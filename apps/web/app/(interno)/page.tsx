@@ -1,80 +1,25 @@
 import Dashboard from '@/pages/Dashboard';
 
-import { Tablero as TableroDeTienda } from '~/abarrotes/Tablero';
-import { AgendaDelDia } from '~/estetica-salon/AgendaDelDia';
-import { Tablero as TableroDeCafeteria } from '~/cafeteria/Tablero';
 import { IrAlInicioDelRol } from '~/cliente/IrAlInicioDelRol';
-import { Tablero as TableroDeFerreteria } from '~/ferreteria/Tablero';
 import { sesionDelServidor } from '~/servidor/http';
-import { abreEnLaAgenda, veLaListaDeEspera } from '~/servidor/inicio-del-salon';
 
 /**
- * LA PANTALLA DE INICIO, que no es la misma para los cinco modelos.
+ * LA PANTALLA DE INICIO: el tablero del restaurante.
  *
- * ── Por qué aquí se decide ─────────────────────────────────────────────────
- * `Dashboard` de `heredado/` es el tablero del RESTAURANTE: se construyó para
- * Restaurante MH y sus nueve indicadores son los de una cena —ventas, costo,
- * utilidad, ticket promedio, la dona de métodos de pago, propinas—. Servírselo a
- * una tiendita no es servirle un tablero genérico: es servirle el de otro negocio,
- * con dos tarjetas que su propia carpeta PROHÍBE (`abarrotes/04-INTERFAZ.md` §4.4:
- * el ticket promedio «se mueve por azar y no dispara nada», y la dona «ocupa más y
- * contesta menos que una lista en 390 px»).
+ * `Dashboard` de `heredado/` es el tablero del RESTAURANTE —ventas, costo, utilidad, ticket
+ * promedio, métodos de pago, propinas—, y POS Don Poncho sirve sólo a un restaurante (DP-2):
+ * los tableros y la agenda de los otros cuatro giros se fueron con ellos.
  *
- * La plantilla se lee en el SERVIDOR, de la sesión, y con el HTML baja ya el tablero
- * que toca: sin parpadeo y sin que el navegador tenga que preguntar quién es.
- *
- * ── Y por qué no un `redirect` a una ruta por modelo ───────────────────────
- * Porque `/` es la casa: es lo que el menú lateral enseña como «Inicio» y lo que
- * queda en el historial del navegador. Redirigir metería un salto visible en la
- * pantalla que más se abre, y dejaría dos direcciones para lo mismo.
- *
- * ── Y la estética no tiene tablero en la casa: tiene AGENDA ────────────────
- * Su carpeta dedica una sección entera a defender que **su inicio no es un tablero**
- * (§4.4.1): «a las 9:45 de la mañana, casi todos los indicadores de un dashboard son
- * adornos», y lo único que a esa hora todavía cambia el resultado de hoy —a quién
- * llamo para el hueco de las once— está en la agenda. Así que `/` le sirve su
- * agenda, y su tablero —los ocho indicadores de su §4.4.2, con la ocupación de mañana
- * como estrella— vive donde su carpeta lo pone: dentro de Reportes.
- *
- * Se SIRVE aquí en vez de redirigir a `/estetica-salon/agenda-del-dia`, y la razón es
- * la misma de arriba más una: ese grupo de rutas no monta el `AppLayout` del heredado,
- * así que un redirect dejaría a la dueña en la única pantalla del sistema SIN BARRA
- * LATERAL, y `/` es de donde cuelga el menú entero. La agenda queda en dos
- * direcciones —la casa y su entrada de menú— y es el mismo componente en las dos.
+ * Quién ve el tablero: dirección. A los demás puestos, `/` los lleva a su casa —la cajera a la
+ * caja, el mesero a sus mesas, la cocina a la cocina— en vez de pintarles el dinero del día,
+ * que su puesto no lee (el servidor ya les niega los datos; la pantalla tampoco se pinta).
  */
 export const dynamic = 'force-dynamic';
 
-/**
- * Quién ve el tablero: los cuatro (`reportes.tablero_*`) admiten dueño, administrador y
- * gerente. A los demás, `/` los lleva a su casa —la cajera, a cobrar— en vez de pintarles
- * un tablero que su puesto no puede leer (bloque D de la 2.4).
- */
 const VEN_EL_TABLERO: ReadonlySet<string> = new Set(['dueno', 'administrador', 'gerente']);
 
 export default async function Pagina() {
   const sesion = await sesionDelServidor();
-  const conTablero =
-    sesion?.paquete === 'tienda' ||
-    sesion?.paquete === 'ferreteria' ||
-    sesion?.paquete === 'cafeteria';
-  if (conTablero && !VEN_EL_TABLERO.has(sesion.rol)) return <IrAlInicioDelRol />;
-
-  // Cada plantilla con el suyo. `restaurante` se queda con el heredado porque el
-  // heredado ES el suyo: se construyó para Restaurante MH y sus nueve indicadores
-  // son los de una cena, uno por uno los de su §4.4.
-  if (sesion?.paquete === 'tienda') return <TableroDeTienda />;
-  if (sesion?.paquete === 'ferreteria') return <TableroDeFerreteria />;
-  if (sesion?.paquete === 'cafeteria') return <TableroDeCafeteria />;
-
-  // Y la estética no tiene tablero en la casa: tiene AGENDA. Para quien la puede leer: al
-  // almacén se le pintaba con el 403 del servidor, y va a su inicio como en los demás giros.
-  if (sesion?.paquete === 'estetica') {
-    return abreEnLaAgenda(sesion.rol) ? (
-      <AgendaDelDia veLaEspera={veLaListaDeEspera(sesion.rol)} />
-    ) : (
-      <IrAlInicioDelRol />
-    );
-  }
-
+  if (sesion !== null && !VEN_EL_TABLERO.has(sesion.rol)) return <IrAlInicioDelRol />;
   return <Dashboard />;
 }

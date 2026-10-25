@@ -2,8 +2,6 @@ import type { Transaccion } from '@morphiqpos/data';
 import { describe, expect, it } from 'vitest';
 
 import * as consultas from './consultas.ts';
-import * as mostrador from './extras-mostrador.ts';
-import * as salon from './extras-salon.ts';
 import * as extras from './extras.ts';
 import { transaccionGrabadora } from '../../pruebas/grabadora.ts';
 
@@ -18,7 +16,7 @@ import { transaccionGrabadora } from '../../pruebas/grabadora.ts';
  * a la ventana de su sesión, nunca a «todo».
  *
  * Lo que este archivo NO puede decir es que Postgres devuelva lo que creemos: eso lo dicen
- * los cinco e2e, que cierran por la pantalla y leen la hoja pintada contra la base viva.
+ * el e2e del restaurante, que cierra por la pantalla y leen la hoja pintada contra la base viva.
  */
 
 const ORG = '11111111-1111-4111-8111-111111111111';
@@ -51,38 +49,6 @@ const CONSULTAS: readonly (readonly [string, Acotada, (tx: Transaccion) => Promi
   ['insumosConsumidos', 'sesion', (tx) => consultas.insumosConsumidos(tx, ORG, SESION)],
   ['salidasSinVenta', 'ventana', (tx) => consultas.salidasSinVenta(tx, ORG, VENTANA)],
   ['propinasPorMesero', 'sesion', (tx) => extras.propinasPorMesero(tx, ORG, SESION)],
-  ['ventasPorCanal', 'sesion', (tx) => extras.ventasPorCanal(tx, ORG, SESION)],
-  ['consumoPorCanal', 'sesion', (tx) => extras.consumoPorCanal(tx, ORG, SESION)],
-  ['modificadoresUsados', 'sesion', (tx) => extras.modificadoresUsados(tx, ORG, SESION)],
-  ['repartoDelBote', 'sesion', (tx) => extras.repartoDelBote(tx, ORG, SESION)],
-  ['mermaDeBarra', 'sesion', (tx) => extras.mermaDeBarra(tx, ORG, SESION)],
-  ['consumoDeLaCasa', 'ventana', (tx) => extras.consumoDeLaCasa(tx, ORG, VENTANA)],
-  ['sellosDelTurno', 'ventana', (tx) => extras.sellosDelTurno(tx, ORG, VENTANA)],
-  ['noRecogidos', 'ventana', (tx) => extras.noRecogidos(tx, ORG, VENTANA)],
-  ['carteraDelDia', 'ventana', (tx) => mostrador.carteraDelDia(tx, ORG, VENTANA)],
-  ['saldosMasViejos', 'negocio', (tx) => mostrador.saldosMasViejos(tx, ORG, VENTANA)],
-  ['cobrosDeCartera', 'sesion', (tx) => mostrador.cobrosDeCartera(tx, ORG, SESION)],
-  ['operacionesDeTerceros', 'sesion', (tx) => mostrador.operacionesDeTerceros(tx, ORG, SESION)],
-  ['salioSinCobrarse', 'ventana', (tx) => mostrador.salioSinCobrarse(tx, ORG, VENTANA)],
-  ['materialCortado', 'ventana', (tx) => mostrador.materialCortado(tx, ORG, VENTANA)],
-  ['turnosDelDia', 'sesion', (tx) => mostrador.turnosDelDia(tx, ORG, SESION)],
-  ['comprasDelDia', 'ventana', (tx) => mostrador.comprasDelDia(tx, ORG, VENTANA)],
-  ['cuentasPorPagar', 'negocio', (tx) => mostrador.cuentasPorPagar(tx, ORG, AHORA)],
-  ['garantiasAbiertas', 'negocio', (tx) => mostrador.garantiasAbiertas(tx, ORG, AHORA)],
-  ['autorizacionesDelDia', 'ventana', (tx) => mostrador.autorizacionesDelDia(tx, ORG, VENTANA)],
-  ['faltantesDelConteo', 'ventana', (tx) => mostrador.faltantesDelConteo(tx, ORG, VENTANA)],
-  ['serviciosDeMostrador', 'sesion', (tx) => mostrador.serviciosDeMostrador(tx, ORG, SESION)],
-  [
-    'liquidacionPorProfesional',
-    'ventana',
-    (tx) => salon.liquidacionPorProfesional(tx, ORG, VENTANA),
-  ],
-  ['productoDeCabina', 'ventana', (tx) => salon.productoDeCabina(tx, ORG, VENTANA)],
-  ['serviciosSinFormula', 'ventana', (tx) => salon.serviciosSinFormula(tx, ORG, VENTANA)],
-  ['cortesiasYRehechos', 'ventana', (tx) => salon.cortesiasYRehechos(tx, ORG, VENTANA)],
-  ['contrapartidasDeComision', 'ventana', (tx) => salon.contrapartidasDeComision(tx, ORG, VENTANA)],
-  ['paquetesDelDia', 'ventana', (tx) => salon.paquetesDelDia(tx, ORG, VENTANA)],
-  ['anticiposDelDia', 'sesion', (tx) => salon.anticiposDelDia(tx, ORG, SESION, VENTANA)],
 ];
 
 describe('la hoja del corte · cada consulta, acotada', () => {

@@ -49,7 +49,8 @@ const COMANDOS = await comandosRegistrados();
 
 describe('la entrada de cada comando contesta, no lanza', () => {
   it('se cargan los comandos de verdad', () => {
-    expect(COMANDOS.size).toBeGreaterThan(250);
+    // POS Don Poncho (DP-2): piso recalibrado al alcance del restaurante (eran más de 250).
+    expect(COMANDOS.size).toBeGreaterThan(100);
   });
 
   it('con basura en cada texto, `safeParse` dice qué está mal y no revienta', () => {

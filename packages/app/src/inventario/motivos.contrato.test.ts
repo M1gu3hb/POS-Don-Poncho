@@ -114,7 +114,9 @@ describe('el motivo de un movimiento de stock', () => {
   it('NINGÚN COMANDO escribe una frase donde la base pide una clave', () => {
     const escrituras = escriturasDeMovimiento();
     // Si el recorte deja de encontrar las inserciones, el contrato pasaría vacío.
-    expect(escrituras.length, 'no se encontró ninguna escritura de movimiento').toBeGreaterThan(8);
+    // POS Don Poncho (DP-2): piso recalibrado al alcance del restaurante; los conteos, los
+    // cortes de material y la barra de los otros giros también insertaban movimientos.
+    expect(escrituras.length, 'no se encontró ninguna escritura de movimiento').toBeGreaterThan(5);
 
     const malas: string[] = [];
     for (const { archivo, motivo } of escrituras) {

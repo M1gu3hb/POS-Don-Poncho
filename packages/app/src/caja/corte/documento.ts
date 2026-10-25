@@ -8,15 +8,12 @@ import {
 } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 import { diasHastaLaVisita, sugerirPedido } from '@morphiqpos/domain/inventario';
-import { sql } from 'kysely';
 import { z } from 'zod';
 
 import { sinCostosSiNoLosVe } from './sin-costos.ts';
 import { definirComando } from '../../definicion.ts';
 import * as consultas from './consultas.ts';
 import { devolucionesDelCorte, type DevolucionDelCorte } from './devoluciones.ts';
-import * as mostrador from './extras-mostrador.ts';
-import * as salon from './extras-salon.ts';
 import * as extras from './extras.ts';
 
 /**
@@ -39,7 +36,6 @@ import * as extras from './extras.ts';
 
 const ROLES_DE_CAJA = ['cajero', 'gerente', 'administrador', 'dueno'] as const;
 const VEN_COSTOS: readonly Rol[] = ['dueno', 'administrador', 'gerente'];
-const SELLOS_POR_PREMIO_POR_OMISION = 5;
 
 export const entradaHojaDelCorte = z.object({ sesionCajaId: z.uuid() });
 
@@ -61,73 +57,13 @@ export interface NegocioDelCorte {
 }
 
 /**
- * Una fila con su COSTO ocultable: `null` para quien no ve costos. El servidor lo
- * quita; esconderlo sólo en la pantalla dejaba el costo en la respuesta (auditoría
- * de la 2.4: merma de barra, consumo de la casa, sellos, garantías y el margen
- * objetivo llegaban completos a un cajero sin permiso).
+ * Lo propio del giro en el corte. POS Don Poncho sirve un solo giro (DP-2): el restaurante y
+ * su propina por mesero. Las variantes de los otros cuatro giros se fueron con ellos.
  */
-type ConCostoOculto<T extends { readonly costoCentavos: string }> = Omit<T, 'costoCentavos'> & {
-  readonly costoCentavos: string | null;
-};
-
-export type ExtrasDelCorte =
-  | {
-      readonly plantilla: 'restaurante';
-      readonly propinasPorMesero: readonly extras.PropinaDeMesero[];
-    }
-  | {
-      readonly plantilla: 'cafeteria';
-      readonly canales: readonly extras.VentaPorCanal[];
-      readonly consumoPorCanal: readonly extras.ConsumoDelCanal[];
-      readonly modificadores: readonly extras.ModificadorUsado[];
-      readonly reparto: readonly extras.ParteDelReparto[];
-      readonly mermaDeBarra: readonly ConCostoOculto<extras.MermaDeBarra>[];
-      readonly consumoDeLaCasa: readonly ConCostoOculto<extras.ConsumoDeLaCasa>[];
-      readonly sellos: Omit<
-        extras.SellosDelTurno,
-        'costoCanjesCentavos' | 'costoPremioCentavos'
-      > & {
-        readonly sellosPorPremio: number;
-        readonly costoCanjesCentavos: string | null;
-        readonly costoPremioCentavos: string | null;
-      };
-      readonly noRecogidos: readonly (Omit<extras.NoRecogido, 'costoCentavos'> & {
-        readonly costoCentavos: string | null;
-      })[];
-    }
-  | {
-      readonly plantilla: 'tienda' | 'ferreteria';
-      readonly cartera: mostrador.Cartera;
-      readonly saldosMasViejos: readonly mostrador.SaldoViejo[];
-      readonly cobrosDeCartera: readonly mostrador.CobroDeCartera[];
-      readonly terceros: readonly mostrador.OperacionDeTerceros[];
-      readonly salioSinCobrarse: readonly mostrador.SalioSinCobrarse[];
-      readonly materialCortado: readonly mostrador.MaterialCortado[];
-      readonly turnos: readonly mostrador.TurnoDelDia[];
-      readonly compras: readonly mostrador.CompraDelDia[];
-      readonly cuentasPorPagar: readonly mostrador.CuentaPorPagar[];
-      readonly deudaConProveedoresCentavos: string;
-      readonly garantias: readonly ConCostoOculto<mostrador.GarantiaAbierta>[];
-      readonly autorizaciones: readonly mostrador.Autorizacion[];
-      readonly faltantes: readonly (Omit<mostrador.Faltante, 'costoCentavos'> & {
-        readonly costoCentavos: string | null;
-      })[];
-      readonly servicios: readonly mostrador.ServicioDeMostrador[];
-    }
-  | {
-      readonly plantilla: 'estetica';
-      readonly profesionales: readonly salon.LiquidacionDeProfesional[];
-      readonly agenda: readonly salon.CitasDelDia[];
-      readonly manana: readonly salon.CitaDeManana[];
-      readonly anticipos: salon.AnticiposDelDia;
-      readonly cabina: readonly (Omit<salon.ProductoDeCabina, 'costoCentavos'> & {
-        readonly costoCentavos: string | null;
-      })[];
-      readonly serviciosSinFormula: number;
-      readonly cortesias: readonly salon.CortesiaORehecho[];
-      readonly contrapartidas: readonly salon.ContrapartidaDeComision[];
-      readonly paquetes: salon.PaquetesDelDia;
-    };
+export interface ExtrasDelCorte {
+  readonly plantilla: 'restaurante';
+  readonly propinasPorMesero: readonly extras.PropinaDeMesero[];
+}
 
 export interface HojaDelCorte {
   readonly verCostos: boolean;
@@ -219,15 +155,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
         ]),
       );
     const delGiro = await ctx.paso('leer_extras', () =>
-      extrasDe(
-        tx,
-        organizacionId,
-        plantilla,
-        sesion,
-        valores,
-        verCostos,
-        sesion.cerradaEn ?? ctx.ahora,
-      ),
+      extrasDe(tx, organizacionId, plantilla, sesion),
     );
 
     // La última pasada: sin un solo costo para quien no los ve, por campo que se
@@ -315,142 +243,18 @@ async function extrasDe(
   organizacionId: string,
   plantilla: string,
   sesion: consultas.SesionDelCorte,
-  valores: Readonly<Record<string, unknown>>,
-  verCostos: boolean,
-  ahora: Date,
 ): Promise<ExtrasDelCorte> {
-  const id = sesion.id;
-  const costo = (centavos: string): string | null => (verCostos ? centavos : null);
-  if (plantilla === 'restaurante') {
-    return {
-      plantilla,
-      propinasPorMesero: await extras.propinasPorMesero(tx, organizacionId, id),
-    };
+  // Un negocio que no es restaurante no lo sirve este sistema: decirlo, no inventar un corte.
+  if (plantilla !== 'restaurante') {
+    throw new ErrorDominio(
+      'CONFIGURACION_INVALIDA',
+      'Este sistema sólo arma el corte de un restaurante.',
+    );
   }
-  if (plantilla === 'cafeteria') {
-    const [canales, consumoPorCanal, modificadores, reparto, mermaDeBarra, consumoDeLaCasa] =
-      await Promise.all([
-        extras.ventasPorCanal(tx, organizacionId, id),
-        extras.consumoPorCanal(tx, organizacionId, id),
-        extras.modificadoresUsados(tx, organizacionId, id),
-        extras.repartoDelBote(tx, organizacionId, id),
-        extras.mermaDeBarra(tx, organizacionId, id),
-        extras.consumoDeLaCasa(tx, organizacionId, sesion),
-      ]);
-    const [sellos, noRecogidos] = await Promise.all([
-      extras.sellosDelTurno(tx, organizacionId, sesion),
-      extras.noRecogidos(tx, organizacionId, sesion),
-    ]);
-    const porPremio = valores['sellos_por_premio'];
-    return {
-      plantilla,
-      canales,
-      consumoPorCanal,
-      modificadores,
-      reparto,
-      mermaDeBarra: mermaDeBarra.map((m) => ({ ...m, costoCentavos: costo(m.costoCentavos) })),
-      consumoDeLaCasa: consumoDeLaCasa.map((c) => ({
-        ...c,
-        costoCentavos: costo(c.costoCentavos),
-      })),
-      sellos: {
-        ...sellos,
-        costoCanjesCentavos: costo(sellos.costoCanjesCentavos),
-        costoPremioCentavos: costo(sellos.costoPremioCentavos),
-        sellosPorPremio:
-          typeof porPremio === 'number' && porPremio > 0
-            ? porPremio
-            : SELLOS_POR_PREMIO_POR_OMISION,
-      },
-      noRecogidos: noRecogidos.map((n) => ({ ...n, costoCentavos: costo(n.costoCentavos) })),
-    };
-  }
-  if (plantilla === 'estetica') {
-    const dia = await limitesDelDia(tx, organizacionId, sesion.abiertaEn);
-    const [profesionales, agenda, manana, anticipos, cabina] = await Promise.all([
-      salon.liquidacionPorProfesional(tx, organizacionId, sesion),
-      salon.agendaDelDia(tx, organizacionId, sesion.sucursalId, dia.hoy, dia.manana),
-      salon.citasDeManana(tx, organizacionId, sesion.sucursalId, dia.manana, dia.pasado),
-      salon.anticiposDelDia(tx, organizacionId, id, sesion),
-      salon.productoDeCabina(tx, organizacionId, sesion),
-    ]);
-    const [serviciosSinFormula, cortesias, contrapartidas, paquetes] = await Promise.all([
-      salon.serviciosSinFormula(tx, organizacionId, sesion),
-      salon.cortesiasYRehechos(tx, organizacionId, sesion),
-      salon.contrapartidasDeComision(tx, organizacionId, sesion),
-      salon.paquetesDelDia(tx, organizacionId, sesion),
-    ]);
-    return {
-      plantilla,
-      profesionales,
-      agenda,
-      manana,
-      anticipos,
-      cabina: cabina.map((c) => ({ ...c, costoCentavos: costo(c.costoCentavos) })),
-      serviciosSinFormula,
-      cortesias,
-      contrapartidas,
-      paquetes,
-    };
-  }
-  const [cartera, saldosMasViejos, cobrosDeCartera, terceros, salioSinCobrarse, materialCortado] =
-    await Promise.all([
-      mostrador.carteraDelDia(tx, organizacionId, sesion),
-      mostrador.saldosMasViejos(tx, organizacionId, sesion),
-      mostrador.cobrosDeCartera(tx, organizacionId, id),
-      mostrador.operacionesDeTerceros(tx, organizacionId, id),
-      mostrador.salioSinCobrarse(tx, organizacionId, sesion),
-      mostrador.materialCortado(tx, organizacionId, sesion),
-    ]);
-  const [turnos, compras, cuentasPorPagar, deuda, garantias, autorizaciones, faltantes, servicios] =
-    await Promise.all([
-      mostrador.turnosDelDia(tx, organizacionId, id),
-      mostrador.comprasDelDia(tx, organizacionId, sesion),
-      mostrador.cuentasPorPagar(tx, organizacionId, ahora),
-      mostrador.deudaConProveedores(tx, organizacionId),
-      mostrador.garantiasAbiertas(tx, organizacionId, ahora),
-      mostrador.autorizacionesDelDia(tx, organizacionId, sesion),
-      mostrador.faltantesDelConteo(tx, organizacionId, sesion),
-      mostrador.serviciosDeMostrador(tx, organizacionId, id),
-    ]);
   return {
-    plantilla: plantilla === 'ferreteria' ? 'ferreteria' : 'tienda',
-    cartera,
-    saldosMasViejos,
-    cobrosDeCartera,
-    terceros,
-    salioSinCobrarse,
-    materialCortado,
-    turnos,
-    compras,
-    cuentasPorPagar,
-    deudaConProveedoresCentavos: deuda,
-    garantias: garantias.map((g) => ({ ...g, costoCentavos: costo(g.costoCentavos) })),
-    autorizaciones,
-    faltantes: faltantes.map((f) => ({ ...f, costoCentavos: costo(f.costoCentavos) })),
-    servicios,
+    plantilla,
+    propinasPorMesero: await extras.propinasPorMesero(tx, organizacionId, sesion.id),
   };
-}
-
-/** El día del negocio en su zona horaria: hoy, mañana y pasado, a medianoche local. */
-async function limitesDelDia(
-  tx: Transaccion,
-  organizacionId: string,
-  instante: Date,
-): Promise<{ readonly hoy: Date; readonly manana: Date; readonly pasado: Date }> {
-  const { rows } = await sql<{ hoy: Date; manana: Date; pasado: Date }>`
-    select (date_trunc('day', ${instante}::timestamptz at time zone o.zona_horaria)
-              at time zone o.zona_horaria)                                    as "hoy",
-           ((date_trunc('day', ${instante}::timestamptz at time zone o.zona_horaria) + interval '1 day')
-              at time zone o.zona_horaria)                                    as "manana",
-           ((date_trunc('day', ${instante}::timestamptz at time zone o.zona_horaria) + interval '2 day')
-              at time zone o.zona_horaria)                                    as "pasado"
-      from organizaciones o
-     where o.id = ${organizacionId}
-  `.execute(tx);
-  const fila = rows[0];
-  if (fila === undefined) throw new Error('La organización del corte no existe.');
-  return fila;
 }
 
 function objetoDe(valor: unknown): Readonly<Record<string, unknown>> {

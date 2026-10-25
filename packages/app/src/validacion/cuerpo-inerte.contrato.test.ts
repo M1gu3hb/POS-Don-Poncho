@@ -13,7 +13,8 @@ const ESPEC_DE_LA_MATRIZ = fileURLToPath(
 describe('la matriz de permisos pregunta sin ejecutar', () => {
   it('ningún comando del registro acepta el cuerpo inerte', async () => {
     const comandos = await comandosRegistrados();
-    expect(comandos.size).toBeGreaterThan(200);
+    // POS Don Poncho (DP-2): piso recalibrado al alcance del restaurante (eran más de 200).
+    expect(comandos.size).toBeGreaterThan(100);
     const loAceptan = [...comandos.values()]
       .filter((c) => c.entrada.safeParse(CUERPO_INERTE).success)
       .map((c) => c.nombre);

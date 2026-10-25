@@ -460,7 +460,9 @@ describe('las lecturas del puente', () => {
 
   it('hay lecturas que mirar', () => {
     // Si el patrón deja de encajar, el contrato pasaría vacío.
-    expect(todas.length).toBeGreaterThan(60);
+    // POS Don Poncho (DP-2): piso recalibrado al alcance del restaurante: las pantallas de los
+    // otros cuatro giros leían más de 60 entidades; las del restaurante leen unas 23.
+    expect(todas.length).toBeGreaterThan(20);
   });
 
   it('TODA ENTIDAD QUE UNA PANTALLA LEE EXISTE en el mapa del puente', () => {

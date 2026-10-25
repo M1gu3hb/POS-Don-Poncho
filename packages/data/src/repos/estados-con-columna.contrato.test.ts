@@ -270,6 +270,45 @@ function columnaDeTransicionPrevia(regla: ReglaDeEstado): boolean {
   return `${regla.tabla}.${regla.restriccion}.${regla.columna}` in ESCRITA_EN_UNA_TRANSICION_PREVIA;
 }
 
+/**
+ * LAS REGLAS QUE POS DON PONCHO NO ESCRIBE, y por qué (DP-2).
+ *
+ * Las migraciones no se tocan: el esquema es un superconjunto, el mismo que se aplica desde
+ * cero en la base compartida, en el proyecto propio de noviembre y en el servidor de enero.
+ * Por eso siguen ahí los `check` de tablas y estados de los otros cuatro giros, cuyo código
+ * se fue con ellos. Para cada uno, este contrato exige lo contrario: que NADIE los escriba.
+ * El día que alguien empiece a escribir uno, esta prueba se pone roja y la regla de la
+ * columna vuelve a regir — un hueco nombrado, no una regla ablandada.
+ */
+const SIN_ESCRITOR_EN_DON_PONCHO: Readonly<Record<string, string>> = {
+  'anticipos_cita.anticipo_aplicado_con_orden': 'Anticipos de cita: estética.',
+  'cita_servicios.cita_servicio_cerrado_con_fecha': 'Servicios de una cita: estética.',
+  'citas.cita_cancelada_con_motivo': 'Agenda de citas: estética.',
+  'citas.cita_cobrada_con_orden': 'Agenda de citas: estética.',
+  'citas.cita_no_llego_con_sello': 'Agenda de citas: estética.',
+  'cotizaciones.cotizacion_aprobada_con_fecha': 'Cotizaciones: ferretería.',
+  'cotizaciones.cotizacion_enviada_con_fecha': 'Cotizaciones: ferretería.',
+  'cotizaciones.cotizacion_ganada_con_orden': 'Cotizaciones: ferretería.',
+  'cotizaciones.cotizacion_perdida_con_motivo': 'Cotizaciones: ferretería.',
+  'lista_espera_citas.espera_cita_agendada_con_cita': 'Lista de espera de citas: estética.',
+  'lista_espera_citas.espera_cita_avisada_con_fecha': 'Lista de espera de citas: estética.',
+  'listas_trabajo.lista_cerrada_con_fecha': 'Listas de trabajo: ferretería.',
+  'notas_mostrador.nota_apartada_con_vencimiento': 'Notas de mostrador: ferretería.',
+  'notas_mostrador.nota_entregada_con_fecha': 'Notas de mostrador: ferretería.',
+  'obras.obra_cerrada_con_fecha': 'Crédito por obra: ferretería.',
+  'ordenes.orden_suspendida_con_codigo':
+    'Venta suspendida en el mostrador (tienda, ferretería, cafetería): el restaurante no aparta.',
+  'pedidos_anticipados.pedido_anticipado_en_fila_con_hora': 'Pedido anticipado: cafetería.',
+  'pedidos_anticipados.pedido_anticipado_entregado_con_hora': 'Pedido anticipado: cafetería.',
+  'piezas_abiertas.pieza_cerrada_con_fecha': 'Material continuo: ferretería.',
+  'tomas_inventario.toma_cerrada_con_fecha':
+    'Toma física por zona: abarrotes. El restaurante ajusta su existencia con movimientos.',
+};
+
+function sinEscritorEnDonPoncho(regla: ReglaDeEstado): boolean {
+  return `${regla.tabla}.${regla.restriccion}` in SIN_ESCRITOR_EN_DON_PONCHO;
+}
+
 const REGLAS = reglasDeLasMigraciones();
 
 describe('todo estado que la base exige acompañado escribe su columna', () => {
@@ -322,6 +361,18 @@ describe('todo estado que la base exige acompañado escribe su columna', () => {
             if (escribeEseEstado) sospechosos.push({ archivo, bloque });
           }
         }
+      }
+
+      if (sinEscritorEnDonPoncho(regla)) {
+        it(`NADIE escribe ${regla.estados.join(' o ')}: no es del restaurante`, () => {
+          expect(
+            sospechosos.map((s) => s.archivo),
+            `${SIN_ESCRITOR_EN_DON_PONCHO[`${regla.tabla}.${regla.restriccion}`] ?? ''} Alguien ` +
+              'volvió a escribir este estado: sácalo de SIN_ESCRITOR_EN_DON_PONCHO y que rija ' +
+              'la regla de la columna.',
+          ).toEqual([]);
+        });
+        return;
       }
 
       it(`hay alguna escritura que ponga ${regla.estados.join(' o ')}`, () => {

@@ -108,7 +108,9 @@ const COMANDOS = await comandosRegistrados();
 
 describe('la frontera por sucursal de los comandos (D-36)', () => {
   it('se cargan los comandos de verdad, no una lista vacía', () => {
-    expect(COMANDOS.size).toBeGreaterThan(250);
+    // POS Don Poncho (DP-2): piso recalibrado al alcance del restaurante; con los cinco giros
+    // eran más de 250. Sigue atrapando un cargador roto que devuelva unos cuantos.
+    expect(COMANDOS.size).toBeGreaterThan(100);
     expect(COMANDOS.get('venta.cobrar')?.sucursal).toEqual({ ordenId: 'ordenes' });
   });
 

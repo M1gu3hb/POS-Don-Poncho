@@ -79,7 +79,9 @@ describe('las rutas con parámetro', () => {
   it('CADA RUTA declara el segmento que su carpeta tiene', () => {
     const rutas = rutasConParametro(API);
     // Si esto sale vacío, el contrato no está mirando nada: pasaría siempre.
-    expect(rutas.length, 'no se encontró ninguna ruta con parámetro').toBeGreaterThan(10);
+    // POS Don Poncho (DP-2): piso recalibrado al alcance del restaurante: casi todas las rutas con
+    // parámetro eran de la agenda, las cotizaciones y el crédito de otros giros.
+    expect(rutas.length, 'no se encontró ninguna ruta con parámetro').toBeGreaterThanOrEqual(2);
 
     const malas: string[] = [];
     for (const [ruta, fuente] of rutas) {

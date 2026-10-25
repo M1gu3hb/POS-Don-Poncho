@@ -2,11 +2,11 @@ import 'server-only';
 
 import { ErrorDominio, PAQUETES_MOSTRADOR } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
-import { repoOrdenes, repoCaja, repoVentaCatalogo } from '@morphiqpos/data';
+import { repoOrdenes, repoCaja } from '@morphiqpos/data';
 
 import { definirComando } from '../definicion.ts';
 import { cotizar, type Cotizacion } from './cotizar.ts';
-import { entradaBuscarCatalogo, entradaEstadoVenta, entradaTicket } from './esquemas.ts';
+import { entradaEstadoVenta, entradaTicket } from './esquemas.ts';
 
 /**
  * Las lecturas de la pantalla de venta (F1.1-A-07 y A-12).
@@ -98,59 +98,6 @@ async function resolverOrden(
   const borrador = await repoOrdenes.borradorDeTerminal(tx, organizacionId, terminalId);
   return borrador?.id ?? null;
 }
-
-export interface ProductoEnRejilla {
-  readonly id: string;
-  readonly nombre: string;
-  readonly sku: string | null;
-  readonly precioVentaCentavos: string;
-  readonly tipoVenta: string;
-  readonly unidadVenta: string;
-  readonly categoriaNombre: string | null;
-  readonly existencia: string | null;
-}
-
-export const buscarCatalogo = definirComando<
-  Transaccion,
-  typeof entradaBuscarCatalogo,
-  { productos: readonly ProductoEnRejilla[] }
->({
-  nombre: 'venta.buscar',
-  entidad: 'producto',
-  escribe: false,
-  roles: [...ROLES_DE_MOSTRADOR],
-  paquetes: PAQUETES_MOSTRADOR,
-  entrada: entradaBuscarCatalogo,
-  async ejecutar(ctx, entrada) {
-    const { organizacionId, sucursalId } = ctx.ambito;
-
-    const almacenId =
-      sucursalId === null
-        ? null
-        : await repoVentaCatalogo.almacenPrincipal(ctx.tx, organizacionId, sucursalId);
-
-    const filas = await ctx.paso('buscar', () =>
-      repoVentaCatalogo.catalogoDeVenta(ctx.tx, organizacionId, {
-        ...(entrada.busqueda === undefined ? {} : { busqueda: entrada.busqueda }),
-        ...(almacenId === null ? {} : { almacenId }),
-        limite: entrada.limite,
-      }),
-    );
-
-    return {
-      productos: filas.map((f) => ({
-        id: f.id,
-        nombre: f.nombre,
-        sku: f.sku,
-        precioVentaCentavos: f.precioVentaCentavos.toString(),
-        tipoVenta: f.tipoVenta,
-        unidadVenta: f.unidadVenta,
-        categoriaNombre: f.categoriaNombre,
-        existencia: f.existencia,
-      })),
-    };
-  },
-});
 
 export interface TicketImpreso {
   readonly serie: string;

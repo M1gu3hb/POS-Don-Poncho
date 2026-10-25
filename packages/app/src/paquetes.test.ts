@@ -10,7 +10,6 @@ import {
   type Paquete,
 } from '@morphiqpos/contracts';
 
-import { sugerenciaDePedido } from './abarrotes/sugerencia.ts';
 import { registrarCompra, usarPlantillaCompra } from './compras/compras.ts';
 import { ajustarStock, crearAlmacen } from './inventario/inventario.ts';
 import { registrarMerma } from './inventario/merma.ts';
@@ -171,7 +170,6 @@ const COMANDOS_CON_MODULO: readonly ComandoVigilado[] = [
   tomarValuacion, // costos_basicos
   registrarCompra, // compras
   usarPlantillaCompra, // compras
-  sugerenciaDePedido, // compras
   // SALA — sólo en `restaurante`, y por eso ninguna contradicción aquí.
   abrirMesa, // mesas
   liberarMesa, // mesas
