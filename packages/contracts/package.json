@@ -1,0 +1,24 @@
+{
+  "name": "@morphiqpos/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tipos, DTOs, eventos y errores. El unico paquete que todos pueden importar. Sin dependencias.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./errores": "./src/errores/index.ts",
+    "./entorno": "./src/entorno/index.ts",
+    "./negocios": "./src/negocios/index.ts",
+    "./negocios/equipo": "./src/negocios/equipo-demo.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  }
+}

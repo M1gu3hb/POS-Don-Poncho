@@ -1,0 +1,692 @@
+/* SU HOJA, ENTERA. Portada de historico/restaurante/src/index.css.
+   ==========================================================================
+   Dos adaptaciones, y sólo dos. Las dos son mecánicas y están forzadas:
+
+   1 · Sus dos fuentes —Inter y DM Sans, las mismas— ya no se piden a
+       `fonts.googleapis.com` con un `@import`. La CSP de esta aplicación es
+       `style-src 'self'` y `font-src 'self' data:`, así que el navegador lo
+       bloquearía y la tipografía caería al sans-serif del sistema. Las sirve
+       `next/font` desde nuestro propio origen (app/layout.tsx) y se anteponen
+       sus variables abajo, en --font-heading y --font-body.
+
+   2 · Las directivas `@tailwind base/components/utilities` de Tailwind 3 se
+       sustituyen por el `@import 'tailwindcss'` de la 4, que vive en
+       `app/globals.css` junto con la traducción de su `tailwind.config.js`.
+
+   Todo lo demás —su paleta, su modo oscuro, su reflejo premium, su blindaje de
+   impresión y sus reglas de @page— entra sin tocar una línea. Su PARCHE DARK sí
+   se retiró en C.16 de la 2.4: ver su sitio, abajo. ============================================================== */
+
+@layer base {
+  /* ==========================================================================
+     SUS TOKENS, DERIVADOS DEL SISTEMA. Etapa 2.35.
+     --------------------------------------------------------------------------
+     Aquí estaban sus valores escritos a mano, y era el único sitio donde
+     vivían. El problema no era el archivo: era que había DOS vocabularios de
+     tokens, el inglés de shadcn —éste, vivo— y el español de `packages/ui`
+     —con contrato, perillas y auditoría de contraste, y muerto porque nadie
+     importaba su hoja—. Dos vocabularios garantizan que uno se queda atrás, y
+     uno ya se había quedado: 36 primitivas escribían `shadow-1..4` y
+     `h-(--altura-control)` en unos 190 sitios, y esas clases no emitían una
+     sola línea de CSS. El sistema pintaba con tokens que no existían.
+
+     Ahora hay UNO. La fuente es `packages/ui/src/estilos/morphiq.css` —que es
+     SU paleta, valor por valor— y estos nombres son alias suyos. Los 244
+     archivos del heredado siguen escribiendo `bg-card`, `text-muted-foreground`
+     y `bg-sidebar` sin cambiar una clase.
+
+     Y el modo oscuro desapareció DE AQUÍ, que es lo que más se gana: antes
+     había que acordarse de tocar dos bloques por cada color. Ahora el estilo
+     cambia sus tokens bajo `.dark` y estos alias lo siguen solos.
+     ========================================================================== */
+  :root {
+    --font-heading: var(--mh-dm-sans), 'DM Sans', sans-serif;
+    --font-body: var(--mh-inter), 'Inter', sans-serif;
+
+    /* MH Astral Systems — Negro / Azul eléctrico, vía el sistema de diseño */
+    --background: var(--fondo);
+    --foreground: var(--texto);
+    --card: var(--superficie);
+    --card-foreground: var(--texto);
+    --popover: var(--superficie-elevada);
+    --popover-foreground: var(--texto);
+    --primary: var(--primario);
+    --primary-foreground: var(--primario-texto);
+    --secondary: var(--fondo-sutil);
+    --secondary-foreground: var(--texto);
+    --muted: var(--fondo-sutil);
+    --muted-foreground: var(--texto-sutil);
+    /* Su `--accent` es una SUPERFICIE teñida —el hover del menú, la fila
+       resaltada—, no un color saturado. En el sistema es `acento-suave`, que
+       existe precisamente porque su paleta ya distinguía las dos cosas y el
+       contrato no. */
+    --accent: var(--acento-suave);
+    --accent-foreground: var(--acento-suave-texto);
+    --destructive: var(--peligro);
+    --destructive-foreground: var(--peligro-texto);
+    --border: var(--borde);
+    /* Su `--input` valía lo mismo que `--border`: 1.33:1 sobre el fondo, un
+       campo cuyo borde nadie ve. `borde-fuerte` es ese mismo tono a 3.21:1,
+       que es lo que WCAG 1.4.11 pide de un elemento no textual. */
+    --input: var(--borde-fuerte);
+    --ring: var(--anillo);
+    /* Su radio de 0.75rem es exactamente el `--radio-lg` de la perilla
+       `redondeo: media`, que es la que declara el estilo `morphiq`. Derivarlo
+       es lo que hace que la perilla funcione de verdad en los 244 archivos. */
+    --radius: var(--radio-lg);
+
+    --success: var(--exito);
+    --success-foreground: var(--exito-texto);
+    --warning: var(--advertencia);
+    --warning-foreground: var(--advertencia-texto);
+    --info: var(--info);
+    --info-foreground: var(--info-texto);
+
+    --chart-1: var(--grafico-1);
+    --chart-2: var(--grafico-2);
+    --chart-3: var(--grafico-3);
+    --chart-4: var(--grafico-4);
+    --chart-5: var(--grafico-5);
+
+    /* Barra lateral oscura permanente — su decisión, y se conserva: en el
+       sistema `lateral-*` es oscuro en los dos modos. */
+    --sidebar-background: var(--lateral-fondo);
+    --sidebar-foreground: var(--lateral-texto);
+    --sidebar-primary: var(--lateral-activo);
+    --sidebar-primary-foreground: var(--lateral-activo-texto);
+    /* La barra es oscura en los DOS modos, asi que su hover tiene su propio token:
+       el acento suave de la pagina es clarisimo en modo claro y sobre una barra
+       casi negra seria un parche blanco. */
+    --sidebar-accent: var(--lateral-hover);
+    --sidebar-accent-foreground: var(--lateral-texto);
+    --sidebar-border: var(--lateral-borde);
+    --sidebar-ring: var(--anillo);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    /* Evita bordes/zonas blancas inferiores y laterales cuando el contenido
+       es más corto que el viewport o cuando hay overscroll en móvil iOS. */
+    min-height: 100dvh;
+    background-color: hsl(var(--background));
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+    overscroll-behavior-y: none;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* =====================================================
+   MODO OSCURO — Animación al alternar tema
+   =====================================================
+   La clase `.theme-anim` se aplica al <html> SOLO durante ~600ms
+   cuando el usuario cambia tema. Esto permite que el navegador
+   anime fondo/color/borde sin penalizar el resto del tiempo. */
+html.theme-anim,
+html.theme-anim body,
+html.theme-anim *:not(input):not(textarea):not(select):not(svg):not(svg *) {
+  transition:
+    background-color 480ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-image 480ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 480ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 480ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 480ms cubic-bezier(0.4, 0, 0.2, 1),
+    fill 480ms cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 480ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* En modo oscuro, los logos PNG con fondo blanco/transparente claro
+   pueden “desaparecer”. Aplicamos un sutil tratamiento al logo de
+   marca de agua para que siga visible y elegante. */
+html.dark .brand-watermark {
+  filter: grayscale(20%) brightness(1.6) contrast(0.9);
+}
+
+/* =====================================================
+   REFLEJO PREMIUM — superficie con brillo sutil arriba
+   =====================================================
+   Aplica con className="premium-sheen" a cards/paneles/cuadritos
+   donde quieras el efecto 3D elegante (Recetas-like).
+   Más sutil en dark, claro y elegante en light. */
+.premium-sheen {
+  position: relative;
+  isolation: isolate;
+}
+.premium-sheen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.18) 6%,
+    rgba(255, 255, 255, 0) 24%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.85;
+  z-index: 1;
+}
+html.dark .premium-sheen::before {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 8%,
+    rgba(255, 255, 255, 0) 28%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0.9;
+}
+/* Asegurar que el contenido quede arriba del reflejo */
+.premium-sheen > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* =====================================================
+   PARCHE DARK — RETIRADO en C.16 de la etapa 2.4
+   =====================================================
+   Aquí vivían ~140 reglas `html.dark .bg-amber-50 { … !important }` que
+   reescribían a mano, sólo en el modo oscuro de ESTE frontend, los colores fijos
+   de paleta del código antiguo. Esos colores ya no existen: el heredado usa los
+   tokens del sistema (commit de sólo color de C.16), que cambian solos con el
+   estilo y el modo —los ocho, no sólo «oscuro»—. Las reglas no tenían ya a quién
+   aplicar, y las pocas clases de paleta que quedan a propósito van sobre fondos
+   que se eligen en tiempo de ejecución, donde reescribirlas sería un error.
+   Se conserva lo de abajo, que no es de paleta. */
+
+/* Hover states: `hover:bg-muted/30` etc se ven bien por tokens.
+   Pero `bg-muted/30` plano se ve muy similar al fondo. Lo subimos sutilmente. */
+html.dark .bg-muted\/20 {
+  background-color: hsl(var(--muted) / 0.4) !important;
+}
+html.dark .bg-muted\/30 {
+  background-color: hsl(var(--muted) / 0.55) !important;
+}
+html.dark .bg-muted\/50 {
+  background-color: hsl(var(--muted) / 0.7) !important;
+}
+
+/* "backdrop-blur" sobre fondos blancos ya no aplica → quitar blur en dark
+   evita un halo difuso indeseado sobre cards oscuras */
+html.dark .backdrop-blur,
+html.dark .backdrop-blur-sm,
+html.dark .backdrop-blur-md,
+html.dark .backdrop-blur-xl {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* =====================================================
+   DOCUMENTOS IMPRIMIBLES — SIEMPRE BLANCOS Y LEGIBLES
+   =====================================================
+   Blindaje visual para tickets, PDFs de cierre, PDFs de corte y fichas
+   de producto. Sin importar si el sistema está en dark mode, estos
+   documentos DEBEN salir con fondo blanco y texto negro/gris oscuro.
+   Esta capa anula cualquier override de dark mode dentro de estos
+   contenedores y también aplica en @media print.
+
+   Clases protegidas: .ticket-printable .cash-cut-pdf .pdf-corte-caja .printable-doc
+   No cambia lógica funcional. Solo asegura legibilidad de impresión. */
+
+/* 1) Contenedores raíz — fondo blanco fijo, texto oscuro */
+.ticket-printable,
+.cash-cut-pdf,
+.pdf-corte-caja,
+.printable-doc,
+html.dark .ticket-printable,
+html.dark .cash-cut-pdf,
+html.dark .pdf-corte-caja,
+html.dark .printable-doc {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  color-scheme: light !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* 1b) Los TOKENS del sistema, en papel (C.16 de la 2.4, D-19).
+   Desde que sus colores fijos pasaron a tokens, un ticket pinta `bg-fondo-sutil` y
+   `border-borde-fuerte`: en Noche o Terminal serían oscuros bajo un texto forzado a
+   oscuro. Las utilidades resuelven el token en el propio elemento (`@theme inline`),
+   así que redefinirlos aquí los deja en papel para todo lo que hay dentro, en
+   cualquier estilo y modo. Los valores son los del estilo base en claro
+   (`packages/ui/src/estilos/morphiq.css`). Lo exige
+   `apps/web/src/imprimibles-en-papel.contrato.test.ts`. */
+.ticket-printable,
+.cash-cut-pdf,
+.pdf-corte-caja,
+.printable-doc {
+  --fondo: 0 0% 100%;
+  --fondo-sutil: 215 25% 94%;
+  --superficie: 0 0% 100%;
+  --superficie-elevada: 0 0% 100%;
+  --texto: 222 47% 11%;
+  --texto-sutil: 215 16% 43%;
+  --texto-tenue: 215 14% 56%;
+  --borde: 215 20% 88%;
+  --borde-fuerte: 215 16% 48%;
+  --primario: 217 91% 45%;
+  --primario-texto: 0 0% 100%;
+  --acento: 199 89% 32%;
+  --acento-texto: 0 0% 100%;
+  --acento-suave: 199 89% 92%;
+  --acento-suave-texto: 217 91% 26%;
+  --info: 199 89% 32%;
+  --info-texto: 0 0% 100%;
+  --exito: 152 60% 30%;
+  --exito-texto: 0 0% 100%;
+  --advertencia: 38 92% 50%;
+  --advertencia-texto: 222 47% 11%;
+  --peligro: 0 72% 42%;
+  --peligro-texto: 0 0% 100%;
+}
+
+/* 2) Todo el árbol — texto oscuro legible y sin fondos oscuros */
+.ticket-printable *,
+.cash-cut-pdf *,
+.pdf-corte-caja *,
+.printable-doc *,
+html.dark .ticket-printable *,
+html.dark .cash-cut-pdf *,
+html.dark .pdf-corte-caja *,
+html.dark .printable-doc * {
+  color: #111827 !important;
+  border-color: #d1d5db;
+}
+
+/* 3) Anular cualquier clase de "texto claro" usada para dark mode */
+.ticket-printable .text-white,
+.ticket-printable .text-slate-50,
+.ticket-printable .text-slate-100,
+.ticket-printable .text-slate-200,
+.ticket-printable .text-gray-50,
+.ticket-printable .text-gray-100,
+.ticket-printable .text-gray-200,
+.ticket-printable .text-zinc-50,
+.ticket-printable .text-zinc-100,
+.ticket-printable .text-neutral-50,
+.ticket-printable .text-neutral-100,
+.cash-cut-pdf .text-white,
+.cash-cut-pdf .text-slate-50,
+.cash-cut-pdf .text-slate-100,
+.cash-cut-pdf .text-slate-200,
+.cash-cut-pdf .text-gray-50,
+.cash-cut-pdf .text-gray-100,
+.cash-cut-pdf .text-gray-200,
+.pdf-corte-caja .text-white,
+.pdf-corte-caja .text-slate-50,
+.pdf-corte-caja .text-slate-100,
+.pdf-corte-caja .text-slate-200,
+.pdf-corte-caja .text-gray-50,
+.pdf-corte-caja .text-gray-100,
+.pdf-corte-caja .text-gray-200,
+.printable-doc .text-white,
+.printable-doc .text-slate-50,
+.printable-doc .text-slate-100,
+.printable-doc .text-slate-200,
+.printable-doc .text-gray-50,
+.printable-doc .text-gray-100,
+.printable-doc .text-gray-200 {
+  color: #111827 !important;
+}
+
+/* 4) Anular cualquier sufijo dark: dentro de imprimibles */
+html.dark .ticket-printable [class*='dark:text-white'],
+html.dark .ticket-printable [class*='dark:text-slate-'],
+html.dark .ticket-printable [class*='dark:text-gray-'],
+html.dark .ticket-printable [class*='dark:text-zinc-'],
+html.dark .ticket-printable [class*='dark:text-neutral-'],
+html.dark .cash-cut-pdf [class*='dark:text-white'],
+html.dark .cash-cut-pdf [class*='dark:text-slate-'],
+html.dark .cash-cut-pdf [class*='dark:text-gray-'],
+html.dark .pdf-corte-caja [class*='dark:text-white'],
+html.dark .pdf-corte-caja [class*='dark:text-slate-'],
+html.dark .pdf-corte-caja [class*='dark:text-gray-'],
+html.dark .printable-doc [class*='dark:text-white'],
+html.dark .printable-doc [class*='dark:text-slate-'],
+html.dark .printable-doc [class*='dark:text-gray-'] {
+  color: #111827 !important;
+}
+
+/* 5) Texto secundario / notas / footers — gris oscuro legible */
+.ticket-printable .text-gray-400,
+.ticket-printable .text-gray-500,
+.ticket-printable .text-gray-600,
+.ticket-printable .text-gray-700,
+.ticket-printable .text-slate-400,
+.ticket-printable .text-slate-500,
+.ticket-printable .text-slate-600,
+.ticket-printable .text-muted-foreground,
+.cash-cut-pdf .text-gray-400,
+.cash-cut-pdf .text-gray-500,
+.cash-cut-pdf .text-gray-600,
+.cash-cut-pdf .text-gray-700,
+.cash-cut-pdf .text-slate-400,
+.cash-cut-pdf .text-slate-500,
+.cash-cut-pdf .text-slate-600,
+.cash-cut-pdf .text-muted-foreground,
+.pdf-corte-caja .text-gray-400,
+.pdf-corte-caja .text-gray-500,
+.pdf-corte-caja .text-gray-600,
+.pdf-corte-caja .text-gray-700,
+.pdf-corte-caja .text-muted-foreground,
+.printable-doc .text-gray-400,
+.printable-doc .text-gray-500,
+.printable-doc .text-gray-600,
+.printable-doc .text-gray-700,
+.printable-doc .text-muted-foreground {
+  color: #4b5563 !important;
+}
+
+/* 6) Fondos: por defecto transparente (heredan blanco del contenedor) */
+.ticket-printable
+  *:not(.bg-gray-50):not(.bg-gray-100):not(.bg-gray-200):not(.bg-slate-50):not(.bg-slate-100):not(
+    .bg-black
+  ):not([style*='background']),
+.cash-cut-pdf
+  *:not(.bg-gray-50):not(.bg-gray-100):not(.bg-gray-200):not(.bg-slate-50):not(.bg-slate-100):not(
+    .bg-black
+  ):not([style*='background']),
+.pdf-corte-caja
+  *:not(.bg-gray-50):not(.bg-gray-100):not(.bg-gray-200):not(.bg-slate-50):not(.bg-slate-100):not(
+    .bg-black
+  ):not([style*='background']),
+.printable-doc
+  *:not(.bg-gray-50):not(.bg-gray-100):not(.bg-gray-200):not(.bg-slate-50):not(.bg-slate-100):not(
+    .bg-black
+  ):not([style*='background']) {
+  background-color: transparent !important;
+}
+
+/* 7) Fondos grises claros permitidos (tablas, encabezados de sección) */
+.ticket-printable .bg-gray-50,
+.ticket-printable .bg-slate-50,
+.cash-cut-pdf .bg-gray-50,
+.cash-cut-pdf .bg-slate-50,
+.pdf-corte-caja .bg-gray-50,
+.pdf-corte-caja .bg-slate-50,
+.printable-doc .bg-gray-50,
+.printable-doc .bg-slate-50 {
+  background-color: #f9fafb !important;
+}
+.ticket-printable .bg-gray-100,
+.ticket-printable .bg-slate-100,
+.cash-cut-pdf .bg-gray-100,
+.cash-cut-pdf .bg-slate-100,
+.pdf-corte-caja .bg-gray-100,
+.pdf-corte-caja .bg-slate-100,
+.printable-doc .bg-gray-100,
+.printable-doc .bg-slate-100 {
+  background-color: #f3f4f6 !important;
+}
+.ticket-printable .bg-gray-200,
+.cash-cut-pdf .bg-gray-200,
+.pdf-corte-caja .bg-gray-200,
+.printable-doc .bg-gray-200 {
+  background-color: #e5e7eb !important;
+}
+
+/* 8) Bordes — negros se respetan, los demás van a gris claro legible */
+.ticket-printable .border-black,
+.cash-cut-pdf .border-black,
+.pdf-corte-caja .border-black,
+.printable-doc .border-black {
+  border-color: #000000 !important;
+}
+
+/* 9) Anular tokens HSL (border, muted, etc.) que vendrían del tema dark */
+.ticket-printable [class*='border-border'],
+.ticket-printable [class*='border-muted'],
+.cash-cut-pdf [class*='border-border'],
+.cash-cut-pdf [class*='border-muted'],
+.pdf-corte-caja [class*='border-border'],
+.pdf-corte-caja [class*='border-muted'],
+.printable-doc [class*='border-border'],
+.printable-doc [class*='border-muted'] {
+  border-color: #d1d5db !important;
+}
+
+/* 10) Mismas reglas dentro de @media print — protección final */
+@media print {
+  .ticket-printable,
+  .cash-cut-pdf,
+  .pdf-corte-caja,
+  .printable-doc {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    color-scheme: light !important;
+  }
+  .ticket-printable *,
+  .cash-cut-pdf *,
+  .pdf-corte-caja *,
+  .printable-doc * {
+    color: #111827 !important;
+  }
+  .ticket-printable .text-white,
+  .ticket-printable [class*='text-slate-1'],
+  .ticket-printable [class*='text-slate-2'],
+  .ticket-printable [class*='text-gray-1'],
+  .ticket-printable [class*='text-gray-2'],
+  .cash-cut-pdf .text-white,
+  .cash-cut-pdf [class*='text-slate-1'],
+  .cash-cut-pdf [class*='text-slate-2'],
+  .cash-cut-pdf [class*='text-gray-1'],
+  .cash-cut-pdf [class*='text-gray-2'],
+  .pdf-corte-caja .text-white,
+  .pdf-corte-caja [class*='text-slate-1'],
+  .pdf-corte-caja [class*='text-slate-2'],
+  .printable-doc .text-white,
+  .printable-doc [class*='text-slate-1'],
+  .printable-doc [class*='text-slate-2'] {
+    color: #111827 !important;
+  }
+  .ticket-printable .text-gray-400,
+  .ticket-printable .text-gray-500,
+  .ticket-printable .text-gray-600,
+  .ticket-printable .text-muted-foreground,
+  .cash-cut-pdf .text-gray-400,
+  .cash-cut-pdf .text-gray-500,
+  .cash-cut-pdf .text-gray-600,
+  .cash-cut-pdf .text-muted-foreground,
+  .pdf-corte-caja .text-gray-400,
+  .pdf-corte-caja .text-gray-500,
+  .pdf-corte-caja .text-gray-600,
+  .printable-doc .text-gray-400,
+  .printable-doc .text-gray-500,
+  .printable-doc .text-gray-600 {
+    color: #4b5563 !important;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* =====================================================
+   IMPRESIÓN — Reglas globales
+   Modo "thermal" (80mm) y modo "letter" (carta) son
+   mutuamente excluyentes a nivel de @page.
+   El JS añade <html data-print-mode="thermal|letter">
+   antes de window.print() para activar el correcto.
+   ===================================================== */
+
+@media print {
+  /* Ocultar todo por defecto */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Solo el contenedor imprimible es visible */
+  .ticket-printable,
+  .ticket-printable * {
+    visibility: visible;
+  }
+  .cash-cut-pdf,
+  .cash-cut-pdf * {
+    visibility: visible;
+  }
+
+  .ticket-printable,
+  .cash-cut-pdf {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+
+  /* Nunca imprimir UI/chrome del navegador */
+  .no-print,
+  .no-print * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Evitar que iframes o stickys impriman fondos */
+  body {
+    background: white !important;
+  }
+}
+
+/* ----- Térmico 80 mm ----- */
+@media print {
+  html[data-print-mode='thermal'] .ticket-printable.thermal-80 {
+    width: 72mm !important;
+    max-width: 72mm !important;
+    margin: 0 auto !important;
+    padding: 2mm !important;
+    font-size: 11px !important;
+    color: #000 !important;
+    page-break-inside: auto !important;
+  }
+  html[data-print-mode='thermal'] .ticket-printable.thermal-80 img {
+    max-width: 38mm !important;
+    max-height: 18mm !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto 1.5mm !important;
+  }
+  /* Evitar saltos de página dentro del ticket */
+  html[data-print-mode='thermal'] .ticket-printable.thermal-80 > div {
+    page-break-inside: avoid !important;
+  }
+}
+@media print {
+  html[data-print-mode='thermal'] {
+    /* size aplicado solo cuando estamos en modo térmico */
+  }
+}
+@page thermal-page {
+  size: 80mm auto;
+  margin: 4mm;
+}
+
+/* ----- Documento A4/carta ----- */
+@media print {
+  html[data-print-mode='letter'] body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  html[data-print-mode='letter'] .cash-cut-pdf,
+  html[data-print-mode='letter'] .ticket-printable.letter-doc,
+  html[data-print-mode='letter'] .pdf-corte-caja {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 8mm !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    transform: none !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    position: static !important;
+  }
+  html[data-print-mode='letter'] table {
+    page-break-inside: auto;
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  html[data-print-mode='letter'] tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  html[data-print-mode='letter'] thead {
+    display: table-header-group;
+  }
+  html[data-print-mode='letter'] tfoot {
+    display: table-footer-group;
+  }
+  html[data-print-mode='letter'] .avoid-break,
+  html[data-print-mode='letter'] h1,
+  html[data-print-mode='letter'] h2,
+  html[data-print-mode='letter'] h3 {
+    page-break-inside: avoid;
+    page-break-after: avoid;
+  }
+  html[data-print-mode='letter'] .page-break {
+    page-break-before: always;
+  }
+  /* Asegurar que el contenedor padre no recorte */
+  html[data-print-mode='letter'] [role='dialog'],
+  html[data-print-mode='letter'] [data-radix-portal] {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    position: static !important;
+  }
+}
+
+/* @page por defecto = A4. El modo térmico fija size desde JS */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+/* Aquí había esto, y es un fallo suyo que hay que contar:
+
+     @media print {
+       html[data-print-mode='thermal'] @page { size: 80mm auto; margin: 4mm; }
+     }
+
+   `@page` es un CONTEXTO DE PÁGINA, no un selector descendiente: no se puede
+   condicionar a un selector. El navegador lo descartaba en silencio y la regla
+   nunca aplicó — el ticket térmico salía en tamaño carta—. El PostCSS de
+   Tailwind 3 también lo tragaba; el de la 4 se niega a parsear la hoja entera,
+   así que aquí bloqueaba TODO el CSS.
+
+   Quitarlo no cambia nada de lo que se veía. Lo que sí cambia es que ahora su
+   intención funciona: `lib/print.js` inyecta la regla `@page` correcta —a nivel
+   raíz, que es donde vale— antes de imprimir y la retira después. Lo mismo
+   pasaba con `@page thermal-page`, una página con nombre que nada usaba. */

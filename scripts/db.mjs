@@ -1,0 +1,239 @@
+#!/usr/bin/env node
+/**
+ * Gobierna el entorno local de datos (F1.0-T05).
+ *
+ *   node scripts/db.mjs up       levanta Postgres y el almacenamiento
+ *   node scripts/db.mjs down     los apaga, conservando los datos
+ *   node scripts/db.mjs reset    los apaga, BORRA los volumenes y relevanta
+ *   node scripts/db.mjs logs     registros en vivo
+ *   node scripts/db.mjs estado   que hay levantado
+ *   node scripts/db.mjs migrate  aplica las migraciones      (necesita packages/data)
+ *   node scripts/db.mjs seed     siembra datos de ejemplo    (necesita packages/data)
+ *
+ * R12 — ningun error critico se silencia. Si Docker no esta, si un contenedor no
+ * llega a sano, o si falta la capa de datos, este script lo dice y devuelve
+ * codigo distinto de cero. Nunca finge exito.
+ */
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const RAIZ = dirname(dirname(fileURLToPath(import.meta.url)));
+const COMPOSE = join(RAIZ, 'infra', 'docker', 'docker-compose.yml');
+const DATA = join(RAIZ, 'packages', 'data');
+
+/**
+ * Ejecuta un comando heredando la consola. Devuelve el codigo de salida.
+ *
+ * Sin `shell: true`: en Windows eso concatena los argumentos sin escaparlos
+ * (DEP0190). `docker` y `git` son ejecutables reales y se resuelven solos.
+ * Los shims .cmd de Windows se manejan aparte, en `correrShim`.
+ */
+function correr(comando, argumentos, opciones = {}) {
+  const resultado = spawnSync(comando, argumentos, {
+    stdio: 'inherit',
+    cwd: RAIZ,
+    ...opciones,
+  });
+  if (resultado.error) {
+    if (resultado.error.code === 'ENOENT') return 127;
+    throw resultado.error;
+  }
+  return resultado.status ?? 1;
+}
+
+/**
+ * Ejecuta un shim de Windows (.cmd), que spawn no puede lanzar directamente.
+ * Se usa solo con argumentos constantes escritos en este archivo: aqui nunca
+ * entra texto del usuario, asi que la concatenacion del shell no es una via de
+ * inyeccion.
+ */
+function correrShim(comando, argumentos) {
+  if (process.platform !== 'win32') {
+    return correr(comando, argumentos, { shell: false });
+  }
+
+  // En Windows `pnpm` es `pnpm.cmd`, y desde Node 18.20.2 lanzar un `.cmd` o un
+  // `.bat` SIN shell se rechaza con EINVAL: es la mitigacion de CVE-2024-27980
+  // ("BatBadBut"). El `shell: false` que habia aqui hacia que `pnpm db:migrate`
+  // reventara siempre en Windows, que es donde se desarrolla hoy.
+  //
+  // Con shell, cmd.exe vuelve a partir la linea, asi que los argumentos se
+  // entrecomillan. Los de hoy no llevan espacios, pero uno que si los lleve
+  // debe seguir llegando entero en vez de partirse en silencio.
+  const seguros = argumentos.map((argumento) =>
+    /[\s"^&|<>]/.test(argumento) ? `"${argumento.replaceAll('"', '""')}"` : argumento,
+  );
+  return correr(`${comando}.cmd`, seguros, { shell: true });
+}
+
+/** Comprueba que Docker esta instalado y su motor responde. */
+function exigirDocker() {
+  const version = spawnSync('docker', ['--version'], { encoding: 'utf8' });
+
+  if (version.error?.code === 'ENOENT' || version.status !== 0) {
+    console.error('✗ Docker no esta instalado o no esta en el PATH.');
+    console.error('');
+    console.error('  El entorno local de MorphiqPOS corre sobre Docker: es el');
+    console.error('  requisito A-27 (el backend completo debe poder correr en la');
+    console.error('  PC de un cliente, sin internet).');
+    console.error('');
+    console.error('  Instala Docker Desktop y, en Settings > Resources > Advanced,');
+    console.error('  mueve "Disk image location" al disco D.');
+    process.exit(2);
+  }
+
+  const motor = spawnSync('docker', ['info', '--format', '{{.ServerVersion}}'], {
+    encoding: 'utf8',
+  });
+
+  if (motor.status !== 0) {
+    console.error('✗ Docker esta instalado pero el motor no responde.');
+    console.error('  Abre Docker Desktop y espera a que diga "Engine running".');
+    process.exit(2);
+  }
+
+  console.log(`  Docker ${version.stdout.trim()} · motor ${motor.stdout.trim()}`);
+}
+
+function compose(...argumentos) {
+  return correr('docker', ['compose', '-f', COMPOSE, ...argumentos]);
+}
+
+/** Espera a que todos los servicios con healthcheck esten sanos. */
+function esperarSanos() {
+  const LIMITE_MS = 120_000;
+  const INTERVALO_MS = 2_000;
+  const SERVICIOS = ['postgres', 'almacenamiento'];
+  const inicio = Date.now();
+
+  process.stdout.write('  esperando a que los servicios esten sanos');
+
+  for (;;) {
+    const pendientes = SERVICIOS.filter((servicio) => {
+      const id = spawnSync('docker', ['compose', '-f', COMPOSE, 'ps', '-q', servicio], {
+        encoding: 'utf8',
+      });
+      const contenedor = id.stdout.trim();
+      if (contenedor.length === 0) return true;
+
+      const salud = spawnSync('docker', ['inspect', '-f', '{{.State.Health.Status}}', contenedor], {
+        encoding: 'utf8',
+      });
+      return salud.stdout.trim() !== 'healthy';
+    });
+
+    if (pendientes.length === 0) {
+      process.stdout.write(' listo\n');
+      return;
+    }
+
+    if (Date.now() - inicio > LIMITE_MS) {
+      process.stdout.write('\n');
+      console.error(`✗ Tras 120 s siguen sin estar sanos: ${pendientes.join(', ')}`);
+      console.error('  Revisa los registros con: pnpm db:logs');
+      process.exit(1);
+    }
+
+    process.stdout.write('.');
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, INTERVALO_MS);
+  }
+}
+
+/**
+ * Delega una tarea de base de datos en packages/data.
+ *
+ * La guarda comprueba que packages/data **declare el script** que se le va a
+ * delegar, no que su package.json exista.
+ *
+ * La version anterior comprobaba la existencia del archivo, y desde F1.0 ese
+ * archivo existe con 17 lineas y ningun script. La guarda dejo de disparar sin
+ * que nada lo dijera, y `pnpm db:migrate` moria con un error criptico de pnpm
+ * en vez del mensaje que explicaba lo que faltaba. Es el ejemplo de manual de
+ * una comprobacion atada al identificador y no al uso.
+ */
+function delegarEnData(tarea) {
+  const manifiesto = join(DATA, 'package.json');
+
+  const scripts = existsSync(manifiesto)
+    ? (JSON.parse(readFileSync(manifiesto, 'utf8')).scripts ?? {})
+    : {};
+
+  if (!(tarea in scripts)) {
+    console.error(`✗ packages/data no implementa el script "${tarea}".`);
+    console.error('');
+    console.error('  El acceso a Postgres esta decidido en docs/adr/0001-acceso-postgres.md:');
+    console.error('  Kysely sobre pg, con las migraciones como archivos .sql numerados.');
+    console.error('');
+    console.error(
+      `  Scripts que packages/data si declara: ${Object.keys(scripts).join(', ') || 'ninguno'}`,
+    );
+    process.exit(3);
+  }
+
+  // Los argumentos de después de la acción viajan con ella. Sin esto,
+  // `pnpm db:migrate --ensayo` —el último ensayo contra producción que manda
+  // F2.3-REGLAS §4.3— llegaba al ejecutor SIN `--ensayo` y APLICABA la tanda de
+  // verdad. Lo cazó la 2.4 leyendo el código antes de usarlo, no corriéndolo.
+  process.exit(
+    correrShim('pnpm', ['--filter', '@morphiqpos/data', tarea, ...process.argv.slice(3)]),
+  );
+}
+
+const accion = process.argv[2] ?? 'ayuda';
+
+switch (accion) {
+  case 'up': {
+    exigirDocker();
+    const codigo = compose('up', '-d', '--wait');
+    if (codigo !== 0) process.exit(codigo);
+    esperarSanos();
+    console.log('✓ Entorno local levantado.');
+    console.log('  Postgres        localhost:5433');
+    console.log('  Almacenamiento  localhost:9000 · consola en localhost:9001');
+    break;
+  }
+
+  case 'down':
+    exigirDocker();
+    process.exit(compose('down'));
+    break;
+
+  case 'reset': {
+    exigirDocker();
+    console.log('  Borrando volumenes: se pierden TODOS los datos locales.');
+    compose('down', '-v');
+    const codigo = compose('up', '-d', '--wait');
+    if (codigo !== 0) process.exit(codigo);
+    esperarSanos();
+    console.log('✓ Entorno local reiniciado desde cero.');
+    break;
+  }
+
+  case 'logs':
+    exigirDocker();
+    process.exit(compose('logs', '-f', '--tail', '100'));
+    break;
+
+  case 'estado':
+    exigirDocker();
+    process.exit(compose('ps'));
+    break;
+
+  case 'migrate':
+    delegarEnData('migrate');
+    break;
+
+  case 'seed':
+    delegarEnData('seed');
+    break;
+
+  case 'tipos':
+    delegarEnData('tipos');
+    break;
+
+  default:
+    console.log('Uso: node scripts/db.mjs <up|down|reset|logs|estado|migrate|seed|tipos>');
+    process.exit(accion === 'ayuda' ? 0 : 1);
+}

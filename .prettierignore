@@ -1,0 +1,47 @@
+# historico/ es evidencia, no codigo (R30)
+historico/
+node_modules/
+.next/
+dist/
+coverage/
+.turbo/
+pnpm-lock.yaml
+# Las primitivas se generan y se tokenizan con un codemod: reformatearlas
+# a mano rompe la posibilidad de volver a generarlas.
+packages/ui/src/primitivas/
+
+# Lo regenera `next build` en cada corrida, con su propio formato. Sin esta
+# linea la puerta se pelea consigo misma: `pnpm build` lo reescribe y el
+# `format:check` siguiente lo rechaza, sobre un archivo que nadie edita.
+apps/web/next-env.d.ts
+
+# --- Documentacion de planeacion y decisiones -------------------------------
+# Prettier formatea CODIGO. Estos son documentos de prosa escritos a mano: al
+# reformatearlos reacomoda saltos de linea, tablas y vinetas, y el diff resultante
+# —32 archivos— no aporta nada y garantiza conflictos con el otro carril, que
+# trabaja sobre los mismos documentos (TEAM.md §3: en zona neutral se agrega, no
+# se modifica lo ajeno).
+#
+# El codigo, sus comentarios y su propia documentacion tecnica SI se formatean:
+# README.md y docs/adr/ quedan fuera de esta exclusion a proposito.
+CONTEXTO_MAESTRO.md
+DECISIONES.md
+REGLAS.md
+TEAM.md
+docs/*.md
+docs/fase-1/
+docs/fase-2/
+docs/reports/
+
+# --- El frontend heredado de Miguel -----------------------------------------
+# Su codigo, copiado tal cual desde `historico/` (R30 derogada) y con su
+# `packageConfig.js` gobernando sin tocar (cambio 4 de Fase 1). Prettier lo
+# reescribe a `printWidth: 100`, que no es el suyo: 23 archivos y ~600 lineas
+# movidas sin que cambie una sola conducta, sobre codigo que el conoce y del que
+# esta puerta no es duena.
+#
+# Es la misma razon por la que `historico/` esta arriba, y la misma logica del
+# tsconfig permisivo de `apps/web/heredado/`: lo heredado se respeta, lo nuevo
+# se somete al estandar. El codigo NUEVO de `apps/web` —`src/`, `app/`— si se
+# formatea, y queda fuera de esta exclusion a proposito.
+apps/web/heredado/

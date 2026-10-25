@@ -1,0 +1,327 @@
+'use client';
+import React, { useState, useMemo, useRef } from 'react';
+import { api } from '@/api/cliente';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from '@/enrutado';
+import { ErrorDePantalla } from '@morphiqpos/ui/sistema';
+import { economiaDelProducto } from '~/inventario/costo-del-platillo';
+import PageHeader from '@/components/common/PageHeader';
+import EmptyState from '@/components/common/EmptyState';
+import { Button } from '@/components/ui/button';
+import { BookOpen, Plus, Eye, Package, ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
+import RecetaAccordionRow from '@/components/recetas/RecetaAccordionRow';
+import RecetaFormDialog from '@/components/recetas/RecetaFormDialog';
+import { EncabezadoDeColumnas, EsqueletoDeRecetas } from '@/components/recetas/RejillaDeRecetas';
+import { usePOSAuth } from '@/lib/POSAuthContext';
+import { hasPermission } from '@/lib/permissions';
+import { Navigate, Link } from '@/enrutado';
+import { Card } from '@/components/ui/card';
+
+export default function Recetas() {
+  const queryClient = useQueryClient();
+  const { posUser } = usePOSAuth();
+  const canEdit = hasPermission(posUser?.rol, 'editar_recetas');
+  const canView = !posUser || hasPermission(posUser?.rol, 'ver_recetas');
+  const [showForm, setShowForm] = useState(false);
+  const [editProducto, setEditProducto] = useState(null);
+  const [editLines, setEditLines] = useState([]);
+  const location = useLocation();
+  // ?producto=<id> → abrir automáticamente y hacer scroll
+  const targetProductoId = useMemo(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      return params.get('producto') || null;
+    } catch {
+      return null;
+    }
+  }, [location.search]);
+  const scrolledRef = useRef(false);
+
+  // Sin initialData:[] — distinguimos "primer fetch" (loading) de "vacío real".
+  // Antes mostraba "Sin recetas" / "No hay inventario" antes del primer fetch,
+  // confundiendo al usuario y haciendo aparecer un falso onboarding.
+  const {
+    data: productosRaw,
+    isPending: productosLoading,
+    isError: productosError,
+    refetch: recargarProductos,
+  } = useQuery({
+    queryKey: ['productos_all'],
+    queryFn: () => api.entidades.ProductoTerminado.filter({ activo: true }),
+    placeholderData: (prev) => prev,
+    staleTime: 5000,
+  });
+
+  const {
+    data: recetasRaw,
+    isPending: recetasLoading,
+    isError: recetasError,
+    refetch: recargarRecetas,
+  } = useQuery({
+    queryKey: ['recetas_all'],
+    queryFn: () => api.entidades.RecetaEscandallo.list('-created_date', 1000),
+    placeholderData: (prev) => prev,
+    staleTime: 5000,
+  });
+
+  const {
+    data: ingredientesRaw,
+    isPending: ingLoading,
+    isError: ingError,
+    refetch: recargarIngredientes,
+  } = useQuery({
+    queryKey: ['ingredientes_all'],
+    queryFn: () => api.entidades.Ingrediente.filter({ activo: true }),
+    placeholderData: (prev) => prev,
+    staleTime: 5000,
+  });
+
+  const { data: categoriasRaw } = useQuery({
+    queryKey: ['categorias_producto'],
+    queryFn: () => api.entidades.CategoriaProducto.filter({ activo: true }),
+    placeholderData: (prev) => prev,
+    staleTime: 5000,
+  });
+
+  const productos = Array.isArray(productosRaw) ? productosRaw : [];
+  const recetas = Array.isArray(recetasRaw) ? recetasRaw : [];
+  const ingredientes = Array.isArray(ingredientesRaw) ? ingredientesRaw : [];
+  const categorias = Array.isArray(categoriasRaw) ? categoriasRaw : [];
+
+  // "Cargando por primera vez" = ninguna query crítica terminó su primer fetch.
+  // Si el caché ya tiene datos (placeholderData), NO se considera loading.
+  const cargandoInicial =
+    (productosLoading && !productosRaw) ||
+    (recetasLoading && !recetasRaw) ||
+    (ingLoading && !ingredientesRaw);
+
+  // Un fallo de lectura SIN datos no es «Sin recetas»: es que no se pudo leer. Sin esta
+  // rama, la query caída dejaba la lista vacía y la pantalla afirmaba que no había nada.
+  const falloDeCarga =
+    (productosError && !productosRaw) ||
+    (recetasError && !recetasRaw) ||
+    (ingError && !ingredientesRaw);
+  const recargarTodo = () => {
+    if (productosError) recargarProductos();
+    if (recetasError) recargarRecetas();
+    if (ingError) recargarIngredientes();
+  };
+
+  // Index para resolver ingrediente base de productos variables.
+  const ingredientesById = useMemo(() => {
+    const m = new Map();
+    (Array.isArray(ingredientes) ? ingredientes : []).forEach((i) => {
+      if (i?.id) m.set(i.id, i);
+    });
+    return m;
+  }, [ingredientes]);
+
+  // El costo de cada platillo sale de SUS líneas, y es «desconocido» —no cero— si no tiene
+  // receta o si a algún insumo le falta el costo (`economiaDelPlatillo`). Antes se sumaba
+  // con `|| 0` y un platillo sin receta salía con costo $0.00 y margen 100 %.
+  const productosConReceta = useMemo(() => {
+    const porProducto = new Map();
+    for (const linea of recetas) {
+      if (linea.activo === false) continue;
+      const grupo = porProducto.get(linea.producto_id) ?? [];
+      grupo.push(linea);
+      porProducto.set(linea.producto_id, grupo);
+    }
+    return productos.map((p) => {
+      const lines = porProducto.get(p.id) ?? [];
+      return { ...p, recetaLines: lines, economia: economiaDelProducto(p, lines) };
+    });
+  }, [productos, recetas]);
+
+  // Sin inventario → no permitimos abrir el formulario (se mostraría un selector vacío
+  // y el usuario quedaría atrapado). En su lugar avisamos y ofrecemos ir a Inventario.
+  // IMPORTANTE: solo válido cuando la query de ingredientes ya terminó su primer fetch,
+  // si no, mostraría "No hay inventario" falso mientras carga.
+  const sinInventario = !cargandoInicial && ingredientes.length === 0;
+
+  const openNew = () => {
+    if (sinInventario) {
+      toast.info('Primero registra al menos un ingrediente en Inventario.');
+      return;
+    }
+    setEditProducto(null);
+    setEditLines([]);
+    setShowForm(true);
+  };
+
+  const openEdit = (producto) => {
+    setEditProducto(producto);
+    setEditLines(producto.recetaLines || []);
+    setShowForm(true);
+  };
+
+  const handlePrint = () => window.print();
+
+  /**
+   * Eliminar una receta y retirar su producto, en UNA transacción.
+   *
+   * Antes esto eran N+1 escrituras sueltas: un `RecetaEscandallo.delete` por
+   * línea dentro de un `Promise.all`, cada uno con un `.catch(() => {})` que se
+   * tragaba el fallo, y después el archivado del producto. Si una línea fallaba
+   * el archivado seguía adelante igual, y el producto quedaba retirado con
+   * media receta viva — media receta que sigue contando en el costeo, así que
+   * `costo_unitario_centavos`, `utilidad_unitaria` y `margen_bp` pasaban a ser
+   * cifras que no correspondían a ninguna receta existente (F1-06 §4).
+   *
+   * `inventario.eliminar_receta` borra las líneas, archiva el producto y su
+   * insumo espejo y lo saca del menú digital en la misma transacción, y frena
+   * si otra receta usa este producto como ingrediente. O pasa todo, o nada.
+   */
+  const handleDeleteReceta = async (producto) => {
+    try {
+      await api.comandos.ejecutar('/api/inventario/recetas/eliminar', {
+        productoId: producto.id,
+      });
+      queryClient.invalidateQueries({ queryKey: ['recetas_all'] });
+      queryClient.invalidateQueries({ queryKey: ['productos_all'] });
+      queryClient.invalidateQueries({ queryKey: ['productos_pos'] });
+      toast.success('Receta eliminada. El producto fue retirado del catálogo.');
+    } catch (e) {
+      // El dominio ya explica en español por qué no se puede —«la receta de
+      // «Tacos» usa este producto como ingrediente»—, y ese mensaje es la única
+      // forma de que el usuario sepa qué corregir.
+      toast.error(e?.message || 'No se pudo eliminar la receta.');
+    }
+  };
+
+  // Bloqueo de acceso por URL directa: solo roles con permiso ver_recetas.
+  // Cocina NO debe entrar a Recetas (esconde costos, márgenes, gramajes).
+  // Hecho DESPUÉS de todos los hooks para no violar rules-of-hooks.
+  if (!canView) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Recetas"
+        description={
+          canEdit
+            ? 'Define y costea los productos que vendes'
+            : 'Consulta los ingredientes y gramajes de cada receta'
+        }
+        actions={
+          canEdit ? (
+            <Button onClick={openNew} className="gap-2">
+              <Plus className="w-4 h-4" /> Nueva receta
+            </Button>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground">
+              <Eye className="w-3.5 h-3.5" /> Solo lectura
+            </span>
+          )
+        }
+      />
+
+      {/* Loading inicial: NO afirmamos "sin recetas" ni "sin inventario" hasta
+          terminar el primer fetch. Esto previene el flash que asustaba al usuario
+          haciéndole creer que el sistema borró sus datos. */}
+      {cargandoInicial ? (
+        <EsqueletoDeRecetas />
+      ) : falloDeCarga ? (
+        <ErrorDePantalla
+          titulo="No se pudieron cargar las recetas"
+          queHacer="Revisa tu conexión e inténtalo de nuevo. Tus recetas siguen guardadas."
+          reintentar={
+            <Button variant="outline" size="sm" onClick={recargarTodo}>
+              Reintentar
+            </Button>
+          }
+        />
+      ) : canEdit && sinInventario && productosConReceta.length === 0 ? (
+        <Card className="p-8 text-center space-y-4 border-2 border-dashed">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-advertencia/15 flex items-center justify-center">
+            <Package className="w-7 h-7 text-advertencia" />
+          </div>
+          <div>
+            <h3 className="font-heading font-bold text-lg">No hay inventario registrado todavía</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mt-1">
+              Primero registra tus ingredientes o insumos en Inventario para poder crear recetas y
+              calcular costos automáticamente.
+            </p>
+          </div>
+          <Link to="/inventario">
+            <Button className="gap-2">
+              Ir a Inventario <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
+        </Card>
+      ) : productosConReceta.length === 0 ? (
+        <EmptyState
+          icon={BookOpen}
+          title="Sin recetas"
+          description={
+            canEdit
+              ? 'Crea tu primera receta para comenzar a definir productos'
+              : 'Aún no hay recetas registradas en el sistema.'
+          }
+          action={
+            canEdit ? (
+              <Button onClick={openNew}>
+                <Plus className="w-4 h-4 mr-1" />
+                Nueva receta
+              </Button>
+            ) : null
+          }
+        />
+      ) : (
+        <div className="@container">
+          <EncabezadoDeColumnas />
+          <div className="space-y-2">
+          {productosConReceta.map((p) => (
+            <div
+              key={p.id}
+              id={`receta-${p.id}`}
+              ref={(el) => {
+                // Scroll una sola vez al producto target
+                if (el && targetProductoId === p.id && !scrolledRef.current) {
+                  scrolledRef.current = true;
+                  setTimeout(() => {
+                    try {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } catch {}
+                  }, 200);
+                }
+              }}
+            >
+              <RecetaAccordionRow
+                producto={p}
+                onEdit={canEdit ? openEdit : null}
+                onPrint={handlePrint}
+                onDelete={canEdit ? handleDeleteReceta : null}
+                readOnly={!canEdit}
+                defaultOpen={targetProductoId === p.id}
+                ingredienteBase={
+                  p.ingrediente_base_id ? ingredientesById.get(p.ingrediente_base_id) : null
+                }
+              />
+            </div>
+          ))}
+          {targetProductoId && !productosConReceta.find((p) => p.id === targetProductoId) && (
+            <div className="p-4 rounded-lg bg-advertencia/10 border border-advertencia/30 text-sm text-advertencia">
+              Este producto no tiene receta asociada.
+            </div>
+          )}
+          </div>
+        </div>
+      )}
+
+      {canEdit && (
+        <RecetaFormDialog
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          productoToEdit={editProducto}
+          recetaLinesToEdit={editLines}
+          ingredientes={ingredientes}
+          categorias={categorias}
+        />
+      )}
+    </div>
+  );
+}

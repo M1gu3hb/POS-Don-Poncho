@@ -1,0 +1,687 @@
+import 'server-only';
+
+import { ErrorDominio, veConsolidado } from '@morphiqpos/contracts';
+import { leyendoConReintento, obtenerDb } from '@morphiqpos/data';
+import { sql, type RawBuilder } from 'kysely';
+
+import { baseLibre } from './db-dinamica.ts';
+
+import { entidadMapeada } from './mapa.ts';
+import { colorDePersona } from './roles.ts';
+import {
+  haciaEl,
+  haciaLaBase,
+  valorHaciaEl,
+  valorHaciaLaBase,
+  LIMITE_MAXIMO,
+  LIMITE_POR_OMISION,
+  type Calculo,
+  type MapaEntidad,
+} from './tipos.ts';
+
+/**
+ * Las lecturas del puente (F1-02 §3, E3-4).
+ *
+ * Un solo camino para las 359 llamadas de su frontend. Lo que garantiza, y por
+ * qué cada garantía existe:
+ *
+ * · **Ámbito de la sesión, SIEMPRE.** `organizacion_id` no se acepta del
+ *   cliente; se pone aquí. Mandarlo en el cuerpo no sirve de nada.
+ * · **Lista blanca de entidades.** Una entidad que no está en el mapa no
+ *   existe: no hay forma de leer una tabla por su nombre real.
+ * · **Lista blanca de campos.** Sólo salen las columnas declaradas. Es lo que
+ *   cierra la fuga D-14 — hoy el portal QR hace `ConfiguracionNegocio.list()`
+ *   completo y expone `presentacion_password` y los identificadores de Google
+ *   a cualquiera que escanee un código.
+ * · **Tope de filas.** Se acabaron los `list(5000)` para buscar un folio.
+ */
+
+export interface Ambito {
+  readonly organizacionId: string;
+  readonly rol: string;
+  /**
+   * El empleo de la sesión. Lo necesita el recorte `soloDeQuienEntra` (C.7 de la 2.4);
+   * sin él, una entidad con recorte no devuelve NADA a esos roles: falla cerrada.
+   */
+  readonly empleoId?: string;
+  /**
+   * La sucursal de la sesión: la de su terminal, o la de su empleo (`resolverSesion`). La
+   * pide la FRONTERA POR SUCURSAL (D-36): quien no consolida sólo lee lo de la suya, y sin
+   * sucursal no lee nada que sea de una —falla cerrada, como el recorte por persona—.
+   */
+  readonly sucursalId?: string | null;
+}
+
+/**
+ * Un rango cerrado sobre un campo de fecha o de día.
+ *
+ * Su plataforma no tenía rangos: `Registros.jsx` descarga 1 000 ventas, 500
+ * movimientos, 300 compras, 300 gastos y 200 cortes EN CADA CARGA, y luego
+ * filtra por periodo en el navegador. Con un restaurante de verdad eso es
+ * descargar el año entero para enseñar el mes.
+ *
+ * El rango se aplica en la base. Los dos extremos son opcionales y ambos
+ * INCLUSIVOS: `{desde: '2026-09-01', hasta: '2026-09-30'}` es septiembre entero,
+ * que es lo que alguien espera al escribir esas dos fechas.
+ */
+export interface Rango {
+  readonly campo: string;
+  readonly desde?: string;
+  readonly hasta?: string;
+}
+
+export interface PeticionConsulta {
+  readonly entidad: string;
+  readonly operacion: 'list' | 'filter' | 'get';
+  readonly filtro?: Readonly<Record<string, unknown>>;
+  /**
+   * Un `in` sobre un campo. NO viene del cliente: lo usa el puente para traer
+   * los hijos de todos los padres de una página en una sola consulta.
+   */
+  readonly filtroEn?: { readonly campo: string; readonly valores: readonly string[] };
+  readonly rango?: Rango;
+  readonly id?: string;
+  /** `'-created_date'` es descendente, igual que en su código. */
+  readonly orden?: string;
+  readonly limite?: number;
+}
+
+type Fila = Record<string, unknown>;
+
+/**
+ * La forma mínima de una consulta encadenable.
+ *
+ * Se declara a mano porque el tipo real de Kysely depende de la tabla, y aquí
+ * la tabla se elige en tiempo de ejecución. Sólo se usan estos cinco métodos.
+ */
+interface ConsultaLibre {
+  leftJoin(tabla: string, columnaIzquierda: string, columnaDerecha: string): ConsultaLibre;
+  where(columna: string | RawBuilder<unknown>, operador: string, valor: unknown): ConsultaLibre;
+  orderBy(columna: string, direccion: 'asc' | 'desc'): ConsultaLibre;
+  limit(n: number): ConsultaLibre;
+  execute(): Promise<Fila[]>;
+}
+
+/**
+ * El alias de la tabla principal.
+ *
+ * Con `left join` de por medio, `id`, `nombre` y `organizacion_id` existen en
+ * las dos tablas y Postgres rechaza la consulta por ambigua. Se cualifica todo
+ * SIEMPRE, con join o sin él, para que no haya dos caminos que mantener.
+ */
+const BASE = 'b';
+
+/** Ninguna sucursal: la sesión sin sucursal de quien no consolida no empareja ninguna fila. */
+const NINGUNA_SUCURSAL = '00000000-0000-4000-8000-000000000000';
+
+/**
+ * Aplica la frontera por sucursal de la entidad (D-36). Quien consolida —dueño y
+ * administrador— lee todas; los demás, la de su sesión. Una entidad del negocio entero
+ * (`delNegocio`) no se recorta.
+ */
+function conFronteraDeSucursal(
+  consulta: ConsultaLibre,
+  mapa: MapaEntidad,
+  ambito: Ambito,
+): ConsultaLibre {
+  const frontera = mapa.sucursal;
+  if (veConsolidado(ambito.rol) || 'delNegocio' in frontera) return consulta;
+  const sucursal = ambito.sucursalId ?? NINGUNA_SUCURSAL;
+  if ('columna' in frontera) {
+    const columna = sql.ref(`${BASE}.${frontera.columna}`);
+    return frontera.nulaEsDelNegocio === true
+      ? consulta.where(sql`coalesce(${columna}, ${sucursal}::uuid)`, '=', sucursal)
+      : consulta.where(`${BASE}.${frontera.columna}`, '=', sucursal);
+  }
+  const { columna, tabla, columnaSucursal, nulaEsDelNegocio } = frontera.porPadre;
+  const delPadre = sql.ref(columnaSucursal ?? 'sucursal_id');
+  const padres = baseLibre(obtenerDb())
+    .selectFrom(tabla)
+    .select('id' as never)
+    .where('organizacion_id' as never, '=', ambito.organizacionId as never)
+    .where(
+      (nulaEsDelNegocio === true
+        ? sql`coalesce(${delPadre}, ${sucursal}::uuid)`
+        : delPadre) as never,
+      '=',
+      sucursal as never,
+    );
+  return consulta.where(`${BASE}.${columna}`, 'in', padres);
+}
+
+/** El campo si este rol lo puede ver; si no, como si no estuviera en el mapa. */
+function vistoPor<C extends { readonly rolesLectura?: readonly string[] }>(
+  campo: C | undefined,
+  puedeVer: (c: C) => boolean,
+): C | undefined {
+  return campo !== undefined && puedeVer(campo) ? campo : undefined;
+}
+
+/** El alias del grupo de derivados número `n`. Dos campos que hacen exactamente
+ * el mismo `join` comparten alias; si cambia una de las columnas de enlace,
+ * necesitan filas distintas. */
+function aliasDerivado(n: number): string {
+  return `d${String(n)}`;
+}
+
+export async function consultar(
+  ambito: Ambito,
+  peticion: PeticionConsulta,
+): Promise<readonly Fila[]> {
+  /**
+   * El puente ENTERO dentro del reintento, y no sólo su consulta principal.
+   *
+   * Esta función hace una consulta más por cada relación de hijos, y el
+   * `ECONNRESET` que el pooler en modo transacción deja en una conexión recién
+   * abierta puede caer en cualquiera de ellas. Envolver sólo la primera dejaba
+   * pasar las otras — se vio: siete 500 en una corrida de navegador, todos en
+   * `/api/datos/consultar`, con el reintento puesto en el sitio equivocado.
+   *
+   * Es una LECTURA, así que repetirla no tiene consecuencias: o trajo filas o no
+   * trajo nada. Las escrituras no se reintentan nunca, y para esa pregunta está
+   * la clave de idempotencia que el envoltorio `comando()` exige.
+   */
+  try {
+    return await leyendoConReintento(() => consultarUnaVez(ambito, peticion));
+  } catch (error) {
+    // La ENTIDAD en el error, que es lo que falta para poder diagnosticar. No es
+    // un dato del negocio: es una clave de `MAPA`, una de 82 constantes. Sin
+    // ella, un `ECONNRESET` en esta ruta no dice qué pantalla se rompió.
+    if (error instanceof Error) {
+      error.message = `[${peticion.entidad}] ${error.message}`;
+    }
+    throw error;
+  }
+}
+
+async function consultarUnaVez(
+  ambito: Ambito,
+  peticion: PeticionConsulta,
+): Promise<readonly Fila[]> {
+  const mapa = entidadMapeada(peticion.entidad);
+  if (mapa === null) {
+    throw new ErrorDominio(
+      'PUENTE_ENTIDAD_DESCONOCIDA',
+      `La entidad «${peticion.entidad}» no existe en el puente.`,
+    );
+  }
+  if (!mapa.rolesLectura.includes(ambito.rol)) {
+    throw new ErrorDominio('PUENTE_SIN_PERMISO', 'Tu rol no puede leer esa información.');
+  }
+
+  /** Si este rol puede ver el campo. Sin `rolesLectura`, cualquiera con sesión. */
+  const puedeVer = (campo: { readonly rolesLectura?: readonly string[] }): boolean =>
+    campo.rolesLectura === undefined || campo.rolesLectura.includes(ambito.rol);
+
+  const columnas = Object.entries(mapa.campos)
+    // Un campo CONSTANTE no tiene columna que seleccionar: lo pone la
+    // traducción de la fila.
+    .filter(([, campo]) => campo.constante === undefined)
+    // Y un campo que este rol no puede ver NI SIQUIERA SE SELECCIONA: quitarlo
+    // después dejaría el costo del producto en el registro de la consulta y en
+    // la memoria del servidor sin ninguna necesidad.
+    .filter(([, campo]) => puedeVer(campo))
+    .map(([suyo, campo]) => `${BASE}.${campo.columna} as ${suyo}`);
+
+  // Los campos que su frontend lee y no son columnas de esta tabla: el nombre
+  // del mesero, el número de la mesa, la zona. Varios campos pueden salir del
+  // MISMO salto (los importes de una venta salen juntos de la vista de pagos),
+  // así que se agrupan por su enlace y comparten un solo `left join`.
+  const gruposDerivados = new Map<
+    string,
+    {
+      readonly alias: string;
+      readonly tabla: string;
+      readonly porColumna: string;
+      readonly emparejaCon: string;
+    }
+  >();
+  const derivados = Object.entries(mapa.derivados ?? {})
+    .filter(([, derivado]) => puedeVer(derivado))
+    .map(([suyo, derivado]) => {
+      const emparejaCon = derivado.emparejaCon ?? 'id';
+      const firma = JSON.stringify([derivado.tabla, derivado.porColumna, emparejaCon]);
+      let grupo = gruposDerivados.get(firma);
+      if (grupo === undefined) {
+        grupo = {
+          alias: aliasDerivado(gruposDerivados.size),
+          tabla: derivado.tabla,
+          porColumna: derivado.porColumna,
+          emparejaCon,
+        };
+        gruposDerivados.set(firma, grupo);
+      }
+      return { suyo, derivado, alias: grupo.alias };
+    });
+  derivados.forEach(({ suyo, derivado, alias }) => {
+    columnas.push(`${alias}.${derivado.columna} as ${suyo}`);
+  });
+
+  // La tabla y las columnas salen del MAPA, nunca del cliente. Ver `db-dinamica.ts`.
+  let consulta = baseLibre(obtenerDb())
+    .selectFrom(`${mapa.tabla} as ${BASE}`)
+    .select(columnas as never) as unknown as ConsultaLibre;
+
+  // 0 · Los derivados. El emparejamiento es por clave primaria —`id` es un
+  //     uuid global, no por organización—, así que un solo lado basta y el
+  //     ámbito de la fila principal ya acota lo que se puede ver.
+  gruposDerivados.forEach(({ alias, tabla, porColumna, emparejaCon }) => {
+    consulta = consulta.leftJoin(
+      `${tabla} as ${alias}`,
+      `${alias}.${emparejaCon}`,
+      `${BASE}.${porColumna}`,
+    );
+  });
+
+  // 1 · El ámbito. No es negociable y va antes que nada.
+  consulta = consulta.where(`${BASE}.organizacion_id`, '=', ambito.organizacionId);
+
+  // 1b · Lo que este rol sólo ve si es SUYO (C.7 de la 2.4): las filas de la profesional
+  //      ligada al empleo de la sesión, y ninguna otra. Del ámbito, nunca del cliente.
+  const recorte = mapa.soloDeQuienEntra;
+  if (recorte?.roles.includes(ambito.rol) === true) {
+    // Sin empleo en el ámbito no hay «suyo» que buscar: cero filas, no todas.
+    const empleoId = ambito.empleoId ?? '00000000-0000-4000-8000-000000000000';
+    const libre = baseLibre(obtenerDb());
+    const suyas = libre
+      .selectFrom('profesionales')
+      .select('id' as never)
+      .where('organizacion_id' as never, '=', ambito.organizacionId as never)
+      .where('empleo_id' as never, '=', empleoId as never);
+    const citasSuyas = libre
+      .selectFrom('cita_servicios')
+      .select('cita_id' as never)
+      .where('organizacion_id' as never, '=', ambito.organizacionId as never)
+      .where('profesional_id' as never, 'in', suyas);
+    if (recorte.porClientaPropia === true) {
+      consulta = consulta.where(
+        `${BASE}.${recorte.columna}`,
+        'in',
+        libre
+          .selectFrom('citas')
+          .select('cliente_id' as never)
+          .where('organizacion_id' as never, '=', ambito.organizacionId as never)
+          .where('id' as never, 'in', citasSuyas),
+      );
+    } else {
+      consulta =
+        recorte.porServicio === true
+          ? consulta.where(`${BASE}.id`, 'in', citasSuyas)
+          : consulta.where(`${BASE}.${recorte.columna}`, 'in', suyas);
+    }
+  }
+
+  // 1c · LA FRONTERA POR SUCURSAL (D-36): quien no consolida lee SU sucursal y ninguna
+  //      otra. De la sesión, nunca del cliente; sin sucursal en la sesión, nada.
+  consulta = conFronteraDeSucursal(consulta, mapa, ambito);
+
+  // 2 · El filtro fijo de la entidad (p. ej. categorias.tipo = 'producto').
+  for (const [columna, valor] of Object.entries(mapa.filtroFijo ?? {})) {
+    consulta = consulta.where(`${BASE}.${columna}`, '=', valor);
+  }
+
+  // 3 · `get(id)` es un filtro por id, ni más ni menos.
+  if (peticion.operacion === 'get') {
+    if (typeof peticion.id !== 'string' || peticion.id === '') {
+      throw new ErrorDominio('PUENTE_CAMPO_INVALIDO', 'Falta el identificador.');
+    }
+    consulta = consulta.where(`${BASE}.id`, '=', peticion.id);
+  }
+
+  // 4 · Su `filter({clave: valor})`: igualdad exacta, AND entre claves. Una
+  //     clave que no está en el mapa se RECHAZA en vez de ignorarse: ignorarla
+  //     devolvería más filas de las que la pantalla pidió, en silencio.
+  for (const [clave, valor] of Object.entries(peticion.filtro ?? {})) {
+    // Un campo que este rol no puede VER tampoco puede usarlo para filtrar: filtrar es
+    // preguntar por su valor fila por fila («¿alguien tiene este teléfono?»), y la
+    // respuesta llega aunque la columna no salga. Se contesta como si no existiera.
+    const campo = vistoPor(mapa.campos[clave], puedeVer);
+    if (campo === undefined) {
+      // Un derivado no se puede filtrar: filtrar por el nombre del mesero
+      // parecería funcionar y devolvería lo que dijera el `join`, no lo que la
+      // pantalla pidió. Se dice con claridad en vez de fallar raro.
+      const esDerivado = Object.prototype.hasOwnProperty.call(mapa.derivados ?? {}, clave);
+      throw new ErrorDominio(
+        'PUENTE_CAMPO_INVALIDO',
+        esDerivado
+          ? `«${clave}» se calcula al leer y no se puede filtrar por él.`
+          : `«${clave}» no es un campo de ${peticion.entidad}.`,
+      );
+    }
+    if (campo.constante !== undefined) {
+      // Filtrar por una constante es preguntar si la fila es de esta tabla. Si
+      // coincide no acota nada; si no, no hay ninguna fila que pueda cumplirlo.
+      // Su `useCajaAbierta` filtra por `tipo_corte='cierre_diario'`, y eso es
+      // exactamente lo que significa venir de `sesiones_caja`.
+      if (valor !== campo.constante) return [];
+      continue;
+    }
+    consulta =
+      valor === null
+        ? consulta.where(`${BASE}.${campo.columna}`, 'is', null)
+        : consulta.where(`${BASE}.${campo.columna}`, '=', valorHaciaLaBase(valor, campo));
+  }
+
+  // 4a · El `in` de los hijos. Es interno del puente y por eso no pasa por la
+  //      validación del filtro de arriba, pero SÍ por la lista blanca de
+  //      campos: un campo que no esté en el mapa no llega a la consulta.
+  if (peticion.filtroEn !== undefined) {
+    const campo = mapa.campos[peticion.filtroEn.campo];
+    if (campo === undefined) {
+      throw new ErrorDominio(
+        'PUENTE_CAMPO_INVALIDO',
+        `«${peticion.filtroEn.campo}» no es un campo de ${peticion.entidad}.`,
+      );
+    }
+    if (peticion.filtroEn.valores.length === 0) return [];
+    consulta = consulta.where(`${BASE}.${campo.columna}`, 'in', [...peticion.filtroEn.valores]);
+  }
+
+  // 4b · El rango, si lo hay. Sólo sobre campos de fecha o de día: pedir un
+  //      rango sobre un texto o un booleano no significa nada y se rechaza en
+  //      vez de devolver algo que parezca una respuesta.
+  if (peticion.rango !== undefined) {
+    const { campo: clave, desde, hasta } = peticion.rango;
+    const campo = vistoPor(mapa.campos[clave], puedeVer);
+    if (campo === undefined) {
+      throw new ErrorDominio(
+        'PUENTE_CAMPO_INVALIDO',
+        `«${clave}» no es un campo de ${peticion.entidad}.`,
+      );
+    }
+    if (campo.conversion !== 'fecha' && campo.conversion !== 'dia') {
+      throw new ErrorDominio(
+        'PUENTE_CAMPO_INVALIDO',
+        `«${clave}» no es una fecha: no se puede pedir un rango sobre él.`,
+      );
+    }
+    if (desde !== undefined && desde !== '') {
+      consulta = consulta.where(
+        `${BASE}.${campo.columna}`,
+        '>=',
+        haciaLaBase(desde, campo.conversion),
+      );
+    }
+    if (hasta !== undefined && hasta !== '') {
+      // `<=` y no `<`: los dos extremos son inclusivos. Para un `timestamptz`,
+      // el cliente manda el final del día en ISO; para un `date`, la fecha
+      // basta. Un `<` aquí dejaría fuera las ventas del último día del mes, que
+      // es justo el error que nadie nota hasta que el corte no cuadra.
+      consulta = consulta.where(
+        `${BASE}.${campo.columna}`,
+        '<=',
+        haciaLaBase(hasta, campo.conversion),
+      );
+    }
+  }
+
+  // 5 · El orden. El prefijo `-` es descendente, como en su código.
+  const orden = peticion.orden ?? mapa.ordenPorOmision;
+  if (orden !== undefined && orden !== '') {
+    const descendente = orden.startsWith('-');
+    const clave = descendente ? orden.slice(1) : orden;
+    // El orden por omisión lo decide el MAPA, no quien pide: ordenar por un campo que este
+    // rol no ve no le revela nada que él haya preguntado. El que pide la pantalla, sí.
+    const campo =
+      peticion.orden === undefined ? mapa.campos[clave] : vistoPor(mapa.campos[clave], puedeVer);
+    if (campo === undefined) {
+      throw new ErrorDominio('PUENTE_CAMPO_INVALIDO', `No se puede ordenar por «${clave}».`);
+    }
+    consulta = consulta.orderBy(`${BASE}.${campo.columna}`, descendente ? 'desc' : 'asc');
+  }
+
+  // 6 · El tope. Aunque pida diez mil.
+  const limite = Math.min(
+    Math.max(1, Math.trunc(peticion.limite ?? LIMITE_POR_OMISION)),
+    LIMITE_MAXIMO,
+  );
+  consulta = consulta.limit(peticion.operacion === 'get' ? 1 : limite);
+
+  const filas = await consulta.execute();
+  const traducidas = filas.map((fila) => traducirFila(fila, mapa, ambito.rol));
+
+  // 7 · Los hijos. UNA consulta por relación para TODA la página, no una por
+  //     padre: dentro de una pantalla de cocina que refresca cada pocos
+  //     segundos, un N+1 aquí se nota.
+  await adjuntarHijos(ambito, mapa, traducidas);
+
+  // 8 · Los totales de cada caja (`CorteCaja`). El mapa los declara derivados de los pagos
+  //     de la sesión (`cobertura.test.ts`) y nadie los derivaba: «Cortes de caja recientes»
+  //     decía «$0.00 · 0 tickets» en cada corte, con dinero real y con el historial de la
+  //     presentación (21-10). Una consulta agregada por página, sólo para quien ve importes.
+  if (
+    mapa.tabla === 'sesiones_caja' &&
+    (mapa.campos['efectivo_inicial_contado']?.rolesLectura ?? []).includes(ambito.rol)
+  )
+    await adjuntarTotalesDeCaja(ambito.organizacionId, traducidas);
+  return traducidas;
+}
+
+/** Suma por método, propinas y número de cuentas cobradas en cada sesión de caja. */
+async function adjuntarTotalesDeCaja(organizacionId: string, cajas: Fila[]): Promise<void> {
+  const ids = cajas
+    .map((c) => (typeof c['id'] === 'string' ? c['id'] : ''))
+    .filter((id) => id !== '');
+  if (ids.length === 0) return;
+  const porMetodo = await obtenerDb()
+    .selectFrom('pagos')
+    .select([
+      'sesion_caja_id as caja',
+      'metodo',
+      sql<string>`sum(monto_centavos)::text`.as('monto'),
+      sql<string>`sum(propina_centavos)::text`.as('propina'),
+    ])
+    .where('organizacion_id', '=', organizacionId)
+    .where('sesion_caja_id', 'in', ids)
+    .groupBy(['sesion_caja_id', 'metodo'])
+    .execute();
+  const cuentas = await obtenerDb()
+    .selectFrom('pagos')
+    .select(['sesion_caja_id as caja', sql<string>`count(distinct orden_id)::text`.as('cuantas')])
+    .where('organizacion_id', '=', organizacionId)
+    .where('sesion_caja_id', 'in', ids)
+    .groupBy('sesion_caja_id')
+    .execute();
+  const pesos = (centavos: bigint) => Number(centavos) / CENTAVOS_POR_PESO;
+  for (const caja of cajas) {
+    const suyas = porMetodo.filter((f) => f.caja === caja['id']);
+    const de = (metodo: string) =>
+      suyas.filter((f) => f.metodo === metodo).reduce((t, f) => t + BigInt(f.monto), 0n);
+    const total = suyas.reduce((t, f) => t + BigInt(f.monto), 0n);
+    const propinas = suyas.reduce((t, f) => t + BigInt(f.propina), 0n);
+    const numero = Number(cuentas.find((f) => f.caja === caja['id'])?.cuantas ?? '0');
+    caja['total_efectivo'] = pesos(de('efectivo'));
+    caja['total_tarjeta'] = pesos(de('tarjeta'));
+    caja['total_transferencia'] = pesos(de('transferencia'));
+    caja['total_general'] = pesos(total);
+    caja['total_propinas'] = pesos(propinas);
+    caja['numero_ventas'] = numero;
+    caja['ticket_promedio'] = numero === 0 ? 0 : pesos(total) / numero;
+  }
+}
+
+/**
+ * Adjunta los arreglos de filas hijas a cada padre.
+ *
+ * Se reusa `consultar` con un filtro `in` implícito —una llamada por relación
+ * con el conjunto de identificadores de los padres—, así que los hijos pasan
+ * por las MISMAS garantías que cualquier otra lectura: ámbito de sesión, lista
+ * blanca de campos y tope de filas. Un camino aparte que las esquivara sería la
+ * puerta de atrás del puente.
+ */
+async function adjuntarHijos(ambito: Ambito, mapa: MapaEntidad, padres: Fila[]): Promise<void> {
+  const relaciones = Object.entries(mapa.hijos ?? {});
+  if (relaciones.length === 0 || padres.length === 0) return;
+
+  const ids = padres.map((p) => String(p['id'])).filter((id) => id !== '');
+  for (const [campo, relacion] of relaciones) {
+    // Se piden todos los hijos de todos los padres de la página de una vez.
+    const todos = await consultar(ambito, {
+      entidad: relacion.entidad,
+      operacion: 'filter',
+      filtroEn: { campo: relacion.porCampo, valores: ids },
+      limite: Math.min(relacion.limite * padres.length, LIMITE_MAXIMO),
+    });
+    const porPadre = new Map<string, Fila[]>();
+    for (const hijo of todos) {
+      const clave = String(hijo[relacion.porCampo]);
+      const lista = porPadre.get(clave) ?? [];
+      if (lista.length < relacion.limite) lista.push(hijo);
+      porPadre.set(clave, lista);
+    }
+    for (const padre of padres) padre[campo] = porPadre.get(String(padre['id'])) ?? [];
+  }
+}
+
+/**
+ * `rol` decide qué campos calculados salen.
+ *
+ * Los `calculados` no vienen de una columna: se derivan de la fila cruda, así
+ * que filtrarlos en el `select` no basta. `costoDeLineaDeReceta` es el ejemplo:
+ * quien no puede ver el costo del insumo tampoco puede ver el de la línea, o el
+ * filtro de arriba sería teatro.
+ */
+function traducirFila(fila: Fila, mapa: MapaEntidad, rol: string): Fila {
+  const salida: Fila = {};
+  for (const [suyo, campo] of Object.entries(mapa.campos)) {
+    salida[suyo] = valorHaciaEl(fila[suyo], campo);
+  }
+  for (const [suyo, derivado] of Object.entries(mapa.derivados ?? {})) {
+    const valor = haciaEl(fila[suyo], derivado.conversion);
+    if (valor !== null || derivado.respaldo === undefined) {
+      salida[suyo] = valor;
+      continue;
+    }
+    // El respaldo se calcula desde el identificador por el que se hizo el
+    // `join`, que ya está en la fila traducida. Si tampoco hay identificador
+    // —una mesa sin mesero asignado— el respaldo NO se inventa: sigue nulo.
+    const claveDelId = Object.entries(mapa.campos).find(
+      ([, campo]) => campo.columna === derivado.porColumna,
+    )?.[0];
+    const id = claveDelId === undefined ? null : salida[claveDelId];
+    salida[suyo] = typeof id === 'string' && id !== '' ? colorDePersona(id) : null;
+  }
+  for (const [suyo, calculado] of Object.entries(mapa.calculados ?? {})) {
+    if (calculado.rolesLectura !== undefined && !calculado.rolesLectura.includes(rol)) continue;
+    salida[suyo] = calcular(calculado.formula, fila);
+  }
+  return salida;
+}
+
+const PUNTOS_BASE = 10_000n;
+const CENTAVOS_POR_PESO = 100;
+/** Cuatro decimales: es la escala de `numeric(14,4)` en `recetas.cantidad`. */
+const ESCALA_CANTIDAD = 10_000n;
+
+/**
+ * Las fórmulas de los campos calculados.
+ *
+ * Se hacen sobre la fila CRUDA y en enteros, no sobre la fila ya traducida a
+ * pesos: `8.1 * 1.05` en coma flotante no da lo mismo que `810 * 10500 / 10000`
+ * redondeado una vez, y el que sale mal es el que acaba en un ticket.
+ *
+ * Es la misma aritmética que `recalcularCostosRecetas`
+ * (`inventario/recetas.ts:131`), a propósito: si las dos difirieran, el costo
+ * que enseña Productos y el que guarda el producto dirían cosas distintas.
+ */
+/**
+ * Una tabla y no un `switch`: el tipo `Record<Calculo, …>` obliga a que toda
+ * fórmula nueva tenga implementación para compilar, sin ramas muertas que el
+ * analizador tenga que perdonar.
+ */
+const FORMULAS: Readonly<Record<Calculo, (fila: Fila) => unknown>> = {
+  costoDeLineaDeReceta(fila) {
+    const centavos = enteroDe(fila['costo_unitario_base_snapshot']);
+    const cantidad = escalarDe(fila['cantidad_convertida_unidad_base']);
+    const mermaBp = enteroDe(fila['merma_porcentaje']) ?? 0n;
+    if (centavos === null || cantidad === null) return null;
+
+    const bruto = centavos * cantidad * (PUNTOS_BASE + mermaBp);
+    const divisor = ESCALA_CANTIDAD * PUNTOS_BASE;
+    // Redondeo al centavo más cercano, UNA sola vez y al final.
+    const redondeado = (bruto + divisor / 2n) / divisor;
+    return Number(redondeado) / CENTAVOS_POR_PESO;
+  },
+  propinaLiquidada(fila) {
+    const id = fila['propina_liquidacion_id'];
+    return typeof id === 'string' && id.length > 0;
+  },
+  etiquetaSatisfaccion(fila) {
+    const etiquetas: Readonly<Record<number, string>> = {
+      1: 'Muy mala',
+      2: 'Mala',
+      3: 'Regular',
+      4: 'Buena',
+      5: 'Excelente',
+    };
+    const score = enteroDe(fila['satisfaccion_score']);
+    return score === null ? null : (etiquetas[Number(score)] ?? null);
+  },
+  fechaDeCreacion(fila) {
+    const fecha = fila['created_date'];
+    if (fecha instanceof Date) return fecha.toISOString();
+    return typeof fecha === 'string' && fecha.length > 0 ? fecha : null;
+  },
+  /**
+   * Lo que se quedó en el cajón: contado − retirado (C.6 de la 2.4). La columna es la de
+   * lo RETIRADO —así se llama, y así la usa el corte de turno—; el fondo de mañana se
+   * deriva. Sin cualquiera de los dos, nulo: «no se dijo» no es cero.
+   */
+  dineroDejadoEnCaja(fila) {
+    const contado = enteroDe(fila['efectivo_contado']);
+    const retirado = enteroDe(fila['efectivo_retirado']);
+    if (contado === null || retirado === null) return null;
+    return Number(contado - retirado) / CENTAVOS_POR_PESO;
+  },
+  /**
+   * La existencia del producto: la de su insumo base si lo tiene; si no, la de su insumo
+   * propio (`materiales_mostrador`) SÓLO cuando ese insumo existe; si no, nula. La vista
+   * da cero para un producto sin insumo, y un cero ahí apagaría un latte (C.9 de la 2.4).
+   */
+  existenciaDelProducto(fila) {
+    const base = textoDeNumero(fila['existencia_base']);
+    if (base !== null) return Number(base);
+    const propio = fila['insumo_propio_id'];
+    if (typeof propio !== 'string' || propio === '') return null;
+    const enMostrador = textoDeNumero(fila['existencia_en_mostrador']);
+    return enMostrador === null ? null : Number(enMostrador);
+  },
+};
+
+export function calcular(formula: Calculo, fila: Fila): unknown {
+  return FORMULAS[formula](fila);
+}
+
+/**
+ * El valor tal como llega de Postgres, como texto.
+ *
+ * `String(valor)` sobre un objeto da `[object Object]`, y aquí eso se
+ * convertiría en un `null` silencioso en vez de en un fallo visible. Un tipo que
+ * no sea número, texto o `bigint` no es un número de la base: se descarta.
+ */
+function textoDeNumero(valor: unknown): string | null {
+  if (typeof valor === 'string') return valor;
+  if (typeof valor === 'number' || typeof valor === 'bigint') return valor.toString();
+  return null;
+}
+
+/** Un entero de la base —`bigint`, `number` o cadena— o `null`. */
+function enteroDe(valor: unknown): bigint | null {
+  if (typeof valor === 'bigint') return valor;
+  const texto = textoDeNumero(valor);
+  if (texto === null) return null;
+  const limpio = texto.split('.')[0] ?? '';
+  return /^-?\d+$/.test(limpio) ? BigInt(limpio) : null;
+}
+
+/** Un `numeric(14,4)` como entero escalado por 10 000, sin pasar por `Number`. */
+function escalarDe(valor: unknown): bigint | null {
+  const texto = textoDeNumero(valor);
+  if (texto === null) return null;
+  const coincide = /^(-?)(\d+)(?:\.(\d{0,4}))?$/.exec(texto);
+  if (coincide === null) return null;
+  const signo = coincide[1] === '-' ? -1n : 1n;
+  const entera = BigInt(coincide[2] ?? '0');
+  const decimales = (coincide[3] ?? '').padEnd(4, '0');
+  return signo * (entera * ESCALA_CANTIDAD + BigInt(decimales));
+}

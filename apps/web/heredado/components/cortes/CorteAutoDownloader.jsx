@@ -1,0 +1,265 @@
+'use client';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { api } from '@/api/cliente';
+import { detallesDeVentas } from '@/lib/detallesDeVentas';
+import { useConfig } from '@/lib/ConfigContext';
+import { canAccessModule } from '@/lib/packageConfig';
+import { usePOSAuth } from '@/lib/POSAuthContext';
+import { hasPermission } from '@/lib/permissions';
+import { getStockStatus } from '@/utils/inventoryUtils';
+import { downloadNodeAsPDF, safeFileName } from '@/lib/pdfDownload';
+import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Download, Loader2 } from 'lucide-react';
+import CorteTicket from '@/components/tickets/CorteTicket';
+import { MARCA_DE_PLATAFORMA } from '~/marca/nombre-visible';
+
+/**
+ * Renderiza el CorteTicket fuera de pantalla, genera el PDF y lo descarga.
+ * Si el navegador bloquea, expone un botón visible para reintentar.
+ */
+export default function CorteAutoDownloader({ corte, onDone }) {
+  const { config, paquete_modo } = useConfig();
+  const { posUser } = usePOSAuth();
+  const veCostos = hasPermission(posUser?.rol, 'ver_costos');
+  // La misma regla que el visor del corte: sin el módulo o sin el permiso, la hoja va sin costos.
+  const sinCostos = !canAccessModule('costos_basicos', paquete_modo) || !veCostos;
+  const haySala = canAccessModule('mesero', paquete_modo);
+  const ref = useRef(null);
+  const [data, setData] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState(false);
+
+  // Carga de datos del corte
+  useEffect(() => {
+    if (!corte) return;
+    let cancelled = false;
+    (async () => {
+      // La caja se llama `fecha_apertura` en el puente (`CorteCaja`), no `fecha_inicio`: con el
+      // nombre equivocado el inicio era 0 y el corte se quedaba con TODAS las ventas de la
+      // historia —666 lecturas al abrir uno, totales que cambiaban cada vez— (21-10-2026).
+      const aperturaDelCorte = corte.fecha_apertura || null;
+      const inicio = aperturaDelCorte ? new Date(aperturaDelCorte).getTime() : 0;
+      const cierre = corte.fecha_cierre ? new Date(corte.fecha_cierre).getTime() : Date.now();
+      const corteId = corte.id;
+
+      try {
+        // Las cinco lecturas iban con `.catch(() => [])` (F1-06 §4.8), y este
+        // componente DESCARGA SOLO. Sin ventas el PDF salía con totales en cero,
+        // sin descuentos con margen del 100 %, y se guardaba en el disco del
+        // negocio como si fuera el corte del día. Aquí un fallo NO produce
+        // archivo: `data` se queda nulo, el auto-disparo no ocurre y queda el
+        // botón de reintento que ya existía.
+        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas] =
+          await Promise.all([
+            api.entidades.Venta.list('-fecha_cierre', 2000),
+            api.entidades.GastoOperativo.list('-created_date', 500),
+            // Lo de costos e inventario sólo lo lee quien lo puede ver (restaurante, 20-10-2026):
+            // para la cajera, que es quien cierra, esas tres lecturas eran 403, el `Promise.all`
+            // caía y el corte del día se quedaba SIN PDF. Ahora su hoja sale sin costos —el
+            // ticket ya sabe hacerlo (`sinCostos`)— en vez de no salir.
+            veCostos ? api.entidades.DescuentoInventarioVenta.list('-created_date', 3000) : [],
+            veCostos ? api.entidades.Ingrediente.list() : [],
+            veCostos ? api.entidades.RecetaEscandallo.list('-created_date', 2000) : [],
+          ]);
+
+        const matchVenta = (v) => {
+          // La venta que dice su caja es de ESA caja y de ninguna otra: la ventana de tiempo
+          // es sólo para las viejas sin caja, y sin apertura no hay ventana.
+          if (v.corte_caja_id) return Boolean(corteId) && v.corte_caja_id === corteId;
+          if (!aperturaDelCorte) return false;
+          const t = v.fecha_cierre ? new Date(v.fecha_cierre).getTime() : 0;
+          if (t >= inicio && t <= cierre) return true;
+          const dayCorte = String(aperturaDelCorte).slice(0, 10);
+          const dayVenta = (v.fecha_apertura || v.fecha_cierre || '').slice(0, 10);
+          return dayCorte === dayVenta;
+        };
+
+        const ventasCorte = allVentas.filter((v) => v.estado === 'pagada' && matchVenta(v));
+        const cancelaciones = allVentas.filter(
+          (v) =>
+            v.estado === 'cancelada' &&
+            ((corteId && v.corte_caja_id === corteId) ||
+              (v.fecha_cierre &&
+                new Date(v.fecha_cierre).getTime() >= inicio &&
+                new Date(v.fecha_cierre).getTime() <= cierre)),
+        );
+        const ventaIds = ventasCorte.map((v) => v.id);
+        // Una lectura para todos los renglones del corte, no una petición por venta.
+        const detalles = await detallesDeVentas(ventasCorte);
+        const gastosCorte = allGastos.filter((g) => {
+          const t = g.created_date ? new Date(g.created_date).getTime() : 0;
+          return t >= inicio && t <= cierre;
+        });
+
+        const descuentosCorte = allDescuentos.filter((d) => ventaIds.includes(d.venta_id));
+        const ingMap = {};
+        const ingPorId = Object.fromEntries(allIngredientes.map((i) => [i.id, i]));
+        const addIng = (ingId, nombre, unidad, qty, costoUnit) => {
+          if (!ingId || !qty) return;
+          if (!ingMap[ingId])
+            ingMap[ingId] = {
+              nombre,
+              unidad,
+              cantidad: 0,
+              costoUnit: costoUnit || 0,
+              costoTotal: 0,
+            };
+          ingMap[ingId].cantidad += qty;
+          ingMap[ingId].costoTotal += qty * (costoUnit || 0);
+        };
+        if (descuentosCorte.length > 0) {
+          descuentosCorte.forEach((d) =>
+            addIng(
+              d.ingrediente_id,
+              d.ingrediente_nombre,
+              d.unidad_base,
+              d.cantidad_total_descontada || 0,
+              d.costo_unitario_snapshot || 0,
+            ),
+          );
+        } else {
+          detalles.forEach((det) => {
+            const recetaLines = allRecetas.filter(
+              (r) => r.producto_id === det.producto_id && r.activo !== false,
+            );
+            recetaLines.forEach((l) => {
+              const ing = ingPorId[l.ingrediente_id];
+              if (!ing) return;
+              const merma = 1 + (l.merma_porcentaje || 0) / 100;
+              const cantPorProd = (l.cantidad_convertida_unidad_base || 0) * merma;
+              const totalCant = cantPorProd * (det.cantidad || 0);
+              addIng(
+                ing.id,
+                ing.nombre,
+                ing.unidad_base,
+                totalCant,
+                ing.costo_por_unidad_base || 0,
+              );
+            });
+          });
+        }
+        const ingredientesConsumidos = Object.values(ingMap).sort(
+          (a, b) => b.costoTotal - a.costoTotal,
+        );
+        const alertas = allIngredientes
+          .map((i) => ({ ...i, status: getStockStatus(i) }))
+          .filter((i) => ['critico', 'agotado', 'bajo'].includes(i.status));
+
+        if (!cancelled) {
+          setData({
+            ventas: ventasCorte,
+            detalles,
+            gastos: gastosCorte,
+            ingredientes: ingredientesConsumidos,
+            cancelaciones,
+            alertas,
+          });
+        }
+      } catch (err) {
+        if (cancelled) return;
+        // `setError(true)` corta el auto-disparo y deja visible el botón de
+        // descarga que este componente ya tenía como respaldo.
+        setError(true);
+        toast.error(err?.message || 'No se pudo cargar el corte para generar el PDF.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [corte, veCostos]);
+
+  const triggerDownload = async () => {
+    if (!ref.current || !data) return;
+    setDownloading(true);
+    setError(false);
+    try {
+      const fecha = corte?.fecha_cierre
+        ? format(new Date(corte.fecha_cierre), 'yyyyMMdd')
+        : format(new Date(), 'yyyyMMdd');
+      const negocio = safeFileName(
+        config?.nombre_negocio || config?.platform_brand || MARCA_DE_PLATAFORMA,
+      );
+      const folio = safeFileName(corte?.folio || 'corte');
+      await downloadNodeAsPDF(ref.current, `Corte_${folio}_${fecha}_${negocio}.pdf`);
+      setDone(true);
+      toast.success('PDF del corte descargado');
+    } catch (err) {
+      console.error('Error generando PDF auto:', err);
+      setError(true);
+      toast.error('No se pudo descargar automáticamente. Usa el botón.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  // Auto-trigger una vez cargados los datos
+  useEffect(() => {
+    if (data && !done && !downloading && !error) {
+      // pequeño delay para asegurar render del nodo
+      const t = setTimeout(triggerDownload, 300);
+      return () => clearTimeout(t);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  return (
+    <>
+      {/* Botón visible (fallback / reintento) */}
+      {!done && (
+        <div className="fixed bottom-6 right-6 z-[60] no-print">
+          <Button onClick={triggerDownload} disabled={downloading || !data} className="shadow-lg">
+            {downloading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Generando PDF…
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-1" /> Descargar PDF del corte
+              </>
+            )}
+          </Button>
+          {done && (
+            <Button variant="ghost" size="sm" className="ml-2" onClick={onDone}>
+              Listo
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Render fuera de pantalla del ticket para captura */}
+      {data &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              left: '-10000px',
+              top: 0,
+              width: '210mm',
+              background: '#fff',
+              zIndex: -1,
+            }}
+            aria-hidden
+          >
+            <CorteTicket
+              ref={ref}
+              corte={corte}
+              ventas={data.ventas}
+              detalles={data.detalles}
+              gastos={data.gastos}
+              ingredientes={data.ingredientes}
+              cancelaciones={data.cancelaciones}
+              alertas={data.alertas}
+              config={config}
+              sinCostos={sinCostos}
+              haySala={haySala}
+            />
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}

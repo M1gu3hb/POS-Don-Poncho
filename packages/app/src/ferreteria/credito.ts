@@ -1,0 +1,580 @@
+import 'server-only';
+
+import { ErrorDominio, PAQUETES_MOSTRADOR } from '@morphiqpos/contracts';
+import { repoCaja, repoFolios, repoOrdenes, repoStock, type Transaccion } from '@morphiqpos/data';
+import {
+  evaluarSalidaACredito,
+  type Evaluacion,
+  type MotivoDeAviso,
+  type TotalesOrden,
+  type Veredicto,
+} from '@morphiqpos/domain/venta';
+import { z } from 'zod';
+
+import { insertarDocumento } from '../cartera/documento.ts';
+import { definirComando, type ContextoComando } from '../definicion.ts';
+import { registrarPagoConPropina } from '../propinas/cobro.ts';
+import { planearConsumo } from '../venta/cobrar.ts';
+import { cotizar, exigirTotalVigente } from '../venta/cotizar.ts';
+
+/**
+ * F-638, F-639 y F-606 · El material que sale firmado.
+ *
+ * ── Por qué la evaluación va ANTES de despachar y no en el cobro ─────────
+ * Porque **en una venta a crédito no hay cobro**. Una comprobación colgada del
+ * cobro es una comprobación que en este giro no corre nunca, y el material sale
+ * a las 7:40 con prisa mientras el saldo está en una libreta bajo el mostrador.
+ *
+ * ── Por qué la remisión sella si estaba en la lista ──────────────────────
+ * Es el dato que importa cuando la cuenta se impugna, y **no se puede derivar
+ * después**: el autorizado pudo darse de baja entre la entrega y el pleito, y
+ * entonces la derivación diría que no estaba cuando sí estaba. Se sella en el
+ * momento, como el precio en la línea de venta y por el mismo motivo.
+ *
+ * ── Por qué el nombre del firmante es obligatorio aunque no esté en la lista ──
+ * Porque un documento de entrega sin nombre de quien recibió no sirve para
+ * nada, que es exactamente el estado de hoy con el talonario de papel carbón.
+ * Si no estaba autorizado, se escribe a mano; lo que no se permite es que no
+ * haya nadie.
+ */
+
+const ROLES = ['cajero', 'gerente', 'administrador', 'dueno'] as const;
+
+export const entradaEvaluarSalida = z.object({
+  clienteId: z.uuid(),
+  importeCentavos: z.number().int().min(1).max(100_000_000),
+  obraId: z.uuid().optional(),
+  autorizadoId: z.uuid().optional(),
+});
+
+export const entradaRegistrarRemision = z.object({
+  ordenId: z.uuid(),
+  clienteId: z.uuid(),
+  importeCentavos: z.number().int().min(1).max(100_000_000),
+  obraId: z.uuid().optional(),
+  autorizadoId: z.uuid().optional(),
+  /** Quien firmó. Si no estaba en la lista, se escribe a mano. */
+  nombreFirmante: z.string().trim().min(2).max(120),
+  firmaUrl: z.string().trim().max(500).optional(),
+  // La llave del dueño NO viaja aquí. Viajaba —`autorizacionDelDueno: true`— y con
+  // eso cualquier cajero abría la mora: la autorización la decidía quien pedía la
+  // excepción. Ahora es la que el dueño registró con SU sesión (`credito.autorizar`),
+  // y el servidor la busca (C.5 de la 2.4).
+});
+
+export interface ResultadoEvaluacion {
+  readonly veredicto: Veredicto;
+  readonly motivos: readonly MotivoDeAviso[];
+  readonly disponibleDespuesCentavos: string;
+  readonly saldoClienteCentavos: string;
+}
+
+export interface ResultadoRemision {
+  readonly remisionId: string;
+  readonly folio: string;
+  /**
+   * El folio del TICKET de la venta a crédito (181): la remisión es venta del día y toma
+   * su folio en la serie de las ventas. Es el que se pide para devolver.
+   */
+  readonly ticket: { readonly serie: string; readonly folio: string };
+  readonly veredicto: Veredicto;
+  readonly motivos: readonly MotivoDeAviso[];
+  readonly autorizadoEstabaEnLista: boolean;
+  readonly saldoClienteCentavos: string;
+}
+
+export const evaluarSalida = definirComando<
+  Transaccion,
+  typeof entradaEvaluarSalida,
+  ResultadoEvaluacion
+>({
+  nombre: 'credito.evaluar_salida',
+  entidad: 'cliente',
+  escribe: false,
+  roles: [...ROLES],
+  paquetes: PAQUETES_MOSTRADOR,
+  entrada: entradaEvaluarSalida,
+  async ejecutar(ctx, entrada) {
+    const { evaluacion, cliente } = await evaluar(ctx, entrada);
+
+    return {
+      veredicto: evaluacion.veredicto,
+      motivos: evaluacion.motivos,
+      disponibleDespuesCentavos: evaluacion.disponibleDespuesCentavos.toString(),
+      saldoClienteCentavos: cliente.saldo.toString(),
+    };
+  },
+});
+
+export const registrarRemision = definirComando<
+  Transaccion,
+  typeof entradaRegistrarRemision,
+  ResultadoRemision
+>({
+  nombre: 'credito.registrar_remision',
+  entidad: 'remision',
+  escribe: true,
+  roles: [...ROLES],
+  paquetes: PAQUETES_MOSTRADOR,
+  sucursal: { ordenId: 'ordenes' },
+  entrada: entradaRegistrarRemision,
+  async ejecutar(ctx, entrada) {
+    const { organizacionId, sucursalId, empleoId } = ctx.ambito;
+    if (sucursalId === null) {
+      throw new ErrorDominio(
+        'VENTA_SIN_TERMINAL',
+        'La remisión lleva folio por sucursal: hace falta saber desde cuál se entrega.',
+      );
+    }
+
+    // EL IMPORTE LO PONE LA ORDEN, no la pantalla (auditoría de la 2.4). Antes el
+    // documento, el saldo del cliente y la evaluación del límite usaban el
+    // `importeCentavos` que mandaba el navegador sin compararlo con nada: una nota de
+    // $6,000 se podía remitir por $1, el límite decía «libre» y el material salía.
+    // Ahora se BLOQUEA la orden —un cobro simultáneo de la misma nota espera a esta
+    // remisión y luego la ve—, tiene que seguir cobrable y su total lo calcula el
+    // servidor; el importe de la pantalla sólo se compara, como en `venta.cobrar`.
+    const orden = await ctx.paso('bloquear_orden', () =>
+      ctx.tx
+        .selectFrom('ordenes')
+        .select(['id', 'estado', 'canal'])
+        .where('organizacion_id', '=', organizacionId)
+        .where('id', '=', entrada.ordenId)
+        .forUpdate()
+        .executeTakeFirst(),
+    );
+    if (orden === undefined) {
+      throw new ErrorDominio('ORDEN_NO_ENCONTRADA', 'Esa nota ya no existe.');
+    }
+    if (!(repoOrdenes.ESTADOS_COBRABLES as readonly string[]).includes(orden.estado)) {
+      throw new ErrorDominio('ORDEN_NO_EDITABLE', 'Esa nota ya se cobró o se canceló.', {
+        estado: orden.estado,
+      });
+    }
+    const { totales } = await ctx.paso('cotizar', () =>
+      cotizar(ctx.tx, organizacionId, entrada.ordenId),
+    );
+    exigirTotalVigente(totales.totalCentavos, entrada.importeCentavos);
+
+    const { evaluacion, cliente, autorizado } = await evaluar(ctx, entrada);
+
+    // La mora es lo ÚNICO que bloquea, y siempre con llave del dueño. Todo lo
+    // demás avisa y deja pasar: convertirlo en muro apagaría el sistema la
+    // primera vez que el mejor cliente venga con una urgencia.
+    if (evaluacion.veredicto === 'requiere_llave') {
+      const llave = await gastarLlaveDelDueno(ctx, entrada);
+      if (!llave) {
+        throw new ErrorDominio(
+          'PUENTE_SIN_PERMISO',
+          'Ese cliente está bloqueado por mora: hace falta que el dueño autorice esta salida desde su sesión, por este importe.',
+          { motivos: evaluacion.motivos.join(', ') },
+        );
+      }
+    }
+
+    const yaHay = await ctx.paso('mirar_remision', () =>
+      ctx.tx
+        .selectFrom('remisiones')
+        .select(['id'])
+        .where('organizacion_id', '=', organizacionId)
+        .where('orden_id', '=', entrada.ordenId)
+        .executeTakeFirst(),
+    );
+    if (yaHay !== undefined) {
+      // Dos remisiones de la misma entrega suman dos veces al saldo del cliente,
+      // y ése es el descuadre que se descubre cuando el contratista reclama.
+      throw new ErrorDominio('CONFIGURACION_CONFLICTO', 'Esa entrega ya tiene su remisión.', {
+        remisionId: yaHay.id,
+      });
+    }
+
+    // Serie propia: la remisión NO comparte consecutivo con el ticket. Dos
+    // documentos distintos en la misma serie hacen que el folio 480 sea a veces
+    // una venta y a veces una entrega, y la cobranza deja de poder citarlo.
+    const tomado = await ctx.paso('tomar_folio', () =>
+      repoFolios.tomarFolio(ctx.tx, organizacionId, sucursalId, 'REM'),
+    );
+    // El folio lleva su serie delante: `REM-114`. No es decoración — es lo que
+    // deja ver, desde el documento, de qué consecutivo salió.
+    const folio = `${tomado.serie}-${tomado.folio.toString()}`;
+
+    const importe = totales.totalCentavos;
+    const remision = await ctx.paso('anotar_remision', () =>
+      ctx.tx
+        .insertInto('remisiones')
+        .values({
+          organizacion_id: organizacionId,
+          orden_id: entrada.ordenId,
+          folio,
+          cliente_id: entrada.clienteId,
+          obra_id: entrada.obraId ?? null,
+          autorizado_id: autorizado === null ? null : (entrada.autorizadoId ?? null),
+          nombre_firmante: entrada.nombreFirmante,
+          // Se SELLA, no se deriva: el autorizado puede darse de baja entre la
+          // entrega y el pleito.
+          autorizado_estaba_en_lista: autorizado?.activo === true,
+          firma_url: entrada.firmaUrl ?? null,
+          importe_centavos: importe,
+          // Nace debiendo todo: el pago se aplica después, contra ESTE documento.
+          saldo_documento_centavos: importe,
+          entregada_en: ctx.ahora,
+          entregada_por: empleoId,
+        })
+        .returning('id')
+        .executeTakeFirstOrThrow(),
+    );
+
+    // EL DOCUMENTO QUE SE DEBE, con el MISMO folio de la remisión. La cartera, el estado
+    // de cuenta y los pagos se leen de `documentos_credito`: sin esta fila la remisión
+    // subía el saldo y el cliente no aparecía en Cuentas ni se le podía cobrar (C.10 de
+    // la 2.4). Sin evaluar otra vez: el muro y la llave ya se resolvieron arriba.
+    await insertarDocumento(ctx, {
+      clienteId: entrada.clienteId,
+      origenTipo: 'remision',
+      origenId: remision.id,
+      importeCentavos: importe,
+      diasPlazo: cliente.diasPlazo,
+      folio,
+    });
+
+    // El saldo del cliente sube con la ENTREGA, no con la factura. Facturar no
+    // vuelve a ser venta: la venta ya se reconoció aquí, y es el error contable
+    // más común del giro.
+    const nuevoSaldo = cliente.saldo + importe;
+    const actualizadas = await ctx.paso('subir_saldo', () =>
+      ctx.tx
+        .updateTable('clientes')
+        .set({ saldo_pendiente_centavos: nuevoSaldo })
+        .where('organizacion_id', '=', organizacionId)
+        .where('id', '=', entrada.clienteId)
+        // Compare-and-set sobre el saldo leído: dos remisiones simultáneas del
+        // mismo contratista sumarían una sola si la segunda pisara a la primera.
+        //
+        // ESTO NO SE PUEDE PONER ROJO con la base falsa: no hay forma de meter
+        // una escritura ajena entre la lectura y este `update` sin montar un
+        // estado que Postgres no permite —dos filas con el mismo id—, y una
+        // prueba sobre un estado imposible no prueba nada. Se declara como
+        // segundo cerrojo de carrera, y el conteo de filas de abajo es lo que
+        // convierte una actualización perdida en un error en vez de en silencio.
+        .where('saldo_pendiente_centavos', '=', cliente.saldo)
+        .executeTakeFirst(),
+    );
+    if (Number(actualizadas.numUpdatedRows) !== 1) {
+      throw new ErrorDominio(
+        'CONFIGURACION_CONFLICTO',
+        'El saldo de ese cliente cambió mientras se registraba la entrega.',
+        { clienteId: entrada.clienteId },
+      );
+    }
+
+    await ctx.paso('marcar_orden', () =>
+      ctx.tx
+        .updateTable('ordenes')
+        .set({
+          // A nombre de quien debe, como el fiado del cobro: la venta es suya.
+          cliente_id: entrada.clienteId,
+          obra_id: entrada.obraId ?? null,
+          autorizado_id: entrada.autorizadoId ?? null,
+          mostradorista_id: empleoId,
+        })
+        .where('organizacion_id', '=', organizacionId)
+        .where('id', '=', entrada.ordenId)
+        .execute(),
+    );
+
+    const venta = await cerrarVentaACredito(ctx, {
+      ordenId: entrada.ordenId,
+      sucursalId,
+      canal: orden.canal,
+      totales,
+    });
+
+    ctx.auditar({
+      entidadId: remision.id,
+      payload: {
+        ordenId: entrada.ordenId,
+        clienteId: entrada.clienteId,
+        obraId: entrada.obraId ?? null,
+        importeCentavos: entrada.importeCentavos,
+        nombreFirmante: entrada.nombreFirmante,
+        autorizadoEstabaEnLista: autorizado?.activo === true,
+        motivos: evaluacion.motivos.join(', '),
+        ticket: `${venta.serie}-${venta.folio}`,
+      },
+    });
+
+    return {
+      remisionId: remision.id,
+      folio,
+      ticket: { serie: venta.serie, folio: venta.folio },
+      veredicto: evaluacion.veredicto,
+      motivos: evaluacion.motivos,
+      autorizadoEstabaEnLista: autorizado?.activo === true,
+      saldoClienteCentavos: nuevoSaldo.toString(),
+    };
+  },
+});
+
+/**
+ * LA REMISIÓN ES VENTA DEL DÍA, y se cierra como el fiado del cobro (181).
+ *
+ * `02-DINERO-Y-CAJA` lo dice dos veces: §1 —«Material entregado con remisión firmada
+ * (crédito) · Sí, en el momento de la entrega … el stock baja hoy … Método de pago
+ * `credito`»— y §6.3 —«Es venta, método credito … baja el stock, no entra dinero»—. La
+ * remisión subía el saldo y dejaba la orden `confirmada`: sin folio, sin pago y sin salida
+ * de almacén. El material salía por la puerta y para el servidor no se había vendido.
+ *
+ * Los pasos son los de `venta.cobrar` con el fiado, en su orden y con sus piezas:
+ * 1 · el almacén ANTES del folio (`planearConsumo`): si falta material, la reversión no
+ *     deja hueco en la numeración del ticket;
+ * 2 · el folio del TICKET, en la serie de las ventas, aparte del `REM-…`;
+ * 3 · un pago `credito` por el total, que suma a la venta y NO al cajón: no se escribe
+ *     ningún movimiento de caja, porque no entró un peso;
+ * 4 · la orden congelada con sus totales (`marcarPagada`).
+ *
+ * La caja que se nombra es la de ESTA terminal si está abierta —la venta cuenta en su
+ * corte, en «Resumen de ventas»—, y ninguna si no: la remisión se entrega también desde la
+ * tableta del pasillo, que no tiene cajón, y en una venta a crédito no hay cobro que exija
+ * caja (`§6.2`, puerta 3).
+ */
+async function cerrarVentaACredito(
+  ctx: ContextoComando<Transaccion>,
+  datos: {
+    readonly ordenId: string;
+    readonly sucursalId: string;
+    readonly canal: string;
+    readonly totales: TotalesOrden;
+  },
+): Promise<{ readonly serie: string; readonly folio: string }> {
+  const { organizacionId, terminalId, empleoId } = ctx.ambito;
+
+  const movimientos = await ctx.paso('planear_salida', () =>
+    planearConsumo(ctx.tx, organizacionId, datos.sucursalId, datos.ordenId, datos.canal),
+  );
+  if (movimientos.length > 0) {
+    await ctx.paso('descontar_stock', () =>
+      repoStock.aplicarMovimientos(
+        movimientos.map((m) => ({ ...m, empleadoId: empleoId })),
+        ctx.tx,
+      ),
+    );
+  }
+
+  const folio = await ctx.paso('tomar_folio_de_venta', () =>
+    repoFolios.tomarFolio(ctx.tx, organizacionId, datos.sucursalId),
+  );
+
+  const sesion =
+    terminalId === null
+      ? null
+      : await ctx.paso('cargar_caja', () =>
+          repoCaja.sesionAbiertaDeTerminal(ctx.tx, organizacionId, terminalId),
+        );
+
+  await ctx.paso('pago_a_credito', () =>
+    registrarPagoConPropina(ctx.tx, {
+      organizacionId,
+      ordenId: datos.ordenId,
+      sesionCajaId: sesion?.id ?? null,
+      metodo: 'credito',
+      montoCentavos: datos.totales.totalCentavos,
+      propinaCentavos: 0n,
+      recibidoCentavos: null,
+      cambioCentavos: 0n,
+      referencia: null,
+      idempotencyKey: null,
+    }),
+  );
+
+  await ctx.paso('cerrar_orden', () =>
+    repoOrdenes.marcarPagada(ctx.tx, {
+      organizacionId,
+      ordenId: datos.ordenId,
+      sesionCajaId: sesion?.id ?? null,
+      empleadoCobraId: empleoId,
+      serie: folio.serie,
+      folio: folio.folio,
+      totales: datos.totales,
+      ahora: ctx.ahora,
+    }),
+  );
+
+  return { serie: folio.serie, folio: folio.folio.toString() };
+}
+
+interface ClienteDeCredito {
+  readonly saldo: bigint;
+  readonly limite: bigint;
+  readonly bloqueado: boolean;
+  /** Cuántos días de plazo tiene: lo que dice cuándo vence su documento. */
+  readonly diasPlazo: number;
+}
+
+interface AutorizadoCargado {
+  readonly activo: boolean;
+  readonly tope: bigint | null;
+}
+
+/** Carga lo que hace falta y deja que el dominio decida. */
+async function evaluar(
+  ctx: ContextoComando<Transaccion>,
+  entrada: {
+    readonly clienteId: string;
+    readonly importeCentavos: number;
+    readonly obraId?: string | undefined;
+    readonly autorizadoId?: string | undefined;
+  },
+): Promise<{
+  readonly evaluacion: Evaluacion;
+  readonly cliente: ClienteDeCredito;
+  readonly autorizado: AutorizadoCargado | null;
+}> {
+  const { organizacionId } = ctx.ambito;
+
+  const fila = await ctx.paso('cargar_cliente', () =>
+    ctx.tx
+      .selectFrom('clientes')
+      .select([
+        'id',
+        'saldo_pendiente_centavos as saldo',
+        'limite_credito_centavos as limite',
+        'bloqueado_por_mora as bloqueado',
+        'dias_plazo as diasPlazo',
+      ])
+      .where('organizacion_id', '=', organizacionId)
+      .where('id', '=', entrada.clienteId)
+      .executeTakeFirst(),
+  );
+  if (fila === undefined) {
+    throw new ErrorDominio('PUENTE_NO_ENCONTRADO', 'Ese cliente no existe en este negocio.');
+  }
+  const cliente: ClienteDeCredito = {
+    saldo: fila.saldo,
+    limite: fila.limite,
+    bloqueado: fila.bloqueado,
+    diasPlazo: fila.diasPlazo,
+  };
+
+  const obraId = entrada.obraId;
+  const obra =
+    obraId === undefined
+      ? null
+      : await ctx.paso('cargar_obra', () =>
+          ctx.tx
+            .selectFrom('obras')
+            .select(['id', 'estado', 'limite_centavos as limite'])
+            .where('organizacion_id', '=', organizacionId)
+            .where('cliente_id', '=', entrada.clienteId)
+            .where('id', '=', obraId)
+            .executeTakeFirst(),
+        );
+  if (obraId !== undefined && (obra === undefined || obra === null)) {
+    // Una obra de OTRO cliente no es un aviso: es un tecleo, y cargarla ahí
+    // metería el material en la cuenta equivocada.
+    throw new ErrorDominio('PUENTE_NO_ENCONTRADO', 'Esa obra no es de ese cliente.', { obraId });
+  }
+
+  const saldoObra =
+    obra == null
+      ? 0n
+      : await ctx.paso('sumar_obra', () =>
+          ctx.tx
+            .selectFrom('remisiones')
+            .select((eb) => eb.fn.sum('saldo_documento_centavos').as('saldo'))
+            .where('organizacion_id', '=', organizacionId)
+            .where('obra_id', '=', obra.id)
+            .executeTakeFirst()
+            .then((r) => BigInt(String(r?.saldo ?? '0').split('.')[0] ?? '0')),
+        );
+
+  const autorizadoId = entrada.autorizadoId;
+  const autorizadoFila =
+    autorizadoId === undefined
+      ? null
+      : await ctx.paso('cargar_autorizado', () =>
+          ctx.tx
+            .selectFrom('autorizados_cuenta')
+            .select(['id', 'activo', 'tope_por_salida_centavos as tope', 'obra_id as obraId'])
+            .where('organizacion_id', '=', organizacionId)
+            .where('cliente_id', '=', entrada.clienteId)
+            .where('id', '=', autorizadoId)
+            .executeTakeFirst(),
+        );
+
+  // Un autorizado de OTRA obra no vale para ésta. Aceptarlo sería la lista de
+  // autorizados sin la parte que la hace útil: el albañil de Las Torres no
+  // puede retirar para la casa del centro.
+  const autorizado: AutorizadoCargado | null =
+    autorizadoFila == null ||
+    (autorizadoFila.obraId !== null && autorizadoFila.obraId !== (entrada.obraId ?? null))
+      ? null
+      : { activo: autorizadoFila.activo, tope: autorizadoFila.tope };
+
+  const evaluacion = evaluarSalidaACredito({
+    importeCentavos: BigInt(entrada.importeCentavos),
+    saldoClienteCentavos: cliente.saldo,
+    limiteClienteCentavos: cliente.limite,
+    bloqueadoPorMora: cliente.bloqueado,
+    obra:
+      obra == null
+        ? null
+        : {
+            saldoCentavos: saldoObra,
+            limiteCentavos: obra.limite,
+            cerrada: obra.estado === 'cerrada',
+          },
+    autorizado:
+      autorizado === null
+        ? null
+        : { activo: autorizado.activo, topePorSalidaCentavos: autorizado.tope },
+  });
+
+  return { evaluacion, cliente, autorizado };
+}
+
+/**
+ * La llave del dueño para ESTA salida: una autorización de crédito (`credito.autorizar`)
+ * para este cliente, vigente, por al menos este importe y sin gastar. Si la hay, se
+ * GASTA —queda atada a esta orden— en la misma transacción.
+ *
+ * «Vale para esta salida y por este monto» (`autorizacion-credito.ts`): una llave que
+ * sirviera para dos salidas sería un permiso abierto, y el muro dejaría de existir sin
+ * que nadie decidiera quitarlo. El `WHERE orden_id is null` del `update` es el cerrojo:
+ * dos remisiones a la vez no gastan la misma.
+ */
+async function gastarLlaveDelDueno(
+  ctx: ContextoComando<Transaccion>,
+  entrada: {
+    readonly ordenId: string;
+    readonly clienteId: string;
+    readonly importeCentavos: number;
+  },
+): Promise<boolean> {
+  const { organizacionId } = ctx.ambito;
+  const vigentes = await ctx.paso('buscar_llave', () =>
+    ctx.tx
+      .selectFrom('autorizaciones_descuento')
+      .select(['id', 'orden_id'])
+      .where('organizacion_id', '=', organizacionId)
+      .where('cliente_id', '=', entrada.clienteId)
+      .where('vence_en', '>', ctx.ahora)
+      .where('descuento_centavos', '>=', BigInt(entrada.importeCentavos))
+      .orderBy('vence_en')
+      .execute(),
+  );
+  // Sin gastar, o dada para ESTA orden: una llave atada a otra salida ya se usó.
+  const llave = vigentes.find((v) => v.orden_id === null || v.orden_id === entrada.ordenId);
+  if (llave === undefined) return false;
+  if (llave.orden_id === entrada.ordenId) return true;
+
+  const gastada = await ctx.paso('gastar_llave', () =>
+    ctx.tx
+      .updateTable('autorizaciones_descuento')
+      .set({ orden_id: entrada.ordenId })
+      .where('organizacion_id', '=', organizacionId)
+      .where('id', '=', llave.id)
+      .where('orden_id', 'is', null)
+      .executeTakeFirst(),
+  );
+  return Number(gastada.numUpdatedRows) === 1;
+}

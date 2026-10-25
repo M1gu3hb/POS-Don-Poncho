@@ -1,0 +1,261 @@
+import 'server-only';
+
+import { ESTADO_HTTP, esErrorDominio, validarEntorno, type Resultado } from '@morphiqpos/contracts';
+import type { ZodType } from 'zod';
+
+import { negocioDelTokenDeMesa } from '../negocio/despliegue.ts';
+import { cuerpoDentroDelLimite } from '../http/limite-cuerpo.ts';
+import { correlationIdDe, registrar } from '../observabilidad.ts';
+import { ejecutarComandoPublico } from './comando-publico.ts';
+import type { ComandoPublico } from './definicion-publica.ts';
+import { payloadDelPortal, type PayloadPortal } from './consulta.ts';
+
+/**
+ * La capa HTTP del portal público (E7-1, E7-3).
+ *
+ * Vive en `packages/app` y no en `apps/web` por lo mismo que `http/ruta.ts`:
+ * necesita `packages/data` para resolver el negocio, y `apps/web` no puede
+ * importar `data` (prohibición 1 de `04-ARQUITECTURA §2`, verificada por lint).
+ * Las rutas de Next quedan en tres líneas y sin nada que se pueda olvidar.
+ *
+ * ── La organización NO viene de la URL ────────────────────────────────────
+ * Sale de `negocioDelDespliegue`, igual que en la pantalla de acceso. El token
+ * dice QUÉ MESA; el despliegue dice DE QUÉ NEGOCIO. Si la organización llegara
+ * en la petición, el token de una mesa serviría para leer el menú de otra.
+ */
+
+/** Lo mínimo de una petición HTTP. `Request` de la Web API ya lo cumple. */
+export interface PeticionDelPortal {
+  readonly method: string;
+  readonly url: string;
+  readonly headers: { get(nombre: string): string | null };
+  json(): Promise<unknown>;
+}
+
+export interface RespuestaDelPortal {
+  readonly estado: number;
+  readonly cuerpo: unknown;
+  readonly cabeceras: Readonly<Record<string, string>>;
+}
+
+/**
+ * Estado HTTP de cada regla del portal.
+ *
+ * `REGLA_DE_NEGOCIO` es 422 para todo, y aquí eso perdería información que el
+ * portal necesita: un 429 le dice a la pantalla que espere, y un 409 que su
+ * aviso ya estaba puesto. El token inválido es 404 —no existe, sin decir por
+ * qué— y el portal apagado 403.
+ */
+const ESTADO_POR_REGLA: Readonly<Record<string, number>> = {
+  QR_TOKEN_INVALIDO: 404,
+  QR_PORTAL_CERRADO: 403,
+  QR_SOLICITUD_DUPLICADA: 409,
+  QR_DEMASIADAS_PETICIONES: 429,
+};
+
+function estadoDe(salida: Resultado<unknown>): number {
+  if (salida.ok) return 200;
+  const regla = salida.error.datos?.['regla'];
+  if (typeof regla === 'string' && regla in ESTADO_POR_REGLA) {
+    return ESTADO_POR_REGLA[regla] ?? ESTADO_HTTP[salida.error.codigo];
+  }
+  return ESTADO_HTTP[salida.error.codigo];
+}
+
+export function respuesta(
+  estado: number,
+  cuerpo: unknown,
+  correlationId?: string,
+): RespuestaDelPortal {
+  return {
+    estado,
+    cuerpo,
+    cabeceras: {
+      // El menú de una mesa lleva el estado de SU cuenta. Que un intermediario
+      // lo guarde significaría servirle la cuenta de una mesa a otra.
+      'cache-control': 'no-store',
+      'content-type': 'application/json; charset=utf-8',
+      ...(correlationId === undefined ? {} : { 'x-correlation-id': correlationId }),
+    },
+  };
+}
+
+export function errorHttp(estado: number, codigo: string, mensaje: string): RespuestaDelPortal {
+  return respuesta(estado, { ok: false, error: { codigo, mensaje } });
+}
+
+/**
+ * Origen propio y cabecera de la aplicación, igual que las rutas con sesión.
+ *
+ * Se repite en vez de importarse porque el original vive en `apps/web/src` y
+ * `packages/app` no puede depender de la aplicación: la dependencia va en el
+ * otro sentido. Su sitio natural es `packages/app/src/http/`, que no es mío;
+ * queda anotado en el informe.
+ *
+ * Aquí no hay cookie que robar, así que esto no es CSRF en sentido estricto:
+ * es lo que impide que un formulario de otra página llene la cocina de pedidos
+ * en nombre de una mesa cuyo código alguien fotografió.
+ */
+export function peticionPropia(peticion: PeticionDelPortal): boolean {
+  const tipo = peticion.headers.get('content-type') ?? '';
+  if (!tipo.toLocaleLowerCase('en-US').startsWith('application/json')) return false;
+  if (peticion.headers.get('x-morphiqpos-request') !== '1') return false;
+
+  const origen = peticion.headers.get('origin');
+  if (origen === null) return true;
+
+  // Los MISMOS origenes que la frontera de escritura de la aplicacion: la
+  // canonica de `APP_URL` mas los alternos por los que este despliegue tambien se
+  // sirve. Sin los alternos, el portal QR contestaba 403 desde la URL del
+  // despliegue mientras el dominio propio no resolvia.
+  const entorno = validarEntorno(process.env);
+  const permitidos = [entorno.APP_URL, ...(entorno.APP_URL_ALTERNAS ?? '').split(',')]
+    .map((valor) => valor.trim())
+    .filter((valor) => valor.length > 0)
+    .map((valor) => {
+      try {
+        return new URL(valor).origin;
+      } catch {
+        return '';
+      }
+    });
+  return permitidos.includes(origen);
+}
+
+interface Despliegue {
+  readonly organizacionId: string;
+  readonly pimienta: string;
+}
+
+/**
+ * A qué negocio sirve ESTA peticion del portal.
+ *
+ * El host va primero, y aqui tiene mas sentido que en ningun otro sitio: el
+ * codigo QR que el comensal escanea LLEVA la direccion dentro
+ * -`https://mh-restaurante.morphiqpos.app/qr/<token>`-, asi que la mesa y el
+ * negocio viajan juntos en lo unico que el comensal tiene. Sin esto, un
+ * despliegue solo podia servir el portal de UN negocio, el de `ORGANIZACION`.
+ *
+ * La organizacion sigue sin llegar en un parametro: el host lo fija el DNS y se
+ * comprueba contra la tabla, y el token se busca DENTRO de la organizacion que
+ * resulte. Un token de otro negocio no encuentra mesa.
+ */
+async function resolverDespliegue(token: string, host?: string | null): Promise<Despliegue> {
+  const entorno = validarEntorno(process.env);
+  // El negocio sale del TOKEN dentro de los que sirve el despliegue: con el sistema maestro
+  // sirviendo seis negocios en un dominio sin slug, pedir «el» negocio del despliegue fallaba
+  // con 422 antes de mirar la mesa (cierre del 21-10).
+  const negocio = await negocioDelTokenDeMesa(entorno.ORGANIZACION, host, token);
+  return { organizacionId: negocio.organizacionId, pimienta: entorno.PIN_PEPPER };
+}
+
+/** `GET /api/publico/qr/:token`. */
+export async function servirPortal(
+  token: string,
+  host?: string | null,
+): Promise<RespuestaDelPortal> {
+  try {
+    const { organizacionId, pimienta } = await resolverDespliegue(token, host);
+    const datos: PayloadPortal = await payloadDelPortal(organizacionId, token, pimienta);
+    return respuesta(200, { ok: true, datos });
+  } catch (error) {
+    return respuestaDeError(error, 'publico.qr', {});
+  }
+}
+
+/** Convierte un comando público en un manejador de ruta. Sólo acepta POST. */
+export function manejadorPublico<E extends ZodType, S>(definicion: ComandoPublico<E, S>) {
+  return async function manejar(
+    token: string,
+    peticion: PeticionDelPortal,
+  ): Promise<RespuestaDelPortal> {
+    if (peticion.method !== 'POST') {
+      return errorHttp(405, 'METODO', 'Usa POST.');
+    }
+    if (!peticionPropia(peticion)) {
+      return errorHttp(403, 'SIN_PERMISO', 'Petición de escritura rechazada.');
+    }
+    if (!cuerpoDentroDelLimite(peticion.headers)) {
+      return errorHttp(413, 'CUERPO_DEMASIADO_GRANDE', 'El cuerpo supera 256 KiB.');
+    }
+
+    let entrada: unknown;
+    try {
+      entrada = await peticion.json();
+    } catch {
+      return errorHttp(400, 'ENTRADA_INVALIDA', 'El cuerpo de la petición no es JSON.');
+    }
+
+    const correlationId = correlationIdDe(
+      peticion.headers.get('x-correlation-id') ?? peticion.headers.get('x-morphiqpos-correlacion'),
+    );
+
+    let despliegue: Despliegue;
+    try {
+      despliegue = await resolverDespliegue(token, peticion.headers.get('host'));
+    } catch (error) {
+      return respuestaDeError(error, definicion.nombre, { correlationId });
+    }
+
+    const clave = peticion.headers.get('idempotency-key');
+
+    const salida = await ejecutarComandoPublico(definicion, {
+      token,
+      organizacionId: despliegue.organizacionId,
+      pimienta: despliegue.pimienta,
+      entrada,
+      ...(clave === null ? {} : { idempotencyKey: clave }),
+      correlationId,
+    });
+
+    return respuesta(estadoDe(salida), salida, salida.correlationId);
+  };
+}
+
+/**
+ * Traduce lo que se escapa fuera del envoltorio.
+ *
+ * Sólo el GET y la resolución del despliegue llegan aquí: los comandos ya
+ * devuelven su unión. Un `ErrorDominio` conserva su código y su mensaje —están
+ * escritos para el comensal—; cualquier otra cosa se queda en el servidor.
+ */
+export function respuestaDeError(
+  error: unknown,
+  donde: string,
+  contexto: { readonly correlationId?: string; readonly organizacionId?: string },
+): RespuestaDelPortal {
+  const correlationId = correlationIdDe(contexto.correlationId);
+  if (esErrorDominio(error)) {
+    const estado = ESTADO_POR_REGLA[error.codigo] ?? ESTADO_HTTP.REGLA_DE_NEGOCIO;
+    return respuesta(
+      estado,
+      {
+        ok: false,
+        error: {
+          codigo: 'REGLA_DE_NEGOCIO',
+          mensaje: error.message,
+          datos: { regla: error.codigo },
+        },
+        correlationId,
+      },
+      correlationId,
+    );
+  }
+
+  registrar({
+    nivel: 'error',
+    modulo: 'portal_http',
+    correlationId,
+    organizacionId: contexto.organizacionId ?? null,
+    mensaje: `${donde} fallo.`,
+  });
+  return respuesta(
+    ESTADO_HTTP.ERROR_INTERNO,
+    {
+      ok: false,
+      error: { codigo: 'ERROR_INTERNO', mensaje: 'No fue posible completar la operación.' },
+      correlationId,
+    },
+    correlationId,
+  );
+}

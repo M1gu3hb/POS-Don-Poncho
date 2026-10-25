@@ -1,0 +1,797 @@
+import 'server-only';
+
+import { sql, type Kysely } from 'kysely';
+
+import type { Transaccion } from '../cliente.ts';
+import type { Esquema } from '../esquema.ts';
+import { tomarFolio } from './folios.ts';
+
+/**
+ * Sesión de caja y sus movimientos (F1.1-A-08).
+ *
+ * Corrige P2-10: en la fuente, `cortes_caja` guardaba `total_ventas`,
+ * `total_efectivo` y `numero_ventas` como columnas, y nunca se actualizaban al
+ * cobrar. El corte mostraba ceros con la caja llena.
+ *
+ * Aquí **no se guarda ningún total**. El saldo esperado es una suma sobre
+ * `movimientos_caja`, y por eso no puede desincronizarse: no hay una segunda
+ * copia que mantener.
+ */
+
+export interface SesionAbierta {
+  readonly id: string;
+  readonly sucursalId: string;
+  readonly terminalId: string;
+  /** La serie del corte. La base la trae con `default 'CC'` (045 §167). */
+  readonly serie: string;
+  readonly fondoInicialCentavos: bigint;
+  readonly abiertaEn: Date;
+}
+
+export async function sesionAbiertaDeTerminal(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  terminalId: string,
+  /**
+   * `true` al CERRAR (auditoría de la 2.4): el cierre suma los movimientos y guarda el
+   * esperado; sin bloquear la sesión, un cobro que entraba entre la suma y el cierre
+   * quedaba fuera del esperado firmado. Con `FOR UPDATE` el cobro en curso termina antes
+   * —o, si llega después, ve la caja cerrada—.
+   */
+  bloquear = false,
+): Promise<SesionAbierta | null> {
+  const consulta = db
+    .selectFrom('sesiones_caja')
+    .select([
+      'id',
+      'sucursal_id as sucursalId',
+      'terminal_id as terminalId',
+      'serie',
+      'fondo_inicial_centavos as fondoInicialCentavos',
+      'abierta_en as abiertaEn',
+    ])
+    .where('organizacion_id', '=', organizacionId)
+    .where('terminal_id', '=', terminalId)
+    .where('estado', '=', 'abierta');
+  const fila = await (bloquear ? consulta.forUpdate() : consulta).executeTakeFirst();
+
+  return fila ?? null;
+}
+
+/**
+ * La sesión abierta de la SUCURSAL, con el nombre de su terminal.
+ *
+ * ── Para qué, si ya hay una por terminal ──────────────────────────────────
+ * Porque `sesiones_caja_una_abierta_por_sucursal` permite UNA por sucursal, y sin
+ * esta consulta abrir una segunda salía como violación de índice único: un 500
+ * con «Algo falló de nuestro lado» en vez de «hay una abierta en la terminal de
+ * al lado, haz el corte ahí».
+ *
+ * Trae el NOMBRE de la terminal a propósito: un identificador no le dice nada a
+ * quien está delante de la caja, y el nombre es lo que se lee en la etiqueta del
+ * aparato.
+ */
+export async function sesionAbiertaDeSucursal(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  sucursalId: string,
+): Promise<(SesionAbierta & { readonly terminalNombre: string | null }) | null> {
+  const fila = await db
+    .selectFrom('sesiones_caja')
+    .leftJoin('terminales', 'terminales.id', 'sesiones_caja.terminal_id')
+    .select([
+      'sesiones_caja.id as id',
+      'sesiones_caja.sucursal_id as sucursalId',
+      'sesiones_caja.terminal_id as terminalId',
+      'sesiones_caja.serie as serie',
+      'sesiones_caja.fondo_inicial_centavos as fondoInicialCentavos',
+      'sesiones_caja.abierta_en as abiertaEn',
+      'terminales.nombre as terminalNombre',
+    ])
+    .where('sesiones_caja.organizacion_id', '=', organizacionId)
+    .where('sesiones_caja.sucursal_id', '=', sucursalId)
+    .where('sesiones_caja.estado', '=', 'abierta')
+    .executeTakeFirst();
+
+  return fila ?? null;
+}
+
+export async function abrirSesion(
+  tx: Transaccion,
+  datos: {
+    readonly organizacionId: string;
+    readonly sucursalId: string;
+    readonly terminalId: string;
+    readonly empleadoAbreId: string;
+    readonly fondoInicialCentavos: bigint;
+    /**
+     * El fondo por montones. Las tres columnas existen desde la 003 y hasta hoy
+     * sólo las escribía la siembra de las demostraciones: la apertura de verdad
+     * guardaba el total y tiraba el desglose, que es justo lo que dice si se
+     * puede dar cambio a las siete de la mañana.
+     */
+    readonly fondoMonedasCentavos?: bigint;
+    readonly fondoChicosCentavos?: bigint;
+    readonly fondoGrandesCentavos?: bigint;
+    /**
+     * Lo que DEBERÍA haber al abrir: lo que dejó el último cierre de la terminal. Se
+     * quedaba en el `default 0` y la «diferencia de apertura» salía igual al fondo.
+     */
+    readonly fondoEsperadoCentavos?: bigint;
+  },
+): Promise<string> {
+  const fila = await tx
+    .insertInto('sesiones_caja')
+    .values({
+      organizacion_id: datos.organizacionId,
+      sucursal_id: datos.sucursalId,
+      terminal_id: datos.terminalId,
+      empleado_abre_id: datos.empleadoAbreId,
+      fondo_inicial_centavos: datos.fondoInicialCentavos,
+      fondo_esperado_centavos: datos.fondoEsperadoCentavos ?? datos.fondoInicialCentavos,
+      // Sin desglose, todo el fondo cuenta como monedas: las columnas son `not
+      // null` y repartirlo a ciegas entre tres montones sería inventarse el
+      // arqueo de mañana.
+      fondo_monedas_centavos: datos.fondoMonedasCentavos ?? datos.fondoInicialCentavos,
+      fondo_chicos_centavos: datos.fondoChicosCentavos ?? 0n,
+      fondo_grandes_centavos: datos.fondoGrandesCentavos ?? 0n,
+      estado: 'abierta',
+    })
+    .returning('id')
+    .executeTakeFirstOrThrow();
+
+  return fila.id;
+}
+
+export interface NuevoMovimiento {
+  readonly organizacionId: string;
+  readonly sesionCajaId: string;
+  readonly tipo: string;
+  /**
+   * El importe. Para los tipos del tronco el signo lo pone `montoConSigno` por el tipo;
+   * para los demás (`ajuste`…) se guarda con el signo que traiga.
+   */
+  readonly montoCentavos: bigint;
+  readonly referenciaTipo: string | null;
+  readonly referenciaId: string | null;
+  readonly empleadoId: string | null;
+  readonly motivo: string | null;
+}
+
+/** Los tipos que el `check movimiento_signo_coherente` (003) obliga a cada signo. */
+const SALEN_DEL_CAJON: readonly string[] = ['devolucion', 'gasto', 'retiro'];
+const ENTRAN_AL_CAJON: readonly string[] = ['apertura', 'venta', 'deposito', 'propina'];
+
+/**
+ * EL SIGNO LO PONE EL TIPO, en un solo sitio (auditoría de la 2.4).
+ *
+ * Dos comandos escribían un `retiro` POSITIVO —la devolución del casco y la entrega de
+ * propina— y la base lo rechaza (`movimiento_signo_coherente`): las dos funciones fallaban
+ * en cuanto tocaban Postgres de verdad, y la base falsa no mira `check`. Cada llamador
+ * decidía el signo a su manera; ahora el repositorio lo normaliza: lo que SALE del cajón,
+ * negativo; lo que ENTRA, positivo; los demás (`ajuste`, `liquidacion`…) tal cual vienen,
+ * porque su signo sí lo decide quien llama.
+ */
+export function montoConSigno(tipo: string, monto: bigint): bigint {
+  const magnitud = monto < 0n ? -monto : monto;
+  if (SALEN_DEL_CAJON.includes(tipo)) return -magnitud;
+  if (ENTRAN_AL_CAJON.includes(tipo)) return magnitud;
+  return monto;
+}
+
+export async function registrarMovimiento(
+  tx: Transaccion,
+  movimiento: NuevoMovimiento,
+): Promise<{ readonly id: string }> {
+  // Devuelve el id porque hay filas que tienen que poder apuntar a su gemelo:
+  // `redondeos.movimiento_caja_id` es lo que deja al corte explicar los veinte
+  // centavos que sobran, y sin el id de vuelta habría que buscarlo por
+  // referencia, que es una consulta más y una forma de equivocarse.
+  return await tx
+    .insertInto('movimientos_caja')
+    .values({
+      organizacion_id: movimiento.organizacionId,
+      sesion_caja_id: movimiento.sesionCajaId,
+      tipo: movimiento.tipo,
+      monto_centavos: montoConSigno(movimiento.tipo, movimiento.montoCentavos),
+      referencia_tipo: movimiento.referenciaTipo,
+      referencia_id: movimiento.referenciaId,
+      empleado_id: movimiento.empleadoId,
+      motivo: movimiento.motivo,
+    })
+    .returning('id')
+    .executeTakeFirstOrThrow();
+}
+
+export interface ArqueoDerivado {
+  readonly fondoInicialCentavos: bigint;
+  /** Suma de TODOS los movimientos, con su signo. Incluye la apertura. */
+  readonly movimientosCentavos: bigint;
+  /** Sólo lo cobrado en efectivo: es lo que debería estar en el cajón. */
+  readonly efectivoEsperadoCentavos: bigint;
+  readonly ventasCentavos: bigint;
+  readonly numeroVentas: number;
+}
+
+/**
+ * Deriva el arqueo de una sesión. Nada de esto se guarda.
+ *
+ * **El esperado es la suma de `movimientos_caja`, y sólo eso.** Ahí entran el
+ * fondo (`apertura`), cada venta cobrada en efectivo (`venta`) y los gastos y
+ * retiros con su signo negativo. Los pagos con tarjeta o transferencia no
+ * generan movimiento: no hay billetes que contar por ellos, y sumarlos hace que
+ * el corte le pida al cajero un efectivo que nunca entró.
+ *
+ * La tentación es `fondo + ventas en efectivo`, y está mal dos veces: cuenta el
+ * fondo dos veces —ya viene como movimiento de apertura— y **no resta los
+ * retiros**, así que el cajero que sacó dinero con permiso aparece con un
+ * faltante por esa cantidad.
+ *
+ * El acoplamiento a cambio es explícito: `abrirCaja` DEBE registrar el fondo
+ * como movimiento y `cobrarOrden` DEBE registrar el efectivo cobrado. Si uno de
+ * los dos deja de hacerlo, el corte miente.
+ */
+export async function arqueoDeSesion(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  sesionCajaId: string,
+): Promise<ArqueoDerivado> {
+  const sesion = await db
+    .selectFrom('sesiones_caja')
+    .select(['fondo_inicial_centavos as fondoInicialCentavos'])
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', sesionCajaId)
+    .executeTakeFirstOrThrow();
+
+  const movimientos = await db
+    .selectFrom('movimientos_caja')
+    .select((eb) => [eb.fn.sum<string>('monto_centavos').as('suma')])
+    .where('organizacion_id', '=', organizacionId)
+    .where('sesion_caja_id', '=', sesionCajaId)
+    .executeTakeFirst();
+
+  const pagos = await db
+    .selectFrom('pagos')
+    .select((eb) => [
+      eb.fn.sum<string>('monto_centavos').as('total'),
+      // `count(distinct orden_id)` y no `count(id)`: un pago mixto son varias
+      // filas y contarlas convertiría una venta en tres.
+      eb.fn.count<string>('orden_id').distinct().as('cuantas'),
+    ])
+    .where('organizacion_id', '=', organizacionId)
+    .where('sesion_caja_id', '=', sesionCajaId)
+    .where('estado', '=', 'confirmado')
+    .executeTakeFirst();
+
+  return {
+    fondoInicialCentavos: sesion.fondoInicialCentavos,
+    movimientosCentavos: aBigint(movimientos?.suma),
+    efectivoEsperadoCentavos: aBigint(movimientos?.suma),
+    ventasCentavos: aBigint(pagos?.total),
+    numeroVentas: Number(pagos?.cuantas ?? '0'),
+  };
+}
+
+/**
+ * Cierra la caja Y LE PONE FOLIO.
+ *
+ * ── Sin el folio, NINGUNA caja se podía cerrar ─────────────────────────────
+ * `045_restaurante.sql:182` añadió `check (estado <> 'cerrada' or folio is not
+ * null)`: un corte cerrado sin folio no se puede reclamar ni auditar, así que
+ * la base lo prohíbe. Pero este `update` marcaba `estado = 'cerrada'` y dejaba
+ * el folio en nulo, de modo que TODO cierre abortaba con 23514 y el cajero veía
+ * «Algo falló de nuestro lado».
+ *
+ * Es el mismo defecto que el `cerrada_en` que faltaba en `marcarPagada`, y se
+ * escapó por lo mismo: los dobles en memoria de las pruebas no modelan `check`,
+ * así que la suite entera pasaba con la caja incerrable. Apareció al cerrar una
+ * caja de verdad contra Postgres.
+ *
+ * El folio se toma DENTRO de esta transacción, con el mismo `tomarFolio` del
+ * cobro. Si el `update` no encuentra fila —alguien la cerró antes—, el comando
+ * lanza y la transacción revierte: el folio consumido se devuelve con ella, y
+ * no queda un hueco en la numeración del corte.
+ */
+/**
+ * Lo que deja un cierre: cuántas filas cambiaron y CON QUÉ FOLIO quedó.
+ *
+ * Devolvía sólo el número de filas y se guardaba el folio para sí. La pantalla
+ * de Miguel enseña «Folio del corte» al cerrar, y como no le llegaba lo leía de
+ * la sesión ABIERTA —donde todavía es nulo, porque el folio se toma justo aquí—
+ * y salía en blanco. En su sistema original ese dato venía en la respuesta del
+ * cierre; al portarlo se perdió.
+ */
+export interface SesionCerrada {
+  readonly filas: number;
+  readonly serie: string;
+  readonly folio: bigint;
+}
+
+export async function cerrarSesion(
+  tx: Transaccion,
+  datos: {
+    readonly organizacionId: string;
+    readonly sucursalId: string;
+    readonly sesionCajaId: string;
+    readonly serie: string;
+    readonly empleadoCierraId: string;
+    readonly efectivoContadoCentavos: bigint;
+    /**
+     * El esperado que se comparó al cerrar. Se guarda con su diferencia, que es lo que
+     * la migración 100 creó para eso y nadie escribía (C.4 de la 2.4).
+     */
+    readonly efectivoEsperadoCentavos: bigint;
+    /**
+     * El bote de propina contado. `undefined` es «este negocio no tiene bote»;
+     * la columna se queda en NULL, que es «no se contó» — y `repartirBote` lo
+     * distingue de un cero a propósito.
+     */
+    readonly boteContadoCentavos?: bigint;
+    /** Lo que se retiró al cerrar (contado − lo que se deja). Sin él, NULL: «no se dijo». */
+    readonly efectivoRetiradoCentavos?: bigint;
+    readonly notasCierre: string | null;
+    readonly ahora: Date;
+  },
+): Promise<SesionCerrada> {
+  const { folio } = await tomarFolio(tx, datos.organizacionId, datos.sucursalId, datos.serie);
+
+  const resultado = await tx
+    .updateTable('sesiones_caja')
+    .set({
+      estado: 'cerrada',
+      cerrada_en: datos.ahora,
+      folio,
+      empleado_cierra_id: datos.empleadoCierraId,
+      efectivo_contado_centavos: datos.efectivoContadoCentavos,
+      ...(datos.boteContadoCentavos === undefined
+        ? {}
+        : { bote_contado_centavos: datos.boteContadoCentavos }),
+      ...(datos.efectivoRetiradoCentavos === undefined
+        ? {}
+        : { efectivo_retirado_centavos: datos.efectivoRetiradoCentavos }),
+      efectivo_esperado_centavos: datos.efectivoEsperadoCentavos,
+      diferencia_centavos: datos.efectivoContadoCentavos - datos.efectivoEsperadoCentavos,
+      notas_cierre: datos.notasCierre,
+    })
+    .where('organizacion_id', '=', datos.organizacionId)
+    .where('id', '=', datos.sesionCajaId)
+    // Cerrar una sesión ya cerrada no debe sobrescribir el arqueo original.
+    .where('estado', '=', 'abierta')
+    .executeTakeFirst();
+
+  return { filas: Number(resultado.numUpdatedRows), serie: datos.serie, folio };
+}
+
+/**
+ * Lo que dejó en el cajón el último cierre de la terminal: contado − retirado. `null` si
+ * no hay cierre anterior o si ese cierre no dijo cuánto dejaba (C.6 de la 2.4).
+ */
+export async function fondoDejadoPorElUltimoCierre(
+  tx: Transaccion,
+  organizacionId: string,
+  terminalId: string,
+): Promise<bigint | null> {
+  const ultimo = await tx
+    .selectFrom('sesiones_caja')
+    .select(['efectivo_contado_centavos as contado', 'efectivo_retirado_centavos as retirado'])
+    .where('organizacion_id', '=', organizacionId)
+    .where('terminal_id', '=', terminalId)
+    .where('estado', '=', 'cerrada')
+    .orderBy('cerrada_en', 'desc')
+    .limit(1)
+    .executeTakeFirst();
+  if (ultimo?.contado == null || ultimo.retirado === null) return null;
+  return ultimo.contado - ultimo.retirado;
+}
+
+/** El conteo del cajón al cerrar, denominación por denominación (F-231, momento `cierre`). */
+export async function anotarConteoDeCierre(
+  tx: Transaccion,
+  datos: {
+    readonly organizacionId: string;
+    readonly sesionCajaId: string;
+    readonly empleadoId: string;
+    readonly conteo: readonly { readonly denominacionCentavos: bigint; readonly piezas: number }[];
+    readonly ahora: Date;
+  },
+): Promise<void> {
+  await tx
+    .insertInto('conteos_denominacion')
+    .values(
+      datos.conteo.map((d) => ({
+        organizacion_id: datos.organizacionId,
+        sesion_caja_id: datos.sesionCajaId,
+        momento: 'cierre',
+        denominacion_centavos: d.denominacionCentavos,
+        piezas: d.piezas,
+        contado_en: datos.ahora,
+        contado_por: datos.empleadoId,
+      })),
+    )
+    .execute();
+}
+
+/**
+ * `SUM` de Postgres devuelve `numeric`, y el parser de `cliente.ts` lo entrega
+ * como cadena para no perder precisión. Una suma vacía devuelve null.
+ */
+function aBigint(valor: string | null | undefined): bigint {
+  if (valor === null || valor === undefined || valor === '') return 0n;
+  return BigInt(valor.split('.')[0] ?? '0');
+}
+
+export interface MovimientoDeCorte {
+  readonly tipo: string;
+  readonly montoCentavos: bigint;
+  readonly motivo: string | null;
+  readonly registradoEn: Date;
+}
+
+/**
+ * Los movimientos manuales de la sesión: gastos, retiros, depósitos, ajustes.
+ *
+ * **Las ventas se excluyen a propósito.** Son cientos en un turno y no aportan
+ * nada al corte una por una: para eso está el total. Lo que el cajero necesita
+ * revisar renglón a renglón es lo que él mismo metió o sacó del cajón.
+ */
+export async function movimientosDeCorte(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  sesionCajaId: string,
+): Promise<readonly MovimientoDeCorte[]> {
+  return db
+    .selectFrom('movimientos_caja')
+    .select(['tipo', 'monto_centavos as montoCentavos', 'motivo', 'created_at as registradoEn'])
+    .where('organizacion_id', '=', organizacionId)
+    .where('sesion_caja_id', '=', sesionCajaId)
+    .where('tipo', '!=', 'venta')
+    .orderBy('created_at')
+    .limit(200)
+    .execute();
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Eliminar un corte cerrado (F1-02 · `Registros.jsx:89`)
+//
+// Su pantalla borra con `api.entidades.CorteCaja.delete(c.id)` detrás de un
+// `if (!isAdmin) return`, y `isAdmin` es una variable del NAVEGADOR. Lo que
+// falta aquí abajo no es el borrado —eso es una línea— sino las tres lecturas
+// que deciden si borrar está permitido, y que tienen que ocurrir DENTRO de la
+// misma transacción que borra.
+// ───────────────────────────────────────────────────────────────────────────
+
+/** Un corte tal como está guardado. No deriva nada: es lo que se va a perder. */
+export interface CorteGuardado {
+  readonly id: string;
+  readonly sucursalId: string;
+  readonly terminalId: string;
+  readonly estado: string;
+  readonly serie: string;
+  readonly folio: bigint | null;
+  readonly abiertaEn: Date;
+  readonly cerradaEn: Date | null;
+  readonly fondoInicialCentavos: bigint;
+  readonly efectivoContadoCentavos: bigint | null;
+  readonly efectivoRetiradoCentavos: bigint | null;
+}
+
+/**
+ * Un corte de ESTA organización, por id.
+ *
+ * Acotado por `organizacion_id` y no sólo por `id`: un corte de otro negocio
+ * tiene que verse igual que uno que no existe. Decir «existe, pero no es tuyo»
+ * convierte el endpoint en un detector de identificadores ajenos.
+ */
+export async function corteDeOrganizacion(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  corteId: string,
+): Promise<CorteGuardado | null> {
+  const fila = await db
+    .selectFrom('sesiones_caja')
+    .select([
+      'id',
+      'sucursal_id as sucursalId',
+      'terminal_id as terminalId',
+      'estado',
+      'serie',
+      'folio',
+      'abierta_en as abiertaEn',
+      'cerrada_en as cerradaEn',
+      'fondo_inicial_centavos as fondoInicialCentavos',
+      'efectivo_contado_centavos as efectivoContadoCentavos',
+      'efectivo_retirado_centavos as efectivoRetiradoCentavos',
+    ])
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', corteId)
+    .executeTakeFirst();
+
+  return fila ?? null;
+}
+
+/** Lo que apunta a un corte. Cero en las seis = se puede borrar. */
+export interface ReferenciasDelCorte {
+  /** `ordenes.sesion_caja_id`. Las ventas que se cobraron en ese turno. */
+  readonly ventas: number;
+  /** `pagos.sesion_caja_id`. Puede haber pago sin orden viva: se cuenta aparte. */
+  readonly pagos: number;
+  /** `movimientos_caja.sesion_caja_id`, SIN contar la apertura. Ver abajo. */
+  readonly movimientos: number;
+  /** `gastos.sesion_caja_id`. Lo que salió del cajón con comprobante. */
+  readonly gastos: number;
+  /** `cortes_turno.sesion_caja_id`. Arqueos intermedios que alguien firmó. */
+  readonly cortesTurno: number;
+  /** Liquidaciones de propina que se llevaron ventas de ese turno. */
+  readonly liquidaciones: number;
+}
+
+interface FilaDeConteos {
+  readonly ventas: number;
+  readonly pagos: number;
+  readonly movimientos: number;
+  readonly gastos: number;
+  readonly cortes_turno: number;
+  readonly liquidaciones: number;
+}
+
+/**
+ * Cuenta, en UNA sola consulta, todo lo que impide borrar el corte.
+ *
+ * ── Por qué se cuenta en vez de intentar el `delete` y ver qué pasa ─────────
+ * Las llaves foráneas a `sesiones_caja` son `on delete restrict`
+ * (`003_venta_caja_inventario.sql:111,255,301` y `045_restaurante.sql:562,706`).
+ * Sin este conteo, borrar un corte con ventas aborta con un `23503`, y lo que
+ * llega a la pantalla del dueño es «update or delete on table "sesiones_caja"
+ * violates foreign key constraint». Eso no dice cuántas ventas hay ni qué
+ * hacer. El conteo convierte la misma negativa en una frase con números.
+ *
+ * ── La apertura no cuenta, y es deliberado ─────────────────────────────────
+ * `caja.abrir` escribe el fondo inicial como un movimiento de tipo `apertura`
+ * para que el esperado sea una SUMA de movimientos y no una fórmula con ramas
+ * (ver `arqueoDeSesion`, arriba). Ese renglón no es actividad del turno: es el
+ * propio corte contado otra vez. Si contara, TODO corte tendría al menos una
+ * referencia y este comando no podría borrar nunca nada — sería una función que
+ * siempre falla, que es peor que no tenerla.
+ *
+ * ── Las liquidaciones se cuentan por `ordenes` ─────────────────────────────
+ * `liquidaciones_propina` no tiene `sesion_caja_id`: el vínculo va al revés,
+ * por `ordenes.propina_liquidacion_id` (`045_restaurante.sql:38`, y el
+ * `comment on table` lo dice: «venta_ids no se guardan: se derivan»). Se cuenta
+ * aunque quede subsumido por `ventas`, porque el número que el dueño necesita
+ * leer es «esto ya se repartió entre los meseros», y eso pesa más que «hay
+ * ventas».
+ */
+export async function referenciasDelCorte(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  corteId: string,
+): Promise<ReferenciasDelCorte> {
+  const resultado = await sql<FilaDeConteos>`
+    select
+      (select count(*)::int from ordenes
+        where organizacion_id = ${organizacionId} and sesion_caja_id = ${corteId}) as ventas,
+      (select count(*)::int from pagos
+        where organizacion_id = ${organizacionId} and sesion_caja_id = ${corteId}) as pagos,
+      (select count(*)::int from movimientos_caja
+        where organizacion_id = ${organizacionId} and sesion_caja_id = ${corteId}
+          and tipo <> 'apertura') as movimientos,
+      (select count(*)::int from gastos
+        where organizacion_id = ${organizacionId} and sesion_caja_id = ${corteId}) as gastos,
+      (select count(*)::int from cortes_turno
+        where organizacion_id = ${organizacionId} and sesion_caja_id = ${corteId}) as cortes_turno,
+      (select count(distinct propina_liquidacion_id)::int from ordenes
+        where organizacion_id = ${organizacionId} and sesion_caja_id = ${corteId}
+          and propina_liquidacion_id is not null) as liquidaciones
+  `.execute(db);
+
+  const fila = resultado.rows[0];
+  // Seis subconsultas escalares devuelven siempre una fila. Si no la hay, la
+  // consulta no es la que se escribió: se falla en vez de suponer que hay cero
+  // referencias, porque suponer cero aquí AUTORIZA un borrado.
+  if (fila === undefined) {
+    throw new Error(
+      'El conteo de referencias del corte no devolvió ninguna fila. ' +
+        'Sin ese número no se puede decidir si el corte se puede borrar.',
+    );
+  }
+
+  return {
+    ventas: fila.ventas,
+    pagos: fila.pagos,
+    movimientos: fila.movimientos,
+    gastos: fila.gastos,
+    cortesTurno: fila.cortes_turno,
+    liquidaciones: fila.liquidaciones,
+  };
+}
+
+/**
+ * Borra los movimientos de apertura del corte. Devuelve cuántos.
+ *
+ * Va antes que el corte porque la llave foránea es `restrict`: los hijos
+ * primero, igual que el orden de `TABLAS_POR_SECCION` en el mantenimiento.
+ * Alcanza sólo a `apertura` a propósito: cualquier otro tipo ya bloqueó la
+ * operación en `referenciasDelCorte`, así que este `delete` no puede llevarse
+ * un movimiento que describa dinero que entró o salió de verdad.
+ */
+export async function borrarMovimientosDeApertura(
+  tx: Transaccion,
+  organizacionId: string,
+  corteId: string,
+): Promise<number> {
+  const resultado = await tx
+    .deleteFrom('movimientos_caja')
+    .where('organizacion_id', '=', organizacionId)
+    .where('sesion_caja_id', '=', corteId)
+    .where('tipo', '=', 'apertura')
+    .executeTakeFirst();
+
+  return Number(resultado.numDeletedRows);
+}
+
+/**
+ * Borra el corte, y sólo si sigue cerrado. Devuelve cuántas filas se fueron.
+ *
+ * El `where estado = 'cerrada'` repite en el `delete` la comprobación que el
+ * comando ya hizo al leer, y no sobra: entre la lectura y el borrado cabe otra
+ * transacción. Cero filas significa que el mundo cambió mientras tanto, y el
+ * comando lo traduce; sin esta cláusula borraría algo que ya no es lo que leyó.
+ */
+export async function borrarCorteCerrado(
+  tx: Transaccion,
+  organizacionId: string,
+  corteId: string,
+): Promise<number> {
+  const resultado = await tx
+    .deleteFrom('sesiones_caja')
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', corteId)
+    .where('estado', '=', 'cerrada')
+    .executeTakeFirst();
+
+  return Number(resultado.numDeletedRows);
+}
+
+// ─────────────────────────────────────────────────── cortes de turno (E8-3)
+
+/**
+ * Dónde empieza el turno que se está cortando.
+ *
+ * Donde acabó el corte de turno anterior, y sólo si no hay ninguno, en la
+ * apertura de la caja. Sin esto, dos cortes seguidos contarían las mismas
+ * ventas las dos veces y el segundo diría que entró el doble.
+ */
+export async function inicioDelTurno(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  sesionCajaId: string,
+  abiertaEn: Date,
+): Promise<Date> {
+  const ultimo = await db
+    .selectFrom('cortes_turno')
+    .select(['cortado_en as cortadoEn'])
+    .where('organizacion_id', '=', organizacionId)
+    .where('sesion_caja_id', '=', sesionCajaId)
+    .orderBy('cortado_en', 'desc')
+    .limit(1)
+    .executeTakeFirst();
+
+  return ultimo?.cortadoEn ?? abiertaEn;
+}
+
+export interface CorteDeTurnoRegistrado {
+  readonly id: string;
+  readonly serie: string;
+  readonly folio: bigint;
+}
+
+/**
+ * Escribe el arqueo parcial. NO toca `sesiones_caja`.
+ *
+ * El folio sale de `tomarFolio` con serie propia, `CT`, y no de la de la caja:
+ * son dos numeraciones distintas y compartirlas dejaría huecos en las dos.
+ * `Caja.jsx:916` lo generaba en el navegador con `generateFolio('CT')`, así que
+ * dos terminales cortando turno a la vez producían el mismo número.
+ */
+export async function registrarCorteDeTurno(
+  tx: Transaccion,
+  datos: {
+    readonly organizacionId: string;
+    readonly sesionCajaId: string;
+    readonly sucursalId: string;
+    readonly empleadoId: string;
+    readonly rangoInicio: Date;
+    readonly efectivoContadoCentavos: bigint;
+    readonly notas: string | null;
+    readonly ahora: Date;
+  },
+): Promise<CorteDeTurnoRegistrado> {
+  const { serie, folio } = await tomarFolio(
+    tx,
+    datos.organizacionId,
+    datos.sucursalId,
+    SERIE_CORTE_TURNO,
+  );
+
+  const fila = await tx
+    .insertInto('cortes_turno')
+    .values({
+      organizacion_id: datos.organizacionId,
+      sesion_caja_id: datos.sesionCajaId,
+      serie,
+      folio,
+      rango_inicio: datos.rangoInicio,
+      cortado_en: datos.ahora,
+      empleado_id: datos.empleadoId,
+      efectivo_contado_centavos: datos.efectivoContadoCentavos,
+      notas: datos.notas,
+    })
+    .returning(['id'])
+    .executeTakeFirstOrThrow();
+
+  return { id: fila.id, serie, folio };
+}
+
+/** La serie de los cortes de turno, distinta de la de la caja (`CC`). */
+const SERIE_CORTE_TURNO = 'CT';
+
+/** El fondo de la sesión por montones: monedas, billetes chicos y grandes (F-984). */
+export async function fondoPorMontones(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  sesionCajaId: string,
+): Promise<{ readonly monedas: bigint; readonly chicos: bigint; readonly grandes: bigint }> {
+  const fila = await db
+    .selectFrom('sesiones_caja')
+    .select([
+      'fondo_monedas_centavos as monedas',
+      'fondo_chicos_centavos as chicos',
+      'fondo_grandes_centavos as grandes',
+    ])
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', sesionCajaId)
+    .executeTakeFirstOrThrow();
+  return fila;
+}
+
+/**
+ * EL CUPO DE CAJAS DE LA SUCURSAL y las que ya están abiertas (F-235, 179).
+ *
+ * `sesiones_caja_una_abierta_por_sucursal` era un índice único: una caja por sucursal,
+ * siempre. Desde la 179 el cupo es de la sucursal —uno por omisión, dos en la cafetería
+ * de fin de semana— y la base lo hace cumplir con un disparador que rechaza igual que el
+ * índice. Esto lo lee ANTES de abrir, para que el rechazo llegue con la terminal que
+ * tiene la caja y no como un 23505 sin explicación.
+ */
+export async function cupoDeCajas(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  sucursalId: string,
+): Promise<{
+  readonly cupo: number;
+  readonly abiertas: readonly (SesionAbierta & { readonly terminalNombre: string | null })[];
+}> {
+  const sucursal = await db
+    .selectFrom('sucursales')
+    .select('cajas_simultaneas')
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', sucursalId)
+    .executeTakeFirst();
+  const abiertas = await db
+    .selectFrom('sesiones_caja')
+    .leftJoin('terminales', 'terminales.id', 'sesiones_caja.terminal_id')
+    .select([
+      'sesiones_caja.id as id',
+      'sesiones_caja.sucursal_id as sucursalId',
+      'sesiones_caja.terminal_id as terminalId',
+      'sesiones_caja.serie as serie',
+      'sesiones_caja.fondo_inicial_centavos as fondoInicialCentavos',
+      'sesiones_caja.abierta_en as abiertaEn',
+      'terminales.nombre as terminalNombre',
+    ])
+    .where('sesiones_caja.organizacion_id', '=', organizacionId)
+    .where('sesiones_caja.sucursal_id', '=', sucursalId)
+    .where('sesiones_caja.estado', '=', 'abierta')
+    .execute();
+  return { cupo: sucursal?.cajas_simultaneas ?? 1, abiertas };
+}

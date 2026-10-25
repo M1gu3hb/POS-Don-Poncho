@@ -1,0 +1,947 @@
+'use client';
+
+import { Badge } from '@morphiqpos/ui/primitivas/badge';
+import { Button } from '@morphiqpos/ui/primitivas/button';
+import { Input } from '@morphiqpos/ui/primitivas/input';
+import { Label } from '@morphiqpos/ui/primitivas/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@morphiqpos/ui/primitivas/tabs';
+import {
+  Aviso,
+  CampoDeDinero,
+  Cifra,
+  ConfirmacionDestructiva,
+  Dinero,
+  ErrorDePantalla,
+  Esqueleto,
+  ListaDeTarjetas,
+  Superficie,
+  Tabla,
+  Vacio,
+  dineroEnTexto,
+  type ColumnaDeTabla,
+} from '@morphiqpos/ui/sistema';
+import {
+  type ChangeEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+
+import { consultarPuente, invocarComando } from '~/cliente/api';
+import { centavosDe } from '~/cliente/dinero-del-puente';
+import { useVocabulario } from '~/cliente/vocabulario';
+
+import { MovimientosDeCaja } from './MovimientosDeCaja';
+import { rotuloDeLaCuenta } from './cuenta-de-la-caja.ts';
+import type { Vocabulario } from '@morphiqpos/domain/vocabulario';
+import { ChevronRight, CircleCheckBig, Search, SearchX, TriangleAlert } from 'lucide-react';
+
+/**
+ * PANTALLA · restaurante · caja
+ *
+ * Pantalla de inicio del cajero: 40-120 cobros al día, y la única del modelo
+ * donde se BUSCA un dato entre muchos. De ahí las filas compactas y las cifras
+ * tabulares a la derecha — aquí lo que adorna, estorba.
+ *
+ * Abre en «Pendientes» y no en «Buscar» porque el 90 % del trabajo del cajero es
+ * cobrar lo que ya está esperando, y un buscador vacío le costaría un clic cien
+ * veces al día. La ESPERA es columna y además ordena la fila: una mesa que lleva
+ * seis minutos esperando no se libera y la persona se está enojando. Los botones
+ * de caja no viven en un menú porque son los momentos en que la caja CAMBIA DE
+ * ESTADO, y esconderlos hace que alguien cobre sin caja abierta o que el turno se
+ * vaya sin cortar. Y «Caja cerrada» es un MURO, no un aviso: un cobro sin sesión
+ * no pertenece a ningún corte, y eso no lo cuadra nadie.
+ *
+ * ── Una tabla en la PC, tarjetas en la tableta y el teléfono ────────────
+ * La PC es el dispositivo de la caja: una `Tabla` densa —código, mesa, mesero,
+ * personas, espera, total— que se compara de arriba abajo y se opera con Enter.
+ * Por debajo de 1280 px cada cuenta es una tarjeta con la mesa y el total GRANDES
+ * arriba y el mesero y la espera abajo; en el teléfono, que es el dueño cobrando
+ * porque el cajero fue al baño, el total es lo más grande de la tarjeta. No es la
+ * misma lista con otro CSS: la tarjeta junta mesa y total en su cabecera, y eso
+ * pide sus propias columnas (`columnasDeTarjeta`).
+ *
+ * ── Recortado, dicho aquí y no escondido ─────────────────────────────────
+ * · La espera cuenta desde que se ABRIÓ la cuenta: el instante en que la mesa la
+ *   pidió vive en `eventos_mesa`, que el puente sólo abre a DIRECCIÓN. El número
+ *   sale mayor; el ORDEN de la fila, que es para lo que sirve, no. Por eso la
+ *   espera no pinta la fila de ámbar: con un número inflado, el color mentiría.
+ * · Cobrar es el diálogo «Cobro» y el arqueo es «Cierre diario y arqueo»: dos
+ *   pantallas propias. Aquí se elige la cuenta y se abren aquéllas — el conteo es
+ *   A CIEGAS, así que ésta nunca adelanta el efectivo esperado.
+ * · Fuera quedan `F2` y las flechas y, en teléfono, el menú que escondía
+ *   Resumen e Historial: allí esas dos pestañas no se muestran, y «sólo
+ *   pendientes», que es lo que el documento pide, se cumple igual. Enter sobre la
+ *   fila enfocada sí cobra: lo trae la `Tabla`.
+ */
+
+/**
+ * Una cuenta esperando cobro. Los nombres de los campos son los del PUENTE, no
+ * unos propios: renombrarlos costaría un mapeo entero para no ganar nada, y el
+ * mapa de entidades ya advierte que los nombres son los que la base escribe.
+ */
+export interface FilaDeCaja {
+  readonly id: string;
+  /** El código impreso que el comensal lleva a la caja: M05-4821. */
+  readonly codigo_caja: string | null;
+  readonly mesa_numero: number | null;
+  /** Lo que nombra a una parte de una cuenta dividida, que no tiene mesa: «Mesa 5 · cuenta 1 de 2». */
+  readonly cliente_nombre: string | null;
+  readonly usuario_mesero_nombre: string | null;
+  readonly personas: number | null;
+  /** En PESOS, como la base lo escribe. Se lee sólo por `totalDe`, que lo da en centavos. */
+  readonly total: number | null;
+  readonly fecha_apertura: string | null;
+}
+
+/** El turno hasta ahora: lo que se enseña cuando no hay nada que cobrar. */
+export interface ResumenDeTurno {
+  readonly abierta: boolean;
+  readonly ventasCentavos: string;
+  readonly numeroVentas: number;
+  /** Si a esta sesión se le enseñan el gasto y la devolución (el servidor lo exige igual). */
+  readonly puedeAdministrar?: boolean;
+  /** Sin caja aquí: la que la sucursal tiene abierta en otra terminal (`caja.traer`). */
+  readonly enOtraTerminal?: CajaEnOtraTerminal | null;
+  /** `false` si la sucursal ya llenó su cupo de cajas: abrir aquí fallaría. */
+  readonly puedoAbrir?: boolean;
+}
+
+/** La caja abierta en otra terminal, como la describe `caja.estado`. */
+interface CajaEnOtraTerminal {
+  readonly sesionCajaId: string;
+  readonly terminalNombre: string | null;
+  readonly abiertaPor: string | null;
+  readonly abiertaEn: string;
+  readonly puedoTraerla: boolean;
+}
+
+/** «La abrió Miguel el 20 oct, 21:18»: dónde está la caja y desde cuándo, en una línea. */
+function dondeEstaLaCaja(caja: CajaEnOtraTerminal): string {
+  const desde = new Date(caja.abiertaEn).toLocaleString('es-MX', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  // «p. m.» ya trae su punto: no se le pone otro.
+  const fin = desde.endsWith('.') ? '' : '.';
+  return `${caja.abiertaPor === null ? 'Se abrió' : `La abrió ${caja.abiertaPor}`} el ${desde}${fin}`;
+}
+
+/**
+ * EL FONDO SE CUENTA POR MONTONES (F-984, día completo del restaurante, 2.4): «$1,500» no
+ * dice si se puede dar cambio. El servidor ya lo guardaba desglosado y las otras cuatro
+ * cajas lo piden así; ésta pedía un solo importe, y `caja.abrir` lo metía entero en el
+ * montón de monedas —lo único honesto que se puede decir de un fondo sin forma—.
+ */
+const MONTONES = [
+  { clave: 'monedas', etiqueta: 'Monedas', ayuda: 'de $1, $2, $5 y $10' },
+  { clave: 'chicos', etiqueta: 'Billetes chicos', ayuda: 'de $20, $50 y $100' },
+  { clave: 'grandes', etiqueta: 'Billetes grandes', ayuda: 'de $200 y $500' },
+] as const;
+
+type Monton = (typeof MONTONES)[number]['clave'];
+
+const SIN_FONDO: Readonly<Record<Monton, number | null>> = {
+  monedas: null,
+  chicos: null,
+  grandes: null,
+};
+
+type FondoPorMontones = Readonly<Record<Monton, number | null>>;
+
+/** El fondo por montones y «Abrir caja»: lo que el muro pide cuando todavía cabe abrir. */
+function FondoDeApertura({
+  fondo,
+  alCambiar,
+  alAbrir,
+}: {
+  readonly fondo: FondoPorMontones;
+  readonly alCambiar: (cambio: (antes: FondoPorMontones) => FondoPorMontones) => void;
+  readonly alAbrir: () => void;
+}) {
+  return (
+    <>
+      {MONTONES.map((monton, indice) => (
+        <div key={monton.clave} className="flex flex-col gap-(--espacio-1)">
+          <Label htmlFor={`caja-fondo-${monton.clave}`}>
+            {monton.etiqueta} <span className="text-texto-sutil">{monton.ayuda}</span>
+          </Label>
+          <CampoDeDinero
+            id={`caja-fondo-${monton.clave}`}
+            autoFocus={indice === 0}
+            centavos={fondo[monton.clave]}
+            alCambiar={(centavos) => {
+              alCambiar((antes) => ({ ...antes, [monton.clave]: centavos }));
+            }}
+          />
+        </div>
+      ))}
+      <p className="flex items-baseline justify-between text-sm">
+        <span className="text-texto-sutil">Abres con</span>
+        <Dinero
+          centavos={MONTONES.reduce((suma, m) => suma + (fondo[m.clave] ?? 0), 0)}
+          tamano="lg"
+        />
+      </p>
+      <Button size="lg" className="w-full" onClick={alAbrir}>
+        Abrir caja
+      </Button>
+    </>
+  );
+}
+
+/** «Usar esta caja aquí», o a quién pedírselo si la abrió otra persona. */
+function TraerLaCaja({
+  caja,
+  alTraer,
+}: {
+  readonly caja: CajaEnOtraTerminal;
+  readonly alTraer: (sesionCajaId: string) => void;
+}) {
+  if (!caja.puedoTraerla) {
+    return (
+      <p className="text-sm text-texto-sutil">
+        Pide a quien la abrió o a la gerencia que la traiga a este dispositivo, o que haga su corte.
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-(--espacio-2)">
+      <Button
+        size="lg"
+        className="w-full"
+        onClick={() => {
+          alTraer(caja.sesionCajaId);
+        }}
+      >
+        Usar esta caja aquí
+      </Button>
+      <p className="text-sm text-texto-sutil">
+        Cobras y haces su corte desde este dispositivo; las ventas del turno siguen en la misma
+        caja.
+      </p>
+    </div>
+  );
+}
+
+/** Lo que `caja.abrir` recibe: cada montón, en centavos; lo que no se tecleó, cero. */
+export function fondoParaAbrir(fondo: Readonly<Record<Monton, number | null>>) {
+  return {
+    fondoMonedasCentavos: fondo.monedas ?? 0,
+    fondoChicosCentavos: fondo.chicos ?? 0,
+    fondoGrandesCentavos: fondo.grandes ?? 0,
+  };
+}
+
+export interface CajaProps {
+  /** Cuando llegan, la pantalla no consulta: es lo que usan las pruebas. */
+  readonly filasIniciales?: readonly FilaDeCaja[];
+  readonly turnoInicial?: ResumenDeTurno;
+  readonly onCobrar?: (ventaId: string) => void;
+}
+
+/** Desde este ancho la lista es la tabla del cajero; por debajo, tarjetas. */
+const PC = '(min-width: 1280px)';
+/**
+ * Cada cuánto se relee la caja mientras la pantalla está abierta.
+ *
+ * La caja vive abierta todo el turno y lo que el mesero pide a las 14:05 tiene que llegar sin
+ * que la cajera recargue la página: leída una sola vez al montar, la cuenta nueva no aparecía
+ * jamás y «la caja es la lista de mesas que ya pidieron cuenta» (`00-FICHA §3`) se quedaba en la
+ * lista de la mañana. Lo encontró el día completo: Rosa abre su caja, Lupita pide la cuenta de
+ * la mesa 1 y la lista de Rosa no la tenía.
+ */
+const CADA_CUANTO_SE_RELEE = 5_000;
+/** En teléfono sobreviven Pendientes y Buscar: lo demás es trabajo de mostrador. */
+const SOLO_PC = 'hidden md:inline-flex';
+
+/** Texto de espera: el dato se lee siempre, nunca se infiere de un color. */
+export function esperaDesde(iso: string | null, ahora: number): string {
+  if (iso === null) return 'sin dato';
+  const minutos = Math.floor((ahora - Date.parse(iso)) / 60_000);
+  if (!Number.isFinite(minutos) || minutos < 1) return 'ahora';
+  if (minutos < 60) return `hace ${String(minutos)} min`;
+  return `hace ${String(Math.floor(minutos / 60))} h`;
+}
+
+/**
+ * El total de la cuenta, en centavos. La unidad la decide `centavosDe` por la conversión
+ * del campo —`Venta.total` llega en pesos—, contando dígitos y no multiplicando. `null` es
+ * «no vino»: quien pinta decide si eso es cero, y «sin consumo» sólo lo es un cero de verdad.
+ */
+function totalDe(fila: FilaDeCaja): number | null {
+  return centavosDe('Venta', 'total', fila.total);
+}
+
+/** Lo que se pinta y se ordena: sin dato cuenta como cero, como siempre se pintó. */
+function totalCentavos(fila: FilaDeCaja): number {
+  return totalDe(fila) ?? 0;
+}
+
+function rotulo(fila: FilaDeCaja, voc: Vocabulario): string {
+  return rotuloDeLaCuenta(fila, {
+    mesa: voc.titulo('unidad_servicio'),
+    sinMesa: `Sin ${voc.singular('unidad_servicio')}`,
+  });
+}
+
+function mesero(fila: FilaDeCaja, voc: Vocabulario): string {
+  return fila.usuario_mesero_nombre ?? `sin ${voc.singular('responsable')}`;
+}
+
+/** Quién atiende y cuánta gente: dos datos chicos que en la tarjeta comparten renglón. */
+function quien(fila: FilaDeCaja, voc: Vocabulario): string {
+  const gente = fila.personas === null ? '' : ` · ${String(fila.personas)} p.`;
+  return `${mesero(fila, voc)}${gente}`;
+}
+
+/**
+ * El importe de la cuenta. Un ticket en $0.00 se abrió y se cerró sin consumo: se
+ * dice con palabras al lado de la cifra, porque el tono de la fila solo no se lee.
+ */
+function importe(fila: FilaDeCaja, cifra: ReactNode): ReactNode {
+  if (totalDe(fila) !== 0) return cifra;
+  return (
+    <>
+      <span className="mr-(--espacio-2) text-xs font-medium text-texto-sutil">sin consumo</span>
+      {cifra}
+    </>
+  );
+}
+
+/**
+ * El nombre de la fila para un lector de pantalla: la fila ES el control de cobrar,
+ * y sin nombre la acción principal de la caja se anunciaba como «fila».
+ */
+function etiquetaDeCobro(fila: FilaDeCaja, voc: Vocabulario): string {
+  return `Cobrar ${rotulo(fila, voc)} · ${dineroEnTexto(totalCentavos(fila))}`;
+}
+
+/** La tabla del cajero en la PC: densa, cada columna alineada, el total a la derecha. */
+function columnasDeTabla(
+  voc: Vocabulario,
+  ahora: number,
+  alCobrar: (ventaId: string) => void,
+): readonly ColumnaDeTabla<FilaDeCaja>[] {
+  return [
+    {
+      clave: 'codigo',
+      titulo: 'Código',
+      celda: (f) => (
+        <span className="font-numeros tracking-wide text-texto-sutil tabular-nums">
+          {f.codigo_caja ?? '—'}
+        </span>
+      ),
+    },
+    {
+      clave: 'mesa',
+      titulo: voc.titulo('unidad_servicio'),
+      celda: (f) => <span className="font-semibold">{rotulo(f, voc)}</span>,
+    },
+    { clave: 'mesero', titulo: voc.titulo('responsable'), celda: (f) => mesero(f, voc) },
+    {
+      clave: 'personas',
+      titulo: 'Personas',
+      numerica: true,
+      celda: (f) => (f.personas === null ? '—' : <Cifra valor={f.personas} tamano="sm" />),
+    },
+    {
+      clave: 'espera',
+      titulo: 'Espera',
+      orden: (f) => f.fecha_apertura ?? '',
+      celda: (f) => <span className="font-medium">{esperaDesde(f.fecha_apertura, ahora)}</span>,
+    },
+    {
+      clave: 'total',
+      titulo: 'Total',
+      numerica: true,
+      orden: (f) => totalCentavos(f),
+      celda: (f) => importe(f, <Dinero centavos={totalCentavos(f)} className="font-semibold" />),
+    },
+    {
+      clave: 'cobrar',
+      titulo: 'Cobrar',
+      // Un control de verdad, con nombre: la columna que se llama «Cobrar» no puede
+      // estar vacía para el lector de pantalla ni para quien opera por voz. Fuera del
+      // orden de tabulación porque la fila ya lo está y Enter sobre ella cobra: dos
+      // paradas por cuenta doblarían el camino del cajero. `Tabla` no activa la fila
+      // cuando el clic viene de un botón de la celda, así que no cobra dos veces.
+      celda: (f) => (
+        <span className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            tabIndex={-1}
+            aria-label={`Cobrar ${rotulo(f, voc)}`}
+            className="text-texto-sutil"
+            onClick={() => {
+              alCobrar(f.id);
+            }}
+          >
+            <ChevronRight aria-hidden="true" className="size-4" />
+          </Button>
+        </span>
+      ),
+    },
+  ];
+}
+
+/**
+ * La tarjeta de tableta y teléfono: la mesa y el total arriba, en grande, y el
+ * total más grande que la mesa —en el teléfono es lo único que se dice en voz
+ * alta—; debajo, el mesero, la espera y el código.
+ */
+function columnasDeTarjeta(voc: Vocabulario, ahora: number): readonly ColumnaDeTabla<FilaDeCaja>[] {
+  return [
+    {
+      clave: 'mesa',
+      titulo: voc.titulo('unidad_servicio'),
+      celda: (f) => (
+        <span className="flex items-baseline justify-between gap-(--espacio-3)">
+          <span className="text-lg font-semibold md:text-2xl">{rotulo(f, voc)}</span>
+          <span>
+            {importe(
+              f,
+              <Dinero centavos={totalCentavos(f)} tamano="lg" className="text-2xl font-bold" />,
+            )}
+          </span>
+        </span>
+      ),
+    },
+    { clave: 'mesero', titulo: voc.titulo('responsable'), celda: (f) => quien(f, voc) },
+    {
+      clave: 'espera',
+      titulo: 'Espera',
+      celda: (f) => <span className="font-medium">{esperaDesde(f.fecha_apertura, ahora)}</span>,
+    },
+    {
+      clave: 'codigo',
+      titulo: 'Código',
+      celda: (f) => <span className="font-numeros tabular-nums">{f.codigo_caja ?? '—'}</span>,
+    },
+  ];
+}
+
+/** Lo decide el ancho, como `TablaAdaptable`; en el servidor, la PC, que es la de la caja. */
+function useEsPC(): boolean {
+  return useSyncExternalStore(
+    (avisar) => {
+      const medio = window.matchMedia(PC);
+      medio.addEventListener('change', avisar);
+      return () => {
+        medio.removeEventListener('change', avisar);
+      };
+    },
+    () => window.matchMedia(PC).matches,
+    () => true,
+  );
+}
+
+/**
+ * Las cuentas que ya pidieron cobro: `Venta` en «cuenta solicitada», con el dinero que el
+ * puente sólo abre a caja. Sale ordenado por espera, de más a menos.
+ *
+ * ── Por cuenta y no por mesa ───────────────────────────────────────────────
+ * Esto se armaba con las MESAS en «cuenta solicitada» y de ahí su cuenta activa. Una cuenta
+ * DIVIDIDA no cabe: cada parte se cobra por separado y ninguna es la activa de la mesa —la
+ * conserva la madre, que ya no se cobra—, así que quien dividía la cuenta de una mesa grande
+ * se quedaba sin saber dónde cobrar lo que acababa de partir: la lista decía «ninguna mesa
+ * está esperando pagar» con dos cuentas pedidas. Preguntar por las cuentas pedidas trae las
+ * dos cosas, y es lo mismo que ya hace la pantalla de cobro para elegir la que sigue.
+ */
+async function leerPendientes(signal: AbortSignal): Promise<readonly FilaDeCaja[]> {
+  const ventas = await consultarPuente<FilaDeCaja>('Venta', {
+    filtro: { estado: 'cuenta_solicitada' },
+    limite: 300,
+    signal,
+  });
+  return [...ventas].sort((a, b) => (a.fecha_apertura ?? '').localeCompare(b.fecha_apertura ?? ''));
+}
+
+export function Caja({ filasIniciales, turnoInicial, onCobrar }: CajaProps) {
+  const voc = useVocabulario();
+  const esPC = useEsPC();
+  const [filas, setFilas] = useState<readonly FilaDeCaja[] | null>(filasIniciales ?? null);
+  const [turno, setTurno] = useState<ResumenDeTurno | null>(turnoInicial ?? null);
+  /** No se leyó NADA: sin lista no hay pantalla, y se dice con su reintento. */
+  const [falloDeCarga, setFalloDeCarga] = useState<string | null>(null);
+  /** Se leyó, y un comando falló: la lista se queda con el último dato. */
+  const [error, setError] = useState<string | null>(null);
+  /** La relectura periódica falló: se queda lo último que se leyó, y se dice. */
+  const [falloDeRefresco, setFalloDeRefresco] = useState<string | null>(null);
+  const [intento, setIntento] = useState(0);
+  const [pestana, setPestana] = useState('pendientes');
+  const [busqueda, setBusqueda] = useState('');
+  const [fondo, setFondo] = useState<Readonly<Record<Monton, number | null>>>(SIN_FONDO);
+  const [ahora, setAhora] = useState(() => Date.now());
+  /** El ticket sin consumo que espera confirmación para eliminarse. */
+  const [aEliminar, setAEliminar] = useState<FilaDeCaja | null>(null);
+  /** El botón que abrió la confirmación: al cancelar, el foco vuelve ahí. */
+  const disparador = useRef<HTMLElement | null>(null);
+
+  /**
+   * Lee, y NO pinta.
+   *
+   * La separación no es estilo: `setState` dentro de una función que el efecto
+   * llama de frente encadena un render por cada lectura. Lo que se lee vuelve
+   * como dato y quien lo pidió decide cuándo escribirlo.
+   */
+  const leerCaja = useCallback(async (signal: AbortSignal) => {
+    const [pendientes, estado] = await Promise.all([
+      leerPendientes(signal),
+      invocarComando<ResumenDeTurno>('/api/caja/estado', {}, { signal }),
+    ]);
+    return { pendientes, estado };
+  }, []);
+
+  useEffect(() => {
+    // El reloj avanza solo: si no, «hace 1 min» sigue diciendo eso cuando ya van
+    // nueve y la columna que ordena la fila miente.
+    const reloj = setInterval(() => {
+      setAhora(Date.now());
+    }, 30_000);
+    const control = new AbortController();
+    if (filasIniciales === undefined) {
+      // Una lectura abortada —la pantalla se fue, o el modo estricto la montó dos
+      // veces— no es un fallo: su rechazo no debe tapar la lectura que sí llegó.
+      leerCaja(control.signal)
+        .then(({ pendientes, estado }) => {
+          if (control.signal.aborted) return;
+          setFilas(pendientes);
+          setTurno(estado);
+        })
+        .catch((fallo: unknown) => {
+          if (control.signal.aborted) return;
+          setFalloDeCarga(fallo instanceof Error ? fallo.message : 'No se pudo leer la caja.');
+        });
+    }
+    // Se relee SIN vaciar lo que se ve y sin encimar lecturas: si la anterior sigue en vuelo, la
+    // que toca se salta. Con `filasIniciales` —las pruebas de la pantalla— no hay red que releer.
+    let leyendo = false;
+    const refresco =
+      filasIniciales === undefined
+        ? setInterval(() => {
+            if (leyendo) return;
+            leyendo = true;
+            leerCaja(control.signal)
+              .then(({ pendientes, estado }) => {
+                if (control.signal.aborted) return;
+                setFilas(pendientes);
+                setTurno(estado);
+                setFalloDeRefresco(null);
+              })
+              .catch((fallo: unknown) => {
+                if (control.signal.aborted) return;
+                setFalloDeRefresco(
+                  fallo instanceof Error ? fallo.message : 'No se pudo releer la caja.',
+                );
+              })
+              .finally(() => {
+                leyendo = false;
+              });
+          }, CADA_CUANTO_SE_RELEE)
+        : null;
+    return () => {
+      clearInterval(reloj);
+      if (refresco !== null) clearInterval(refresco);
+      control.abort();
+    };
+  }, [filasIniciales, leerCaja, intento]);
+
+  /** Tras un movimiento del cajón: se vuelve a leer sin vaciar lo que se ve. */
+  function releerTurno(): void {
+    leerCaja(new AbortController().signal)
+      .then(({ pendientes, estado }) => {
+        setFilas(pendientes);
+        setTurno(estado);
+      })
+      .catch((fallo: unknown) => {
+        setError(fallo instanceof Error ? fallo.message : 'No se pudo releer la caja.');
+      });
+  }
+
+  /** El estado se limpia EN EL CLIC, no en el efecto: el efecto sólo vuelve a leer. */
+  function reintentar(): void {
+    setFalloDeCarga(null);
+    setFilas(null);
+    setTurno(null);
+    setIntento((previo) => previo + 1);
+  }
+
+  const visibles = useMemo(() => {
+    const aguja = busqueda.trim().toLowerCase();
+    if (aguja === '') return filas ?? [];
+    const texto = (f: FilaDeCaja) => `${f.codigo_caja ?? ''} ${rotulo(f, voc)} ${quien(f, voc)}`;
+    return (filas ?? []).filter((f) => texto(f).toLowerCase().includes(aguja));
+  }, [filas, busqueda, voc]);
+
+  const cobrar = useCallback(
+    (id: string) => {
+      onCobrar?.(id);
+    },
+    [onCobrar],
+  );
+
+  const sinConsumo = useMemo(() => (filas ?? []).filter((f) => totalDe(f) === 0), [filas]);
+  const columnasPC = useMemo(() => columnasDeTabla(voc, ahora, cobrar), [voc, ahora, cobrar]);
+  const columnasTarjeta = useMemo(() => columnasDeTarjeta(voc, ahora), [voc, ahora]);
+
+  const alBuscar = (evento: ChangeEvent<HTMLInputElement>) => {
+    setBusqueda(evento.target.value);
+  };
+
+  // Ruta por convención /api/<dominio>/<verbo>: la salida que ya existe para anular
+  // una cuenta. Su motivo es obligatorio en la base, así que va siempre. Llega aquí
+  // sólo desde la confirmación: anular es destructivo (04-INTERFAZ §4.6) y el botón
+  // vive encima de la lista donde se toca para cobrar cien veces al día.
+  const eliminarVacio = (id: string) => {
+    setAEliminar(null);
+    const motivo = 'Cuenta sin consumo eliminada desde caja';
+    invocarComando('/api/restaurante/cancelar-orden', { ordenId: id, motivo })
+      .then(() => {
+        setFilas((previas) => (previas ?? []).filter((fila) => fila.id !== id));
+      })
+      .catch((fallo: unknown) => {
+        setError(fallo instanceof Error ? fallo.message : 'No se pudo eliminar el ticket.');
+      });
+  };
+
+  const alAbrirCaja = () => {
+    invocarComando('/api/caja/abrir', fondoParaAbrir(fondo))
+      .then(async () => leerCaja(new AbortController().signal))
+      .then(({ pendientes, estado }) => {
+        setFilas(pendientes);
+        setTurno(estado);
+        setError(null);
+      })
+      .catch((fallo: unknown) => {
+        setError(fallo instanceof Error ? fallo.message : 'No se pudo abrir la caja.');
+      });
+  };
+
+  /**
+   * TRAER LA CAJA A ESTE DISPOSITIVO (21-10-2026): la caja es de la terminal donde se abrió,
+   * y quien la abrió en la computadora y entra desde el teléfono veía «Caja cerrada» y un
+   * «Abrir caja» que chocaba con la suya. Se mueve la sesión aquí y se relee el turno.
+   */
+  const alTraerCaja = (sesionCajaId: string) => {
+    invocarComando('/api/caja/traer', { sesionCajaId })
+      .then(async () => leerCaja(new AbortController().signal))
+      .then(({ pendientes, estado }) => {
+        setFilas(pendientes);
+        setTurno(estado);
+        setError(null);
+      })
+      .catch((fallo: unknown) => {
+        setError(fallo instanceof Error ? fallo.message : 'No se pudo traer la caja.');
+      });
+  };
+
+  if (falloDeCarga !== null) {
+    return (
+      <main className="mx-auto flex max-w-lg flex-col gap-(--espacio-4) p-(--espacio-6)">
+        <h1 className="text-2xl font-bold">Caja</h1>
+        <ErrorDePantalla
+          titulo={`No se pudieron leer ${voc.enFrase('orden', true)} pendientes`}
+          queHacer={`Sin esta lista no se sabe qué ${voc.plural('unidad_servicio')} esperan pagar ni si la caja está abierta. Revisa la conexión y vuelve a intentarlo.`}
+          detalle={falloDeCarga}
+          reintentar={<Button onClick={reintentar}>Volver a intentar</Button>}
+        />
+      </main>
+    );
+  }
+
+  // La forma de lo que viene, nunca una rueda: tarjetas altas en tableta y
+  // teléfono, renglones compactos en la PC. Al llegar los datos nada salta.
+  if (filas === null || turno === null) {
+    return (
+      <main className="flex flex-col gap-(--espacio-4) p-(--espacio-4)">
+        <header className="flex flex-col gap-(--espacio-3) xl:flex-row xl:items-center xl:justify-between">
+          <h1 className="text-2xl font-bold">Caja</h1>
+          <div className="grid grid-cols-2 gap-(--espacio-2) xl:flex">
+            <Esqueleto className="h-(--altura-control) xl:w-28" />
+            <Esqueleto className="h-(--altura-control) xl:w-36" />
+          </div>
+        </header>
+        <Esqueleto className="h-(--altura-control) w-full max-w-md" />
+        <div
+          role="status"
+          aria-busy="true"
+          aria-label="Leyendo la caja"
+          className="flex flex-col gap-(--espacio-2)"
+        >
+          {Array.from({ length: 6 }, (_, indice) => (
+            <Esqueleto
+              key={indice}
+              className="h-24 w-full rounded-lg xl:h-(--altura-control) xl:rounded-md"
+            />
+          ))}
+        </div>
+      </main>
+    );
+  }
+
+  if (!turno.abierta) {
+    // El muro es la tarjeta ámbar del documento, y no un `Aviso` con un enlace:
+    // aquí mismo se declara el fondo y se abre, sin ir a otra pantalla. Si la caja de la
+    // sucursal está abierta en otra terminal, el muro lo dice y la trae; el fondo sólo se
+    // pide si todavía cabe abrir otra.
+    const ajena = turno.enOtraTerminal ?? null;
+    const puedoAbrir = turno.puedoAbrir !== false;
+    return (
+      <main className="flex min-h-dvh items-center justify-center p-(--espacio-4)">
+        <Superficie
+          como="section"
+          nivel={2}
+          relleno={6}
+          aria-labelledby="caja-muro"
+          className="flex w-full max-w-md flex-col gap-(--espacio-4) border-advertencia/50 bg-advertencia/10"
+        >
+          <div className="flex flex-col gap-(--espacio-2)">
+            <h1 id="caja-muro" className="flex items-center gap-(--espacio-2) text-2xl font-bold">
+              <TriangleAlert aria-hidden="true" className="size-5 shrink-0" />
+              {ajena === null ? 'Caja cerrada' : 'La caja está en otra terminal'}
+            </h1>
+            <p className="text-sm text-texto-sutil">
+              {ajena === null
+                ? 'Sin sesión de caja, un cobro no entra en ningún corte. Declara el fondo y ábrela.'
+                : `Está abierta en «${ajena.terminalNombre ?? 'otra terminal'}». ${dondeEstaLaCaja(ajena)}`}
+            </p>
+          </div>
+          {error === null ? null : <Aviso tono="peligro" titulo={error} />}
+          {ajena === null ? null : <TraerLaCaja caja={ajena} alTraer={alTraerCaja} />}
+          {puedoAbrir ? (
+            <FondoDeApertura fondo={fondo} alCambiar={setFondo} alAbrir={alAbrirCaja} />
+          ) : null}
+        </Superficie>
+      </main>
+    );
+  }
+
+  const vendido = Number(turno.ventasCentavos);
+  const resumen = (
+    <Superficie
+      como="dl"
+      relleno={4}
+      className="grid w-full max-w-md grid-cols-[1fr_auto] items-baseline gap-x-(--espacio-4) gap-y-(--espacio-2) text-left"
+    >
+      <dt className="text-sm text-texto-sutil">Vendido en el turno</dt>
+      <dd className="justify-self-end">
+        <Dinero centavos={Number.isFinite(vendido) ? vendido : 0} tamano="lg" />
+      </dd>
+      <dt className="text-sm text-texto-sutil">
+        {voc.titulo('orden', true)} cobrad{voc.terminacion('orden', true)}
+      </dt>
+      <dd className="justify-self-end">
+        <Cifra valor={turno.numeroVentas} tamano="lg" />
+      </dd>
+    </Superficie>
+  );
+
+  const aguja = busqueda.trim();
+  // El vacío ENSEÑA: sin nadie esperando, el resumen del turno es lo que el cajero
+  // haría con ese hueco. Con una búsqueda que no encontró, se dice qué se buscó.
+  const vacio =
+    filas.length === 0 || aguja === '' ? (
+      <Vacio
+        icono={<CircleCheckBig />}
+        titulo={`${voc.conDeterminante('ningun', 'unidad_servicio')} está esperando pagar.`}
+      >
+        {resumen}
+      </Vacio>
+    ) : (
+      <Vacio
+        icono={<SearchX />}
+        titulo={`${voc.conDeterminante('ningun', 'orden')} coincide con «${aguja}».`}
+        explicacion={`Se busca por código, ${voc.singular('unidad_servicio')} o ${voc.singular('responsable')}.`}
+        accion={
+          <Button
+            variant="outline"
+            onClick={() => {
+              setBusqueda('');
+            }}
+          >
+            Limpiar búsqueda
+          </Button>
+        }
+      />
+    );
+
+  const etiqueta = `${voc.titulo('orden', true)} pendientes de cobro`;
+  const lista = esPC ? (
+    <Tabla
+      etiqueta={etiqueta}
+      columnas={columnasPC}
+      filas={visibles}
+      claveDe={(f) => f.id}
+      alActivar={cobrar}
+      etiquetaDeFila={(f) => etiquetaDeCobro(f, voc)}
+      // El ámbar nunca va solo: la celda del total dice «sin consumo».
+      tonoDeFila={(f) => (totalDe(f) === 0 ? 'advertencia' : undefined)}
+      alto="max-h-[70vh]"
+      vacio={vacio}
+    />
+  ) : (
+    <ListaDeTarjetas
+      columnas={columnasTarjeta}
+      filas={visibles}
+      claveDe={(f) => f.id}
+      principal="mesa"
+      alActivar={cobrar}
+      vacio={vacio}
+    />
+  );
+
+  return (
+    <main className="flex flex-col gap-(--espacio-4) p-(--espacio-4)">
+      <header className="flex flex-col gap-(--espacio-3) xl:flex-row xl:items-center xl:justify-between">
+        <h1 className="text-2xl font-bold">Caja</h1>
+        {/* En tablet y teléfono ocupan una fila de ancho completo. */}
+        <nav aria-label="Estado de la caja" className="grid grid-cols-2 gap-(--espacio-2) xl:flex">
+          <Button variant="secondary" size="sm" disabled title="Ya está abierta">
+            Abrir caja
+          </Button>
+          {/*
+            DOS ENLACES A UNA PANTALLA QUE NO EXISTE, y con 404 en el navegador.
+
+            Decían «Corte de turno» y «Cierre diario» y los dos llevaban a
+            `/restaurante/cierre-diario`, que **no es una ruta**: la pantalla se
+            llama `cierre-diario-y-arqueo`. Los dos daban 404, y ninguna puerta lo
+            veía porque la de rutas llamadas comprueba las de `/api/` —un enlace a
+            una PANTALLA que no existe no pasaba por ahí—.
+
+            Y eran dos para una: la pantalla de cierre no lee `?arqueo=turno` ni
+            distingue turno de día, así que los dos botones habrían hecho lo mismo.
+            Uno, con el nombre de la pantalla a la que lleva.
+          */}
+          <Button variant="outline" size="sm" asChild>
+            <a href="/restaurante/cierre-diario-y-arqueo">Cierre y arqueo</a>
+          </Button>
+        </nav>
+      </header>
+
+      {error === null ? null : (
+        <Aviso tono="peligro" titulo={error}>
+          La lista quedó congelada con el último dato conocido.
+        </Aviso>
+      )}
+      {falloDeRefresco === null ? null : (
+        <Aviso tono="atencion" titulo={falloDeRefresco}>
+          No se pudo releer la caja: se muestra el último dato conocido y se vuelve a intentar sola.
+        </Aviso>
+      )}
+
+      <Tabs value={pestana} onValueChange={setPestana}>
+        <TabsList>
+          <TabsTrigger value="pendientes">
+            Pendientes <Badge variant="secondary">{String(filas.length)}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="buscar">Buscar</TabsTrigger>
+          {/* En teléfono sobrevive Pendientes: cobrar desde ahí sólo pasa cuando el
+              dueño releva al cajero que fue al baño. */}
+          <TabsTrigger value="resumen" className={SOLO_PC}>
+            Resumen
+          </TabsTrigger>
+          <TabsTrigger value="historial" className={SOLO_PC}>
+            Historial
+          </TabsTrigger>
+          {/* El corte de turno, el retiro, el gasto y la devolución: lo que mueve el cajón
+              sin ser un cobro (§8.3). Antes no había dónde. */}
+          <TabsTrigger value="movimientos">Movimientos</TabsTrigger>
+        </TabsList>
+        <TabsContent value="buscar" className="mt-(--espacio-3) max-w-sm">
+          <div className="relative">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-(--espacio-3) size-4 -translate-y-1/2 text-texto-sutil"
+            />
+            <Input
+              id="caja-buscar"
+              aria-label={`Buscar ${voc.singular('orden')}`}
+              placeholder={`Código, ${voc.singular('unidad_servicio')} o ${voc.singular('responsable')}`}
+              value={busqueda}
+              onChange={alBuscar}
+              className="pl-(--espacio-8)"
+            />
+          </div>
+        </TabsContent>
+        <TabsContent value="resumen" className="mt-(--espacio-3)">
+          {resumen}
+        </TabsContent>
+        <TabsContent value="historial" className="mt-(--espacio-3) text-sm text-texto-sutil">
+          Los cobros ya cerrados viven en Registros, con su folio y su corte.
+        </TabsContent>
+        <TabsContent value="movimientos" className="mt-(--espacio-3)">
+          <MovimientosDeCaja
+            puedeAdministrar={turno.puedeAdministrar === true}
+            alMover={releerTurno}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {pestana === 'pendientes' || pestana === 'buscar' ? (
+        <>
+          {/* Se señala y se ofrece eliminarlo, FUERA de la tarjeta: en la tableta la
+              tarjeta entera es el botón de cobrar, y un botón dentro de otro cobra
+              al querer eliminar. */}
+          {sinConsumo.length === 0 ? null : (
+            <Aviso
+              tono="atencion"
+              titulo={`${voc.conNumero('orden', sinConsumo.length)} sin consumo`}
+            >
+              <p>Se abrieron y se cerraron sin consumo: no hay nada que cobrar.</p>
+              <ul className="mt-(--espacio-2) flex flex-col gap-(--espacio-2)">
+                {sinConsumo.map((fila) => (
+                  <li
+                    key={fila.id}
+                    className="flex flex-wrap items-center justify-between gap-(--espacio-2)"
+                  >
+                    <span className="font-medium text-texto">
+                      {rotulo(fila, voc)} · {fila.codigo_caja ?? '—'}
+                    </span>
+                    {/* El nombre EMPIEZA por lo que se lee en el botón: quien lo pide
+                        por voz dice «Eliminar ticket» (WCAG 2.5.3). */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      aria-label={`Eliminar ticket sin consumo de ${rotulo(fila, voc)}`}
+                      onClick={(evento) => {
+                        disparador.current = evento.currentTarget;
+                        setAEliminar(fila);
+                      }}
+                    >
+                      Eliminar ticket
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </Aviso>
+          )}
+          {lista}
+        </>
+      ) : null}
+
+      <ConfirmacionDestructiva
+        abierta={aEliminar !== null}
+        queSeBorra={
+          aEliminar === null
+            ? ''
+            : `el ticket sin consumo de ${rotulo(aEliminar, voc)} · ${aEliminar.codigo_caja ?? 'sin código'}`
+        }
+        alConfirmar={() => {
+          if (aEliminar !== null) eliminarVacio(aEliminar.id);
+        }}
+        alCancelar={() => {
+          setAEliminar(null);
+          disparador.current?.focus();
+        }}
+      />
+    </main>
+  );
+}

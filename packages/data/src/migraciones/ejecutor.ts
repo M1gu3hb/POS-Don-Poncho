@@ -1,0 +1,425 @@
+import 'server-only';
+
+import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import type pg from 'pg';
+
+import { obtenerPool } from '../cliente.ts';
+import { leerMigraciones, type Migracion } from './lectura.ts';
+
+const RAIZ = fileURLToPath(new URL('../../../../', import.meta.url));
+
+// La lectura del disco vive en `lectura.ts`, sin dependencias de servidor. Se
+// reexporta para que quien importe el ejecutor no tenga que saberlo.
+export { leerMigraciones, type Migracion };
+
+/**
+ * Ejecutor de migraciones (F1.1-T01).
+ *
+ * Las migraciones son archivos `.sql` numerados. Kysely no las genera ni las
+ * posee: el esquema vive entero en SQL, que es exactamente la razón por la que
+ * se eligió Kysely sobre Drizzle (ADR 0001, requisito 10 — una sola fuente de
+ * verdad del esquema).
+ *
+ * Reglas que este ejecutor hace cumplir:
+ *
+ *   1. **Forward-only.** No hay `down`. Un error se corrige con una migración
+ *      nueva, no editando una ya aplicada.
+ *   2. **Todo o nada.** La tanda entera corre en UNA transacción: si la tercera
+ *      migración falla, las dos anteriores se revierten y la base queda en el
+ *      estado en que estaba. Postgres tiene DDL transaccional, así que esto es
+ *      real y no una aproximación.
+ *   3. **El hash del contenido se guarda en el ledger.** Editar una migración
+ *      aplicada es un error, no un aviso: en producción esa edición nunca se
+ *      ejecutó, así que el código y la base habrían divergido en silencio
+ *      (`supabase-vercel-produccion §3`).
+ *   4. **El orden es el del prefijo numérico**, nunca el del sistema de archivos.
+ *
+ * Se usa el cliente crudo de `pg` en vez de Kysely por una razón técnica: Kysely
+ * envía por el protocolo extendido, que admite **una sola sentencia por mensaje**,
+ * y un archivo de migración tiene decenas.
+ */
+
+/**
+ * El DDL del ledger. Se exporta porque el ensayo con datos levanta la base
+ * desde cero y necesita EXACTAMENTE esta tabla: una segunda definición escrita
+ * a mano en el script de ensayo es la forma seguro de que un día difieran y el
+ * ensayo deje de probar lo que dice probar.
+ */
+export const LEDGER = `
+  create table if not exists _migraciones (
+    version      integer      primary key,
+    nombre       text         not null,
+    hash         text         not null,
+    aplicada_en  timestamptz  not null default now(),
+    duracion_ms  integer      not null
+  )
+`;
+
+export interface ResultadoMigracion {
+  readonly aplicadas: readonly string[];
+  readonly yaEstaban: number;
+  readonly ensayo: boolean;
+}
+
+function literalSql(valor: string): string {
+  return `'${valor.replaceAll("'", "''")}'`;
+}
+
+const EXTENSION_PG_CRON_OPCIONAL = String.raw`
+do $morphiqpos_pg_cron$
+begin
+  if exists (
+    select 1 from pg_catalog.pg_available_extensions where name = 'pg_cron'
+  ) then
+    execute 'create extension if not exists pg_cron with schema pg_catalog';
+  else
+    raise notice 'pg_cron no está disponible; la purga manual de comandos ejecutados queda documentada.';
+  end if;
+end
+$morphiqpos_pg_cron$;`;
+
+const TAREA_PG_CRON_OPCIONAL = String.raw`
+do $morphiqpos_pg_cron$
+begin
+  if to_regprocedure('cron.schedule(text,text,text)') is null then
+    raise notice 'pg_cron ausente: ejecutar como purga manual DELETE de comandos_ejecutados con más de 90 días.';
+  else
+    perform cron.schedule(
+      'morphiqpos_retencion_comandos',
+      '17 3 * * *',
+      $trabajo$
+        delete from public.comandos_ejecutados
+        where created_at < now() - interval '90 days';
+      $trabajo$
+    );
+  end if;
+end
+$morphiqpos_pg_cron$;`;
+
+/**
+ * Conserva intacto el archivo y su hash, pero adapta la migración 053 cuando
+ * el PostgreSQL de destino no ofrece pg_cron.
+ */
+export function prepararSqlMigracion(migracion: Migracion): string {
+  if (migracion.version !== 53) return migracion.sql;
+
+  const sinExtensionObligatoria = migracion.sql.replace(
+    /create\s+extension\s+if\s+not\s+exists\s+pg_cron\s+with\s+schema\s+pg_catalog\s*;/i,
+    EXTENSION_PG_CRON_OPCIONAL,
+  );
+  const portable = sinExtensionObligatoria.replace(
+    /select\s+cron\.schedule\([\s\S]*?\$trabajo\$\s*\);/i,
+    TAREA_PG_CRON_OPCIONAL,
+  );
+  if (portable === migracion.sql || portable.includes('select cron.schedule(')) {
+    throw new Error('La compatibilidad de pg_cron ya no reconoce la migración 053.');
+  }
+  return portable;
+}
+
+/**
+ * Construye el único mensaje que el transporte vinculado entrega a Postgres.
+ * El SQL y el ledger viajan en la misma transacción también cuando no hay una
+ * contraseña de conexión disponible y el CLI usa la Management API.
+ */
+export function prepararTandaVinculada(pendientes: readonly Migracion[], ensayo: boolean): string {
+  const partes = ['begin;'];
+
+  for (const migracion of pendientes) {
+    partes.push(prepararSqlMigracion(migracion));
+    partes.push(
+      'insert into _migraciones (version, nombre, hash, duracion_ms) values ' +
+        `(${migracion.version}, ${literalSql(migracion.nombre)}, ${literalSql(migracion.hash)}, 0);`,
+    );
+  }
+
+  partes.push(ensayo ? 'rollback;' : 'commit;');
+  return partes.join('\n');
+}
+
+/** Compara lo que hay en disco con lo que dice el ledger y lanza si divergen. */
+function comprobarIntegridad(
+  enDisco: readonly Migracion[],
+  registradas: readonly { version: number; nombre: string; hash: string }[],
+): void {
+  const porVersion = new Map(registradas.map((fila) => [fila.version, fila]));
+
+  for (const migracion of enDisco) {
+    const registrada = porVersion.get(migracion.version);
+    if (registrada !== undefined && registrada.hash !== migracion.hash) {
+      throw new Error(
+        [
+          `La migración ${migracion.archivo} cambió después de haberse aplicado.`,
+          '',
+          '  Las migraciones son forward-only: en producción esa edición nunca se',
+          '  ejecutó, así que el código y la base ya divergieron en silencio.',
+          '',
+          '  Corrige con una migración NUEVA que lleve la base al estado que quieres.',
+        ].join('\n'),
+      );
+    }
+  }
+
+  for (const registrada of registradas) {
+    if (!enDisco.some((m) => m.version === registrada.version)) {
+      throw new Error(
+        `La base tiene aplicada la migración ${registrada.version} ("${registrada.nombre}") y ` +
+          'ese archivo no está en el repositorio. O alguien lo borró, o esta base pertenece ' +
+          'a otra rama.',
+      );
+    }
+  }
+}
+
+/**
+ * Aplica las migraciones pendientes.
+ *
+ * @param opciones.ensayo  Aplica **toda la tanda** y hace `ROLLBACK` al final.
+ *   Comprueba que el SQL es válido contra la base real sin escribir nada, que es
+ *   la práctica que pide `supabase-vercel-produccion §3`. Se ensaya la cadena
+ *   completa, no migración por migración: la 002 suele depender de la 001.
+ */
+interface FilaLedger {
+  readonly version: number;
+  readonly nombre: string;
+  readonly hash: string;
+}
+
+interface OpcionesVinculadas {
+  readonly projectRef: string;
+  readonly cliPath?: string;
+  readonly ensayo?: boolean;
+}
+
+function ejecutarConsultaVinculada(
+  opciones: OpcionesVinculadas,
+  entrada: { readonly sql?: string; readonly archivo?: string },
+): string {
+  if (!/^[a-z0-9]{20}$/.test(opciones.projectRef)) {
+    throw new Error('MORPHIQPOS_SUPABASE_PROJECT_REF no tiene el formato esperado.');
+  }
+
+  const fuente = entrada.archivo === undefined ? [entrada.sql ?? ''] : ['--file', entrada.archivo];
+  const resultado = spawnSync(
+    opciones.cliPath ?? 'supabase',
+    [
+      'db',
+      'query',
+      '--output-format',
+      'json',
+      '--linked',
+      '--project-ref',
+      opciones.projectRef,
+      ...fuente,
+    ],
+    { cwd: RAIZ, encoding: 'utf8', windowsHide: true },
+  );
+
+  if (resultado.error !== undefined) throw resultado.error;
+  if (resultado.status !== 0) {
+    const detalle = [resultado.stderr.trim(), resultado.stdout.trim()].filter(Boolean).join('\n');
+    throw new Error(`Supabase CLI no pudo ejecutar la migración vinculada: ${detalle}`);
+  }
+  return resultado.stdout;
+}
+
+function filasLedgerVinculado(salida: string): readonly FilaLedger[] {
+  const documento: unknown = JSON.parse(salida);
+  if (typeof documento !== 'object' || documento === null || !('rows' in documento)) {
+    throw new Error('Supabase CLI devolvió una respuesta sin filas.');
+  }
+
+  const rows = documento.rows;
+  if (!Array.isArray(rows)) {
+    throw new Error('Supabase CLI devolvió rows con un tipo inválido.');
+  }
+  const filas: readonly unknown[] = rows;
+
+  return filas.map((fila) => {
+    if (
+      typeof fila !== 'object' ||
+      fila === null ||
+      !('version' in fila) ||
+      typeof fila.version !== 'number' ||
+      !('nombre' in fila) ||
+      typeof fila.nombre !== 'string' ||
+      !('hash' in fila) ||
+      typeof fila.hash !== 'string'
+    ) {
+      throw new Error('El ledger vinculado devolvió una fila inválida.');
+    }
+    return { version: fila.version, nombre: fila.nombre, hash: fila.hash };
+  });
+}
+
+/**
+ * Ejecuta el mismo protocolo forward-only mediante `supabase db query`.
+ * Sirve cuando el acceso vinculado de la CLI está autorizado pero la
+ * contraseña de Postgres no está disponible. No cambia el formato del ledger.
+ */
+export function migrarVinculado(opciones: OpcionesVinculadas): ResultadoMigracion {
+  const ensayo = opciones.ensayo ?? false;
+  const salida = ejecutarConsultaVinculada(opciones, {
+    sql: 'select version, nombre, hash from public._migraciones order by version',
+  });
+  const registradas = filasLedgerVinculado(salida);
+  const enDisco = leerMigraciones();
+  comprobarIntegridad(enDisco, registradas);
+
+  const aplicadas = new Set(registradas.map((fila) => fila.version));
+  const pendientes = enDisco.filter((migracion) => !aplicadas.has(migracion.version));
+  if (pendientes.length === 0) {
+    return { aplicadas: [], yaEstaban: registradas.length, ensayo };
+  }
+
+  const archivo = join(tmpdir(), `morphiqpos-migraciones-${randomUUID()}.sql`);
+  writeFileSync(archivo, prepararTandaVinculada(pendientes, ensayo), 'utf8');
+  try {
+    ejecutarConsultaVinculada(opciones, { archivo });
+  } finally {
+    rmSync(archivo, { force: true });
+  }
+
+  return {
+    aplicadas: pendientes.map((migracion) => migracion.archivo),
+    yaEstaban: registradas.length,
+    ensayo,
+  };
+}
+
+export interface OpcionesEmision {
+  readonly archivo: string;
+  readonly ensayo?: boolean;
+}
+
+/**
+ * Escribe la tanda pendiente a un archivo, con su ledger, y NO la aplica.
+ *
+ * ── Por qué hay un tercer transporte ───────────────────────────────────────
+ * Los dos de arriba necesitan una credencial que no siempre existe: `migrar()`
+ * pide una conexión con DDL —y el rol de la aplicación no lo tiene, a
+ * propósito— y `migrarVinculado()` pide el ejecutable del CLI de Supabase.
+ * Cuando el privilegio de DDL vive en un sitio al que este proceso no puede
+ * llamar, éste es el camino: se emite el texto y lo aplica quien sí puede.
+ *
+ * Lo que se escribe es la salida de `prepararTandaVinculada`, byte a byte igual
+ * a lo que aplicaría el transporte vinculado, con sus `insert` de ledger y el
+ * hash de cada archivo. El ledger se LEE con la conexión normal —comprobar que
+ * la base está al día es una operación de sólo lectura, y por eso no hace falta
+ * DDL para esto— y se compara con la MISMA `comprobarIntegridad`.
+ *
+ * ── Lo que este camino NO da ───────────────────────────────────────────────
+ * Que emitir y aplicar ocurran en la misma conexión: entre las dos cosas
+ * alguien podría aplicar otra migración y este proceso no se enteraría. Se
+ * comprueba DESPUÉS releyendo el ledger contra el disco, que es lo que hace
+ * `verify:acople`.
+ *
+ * La atomicidad no se pierde: el `begin` y el `commit` viajan dentro del texto.
+ */
+export async function emitirTanda(opciones: OpcionesEmision): Promise<ResultadoMigracion> {
+  const ensayo = opciones.ensayo ?? false;
+  const cliente = await obtenerPool().connect();
+  try {
+    const registradas = await leerLedger(cliente);
+    const enDisco = leerMigraciones();
+    comprobarIntegridad(enDisco, registradas);
+
+    const aplicadas = new Set(registradas.map((fila) => fila.version));
+    const pendientes = enDisco.filter((m) => !aplicadas.has(m.version));
+    if (pendientes.length === 0) {
+      return { aplicadas: [], yaEstaban: registradas.length, ensayo };
+    }
+
+    writeFileSync(opciones.archivo, prepararTandaVinculada(pendientes, ensayo), 'utf8');
+    return { aplicadas: pendientes.map((m) => m.archivo), yaEstaban: registradas.length, ensayo };
+  } finally {
+    cliente.release();
+  }
+}
+
+/**
+ * Lee el ledger. Si la tabla no existe todavía, devuelve vacío.
+ *
+ * Se distingue «no existe» (`42P01`) de cualquier otro fallo: un
+ * «permission denied» tiene que propagarse, no confundirse con una base nueva
+ * y disparar una migración desde cero contra un esquema que sí estaba.
+ */
+async function leerLedger(cliente: pg.PoolClient): Promise<readonly FilaLedger[]> {
+  try {
+    const resultado = await cliente.query<FilaLedger>(
+      'select version, nombre, hash from _migraciones order by version',
+    );
+    return resultado.rows;
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === '42P01') {
+      return [];
+    }
+    throw error;
+  }
+}
+
+export async function migrar(opciones: { ensayo?: boolean } = {}): Promise<ResultadoMigracion> {
+  const ensayo = opciones.ensayo ?? false;
+  const cliente = await obtenerPool().connect();
+
+  try {
+    // Se LEE antes de crear. `create table if not exists` parece inofensivo,
+    // pero Postgres exige CREATE sobre el schema aunque la tabla ya exista, y
+    // eso convertía «no hay nada que aplicar» en «permission denied» para el
+    // rol de aplicación, que a propósito no puede hacer DDL.
+    //
+    // Con este orden, comprobar que la base está al día es una operación de
+    // sólo lectura: cualquiera puede verificar, sólo un rol con DDL puede
+    // cambiar. Que es exactamente el reparto que se quiere.
+    const registradas = await leerLedger(cliente);
+
+    const enDisco = leerMigraciones();
+    comprobarIntegridad(enDisco, registradas);
+
+    const yaEstaban = registradas.length;
+    const aplicadas = new Set(registradas.map((fila) => fila.version));
+    const pendientes = enDisco.filter((m) => !aplicadas.has(m.version));
+
+    if (pendientes.length === 0) {
+      return { aplicadas: [], yaEstaban, ensayo };
+    }
+
+    // Sólo a partir de aquí hace falta DDL.
+    await cliente.query(LEDGER);
+
+    // Una sola transacción para toda la tanda: si la tercera falla, las dos
+    // anteriores se revierten. Postgres tiene DDL transaccional.
+    await cliente.query('begin');
+    try {
+      for (const migracion of pendientes) {
+        const inicio = process.hrtime.bigint();
+
+        // Sin parámetros → protocolo simple → el archivo entero, con sus
+        // decenas de sentencias, viaja en un solo mensaje.
+        await cliente.query(prepararSqlMigracion(migracion));
+
+        const duracion = Number((process.hrtime.bigint() - inicio) / 1_000_000n);
+
+        await cliente.query(
+          'insert into _migraciones (version, nombre, hash, duracion_ms) values ($1, $2, $3, $4)',
+          [migracion.version, migracion.nombre, migracion.hash, duracion],
+        );
+      }
+
+      await cliente.query(ensayo ? 'rollback' : 'commit');
+    } catch (error) {
+      await cliente.query('rollback');
+      throw error;
+    }
+
+    return { aplicadas: pendientes.map((m) => m.archivo), yaEstaban, ensayo };
+  } finally {
+    cliente.release();
+  }
+}

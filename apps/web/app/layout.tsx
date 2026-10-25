@@ -1,0 +1,203 @@
+import type { Metadata, Viewport } from 'next';
+import { DM_Sans, Inter } from 'next/font/google';
+import { headers } from 'next/headers';
+import type { ReactNode } from 'react';
+
+import { GUION_SIN_PARPADEO } from '@/tema-arranque';
+import { validarEntorno } from '@morphiqpos/contracts';
+import { NOMBRE_COOKIE } from '@morphiqpos/app/http';
+import { APARIENCIA_POR_OMISION, aparienciaDeLaOrganizacion } from '@morphiqpos/app/configuracion';
+import { negocioDeLaEntrada, slugDeLaRutaDeEntrada } from '@morphiqpos/app/negocio';
+import { estiloOPredeterminado } from '@morphiqpos/ui/tokens';
+
+import { sesionDelServidor } from '~/servidor/http';
+
+import { CABECERA_NONCE } from '~/seguridad/csp';
+
+import { CABECERA_RUTA } from '../middleware';
+import { GUION_DEL_MODO } from '~/proveedores/modo';
+import { Proveedores } from '~/proveedores/Proveedores';
+
+import './globals.css';
+
+/**
+ * Sus dos fuentes, servidas desde nuestro propio origen.
+ *
+ * Su `index.css` las pedía a `fonts.googleapis.com`. Aquí eso no funciona: la
+ * CSP es `style-src 'self'` y `font-src 'self' data:`, así que el navegador lo
+ * bloquearía. `next/font` las descarga en el build, las sirve desde `/_next` y
+ * expone la variable que consume su hoja. Mismas familias, mismo aspecto, y
+ * sin una petición de terceros que bloquee el pintado.
+ */
+const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--mh-inter' });
+const dmSans = DM_Sans({ subsets: ['latin'], display: 'swap', variable: '--mh-dm-sans' });
+
+/**
+ * De qué negocio es la piel que se pinta, con sesión y sin ella.
+ *
+ * Aparte del componente porque tiene tres caminos y cada uno con su razón, y un
+ * ternario de tres ramas dentro del `layout` esconde la de en medio — que es la única
+ * que no es obvia.
+ *
+ * NUNCA lanza. Es un dato decorativo: una pantalla de acceso que no abre porque el
+ * color no se pudo leer sería un desastre causado por un adorno.
+ */
+async function aparienciaDelDespliegue(
+  sesion: { readonly organizacionId: string } | null,
+  host: string | null,
+  ruta: string | null,
+) {
+  if (sesion !== null) return aparienciaDeLaOrganizacion(sesion.organizacionId);
+  try {
+    // La entrada de un negocio (`/n/<slug>/login-pos`) se pinta con SU estilo; sin
+    // dirección, el único que sirve el despliegue. Varios sin dirección —las cinco
+    // demostraciones y un cliente en un despliegue— no tienen una respuesta correcta,
+    // y se pinta con la base: es la misma regla con la que la entrada elige a quién
+    // enseñar (`elegirNegocioDeLaEntrada`), así que color y personas no discrepan.
+    const negocio = await negocioDeLaEntrada(
+      process.env['ORGANIZACION'],
+      host,
+      slugDeLaRutaDeEntrada(ruta),
+    );
+    if (negocio === null) return APARIENCIA_POR_OMISION;
+    return await aparienciaDeLaOrganizacion(negocio.organizacionId);
+  } catch {
+    return APARIENCIA_POR_OMISION;
+  }
+}
+
+export const metadata: Metadata = {
+  title: 'Morphiq POS',
+  description: 'Sistema maestro de puntos de venta de Morphiq.',
+  icons: { icon: '/icono.svg' },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  // No se bloquea el zoom: escalar a 200 % sin perder contenido es requisito
+  // de accesibilidad.
+  maximumScale: 5,
+};
+
+/**
+ * Layout raíz.
+ *
+ * Leer las cabeceras vuelve DINÁMICO el renderizado, y eso es a propósito: un
+ * nonce por petición no cabe en HTML prerenderizado en el build. Sin esto la
+ * CSP bloquea todos los scripts de Next y la página se sirve sin hidratar —se
+ * ve bien y no responde a un solo clic—.
+ *
+ * No se pierde nada: en un POS prácticamente toda pantalla depende de la
+ * sesión y del negocio, así que ninguna iba a ser estática.
+ */
+export default async function LayoutRaiz({ children }: { children: ReactNode }) {
+  const cabeceras = await headers();
+  const nonce = cabeceras.get(CABECERA_NONCE) ?? undefined;
+  /**
+   * ¿Hay sesión? Lo dice la cookie, y con eso basta: no se valida aquí —de eso se
+   * encarga cada ruta—, sólo se decide si tiene sentido pedir la configuración del
+   * negocio. Sin sesión esa consulta es un 401 garantizado en la consola.
+   */
+  const conSesion = (cabeceras.get('cookie') ?? '').includes(`${NOMBRE_COOKIE}=`);
+
+  /**
+   * LA APARIENCIA DEL NEGOCIO, resuelta EN EL SERVIDOR.
+   *
+   * Va aquí y no en un efecto del cliente porque los tokens de color viven bajo
+   * `[data-estilo]` y los nombres en inglés que pinta la aplicación derivan de ellos:
+   * aplicarlo tras hidratar sería medio segundo de otro estilo en CADA carga. Y nunca
+   * lanza: si la base no contesta se pinta con el estilo base y la aplicación sigue.
+   *
+   * ── Y LA PANTALLA DE ACCESO TAMBIÉN, cuando se puede ─────────────────────
+   * Antes se pintaba siempre con el estilo base «porque sin sesión no hay negocio del
+   * que leerla». Sí lo hay: un despliegue sirve a UN negocio (R16) y el servidor ya
+   * sabe cuál —`negociosDelDespliegue`, del host o de la configuración—, que es la
+   * misma resolución con la que la pantalla de acceso arma sus tarjetas de personas.
+   *
+   * Importa porque los atributos llegan en el PRIMER pintado del día, antes de que
+   * nadie teclee un PIN: la primera pantalla con tokens que se abra ya está en el
+   * estilo de su negocio, sin el salto de medio segundo que habría si el estilo
+   * llegara al entrar. Y no es un parámetro del cliente —eso sería R16 al revés—: es
+   * configuración del servidor, la misma con la que esa pantalla arma sus tarjetas.
+   *
+   * Lo que NO cambia, y está bien que no cambie: la pantalla de acceso EN SÍ. Es de
+   * `heredado/`, se pinta con su propio degradado y la cubre `verify:aspecto`. Los
+   * atributos están puestos en su `<html>`; lo que no hay es una sola clase suya que
+   * los consuma, y cambiárselas sería romper el diseño que Miguel entregó.
+   *
+   * Cuando el despliegue sirve a VARIOS —las cinco demostraciones a la vez— no hay
+   * una respuesta correcta, y ahí sí se pinta con la base.
+   */
+  const sesion = conSesion ? await sesionDelServidor() : null;
+  const guardada = await aparienciaDelDespliegue(
+    sesion,
+    cabeceras.get('host'),
+    cabeceras.get(CABECERA_RUTA),
+  );
+  /**
+   * Sin preferencia, o con una que ya no es un estilo construido, arranca `morphiq`.
+   *
+   * `aparienciaDeLaOrganizacion` ya normaliza lo que lee de la base; esto cierra el hueco
+   * que queda entre ella y el `<html>`: el atributo que se escribe SIEMPRE es un estilo
+   * conocido, porque uno desconocido es una pagina sin tokens. Y no pisa nada: un negocio
+   * que guardo `noche` o `bloque` sigue viendo `noche` o `bloque`.
+   */
+  const apariencia = { ...guardada, estilo: estiloOPredeterminado(guardada.estilo) };
+
+  /**
+   * LA DIRECCIÓN PÚBLICA, para lo que se imprime o se comparte (el QR de cada mesa).
+   *
+   * Es el origen de `APP_URL`, configuración del despliegue: el QR generado desde la URL de
+   * Vercel o desde un preview llevaba ESA dirección y no el dominio propio. Si la variable no
+   * es una URL válida no se pone y el cliente usa el origen de la pestaña.
+   */
+  let urlPublica: string | undefined;
+  try {
+    urlPublica = new URL(validarEntorno(process.env).APP_URL).origin;
+  } catch {
+    urlPublica = undefined;
+  }
+
+  return (
+    <html
+      lang="es-MX"
+      suppressHydrationWarning
+      className={`${inter.variable} ${dmSans.variable}`}
+      /**
+       * EL ESTILO Y SUS CUATRO PERILLAS, puestos en el servidor.
+       *
+       * Sin estos atributos el sistema de diseño no existe: sus tokens de color
+       * viven bajo `[data-estilo='…']` y los nombres en inglés que pinta la
+       * aplicación DERIVAN de ellos desde la etapa 2.35. Sin `data-estilo` no hay
+       * `--fondo`, y sin `--fondo` no hay `--background`.
+       *
+       * Van en el HTML del servidor y no en un efecto del cliente a propósito: si
+       * los pusiera React tras hidratar, la primera pintura sería sin tokens —un
+       * destello de página en blanco y negro— en cada carga.
+       *
+       * Desde la etapa 5 el estilo lo elige cada organización desde Modo Presentación,
+       * y desde la 4.4 cada demostración nace con el suyo. Esto ya no es siempre
+       * `morphiq`: es lo que ese negocio guardó.
+       */
+      data-estilo={apariencia.estilo}
+      data-densidad={apariencia.densidad}
+      data-redondeo={apariencia.redondeo}
+      data-elevacion={apariencia.elevacion}
+      data-movimiento={apariencia.movimiento}
+      data-url-publica={urlPublica}
+    >
+      <head>
+        {/* Pone la clase del tema ANTES del primer pintado. */}
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: GUION_SIN_PARPADEO }} />
+        {/* Y el modo del SISTEMA, derivado de esa clase: `data-modo`. Detrás, no antes. */}
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: GUION_DEL_MODO }} />
+      </head>
+      <body>
+        <Proveedores conSesion={conSesion} apariencia={apariencia}>
+          {children}
+        </Proveedores>
+      </body>
+    </html>
+  );
+}

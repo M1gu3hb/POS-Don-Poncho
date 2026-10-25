@@ -1,0 +1,157 @@
+import { ErrorDominio } from '@morphiqpos/contracts/errores';
+import { cantidad, cantidadATexto } from '@morphiqpos/domain/catalogo';
+import type { MovimientoPlaneado } from '@morphiqpos/domain/inventario';
+import { sql } from 'kysely';
+
+import type { Transaccion } from '../cliente.ts';
+
+interface MovimientoValidado {
+  readonly movimiento: MovimientoPlaneado;
+  readonly cantidad: string;
+}
+
+/**
+ * Aplica decrementos y escribe el ledger dentro de la transacción del comando.
+ * Los bloqueos se toman en orden estable para evitar ciclos entre dos órdenes.
+ */
+export async function aplicarMovimientos(
+  movimientos: MovimientoPlaneado[],
+  tx: Transaccion,
+): Promise<void> {
+  const validados = movimientos.map(validar).sort(compararSaldo);
+  if (validados.length === 0) return;
+
+  for (const { movimiento, cantidad: consumo } of validados) {
+    if (movimiento.permiteNegativo) {
+      await sql`
+        insert into existencias (organizacion_id, almacen_id, insumo_id, cantidad)
+        values (${movimiento.organizacionId}, ${movimiento.almacenId}, ${movimiento.insumoId}, 0)
+        on conflict (almacen_id, insumo_id) do nothing
+      `.execute(tx);
+    }
+
+    const resultado = await sql<{ cantidad: string }>`
+      update existencias
+         set cantidad = cantidad - ${consumo},
+             actualizado_en = now()
+       where organizacion_id = ${movimiento.organizacionId}
+         and almacen_id = ${movimiento.almacenId}
+         and insumo_id = ${movimiento.insumoId}
+         and (cantidad >= ${consumo} or ${movimiento.permiteNegativo})
+       returning cantidad
+    `.execute(tx);
+
+    if (resultado.rows.length !== 1) {
+      throw new ErrorDominio(
+        'STOCK_INSUFICIENTE',
+        'No hay inventario suficiente para completar la venta.',
+        { insumoId: movimiento.insumoId },
+      );
+    }
+  }
+
+  const filas = validados.map(
+    ({ movimiento, cantidad: consumo }) => sql`(
+    ${movimiento.organizacionId},
+    ${movimiento.almacenId},
+    ${movimiento.insumoId},
+    ${movimiento.tipo},
+    ${`-${consumo}`},
+    ${movimiento.unidad},
+    ${movimiento.referenciaTipo},
+    ${movimiento.referenciaId},
+    ${movimiento.empleadoId ?? null},
+    ${movimiento.idempotencyKey}
+  )`,
+  );
+
+  await sql`
+    insert into movimientos_stock (
+      organizacion_id,
+      almacen_id,
+      insumo_id,
+      tipo,
+      cantidad,
+      unidad,
+      referencia_tipo,
+      referencia_id,
+      empleado_id,
+      idempotency_key
+    ) values ${sql.join(filas)}
+  `.execute(tx);
+}
+
+function validar(movimiento: MovimientoPlaneado): MovimientoValidado {
+  const valor = cantidad(movimiento.cantidad);
+  if (valor === 0n) {
+    throw new ErrorDominio('INVENTARIO_INVALIDO', 'Un movimiento de stock no puede ser cero.');
+  }
+  return { movimiento, cantidad: cantidadATexto(valor) };
+}
+
+function compararSaldo(a: MovimientoValidado, b: MovimientoValidado): number {
+  const claveA = `${a.movimiento.organizacionId}\u0000${a.movimiento.almacenId}\u0000${a.movimiento.insumoId}`;
+  const claveB = `${b.movimiento.organizacionId}\u0000${b.movimiento.almacenId}\u0000${b.movimiento.insumoId}`;
+  return claveA < claveB ? -1 : claveA > claveB ? 1 : 0;
+}
+
+/** Lo que regresa al almacén, con la cantidad en MAGNITUD (positiva) y en unidad base. */
+export interface Regreso {
+  readonly organizacionId: string;
+  readonly almacenId: string;
+  readonly insumoId: string;
+  readonly cantidad: string;
+  readonly unidad: string;
+  readonly devolucionId: string;
+  readonly empleadoId: string;
+}
+
+/**
+ * LA MERCANCÍA QUE REGRESA de una devolución de venta (D-29 de la 2.4).
+ *
+ * Sube la existencia —o la crea, si el insumo se quedó sin renglón— y escribe el
+ * ledger con signo POSITIVO, tipo `devolucion` y referido al DOCUMENTO de la
+ * devolución, no a la venta: una venta puede tener varias, y el kardex tiene que
+ * poder decir cuál regresó qué. Los bloqueos en el mismo orden estable que la salida.
+ */
+export async function regresarAlInventario(
+  regresos: readonly Regreso[],
+  tx: Transaccion,
+): Promise<void> {
+  const ordenados = [...regresos].sort((a, b) => {
+    const claveA = `${a.almacenId}\u0000${a.insumoId}`;
+    const claveB = `${b.almacenId}\u0000${b.insumoId}`;
+    return claveA < claveB ? -1 : claveA > claveB ? 1 : 0;
+  });
+  if (ordenados.length === 0) return;
+
+  for (const regreso of ordenados) {
+    const valor = cantidadATexto(cantidad(regreso.cantidad));
+    await sql`
+      insert into existencias (organizacion_id, almacen_id, insumo_id, cantidad)
+      values (${regreso.organizacionId}, ${regreso.almacenId}, ${regreso.insumoId}, ${valor})
+      on conflict (almacen_id, insumo_id)
+      do update set cantidad = existencias.cantidad + excluded.cantidad, actualizado_en = now()
+    `.execute(tx);
+  }
+
+  const filas = ordenados.map(
+    (regreso) => sql`(
+    ${regreso.organizacionId},
+    ${regreso.almacenId},
+    ${regreso.insumoId},
+    ${'devolucion'},
+    ${cantidadATexto(cantidad(regreso.cantidad))},
+    ${regreso.unidad},
+    ${'devolucion'},
+    ${regreso.devolucionId},
+    ${regreso.empleadoId}
+  )`,
+  );
+  await sql`
+    insert into movimientos_stock (
+      organizacion_id, almacen_id, insumo_id, tipo, cantidad, unidad,
+      referencia_tipo, referencia_id, empleado_id
+    ) values ${sql.join(filas)}
+  `.execute(tx);
+}

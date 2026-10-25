@@ -1,0 +1,86 @@
+# Workspaces del monorepo. Ver docs/fase-1/04-ARQUITECTURA-Y-MONOREPO.md §1
+# del repositorio de documentacion (M1gu3hb/MorphiqPOS).
+#
+# historico/ NO es un workspace a proposito: es evidencia, no codigo.
+# No se compila, no se lintea, no se importa.
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Catalogo de versiones. Un paquete escribe "catalog:" y hereda de aqui.
+# Con 15 paquetes por venir, es lo que impide que dos usen versiones distintas
+# de la misma herramienta y que las pruebas se comporten distinto segun donde
+# se corran.
+allowBuilds:
+  # Llega por `jspdf` -> `canvg`, que su `pdfDownload.js` usa para los PDF de
+  # corte. Su postinstall no compila nada: imprime un anuncio pidiendo
+  # patrocinio. Se aprueba para que `pnpm install` no falle pidiendo una
+  # decision que ya esta tomada.
+  core-js: true
+  # Decodifica y vuelve a codificar las imágenes subidas. Su instalación elige
+  # el binario precompilado de libvips para la plataforma actual.
+  sharp: true
+
+# Fijadas por seguridad (auditoría de dependencias de la 2.4): `source-map-js` llega por
+# next > postcss y su versión vulnerable (< 1.2.2) permite colgar el proceso con un mapa
+# de fuentes armado a propósito.
+overrides:
+  source-map-js: 1.2.2
+  # La que next trae como opcional para optimizar imágenes: < 0.35.5 arrastra el fallo de
+  # librsvg (CVE-2026-96889). La misma que usa la subida de archivos.
+  sharp: 0.35.5
+
+catalog:
+  typescript: 6.0.3
+  vitest: 5.0.0
+  '@vitest/coverage-v8': 5.0.0
+  '@types/node': 24.13.3
+  '@types/react': 19.2.18
+  '@types/react-dom': 19.2.7
+  next: 16.3.8
+  react: 19.2.8
+  react-dom: 19.2.8
+  tailwindcss: 4.3.3
+  '@tailwindcss/postcss': 4.3.3
+  '@tanstack/react-query': 5.102.8
+  sonner: 2.0.8
+  lucide-react: 1.42.0
+  'class-variance-authority': 0.7.1
+  clsx: 2.1.1
+  'tailwind-merge': 3.6.0
+  eslint: 10.10.0
+  'typescript-eslint': 8.70.0
+  'eslint-config-prettier': 10.1.8
+  'eslint-plugin-react-hooks': 7.1.1
+  '@next/eslint-plugin-next': 16.3.8
+  globals: 17.12.0
+  prettier: 3.9.6
+  '@playwright/test': 1.63.0
+  zod: 4.5.4
+  kysely: 0.29.5
+  pg: 8.23.0
+  '@types/pg': 8.23.1
+  # Argon2id con binarios precompilados: no exige toolchain de C++ en Windows,
+  # que es donde se desarrolla. La alternativa nativa `argon2` falla al instalar.
+  '@node-rs/argon2': 2.2.0
+  argon2: 0.45.1
+  'kysely-codegen': 0.20.0
+  dotenv: 17.4.2
+
+minimumReleaseAgeExclude:
+  - lucide-react@1.42.0
+  - '@typescript-eslint/eslint-plugin@8.70.0'
+  - '@typescript-eslint/parser@8.70.0'
+  - '@typescript-eslint/project-service@8.70.0'
+  - '@typescript-eslint/scope-manager@8.70.0'
+  - '@typescript-eslint/tsconfig-utils@8.70.0'
+  - '@typescript-eslint/type-utils@8.70.0'
+  - '@typescript-eslint/types@8.70.0'
+  - '@typescript-eslint/typescript-estree@8.70.0'
+  - '@typescript-eslint/utils@8.70.0'
+  - '@typescript-eslint/visitor-keys@8.70.0'
+  - typescript-eslint@8.70.0
+
+# `core-js` llega como dependencia transitiva de `html2canvas` y su postinstall
+# no compila nada: imprime un anuncio pidiendo patrocinio. Se declara ignorado
+# para que `pnpm install` no falle pidiendo una decision que ya esta tomada.

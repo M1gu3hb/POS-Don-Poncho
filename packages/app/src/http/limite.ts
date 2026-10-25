@@ -1,0 +1,179 @@
+import 'server-only';
+
+import { createHmac } from 'node:crypto';
+
+import { repoLimite } from '@morphiqpos/data';
+
+import { correlationIdDe, registrar } from '../observabilidad.ts';
+
+/**
+ * Límite de tasa por origen (F1.1-C-13).
+ *
+ * El bloqueo del PIN cuenta por credencial: frena a quien ataca UNA cuenta. No
+ * frena a quien barre la plantilla probando `1234` en cada empleado, ni a quien
+ * enumera códigos de enrolamiento de seis dígitos. Esto sí.
+ *
+ * ── De dónde sale la IP, y por qué importa ────────────────────────────────
+ * Detrás de un proxy, `x-forwarded-for` es una lista y el ÚLTIMO valor es el
+ * que puso el proxy de confianza; los anteriores los puede inventar el cliente.
+ * Tomar el primero —que es lo que hace casi todo el mundo— deja que cualquiera
+ * se ponga una IP distinta en cada intento y el límite no exista.
+ *
+ * En Vercel la de confianza es `x-vercel-forwarded-for`, que la plataforma
+ * sobrescribe siempre. Se prefiere esa cuando está.
+ */
+
+/**
+ * Ventanas por acción. Frenan el barrido sin estorbar a nadie real.
+ *
+ * El de enrolamiento empezó en 10 por diez minutos y lo subió la realidad: el
+ * primer día de una instalación se dan de alta varias cajas desde la misma red,
+ * y la prueba de extremo a extremo se bloqueó a sí misma. Veinte sigue siendo
+ * nada frente al millón de combinaciones de seis dígitos —un barrido necesita
+ * decenas de miles de intentos— y deja trabajar a quien está instalando.
+ *
+ * El de entrada no se toca: veinte PIN fallidos en cinco minutos desde la misma
+ * red ya no es un cajero con prisa. FALLIDOS: la entrada correcta devuelve su
+ * intento (`devolver`). Contaba todas, y una tableta que pasa de mesero en mesero
+ * —con todas las cajas del negocio detrás de la misma IP— gastaba la cuota entrando
+ * bien y dejaba al restaurante entero sin entrar a media comida.
+ */
+export const LIMITES = {
+  entrar: { intentos: 20, ventanaSegundos: 300 },
+  empleados: { intentos: 60, ventanaSegundos: 300 },
+  enrolar: { intentos: 20, ventanaSegundos: 600 },
+  presentacion: { intentos: 10, ventanaSegundos: 900 },
+  archivos: { intentos: 20, ventanaSegundos: 3600 },
+  /**
+   * Mantenimiento destructivo. Tres por hora y por origen.
+   *
+   * Nadie borra el histórico de su negocio cuatro veces en una hora. Son los
+   * endpoints a los que iría una sesión robada, y tres intentos bastan para
+   * quien se equivoca de sección y lo repite.
+   */
+  mantenimiento: { intentos: 3, ventanaSegundos: 3600 },
+} as const;
+
+export type AccionLimitada = keyof typeof LIMITES;
+
+export interface Permiso {
+  readonly ok: boolean;
+  readonly esperaSegundos: number;
+}
+
+/**
+ * El origen de la petición, o `null` si no se puede determinar. El llamador
+ * convierte ese caso en un cubo global por acción para no desactivar la cuota.
+ */
+export function origenDe(cabeceras: { get(nombre: string): string | null }): string | null {
+  const deVercel = cabeceras.get('x-vercel-forwarded-for');
+  if (deVercel !== null && deVercel.trim() !== '') return deVercel.trim();
+
+  const reenviada = cabeceras.get('x-forwarded-for');
+  if (reenviada === null) return null;
+
+  // El último de la lista es el que añadió el proxy más cercano al servidor.
+  const partes = reenviada
+    .split(',')
+    .map((p) => p.trim())
+    .filter((p) => p !== '');
+  return partes[partes.length - 1] ?? null;
+}
+
+/**
+ * Cuenta el intento y dice si se permite.
+ *
+ * Cuando la base falla se deja pasar: un límite de tasa que impide entrar porque su propia tabla no
+ * responde deja al negocio sin cobrar por proteger un endpoint. El bloqueo por
+ * credencial sigue vigente en ese caso, así que no se queda desnudo.
+ */
+export async function permitir(
+  accion: AccionLimitada,
+  cabeceras: { get(nombre: string): string | null },
+  pimienta: string,
+): Promise<Permiso> {
+  const { intentos: maximo, ventanaSegundos } = LIMITES[accion];
+  const clave = claveDelOrigen(accion, cabeceras, pimienta);
+
+  try {
+    const { intentos, esperaSegundos } = await repoLimite.contarIntento(clave, ventanaSegundos);
+    return { ok: intentos <= maximo, esperaSegundos };
+  } catch {
+    registrar({
+      nivel: 'alerta',
+      modulo: 'limite_tasa',
+      correlationId: correlationIdDe(
+        cabeceras.get('x-correlation-id') ?? cabeceras.get('x-morphiqpos-correlacion'),
+      ),
+      organizacionId: null,
+      mensaje: `No se pudo contar el intento de ${accion}.`,
+    });
+    return { ok: true, esperaSegundos: 0 };
+  }
+}
+
+/** El cubo de la acción para el origen de la petición: el MISMO al contar y al devolver. */
+function claveDelOrigen(
+  accion: AccionLimitada,
+  cabeceras: { get(nombre: string): string | null },
+  pimienta: string,
+): string {
+  const origen = origenDe(cabeceras) ?? 'origen_global';
+  return createHmac('sha256', pimienta).update(`${accion}:${origen}`, 'utf8').digest('hex');
+}
+
+/**
+ * Devuelve el intento de una entrada con el PIN correcto (ver `LIMITES.entrar`).
+ *
+ * Se cuenta ANTES de verificar, con la sentencia atómica del repositorio, y se devuelve
+ * DESPUÉS sólo si salió bien: mientras se verifica, cada petición ocupa su lugar, así que
+ * un barrido en paralelo sigue topando en veinte.
+ *
+ * Si la base falla aquí se registra y se sigue: el peor caso es un contador más alto que
+ * lo justo —más estricto, nunca más abierto— y la persona ya entró.
+ */
+export async function devolver(
+  accion: 'entrar',
+  cabeceras: { get(nombre: string): string | null },
+  pimienta: string,
+): Promise<void> {
+  try {
+    await repoLimite.devolverIntento(claveDelOrigen(accion, cabeceras, pimienta));
+  } catch {
+    registrar({
+      nivel: 'alerta',
+      modulo: 'limite_tasa',
+      correlationId: correlationIdDe(
+        cabeceras.get('x-correlation-id') ?? cabeceras.get('x-morphiqpos-correlacion'),
+      ),
+      organizacionId: null,
+      mensaje: `No se pudo devolver el intento de ${accion}.`,
+    });
+  }
+}
+
+/** Agrupa las subidas por organización; cambiar de IP no regala más espacio. */
+export async function permitirOrganizacion(
+  accion: 'archivos',
+  organizacionId: string,
+  pimienta: string,
+  correlationId?: string,
+): Promise<Permiso> {
+  const { intentos: maximo, ventanaSegundos } = LIMITES[accion];
+  const clave = createHmac('sha256', pimienta)
+    .update(`${accion}:organizacion:${organizacionId}`, 'utf8')
+    .digest('hex');
+  try {
+    const { intentos, esperaSegundos } = await repoLimite.contarIntento(clave, ventanaSegundos);
+    return { ok: intentos <= maximo, esperaSegundos };
+  } catch {
+    registrar({
+      nivel: 'alerta',
+      modulo: 'limite_tasa',
+      correlationId: correlationIdDe(correlationId),
+      organizacionId,
+      mensaje: `No se pudo contar el intento de ${accion}.`,
+    });
+    return { ok: true, esperaSegundos: 0 };
+  }
+}

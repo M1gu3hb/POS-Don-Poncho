@@ -1,0 +1,260 @@
+import { z } from 'zod';
+
+/**
+ * Las entradas de los comandos de venta.
+ *
+ * **Ninguna acepta un importe.** Es P0-07 y la regla que Miguel puso primero en
+ * la lista: «El endpoint no acepta importes del cliente.» Se reciben producto,
+ * cantidad y unidad; el precio lo pone el catálogo y el total lo deriva el
+ * dominio.
+ *
+ * Lo único que se parece a dinero y sí entra es `recibidoCentavos` en el cobro
+ * —cuánto billete puso el cliente en el mostrador—, y ni siquiera decide el
+ * total: sólo sirve para calcular el cambio, y el servidor comprueba que alcance.
+ */
+
+/** Cantidad como cadena decimal: `numeric(14,4)` en la base, nunca un float. */
+const cantidadDecimal = z
+  .string()
+  .regex(/^\d{1,10}(\.\d{1,4})?$/, 'La cantidad debe ser un decimal de hasta cuatro cifras.')
+  .refine((v) => Number.parseFloat(v) > 0, 'La cantidad debe ser mayor que cero.');
+
+/**
+ * Diez millones de pesos. Es una cota, y `Number.MAX_SAFE_INTEGER` no lo era.
+ *
+ * Ese tope son noventa mil millones de pesos: acepta cualquier cosa que quepa en
+ * un `number`, así que un cero de más al teclear un retiro entra sin resistencia
+ * y el arqueo del día pasa a ser una cifra que no corresponde a nada. La suma no
+ * se desborda —los importes son `bigint` en la base— y por eso el defecto no da
+ * error: simplemente el número es falso.
+ *
+ * Diez millones es holgado para un restaurante y absurdo como error de tecleo,
+ * que es exactamente lo que una cota tiene que distinguir. El mismo valor que ya
+ * usaba `caja.corte_turno`.
+ */
+const TOPE_DE_IMPORTE_CENTAVOS = 1_000_000_000;
+
+const centavosNoNegativos = z.number().int().nonnegative().max(TOPE_DE_IMPORTE_CENTAVOS);
+
+export const entradaCrearOrden = z.object({});
+
+export const entradaAgregarLinea = z.object({
+  ordenId: z.uuid(),
+  productoId: z.uuid(),
+  cantidad: cantidadDecimal,
+  /** Para productos por medida o por porción. El catálogo decide si aplica. */
+  unidad: z.string().min(1).max(10).optional(),
+  /**
+   * F-147 · Se vende la CAJA, no 24 piezas: la línea lleva el precio de la presentación
+   * y descuenta `factor × cantidad` en unidad base. El precio lo pone el servidor.
+   */
+  presentacionId: z.uuid().optional(),
+});
+
+/** Quitar TODAS las líneas de un borrador: lo que dejó un cobro que no se completó. */
+export const entradaVaciarOrden = z.object({
+  ordenId: z.uuid(),
+});
+
+export const entradaQuitarLinea = z.object({
+  ordenId: z.uuid(),
+  lineaId: z.uuid(),
+});
+
+export const entradaCambiarCantidad = z.object({
+  ordenId: z.uuid(),
+  lineaId: z.uuid(),
+  cantidad: cantidadDecimal,
+});
+
+export const entradaCotizarOrden = z.object({
+  ordenId: z.uuid(),
+});
+
+/** Un renglón de pago. Un pago mixto son varios (corrige P1-11). */
+export const entradaPago = z.object({
+  /**
+   * `fiado` es lo que se entrega sin cobrar (C.10 de la 2.4): suma a la venta, NO al cajón, y
+   * deja un documento de crédito a nombre de `clienteId` en la misma transacción. El `check`
+   * de `pagos.metodo` lo admite desde la 003; lo que faltaba era dejarlo pasar aquí.
+   */
+  metodo: z.enum(['efectivo', 'tarjeta', 'transferencia', 'fiado']),
+  montoCentavos: centavosNoNegativos,
+  /** Sólo en efectivo: cuánto puso el cliente. Sirve para el cambio. */
+  recibidoCentavos: centavosNoNegativos.optional(),
+  referencia: z.string().max(60).optional(),
+});
+
+export const entradaCobrarOrden = z.object({
+  ordenId: z.uuid(),
+  pagos: z.array(entradaPago).min(1).max(5),
+  /**
+   * Lo que la pantalla creía que era el total, en centavos.
+   *
+   * NO se usa para cobrar. El servidor recalcula y, si no coincide, rechaza con
+   * el total correcto en vez de cobrar el suyo en silencio: el cajero ya le dijo
+   * un número al cliente, y cobrar otro distinto sin avisar es peor que fallar.
+   */
+  totalEsperadoCentavos: centavosNoNegativos.optional(),
+  /**
+   * A quién se le fía. Obligatorio si algún pago es `fiado`: un fiado sin nombre es una deuda
+   * que nadie va a cobrar. Se sella también en la orden, para el ticket y la ficha.
+   */
+  clienteId: z.uuid().optional(),
+  /**
+   * F-331 · Por dónde sale esta venta. Decide el EMPAQUE, y con él el costo.
+   *
+   * Un latte para tomar aquí va en taza; el mismo para llevar va en vaso, tapa y
+   * funda. Sin este campo la receta es una sola y todos los márgenes de la
+   * plantilla están inflados entre cinco y ocho puntos.
+   *
+   * No es un dato de dinero que el cliente elija: no cambia el PRECIO, cambia
+   * qué insumos se descuentan. El precio lo sigue poniendo el catálogo.
+   */
+  canal: z.enum(['aqui', 'llevar', 'plataforma', 'anticipado']).optional(),
+  /**
+   * F-328 · El nombre que se grita al entregar.
+   *
+   * NO es `cliente_nombre`: ése es del cliente identificado y tiene ficha. Éste
+   * es la etiqueta efímera del vaso, y confundirlos metería nombres de pila
+   * sueltos en el padrón con el que se hace la lealtad.
+   */
+  nombrePedido: z.string().trim().min(1).max(60).optional(),
+});
+
+/**
+ * Abrir la caja, con el fondo POR MONTONES.
+ *
+ * ── El defecto que esto arregla ────────────────────────────────────────────
+ * Esto era sólo `fondoInicialCentavos`, y la pantalla de caja del mostrador
+ * —`abarrotes/Caja.tsx`— publica los TRES montones: monedas, billetes chicos y
+ * billetes grandes. Ninguno encajaba, así que `caja.abrir` rechazaba cada
+ * apertura con «Hay datos incompletos o mal escritos» y **la caja de una tienda
+ * no se podía abrir desde su pantalla**. Las cinco demostraciones tienen caja
+ * abierta porque la siembra la escribe en la tabla, no porque alguien la abriera.
+ *
+ * Y el desglose no es adorno: «$1,500» no dice si se puede dar cambio; cuánto hay
+ * en monedas, sí. Las tres columnas existen en `sesiones_caja` desde la 003 y
+ * hasta hoy sólo las escribía la siembra.
+ *
+ * Se aceptan las dos formas —el total, o el desglose— porque hay dos pantallas
+ * que abren caja y no mandan lo mismo. Cuando viene el desglose, el total es su
+ * suma: dos números que tienen que cuadrar no se piden dos veces.
+ */
+export const entradaAbrirCaja = z
+  .object({
+    fondoInicialCentavos: centavosNoNegativos.optional(),
+    fondoMonedasCentavos: centavosNoNegativos.optional(),
+    fondoChicosCentavos: centavosNoNegativos.optional(),
+    fondoGrandesCentavos: centavosNoNegativos.optional(),
+  })
+  .refine(
+    (v) =>
+      v.fondoInicialCentavos !== undefined ||
+      v.fondoMonedasCentavos !== undefined ||
+      v.fondoChicosCentavos !== undefined ||
+      v.fondoGrandesCentavos !== undefined,
+    {
+      message:
+        'Di con cuánto abres: el total en `fondoInicialCentavos`, o el desglose por montones. ' +
+        'Una caja sin fondo declarado no se puede arquear al cerrar.',
+    },
+  )
+  .transform((v) => {
+    const desglose =
+      v.fondoMonedasCentavos !== undefined ||
+      v.fondoChicosCentavos !== undefined ||
+      v.fondoGrandesCentavos !== undefined;
+    const monedas = v.fondoMonedasCentavos ?? 0;
+    const chicos = v.fondoChicosCentavos ?? 0;
+    const grandes = v.fondoGrandesCentavos ?? 0;
+    return {
+      // Con desglose, el total es la suma. Sin desglose, el total va entero al
+      // montón de monedas: es lo único honesto que se puede decir de un fondo
+      // del que nadie declaró la forma, y deja el arqueo cuadrando igual.
+      fondoInicialCentavos: desglose ? monedas + chicos + grandes : (v.fondoInicialCentavos ?? 0),
+      fondoMonedasCentavos: desglose ? monedas : (v.fondoInicialCentavos ?? 0),
+      fondoChicosCentavos: chicos,
+      fondoGrandesCentavos: grandes,
+    };
+  });
+
+export const entradaMovimientoCaja = z.object({
+  tipo: z.enum(['gasto', 'retiro', 'deposito', 'ajuste']),
+  /**
+   * Puede ser NEGATIVO: un ajuste a la baja lo es. Lo que se acota es su valor
+   * absoluto, en los dos sentidos — un retiro de mil millones y un ajuste de
+   * menos mil millones son el mismo error de tecleo.
+   */
+  montoCentavos: z.number().int().min(-TOPE_DE_IMPORTE_CENTAVOS).max(TOPE_DE_IMPORTE_CENTAVOS),
+  motivo: z.string().min(3).max(200),
+});
+
+export const entradaCerrarCaja = z.object({
+  efectivoContadoCentavos: centavosNoNegativos,
+  /**
+   * El BOTE de propina contado, cuando el negocio tiene bote.
+   *
+   * ── Por qué va aquí y no en un comando aparte ─────────────────────────
+   * La pantalla de cierre de una cafetería publicaba en
+   * `/api/cafeteria/contar-bote`, **una ruta que no existe** —su propio
+   * comentario lo decía: «el documento no nombra la ruta y todavía no existe
+   * ninguna»—. Resultado: el 404 devolvía la página de error de Next, el cliente
+   * lo traducía a «El servidor respondió algo inesperado» y **un turno de
+   * cafetería no se podía cerrar**. Y como el cierre iba después, tampoco se
+   * cerraba la caja.
+   *
+   * Contar el bote es parte del cierre, no un acto aparte: se cuenta el cajón y
+   * se cuenta el bote en el mismo momento y con las manos en el mismo dinero. En
+   * el mismo comando, además, son una sola transacción.
+   *
+   * `cafeteria.repartir_bote` EXIGE este número —«nulo no es cero: es "no se
+   * contó"»— así que sin esto el reparto del bote tampoco podía funcionar nunca.
+   */
+  boteContadoCentavos: centavosNoNegativos.optional(),
+  /**
+   * EL DINERO QUE SE QUEDA EN EL CAJÓN, que es el fondo de mañana (C.6 de la 2.4).
+   *
+   * Viajaba como texto en `notas` —«Dinero dejado en caja (fondo): $1,000.00»—, así que
+   * el día siguiente no podía compararse con nada y el PDF no podía enseñarlo. Ahora es
+   * un campo: se guarda lo RETIRADO (`efectivo_retirado_centavos`, contado − dejado) y lo
+   * dejado se deriva, igual que en el corte de turno. Sin él la columna queda en NULL,
+   * que es «no se dijo», no «se dejó cero».
+   */
+  fondoDejadoCentavos: centavosNoNegativos.optional(),
+  /**
+   * EL CONTEO por denominación (F-231): el total lo calcula la máquina. Si viaja, el
+   * efectivo contado tiene que ser su suma; si no cuadra, el cierre se rechaza en vez de
+   * guardar dos números distintos para el mismo cajón.
+   */
+  denominaciones: z
+    .array(
+      z.object({
+        denominacionCentavos: z.number().int().positive().max(100_000_00),
+        piezas: z.number().int().min(0).max(100_000),
+      }),
+    )
+    .max(20)
+    .optional(),
+  /**
+   * Lo suelto que no se cuenta por piezas —las monedas de centavos—, como importe. El
+   * conteo por denominación MÁS esto tiene que dar lo contado. No se guarda como una
+   * denominación inventada: quien lea el conteo lo obtiene como contado − la suma.
+   */
+  sueltosCentavos: centavosNoNegativos.optional(),
+  notas: z.string().max(500).optional(),
+});
+
+/** La cotización acepta la orden explícita o, sin ella, el borrador vivo. */
+export const entradaEstadoVenta = z.object({
+  ordenId: z.uuid().optional(),
+});
+
+export const entradaBuscarCatalogo = z.object({
+  busqueda: z.string().max(60).optional(),
+  limite: z.number().int().min(1).max(100).default(40),
+});
+
+export const entradaTicket = z.object({
+  ordenId: z.uuid(),
+});
