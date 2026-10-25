@@ -29,15 +29,13 @@
     "./propinas": "./src/propinas/index.ts",
     "./portal": "./src/portal/index.ts",
     "./mantenimiento": "./src/mantenimiento/index.ts",
-    "./puente-presentacion": "./src/puente/presentacion.ts",
     "./observabilidad": "./src/observabilidad.ts",
     "./archivos": "./src/archivos/index.ts",
     "./clientes": "./src/clientes/index.ts",
     "./ferreteria": "./src/ferreteria/index.ts",
     "./salon": "./src/salon/index.ts",
     "./cartera": "./src/cartera/index.ts",
-    "./reportes": "./src/reportes/index.ts",
-    "./presentacion": "./src/presentacion/index.ts"
+    "./reportes": "./src/reportes/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

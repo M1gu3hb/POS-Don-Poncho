@@ -3,7 +3,6 @@ import { leerCookie, permitir } from '@morphiqpos/app/http';
 import { empleadosParaEntrar } from '@morphiqpos/app/identidad';
 import { terminosDeLaOrganizacion } from '@morphiqpos/app/configuracion';
 import { negociosDelDespliegue, elegirNegocioDeLaEntrada } from '@morphiqpos/app/negocio';
-import { destinosDePresentacion } from '@morphiqpos/app/sesion';
 import { correlationIdDe, registrar } from '@morphiqpos/app/observabilidad';
 import { colorDePersona, etiquetaDeRolEnElGiro, rolMH } from '@morphiqpos/app/puente';
 
@@ -54,43 +53,29 @@ export async function GET(peticion: Request): Promise<Response> {
           empleadosParaEntrar(negocio.organizacionId, token, entorno.PIN_PEPPER),
           terminosDeLaOrganizacion(negocio.organizacionId),
         ]);
-        return Promise.all(
-          gente.map(async (e) => {
-            const esDuenoGeneral =
-              e.rol === 'dueno' &&
-              (
-                await destinosDePresentacion({
-                  empleoId: e.empleoId,
-                  organizacionId: negocio.organizacionId,
-                  rol: e.rol,
-                })
-              ).length > 0;
-            const usuario = {
-              id: e.empleoId,
+        return gente.map((e) => {
+          const usuario = {
+            id: e.empleoId,
+            nombre: e.nombre,
+            rol: rolMH(e.rol) ?? e.rol,
+            etiqueta: etiquetaDeRolEnElGiro(e.rol, terminos.giro, terminos.personalizado),
+            color: colorDePersona(e.empleoId),
+            activo: true,
+            negocio: negocio.nombre,
+            negocioSlug: negocio.slug,
+            modelo: terminos.giro,
+          };
+          return {
+            usuario,
+            empleado: {
+              empleoId: e.empleoId,
               nombre: e.nombre,
-              rol: rolMH(e.rol) ?? e.rol,
-              etiqueta: esDuenoGeneral
-                ? 'Dueño general'
-                : etiquetaDeRolEnElGiro(e.rol, terminos.giro, terminos.personalizado),
-              color: colorDePersona(e.empleoId),
-              activo: true,
+              rol: e.rol,
               negocio: negocio.nombre,
               negocioSlug: negocio.slug,
-              modelo: terminos.giro,
-              esDuenoGeneral,
-            };
-            return {
-              usuario,
-              empleado: {
-                empleoId: e.empleoId,
-                nombre: e.nombre,
-                rol: e.rol,
-                negocio: negocio.nombre,
-                negocioSlug: negocio.slug,
-              },
-            };
-          }),
-        );
+            },
+          };
+        });
       }),
     );
     const personas = listas.flat();

@@ -61,11 +61,6 @@ vi.mock('@morphiqpos/app/identidad', async (original) => ({
   organizacionDelDispositivo: () => Promise.resolve(terminalDe),
 }));
 
-vi.mock('@morphiqpos/app/sesion', () => ({
-  destinosDePresentacion: (dueno: { empleoId: string }) =>
-    Promise.resolve(dueno.empleoId === 'e-ti-1' ? [{ empleoId: 'otro' }] : []),
-}));
-
 vi.mock('@morphiqpos/app/configuracion', async (original) => ({
   ...(await original<typeof import('@morphiqpos/app/configuracion')>()),
   terminosDeLaOrganizacion: (organizacionId: string) =>
@@ -82,7 +77,6 @@ interface Cuerpo {
     readonly usuarios?: readonly {
       readonly nombre: string;
       readonly etiqueta: string;
-      readonly esDuenoGeneral?: boolean;
       readonly negocioSlug?: string;
     }[];
   };
@@ -125,7 +119,7 @@ beforeEach(() => {
 });
 
 describe('/api/auth/empleados en un despliegue de varios negocios', () => {
-  it('el acceso central ofrece los modelos servidos y reconoce al dueño general', async () => {
+  it('el acceso ofrece los negocios servidos, y nadie entra como «dueño general»', async () => {
     const { estado, cuerpo, texto } = await pedir();
     expect(estado).toBe(200);
     expect(cuerpo.datos?.negocios?.map((n) => n.slug)).toEqual([
@@ -134,9 +128,9 @@ describe('/api/auth/empleados en un despliegue de varios negocios', () => {
       ESTETICA.slug,
     ]);
     expect(cuerpo.datos?.usuarios?.map((u) => u.nombre)).toEqual(['Lupita', 'Demo', 'Karla']);
-    const general = cuerpo.datos?.usuarios?.find((u) => u.esDuenoGeneral);
-    expect(general?.nombre).toBe('Demo');
-    expect(general?.etiqueta).toBe('Dueño general');
+    // POS Don Poncho (DP-2): sin dueño general entre negocios. Cada quien con el rol de su giro.
+    expect(cuerpo.datos?.usuarios?.map((u) => u.etiqueta)).not.toContain('Dueño general');
+    expect(texto).not.toContain('esDuenoGeneral');
     for (const secreto of ['pin_hash', 'presentacion_destinos', 'presentacion_dueno_empleo']) {
       expect(texto).not.toContain(secreto);
     }

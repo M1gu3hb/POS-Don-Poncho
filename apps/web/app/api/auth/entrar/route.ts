@@ -8,7 +8,6 @@ import {
 } from '@morphiqpos/app/http';
 import { entrarConPin, organizacionDeQuienEntra } from '@morphiqpos/app/identidad';
 import { elegirNegocioDeLaEntrada, negociosDelDespliegue } from '@morphiqpos/app/negocio';
-import { sesionDePresentacion } from '@morphiqpos/app/presentacion';
 import { correlationIdDe, registrar } from '@morphiqpos/app/observabilidad';
 import { terminosDeLaOrganizacion } from '@morphiqpos/app/configuracion';
 import { etiquetaDeRol, etiquetaDeRolEnElGiro, rolMH } from '@morphiqpos/app/puente';
@@ -17,7 +16,6 @@ import { z } from 'zod';
 import { cookieDeDispositivo, NOMBRE_COOKIE_DISPOSITIVO } from '~/servidor/dispositivo';
 import { cookieDeEntrada } from '~/servidor/entrada';
 import { peticionDeEscrituraValida } from '~/servidor/seguridad-http';
-import { cookieDePresentacion } from '~/servidor/cookie-presentacion';
 
 /**
  * Entrada con PIN (F1.1-A-03, revisada en T2 del port del restaurante).
@@ -178,29 +176,17 @@ export async function POST(peticion: Request): Promise<Response> {
   // (`LIMITES.entrar`), y la tableta que pasa de mesero en mesero no la gasta entrando bien.
   await devolver('entrar', peticion.headers, entorno.PIN_PEPPER);
 
-  // EL MODO PRESENTACIÓN (21-10): si el restaurante está presentándose, la sesión de verdad
-  // se abre en el gemelo del contexto de presentación, con la misma terminal del navegador.
-  const enPresentacion = await sesionDePresentacion({
-    organizacionId: resultado.organizacionId,
-    empleoId: validada.data.empleoId,
-    tokenReal: resultado.token,
-    deviceToken: resultado.deviceToken ?? deviceToken,
-    pimienta: entorno.PIN_PEPPER,
-    secreto: entorno.SESSION_SECRET,
-  });
-
   // Sin HTTPS el navegador descarta una cookie `Secure`, y en la red local de
   // una demostración eso significaría no poder entrar nunca.
   const seguro = entorno.NODE_ENV === 'production';
   const cookies = [
-    cookieDePresentacion('', seguro, 0),
     cookieDeSesion({
-      token: enPresentacion?.token ?? resultado.token,
+      token: resultado.token,
       maxEdadSegundos: resultado.maxEdadSegundos,
       seguro,
     }),
   ];
-  const dispositivoNuevo = enPresentacion?.deviceToken ?? resultado.deviceToken;
+  const dispositivoNuevo = resultado.deviceToken;
   if (dispositivoNuevo !== undefined) {
     cookies.push(
       cookieDeDispositivo({
@@ -227,9 +213,7 @@ export async function POST(peticion: Request): Promise<Response> {
       // `ROLE_HOME_ROUTES`. El identificador que devuelve es el del EMPLEO,
       // que es lo que su pantalla mandó — no un identificador interno nuevo.
       datos: {
-        // En presentación, el empleo de la sesión es el gemelo: las pantallas de sala
-        // reconocen «lo suyo» por este id.
-        id: enPresentacion?.empleoId ?? validada.data.empleoId,
+        id: validada.data.empleoId,
         nombre: resultado.nombre,
         rol: rolMH(resultado.rol) ?? resultado.rol,
         etiqueta:
@@ -237,8 +221,7 @@ export async function POST(peticion: Request): Promise<Response> {
             ? etiquetaDeRol(resultado.rol)
             : etiquetaDeRolEnElGiro(resultado.rol, terminos.giro, terminos.personalizado),
         activo: true,
-        organizacionId: enPresentacion?.organizacionId ?? resultado.organizacionId,
-        enPresentacion: enPresentacion !== null,
+        organizacionId: resultado.organizacionId,
       },
     },
     cookies,

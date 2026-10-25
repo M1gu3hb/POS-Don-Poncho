@@ -232,23 +232,16 @@ export async function negocioDelDespliegue(
 }
 
 /**
- * LOS NEGOCIOS QUE PUEDE ATENDER EL PORTAL PÚBLICO: los del despliegue y sus contextos de
- * presentación (cierre del restaurante, 21-10).
+ * LOS NEGOCIOS QUE PUEDE ATENDER EL PORTAL PÚBLICO: los del despliegue, ni uno más.
  *
- * Durante el modo presentación el personal opera en el contexto espejo, y el QR que se
- * enseña en su pantalla es de una mesa de ese contexto. No se sirve por su cuenta —no está
- * en `ORGANIZACION` ni en la entrada—: entra aquí sólo como espejo de un negocio servido.
+ * El maestro sumaba aquí los contextos espejo del modo presentación; POS Don Poncho no
+ * tiene modo presentación (DP-2), así que el portal atiende lo mismo que sirve la entrada.
  */
 export async function negociosDelPortal(
   slugConfigurado: string | undefined,
   host?: string | null,
 ): Promise<readonly NegocioDelDespliegue[]> {
-  const servidos = await negociosDelDespliegue(slugConfigurado, host);
-  const espejos = await repoNegocio.espejosDePresentacion(
-    obtenerDb(),
-    servidos.map((n) => n.organizacionId),
-  );
-  return [...servidos, ...espejos];
+  return negociosDelDespliegue(slugConfigurado, host);
 }
 
 /** La fila mínima para decidir de quién es un token: su organización. */

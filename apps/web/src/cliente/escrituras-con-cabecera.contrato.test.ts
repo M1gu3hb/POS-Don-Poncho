@@ -103,9 +103,10 @@ describe('las escrituras del navegador', () => {
       for (const llamada of sinCabecera) faltan.push(`${relative(WEB, archivo)}: ${llamada}`);
     }
     expect(faltan).toEqual([]);
-    // No es un contrato vacío: `invocarComando` y la subida de imágenes del cliente, la
-    // presentación del dueño, el apartado de la cafetería y las dos del puente heredado.
-    expect(total).toBeGreaterThanOrEqual(6);
+    // No es un contrato vacío: `invocarComando` y la subida de imágenes del cliente y las del
+    // puente heredado. POS Don Poncho (DP-2): piso recalibrado al alcance del restaurante —la
+    // presentación del dueño y el apartado de la cafetería se fueron con lo suyo—.
+    expect(total).toBeGreaterThanOrEqual(4);
   });
 
   it('acusa el `fetch` que tenía Apariencia y deja pasar la cabecera en una variable', () => {

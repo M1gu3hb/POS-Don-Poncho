@@ -12,7 +12,6 @@ import type { AparienciaInicial } from '@morphiqpos/ui/hooks';
 
 import { ProveedorDeApariencia } from './Apariencia';
 import { GuardiaDePlantilla, ProveedorDeConsultas } from './ProveedorDeConsultas';
-import { VigiaDePresentacion } from './VigiaDePresentacion';
 
 /**
  * Los proveedores de la aplicación — los SUYOS, en su orden.
@@ -64,7 +63,6 @@ export function Proveedores({
             pantalla al cambiar de contexto es justo lo que se quiere.
           */}
           <ProveedorDeConsultas>
-            <VigiaDePresentacion />
             {conSesion ? (
               <ConfigProvider>
                 <GuardiaDePlantilla />

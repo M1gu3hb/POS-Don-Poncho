@@ -40,8 +40,3 @@ export {
   type PeticionDeSupervisor,
   type ResultadoDeSupervisor,
 } from './supervisor.ts';
-export {
-  cambiarNegocioDePresentacion,
-  empleoRaizDePresentacion,
-  negociosDePresentacion,
-} from './presentacion.ts';

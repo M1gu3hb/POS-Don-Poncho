@@ -27,7 +27,6 @@ export default function POSLogin() {
   const [usuariosCargando, setUsuariosCargando] = useState(true);
   const [usuariosError, setUsuariosError] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [vistaDeAcceso, setVistaDeAcceso] = useState('');
   const { login, posUser } = usePOSAuth();
   const { config } = useConfig();
   const navigate = useNavigate();
@@ -65,8 +64,6 @@ export default function POSLogin() {
       const list = await api.auth.usuarios();
       const disponibles = Array.isArray(list) ? list : [];
       setUsuarios(disponibles);
-      const equipo = disponibles.filter((u) => u.esDuenoGeneral);
-      if (equipo.length === 1) setSelectedUser((actual) => actual ?? equipo[0]);
       setUsuariosError(false);
     } catch (err) {
       console.error('[POSLogin] cargar usuarios:', err);
@@ -174,34 +171,16 @@ export default function POSLogin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pin, loading, usuarios, selectedUser]);
 
-  // Llegó aquí porque el restaurante entró o salió del modo presentación (21-10): se dice por
-  // qué, una vez, y se limpia la dirección para que recargar no lo repita.
-  useEffect(() => {
-    const parametros = new URLSearchParams(window.location.search);
-    if (parametros.get('aviso') !== 'presentacion') return;
-    toast.info('El restaurante cambió de modo presentación. Entra con tu PIN para continuar.');
-    parametros.delete('aviso');
-    const resto = parametros.toString();
-    window.history.replaceState(null, '', `${window.location.pathname}${resto ? `?${resto}` : ''}`);
-  }, []);
-
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
   const sistema = nombreVisibleDelSistema(config.nombre_sistema);
 
-  // Una entrada para el equipo y las demostraciones. El servidor delimita la lista;
-  // elegir un modelo sólo filtra las tarjetas, nunca concede permisos.
-  const negociosServidos = [...new Set(usuarios.map((u) => u.negocioSlug).filter(Boolean))];
-  const variosNegocios = negociosServidos.length > 1;
-  const generales = usuarios.filter((u) => u.esDuenoGeneral);
-  const vista = vistaDeAcceso || (generales.length ? 'equipo' : negociosServidos[0] || '');
-  const visibles = !variosNegocios ? usuarios : vista === 'equipo'
-    ? generales : usuarios.filter((u) => u.negocioSlug === vista && !u.esDuenoGeneral);
+  // Un despliegue, un negocio (POS Don Poncho, DP-2): el servidor manda sólo a SU gente.
+  const visibles = usuarios;
   // El nombre se IMPRIME sin el prefijo con que nace una demostración («Demo del acople · …»):
   // el dato queda como está en la base, lo que se lee en pantalla no.
   const nombreDelNegocio = nombreVisibleDelNegocio(usuarios[0]?.negocio || config.nombre_negocio);
   // Sin un negocio propio, el título es el del producto —«Morphiq POS»—, no sólo la marca.
-  const negocio =
-    variosNegocios || nombreDelNegocio === MARCA_DE_PLATAFORMA ? NOMBRE_DEL_SISTEMA : nombreDelNegocio;
+  const negocio = nombreDelNegocio === MARCA_DE_PLATAFORMA ? NOMBRE_DEL_SISTEMA : nombreDelNegocio;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#04070f] via-[#0a1428] to-[#0b1d3a] relative overflow-hidden">
@@ -275,7 +254,7 @@ export default function POSLogin() {
         <h1 className="text-3xl sm:text-4xl font-heading font-black text-primario-texto tracking-wide text-center">
           {negocio}
         </h1>
-        <p className="text-primario-texto/60 text-sm mt-1 tracking-wider uppercase">{variosNegocios ? 'Sistema maestro · demostración' : sistema}</p>
+        <p className="text-primario-texto/60 text-sm mt-1 tracking-wider uppercase">{sistema}</p>
 
         {selectedUser && (
           <p
@@ -286,7 +265,6 @@ export default function POSLogin() {
             }}
           >
             Iniciando como: {selectedUser.nombre}
-            {variosNegocios && selectedUser.negocio && !selectedUser.esDuenoGeneral ? ` · ${nombreVisibleDelNegocio(selectedUser.negocio)}` : ''}
           </p>
         )}
 
@@ -370,31 +348,8 @@ export default function POSLogin() {
       <div className="relative z-10 border-t border-primario-texto/10 bg-velo backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <p className="text-primario-texto/60 text-[10px] uppercase tracking-widest mb-2 text-center sm:text-left">
-            {variosNegocios
-              ? 'Equipo Morphiq y usuarios de demostración'
-              : 'Usuarios disponibles'}
+            Usuarios disponibles
           </p>
-          {variosNegocios && (
-            <div className="mb-4 flex flex-col gap-2 text-sm text-primario-texto">
-              <label htmlFor="vista-de-acceso">Elige tu acceso</label>
-              <select
-                id="vista-de-acceso"
-                value={vista}
-                onChange={(e) => {
-                  setVistaDeAcceso(e.target.value);
-                  setSelectedUser(null);
-                  setPin('');
-                }}
-                className="rounded-lg border border-primario-texto/20 bg-sidebar text-sidebar-foreground p-3"
-              >
-                {generales.length > 0 && <option value="equipo">Equipo Morphiq · dueño general</option>}
-                {negociosServidos.map((slug) => (
-                  <option key={slug} value={slug}>{nombreVisibleDelNegocio(usuarios.find((u) => u.negocioSlug === slug)?.negocio)}</option>
-                ))}
-              </select>
-              <p className="text-primario-texto/60 text-xs">Entra como dueño general para recorrer todos los modelos, o elige una demostración para probar sus puestos.</p>
-            </div>
-          )}
           {usuariosCargando ? (
             <div className="flex items-center justify-center gap-2 py-6 text-primario-texto/60 text-sm">
               <div className="w-4 h-4 border-2 border-primario-texto/20 border-t-primario-texto/80 rounded-full animate-spin" />
@@ -457,17 +412,6 @@ export default function POSLogin() {
                             lo rotula el servidor con el vocabulario del negocio. */}
                         {u.etiqueta || ROLE_LABELS[u.rol]}
                       </p>
-                      {/* Con varios negocios en un despliegue, el rol no basta:
-                          hay un dueño en cada uno. El negocio va en la tarjeta
-                          porque es lo que se elige al tocarla. */}
-                      {variosNegocios && u.negocio && !u.esDuenoGeneral && (
-                        <p
-                          className="text-[9px] truncate mt-0.5"
-                          style={{ color: 'var(--brand-accent, #60a5fa)' }}
-                        >
-                          {nombreVisibleDelNegocio(u.negocio)}
-                        </p>
-                      )}
                     </div>
                   </button>
                 );

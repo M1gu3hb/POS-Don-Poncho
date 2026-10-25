@@ -34,9 +34,8 @@ describe('POST /api/auth/salir', () => {
     expect(codigo).toMatch(
       /await cerrarSesion\(\s*leerCookie\(peticion\.headers\.get\('cookie'\), NOMBRE_COOKIE\)/,
     );
-    expect(codigo).toMatch(
-      /await cerrarSesion\(\s*leerCookie\(peticion\.headers\.get\('cookie'\), COOKIE_PRESENTACION\)/,
-    );
+    // POS Don Poncho (DP-2): sin modo presentación no hay una segunda cookie que revocar.
+    expect(codigo).not.toContain('COOKIE_PRESENTACION');
     expect(codigo).toContain('cookieDeCierre(');
   });
 });

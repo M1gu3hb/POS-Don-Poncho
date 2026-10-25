@@ -95,9 +95,6 @@ export default function PrimerosPasosCard({ progreso, ready = true }) {
   // 2. Los 8 pasos ya se marcaron como completados (persistido).
   // 3. El Dashboard aún no terminó el primer fetch (ready=false) — evita flash.
   // 4. El cálculo actual indica que todo está listo.
-  // En presentación al cliente (21-10) la guía de configuración es un control interno: no se
-  // enseña. Fuera de ella, sigue igual.
-  if (posUser?.enPresentacion === true) return null;
   if (dismissed) return null;
   if (completedPersisted) return null;
   if (!ready) return null;

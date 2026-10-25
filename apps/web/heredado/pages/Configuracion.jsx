@@ -40,7 +40,6 @@ import {
 } from 'lucide-react';
 import IntegracionesRespaldos from '@/components/configuracion/IntegracionesRespaldos';
 import DatosSection from '@/components/datos/DatosSection';
-import { PresentacionDelDueno } from '~/configuracion/PresentacionDelDueno';
 import ConfiguracionDeVoz from '@/components/configuracion/ConfiguracionDeVoz';
 import { SelectorDeApariencia } from '~/configuracion/SelectorDeApariencia';
 import { useLocation } from '@/enrutado';
@@ -519,12 +518,6 @@ export default function Configuracion() {
             </TabsTrigger>
           )}
           {posUser?.rol === 'administrador' && (
-            <TabsTrigger value="presentacion">
-              <Sparkles className="w-3 h-3 mr-1" />
-              Presentación
-            </TabsTrigger>
-          )}
-          {posUser?.rol === 'administrador' && (
             <TabsTrigger value="mantenimiento">
               <ShieldAlert className="w-3 h-3 mr-1" />
               Mantenimiento
@@ -937,12 +930,6 @@ export default function Configuracion() {
         {posUser?.rol === 'administrador' && (
           <TabsContent value="integraciones">
             <IntegracionesRespaldos />
-          </TabsContent>
-        )}
-
-        {posUser?.rol === 'administrador' && (
-          <TabsContent value="presentacion">
-            <PresentacionDelDueno cfg={cfg} />
           </TabsContent>
         )}
 
