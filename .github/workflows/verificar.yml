@@ -25,9 +25,10 @@
 
 name: Verificar
 
+# POS Don Poncho (DP-2): sin `push` a `main`. Se trabaja directo en `main` durante el
+# arranque y cada corrida completa cuesta minutos de Actions: corre en cada PR y a mano
+# (`workflow_dispatch`), que es cuando alguien la va a leer.
 on:
-  push:
-    branches: [main]
   pull_request:
   # Para correr el rastreo COMPLETO —cinco modelos por ocho estilos— sin empujar a
   # `main`: es el que cualquiera lanza antes de fusionar un cambio de diseño.
