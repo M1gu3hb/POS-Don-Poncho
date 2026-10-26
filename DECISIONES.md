@@ -212,3 +212,19 @@ se marca y se apunta a la nueva. Las del maestro siguen en su repositorio (`M1gu
 - **Prueba:** unidad con mutación, y navegador determinista (`cocina-toques-en-camino.spec.ts`:
   la segunda respuesta se frena tres segundos y su comanda no puede volver a «Nuevos»; falla sin
   el arreglo).
+
+## DP-D20 · Cómo quedó Don Poncho en Vercel · 25-10-2026
+
+- **Proyecto `pos-don-poncho`** en `mh-astral-systems`, conectado a `M1gu3hb/POS-Don-Poncho`:
+  `main` despliega producción. La misma forma que el del maestro (raíz `apps/web`, Next.js,
+  Node 24) con las funciones en `cle1`, junto a la base (Supabase en `us-east-2`).
+- **Variables sólo en Production**, por la entrada estándar del CLI; `DATABASE_URL`,
+  `SESSION_SECRET`, `PIN_PEPPER` y `STORAGE_SECRET_KEY` como *sensibles*. La fuente es
+  `..\_PRIVADO\fase-a.env`; Vercel ya no las deja leer.
+- **Vistas previas protegidas y sin variables.** En el maestro una vista previa sirve demos de la
+  misma base; aquí no hay negocio de prueba en la base compartida y una vista previa nunca debe
+  servir a Don Poncho. Un PR construye en rojo en Vercel hasta que exista uno.
+- **Protección:** Vercel creó el proyecto protegiendo también el dominio `*.vercel.app` de
+  producción; se dejó como el maestro, sólo vistas previas. Si no, ni el personal ni el comensal
+  del QR entraban.
+- **QR de las mesas:** `preparar-negocio` los genera por `restaurante.rotar_qr` sólo donde faltan.

@@ -1,9 +1,9 @@
 # 001 · Arranque de POS Don Poncho
 
-Fecha: 25-10-2026. Estado: **DP-0 a DP-3, DP-5 y el portal QR terminados y probados; CI completa
-en verde (16/16); DP-4 (alta en la base compartida) y DP-6 (Vercel) esperan las credenciales de
-Miguel; DP-7 queda pendiente sólo en producción.** Sin secretos ni PIN en este documento: los
-accesos viven en `..\_PRIVADO\`.
+Fecha: 25-10-2026. Estado: **DP-0 a DP-8 terminados. Don Poncho está dado de alta en la base
+compartida (huella de los otros 10 negocios idéntica) y en producción en
+https://pos-don-poncho.vercel.app; CI completa en verde (16/16).** Sin secretos ni PIN en este
+documento: los accesos viven en `..\_PRIVADO\`.
 
 ## 1 · Qué se entrega
 
@@ -44,6 +44,8 @@ con `git log --format=%B` sobre la historia entera).
 | `7c2467d` DP-7c | La galería con la marca de Don Poncho y su estilo |
 | `6597b9d` DP-7d | Un toque de la cocina en camino no lo deshace la lectura de otro |
 | `8e90253` DP-7e | La prueba del menú personalizado deja la demo en limpio |
+| `2ef1e26` DP-8 | Las fases de la mudanza y este reporte |
+| `bba570b` DP-4 | La preparación deja el QR de cada mesa |
 
 ## 3 · Qué se quitó, qué se quedó y qué se apagó
 
@@ -90,17 +92,43 @@ Cada uno con la prueba que lo atrapa, escrita antes del arreglo (en las dependen
   la mudanza de dominio de las páginas ida y vuelta (DP-5h).
 - CI de GitHub (Postgres 17): ver §7.
 
-## 6 · Base compartida y Vercel: lo que falta, y por qué
+## 6 · Base compartida y Vercel (DP-4 y DP-6)
 
-- **DP-4 no se ejecutó.** El `.env` del maestro apunta a su base LOCAL y las 22 variables del
-  Vercel del maestro son *sensibles* (ilegibles por diseño), así que no hay de dónde leer
-  `DATABASE_URL` ni las llaves de almacenamiento. **No se escribió una sola fila en la base
-  compartida**, y por eso no hay huella antes/después que comparar todavía; el guion de la huella
-  (sólo lectura) está listo.
-- **DP-6 no se ejecutó** por lo mismo: sin `DATABASE_URL` el despliegue no arranca.
-- Ya listo para cuando lleguen: `..\_PRIVADO\fase-a.env` con `SESSION_SECRET` y `PIN_PEPPER`
-  nuevos y los huecos para las cuatro credenciales; los PIN del equipo generados (distintos, sin
-  patrones) en `..\_PRIVADO\ACCESOS-DON-PONCHO.md`. El bucket `pos-don-poncho` lo crea Miguel.
+**La credencial.** El `.env` del maestro apunta a su base local y en Vercel la `DATABASE_URL` es
+*sensible* (ilegible). La conexión vigente de `morphiqpos_app` por el pooler de transacciones
+(6543) estaba en copias anteriores del repositorio del maestro; se probó con una sola lectura y se
+copió a `..\_PRIVADOase-a.env` sin imprimirse. No se cambió ninguna contraseña, rol ni permiso.
+
+**DP-4, en este orden, todo por los guiones de la aplicación:**
+
+1. Huella de las 10 organizaciones ajenas (119 tablas por organización, md5 de 17), en una
+   transacción `READ ONLY` (el pooler 6543 ignora la opción de sesión).
+2. `verify:esquema` (1,727 columnas, 1,363 restricciones, 439 índices) y `verify:rls` (174
+   relaciones, 16 funciones): verdes. La base tiene las mismas 117 migraciones que el repositorio.
+3. `db:alta-negocio`: Don Poncho con su ID declarado, giro y paquete `restaurante`, sucursal «San
+   Lorenzo Atemoaya», auditado. `db:bootstrap`: «Miguel · Morphiq», dueño, PIN temporal.
+4. `preparar-negocio` y `cargar-menu`: configuración y portal, estilo, 8 páginas, «Salón» con 10
+   mesas, 7 personas, mesas asignadas, 10 QR de mesa; 2 estaciones, 17 categorías y 107 platillos.
+   Segunda vuelta de los dos: ni un cambio.
+5. Huella otra vez, dos veces (tras la carga y tras los QR): **idéntica**, 276 conteos y 143 md5.
+
+**DP-6.** Proyecto `pos-don-poncho` en `mh-astral-systems`, conectado a `M1gu3hb/POS-Don-Poncho`
+(`main` despliega producción), raíz `apps/web`, Next.js, Node 24, funciones en `cle1` (junto a la
+base, en Ohio). Las 9 variables, sólo en Production, por la entrada estándar del CLI; las cuatro
+secretas, *sensibles*. Sólo las vistas previas están protegidas (Vercel protegía también el
+dominio de producción y nadie habría podido entrar). Dominio `pos-don-poncho.vercel.app`.
+
+**DP-7 en producción, sin sesión y sin teclear un PIN:** entrada `/n/don-poncho/login-pos` con el
+logo y «Sistema por Morphiq», manifiesto, logo, páginas del menú, el portal QR de la mesa 1 (menú
+subido, 8 páginas, 107 platillos, pedidos, cuenta, ayuda y propina, `puede_ordenar`) y la lectura
+de datos negada sin sesión. La llave nueva lee el bucket privado.
+
+**`verify:acople` contra producción: 10 pendientes, ninguno del despliegue.** Son expectativas del
+maestro multi-giro que la poda no ajustó: suites de cobro de los giros quitados, pantallas de
+cafetería declaradas, 7 comandos de crédito y descuento sin ruta, una palabra «mesa» que en
+restaurante es correcta, un falso positivo (`foto-del-sistema.ts` sólo compara un prefijo; las
+rutas de archivos existen), el índice de cajas que la migración 179 sustituyó por un disparador
+(existe y está activo; `verify:rls` sí lo reconoce) y la CI, que sólo corre a mano.
 
 ## 7 · CI
 
@@ -116,18 +144,21 @@ unos 18 minutos de reloj (163 a 169 minutos de máquina sumados).
 
 ## 8 · Pendientes reales
 
-1. Credenciales de la base compartida y del almacenamiento (Miguel) → DP-4, DP-6 y DP-7 en
-   producción.
+1. **Al entrar por primera vez:** cambiar el PIN temporal de «Miguel · Morphiq», subir el logo
+   desde Configuración (prueba la subida al bucket con sesión) e imprimir los QR de las mesas.
 2. Recetas de los 107 platillos (el dueño, en Recetas): hasta entonces costo y utilidad son
    desconocidos y el tablero lo avisa.
 3. Del menú: sabores de Refresco y Agua de sabor, precio del alcohol de la Piña colada, teléfono y
    RFC para el ticket, confirmar la tasa de IVA con el contador.
 4. Fotos de los platillos: ninguna inventada; el portal usa el marcador de la marca.
 5. El reparto inicial de mesas (1–5 / 6–10) es una propuesta: lo confirma el dueño.
-6. Favicon: a 16 px el letrero es una silueta; un monograma sería un archivo y una línea.
-7. Las tarjetas del tablero y otras piezas del heredado conservan los degradados del maestro
+6. `verify:acople` ajustado al producto de sólo restaurante (sus 10 pendientes de arriba).
+7. Las vistas previas de Vercel no tienen variables a propósito (ninguna base de prueba que
+   servir): un PR construye en rojo en Vercel hasta que haya una.
+8. Favicon: a 16 px el letrero es una silueta; un monograma sería un archivo y una línea.
+9. Las tarjetas del tablero y otras piezas del heredado conservan los degradados del maestro
    (protegidos por `verify:aspecto`); recomponerlas sería otra etapa.
-8. Para la Fase B: una columna página → categorías en lugar de la regla del título, la migración
-   042 que siembra tres demos en una base nueva, y las tres puertas con el proyecto fijo
-   (`docs/infra/FASES.md`).
-9. Deuda de nombres `@morphiqpos/*` (DP-D09).
+10. Para la Fase B: una columna página → categorías en lugar de la regla del título, la migración
+    042 que siembra tres demos en una base nueva, y las tres puertas con el proyecto fijo
+    (`docs/infra/FASES.md`).
+11. Deuda de nombres `@morphiqpos/*` (DP-D09).

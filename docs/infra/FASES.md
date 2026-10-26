@@ -54,6 +54,11 @@ tiempo real. Lo que cambia de una fase a otra son **variables de entorno**, no c
 
 - Portal QR con todo encendido en «menú subido» (8 páginas en `apps/web/public/menu-qr`) y la
   asignación de mesas (1–5 «Mesero 1», 6–10 «Mesero 2»), que pedir desde el QR exige.
+- El QR de cada mesa (su token viaja con la fila de la mesa: los QR impresos siguen sirviendo
+  después de la mudanza, mientras el dominio sea el mismo o redirija).
+- Vercel `pos-don-poncho`: `main` despliega producción, raíz `apps/web`, funciones en `cle1`;
+  variables sólo en Production (las cuatro secretas, _sensibles_); vistas previas protegidas y sin
+  variables (DP-D20). Al mudar de base cambian `DATABASE_URL` y `STORAGE_*`, y se redespliega.
 - Todo el menú con receta pendiente: el costo y la utilidad son desconocidos hasta capturarlas.
 
 ## Antes de cada despliegue

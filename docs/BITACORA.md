@@ -141,3 +141,14 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - En esa segunda corrida la jornada cayó en escritorio: la cocina regresaba a «Nuevos» una comanda
   cuyo toque iba en camino y el segundo «Listo» cayó sobre la misma. Defecto heredado de la
   pantalla, no de la prueba: prueba de navegador determinista que lo reproduce y arreglo (DP-D19).
+
+## 25-10-2026 · DP-4 y DP-6 · Don Poncho en la base compartida y en producción
+
+- Credencial: la `DATABASE_URL` vigente de `morphiqpos_app` (6543) estaba en una copia anterior
+  del maestro; probada con una lectura y copiada al archivo privado. Nada rotado ni cambiado.
+- Huella antes; `verify:esquema` y `verify:rls` verdes; alta con el ID declarado; dueño inicial;
+  preparación y menú (segunda vuelta sin cambios); 10 QR de mesa (paso nuevo del guion); huella
+  después, dos veces: idéntica.
+- Vercel `pos-don-poncho`, variables por la entrada estándar, despliegue desde `main` (READY en
+  `cle1`). Humo público en verde. `verify:acople`: 10 pendientes heredados de la poda, ninguno del
+  despliegue (reporte 001 §6).
