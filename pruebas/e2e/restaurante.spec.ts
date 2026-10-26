@@ -255,8 +255,8 @@ test.describe('restaurante · su vocabulario, sus pantallas y su dashboard', () 
       libre,
       `La demo de restaurante no tiene ninguna mesa libre (${String(mesas.length)} mesas, estados: ` +
         `${[...new Set(mesas.map((m) => m.estado ?? '?'))].join(', ')}). Sin mesa libre no hay ` +
-        'cuenta que abrir: vuelve a sembrarla con `scripts/sembrar-demos.mjs --solo ' +
-        'demo-acople-restaurante`.',
+        'cuenta que abrir: vuelve a sembrarla con `scripts/sembrar-pruebas.mjs --solo ' +
+        'prueba-restaurante`.',
     ).toBeDefined();
 
     const platillos = await consultarPuente<PlatilloDelPuente>(page, 'ProductoTerminado', {
@@ -589,7 +589,7 @@ test.describe('restaurante · su vocabulario, sus pantallas y su dashboard', () 
   test('cocina, caja y mesera llegan a su pantalla aunque la recarga tarde, sin pasar por otro modelo', async ({
     browser,
   }, info) => {
-    const slug = process.env['MORPHIQPOS_ORG_DEMO'] ?? 'demo-acople-restaurante';
+    const slug = process.env['MORPHIQPOS_ORG_DEMO'] ?? 'prueba-restaurante';
     for (const [rol, casa] of [
       ['cocina', '/cocina'],
       ['cajero', '/caja'],

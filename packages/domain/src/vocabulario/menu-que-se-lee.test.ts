@@ -112,18 +112,14 @@ describe('el menú que el dueño lee', () => {
     // del modelo dos pantallas pueden compartir módulo —«Cobrar» y «Caja» de una
     // tiendita son las dos `caja_directa`— y las dos tienen que salir. La primera
     // versión de esa regla se comió tres pantallas de modelo sin avisar.
+    // POS Don Poncho (DP-2): sólo el restaurante tiene pantallas de modelo; las otras cuatro
+    // plantillas se quedaron sin ellas al irse su código, y tienen que ofrecer CERO.
     const cuentas: Record<string, number> = {
-      tienda: 11,
-      cafeteria: 11,
+      tienda: 0,
+      cafeteria: 0,
       restaurante: 11,
-      // 14 desde C.6 de la 2.4: «Fondo y movimientos» y «Cortes», heredadas de abarrotes. Sin
-      // ellas la ferretería no podía abrir ni cerrar su caja desde el sistema.
-      ferreteria: 14,
-      // TRECE desde el 20-09-2026: la estética estrenó su TABLERO, y en este modelo
-      // no vive en `/` como en los otros cuatro. Su §4.4.1 defiende que su inicio es
-      // la agenda —«a las 9:45 de la mañana, casi todos los indicadores de un
-      // dashboard son adornos»— así que el tablero cuelga de una entrada de menú.
-      estetica: 13,
+      ferreteria: 0,
+      estetica: 0,
     };
     for (const plantilla of PLANTILLAS) {
       const delModelo = navegacionDePlantilla(plantilla).filter((e) =>

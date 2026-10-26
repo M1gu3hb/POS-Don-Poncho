@@ -1,6 +1,11 @@
-# Reglas no negociables — MorphiqPOS
+# Reglas no negociables — heredadas de MorphiqPOS
 
 Si una propuesta viola una de estas reglas, se rechaza. No se debaten caso por caso: se debate la regla, y si cambia, se registra en `DECISIONES.md`.
+
+> **En POS Don Poncho rigen R7–R17 y R31–R33** (independencia, corrección técnica, calidad,
+> seguridad), más R19 y R20. Las de producto y modularidad (R1–R5, R21–R26) describen al maestro y
+> sus cinco giros; quedan como referencia. R34 ya no aplica tal cual: el repositorio es público por
+> decisión de Miguel (DP-D02) y por eso no entra ningún secreto.
 
 ---
 

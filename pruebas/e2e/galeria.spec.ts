@@ -1,8 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { ESTILOS } from '../../packages/ui/src/tokens/estilos.ts';
-import { agendarUnMiercolesDeMuestra } from './ayudantes/agenda-de-muestra';
-import { abrirCajaPorLaRuta, consultarPuente, entrar, vigilarFallos } from './ayudantes/sesion';
+import { abrirCajaPorLaRuta, entrar, vigilarFallos } from './ayudantes/sesion';
 
 /**
  * LA GALERÍA · una PUERTA que compara, no una carpeta con fotos.
@@ -42,63 +41,7 @@ interface Retrato {
   readonly preparar?: (page: Page) => Promise<void>;
 }
 
-interface ConNombre {
-  readonly nombre?: string | null;
-  readonly precio_venta?: number | null;
-}
-
-/** Un producto con nombre y precio, del catálogo de la demo. */
-async function unProducto(page: Page, entidad: string): Promise<string> {
-  const filas = await consultarPuente<ConNombre>(page, entidad, { limite: 40 });
-  const elegido = filas.find((f) => (f.nombre ?? '') !== '' && (f.precio_venta ?? 1) > 0);
-  if (elegido?.nombre === undefined || elegido.nombre === null) {
-    throw new Error(`La demo no tiene ningún ${entidad} con nombre: no hay qué retratar.`);
-  }
-  return elegido.nombre;
-}
-
 const RETRATOS: Readonly<Record<string, readonly Retrato[]>> = {
-  tienda: [
-    {
-      ruta: '/abarrotes/cobrar',
-      de: 'cobro',
-      preparar: async (page) => {
-        const buscador = page.getByLabel('Código o nombre · F2');
-        await buscador.fill(await unProducto(page, 'ProductoTerminado'));
-        await buscador.press('Enter');
-      },
-    },
-    { ruta: '/', de: 'inicio' },
-    { ruta: '/abarrotes/existencias', de: 'lista' },
-    { ruta: '/abarrotes/fiado', de: 'fiado' },
-    { ruta: '/abarrotes/cortes', de: 'cortes' },
-    { ruta: '/sistema', de: 'sistema' },
-  ],
-  cafeteria: [
-    {
-      ruta: '/cafeteria/cobrar',
-      de: 'cobro',
-      preparar: async (page) => {
-        await page
-          .getByRole('button', { name: await unProducto(page, 'ProductoTerminado') })
-          .first()
-          .click();
-        // Una bebida con opciones las abre ENCIMA del cobro (C.10 de la 2.4): con las de
-        // omisión se agrega; sin opciones no se abre nada. El diálogo tapaba «Aquí» y la
-        // galería esperaba el clic diez minutos.
-        const opciones = page.getByRole('dialog');
-        if (await opciones.isVisible({ timeout: 2_000 }).catch(() => false)) {
-          await opciones.getByRole('button', { name: /^AGREGAR/ }).click();
-          await expect(opciones).toBeHidden();
-        }
-        await page.getByRole('button', { name: 'Aquí' }).click();
-      },
-    },
-    { ruta: '/', de: 'inicio' },
-    { ruta: '/cafeteria/inventario', de: 'lista' },
-    { ruta: '/cafeteria/barra', de: 'barra' },
-    { ruta: '/cafeteria/productos', de: 'productos' },
-  ],
   restaurante: [
     { ruta: '/restaurante/mapa-de-mesas', de: 'mesas' },
     { ruta: '/', de: 'inicio' },
@@ -110,37 +53,16 @@ const RETRATOS: Readonly<Record<string, readonly Retrato[]>> = {
      * que se veía roto en Noche y Terminal; sin retrato, volver a romperlo no lo vería
      * nadie. Son las cuatro del menú del restaurante que no son del modelo —el tablero
      * de `/` ya se retrata arriba como «inicio»—, y sólo aquí: MH es un restaurante,
-     * pero la galería nunca corre sobre MH, sólo sobre `demo-acople-restaurante`.
+     * pero la galería nunca corre sobre MH, sólo sobre `prueba-restaurante`.
      */
     { ruta: '/mesero', de: 'heredado-mesero' },
     { ruta: '/compras', de: 'heredado-compras' },
     { ruta: '/portal-qr', de: 'heredado-portal-qr' },
     { ruta: '/configuracion', de: 'heredado-configuracion' },
   ],
-  ferreteria: [
-    {
-      ruta: '/ferreteria/mostrador',
-      de: 'cobro',
-      preparar: async (page) => {
-        const material = await unProducto(page, 'MaterialMostrador');
-        await page.locator('#buscador').fill(material.split(' ')[0] ?? material);
-      },
-    },
-    { ruta: '/', de: 'inicio' },
-    { ruta: '/ferreteria/existencias', de: 'lista' },
-    { ruta: '/ferreteria/cuentas', de: 'cuentas' },
-    { ruta: '/ferreteria/material', de: 'material' },
-  ],
-  estetica: [
-    { ruta: '/estetica-salon/agenda-del-dia', de: 'agenda', preparar: agendarUnMiercolesDeMuestra },
-    { ruta: '/', de: 'inicio' },
-    { ruta: '/estetica-salon/catalogo-de-servicios', de: 'lista' },
-    { ruta: '/estetica-salon/clientas', de: 'clientas' },
-    { ruta: '/estetica-salon/productos', de: 'productos' },
-  ],
 };
 
-const MODELO = (process.env['MORPHIQPOS_ORG_DEMO'] ?? '').replace('demo-acople-', '');
+const MODELO = (process.env['MORPHIQPOS_ORG_DEMO'] ?? '') === '' ? '' : 'restaurante';
 
 /**
  * EL RELOJ DE LA PÁGINA, A MEDIODÍA DEL DÍA DEL NEGOCIO.

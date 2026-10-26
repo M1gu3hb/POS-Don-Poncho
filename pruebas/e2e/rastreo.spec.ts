@@ -651,17 +651,14 @@ function sondaPara(tipo: string): string | null {
  * Lo usan dos cosas —esperar a que el menú sea el de este negocio, y llegar a las
  * cuatro pantallas que no cuelgan de ningún menú—, así que vive una sola vez.
  */
+// POS Don Poncho (DP-2): un solo modelo.
 const PREFIJO_DEL_MODELO: Readonly<Record<string, string>> = {
-  tienda: '/abarrotes/',
-  cafeteria: '/cafeteria/',
   restaurante: '/restaurante/',
-  ferreteria: '/ferreteria/',
-  estetica: '/estetica-salon/',
 };
 
-/** El modelo de esta corrida, que la demostración dice en su propio slug. */
+/** El modelo de esta corrida: el restaurante de prueba, si se declaró negocio. */
 function modeloDeLaDemo(): string {
-  return (process.env['MORPHIQPOS_ORG_DEMO'] ?? '').replace('demo-acople-', '');
+  return (process.env['MORPHIQPOS_ORG_DEMO'] ?? '') === '' ? '' : 'restaurante';
 }
 
 /**
@@ -680,8 +677,6 @@ function modeloDeLaDemo(): string {
 const PANTALLAS_SIN_MENU: readonly string[] = [
   '/restaurante/acceso-por-pin',
   '/restaurante/portal-del-comensal',
-  '/cafeteria/acceso-por-pin',
-  '/cafeteria/menu-publico-y-pedido-anticipado',
 ];
 
 /**

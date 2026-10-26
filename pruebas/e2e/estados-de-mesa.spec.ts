@@ -83,7 +83,7 @@ import {
  * de ser el de lo que la tapa.
  */
 
-const SLUG = 'demo-acople-restaurante';
+const SLUG = 'prueba-restaurante';
 const MODOS = ['claro', 'oscuro'] as const;
 type Modo = (typeof MODOS)[number];
 

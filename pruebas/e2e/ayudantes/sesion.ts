@@ -77,7 +77,7 @@ import { nombreVisibleDelNegocio } from '../../../apps/web/src/marca/nombre-visi
  *
  * Contra el servidor local, una corrida por modelo:
  *
- *   ORGANIZACION=demo-acople-ferreteria APP_URL=http://localhost:3200 \
+ *   ORGANIZACION=prueba-restaurante APP_URL=http://localhost:3200 \
  *   pnpm --filter @morphiqpos/web exec next start -p 3200
  *
  * SIN bajar `MORPHIQPOS_DB_POOL_MAX`. Aquí decía `=3`, y era para el pooler en
@@ -87,7 +87,7 @@ import { nombreVisibleDelNegocio } from '../../../apps/web/src/marca/nombre-visi
  * pooler ya recicló su conexión. Medido: con `=4`, once 500 en una corrida; con
  * el 10 por omisión, cero.
  *
- *   MORPHIQPOS_ORG_DEMO=demo-acople-ferreteria MORPHIQPOS_DEMO_PERSONA=Demo \
+ *   MORPHIQPOS_ORG_DEMO=prueba-restaurante MORPHIQPOS_DEMO_PERSONA='Dueña de prueba' \
  *   MORPHIQPOS_DEMO_PIN=1234 pnpm test:e2e pruebas/e2e/ferreteria.spec.ts
  *
  * `MORPHIQPOS_DEMO_PERSONA` ya no es opcional cuando la demo tiene VARIAS
@@ -106,7 +106,7 @@ import { nombreVisibleDelNegocio } from '../../../apps/web/src/marca/nombre-visi
  *
  *   MORPHIQPOS_URL_DESPLIEGUE=https://morphiqpos-git-fase-2-mh-astral-systems.vercel.app \
  *   MORPHIQPOS_ESTADO_VERCEL=<ruta al estado con la cookie, FUERA del repositorio> \
- *   MORPHIQPOS_ORG_DEMO=demo-acople-estetica MORPHIQPOS_DEMO_PERSONA=Demo \
+ *   MORPHIQPOS_ORG_DEMO=prueba-restaurante MORPHIQPOS_DEMO_PERSONA='Dueña de prueba' \
  *   MORPHIQPOS_DEMO_PIN=1234 \
  *   pnpm test:e2e pruebas/e2e/estetica-salon.spec.ts
  *
@@ -209,12 +209,12 @@ export interface QuienEntra {
 
 /** La plantilla de comando de A3 §4.1, con el giro que pide cada modelo. */
 function comandoDeAlta(giro: string): string {
-  const slug = `demo-acople-${giro}`;
+  const slug = giro === 'restaurante' ? 'prueba-restaurante' : `prueba-${giro}`;
   const plantilla = PLANTILLA_DE_ALTA[giro] ?? 'tienda';
   return [
-    `  pnpm db:alta-negocio --slug ${slug} --nombre "Demo del acople · ${giro}" \\`,
+    `  pnpm db:alta-negocio --slug ${slug} --nombre "Restaurante de prueba" \\`,
     `    --giro ${giro} --paquete ${plantilla}`,
-    `  pnpm db:bootstrap --org ${slug} --persona "Demo" --pin 1234`,
+    `  pnpm db:bootstrap --org ${slug} --persona "Dueña de prueba" --pin 1234`,
     `  y en el entorno del despliegue: ORGANIZACION=${slug}`,
   ].join('\n');
 }
@@ -294,7 +294,7 @@ export async function exigirDemostracion(
         'Ferretería La Broca son clientes que cobran.',
         '',
         'Declara contra qué demo corre esta suite antes de correrla:',
-        '  MORPHIQPOS_ORG_DEMO=demo-acople-tienda MORPHIQPOS_DEMO_PERSONA=Demo \\',
+        "  MORPHIQPOS_ORG_DEMO=prueba-restaurante MORPHIQPOS_DEMO_PERSONA='Dueña de prueba' \\",
         '  MORPHIQPOS_DEMO_PIN=1234 pnpm test:e2e',
       ].join('\n'),
     );
@@ -328,7 +328,7 @@ export async function exigirDemostracion(
         'puede teclear en esa pantalla, y la prueba se quedaría esperando un salto que',
         'nadie va a dar.',
         '',
-        `  pnpm db:bootstrap --org ${SLUG} --persona "Demo" --pin 1234`,
+        `  pnpm db:bootstrap --org ${SLUG} --persona "Dueña de prueba" --pin 1234`,
       ].join('\n'),
     );
   }
@@ -444,7 +444,7 @@ export async function exigirDemostracion(
           'forma de entrar. `alta-negocio` crea la organización y su primera sucursal;',
           'el dueño con PIN lo crea `bootstrap`, que es otro paso:',
           '',
-          `  pnpm db:bootstrap --org ${SLUG} --persona "Demo" --pin ${PIN_DEMO}`,
+          `  pnpm db:bootstrap --org ${SLUG} --persona "Dueña de prueba" --pin ${PIN_DEMO}`,
         ].join('\n'),
       );
     }
@@ -1747,7 +1747,7 @@ export async function abrirLaCajaSiHaceFalta(
       'SUCURSAL y cerrar la ajena exige ser su terminal. Se limpia volviendo a sembrar la',
       'demo, que borra sus sesiones de caja:',
       '',
-      '  node --conditions=react-server scripts/sembrar-demos.mjs --solo <slug>',
+      '  node --conditions=react-server scripts/sembrar-pruebas.mjs --solo <slug>',
     ].join('\n'),
   ).toBe(true);
 

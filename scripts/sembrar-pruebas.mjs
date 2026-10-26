@@ -1,26 +1,18 @@
 #!/usr/bin/env node
 /**
- * Siembra LAS CINCO demostraciones del acople, sin levantar cinco servidores.
+ * Siembra LOS RESTAURANTES DE PRUEBA en una base desechable, sin levantar un servidor.
  *
- *   node --conditions=react-server scripts/sembrar-demos.mjs [--solo <slug>]
+ *   node --conditions=react-server scripts/sembrar-pruebas.mjs [--solo <slug>]
  *
- * ── Por qué existe además de `sembrar-demo.mjs` ────────────────────────────
- * El otro siembra por HTTP, que es lo correcto para comprobar que la ruta y la
- * sesión funcionan. Pero un despliegue sirve a UN negocio (R16), así que sembrar
- * las cinco por HTTP son cinco arranques de servidor con su `ORGANIZACION`
- * distinta — quince minutos y cinco oportunidades de dejar una a medias.
+ * Ejecuta el MISMO comando que `/api/pruebas/resetear` —`configuracion.resetear_negocio_de_prueba`—
+ * con las dependencias de producción: la misma transacción, el mismo gate de rol, la misma
+ * auditoría. Lo único que no pasa por HTTP es el ámbito, que se construye leyendo la
+ * organización, su sucursal y su dueño de la base.
  *
- * Esto ejecuta el MISMO comando, `configuracion.resetear_demo`, con las mismas
- * dependencias de producción: la misma transacción, el mismo gate de rol, la
- * misma auditoría. Lo único que no pasa por HTTP es el ámbito, que aquí se
- * construye leyendo la organización, su sucursal y su dueño de la base.
- *
- * ── La guarda, que es lo primero ───────────────────────────────────────────
- * Este comando BORRA el catálogo, el inventario y las ventas de la organización
- * sobre la que corre. Sobre uno de los cuatro negocios que cobran, eso es el día
- * de trabajo de alguien. Por eso sólo acepta slugs que empiecen por
- * `demo-acople-`, y además rechaza explícitamente los cuatro por su slug:
- * `F2.3-REGLAS §4.5`.
+ * ── Las guardas, que son lo primero ─────────────────────────────────────────
+ * El comando BORRA el catálogo, el inventario y las ventas del negocio. Sólo corre sobre los
+ * `NEGOCIOS_DE_PRUEBA` (por ID) y se niega si `DATABASE_URL` es de un proyecto intocable: en
+ * la base compartida de la Fase A no hay nada que sembrar (DP-D06).
  */
 import { existsSync, readFileSync } from 'node:fs';
 
@@ -30,8 +22,8 @@ import { existsSync, readFileSync } from 'node:fs';
  * Y SI NO HAY, no pasa nada: en CI las variables llegan por el entorno del
  * trabajo y el archivo no existe. Antes esto reventaba con `ENOENT .env` antes de
  * leer una sola variable, lo que dejaba la siembra fuera de cualquier sitio que no
- * fuera una laptop con su `.env` — y con ella el rastreador, que necesita las cinco
- * demostraciones sembradas para poder tocar algo.
+ * fuera una laptop con su `.env` — y con ella el rastreador, que necesita los restaurantes
+ * de prueba sembrados para poder tocar algo.
  */
 for (const linea of (existsSync('.env') ? readFileSync('.env', 'utf8') : '').split('\n')) {
   const encontrado = /^([A-Z_][A-Z0-9_]*)=(.*)$/.exec(linea.trim());
@@ -48,15 +40,10 @@ const { NEGOCIOS_DE_PRUEBA, exigirNegocioDePrueba } =
   await import('../packages/contracts/src/negocios/index.ts');
 
 /**
- * LA PLANTILLA Y EL ESTILO DE CADA DEMO ya no se ponen aquí: los repone el propio
- * `resetear_demo` (`packages/app/src/negocio-de-prueba/como-nueva.ts`), para que el botón de
- * reseteo de la aplicación deje la demo igual que esta siembra. Antes vivían aquí, y un
- * reseteo desde la pantalla dejaba la plantilla cruzada y el estilo de la última prueba.
- *
- * Y la lista de negocios vivos tampoco: la regla es POSITIVA y está en
- * `packages/contracts/src/negocios` —sólo se siembra lo que está en `NEGOCIOS_DE_PRUEBA`, por ID—.
+ * La plantilla, el estilo, el IVA y los topes los repone el propio reseteo
+ * (`packages/app/src/negocio-de-prueba/como-nueva.ts`). Y la lista de negocios tampoco vive
+ * aquí: la regla es POSITIVA y está en `packages/contracts/src/negocios`.
  */
-
 const soloEste = process.argv.includes('--solo')
   ? process.argv[process.argv.indexOf('--solo') + 1]
   : null;
@@ -75,9 +62,8 @@ const sello = new Date()
 
 const db = obtenerDb();
 
-// Las demos, POR ID y de la lista compartida. Esto era `slug like 'demo-acople-%'`:
-// correcto hoy, pero es una regla de prefijo, y tres de los cuatro negocios reales
-// tienen un slug que empieza por `demo-`.
+// Los de prueba, POR ID y de la lista compartida: una regla de prefijo daría por buena una
+// caja ajena (tres negocios de la base compartida tienen un slug que empieza por `demo-`).
 const demos = await db
   .selectFrom('organizaciones')
   .select(['id', 'slug', 'nombre', 'giro', 'paquete'])
@@ -91,13 +77,13 @@ const demos = await db
   .execute();
 
 if (demos.length === 0) {
-  console.error('✗ No hay ninguna demostración activa. Créalas con `db:alta-negocio`.');
+  console.error('✗ No hay ningún restaurante de prueba activo. Créalos con `db:alta-negocio`.');
   process.exit(1);
 }
 if (soloEste !== null && !demos.some((d) => d.slug === soloEste)) {
   // `--solo` con un negocio que no es una demo: se dice ANTES de tocar nada.
   try {
-    exigirNegocioDePrueba({ slug: soloEste }, 'sembrar-demos');
+    exigirNegocioDePrueba({ slug: soloEste }, 'sembrar-pruebas');
   } catch (error) {
     console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -111,7 +97,7 @@ for (const demo of demos) {
 
   // Segundo cerrojo, por ID y slug a la vez: la consulta ya filtró por la lista, así
   // que esto no puede fallar HOY. Se queda por si alguien cambia la consulta.
-  exigirNegocioDePrueba({ id: demo.id, slug: demo.slug }, 'sembrar-demos');
+  exigirNegocioDePrueba({ id: demo.id, slug: demo.slug }, 'sembrar-pruebas');
 
   const sucursal = await db
     .selectFrom('sucursales')
@@ -160,7 +146,7 @@ for (const demo of demos) {
     // lo que evita cobrar dos veces. Aquí se deriva del slug y del día, así que
     // dos corridas seguidas del mismo día devuelven la primera en vez de sembrar
     // dos veces — que es exactamente lo que la clave existe para hacer.
-    idempotencyKey: `sembrar-demos:${demo.slug}:${sello}`,
+    idempotencyKey: `sembrar-pruebas:${demo.slug}:${sello}`,
   });
 
   if (!resultado.ok) {
@@ -177,22 +163,13 @@ for (const demo of demos) {
     `caja con $${(Number(d.arranque.fondoCentavos) / 100).toFixed(2)}`,
     d.arranque.proveedor,
   ];
-  if (d.bebidas !== null && d.bebidas !== undefined) {
-    partes.push(
-      `${String(d.bebidas.opcionesDeBebida)} opciones de bebida en ${String(d.bebidas.bebidasConOpciones)} bebidas`,
-    );
-  }
-  if (d.sala !== null) partes.push(`${String(d.sala.mesas)} mesas`);
-  if (d.salon !== null) {
-    partes.push(`${String(d.salon.profesionales)} profesionales`);
-    partes.push(`${String(d.salon.servicios)} servicios`);
-  }
+  partes.push(`${String(d.sala.mesas)} mesas`);
   console.log(`  ✓ ${demo.slug.padEnd(26)} ${partes.join(' · ')}`);
 }
 
 console.log(
   fallos === 0
-    ? '\n✓ Las demostraciones están sembradas.\n'
-    : `\n✗ ${String(fallos)} demostración(es) sin sembrar.\n`,
+    ? '\n✓ Los restaurantes de prueba están sembrados.\n'
+    : `\n✗ ${String(fallos)} restaurante(s) de prueba sin sembrar.\n`,
 );
 process.exit(fallos === 0 ? 0 : 1);

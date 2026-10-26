@@ -85,13 +85,6 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
-      "ruta": "/api/catalogo/alta-rapida",
-      "comando": "catalogo.alta_rapida",
-      "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente"],
-      "paquetes": ["tienda"]
-    },
-    {
       "ruta": "/api/catalogo/archivar",
       "comando": "catalogo.archivar_producto",
       "escribe": true,
@@ -552,13 +545,6 @@
       "escribe": true,
       "roles": ["administrador", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
-    },
-    {
-      "ruta": "/api/venta/devolver",
-      "comando": "venta.devolver",
-      "escribe": true,
-      "roles": ["administrador", "cajero", "cocina", "dueno", "gerente"],
-      "paquetes": ["cafeteria"]
     },
     {
       "ruta": "/api/venta/estado",

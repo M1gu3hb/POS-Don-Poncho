@@ -3,12 +3,6 @@ import 'server-only';
 /** Los comandos de venta (F1.1-A-06, A-07, A-09, A-12). */
 
 export { agregarLinea, cambiarCantidad, crearOrden, quitarLinea, vaciarOrden } from './carrito.ts';
-export {
-  devolverPedido,
-  entradaDevolverPedido,
-  type DineroPorMetodo,
-  type ResultadoDevolucion,
-} from './devolucion.ts';
 export { estadoDeVenta, ticketDeOrden, type EstadoVenta, type TicketImpreso } from './consultas.ts';
 export { cobrarOrden, type ResultadoCobro } from './cobrar.ts';
 export { repartirPagos, type PagoEntrante, type PagoValidado } from './pagos.ts';

@@ -44,7 +44,7 @@ import {
  * rastreo— sino de que el estilo ELEGIDO es el que se guarda, se recarga y ven los demás.
  */
 
-const SLUG = 'demo-acople-restaurante';
+const SLUG = 'prueba-restaurante';
 
 /**
  * La apariencia del negocio: el estilo y sus cuatro perillas. Lleva firma de índice para poder

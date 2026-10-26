@@ -30,7 +30,7 @@ name: Verificar
 # (`workflow_dispatch`), que es cuando alguien la va a leer.
 on:
   pull_request:
-  # Para correr el rastreo COMPLETO —cinco modelos por ocho estilos— sin empujar a
+  # Para correr el rastreo COMPLETO —el restaurante en los ocho estilos— sin empujar a
   # `main`: es el que cualquiera lanza antes de fusionar un cambio de diseño.
   workflow_dispatch:
     inputs:
@@ -146,7 +146,7 @@ jobs:
 
       # El reseteo de una demo borra TODA tabla salvo las que conserva con su razón, en
       # el orden de las llaves foráneas: una tabla nueva no se puede quedar fuera (2.4, B.2).
-      - name: El reseteo de las demos cubre el esquema
+      - name: El reseteo del restaurante de prueba cubre el esquema
         run: pnpm verify:limpieza
 
       # --- Formato, lint y tipos -------------------------------------------
@@ -329,7 +329,7 @@ jobs:
         run: pnpm verify:mutaciones-backend
 
   # ─────────────────────────────────────────────────────────────────────────
-  # EL RASTREADOR · toca cada botón de cada pantalla, en los cinco modelos.
+  # EL RASTREADOR · toca cada botón de cada pantalla del restaurante.
   #
   # Por qué está aquí, y por qué no estaba: la vuelta 2.3 lo construyó, corrió
   # contra producción y destapó 58 defectos —siete de ellos botones que no hacían
@@ -338,14 +338,11 @@ jobs:
   # una laptop no es una puerta del proyecto; eso ya está escrito arriba, para los
   # arneses de mutación, y vale igual para esto.
   #
-  # UN TRABAJO POR MODELO, en paralelo. Los cinco en serie son 42 minutos de reloj
-  # —medido contra producción: restaurante 13.8, cafetería 9.4, estética 7.3,
-  # ferretería 7.0, tienda 4.3—. En matriz, el reloj es el del modelo más lento
-  # más su arranque, y un modelo que falla no oculta a los otros cuatro
-  # (`fail-fast: false`).
+  # POS Don Poncho (DP-2): un solo modelo, el restaurante, sobre su restaurante de prueba.
+  # Los ocho estilos completos corren a mano (`workflow_dispatch`); en cada PR, el reducido.
   #
-  # CADA TRABAJO SE PROVISIONA SOLO: su Postgres, sus migraciones, su negocio de
-  # demostración con su equipo y su catálogo. No habla con producción ni con el
+  # CADA TRABAJO SE PROVISIONA SOLO: su Postgres, sus migraciones, su restaurante de
+  # prueba con su equipo y su catálogo. No habla con producción ni con el
   # preview: sin secretos, y por eso puede correr en un pull request de cualquiera.
   rastreo:
     name: Rastreo · ${{ matrix.modelo }} · ${{ matrix.estilo }}
@@ -357,35 +354,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # El giro y la plantilla son el MISMO valor en las cinco demos, y no por
-        # casualidad: `organizaciones_paquete_compatible_con_giro` lo exige desde
-        # la 166, y la guarda de `app/(modelos)/` redirige cuando no coinciden.
-        modelo: [restaurante, cafeteria, tienda, ferreteria, estetica]
+        modelo: [restaurante]
         # LOS OCHO ESTILOS. Un estilo que esconde un botón detrás de otro, o que deja
-        # ilegible una tabla densa, es un botón muerto en una pantalla de verdad —y
-        # `/sistema` no lo ve—. Completo (5 × 8 = 40 trabajos) en `main` y a mano
-        # (`workflow_dispatch`); en cada pull request, REDUCIDO: cada modelo en el
-        # estilo de su giro, que son cinco de los ocho.
-        estilo: ${{ fromJSON((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && '["morphiq","cristal","relieve","taller","bloque","terminal","papel","noche"]' || '["reducido"]') }}
-        # Y la suite de cobro de cada uno, que NO se llama igual que su modelo: la de
-        # `tienda` es `abarrotes` y la de `estetica` es `estetica-salon`. `propio`
-        # es el estilo del rastreo reducido.
+        # ilegible una tabla densa, es un botón muerto en una pantalla de verdad. Completo
+        # (8 trabajos) a mano (`workflow_dispatch`); en cada pull request, REDUCIDO: el
+        # estilo propio del restaurante.
+        estilo: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["morphiq","cristal","relieve","taller","bloque","terminal","papel","noche"]' || '["reducido"]') }}
         include:
           - modelo: restaurante
             suite: restaurante
             propio: noche
-          - modelo: cafeteria
-            suite: cafeteria
-            propio: terminal
-          - modelo: tienda
-            suite: abarrotes
-            propio: bloque
-          - modelo: ferreteria
-            suite: ferreteria
-            propio: taller
-          - modelo: estetica
-            suite: estetica-salon
-            propio: cristal
 
     services:
       postgres:
@@ -407,12 +385,12 @@ jobs:
       # El servidor de Playwright hereda este entorno, así que estas cuatro son
       # las del SERVIDOR y las tres de abajo las de la PRUEBA.
       APP_URL: http://localhost:3200
-      ORGANIZACION: demo-acople-${{ matrix.modelo }}
+      ORGANIZACION: prueba-restaurante
       # Un despliegue de CI no tiene almacén de archivos, y eso está traducido a
       # un 503 legible con el endpoint escrito (`ErrorDeAlmacen`). Las cuatro
       # variables existen porque el contrato del entorno las exige para arrancar.
       STORAGE_ENDPOINT: http://localhost:9000
-      STORAGE_BUCKET: morphiqpos
+      STORAGE_BUCKET: pos-don-poncho
       STORAGE_ACCESS_KEY: rastreo-sin-almacen
       STORAGE_SECRET_KEY: rastreo-sin-almacen
       # Secretos de USAR Y TIRAR, de este trabajo y de nadie más: la base se crea
@@ -460,41 +438,37 @@ jobs:
       # El negocio, su sucursal y su dueño, por las MISMAS dos órdenes con que se
       # da de alta un negocio de verdad. Nada de SQL a mano: un alta que no pasa
       # por el alta no prueba que el alta funcione.
-      - name: El negocio de demostración y su dueño
+      - name: El restaurante de prueba y su dueño
         run: |
           pnpm db:alta-negocio \
-            --slug "demo-acople-${{ matrix.modelo }}" \
-            --nombre "Demo del acople · ${{ matrix.modelo }}" \
-            --giro "${{ matrix.modelo }}" \
-            --paquete "${{ matrix.modelo }}"
-          pnpm db:bootstrap --org "demo-acople-${{ matrix.modelo }}" --persona "Demo" --pin 1234
+            --slug "prueba-restaurante" \
+            --nombre "Restaurante de prueba" \
+            --giro restaurante \
+            --paquete restaurante
+          pnpm db:bootstrap --org "prueba-restaurante" --persona "Dueña de prueba" --pin 1234
 
-      # El catálogo, el equipo con sus seis roles, el inventario y la caja abierta
-      # con su fondo. Es el MISMO comando `configuracion.resetear_demo` que corre
-      # contra el despliegue, con su transacción y su auditoría.
-      - name: Sembrar la demostración
-        run: node --conditions=react-server scripts/sembrar-demos.mjs --solo "demo-acople-${{ matrix.modelo }}"
+      # El catálogo, el equipo con sus roles, el inventario y la sala. Es el MISMO
+      # comando `configuracion.resetear_negocio_de_prueba`, con su transacción y su auditoría.
+      - name: Sembrar el restaurante de prueba
+        run: node --conditions=react-server scripts/sembrar-pruebas.mjs --solo prueba-restaurante
 
       # LOS OCHO ESTILOS, EN UN NAVEGADOR, y antes del rastreo a propósito.
       #
       # Dura diez segundos y el rastreo catorce minutos: si un estilo esconde un
-      # botón, se sabe ya en vez de al final. Y va en UN SOLO modelo porque lo que
-      # mide —que los tokens lleguen, que nada tape a nadie, que se acierte al tocar
-      # y que el foco se vea— no depende del giro: `/sistema` es la misma página en
-      # los cinco. Correrlo cinco veces serían cuatro copias del mismo veredicto.
+      # botón, se sabe ya en vez de al final.
       #
       # `test:e2e` construye y levanta el servidor él mismo; el build lo comparte con
       # el paso siguiente por la caché de turbo, así que no se paga dos veces.
       - name: Los ocho estilos, en el navegador
-        if: matrix.modelo == 'tienda' && (matrix.estilo == 'reducido' || matrix.estilo == 'morphiq')
+        if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
         run: pnpm test:e2e pruebas/e2e/estilos.spec.ts pruebas/e2e/contraste.spec.ts --project=escritorio
 
       # Playwright construye y levanta el servidor él mismo (`webServer` de
       # `playwright.config.ts`), heredando el entorno de este trabajo.
       - name: Tocar cada botón de cada pantalla
         env:
-          MORPHIQPOS_ORG_DEMO: demo-acople-${{ matrix.modelo }}
-          MORPHIQPOS_DEMO_PERSONA: Demo
+          MORPHIQPOS_ORG_DEMO: prueba-restaurante
+          MORPHIQPOS_DEMO_PERSONA: Dueña de prueba
           MORPHIQPOS_DEMO_PIN: '1234'
           MORPHIQPOS_ESTILOS: ${{ matrix.estilo == 'reducido' && matrix.propio || matrix.estilo }}
         run: pnpm test:e2e pruebas/e2e/rastreo.spec.ts --project=escritorio
@@ -531,15 +505,15 @@ jobs:
       # su transacción y su auditoría— y cuesta segundos. La alternativa era poner la
       # suite ANTES del rastreo, y entonces el rastreador heredaría una venta cobrada y
       # una caja abierta: se arregla el barato y se protege el gate que más cuesta.
-      - name: La demostración, otra vez
+      - name: El restaurante de prueba, otra vez
         if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
-        run: node --conditions=react-server scripts/sembrar-demos.mjs --solo "demo-acople-${{ matrix.modelo }}"
+        run: node --conditions=react-server scripts/sembrar-pruebas.mjs --solo prueba-restaurante
 
       - name: La suite de su modelo
         if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
         env:
-          MORPHIQPOS_ORG_DEMO: demo-acople-${{ matrix.modelo }}
-          MORPHIQPOS_DEMO_PERSONA: Demo
+          MORPHIQPOS_ORG_DEMO: prueba-restaurante
+          MORPHIQPOS_DEMO_PERSONA: Dueña de prueba
           MORPHIQPOS_DEMO_PIN: '1234'
         run: pnpm test:e2e pruebas/e2e/${{ matrix.suite }}.spec.ts --project=escritorio
 
@@ -548,15 +522,15 @@ jobs:
       # diseño que nadie declaró la pone en rojo y deja la imagen de la diferencia en
       # el artefacto. Declarar es regenerar —este flujo a mano con
       # `actualizar_galeria`— y subir las imágenes nuevas con el cambio que las motiva.
-      - name: La demostración, para la galería
+      - name: El restaurante de prueba, para la galería
         if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
-        run: node --conditions=react-server scripts/sembrar-demos.mjs --solo "demo-acople-${{ matrix.modelo }}"
+        run: node --conditions=react-server scripts/sembrar-pruebas.mjs --solo prueba-restaurante
 
       - name: La galería, contra la vuelta anterior
         if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
         env:
-          MORPHIQPOS_ORG_DEMO: demo-acople-${{ matrix.modelo }}
-          MORPHIQPOS_DEMO_PERSONA: Demo
+          MORPHIQPOS_ORG_DEMO: prueba-restaurante
+          MORPHIQPOS_DEMO_PERSONA: Dueña de prueba
           MORPHIQPOS_DEMO_PIN: '1234'
         run: pnpm test:e2e pruebas/e2e/galeria.spec.ts --project=escritorio ${{ inputs.actualizar_galeria && '--update-snapshots=all' || '' }}
 
@@ -627,21 +601,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - modelo: tienda
-            suite: dia-completo-abarrotes
-            aparatos: --project=escritorio --project=tablet
-          - modelo: cafeteria
-            suite: dia-completo-cafeteria
-            aparatos: --project=escritorio --project=tablet
-          - modelo: ferreteria
-            suite: dia-completo-ferreteria
-            aparatos: --project=escritorio --project=tablet
           - modelo: restaurante
             suite: dia-completo-restaurante
             aparatos: --project=escritorio --project=tablet --project=telefono
-          - modelo: estetica
-            suite: dia-completo-estetica
-            aparatos: --project=tablet
 
     services:
       postgres:
@@ -661,11 +623,11 @@ jobs:
     env:
       DATABASE_URL: postgres://morphiqpos:morphiqpos_ci@localhost:5433/morphiqpos_e2e
       APP_URL: http://localhost:3200
-      ORGANIZACION: demo-acople-${{ matrix.modelo }}
+      ORGANIZACION: prueba-restaurante
       # Sin almacén de archivos en CI, como en el rastreo: el contrato del entorno exige las
       # cuatro y la aplicación lo traduce a un 503 legible.
       STORAGE_ENDPOINT: http://localhost:9000
-      STORAGE_BUCKET: morphiqpos
+      STORAGE_BUCKET: pos-don-poncho
       STORAGE_ACCESS_KEY: e2e-sin-almacen
       STORAGE_SECRET_KEY: e2e-sin-almacen
       # De usar y tirar, de este trabajo y de nadie más: la base nace y muere con él.
@@ -708,15 +670,15 @@ jobs:
       # El negocio, su sucursal y su dueño por las MISMAS órdenes del alta de un negocio de
       # verdad; el catálogo, el equipo con sus roles y el inventario, por el mismo reseteo
       # que corre en el despliegue. La prueba vuelve a resetear al empezar cada aparato.
-      - name: La demostración del modelo
+      - name: El restaurante de prueba
         run: |
           pnpm db:alta-negocio \
-            --slug "demo-acople-${{ matrix.modelo }}" \
-            --nombre "Demo del acople · ${{ matrix.modelo }}" \
-            --giro "${{ matrix.modelo }}" \
-            --paquete "${{ matrix.modelo }}"
-          pnpm db:bootstrap --org "demo-acople-${{ matrix.modelo }}" --persona "Demo" --pin 1234
-          node --conditions=react-server scripts/sembrar-demos.mjs --solo "demo-acople-${{ matrix.modelo }}"
+            --slug "prueba-restaurante" \
+            --nombre "Restaurante de prueba" \
+            --giro restaurante \
+            --paquete restaurante
+          pnpm db:bootstrap --org "prueba-restaurante" --persona "Dueña de prueba" --pin 1234
+          node --conditions=react-server scripts/sembrar-pruebas.mjs --solo prueba-restaurante
 
       # Playwright construye y levanta el servidor él mismo (`webServer`), con este entorno.
       - name: El día completo, en los aparatos de quien lo opera
@@ -739,7 +701,7 @@ jobs:
       - name: El estilo del negocio y los estados de mesa
         if: matrix.modelo == 'restaurante'
         run: |
-          node --conditions=react-server scripts/sembrar-demos.mjs --solo "demo-acople-${{ matrix.modelo }}"
+          node --conditions=react-server scripts/sembrar-pruebas.mjs --solo prueba-restaurante
           pnpm test:e2e pruebas/e2e/estilos-del-negocio.spec.ts pruebas/e2e/estados-de-mesa.spec.ts --project=escritorio --workers=1 --retries=0
 
       # LAS OPERACIONES DE MESA POR LAS VISTAS ADICIONALES (cierre del 21-10): dividir y cobrar
@@ -763,7 +725,7 @@ jobs:
 
   # PERMISOS POR ROL Y AISLAMIENTO ENTRE NEGOCIOS, contra el servidor (D.3 y D.4 de la 2.4).
   #
-  # Con las cinco demos en una sola base, como en un despliegue de varios negocios:
+  # Con los DOS restaurantes de prueba en una sola base, como Don Poncho en la base compartida:
   #   · la MATRIZ: cada persona de cada demo toca cada ruta de comando; el rol que no está
   #     en el comando recibe 403 `SIN_PERMISO` y nada más, el que está recibe cualquier cosa
   #     menos eso. Más la cocina sin costos y el almacén sin caja.
@@ -798,11 +760,11 @@ jobs:
     env:
       DATABASE_URL: postgres://morphiqpos:morphiqpos_ci@localhost:5433/morphiqpos_e2e
       APP_URL: http://localhost:3200
-      ORGANIZACION: demo-acople-tienda,demo-acople-cafeteria,demo-acople-restaurante,demo-acople-ferreteria,demo-acople-estetica
+      ORGANIZACION: prueba-restaurante,prueba-restaurante-dos
       # Sin almacén de archivos en CI, como en el rastreo: el contrato del entorno exige las
       # cuatro y la aplicación lo traduce a un 503 legible.
       STORAGE_ENDPOINT: http://localhost:9000
-      STORAGE_BUCKET: morphiqpos
+      STORAGE_BUCKET: pos-don-poncho
       STORAGE_ACCESS_KEY: e2e-sin-almacen
       STORAGE_SECRET_KEY: e2e-sin-almacen
       # De usar y tirar, de este trabajo y de nadie más: la base nace y muere con él.
@@ -810,7 +772,8 @@ jobs:
       PIN_PEPPER: e2e_de_ci_pimienta_de_pin_efimera_2026_xx
       NODE_ENV: production
       TZ: America/Mexico_City
-      MORPHIQPOS_DEMOS_MATRIZ: demo-acople-tienda,demo-acople-cafeteria,demo-acople-restaurante,demo-acople-ferreteria,demo-acople-estetica
+      MORPHIQPOS_DEMOS_MATRIZ: prueba-restaurante
+      MORPHIQPOS_DEMOS_AISLAMIENTO: prueba-restaurante,prueba-restaurante-dos
 
     steps:
       - name: Descargar el repositorio
@@ -843,13 +806,13 @@ jobs:
       - name: Migraciones
         run: pnpm --filter @morphiqpos/data migrate
 
-      - name: Las cinco demostraciones
+      - name: Los dos restaurantes de prueba
         run: |
-          for giro in tienda cafeteria restaurante ferreteria estetica; do
-            pnpm db:alta-negocio --slug "demo-acople-$giro" --nombre "Demo del acople · $giro" --giro "$giro" --paquete "$giro"
-            pnpm db:bootstrap --org "demo-acople-$giro" --persona "Demo" --pin 1234
-          done
-          node --conditions=react-server scripts/sembrar-demos.mjs
+          pnpm db:alta-negocio --slug prueba-restaurante --nombre "Restaurante de prueba" --giro restaurante --paquete restaurante
+          pnpm db:bootstrap --org prueba-restaurante --persona "Dueña de prueba" --pin 1234
+          pnpm db:alta-negocio --slug prueba-restaurante-dos --nombre "Segundo restaurante de prueba" --giro restaurante --paquete restaurante
+          pnpm db:bootstrap --org prueba-restaurante-dos --persona "Dueña de prueba" --pin 1234
+          node --conditions=react-server scripts/sembrar-pruebas.mjs
 
       - name: Cada rol contra cada ruta de comando
         run: pnpm test:e2e pruebas/e2e/matriz-de-permisos.spec.ts --project=escritorio --retries=0

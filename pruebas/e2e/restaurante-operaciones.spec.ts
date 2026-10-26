@@ -75,7 +75,7 @@ import {
  * ── Cómo se corre ────────────────────────────────────────────────────────────
  * Igual que la jornada: contra una demo del restaurante sembrada y un servidor propio,
  *
- *   MORPHIQPOS_ORG_DEMO=demo-acople-restaurante MORPHIQPOS_DEMO_PERSONA=Demo MORPHIQPOS_DEMO_PIN=1234 \
+ *   MORPHIQPOS_ORG_DEMO=prueba-restaurante MORPHIQPOS_DEMO_PERSONA='Dueña de prueba' MORPHIQPOS_DEMO_PIN=1234 \
  *   pnpm test:e2e pruebas/e2e/restaurante-operaciones.spec.ts --project=escritorio --workers=1 --retries=0
  *
  * El día es UNO para todo el archivo, como en `restaurante-concurrencia.spec.ts`: la primera
@@ -86,7 +86,7 @@ import {
  *
  * ── El orden, y por qué DEBE ser la última del restaurante en su trabajo ─────────
  * Una demo en la que se dividió una cuenta ya no se puede resetear (D-6, abajo): `resetear_demo`
- * contesta 500 y `scripts/sembrar-demos.mjs` también falla, hasta que alguien limpia la base a
+ * contesta 500 y `scripts/sembrar-pruebas.mjs` también falla, hasta que alguien limpia la base a
  * mano o la recrea. Por eso (1) las dos pruebas de dividir van después de las demás, para que un
  * fallo anterior no se vuelva una cascada de «ERROR_INTERNO» al reiniciar Playwright su proceso y
  * volver a resetear; (2) en CI esta suite va DESPUÉS de las otras del restaurante y ninguna que
@@ -121,7 +121,7 @@ import {
  * restaurante que cuelgan de la jornada.
  */
 
-const SLUG = 'demo-acople-restaurante';
+const SLUG = 'prueba-restaurante';
 
 /** $1,500 por montones: el fondo con el que Beatriz abre su caja. */
 const FONDO = { monedas: 30_000, chicos: 70_000, grandes: 50_000 } as const;
@@ -2960,7 +2960,7 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
   //   evalúa al confirmar sobre cada hija borrada: la madre ya no existe, `total_madre` es NULL,
   //   `NULL is distinct from 0` es verdadero y el commit revienta con 23514 «La división no cuadra:
   //   la madre suma <NULL> y las hijas 0». El comando contesta 500 ERROR_INTERNO y
-  //   `scripts/sembrar-demos.mjs` también falla: una demo en la que alguien dividió una cuenta no
+  //   `scripts/sembrar-pruebas.mjs` también falla: una demo en la que alguien dividió una cuenta no
   //   se puede volver a dejar limpia sin tocar la base a mano.
   //   Se exige: que el reseteo conteste 200 aunque haya cuentas divididas, y que no quede ninguna.
   test('D-6 · el reseteo de la demo se deja hacer aunque haya una cuenta dividida', async ({

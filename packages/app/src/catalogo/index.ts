@@ -30,8 +30,6 @@ export {
   type ResultadoGuardarModificadores,
 } from './modificadores-guardar.ts';
 
-export { altaRapida, entradaAltaRapida, type ResultadoAltaRapida } from './alta-rapida.ts';
-
 export {
   asignarFiscalMasivo,
   entradaFiscalMasivo,

@@ -79,7 +79,7 @@ import {
  * del comensal falla DICIENDO qué falta (`abrirElQrDeLaMesa`).
  */
 
-const SLUG = 'demo-acople-restaurante';
+const SLUG = 'prueba-restaurante';
 const FONDO_CENTAVOS = 150_000;
 const MESA = 6;
 const ZONA = 'Interior';

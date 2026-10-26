@@ -82,7 +82,7 @@ import {
  * reseteo): la última cierra la caja y exige que todo el dinero del día cuadre al centavo.
  */
 
-const SLUG = 'demo-acople-restaurante';
+const SLUG = 'prueba-restaurante';
 const FONDO_CENTAVOS = 150_000;
 
 /** Lo que gasta del almacén UNA arrachera cobrada, en gramos (la receta de la siembra). */

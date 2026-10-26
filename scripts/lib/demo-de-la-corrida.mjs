@@ -33,9 +33,9 @@ export function demoDeLaCorrida(guion) {
   if (slug === '') {
     console.error(
       [
-        `✗ ${guion}: falta el negocio. Este guion ESCRIBE, y sólo corre sobre una demostración`,
+        `✗ ${guion}: falta el negocio. Este guion ESCRIBE, y sólo corre sobre un restaurante de prueba`,
         '  que se le nombra: --negocio <slug> (o MORPHIQPOS_ORG_DEMO).',
-        `  Las demos: ${NEGOCIOS_DE_PRUEBA.map((d) => d.slug).join(', ')}.`,
+        `  Los de prueba: ${NEGOCIOS_DE_PRUEBA.map((d) => d.slug).join(', ')}.`,
       ].join('\n'),
     );
     process.exit(1);
@@ -106,7 +106,7 @@ export function personaConRol(empleados, rol) {
   const persona = empleados.find((e) => e.rol === rol);
   if (persona === undefined) {
     console.error(
-      `✗ La demo no tiene a nadie con rol «${rol}». Resetéala: \`node --conditions=react-server scripts/sembrar-demos.mjs --solo <slug>\`.`,
+      `✗ La demo no tiene a nadie con rol «${rol}». Resetéala: \`node --conditions=react-server scripts/sembrar-pruebas.mjs --solo <slug>\`.`,
     );
     process.exit(1);
   }

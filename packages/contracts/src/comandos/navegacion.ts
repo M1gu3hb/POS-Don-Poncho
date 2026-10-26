@@ -187,387 +187,13 @@ const RESTAURANTE: readonly EntradaDeMenu[] = [
   },
 ];
 
-/** El día de una cafetería: se cobra de pie y la barra llama por nombre. */
-const CAFETERIA: readonly EntradaDeMenu[] = [
-  {
-    ruta: '/cafeteria/cobrar',
-    etiqueta: 'Cobrar',
-    icono: 'CreditCard',
-    modulo: 'caja_directa',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/cafeteria/opciones-de-la-bebida',
-    etiqueta: 'Opciones de la bebida',
-    icono: 'SlidersHorizontal',
-    modulo: 'modificadores_de_bebida',
-    permiso: 'ver_productos',
-  },
-  {
-    ruta: '/cafeteria/cobro-y-propina',
-    etiqueta: 'Cobro y propina',
-    icono: 'HandCoins',
-    modulo: 'propinas',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/cafeteria/barra',
-    etiqueta: 'Barra',
-    icono: 'Coffee',
-    modulo: 'barra',
-    permiso: 'ver_cocina',
-    entidad: 'preparacion',
-  },
-  {
-    ruta: '/cafeteria/recogida',
-    etiqueta: 'Recogida',
-    icono: 'BellRing',
-    modulo: 'pedido_anticipado',
-    permiso: 'ver_cocina',
-  },
-  {
-    ruta: '/cafeteria/turno',
-    etiqueta: 'Turno',
-    icono: 'Clock',
-    modulo: 'turno_de_barra',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/cafeteria/cierre-de-turno-y-arqueo',
-    etiqueta: 'Cierre de turno',
-    icono: 'ClipboardCheck',
-    modulo: 'cortes',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/cafeteria/clientes-y-sellos',
-    etiqueta: 'Clientes y sellos',
-    icono: 'Stamp',
-    modulo: 'sellos_de_lealtad',
-    permiso: 'ver_ventas',
-  },
-  {
-    ruta: '/cafeteria/productos',
-    etiqueta: 'Productos',
-    icono: 'Tag',
-    modulo: 'productos_basicos',
-    permiso: 'ver_productos',
-    entidad: 'producto',
-  },
-  {
-    ruta: '/cafeteria/recetas',
-    etiqueta: 'Recetas',
-    icono: 'BookOpen',
-    modulo: 'recetas',
-    permiso: 'ver_recetas',
-  },
-  {
-    ruta: '/cafeteria/inventario',
-    etiqueta: 'Inventario',
-    icono: 'Package',
-    modulo: 'inventario',
-    permiso: 'ver_inventario',
-  },
-];
-
-/** El día de una tiendita: se cobra, se fía y se cuenta el anaquel. */
-const TIENDA: readonly EntradaDeMenu[] = [
-  {
-    ruta: '/abarrotes/cobrar',
-    etiqueta: 'Cobrar',
-    icono: 'ScanBarcode',
-    modulo: 'caja_directa',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/abarrotes/caja',
-    etiqueta: 'Caja',
-    icono: 'Landmark',
-    modulo: 'caja_directa',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/abarrotes/fiado',
-    etiqueta: 'Fiado',
-    icono: 'NotebookPen',
-    modulo: 'fiado',
-    permiso: 'ver_ventas',
-  },
-  {
-    ruta: '/abarrotes/servicios',
-    etiqueta: 'Servicios',
-    icono: 'Smartphone',
-    modulo: 'servicios_de_terceros',
-    permiso: 'ver_ventas',
-  },
-  {
-    ruta: '/abarrotes/producto',
-    etiqueta: 'Productos',
-    icono: 'Tag',
-    modulo: 'productos_basicos',
-    permiso: 'ver_productos',
-    entidad: 'producto',
-  },
-  {
-    ruta: '/abarrotes/alta-rapida-de-producto',
-    etiqueta: 'Alta rápida',
-    icono: 'PlusCircle',
-    modulo: 'productos_basicos',
-    permiso: 'ver_productos',
-  },
-  {
-    ruta: '/abarrotes/existencias',
-    etiqueta: 'Existencias',
-    icono: 'Package',
-    modulo: 'inventario',
-    permiso: 'ver_inventario',
-  },
-  {
-    ruta: '/abarrotes/entradas',
-    etiqueta: 'Entradas',
-    icono: 'Truck',
-    modulo: 'entradas_de_mercancia',
-    permiso: 'ver_compras',
-  },
-  {
-    ruta: '/abarrotes/conteo',
-    etiqueta: 'Conteo',
-    icono: 'ListChecks',
-    modulo: 'toma_fisica',
-    permiso: 'ver_inventario',
-  },
-  {
-    ruta: '/abarrotes/cortes',
-    etiqueta: 'Cortes',
-    icono: 'ClipboardCheck',
-    modulo: 'cortes',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/abarrotes/registros',
-    etiqueta: 'Registros',
-    icono: 'FileText',
-    modulo: 'registros_basicos',
-    permiso: 'ver_registros',
-  },
-];
-
-/** El día de una ferretería: el mostrador manda, y se vende por medida. */
-const FERRETERIA: readonly EntradaDeMenu[] = [
-  {
-    ruta: '/ferreteria/mostrador',
-    etiqueta: 'Mostrador',
-    icono: 'Search',
-    modulo: 'mostrador',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/ferreteria/caja',
-    etiqueta: 'Caja',
-    icono: 'Landmark',
-    modulo: 'caja_directa',
-    permiso: 'ver_caja',
-  },
-  /**
-   * EL CAJÓN Y SU CORTE, heredados de abarrotes (§PANTALLA 9). No tenían dirección: la
-   * ferretería no podía abrir ni cerrar su caja desde el sistema (C.6 de la 2.4).
-   */
-  {
-    ruta: '/ferreteria/fondo-y-movimientos',
-    etiqueta: 'Fondo y movimientos',
-    icono: 'Landmark',
-    modulo: 'caja_directa',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/ferreteria/cortes',
-    etiqueta: 'Cortes',
-    icono: 'ClipboardCheck',
-    modulo: 'cortes',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/ferreteria/cotizacion',
-    etiqueta: 'Cotización',
-    icono: 'FileSpreadsheet',
-    modulo: 'cotizaciones',
-    permiso: 'ver_ventas',
-  },
-  {
-    ruta: '/ferreteria/cuentas',
-    etiqueta: 'Cuentas',
-    icono: 'Wallet',
-    modulo: 'credito_y_cobranza',
-    permiso: 'ver_ventas',
-  },
-  {
-    ruta: '/ferreteria/corte-de-material',
-    etiqueta: 'Corte de material',
-    icono: 'Scissors',
-    modulo: 'corte_de_material',
-    permiso: 'ver_inventario',
-  },
-  {
-    ruta: '/ferreteria/trabajos-de-mostrador',
-    etiqueta: 'Trabajos de mostrador',
-    icono: 'Wrench',
-    modulo: 'trabajos_de_mostrador',
-    permiso: 'ver_ventas',
-  },
-  {
-    ruta: '/ferreteria/material',
-    etiqueta: 'Materiales',
-    icono: 'Tag',
-    modulo: 'productos_basicos',
-    permiso: 'ver_productos',
-    entidad: 'producto',
-  },
-  {
-    ruta: '/ferreteria/ficha-de-pieza',
-    etiqueta: 'Ficha de pieza',
-    icono: 'Ruler',
-    modulo: 'piezas_y_medidas',
-    permiso: 'ver_productos',
-  },
-  {
-    ruta: '/ferreteria/existencias',
-    etiqueta: 'Existencias',
-    icono: 'Package',
-    modulo: 'inventario',
-    permiso: 'ver_inventario',
-  },
-  {
-    ruta: '/ferreteria/entradas',
-    etiqueta: 'Entradas',
-    icono: 'Truck',
-    modulo: 'entradas_de_mercancia',
-    permiso: 'ver_compras',
-  },
-  {
-    ruta: '/ferreteria/conteo',
-    etiqueta: 'Conteo',
-    icono: 'ListChecks',
-    modulo: 'toma_fisica',
-    permiso: 'ver_inventario',
-  },
-  {
-    ruta: '/ferreteria/facturacion',
-    etiqueta: 'Facturación',
-    icono: 'FileCheck',
-    modulo: 'facturacion',
-    permiso: 'ver_ventas',
-  },
-];
-
-/** El día de una estética: la agenda ES el negocio, y termina liquidando. */
-const ESTETICA: readonly EntradaDeMenu[] = [
-  {
-    ruta: '/estetica-salon/agenda-del-dia',
-    etiqueta: 'Agenda',
-    icono: 'CalendarDays',
-    modulo: 'agenda',
-    // La recepción y las estilistas la leen todo el día (D.1 de la 2.4): con
-    // `ver_dashboard` sólo la veía quien dirige.
-    permiso: 'ver_agenda',
-  },
-  {
-    ruta: '/estetica-salon/agendar',
-    etiqueta: 'Agendar',
-    icono: 'CalendarPlus',
-    modulo: 'citas',
-    permiso: 'ver_ventas',
-  },
-  {
-    ruta: '/estetica-salon/cita-en-curso',
-    etiqueta: 'Cita en curso',
-    icono: 'Timer',
-    modulo: 'citas',
-    permiso: 'ver_ventas',
-  },
-  {
-    ruta: '/estetica-salon/mi-dia',
-    etiqueta: 'Mi día',
-    icono: 'UserCheck',
-    modulo: 'agenda_por_profesional',
-    permiso: 'ver_mesero',
-  },
-  {
-    ruta: '/estetica-salon/cobrar',
-    etiqueta: 'Cobrar',
-    icono: 'CreditCard',
-    modulo: 'caja_directa',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/estetica-salon/caja-y-corte',
-    etiqueta: 'Caja y corte',
-    icono: 'ClipboardCheck',
-    modulo: 'cortes',
-    permiso: 'ver_caja',
-  },
-  {
-    ruta: '/estetica-salon/liquidacion',
-    etiqueta: 'Liquidación',
-    icono: 'HandCoins',
-    modulo: 'comisiones',
-    permiso: 'ver_registros',
-  },
-  {
-    ruta: '/estetica-salon/clientas',
-    etiqueta: 'Clientas',
-    icono: 'Users',
-    modulo: 'clientes',
-    permiso: 'ver_ventas',
-    entidad: 'cliente',
-  },
-  {
-    ruta: '/estetica-salon/historial-de-la-clienta',
-    etiqueta: 'Historial',
-    icono: 'History',
-    modulo: 'expediente',
-    permiso: 'ver_ventas',
-  },
-  {
-    ruta: '/estetica-salon/catalogo-de-servicios',
-    etiqueta: 'Servicios',
-    icono: 'Sparkles',
-    modulo: 'catalogo_de_servicios',
-    permiso: 'ver_productos',
-    entidad: 'linea_orden',
-  },
-  {
-    ruta: '/estetica-salon/ficha-del-profesional',
-    etiqueta: 'Profesionales',
-    icono: 'IdCard',
-    modulo: 'profesionales',
-    permiso: 'ver_configuracion',
-    entidad: 'responsable',
-  },
-  {
-    ruta: '/estetica-salon/productos',
-    etiqueta: 'Productos',
-    icono: 'Tag',
-    modulo: 'productos_basicos',
-    permiso: 'ver_productos',
-    entidad: 'producto',
-  },
-  /**
-   * Y el TABLERO, que en este modelo vive aquí dentro y no en la raíz.
-   *
-   * Los otros cuatro modelos sirven su tablero en `/`. Este no: su carpeta dedica
-   * una seccion a defender que «a las 9:45 de la manana, casi todos los indicadores
-   * de un dashboard son adornos» y que lo unico que a esa hora todavia cambia el dia
-   * esta en la AGENDA — que es su `INICIO_POR_PLANTILLA`. El tablero se abre dos
-   * veces al dia, asi que cuelga de una entrada de menu como cualquier reporte.
-   */
-  {
-    ruta: '/estetica-salon/reportes',
-    etiqueta: 'Reportes',
-    icono: 'FileSpreadsheet',
-    modulo: 'reportes_operativos',
-    permiso: 'ver_registros',
-  },
-];
+/*
+ * POS Don Poncho (DP-2): los menús de cafetería, tienda, ferretería y estética se fueron con
+ * sus pantallas. Las plantillas siguen declaradas en `plantillas.ts` —son los valores que
+ * puede guardar `organizaciones.paquete`, como el esquema guarda sus tablas—, pero este
+ * sistema sólo sirve al restaurante: a cualquier otra le queda el punto de venta heredado
+ * que sus módulos permitan y el tablero.
+ */
 
 /**
  * EL PUNTO DE VENTA DE TODOS LOS DÍAS.
@@ -673,12 +299,8 @@ const HEREDADO: readonly EntradaDeMenu[] = [
  * los tres grupos se mantienen aparte porque `navegacionDePlantilla` los trata
  * distinto.
  */
-const MENU_DEL_MODELO: Readonly<Record<Plantilla, readonly EntradaDeMenu[]>> = {
-  tienda: TIENDA,
-  cafeteria: CAFETERIA,
+const MENU_DEL_MODELO: Readonly<Partial<Record<Plantilla, readonly EntradaDeMenu[]>>> = {
   restaurante: RESTAURANTE,
-  ferreteria: FERRETERIA,
-  estetica: ESTETICA,
 };
 
 /**
@@ -732,23 +354,23 @@ export function navegacionDePlantilla(plantilla: Plantilla): readonly EntradaDeM
  * con el foco en el escáner porque la fila no espera.
  */
 export const INICIO_POR_PLANTILLA: Readonly<Record<Plantilla, string>> = {
-  tienda: '/abarrotes/cobrar',
-  cafeteria: '/cafeteria/cobrar',
   restaurante: '/restaurante/mapa-de-mesas',
-  ferreteria: '/ferreteria/mostrador',
-  estetica: '/estetica-salon/agenda-del-dia',
+  // Las que este sistema no sirve (DP-2) abren en el tablero: sus pantallas ya no existen.
+  tienda: '/',
+  cafeteria: '/',
+  ferreteria: '/',
+  estetica: '/',
 };
 
 /**
  * Las pantallas de modelo que NO llevan sesión de negocio.
  *
- * Son las mismas cuatro que no cuelgan de ningún menú, y por la misma razón:
+ * Son las mismas dos que no cuelgan de ningún menú, y por la misma razón:
  *
- * · los dos `acceso-por-pin` se ven ANTES de que exista sesión — son la pantalla
- *   de entrar, y exigir sesión para verlas es un bucle;
- * · el portal del comensal y el menú público los abre el CLIENTE desde su
- *   teléfono, con el token de su mesa. No hay empleado, no hay plantilla y no hay
- *   menú lateral.
+ * · `acceso-por-pin` se ve ANTES de que exista sesión — es la pantalla de entrar,
+ *   y exigir sesión para verla es un bucle;
+ * · el portal del comensal lo abre el CLIENTE desde su teléfono, con el token de su
+ *   mesa. No hay empleado, no hay plantilla y no hay menú lateral.
  *
  * La guarda de `app/(modelos)/` las salta, y `verify:acople` comprueba que esta
  * lista y las filas `PANTALLA-SIN-MENU` de `EXCEPCIONES-COBERTURA.md` digan lo
@@ -758,8 +380,6 @@ export const INICIO_POR_PLANTILLA: Readonly<Record<Plantilla, string>> = {
 export const RUTAS_DE_MODELO_SIN_SESION: readonly string[] = [
   '/restaurante/acceso-por-pin',
   '/restaurante/portal-del-comensal',
-  '/cafeteria/acceso-por-pin',
-  '/cafeteria/menu-publico-y-pedido-anticipado',
 ];
 
 /** ¿Esta ruta de modelo se abre sin sesión? */

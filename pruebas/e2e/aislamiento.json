@@ -121,20 +121,6 @@
       "ids": [{ "camino": "sesionCajaId", "tabla": "sesiones_caja" }]
     },
     {
-      "ruta": "/api/catalogo/alta-rapida",
-      "comando": "catalogo.alta_rapida",
-      "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente"],
-      "paquetes": ["tienda"],
-      "idRequerido": false,
-      "cuerpo": {
-        "nombre": "prueba de aislamiento",
-        "precio": "prueba de aislamiento",
-        "categoriaId": "⟨categorias⟩"
-      },
-      "ids": [{ "camino": "categoriaId", "tabla": "categorias" }]
-    },
-    {
       "ruta": "/api/catalogo/archivar",
       "comando": "catalogo.archivar_producto",
       "escribe": true,
@@ -910,16 +896,6 @@
         { "camino": "ordenId", "tabla": "ordenes" },
         { "camino": "lineas[0].ordenLineaId", "tabla": "orden_lineas" }
       ]
-    },
-    {
-      "ruta": "/api/venta/devolver",
-      "comando": "venta.devolver",
-      "escribe": true,
-      "roles": ["administrador", "cajero", "cocina", "dueno", "gerente"],
-      "paquetes": ["cafeteria"],
-      "idRequerido": true,
-      "cuerpo": { "pedidoId": "⟨ordenes⟩" },
-      "ids": [{ "camino": "pedidoId", "tabla": "ordenes" }]
     },
     {
       "ruta": "/api/venta/estado",

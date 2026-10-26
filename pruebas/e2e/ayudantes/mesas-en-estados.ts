@@ -126,7 +126,7 @@ export async function ponerLasMesas(
       expect(
         mesa?.['estado'],
         `La mesa ${String(numero)} no está libre (${String(mesa?.['estado'])}): una corrida anterior ` +
-          'dejó la demo a medias. Vuelve a sembrarla con `scripts/sembrar-demos.mjs --solo demo-acople-restaurante`.',
+          'dejó la demo a medias. Vuelve a sembrarla con `scripts/sembrar-pruebas.mjs --solo prueba-restaurante`.',
       ).toBe('libre');
 
       const paso = PASO[estado];

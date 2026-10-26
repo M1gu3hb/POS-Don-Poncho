@@ -39,7 +39,7 @@ import {
  * `vigilarFallos` hace que cualquiera de esos 4xx vuelva a tumbar el día.
  */
 
-const SLUG = 'demo-acople-restaurante';
+const SLUG = 'prueba-restaurante';
 const FONDO_CENTAVOS = 150_000;
 /** La venta del día, sin propinas: las mesas 1 a 5. */
 const VENDIDO_DEL_DIA = 56_400 + 28_300 + 39_900 + 10_000 + 15_400;

@@ -61,14 +61,13 @@ const URL_DESECHABLE = `postgres://${USUARIO}@localhost:${String(PUERTO)}/${BASE
 /** El entorno del servidor y de la siembra. Público a propósito: no abre nada vivo. */
 export const ENTORNO_DESECHABLE = {
   DATABASE_URL: URL_DESECHABLE,
-  ORGANIZACION:
-    'demo-acople-tienda,demo-acople-cafeteria,demo-acople-restaurante,demo-acople-ferreteria,demo-acople-estetica',
+  ORGANIZACION: 'prueba-restaurante,prueba-restaurante-dos',
   APP_URL: `http://localhost:${PUERTO_DEL_SERVIDOR}`,
   // Sin almacén de archivos, como el rastreo de CI: el contrato del entorno exige las cuatro
   // para arrancar, y sin ellas la siembra moría con `ErrorDeEntorno` en cuanto no había un
   // `.env` que las pusiera. Subir una foto contesta el 503 legible de `ErrorDeAlmacen`.
   STORAGE_ENDPOINT: 'http://localhost:9000',
-  STORAGE_BUCKET: 'morphiqpos',
+  STORAGE_BUCKET: 'pos-don-poncho',
   STORAGE_ACCESS_KEY: 'base-desechable-sin-almacen',
   STORAGE_SECRET_KEY: 'base-desechable-sin-almacen',
   SESSION_SECRET: 'base_desechable_local_firma_de_sesion_2026',
@@ -155,7 +154,7 @@ async function migrar() {
   }
 }
 
-async function demosQueFaltan() {
+async function pruebasQueFaltan() {
   const { NEGOCIOS_DE_PRUEBA } = await import('../packages/contracts/src/negocios/index.ts');
   const existentes = await conCliente(BASE, async (c) =>
     (await c.query('select slug from organizaciones')).rows.map((f) => f.slug),
@@ -173,31 +172,32 @@ function nodo(script, argumentos) {
   return resultado.stdout;
 }
 
-async function darDeAltaLasDemos() {
-  for (const demo of await demosQueFaltan()) {
-    const giro = demo.slug.replace(/^demo-acople-/, '');
+async function darDeAltaLasPruebas() {
+  const { DUENO_DE_PRUEBA } =
+    await import('../packages/contracts/src/negocios/equipo-de-prueba.ts');
+  for (const prueba of await pruebasQueFaltan()) {
     nodo('packages/app/bin/alta-negocio.mjs', [
       '--slug',
-      demo.slug,
+      prueba.slug,
       '--nombre',
-      demo.nombre,
+      prueba.nombre,
       '--giro',
-      giro,
+      prueba.giro,
       '--paquete',
-      giro,
+      prueba.giro,
     ]);
     nodo('packages/app/bin/bootstrap.mjs', [
       '--org',
-      demo.slug,
+      prueba.slug,
       '--persona',
-      'Demo',
+      DUENO_DE_PRUEBA.nombre,
       '--pin',
-      '1234',
+      DUENO_DE_PRUEBA.pin,
     ]);
-    console.log(`  alta: ${demo.slug}`);
+    console.log(`  alta: ${prueba.slug}`);
   }
-  nodo('scripts/sembrar-demos.mjs', []);
-  console.log('  las cinco demos, sembradas');
+  nodo('scripts/sembrar-pruebas.mjs', []);
+  console.log('  los restaurantes de prueba, sembrados');
 }
 
 /** El clúster en un contenedor: lo arranca si no está corriendo y espera a que acepte. */
@@ -239,7 +239,7 @@ async function subir() {
     subirElContenedor();
     await crearBaseYRol();
     await migrar();
-    await darDeAltaLasDemos();
+    await darDeAltaLasPruebas();
     console.log(`✓ Base desechable en ${URL_DESECHABLE} (contenedor ${CONTENEDOR}, ${IMAGEN})`);
     return;
   }
@@ -277,7 +277,7 @@ async function subir() {
   }
   await crearBaseYRol();
   await migrar();
-  await darDeAltaLasDemos();
+  await darDeAltaLasPruebas();
   console.log(`✓ Base desechable en ${URL_DESECHABLE} (directorio ${DIRECTORIO})`);
 }
 

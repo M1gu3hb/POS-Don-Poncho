@@ -225,8 +225,16 @@ describe('T2 · el frontend no declara módulos por su cuenta', () => {
  * respondiendo — y ninguna colgaba de un menú. Para abrir cualquiera había que
  * teclear la URL.
  */
+/**
+ * POS Don Poncho (DP-2): el único modelo con pantallas es el restaurante. Las otras cuatro
+ * plantillas siguen declaradas —son valores posibles de `organizaciones.paquete`— pero sus
+ * pantallas se fueron: abren en el tablero con el punto de venta heredado que sus módulos
+ * permitan. Lo que se exige del restaurante no cambia.
+ */
+const CON_MODELO = ['restaurante'] as const;
+
 describe('T2 · las pantallas de los modelos cuelgan de un menú', () => {
-  it.each(PLANTILLAS)('«%s» ofrece un menú con pantallas de su modelo', (plantilla) => {
+  it.each(CON_MODELO)('«%s» ofrece un menú con pantallas de su modelo', (plantilla) => {
     const entradas = navegacionDePlantilla(plantilla);
     expect(entradas.length).toBeGreaterThan(8);
 
@@ -248,7 +256,7 @@ describe('T2 · las pantallas de los modelos cuelgan de un menú', () => {
     }
   });
 
-  it.each(PLANTILLAS)('«%s» abre en una pantalla de su propio menú', (plantilla) => {
+  it.each(CON_MODELO)('«%s» abre en una pantalla de su propio menú', (plantilla) => {
     const inicio = INICIO_POR_PLANTILLA[plantilla];
     expect(inicio).toBeDefined();
     expect(navegacionDePlantilla(plantilla).map((e) => e.ruta)).toContain(inicio);
@@ -257,8 +265,14 @@ describe('T2 · las pantallas de los modelos cuelgan de un menú', () => {
     expect(inicio.split('/').length).toBe(3);
   });
 
-  it('las cinco abren en pantallas distintas', () => {
-    const inicios = PLANTILLAS.map((plantilla) => INICIO_POR_PLANTILLA[plantilla]);
-    expect(new Set(inicios).size).toBe(inicios.length);
+  it('las plantillas sin modelo abren en el tablero, que está en su menú', () => {
+    for (const plantilla of PLANTILLAS.filter((p) => p !== 'restaurante')) {
+      expect(INICIO_POR_PLANTILLA[plantilla]).toBe('/');
+      expect(navegacionDePlantilla(plantilla).map((e) => e.ruta)).toContain('/');
+      expect(
+        navegacionDePlantilla(plantilla).filter((e) => e.ruta.split('/').length === 3),
+        `«${plantilla}» no tiene pantallas de modelo en POS Don Poncho`,
+      ).toEqual([]);
+    }
   });
 });
