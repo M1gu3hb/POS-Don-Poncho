@@ -174,4 +174,7 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   mesero que la atiende (al atender su aviso o al tomar la mesa), nunca de otro. Globos de
   solicitud sobre cada mesa en la pantalla del mesero. Ayudante e2e `prepararElPortalDelComensal`
   acepta `mesero: null`.
+- DP-9.3 (DP-D24): vista «Solicitudes» dentro de Mesas (estación recordada por aparato); la voz
+  de las solicitudes sólo suena ahí (antes sonaba en todas las pantallas del mesero); la caja ya
+  no las lee ni las atiende en el servidor. Sale el modal viejo de solicitudes.
 

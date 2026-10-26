@@ -318,3 +318,36 @@ puerta los denuncia todos.
   cerrada), navegador en escritorio, tablet y teléfono (la dueña lo enciende desde Configuración,
   el comensal abre y pide, la mesera ve y toca el globo, el servidor dice que la mesa y la cuenta
   son suyas). Once mutaciones (ocho del servidor y tres del navegador), todas atrapadas.
+
+## DP-D24 · Vista «Solicitudes» dentro de Mesas; la voz de las solicitudes sólo ahí; la caja no las ve · 26-10-2026
+
+- **Lo que había:**
+  - Las solicitudes del comensal se veían en un modal que abría el botón «Solicitudes» del
+    encabezado de Mesas, y en las tarjetas «SOLICITUDES ACTIVAS» bajo el plano.
+  - La VOZ (y el timbre) de las solicitudes la soltaba `SolicitudesQRWatcher`, montado en
+    `AppLayout`: sonaba en CUALQUIER pantalla del mesero —Mesas, su pedido, sus ventas— y en las
+    del dueño/gerente si no tenían silenciadas las notificaciones de administración.
+  - En el servidor la caja leía `SolicitudQR` por el puente y podía atender y limpiar
+    solicitudes (`ROLES_DE_SALA` la incluía); la cocina también las leía.
+- **Elección:**
+  - Arriba de las zonas, un selector Mesas / Solicitudes (con el número de pendientes).
+    «Solicitudes» convierte la pantalla entera en la lista: mesa en grande, tipo con icono y
+    texto, hace cuánto y «Atender» (el mismo comando que el globo). De la que más lleva esperando
+    a la más nueva. Sale el botón del encabezado y su modal (`SolicitudesQRPanel`, borrado).
+  - La vista se recuerda en el APARATO (`localStorage`, con respaldo si el navegador lo niega):
+    un aparato se queda de estación sin rol ni PIN nuevos.
+  - La voz de las solicitudes suena SÓLO en esa vista, con la configuración de Alertas del
+    aparato (sonido, voz o las dos; el nombre del mesero sólo en las suyas). Las que ya estaban
+    al abrirla no se anuncian. En el plano: globos (DP-D23), sin voz. `SolicitudesQRWatcher`
+    queda con el aviso visual y la limpieza diaria, sin sonido ni voz. Los demás avisos (pedido
+    listo, cocina) no cambian.
+  - Servidor: `SolicitudQR` la leen dirección y mesero (sin caja ni cocina);
+    `atender_solicitud` y `limpiar_solicitudes` las ejecutan mesero, gerente, administrador y
+    dueño. `asignar_mesero` (tomar la mesa) sigue siendo de toda la sala. La caja cobra por
+    `Venta`, que ya trae lo que el comensal pidió por el QR.
+- **Prueba:** unidad (hace cuánto, orden, qué anunciar, vista recordada y almacén bloqueado),
+  integración contra Postgres (la caja no lee, no atiende ni limpia; mesero y gerente sí),
+  navegador en escritorio, tablet y teléfono con la voz espiada (`speechSynthesis.speak`): en
+  «Solicitudes» se anuncia, en el plano no; recordar la vista al recargar; atender desde la
+  lista; la caja recibe 403 del puente. Diez mutaciones (tres del servidor, cuatro de la lógica,
+  tres del navegador), todas atrapadas.
