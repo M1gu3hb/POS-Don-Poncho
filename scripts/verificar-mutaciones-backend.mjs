@@ -111,7 +111,6 @@ const CONTRATO_ESQUEMA = join(
 const MANIFIESTO_RAIZ = join(RAIZ, 'package.json');
 const PRUEBA_CONTRATO_ESQUEMA = 'packages/data/src/verificacion/contrato-esquema.test.ts';
 const CONTRATO_RLS = join(RAIZ, 'packages', 'data', 'src', 'verificacion', 'rls.ts');
-const SCRIPT_RLS = join(RAIZ, 'scripts', 'verificar-rls.mjs');
 const PRUEBA_RLS_VIVA = 'packages/data/src/verificacion/rls.test.ts';
 const REPOSITORIO_LIMITE = join(RAIZ, 'packages', 'data', 'src', 'repos', 'limite.ts');
 const PRUEBA_REPOSITORIO_LIMITE = 'packages/data/src/repos/limite.test.ts';
@@ -731,9 +730,10 @@ comprobarMutacion({
 });
 comprobarMutacion({
   nombre: 'FORCE RLS omitido de la consulta viva',
-  origen: SCRIPT_RLS,
-  archivoTemporal: 'verificar-rls.mjs',
-  variable: 'MORPHIQPOS_RLS_VERIFY_SCRIPT_PATH',
+  // La consulta vive en `rls.ts` desde DP-7 (una sola para verify:rls y verify:acople).
+  origen: CONTRATO_RLS,
+  archivoTemporal: 'rls.ts',
+  variable: 'MORPHIQPOS_RLS_CONTRACT_SOURCE_PATH',
   prueba: PRUEBA_RLS_VIVA,
   transformar: (codigo) => codigo.replace('c.relforcerowsecurity', 'false'),
 });

@@ -75,7 +75,9 @@ Cada uno con la prueba que lo atrapa, escrita antes del arreglo (en las dependen
    de su estación (DP-D17).
 7. Colores fijos de Morphiq en botones del mesero y en el marcador de platillo sin foto.
 8. **La cocina regresaba a «Nuevos» una comanda recién tocada** cuando otro toque iba en camino,
-   y el cocinero podía tocar la equivocada; la CI lo atrapó en la jornada (DP-D19).
+   y el cocinero podía tocar la equivocada; y un «Listo» tocado con su «Preparar» todavía en
+   camino llegaba en desorden y uno de los dos se rechazaba. La CI atrapó los dos en la jornada
+   (DP-D19).
 
 ## 5 · Evidencia
 

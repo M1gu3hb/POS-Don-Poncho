@@ -212,6 +212,13 @@ se marca y se apunta a la nueva. Las del maestro siguen en su repositorio (`M1gu
 - **Prueba:** unidad con mutación, y navegador determinista (`cocina-toques-en-camino.spec.ts`:
   la segunda respuesta se frena tres segundos y su comanda no puede volver a «Nuevos»; falla sin
   el arreglo).
+- **Segunda parte (26-10-2026), el mismo defecto en UNA comanda:** como la pantalla pinta
+  «Preparar» al instante, el cocinero puede tocar «Listo» antes de que el «Preparar» llegue a la
+  base. Se mandaban juntos y llegaban en desorden: el servidor aceptaba `nuevo → listo` y luego
+  rechazaba el «Preparar» como retroceso (422), o al revés. La CI lo vio en la tableta. Ahora los
+  toques de una comanda salen en fila (`crearFilaPorClave`): cada uno cuando contestó el anterior
+  de esa comanda; las demás no esperan y un fallo no traba la fila. Prueba de unidad con mutación
+  y un segundo caso determinista en la misma suite, que falla sin el arreglo.
 
 ## DP-D20 · Cómo quedó Don Poncho en Vercel · 25-10-2026
 

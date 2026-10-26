@@ -152,3 +152,14 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - Vercel `pos-don-poncho`, variables por la entrada estándar, despliegue desde `main` (READY en
   `cle1`). Humo público en verde. `verify:acople`: 10 pendientes heredados de la poda, ninguno del
   despliegue (reporte 001 §6).
+
+## 26-10-2026 · DP-7 · `verify:acople` en verde, y la segunda carrera de la cocina
+
+- `verify:acople` ajustada al producto (DP-D21): consulta de seguridad única, suites y pantallas
+  derivadas del producto, 7 comandos de otros giros declarados contra `MODELOS`, el «mesa» a mano
+  de la cancelación y un falso positivo de prefijo. Seis mutaciones de la puerta, todas atrapadas.
+- La CI de ese commit dio dos rojos: el banco de mutaciones apuntaba a la consulta en su lugar
+  viejo (se movió a `rls.ts`), y la jornada en tableta: un «Listo» tocado con su «Preparar» en
+  camino llegó primero. Defecto heredado de la cocina; prueba determinista y fila por comanda
+  (DP-D19, segunda parte).
+
