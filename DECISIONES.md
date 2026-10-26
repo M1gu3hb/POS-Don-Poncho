@@ -197,3 +197,18 @@ se marca y se apunta a la nueva. Las del maestro siguen en su repositorio (`M1gu
 - **Prueba:** unidad (ligado de páginas, opciones públicas sin precio) y navegador
   (`restaurante-menu-personalizado.spec.ts`: el comensal pide desde una página con su opción y el
   servidor lo registra).
+
+## DP-D19 · Un toque de la cocina en camino no lo deshace la lectura de otro · 25-10-2026
+
+- **Defecto heredado del maestro:** la cocina (`heredado/pages/Cocina.jsx`) pintaba cada toque
+  escribiéndolo en la caché de la lectura y releía al contestar cada uno. Con dos toques seguidos,
+  la relectura del primero llegaba con el segundo todavía viejo y la comanda regresaba a «Nuevos»
+  hasta la siguiente lectura. El cocinero podía tocar la equivocada; en la CI el segundo «Listo»
+  cayó otra vez sobre la misma comanda y la de la barra se quedó en el fuego. El maestro lo
+  rodeaba en la prueba (`cocinaDejaLista` reintenta), no en la pantalla.
+- **Elección:** lo tocado se pinta ENCIMA de lo leído, no dentro (`toques-en-camino.ts`), y se
+  suelta sólo después de una relectura que salió tras la escritura, y sólo si nadie volvió a tocar
+  esa comanda mientras tanto. Los avisos y el aspecto de la pantalla no cambian.
+- **Prueba:** unidad con mutación, y navegador determinista (`cocina-toques-en-camino.spec.ts`:
+  la segunda respuesta se frena tres segundos y su comanda no puede volver a «Nuevos»; falla sin
+  el arreglo).
