@@ -170,4 +170,8 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - DP-9.1 (DP-D22): Recetas y Platillos ya no pisan el área ni la visibilidad; el servidor aprende
   el área de un platillo nuevo de su categoría. Apareció además que Recetas no guardaba un
   platillo sin foto (`imagen_url: ''`). Producción revisada en sólo lectura: nada movido.
+- DP-9.2 (DP-D23): el portal funciona sin asignación de mesas; la cuenta del comensal es del
+  mesero que la atiende (al atender su aviso o al tomar la mesa), nunca de otro. Globos de
+  solicitud sobre cada mesa en la pantalla del mesero. Ayudante e2e `prepararElPortalDelComensal`
+  acepta `mesero: null`.
 

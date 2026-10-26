@@ -713,6 +713,16 @@ jobs:
         if: matrix.modelo == 'restaurante'
         run: pnpm test:e2e pruebas/e2e/restaurante-operaciones.spec.ts --project=escritorio --workers=1 --retries=0
 
+      # LOS CAMBIOS DEL CLIENTE (DP-9): Recetas no pisa el área ni la visibilidad (DP-9.1); el
+      # portal sin asignación de mesas y los globos de solicitud sobre cada mesa, en los tres
+      # aparatos —el teléfono del mesero pinta las mesas como tarjetas, no como plano— (DP-9.2).
+      # Cada una resetea la demo al empezar.
+      - name: Los cambios del cliente
+        if: matrix.modelo == 'restaurante'
+        run: |
+          pnpm test:e2e pruebas/e2e/recetas-area-y-visibilidad.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/portal-sin-asignacion.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
+
       - name: Las trazas del día
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

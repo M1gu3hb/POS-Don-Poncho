@@ -288,3 +288,33 @@ puerta los denuncia todos.
 - **Prueba:** unidad de la regla y del campo, integración contra Postgres por el comando del
   puente, navegador (editar la limonada → sigue en barra y escondida; receta nueva en Bebidas →
   nace en barra, sin foto). Seis mutaciones, todas atrapadas.
+
+## DP-D23 · El portal funciona sin asignación de mesas; globos de solicitud sobre cada mesa · 26-10-2026
+
+- **Defecto heredado del maestro:** con `asignacion_mesas_activa = false` el comensal no podía
+  abrir ni pedir desde el QR: `puedeOrdenarDesdeQR` exigía la asignación y `abrir_mesa` un mesero
+  asignado que en ese modo no existe. Configuración ni siquiera dejaba encender «Permitir que el
+  comensal envíe pedidos» sin la asignación.
+- **Elección:**
+  - La asignación deja de ser condición del negocio. Lo que falta, con la asignación ENCENDIDA,
+    es el mesero de ESA mesa (`faltaMesero`): ahí la mesa sigue cerrada al QR, porque es el
+    proceso que el negocio eligió. Sin asignación, el comensal abre, pide y llama.
+  - La cuenta que abre el comensal nace a nombre de quien ya tomó la mesa
+    (`mesas.empleado_atiende_id`) o de nadie. El MESERO que atiende un aviso de esa mesa, o que la
+    toma desde su pantalla (`asignar_mesero`), se queda con la mesa Y con su cuenta
+    (`quedarseConLaMesa`): la propina y el corte salen de `ordenes.empleado_atiende_id`, y una
+    cuenta sin él caía en «Caja / venta directa». Las dos escrituras llevan
+    `where empleado_atiende_id is null`: nunca le quitan la mesa a quien ya la tiene. Un gerente o
+    la caja que atienden el aviso no se la quedan.
+  - Globos de solicitud sobre cada mesa en la pantalla del mesero, en los dos modos: burbuja
+    oscura con cola, icono + texto + tono (el color nunca va solo), hasta tres apilados y el resto
+    en «+N más», encima de la mesa (debajo si está pegada al borde de arriba) y en línea sobre la
+    tarjeta del teléfono. Tocar uno atiende la solicitud sin abrir la mesa.
+  - Alternativa descartada: que la cuenta del comensal nazca a nombre de «el primer mesero en
+    turno». Inventa una atribución que nadie decidió.
+- **Prueba:** unidad (bandera, agrupado de globos), integración contra Postgres (nueve casos:
+  abrir y pedir sin asignación, quedarse con la mesa al atender o al tomarla antes y después de
+  que el comensal abra, otro mesero no la roba, la gerente no se la queda, con asignación sigue
+  cerrada), navegador en escritorio, tablet y teléfono (la dueña lo enciende desde Configuración,
+  el comensal abre y pide, la mesera ve y toca el globo, el servidor dice que la mesa y la cuenta
+  son suyas). Once mutaciones (ocho del servidor y tres del navegador), todas atrapadas.
