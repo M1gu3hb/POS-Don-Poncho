@@ -177,4 +177,7 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - DP-9.3 (DP-D24): vista «Solicitudes» dentro de Mesas (estación recordada por aparato); la voz
   de las solicitudes sólo suena ahí (antes sonaba en todas las pantallas del mesero); la caja ya
   no las lee ni las atiende en el servidor. Sale el modal viejo de solicitudes.
+- DP-9.4 (DP-D25): cocina en el teléfono. QR por estación firmado para el día y revocable, API
+  pública estrecha, voz, Wake Lock y botonera (`docs/cliente/BOTONERA.md`). Sin migración. De
+  paso: el guardado de Configuración bloquea la fila antes de reescribirla.
 

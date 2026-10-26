@@ -9,3 +9,4 @@ Poncho, y cómo portarlo.
 | 01  | [Recetas y Platillos no pisan el área ni la visibilidad](01-recetas-area-y-visibilidad.md)          | DP-9.1  | No        |
 | 02  | [El portal sin asignación de mesas y los globos de solicitud](02-portal-sin-asignacion-y-globos.md) | DP-9.2  | No        |
 | 03  | [La vista «Solicitudes» dentro de Mesas](03-vista-de-solicitudes.md)                                | DP-9.3  | No        |
+| 04  | [Cocina en el teléfono](04-cocina-en-el-telefono.md)                                                | DP-9.4  | No        |

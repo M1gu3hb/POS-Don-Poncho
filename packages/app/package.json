@@ -28,6 +28,7 @@
     "./compras": "./src/compras/index.ts",
     "./propinas": "./src/propinas/index.ts",
     "./portal": "./src/portal/index.ts",
+    "./telefono-de-cocina": "./src/telefono-de-cocina/index.ts",
     "./mantenimiento": "./src/mantenimiento/index.ts",
     "./observabilidad": "./src/observabilidad.ts",
     "./archivos": "./src/archivos/index.ts",

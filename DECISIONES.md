@@ -351,3 +351,43 @@ puerta los denuncia todos.
   «Solicitudes» se anuncia, en el plano no; recordar la vista al recargar; atender desde la
   lista; la caja recibe 403 del puente. Diez mutaciones (tres del servidor, cuatro de la lógica,
   tres del navegador), todas atrapadas.
+
+## DP-D25 · Cocina en el teléfono: un QR por estación, firmado para el día y revocable · 26-10-2026
+
+- **Lo que se pidió:** que cada estación (Cocina, Bebidas…) tenga un teléfono que enseñe la
+  comanda pendiente más reciente, la lea en voz y la prepare o la deje lista con tres botones o
+  con una botonera física, sin PIN.
+- **Elección:**
+  - «Conectar teléfono» en la pantalla de Cocina emite el QR de UNA estación
+    (`restaurante.conectar_telefono_de_cocina`: cocina, gerente y dueño; un cocinero con estación
+    fija, sólo la suya). El código es una FIRMA HMAC, con una llave derivada de la pimienta del
+    servidor, de negocio + estación + día de operación + versión: no se guarda en ninguna parte
+    (sin tabla, sin migración) y no se puede inventar. Vale el día de operación en que se emitió
+    (zona del negocio) y hasta que se emite otro para la estación, que sube la versión
+    (`configuracion.valores.telefonos_de_cocina`: nunca sale al navegador ni se escribe por el
+    puente). Firma la ruta, no el comando: el comando no ve secretos.
+  - API pública estrecha (R33): `GET /api/publico/cocina/:token` (la comanda pendiente más
+    reciente de SU estación: mesa, platillos, cantidades, notas, alergia, celebración; sin precios
+    ni ids ajenos; del nombre del pedido sólo la primera palabra) y `POST …/transicion` (sólo
+    `en_preparacion` y `listo`, sólo comandas de su estación). Límite de tasa por token,
+    idempotencia anónima, auditoría sin identidad y 404 igual para cualquier código inválido.
+  - Concurrencia con la pantalla grande: el teléfono mueve la comanda con la MISMA función que
+    `transicionar_pedido` (`moverLaComandaEntera`, extraída de `preparacion.ts`). Si la pantalla
+    ya la movió, «Listo» responde «sin cambio» y «Preparar» no la devuelve al fuego.
+  - El teléfono: «Toca para activar el sonido» (el navegador lo exige), Wake Lock (la pantalla no
+    se apaga), la voz con el mismo texto que la pantalla grande (`fraseNuevoPedidoCocina`),
+    «Repetir voz», y la botonera como teclas (`1`/`2`/`3`, flechas, páginas, Enter, Espacio):
+    `docs/cliente/BOTONERA.md`.
+  - De paso: el guardado genérico de Configuración bloquea la fila (`for update`) antes de
+    reescribir el documento. Sin eso, guardar Configuración en el mismo instante en que se conecta
+    un teléfono podía devolverle la vida al código revocado.
+  - Descartado: una tabla de tokens (pide migración: sería fase-b) y reusar el token de
+    dispositivo del monitor de recogida (ver el hallazgo en el reporte 002).
+- **Prueba:** unidad (firma y forma del token; teclas, acciones, qué anunciar), integración contra
+  Postgres (sólo su estación y la más reciente, sin importes; preparar y listo, auditados;
+  idempotencia; la pantalla grande primero; estación ajena; revocar; otro día; estación apagada;
+  cocinero con estación fija; mesero sin permiso; Configuración no pisa ni enseña la versión) y
+  navegador en escritorio y tablet (el cocinero conecta, el teléfono sin sesión recibe la comanda
+  con voz, la botonera la prepara y la deja lista, el servidor lo confirma, el código viejo deja
+  de servir y no deja botones). Quince mutaciones (nueve del servidor, tres de la lógica, tres del
+  navegador), todas atrapadas.
