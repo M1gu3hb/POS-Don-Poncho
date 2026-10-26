@@ -9,13 +9,13 @@ import {
   type MarcaDePantalla,
   accionesDelTablero,
   cabecerasDeEscrituraDePrueba,
-  cambiarDePlantilla,
   consultarPuente,
   entrar,
   exigirCobroAceptado,
   exigirDemostracion,
   exigirGiro,
   exigirInventarioMovido,
+  exigirPlantilla,
   exigirVentaCobrada,
   exigirVocabulario,
   menuLateral,
@@ -141,7 +141,7 @@ test.describe('restaurante · su vocabulario, sus pantallas y su dashboard', () 
     await exigirGiro(page, 'restaurante', 'restaurante');
     // Ninguna pantalla puede abrir en 200 y reventar por dentro.
     const exigirSinFallos = vigilarFallos(page);
-    await cambiarDePlantilla(page, 'restaurante');
+    await exigirPlantilla(page, 'restaurante');
 
     // ── 1 · SU VOCABULARIO ────────────────────────────────────────────────
     // Se mira en el marco `(interno)`, que es el único sitio donde el sustantivo

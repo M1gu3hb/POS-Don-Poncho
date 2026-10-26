@@ -675,78 +675,34 @@ interface RespuestaDeComando {
 }
 
 /**
- * Cambia la plantilla del negocio, que es el paso «cambiar a esa plantilla».
+ * Exige que el negocio de la prueba tenga la plantilla que la prueba va a mirar.
  *
- * ── Por qué por la ruta y no por la pantalla ───────────────────────────────
- * La pantalla es Configuración → Modo Presentación, y está detrás de una contraseña
- * que el servidor compara con Argon2id (`desbloquearPresentacion`). En una demo
- * recién creada esa contraseña NO está configurada, así que el candado no se puede
- * abrir ni con la correcta: la pantalla enseña «hay que configurarla primero». Pedir
- * que la demo la tenga añadiría un cuarto bloqueo a los tres de A3 §4 para probar
- * algo que no es el sujeto de esta prueba.
+ * En el maestro esto CAMBIABA la plantilla por `/api/configuracion/paquete` (la ruta del
+ * botón de Modo Presentación). POS Don Poncho es sólo restaurante y esa ruta ya no existe
+ * (DP-2b): la plantilla sale de `organizaciones.paquete`, que el reseteo del negocio de
+ * prueba pone según su giro (`PLANTILLA_POR_GIRO`). Así que en vez de ponerla se exige que
+ * esté: si no lo está, lo que se mire después del menú y del vocabulario no significaría nada.
  *
- * Lo que se usa es EXACTAMENTE la ruta que usa ese botón —`/api/configuracion/paquete`,
- * con las mismas cabeceras que pone `heredado/api/cliente.ts`— así que pasa por el
- * mismo comando, el mismo gate de rol (`roles: ['dueno']`) y la misma normalización
- * de `plantillaDe()`. No se está saltando la autorización: se está saltando el
- * diálogo.
- *
- * ── Por qué NO recarga aquí ────────────────────────────────────────────────
- * `paquete_modo` llega al navegador por el `useQuery(['config'])` de `ConfigContext`,
- * y el menú lateral se pinta con él. Recargar dentro de esta función esconde ese
- * detalle; cada prueba navega después a la pantalla que va a mirar, que es una
- * navegación completa y vuelve a pedir la configuración. Quien lea la prueba ve el
- * orden: cambio, entro, miro.
+ * Se lee del SERVIDOR (`paquete_modo` de la configuración, derivado de esa columna), con la
+ * sesión de la prueba: el mismo valor que el `useQuery(['config'])` de `ConfigContext` le da
+ * al menú lateral.
  */
-export async function cambiarDePlantilla(page: Page, plantilla: Plantilla): Promise<void> {
-  const respuesta = await page.request.post('/api/configuracion/paquete', {
-    headers: cabecerasDeEscritura(),
-    data: { paquete: plantilla },
-  });
-
-  const cuerpo = (await respuesta.json()) as RespuestaDeComando;
-
+export async function exigirPlantilla(page: Page, plantilla: Plantilla): Promise<void> {
+  const [configuracion] = await consultarPuente<{ paquete_modo?: string }>(
+    page,
+    'ConfiguracionNegocio',
+    { limite: 1 },
+  );
   expect(
-    cuerpo.ok,
+    configuracion?.paquete_modo,
     [
-      `No se pudo poner la plantilla «${plantilla}»: ${respuesta.status()} ` +
-        `${cuerpo.error?.codigo ?? ''} ${cuerpo.error?.mensaje ?? ''}`.trim(),
+      `El negocio de la prueba no tiene la plantilla «${plantilla}».`,
       '',
-      'Si el código es SIN_PERMISO, la persona con la que entra la prueba no es DUEÑO:',
-      "`cambiarPaquete` declara `roles: ['dueno']` a propósito —el paquete decide qué",
-      'funciones existen y qué se cobra, no es un campo más de la configuración—.',
-      '`db:bootstrap` crea un dueño; un administrador creado después, no.',
-      '',
-      'Si es CONFIGURACION_INVALIDA, el giro de la demo no admite esa plantilla:',
-      '`paquetePermitidoParaGiro` reserva `restaurante` para cafeterías y restaurantes.',
+      'La plantilla la deriva `plantillaDeOrganizacion(giro, paquete)` de',
+      '`organizaciones.paquete`, y el reseteo del negocio de prueba la pone según su giro.',
+      'Si aquí falta, el negocio no se reseteó o no es del giro que pide la prueba.',
     ].join('\n'),
-  ).toBe(true);
-}
-
-/**
- * Pide una plantilla y devuelve el código con el que el servidor la RECHAZA.
- *
- * Existe por la estética, y por una sola razón: `salon` no es una plantilla. Está
- * escrita como destino en el `FILE-MAP.md` de `estetica-salon` y no está en
- * `PAQUETES`, así que el sistema no la puede poner. Afirmar ese rechazo es lo único
- * honesto que se puede afirmar hoy sobre la quinta plantilla, y es infinitamente más
- * útil que una prueba saltada: el día que A3 la añada, esta afirmación se cae y
- * obliga a mirar.
- */
-export async function plantillaRechazada(page: Page, valor: string): Promise<string> {
-  const respuesta = await page.request.post('/api/configuracion/paquete', {
-    headers: cabecerasDeEscritura(),
-    data: { paquete: valor },
-  });
-  const cuerpo = (await respuesta.json()) as RespuestaDeComando;
-
-  expect(
-    cuerpo.ok,
-    `El servidor ACEPTÓ la plantilla «${valor}». Si ya existe en PAQUETES, esta prueba ` +
-      'se quedó atrás: actualízala en vez de borrar la afirmación.',
-  ).not.toBe(true);
-
-  return cuerpo.error?.codigo ?? `HTTP ${respuesta.status()}`;
+  ).toBe(plantilla);
 }
 
 /**
@@ -1816,10 +1772,9 @@ export async function soltarLaCaja(page: Page): Promise<string> {
  * Abre la caja de esta terminal POR LA RUTA, no por el diálogo.
  *
  * ── Por qué por la ruta, y por qué esto no es saltarse nada ────────────────
- * Es el mismo criterio que `cambiarDePlantilla`: se usa EXACTAMENTE la ruta que
- * usa el botón, con las mismas cabeceras, así que pasa por el mismo comando, el
- * mismo gate de rol, la misma plantilla permitida y la misma auditoría. Lo que
- * se salta es el DIÁLOGO, no la autorización.
+ * Se usa EXACTAMENTE la ruta que usa el botón, con las mismas cabeceras, así que
+ * pasa por el mismo comando, el mismo gate de rol, la misma plantilla permitida y
+ * la misma auditoría. Lo que se salta es el DIÁLOGO, no la autorización.
  *
  * Y hace falta porque tres de los cinco modelos abren la caja en la pantalla
  * HEREDADA —un diálogo de la plataforma anterior— mientras el mostrador y la
