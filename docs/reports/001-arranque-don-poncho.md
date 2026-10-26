@@ -110,7 +110,9 @@ copió a `..\_PRIVADOase-a.env` sin imprimirse. No se cambió ninguna contrase�
 1. Huella de las 10 organizaciones ajenas (119 tablas por organización, md5 de 17), en una
    transacción `READ ONLY` (el pooler 6543 ignora la opción de sesión).
 2. `verify:esquema` (1,727 columnas, 1,363 restricciones, 439 índices) y `verify:rls` (174
-   relaciones, 16 funciones): verdes. La base tiene las mismas 117 migraciones que el repositorio.
+   relaciones, 16 funciones): verdes, por conexión directa y también por el CLI de Supabase
+   (`D:\herramientas\supabase-cli`, su transporte canónico, con el checkout vinculado). La base
+   tiene las mismas 117 migraciones que el repositorio.
 3. `db:alta-negocio`: Don Poncho con su ID declarado, giro y paquete `restaurante`, sucursal «San
    Lorenzo Atemoaya», auditado. `db:bootstrap`: «Miguel · Morphiq», dueño, PIN temporal.
 4. `preparar-negocio` y `cargar-menu`: configuración y portal, estilo, 8 páginas, «Salón» con 10
