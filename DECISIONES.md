@@ -133,3 +133,42 @@ se marca y se apunta a la nueva. Las del maestro siguen en su repositorio (`M1gu
 - **Resultado:** no se puede. Las 22 variables del maestro son de tipo **sensible**: ni el CLI ni la
   API devuelven su valor (la descarga las trae vacías; el archivo temporal se borró). Queda la otra
   vía que se le ofreció: que Miguel las deje en `..\_PRIVADO\` y el guion las lea de ahí.
+
+## DP-D14 · La barbacoa por kilo descuenta su RECETA por kilo · 25-10-2026
+
+- **Contexto:** el alta de producto exigía que un producto por medida descontara un insumo base.
+  Con eso la barbacoa tendría que nacer con un insumo «Barbacoa» y su costo saldría en $0 (el
+  insumo sin compras), contra la regla de la receta pendiente.
+- **Elección:** un producto `variable_medida` acepta `insumo_base` **o** `receta`. El dominio ya lo
+  soportaba: `consumoDeReceta` multiplica la receta por la cantidad vendida (0.25 kg incluido) y el
+  cobro no descuenta nada mientras la receta no tenga líneas. La receta se captura por kilo.
+- **Prueba:** `productos.test.ts` acepta el kilo de barbacoa por receta y sigue rechazando un
+  variable con `sku`.
+
+## DP-D15 · Los arreglos del puente llegan a su columna `jsonb` · 25-10-2026
+
+- **Defecto heredado del maestro:** `pg` convierte un arreglo de JS en un arreglo NATIVO de
+  Postgres, y una columna `jsonb` lo rechaza (`22P02`). No se podían guardar los atajos de peso de
+  un producto (`presets_variable_qr`) ni las líneas de una plantilla de compra, tampoco desde sus
+  pantallas.
+- **Elección:** conversión nueva `jsonb`, que manda texto JSON, sólo en los campos escribibles de
+  columnas `jsonb`. `json` se queda para lo que sólo se lee y para los arreglos nativos
+  (`dia_visita int[]`, donde mandar el arreglo tal cual es lo correcto).
+- **Prueba:** unidad (la conversión y qué campos la usan) e integración contra Postgres real.
+
+## DP-D16 · Las pantallas del salón usan las zonas DEL NEGOCIO · 25-10-2026
+
+- **Defecto heredado:** el mapa del mesero, el editor de mesas y su diálogo sólo conocían una lista
+  fija (`Interior, Exterior, Terraza, Barra, Otro`). Las 10 mesas en «Salón» no se veían y una mesa
+  nueva nacía en «Interior», que Don Poncho no tiene, y no se podía guardar.
+- **Elección:** `zonasDelNegocio`: las zonas dadas de alta, por su orden, más las de sus mesas; la
+  lista fija sólo si no hay ninguna. El diálogo propone la primera zona del negocio.
+
+## DP-D17 · «Receta pendiente», derivada · 25-10-2026
+
+- Un producto con `estrategia_consumo = 'receta'` y cero líneas activas. Sin columna ni DDL: se
+  deriva al leer (`receta-pendiente.ts`) y se borra sola con el primer ingrediente. Se vende y no
+  descuenta; su costo se enseña «desconocido» (nunca el cero guardado) y su margen «Sin costo».
+  Rótulo y filtro en Recetas y Platillos; aviso «N platillos sin receta» en el tablero.
+- **El área de preparación:** el cargador pone a cada platillo el área de su estación (comida →
+  cocina, bebidas → barra). En `ninguno`, con el que nace un producto, no se genera comanda.

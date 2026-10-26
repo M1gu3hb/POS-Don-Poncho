@@ -105,3 +105,16 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - **Hallazgo para DP-4/DP-6:** las variables del Vercel del maestro son *sensibles* (ilegibles por
   diseño), así que la decisión de leerlas de ahí no se puede cumplir (DP-D13). Hace falta que
   Miguel entregue `DATABASE_URL` y `STORAGE_*`.
+
+## 25-10-2026 · DP-5 · El menú, la receta pendiente y lo que apareció al ensayar
+
+- `scripts/cargar-menu.mjs` y `scripts/preparar-negocio.mjs`: por los comandos de la aplicación,
+  idempotentes. Ensayo en base desechable (`dp_ensayo`) con Don Poncho y su ID real: la primera
+  vuelta crea 2 estaciones, 17 categorías y 107 platillos (34 a cocina, 73 a barra), 10 mesas en
+  «Salón» y 7 personas; la segunda no cambia nada. 107 con receta pendiente; barbacoa por kilo a
+  $795.00 con ¼, ½ y 1 kg.
+- Tres defectos heredados encontrados al ensayar, cada uno con prueba antes del arreglo: los
+  arreglos hacia `jsonb` (DP-D15), las zonas fijas del salón (DP-D16) y el área de preparación con
+  la que nace un producto (DP-D17).
+- Las pantallas `/restaurante/recetas` y `/restaurante/productos` enseñaban costo $0.00 y margen
+  100 % «sano» a un platillo sin receta: ahora «Costo desconocido» y «Sin costo».

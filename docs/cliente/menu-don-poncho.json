@@ -1,0 +1,727 @@
+{
+  "version": 1,
+  "fuente": "catalogo-menu-don-poncho.pdf (transcripción de los 3 menús impresos, 25-10-2026)",
+  "moneda": "MXN",
+  "precios": "precio final al público, IVA incluido (se desglosa, no se suma)",
+  "estaciones": ["Cocina", "Bebidas"],
+  "areaPorEstacion": {
+    "Cocina": "cocina",
+    "Bebidas": "barra"
+  },
+  "modificadores": [
+    {
+      "clave": "relleno-quesadilla",
+      "nombre": "Relleno",
+      "obligatorio": true,
+      "opciones": [
+        ["Pollo", 0],
+        ["Hongos", 0],
+        ["Queso", 0]
+      ]
+    },
+    {
+      "clave": "sabor-jugo",
+      "nombre": "Sabor del jugo",
+      "obligatorio": true,
+      "opciones": [
+        ["Naranja", 0],
+        ["Zanahoria", 0]
+      ]
+    },
+    {
+      "clave": "sabor-licuado",
+      "nombre": "Sabor del licuado",
+      "obligatorio": true,
+      "opciones": [
+        ["Fresa", 0],
+        ["Chocolate", 0]
+      ]
+    },
+    {
+      "clave": "sabor-pulque-basico",
+      "nombre": "Sabor (básico)",
+      "obligatorio": true,
+      "opciones": [
+        ["Avena", 0],
+        ["Betabel", 0],
+        ["Zanahoria", 0],
+        ["Amaranto", 0],
+        ["Guayaba", 0],
+        ["Piña", 0],
+        ["Tuna roja", 0, "temporada"],
+        ["Tuna verde", 0, "temporada"],
+        ["Bombón", 0],
+        ["Plátano", 0],
+        ["Hierbabuena", 0],
+        ["Menta", 0],
+        ["Chicle", 0],
+        ["Tamarindo", 0],
+        ["Mandarina", 0]
+      ]
+    },
+    {
+      "clave": "sabor-pulque-especial",
+      "nombre": "Sabor (especial)",
+      "obligatorio": true,
+      "opciones": [
+        ["Apio", 0],
+        ["Jitomate", 0],
+        ["Limón", 0],
+        ["Manzana", 0],
+        ["Capuchino", 0],
+        ["Mocca", 0],
+        ["Cajeta", 0],
+        ["Coco", 0],
+        ["Chocolate", 0],
+        ["Pepino", 0],
+        ["Toronja", 0],
+        ["Naranja", 0],
+        ["Fresa", 0],
+        ["Mango", 0],
+        ["Pinole", 0],
+        ["Mango con chile", 0],
+        ["Limón con chile", 0],
+        ["Tamarindo con chile", 0],
+        ["Cempasúchil", 0, "temporada"]
+      ]
+    },
+    {
+      "clave": "sabor-pulque-exotico",
+      "nombre": "Sabor (exótico)",
+      "obligatorio": true,
+      "opciones": [
+        ["Maracuyá", 0],
+        ["Mamey", 0],
+        ["Blueberrie", 0],
+        ["Zapote", 0],
+        ["Kiwi", 0],
+        ["Chocolate Turín", 0],
+        ["Frutos rojos", 0],
+        ["Zarzamora", 0],
+        ["Guanabána", 0],
+        ["Yaka", 0],
+        ["Cereza", 0],
+        ["Duraznos con crema", 0],
+        ["Fresas con crema", 0],
+        ["Plátanos con crema", 0],
+        ["Nutella", 0],
+        ["Matcha", 0],
+        ["Chai", 0],
+        ["Cubano", 0],
+        ["Tres leches", 0],
+        ["Arándano", 0],
+        ["Piña coco", 0],
+        ["Mazapán", 0],
+        ["Higo", 0]
+      ]
+    },
+    {
+      "clave": "sabor-pulque-premium",
+      "nombre": "Sabor (premium)",
+      "obligatorio": true,
+      "opciones": [
+        ["Pistache", 0],
+        ["Nuez", 0],
+        ["Queso", 0]
+      ]
+    },
+    {
+      "clave": "sabor-pulque-premium-licor",
+      "nombre": "Sabor (premium con licor)",
+      "obligatorio": true,
+      "opciones": [
+        ["Piña colada", 0],
+        ["Vino tinto", 0],
+        ["Rompope", 0],
+        ["Tequila", 0],
+        ["Mezcal", 0],
+        ["Mojito", 0]
+      ]
+    }
+  ],
+  "categorias": [
+    {
+      "nombre": "Pa’ empezar",
+      "estacion": "Cocina",
+      "productos": [
+        {
+          "nombre": "Tamales de frijol",
+          "detalle": "5 piezas",
+          "precio": 5000
+        },
+        {
+          "nombre": "Tamales de frijol con mole",
+          "detalle": "5 piezas",
+          "precio": 6500
+        },
+        {
+          "nombre": "Tlacoyo de frijol",
+          "precio": 2000
+        },
+        {
+          "nombre": "Quesadilla",
+          "detalle": "Pollo, hongos o queso",
+          "precio": 2500,
+          "modificadores": ["relleno-quesadilla"]
+        },
+        {
+          "nombre": "Quesadilla combinada",
+          "precio": 2900
+        },
+        {
+          "nombre": "Nopales en ensalada",
+          "precio": 3500
+        },
+        {
+          "nombre": "Nopales en escabeche",
+          "precio": 4000
+        },
+        {
+          "nombre": "Guacamole",
+          "precio": 6000
+        },
+        {
+          "nombre": "Aguacate",
+          "precio": 9500
+        },
+        {
+          "nombre": "Docena de tortillas",
+          "precio": 3400
+        }
+      ]
+    },
+    {
+      "nombre": "Las sopas",
+      "estacion": "Cocina",
+      "productos": [
+        {
+          "nombre": "Consomé de carnero",
+          "precio": 3300
+        },
+        {
+          "nombre": "Consomé de pollo",
+          "detalle": "Con pollo deshebrado y arroz",
+          "precio": 2700
+        },
+        {
+          "nombre": "Caldo de nopal",
+          "detalle": "Con champiñones y chile de árbol",
+          "precio": 3000
+        },
+        {
+          "nombre": "Sopa azteca",
+          "precio": 3000
+        },
+        {
+          "nombre": "Arroz",
+          "precio": 2500
+        }
+      ]
+    },
+    {
+      "nombre": "Lo fuerte",
+      "estacion": "Cocina",
+      "productos": [
+        {
+          "nombre": "Barbacoa de horno",
+          "precio": 79500,
+          "porPeso": {
+            "unidad": "kg",
+            "presets": [0.25, 0.5, 1]
+          }
+        },
+        {
+          "nombre": "Barbacoa preparada",
+          "detalle": "Con chile cuaresmeño, cilantro y cebolla",
+          "precio": 79500,
+          "porPeso": {
+            "unidad": "kg",
+            "presets": [0.25, 0.5, 1]
+          }
+        },
+        {
+          "nombre": "Cabeza preparada",
+          "detalle": "Con chile cuaresmeño, cilantro y cebolla",
+          "precio": 27000
+        },
+        {
+          "nombre": "Mole con pollo",
+          "precio": 9500
+        },
+        {
+          "nombre": "Enchiladas de mole",
+          "precio": 9500
+        },
+        {
+          "nombre": "Tacos dorados de barbacoa",
+          "detalle": "2 piezas",
+          "precio": 16000
+        },
+        {
+          "nombre": "Taco suave de barbacoa",
+          "precio": 9500
+        },
+        {
+          "nombre": "Tamal de nopal",
+          "precio": 6000
+        },
+        {
+          "nombre": "Cecina de Yecapixtla",
+          "precio": 14500
+        },
+        {
+          "nombre": "Mixiote de carnero",
+          "precio": 17000
+        },
+        {
+          "nombre": "Conejo al pastor",
+          "precio": 14500
+        },
+        {
+          "nombre": "Conejo enchilado",
+          "precio": 14500
+        }
+      ]
+    },
+    {
+      "nombre": "Lo dulce",
+      "estacion": "Cocina",
+      "productos": [
+        {
+          "nombre": "Fresas con crema",
+          "precio": 4500
+        },
+        {
+          "nombre": "Flan napolitano",
+          "precio": 4000
+        },
+        {
+          "nombre": "Pastel de la casa",
+          "precio": 3000
+        },
+        {
+          "nombre": "Plátanos fritos",
+          "precio": 5500
+        },
+        {
+          "nombre": "Cocoles de piloncillo",
+          "precio": 3300
+        },
+        {
+          "nombre": "Bolsa de pan",
+          "precio": 4800
+        },
+        {
+          "nombre": "Helado",
+          "precio": 8400
+        }
+      ]
+    },
+    {
+      "nombre": "Para calentar",
+      "estacion": "Bebidas",
+      "productos": [
+        {
+          "nombre": "Café de olla",
+          "precio": 2800
+        },
+        {
+          "nombre": "Atole de guayaba",
+          "precio": 3500
+        }
+      ]
+    },
+    {
+      "nombre": "Para enfriar",
+      "estacion": "Bebidas",
+      "productos": [
+        {
+          "nombre": "Coca cola",
+          "precio": 3700
+        },
+        {
+          "nombre": "Refresco",
+          "precio": 3700
+        },
+        {
+          "nombre": "Agua mineral",
+          "precio": 3700
+        },
+        {
+          "nombre": "Boing",
+          "precio": 3000
+        },
+        {
+          "nombre": "Jugo",
+          "detalle": "Naranja o zanahoria",
+          "precio": 3800,
+          "modificadores": ["sabor-jugo"]
+        },
+        {
+          "nombre": "Licuado",
+          "detalle": "Fresa o chocolate",
+          "precio": 3900,
+          "modificadores": ["sabor-licuado"]
+        },
+        {
+          "nombre": "Jarra de agua de sabor",
+          "precio": 8000
+        },
+        {
+          "nombre": "Copa de agua de sabor",
+          "precio": 3700
+        },
+        {
+          "nombre": "Limonada",
+          "precio": 5800
+        },
+        {
+          "nombre": "Naranjada",
+          "precio": 5800
+        },
+        {
+          "nombre": "Agua mineral preparada",
+          "precio": 3800
+        }
+      ]
+    },
+    {
+      "nombre": "Cerveza",
+      "estacion": "Bebidas",
+      "productos": [
+        {
+          "nombre": "Corona",
+          "precio": 4700
+        },
+        {
+          "nombre": "Victoria",
+          "precio": 4700
+        },
+        {
+          "nombre": "Modelo especial",
+          "precio": 5200
+        },
+        {
+          "nombre": "Negra modelo",
+          "precio": 5200
+        },
+        {
+          "nombre": "Cerveza de barril · bola",
+          "precio": 7000
+        },
+        {
+          "nombre": "Cerveza de barril · litro",
+          "precio": 12000
+        },
+        {
+          "nombre": "Michelado (extra)",
+          "detalle": "Preparación de la cerveza, se agrega aparte",
+          "precio": 1500
+        },
+        {
+          "nombre": "Cubano (extra)",
+          "detalle": "Preparación de la cerveza, se agrega aparte",
+          "precio": 2000
+        },
+        {
+          "nombre": "Con clamato (extra)",
+          "detalle": "Preparación de la cerveza, se agrega aparte",
+          "precio": 3000
+        },
+        {
+          "nombre": "Con clamato cubano (extra)",
+          "detalle": "Preparación de la cerveza, se agrega aparte",
+          "precio": 3500
+        }
+      ]
+    },
+    {
+      "nombre": "Bebidas preparadas",
+      "estacion": "Bebidas",
+      "productos": [
+        {
+          "nombre": "Conga",
+          "precio": 7000
+        },
+        {
+          "nombre": "Paloma",
+          "detalle": "José cuervo tradicional",
+          "precio": 12500
+        },
+        {
+          "nombre": "Charro negro",
+          "detalle": "José cuervo tradicional",
+          "precio": 12500
+        },
+        {
+          "nombre": "Carajillo",
+          "precio": 15500
+        },
+        {
+          "nombre": "Sangría preparada",
+          "detalle": "Vino tinto y vodka",
+          "precio": 13500
+        },
+        {
+          "nombre": "Piedra",
+          "precio": 9500
+        },
+        {
+          "nombre": "Mojito",
+          "precio": 10000
+        },
+        {
+          "nombre": "Mojito litro",
+          "precio": 17500
+        },
+        {
+          "nombre": "Piña colada sin alcohol",
+          "detalle": "El alcohol de tu agrado es adicional",
+          "precio": 10000
+        },
+        {
+          "nombre": "Bull",
+          "precio": 15500
+        },
+        {
+          "nombre": "Mezcalita",
+          "precio": 13500
+        },
+        {
+          "nombre": "Cazuela tequila",
+          "precio": 33000
+        },
+        {
+          "nombre": "Cazuela mezcal",
+          "precio": 39000
+        }
+      ]
+    },
+    {
+      "nombre": "Tequila",
+      "estacion": "Bebidas",
+      "copa": true,
+      "productos": [
+        {
+          "nombre": "Hornitos",
+          "precio": 11300
+        },
+        {
+          "nombre": "Maestro dobel",
+          "precio": 15000
+        },
+        {
+          "nombre": "Cuervo tradicional",
+          "precio": 11500
+        },
+        {
+          "nombre": "1800 cristalino",
+          "precio": 14000
+        },
+        {
+          "nombre": "Don Julio reposado",
+          "precio": 14000
+        },
+        {
+          "nombre": "Don Julio 70",
+          "precio": 15500
+        },
+        {
+          "nombre": "Centenario",
+          "precio": 12000
+        }
+      ]
+    },
+    {
+      "nombre": "Ron",
+      "estacion": "Bebidas",
+      "copa": true,
+      "productos": [
+        {
+          "nombre": "Bacardí blanco",
+          "precio": 11000
+        },
+        {
+          "nombre": "Havana 3 años",
+          "precio": 12500
+        },
+        {
+          "nombre": "Havana 7 años",
+          "precio": 13500
+        }
+      ]
+    },
+    {
+      "nombre": "Brandy",
+      "estacion": "Bebidas",
+      "copa": true,
+      "productos": [
+        {
+          "nombre": "Torres 10",
+          "precio": 12000
+        }
+      ]
+    },
+    {
+      "nombre": "Whisky",
+      "estacion": "Bebidas",
+      "copa": true,
+      "productos": [
+        {
+          "nombre": "Red label",
+          "precio": 15000
+        },
+        {
+          "nombre": "Jack Daniel’s",
+          "precio": 14000
+        },
+        {
+          "nombre": "Black label",
+          "precio": 17000
+        }
+      ]
+    },
+    {
+      "nombre": "Vodka",
+      "estacion": "Bebidas",
+      "copa": true,
+      "productos": [
+        {
+          "nombre": "Absolut",
+          "precio": 11500
+        },
+        {
+          "nombre": "Smirnoff",
+          "precio": 11000
+        }
+      ]
+    },
+    {
+      "nombre": "Anís y licores",
+      "estacion": "Bebidas",
+      "copa": true,
+      "productos": [
+        {
+          "nombre": "Chinchón",
+          "precio": 12500
+        },
+        {
+          "nombre": "Baileys",
+          "precio": 10500
+        },
+        {
+          "nombre": "Licor 43",
+          "precio": 14000
+        }
+      ]
+    },
+    {
+      "nombre": "Vino tinto",
+      "estacion": "Bebidas",
+      "copa": true,
+      "productos": [
+        {
+          "nombre": "Concha y toro",
+          "precio": 9500
+        },
+        {
+          "nombre": "La redonda",
+          "precio": 9900
+        },
+        {
+          "nombre": "Finca Las Moras",
+          "precio": 11000
+        }
+      ]
+    },
+    {
+      "nombre": "Mezcal",
+      "estacion": "Bebidas",
+      "copa": true,
+      "productos": [
+        {
+          "nombre": "Monte lobos",
+          "precio": 15500
+        },
+        {
+          "nombre": "400 conejos",
+          "precio": 17500
+        }
+      ]
+    },
+    {
+      "nombre": "Pulques",
+      "estacion": "Bebidas",
+      "productos": [
+        {
+          "nombre": "Pulque básico · litro",
+          "precio": 11000,
+          "modificadores": ["sabor-pulque-basico"]
+        },
+        {
+          "nombre": "Pulque básico · medio litro",
+          "precio": 5500,
+          "modificadores": ["sabor-pulque-basico"]
+        },
+        {
+          "nombre": "Pulque especial · litro",
+          "precio": 12000,
+          "modificadores": ["sabor-pulque-especial"]
+        },
+        {
+          "nombre": "Pulque especial · medio litro",
+          "precio": 6000,
+          "modificadores": ["sabor-pulque-especial"]
+        },
+        {
+          "nombre": "Pulque exótico · litro",
+          "precio": 13000,
+          "modificadores": ["sabor-pulque-exotico"]
+        },
+        {
+          "nombre": "Pulque exótico · medio litro",
+          "precio": 6500,
+          "modificadores": ["sabor-pulque-exotico"]
+        },
+        {
+          "nombre": "Pulque de piñón · litro",
+          "detalle": "Premium",
+          "precio": 24000
+        },
+        {
+          "nombre": "Pulque de piñón · medio litro",
+          "detalle": "Premium",
+          "precio": 12000
+        },
+        {
+          "nombre": "Pulque premium · litro",
+          "detalle": "Pistache, nuez o queso",
+          "precio": 16000,
+          "modificadores": ["sabor-pulque-premium"]
+        },
+        {
+          "nombre": "Pulque premium · medio litro",
+          "detalle": "Pistache, nuez o queso",
+          "precio": 8000,
+          "modificadores": ["sabor-pulque-premium"]
+        },
+        {
+          "nombre": "Pulque premium con licor · litro",
+          "detalle": "Piña colada, vino tinto, rompope, tequila, mezcal o mojito",
+          "precio": 17500,
+          "modificadores": ["sabor-pulque-premium-licor"]
+        },
+        {
+          "nombre": "Pulque premium con licor · medio litro",
+          "detalle": "Piña colada, vino tinto, rompope, tequila, mezcal o mojito",
+          "precio": 8800,
+          "modificadores": ["sabor-pulque-premium-licor"]
+        },
+        {
+          "nombre": "Pulque natural · litro",
+          "precio": 7000
+        }
+      ]
+    }
+  ]
+}

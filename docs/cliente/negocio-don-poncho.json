@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "nota": "Lo que prepara scripts/preparar-negocio.mjs. SIN PIN: los PIN viven fuera del repositorio (..\\_PRIVADO\\).",
+  "configuracion": {
+    "nombre_sistema": "POS Don Poncho",
+    "platform_brand": "POS Don Poncho",
+    "direccion": "Carr. a Sta. Cecilia #1, San Lorenzo Atemoaya, Xochimilco, CDMX 16400",
+    "logo_url": "/marca/don-poncho.svg",
+    "logo_ticket_url": "/marca/don-poncho.png",
+    "logo_pdf_url": "/marca/don-poncho.png",
+    "color_primario": "#83653f",
+    "color_secundario": "#161614",
+    "color_acento": "#ac8a5f",
+    "mostrar_logo_ticket": true,
+    "mensaje_ticket": "¡Gracias por tu visita!"
+  },
+  "apariencia": {
+    "estilo": "don-poncho",
+    "densidad": "comoda",
+    "redondeo": "sutil",
+    "elevacion": "sombra",
+    "movimiento": "sutil"
+  },
+  "sala": { "zona": "Salón", "mesas": 10, "capacidad": 4 },
+  "equipo": [
+    { "nombre": "Dueño Don Poncho", "puesto": "dueno" },
+    { "nombre": "Gerente", "puesto": "gerente" },
+    { "nombre": "Caja", "puesto": "cajero" },
+    { "nombre": "Mesero 1", "puesto": "mesero" },
+    { "nombre": "Mesero 2", "puesto": "mesero" },
+    { "nombre": "Cocina", "puesto": "cocina" },
+    { "nombre": "Almacén", "puesto": "almacen" }
+  ]
+}
