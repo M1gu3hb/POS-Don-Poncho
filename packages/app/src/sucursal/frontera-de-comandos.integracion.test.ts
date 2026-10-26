@@ -59,7 +59,13 @@ function huella(resultado: Resultado<unknown>): string {
 }
 
 beforeAll(async () => {
-  negocio = await sembrarNegocio({ nombre: 'Abarrotes de Dos Sucursales', rol: 'cajero' });
+  // Un restaurante (DP-2): el corte de caja de POS Don Poncho es el del restaurante.
+  negocio = await sembrarNegocio({
+    nombre: 'Restaurante de Dos Sucursales',
+    rol: 'cajero',
+    giro: 'restaurante',
+    paquete: 'restaurante',
+  });
   centro = await sembrarSucursal(negocio, { terminales: ['Caja Centro'] });
   norte = await sembrarSucursal(negocio, { terminales: ['Caja Norte'] });
   const refresco = await sembrarProducto(negocio, centro.almacenId, {

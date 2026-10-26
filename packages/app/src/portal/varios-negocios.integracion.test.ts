@@ -130,9 +130,11 @@ describe('el portal del comensal con varios negocios en el dominio público', ()
     expect(JSON.stringify(salida.cuerpo)).not.toContain('no sirve');
   });
 
-  it('el contexto de presentación del restaurante se atiende como espejo suyo', async () => {
+  it('un negocio que se dice espejo de presentación del restaurante NO se atiende (DP-2)', async () => {
+    // POS Don Poncho no tiene modo presentación: la marca `presentacion_espejo_de` ya no le
+    // abre el portal a un negocio que el despliegue no sirve.
     const salida = await servirPortal(espejo.token, HOST);
-    expect(salida.estado).toBe(200);
+    expect(salida.estado).toBe(404);
   });
 
   it('un token inventado contesta lo mismo que uno ajeno', async () => {
