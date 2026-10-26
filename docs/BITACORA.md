@@ -126,3 +126,18 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   sus platillos con «Agregar»; 8 páginas diseñadas desde el menú; el marcador de platillo sin
   foto, plano en la pizarra de la marca; el cargador deja el portal encendido, las 8 páginas y la
   asignación de mesas. Ensayo en base desechable y prueba de navegador en verde.
+
+## 25-10-2026 · DP-7 · Verificación local y en la CI
+
+- Primera CI completa a mano (`40261424207`, Postgres 17): 14 de 16 trabajos verdes, la jornada
+  incluida. Dos rojos: la auditoría de dependencias (Next 16.3.8 con ejecución remota de código,
+  DOMPurify y Zod, heredados) → DP-7a; y la suite del restaurante en el estilo `don-poncho`, que
+  cambiaba la plantilla por la ruta que DP-2b quitó → DP-7b exige la plantilla en vez de ponerla.
+- Al ensayar la mudanza de dominio de las páginas del menú, ir y volver (A → B → A) no escribía la
+  segunda A: la clave de idempotencia repetía la de la primera. Ahora lleva el `updated_at` de la
+  fila (DP-5h).
+- La galería se regeneró en la segunda corrida (`40263378355`): en la primera su paso iba detrás de
+  la suite roja y se saltó. 72 retratos cambian por la marca y entran 9 del estilo `don-poncho`.
+- En esa segunda corrida la jornada cayó en escritorio: la cocina regresaba a «Nuevos» una comanda
+  cuyo toque iba en camino y el segundo «Listo» cayó sobre la misma. Defecto heredado de la
+  pantalla, no de la prueba: prueba de navegador determinista que lo reproduce y arreglo (DP-D19).
