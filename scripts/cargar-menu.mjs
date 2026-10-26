@@ -18,8 +18,9 @@
  * Sólo corre contra Don Poncho o un restaurante de prueba, por ID: un negocio ajeno de la
  * base compartida se rechaza antes de tocar nada.
  */
-import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+
+import { argumento, cargarEntorno, huella } from './lib/guion.mjs';
 
 import {
   areaDeLaCategoria,
@@ -30,18 +31,7 @@ import {
   validarMenu,
 } from './lib/menu.mjs';
 
-for (const linea of (existsSync('.env') ? readFileSync('.env', 'utf8') : '').split('\n')) {
-  const encontrado = /^([A-Z_][A-Z0-9_]*)=(.*)$/.exec(linea.trim());
-  if (encontrado !== null && process.env[encontrado[1]] === undefined) {
-    process.env[encontrado[1]] = encontrado[2].replace(/^["']|["']$/g, '');
-  }
-}
-process.env['MORPHIQPOS_DB_POOL_MAX'] ??= '3';
-
-function argumento(nombre, porOmision = null) {
-  const i = process.argv.indexOf(`--${nombre}`);
-  return i === -1 ? porOmision : (process.argv[i + 1] ?? porOmision);
-}
+cargarEntorno();
 
 const slug = argumento('org');
 const persona = argumento('persona');
@@ -120,17 +110,6 @@ const ambito = {
 const cuenta = { creadas: 0, existian: 0, completados: 0 };
 
 /** Corre un comando con clave estable; lanza con el código si el comando lo rechaza. */
-/**
- * La huella de lo que se manda: con los mismos datos, la misma clave (el comando devuelve lo de la
- * primera vez); con datos nuevos —otra versión de la configuración—, otra clave, en vez de un
- * `IDEMPOTENCIA_CONFLICTO` por reusar la vieja con otro contenido.
- */
-function huella(entrada) {
-  // El PIN NO entra: la clave se guarda en la base, y de cuatro dígitos se adivina a la fuerza.
-  const sinPin = JSON.stringify(entrada, (campo, valor) => (campo === 'pin' ? undefined : valor));
-  return createHash('sha256').update(sinPin).digest('hex').slice(0, 16);
-}
-
 async function ejecutar(definicion, entrada, clave) {
   const resultado = await comando(definicion, {
     ambito,

@@ -6,33 +6,25 @@
  *     --persona "Miguel · Morphiq" --pines <archivo fuera del repo> \
  *     [--datos docs/cliente/negocio-don-poncho.json] [--ensayo]
  *
- * Configuración (nombre del sistema, dirección, logos y colores), apariencia, la zona con sus
- * mesas y el equipo. Cada cosa por su comando —`puente.escribir`, `configuracion.fijar_apariencia`,
- * `identidad.guardar_empleado`— con su rol, su transacción y su auditoría, firmado por el dueño
- * de `--persona`.
+ * Configuración (nombre, dirección, logos, colores y el portal QR con todo encendido),
+ * apariencia, las páginas del menú personalizado, la zona con sus mesas, el equipo y quién
+ * responde por cada mesa. Cada cosa por su comando —`puente.escribir`,
+ * `configuracion.fijar_apariencia`, `identidad.guardar_empleado`— con su rol, su transacción y su
+ * auditoría, firmado por el dueño de `--persona`.
  *
  * LOS PIN NO ESTÁN EN EL REPOSITORIO: `--pines` es un JSON `{ "<nombre>": "<pin>" }` que vive en
  * `..\_PRIVADO\`. El guion no los imprime nunca.
  *
- * IDEMPOTENTE: la configuración y la apariencia se escriben con los mismos valores; la zona, cada
- * mesa (por número) y cada persona (por nombre) se crean sólo si no existen, y a quien ya existe
+ * IDEMPOTENTE: configuración y apariencia se escriben con los mismos valores; páginas (por
+ * título), mesas (por número) y personas (por nombre) se crean sólo si faltan; a quien ya existe
  * NO se le cambia el PIN. Sólo corre contra Don Poncho o un restaurante de prueba, por ID.
  */
-import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
-for (const linea of (existsSync('.env') ? readFileSync('.env', 'utf8') : '').split('\n')) {
-  const encontrado = /^([A-Z_][A-Z0-9_]*)=(.*)$/.exec(linea.trim());
-  if (encontrado !== null && process.env[encontrado[1]] === undefined) {
-    process.env[encontrado[1]] = encontrado[2].replace(/^["']|["']$/g, '');
-  }
-}
-process.env['MORPHIQPOS_DB_POOL_MAX'] ??= '3';
+import { argumento, cargarEntorno, huella } from './lib/guion.mjs';
 
-function argumento(nombre, porOmision = null) {
-  const i = process.argv.indexOf(`--${nombre}`);
-  return i === -1 ? porOmision : (process.argv[i + 1] ?? porOmision);
-}
+cargarEntorno();
+
 const slug = argumento('org');
 const persona = argumento('persona');
 const rutaDePines = argumento('pines');
@@ -111,17 +103,6 @@ const ambito = {
 };
 const hecho = [];
 
-/**
- * La huella de lo que se manda: con los mismos datos, la misma clave (el comando devuelve lo de la
- * primera vez); con datos nuevos —otra versión de la configuración—, otra clave, en vez de un
- * `IDEMPOTENCIA_CONFLICTO` por reusar la vieja con otro contenido.
- */
-function huella(entrada) {
-  // El PIN NO entra: la clave se guarda en la base, y de cuatro dígitos se adivina a la fuerza.
-  const sinPin = JSON.stringify(entrada, (campo, valor) => (campo === 'pin' ? undefined : valor));
-  return createHash('sha256').update(sinPin).digest('hex').slice(0, 16);
-}
-
 async function ejecutar(definicion, entrada, clave) {
   if (ensayo) return null;
   const r = await comando(definicion, {
@@ -149,25 +130,43 @@ hecho.push('configuración y portal QR', `estilo ${datos.apariencia.estilo}`);
 // 1b · Las páginas del menú personalizado, por título. La imagen se sirve del propio sitio
 // (`apps/web/public/menu-qr`, la genera `generar-menu-qr.mjs`) con la dirección del despliegue.
 const origen = new URL(process.env['APP_URL'] ?? '').origin;
-const paginasQueHay = new Set(
+const paginasQueHay = new Map(
   (
     await db
       .selectFrom('menu_qr_secciones')
-      .select('nombre')
+      .select(['id', 'nombre', 'imagen_url', 'updated_at'])
       .where('organizacion_id', '=', org.id)
       .execute()
-  ).map((p) => p.nombre),
+  ).map((p) => [p.nombre, p]),
 );
 let paginasNuevas = 0;
+let paginasMudadas = 0;
 for (const [orden, pagina] of datos.portal.paginas.entries()) {
-  if (paginasQueHay.has(pagina.titulo)) continue;
+  const imagen = `${origen}/menu-qr/${pagina.archivo}.webp`;
+  const existente = paginasQueHay.get(pagina.titulo);
+  if (existente !== undefined) {
+    // Al mudar de dominio (Fase B o C) la imagen apunta todavía al de antes: se corrige, pero
+    // SÓLO si es la que puso este guion (`/menu-qr/<archivo>.webp`); una que subió el dueño, no.
+    // La clave lleva el `updated_at` de la fila: ir y volver (A → B → A) es otra escritura, no
+    // la respuesta guardada de la primera vez que se escribió A.
+    const esLaNuestra = (existente.imagen_url ?? '').endsWith(`/menu-qr/${pagina.archivo}.webp`);
+    if (esLaNuestra && existente.imagen_url !== imagen) {
+      paginasMudadas += 1;
+      await ejecutar(
+        escribirDatos,
+        {
+          entidad: 'MenuQRSeccion',
+          operacion: 'update',
+          id: existente.id,
+          datos: { imagen_url: imagen },
+        },
+        `pagina-mudada:${pagina.archivo}:${new Date(existente.updated_at).toISOString()}`,
+      );
+    }
+    continue;
+  }
   paginasNuevas += 1;
-  const seccion = {
-    nombre: pagina.titulo,
-    imagen_url: `${origen}/menu-qr/${pagina.archivo}.webp`,
-    orden,
-    activo: true,
-  };
+  const seccion = { nombre: pagina.titulo, imagen_url: imagen, orden, activo: true };
   await ejecutar(
     escribirDatos,
     { entidad: 'MenuQRSeccion', operacion: 'create', datos: seccion },
@@ -175,7 +174,8 @@ for (const [orden, pagina] of datos.portal.paginas.entries()) {
   );
 }
 hecho.push(
-  `${String(paginasNuevas)} páginas del menú QR nuevas de ${String(datos.portal.paginas.length)}`,
+  `${String(paginasNuevas)} páginas del menú QR nuevas de ${String(datos.portal.paginas.length)}` +
+    (paginasMudadas > 0 ? ` (${String(paginasMudadas)} con su dirección nueva)` : ''),
 );
 
 // 2 · La zona y sus mesas, por nombre y por número.
