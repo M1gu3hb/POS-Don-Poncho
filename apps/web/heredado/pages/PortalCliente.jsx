@@ -23,7 +23,6 @@ import {
 import { getTiposSolicitudHabilitados, TIPO_SOLICITUD_VERBO } from '@/utils/qrUtils';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import ThemeToggle from '@/components/common/ThemeToggle';
-import { MarcaMorphiq } from '~/marca/MarcaMorphiq';
 import { nombreVisibleDelNegocio } from '~/marca/nombre-visible';
 
 /**
@@ -592,9 +591,6 @@ function PortalCliente() {
           </p>
         )}
 
-        {/* La firma de la plataforma al pie del menú. El comensal ve el nombre del negocio
-            arriba y la marca de Morphiq aquí, nunca un nombre técnico. */}
-        <MarcaMorphiq variante="portal" />
       </main>
 
       {/* Botón flotante de atención.

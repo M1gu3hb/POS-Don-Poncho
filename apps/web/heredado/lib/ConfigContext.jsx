@@ -8,36 +8,36 @@ import {
   getPackageFeatures,
   canAccessModule as canAccessModuleHelper,
 } from '@/lib/packageConfig';
-import { LOGO_POR_OMISION } from '~/marca/logo';
+import { LOGO_POR_OMISION, RUTA_DEL_LOGO_IMPRIMIBLE } from '~/marca/logo';
 import {
-  MARCA_DE_PLATAFORMA,
+  NOMBRE_DEL_NEGOCIO,
   NOMBRE_DEL_SISTEMA,
   marcaVisibleDePlataforma,
   nombreVisibleDelNegocio,
   nombreVisibleDelSistema,
 } from '~/marca/nombre-visible';
 
-// Logo oficial por defecto de la plataforma Morphiq. Vive en un solo sitio:
-// `apps/web/src/marca/logo.ts` (vacío mientras no se entregue el archivo oficial).
+// El logo de la casa por omisión (DP-3). Vive en un solo sitio: `apps/web/src/marca/logo.ts`.
 export const MH_LOGO_URL = LOGO_POR_OMISION;
 
-const PLATFORM_BRAND = MARCA_DE_PLATAFORMA;
 const DEFAULT_SYSTEM_NAME = NOMBRE_DEL_SISTEMA;
 
 const DEFAULT_CONFIG = {
-  nombre_negocio: PLATFORM_BRAND,
+  nombre_negocio: NOMBRE_DEL_NEGOCIO,
   nombre_sistema: DEFAULT_SYSTEM_NAME,
-  platform_brand: PLATFORM_BRAND,
+  platform_brand: DEFAULT_SYSTEM_NAME,
   logo_url: MH_LOGO_URL,
-  logo_ticket_url: '',
-  logo_pdf_url: '',
+  logo_ticket_url: RUTA_DEL_LOGO_IMPRIMIBLE,
+  logo_pdf_url: RUTA_DEL_LOGO_IMPRIMIBLE,
   background_logo_url: '',
   background_image_url: '',
   background_fit: 'cover',
   background_opacity: 0.12,
-  color_primario: '#1e40af',
-  color_secundario: '#0f172a',
-  color_acento: '#38bdf8',
+  // Los del logo (DP-3): el dorado oscurecido del botón, el negro de las letras y el dorado
+  // exacto del marco. Pintan los acentos del acceso; el resto sale de los tokens del estilo.
+  color_primario: '#83653f',
+  color_secundario: '#161614',
+  color_acento: '#ac8a5f',
   moneda: 'MXN',
   simbolo_moneda: '$',
   iva_porcentaje: 0,
@@ -80,8 +80,10 @@ export function ConfigProvider({ children }) {
 
   const stored = Array.isArray(data) && data[0] ? data[0] : {};
 
-  // Resolución de logos: si no hay específico, usar logo_url; y si tampoco, usar el oficial.
+  // Resolución de logos: si no hay específico, usar logo_url; y si tampoco, el de la casa
+  // (el vector en pantalla, el PNG en lo que se imprime: html2canvas pinta igual un PNG).
   const logoPrincipal = stored.logo_url || MH_LOGO_URL;
+  const logoImprimible = stored.logo_url || RUTA_DEL_LOGO_IMPRIMIBLE;
 
   const config = {
     ...DEFAULT_CONFIG,
@@ -89,12 +91,12 @@ export function ConfigProvider({ children }) {
     // Lo que se IMPRIME de los tres nombres, no lo que se guarda: la base conserva el dato
     // tal cual (el formulario de Identidad edita el valor crudo) y aquí se le quita lo que
     // un cliente no debe leer — «Demo del acople · …» y la marca anterior de la plataforma.
-    nombre_negocio: nombreVisibleDelNegocio(stored.nombre_negocio || PLATFORM_BRAND),
-    nombre_sistema: nombreVisibleDelSistema(stored.nombre_sistema || DEFAULT_SYSTEM_NAME),
-    platform_brand: marcaVisibleDePlataforma(stored.platform_brand || PLATFORM_BRAND),
+    nombre_negocio: nombreVisibleDelNegocio(stored.nombre_negocio),
+    nombre_sistema: nombreVisibleDelSistema(stored.nombre_sistema),
+    platform_brand: marcaVisibleDePlataforma(stored.platform_brand),
     logo_url: logoPrincipal,
-    logo_ticket_url: stored.logo_ticket_url || logoPrincipal,
-    logo_pdf_url: stored.logo_pdf_url || logoPrincipal,
+    logo_ticket_url: stored.logo_ticket_url || logoImprimible,
+    logo_pdf_url: stored.logo_pdf_url || logoImprimible,
     // IMPORTANTE: NO usar logoPrincipal como fallback de background_logo_url.
     // Antes esto provocaba que el logo del negocio se mostrara como un
     // rectángulo flotante en medio de la pantalla aunque el usuario nunca

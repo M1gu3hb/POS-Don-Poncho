@@ -26,7 +26,7 @@ import { definirComando } from '../comando.ts';
  * eso se guarda por ORGANIZACIÓN y la cambia quien responde por la marca.
  */
 
-/** Los ocho estilos. Es la misma lista que `ESTILOS_CONSTRUIDOS` de `@morphiqpos/ui`. */
+/** Los nueve estilos. Es la misma lista que `ESTILOS_CONSTRUIDOS` de `@morphiqpos/ui`. */
 export const ESTILOS_DISPONIBLES = [
   'morphiq',
   'cristal',
@@ -36,6 +36,7 @@ export const ESTILOS_DISPONIBLES = [
   'terminal',
   'papel',
   'noche',
+  'don-poncho',
 ] as const;
 
 export const DENSIDADES = ['guantes', 'comoda', 'normal', 'compacta'] as const;
@@ -74,9 +75,13 @@ const HEREDADOS: Readonly<Record<string, string>> = {
 };
 
 export function normalizarEstilo(guardado: string | null | undefined): string {
-  if (guardado === null || guardado === undefined || guardado === '') return 'morphiq';
+  if (guardado === null || guardado === undefined || guardado === '') {
+    return APARIENCIA_POR_OMISION.estilo;
+  }
   const traducido = HEREDADOS[guardado] ?? guardado;
-  return (ESTILOS_DISPONIBLES as readonly string[]).includes(traducido) ? traducido : 'morphiq';
+  return (ESTILOS_DISPONIBLES as readonly string[]).includes(traducido)
+    ? traducido
+    : APARIENCIA_POR_OMISION.estilo;
 }
 
 function esDocumento(valor: unknown): valor is Record<string, unknown> {
@@ -190,13 +195,13 @@ export const fijarApariencia = definirComando<
   },
 });
 
-/** La apariencia por omision: la del estilo base. */
+/** La apariencia por omision: la del estilo de la casa, `don-poncho`, con sus perillas. */
 export const APARIENCIA_POR_OMISION: AparienciaGuardada = {
-  estilo: 'morphiq',
-  densidad: 'normal',
-  redondeo: 'media',
+  estilo: 'don-poncho',
+  densidad: 'comoda',
+  redondeo: 'sutil',
   elevacion: 'sombra',
-  movimiento: 'normal',
+  movimiento: 'sutil',
 };
 
 /**

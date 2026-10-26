@@ -143,6 +143,21 @@ export const ESTILOS: Readonly<Record<string, DefinicionEstilo>> = {
       movimiento: 'sutil',
     },
   },
+  'don-poncho': {
+    clave: 'don-poncho',
+    nombre: 'Don Poncho',
+    referencia: 'el letrero de La Tradicional Barbacoa de Don Poncho',
+    para:
+      'EL DE LA CASA. Papel crema, marco dorado y letra negra, como el letrero de la ' +
+      'entrada; la barra negra, como la pizarra del menú. Cómodo al tacto y de esquina ' +
+      'sutil: lo usa un mesero con la charola en la otra mano.',
+    perillas: {
+      densidad: 'comoda',
+      redondeo: 'sutil',
+      elevacion: 'sombra',
+      movimiento: 'sutil',
+    },
+  },
 };
 
 /** Los estilos construidos hasta hoy. Los ocho de la etapa 2.35 entran aqui. */
@@ -151,9 +166,9 @@ export const CLAVES_ESTILO = Object.keys(ESTILOS);
 /**
  * EL ESTILO CON QUE ARRANCA TODO LO QUE NO TIENE UNA PREFERENCIA GUARDADA.
  *
- * Es `morphiq`: el base, el que ya vende y el que el cliente conoce. Los otros siete son
- * variaciones sobre ese esqueleto y se eligen a proposito (Configuracion → Estilo visual);
- * ninguno es «el que sale si nadie dijo nada».
+ * Es `don-poncho` (POS Don Poncho, DP-3): el de la casa, con los colores del logo. Los
+ * ocho del maestro siguen construidos y se eligen a proposito (Configuracion → Estilo
+ * visual); ninguno es «el que sale si nadie dijo nada».
  *
  * Es la UNICA fuente de la respuesta a «¿y si no hay nada guardado?». La consultan:
  *   · `useApariencia`, cuando lo que llega del servidor no es un estilo conocido;
@@ -167,7 +182,7 @@ export const CLAVES_ESTILO = Object.keys(ESTILOS);
  * Lo que NO hace: pisar lo que un negocio guardo. La preferencia del negocio (en la base) y
  * la del dispositivo (modo claro/oscuro, en `localStorage`) mandan siempre sobre esto.
  */
-export const ESTILO_PREDETERMINADO = 'morphiq';
+export const ESTILO_PREDETERMINADO = 'don-poncho';
 
 /** La clave si es un estilo construido; si no (vacia, desconocida, de otra version), la predeterminada. */
 export function estiloOPredeterminado(clave: string | null | undefined): string {

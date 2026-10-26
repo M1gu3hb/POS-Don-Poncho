@@ -5,8 +5,11 @@ import { es } from 'date-fns/locale';
 import { formatCurrency, formatPercent } from '@/utils/financialUtils';
 import { desgloseMetodosPagoConPropinas } from '@/utils/tipsUtils';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
-import { MarcaMorphiq } from '~/marca/MarcaMorphiq';
-import { MARCA_DE_PLATAFORMA, nombreVisibleDelSistema } from '~/marca/nombre-visible';
+import {
+  NOMBRE_DEL_NEGOCIO,
+  marcaVisibleDePlataforma,
+  nombreVisibleDelSistema,
+} from '~/marca/nombre-visible';
 
 /**
  * Internal printable corte de caja PDF/document.
@@ -136,7 +139,7 @@ const CorteTicket = React.forwardRef(function CorteTicket(
         )}
         <div className="flex-1">
           <h1 className="text-3xl font-heading font-black tracking-wider">
-            {config?.nombre_negocio || MARCA_DE_PLATAFORMA}
+            {config?.nombre_negocio || NOMBRE_DEL_NEGOCIO}
           </h1>
           {config?.direccion && <p className="text-xs">{config.direccion}</p>}
           {config?.telefono && <p className="text-xs">Tel: {config.telefono}</p>}
@@ -148,7 +151,7 @@ const CorteTicket = React.forwardRef(function CorteTicket(
             Folio: <span className="font-mono font-bold">{corte?.folio || '—'}</span>
           </p>
           <p className="text-[10px] text-texto-sutil mt-1">
-            <MarcaMorphiq variante="documento" nombre={config?.platform_brand} />
+            {marcaVisibleDePlataforma(config?.platform_brand)}
           </p>
         </div>
       </div>

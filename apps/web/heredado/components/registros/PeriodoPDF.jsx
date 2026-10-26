@@ -4,7 +4,7 @@ import { formatCurrency } from '@/utils/financialUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { MH_LOGO_URL as AZECAFE_LOGO_URL } from '@/lib/ConfigContext';
-import { MARCA_DE_PLATAFORMA, nombreVisibleDelSistema } from '~/marca/nombre-visible';
+import { NOMBRE_DEL_NEGOCIO, nombreVisibleDelSistema } from '~/marca/nombre-visible';
 
 /**
  * PDF imprimible de un periodo seleccionado en Registros.
@@ -44,7 +44,7 @@ export default function PeriodoPDF({ data, config = {}, sinCostos = false }) {
             style={{ width: 56, height: 56, objectFit: 'contain' }}
           />
           <div>
-            <h1 className="text-xl font-bold">{config.nombre_negocio || MARCA_DE_PLATAFORMA}</h1>
+            <h1 className="text-xl font-bold">{config.nombre_negocio || NOMBRE_DEL_NEGOCIO}</h1>
             <p className="text-xs text-texto-sutil">{config.direccion || ''}</p>
           </div>
         </div>

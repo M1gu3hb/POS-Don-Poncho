@@ -6,8 +6,7 @@ import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import { propinaDerivada } from '@/utils/tipsUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { MarcaMorphiq } from '~/marca/MarcaMorphiq';
-import { MARCA_DE_PLATAFORMA } from '~/marca/nombre-visible';
+import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
 
 /**
  * Ticket / pre-cuenta optimizado para impresora térmica de 80mm.
@@ -62,7 +61,7 @@ export default function PreCuentaTicket({
           />
         )}
         <h1 style={{ fontWeight: 900, fontSize: '15px', letterSpacing: '2px', margin: 0 }}>
-          {config?.nombre_negocio || MARCA_DE_PLATAFORMA}
+          {config?.nombre_negocio || NOMBRE_DEL_NEGOCIO}
         </h1>
         {config?.direccion && (
           <p style={{ fontSize: '9px', margin: '2px 0 0' }}>{config.direccion}</p>
@@ -205,9 +204,6 @@ export default function PreCuentaTicket({
           <p style={{ fontSize: '9px', margin: '2px 0 0' }}>{config.ticket_footer}</p>
         )}
         {esFinal && <p style={{ fontSize: '9px', margin: '2px 0 0' }}>Conserva este ticket</p>}
-        <p style={{ fontSize: '8px', margin: '4px 0 0', color: '#555' }}>
-          <MarcaMorphiq variante="ticket" nombre={config?.platform_brand} />
-        </p>
       </div>
     </div>
   );

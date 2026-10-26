@@ -353,12 +353,12 @@ export default function MobileAdminRadialMenu() {
           style={{
             width: FAB_SIZE,
             height: FAB_SIZE,
-            background: open
-              ? 'linear-gradient(135deg, hsl(217,91%,62%) 0%, hsl(217,91%,48%) 100%)'
-              : 'linear-gradient(135deg, hsl(217,91%,55%) 0%, hsl(217,91%,42%) 100%)',
+            // DP-3: el primario del estilo, plano. Antes era el azul de Morphiq fijo, con
+            // degradado, encima de cualquier estilo.
+            background: open ? 'hsl(var(--acento))' : 'hsl(var(--primario))',
             boxShadow: open
-              ? '0 0 0 6px rgba(59,130,246,0.18), 0 12px 28px rgba(0,0,0,0.4), 0 2px 0 rgba(255,255,255,0.25) inset'
-              : '0 8px 22px rgba(0,0,0,0.35), 0 2px 0 rgba(255,255,255,0.25) inset',
+              ? '0 0 0 6px hsl(var(--primario) / 0.18), 0 12px 28px rgba(0,0,0,0.4)'
+              : '0 8px 22px rgba(0,0,0,0.35)',
             WebkitTapHighlightColor: 'transparent',
             touchAction: 'none',
           }}

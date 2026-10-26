@@ -15,7 +15,7 @@ import { downloadNodeAsPDF, safeFileName } from '@/lib/pdfDownload';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import CorteTicket from '@/components/tickets/CorteTicket';
-import { MARCA_DE_PLATAFORMA } from '~/marca/nombre-visible';
+import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
 
 export default function CorteViewerDialog({ corte, open, onClose }) {
   const { config, paquete_modo } = useConfig();
@@ -203,7 +203,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
         ? format(new Date(corte.fecha_cierre), 'yyyyMMdd')
         : format(new Date(), 'yyyyMMdd');
       const negocio = safeFileName(
-        config?.nombre_negocio || config?.platform_brand || MARCA_DE_PLATAFORMA,
+        config?.nombre_negocio || NOMBRE_DEL_NEGOCIO,
       );
       const folio = safeFileName(corte?.folio || 'corte');
       const filename = `Corte_${folio}_${fecha}_${negocio}.pdf`;

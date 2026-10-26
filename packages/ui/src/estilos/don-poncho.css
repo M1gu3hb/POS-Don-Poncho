@@ -1,0 +1,125 @@
+/**
+ * Estilo `don-poncho` — el de La Tradicional Barbacoa de Don Poncho. El predeterminado.
+ *
+ * LOS COLORES SON LOS DEL LOGO, exactos, y mandan sobre cualquier paleta de partida:
+ *
+ *   · crema  #F3F1BF  (57 70% 85%) — el óvalo del letrero
+ *   · dorado #AC8A5F  (34 31% 52%) — el marco
+ *   · negro  #161614  (60 5% 8%)   — las letras
+ *
+ * El dorado EXACTO del logo vive en la barra lateral, con letra negra como en el letrero
+ * (5.64:1). Para el botón se oscurece a 34 35% 38%: en modo claro el sistema pone letra CLARA
+ * sobre el primario en los ocho estilos —el acceso, el escáner y los mosaicos de ícono lo
+ * dan por hecho—, y con crema sobre el dorado exacto daba 3.2:1. Oscurecido da 5.26:1 (AA).
+ *
+ * Su punto de vista: el letrero de la entrada —papel crema, marco dorado, letra negra— en
+ * modo claro, y la madera oscura del local en el oscuro. La barra lateral es negra en los dos,
+ * como la pizarra del menú. Sin degradados ni adornos (guía de recomposición §7).
+ *
+ * Los semánticos (éxito, advertencia, peligro, información) son los del sistema, sin tocar:
+ * el rojo de un error no se puede confundir con la marca.
+ */
+
+[data-estilo='don-poncho'] {
+  --sombra-tinte: 60 5% 8%;
+
+  /* El papel del letrero, aclarado para que una tabla larga no canse. */
+  --fondo: 56 60% 95%;
+  --fondo-sutil: 56 52% 89%;
+  --superficie: 56 70% 98%;
+  --superficie-elevada: 56 70% 98%;
+
+  --texto: 60 5% 8%;
+  --texto-sutil: 34 14% 32%;
+  --texto-tenue: 34 10% 44%;
+
+  --borde: 40 28% 80%;
+  --borde-fuerte: 34 22% 42%;
+  --anillo: 30 45% 34%;
+
+  /* El dorado del marco, oscurecido para la letra crema (5.26:1). */
+  --primario: 34 35% 38%;
+  --primario-texto: 56 70% 98%;
+  --acento: 30 42% 28%;
+  --acento-texto: 57 70% 92%;
+  --acento-suave: 50 62% 86%;
+  --acento-suave-texto: 30 42% 20%;
+
+  --exito: 152 60% 30%;
+  --exito-texto: 0 0% 100%;
+  --advertencia: 38 92% 50%;
+  --advertencia-texto: 222 47% 11%;
+  --peligro: 0 72% 42%;
+  --peligro-texto: 0 0% 100%;
+  --info: 199 89% 32%;
+  --info-texto: 0 0% 100%;
+
+  /* Dorado, carbón, nopal, tuna, chile y cielo: a 0.12 o más uno de otro (OKLab) y todos
+     sobre 4.9:1 contra la superficie, para que una barra se lea en la pantalla de la caja. */
+  --grafico-1: 34 50% 38%;
+  --grafico-2: 60 5% 22%;
+  --grafico-3: 152 55% 30%;
+  --grafico-4: 320 45% 40%;
+  --grafico-5: 6 65% 46%;
+  --grafico-6: 205 55% 40%;
+
+  --velo: 60 5% 8%;
+
+  /* La pizarra del menú: negra, con letra crema y lo activo en dorado. */
+  --lateral-fondo: 60 5% 8%;
+  --lateral-texto: 57 60% 88%;
+  --lateral-activo: 34 31% 52%;
+  --lateral-activo-texto: 60 5% 8%;
+  --lateral-hover: 60 4% 15%;
+  --lateral-borde: 60 4% 18%;
+}
+
+/** La madera del local: fondo casi negro, letra crema y el dorado un tono más claro. */
+[data-estilo='don-poncho'][data-modo='oscuro'] {
+  --sombra-tinte: 60 8% 2%;
+
+  --fondo: 60 5% 7%;
+  --fondo-sutil: 45 6% 13%;
+  --superficie: 45 6% 10%;
+  --superficie-elevada: 45 6% 13%;
+
+  --texto: 57 70% 88%;
+  --texto-sutil: 50 26% 72%;
+  --texto-tenue: 45 14% 56%;
+
+  --borde: 45 8% 20%;
+  --borde-fuerte: 45 15% 52%;
+  --anillo: 36 45% 66%;
+
+  --primario: 36 40% 64%;
+  --primario-texto: 60 5% 8%;
+  --acento: 45 55% 74%;
+  --acento-texto: 60 5% 8%;
+  --acento-suave: 45 10% 18%;
+  --acento-suave-texto: 57 70% 88%;
+
+  --exito: 152 55% 62%;
+  --exito-texto: 152 45% 7%;
+  --advertencia: 38 92% 62%;
+  --advertencia-texto: 222 47% 10%;
+  --peligro: 0 80% 70%;
+  --peligro-texto: 0 50% 9%;
+  --info: 199 89% 66%;
+  --info-texto: 199 60% 8%;
+
+  --grafico-1: 36 50% 60%;
+  --grafico-2: 57 70% 86%;
+  --grafico-3: 152 50% 52%;
+  --grafico-4: 320 45% 70%;
+  --grafico-5: 4 75% 64%;
+  --grafico-6: 205 60% 66%;
+
+  --velo: 60 8% 3%;
+
+  --lateral-fondo: 60 6% 4%;
+  --lateral-texto: 57 60% 86%;
+  --lateral-activo: 36 40% 64%;
+  --lateral-activo-texto: 60 5% 8%;
+  --lateral-hover: 45 6% 11%;
+  --lateral-borde: 45 6% 14%;
+}

@@ -17,11 +17,14 @@ import type { AparienciaGuardada } from '../configuracion/apariencia.ts';
 /**
  * EL ESTILO DEL RESTAURANTE DE PRUEBA, con las perillas que el propio estilo declara en
  * `packages/ui/src/tokens/estilos.ts` (la prueba lo compara, para que no se desfasen).
+ *
+ * Es `don-poncho` (DP-3): la jornada y la galería prueban el estilo con que trabaja la casa,
+ * no uno que el restaurante no usa.
  */
 export const APARIENCIA_DE_PRUEBA: AparienciaGuardada = {
-  estilo: 'noche',
+  estilo: 'don-poncho',
   densidad: 'comoda',
-  redondeo: 'media',
+  redondeo: 'sutil',
   elevacion: 'sombra',
   movimiento: 'sutil',
 };

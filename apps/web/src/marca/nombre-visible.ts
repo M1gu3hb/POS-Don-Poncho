@@ -23,11 +23,20 @@
  * de todas las pantallas y no pueden convertir un nombre raro en una pantalla en blanco.
  */
 
-/** La marca de la plataforma, como se escribe en cualquier documento. */
+/**
+ * La marca de la PLATAFORMA. En POS Don Poncho firma una sola vez: el crédito «Sistema por
+ * Morphiq» de la pantalla de acceso (`./contenido.ts`). Ningún documento la imprime.
+ */
 export const MARCA_DE_PLATAFORMA = 'Morphiq';
 
-/** El nombre del producto: lo que dice la pestaña del navegador y la pantalla de acceso. */
-export const NOMBRE_DEL_SISTEMA = 'Morphiq POS';
+/** El nombre del producto: lo que dice la pestaña del navegador, la barra y el corte. */
+export const NOMBRE_DEL_SISTEMA = 'POS Don Poncho';
+
+/** El nombre corto de la casa, el que va si la base no dice otro. El largo es del logo. */
+export const NOMBRE_DEL_NEGOCIO = 'Don Poncho';
+
+/** «Morphiq POS», el nombre del producto del maestro, al que se traduce su nombre de código. */
+const PRODUCTO_DEL_MAESTRO = `${MARCA_DE_PLATAFORMA} POS`;
 
 /**
  * El prefijo con que nace una demostración: «Demo del acople», sola o seguida de su
@@ -81,51 +90,58 @@ function conMayuscula(texto: string): string {
 function sinLaMarcaAnterior(texto: string): string {
   return texto
     .replace(MARCA_ANTERIOR, MARCA_DE_PLATAFORMA)
-    .replace(NOMBRE_DE_CODIGO, NOMBRE_DEL_SISTEMA);
+    .replace(NOMBRE_DE_CODIGO, PRODUCTO_DEL_MAESTRO);
+}
+
+/** Lo que es la plataforma y no esta casa —«Morphiq», «Morphiq POS»— se cambia por `propio`. */
+function sinLaPlataforma(texto: string, propio: string): string {
+  return ES_LA_MARCA_PROPIA.test(texto) ? propio : texto;
 }
 
 /**
  * El nombre de un negocio como se imprime: sin el prefijo de demostración, sin la marca
  * anterior, y con mayúscula inicial si lo que quedó es el giro.
  *
- * Si no queda nada que mostrar —la base devolvió vacío, o sólo «Demo del acople»— cae a la
- * marca de la plataforma, que es lo que un documento sin nombre debe decir.
+ * Si no queda nada que mostrar —la base devolvió vacío, o sólo «Demo del acople»— cae al
+ * nombre de la casa. Y si lo que queda es la plataforma («MH Astral Systems», el
+ * `nombre_negocio` por omisión del maestro, o «Morphiq»), también: no es el nombre de nadie.
  */
 export function nombreVisibleDelNegocio(nombre: unknown): string {
   const limpio = comoTexto(nombre);
-  if (limpio === '') return MARCA_DE_PLATAFORMA;
+  if (limpio === '') return NOMBRE_DEL_NEGOCIO;
 
   const sinPrefijo = limpio.replace(PREFIJO_DE_DEMOSTRACION, '').trim();
-  if (sinPrefijo === '') return MARCA_DE_PLATAFORMA;
+  if (sinPrefijo === '') return NOMBRE_DEL_NEGOCIO;
 
   // Un nombre que escribió una persona no se retoca: «iStore» no debe volverse «IStore».
   // La mayúscula y el acento sólo se arreglan cuando lo que queda es el resto del alta
   // automática («restaurante», «cafeteria»), que se escribió en minúscula y sin acento.
-  if (sinPrefijo === limpio) return sinLaMarcaAnterior(limpio);
+  if (sinPrefijo === limpio) return sinLaPlataforma(sinLaMarcaAnterior(limpio), NOMBRE_DEL_NEGOCIO);
 
   const delGiro = GIRO_CON_ACENTO[sinPrefijo.toLocaleLowerCase('es-MX')];
-  return delGiro ?? conMayuscula(sinLaMarcaAnterior(sinPrefijo));
+  return (
+    delGiro ?? sinLaPlataforma(conMayuscula(sinLaMarcaAnterior(sinPrefijo)), NOMBRE_DEL_NEGOCIO)
+  );
 }
 
 /**
- * La marca de la plataforma que firma un documento («Morphiq»). Es un campo editable
- * (`platform_brand`): si el negocio escribió otra cosa, se respeta; sólo se corrige lo que
- * está vacío o lo que todavía dice la marca anterior.
+ * La firma del SISTEMA en la barra lateral y en el corte («POS Don Poncho»). Es un campo
+ * editable (`platform_brand`): si el negocio escribió otra cosa, se respeta; lo vacío, la
+ * marca anterior y la de Morphiq se leen como el nombre del producto.
  */
 export function marcaVisibleDePlataforma(marca: unknown): string {
   const limpia = comoTexto(marca);
-  if (limpia === '') return MARCA_DE_PLATAFORMA;
-  const corregida = sinLaMarcaAnterior(limpia);
-  return ES_LA_MARCA_PROPIA.test(corregida) ? MARCA_DE_PLATAFORMA : corregida;
+  if (limpia === '') return NOMBRE_DEL_SISTEMA;
+  return sinLaPlataforma(sinLaMarcaAnterior(limpia), NOMBRE_DEL_SISTEMA);
 }
 
 /**
- * El nombre del sistema («Morphiq POS»), el de la pestaña y el pie de los documentos.
- * Mismo criterio que la marca: vacío o marca anterior se corrigen; lo escrito a mano se
- * respeta.
+ * El nombre del sistema («POS Don Poncho»), el de la pestaña y el pie de los documentos.
+ * Mismo criterio que la firma: vacío, marca anterior o la del maestro se corrigen; lo
+ * escrito a mano se respeta.
  */
 export function nombreVisibleDelSistema(nombre: unknown): string {
   const limpio = comoTexto(nombre);
   if (limpio === '') return NOMBRE_DEL_SISTEMA;
-  return sinLaMarcaAnterior(limpio);
+  return sinLaPlataforma(sinLaMarcaAnterior(limpio), NOMBRE_DEL_SISTEMA);
 }

@@ -30,7 +30,7 @@ name: Verificar
 # (`workflow_dispatch`), que es cuando alguien la va a leer.
 on:
   pull_request:
-  # Para correr el rastreo COMPLETO —el restaurante en los ocho estilos— sin empujar a
+  # Para correr el rastreo COMPLETO —el restaurante en los nueve estilos— sin empujar a
   # `main`: es el que cualquiera lanza antes de fusionar un cambio de diseño.
   workflow_dispatch:
     inputs:
@@ -112,10 +112,10 @@ jobs:
       - name: Tokens del sistema de diseño
         run: pnpm verify:primitivas
 
-      # Cada uno de los ocho estilos declara TODOS los tokens del contrato, y ningún
+      # Cada uno de los nueve estilos declara TODOS los tokens del contrato, y ningún
       # par de color baja de AA. Se calcula, no se mira: un estilo que no pasa no se
       # publica, por bonito que sea.
-      - name: Contraste de los ocho estilos
+      - name: Contraste de los nueve estilos
         run: pnpm verify:estilos
 
       # Todo comando que declara escribir deja rastro. `definirComando` ya lo exige en
@@ -339,7 +339,8 @@ jobs:
   # arneses de mutación, y vale igual para esto.
   #
   # POS Don Poncho (DP-2): un solo modelo, el restaurante, sobre su restaurante de prueba.
-  # Los ocho estilos completos corren a mano (`workflow_dispatch`); en cada PR, el reducido.
+  # Los nueve estilos completos corren a mano (`workflow_dispatch`); en cada PR, el reducido:
+  # el de la casa, `don-poncho`.
   #
   # CADA TRABAJO SE PROVISIONA SOLO: su Postgres, sus migraciones, su restaurante de
   # prueba con su equipo y su catálogo. No habla con producción ni con el
@@ -355,15 +356,15 @@ jobs:
       fail-fast: false
       matrix:
         modelo: [restaurante]
-        # LOS OCHO ESTILOS. Un estilo que esconde un botón detrás de otro, o que deja
+        # LOS NUEVE ESTILOS. Un estilo que esconde un botón detrás de otro, o que deja
         # ilegible una tabla densa, es un botón muerto en una pantalla de verdad. Completo
-        # (8 trabajos) a mano (`workflow_dispatch`); en cada pull request, REDUCIDO: el
+        # (9 trabajos) a mano (`workflow_dispatch`); en cada pull request, REDUCIDO: el
         # estilo propio del restaurante.
-        estilo: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["morphiq","cristal","relieve","taller","bloque","terminal","papel","noche"]' || '["reducido"]') }}
+        estilo: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["don-poncho","morphiq","cristal","relieve","taller","bloque","terminal","papel","noche"]' || '["reducido"]') }}
         include:
           - modelo: restaurante
             suite: restaurante
-            propio: noche
+            propio: don-poncho
 
     services:
       postgres:
@@ -459,8 +460,8 @@ jobs:
       #
       # `test:e2e` construye y levanta el servidor él mismo; el build lo comparte con
       # el paso siguiente por la caché de turbo, así que no se paga dos veces.
-      - name: Los ocho estilos, en el navegador
-        if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
+      - name: Los nueve estilos, en el navegador
+        if: matrix.estilo == 'reducido' || matrix.estilo == 'don-poncho'
         run: pnpm test:e2e pruebas/e2e/estilos.spec.ts pruebas/e2e/contraste.spec.ts --project=escritorio
 
       # Playwright construye y levanta el servidor él mismo (`webServer` de
@@ -506,11 +507,11 @@ jobs:
       # suite ANTES del rastreo, y entonces el rastreador heredaría una venta cobrada y
       # una caja abierta: se arregla el barato y se protege el gate que más cuesta.
       - name: El restaurante de prueba, otra vez
-        if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
+        if: matrix.estilo == 'reducido' || matrix.estilo == 'don-poncho'
         run: node --conditions=react-server scripts/sembrar-pruebas.mjs --solo prueba-restaurante
 
       - name: La suite de su modelo
-        if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
+        if: matrix.estilo == 'reducido' || matrix.estilo == 'don-poncho'
         env:
           MORPHIQPOS_ORG_DEMO: prueba-restaurante
           MORPHIQPOS_DEMO_PERSONA: Dueña de prueba
@@ -523,11 +524,11 @@ jobs:
       # el artefacto. Declarar es regenerar —este flujo a mano con
       # `actualizar_galeria`— y subir las imágenes nuevas con el cambio que las motiva.
       - name: El restaurante de prueba, para la galería
-        if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
+        if: matrix.estilo == 'reducido' || matrix.estilo == 'don-poncho'
         run: node --conditions=react-server scripts/sembrar-pruebas.mjs --solo prueba-restaurante
 
       - name: La galería, contra la vuelta anterior
-        if: matrix.estilo == 'reducido' || matrix.estilo == 'morphiq'
+        if: matrix.estilo == 'reducido' || matrix.estilo == 'don-poncho'
         env:
           MORPHIQPOS_ORG_DEMO: prueba-restaurante
           MORPHIQPOS_DEMO_PERSONA: Dueña de prueba
@@ -535,7 +536,7 @@ jobs:
         run: pnpm test:e2e pruebas/e2e/galeria.spec.ts --project=escritorio ${{ inputs.actualizar_galeria && '--update-snapshots=all' || '' }}
 
       - name: Los retratos de la galería
-        if: always() && (matrix.estilo == 'reducido' || matrix.estilo == 'morphiq')
+        if: always() && (matrix.estilo == 'reducido' || matrix.estilo == 'don-poncho')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: galeria-${{ matrix.modelo }}
@@ -693,10 +694,10 @@ jobs:
         if: matrix.modelo == 'restaurante'
         run: pnpm test:e2e pruebas/e2e/restaurante-concurrencia.spec.ts pruebas/e2e/restaurante-portal-qr.spec.ts --project=escritorio --workers=1 --retries=0
 
-      # EL ESTILO DEL NEGOCIO Y LOS ESTADOS DE MESA (cierre del 21-10): cada uno de los ocho
+      # EL ESTILO DEL NEGOCIO Y LOS ESTADOS DE MESA (cierre del 21-10): cada uno de los nueve
       # estilos —y una perilla— se elige, se guarda, sobrevive a recargar y lo ve otro aparato; y
       # cada estado de mesa se lee, con su palabra y su contraste medido sobre el peor píxel, en
-      # los ocho estilos. La demo se vuelve a sembrar antes: los estados se ponen sobre mesas
+      # los nueve estilos. La demo se vuelve a sembrar antes: los estados se ponen sobre mesas
       # libres, y la concurrencia deja mesas usadas.
       - name: El estilo del negocio y los estados de mesa
         if: matrix.modelo == 'restaurante'

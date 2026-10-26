@@ -93,3 +93,43 @@ se marca y se apunta a la nueva. Las del maestro siguen en su repositorio (`M1gu
 - Los contratos que escanean el código tenían pisos «al menos N» calibrados para cinco giros
   (p. ej. más de 250 comandos). Se bajan al alcance del restaurante con su razón escrita junto al
   número; siguen atrapando un cargador roto que devuelva unos cuantos.
+
+## DP-D11 · El estilo `don-poncho` y la marca de la casa · 25-10-2026
+
+- **Contexto:** el encargo daba una paleta de partida (naranja barro y rojo chile) y decía que, si
+  el logo traía otros colores, mandaban los del logo. El logo trae tres: crema `#F3F1BF`, dorado
+  `#AC8A5F` y negro `#161614`.
+- **Elección:** un noveno estilo, `don-poncho`, y es el predeterminado (sistema de diseño, servidor
+  y guion de arranque dicen lo mismo). Modo claro: el letrero —papel crema, marco dorado, letra
+  negra—; modo oscuro: la madera del local. La barra lateral es negra en los dos, con el dorado
+  exacto del logo en lo activo (5.64:1 con letra negra). El botón usa el dorado **oscurecido** a
+  `34 35% 38%` con letra crema (5.26:1): en modo claro los ocho estilos del maestro ponen letra
+  clara sobre el primario y el acceso, el escáner y los mosaicos de ícono lo dan por hecho. Los
+  semánticos son los del sistema, sin tocar. Perillas: densidad cómoda, esquina sutil, sombra,
+  movimiento sutil. Los ocho del maestro siguen construidos.
+- **El acceso** deja su degradado azul y sus resplandores y se pinta con los tokens de la barra
+  (la pizarra negra con letra crema); el logo de la casa va grande, sin sombra.
+- **Morphiq** firma UNA vez: «Sistema por Morphiq», discreto, en el acceso. El ticket del comensal
+  lleva logo, nombre y dirección; el corte y la barra firman «POS Don Poncho». Una prueba lo
+  comprueba contra los archivos.
+- **Íconos:** favicon 16 y 32, `apple-touch-icon` y los de la app instalable (192, 512 y 512
+  `maskable`) salen del logo. A 16 px el letrero es una silueta: si Miguel quiere un monograma
+  para el favicon, es un archivo y una línea.
+
+## DP-D12 · Los tarros, como producto extra · 25-10-2026
+
+- **Contexto:** en el restaurante el modificador viaja como nota y no cobra (los de pago son la
+  tarea E9-3 del maestro).
+- **Elección (de Miguel):** cada tarro es un producto en Cerveza —«Michelado (extra)» $15,
+  «Cubano (extra)» $20, «Con clamato (extra)» $30, «Con clamato cubano (extra)» $35— que el
+  mesero agrega junto a la cerveza. El menú queda en 107 productos.
+
+## DP-D13 · Las credenciales compartidas salen del Vercel del maestro · 25-10-2026
+
+- **Contexto:** el `.env` del maestro apunta a su base LOCAL, no a Supabase.
+- **Elección (de Miguel):** leer `DATABASE_URL` (pooler), `STORAGE_*` y `MORPHIQPOS_DB_POOL_MAX` del
+  proyecto Vercel `morphiqpos` (producción, sólo lectura) a un archivo temporal fuera del
+  repositorio.
+- **Resultado:** no se puede. Las 22 variables del maestro son de tipo **sensible**: ni el CLI ni la
+  API devuelven su valor (la descarga las trae vacías; el archivo temporal se borró). Queda la otra
+  vía que se le ofreció: que Miguel las deje en `..\_PRIVADO\` y el guion las lea de ahí.

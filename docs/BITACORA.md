@@ -82,3 +82,26 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   temporal fuera del repo.
 - Tarros: en el restaurante los modificadores viajan como nota y no cobran (E9-3 del maestro).
   Cada tarro es un **producto extra** en Cerveza. El menú queda en 107 productos.
+
+## 25-10-2026 · DP-3 · La marca de la casa
+
+- Estilo `don-poncho` (DP-D11), el predeterminado. Contraste AA en claro y oscuro por la auditoría
+  (`verify:estilos`, 9 estilos × 2 modos) y la prueba de contrato; colores de gráfica a ≥ 0.12 en
+  OKLab entre sí y ≥ 4.9:1 contra la superficie.
+- Logo de la casa en el acceso, la barra lateral, el ticket, el corte y el portal QR (vector en
+  pantalla, PNG en lo que se imprime). Favicon, `apple-touch-icon` y app instalable
+  (`app/manifest.ts`). Se fueron los logos de Morphiq del repositorio.
+- Morphiq firma una vez: «Sistema por Morphiq» en el acceso. Ticket del comensal: logo, nombre y
+  dirección. Una prueba lo comprueba contra los archivos y su mutación se detecta.
+- El acceso dejó el degradado azul y los resplandores (excepción de `verify:aspecto` declarada con
+  sus 80 testigos). Los botones flotantes del mesero dejaron el azul de Morphiq fijo: ahora son el
+  primario y el acento del estilo, planos.
+- El restaurante de prueba usa ya `don-poncho`: la jornada y la galería prueban el estilo real.
+- **Quedan con degradado** las tarjetas del tablero y otras ~70 piezas del heredado: son el diseño
+  protegido del maestro (`verify:aspecto`, guía §7: no se toca el heredado). Recomponerlas es otra
+  etapa, si Miguel la quiere.
+- Resto de DP-2 que apareció al correr el portal en local: la suite esperaba «Restaurante MH».
+  Ahora sale del contrato de negocios de prueba.
+- **Hallazgo para DP-4/DP-6:** las variables del Vercel del maestro son *sensibles* (ilegibles por
+  diseño), así que la decisión de leerlas de ahí no se puede cumplir (DP-D13). Hace falta que
+  Miguel entregue `DATABASE_URL` y `STORAGE_*`.

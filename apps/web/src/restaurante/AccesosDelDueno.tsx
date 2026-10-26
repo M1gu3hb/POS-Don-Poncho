@@ -3,15 +3,7 @@
 import Link from 'next/link';
 import { Superficie } from '@morphiqpos/ui/sistema';
 import { usePOSAuth } from '@/lib/POSAuthContext';
-import {
-  ArrowUpRight,
-  ChefHat,
-  LayoutGrid,
-  Landmark,
-  Palette,
-  Presentation,
-  Settings,
-} from 'lucide-react';
+import { ArrowUpRight, ChefHat, LayoutGrid, Landmark, Palette, Settings } from 'lucide-react';
 
 const ACCESOS = [
   {
@@ -31,14 +23,8 @@ const ACCESOS = [
   {
     href: '/configuracion?tab=apariencia',
     nombre: 'Apariencia',
-    detalle: 'Ocho estilos y sus ajustes',
+    detalle: 'El estilo de la casa y sus ajustes',
     icono: Palette,
-  },
-  {
-    href: '/configuracion?tab=presentacion',
-    nombre: 'Presentación',
-    detalle: 'Recorre los modelos de negocio',
-    icono: Presentation,
   },
 ];
 

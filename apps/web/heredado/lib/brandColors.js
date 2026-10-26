@@ -11,15 +11,15 @@
  * NO toca colores semánticos (rojo=error, verde=éxito, ámbar=warn). Esos
  * siguen viviendo en CSS vars de tema (--destructive, --success, etc.).
  *
- * Defaults (paleta MH azul premium):
- *   primario:  #1e40af
- *   acento:    #38bdf8
+ * Defaults (los del logo de Don Poncho, DP-3):
+ *   primario:  #83653f  (el dorado del marco, oscurecido para letra clara)
+ *   acento:    #ac8a5f  (el dorado exacto)
  */
 
 export const BRAND_DEFAULTS = {
-  color_primario: '#1e40af',
-  color_acento: '#38bdf8',
-  color_secundario: '#0f172a', // legacy, no se expone en UI
+  color_primario: '#83653f',
+  color_acento: '#ac8a5f',
+  color_secundario: '#161614', // legacy, no se expone en UI
 };
 
 /** Hex `#rrggbb` (o `#rgb`) → `{r,g,b}`. Tolera basura → null. */

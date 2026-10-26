@@ -67,9 +67,17 @@ async function aparienciaDelDespliegue(
 }
 
 export const metadata: Metadata = {
-  title: 'Morphiq POS',
-  description: 'Sistema maestro de puntos de venta de Morphiq.',
-  icons: { icon: '/icono.svg' },
+  title: 'POS Don Poncho',
+  description: 'Punto de venta de La Tradicional Barbacoa de Don Poncho.',
+  // El logo de la casa (DP-3). A 16 px el letrero no se lee: es la silueta, y así se queda
+  // hasta que Miguel quiera un monograma para el favicon.
+  icons: {
+    icon: [
+      { url: '/iconos/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/iconos/favicon-16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: { url: '/iconos/apple-touch-icon.png', sizes: '180x180' },
+  },
 };
 
 export const viewport: Viewport = {
@@ -121,10 +129,9 @@ export default async function LayoutRaiz({ children }: { children: ReactNode }) 
    * llegara al entrar. Y no es un parámetro del cliente —eso sería R16 al revés—: es
    * configuración del servidor, la misma con la que esa pantalla arma sus tarjetas.
    *
-   * Lo que NO cambia, y está bien que no cambie: la pantalla de acceso EN SÍ. Es de
-   * `heredado/`, se pinta con su propio degradado y la cubre `verify:aspecto`. Los
-   * atributos están puestos en su `<html>`; lo que no hay es una sola clase suya que
-   * los consuma, y cambiárselas sería romper el diseño que Miguel entregó.
+   * Y la pantalla de acceso los CONSUME desde DP-3: dejó su degradado y se pinta con los
+   * tokens de la barra lateral (`bg-lateral-fondo`), así que sale en el estilo del negocio
+   * —en `don-poncho`, la pizarra negra con letra crema— desde el primer pintado.
    *
    * Cuando el despliegue sirve a VARIOS —las cinco demostraciones a la vez— no hay
    * una respuesta correcta, y ahí sí se pinta con la base.
@@ -136,7 +143,7 @@ export default async function LayoutRaiz({ children }: { children: ReactNode }) 
     cabeceras.get(CABECERA_RUTA),
   );
   /**
-   * Sin preferencia, o con una que ya no es un estilo construido, arranca `morphiq`.
+   * Sin preferencia, o con una que ya no es un estilo construido, arranca `don-poncho`.
    *
    * `aparienciaDeLaOrganizacion` ya normaliza lo que lee de la base; esto cierra el hueco
    * que queda entre ella y el `<html>`: el atributo que se escribe SIEMPRE es un estilo

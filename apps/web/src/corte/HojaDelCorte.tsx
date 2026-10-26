@@ -1,7 +1,6 @@
 import { Cifra, Dinero, Tabla, type ColumnaDeTabla } from '@morphiqpos/ui/sistema';
 import type { Ref } from 'react';
 
-import { MarcaMorphiq } from '../marca/MarcaMorphiq.tsx';
 import { marcaVisibleDePlataforma, nombreVisibleDelNegocio } from '../marca/nombre-visible.ts';
 
 import type { Celda, Columna, DocumentoDelCorte, Seccion, Valor } from './hoja.ts';
@@ -184,9 +183,7 @@ export function HojaDelCorte({ documento, generadoEn, ref }: HojaDelCorteProps) 
           <p className="text-xs">
             Folio: <span className="font-mono font-bold">{documento.folio}</span>
           </p>
-          <p className="mt-(--espacio-1) text-xs text-texto-sutil">
-            <MarcaMorphiq variante="documento" nombre={marca} />
-          </p>
+          <p className="mt-(--espacio-1) text-xs text-texto-sutil">{marca}</p>
         </div>
       </header>
 

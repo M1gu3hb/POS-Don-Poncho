@@ -26,19 +26,21 @@ import { z } from 'zod';
  */
 
 export const CONFIG_POR_OMISION = {
-  nombre_negocio: 'MH Astral Systems',
-  nombre_sistema: 'MH Astral POS',
-  platform_brand: 'MH Astral Systems',
-  logo_url: '',
-  logo_ticket_url: '',
-  logo_pdf_url: '',
+  // Los de la casa (DP-3). El logo sale de `apps/web/public/marca`: el vector para la
+  // pantalla y el PNG para el ticket y los PDF.
+  nombre_negocio: 'Don Poncho',
+  nombre_sistema: 'POS Don Poncho',
+  platform_brand: 'POS Don Poncho',
+  logo_url: '/marca/don-poncho.svg',
+  logo_ticket_url: '/marca/don-poncho.png',
+  logo_pdf_url: '/marca/don-poncho.png',
   background_logo_url: '',
   background_image_url: '',
   background_fit: 'cover',
   background_opacity: 0.12,
-  color_primario: '#1e40af',
-  color_secundario: '#0f172a',
-  color_acento: '#38bdf8',
+  color_primario: '#83653f',
+  color_secundario: '#161614',
+  color_acento: '#ac8a5f',
   moneda: 'MXN',
   simbolo_moneda: '$',
   iva_porcentaje: 0,

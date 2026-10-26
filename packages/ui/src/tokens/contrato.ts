@@ -25,6 +25,8 @@
  *   terminal  fosforo y teclado: quien viene de un POS viejo
  *   papel     el sistema desaparece: despacho, consultorio, agencia
  *   noche     para operar a oscuras: barra, cocina, cine
+ *   don-poncho el de la casa (POS Don Poncho, DP-3): el letrero de la barbacoa, papel
+ *             crema, marco dorado y letra negra. Es el predeterminado de este producto.
  *
  * `premium` y `editorial`, de la Fase 1, se retiran aqui: `papel` es el editorial
  * afinado y con nombre propio, y `premium` era el mismo territorio que `morphiq`.
@@ -43,6 +45,7 @@ export const ESTILOS_CONSTRUIDOS = [
   'terminal',
   'papel',
   'noche',
+  'don-poncho',
 ] as const;
 export type EstiloConstruido = (typeof ESTILOS_CONSTRUIDOS)[number];
 

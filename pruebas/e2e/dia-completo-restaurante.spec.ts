@@ -1,7 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { conciliarElDia } from '../../packages/testing/src/conciliacion.ts';
-import { nombreVisibleDelNegocio } from '../../apps/web/src/marca/nombre-visible.ts';
 
 import {
   exigirQueCuadre,
@@ -342,19 +341,22 @@ async function esperadoDelCajon(page: Page): Promise<number> {
   return Number(cuerpo.datos?.efectivoEsperadoCentavos ?? Number.NaN);
 }
 
-/**
- * El nombre del restaurante como se LEE en la pantalla de acceso: «Restaurante MH» (D-52), pasado
- * por el mismo `nombreVisibleDelNegocio` que usa la pantalla.
- */
-const NEGOCIO_VISIBLE = nombreVisibleDelNegocio('Restaurante MH');
+const ESTILOS = [
+  'morphiq',
+  'cristal',
+  'relieve',
+  'taller',
+  'bloque',
+  'terminal',
+  'papel',
+  'noche',
+  'don-poncho',
+];
 
-const ESTILOS = ['morphiq', 'cristal', 'relieve', 'taller', 'bloque', 'terminal', 'papel', 'noche'];
-
 /**
- * El botón del menú del teléfono se tiene que VER, en los ocho estilos, claros y oscuros. Era
+ * El botón del menú del teléfono se tiene que VER, en los nueve estilos, claros y oscuros. Era
  * `text-primario-texto` —el texto sobre el primario— encima de la barra: contraste de 1.0 a
- * 1.4 en once de los dieciséis, entre ellos «noche», el de esta demo, y la mesera no veía cómo
- * abrir su menú. Un ícono que se toca pide 3:1 (WCAG 1.4.11). Devuelve los que no llegan.
+ * 1.4 en once de los dieciséis del maestro, y la mesera no veía cómo abrir su menú. Un ícono que se toca pide 3:1 (WCAG 1.4.11). Devuelve los que no llegan.
  */
 function menuIlegible(page: Page): Promise<string[]> {
   return page.evaluate((estilos) => {
@@ -749,23 +751,12 @@ test.describe('el día completo del restaurante', () => {
           const deNuevo = await otroNavegador.newPage();
           fallos.push(vigilarFallos(deNuevo));
           await deNuevo.goto('/login-pos');
-          // Con varios contextos servidos se elige el modelo; con uno solo (CI) no hay que elegir.
-          // La lista llega después de pintar la pantalla, y hasta que llega no se sabe cuál de los
-          // dos casos es: cada demostración tiene su «Demo», y tocarla antes de elegir era entrar
-          // a la primera de la lista, la tienda (lo hizo una vez en teléfono).
-          const modelos = deNuevo.locator('#vista-de-acceso');
+          // El acceso sirve a UN negocio (DP-2): no hay modelo que elegir, sólo su tarjeta.
           const suTarjeta = deNuevo
             .getByRole('button')
             .filter({ has: deNuevo.getByText(laDuena.nombre, { exact: true }) });
-          await expect(modelos.or(suTarjeta).first()).toBeVisible({ timeout: 30_000 });
-          const variosModelos = (await modelos.count()) > 0;
-          if (variosModelos) {
-            await modelos.selectOption({ label: NEGOCIO_VISIBLE });
-          }
+          await expect(suTarjeta.first()).toBeVisible({ timeout: 30_000 });
           await suTarjeta.first().click();
-          if (variosModelos) {
-            await expect(deNuevo.getByText(/^Iniciando como:/)).toContainText(NEGOCIO_VISIBLE);
-          }
           for (const digito of laDuena.pin) {
             await deNuevo.getByRole('button', { name: digito, exact: true }).click();
           }

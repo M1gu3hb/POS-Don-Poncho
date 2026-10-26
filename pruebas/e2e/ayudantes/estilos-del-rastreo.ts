@@ -77,11 +77,11 @@ export async function ponerEstilo(
   const antes = await page.evaluate(() => {
     const raiz = document.documentElement.dataset;
     return {
-      estilo: raiz['estilo'] ?? 'morphiq',
-      densidad: raiz['densidad'] ?? 'normal',
-      redondeo: raiz['redondeo'] ?? 'media',
+      estilo: raiz['estilo'] ?? 'don-poncho',
+      densidad: raiz['densidad'] ?? 'comoda',
+      redondeo: raiz['redondeo'] ?? 'sutil',
       elevacion: raiz['elevacion'] ?? 'sombra',
-      movimiento: raiz['movimiento'] ?? 'normal',
+      movimiento: raiz['movimiento'] ?? 'sutil',
     };
   });
 

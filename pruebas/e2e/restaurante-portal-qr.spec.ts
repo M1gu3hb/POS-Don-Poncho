@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { nombreVisibleDelNegocio } from '../../apps/web/src/marca/nombre-visible.ts';
+import { negocioDePruebaPorSlug } from '../../packages/contracts/src/negocios/index.ts';
 
 import {
   existenciaDe,
@@ -85,10 +86,10 @@ const MESA = 6;
 const ZONA = 'Interior';
 const MESERO = 'Lupita';
 /**
- * El negocio como lo LEE el comensal en el encabezado del portal: «Restaurante MH» (D-52), por el
- * mismo `nombreVisibleDelNegocio` que usa la pantalla.
+ * El negocio como lo LEE el comensal en el encabezado del portal: el nombre del restaurante de
+ * prueba (DP-2), por el mismo `nombreVisibleDelNegocio` que usa la pantalla.
  */
-const NEGOCIO = nombreVisibleDelNegocio('Restaurante MH');
+const NEGOCIO = nombreVisibleDelNegocio(negocioDePruebaPorSlug('prueba-restaurante')?.nombre);
 
 /** Lo que consume el primer grupo: $329 + 2 × $55 = $439.00. */
 const PEDIDO_UNO: readonly PlatilloPedido[] = [

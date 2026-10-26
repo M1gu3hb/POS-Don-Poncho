@@ -8,7 +8,7 @@ import { useApariencia, type AparienciaInicial } from './useApariencia';
  *
  * El valor inicial lo escribe el servidor en el `<html>`; este hook lo vuelve estado. Si lo
  * que llega no es un estilo conocido, el hook lanzaba durante la hidratación y la aplicación
- * quedaba en blanco. Ahora arranca con el predeterminado (`morphiq`).
+ * quedaba en blanco. Ahora arranca con el predeterminado (`don-poncho`, DP-3).
  */
 function Sonda({ inicial }: { readonly inicial: string | AparienciaInicial }) {
   const { apariencia } = useApariencia(inicial);
@@ -39,16 +39,16 @@ describe('useApariencia · el estilo inicial', () => {
     expect(marcado).toContain('data-movimiento="nula"');
   });
 
-  it('un estilo vacío arranca con morphiq en vez de lanzar', () => {
+  it('un estilo vacío arranca con don-poncho en vez de lanzar', () => {
     const marcado = renderToStaticMarkup(<Sonda inicial="" />);
-    expect(marcado).toContain('data-estilo="morphiq"');
-    expect(marcado).toContain('data-densidad="normal"');
+    expect(marcado).toContain('data-estilo="don-poncho"');
+    expect(marcado).toContain('data-densidad="comoda"');
   });
 
-  it('un estilo que ya no existe arranca con morphiq en vez de dejar la pantalla en blanco', () => {
+  it('un estilo que ya no existe arranca con don-poncho en vez de dejar la pantalla en blanco', () => {
     expect(() => renderToStaticMarkup(<Sonda inicial="premium" />)).not.toThrow();
     expect(renderToStaticMarkup(<Sonda inicial={{ estilo: 'inexistente' }} />)).toContain(
-      'data-estilo="morphiq"',
+      'data-estilo="don-poncho"',
     );
   });
 });

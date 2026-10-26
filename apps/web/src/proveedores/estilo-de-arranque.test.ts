@@ -9,7 +9,7 @@ import { CLAVE_TEMA, GUION_SIN_PARPADEO } from '../../heredado/tema-arranque';
 /**
  * EL ESTILO CON QUE ARRANCA LA PRIMERA PINTURA Y LA PANTALLA DE ACCESO.
  *
- * Tres capas dicen «morphiq» cuando no hay nada guardado, y tienen que decir lo mismo:
+ * Tres capas dicen «don-poncho» cuando no hay nada guardado, y tienen que decir lo mismo:
  *   · el servidor (`APARIENCIA_POR_OMISION` y `normalizarEstilo`, en la capa de datos);
  *   · el sistema de diseño (`ESTILO_PREDETERMINADO`, que usa el layout y el hook);
  *   · el guion que corre ANTES del primer pintado (`GUION_SIN_PARPADEO`).
@@ -60,20 +60,34 @@ const ALMACEN_QUE_LANZA: AlmacenSimulado = {
 };
 
 describe('el predeterminado dicho por las tres capas', () => {
-  it('el servidor y el sistema de diseño coinciden: morphiq', () => {
-    expect(APARIENCIA_POR_OMISION.estilo).toBe('morphiq');
+  it('el servidor y el sistema de diseño coinciden: don-poncho', () => {
+    expect(APARIENCIA_POR_OMISION.estilo).toBe('don-poncho');
     expect(ESTILO_PREDETERMINADO).toBe(APARIENCIA_POR_OMISION.estilo);
   });
 
-  it('un negocio sin estilo guardado, o con uno que ya no existe, es morphiq', () => {
-    // `premium` y `base` son nombres de la Fase 1 que ya significaban «el base».
-    for (const vacio of [undefined, null, '', 'premium', 'base', 'desconocido']) {
-      expect(normalizarEstilo(vacio)).toBe('morphiq');
+  it('un negocio sin estilo guardado, o con uno que ya no existe, es don-poncho', () => {
+    for (const vacio of [undefined, null, '', 'desconocido', 'Don-Poncho']) {
+      expect(normalizarEstilo(vacio)).toBe('don-poncho');
     }
   });
 
+  it('los nombres de la Fase 1 que significaban «el base» siguen siendo morphiq', () => {
+    // `premium` y `base` se guardaron a propósito: eran el estilo de Morphiq, no «ninguno».
+    expect(normalizarEstilo('premium')).toBe('morphiq');
+    expect(normalizarEstilo('base')).toBe('morphiq');
+  });
+
   it('un negocio que guardó otro estilo conserva el suyo', () => {
-    for (const estilo of ['cristal', 'relieve', 'taller', 'bloque', 'terminal', 'papel', 'noche']) {
+    for (const estilo of [
+      'morphiq',
+      'cristal',
+      'relieve',
+      'taller',
+      'bloque',
+      'terminal',
+      'papel',
+      'noche',
+    ]) {
       expect(normalizarEstilo(estilo)).toBe(estilo);
     }
   });
@@ -84,10 +98,10 @@ describe('el predeterminado dicho por las tres capas', () => {
 });
 
 describe('el guion de arranque, antes del primer pintado', () => {
-  it('si el <html> llega sin estilo, le pone morphiq', () => {
+  it('si el <html> llega sin estilo, le pone don-poncho', () => {
     const html = htmlSimulado();
     correrElGuion(html, SIN_PREFERENCIA);
-    expect(html.getAttribute('data-estilo')).toBe('morphiq');
+    expect(html.getAttribute('data-estilo')).toBe('don-poncho');
   });
 
   it('si el <html> ya trae el estilo del negocio, NO lo pisa', () => {
@@ -103,7 +117,7 @@ describe('el guion de arranque, antes del primer pintado', () => {
     expect(() => {
       correrElGuion(html, ALMACEN_QUE_LANZA);
     }).not.toThrow();
-    expect(html.getAttribute('data-estilo')).toBe('morphiq');
+    expect(html.getAttribute('data-estilo')).toBe('don-poncho');
   });
 
   it('conserva la preferencia del dispositivo: el modo oscuro guardado sigue siendo oscuro', () => {
@@ -111,7 +125,7 @@ describe('el guion de arranque, antes del primer pintado', () => {
     correrElGuion(html, { getItem: (clave) => (clave === CLAVE_TEMA ? 'dark' : null) });
     expect(html.clases.has('dark')).toBe(true);
     expect(html.style.colorScheme).toBe('dark');
-    expect(html.getAttribute('data-estilo')).toBe('morphiq');
+    expect(html.getAttribute('data-estilo')).toBe('don-poncho');
   });
 
   it('sin preferencia de modo, arranca en claro', () => {

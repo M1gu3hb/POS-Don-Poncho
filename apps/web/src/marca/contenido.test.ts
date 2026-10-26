@@ -1,91 +1,91 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import {
-  ESTILO_DE_LA_PALABRA,
-  ESTILO_DE_LA_VARIANTE,
-  contenidoDeLaMarca,
-  type VarianteDeMarca,
-} from './contenido';
-import { RUTA_DEL_LOGO_OFICIAL } from './logo';
+import { CREDITO_DE_LA_PLATAFORMA, ESTILO_DEL_CREDITO } from './contenido';
+import { LOGO_POR_OMISION, RUTA_DEL_LOGO, RUTA_DEL_LOGO_IMPRIMIBLE } from './logo';
 
 /**
- * La marca de la plataforma. El componente (`MarcaMorphiq.tsx`) sólo pinta lo que decide
- * `contenido.ts`, y es ahí donde se prueba: las pruebas de `apps/web` no transforman JSX.
+ * LA MARCA DE POS DON PONCHO (DP-3).
+ *
+ * El logo de la casa en todas partes, y Morphiq UNA vez: «Sistema por Morphiq», discreto, en
+ * la pantalla de acceso. Nada de Morphiq en el ticket del comensal, el corte ni el portal QR.
+ *
+ * Se prueba contra los archivos reales: el componente del crédito no se transforma aquí (las
+ * pruebas de `apps/web` no compilan JSX), así que lo que se comprueba es QUIÉN lo importa y qué
+ * texto llevan las pantallas que se imprimen.
  */
 
-const VARIANTES: readonly VarianteDeMarca[] = ['acceso', 'ticket', 'documento', 'portal'];
+const WEB = join(__dirname, '..', '..');
+const PUBLICO = join(WEB, 'public');
 
-describe('contenidoDeLaMarca · el logo oficial que entregó Miguel (21-10)', () => {
-  it('el repositorio trae el logo oficial en un solo punto', () => {
-    expect(RUTA_DEL_LOGO_OFICIAL).toBe('/marca/morphiq-logo.png');
-    expect(contenidoDeLaMarca(null)).toEqual({
-      tipo: 'logo',
-      src: '/marca/morphiq-logo.png',
-      alt: 'Morphiq',
-    });
-  });
-});
+function fuentes(carpeta: string): string[] {
+  const salida: string[] = [];
+  for (const entrada of readdirSync(carpeta, { withFileTypes: true })) {
+    const ruta = join(carpeta, entrada.name);
+    if (entrada.isDirectory()) salida.push(...fuentes(ruta));
+    else if (/\.(jsx|tsx|ts)$/.test(entrada.name) && !/\.test\.tsx?$/.test(entrada.name)) {
+      salida.push(ruta);
+    }
+  }
+  return salida;
+}
 
-describe('contenidoDeLaMarca · sin archivo de logo', () => {
-  it('pinta la palabra «Morphiq»', () => {
-    expect(contenidoDeLaMarca(null, null)).toEqual({ tipo: 'texto', texto: 'Morphiq' });
-    expect(contenidoDeLaMarca(undefined, null)).toEqual({ tipo: 'texto', texto: 'Morphiq' });
-    expect(contenidoDeLaMarca('', null)).toEqual({ tipo: 'texto', texto: 'Morphiq' });
-  });
+const TODAS = [
+  ...fuentes(join(WEB, 'heredado')),
+  ...fuentes(join(WEB, 'src')),
+  ...fuentes(join(WEB, 'app')),
+];
+const leer = (ruta: string): string => readFileSync(ruta, 'utf8');
+const relativa = (ruta: string): string => relative(WEB, ruta).replaceAll('\\', '/');
 
-  it('cambia la marca anterior de la plataforma por la de hoy', () => {
-    expect(contenidoDeLaMarca('MH Astral Systems', null)).toEqual({
-      tipo: 'texto',
-      texto: 'Morphiq',
-    });
-  });
-
-  it('respeta la marca que el negocio escribió a propósito', () => {
-    expect(contenidoDeLaMarca('Agencia Aurora', null)).toEqual({
-      tipo: 'texto',
-      texto: 'Agencia Aurora',
-    });
-  });
-});
-
-describe('contenidoDeLaMarca · cuando ya haya logo oficial', () => {
-  const LOGO = '/marca/morphiq-logo.svg';
-
-  it('pinta el archivo en lugar de la palabra, sin tocar ninguna pantalla', () => {
-    expect(contenidoDeLaMarca(null, LOGO)).toEqual({ tipo: 'logo', src: LOGO, alt: 'Morphiq' });
-    expect(contenidoDeLaMarca('MH Astral Systems', LOGO)).toEqual({
-      tipo: 'logo',
-      src: LOGO,
-      alt: 'Morphiq',
-    });
+describe('el logo de la casa', () => {
+  it('es el de Don Poncho, en vector para la pantalla y en PNG para lo que se imprime', () => {
+    expect(RUTA_DEL_LOGO).toBe('/marca/don-poncho.svg');
+    expect(RUTA_DEL_LOGO_IMPRIMIBLE).toBe('/marca/don-poncho.png');
+    expect(LOGO_POR_OMISION).toBe(RUTA_DEL_LOGO);
   });
 
-  it('no le pone el logo de Morphiq encima a un negocio que firmó con su propia marca', () => {
-    expect(contenidoDeLaMarca('Agencia Aurora', LOGO)).toEqual({
-      tipo: 'texto',
-      texto: 'Agencia Aurora',
-    });
-  });
-});
-
-describe('las variantes', () => {
-  it('hay una por cada sitio donde se pinta la marca', () => {
-    expect(Object.keys(ESTILO_DE_LA_VARIANTE).sort()).toEqual([...VARIANTES].sort());
-  });
-
-  it('el acceso lleva su color; en un ticket o un PDF la marca hereda el del documento', () => {
-    expect(ESTILO_DE_LA_VARIANTE.acceso).toContain('text-primario-texto');
-    for (const variante of ['ticket', 'documento'] as const) {
-      // Sólo el tamaño (`text-xs`): un color propio sería lo único de la hoja que no obedece
-      // a su fondo —un ticket imprime en negro—.
-      expect(ESTILO_DE_LA_VARIANTE[variante]).not.toMatch(/\btext-(?!xs\b)/);
+  it('los archivos existen en public/, que es lo que la CSP deja servir', () => {
+    for (const ruta of [RUTA_DEL_LOGO, RUTA_DEL_LOGO_IMPRIMIBLE]) {
+      expect(existsSync(join(PUBLICO, ruta)), ruta).toBe(true);
     }
   });
 
-  it('no escriben ningún color ni tamaño literal: sólo tokens del sistema', () => {
-    const todas = [...Object.values(ESTILO_DE_LA_VARIANTE), ESTILO_DE_LA_PALABRA].join(' ');
-    expect(todas).not.toMatch(/#[0-9a-f]{3,8}\b|\[\d+px\]|\b(?:bg|text)-(?:white|black)\b/i);
-    // Ningún espacio literal grande: van como `(--espacio-N)`, que obedece a la densidad.
-    expect(todas).not.toMatch(/\b(?:p|px|py|m|mx|my|mt|mb|gap)-(?:3|4|5|6|8|10|12)\b/);
+  it('el logo de Morphiq ya no está en el repositorio', () => {
+    expect(readdirSync(join(PUBLICO, 'marca')).filter((f) => /morphiq/i.test(f))).toEqual([]);
   });
+});
+
+describe('el crédito de la plataforma', () => {
+  it('dice «Sistema por Morphiq» y nada más', () => {
+    expect(CREDITO_DE_LA_PLATAFORMA).toBe('Sistema por Morphiq');
+  });
+
+  it('se pinta con tokens del sistema, sin color ni tamaño literal', () => {
+    expect(ESTILO_DEL_CREDITO).not.toMatch(
+      /#[0-9a-f]{3,8}\b|\[\d+px\]|\b(?:bg|text)-(?:white|black)\b/i,
+    );
+    expect(ESTILO_DEL_CREDITO).toContain('text-lateral-texto');
+  });
+
+  it('sólo lo pinta la pantalla de acceso', () => {
+    const quienes = TODAS.filter((ruta) => /<CreditoDeMorphiq\b/.test(leer(ruta))).map(relativa);
+    expect(quienes).toEqual(['heredado/pages/POSLogin.jsx']);
+  });
+
+  it('ninguna pantalla importa ya la firma vieja de Morphiq', () => {
+    expect(TODAS.filter((ruta) => /\bMarcaMorphiq\b/.test(leer(ruta))).map(relativa)).toEqual([]);
+  });
+});
+
+describe('lo que ve el comensal no dice Morphiq', () => {
+  it.each(['heredado/components/tickets/PreCuentaTicket.jsx', 'heredado/pages/PortalCliente.jsx'])(
+    '%s no nombra a la plataforma',
+    (archivo) => {
+      const codigo = leer(join(WEB, archivo));
+      expect(codigo).not.toMatch(/Morphiq|MARCA_DE_PLATAFORMA|platform_brand/);
+    },
+  );
 });

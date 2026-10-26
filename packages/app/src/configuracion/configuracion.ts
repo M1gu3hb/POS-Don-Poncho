@@ -112,12 +112,12 @@ const DEFAULTS = {
   logoUrl: null,
   colorPrimario: COLOR_PRIMARIO_DEFAULT,
   colorAcento: COLOR_ACENTO_DEFAULT,
-  /* Las cinco de la apariencia son las del estilo `morphiq`, que es el base. */
-  estilo: 'morphiq',
-  densidad: 'normal',
-  redondeo: 'media',
+  /* Las cinco de la apariencia son las del estilo de la casa, `don-poncho` (DP-3). */
+  estilo: 'don-poncho',
+  densidad: 'comoda',
+  redondeo: 'sutil',
   elevacion: 'sombra',
-  movimiento: 'normal',
+  movimiento: 'sutil',
   /** IVA general de México. Es el punto de partida, no una constante. */
   impuestoPuntosBase: 1600,
   impuestoIncluidoEnPrecio: true,

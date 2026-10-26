@@ -249,7 +249,12 @@ const REGLAS = [
 /** Archivos que la regla no mira, con su razon. */
 const EXENTOS = new Map([
   ['globals.css', 'Es donde se define el puente de tokens; ahi los colores SI viven'],
-  ['icono.svg', 'Es el logotipo, no un componente'],
+  [
+    'manifest.ts',
+    'El manifiesto web (DP-3) pide sus dos colores en hexadecimal: el navegador lo lee antes ' +
+      'que cualquier hoja de estilo y no entiende variables CSS. Son el negro del letrero, el ' +
+      'mismo `--lateral-fondo` de `don-poncho.css`',
+  ],
 ]);
 
 /**

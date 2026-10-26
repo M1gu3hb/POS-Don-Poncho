@@ -48,6 +48,7 @@ const ESTILOS = [
   'terminal',
   'papel',
   'noche',
+  'don-poncho',
 ] as const;
 
 /**
@@ -79,7 +80,7 @@ interface ControlTapado {
   readonly lotapa: string;
 }
 
-test.describe('los ocho estilos, en el navegador', () => {
+test.describe('los nueve estilos, en el navegador', () => {
   for (const estilo of ESTILOS) {
     test(`${estilo}: sus tokens llegan, se puede tocar y el foco se ve`, async ({ page }) => {
       const enLaConsola: string[] = [];

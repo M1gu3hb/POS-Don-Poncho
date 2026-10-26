@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  MARCA_DE_PLATAFORMA,
+  NOMBRE_DEL_NEGOCIO,
   NOMBRE_DEL_SISTEMA,
   marcaVisibleDePlataforma,
   nombreVisibleDelNegocio,
@@ -43,23 +43,33 @@ describe('nombreVisibleDelNegocio', () => {
     expect(nombreVisibleDelNegocio('Demo del acoplexyz')).toBe('Demo del acoplexyz');
   });
 
-  it('cae a la marca cuando no queda nada que mostrar', () => {
-    expect(nombreVisibleDelNegocio('')).toBe(MARCA_DE_PLATAFORMA);
-    expect(nombreVisibleDelNegocio('   ')).toBe(MARCA_DE_PLATAFORMA);
-    expect(nombreVisibleDelNegocio('Demo del acople')).toBe(MARCA_DE_PLATAFORMA);
-    expect(nombreVisibleDelNegocio('Demo del acople · ')).toBe(MARCA_DE_PLATAFORMA);
+  it('cae al nombre de la casa cuando no queda nada que mostrar', () => {
+    expect(NOMBRE_DEL_NEGOCIO).toBe('Don Poncho');
+    expect(nombreVisibleDelNegocio('')).toBe(NOMBRE_DEL_NEGOCIO);
+    expect(nombreVisibleDelNegocio('   ')).toBe(NOMBRE_DEL_NEGOCIO);
+    expect(nombreVisibleDelNegocio('Demo del acople')).toBe(NOMBRE_DEL_NEGOCIO);
+    expect(nombreVisibleDelNegocio('Demo del acople · ')).toBe(NOMBRE_DEL_NEGOCIO);
   });
 
-  it('cambia la marca anterior por la de hoy', () => {
-    expect(nombreVisibleDelNegocio('MH Astral Systems')).toBe('Morphiq');
-    expect(nombreVisibleDelNegocio('mh-astral-systems')).toBe('Morphiq');
+  it('el nombre de la plataforma no es el del negocio: un valor por omisión que quedó se lee Don Poncho', () => {
+    // «MH Astral Systems» era el `nombre_negocio` por omisión del maestro, y «Morphiq» su
+    // marca. Un ticket de Don Poncho con cualquiera de los dos sería un ticket ajeno.
+    for (const ajeno of [
+      'MH Astral Systems',
+      'mh-astral-systems',
+      'Morphiq',
+      'Morphiq POS',
+      'MorphiqPOS',
+    ]) {
+      expect(nombreVisibleDelNegocio(ajeno), ajeno).toBe('Don Poncho');
+    }
   });
 
   it('nunca lanza, venga lo que venga', () => {
-    expect(nombreVisibleDelNegocio(null)).toBe(MARCA_DE_PLATAFORMA);
-    expect(nombreVisibleDelNegocio(undefined)).toBe(MARCA_DE_PLATAFORMA);
-    expect(nombreVisibleDelNegocio(42)).toBe(MARCA_DE_PLATAFORMA);
-    expect(nombreVisibleDelNegocio({})).toBe(MARCA_DE_PLATAFORMA);
+    expect(nombreVisibleDelNegocio(null)).toBe(NOMBRE_DEL_NEGOCIO);
+    expect(nombreVisibleDelNegocio(undefined)).toBe(NOMBRE_DEL_NEGOCIO);
+    expect(nombreVisibleDelNegocio(42)).toBe(NOMBRE_DEL_NEGOCIO);
+    expect(nombreVisibleDelNegocio({})).toBe(NOMBRE_DEL_NEGOCIO);
   });
 
   it('es idempotente: aplicarla dos veces da lo mismo que una', () => {
@@ -79,21 +89,21 @@ describe('nombreVisibleDelNegocio', () => {
 });
 
 describe('marcaVisibleDePlataforma', () => {
-  it('pone Morphiq donde faltaba o donde decía la marca anterior', () => {
-    expect(marcaVisibleDePlataforma('')).toBe('Morphiq');
-    expect(marcaVisibleDePlataforma(undefined)).toBe('Morphiq');
-    expect(marcaVisibleDePlataforma('MH Astral Systems')).toBe('Morphiq');
+  it('la firma del sistema en la barra y en el corte es POS Don Poncho', () => {
+    expect(marcaVisibleDePlataforma('')).toBe('POS Don Poncho');
+    expect(marcaVisibleDePlataforma(undefined)).toBe('POS Don Poncho');
+    expect(marcaVisibleDePlataforma('MH Astral Systems')).toBe('POS Don Poncho');
   });
 
-  it('respeta la marca que el negocio escribió a propósito', () => {
+  it('respeta una firma que el negocio escribió a propósito', () => {
     expect(marcaVisibleDePlataforma('Agencia Aurora')).toBe('Agencia Aurora');
-    expect(marcaVisibleDePlataforma('Morphiq')).toBe('Morphiq');
   });
 
-  it('el nombre de código del producto («MorphiqPOS») se lee Morphiq, no el del repositorio', () => {
-    // El documento del corte lo usa como marca cuando el negocio no escribió una.
-    expect(marcaVisibleDePlataforma('MorphiqPOS')).toBe('Morphiq');
-    expect(marcaVisibleDePlataforma('Morphiq POS')).toBe('Morphiq');
+  it('Morphiq no firma documentos: su marca y su nombre de código se leen POS Don Poncho', () => {
+    // Morphiq firma una sola vez, en el acceso («Sistema por Morphiq», `./contenido.ts`).
+    for (const morphiq of ['Morphiq', 'MorphiqPOS', 'Morphiq POS']) {
+      expect(marcaVisibleDePlataforma(morphiq), morphiq).toBe('POS Don Poncho');
+    }
   });
 
   it('es idempotente', () => {
@@ -105,22 +115,24 @@ describe('marcaVisibleDePlataforma', () => {
 });
 
 describe('nombreVisibleDelSistema', () => {
-  it('corrige el nombre anterior del sistema conservando el resto de la frase', () => {
-    expect(nombreVisibleDelSistema('MH Astral POS')).toBe('Morphiq POS');
-    expect(nombreVisibleDelSistema('MH Astral Systems POS')).toBe('Morphiq POS');
-    expect(nombreVisibleDelSistema('MH-Astral-Systems')).toBe('Morphiq');
+  it('el nombre de una plataforma anterior se lee POS Don Poncho', () => {
+    expect(nombreVisibleDelSistema('MH Astral POS')).toBe('POS Don Poncho');
+    expect(nombreVisibleDelSistema('MH Astral Systems POS')).toBe('POS Don Poncho');
+    expect(nombreVisibleDelSistema('MH-Astral-Systems')).toBe('POS Don Poncho');
+    expect(nombreVisibleDelSistema('Morphiq POS')).toBe('POS Don Poncho');
   });
 
-  it('con el campo vacío dice Morphiq POS', () => {
+  it('con el campo vacío dice POS Don Poncho', () => {
+    expect(NOMBRE_DEL_SISTEMA).toBe('POS Don Poncho');
     expect(nombreVisibleDelSistema(null)).toBe(NOMBRE_DEL_SISTEMA);
-    expect(nombreVisibleDelSistema('  ')).toBe('Morphiq POS');
+    expect(nombreVisibleDelSistema('  ')).toBe('POS Don Poncho');
   });
 
   it('respeta un nombre escrito a mano', () => {
     expect(nombreVisibleDelSistema('Caja del Jacaranda')).toBe('Caja del Jacaranda');
   });
 
-  it('separa el nombre de código: «MorphiqPOS» se lee «Morphiq POS»', () => {
-    expect(nombreVisibleDelSistema('MorphiqPOS')).toBe('Morphiq POS');
+  it('el nombre de código del maestro («MorphiqPOS») tampoco se cuela', () => {
+    expect(nombreVisibleDelSistema('MorphiqPOS')).toBe('POS Don Poncho');
   });
 });
