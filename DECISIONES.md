@@ -172,3 +172,28 @@ se marca y se apunta a la nueva. Las del maestro siguen en su repositorio (`M1gu
   Rótulo y filtro en Recetas y Platillos; aviso «N platillos sin receta» en el tablero.
 - **El área de preparación:** el cargador pone a cada platillo el área de su estación (comida →
   cocina, bebidas → barra). En `ninguno`, con el que nace un producto, no se genera comanda.
+
+## DP-D18 · El menú personalizado del portal QR también pide · 25-10-2026
+
+- **Contexto:** Miguel pidió el portal «con todo», el menú default y uno personalizado «como si lo
+  hubieran subido ellos», con los botones de pedir. En el maestro el modo «menú subido» sólo
+  enseñaba imágenes: no se ligaba a platillos, el servidor ni mandaba el catálogo, y el menú
+  público no publicaba las opciones de un platillo (desde el QR no se elegía el sabor del pulque).
+- **Elección, sin DDL:**
+  - Una página se liga a las categorías que **nombra su título**, separadas por «·»
+    («Pa’ empezar · Las sopas»). Debajo de su imagen van esos platillos con «Agregar», que abre el
+    mismo diálogo que el menú default. Un título que no nombra ninguna sigue siendo sólo imagen; la
+    pestaña «Menú QR» dice de cada página qué pide.
+  - El menú público lleva las opciones de cada platillo, con nombres y sin precio.
+  - En «menú subido» el servidor manda el catálogo cuando el comensal puede pedir.
+  - El diseño: 8 páginas con el aspecto del letrero, generadas desde los datos del menú
+    (`scripts/generar-menu-qr.mjs` → `apps/web/public/menu-qr/`), servidas por el propio sitio.
+  - Don Poncho queda con el portal encendido en «menú subido», pedidos, cuenta, ayuda y propina del
+    comensal. Pedir desde el QR exige la **asignación de mesas** (la comanda tiene responsable):
+    queda encendida, con las mesas 1–5 a «Mesero 1» y 6–10 a «Mesero 2»; el dueño la cambia en
+    Configuración.
+- **Pendiente (Fase B):** una columna explícita página → categorías reemplazaría la regla del
+  título; requiere migración, que la base compartida no admite.
+- **Prueba:** unidad (ligado de páginas, opciones públicas sin precio) y navegador
+  (`restaurante-menu-personalizado.spec.ts`: el comensal pide desde una página con su opción y el
+  servidor lo registra).

@@ -118,3 +118,11 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   la que nace un producto (DP-D17).
 - Las pantallas `/restaurante/recetas` y `/restaurante/productos` enseñaban costo $0.00 y margen
   100 % «sano» a un platillo sin receta: ahora «Costo desconocido» y «Sin costo».
+
+## 25-10-2026 · Portal QR completo y menú personalizado (DP-D18)
+
+- Pedido de Miguel: portal «con todo» y el menú personalizado diseñado con botones de pedir.
+- Hecho: el menú público publica las opciones de cada platillo; cada página del menú subido lleva
+  sus platillos con «Agregar»; 8 páginas diseñadas desde el menú; el marcador de platillo sin
+  foto, plano en la pizarra de la marca; el cargador deja el portal encendido, las 8 páginas y la
+  asignación de mesas. Ensayo en base desechable y prueba de navegador en verde.

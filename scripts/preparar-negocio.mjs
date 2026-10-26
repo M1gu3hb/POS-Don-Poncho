@@ -18,6 +18,7 @@
  * mesa (por número) y cada persona (por nombre) se crean sólo si no existen, y a quien ya existe
  * NO se le cambia el PIN. Sólo corre contra Don Poncho o un restaurante de prueba, por ID.
  */
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 
 for (const linea of (existsSync('.env') ? readFileSync('.env', 'utf8') : '').split('\n')) {
@@ -110,25 +111,72 @@ const ambito = {
 };
 const hecho = [];
 
+/**
+ * La huella de lo que se manda: con los mismos datos, la misma clave (el comando devuelve lo de la
+ * primera vez); con datos nuevos —otra versión de la configuración—, otra clave, en vez de un
+ * `IDEMPOTENCIA_CONFLICTO` por reusar la vieja con otro contenido.
+ */
+function huella(entrada) {
+  // El PIN NO entra: la clave se guarda en la base, y de cuatro dígitos se adivina a la fuerza.
+  const sinPin = JSON.stringify(entrada, (campo, valor) => (campo === 'pin' ? undefined : valor));
+  return createHash('sha256').update(sinPin).digest('hex').slice(0, 16);
+}
+
 async function ejecutar(definicion, entrada, clave) {
   if (ensayo) return null;
   const r = await comando(definicion, {
     ambito,
     entrada,
-    idempotencyKey: `preparar-negocio:v${String(datos.version)}:${slug}:${clave}`,
+    idempotencyKey: `preparar-negocio:v${String(datos.version)}:${slug}:${clave}:${huella(entrada)}`,
   });
   if (!r.ok) throw new Error(`${clave}: ${r.error.codigo} · ${r.error.mensaje ?? ''}`);
   return r.datos;
 }
 
-// 1 · Configuración y apariencia: mismos valores, mismo resultado.
+// 1 · Configuración (con el portal QR) y apariencia: mismos valores, mismo resultado.
 await ejecutar(
   escribirDatos,
-  { entidad: 'ConfiguracionNegocio', operacion: 'update', datos: datos.configuracion },
+  {
+    entidad: 'ConfiguracionNegocio',
+    operacion: 'update',
+    datos: { ...datos.configuracion, ...datos.portal.configuracion },
+  },
   'configuracion',
 );
 await ejecutar(fijarApariencia, datos.apariencia, 'apariencia');
-hecho.push('configuración', `estilo ${datos.apariencia.estilo}`);
+hecho.push('configuración y portal QR', `estilo ${datos.apariencia.estilo}`);
+
+// 1b · Las páginas del menú personalizado, por título. La imagen se sirve del propio sitio
+// (`apps/web/public/menu-qr`, la genera `generar-menu-qr.mjs`) con la dirección del despliegue.
+const origen = new URL(process.env['APP_URL'] ?? '').origin;
+const paginasQueHay = new Set(
+  (
+    await db
+      .selectFrom('menu_qr_secciones')
+      .select('nombre')
+      .where('organizacion_id', '=', org.id)
+      .execute()
+  ).map((p) => p.nombre),
+);
+let paginasNuevas = 0;
+for (const [orden, pagina] of datos.portal.paginas.entries()) {
+  if (paginasQueHay.has(pagina.titulo)) continue;
+  paginasNuevas += 1;
+  const seccion = {
+    nombre: pagina.titulo,
+    imagen_url: `${origen}/menu-qr/${pagina.archivo}.webp`,
+    orden,
+    activo: true,
+  };
+  await ejecutar(
+    escribirDatos,
+    { entidad: 'MenuQRSeccion', operacion: 'create', datos: seccion },
+    `pagina:${pagina.archivo}`,
+  );
+}
+hecho.push(
+  `${String(paginasNuevas)} páginas del menú QR nuevas de ${String(datos.portal.paginas.length)}`,
+);
 
 // 2 · La zona y sus mesas, por nombre y por número.
 let zona = await db
@@ -195,6 +243,45 @@ for (const integrante of datos.equipo) {
   );
 }
 hecho.push(`${String(personasNuevas)} personas nuevas de ${String(datos.equipo.length)}`);
+
+// 4 · Quién responde por cada mesa. Con la asignación encendida el comensal pide desde el QR
+// y la comanda tiene dueño (`puedeOrdenarDesdeQR`). Sólo las mesas que siguen sin asignar.
+let asignadas = 0;
+if (!ensayo) {
+  for (const [nombre, numerosDeMesa] of Object.entries(datos.sala.asignacion ?? {})) {
+    const empleo = await db
+      .selectFrom('empleos')
+      .innerJoin('personas', 'personas.id', 'empleos.persona_id')
+      .select('empleos.id')
+      .where('empleos.organizacion_id', '=', org.id)
+      .where('empleos.activo', '=', true)
+      .where('personas.nombre', '=', nombre)
+      .executeTakeFirst();
+    if (empleo === undefined)
+      throw new Error(`«${nombre}» no está en el equipo: no se le asignan mesas.`);
+    const libres = await db
+      .selectFrom('mesas')
+      .select(['id', 'numero'])
+      .where('organizacion_id', '=', org.id)
+      .where('numero', 'in', numerosDeMesa)
+      .where('empleado_asignado_id', 'is', null)
+      .execute();
+    for (const mesa of libres) {
+      asignadas += 1;
+      await ejecutar(
+        escribirDatos,
+        {
+          entidad: 'Mesa',
+          operacion: 'update',
+          id: mesa.id,
+          datos: { mesero_asignado_id: empleo.id },
+        },
+        `asignacion:${String(mesa.numero)}`,
+      );
+    }
+  }
+}
+hecho.push(`${String(asignadas)} mesas asignadas`);
 
 console.log(
   `${ensayo ? '◦ Ensayo' : '✓ Preparado'} «${slug}»: ${hecho.join(' · ')}. (Los PIN no se imprimen.)`,

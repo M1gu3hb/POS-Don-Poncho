@@ -21,14 +21,99 @@
     "elevacion": "sombra",
     "movimiento": "sutil"
   },
-  "sala": { "zona": "Salón", "mesas": 10, "capacidad": 4 },
+  "sala": {
+    "zona": "Salón",
+    "mesas": 10,
+    "capacidad": 4,
+    "asignacion": {
+      "Mesero 1": [1, 2, 3, 4, 5],
+      "Mesero 2": [6, 7, 8, 9, 10]
+    }
+  },
   "equipo": [
-    { "nombre": "Dueño Don Poncho", "puesto": "dueno" },
-    { "nombre": "Gerente", "puesto": "gerente" },
-    { "nombre": "Caja", "puesto": "cajero" },
-    { "nombre": "Mesero 1", "puesto": "mesero" },
-    { "nombre": "Mesero 2", "puesto": "mesero" },
-    { "nombre": "Cocina", "puesto": "cocina" },
-    { "nombre": "Almacén", "puesto": "almacen" }
-  ]
+    {
+      "nombre": "Dueño Don Poncho",
+      "puesto": "dueno"
+    },
+    {
+      "nombre": "Gerente",
+      "puesto": "gerente"
+    },
+    {
+      "nombre": "Caja",
+      "puesto": "cajero"
+    },
+    {
+      "nombre": "Mesero 1",
+      "puesto": "mesero"
+    },
+    {
+      "nombre": "Mesero 2",
+      "puesto": "mesero"
+    },
+    {
+      "nombre": "Cocina",
+      "puesto": "cocina"
+    },
+    {
+      "nombre": "Almacén",
+      "puesto": "almacen"
+    }
+  ],
+  "portal": {
+    "configuracion": {
+      "portal_qr_activo": true,
+      "portal_qr_modo_menu": "menu_subido",
+      "portal_qr_mostrar_precios": true,
+      "portal_qr_mostrar_sin_imagen": true,
+      "portal_qr_permitir_ordenar": true,
+      "portal_qr_permitir_pedidos_cliente": true,
+      "portal_qr_permitir_cuenta": true,
+      "portal_qr_permitir_ayuda": true,
+      "portal_qr_mostrar_precuenta": true,
+      "portal_qr_permitir_propina_cliente": true,
+      "portal_qr_cuenta_modo": "ambos",
+      "portal_qr_mensaje_bienvenida": "¡Bienvenidos a La Tradicional Barbacoa de Don Poncho! Del horno a tu mesa.",
+      "asignacion_mesas_activa": true
+    },
+    "paginas": [
+      {
+        "archivo": "01-pa-empezar-y-sopas",
+        "titulo": "Pa’ empezar · Las sopas",
+        "portada": true
+      },
+      {
+        "archivo": "02-lo-fuerte",
+        "titulo": "Lo fuerte",
+        "nota": "La barbacoa de horno y la preparada se sirven por kilo: ¼, ½ o 1 kg."
+      },
+      {
+        "archivo": "03-lo-dulce-y-para-calentar",
+        "titulo": "Lo dulce · Para calentar"
+      },
+      {
+        "archivo": "04-para-enfriar",
+        "titulo": "Para enfriar"
+      },
+      {
+        "archivo": "05-cerveza-y-preparadas",
+        "titulo": "Cerveza · Bebidas preparadas"
+      },
+      {
+        "archivo": "06-tequila-mezcal-ron-brandy",
+        "titulo": "Tequila · Mezcal · Ron · Brandy",
+        "nota": "Todo por copa."
+      },
+      {
+        "archivo": "07-whisky-vodka-licores-vino",
+        "titulo": "Whisky · Vodka · Anís y licores · Vino tinto",
+        "nota": "Todo por copa."
+      },
+      {
+        "archivo": "08-pulques",
+        "titulo": "Pulques",
+        "pulques": true
+      }
+    ]
+  }
 }

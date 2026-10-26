@@ -18,6 +18,7 @@
  * Sólo corre contra Don Poncho o un restaurante de prueba, por ID: un negocio ajeno de la
  * base compartida se rechaza antes de tocar nada.
  */
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 
 import {
@@ -119,11 +120,22 @@ const ambito = {
 const cuenta = { creadas: 0, existian: 0, completados: 0 };
 
 /** Corre un comando con clave estable; lanza con el código si el comando lo rechaza. */
+/**
+ * La huella de lo que se manda: con los mismos datos, la misma clave (el comando devuelve lo de la
+ * primera vez); con datos nuevos —otra versión de la configuración—, otra clave, en vez de un
+ * `IDEMPOTENCIA_CONFLICTO` por reusar la vieja con otro contenido.
+ */
+function huella(entrada) {
+  // El PIN NO entra: la clave se guarda en la base, y de cuatro dígitos se adivina a la fuerza.
+  const sinPin = JSON.stringify(entrada, (campo, valor) => (campo === 'pin' ? undefined : valor));
+  return createHash('sha256').update(sinPin).digest('hex').slice(0, 16);
+}
+
 async function ejecutar(definicion, entrada, clave) {
   const resultado = await comando(definicion, {
     ambito,
     entrada,
-    idempotencyKey: `cargar-menu:v${String(menu.version)}:${slug}:${clave}`,
+    idempotencyKey: `cargar-menu:v${String(menu.version)}:${slug}:${clave}:${huella(entrada)}`,
   });
   if (!resultado.ok) {
     throw new Error(`${clave}: ${resultado.error.codigo} · ${resultado.error.mensaje ?? ''}`);
