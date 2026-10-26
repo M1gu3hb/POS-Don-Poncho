@@ -2,9 +2,9 @@ import { expect, test } from '@playwright/test';
 import type { Locator, Page, PlaywrightWorkerArgs, Response, TestInfo } from '@playwright/test';
 
 import {
-  DEMOS,
+  NEGOCIOS_DE_PRUEBA,
   NEGOCIOS_REALES,
-  demoPorSlug,
+  negocioDePruebaPorSlug,
   negocioReal,
 } from '../../../packages/contracts/src/negocios/index.ts';
 import { nombreVisibleDelNegocio } from '../../../apps/web/src/marca/nombre-visible.ts';
@@ -303,7 +303,7 @@ export async function exigirDemostracion(
   // LA REGLA POSITIVA (bloque B de la 2.4): la suite corre sólo sobre una de las cinco
   // demos declaradas por ID en `packages/contracts/src/negocios`. Antes de abrir una
   // conexión, porque todo lo de abajo ya habla con el despliegue.
-  if (demoPorSlug(SLUG) === null) {
+  if (negocioDePruebaPorSlug(SLUG) === null) {
     const real = negocioReal(SLUG);
     throw new Error(
       [
@@ -312,7 +312,7 @@ export async function exigirDemostracion(
           ? 'No está en la lista de demos de packages/contracts/src/negocios.'
           : `Es ${real.nombre}: un NEGOCIO REAL que cobra. Nunca se prueba.`,
         '',
-        `Las demos: ${DEMOS.map((d) => d.slug).join(', ')}.`,
+        `Las demos: ${NEGOCIOS_DE_PRUEBA.map((d) => d.slug).join(', ')}.`,
       ].join('\n'),
     );
   }

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { slugDelHostQueManda, slugsConfigurados } from './despliegue.ts';
 
 /**
- * UN DESPLIEGUE, LAS CINCO DEMOS (E3).
+ * UN DESPLIEGUE, LAS CINCO NEGOCIOS_DE_PRUEBA (E3).
  *
  * `ORGANIZACION` es una variable del BUILD: la misma para todas las peticiones,
  * así que con un solo slug **un despliegue sólo puede servir a un negocio**. El

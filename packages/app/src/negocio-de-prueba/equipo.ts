@@ -1,68 +1,48 @@
 import 'server-only';
 
 import type { Giro } from '@morphiqpos/contracts';
-import { equipoDeDemo, type EmpleadoDemo } from '@morphiqpos/contracts/negocios/equipo';
+import {
+  equipoDePrueba,
+  type EmpleadoDePrueba,
+} from '@morphiqpos/contracts/negocios/equipo';
 import type { Transaccion } from '@morphiqpos/data';
 
 import { hashearPin } from '../identidad/pin.ts';
 
 /**
- * EL EQUIPO de cada demostración: una persona por cada rol que opera de verdad.
+ * EL EQUIPO del restaurante de prueba: una persona por cada rol que opera de verdad.
  *
- * ── Por qué hacía falta ────────────────────────────────────────────────────
- * Las cinco demos tenían UN empleado, el dueño que crea `db:bootstrap`. Con uno
- * solo no se puede enseñar nada de lo que este sistema hace: los permisos por
- * rol no se ven —el dueño lo puede todo—, la pantalla de acceso enseña una sola
- * tarjeta, el corte de caja no distingue quién cobró, y la comisión de un salón
- * o la propina de un restaurante no tienen a quién repartirse.
+ * Con sólo el dueño que crea `db:bootstrap` no se prueba nada de lo que importa: los
+ * permisos por rol no se distinguen, el corte no sabe quién cobró y la propina no tiene a
+ * quién repartirse. «Entra con el dueño y mira» no prueba que un cajero NO pueda cambiar la
+ * configuración.
  *
- * Y peor para quien revisa: «entra con el dueño y mira» no prueba que un cajero
- * NO pueda cambiar la plantilla, que es media seguridad del sistema.
- *
- * ── Los PIN, y por qué están aquí escritos ─────────────────────────────────
- * Son de DEMOSTRACIÓN, de cuatro dígitos y **distintos por rol a propósito**,
- * para que al revisar se sepa con quién se entró sin mirar dos veces. Se hashean
- * con Argon2id y pimienta igual que cualquier otro: no hay un camino distinto
- * para sembrar, y nunca se guarda un PIN en claro — precisamente porque «es sólo
- * la demo» es como acaban los PIN en claro en producción.
- *
- * El del DUEÑO no está aquí: lo pone `db:bootstrap` cuando se crea el negocio, y
- * un reseteo de demostración no tiene por qué cambiarle la contraseña a nadie.
- *
- * ── Los nombres ────────────────────────────────────────────────────────────
- * Personas reconocibles y distintas en cada demo, para que al abrir una captura
- * de pantalla se sepa de qué negocio es. No «Usuario 2» ni «Cajero Demo»: una
- * pantalla de acceso con nombres genéricos se ve como un sistema sin terminar.
+ * Los PIN son de PRUEBA (`@morphiqpos/contracts/negocios/equipo`), distintos por rol a
+ * propósito, y se hashean con Argon2id y pimienta igual que cualquier otro. Sólo existen en
+ * bases desechables: el reseteo se niega fuera de `NEGOCIOS_DE_PRUEBA`.
  */
 
-export type { EmpleadoDemo };
+export type { EmpleadoDePrueba };
 
-/**
- * El equipo de cada giro. La TABLA vive en `@morphiqpos/contracts/negocios/equipo`
- * desde la 2.4: la leen también las pruebas de extremo a extremo, que entran con el
- * rol que toca a cada paso del día. Aquí sólo se decide qué giro siembra cuál.
- */
-export function equipoDelGiro(giro: Giro): readonly EmpleadoDemo[] {
-  return equipoDeDemo(giro);
+/** El equipo de un giro de prueba. La TABLA vive en contratos: la leen también las e2e. */
+export function equipoDelGiro(giro: Giro): readonly EmpleadoDePrueba[] {
+  return equipoDePrueba(giro);
 }
 
 /**
  * Siembra el equipo. Devuelve el `empleos.id` de cada persona, por su nombre.
  *
- * Los devuelve porque los necesitan dos cosas: la ficha de profesional de un
- * salón —que cuelga de un empleo— y la sesión de caja, que guarda quién la
- * abrió. Sin eso habría que volver a consultar por nombre, que es la clase de
- * atajo con el que dos personas homónimas rompen una demostración.
+ * Los devuelve porque la sesión de caja guarda quién la abrió. Sin eso habría que volver a consultar por nombre, que es la clase de
+ * atajo con el que dos personas homónimas rompen una prueba.
  *
  * Es idempotente por (organización, nombre, apellidos): correrlo dos veces no
  * duplica a nadie, y devuelve igual el empleo de quien ya estaba.
  *
  * ── Y a quien ya estaba lo REPONE (bloque B.2 de la 2.4) ──────────────────
- * Antes lo saltaba tal cual, y eso dejaba la demo como la había dejado la última
+ * Antes lo saltaba tal cual, y eso dejaba el negocio como lo había dejado la última
  * prueba: `humo-accesos` le cambia el PIN a alguien, una prueba de seguridad lo
  * bloquea por intentos, otra lo da de baja o le cambia el rol. La corrida siguiente
- * —o la demostración delante de un cliente— no podía entrar con el PIN que
- * `ACCESOS-DEMO.md` publica. Ahora cada persona sembrada vuelve a su rol, a su PIN,
+ * no podía entrar con su PIN de prueba. Ahora cada persona sembrada vuelve a su rol, a su PIN,
  * a cero intentos, sin bloqueo y activa.
  */
 export async function sembrarEquipo(

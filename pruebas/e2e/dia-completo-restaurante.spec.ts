@@ -443,7 +443,7 @@ test.describe('el día completo del restaurante', () => {
       const duena = await equipo.pagina(info, 'dueno');
       fallos.push(vigilarFallos(duena));
       await test.step('reseteo de la demo', async () => {
-        const respuesta = await duena.request.post('/api/catalogo/demostracion/resetear', {
+        const respuesta = await duena.request.post('/api/pruebas/resetear', {
           headers: cabecerasDeEscrituraDePrueba(),
           data: { confirmacion: 'RESETEAR' },
         });

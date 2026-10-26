@@ -10,7 +10,7 @@
  * siempre — sesión, rol, transacción, idempotencia y rastro.
  *
  * Entra como el dueño de la demo (PIN publicado, `ACCESOS-DEMO.md` §2) y ejecuta
- * `resetearDemo`, que la deja como recién nacida: catálogo, equipo con sus PIN,
+ * `resetearNegocioDePrueba`, que la deja como recién nacida: catálogo, equipo con sus PIN,
  * plantilla, estilo, IVA y topes.
  *
  * ── Lo que cambió en la 2.4 (bloque B) ─────────────────────────────────────
@@ -54,7 +54,7 @@ exigir(
 paso(2, 'Sembrar con el comando real');
 const sembrado = exigir(
   'resetear demostración',
-  await llamar('/api/catalogo/demostracion/resetear', { confirmacion: 'RESETEAR' }),
+  await llamar('/api/pruebas/resetear', { confirmacion: 'RESETEAR' }),
 );
 console.log(
   `  ${String(sembrado.productos)} producto(s) y ${String(sembrado.insumos)} insumo(s), con rastro en auditoría`,

@@ -1,79 +1,137 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  DEMOS,
+  NEGOCIO_DON_PONCHO,
+  NEGOCIOS_AJENOS,
+  NEGOCIOS_DE_PRUEBA,
   NEGOCIOS_REALES,
-  NoEsUnaDemo,
-  demoPorSlug,
+  NoEsUnNegocioDePrueba,
   esDeUnProyectoIntocable,
-  exigirDemo,
+  negocioAjeno,
+  exigirNegocioDePrueba,
+  negocioDePruebaPorSlug,
+  negocioReal,
 } from './index.ts';
 
 /**
- * La guarda de todo lo que prueba, siembra o resetea (bloque B de la 2.4).
+ * La guarda de todo lo que prueba, siembra o resetea (bloque B de la 2.4, reducida en DP-2).
  *
- * Lo que fija: la regla es POSITIVA —sólo las cinco demos pasan— y el prefijo `demo-`
- * no significa nada, porque tres de los cuatro negocios reales lo llevan.
+ * Lo que fija: la regla es POSITIVA —sólo los restaurantes de prueba pasan, y sólo existen en
+ * bases desechables—. Don Poncho es el único negocio real de este sistema, y los negocios que
+ * conviven con él en la base compartida de la Fase A son ajenos: tampoco se tocan.
  */
-describe('las dos listas', () => {
-  it('no comparten ni un ID ni un slug', () => {
-    const reales = new Set(NEGOCIOS_REALES.flatMap((n) => [n.id, n.slug]));
-    for (const demo of DEMOS) {
-      expect(reales.has(demo.id)).toBe(false);
-      expect(reales.has(demo.slug)).toBe(false);
+describe('las tres listas', () => {
+  it('Don Poncho es el único negocio real, con su ID fijo', () => {
+    expect(NEGOCIOS_REALES).toEqual([NEGOCIO_DON_PONCHO]);
+    expect(NEGOCIO_DON_PONCHO.slug).toBe('don-poncho');
+    expect(NEGOCIO_DON_PONCHO.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-/);
+  });
+
+  it('los de prueba no comparten ni un ID ni un slug con los reales ni con los ajenos', () => {
+    const protegidos = new Set(
+      [...NEGOCIOS_REALES, ...NEGOCIOS_AJENOS].flatMap((n) => [n.id, n.slug]),
+    );
+    for (const prueba of NEGOCIOS_DE_PRUEBA) {
+      expect(protegidos.has(prueba.id)).toBe(false);
+      expect(protegidos.has(prueba.slug)).toBe(false);
     }
   });
 
-  it('son las cuatro y las cinco que declara el encargo', () => {
-    expect(NEGOCIOS_REALES.map((n) => n.slug).sort()).toEqual([
-      'demo-abarrotes-don-chuy',
-      'demo-cafe-jacaranda',
-      'demo-ferreteria-la-broca',
-      'mh-restaurante',
+  it('hay dos restaurantes de prueba: la jornada usa uno y el aislamiento pide el otro', () => {
+    expect(NEGOCIOS_DE_PRUEBA.map((n) => n.slug)).toEqual([
+      'prueba-restaurante',
+      'prueba-restaurante-dos',
     ]);
-    expect(DEMOS.map((n) => n.slug).sort()).toEqual([
-      'demo-acople-cafeteria',
-      'demo-acople-estetica',
-      'demo-acople-ferreteria',
+    expect(NEGOCIOS_DE_PRUEBA.every((n) => n.giro === 'restaurante')).toBe(true);
+    // Ningún nombre de demostración a la vista (DP-2).
+    for (const n of NEGOCIOS_DE_PRUEBA) expect(n.nombre).not.toMatch(/demo|MH|Morphiq/i);
+  });
+
+  it('los ajenos incluyen las demostraciones del maestro que viven en la base compartida', () => {
+    const slugs = NEGOCIOS_AJENOS.map((n) => n.slug);
+    for (const slug of [
+      'mh-restaurante',
       'demo-acople-restaurante',
       'demo-acople-tienda',
-    ]);
+      'demo-cafe-jacaranda',
+    ]) {
+      expect(slugs).toContain(slug);
+    }
   });
 });
 
-describe('exigirDemo', () => {
-  it('deja pasar a una demo, por ID y por slug', () => {
-    const tienda = demoPorSlug('demo-acople-tienda');
-    expect(tienda).not.toBeNull();
-    expect(exigirDemo({ id: tienda?.id ?? '' }, 'x').slug).toBe('demo-acople-tienda');
-    expect(exigirDemo({ slug: 'demo-acople-tienda' }, 'x').id).toBe(tienda?.id);
-    expect(exigirDemo({ id: tienda?.id ?? '', slug: 'demo-acople-tienda' }, 'x').slug).toBe(
-      'demo-acople-tienda',
+describe('exigirNegocioDePrueba', () => {
+  it('deja pasar a un restaurante de prueba, por ID y por slug', () => {
+    const prueba = negocioDePruebaPorSlug('prueba-restaurante');
+    expect(prueba).not.toBeNull();
+    expect(exigirNegocioDePrueba({ id: prueba?.id ?? '' }, 'x').slug).toBe('prueba-restaurante');
+    expect(exigirNegocioDePrueba({ slug: 'prueba-restaurante' }, 'x').id).toBe(prueba?.id);
+    expect(
+      exigirNegocioDePrueba({ id: prueba?.id ?? '', slug: 'prueba-restaurante' }, 'x').slug,
+    ).toBe('prueba-restaurante');
+  });
+
+  it('para a Don Poncho, por ID y por slug, y dice quién es', () => {
+    expect(() => exigirNegocioDePrueba({ id: NEGOCIO_DON_PONCHO.id }, 'resetear')).toThrow(
+      NoEsUnNegocioDePrueba,
+    );
+    expect(() => exigirNegocioDePrueba({ slug: 'don-poncho' }, 'resetear')).toThrow(
+      NoEsUnNegocioDePrueba,
+    );
+    expect(() => exigirNegocioDePrueba({ id: NEGOCIO_DON_PONCHO.id }, 'resetear')).toThrow(
+      NEGOCIO_DON_PONCHO.nombre,
     );
   });
 
-  it('para a CADA negocio real, aunque su slug empiece por demo-', () => {
-    for (const real of NEGOCIOS_REALES) {
-      expect(() => exigirDemo({ id: real.id }, 'resetear')).toThrow(NoEsUnaDemo);
-      expect(() => exigirDemo({ slug: real.slug }, 'resetear')).toThrow(NoEsUnaDemo);
-      expect(() => exigirDemo({ id: real.id }, 'resetear')).toThrow(real.nombre);
+  it('para a CADA negocio ajeno de la base compartida, aunque su slug diga demo', () => {
+    for (const ajeno of NEGOCIOS_AJENOS) {
+      expect(() => exigirNegocioDePrueba({ id: ajeno.id }, 'resetear')).toThrow(
+        NoEsUnNegocioDePrueba,
+      );
+      expect(() => exigirNegocioDePrueba({ slug: ajeno.slug }, 'resetear')).toThrow(
+        NoEsUnNegocioDePrueba,
+      );
     }
   });
 
   it('para a un negocio que no está en ninguna lista: la regla es positiva', () => {
-    expect(() => exigirDemo({ id: '99999999-0000-4000-8000-000000000000' }, 'sembrar')).toThrow(
-      NoEsUnaDemo,
+    expect(() =>
+      exigirNegocioDePrueba({ id: '99999999-0000-4000-8000-000000000000' }, 'sembrar'),
+    ).toThrow(NoEsUnNegocioDePrueba);
+    expect(() => exigirNegocioDePrueba({ slug: 'prueba-cafeteria' }, 'sembrar')).toThrow(
+      NoEsUnNegocioDePrueba,
     );
-    expect(() => exigirDemo({ slug: 'demo-acople-farmacia' }, 'sembrar')).toThrow(NoEsUnaDemo);
-    expect(() => exigirDemo({}, 'sembrar')).toThrow(NoEsUnaDemo);
-    expect(() => exigirDemo({ id: '', slug: '' }, 'sembrar')).toThrow(NoEsUnaDemo);
+    expect(() => exigirNegocioDePrueba({}, 'sembrar')).toThrow(NoEsUnNegocioDePrueba);
+    expect(() => exigirNegocioDePrueba({ id: '', slug: '' }, 'sembrar')).toThrow(
+      NoEsUnNegocioDePrueba,
+    );
   });
 
-  it('para un slug de demo con el ID de un cliente', () => {
-    const mh = NEGOCIOS_REALES[0];
-    expect(() => exigirDemo({ id: mh?.id ?? '', slug: 'demo-acople-tienda' }, 'x')).toThrow(
-      NoEsUnaDemo,
-    );
+  it('para un slug de prueba con el ID de un negocio real', () => {
+    expect(() =>
+      exigirNegocioDePrueba({ id: NEGOCIO_DON_PONCHO.id, slug: 'prueba-restaurante' }, 'x'),
+    ).toThrow(NoEsUnNegocioDePrueba);
+  });
+});
+
+describe('negocioReal', () => {
+  it('reconoce a Don Poncho y a los ajenos, que nunca se dan de alta ni se tocan', () => {
+    expect(negocioReal('don-poncho')?.id).toBe(NEGOCIO_DON_PONCHO.id);
+    expect(negocioReal(NEGOCIOS_AJENOS[0]?.id)).not.toBeNull();
+    expect(negocioReal('prueba-restaurante')).toBeNull();
+  });
+});
+
+describe('negocioAjeno', () => {
+  it('reconoce a los ajenos de la base compartida, y NO a Don Poncho ni a los de prueba', () => {
+    for (const ajeno of NEGOCIOS_AJENOS) {
+      expect(negocioAjeno(ajeno.id)?.slug).toBe(ajeno.slug);
+      expect(negocioAjeno(ajeno.slug)?.id).toBe(ajeno.id);
+    }
+    // Don Poncho no es ajeno: su alta y su primer acceso sí proceden (una vez).
+    expect(negocioAjeno('don-poncho')).toBeNull();
+    expect(negocioAjeno(NEGOCIO_DON_PONCHO.id)).toBeNull();
+    expect(negocioAjeno('prueba-restaurante')).toBeNull();
   });
 });
 

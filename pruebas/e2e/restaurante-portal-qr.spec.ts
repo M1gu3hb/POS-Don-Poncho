@@ -143,7 +143,7 @@ test.describe('el portal del comensal', () => {
       const duena = await equipo.pagina(info, 'dueno');
       fallos.push(vigilarFallos(duena));
       await test.step('reseteo de la demo: el portal nace apagado y sin códigos', async () => {
-        const respuesta = await duena.request.post('/api/catalogo/demostracion/resetear', {
+        const respuesta = await duena.request.post('/api/pruebas/resetear', {
           headers: cabecerasDeEscrituraDePrueba(),
           data: { confirmacion: 'RESETEAR' },
         });
@@ -679,7 +679,7 @@ test.describe('el portal del comensal', () => {
     const equipo = new Equipo(browser, SLUG);
     try {
       const duena = await equipo.pagina(info, 'dueno');
-      const respuesta = await duena.request.post('/api/catalogo/demostracion/resetear', {
+      const respuesta = await duena.request.post('/api/pruebas/resetear', {
         headers: cabecerasDeEscrituraDePrueba(),
         data: { confirmacion: 'RESETEAR' },
       });

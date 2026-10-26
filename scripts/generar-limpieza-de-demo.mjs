@@ -20,12 +20,12 @@
  *   node scripts/generar-limpieza-de-demo.mjs              reescribe el bloque generado
  *   node scripts/generar-limpieza-de-demo.mjs --verificar  sale en 1 si está desfasado
  *
- * La prueba `packages/app/src/demostracion/tablas-del-reseteo.test.ts` comprueba lo
+ * La prueba `packages/app/src/negocio-de-prueba/tablas-del-reseteo.test.ts` comprueba lo
  * mismo por su cuenta —cobertura y orden— sin llamar a este guion.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const ARCHIVO = 'packages/app/src/demostracion/tablas-del-reseteo.ts';
+const ARCHIVO = 'packages/app/src/negocio-de-prueba/tablas-del-reseteo.ts';
 const ESQUEMA = 'scripts/esquema-esperado.json';
 const INICIO = '// <generado por scripts/generar-limpieza-de-demo.mjs>';
 const FIN = '// </generado>';

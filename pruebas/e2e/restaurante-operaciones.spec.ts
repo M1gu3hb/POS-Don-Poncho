@@ -988,7 +988,7 @@ async function empezarElDia(browser: Browser, info: TestInfo): Promise<Dia> {
   const duena = conTecho(await equipo.pagina(info, 'dueno'));
 
   if (!reseteado) {
-    const respuesta = await duena.request.post('/api/catalogo/demostracion/resetear', {
+    const respuesta = await duena.request.post('/api/pruebas/resetear', {
       headers: cabecerasDeEscrituraDePrueba(),
       data: { confirmacion: 'RESETEAR' },
     });
@@ -2970,7 +2970,7 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
     const equipo = new Equipo(browser, SLUG);
     try {
       const duena = conTecho(await equipo.pagina(info, 'dueno'));
-      const respuesta = await duena.request.post('/api/catalogo/demostracion/resetear', {
+      const respuesta = await duena.request.post('/api/pruebas/resetear', {
         headers: cabecerasDeEscrituraDePrueba(),
         data: { confirmacion: 'RESETEAR' },
       });

@@ -9,20 +9,20 @@
  * protegiendo a los de antes.
  *
  * ── Por qué por ID y no por nombre ni por prefijo ────────────────────────────
- * **Tres de los cuatro negocios reales tienen un identificador que empieza por
- * `demo-`.** Nacieron como demostraciones y se quedaron a cobrar. Cualquier regla de
- * prefijo daría por buena la caja de Don Chuy. El nombre tampoco sirve: se cambia
- * desde la configuración. El ID no lo cambia nadie.
+ * En la base compartida de la Fase A conviven con Don Poncho negocios ajenos, y tres de
+ * ellos tienen un identificador que empieza por `demo-` aunque cobran de verdad. Una regla
+ * de prefijo daría por buena una caja ajena. El nombre tampoco sirve: se cambia desde la
+ * configuración. El ID no lo cambia nadie.
  *
  * ── Y la regla es POSITIVA ───────────────────────────────────────────────────
- * Una operación de prueba corre SÓLO si el negocio está en `DEMOS`. No «si no está en
- * los reales»: un negocio que Miguel dé de alta mañana no está en ninguna de las dos
- * listas, y con una regla negativa sería tocable desde el primer día. Con ésta no lo
- * es hasta que alguien lo declare demo aquí, a propósito y con su ID.
+ * Una operación de prueba corre SÓLO si el negocio está en `NEGOCIOS_DE_PRUEBA`, que son
+ * dos restaurantes que únicamente existen en bases desechables. No «si no está en los
+ * reales»: un negocio que nadie declaró sería tocable desde el primer día.
  *
- * `NEGOCIOS_REALES` se conserva para los MENSAJES —decir «eso es la caja de
- * Restaurante MH» es más útil que «no es una demo»— y para las comprobaciones que
- * miran lo que un despliegue sirve. Nunca para decidir que algo se puede tocar.
+ * POS Don Poncho (DP-2) no tiene demostraciones. `NEGOCIOS_REALES` es Don Poncho y
+ * `NEGOCIOS_AJENOS` son los que viven en la base compartida (los cuatro clientes y las
+ * demostraciones del maestro): las dos listas sirven para los MENSAJES y para negarse a dar
+ * de alta otra vez; nunca para decidir que algo se puede tocar.
  *
  * Este archivo lo importan el servidor (`resetear.ts`), los guiones (`scripts/*.mjs`,
  * por ruta), las pruebas (`pruebas/`, por ruta) y `@morphiqpos/testing`. No depende
@@ -35,8 +35,31 @@ export interface NegocioConocido {
   readonly nombre: string;
 }
 
-/** Los cuatro que cobran. Nunca se prueban, nunca se resetean, nunca se siembran. */
-export const NEGOCIOS_REALES: readonly NegocioConocido[] = [
+/** Un restaurante de prueba: el giro va escrito, no se deduce del slug. */
+export interface NegocioDePrueba extends NegocioConocido {
+  readonly giro: 'restaurante';
+}
+
+/**
+ * EL NEGOCIO DE ESTE SISTEMA. Su ID se fija aquí ANTES de darlo de alta: `db:alta-negocio`
+ * lo crea con este ID sólo si ni el ID ni el slug existen, y si ya existe no lo toca (DP-4).
+ * Así el mismo ID viaja a su proyecto propio (Fase B) y a su servidor (Fase C).
+ */
+export const NEGOCIO_DON_PONCHO: NegocioConocido = {
+  id: '617ec3ad-cdc5-46d4-8d71-a1ed479c496b',
+  slug: 'don-poncho',
+  nombre: 'Don Poncho',
+};
+
+/** El que cobra. Nunca se prueba, nunca se resetea, nunca se siembra. */
+export const NEGOCIOS_REALES: readonly NegocioConocido[] = [NEGOCIO_DON_PONCHO];
+
+/**
+ * LOS AJENOS: los que comparten la base de la Fase A con Don Poncho (proyecto MorphiqPOS).
+ * Son de otros clientes o del maestro. Este sistema no los sirve, no los lee y no los toca;
+ * van aquí para que ninguna herramienta los confunda con algo suyo.
+ */
+export const NEGOCIOS_AJENOS: readonly NegocioConocido[] = [
   { id: 'aefc918b-5303-4ae7-a1b1-7c8e03105852', slug: 'mh-restaurante', nombre: 'Restaurante MH' },
   {
     id: '10000000-0000-4000-8000-000000000001',
@@ -53,49 +76,59 @@ export const NEGOCIOS_REALES: readonly NegocioConocido[] = [
     slug: 'demo-cafe-jacaranda',
     nombre: 'Café Jacaranda',
   },
-];
-
-/**
- * Las cinco demostraciones del acople. Las ÚNICAS sobre las que corre una prueba.
- *
- * El nombre es el que tienen al nacer (`db:alta-negocio`), y es al que las devuelve el
- * reseteo si una prueba lo cambió desde la configuración. Comprobados contra la base el
- * 24-09-2026: ID, slug y nombre.
- */
-export const DEMOS: readonly NegocioConocido[] = [
   {
     id: '1c20ddfe-535d-480c-88eb-f0d2efe3d750',
     slug: 'demo-acople-tienda',
-    nombre: 'Demo del acople · tienda',
+    nombre: 'Demostración del maestro · tienda',
   },
   {
     id: 'c7fc2e42-c167-4180-9938-855f8c52896b',
     slug: 'demo-acople-cafeteria',
-    nombre: 'Demo del acople · cafeteria',
+    nombre: 'Demostración del maestro · cafetería',
   },
   {
     id: '33dad5ff-ffea-44a5-abd4-cce8019098a7',
     slug: 'demo-acople-restaurante',
-    // El restaurante que Miguel presenta y opera: un solo restaurante visible (21-10, D-52).
-    // `mh-restaurante` se llama igual pero ya no lo sirve el despliegue.
-    nombre: 'Restaurante MH',
+    nombre: 'Demostración del maestro · restaurante',
   },
   {
     id: '61d447a6-9633-4709-b850-871c00ae162f',
     slug: 'demo-acople-ferreteria',
-    nombre: 'Demo del acople · ferreteria',
+    nombre: 'Demostración del maestro · ferretería',
   },
   {
     id: '1747ccf9-3474-4233-bd87-60e2e188fa8b',
     slug: 'demo-acople-estetica',
-    nombre: 'Demo del acople · estetica',
+    nombre: 'Demostración del maestro · estética',
   },
 ];
 
 /**
- * El proyecto de Supabase donde viven los cuatro negocios reales, y el de otro cliente
- * que esta base de código no toca ni para leer. Una URL de base que apunte a
- * cualquiera de los dos no es una base desechable.
+ * LOS RESTAURANTES DE PRUEBA. Los ÚNICOS sobre los que corre una prueba, una siembra o un
+ * reseteo, y sólo existen en bases desechables: sus ID no están en la base compartida, y
+ * las herramientas que los crean se niegan a correr contra un proyecto intocable.
+ *
+ * Dos, porque el aislamiento entre negocios se prueba pidiendo lo de uno desde el otro.
+ */
+export const NEGOCIOS_DE_PRUEBA: readonly NegocioDePrueba[] = [
+  {
+    id: 'eee9992f-8c71-4bb4-84a9-7682abb68f6d',
+    slug: 'prueba-restaurante',
+    nombre: 'Restaurante de prueba',
+    giro: 'restaurante',
+  },
+  {
+    id: 'be590cf6-f702-48bb-a0ea-7971de8d90e5',
+    slug: 'prueba-restaurante-dos',
+    nombre: 'Segundo restaurante de prueba',
+    giro: 'restaurante',
+  },
+];
+
+/**
+ * El proyecto de Supabase donde vive la base compartida de la Fase A, y el de otro cliente
+ * que esta base de código no toca ni para leer. Una URL de base que apunte a cualquiera de
+ * los dos no es una base desechable.
  */
 export const PROYECTOS_INTOCABLES: readonly string[] = [
   'wyqmzhliurwyxuyxznpb',
@@ -104,60 +137,76 @@ export const PROYECTOS_INTOCABLES: readonly string[] = [
 
 const normalizar = (valor: string): string => valor.trim().toLocaleLowerCase('en-US');
 
-/** La demo con ese ID, o `null`. */
-export function demoPorId(id: string | null | undefined): NegocioConocido | null {
+/** El restaurante de prueba con ese ID, o `null`. */
+export function negocioDePruebaPorId(id: string | null | undefined): NegocioDePrueba | null {
   const buscado = normalizar(id ?? '');
-  return DEMOS.find((d) => d.id === buscado) ?? null;
+  return NEGOCIOS_DE_PRUEBA.find((d) => d.id === buscado) ?? null;
 }
 
-/** La demo con ese slug, o `null`. Para quien sólo ve el slug —una respuesta pública—. */
-export function demoPorSlug(slug: string | null | undefined): NegocioConocido | null {
+/** El restaurante de prueba con ese slug, o `null`. */
+export function negocioDePruebaPorSlug(slug: string | null | undefined): NegocioDePrueba | null {
   const buscado = normalizar(slug ?? '');
-  return DEMOS.find((d) => d.slug === buscado) ?? null;
+  return NEGOCIOS_DE_PRUEBA.find((d) => d.slug === buscado) ?? null;
 }
 
-/** El negocio real con ese ID o slug, o `null`. Sólo para decirlo en un mensaje. */
+/** Don Poncho o un ajeno, con ese ID o slug, o `null`. Sólo para decirlo y negarse. */
 export function negocioReal(idOSlug: string | null | undefined): NegocioConocido | null {
   const buscado = normalizar(idOSlug ?? '');
-  return NEGOCIOS_REALES.find((n) => n.id === buscado || n.slug === buscado) ?? null;
-}
-
-/** El error de una operación de prueba sobre algo que no es una demo. */
-export class NoEsUnaDemo extends Error {
-  override readonly name = 'NoEsUnaDemo';
+  return (
+    [...NEGOCIOS_REALES, ...NEGOCIOS_AJENOS].find((n) => n.id === buscado || n.slug === buscado) ??
+    null
+  );
 }
 
 /**
- * LA guarda. Lanza si el negocio no es una de las cinco demos.
+ * Un negocio AJENO —de otro cliente o del maestro— con ese ID o slug, o `null`. Las
+ * herramientas de alta y de primer acceso se niegan con ellos sin abrir la base; con Don
+ * Poncho proceden una sola vez (si ya existe, o ya tiene dueño con PIN, se niegan).
+ */
+export function negocioAjeno(idOSlug: string | null | undefined): NegocioConocido | null {
+  const buscado = normalizar(idOSlug ?? '');
+  return NEGOCIOS_AJENOS.find((n) => n.id === buscado || n.slug === buscado) ?? null;
+}
+
+/** El error de una operación de prueba sobre algo que no es un restaurante de prueba. */
+export class NoEsUnNegocioDePrueba extends Error {
+  override readonly name = 'NoEsUnNegocioDePrueba';
+}
+
+/**
+ * LA guarda. Lanza si el negocio no es uno de los restaurantes de prueba.
  *
  * Con `id` decide por ID. Sin él —quien sólo tiene el slug de una respuesta pública—
- * decide por slug contra la misma lista. Si llegan los dos, tienen que ser de la
- * MISMA demo: un slug de demo con el ID de un cliente es exactamente el error que
+ * decide por slug contra la misma lista. Si llegan los dos, tienen que ser del MISMO
+ * negocio de prueba: un slug de prueba con el ID de un cliente es exactamente el error que
  * esta guarda existe para parar.
  */
-export function exigirDemo(
+export function exigirNegocioDePrueba(
   negocio: { readonly id?: string | null; readonly slug?: string | null },
   operacion: string,
-): NegocioConocido {
-  const porId = negocio.id === undefined || negocio.id === null ? null : demoPorId(negocio.id);
+): NegocioDePrueba {
+  const porId =
+    negocio.id === undefined || negocio.id === null ? null : negocioDePruebaPorId(negocio.id);
   const porSlug =
-    negocio.slug === undefined || negocio.slug === null ? null : demoPorSlug(negocio.slug);
+    negocio.slug === undefined || negocio.slug === null
+      ? null
+      : negocioDePruebaPorSlug(negocio.slug);
   const tieneId = negocio.id !== undefined && negocio.id !== null && negocio.id !== '';
   const tieneSlug = negocio.slug !== undefined && negocio.slug !== null && negocio.slug !== '';
-  const demo = tieneId ? porId : porSlug;
+  const prueba = tieneId ? porId : porSlug;
   const coinciden = !(tieneId && tieneSlug) || (porId !== null && porId === porSlug);
 
-  if (demo !== null && coinciden) return demo;
+  if (prueba !== null && coinciden) return prueba;
 
   const quien = negocio.id ?? negocio.slug ?? '(sin negocio)';
   const real = negocioReal(negocio.id ?? negocio.slug);
-  throw new NoEsUnaDemo(
+  throw new NoEsUnNegocioDePrueba(
     [
-      `ALTO: «${operacion}» sólo corre sobre una demostración, y «${quien}» no lo es.`,
+      `ALTO: «${operacion}» sólo corre sobre un restaurante de prueba, y «${quien}» no lo es.`,
       real === null
-        ? 'No está en la lista de demos de packages/contracts/src/negocios.'
-        : `Es ${real.nombre}: un negocio REAL que cobra. Nunca se prueba ni se resetea.`,
-      `Las demos: ${DEMOS.map((d) => d.slug).join(', ')}.`,
+        ? 'No está en la lista de negocios de prueba de packages/contracts/src/negocios.'
+        : `Es ${real.nombre}: un negocio que NO es de prueba. Nunca se prueba ni se resetea.`,
+      `Los de prueba: ${NEGOCIOS_DE_PRUEBA.map((d) => d.slug).join(', ')}.`,
     ].join('\n'),
   );
 }

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { expect, type Page, test } from '@playwright/test';
 
-import { DEMOS as DEMOS_CONOCIDAS } from '../../packages/contracts/src/negocios/index.ts';
+import { NEGOCIOS_DE_PRUEBA as DEMOS_CONOCIDAS } from '../../packages/contracts/src/negocios/index.ts';
 
 import { Equipo, giroDeLaDemo } from './ayudantes/roles.ts';
 import { cabecerasDeEscrituraDePrueba, exigirDemostracion } from './ayudantes/sesion.ts';
@@ -44,7 +44,7 @@ const DATOS = JSON.parse(readFileSync(join('pruebas', 'e2e', 'aislamiento.json')
   readonly rutas: readonly RutaConIds[];
 };
 
-const DEMOS = (
+const NEGOCIOS_DE_PRUEBA = (
   process.env['MORPHIQPOS_DEMOS_AISLAMIENTO'] ?? DEMOS_CONOCIDAS.map((d) => d.slug).join(',')
 )
   .split(',')
@@ -223,12 +223,15 @@ async function revisarLasRutas(
 }
 
 test.describe('el aislamiento entre negocios', () => {
-  test.skip(DEMOS.length < 2, 'Hacen falta dos demos para pedir lo de una desde la otra.');
+  test.skip(
+    NEGOCIOS_DE_PRUEBA.length < 2,
+    'Hacen falta dos demos para pedir lo de una desde la otra.',
+  );
   test.use({ actionTimeout: 20_000, navigationTimeout: 30_000 });
 
   test('ningún negocio ve el personal de otro en su entrada', async ({ request }) => {
     const vistos = new Map<string, string>();
-    for (const slug of DEMOS) {
+    for (const slug of NEGOCIOS_DE_PRUEBA) {
       const respuesta = await request.get(`/api/auth/empleados?negocio=${slug}`);
       expect(respuesta.status(), slug).toBe(200);
       const lista = (await respuesta.json()) as {
@@ -244,8 +247,8 @@ test.describe('el aislamiento entre negocios', () => {
     }
   });
 
-  for (const [i, propio] of DEMOS.entries()) {
-    const ajeno = DEMOS[(i + 1) % DEMOS.length] ?? propio;
+  for (const [i, propio] of NEGOCIOS_DE_PRUEBA.entries()) {
+    const ajeno = NEGOCIOS_DE_PRUEBA[(i + 1) % NEGOCIOS_DE_PRUEBA.length] ?? propio;
     test(`${propio} no ve nada de ${ajeno}`, async ({ browser, playwright }, info) => {
       test.setTimeout(20 * 60_000);
       await exigirDemostracion(playwright, info, propio);

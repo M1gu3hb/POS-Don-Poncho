@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { expect, type Page, test } from '@playwright/test';
 
 import { CUERPO_INERTE } from '../../packages/app/src/pruebas/cuerpo-inerte.ts';
-import { equipoDeDemo } from '../../packages/contracts/src/negocios/equipo-demo.ts';
+import { equipoDePrueba } from '../../packages/contracts/src/negocios/equipo-de-prueba.ts';
 
 import { Equipo, giroDeLaDemo, type RolDePrueba } from './ayudantes/roles.ts';
 import { cabecerasDeEscrituraDePrueba, exigirDemostracion } from './ayudantes/sesion.ts';
@@ -46,7 +46,11 @@ const MATRIZ = JSON.parse(
   readFileSync(join('pruebas', 'e2e', 'matriz-de-permisos.json'), 'utf8'),
 ) as { readonly incluidas: readonly RutaDeLaMatriz[] };
 
-const DEMOS = (process.env['MORPHIQPOS_DEMOS_MATRIZ'] ?? process.env['MORPHIQPOS_ORG_DEMO'] ?? '')
+const NEGOCIOS_DE_PRUEBA = (
+  process.env['MORPHIQPOS_DEMOS_MATRIZ'] ??
+  process.env['MORPHIQPOS_ORG_DEMO'] ??
+  ''
+)
   .split(',')
   .map((s) => s.trim())
   .filter((s) => s !== '');
@@ -80,7 +84,7 @@ async function tocar(page: Page, ruta: string): Promise<Contestacion> {
   return { estado: respuesta.status(), codigo };
 }
 
-for (const slug of DEMOS) {
+for (const slug of NEGOCIOS_DE_PRUEBA) {
   test.describe(`matriz de permisos · ${slug}`, () => {
     test.beforeAll(async ({ playwright }, info) => {
       await exigirDemostracion(playwright, info, slug);
@@ -90,7 +94,7 @@ for (const slug of DEMOS) {
       test.setTimeout(15 * 60_000);
       const equipo = new Equipo(browser, slug);
       const roles = ROLES_DE_PRUEBA.filter(
-        (rol) => rol === 'dueno' || equipoDeDemo(giroDeLaDemo(slug)).some((e) => e.rol === rol),
+        (rol) => rol === 'dueno' || equipoDePrueba(giroDeLaDemo(slug)).some((e) => e.rol === rol),
       );
       const fallas: string[] = [];
       let tocadas = 0;
@@ -133,7 +137,7 @@ for (const slug of DEMOS) {
     test('la cocina nunca ve costos', async ({ browser }, info) => {
       const giro = giroDeLaDemo(slug);
       test.skip(
-        !equipoDeDemo(giro).some((e) => e.rol === 'cocina'),
+        !equipoDePrueba(giro).some((e) => e.rol === 'cocina'),
         `${slug} no tiene a nadie en cocina: no hay a quién preguntarle.`,
       );
       const equipo = new Equipo(browser, slug);

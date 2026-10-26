@@ -43,17 +43,18 @@ process.env['MORPHIQPOS_DB_POOL_MAX'] ??= '3';
 
 const { obtenerDb } = await import('../packages/data/src/cliente.ts');
 const { comando } = await import('../packages/app/src/produccion.ts');
-const { resetearDemo } = await import('../packages/app/src/demostracion/index.ts');
-const { DEMOS, exigirDemo } = await import('../packages/contracts/src/negocios/index.ts');
+const { resetearNegocioDePrueba } = await import('../packages/app/src/negocio-de-prueba/index.ts');
+const { NEGOCIOS_DE_PRUEBA, exigirNegocioDePrueba } =
+  await import('../packages/contracts/src/negocios/index.ts');
 
 /**
  * LA PLANTILLA Y EL ESTILO DE CADA DEMO ya no se ponen aquí: los repone el propio
- * `resetear_demo` (`packages/app/src/demostracion/como-nueva.ts`), para que el botón de
+ * `resetear_demo` (`packages/app/src/negocio-de-prueba/como-nueva.ts`), para que el botón de
  * reseteo de la aplicación deje la demo igual que esta siembra. Antes vivían aquí, y un
  * reseteo desde la pantalla dejaba la plantilla cruzada y el estilo de la última prueba.
  *
  * Y la lista de negocios vivos tampoco: la regla es POSITIVA y está en
- * `packages/contracts/src/negocios` —sólo se siembra lo que está en `DEMOS`, por ID—.
+ * `packages/contracts/src/negocios` —sólo se siembra lo que está en `NEGOCIOS_DE_PRUEBA`, por ID—.
  */
 
 const soloEste = process.argv.includes('--solo')
@@ -83,7 +84,7 @@ const demos = await db
   .where(
     'id',
     'in',
-    DEMOS.map((d) => d.id),
+    NEGOCIOS_DE_PRUEBA.map((d) => d.id),
   )
   .where('activa', '=', true)
   .orderBy('slug')
@@ -96,7 +97,7 @@ if (demos.length === 0) {
 if (soloEste !== null && !demos.some((d) => d.slug === soloEste)) {
   // `--solo` con un negocio que no es una demo: se dice ANTES de tocar nada.
   try {
-    exigirDemo({ slug: soloEste }, 'sembrar-demos');
+    exigirNegocioDePrueba({ slug: soloEste }, 'sembrar-demos');
   } catch (error) {
     console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -110,7 +111,7 @@ for (const demo of demos) {
 
   // Segundo cerrojo, por ID y slug a la vez: la consulta ya filtró por la lista, así
   // que esto no puede fallar HOY. Se queda por si alguien cambia la consulta.
-  exigirDemo({ id: demo.id, slug: demo.slug }, 'sembrar-demos');
+  exigirNegocioDePrueba({ id: demo.id, slug: demo.slug }, 'sembrar-demos');
 
   const sucursal = await db
     .selectFrom('sucursales')
@@ -124,7 +125,7 @@ for (const demo of demos) {
     continue;
   }
 
-  // El dueño, que es quien puede resetear. `resetearDemo` declara
+  // El dueño, que es quien puede resetear. `resetearNegocioDePrueba` declara
   // `roles: ['dueno','administrador']` a propósito: borra el negocio entero.
   const dueno = await db
     .selectFrom('empleos')
@@ -143,7 +144,7 @@ for (const demo of demos) {
     continue;
   }
 
-  const resultado = await comando(resetearDemo, {
+  const resultado = await comando(resetearNegocioDePrueba, {
     ambito: {
       organizacionId: demo.id,
       sucursalId: sucursal.id,

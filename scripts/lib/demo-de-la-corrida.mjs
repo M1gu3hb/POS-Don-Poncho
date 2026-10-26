@@ -16,7 +16,8 @@
  * lista de empleados se pide si el negocio no es una demo. Después sólo eligen gente
  * de esa demo, y se niegan si la respuesta trae a alguien sin su marca.
  */
-const { DEMOS, exigirDemo } = await import('../../packages/contracts/src/negocios/index.ts');
+const { NEGOCIOS_DE_PRUEBA, exigirNegocioDePrueba } =
+  await import('../../packages/contracts/src/negocios/index.ts');
 
 function bandera(nombre) {
   const i = process.argv.indexOf(`--${nombre}`);
@@ -34,13 +35,13 @@ export function demoDeLaCorrida(guion) {
       [
         `✗ ${guion}: falta el negocio. Este guion ESCRIBE, y sólo corre sobre una demostración`,
         '  que se le nombra: --negocio <slug> (o MORPHIQPOS_ORG_DEMO).',
-        `  Las demos: ${DEMOS.map((d) => d.slug).join(', ')}.`,
+        `  Las demos: ${NEGOCIOS_DE_PRUEBA.map((d) => d.slug).join(', ')}.`,
       ].join('\n'),
     );
     process.exit(1);
   }
   try {
-    return exigirDemo({ slug }, guion);
+    return exigirNegocioDePrueba({ slug }, guion);
   } catch (error) {
     console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
@@ -89,7 +90,7 @@ export async function empleadosDeLaDemo(llamar, demo) {
 export function enLaDemo(sesion, demo, guion) {
   const organizacionId = sesion?.organizacionId;
   try {
-    exigirDemo(
+    exigirNegocioDePrueba(
       { id: typeof organizacionId === 'string' ? organizacionId : '', slug: demo.slug },
       guion,
     );

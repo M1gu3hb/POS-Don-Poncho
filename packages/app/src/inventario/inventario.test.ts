@@ -13,7 +13,7 @@ import {
 } from './inventario.ts';
 import { registrarConsumoInterno } from './consumo-interno.ts';
 import { actualizarCostoInsumo, eliminarReceta, guardarReceta } from './recetas.ts';
-import { resetearDemo } from '../demostracion/resetear.ts';
+import { resetearNegocioDePrueba } from '../negocio-de-prueba/resetear.ts';
 import { ambitoDeCajero } from '../pruebas/dobles.ts';
 import { arnesGrabador } from '../pruebas/grabadora.ts';
 
@@ -82,11 +82,14 @@ describe('B-11 · comandos de insumos y almacenes', () => {
   });
 });
 
-describe('B-10 · reinicio de demostración', () => {
-  it('exige confirmación literal y está disponible para cada paquete', () => {
-    expect(resetearDemo.paquetes).toHaveLength(5);
-    expect(resetearDemo.entrada.safeParse({ confirmacion: 'sí' }).success).toBe(false);
-    expect(resetearDemo.entrada.safeParse({ confirmacion: 'RESETEAR' }).success).toBe(true);
+describe('B-10 · reinicio del restaurante de prueba', () => {
+  it('exige confirmación literal y sólo corre en la plantilla del restaurante', () => {
+    // POS Don Poncho (DP-2): el negocio de prueba es un restaurante; ya no hay cinco demos.
+    expect(resetearNegocioDePrueba.paquetes).toEqual(['restaurante']);
+    expect(resetearNegocioDePrueba.entrada.safeParse({ confirmacion: 'sí' }).success).toBe(false);
+    expect(resetearNegocioDePrueba.entrada.safeParse({ confirmacion: 'RESETEAR' }).success).toBe(
+      true,
+    );
   });
 });
 

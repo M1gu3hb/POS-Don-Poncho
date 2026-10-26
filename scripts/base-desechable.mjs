@@ -156,11 +156,11 @@ async function migrar() {
 }
 
 async function demosQueFaltan() {
-  const { DEMOS } = await import('../packages/contracts/src/negocios/index.ts');
+  const { NEGOCIOS_DE_PRUEBA } = await import('../packages/contracts/src/negocios/index.ts');
   const existentes = await conCliente(BASE, async (c) =>
     (await c.query('select slug from organizaciones')).rows.map((f) => f.slug),
   );
-  return DEMOS.filter((d) => !existentes.includes(d.slug));
+  return NEGOCIOS_DE_PRUEBA.filter((d) => !existentes.includes(d.slug));
 }
 
 function nodo(script, argumentos) {

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { demoPorId, negocioReal } from '@morphiqpos/contracts/negocios';
+import { negocioAjeno, negocioDePruebaPorId } from '@morphiqpos/contracts/negocios';
 import { conTransaccion, type Transaccion } from '@morphiqpos/data';
 
 import { FORMA_PIN, hashearPin } from '../identidad/pin.ts';
@@ -56,14 +56,15 @@ export interface ResultadoPrimerAcceso {
 export async function prepararPrimerAcceso(
   peticion: PeticionPrimerAcceso,
 ): Promise<ResultadoPrimerAcceso> {
-  // LA GUARDA (bloque B.4 de la 2.4): sobre un negocio que cobra esto crea un dueño o
-  // le ROTA el PIN al que hay. El ejemplo del RUNBOOK lo hacía sobre La Broca. El PIN de
-  // un negocio real se cambia desde su aplicación, por su dueño; no desde un guion.
-  const real = negocioReal(peticion.organizacionSlug);
-  if (real !== null) {
+  // LA GUARDA (bloque B.4 de la 2.4): sobre un negocio ajeno —los que comparten la base de la
+  // Fase A— esto crearía un dueño o le ROTARÍA el PIN al que hay. Se niega sin abrir la base.
+  // Don Poncho pasa: su PRIMER acceso lo da este guion, y `exigirPrimerAcceso` se niega en
+  // cuanto ya tiene un dueño con PIN (DP-2).
+  const ajeno = negocioAjeno(peticion.organizacionSlug);
+  if (ajeno !== null) {
     throw new Error(
-      `«${peticion.organizacionSlug}» es ${real.nombre}, un negocio REAL que cobra: aquí no se ` +
-        'crean dueños ni se rotan PIN. Su dueño lo cambia desde Configuración → Accesos.',
+      `«${peticion.organizacionSlug}» es ${ajeno.nombre}, un negocio AJENO: aquí no se ` +
+        'crean dueños ni se rotan PIN. Su dueño lo cambia desde su propio sistema.',
     );
   }
   if (!FORMA_PIN.test(peticion.pin)) {
@@ -98,15 +99,14 @@ export async function prepararPrimerAcceso(
 
 /**
  * LA REGLA POSITIVA (auditoría de la 2.4). La guarda de arriba usa la lista de los
- * reales, y esa lista sólo sirve para decirlo en un mensaje: un quinto cliente dado de
- * alta mañana no estaría en ella, y `db:bootstrap` le rotaría el PIN a su dueño. Fuera
- * de las cinco demos, este script da el PRIMER acceso y nada más: si el negocio ya tiene
- * un dueño activo con PIN, se niega. El PIN de un negocio que ya entra lo cambia su
- * dueño desde la aplicación. En una demo sigue siendo idempotente —rota—, que es lo que
- * la siembra y CI necesitan.
+ * ajenos, y esa lista sólo sirve para decirlo en un mensaje: un negocio que nadie declaró
+ * no estaría en ella. Fuera de los restaurantes de prueba, este script da el PRIMER acceso
+ * y nada más: si el negocio ya tiene un dueño activo con PIN, se niega. El PIN de un negocio
+ * que ya entra —Don Poncho incluido— lo cambia su dueño desde la aplicación. En un negocio de
+ * prueba sigue siendo idempotente —rota—, que es lo que la siembra y CI necesitan.
  */
 async function exigirPrimerAcceso(tx: Transaccion, negocio: Negocio): Promise<void> {
-  if (demoPorId(negocio.organizacionId) !== null) return;
+  if (negocioDePruebaPorId(negocio.organizacionId) !== null) return;
   const conPin = await tx
     .selectFrom('empleos as e')
     .innerJoin('identidades as i', 'i.persona_id', 'e.persona_id')

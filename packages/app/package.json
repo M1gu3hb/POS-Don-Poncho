@@ -12,7 +12,7 @@
     "./catalogo": "./src/catalogo/index.ts",
     "./configuracion": "./src/configuracion/index.ts",
     "./inventario": "./src/inventario/index.ts",
-    "./demostracion": "./src/demostracion/index.ts",
+    "./negocio-de-prueba": "./src/negocio-de-prueba/index.ts",
     "./http": "./src/http/index.ts",
     "./sesion": "./src/sesion/index.ts",
     "./venta": "./src/venta/index.ts",

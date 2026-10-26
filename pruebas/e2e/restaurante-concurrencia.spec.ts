@@ -124,7 +124,7 @@ async function empezarElDia(browser: Browser, info: TestInfo): Promise<Dia> {
   const duena = conTecho(await equipo.pagina(info, 'dueno'));
 
   if (!reseteado) {
-    const respuesta = await duena.request.post('/api/catalogo/demostracion/resetear', {
+    const respuesta = await duena.request.post('/api/pruebas/resetear', {
       headers: cabecerasDeEscrituraDePrueba(),
       data: { confirmacion: 'RESETEAR' },
     });

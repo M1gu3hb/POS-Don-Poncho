@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { Transaccion } from '@morphiqpos/data';
 
-import type { SemillaDemo } from './datos.ts';
+import type { SemillaDePrueba } from './datos.ts';
 
 /**
  * LOS DATOS DE ARRANQUE: el proveedor y la caja abierta con su fondo.
@@ -44,7 +44,7 @@ export async function sembrarArranque(
   tx: Transaccion,
   organizacionId: string,
   sucursalId: string,
-  semilla: SemillaDemo,
+  semilla: SemillaDePrueba,
 ): Promise<ResumenArranque> {
   const proveedor = await tx
     .insertInto('proveedores')

@@ -2,13 +2,13 @@
 /**
  * `pnpm db:bootstrap` — la puerta al sistema cerrado (F1.1-C-04).
  *
- *   pnpm db:bootstrap --org demo-acople-ferreteria --persona "Demo" --pin 1234
+ *   pnpm db:bootstrap --org prueba-restaurante --persona "Dueña de prueba" --pin 1234
  *   pnpm db:bootstrap --org <slug-de-un-negocio-nuevo> --persona "<nombre>" --pin <4-8 dígitos>
  *
- * **Se niega sobre los cuatro negocios reales** (`packages/contracts/src/negocios`): ahí
- * crearía un dueño o le rotaría el PIN al que hay. El PIN de un negocio que cobra lo
- * cambia su dueño desde la aplicación. Los ejemplos de aquí usaban La Broca y
- * Jacaranda, que son dos de ellos.
+ * **Se niega sobre los negocios ajenos** de la base compartida (`packages/contracts/src/
+ * negocios`): ahí crearía un dueño o le rotaría el PIN al que hay. Sobre Don Poncho da el
+ * PRIMER acceso y sólo ése: si ya tiene un dueño con PIN, se niega (lo cambia su dueño desde
+ * la aplicación).
  *
  * Deja lista una cuenta de dueño con PIN. Eso es todo lo que hace falta: desde
  * T2 del port del restaurante ya no hay código de enrolamiento que teclear —la
@@ -44,12 +44,12 @@ if (organizacionSlug === undefined || nombrePersona === undefined || pin === und
   );
   process.exit(1);
 }
-const { negocioReal } = await import('../../contracts/src/negocios/index.ts');
-const real = negocioReal(organizacionSlug);
-if (real !== null) {
+const { negocioAjeno } = await import('../../contracts/src/negocios/index.ts');
+const ajeno = negocioAjeno(organizacionSlug);
+if (ajeno !== null) {
   console.error(
-    `✗ «${organizacionSlug}» es ${real.nombre}, un negocio REAL que cobra. db:bootstrap no crea ` +
-      'dueños ni rota PIN en él: su dueño lo cambia desde Configuración → Accesos.',
+    `✗ «${organizacionSlug}» es ${ajeno.nombre}, un negocio AJENO. db:bootstrap no crea ` +
+      'dueños ni rota PIN en él.',
   );
   process.exit(1);
 }

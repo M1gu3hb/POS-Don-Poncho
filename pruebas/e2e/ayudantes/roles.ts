@@ -12,12 +12,12 @@ import {
 } from '@playwright/test';
 
 import {
-  DUENO_DE_DEMO,
-  equipoDeDemo,
-  esGiroDeDemo,
-  type GiroDeDemo,
-} from '../../../packages/contracts/src/negocios/equipo-demo.ts';
-import { demoPorSlug } from '../../../packages/contracts/src/negocios/index.ts';
+  DUENO_DE_PRUEBA,
+  equipoDePrueba,
+  esGiroDePrueba,
+  type GiroDePrueba,
+} from '../../../packages/contracts/src/negocios/equipo-de-prueba.ts';
+import { negocioDePruebaPorSlug } from '../../../packages/contracts/src/negocios/index.ts';
 
 import { entrar, type QuienEntra } from './sesion.ts';
 
@@ -51,15 +51,14 @@ export interface PersonaDeDemo extends QuienEntra {
 
 const CARPETA = join('pruebas', 'e2e', '.sesiones');
 
-/** El giro de una demo: su slug es `demo-acople-<giro>`, y sólo vale si es una demo. */
-export function giroDeLaDemo(slug: string): GiroDeDemo {
-  const demo = demoPorSlug(slug);
-  if (demo === null) {
-    throw new Error(`«${slug}» no es una de las cinco demos: aquí no entra ninguna prueba.`);
+/** El giro de un negocio de prueba: va escrito en su registro, no se deduce del slug. */
+export function giroDeLaDemo(slug: string): GiroDePrueba {
+  const prueba = negocioDePruebaPorSlug(slug);
+  if (prueba === null) {
+    throw new Error(`«${slug}» no es un negocio de prueba: aquí no entra ninguna prueba.`);
   }
-  const giro = demo.slug.replace(/^demo-acople-/, '');
-  if (!esGiroDeDemo(giro)) throw new Error(`La demo «${slug}» no tiene un giro con equipo.`);
-  return giro;
+  if (!esGiroDePrueba(prueba.giro)) throw new Error(`«${slug}» no tiene un giro con equipo.`);
+  return prueba.giro;
 }
 
 /**
@@ -67,15 +66,16 @@ export function giroDeLaDemo(slug: string): GiroDeDemo {
  * salón— se elige por nombre; sin nombre, la primera de la tabla de la siembra.
  */
 export function personaDe(slug: string, rol: RolDePrueba, nombre?: string): PersonaDeDemo {
-  if (rol === 'dueno') return { slug, nombre: DUENO_DE_DEMO.nombre, pin: DUENO_DE_DEMO.pin, rol };
+  if (rol === 'dueno')
+    return { slug, nombre: DUENO_DE_PRUEBA.nombre, pin: DUENO_DE_PRUEBA.pin, rol };
   const giro = giroDeLaDemo(slug);
-  const delRol = equipoDeDemo(giro).filter((e) => e.rol === rol);
+  const delRol = equipoDePrueba(giro).filter((e) => e.rol === rol);
   const elegido = nombre === undefined ? delRol[0] : delRol.find((e) => e.nombre === nombre);
   if (elegido === undefined) {
     throw new Error(
       `La demo «${slug}» no tiene a nadie con rol «${rol}»` +
         (nombre === undefined ? '' : ` que se llame ${nombre}`) +
-        `. Su equipo: ${equipoDeDemo(giro)
+        `. Su equipo: ${equipoDePrueba(giro)
           .map((e) => `${e.nombre} (${e.rol})`)
           .join(', ')}.`,
     );
