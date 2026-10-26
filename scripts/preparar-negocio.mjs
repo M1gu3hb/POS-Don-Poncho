@@ -6,18 +6,15 @@
  *     --persona "Miguel · Morphiq" --pines <archivo fuera del repo> \
  *     [--datos docs/cliente/negocio-don-poncho.json] [--ensayo]
  *
- * Configuración (nombre, dirección, logos, colores y el portal QR con todo encendido),
- * apariencia, las páginas del menú personalizado, la zona con sus mesas, el equipo y quién
- * responde por cada mesa. Cada cosa por su comando —`puente.escribir`,
- * `configuracion.fijar_apariencia`, `identidad.guardar_empleado`— con su rol, su transacción y su
- * auditoría, firmado por el dueño de `--persona`.
+ * Configuración (con el portal QR encendido), apariencia, páginas del menú personalizado, zona y
+ * mesas, equipo, quién responde por cada mesa y el QR de cada una. Cada cosa por su comando, con
+ * su rol, su transacción y su auditoría, firmado por el dueño de `--persona`.
  *
  * LOS PIN NO ESTÁN EN EL REPOSITORIO: `--pines` es un JSON `{ "<nombre>": "<pin>" }` que vive en
  * `..\_PRIVADO\`. El guion no los imprime nunca.
  *
- * IDEMPOTENTE: configuración y apariencia se escriben con los mismos valores; páginas (por
- * título), mesas (por número) y personas (por nombre) se crean sólo si faltan; a quien ya existe
- * NO se le cambia el PIN. Sólo corre contra Don Poncho o un restaurante de prueba, por ID.
+ * IDEMPOTENTE: lo que ya está no se toca (a quien existe NO se le cambia el PIN; la mesa que ya
+ * tiene QR lo conserva). Sólo corre contra Don Poncho o un restaurante de prueba, por ID.
  */
 import { readFileSync } from 'node:fs';
 
@@ -52,6 +49,7 @@ const { comando } = await import('../packages/app/src/produccion.ts');
 const { escribirDatos } = await import('../packages/app/src/puente/comandos.ts');
 const { fijarApariencia } = await import('../packages/app/src/configuracion/index.ts');
 const { guardarEmpleado } = await import('../packages/app/src/identidad/index.ts');
+const { rotarQr } = await import('../packages/app/src/restaurante/index.ts');
 
 const permitido = [...NEGOCIOS_REALES, ...NEGOCIOS_DE_PRUEBA].find((n) => n.slug === slug);
 if (negocioAjeno(slug) !== null || permitido === undefined) {
@@ -282,6 +280,19 @@ if (!ensayo) {
   }
 }
 hecho.push(`${String(asignadas)} mesas asignadas`);
+
+// 5 · El QR de cada mesa que no lo tiene, por `restaurante.rotar_qr` (el «Generar tokens» de
+// Portal QR). La que ya tiene el suyo —impreso, quizá— lo conserva.
+const sinQr = ensayo
+  ? []
+  : await db
+      .selectFrom('mesas')
+      .select(['id', 'numero'])
+      .where('organizacion_id', '=', org.id)
+      .where('qr_token', 'is', null)
+      .execute();
+for (const mesa of sinQr) await ejecutar(rotarQr, { mesaId: mesa.id }, `qr:${String(mesa.numero)}`);
+hecho.push(`${String(sinQr.length)} QR de mesa nuevos`);
 
 console.log(
   `${ensayo ? '◦ Ensayo' : '✓ Preparado'} «${slug}»: ${hecho.join(' · ')}. (Los PIN no se imprimen.)`,
