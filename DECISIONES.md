@@ -228,3 +228,29 @@ se marca y se apunta a la nueva. Las del maestro siguen en su repositorio (`M1gu
   producción; se dejó como el maestro, sólo vistas previas. Si no, ni el personal ni el comensal
   del QR entraban.
 - **QR de las mesas:** `preparar-negocio` los genera por `restaurante.rotar_qr` sólo donde faltan.
+
+## DP-D21 · `verify:acople` ajustada al producto de sólo restaurante · 26-10-2026
+
+La puerta vino idéntica del maestro y contra producción daba 10 pendientes. Ninguno era del
+despliegue; cada uno se resolvió en su causa, sin bajar una exigencia:
+
+- **Defecto de la puerta (heredado):** su consulta de seguridad era una copia vieja de la de
+  `verify:rls` sin los disparadores, y nunca veía el sustituto de la 179. Ahora hay UNA consulta,
+  `CONSULTA_SEGURIDAD` en `packages/data/src/verificacion/rls.ts`, para las dos puertas.
+- **Defecto de la pantalla:** el ejemplo del motivo de cancelación decía «mesa» a mano; ahora usa
+  el término del negocio con su concordancia.
+- **Listas que se quedaron en cinco modelos:** las suites de cobro salen de `MODELOS`; las dos
+  pantallas sin menú de la cafetería se quitaron de `EXCEPCIONES-COBERTURA.md`.
+- **Comandos de los giros que el producto no tiene** (`COMANDOS_DE_GIROS_QUE_ESTE_PRODUCTO_NO_TIENE`):
+  7 comandos de mostrador y crédito de abarrotes, cafetería y ferretería cuyas rutas se fueron en
+  DP-2. No se borraron porque sus pruebas cubren reglas de dinero que el restaurante también usa.
+  Cada fila dice a qué modelos servía y vale sólo mientras ninguno esté en `MODELOS`; la puerta
+  falla si una fila sobra (el comando no existe, ya tiene ruta o su modelo volvió).
+- **Falso positivo:** una cadena que termina en «/» es un prefijo al que se le pega algo; vale
+  contra un segmento dinámico (`/api/archivos/[...ruta]`) y sólo contra eso.
+- **La CI:** la puerta exige checks de GitHub sobre el commit, y aquí la CI corre a mano. No se
+  afloja: antes de `verify:acople` se lanza la CI sobre ese commit.
+
+Probado por mutación: quitar una fila, declarar un comando inexistente, uno con ruta o uno de un
+modelo presente, volver a la lista de suites a mano y un prefijo que no lleva a ninguna ruta; la
+puerta los denuncia todos.

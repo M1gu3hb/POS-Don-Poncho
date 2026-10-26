@@ -128,6 +128,12 @@ export function CancelarLaCuenta({
   const [enviando, setEnviando] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
   const listo = motivo.trim().length >= 3 && !enviando;
+  // El ejemplo nombra la unidad como la llama el negocio («la mesa equivocada»), con su
+  // concordancia: si un día se llama de otro modo, el ejemplo lo sigue.
+  const dondeSeCapturo =
+    voc.singular('unidad_servicio') === ''
+      ? 'por error'
+      : `en ${voc.enFrase('unidad_servicio')} ${voc.articulo('unidad_servicio') === 'el' ? 'equivocado' : 'equivocada'}`;
 
   async function cancelar(): Promise<void> {
     setEnviando(true);
@@ -169,7 +175,7 @@ export function CancelarLaCuenta({
               id="cancelar-cuenta-motivo"
               maxLength={300}
               value={motivo}
-              placeholder="se fueron sin pagar · se capturó en la mesa equivocada"
+              placeholder={`se fueron sin pagar · se capturó ${dondeSeCapturo}`}
               onChange={(evento) => {
                 setMotivo(evento.target.value);
               }}

@@ -77,16 +77,15 @@ plantilla. No hace falta que estén en las cinco —el mapa de mesas no es de un
 que exista un negocio desde el que se pueda LLEGAR. Se puso esa comprobación porque hasta el
 17-09-2026 no colgaba **ninguna**: las 61 respondían y sólo se abrían tecleando la URL.
 
-Cuatro no van en ningún menú, y no es un olvido:
+Dos no van en ningún menú, y no es un olvido:
 
 | Clave | Qué es | Por qué no puede estar en el menú |
 |---|---|---|
 | `PANTALLA-SIN-MENU restaurante/acceso-por-pin` | La entrada con PIN del modelo | Es lo que se ve ANTES de que exista sesión, y el menú lateral se pinta DESPUÉS. Ponerla en el menú sería ofrecerle a alguien que ya entró la pantalla de entrar. |
-| `PANTALLA-SIN-MENU cafeteria/acceso-por-pin` | La misma, en la cafetería | Se ve ANTES de que exista sesión y el menú lateral se pinta DESPUÉS: ofrecerle la entrada a quien ya entró no sirve. |
 | `PANTALLA-SIN-MENU restaurante/portal-del-comensal` | El portal que abre el COMENSAL con el QR de su mesa | No la abre Miguel ni su personal: la abre el cliente, desde su teléfono, con un token de mesa. No hay sesión de negocio ni menú lateral en esa pantalla. |
-| `PANTALLA-SIN-MENU cafeteria/menu-publico-y-pedido-anticipado` | El menú público y el pedido anticipado, por QR | Lo mismo: es del cliente. Lo que sí está en el menú del negocio es `/cafeteria/recogida`, que es donde el personal ve lo que ese QR pidió. |
 
-**La puerta FALLA si una de estas cuatro filas no existe**, igual que con las demás excepciones: lo
+**La puerta FALLA si una de estas dos filas no existe** (las dos de la cafetería se fueron con su
+modelo en DP-2, y con ellas sus pantallas), igual que con las demás excepciones: lo
 que no se puede es que una pantalla desaparezca del menú sin que nadie lo diga.
 
 ### Las que NO consumen el diccionario del giro
@@ -104,10 +103,9 @@ importar algo que no se usa para que una puerta se ponga verde.
 | Clave | Qué es | Por qué no nombra ninguna entidad |
 |---|---|---|
 | `PANTALLA-SIN-VOCABULARIO restaurante/acceso-por-pin` | La entrada con PIN | Dice «¿Quién está operando?» y pinta nombres de personas. Ni mesa, ni cuenta, ni platillo: nada del diccionario. |
-| `PANTALLA-SIN-VOCABULARIO cafeteria/acceso-por-pin` | La misma, en la barra | Pregunta quién opera y pinta nombres de personas: ni bebida, ni turno, ni cliente, nada del diccionario. |
 | `PANTALLA-SIN-VOCABULARIO restaurante/inventario` | Las existencias de la cocina | Habla de INSUMOS y de almacenes, que no son entidades del diccionario: el `producto` de un restaurante es el platillo, y eso se vende, no se cuenta aquí. |
 
-**La puerta también falla al revés**: si una de estas tres acaba consumiendo el diccionario, la fila
+**La puerta también falla al revés**: si una de estas dos acaba consumiendo el diccionario, la fila
 sobra y hay que borrarla. Una lista de excepciones que incluye lo que ya funciona deja de leerse.
 
 ### Las HEREDADAS que pierden su sitio en el menú

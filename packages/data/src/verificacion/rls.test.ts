@@ -124,7 +124,10 @@ describe('C-13 · verificación viva de RLS y grants', () => {
   });
 
   it('consulta el catálogo requerido y está conectado a pnpm verify', () => {
-    const fuente = readFileSync(SCRIPT, 'utf8');
+    // La consulta vive en `rls.ts` desde DP-7 (una sola para `verify:rls` y `verify:acople`);
+    // el script la importa, y es ESA la que se comprueba.
+    expect(readFileSync(SCRIPT, 'utf8')).toContain('CONSULTA_SEGURIDAD');
+    const fuente = readFileSync(CONTRATO_RLS, 'utf8');
     expect(fuente).toContain('c.relrowsecurity');
     expect(fuente).toContain('c.relforcerowsecurity');
     expect(fuente).toContain("has_table_privilege('anon'");
@@ -168,5 +171,29 @@ describe('un índice crítico SUSTITUIDO por un disparador (179)', () => {
     expect(problemasDeSeguridad(base(['sesiones_caja_cupo_de_la_sucursal'], otro))).toEqual([
       `${otro}: índice 046 ausente`,
     ]);
+  });
+});
+
+describe('UNA sola consulta de seguridad para las dos puertas (DP-7)', () => {
+  const PUERTAS = ['verificar-rls.mjs', 'verificar-acople.mjs'].map((nombre) =>
+    fileURLToPath(new URL(`../../../../scripts/${nombre}`, import.meta.url)),
+  );
+
+  it('pide las cuatro cosas que el análisis lee, los disparadores incluidos', async () => {
+    const { CONSULTA_SEGURIDAD } = await import('./rls.ts');
+    for (const clave of ['relaciones', 'indices', 'funciones', 'disparadores']) {
+      expect(CONSULTA_SEGURIDAD).toContain(`'${clave}'`);
+    }
+    expect(CONSULTA_SEGURIDAD).toContain('pg_catalog.pg_trigger');
+  });
+
+  it('ninguna puerta escribe su propia copia: `verify:acople` no veía el disparador de la 179', () => {
+    for (const puerta of PUERTAS) {
+      const fuente = readFileSync(puerta, 'utf8');
+      expect(fuente, puerta).toMatch(
+        /\bCONSULTA_SEGURIDAD\b[^;]*from '..\/packages\/data\/src\/verificacion\/rls\.ts'/s,
+      );
+      expect(fuente, puerta).not.toContain('pg_catalog.pg_class');
+    }
   });
 });

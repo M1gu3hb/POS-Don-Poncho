@@ -123,12 +123,12 @@ logo y «Sistema por Morphiq», manifiesto, logo, páginas del menú, el portal 
 subido, 8 páginas, 107 platillos, pedidos, cuenta, ayuda y propina, `puede_ordenar`) y la lectura
 de datos negada sin sesión. La llave nueva lee el bucket privado.
 
-**`verify:acople` contra producción: 10 pendientes, ninguno del despliegue.** Son expectativas del
-maestro multi-giro que la poda no ajustó: suites de cobro de los giros quitados, pantallas de
-cafetería declaradas, 7 comandos de crédito y descuento sin ruta, una palabra «mesa» que en
-restaurante es correcta, un falso positivo (`foto-del-sistema.ts` sólo compara un prefijo; las
-rutas de archivos existen), el índice de cajas que la migración 179 sustituyó por un disparador
-(existe y está activo; `verify:rls` sí lo reconoce) y la CI, que sólo corre a mano.
+**`verify:acople` contra producción: verde** (DP-D21). Daba 10 pendientes heredados de la poda y
+de la propia puerta; se resolvieron en su causa: una consulta de seguridad única para las dos
+puertas (la del acople no veía el disparador de la 179), el «mesa» tecleado a mano en la
+cancelación, las suites y las pantallas sin menú derivadas del producto, los 7 comandos de
+mostrador y crédito de otros giros declarados contra `MODELOS`, y un falso positivo de prefijo.
+Su último requisito, checks de GitHub sobre el commit, se cumple corriendo la CI sobre él.
 
 ## 7 · CI
 
@@ -152,13 +152,12 @@ unos 18 minutos de reloj (163 a 169 minutos de máquina sumados).
    RFC para el ticket, confirmar la tasa de IVA con el contador.
 4. Fotos de los platillos: ninguna inventada; el portal usa el marcador de la marca.
 5. El reparto inicial de mesas (1–5 / 6–10) es una propuesta: lo confirma el dueño.
-6. `verify:acople` ajustado al producto de sólo restaurante (sus 10 pendientes de arriba).
-7. Las vistas previas de Vercel no tienen variables a propósito (ninguna base de prueba que
+6. Las vistas previas de Vercel no tienen variables a propósito (ninguna base de prueba que
    servir): un PR construye en rojo en Vercel hasta que haya una.
-8. Favicon: a 16 px el letrero es una silueta; un monograma sería un archivo y una línea.
-9. Las tarjetas del tablero y otras piezas del heredado conservan los degradados del maestro
+7. Favicon: a 16 px el letrero es una silueta; un monograma sería un archivo y una línea.
+8. Las tarjetas del tablero y otras piezas del heredado conservan los degradados del maestro
    (protegidos por `verify:aspecto`); recomponerlas sería otra etapa.
-10. Para la Fase B: una columna página → categorías en lugar de la regla del título, la migración
-    042 que siembra tres demos en una base nueva, y las tres puertas con el proyecto fijo
-    (`docs/infra/FASES.md`).
-11. Deuda de nombres `@morphiqpos/*` (DP-D09).
+9. Para la Fase B: una columna página → categorías en lugar de la regla del título, la migración
+   042 que siembra tres demos en una base nueva, y las tres puertas con el proyecto fijo
+   (`docs/infra/FASES.md`).
+10. Deuda de nombres `@morphiqpos/*` (DP-D09).

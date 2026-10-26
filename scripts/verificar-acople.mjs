@@ -46,7 +46,7 @@ import {
   consultarViva,
 } from '../packages/data/src/verificacion/consulta-directa.ts';
 import { DICCIONARIOS } from '../packages/domain/src/vocabulario/diccionarios.ts';
-import { problemasDeSeguridad } from '../packages/data/src/verificacion/rls.ts';
+import { CONSULTA_SEGURIDAD, problemasDeSeguridad } from '../packages/data/src/verificacion/rls.ts';
 import { sinFalsosDelimitadores } from './lib/sin-prosa.mjs';
 import { MODELOS, pantallasEsperadas, rutasEsperadas } from './verificar-cobertura.mjs';
 
@@ -145,49 +145,6 @@ async function comprobarMigraciones() {
 // 2 · RLS, grants y los índices únicos
 // ───────────────────────────────────────────────────────────────────────────
 
-const CONSULTA_SEGURIDAD = String.raw`
-with relaciones as (
-  select
-    format('%I.%I', n.nspname, c.relname) as clave,
-    case c.relkind
-      when 'r' then 'tabla'
-      when 'p' then 'tabla_particionada'
-      when 'v' then 'vista'
-      when 'm' then 'vista_materializada'
-    end as tipo,
-    case when c.relkind in ('r', 'p') then c.relrowsecurity else null end as "rlsActiva",
-    case when c.relkind in ('r', 'p') then c.relforcerowsecurity else null end as "rlsForzada",
-    has_table_privilege('anon', format('%I.%I', n.nspname, c.relname), 'SELECT') as "selectAnon",
-    has_table_privilege('authenticated', format('%I.%I', n.nspname, c.relname), 'SELECT')
-      as "selectAuthenticated"
-  from pg_catalog.pg_class c
-  join pg_catalog.pg_namespace n on n.oid = c.relnamespace
-  where n.nspname = 'public'
-    and c.relkind in ('r', 'p', 'v', 'm')
-), indices as (
-  select i.relname as nombre, x.indisunique as unico, x.indisvalid as valido
-  from pg_catalog.pg_index x
-  join pg_catalog.pg_class i on i.oid = x.indexrelid
-  join pg_catalog.pg_class t on t.oid = x.indrelid
-  join pg_catalog.pg_namespace n on n.oid = t.relnamespace
-  where n.nspname = 'public'
-), funciones as (
-  select
-    format('%I.%I(%s)', n.nspname, p.proname,
-           pg_catalog.pg_get_function_identity_arguments(p.oid)) as clave,
-    has_function_privilege('anon', p.oid, 'EXECUTE') as "executeAnon",
-    has_function_privilege('authenticated', p.oid, 'EXECUTE') as "executeAuthenticated"
-  from pg_catalog.pg_proc p
-  join pg_catalog.pg_namespace n on n.oid = p.pronamespace
-  where n.nspname = 'public'
-)
-select json_build_object(
-  'relaciones', coalesce((select json_agg(row_to_json(r) order by r.clave) from relaciones r), '[]'::json),
-  'indices',    coalesce((select json_agg(row_to_json(i) order by i.nombre) from indices i), '[]'::json),
-  'funciones',  coalesce((select json_agg(row_to_json(f) order by f.clave) from funciones f), '[]'::json)
-) as estado;
-`;
-
 async function comprobarSeguridad() {
   if (cadenaDeVerificacion() === undefined) return;
   let estado;
@@ -229,7 +186,39 @@ function urlDe(rutaDeArchivo) {
 }
 
 /**
- * Los comandos con `escribe: true` que ninguna ruta importa.
+ * LOS COMANDOS DE LOS GIROS QUE ESTE PRODUCTO NO TIENE (POS Don Poncho, DP-7).
+ *
+ * El núcleo es el del maestro y trae comandos que sólo servían a otros modelos: en el
+ * maestro sus rutas y sus pantallas existían; en DP-2 se fueron con su giro y el comando
+ * quedó, porque sus pruebas cubren reglas de dinero que el restaurante también usa (el
+ * tope y la autorización del descuento, el saldo de la ficha y la remisión).
+ *
+ * No es una lista de pendientes: cada fila dice a qué MODELOS servía y la excepción vale
+ * sólo mientras NINGUNO esté en `MODELOS`. El día que uno vuelva, su comando necesita ruta
+ * otra vez. Y la puerta falla si una fila sobra: si el comando ya no existe, si ya no
+ * escribe, o si una ruta lo importa.
+ */
+const COMANDOS_DE_GIROS_QUE_ESTE_PRODUCTO_NO_TIENE = {
+  // `/api/venta/cobrar-mostrador` y `preparar-mostrador` · `abarrotes/Cobrar`, `cafeteria/Cobrar`.
+  aplicarDescuento: ['abarrotes', 'cafeteria'],
+  // El mismo cobro de mostrador, por `servidor/carrito-de-mostrador.ts` (el maestro tampoco
+  // lo importaba desde un `route.ts`: su puerta lo contaba huérfano).
+  vaciarOrden: ['abarrotes', 'cafeteria'],
+  // `/api/credito/pago` · `ferreteria/Cuentas`.
+  registrarPagoCredito: ['ferreteria'],
+  // `/api/credito/confirmar-transferencia` · `abarrotes/PorConfirmarEnElBanco`, `ferreteria/Caja`.
+  confirmarTransferencia: ['abarrotes', 'ferreteria'],
+  // `/api/fiado/limite`: el fiado de la tiendita.
+  emitirDocumentoCredito: ['abarrotes'],
+  // `/api/credito/limite-credito` · `ferreteria/LlaveYLimite`, `ferreteria/NuevoClienteDeCredito`.
+  fijarLimiteDeCredito: ['ferreteria'],
+  // `/api/credito/limite` y `/api/fiado/incobrable` · `ferreteria/LlaveYLimite`.
+  fijarMuroDeCredito: ['ferreteria', 'abarrotes'],
+};
+
+/**
+ * Los comandos con `escribe: true`, y los nombres que importan las rutas: un comando de
+ * escritura que no está entre esos nombres no tiene ruta (`comandosHuerfanos`).
  *
  * Se descubren recorriendo el árbol, no de una lista: una lista sólo contiene
  * lo que alguien recordó registrar, y un comando nuevo que se olvide de
@@ -289,7 +278,32 @@ function comandosDeEscrituraSinRuta() {
     }
   }
 
-  return [...comandos.keys()].filter((nombre) => !importados.has(nombre)).sort();
+  return { comandos, importados };
+}
+
+/** Los huérfanos que cuentan, y las filas de la declaración que sobran. */
+function comandosHuerfanos() {
+  const { comandos, importados } = comandosDeEscrituraSinRuta();
+  const modelosDelProducto = new Set(MODELOS.map((modelo) => modelo.clave));
+  const sobran = [];
+  for (const [nombre, modelos] of Object.entries(COMANDOS_DE_GIROS_QUE_ESTE_PRODUCTO_NO_TIENE)) {
+    if (!comandos.has(nombre)) sobran.push(`${nombre} ya no existe o ya no escribe`);
+    else if (importados.has(nombre)) sobran.push(`${nombre} ya tiene ruta`);
+    const presentes = modelos.filter((modelo) => modelosDelProducto.has(modelo));
+    if (presentes.length > 0) {
+      sobran.push(
+        `${nombre} sirve a ${presentes.join(', ')}, que SÍ está en MODELOS: necesita ruta`,
+      );
+    }
+  }
+  const huerfanos = [...comandos.keys()]
+    .filter((nombre) => !importados.has(nombre))
+    .filter((nombre) => {
+      const modelos = COMANDOS_DE_GIROS_QUE_ESTE_PRODUCTO_NO_TIENE[nombre];
+      return modelos === undefined || modelos.some((modelo) => modelosDelProducto.has(modelo));
+    })
+    .sort();
+  return { huerfanos, sobran };
 }
 
 async function comprobarRutas(base) {
@@ -331,11 +345,16 @@ async function comprobarRutas(base) {
   // convención del proyecto es que TODAS las rutas de comando son POST
   // (`manejadorDeComando`), y los `GET`/`PATCH` de los `05-DATOS-Y-BACKEND.md`
   // son la forma REST con la que se diseñaron, no la que se implementó.
-  const huerfanos = comandosDeEscrituraSinRuta();
+  const { huerfanos, sobran } = comandosHuerfanos();
   exigir(
     huerfanos.length === 0,
     `RUTAS: ${huerfanos.length} comando(s) que ESCRIBEN y a los que no llega ninguna ruta: ` +
       huerfanos.slice(0, 8).join(', '),
+  );
+  exigir(
+    sobran.length === 0,
+    `RUTAS: COMANDOS_DE_GIROS_QUE_ESTE_PRODUCTO_NO_TIENE tiene filas que sobran · ` +
+      `${sobran.join(' · ')}. Borra la fila: una excepción que ya no aplica deja de leerse.`,
   );
 
   if (base === undefined) {
@@ -1421,13 +1440,10 @@ async function comprobarDespliegue() {
  * pantalla con la venta que quedó en el servidor, al centavo y con folio. Buscar
  * «cobrar» o «total» daría verde con un comentario.
  */
-const SUITES_DE_MODELO = [
-  'abarrotes.spec.ts',
-  'cafeteria.spec.ts',
-  'restaurante.spec.ts',
-  'estetica-salon.spec.ts',
-  'ferreteria.spec.ts',
-];
+// Una por modelo de `MODELOS` (la fuente con la que se mide la cobertura), con el nombre del
+// modelo: eran cinco escritas a mano y, al quedarse POS Don Poncho sólo con el restaurante
+// (DP-2), la lista siguió pidiendo las suites de los cuatro que se fueron.
+const SUITES_DE_MODELO = MODELOS.map((modelo) => `${modelo.clave}.spec.ts`);
 
 /**
  * Las que NO cobran todavía, con su motivo y su sonda.
@@ -1917,7 +1933,16 @@ function llamadasDelTexto(texto) {
 
   for (const m of texto.matchAll(/['"](\/api\/[a-zA-Z0-9/_-]+)['"]/g)) {
     const url = m[1] ?? '';
-    llamadas.push({ url, partes: url.replace('/api/', '').split('/'), dinamicos: new Set() });
+    const partes = url.replace('/api/', '').split('/');
+    // Una cadena que TERMINA en «/» es un prefijo al que se le pega algo
+    // (`'/api/archivos/' + ruta`, o un `startsWith`): su último segmento es lo que se pega,
+    // así que vale contra un `[x]` como cualquier interpolación, y sólo contra eso.
+    const dinamicos = new Set();
+    if (partes.length > 1 && partes.at(-1) === '') {
+      partes[partes.length - 1] = '*';
+      dinamicos.add(partes.length - 1);
+    }
+    llamadas.push({ url, partes, dinamicos });
   }
 
   for (const m of texto.matchAll(/`(\/api\/[^`]*)`/g)) {
