@@ -1,10 +1,7 @@
 import 'server-only';
 
 import type { Giro } from '@morphiqpos/contracts';
-import {
-  equipoDePrueba,
-  type EmpleadoDePrueba,
-} from '@morphiqpos/contracts/negocios/equipo';
+import { equipoDePrueba, type EmpleadoDePrueba } from '@morphiqpos/contracts/negocios/equipo';
 import type { Transaccion } from '@morphiqpos/data';
 
 import { hashearPin } from '../identidad/pin.ts';

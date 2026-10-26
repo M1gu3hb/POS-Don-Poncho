@@ -38,16 +38,17 @@ function resetearComo(organizacionId: string) {
 }
 
 describe('configuracion.resetear_negocio_de_prueba · la guarda', () => {
-  it.each(
-    [...NEGOCIOS_REALES, ...NEGOCIOS_AJENOS].map((n) => [n.nombre, n.id] as const),
-  )('sobre %s contesta SIN_PERMISO y no toca la base', async (_nombre, id) => {
-    const { salida, conexion } = resetearComo(id);
-    const resultado = await salida;
-    expect(resultado.ok).toBe(false);
-    if (resultado.ok) return;
-    expect(resultado.error.codigo).toBe('SIN_PERMISO');
-    expect(conexion.consultas).toHaveLength(0);
-  });
+  it.each([...NEGOCIOS_REALES, ...NEGOCIOS_AJENOS].map((n) => [n.nombre, n.id] as const))(
+    'sobre %s contesta SIN_PERMISO y no toca la base',
+    async (_nombre, id) => {
+      const { salida, conexion } = resetearComo(id);
+      const resultado = await salida;
+      expect(resultado.ok).toBe(false);
+      if (resultado.ok) return;
+      expect(resultado.error.codigo).toBe('SIN_PERMISO');
+      expect(conexion.consultas).toHaveLength(0);
+    },
+  );
 
   it('sobre un negocio que no está en ninguna lista, también: la regla es positiva', async () => {
     const { salida, conexion } = resetearComo('99999999-0000-4000-8000-000000000009');

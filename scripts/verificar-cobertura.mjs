@@ -57,10 +57,8 @@ const RAIZ = dirname(dirname(fileURLToPath(import.meta.url)));
 /** Los cinco modelos de la Fase 2, en el orden de las etapas. */
 export const MODELOS = [
   { clave: 'restaurante', carpeta: '01-alimentos/restaurante' },
-  { clave: 'cafeteria', carpeta: '01-alimentos/cafeteria' },
-  { clave: 'abarrotes', carpeta: '02-retail/abarrotes' },
-  { clave: 'ferreteria', carpeta: '02-retail/ferreteria' },
-  { clave: 'estetica-salon', carpeta: '03-servicios-cita/estetica-salon' },
+  // POS Don Poncho (DP-2): sólo el restaurante. Los otros cuatro modelos del maestro —y sus
+  // carpetas de documentación— se fueron con su código.
 ];
 
 const DOCS = join(RAIZ, 'docs', 'fase-2', 'modelos');

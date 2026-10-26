@@ -1,119 +1,95 @@
-# Registro de decisiones — MorphiqPOS
+# DECISIONES · POS Don Poncho
 
-Formato: cada decisión lleva fecha, alternativas evaluadas, elección y consecuencia.
-**Una decisión superada no se borra: se marca y se apunta a la nueva.**
-
----
-
-## Decisiones vigentes
-
-| ID | Fecha | Decisión | Elegido | Consecuencia principal |
-|---|---|---|---|---|
-| **A-01** | 6-sep-2026 | Modelo de distribución | **Superada parcialmente por A-52** | Se conserva la entrega independiente por cliente; deja de regir la prohibición de copiar código. El generador sigue diferido hasta una necesidad real. |
-| **A-02** | 7-sep-2026 | Modelo de venta | **Una tabla `ordenes`** con estrategias de captura, cumplimiento y consumo de inventario | Caja, pagos, costos, clientes y reportes se escriben una vez y sirven a todos los giros. Habilita servicios, espacios, producción y e-commerce sin reescribir el núcleo |
-| **A-03** | 6-sep-2026 | Capacidad de ejecución | **Medio tiempo, solo** (~15–20 h/semana ≈ 2.25 jornadas) | Fase 0 ~4–5 semanas; Corte 0 ~8–9 semanas |
-| **A-04** | 6-sep-2026 | Sistema Base44 | **Erradicación total.** No hay nada que congelar ni migrar | Se elimina el entregable de mapa de migración de datos. Repo nuevo = cero residuos por construcción |
-| **A-05** | 6-sep-2026 | Piloto externo | **Ninguno.** Tenants internos de demostración | Confeti queda intacto y sirve sólo como *validador* de escenarios, sin tocar su sistema |
-| **A-16** | 6-sep-2026 | Infraestructura inicial | **Todo local.** Sin despliegue por ahora | Docker en la laptop. Es además requisito de la demo: se demuestra donde el wifi es malo o no hay |
-| **A-17** | 6-sep-2026 | Base de código | **Los dos sistemas.** Arquitectura de POS-MH-Tiendita + features y reglas del POS de restaurante | Nada desde cero. Se hereda también la responsabilidad de corregir los defectos de la tiendita antes de agregar features |
-| **A-18** | 6-sep-2026 | Modelo de negocio | **No es SaaS.** Boutique, sistemas personalizados | No habrá autoservicio en línea. "No vende sacos, toma medidas" |
-| **A-19** | 6-sep-2026 | Alcance del catálogo | **Todo el catálogo se construirá eventualmente** | El total no ordena el trabajo; el orden sí. Regla de admisión por corte |
-| **A-20** | 7-sep-2026 | Stack del frontend | **Next.js 14 App Router único.** Sin segunda app en Vite | Las pantallas de operación son rutas 100% cliente: se sienten como SPA sin partir el proyecto, el build, el diseño ni la sesión |
-| **A-21** | 7-sep-2026 | Dónde vive la lógica crítica | **API TypeScript con transacciones reales** contra Postgres (pg/Drizzle) | Nada de lógica de negocio en RPC de PL/pgSQL, RLS ni Edge Functions. Testeable, versionada y lista para exponerse por MCP a la IA |
-| **A-22** | 7-sep-2026 | Stripe y suscripciones | **Fuera del núcleo** → capacidad opcional `membresias` | Sirve a clientes que sí venden suscripciones (gimnasios, academias). La cobranza de rentas de Miguel se maneja aparte |
-| **A-23** | 7-sep-2026 | Motor de estilos | **Tokens + 4 perillas estructurales**: densidad, redondeo, elevación, movimiento | Se cambia entre premium, editorial e industrial sin duplicar componentes. Es feature de producto y jugada de venta |
-| **A-24** | 7-sep-2026 | Primer corte | **Núcleo endurecido + motor de diseño al mismo tiempo** | Cero features nuevas. Las pantallas nacen sobre tokens en vez de retrofitearlos en 100 componentes |
-| **A-25** | 7-sep-2026 | Multi-tenant | **Se conserva `negocio_id`** en todas las tablas | No para SaaS: para tener varios negocios de demostración y cambiar de giro frente al prospecto. Multisucursal es concepto aparte, llega con franquicias |
-| **A-26** | 7-sep-2026 | Offline | **Sin offline por ahora.** Sólo online | El caso "cliente sin internet" se resuelve con servidor local propio, no con sincronización offline |
-| **A-27** | 7-sep-2026 | Portabilidad del backend | **El backend completo debe poder correr en el servidor privado del cliente** (PC con Postgres, en su local) | **Regla dura:** cero lógica de negocio en RLS, Edge Functions o servicios propietarios. Todo desplegable con Docker. Es lo que impide repetir Base44 con otro proveedor. Miguel lo venderá como opción: "con internet o sin internet" |
-| **A-28** | 7-sep-2026 | Acceso de empleados | **Terminal dada de alta + PIN por empleado verificado en servidor; correo y contraseña para el dueño** | Rápido entre cliente y cliente, seguro de verdad, y con trazabilidad de quién cobró qué. Corrige el agujero que tienen los dos sistemas |
-| **A-29** | 7-sep-2026 | Pruebas | **Pirámide mínima obligatoria en el núcleo** (~20–25 % del tiempo) | Unitarias, integración contra Postgres real, concurrencia, inyección de fallos, idempotencia, aislamiento de tenant, E2E del guion de demo |
-| **A-30** | 7-sep-2026 | Orden de ramas | **Restaurante → completar retail (variantes, lotes, series) → servicios y citas** | Restaurante primero: mejor demo, ~70 % construido, y valida `ordenes` con una segunda estrategia real |
-| **A-35** | 8-sep-2026 | Repositorio de código | **Local por ahora**, sin remoto | Se conecta cuando F1.1 despliegue |
-| **A-36** | 8-sep-2026 | Versiones del stack | **Next 16.3.4 · React 19.2.8 · TypeScript 6.0.3** | A-20 fijaba Next 14, que dejó de publicarse el 11-dic-2025. TS 6 y no 7 porque `typescript-eslint` sólo soporta `<6.1.0`, y sin él no hay reglas con información de tipos — que es lo que hace cumplir R19 |
-| **A-37** | 8-sep-2026 | Acceso a Postgres | **Kysely** sobre `pg` (ADR 0001) | El esquema vive entero en `.sql` y los tipos se derivan de la base migrada. Con Drizzle habría dos fuentes de verdad del esquema: triggers, `check` e índices parciales no caben en TypeScript |
-| **A-38** | 8-sep-2026 | Tailwind | **v4.3.3**, no v3 | La razón de v3 era "continuidad con ambos sistemas" y no aplica: repo nuevo, cero configuración reutilizada. `@theme` de v4 mapea directo sobre las variables CSS del motor de tokens |
-| **A-39** | 8-sep-2026 | Infraestructura principal | **Supabase gestionado** — proyecto `MorphiqPOS`, ref `wyqmzhliurwyxuyxznpb`, us-east-2, Postgres 17.6. Sustituye a Docker | Supera a A-16. El `docker-compose` **se conserva y corre en CI como prueba de portabilidad**: si el sistema deja de arrancar contra un Postgres pelón, se coló una dependencia de Supabase y muere la promesa A-27 |
-| **A-40** | 8-sep-2026 | Despliegue | **Un solo proyecto en Vercel**, conectado al repositorio | F1.1 termina desplegado y abierto desde el teléfono |
-| **A-41** | 8-sep-2026 | **Secuencia de la Fase 1** | **Replanteada: producto vendible al final de F1.1**, no de F1.3 | El plan original secuenciaba por capa de arquitectura y violaba su propia regla de admisión ("cada corte agrega un capítulo al guion de demostración"). F1.0 no agregó ninguno. Se mantiene la **correctitud** (transacciones, precios en servidor, auth en servidor) y se difiere la **completitud** (matriz de permisos, registry con grafo, config multi-ámbito) |
-| **A-42** | 8-sep-2026 | Forma del sistema de capacidades | **Selector de paquete en configuración**: Tienda · Ferretería · Farmacia · Cafetería · Restaurante | Resuelve A-32. Es lo que Miguel pidió y lo que usará frente a un cliente. El registry existe por debajo; lo que se ve y se usa es un desplegable. Se verifica en servidor, no ocultando botones |
-| **A-43** | 8-sep-2026 | Autonomía del agente de desarrollo | **Total dentro de las reglas escritas.** Pregunta sólo ante lo irreversible, lo que contradice la documentación, o lo que toca datos de clientes reales | Con medio tiempo, esperar respuesta cuesta más que corregir una decisión escrita |
-| **A-44** | 8-sep-2026 | Versión de Postgres | **17** | Supabase corre 17.6; el compose se alinea |
-| **A-45** | 8-sep-2026 | **Dos agentes en paralelo** | **Claude Code = carril A** (venta, dinero, restaurante) · **Codex = carril B** (catálogo, inventario, gestión, público). 50/50 por área de negocio completa, no por capa | Duplica velocidad sin bloqueo mutuo. Zonas de propiedad en `TEAM.md`; sólo dos dependencias cruzadas, ambas entregadas en las primeras tareas. Carpetas separadas con `git worktree`, ramas `carril-a` y `carril-b` |
-| **A-46** | 8-sep-2026 | Repositorio del código | **Se integra al repositorio `MorphiqPOS`**, junto a la documentación. Commits a nombre de `M1gu3hb` | Supera a A-35. Un solo lugar: la separación entre repo de planeación y repo de código era la causa del problema de contexto de la sesión del 7-sep |
-| **A-47** | 8-sep-2026 | Credenciales | **Los agentes las extraen con Supabase CLI** y las escriben en `.env`, que está en `.gitignore` | Miguel lo autoriza expresamente. Los secretos nunca entran al repositorio, a un reporte ni a un commit — no por precaución abstracta, sino porque el repositorio es público |
-| **A-48** | 8-sep-2026 | Reportes | **Obligatorios** en `docs/reports/`, folio correlativo compartido, uno por sesión, con la plantilla de `docs/reports/PLANTILLA.md` | Incluye campo obligatorio "Lo que NO hice". Es lo que permite auditar contra el código en vez de creerle al reporte — el acta de F1.0 declaraba pruebas "contra Postgres real" que no ejecutaban SQL |
-| **A-49** | 9-sep-2026 | **Base del proyecto: se queda el monorepo** | **No se migra al repositorio de la tiendita** | El 8-sep recomendé evaluar la mudanza porque el monorepo llevaba 10 % y nada funcionaba. La auditoría del 9-sep revisa esa recomendación: el motor está mucho más avanzado (dominio, 7 comandos server-side, repositorios, decremento atómico, 28 tablas, 312 pruebas, 45 mutaciones). Lo que falta para vender son ~10–12 tareas de **cableado**, no meses. Cambiar de base costaría más que terminar. Las pantallas del restaurante se portan igual, en el carril A desde A-15 |
-| **A-50** | 9-sep-2026 | Prioridad de la sesión 3 | **Cablear, no construir motor** | `apps/web` no importa nada del backend: cero rutas de API, cero Server Actions, cero sesión. Tres sesiones de motor sin conexión al mundo. Nueva tarea **X-01** (resolvedor de sesión + puente HTTP), de carril A, publicada temprano porque desbloquea a los dos |
-| **A-51** | 9-sep-2026 | Arneses de mutación | **Si no está enganchado a `verify`, no cuenta** | Codex enganchó los suyos (`verify:catalogo`, `verify:inventario`, `verify:comandos-catalogo`). Claude Code reportó 17 mutaciones con tabla detallada y el arnés no está en el repositorio: no es reproducible |
+Cada decisión estructural con sus alternativas y su consecuencia. Una decisión superada no se borra:
+se marca y se apunta a la nueva. Las del maestro siguen en su repositorio (`M1gu3hb/MorphiqPOS`,
+`DECISIONES.md` y `docs/fase-2/05-DECISIONES.md` en `5f4534c`).
 
 ---
 
-## Decisiones superadas
+## DP-D01 · Origen: `MorphiqPOS@5f4534c` · 25-10-2026
 
-| ID | Decisión original | Estado |
-|---|---|---|
-| A-16 | "Todo local, Docker, sin despliegue" | **Superada** por A-39. Supabase gestionado es el entorno principal; el compose queda como prueba de portabilidad |
-| A-20 (versión) | Next.js 14 | **Superada** por A-36. Next 14 dejó de publicarse en dic-2025. La forma (Next único, operación como cliente puro) sigue vigente |
-| A-32 | Nombres de perfiles de giro, pendiente | **Resuelta** por A-42: selector de paquete con cinco giros |
-| Secuencia F1.0→F1.5 original | Fundación → núcleo → catálogo → inventario → restaurante | **Superada** por A-41. Ver `docs/fase-1/15-AUDITORIA-F1.0-Y-REPLANTEAMIENTO.md`. Los documentos 08–12 no se tiran: su contenido se redistribuye |
-| A-01 (recomendación inicial) | "Un código configurable por tenant, muchos inquilinos" | **Superada** por A-01 vigente. Miguel eligió ensamblaje por cliente. El análisis comparativo se conserva en `docs/01_MODELO_MASTER_POS.md` §2 |
-| A-05 (recomendación inicial) | Confeti como piloto 1 | **Superada.** No hay cliente próximo de sistema; Confeti opera bien y no se toca |
-| Híbrido Next + Vite | Dos aplicaciones separadas | **Superada** por A-20. El objetivo real (pantallas de operación rápidas) se logra con rutas cliente dentro de Next |
+- **Contexto:** el encargo pide copiar el restaurante y el núcleo del maestro, no reescribir.
+- **Alternativas:** fork con su historia; paquetes versionados del maestro; copia por
+  `git archive` con historia nueva.
+- **Elección:** `git archive 5f4534c` (merge del PR #18, `origin/main` confirmado con `git fetch`),
+  historia nueva. `ORIGEN.md` registra qué viajó y qué no.
+- **Consecuencia:** nada de `.env`, `historico/`, `.work/` ni los siete worktrees sin integrar del
+  maestro. Las correcciones se rastrean contra `5f4534c`.
 
----
+## DP-D02 · El repositorio es público · 25-10-2026
 
-## Decisiones pendientes
+- **Contexto:** el encargo pedía detenerse si `M1gu3hb/POS-Don-Poncho` era público. Lo era.
+- **Decisión de Miguel:** «no te detengas, ignora esa parte».
+- **Consecuencia:** cero PIN, secretos, llaves o datos personales en el repo; los accesos van a
+  `..\_PRIVADO\ACCESOS-DON-PONCHO.md`. Los minutos de Actions de un repo público no se cobran,
+  pero la CI igual corre sólo en PR y a mano (DP-D08).
 
-| ID | Decisión | Recomendación | Bloquea |
-|---|---|---|---|
-| **A-31** | Formato de ticket en v1: carta / 80 mm / 58 mm / combinación | Carta con `@media print` en F1.1; dejar la ruta abierta a 80 mm | F1.1-T16 |
-| **A-33** | ¿Este repositorio se vuelve privado? | **Sí, privado.** Ver advertencia en `README.md` | Publicación de la auditoría de seguridad completa |
-| **A-34** | Hardware del primer corte: impresora, cajón, báscula, escáner | Escáner de cámara y físico entran en F1.1-T17. Báscula, cajón y térmica se difieren | F1.1 cerrado |
+## DP-D03 · Poda por alcanzabilidad, no por nombre de carpeta · 25-10-2026
 
----
+- **Método:** un grafo de imports, enlaces entre páginas y rutas `/api` del cliente, desde lo que
+  abre cada puesto del restaurante (las doce pantallas heredadas del menú real —D-52 del maestro—,
+  «Cierre del día», las vistas `restaurante/*`, el login y el portal QR). Las URL que el cliente
+  arma con funciones no las ve el detector, así que la API se clasifica por el MÓDULO de comandos
+  que importa cada ruta, y se confirma con tipos, pruebas y navegador.
+- **Se va:** los módulos `abarrotes`, `cafeteria`, `ferreteria`, `salon` y el dominio `agenda`; sus
+  161 rutas y pantallas; la venta de mostrador (suspender, retomar, apartadas, búsqueda, más
+  vendidos); los cortes de los otros giros; el repo de tomas de inventario (sin llamadores).
+- **Se queda, aunque hoy no tenga pantalla:** el núcleo y el dominio del restaurante completos
+  —p. ej. lista de espera, separar mesas, marchar tiempos, kardex, valuación, traspasos—, con sus
+  pruebas. Son del restaurante y del núcleo, no de otro giro; quitarlos perdería capacidad probada
+  que el cliente puede pedir mañana.
+- **Alternativa descartada:** quitar todo lo que no tenga pantalla hoy. Rompía la matriz de
+  permisos del núcleo y perdía funciones del restaurante ya probadas.
 
-## Reglas derivadas que no son negociables
+## DP-D04 · Las migraciones no se tocan: el esquema es un superconjunto · 25-10-2026
 
-Extraídas de las decisiones anteriores. Si una propuesta las viola, se rechaza.
+- **Consecuencia:** siguen las tablas de otros giros, sin código que las escriba. El contrato de
+  «estado ⇒ columna» exige ahora que NADIE escriba los estados de esas tablas
+  (`SIN_ESCRITOR_EN_DON_PONCHO`): un hueco nombrado, no una regla ablandada.
+- **Para la Fase B:** la migración 042 siembra tres organizaciones de muestra (Don Chuy, La Broca,
+  Jacaranda) en cualquier base nueva. En la base propia se tratan con OK de Miguel (ver
+  `docs/infra/FASES.md`).
 
-1. **A-52:** repositorio y proyecto independientes por cliente; se permite extraer, copiar y adaptar piezas del Master POS. No se trasladan credenciales ni datos de otros clientes.
-2. **Cero lógica de negocio** en RLS, Edge Functions o servicios propietarios. El backend debe correr en una PC del cliente.
-3. **Los precios se calculan en el servidor.** Nunca se confía en el total que manda el cliente.
-4. **Cobro, comanda, stock, caja y mesa son transaccionales e idempotentes.** O confirma todo, o no persiste nada.
-5. **Los permisos se aplican en servidor.** Ocultar un botón no es autorización.
-6. **Ningún error crítico se silencia.** Nada de `catch(() => {})`.
-7. **El stock es un ledger inmutable.** Nunca leer-calcular-escribir un saldo.
-8. **Ninguna función se declara terminada sin su prueba**, y sin pasar el estándar `morphiq-prs`.
-9. **Cada corte debe agregar un capítulo al guion de demostración**, o ser cimentación obligatoria de algo que sí lo hace.
-10. **Ningún PIN, contraseña, token ni dato de cliente** se copia a documentación o a este repositorio.
+## DP-D05 · Fuera el modo presentación, el dueño general y el selector de modelos · 25-10-2026
 
----
+- **Alternativas:** desactivar (sin ruta ni menú, el servidor niega) o quitar.
+- **Elección:** quitar. El contexto espejo, su historial, el cambio de negocio, la contraseña y el
+  cambio de plantilla se fueron con sus rutas, pantallas y pruebas. La sesión dejó de leer la
+  presentación (cuatro columnas y un `join` menos por petición).
+- **Lo único que queda desactivado y no borrado:** `Ambito.presentador` en contratos (opcional,
+  nunca se llena). El resolvedor de sesión rechaza cualquier cookie que traiga una delegación.
+  Quitarlo del contrato tocaba la auditoría y el formato del token sin ganar nada.
 
-## Registro de sesiones
+## DP-D06 · Restaurantes de prueba en vez de demostraciones · 25-10-2026
 
-| Fecha | Dónde | Qué se resolvió |
-|---|---|---|
-| 6-sep-2026 | Cowork local | Lectura del paquete de auditoría Fase 0 (34 documentos). Interpretación de la visión, riesgos y contradicciones. Decisiones A-01, A-03, A-04, A-05, A-16 |
-| 6-sep-2026 | Cowork local | Reencuadre: MorphiqPOS es herramienta de venta antes que producto. Guion de demostración. Decisiones A-17, A-18, A-19 |
-| 7-sep-2026 | Cowork local | Auditoría del repo `POS-MH-Tiendita`. Catálogo de 9 ramas / ~180 capacidades / 30 giros. Entrevista dirigida: decisiones A-02, A-20 a A-30. Publicación de este repositorio |
-| 7-sep-2026 | Cowork local | **Fase 0 cerrada.** Análisis estructural de ambas fuentes. Estrategia de fusión, modelo de datos unificado (~45 tablas), arquitectura del monorepo, sistema de diseño, mapa de defectos, y el plan completo de Fase 1 en 6 cortes. Ver `docs/fase-1/` |
-| 7/8-sep-2026 | Claude Code | **Corte F1.0 ejecutado**, 12 de 13 tareas. Monorepo, TypeScript estricto, sistema de diseño con 36 primitivas tokenizadas, CSP con nonce, CI, 149 pruebas y 28 mutaciones. Decisiones A-35 a A-38. **SHA-256 del ZIP verificado: coincide.** Tres defectos encontrados por pruebas que la inspección no habría visto |
-| 8-sep-2026 | Cowork local | **Auditoría independiente de F1.0 y replanteamiento.** F1.0 entregó fundación excelente y cero producto: 2 rutas, sin BD, sin auth, sin pantallas de negocio — culpa del plan, no de la ejecución. Decisiones A-39 a A-44. Nuevo corte **F1.1 POS que vende**. Ver `docs/fase-1/15` y `16` |
-| 8-sep-2026 | Cowork local | **Reparto en dos carriles.** Codex entra como segundo desarrollador. Decisiones A-45 a A-48. `TEAM.md`, `18-REPARTO-DOS-CARRILES.md`, plantilla de reportes |
-| 8/9-sep-2026 | Claude Code + Codex | **Sesión 2.** Carril A: A-01 (envoltorio `comando()`), 1 de 22. Carril B: B-01 a B-05 + 2 a medias, 5 de 24. Ambos reportes honestos |
-| 9-sep-2026 | Cowork local | **Auditoría de la sesión 2.** Hallazgo central: `apps/web` no importa nada del backend — motor sin cableado. Se revisa y se descarta la mudanza a la tiendita (A-49). Decisiones A-49 a A-51. Prompts de la sesión 3 en `docs/fase-1/19` |
+- **Contexto:** «sin demos», pero las jornadas e2e, la matriz de permisos y el aislamiento
+  necesitan un restaurante sembrado.
+- **Elección:** dos restaurantes de prueba (`prueba-restaurante`, `prueba-restaurante-dos`) con ID
+  propios que no existen en la base compartida; su siembra es la del restaurante del maestro, sin
+  los otros giros. Su reseteo (`/api/pruebas/resetear`) tiene DOS guardas: por ID y por base (se
+  niega si `DATABASE_URL` es de un proyecto intocable).
+- **Consecuencia:** en producción ese reseteo contesta 403 siempre.
 
-## A-52 · 20-oct-2026 · Master POS interno y extracción por cliente
+## DP-D07 · Don Poncho con ID fijo, alta idempotente y primer acceso único · 25-10-2026
 
-Miguel aclaró expresamente el objetivo: el mismo POS completo para él y su equipo,
-login central por PIN, dueño general con acceso a todos los modelos y demostraciones
-por puesto. Los clientes reciben proyectos independientes ensamblados con piezas del
-maestro y funciones nuevas cuando hagan falta. Se permite copiar y adaptar código.
+- **Elección:** `NEGOCIO_DON_PONCHO.id` se declara antes del alta. `db:alta-negocio` lo crea con ese
+  ID sólo si ni el slug ni el ID existen (con su fila de auditoría) y, si ya existe, no toca nada.
+  `db:bootstrap` da el PRIMER acceso y se niega si ya hay dueño con PIN. Los negocios ajenos se
+  niegan antes de abrir la base.
+- **Consecuencia:** el mismo ID viaja a la Fase B y a la C.
 
-Supera la restricción de A-01/R3 y cualquier texto anterior equivalente. Alternativa
-rechazada: exigir paquetes publicados como única entrega o accesos separados por URL.
-Consecuencia: cada extracción debe declarar su origen y llevar dependencias, esquema,
-permisos y pruebas; las mejoras genéricas pueden regresar al maestro mediante revisión.
-No elimina el aislamiento de datos ni los permisos en servidor. Ver D-42 y
-[objetivo vigente](docs/MASTER-POS-VIGENTE.md).
+## DP-D08 · CI en `pull_request` y a mano · 25-10-2026
+
+- Sin `push` a `main` durante el arranque (se trabaja directo en `main`). Jobs reducidos al
+  restaurante (ver DP-2 en `docs/BITACORA.md`).
+
+## DP-D09 · El renombre `@morphiqpos/*` → `@donponcho/*` queda como deuda · 25-10-2026
+
+- Son 1,089 archivos. No es barato y no lo ve nadie fuera del código; el encargo lo pide sólo si es
+  barato. Queda anotado.
+
+## DP-D10 · Los pisos anti-vacío de los contratos se recalibran · 25-10-2026
+
+- Los contratos que escanean el código tenían pisos «al menos N» calibrados para cinco giros
+  (p. ej. más de 250 comandos). Se bajan al alcance del restaurante con su razón escrita junto al
+  número; siguen atrapando un cargador roto que devuelva unos cuantos.

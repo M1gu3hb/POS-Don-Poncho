@@ -29,9 +29,8 @@ const MIGRACION_RUTINAS = join(
 const PRUEBA_RUTINAS = 'packages/data/src/migraciones/rutinas.test.ts';
 const CONFIGURACION = join(RAIZ, 'packages', 'app', 'src', 'configuracion', 'configuracion.ts');
 const PRUEBA_CONFIGURACION = 'packages/app/src/configuracion/configuracion.test.ts';
-const PRESENTACION = join(RAIZ, 'packages', 'app', 'src', 'puente', 'presentacion.ts');
 const CONFIGURACION_PUENTE = join(RAIZ, 'packages', 'app', 'src', 'puente', 'configuracion.ts');
-const PRUEBA_PRESENTACION = 'packages/app/src/puente/presentacion.test.ts';
+const PRUEBA_PAQUETE_DE_LA_COLUMNA = 'packages/app/src/puente/paquete-de-la-columna.test.ts';
 const MIGRACION_SESIONES = join(
   RAIZ,
   'packages',
@@ -130,17 +129,6 @@ const COMANDO_PUBLICO = join(RAIZ, 'packages', 'app', 'src', 'portal', 'comando-
 const IDEMPOTENCIA_PORTAL = join(RAIZ, 'packages', 'app', 'src', 'portal', 'idempotencia.ts');
 const PRUEBA_IDEMPOTENCIA_PORTAL = 'packages/app/src/portal/idempotencia.test.ts';
 const LIMITE_APLICACION = join(RAIZ, 'packages', 'app', 'src', 'http', 'limite.ts');
-const RUTA_PRESENTACION = join(
-  RAIZ,
-  'apps',
-  'web',
-  'app',
-  'api',
-  'configuracion',
-  'presentacion',
-  'route.ts',
-);
-const PRUEBA_LIMITE_PRESENTACION = 'apps/web/src/servidor/presentacion-limite.test.ts';
 const RUTA_EMPLEADOS_PUBLICOS = join(
   RAIZ,
   'apps',
@@ -341,20 +329,11 @@ comprobarMutacion({
     codigo.replace('      ...(esDocumento(actual?.valores) ? actual.valores : {}),\n', ''),
 });
 comprobarMutacion({
-  nombre: 'cambio de paquete devuelto al JSON',
-  origen: PRESENTACION,
-  archivoTemporal: 'presentacion.ts',
-  variable: 'MORPHIQPOS_PRESENTACION_SOURCE_PATH',
-  prueba: PRUEBA_PRESENTACION,
-  transformar: (codigo) =>
-    codigo.replace(".updateTable('organizaciones')", ".updateTable('configuracion')"),
-});
-comprobarMutacion({
   nombre: 'lectura de paquete devuelta al JSON',
   origen: CONFIGURACION_PUENTE,
   archivoTemporal: 'configuracion.ts',
   variable: 'MORPHIQPOS_PUENTE_CONFIGURACION_SOURCE_PATH',
-  prueba: PRUEBA_PRESENTACION,
+  prueba: PRUEBA_PAQUETE_DE_LA_COLUMNA,
   transformar: (codigo) =>
     codigo.replace(
       'paquete_modo: plantillaDeOrganizacion(fila.giro, fila.paquete)',
@@ -370,7 +349,7 @@ comprobarMutacion({
   origen: CONFIGURACION_PUENTE,
   archivoTemporal: 'configuracion.ts',
   variable: 'MORPHIQPOS_PUENTE_CONFIGURACION_SOURCE_PATH',
-  prueba: PRUEBA_PRESENTACION,
+  prueba: PRUEBA_PAQUETE_DE_LA_COLUMNA,
   transformar: (codigo) =>
     codigo.replace(
       'paquete_modo: plantillaDeOrganizacion(fila.giro, fila.paquete)',
@@ -419,20 +398,6 @@ comprobarMutacion({
   variable: 'MORPHIQPOS_SALIR_ROUTE_PATH',
   prueba: PRUEBA_SALIR,
   transformar: (codigo) => codigo.replace('await cerrarSesion(', 'await Promise.resolve('),
-});
-// La sesión de presentación del dueño general (D-42) es la que abre los demás modelos: salir
-// tiene que revocarla también, no sólo la del puesto.
-comprobarMutacion({
-  nombre: 'logout deja viva la sesión de presentación',
-  origen: SALIR,
-  archivoTemporal: 'route.ts',
-  variable: 'MORPHIQPOS_SALIR_ROUTE_PATH',
-  prueba: PRUEBA_SALIR,
-  transformar: (codigo) =>
-    codigo.replace(
-      /await cerrarSesion\((\s*leerCookie\(peticion\.headers\.get\('cookie'\), COOKIE_PRESENTACION\))/,
-      'await Promise.resolve($1',
-    ),
 });
 comprobarMutacion({
   nombre: 'roles de entidad otra vez opcionales',
@@ -878,23 +843,6 @@ comprobarMutacion({
   prueba: PRUEBA_IDEMPOTENCIA_PORTAL,
   transformar: (codigo) =>
     codigo.replace('huellaEntrada: huella({ mesaId, entrada })', 'huellaEntrada: huella(entrada)'),
-});
-comprobarMutacion({
-  nombre: 'ventana de presentación eliminada',
-  origen: LIMITE_APLICACION,
-  archivoTemporal: 'limite.ts',
-  variable: 'MORPHIQPOS_APP_RATE_LIMIT_SOURCE_PATH',
-  prueba: PRUEBA_LIMITE_PRESENTACION,
-  transformar: (codigo) =>
-    codigo.replace('  presentacion: { intentos: 10, ventanaSegundos: 900 },\n', ''),
-});
-comprobarMutacion({
-  nombre: 'desbloqueo de presentación sin consumo de cuota',
-  origen: RUTA_PRESENTACION,
-  archivoTemporal: 'route.ts',
-  variable: 'MORPHIQPOS_PRESENTATION_ROUTE_PATH',
-  prueba: PRUEBA_LIMITE_PRESENTACION,
-  transformar: (codigo) => codigo.replace("permitir('presentacion'", "permitir('entrar'"),
 });
 comprobarMutacion({
   nombre: 'plantilla anónima sin consumo de cuota de entrada',
