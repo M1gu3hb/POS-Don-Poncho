@@ -261,3 +261,30 @@ despliegue; cada uno se resolvió en su causa, sin bajar una exigencia:
 Probado por mutación: quitar una fila, declarar un comando inexistente, uno con ruta o uno de un
 modelo presente, volver a la lista de suites a mano y un prefijo que no lleva a ninguna ruta; la
 puerta los denuncia todos.
+
+## DP-D22 · Recetas y Platillos no pisan el área ni la visibilidad · 26-10-2026
+
+- **Defectos heredados del maestro:**
+  - Recetas (`RecetaFormDialog.jsx`) mandaba SIEMPRE `area_preparacion: 'cocina'` y
+    `visible_en_menu_digital: true`, también al editar: una bebida dejaba de ir a la barra y un
+    platillo escondido del QR reaparecía.
+  - Platillos (`ProductoSimpleDialog.jsx`) mandaba `ninguno` al crear y al EDITAR: le quitaba la
+    comanda a un platillo que la tenía. La importación hacía lo mismo si el archivo no traía área.
+  - Recetas mandaba `imagen_url: ''` y el puente lo rechaza («debe ser una URL»): **no se podía
+    guardar la receta de un platillo sin foto**, y Don Poncho no tiene fotos.
+  - Ninguna pantalla dejaba escoger el área.
+- **Elección:**
+  - Campo «Área de preparación» en los dos diálogos (`AreaDePreparacionSelect`): al editar, el
+    área que tiene; al crear, «Según su categoría». La visibilidad en el menú digital no viaja.
+  - El servidor (`completarAreaAlCrear`, en `puente.escribir`): un `ProductoTerminado` creado sin
+    área la aprende de su categoría y, si la categoría no tiene platillos, de su estación
+    (`areaPorOmision`, la más frecuente, sin contar `ninguno` ni dados de baja). Si no hay de dónde,
+    se niega con `AREA_DE_PREPARACION_REQUERIDA`: un platillo no nace sin comanda sin que alguien
+    lo decida. El área que alguien elige se respeta, `ninguno` incluido.
+  - Alternativa descartada: deducir el área por el NOMBRE de la estación («Bebidas» → barra):
+    frágil y de otro idioma en cada negocio.
+- **Producción (sólo lectura):** los 107 platillos de Don Poncho tienen el área de su menú,
+  ninguno escondido del QR, ninguno editado desde la carga. Nada que corregir.
+- **Prueba:** unidad de la regla y del campo, integración contra Postgres por el comando del
+  puente, navegador (editar la limonada → sigue en barra y escondida; receta nueva en Bebidas →
+  nace en barra, sin foto). Seis mutaciones, todas atrapadas.

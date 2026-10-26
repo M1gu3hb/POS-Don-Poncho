@@ -163,3 +163,11 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   camino llegó primero. Defecto heredado de la cocina; prueba determinista y fila por comanda
   (DP-D19, segunda parte).
 
+## 26-10-2026 · DP-9 · Paquete 1 de cambios del cliente
+
+- DP-9.0: plan enviado a Miguel con el estado comprobado de cada cambio (dos búsquedas de sólo
+  lectura en paralelo). `main`: 9.1, 9.2, 9.3, 9.4, 9.7, 9.8. `fase-b`: 9.5 y 9.6.
+- DP-9.1 (DP-D22): Recetas y Platillos ya no pisan el área ni la visibilidad; el servidor aprende
+  el área de un platillo nuevo de su categoría. Apareció además que Recetas no guardaba un
+  platillo sin foto (`imagen_url: ''`). Producción revisada en sólo lectura: nada movido.
+
