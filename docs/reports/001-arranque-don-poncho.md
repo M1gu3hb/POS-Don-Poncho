@@ -46,6 +46,10 @@ con `git log --format=%B` sobre la historia entera).
 | `8e90253` DP-7e | La prueba del menú personalizado deja la demo en limpio |
 | `2ef1e26` DP-8 | Las fases de la mudanza y este reporte |
 | `bba570b` DP-4 | La preparación deja el QR de cada mesa |
+| `875c187` DP-8b | Don Poncho en la base compartida y en producción |
+| `1ec73cf` DP-7f | `verify:acople` ajustada al producto de sólo restaurante |
+| `ce2f2a3` DP-7g | Los toques de una comanda van en fila; la mutación de FORCE RLS, a su consulta |
+| `44fbdb7` DP-7h | La prueba de la fila, sin expresión void |
 
 ## 3 · Qué se quitó, qué se quedó y qué se apagó
 
@@ -134,7 +138,7 @@ Su último requisito, checks de GitHub sobre el commit, se cumple corriendo la C
 
 ## 7 · CI
 
-Tres corridas a mano, completas (Postgres 17: la cadena entera, la jornada en tres tamaños,
+Seis corridas a mano, completas (Postgres 17: la cadena entera, la jornada en tres tamaños,
 permisos y aislamiento, y el rastreo del restaurante en los 9 estilos). Cada una, 16 trabajos y
 unos 18 minutos de reloj (163 a 169 minutos de máquina sumados).
 
@@ -143,6 +147,9 @@ unos 18 minutos de reloj (163 a 169 minutos de máquina sumados).
 | `40261424207` | `737ab9c` | 14/16 | Auditoría: Next 16.3.8 con ejecución remota de código, DOMPurify y Zod → DP-7a. La suite del restaurante llamaba a la ruta de plantilla que DP-2b quitó → DP-7b. La galería no se regeneró (su paso va detrás de la suite roja). |
 | `40263378355` | `ce25450` | 15/16 | Galería regenerada → DP-7c. La jornada cayó en escritorio: la cocina regresaba una comanda recién tocada → DP-7d (DP-D19). |
 | `40266967242` | `8e90253` | **16/16** | Todo verde, galería comparada contra la nueva referencia. |
+| `40315995417` | `1ec73cf` | 14/16 | El banco de mutaciones buscaba la consulta de RLS en su lugar viejo; la jornada en tableta: un «Listo» con su «Preparar» en camino → DP-7g. |
+| `40320889728` | `ce2f2a3` | cancelada | El lint marcó una flecha de la prueba nueva → DP-7h; la cancela la siguiente. |
+| `40321898271` | `44fbdb7` | **16/16** | Todo verde. Con ella, `verify:acople` contra producción: **completo**. |
 
 ## 8 · Pendientes reales
 
