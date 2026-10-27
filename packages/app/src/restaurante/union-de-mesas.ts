@@ -103,7 +103,11 @@ export const unirMesasComando = definirComando<
   escribe: true,
   roles: [...ROLES],
   paquetes: PAQUETES_RESTAURANTE,
-  sucursal: { mesaPrincipalId: 'mesas', 'mesaIds[]': 'mesas' },
+  sucursal: {
+    mesaPrincipalId: 'mesas',
+    'mesaIds[]': 'mesas',
+    'posiciones[].mesaId': 'mesas',
+  },
   modulo: 'mesas',
   entrada: entradaUnirMesas,
   async ejecutar(ctx, entrada) {

@@ -18,7 +18,6 @@ import {
 } from '@morphiqpos/ui/sistema';
 import {
   ArrowLeft,
-  Combine,
   Minus,
   Plus,
   Search,
@@ -54,8 +53,7 @@ import { DividirCuentaDialog } from './DividirCuentaDialog';
 import { lineasDelEnvio } from './envio-a-cocina';
 import { ListosParaRecoger, useListosDeLaCuenta } from './ListosParaRecoger';
 import { useRolDeLaSesion } from './rol-de-la-sesion';
-import { liberarMesaConPregunta } from './unir-mesas/liberar-con-pregunta';
-import { useUnionDeLaMesa } from './unir-mesas/use-union-de-la-mesa';
+import { liberarMesaConPregunta, useUnionDeLaMesa } from './unir-mesas';
 import { useVocabulario } from '~/cliente/vocabulario';
 
 /**
@@ -468,10 +466,7 @@ export function MesaActiva(props: MesaActivaProps) {
           </Badge>
         )}
         {grupo !== null && grupo.unidas.length > 0 && (
-          <Badge variant="outline">
-            <Combine aria-hidden="true" />
-            Unida con {grupo.unidas.join(' · ')}
-          </Badge>
+          <Badge variant="outline">Unida con {grupo.unidas.join(' · ')}</Badge>
         )}
         {personasDeLaMesa !== null && (
           <span className="inline-flex items-center gap-(--espacio-1) text-sm text-texto-sutil">
