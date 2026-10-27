@@ -180,4 +180,7 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - DP-9.4 (DP-D25): cocina en el teléfono. QR por estación firmado para el día y revocable, API
   pública estrecha, voz, Wake Lock y botonera (`docs/cliente/BOTONERA.md`). Sin migración. De
   paso: el guardado de Configuración bloquea la fila antes de reescribirla.
+- DP-9.7 (DP-D26, supera DP-D18): botones sobre las páginas del menú QR (editor con arrastre,
+  platillo y grupo, precio vigente, vista previa) y aspecto del portal por tokens. Las 8
+  páginas de Don Poncho, con 97 botones medidos de sus imágenes. Sin migración.
 

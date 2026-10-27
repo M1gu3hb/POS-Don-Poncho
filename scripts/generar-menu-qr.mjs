@@ -9,11 +9,19 @@
  * letrero —papel crema, marco dorado, letra negra, el logo y «Del horno a tu mesa…»— y la deja
  * en `apps/web/public/menu-qr/<archivo>.webp`. Se corre otra vez cuando cambia el menú.
  *
- * Las categorías de cada página son las que nombra su TÍTULO, separadas por «·»: la misma regla
- * con la que el portal pone debajo de la página los platillos para pedir (`paginas-del-menu.ts`).
+ * Las categorías de cada página son las que nombra su TÍTULO, separadas por «·».
+ *
+ *   node scripts/generar-menu-qr.mjs --posiciones
+ *
+ * DP-9.7: mide dónde quedó cada platillo en cada página (en % de la imagen) y lo deja en
+ * `docs/cliente/botones-menu-qr.json`, sin tocar las imágenes: es lo que coloca los botones
+ * «Agregar» sobre la carta. Comprueba que la página medida mida lo mismo que su imagen; si el
+ * menú cambió, primero se regeneran las imágenes (sin la bandera, que también deja las
+ * posiciones).
+ *
  * Usa el Chromium de Playwright y `sharp`, que ya son del repositorio.
  */
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,7 +50,7 @@ const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 function renglon(p) {
   const precio = p.porPeso ? `${pesos(p.precio)} <small>/ kg</small>` : pesos(p.precio);
   const detalle = p.detalle ? `<div class="detalle">${esc(p.detalle)}</div>` : '';
-  return `<div class="item"><div class="linea"><span class="nombre">${esc(p.nombre)}</span><span class="puntos"></span><span class="precio">${precio}</span></div>${detalle}</div>`;
+  return `<div class="item" data-producto="${esc(p.nombre)}"><div class="linea"><span class="nombre">${esc(p.nombre)}</span><span class="puntos"></span><span class="precio">${precio}</span></div>${detalle}</div>`;
 }
 
 function bloque(nombre, conTitulo) {
@@ -66,7 +74,7 @@ function pulques() {
           .opciones.map((o) => esc(o[0]) + (o[2] ? '*' : ''))
           .join(', ')
       : esc(detalle ?? '');
-    return `<div class="item"><div class="linea"><span class="nombre">${titulo}</span><span class="puntos"></span><span class="precio">${pesos(precio(`${base} · litro`))}${medio ? ` <small>· ½ ${pesos(medio)}</small>` : ''}</span></div><div class="detalle">${sabores}</div></div>`;
+    return `<div class="item" data-grupo="${esc(base)}"><div class="linea"><span class="nombre">${titulo}</span><span class="puntos"></span><span class="precio">${pesos(precio(`${base} · litro`))}${medio ? ` <small>· ½ ${pesos(medio)}</small>` : ''}</span></div><div class="detalle">${sabores}</div></div>`;
   };
   return `<section><div class="cabeza">litro · ½ litro</div>
     ${fila('Básico', 'Pulque básico', 'sabor-pulque-basico')}
@@ -75,7 +83,7 @@ function pulques() {
     ${fila('Premium', 'Pulque premium', 'sabor-pulque-premium')}
     ${fila('Premium con licor', 'Pulque premium con licor', 'sabor-pulque-premium-licor')}
     ${fila('De piñón', 'Pulque de piñón', null, 'Premium')}
-    <div class="item"><div class="linea"><span class="nombre">Natural</span><span class="puntos"></span><span class="precio">${pesos(precio('Pulque natural · litro'))} <small>/ litro</small></span></div></div>
+    <div class="item" data-producto="Pulque natural · litro"><div class="linea"><span class="nombre">Natural</span><span class="puntos"></span><span class="precio">${pesos(precio('Pulque natural · litro'))} <small>/ litro</small></span></div></div>
     <p class="nota">* De temporada.</p></section>`;
 }
 
@@ -108,21 +116,79 @@ function html(pagina) {
   return `<!doctype html><html lang="es-MX"><meta charset="utf-8"><style>${ESTILO}</style><body><div class="hoja">${cabeza}<h1>${esc(pagina.titulo)}</h1><div class="orla">✦ ✦ ✦</div>${cuerpo}${pagina.nota ? `<p class="nota">${esc(pagina.nota)}</p>` : ''}<footer>La Tradicional Barbacoa de Don Poncho · Precios en pesos, IVA incluido</footer></div></body></html>`;
 }
 
+const SOLO_POSICIONES = process.argv.includes('--posiciones');
+const POSICIONES = join(RAIZ, 'docs', 'cliente', 'botones-menu-qr.json');
+const ESCALA = 2;
+
+/**
+ * Dónde quedó cada platillo de la página, en % de la imagen (la captura es la página entera). Un
+ * renglón de pulque es un GRUPO: sus presentaciones (litro, medio litro) se eligen al tocarlo.
+ */
+async function medir(hoja) {
+  // Lo de adentro corre en la página de Chromium, no en Node.
+  /* global document, window */
+  return hoja.evaluate(() => {
+    const ancho = document.documentElement.scrollWidth;
+    const alto = document.documentElement.scrollHeight;
+    const pct = (v, total) => Math.round((v / total) * 10000) / 100;
+    return {
+      alto,
+      botones: [...document.querySelectorAll('.item')].map((el) => {
+        const r = el.getBoundingClientRect();
+        const caja = {
+          x: pct(r.left + window.scrollX, ancho),
+          y: pct(r.top + window.scrollY, alto),
+          ancho: pct(r.width, ancho),
+          alto: pct(r.height, alto),
+        };
+        const grupo = el.getAttribute('data-grupo');
+        return grupo === null
+          ? { tipo: 'platillo', producto: el.getAttribute('data-producto'), ...caja }
+          : {
+              tipo: 'grupo',
+              prefijo: grupo,
+              etiqueta: el.querySelector('.nombre')?.textContent ?? grupo,
+              ...caja,
+            };
+      }),
+    };
+  });
+}
+
 mkdirSync(SALIDA, { recursive: true });
 const navegador = await chromium.launch();
 try {
   const hoja = await navegador.newPage({
     viewport: { width: 540, height: 800 },
-    deviceScaleFactor: 2,
+    deviceScaleFactor: ESCALA,
   });
+  const posiciones = {};
   for (const pagina of paginas) {
     await hoja.setContent(html(pagina), { waitUntil: 'load' });
+    const medida = await medir(hoja);
+    posiciones[pagina.archivo] = medida.botones;
+    if (SOLO_POSICIONES) {
+      const { height } = await sharp(join(SALIDA, `${pagina.archivo}.webp`)).metadata();
+      if (height !== medida.alto * ESCALA) {
+        throw new Error(
+          `${pagina.archivo}: la imagen mide ${String(height)} px y la página ${String(medida.alto * ESCALA)}. Regenera las imágenes.`,
+        );
+      }
+      console.log(`✓ ${pagina.archivo} · ${String(medida.botones.length)} botones`);
+      continue;
+    }
     const png = await hoja.screenshot({ fullPage: true });
     await sharp(png)
       .webp({ quality: 84 })
       .toFile(join(SALIDA, `${pagina.archivo}.webp`));
     console.log(`✓ ${pagina.archivo}.webp · ${pagina.titulo}`);
   }
+  writeFileSync(
+    POSICIONES,
+    `${JSON.stringify(posiciones, null, 2)}
+`,
+  );
+  console.log(`✓ ${POSICIONES}`);
 } finally {
   await navegador.close();
 }

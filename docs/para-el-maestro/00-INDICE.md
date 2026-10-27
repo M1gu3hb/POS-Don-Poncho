@@ -10,3 +10,4 @@ Poncho, y cómo portarlo.
 | 02  | [El portal sin asignación de mesas y los globos de solicitud](02-portal-sin-asignacion-y-globos.md) | DP-9.2  | No        |
 | 03  | [La vista «Solicitudes» dentro de Mesas](03-vista-de-solicitudes.md)                                | DP-9.3  | No        |
 | 04  | [Cocina en el teléfono](04-cocina-en-el-telefono.md)                                                | DP-9.4  | No        |
+| 05  | [Botones sobre las páginas del menú QR y aspecto del portal](05-botones-del-menu-qr.md)             | DP-9.7  | No        |

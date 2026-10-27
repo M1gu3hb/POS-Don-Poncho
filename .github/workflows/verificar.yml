@@ -717,7 +717,8 @@ jobs:
       # portal sin asignación de mesas y los globos de solicitud sobre cada mesa, en los tres
       # aparatos —el teléfono del mesero pinta las mesas como tarjetas, no como plano— (DP-9.2); la
       # vista «Solicitudes» de Mesas, con la voz sólo ahí (DP-9.3); el teléfono de una estación de
-      # cocina, sin sesión, con la botonera (DP-9.4).
+      # cocina, sin sesión, con la botonera (DP-9.4); los botones sobre la carta del menú QR y el
+      # aspecto del portal (DP-9.7).
       # Cada una resetea la demo al empezar.
       - name: Los cambios del cliente
         if: matrix.modelo == 'restaurante'
@@ -726,6 +727,7 @@ jobs:
           pnpm test:e2e pruebas/e2e/portal-sin-asignacion.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/vista-de-solicitudes.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/telefono-de-cocina.spec.ts --project=escritorio --project=tablet --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/botones-del-menu-qr.spec.ts --project=escritorio --project=tablet --workers=1 --retries=0
 
       - name: Las trazas del día
         if: always()

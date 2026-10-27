@@ -175,6 +175,9 @@ se marca y se apunta a la nueva. Las del maestro siguen en su repositorio (`M1gu
 
 ## DP-D18 · El menú personalizado del portal QR también pide · 25-10-2026
 
+> **Superada por DP-D26 (26-10-2026):** la regla del título ya no liga platillos a la página; los
+> botones van encima de la imagen y la lista de abajo se fue. Se deja como registro.
+
 - **Contexto:** Miguel pidió el portal «con todo», el menú default y uno personalizado «como si lo
   hubieran subido ellos», con los botones de pedir. En el maestro el modo «menú subido» sólo
   enseñaba imágenes: no se ligaba a platillos, el servidor ni mandaba el catálogo, y el menú
@@ -391,3 +394,37 @@ puerta los denuncia todos.
   con voz, la botonera la prepara y la deja lista, el servidor lo confirma, el código viejo deja
   de servir y no deja botones). Quince mutaciones (nueve del servidor, tres de la lógica, tres del
   navegador), todas atrapadas.
+
+## DP-D26 · Botones sobre las páginas del menú QR y aspecto del portal, por tokens · 26-10-2026
+
+- **Lo que había:** cada página del menú subido era una imagen con una lista aparte de «Agregar»
+  debajo, ligada por el título de la página (DP-D18). Se repetía y le quitaba la gracia.
+- **Elección (versión 1; diseñar la carta desde cero no entra):**
+  - En Portal QR → Menú QR, cada página tiene «Botones»: un editor sobre la imagen donde se
+    colocan botones arrastrando y se estiran desde la esquina (también con flechas del teclado).
+    Dos tipos: **platillo** (abre el diálogo de opciones de siempre) y **grupo** (un botón,
+    «Cervezas», que despliega los platillos de una categoría o de una lista elegida). Por botón,
+    «enseñar el precio vigente del sistema» (la imagen puede tener precios viejos). Vista previa
+    como comensal dentro del editor.
+  - Posiciones en % de la imagen: iguales en cualquier teléfono y con zoom de dos dedos.
+  - Viven en `configuracion.valores.portal_qr_botones` (`{ [página]: Boton[] }`), validados con
+    zod al guardar (dentro de la página, cada tipo con lo suyo, sin ids repetidos, hasta 60 por
+    página). Sin migración: cabe de sobra en el tope de 64 KiB del documento.
+  - El portal publica sobre cada página sólo lo que se vende: un botón de un platillo escondido
+    del menú digital no sale y un grupo se queda con sus visibles. Sin poder pedir, la página es
+    sólo imagen. Se quita la lista repetida de abajo.
+  - Las 8 páginas de Don Poncho quedan con sus 97 botones: `generar-menu-qr.mjs --posiciones`
+    mide dónde quedó cada platillo en cada imagen (comprueba que la imagen mida lo mismo que la
+    página medida) y `preparar-negocio.mjs` los escribe por el puente, sin pisar una página que
+    ya tenga botones. Los renglones de pulque son grupos (litro y medio litro).
+  - Aspecto del portal, por tokens: uno de los nueve estilos (o el del negocio), la tipografía
+    (la del sistema, redonda o clásica, de las que ya carga la aplicación) y el fondo (liso o con
+    la marca de agua), en `configuracion.valores.portal_qr_tema`. El orden de las páginas es el
+    «Orden» que ya tenía cada una.
+- **Prueba:** unidad (forma de los botones y del tema; mover, estirar, tipo, faltantes; caja,
+  platillos y precio vigente), integración contra Postgres (se guarda validado; el portal publica
+  sólo lo que se vende; sin pedir, sin botones —también en mixto—; el tema viaja y se valida),
+  navegador (la dueña coloca un platillo arrastrándolo y un grupo, vista previa, guarda, elige el
+  aspecto; el comensal ve el botón ENCIMA de la imagen con el precio vigente, sin la lista,
+  despliega el grupo y pide tocando el platillo). Once mutaciones (cinco del servidor, tres de la
+  lógica, tres del navegador), todas atrapadas.

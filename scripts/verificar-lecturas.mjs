@@ -20,9 +20,9 @@ const CONTRATO = join(RAIZ, 'packages', 'app', 'src', 'puente', 'cobertura.test.
 const LECTURAS_PERMITIDAS = [
   {
     campo: 'descripcion',
-    cantidad: 52,
+    cantidad: 50,
     razon:
-      'Es un nombre compartido por productos, estaciones, menús, gastos y formularios; sólo se descarta en las entidades de categoría. POS Don Poncho (DP-2): 52 —la que falta era del selector de modelos del Modo presentación, que se fue—.',
+      'Es un nombre compartido por productos, estaciones, menús, gastos y formularios; sólo se descarta en las entidades de categoría. POS Don Poncho (DP-2): 52 —la que falta era del selector de modelos del Modo presentación, que se fue—. DP-9.7: 50 —las dos de la página del menú del portal pasaron a `src/restaurante/menu-qr/PaginaConBotones.tsx`—.',
   },
   {
     campo: 'fecha',

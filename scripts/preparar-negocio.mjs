@@ -6,9 +6,10 @@
  *     --persona "Miguel · Morphiq" --pines <archivo fuera del repo> \
  *     [--datos docs/cliente/negocio-don-poncho.json] [--ensayo]
  *
- * Configuración (con el portal QR encendido), apariencia, páginas del menú personalizado, zona y
- * mesas, equipo, quién responde por cada mesa y el QR de cada una. Cada cosa por su comando, con
- * su rol, su transacción y su auditoría, firmado por el dueño de `--persona`.
+ * Configuración (con el portal QR encendido), apariencia, páginas del menú personalizado y sus
+ * botones (DP-9.7), zona y mesas, equipo, quién responde por cada mesa y el QR de cada una. Cada
+ * cosa por su comando, con su rol, su transacción y su auditoría, firmado por el dueño de
+ * `--persona`.
  *
  * LOS PIN NO ESTÁN EN EL REPOSITORIO: `--pines` es un JSON `{ "<nombre>": "<pin>" }` que vive en
  * `..\_PRIVADO\`. El guion no los imprime nunca.
@@ -175,6 +176,79 @@ hecho.push(
   `${String(paginasNuevas)} páginas del menú QR nuevas de ${String(datos.portal.paginas.length)}` +
     (paginasMudadas > 0 ? ` (${String(paginasMudadas)} con su dirección nueva)` : ''),
 );
+
+// 1c · Los botones de cada página (DP-9.7), donde está cada platillo en la imagen: las posiciones
+// las mide `generar-menu-qr.mjs --posiciones`. Una página que ya tiene botones NO se toca: puede
+// que el dueño los haya acomodado. Un renglón de pulque es un grupo (litro y medio litro).
+const posiciones = JSON.parse(readFileSync('docs/cliente/botones-menu-qr.json', 'utf8'));
+const paginasPorTitulo = new Map(
+  (
+    await db
+      .selectFrom('menu_qr_secciones')
+      .select(['id', 'nombre'])
+      .where('organizacion_id', '=', org.id)
+      .execute()
+  ).map((p) => [p.nombre, p.id]),
+);
+const platillosPorNombre = new Map(
+  (
+    await db
+      .selectFrom('productos')
+      .select(['id', 'nombre'])
+      .where('organizacion_id', '=', org.id)
+      .where('activo', '=', true)
+      .execute()
+  ).map((p) => [p.nombre, p.id]),
+);
+const configuracionActual = await db
+  .selectFrom('configuracion')
+  .select('valores')
+  .where('organizacion_id', '=', org.id)
+  .executeTakeFirst();
+const botonesActuales = configuracionActual?.valores?.portal_qr_botones ?? {};
+const botonesNuevos = { ...botonesActuales };
+let paginasConBotones = 0;
+for (const [indice, pagina] of datos.portal.paginas.entries()) {
+  const paginaId = paginasPorTitulo.get(pagina.titulo);
+  if (paginaId === undefined || (botonesActuales[paginaId]?.length ?? 0) > 0) continue;
+  botonesNuevos[paginaId] = (posiciones[pagina.archivo] ?? []).map((pos, i) => {
+    const caja = { x: pos.x, y: pos.y, ancho: pos.ancho, alto: pos.alto };
+    const id = `p${String(indice + 1)}-${String(i + 1)}`;
+    if (pos.tipo === 'grupo') {
+      const ids = [...platillosPorNombre]
+        .filter(([nombre]) => nombre.startsWith(`${pos.prefijo} · `))
+        .sort(([a], [b]) => a.localeCompare(b, 'es-MX'))
+        .map(([, idDelPlatillo]) => idDelPlatillo);
+      if (ids.length === 0)
+        throw new Error(`${pagina.archivo}: el grupo «${pos.prefijo}» no tiene platillos.`);
+      return {
+        id,
+        tipo: 'grupo',
+        ...caja,
+        productoIds: ids,
+        etiqueta: pos.etiqueta,
+        mostrarPrecio: false,
+      };
+    }
+    const productoId = platillosPorNombre.get(pos.producto);
+    if (productoId === undefined)
+      throw new Error(`${pagina.archivo}: «${pos.producto}» no es un platillo del menú.`);
+    return { id, tipo: 'platillo', ...caja, productoId, mostrarPrecio: true };
+  });
+  paginasConBotones += 1;
+}
+if (paginasConBotones > 0) {
+  await ejecutar(
+    escribirDatos,
+    {
+      entidad: 'ConfiguracionNegocio',
+      operacion: 'update',
+      datos: { portal_qr_botones: botonesNuevos },
+    },
+    'botones-del-menu',
+  );
+}
+hecho.push(`botones del menú QR en ${String(paginasConBotones)} página(s)`);
 
 // 2 · La zona y sus mesas, por nombre y por número.
 let zona = await db

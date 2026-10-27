@@ -1,0 +1,800 @@
+{
+  "01-pa-empezar-y-sopas": [
+    {
+      "tipo": "platillo",
+      "producto": "Tamales de frijol",
+      "x": 8.7,
+      "y": 37.98,
+      "ancho": 82.59,
+      "alto": 3.91
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Tamales de frijol con mole",
+      "x": 8.7,
+      "y": 42.57,
+      "ancho": 82.59,
+      "alto": 3.91
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Tlacoyo de frijol",
+      "x": 8.7,
+      "y": 47.16,
+      "ancho": 82.59,
+      "alto": 2.12
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Quesadilla",
+      "x": 8.7,
+      "y": 49.96,
+      "ancho": 82.59,
+      "alto": 3.91
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Quesadilla combinada",
+      "x": 8.7,
+      "y": 54.55,
+      "ancho": 82.59,
+      "alto": 2.12
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Nopales en ensalada",
+      "x": 8.7,
+      "y": 57.35,
+      "ancho": 82.59,
+      "alto": 2.12
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Nopales en escabeche",
+      "x": 8.7,
+      "y": 60.15,
+      "ancho": 82.59,
+      "alto": 2.12
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Guacamole",
+      "x": 8.7,
+      "y": 62.95,
+      "ancho": 82.59,
+      "alto": 2.12
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Aguacate",
+      "x": 8.7,
+      "y": 65.75,
+      "ancho": 82.59,
+      "alto": 2.12
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Docena de tortillas",
+      "x": 8.7,
+      "y": 68.55,
+      "ancho": 82.59,
+      "alto": 2.12
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Consomé de carnero",
+      "x": 8.7,
+      "y": 75.59,
+      "ancho": 82.59,
+      "alto": 2.12
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Consomé de pollo",
+      "x": 8.7,
+      "y": 78.39,
+      "ancho": 82.59,
+      "alto": 3.91
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Caldo de nopal",
+      "x": 8.7,
+      "y": 82.98,
+      "ancho": 82.59,
+      "alto": 3.91
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Sopa azteca",
+      "x": 8.7,
+      "y": 87.57,
+      "ancho": 82.59,
+      "alto": 2.12
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Arroz",
+      "x": 8.7,
+      "y": 90.37,
+      "ancho": 82.59,
+      "alto": 2.12
+    }
+  ],
+  "02-lo-fuerte": [
+    {
+      "tipo": "platillo",
+      "producto": "Barbacoa de horno",
+      "x": 8.7,
+      "y": 28.35,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Barbacoa preparada",
+      "x": 8.7,
+      "y": 31.97,
+      "ancho": 82.59,
+      "alto": 5.07
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Cabeza preparada",
+      "x": 8.7,
+      "y": 37.91,
+      "ancho": 82.59,
+      "alto": 5.07
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Mole con pollo",
+      "x": 8.7,
+      "y": 43.86,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Enchiladas de mole",
+      "x": 8.7,
+      "y": 47.48,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Tacos dorados de barbacoa",
+      "x": 8.7,
+      "y": 51.11,
+      "ancho": 82.59,
+      "alto": 5.07
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Taco suave de barbacoa",
+      "x": 8.7,
+      "y": 57.05,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Tamal de nopal",
+      "x": 8.7,
+      "y": 60.68,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Cecina de Yecapixtla",
+      "x": 8.7,
+      "y": 64.3,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Mixiote de carnero",
+      "x": 8.7,
+      "y": 67.93,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Conejo al pastor",
+      "x": 8.7,
+      "y": 71.55,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Conejo enchilado",
+      "x": 8.7,
+      "y": 75.18,
+      "ancho": 82.59,
+      "alto": 2.75
+    }
+  ],
+  "03-lo-dulce-y-para-calentar": [
+    {
+      "tipo": "platillo",
+      "producto": "Fresas con crema",
+      "x": 8.7,
+      "y": 32.97,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Flan napolitano",
+      "x": 8.7,
+      "y": 36.6,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Pastel de la casa",
+      "x": 8.7,
+      "y": 40.22,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Plátanos fritos",
+      "x": 8.7,
+      "y": 43.85,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Cocoles de piloncillo",
+      "x": 8.7,
+      "y": 47.47,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Bolsa de pan",
+      "x": 8.7,
+      "y": 51.1,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Helado",
+      "x": 8.7,
+      "y": 54.72,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Café de olla",
+      "x": 8.7,
+      "y": 63.85,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Atole de guayaba",
+      "x": 8.7,
+      "y": 67.47,
+      "ancho": 82.59,
+      "alto": 2.75
+    }
+  ],
+  "04-para-enfriar": [
+    {
+      "tipo": "platillo",
+      "producto": "Coca cola",
+      "x": 8.7,
+      "y": 28.35,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Refresco",
+      "x": 8.7,
+      "y": 31.97,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Agua mineral",
+      "x": 8.7,
+      "y": 35.6,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Boing",
+      "x": 8.7,
+      "y": 39.22,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Jugo",
+      "x": 8.7,
+      "y": 42.85,
+      "ancho": 82.59,
+      "alto": 5.07
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Licuado",
+      "x": 8.7,
+      "y": 48.79,
+      "ancho": 82.59,
+      "alto": 5.07
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Jarra de agua de sabor",
+      "x": 8.7,
+      "y": 54.73,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Copa de agua de sabor",
+      "x": 8.7,
+      "y": 58.36,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Limonada",
+      "x": 8.7,
+      "y": 61.98,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Naranjada",
+      "x": 8.7,
+      "y": 65.61,
+      "ancho": 82.59,
+      "alto": 2.75
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Agua mineral preparada",
+      "x": 8.7,
+      "y": 69.23,
+      "ancho": 82.59,
+      "alto": 2.75
+    }
+  ],
+  "05-cerveza-y-preparadas": [
+    {
+      "tipo": "platillo",
+      "producto": "Corona",
+      "x": 8.7,
+      "y": 27.28,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Victoria",
+      "x": 8.7,
+      "y": 29.93,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Modelo especial",
+      "x": 8.7,
+      "y": 32.58,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Negra modelo",
+      "x": 8.7,
+      "y": 35.23,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Cerveza de barril · bola",
+      "x": 8.7,
+      "y": 37.88,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Cerveza de barril · litro",
+      "x": 8.7,
+      "y": 40.53,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Conga",
+      "x": 8.7,
+      "y": 52.31,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Paloma",
+      "x": 8.7,
+      "y": 54.96,
+      "ancho": 82.59,
+      "alto": 3.7
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Charro negro",
+      "x": 8.7,
+      "y": 59.3,
+      "ancho": 82.59,
+      "alto": 3.7
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Carajillo",
+      "x": 8.7,
+      "y": 63.64,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Sangría preparada",
+      "x": 8.7,
+      "y": 66.29,
+      "ancho": 82.59,
+      "alto": 3.7
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Piedra",
+      "x": 8.7,
+      "y": 70.63,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Mojito",
+      "x": 8.7,
+      "y": 73.28,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Mojito litro",
+      "x": 8.7,
+      "y": 75.93,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Piña colada sin alcohol",
+      "x": 8.7,
+      "y": 78.58,
+      "ancho": 82.59,
+      "alto": 3.7
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Bull",
+      "x": 8.7,
+      "y": 82.92,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Mezcalita",
+      "x": 8.7,
+      "y": 85.57,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Cazuela tequila",
+      "x": 8.7,
+      "y": 88.21,
+      "ancho": 82.59,
+      "alto": 2.01
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Cazuela mezcal",
+      "x": 8.7,
+      "y": 90.86,
+      "ancho": 82.59,
+      "alto": 2.01
+    }
+  ],
+  "06-tequila-mezcal-ron-brandy": [
+    {
+      "tipo": "platillo",
+      "producto": "Hornitos",
+      "x": 8.7,
+      "y": 32.9,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Maestro dobel",
+      "x": 8.7,
+      "y": 36.1,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Cuervo tradicional",
+      "x": 8.7,
+      "y": 39.29,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "1800 cristalino",
+      "x": 8.7,
+      "y": 42.49,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Don Julio reposado",
+      "x": 8.7,
+      "y": 45.68,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Don Julio 70",
+      "x": 8.7,
+      "y": 48.87,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Centenario",
+      "x": 8.7,
+      "y": 52.07,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Monte lobos",
+      "x": 8.7,
+      "y": 60.11,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "400 conejos",
+      "x": 8.7,
+      "y": 63.3,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Bacardí blanco",
+      "x": 8.7,
+      "y": 71.34,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Havana 3 años",
+      "x": 8.7,
+      "y": 74.53,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Havana 7 años",
+      "x": 8.7,
+      "y": 77.73,
+      "ancho": 82.59,
+      "alto": 2.42
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Torres 10",
+      "x": 8.7,
+      "y": 85.77,
+      "ancho": 82.59,
+      "alto": 2.42
+    }
+  ],
+  "07-whisky-vodka-licores-vino": [
+    {
+      "tipo": "platillo",
+      "producto": "Red label",
+      "x": 8.7,
+      "y": 35.15,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Jack Daniel’s",
+      "x": 8.7,
+      "y": 38.56,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Black label",
+      "x": 8.7,
+      "y": 41.97,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Absolut",
+      "x": 8.7,
+      "y": 50.56,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Smirnoff",
+      "x": 8.7,
+      "y": 53.97,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Chinchón",
+      "x": 8.7,
+      "y": 62.56,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Baileys",
+      "x": 8.7,
+      "y": 65.97,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Licor 43",
+      "x": 8.7,
+      "y": 69.38,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Concha y toro",
+      "x": 8.7,
+      "y": 77.97,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "La redonda",
+      "x": 8.7,
+      "y": 81.38,
+      "ancho": 82.59,
+      "alto": 2.59
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Finca Las Moras",
+      "x": 8.7,
+      "y": 84.8,
+      "ancho": 82.59,
+      "alto": 2.59
+    }
+  ],
+  "08-pulques": [
+    {
+      "tipo": "grupo",
+      "prefijo": "Pulque básico",
+      "etiqueta": "Básico",
+      "x": 8.7,
+      "y": 31.35,
+      "ancho": 82.59,
+      "alto": 7.26
+    },
+    {
+      "tipo": "grupo",
+      "prefijo": "Pulque especial",
+      "etiqueta": "Especial",
+      "x": 8.7,
+      "y": 39.48,
+      "ancho": 82.59,
+      "alto": 9.46
+    },
+    {
+      "tipo": "grupo",
+      "prefijo": "Pulque exótico",
+      "etiqueta": "Exótico",
+      "x": 8.7,
+      "y": 49.81,
+      "ancho": 82.59,
+      "alto": 11.65
+    },
+    {
+      "tipo": "grupo",
+      "prefijo": "Pulque premium",
+      "etiqueta": "Premium",
+      "x": 8.7,
+      "y": 62.34,
+      "ancho": 82.59,
+      "alto": 5.07
+    },
+    {
+      "tipo": "grupo",
+      "prefijo": "Pulque premium con licor",
+      "etiqueta": "Premium con licor",
+      "x": 8.7,
+      "y": 68.28,
+      "ancho": 82.59,
+      "alto": 5.07
+    },
+    {
+      "tipo": "grupo",
+      "prefijo": "Pulque de piñón",
+      "etiqueta": "De piñón",
+      "x": 8.7,
+      "y": 74.22,
+      "ancho": 82.59,
+      "alto": 5.07
+    },
+    {
+      "tipo": "platillo",
+      "producto": "Pulque natural · litro",
+      "x": 8.7,
+      "y": 80.17,
+      "ancho": 82.59,
+      "alto": 2.75
+    }
+  ]
+}
