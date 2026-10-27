@@ -219,7 +219,7 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Mesero.jsx",
-      "porque": "DP-9.3 (DP-D24): el botón «Solicitudes» del encabezado y su modal (SolicitudesQRPanel) se van; los sustituye el selector Mesas / Solicitudes arriba de las zonas, que convierte la pantalla entera en la lista de pendientes. Lo nuevo vive en src (SelectorDeVista, VistaDeSolicitudes).",
+      "porque": "DP-9.3 (DP-D24): el botón «Solicitudes» del encabezado y su modal (SolicitudesQRPanel) se van; los sustituye el selector Mesas / Solicitudes arriba de las zonas, que convierte la pantalla entera en la lista de pendientes. Lo nuevo vive en src (SelectorDeVista, VistaDeSolicitudes). DP-9.6 (DP-D30): arriba del mapa, alineado a la derecha, el botón «Unir mesas» con su icono (Combine) entra al modo de unir mesas en el mapa (src: UnirMesasEnElMapa).",
       "testigos": [
         "- clase:flex",
         "- clase:flex",
@@ -254,7 +254,9 @@
         "- clase:p-4",
         "- clase:sm:p-6",
         "- texto:Solicitudes",
-        "- icono:Bell"
+        "- icono:Bell",
+        "+ clase:justify-end",
+        "+ icono:Combine"
       ]
     },
     {

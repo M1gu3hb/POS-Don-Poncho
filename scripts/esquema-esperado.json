@@ -9626,6 +9626,17 @@
       "generada": null
     },
     {
+      "clave": "public.mesas.unida_a_mesa_id",
+      "esquema": "public",
+      "tabla": "mesas",
+      "columna": "unida_a_mesa_id",
+      "tipo": "uuid",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.mesas.updated_at",
       "esquema": "public",
       "tabla": "mesas",
@@ -18646,6 +18657,28 @@
       "generada": null
     },
     {
+      "clave": "public.union_mesa_miembros.posicion_x_original",
+      "esquema": "public",
+      "tabla": "union_mesa_miembros",
+      "columna": "posicion_x_original",
+      "tipo": "integer",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
+      "clave": "public.union_mesa_miembros.posicion_y_original",
+      "esquema": "public",
+      "tabla": "union_mesa_miembros",
+      "columna": "posicion_y_original",
+      "tipo": "integer",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.union_mesa_miembros.union_abierta",
       "esquema": "public",
       "tabla": "union_mesa_miembros",
@@ -18739,7 +18772,7 @@
       "tabla": "uniones_mesa",
       "columna": "orden_id",
       "tipo": "uuid",
-      "noNula": true,
+      "noNula": false,
       "defaultSql": null,
       "identidad": null,
       "generada": null
@@ -18751,6 +18784,28 @@
       "columna": "organizacion_id",
       "tipo": "uuid",
       "noNula": true,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
+      "clave": "public.uniones_mesa.principal_x_original",
+      "esquema": "public",
+      "tabla": "uniones_mesa",
+      "columna": "principal_x_original",
+      "tipo": "integer",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
+      "clave": "public.uniones_mesa.principal_y_original",
+      "esquema": "public",
+      "tabla": "uniones_mesa",
+      "columna": "principal_y_original",
+      "tipo": "integer",
+      "noNula": false,
       "defaultSql": null,
       "identidad": null,
       "generada": null
@@ -26645,6 +26700,17 @@
       "diferidaInicialmente": false
     },
     {
+      "clave": "public.mesas.mesas_no_unida_a_si_misma",
+      "esquema": "public",
+      "tabla": "mesas",
+      "nombre": "mesas_no_unida_a_si_misma",
+      "tipo": "check",
+      "definicion": "CHECK (unida_a_mesa_id IS NULL OR unida_a_mesa_id <> id)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
       "clave": "public.mesas.mesas_numero_check",
       "esquema": "public",
       "tabla": "mesas",
@@ -26728,6 +26794,17 @@
       "nombre": "mesas_tamano_check",
       "tipo": "check",
       "definicion": "CHECK (tamano = ANY (ARRAY['chica'::text, 'mediana'::text, 'grande'::text]))",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.mesas.mesas_unida_a_mesa_id_fkey",
+      "esquema": "public",
+      "tabla": "mesas",
+      "nombre": "mesas_unida_a_mesa_id_fkey",
+      "tipo": "foreign_key",
+      "definicion": "FOREIGN KEY (unida_a_mesa_id) REFERENCES mesas(id) ON DELETE SET NULL",
       "validada": true,
       "diferible": false,
       "diferidaInicialmente": false
@@ -36627,6 +36704,16 @@
       "primario": false,
       "valido": true,
       "definicion": "CREATE UNIQUE INDEX mesas_una_orden_activa ON public.mesas USING btree (organizacion_id, orden_activa_id) WHERE (orden_activa_id IS NOT NULL)"
+    },
+    {
+      "clave": "public.mesas.mesas_unidas",
+      "esquema": "public",
+      "tabla": "mesas",
+      "nombre": "mesas_unidas",
+      "unico": false,
+      "primario": false,
+      "valido": true,
+      "definicion": "CREATE INDEX mesas_unidas ON public.mesas USING btree (organizacion_id, unida_a_mesa_id) WHERE (unida_a_mesa_id IS NOT NULL)"
     },
     {
       "clave": "public.modificador_opciones.modificador_opciones_pkey",

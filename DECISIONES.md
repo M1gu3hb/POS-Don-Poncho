@@ -509,3 +509,40 @@ puerta los denuncia todos.
   cuenta anterior, tope, sin pedidos no hay latido); unidad del teléfono; navegador con dos
   teléfonos en la misma mesa. Las cuatro suites que pedían desde el portal pasan por el pedido de
   la mesa (`ayudantes/pedido-de-la-mesa.ts`).
+
+## DP-D30 · Unir mesas desde el mapa: la unión es del salón (fase B) · 26-10-2026
+
+- **Lo que había:** `restaurante.unir_mesas` con la principal elegida de una lista y un tope de
+  seis (`.max(5)`); las mesas no se movían en el mapa; ninguna pantalla separaba (D-2); «Marcar
+  entregado» no alcanzaba a la mesa unida (D-3); el QR de una mesa unida abría su propia cuenta,
+  y la unión nacía con una cuenta y moría con ella.
+- **Elección:**
+  - Migración 187 (rama `fase-b`, sin aplicar en la base compartida): la unión puede vivir sin
+    cuenta (`uniones_mesa.orden_id` nulo), guarda las posiciones ORIGINALES de cada mesa y
+    `mesas.unida_a_mesa_id` marca a las absorbidas.
+  - **Criterio de «juntas»:** cada mesa del grupo toca a otra (8 puntos de tolerancia, por su caja
+    en el plano) y el grupo cabe en 640 × 400 puntos (una hilera de cinco rectangulares medianas o
+    un bloque de tres por dos). Sin tope de cantidad; el tope técnico de la entrada (40) no es de
+    negocio. La regla vive en el dominio (`sala/union.ts`) y la aplican pantalla y servidor.
+  - El imán (36 puntos) y el efecto líquido son de la pantalla: un filtro SVG, sin librerías. Con
+    movimiento reducido no tiemblan.
+  - El número que queda es el de la principal elegida: las demás se ocultan y su QR cae en ella.
+    No se renumera nada; al separar, cada mesa vuelve a su posición (zona y número nunca
+    cambiaron).
+  - **La unión es del salón:** sobrevive al cobro y a la cancelación. Al limpiar la principal,
+    `liberar_mesa` exige decidir (`MESA_UNIDA_SIN_DECISION`): separar o dejarlas unidas para el
+    siguiente cliente. Una unión libre se separa desde el mapa.
+  - D-3: al unir, las comandas de la unida pasan a la cuenta del grupo (siguen diciendo su mesa en
+    el tablero). D-2: «Separar mesas» en la mesa activa de la principal y en el mapa.
+  - De paso: `ErrorPuente` (cliente heredado) conserva los `datos` del error; sin eso, la mesa de
+    meseros y la caja no podían saber qué regla las detuvo.
+  - Guardas de una revisión independiente (sólo lectura) del código: principal ya cobrada no se
+    une; posiciones sólo del grupo; ninguna cuenta se muda a una mesa oculta y la que llega a una
+    principal libre toma la unión; la cuenta sin cobrar se dice antes que la pregunta del grupo;
+    candados en el orden cuenta → principal → demás (el del cobro y el de liberar).
+- **Prueba:** unidad del dominio (imán, grupo, regla, medidas) y de la pantalla (plano, toque,
+  escala, la pregunta al liberar); integración contra Postgres (regla y perímetro en el servidor,
+  posiciones originales, QR de la absorbida, cuenta del grupo desde el QR, cobro sin cerrar la
+  unión, separar o mantener al limpiar, cancelar); navegador: arrastre con imán, número, QR y
+  separar en tableta, PC y teléfono, y el día completo de operaciones con el mapa (D-2 y D-3 dejan
+  de ser `fixme`).

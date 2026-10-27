@@ -160,12 +160,33 @@ const COLUMNAS_MESA = [
 export function buscadorDeProduccion(organizacionId: string, db?: Transaccion): BuscadorDeMesa {
   return async (token: string) => {
     const base = db ?? obtenerDb();
-    return base
+    const filas = await base
       .selectFrom('mesas')
       .select(COLUMNAS_MESA)
       .where('qr_token', '=', token)
       .where('organizacion_id', '=', organizacionId)
       .limit(2)
       .execute();
+    const fila = filas[0];
+    if (filas.length !== 1 || fila === undefined) return filas;
+    // DP-9.6 · Mesa unida a otra: su QR cae en la PRINCIPAL. La gente de la 5 pide, ve la cuenta
+    // y cuenta como persona de la 4. El QR propio sigue mandando: apagado en la 5, no sirve.
+    const unida = await base
+      .selectFrom('mesas')
+      .select('unida_a_mesa_id')
+      .where('organizacion_id', '=', organizacionId)
+      .where('id', '=', fila.id)
+      .executeTakeFirst();
+    const principalId = unida?.unida_a_mesa_id ?? null;
+    if (principalId === null) return filas;
+    const principal = await base
+      .selectFrom('mesas')
+      .select(COLUMNAS_MESA)
+      .where('organizacion_id', '=', organizacionId)
+      .where('id', '=', principalId)
+      .executeTakeFirst();
+    return principal === undefined
+      ? filas
+      : [{ ...principal, activa: principal.activa && fila.activa, qr_activa: fila.qr_activa }];
   };
 }

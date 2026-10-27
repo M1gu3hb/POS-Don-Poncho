@@ -18,6 +18,7 @@ import {
 } from '@morphiqpos/ui/sistema';
 import {
   ArrowLeft,
+  Combine,
   Minus,
   Plus,
   Search,
@@ -53,6 +54,8 @@ import { DividirCuentaDialog } from './DividirCuentaDialog';
 import { lineasDelEnvio } from './envio-a-cocina';
 import { ListosParaRecoger, useListosDeLaCuenta } from './ListosParaRecoger';
 import { useRolDeLaSesion } from './rol-de-la-sesion';
+import { liberarMesaConPregunta } from './unir-mesas/liberar-con-pregunta';
+import { useUnionDeLaMesa } from './unir-mesas/use-union-de-la-mesa';
 import { useVocabulario } from '~/cliente/vocabulario';
 
 /**
@@ -126,6 +129,10 @@ export function MesaActiva(props: MesaActivaProps) {
   const idDeLaDireccion = useSearchParams().get('mesa');
   const router = useRouter();
   const [mesa, setMesa] = useState<MesaAbierta | null>(mesaInicial ?? null);
+  // DP-9.6: si esta mesa encabeza un grupo vivo, su pantalla ofrece «Separar mesas».
+  const [versionDelGrupo, setVersionDelGrupo] = useState(0);
+  const grupo = useUnionDeLaMesa(mesa?.id ?? null, versionDelGrupo);
+  const unionId = grupo?.unionId ?? null;
   const [productos, setProductos] = useState<readonly ProductoDeComanda[] | null>(
     productosIniciales ?? (mesaInicial === undefined ? null : []),
   );
@@ -312,7 +319,13 @@ export function MesaActiva(props: MesaActivaProps) {
     setLiberando(true);
     setError(null);
     try {
-      await invocarComando('/api/restaurante/liberar-mesa', { mesaId: mesa.id });
+      // DP-9.6: si es la principal de mesas unidas, pregunta «¿Separar o dejarlas unidas?».
+      const liberada = await liberarMesaConPregunta(
+        mesa.id,
+        (entrada) => invocarComando('/api/restaurante/liberar-mesa', entrada),
+        unionId !== null,
+      );
+      if (!liberada) return;
       // Se vuelve a leer la mesa en vez de suponer su estado: queda libre y sin cuenta.
       const frescas = await consultarPuente<MesaAbierta>('Mesa', {
         filtro: { id: mesa.id },
@@ -452,6 +465,12 @@ export function MesaActiva(props: MesaActivaProps) {
         {mesa !== null && (
           <Badge variant="secondary">
             {ESTADOS_DE_MESA[mesa.estado] ?? mesa.estado.replace(/_/g, ' ')}
+          </Badge>
+        )}
+        {grupo !== null && grupo.unidas.length > 0 && (
+          <Badge variant="outline">
+            <Combine aria-hidden="true" />
+            Unida con {grupo.unidas.join(' · ')}
           </Badge>
         )}
         {personasDeLaMesa !== null && (
@@ -836,7 +855,11 @@ export function MesaActiva(props: MesaActivaProps) {
               falloLineas === null ? enviadas.reduce((s, l) => s + importeDe(l), 0) : null
             }
             alCambiarDeMesa={alCambiarDeMesa}
-            alUnir={releerLoEnviado}
+            unionId={unionId}
+            alSeparar={() => {
+              setVersionDelGrupo((v) => v + 1);
+              releerLoEnviado();
+            }}
           />
         </div>
       ) : null}

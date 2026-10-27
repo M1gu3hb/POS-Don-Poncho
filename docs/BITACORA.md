@@ -199,3 +199,20 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   mesa en el servidor, sondeo de 2.5 s con latido, «personas conectadas», «¿Ya pidieron todos?» y
   un solo envío aunque dos lo manden a la vez. Las bases locales `dp_integ` y `dp_e2e` quedaron
   con la 186 (desechables); la compartida, sin tocar.
+- DP-9.6 (DP-D30, rama `fase-b`, migración 187): unir mesas desde el mapa. Arrastre con imán y
+  efecto líquido, «¿Qué número queda?», las demás ocultas y su QR a la principal, la unión del
+  salón que sobrevive al cobro y «¿Separar mesas o dejarlas unidas?» al limpiar. D-2 y D-3
+  arreglados: sus pruebas dejan de ser `fixme`. Apareció que el cliente heredado tiraba los
+  `datos` del error del servidor (la mesa de meseros y la caja no podían preguntar): corregido.
+  `dp_integ` y `dp_e2e` con la 187 (desechables); la compartida, sin tocar.
+- DP-9.6, revisión: un revisor independiente (sólo lectura) encontró cinco defectos reales —una
+  principal ya cobrada absorbía cuentas vivas, «Cambiar de mesa» llevaba cuentas a mesas ocultas,
+  `posiciones` movía mesas ajenas, sin candados, y la pregunta del grupo antes que «cuenta sin
+  cobrar»—; cada uno con su prueba en rojo contra Postgres y luego en verde. Las pruebas de
+  navegador encontraron otro: el modo unir abierto antes de que llegaran las mesas quedaba vacío.
+- Arnés de mutaciones: los bancos que llamaban `subprocess.run(['bash', …])` desde Python
+  (DP-9.5, DP-9.6 y DP-9.8) corrían el lanzador de WSL —System32 va antes que Git Bash— y
+  marcaban «muerta» sin correr la prueba. Ahora usan Git Bash por ruta y una línea base que debe
+  pasar sin mutar antes de mutar nada; los tres bancos se volvieron a correr con el arnés bueno
+  (resultados en el reporte 002). Los bancos de DP-9.1 a DP-9.4 y DP-9.7 usaban `shell=True`
+  (cmd) y no tenían el problema.

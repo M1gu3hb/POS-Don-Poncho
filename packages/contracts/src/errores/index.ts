@@ -97,6 +97,10 @@ export const CODIGOS_ERROR = {
   MESA_YA_ABIERTA: 'MESA_YA_ABIERTA',
   /** Se intentó liberar una mesa cuya venta todavía no se ha cobrado. */
   MESA_NO_LIBERABLE: 'MESA_NO_LIBERABLE',
+  /** DP-9.6 · Las mesas de la unión no quedaron pegadas, son de otra zona, o son medio salón. */
+  UNION_DE_MESAS_INVALIDA: 'UNION_DE_MESAS_INVALIDA',
+  /** DP-9.6 · Liberar la principal de una unión pide decidir: ¿separar o dejarlas unidas? */
+  MESA_UNIDA_SIN_DECISION: 'MESA_UNIDA_SIN_DECISION',
   COMANDA_NO_ENCONTRADA: 'COMANDA_NO_ENCONTRADA',
   /** El estado pedido no sigue a la tabla de transiciones, o retrocede. */
   TRANSICION_INVALIDA: 'TRANSICION_INVALIDA',
