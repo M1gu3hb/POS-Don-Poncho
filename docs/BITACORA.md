@@ -227,3 +227,31 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   (`movimientos_stock_motivo_conocido`) no la cumple ni el origen: no se exige.
 - De paso: `open(p, 'w')` de Python en Windows escribe CRLF; los guiones de edición usan
   `newline=''`.
+- Ensayo contra las migraciones de `fase-b` (hasta la 188): migrar 7 s, importar 2,2 s,
+  idénticos; las demostraciones de la 042 quedan apagadas y Don Poncho activo. En los dos
+  ensayos la app compilada, con la pimienta de producción, lista al personal y entra con PIN (un
+  gerente de ensayo dado de alta sólo en la copia) y pasa la jornada completa.
+- Banco de mutaciones de DP-10.1 a 10.3: 35 mutantes más uno a mano sobre la clave del portal,
+  todos muertos por una prueba que falla (el de la respuesta del PIN no lo veía el navegador,
+  porque la pantalla vuelve a preguntar a `/api/catalogo/sesion`: lo mata la prueba de la ruta).
+- La e2e del pedido compartido en `fase-b` destapó que el portal fundía cocina y barra en una
+  comanda cuando había estaciones (la clave del grupo no llevaba el área): arreglado en `main`
+  (`d1d6b01`). La jornada de concurrencia cerraba la última caja con dos mesas vivas: con
+  DP-10.2 ya no se deja; la prueba lo exige y luego cancela esas cuentas.
+- `main` (d1d6b01, 27-10, 20:20 UTC): CI `40573919299` verde (16 trabajos), acople verde contra
+  producción, Production lista a las 20:21. Escrito en producción con `preparar-negocio.mjs`
+  (datos v2), entre las 20:22:54 y las 20:22:58 UTC: la bandera
+  `estaciones_preparacion_activas`, «Cocina» como general, el usuario Cocina a la estación
+  Cocina y el alta de Bebidas (cocina, estación Bebidas, PIN al azar sólo en `_PRIVADO`); la
+  apariencia se volvió a fijar con los mismos valores. Comparado contra una exportación de
+  antes: sólo cambiaron esas filas y su auditoría (950 → 964 filas). La pantalla de acceso lista
+  9 personas. Almacén: un PNG de prueba subido, leído, listado y borrado (el bucket quedó
+  vacío). Humo verde antes y después; huella de las otras 10 organizaciones idéntica
+  (20:21:43 → 20:25:18 UTC); sin cajas, cobros ni cuentas.
+- `fase-b`: `main` fusionado otra vez (`42fc58a`); puertas, unidad (4 231) e integración (209)
+  verdes; concurrencia 18 de 18 en los tres aparatos y pedido compartido 3 de 3. Banco de la 188:
+  5 de 5. Subida (sólo avance); CI del PR #1 `40578188619` verde (8 trabajos). Descripción del PR
+  al día con la 188, las fusiones y el ensayo.
+- Limpieza: las dos bases locales del ensayo con datos reales (`dp_ensayo_main`,
+  `dp_ensayo_faseb`) se borraron; las exportaciones se quedan en `..\_PRIVADO\mudanza\`. Reporte
+  en `docs/reports/003-funcionamiento.md`.
