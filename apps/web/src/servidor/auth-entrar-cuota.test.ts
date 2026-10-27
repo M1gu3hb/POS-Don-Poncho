@@ -177,3 +177,37 @@ describe('la cuota de entrada cuenta los PIN que fallan', () => {
     expect(dobles.devolver).not.toHaveBeenCalled();
   });
 });
+
+describe('la entrada con PIN trae la estación de cocina del empleo (DP-10.1)', () => {
+  it('con la misma forma que /api/catalogo/sesion, leída por el servidor para ESE empleo', async () => {
+    vi.clearAllMocks();
+    dobles.permitir.mockResolvedValue({ ok: true, esperaSegundos: 0 });
+    dobles.devolver.mockResolvedValue(undefined);
+    dobles.organizacionDeQuienEntra.mockResolvedValue(ORGANIZACION);
+    dobles.entrarConPin.mockResolvedValue({
+      ok: true,
+      token: 'token-de-sesion',
+      maxEdadSegundos: 3600,
+      organizacionId: ORGANIZACION,
+      rol: 'cocina',
+      nombre: 'Bebidas',
+    });
+    dobles.leerEstacionDeLaSesion.mockResolvedValueOnce({
+      estacion_preparacion_id: 'e-bebidas',
+      estacion_preparacion_nombre: 'Bebidas',
+      estacion_preparacion_color: '#0891b2',
+      puede_ver_todas_estaciones: false,
+    });
+
+    const respuesta = await POST(entrar({ empleoId: EMPLEO, pin: '1234' }));
+
+    expect(respuesta.status).toBe(200);
+    expect(dobles.leerEstacionDeLaSesion).toHaveBeenCalledWith(ORGANIZACION, EMPLEO, 'cocina');
+    expect(((await respuesta.json()) as { datos: Record<string, unknown> }).datos).toMatchObject({
+      rol: 'cocina',
+      estacion_preparacion_id: 'e-bebidas',
+      estacion_preparacion_nombre: 'Bebidas',
+      puede_ver_todas_estaciones: false,
+    });
+  });
+});
