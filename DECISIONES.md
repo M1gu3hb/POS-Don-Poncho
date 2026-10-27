@@ -481,3 +481,31 @@ puerta los denuncia todos.
   restablecer, PDF de todas, PNG de 709 px que un lector aparte lee con la dirección de SU mesa,
   SVG en mm). Diecisiete mutaciones (seis del servidor, siete de la lógica, cuatro del
   navegador), todas atrapadas.
+
+## DP-D29 · El pedido compartido de la mesa: un carrito en el servidor, un solo envío (fase B) · 26-10-2026
+
+- **Lo que había:** cada teléfono armaba su carrito en su memoria y cada «Enviar» salía a cocina
+  como comandas aparte; nadie sabía cuántos estaban pidiendo.
+- **Elección:**
+  - Migración 186 (rama `fase-b`, sin aplicar en la base compartida): `carrito_mesa_lineas`,
+    `dispositivos_mesa` y `carritos_mesa`. La línea no lleva precio (R9): el envío reusa
+    `pedirEnLaMesa`, la misma función del pedido de siempre, con el precio del catálogo.
+  - El teléfono se reconoce por un id que inventa su navegador; el servidor guarda sólo su huella
+    (HMAC con la pimienta). Cada quien quita sólo lo suyo.
+  - Agregar, quitar y enviar son comandos públicos auditados e idempotentes. El SONDEO (cada
+    2.5 s) no: deja el latido —presencia, no un hecho del negocio— y devuelve el carrito; auditarlo
+    escribiría una fila por teléfono cada tres segundos. Tiene su límite por token.
+  - Conectados = teléfonos que latieron en el último minuto desde que se abrió la cuenta. Con dos
+    o más, o una mesa abierta para dos o más, «Esperen a que todos…» y el envío exige
+    confirmación también en el servidor (`QR_CARRITO_SIN_CONFIRMAR`, 409).
+  - Un solo pedido: el envío lee la cuenta CON CANDADO; el segundo «Enviar» simultáneo espera y
+    encuentra el carrito vacío (`enviado: false`). La ronda de la mesa sube con cada envío y los
+    demás teléfonos ven «Pedido enviado». Lo de una cuenta anterior no aparece en la siguiente.
+  - Contrato del esquema: en `fase-b`, `scripts/esquema-esperado.json` incluye las tablas nuevas
+    (generadas de una base local migrada, sólo altas). Por eso `verify:esquema` y `verify:rls`,
+    que comparan con la base COMPARTIDA, no pasan en esta rama hasta aplicar la 186 en Fase B.
+- **Prueba:** integración contra Postgres (dos teléfonos, lo ajeno, confirmar, envío simultáneo
+  en paralelo de verdad, precio del catálogo y una comanda por estación, ventana de conectados,
+  cuenta anterior, tope, sin pedidos no hay latido); unidad del teléfono; navegador con dos
+  teléfonos en la misma mesa. Las cuatro suites que pedían desde el portal pasan por el pedido de
+  la mesa (`ayudantes/pedido-de-la-mesa.ts`).

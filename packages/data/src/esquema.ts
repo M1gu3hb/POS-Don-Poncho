@@ -1133,6 +1133,9 @@ export interface Esquema {
   ocupacion_mesas: OcupacionMesas;
   uniones_mesa: UnionesMesa;
   union_mesa_miembros: UnionMesaMiembros;
+  carrito_mesa_lineas: CarritoMesaLineas;
+  dispositivos_mesa: DispositivosMesa;
+  carritos_mesa: CarritosMesa;
   movimientos_stock: MovimientosStock;
   orden_linea_modificadores: OrdenLineaModificadores;
   orden_lineas: OrdenLineas;
@@ -1617,6 +1620,35 @@ export interface UnionMesaMiembros {
   mesa_id: string;
   orden_absorbida_id: string | null;
   union_abierta: Generated<boolean>;
+}
+
+/** DP-9.5 · Lo que hay en el carrito compartido de una mesa (sin precio: lo pone el servidor). */
+export interface CarritoMesaLineas {
+  id: Generated<string>;
+  organizacion_id: string;
+  mesa_id: string;
+  dispositivo_huella: string;
+  producto_id: string;
+  cantidad: string;
+  notas: Generated<string>;
+  created_at: Generated<Date>;
+}
+
+/** DP-9.5 · Los teléfonos con el portal de una mesa abierto y su último latido. */
+export interface DispositivosMesa {
+  organizacion_id: string;
+  mesa_id: string;
+  dispositivo_huella: string;
+  visto_en: Generated<Date>;
+}
+
+/** DP-9.5 · La ronda del carrito de cada mesa; su fila es el cerrojo del envío. */
+export interface CarritosMesa {
+  organizacion_id: string;
+  mesa_id: string;
+  ronda: Generated<number>;
+  enviado_en: Date | null;
+  enviado_por_huella: string | null;
 }
 
 /** F-315 · Vista: el estimado, el real y la desviación de cada platillo. */

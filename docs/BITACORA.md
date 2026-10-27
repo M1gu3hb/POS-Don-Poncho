@@ -195,3 +195,7 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   QR se lee con jsQR. De paso: instalar `jsqr` falló a medias con «Acceso denegado» y dejó
   `node_modules` sin su almacén virtual; `pnpm install --frozen-lockfile` lo repuso (7 min) y el
   segundo intento entró limpio.
+- DP-9.5 (DP-D29, rama `fase-b`, migración 186): el pedido compartido de la mesa. Un carrito por
+  mesa en el servidor, sondeo de 2.5 s con latido, «personas conectadas», «¿Ya pidieron todos?» y
+  un solo envío aunque dos lo manden a la vez. Las bases locales `dp_integ` y `dp_e2e` quedaron
+  con la 186 (desechables); la compartida, sin tocar.

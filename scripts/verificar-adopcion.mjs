@@ -259,6 +259,28 @@ export const SIN_ESTADO = [
       'Sin mesas con token no hay QR que diseñar: lo dice un Aviso que manda a «Generar tokens faltantes», el botón de al lado (DP-9.8).',
   },
   {
+    pantalla: 'portal/carrito-compartido/CarritoDeLaMesa',
+    estado: 'vacio',
+    razon:
+      'No es una pantalla: es el pedido de la mesa en el portal (DP-9.5); vacío no se pinta y el menú de al lado es lo que se ve.',
+  },
+  {
+    pantalla: 'portal/carrito-compartido/CarritoDeLaMesa',
+    estado: 'cargando',
+    razon: 'No lee nada: recibe el carrito que el portal ya sondea; mientras llega no se pinta.',
+  },
+  {
+    pantalla: 'portal/carrito-compartido/AvisoDeLaMesa',
+    estado: 'vacio',
+    razon:
+      'No es una pantalla: es el aviso de arriba del portal (DP-9.5); sin teléfonos conectados no se pinta.',
+  },
+  {
+    pantalla: 'portal/carrito-compartido/AvisoDeLaMesa',
+    estado: 'cargando',
+    razon: 'No lee nada: recibe el estado que el portal ya sondea.',
+  },
+  {
     pantalla: 'telefono-de-cocina/ComandaEnElTelefono',
     estado: 'vacio',
     razon:

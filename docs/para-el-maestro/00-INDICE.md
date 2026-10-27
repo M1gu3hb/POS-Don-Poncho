@@ -12,3 +12,4 @@ Poncho, y cómo portarlo.
 | 04  | [Cocina en el teléfono](04-cocina-en-el-telefono.md)                                                | DP-9.4  | No        |
 | 05  | [Botones sobre las páginas del menú QR y aspecto del portal](05-botones-del-menu-qr.md)             | DP-9.7  | No        |
 | 06  | [QR de las mesas con diseño](06-qr-de-mesas-con-diseno.md)                                          | DP-9.8  | No        |
+| 07  | [El pedido compartido de la mesa](07-pedido-compartido.md)                                          | DP-9.5  | 186       |
