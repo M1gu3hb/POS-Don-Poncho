@@ -194,4 +194,8 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   mesa en `configuracion` (sin migración), y exportación PNG/SVG/PDF en mm que sólo sale si cada
   QR se lee con jsQR. De paso: instalar `jsqr` falló a medias con «Acceso denegado» y dejó
   `node_modules` sin su almacén virtual; `pnpm install --frozen-lockfile` lo repuso (7 min) y el
-  segundo intento entró limpio.
+  segundo intento entró limpio. En producción (408fb69, 26-10): CI `40447773811` verde, acople verde contra
+  producción, humo sin dinero verde, licencia de jsQR servida en `/licencias/`; ninguna escritura
+  en la base (el diseño por omisión es el de siempre); huella de las otras 10 organizaciones
+  idéntica. Sus 17 mutaciones se repitieron el 27-10 con el arnés corregido (ver reporte 002):
+  17 de 17 atrapadas.
