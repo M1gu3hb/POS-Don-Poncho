@@ -212,5 +212,8 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   («Hacer general»). `preparacionEstacionUtils.js` era código muerto. `preparar-negocio.mjs`
   (datos v2) probado contra la base de demo de DP-9: general, Cocina a su estación, alta de
   Bebidas, bandera; la segunda corrida no cambia nada.
+- DP-10.2 (DP-D32): la última caja de la sucursal no cierra con cuentas de mesa vivas (dice
+  cuáles); con otra abierta, cierra y avisa. El cierre bloquea las cajas de la sucursal en orden
+  antes de decidir (probado con el candado observado en `pg_stat_activity`).
 - De paso: `open(p, 'w')` de Python en Windows escribe CRLF; los guiones de edición usan
   `newline=''`.

@@ -511,3 +511,28 @@ puerta los denuncia todos.
   «hacer general»: idempotente, sin cambiar de mano, apagada, sin permiso, otro negocio) y
   navegador (cada cocinero entra con su PIN y ve lo suyo, el dueño todo, sin estación el aviso,
   recargar conserva, el pedido nuevo se anuncia sólo en su estación, el teléfono sólo la suya).
+
+## DP-D32 · La última caja no cierra con cuentas vivas; con otra abierta, cierra y avisa · 27-10-2026
+
+- **Lo que había (C10):** `caja.cerrar` no veía las cuentas de mesa (no tienen caja hasta que se
+  cobran). Cerraba con mesas sentadas; la única defensa era la pantalla de Cierre diario, que
+  leía el salón y escribía sin volver a mirar.
+- **Elección:**
+  - Dentro de la transacción del cierre, la ÚLTIMA caja abierta de la sucursal no cierra si
+    quedan cuentas vivas, y dice qué mesas faltan. Con otra caja abierta, cierra y avisa
+    (`aviso` en el resultado, enseñado por Caja y Corte).
+  - Cuenta viva: orden cobrable de la sucursal con mesa, o parte de una cuenta dividida (su madre
+    tiene la mesa). Un carrito de mostrador no cuenta.
+  - El cierre bloquea las cajas abiertas de la sucursal en orden de id antes que la suya: dos
+    cierres a la vez se forman en fila y el segundo ya ve cerrada a la primera (sin el orden
+    fijo, dos cierres que bloquean primero la propia se trabarían).
+  - Las mesas viajan en el MENSAJE: los errores de dominio sólo mandan `regla` en `datos`, y
+    abrir los detalles a todos los comandos no es de este encargo.
+  - Cierre diario conserva su muro, más estricto (es el cierre del día entero).
+  - Descartado: bloquear también al abrir una mesa mientras cierra la última caja. Abrir mesa
+    sin caja ya es posible hoy (el mesero sienta gente antes de que abra la caja); lo que no se
+    permite es firmar el corte sabiendo que hay cuentas vivas.
+- **Prueba:** unidad (la decisión y el texto) e integración contra Postgres (rechazo con las
+  mesas nombradas y, cobradas, cierre; la parte sin cobrar de una dividida; con otra caja,
+  cierra y avisa y la que queda ya es la última; el cierre ESPERA el candado de la otra caja,
+  observado en `pg_stat_activity`; dos cierres a la vez: sólo uno cierra).
