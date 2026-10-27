@@ -189,3 +189,9 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - Demo local (DP-D27): `scripts/demo-local.mjs` + `docs/DEMO-LOCAL.md`; probada desde cero en la
   IP de la PC. Las cookies llevan `Secure` sólo si `APP_URL` es https (`cookiesSeguras`): antes,
   los teléfonos de la red local no podían entrar a la aplicación compilada.
+- DP-9.8 (DP-D28): QR de las mesas con diseño. Motor de Morphiq-QRs portado a TypeScript (por un
+  subagente en su worktree, revisado aquí: 487 casos, idéntico al original), diseño general y por
+  mesa en `configuracion` (sin migración), y exportación PNG/SVG/PDF en mm que sólo sale si cada
+  QR se lee con jsQR. De paso: instalar `jsqr` falló a medias con «Acceso denegado» y dejó
+  `node_modules` sin su almacén virtual; `pnpm install --frozen-lockfile` lo repuso (7 min) y el
+  segundo intento entró limpio.

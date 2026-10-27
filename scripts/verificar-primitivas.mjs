@@ -250,6 +250,11 @@ const REGLAS = [
 const EXENTOS = new Map([
   ['globals.css', 'Es donde se define el puente de tokens; ahi los colores SI viven'],
   [
+    'colores-del-qr.ts',
+    'La tinta y el papel de un QR impreso (DP-9.8): datos del diseno que se guardan y salen al ' +
+      'papel, no colores de la interfaz. Viven solo en ese archivo',
+  ],
+  [
     'manifest.ts',
     'El manifiesto web (DP-3) pide sus dos colores en hexadecimal: el navegador lo lee antes ' +
       'que cualquier hoja de estilo y no entiende variables CSS. Son el negro del letrero, el ' +

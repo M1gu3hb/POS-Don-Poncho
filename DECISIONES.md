@@ -453,3 +453,31 @@ puerta los denuncia todos.
   segunda corrida sin duplicar, servidor en la IP de la PC; por la IP, entrar devuelve sus tres
   cookies sin `Secure` y con esa cookie la lectura de mesas da 200 (sin ella, 401); la página
   publica `data-url-publica` con la IP y las imágenes del menú se sirven.
+
+## DP-D28 · QR de las mesas con diseño: motor de Morphiq-QRs, y sólo se imprime lo que se lee · 26-10-2026
+
+- **Lo que había:** cada mesa tenía un QR negro sobre blanco de `qrcode`, con descarga PNG de
+  800 px y una impresión por ventana emergente. Sin diseño, sin tamaño en milímetros y sin revisar
+  que se leyera.
+- **Elección:**
+  - El motor de diseño del estudio de Miguel (`M1gu3hb/Morphiq-QRs`) portado a TypeScript estricto
+    en `packages/domain/src/qr/`, puro y validado en la frontera; comparado contra el original
+    (55 181 dibujos, cero diferencias). La codificación sigue en `qrcode`; con logo, nivel H.
+  - Un diseño general y uno opcional por mesa en `configuracion.valores.qr_de_mesas`, con zod al
+    guardar: ids del catálogo, `#rrggbb`, centro que va con su esquina, contraste suficiente
+    (también el segundo color del degradado), hasta 50 mesas propias y nada de campos de más
+    —el contenido del QR no viaja en el diseño—. Sin migración.
+  - Antes de exportar —PNG a 300 ppp, SVG en mm, PDF carta—, cada QR se lee con jsQR en cuatro
+    condiciones y tiene que decir EXACTAMENTE la dirección de su mesa; sin intentar invertido,
+    porque muchas cámaras no leen claro sobre oscuro. Si uno falla, no sale ninguno. El editor
+    revisa mientras se diseña y no deja guardar lo que no se lee.
+  - El PDF lleva cada QR como imagen a 300 ppp (nítido al imprimir) con `jspdf`, que ya estaba:
+    no se trajo `svg2pdf.js`. `jsqr` (Apache-2.0) sí, y su licencia se sirve con la aplicación.
+- **Prueba:** motor (487 casos), unidad del diseño en servidor y pantalla, de la codificación
+  (la matriz pintada a píxeles se lee con jsQR y dice la dirección; invertida no), de la pieza,
+  las medidas y la compuerta de impresión; integración contra Postgres (dueño guarda, ilegible y
+  campo de más rechazados, mesero sin permiso, restablecer, otro negocio intacto); navegador en
+  escritorio, tablet y teléfono (diseño ilegible no se guarda, uno legible sí, personalizar y
+  restablecer, PDF de todas, PNG de 709 px que un lector aparte lee con la dirección de SU mesa,
+  SVG en mm). Diecisiete mutaciones (seis del servidor, siete de la lógica, cuatro del
+  navegador), todas atrapadas.

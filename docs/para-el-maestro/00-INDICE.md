@@ -11,3 +11,4 @@ Poncho, y cómo portarlo.
 | 03  | [La vista «Solicitudes» dentro de Mesas](03-vista-de-solicitudes.md)                                | DP-9.3  | No        |
 | 04  | [Cocina en el teléfono](04-cocina-en-el-telefono.md)                                                | DP-9.4  | No        |
 | 05  | [Botones sobre las páginas del menú QR y aspecto del portal](05-botones-del-menu-qr.md)             | DP-9.7  | No        |
+| 06  | [QR de las mesas con diseño](06-qr-de-mesas-con-diseno.md)                                          | DP-9.8  | No        |
