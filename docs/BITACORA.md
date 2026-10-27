@@ -182,5 +182,10 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   paso: el guardado de Configuración bloquea la fila antes de reescribirla.
 - DP-9.7 (DP-D26, supera DP-D18): botones sobre las páginas del menú QR (editor con arrastre,
   platillo y grupo, precio vigente, vista previa) y aspecto del portal por tokens. Las 8
-  páginas de Don Poncho, con 97 botones medidos de sus imágenes. Sin migración.
-
+  páginas de Don Poncho, con 97 botones medidos de sus imágenes. Sin migración. En producción
+  (b338ea2): los botones se escribieron con `preparar-negocio.mjs` (las 24 claves de
+  configuración ya eran idénticas: sólo cambió `portal_qr_botones`); el portal publica 8 páginas
+  con 15·12·9·11·19·13·11·7 botones; humo verde; huella de las otras 10 organizaciones idéntica.
+- Demo local (DP-D27): `scripts/demo-local.mjs` + `docs/DEMO-LOCAL.md`; probada desde cero en la
+  IP de la PC. Las cookies llevan `Secure` sólo si `APP_URL` es https (`cookiesSeguras`): antes,
+  los teléfonos de la red local no podían entrar a la aplicación compilada.

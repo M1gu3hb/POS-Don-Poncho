@@ -428,3 +428,28 @@ puerta los denuncia todos.
   aspecto; el comensal ve el botón ENCIMA de la imagen con el precio vigente, sin la lista,
   despliega el grupo y pide tocando el platillo). Once mutaciones (cinco del servidor, tres de la
   lógica, tres del navegador), todas atrapadas.
+
+## DP-D27 · Demo local en la red: base desechable y cookies `Secure` sólo con https · 26-10-2026
+
+- **Lo que había:** probar con los teléfonos pedía la base compartida (no se puede: cero
+  reseteos, cero siembras) o un arranque a mano. Y las cookies decidían `Secure` por
+  `NODE_ENV === 'production'`: la aplicación compilada servida en `http://<IP de la PC>` mandaba
+  cookies `Secure` que el teléfono descarta, así que nadie podía entrar por la red local
+  (`localhost` sí, porque el navegador lo trata como seguro).
+- **Elección:**
+  - `scripts/demo-local.mjs preparar|servir` y `docs/DEMO-LOCAL.md`: una base de ESTA máquina
+    (se niega con otra, no lee el `.env`), las migraciones de la rama en la que se está (así se
+    prueba `fase-b`), y Don Poncho dado de alta por los comandos de la aplicación como en
+    producción —menú, portal, mesas, equipo, botones—. Idempotente. Sus secretos y sus PIN de
+    demo se inventan la primera vez y se guardan fuera del repositorio, en la carpeta temporal.
+    `servir` compila y escucha en `0.0.0.0` con `APP_URL=http://<IP>:<puerto>`: los QR (salen de
+    `APP_URL`) y las imágenes del menú apuntan a la IP.
+  - `cookiesSeguras(entorno)`: `Secure` cuando está compilada **y** `APP_URL` es https —el mismo
+    dato del que el middleware decide la CSP estricta—. Lo usan las tres rutas que escriben
+    cookies (entrar, salir, empleados). En producción no cambia nada.
+- **Prueba:** unidad del criterio (producción https, red local http, desarrollo, mayúsculas) y
+  un contrato que lee TODAS las rutas que escriben cookies y exige `cookiesSeguras(entorno)`.
+  Seis mutaciones (tres del criterio, una por ruta), todas atrapadas. A mano: base desde cero,
+  segunda corrida sin duplicar, servidor en la IP de la PC; por la IP, entrar devuelve sus tres
+  cookies sin `Secure` y con esa cookie la lectura de mesas da 200 (sin ella, 401); la página
+  publica `data-url-publica` con la IP y las imágenes del menú se sirven.

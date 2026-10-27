@@ -1,5 +1,5 @@
 import { validarEntorno } from '@morphiqpos/contracts';
-import { cookieDeCierre, leerCookie, NOMBRE_COOKIE } from '@morphiqpos/app/http';
+import { cookieDeCierre, cookiesSeguras, leerCookie, NOMBRE_COOKIE } from '@morphiqpos/app/http';
 import { cerrarSesion } from '@morphiqpos/app/sesion';
 
 import { peticionDeEscrituraValida } from '~/servidor/seguridad-http';
@@ -34,7 +34,7 @@ export async function POST(peticion: Request): Promise<Response> {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': 'no-store',
-      'set-cookie': cookieDeCierre(entorno.NODE_ENV === 'production'),
+      'set-cookie': cookieDeCierre(cookiesSeguras(entorno)),
     },
   });
   return respuesta;
