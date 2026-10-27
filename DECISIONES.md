@@ -498,8 +498,10 @@ puerta los denuncia todos.
   - Conectados = teléfonos que latieron en el último minuto desde que se abrió la cuenta. Con dos
     o más, o una mesa abierta para dos o más, «Esperen a que todos…» y el envío exige
     confirmación también en el servidor (`QR_CARRITO_SIN_CONFIRMAR`, 409).
-  - Un solo pedido: el envío lee la cuenta CON CANDADO; el segundo «Enviar» simultáneo espera y
-    encuentra el carrito vacío (`enviado: false`). La ronda de la mesa sube con cada envío y los
+  - Un solo pedido: el envío toma la fila de `carritos_mesa` CON CANDADO; el segundo «Enviar»
+    simultáneo espera y encuentra el carrito vacío (`enviado: false`). El candado de la CUENTA
+    (el de siempre del pedido del portal) cubre otra carrera: enviar mientras la caja cierra la
+    cuenta; probada de forma determinista (`carrito-y-caja.integracion.test.ts`). La ronda de la mesa sube con cada envío y los
     demás teléfonos ven «Pedido enviado». Lo de una cuenta anterior no aparece en la siguiente.
   - Contrato del esquema: en `fase-b`, `scripts/esquema-esperado.json` incluye las tablas nuevas
     (generadas de una base local migrada, sólo altas). Por eso `verify:esquema` y `verify:rls`,

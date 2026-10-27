@@ -171,7 +171,7 @@ export const enviarElCarrito = definirComandoPublico<
     const huella = huellaDe(ctx, entrada.dispositivo);
     const { organizacionId, mesaId } = ctx.ambito;
 
-    // EL CANDADO: el segundo «Enviar» espera aquí y, cuando pasa, el carrito ya está vacío.
+    // La cuenta, con su candado: si la caja la cierra mientras tanto, aquí se espera y se dice.
     const orden = await ctx.paso('cargar_venta', () => ordenAbiertaDeLaMesa(ctx));
     await ctx.paso('fila_del_carrito', () =>
       ctx.tx
@@ -180,6 +180,8 @@ export const enviarElCarrito = definirComandoPublico<
         .onConflict((oc) => oc.columns(['organizacion_id', 'mesa_id']).doNothing())
         .execute(),
     );
+    // EL CANDADO del envío: el segundo «Enviar» espera aquí y, cuando pasa, el carrito ya está
+    // vacío.
     const antes = await ctx.tx
       .selectFrom('carritos_mesa')
       .select('ronda')
