@@ -215,5 +215,8 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - DP-10.2 (DP-D32): la última caja de la sucursal no cierra con cuentas de mesa vivas (dice
   cuáles); con otra abierta, cierra y avisa. El cierre bloquea las cajas de la sucursal en orden
   antes de decidir (probado con el candado observado en `pg_stat_activity`).
+- DP-10.3 (DP-D33): el QR de una mesa miembro de una unión abierta usa la principal («Esta mesa
+  está unida a la mesa N»); D-2 («Separar mesas» en la principal) y D-3 (al unir, las comandas
+  de la unida pasan a la cuenta del grupo) dejan de ser `fixme`.
 - De paso: `open(p, 'w')` de Python en Windows escribe CRLF; los guiones de edición usan
   `newline=''`.

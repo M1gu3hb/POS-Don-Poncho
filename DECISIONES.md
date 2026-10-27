@@ -536,3 +536,22 @@ puerta los denuncia todos.
   mesas nombradas y, cobradas, cierre; la parte sin cobrar de una dividida; con otra caja,
   cierra y avisa y la que queda ya es la última; el cierre ESPERA el candado de la otra caja,
   observado en `pg_stat_activity`; dos cierres a la vez: sólo uno cierra).
+
+## DP-D33 · Puente de las mesas unidas en `main` hasta la mudanza · 27-10-2026
+
+- **Lo que había:** en `main` la unión es la vieja (F-302): la mesa unida se queda sin cuenta
+  propia, pero su QR seguía siendo suyo (el comensal pedía en una mesa sin cuenta); ninguna
+  pantalla separaba un grupo (D-2) y lo que cocina dejó listo para la unida no se entregaba desde
+  la principal (D-3).
+- **Elección (sin migración):**
+  - El QR de una mesa miembro de una unión ABIERTA resuelve a la principal en el único sitio
+    donde nace el ámbito del comensal (`buscadorDeProduccion`): «Mesa 4», «Esta mesa está unida
+    a la mesa 4», y pedidos y solicitudes caen en su cuenta. El QR propio sigue mandando.
+  - D-2: «Separar mesas» en la mesa activa de la principal, con `restaurante.separar_mesas`.
+  - D-3: al unir, `comandas.orden_id` de la unida pasa a la cuenta del grupo, como sus líneas.
+  - El diálogo y el hook usan las mismas rutas de archivo que `fase-b` para que la fusión
+    resuelva a su diseño (DP-D30), que reemplaza este puente; el aviso del portal se conserva.
+- **Prueba:** integración contra Postgres (unir 4 y 5, escanear la 5: «Mesa 4» y unida; pedir
+  cae en la cuenta de la 4 y la 5 no abre cuenta; la solicitud es de la 4; separadas, el QR de la
+  5 vuelve a la 5; D-3: las comandas de la 5 cuelgan de la cuenta de la 4) y navegador (D-2 y D-3
+  dejan de ser `test.fixme`; D-2 separa de verdad).
