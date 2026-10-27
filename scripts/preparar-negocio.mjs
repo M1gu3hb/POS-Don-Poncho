@@ -7,15 +7,17 @@
  *     [--datos docs/cliente/negocio-don-poncho.json] [--ensayo]
  *
  * Configuración (con el portal QR encendido), apariencia, páginas del menú personalizado y sus
- * botones (DP-9.7), zona y mesas, equipo, quién responde por cada mesa y el QR de cada una. Cada
- * cosa por su comando, con su rol, su transacción y su auditoría, firmado por el dueño de
- * `--persona`.
+ * botones (DP-9.7), la estación general (DP-10.1), zona y mesas, equipo con su estación de cocina,
+ * quién responde por cada mesa y el QR de cada una. Cada cosa por su comando, con su rol, su
+ * transacción y su auditoría, firmado por el dueño de `--persona`. Corre DESPUÉS de
+ * `cargar-menu.mjs`: las estaciones y los platillos salen del menú.
  *
  * LOS PIN NO ESTÁN EN EL REPOSITORIO: `--pines` es un JSON `{ "<nombre>": "<pin>" }` que vive en
  * `..\_PRIVADO\`. El guion no los imprime nunca.
  *
  * IDEMPOTENTE: lo que ya está no se toca (a quien existe NO se le cambia el PIN; la mesa que ya
- * tiene QR lo conserva). Sólo corre contra Don Poncho o un restaurante de prueba, por ID.
+ * tiene QR lo conserva). A un cocinero que ya existe sólo se le pone la estación que dice el
+ * archivo, si no la tiene. Sólo corre contra Don Poncho o un restaurante de prueba, por ID.
  */
 import { readFileSync } from 'node:fs';
 
@@ -50,7 +52,7 @@ const { comando } = await import('../packages/app/src/produccion.ts');
 const { escribirDatos } = await import('../packages/app/src/puente/comandos.ts');
 const { fijarApariencia } = await import('../packages/app/src/configuracion/index.ts');
 const { guardarEmpleado } = await import('../packages/app/src/identidad/index.ts');
-const { rotarQr } = await import('../packages/app/src/restaurante/index.ts');
+const { marcarEstacionGeneral, rotarQr } = await import('../packages/app/src/restaurante/index.ts');
 
 const permitido = [...NEGOCIOS_REALES, ...NEGOCIOS_DE_PRUEBA].find((n) => n.slug === slug);
 if (negocioAjeno(slug) !== null || permitido === undefined) {
@@ -125,6 +127,36 @@ await ejecutar(
 );
 await ejecutar(fijarApariencia, datos.apariencia, 'apariencia');
 hecho.push('configuración y portal QR', `estilo ${datos.apariencia.estilo}`);
+
+// 1a · La estación GENERAL (DP-10.1): el respaldo de la regla 10, a donde va la comanda cuyo
+// platillo no tiene estación por su categoría. Las estaciones las crea `cargar-menu.mjs`.
+const estacionesPorNombre = new Map(
+  (
+    await db
+      .selectFrom('estaciones_preparacion')
+      .select(['id', 'nombre', 'es_general as esGeneral'])
+      .where('organizacion_id', '=', org.id)
+      .where('activa', '=', true)
+      .execute()
+  ).map((e) => [e.nombre, e]),
+);
+function estacionDe(nombre) {
+  if (nombre === undefined) return null;
+  const estacion = estacionesPorNombre.get(nombre);
+  if (estacion === undefined) {
+    throw new Error(
+      `La estación «${nombre}» no existe o está apagada: corre cargar-menu.mjs antes.`,
+    );
+  }
+  return estacion.id;
+}
+const general = datos.estaciones?.general;
+if (general !== undefined) {
+  const estacionId = estacionDe(general);
+  const yaEra = estacionesPorNombre.get(general)?.esGeneral === true;
+  if (!yaEra) await ejecutar(marcarEstacionGeneral, { estacionId }, `general:${general}`);
+  hecho.push(`estación general «${general}»${yaEra ? ' (ya lo era)' : ''}`);
+}
 
 // 1b · Las páginas del menú personalizado, por título. La imagen se sirve del propio sitio
 // (`apps/web/public/menu-qr`, la genera `generar-menu-qr.mjs`) con la dirección del despliegue.
@@ -293,28 +325,69 @@ hecho.push(
   `${String(mesasNuevas)} mesas nuevas de ${String(datos.sala.mesas)}`,
 );
 
-// 3 · El equipo, por nombre. A quien ya existe no se le toca el PIN.
-const yaEstan = new Set(
+// 3 · El equipo, por nombre. A quien ya existe no se le toca el PIN: si es de cocina y el archivo
+// le da una estación que no tiene, sólo se le pone ésa (DP-10.1), con todo lo demás como estaba.
+const yaEstan = new Map(
   (
     await db
       .selectFrom('empleos')
       .innerJoin('personas', 'personas.id', 'empleos.persona_id')
-      .select('personas.nombre')
+      .select([
+        'personas.nombre',
+        'personas.telefono',
+        'empleos.id',
+        'empleos.rol',
+        'empleos.color',
+        'empleos.activo',
+        'empleos.estacion_preparacion_id as estacionId',
+      ])
       .where('empleos.organizacion_id', '=', org.id)
       .execute()
-  ).map((p) => p.nombre),
+  ).map((p) => [p.nombre, p]),
 );
 let personasNuevas = 0;
+let estacionesPuestas = 0;
 for (const integrante of datos.equipo) {
-  if (yaEstan.has(integrante.nombre)) continue;
-  personasNuevas += 1;
+  const estacionId = estacionDe(integrante.estacion);
+  const actual = yaEstan.get(integrante.nombre);
+  if (actual === undefined) {
+    personasNuevas += 1;
+    await ejecutar(
+      guardarEmpleado,
+      {
+        nombre: integrante.nombre,
+        puesto: integrante.puesto,
+        estacionPreparacionId: estacionId,
+        pin: String(pines[integrante.nombre]),
+      },
+      `empleado:${integrante.nombre}`,
+    );
+    continue;
+  }
+  if (estacionId === null || actual.estacionId === estacionId) continue;
+  if (actual.rol !== 'cocina' || integrante.puesto !== 'cocina') {
+    throw new Error(`«${integrante.nombre}» no es de cocina: no se le pone estación.`);
+  }
+  estacionesPuestas += 1;
   await ejecutar(
     guardarEmpleado,
-    { nombre: integrante.nombre, puesto: integrante.puesto, pin: String(pines[integrante.nombre]) },
-    `empleado:${integrante.nombre}`,
+    {
+      empleado: actual.id,
+      nombre: actual.nombre,
+      puesto: 'cocina',
+      telefono: actual.telefono,
+      color: actual.color,
+      estacionPreparacionId: estacionId,
+      veTodasLasEstaciones: false,
+      activo: actual.activo,
+    },
+    `estacion-de:${integrante.nombre}:${estacionId}`,
   );
 }
-hecho.push(`${String(personasNuevas)} personas nuevas de ${String(datos.equipo.length)}`);
+hecho.push(
+  `${String(personasNuevas)} personas nuevas de ${String(datos.equipo.length)}`,
+  `${String(estacionesPuestas)} estaciones puestas a quien ya estaba`,
+);
 
 // 4 · Quién responde por cada mesa. Con la asignación encendida el comensal pide desde el QR
 // y la comanda tiene dueño (`puedeOrdenarDesdeQR`). Sólo las mesas que siguen sin asignar.

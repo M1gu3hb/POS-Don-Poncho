@@ -481,3 +481,33 @@ puerta los denuncia todos.
   restablecer, PDF de todas, PNG de 709 px que un lector aparte lee con la dirección de SU mesa,
   SVG en mm). Diecisiete mutaciones (seis del servidor, siete de la lógica, cuatro del
   navegador), todas atrapadas.
+
+## DP-D31 · La estación de cocina sale de la sesión del servidor; el portal sigue la cadena del mesero · 27-10-2026
+
+> DP-D29 y DP-D30 viven en la rama `fase-b` (pedido compartido y unir mesas desde el mapa).
+
+- **Lo que había (producción, 27-10):** `estaciones_preparacion_activas` apagada y el único
+  usuario de cocina viendo comida y bebidas revueltas. Encenderla dejaba la pantalla vacía: la
+  sesión del navegador no traía `estacion_preparacion_id` ni «ve todas». Ninguna estación era
+  `es_general`, y el portal QR mandaba comandas SIN estación con la bandera apagada.
+- **Elección:**
+  - La entrada con PIN y `/api/catalogo/sesion` contestan la estación del EMPLEO (id, nombre y
+    color, sólo si está encendida y es del mismo negocio) y si ve todas
+    (`leerEstacionDeLaSesion`). Dueño, gerente y administrador ven todas. Una lectura aparte en
+    esas dos rutas y no en el ámbito de cada petición: no se agrega un join al camino caliente.
+  - La pantalla de Cocina decide con eso sólo cuando el servidor ya contestó (`verificada`); al
+    volver a la pestaña adopta un cambio de estación. Sin estación, el aviso pedido.
+  - A dónde va una comanda no depende de la bandera: el portal sigue la cadena del mesero
+    (estación ACTIVA de la categoría → general), con nombre y color vivos. La bandera decide
+    qué se DIBUJA. Se conserva del portal que nunca lanza: sin ninguna estación activa, por área.
+  - `restaurante.marcar_estacion_general` nombra general una estación existente (sólo dirección;
+    nunca cambia la general de mano; idempotente, auditado). Descartado: crear una «Cocina
+    general» aparte, que nadie vería con sus estaciones.
+  - Producción por `preparar-negocio.mjs` (archivo de datos v2): «Cocina» general, el usuario
+    Cocina a su estación (sin tocar su PIN), alta de «Bebidas» y la bandera encendida.
+- **Prueba:** unidad (estación de la sesión, alcance de la pantalla, comparación de sesiones),
+  integración contra Postgres (la estación de la sesión por rol, apagada y de otro negocio; cada
+  comanda con la estación de su categoría por el mesero y por el QR, encendidas y apagadas;
+  «hacer general»: idempotente, sin cambiar de mano, apagada, sin permiso, otro negocio) y
+  navegador (cada cocinero entra con su PIN y ve lo suyo, el dueño todo, sin estación el aviso,
+  recargar conserva, el pedido nuevo se anuncia sólo en su estación, el teléfono sólo la suya).

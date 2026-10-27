@@ -199,3 +199,18 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   en la base (el diseño por omisión es el de siempre); huella de las otras 10 organizaciones
   idéntica. Sus 17 mutaciones se repitieron el 27-10 con el arnés corregido (ver reporte 002):
   17 de 17 atrapadas.
+
+## 27-10-2026 · DP-10 · Dejar el funcionamiento listo para operar
+
+- DP-10.0: plan enviado a Miguel. `main`: 10.1, 10.2, 10.3 y las herramientas de la mudanza;
+  `fase-b`: la fusión de `main` y la migración 188. Los PIN reales los teclea Miguel (no se
+  meten contraseñas en producción desde aquí).
+- DP-10.1 (DP-D31): la sesión trae la estación del empleo desde el servidor (PIN y
+  `/api/catalogo/sesion`); Cocina decide con ella cuando el servidor contesta; aviso al cocinero
+  sin estación; voz y aviso de pedido por estación. El portal QR mandaba comandas sin estación con
+  las estaciones apagadas: ahora sigue la cadena del mesero. `restaurante.marcar_estacion_general`
+  («Hacer general»). `preparacionEstacionUtils.js` era código muerto. `preparar-negocio.mjs`
+  (datos v2) probado contra la base de demo de DP-9: general, Cocina a su estación, alta de
+  Bebidas, bandera; la segunda corrida no cambia nada.
+- De paso: `open(p, 'w')` de Python en Windows escribe CRLF; los guiones de edición usan
+  `newline=''`.

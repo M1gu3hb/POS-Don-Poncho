@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "nota": "Lo que prepara scripts/preparar-negocio.mjs. SIN PIN: los PIN viven fuera del repositorio (..\\_PRIVADO\\).",
   "configuracion": {
     "nombre_sistema": "POS Don Poncho",
@@ -12,7 +12,11 @@
     "color_secundario": "#161614",
     "color_acento": "#ac8a5f",
     "mostrar_logo_ticket": true,
-    "mensaje_ticket": "¡Gracias por tu visita!"
+    "mensaje_ticket": "¡Gracias por tu visita!",
+    "estaciones_preparacion_activas": true
+  },
+  "estaciones": {
+    "general": "Cocina"
   },
   "apariencia": {
     "estilo": "don-poncho",
@@ -53,7 +57,13 @@
     },
     {
       "nombre": "Cocina",
-      "puesto": "cocina"
+      "puesto": "cocina",
+      "estacion": "Cocina"
+    },
+    {
+      "nombre": "Bebidas",
+      "puesto": "cocina",
+      "estacion": "Bebidas"
     },
     {
       "nombre": "Almacén",
