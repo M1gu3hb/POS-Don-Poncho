@@ -555,3 +555,27 @@ puerta los denuncia todos.
   cae en la cuenta de la 4 y la 5 no abre cuenta; la solicitud es de la 4; separadas, el QR de la
   5 vuelve a la 5; D-3: las comandas de la 5 cuelgan de la cuenta de la 4) y navegador (D-2 y D-3
   dejan de ser `test.fixme`; D-2 separa de verdad).
+
+## DP-D34 · La mudanza de un negocio: exportar del catálogo, importar sin disparadores y comparar md5 · 27-10-2026
+
+- **Lo que hacía falta:** sacar las filas de Don Poncho de la base compartida y meterlas en su
+  base nueva (Fase B) sin perder ni cambiar nada, con los mismos ID, y poder probarlo antes.
+- **Elección:**
+  - Las tablas del negocio salen del CATÁLOGO: las que tienen `organizacion_id`, su fila de
+    `organizaciones` y las hijas alcanzables por llave foránea. Fuera: `_migraciones`,
+    `limite_tasa` y los catálogos globales que trae cada base (`motivos_merma`, `regimenes_ieps`).
+  - Cada fila como `to_jsonb(t)::text` y de vuelta con `jsonb_populate_recordset`: ni un
+    `bigint` ni un `numeric` pasan por números de JavaScript.
+  - Importar con `session_replication_role = replica` (como la restauración oficial de
+    Supabase): sin disparadores, ningún ledger ni saldo se vuelve a aplicar. Las llaves foráneas
+    validadas se comprueban a mano antes del `commit` (las `NOT VALID` no las cumple ni el origen).
+  - Conteo y md5 por tabla sobre las columnas del ORIGEN, con zona UTC, fechas ISO e intercalación
+    «C»: el mismo resultado en cualquier servidor. Se comparan dentro de la transacción: si no
+    cuadra, no se guarda.
+  - Descartado: `pg_dump` por organización (no filtra hijas sin `organizacion_id` ni compara) y
+    un filtro escrito a mano (se queda atrás con la siguiente migración).
+  - Las puertas de esquema, RLS y acople toman el proyecto de `MORPHIQPOS_PROYECTO_VERIFICADO`.
+- **Prueba:** unidad (`listar` del almacén por carpetas y páginas; `proyectoVerificado`) y el
+  ensayo con los datos reales (ver el reporte 003): exportar de la compartida en sólo lectura,
+  importar a bases desechables con las migraciones de `main` y de `fase-b`, filas y md5
+  idénticos; repetir se niega; una fila alterada en el destino la señala la verificación.

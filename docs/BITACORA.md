@@ -218,5 +218,12 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - DP-10.3 (DP-D33): el QR de una mesa miembro de una unión abierta usa la principal («Esta mesa
   está unida a la mesa N»); D-2 («Separar mesas» en la principal) y D-3 (al unir, las comandas
   de la unida pasan a la cuenta del grupo) dejan de ser `fixme`.
+- DP-10.5 (DP-D34), lo que va a `main`: `exportar-negocio.mjs` (sólo lectura, tablas del
+  catálogo, salida en `..\_PRIVADO\mudanza\`), `importar-negocio.mjs` (una transacción sin
+  disparadores, llaves a mano, filas y md5 comparados antes del `commit`), `listar` del almacén,
+  las puertas con `MORPHIQPOS_PROYECTO_VERIFICADO` y `docs/infra/MUDANZA-FASE-B.md`. Ensayo con
+  los datos reales contra las migraciones de `main`: exportar 16,9 s (132 tablas, 950 filas, el
+  bucket vacío), migrar 8 s, importar 1,4 s, idénticos. Una llave `NOT VALID`
+  (`movimientos_stock_motivo_conocido`) no la cumple ni el origen: no se exige.
 - De paso: `open(p, 'w')` de Python en Windows escribe CRLF; los guiones de edición usan
   `newline=''`.
