@@ -1,3 +1,4 @@
+import type { EstacionDeLaSesion } from '@morphiqpos/app/identidad';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '../../app/api/auth/entrar/route';
@@ -21,7 +22,7 @@ const dobles = vi.hoisted(() => ({
   entrarConPin: vi.fn(),
   organizacionDeQuienEntra: vi.fn(),
   // La estación de la sesión (DP-10.1) se lee de la base; aquí no hay base y no es lo que se mide.
-  leerEstacionDeLaSesion: vi.fn(() =>
+  leerEstacionDeLaSesion: vi.fn((): Promise<EstacionDeLaSesion> =>
     Promise.resolve({
       estacion_preparacion_id: null,
       estacion_preparacion_nombre: null,
