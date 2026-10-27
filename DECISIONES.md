@@ -548,3 +548,99 @@ puerta los denuncia todos.
   unión, separar o mantener al limpiar, cancelar); navegador: arrastre con imán, número, QR y
   separar en tableta, PC y teléfono, y el día completo de operaciones con el mapa (D-2 y D-3 dejan
   de ser `fixme`).
+
+## DP-D31 · La estación de cocina sale de la sesión del servidor; el portal sigue la cadena del mesero · 27-10-2026
+
+- **Lo que había (producción, 27-10):** `estaciones_preparacion_activas` apagada y el único
+  usuario de cocina viendo comida y bebidas revueltas. Encenderla dejaba la pantalla vacía: la
+  sesión del navegador no traía `estacion_preparacion_id` ni «ve todas». Ninguna estación era
+  `es_general`, y el portal QR mandaba comandas SIN estación con la bandera apagada.
+- **Elección:**
+  - La entrada con PIN y `/api/catalogo/sesion` contestan la estación del EMPLEO (id, nombre y
+    color, sólo si está encendida y es del mismo negocio) y si ve todas
+    (`leerEstacionDeLaSesion`). Dueño, gerente y administrador ven todas. Una lectura aparte en
+    esas dos rutas y no en el ámbito de cada petición: no se agrega un join al camino caliente.
+  - La pantalla de Cocina decide con eso sólo cuando el servidor ya contestó (`verificada`); al
+    volver a la pestaña adopta un cambio de estación. Sin estación, el aviso pedido.
+  - A dónde va una comanda no depende de la bandera: el portal sigue la cadena del mesero
+    (estación ACTIVA de la categoría → general), con nombre y color vivos. La bandera decide
+    qué se DIBUJA. Se conserva del portal que nunca lanza: sin ninguna estación activa, por área.
+  - `restaurante.marcar_estacion_general` nombra general una estación existente (sólo dirección;
+    nunca cambia la general de mano; idempotente, auditado). Descartado: crear una «Cocina
+    general» aparte, que nadie vería con sus estaciones.
+  - Producción por `preparar-negocio.mjs` (archivo de datos v2): «Cocina» general, el usuario
+    Cocina a su estación (sin tocar su PIN), alta de «Bebidas» y la bandera encendida.
+- **Prueba:** unidad (estación de la sesión, alcance de la pantalla, comparación de sesiones),
+  integración contra Postgres (la estación de la sesión por rol, apagada y de otro negocio; cada
+  comanda con la estación de su categoría por el mesero y por el QR, encendidas y apagadas;
+  «hacer general»: idempotente, sin cambiar de mano, apagada, sin permiso, otro negocio) y
+  navegador (cada cocinero entra con su PIN y ve lo suyo, el dueño todo, sin estación el aviso,
+  recargar conserva, el pedido nuevo se anuncia sólo en su estación, el teléfono sólo la suya).
+
+## DP-D32 · La última caja no cierra con cuentas vivas; con otra abierta, cierra y avisa · 27-10-2026
+
+- **Lo que había (C10):** `caja.cerrar` no veía las cuentas de mesa (no tienen caja hasta que se
+  cobran). Cerraba con mesas sentadas; la única defensa era la pantalla de Cierre diario, que
+  leía el salón y escribía sin volver a mirar.
+- **Elección:**
+  - Dentro de la transacción del cierre, la ÚLTIMA caja abierta de la sucursal no cierra si
+    quedan cuentas vivas, y dice qué mesas faltan. Con otra caja abierta, cierra y avisa
+    (`aviso` en el resultado, enseñado por Caja y Corte).
+  - Cuenta viva: orden cobrable de la sucursal con mesa, o parte de una cuenta dividida (su madre
+    tiene la mesa). Un carrito de mostrador no cuenta.
+  - El cierre bloquea las cajas abiertas de la sucursal en orden de id antes que la suya: dos
+    cierres a la vez se forman en fila y el segundo ya ve cerrada a la primera (sin el orden
+    fijo, dos cierres que bloquean primero la propia se trabarían).
+  - Las mesas viajan en el MENSAJE: los errores de dominio sólo mandan `regla` en `datos`, y
+    abrir los detalles a todos los comandos no es de este encargo.
+  - Cierre diario conserva su muro, más estricto (es el cierre del día entero).
+  - Descartado: bloquear también al abrir una mesa mientras cierra la última caja. Abrir mesa
+    sin caja ya es posible hoy (el mesero sienta gente antes de que abra la caja); lo que no se
+    permite es firmar el corte sabiendo que hay cuentas vivas.
+- **Prueba:** unidad (la decisión y el texto) e integración contra Postgres (rechazo con las
+  mesas nombradas y, cobradas, cierre; la parte sin cobrar de una dividida; con otra caja,
+  cierra y avisa y la que queda ya es la última; el cierre ESPERA el candado de la otra caja,
+  observado en `pg_stat_activity`; dos cierres a la vez: sólo uno cierra).
+
+## DP-D33 · Puente de las mesas unidas en `main` hasta la mudanza · 27-10-2026
+
+- **Lo que había:** en `main` la unión es la vieja (F-302): la mesa unida se queda sin cuenta
+  propia, pero su QR seguía siendo suyo (el comensal pedía en una mesa sin cuenta); ninguna
+  pantalla separaba un grupo (D-2) y lo que cocina dejó listo para la unida no se entregaba desde
+  la principal (D-3).
+- **Elección (sin migración):**
+  - El QR de una mesa miembro de una unión ABIERTA resuelve a la principal en el único sitio
+    donde nace el ámbito del comensal (`buscadorDeProduccion`): «Mesa 4», «Esta mesa está unida
+    a la mesa 4», y pedidos y solicitudes caen en su cuenta. El QR propio sigue mandando.
+  - D-2: «Separar mesas» en la mesa activa de la principal, con `restaurante.separar_mesas`.
+  - D-3: al unir, `comandas.orden_id` de la unida pasa a la cuenta del grupo, como sus líneas.
+  - El diálogo y el hook usan las mismas rutas de archivo que `fase-b` para que la fusión
+    resuelva a su diseño (DP-D30), que reemplaza este puente; el aviso del portal se conserva.
+- **Prueba:** integración contra Postgres (unir 4 y 5, escanear la 5: «Mesa 4» y unida; pedir
+  cae en la cuenta de la 4 y la 5 no abre cuenta; la solicitud es de la 4; separadas, el QR de la
+  5 vuelve a la 5; D-3: las comandas de la 5 cuelgan de la cuenta de la 4) y navegador (D-2 y D-3
+  dejan de ser `test.fixme`; D-2 separa de verdad).
+
+## DP-D34 · La mudanza de un negocio: exportar del catálogo, importar sin disparadores y comparar md5 · 27-10-2026
+
+- **Lo que hacía falta:** sacar las filas de Don Poncho de la base compartida y meterlas en su
+  base nueva (Fase B) sin perder ni cambiar nada, con los mismos ID, y poder probarlo antes.
+- **Elección:**
+  - Las tablas del negocio salen del CATÁLOGO: las que tienen `organizacion_id`, su fila de
+    `organizaciones` y las hijas alcanzables por llave foránea. Fuera: `_migraciones`,
+    `limite_tasa` y los catálogos globales que trae cada base (`motivos_merma`, `regimenes_ieps`).
+  - Cada fila como `to_jsonb(t)::text` y de vuelta con `jsonb_populate_recordset`: ni un
+    `bigint` ni un `numeric` pasan por números de JavaScript.
+  - Importar con `session_replication_role = replica` (como la restauración oficial de
+    Supabase): sin disparadores, ningún ledger ni saldo se vuelve a aplicar. Las llaves foráneas
+    validadas se comprueban a mano antes del `commit` (las `NOT VALID` no las cumple ni el origen).
+  - Conteo y md5 por tabla sobre las columnas del ORIGEN, con zona UTC, fechas ISO e intercalación
+    «C»: el mismo resultado en cualquier servidor. Se comparan dentro de la transacción: si no
+    cuadra, no se guarda.
+  - Descartado: `pg_dump` por organización (no filtra hijas sin `organizacion_id` ni compara) y
+    un filtro escrito a mano (se queda atrás con la siguiente migración).
+  - Las puertas de esquema, RLS y acople toman el proyecto de `MORPHIQPOS_PROYECTO_VERIFICADO`.
+- **Prueba:** unidad (`listar` del almacén por carpetas y páginas; `proyectoVerificado`) y el
+  ensayo con los datos reales (ver el reporte 003): exportar de la compartida en sólo lectura,
+  importar a bases desechables con las migraciones de `main` y de `fase-b`, filas y md5
+  idénticos; repetir se niega; una fila alterada en el destino la señala la verificación.

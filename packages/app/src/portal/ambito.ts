@@ -42,6 +42,11 @@ export interface AmbitoPortal {
   readonly empleadoAsignadoId: string | null;
   /** Quien tomó la mesa en el modo sin asignación (`restaurante.asignar_mesero`). DP-9.2. */
   readonly empleadoAtiendeId: string | null;
+  /**
+   * DP-10.3: el QR era de una mesa UNIDA a otra, y lo de arriba es de la principal. El portal
+   * dice «Esta mesa está unida a la mesa N».
+   */
+  readonly unidaALaPrincipal: boolean;
 }
 
 /** La fila cruda que devuelve la búsqueda por token, antes de comprobar nada. */
@@ -57,6 +62,8 @@ export interface FilaMesaPorToken {
   readonly empleado_atiende_id: string | null;
   readonly qr_activa: boolean;
   readonly activa: boolean;
+  /** DP-10.3: esta fila es la de la principal; el token era de una mesa unida a ella. */
+  readonly unida?: boolean;
 }
 
 /**
@@ -129,6 +136,7 @@ export async function resolverAmbitoPortal(
     ordenActivaId: fila.orden_activa_id,
     empleadoAsignadoId: fila.empleado_asignado_id,
     empleadoAtiendeId: fila.empleado_atiende_id,
+    unidaALaPrincipal: fila.unida === true,
   };
 }
 
@@ -170,7 +178,8 @@ export function buscadorDeProduccion(organizacionId: string, db?: Transaccion): 
     const fila = filas[0];
     if (filas.length !== 1 || fila === undefined) return filas;
     // DP-9.6 · Mesa unida a otra: su QR cae en la PRINCIPAL. La gente de la 5 pide, ve la cuenta
-    // y cuenta como persona de la 4. El QR propio sigue mandando: apagado en la 5, no sirve.
+    // y cuenta como persona de la 4. El QR propio sigue mandando: apagado en la 5, no sirve. Y el
+    // portal lo dice: «Esta mesa está unida a la mesa 4» (`unida`, DP-10.3).
     const unida = await base
       .selectFrom('mesas')
       .select('unida_a_mesa_id')
@@ -187,6 +196,13 @@ export function buscadorDeProduccion(organizacionId: string, db?: Transaccion): 
       .executeTakeFirst();
     return principal === undefined
       ? filas
-      : [{ ...principal, activa: principal.activa && fila.activa, qr_activa: fila.qr_activa }];
+      : [
+          {
+            ...principal,
+            activa: principal.activa && fila.activa,
+            qr_activa: fila.qr_activa,
+            unida: true,
+          },
+        ];
   };
 }

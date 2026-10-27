@@ -26,15 +26,18 @@ tiempo real. Lo que cambia de una fase a otra son **variables de entorno**, no c
    Jacaranda) en cualquier base nueva. Son ajenos (`NEGOCIOS_AJENOS`), las guardas los niegan y no
    estorban, pero en la base propia sobran: se archivan con una migración nueva del repositorio,
    probada antes en base desechable.
-3. Copiar SOLO las filas de `don-poncho` (exportación por organización, con su auditoría) y
-   verificar conteos y md5 por tabla contra la base compartida.
+3. Copiar SOLO las filas de `don-poncho` (`exportar-negocio.mjs` e `importar-negocio.mjs`) y
+   verificar conteos y md5 por tabla contra la base compartida (el importador lo hace antes de
+   guardar).
 4. Cambiar en Vercel `DATABASE_URL`, `STORAGE_*` (bucket nuevo) y volver a desplegar.
 5. Correr `scripts/preparar-negocio.mjs` contra la base nueva con el `APP_URL` del despliegue: no
    duplica nada y corrige la dirección de las páginas del menú QR (guardan la dirección absoluta
    del sitio; sólo las que puso el guion, no las que subió el dueño).
-6. Las puertas `verify:esquema`, `verify:rls` y `verify:acople` hoy apuntan al proyecto
-   `wyqmzh…` por nombre: se parametrizan por variable antes de la mudanza.
-7. Retirar `don-poncho` de la base compartida sólo con Miguel presente, y con respaldo.
+6. Las puertas `verify:esquema`, `verify:rls` y `verify:acople` toman el proyecto de
+   `MORPHIQPOS_PROYECTO_VERIFICADO` (sin ella, el `wyqmzh…` de la Fase A), desde DP-10.5.
+
+El paso a paso del día, con tiempos y cómo regresar: `docs/infra/MUDANZA-FASE-B.md`. Las
+herramientas: `scripts/exportar-negocio.mjs` y `scripts/importar-negocio.mjs` (DP-D34). 7. Retirar `don-poncho` de la base compartida sólo con Miguel presente, y con respaldo.
 
 ## Fase B → C (servidor del restaurante)
 

@@ -69,11 +69,32 @@ const pinAlAzar = (usados) => {
   }
 };
 
-/** Los secretos y los PIN de la demo: se inventan una vez y se reusan (el dueño ya existe). */
+/**
+ * Los secretos y los PIN de la demo: se inventan una vez y se reusan (el dueño ya existe). Si el
+ * equipo creció desde entonces (DP-10.1: «Bebidas»), sólo se inventan los que faltan.
+ */
 function secretosDeLaDemo() {
   mkdirSync(CARPETA, { recursive: true });
-  if (existsSync(ARCHIVO_DE_SECRETOS)) return JSON.parse(readFileSync(ARCHIVO_DE_SECRETOS, 'utf8'));
   const datos = JSON.parse(readFileSync('docs/cliente/negocio-don-poncho.json', 'utf8'));
+  if (existsSync(ARCHIVO_DE_SECRETOS)) {
+    const guardados = JSON.parse(readFileSync(ARCHIVO_DE_SECRETOS, 'utf8'));
+    const faltan = datos.equipo.filter((persona) => guardados.pines[persona.nombre] === undefined);
+    if (faltan.length === 0) return guardados;
+    const usados = new Set([guardados.pinDelDueno, ...Object.values(guardados.pines)]);
+    const completos = {
+      ...guardados,
+      pines: {
+        ...guardados.pines,
+        ...Object.fromEntries(faltan.map((persona) => [persona.nombre, pinAlAzar(usados)])),
+      },
+    };
+    writeFileSync(
+      ARCHIVO_DE_SECRETOS,
+      `${JSON.stringify(completos, null, 2)}
+`,
+    );
+    return completos;
+  }
   const usados = new Set();
   const secretos = {
     SESSION_SECRET: randomBytes(32).toString('hex'),

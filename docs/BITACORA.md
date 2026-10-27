@@ -216,3 +216,42 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   pasar sin mutar antes de mutar nada; los tres bancos se volvieron a correr con el arnés bueno
   (resultados en el reporte 002). Los bancos de DP-9.1 a DP-9.4 y DP-9.7 usaban `shell=True`
   (cmd) y no tenían el problema.
+
+  segundo intento entró limpio. En producción (408fb69, 26-10): CI `40447773811` verde, acople verde contra
+  producción, humo sin dinero verde, licencia de jsQR servida en `/licencias/`; ninguna escritura
+  en la base (el diseño por omisión es el de siempre); huella de las otras 10 organizaciones
+  idéntica. Sus 17 mutaciones se repitieron el 27-10 con el arnés corregido (ver reporte 002):
+  17 de 17 atrapadas.
+
+## 27-10-2026 · DP-10 · Dejar el funcionamiento listo para operar
+
+- DP-10.0: plan enviado a Miguel. `main`: 10.1, 10.2, 10.3 y las herramientas de la mudanza;
+  `fase-b`: la fusión de `main` y la migración 188. Los PIN reales los teclea Miguel (no se
+  meten contraseñas en producción desde aquí).
+- DP-10.1 (DP-D31): la sesión trae la estación del empleo desde el servidor (PIN y
+  `/api/catalogo/sesion`); Cocina decide con ella cuando el servidor contesta; aviso al cocinero
+  sin estación; voz y aviso de pedido por estación. El portal QR mandaba comandas sin estación con
+  las estaciones apagadas: ahora sigue la cadena del mesero. `restaurante.marcar_estacion_general`
+  («Hacer general»). `preparacionEstacionUtils.js` era código muerto. `preparar-negocio.mjs`
+  (datos v2) probado contra la base de demo de DP-9: general, Cocina a su estación, alta de
+  Bebidas, bandera; la segunda corrida no cambia nada.
+- DP-10.2 (DP-D32): la última caja de la sucursal no cierra con cuentas de mesa vivas (dice
+  cuáles); con otra abierta, cierra y avisa. El cierre bloquea las cajas de la sucursal en orden
+  antes de decidir (probado con el candado observado en `pg_stat_activity`).
+- DP-10.3 (DP-D33): el QR de una mesa miembro de una unión abierta usa la principal («Esta mesa
+  está unida a la mesa N»); D-2 («Separar mesas» en la principal) y D-3 (al unir, las comandas
+  de la unida pasan a la cuenta del grupo) dejan de ser `fixme`.
+- DP-10.5 (DP-D34), lo que va a `main`: `exportar-negocio.mjs` (sólo lectura, tablas del
+  catálogo, salida en `..\_PRIVADO\mudanza\`), `importar-negocio.mjs` (una transacción sin
+  disparadores, llaves a mano, filas y md5 comparados antes del `commit`), `listar` del almacén,
+  las puertas con `MORPHIQPOS_PROYECTO_VERIFICADO` y `docs/infra/MUDANZA-FASE-B.md`. Ensayo con
+  los datos reales contra las migraciones de `main`: exportar 16,9 s (132 tablas, 950 filas, el
+  bucket vacío), migrar 8 s, importar 1,4 s, idénticos. Una llave `NOT VALID`
+  (`movimientos_stock_motivo_conocido`) no la cumple ni el origen: no se exige.
+- DP-10.4 (en `fase-b`): `main` fusionado con un commit de merge (sin rebase ni fuerza). Los
+  conflictos se resolvieron a favor de la unión de la fase B (DP-9.6): `AccionesDeLaMesa`,
+  `MesaActiva`, el hook de la unión, `sala-escrituras` y la e2e de operaciones son los suyos; el QR
+  de la mesa unida sigue por `mesas.unida_a_mesa_id` y conserva el aviso «Esta mesa está unida a
+  la mesa N». Decisiones, índice, bitácora, aspecto y CI llevan lo de los dos lados.
+- De paso: `open(p, 'w')` de Python en Windows escribe CRLF; los guiones de edición usan
+  `newline=''`.

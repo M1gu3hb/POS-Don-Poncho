@@ -151,7 +151,7 @@
     },
     {
       "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
-      "porque": "DP-5 (DP-D18): el menú personalizado (modo «menú subido») también pide. Cada página lleva debajo los platillos de las categorías que nombra su título, con el mismo «Agregar» que el menú de siempre (renglones separados por divide-y bajo un border-t), y con más de una página hay una fila de accesos para saltar a cada una (nav «Páginas del menú»). La página guarda su ancla (scroll-mt-20) para no quedar bajo el encabezado fijo. DP-9.7 (DP-D26): cada página del menú subido se pinta con `src/restaurante/menu-qr/PaginaConBotones` —los botones van ENCIMA de la imagen— y se va la lista repetida de platillos de abajo; el portal toma el estilo, la tipografía y el fondo que eligió el negocio. DP-9.5 (fase B): el carrito deja de vivir en el teléfono. Lo elegido va al carrito de la MESA en el servidor —lo ven todos los teléfonos— con «agregado al pedido de la mesa»; enviarlo, sus avisos y «Tu pedido está vacío» pasan al pedido de la mesa (src/portal/carrito-compartido), que pregunta «¿Ya pidieron todos?» en una mesa de dos o más.",
+      "porque": "DP-5 (DP-D18): el menú personalizado (modo «menú subido») también pide. Cada página lleva debajo los platillos de las categorías que nombra su título, con el mismo «Agregar» que el menú de siempre (renglones separados por divide-y bajo un border-t), y con más de una página hay una fila de accesos para saltar a cada una (nav «Páginas del menú»). La página guarda su ancla (scroll-mt-20) para no quedar bajo el encabezado fijo. DP-9.7 (DP-D26): cada página del menú subido se pinta con `src/restaurante/menu-qr/PaginaConBotones` —los botones van ENCIMA de la imagen— y se va la lista repetida de platillos de abajo; el portal toma el estilo, la tipografía y el fondo que eligió el negocio. DP-9.5 (fase B): el carrito deja de vivir en el teléfono. Lo elegido va al carrito de la MESA en el servidor —lo ven todos los teléfonos— con «agregado al pedido de la mesa»; enviarlo, sus avisos y «Tu pedido está vacío» pasan al pedido de la mesa (src/portal/carrito-compartido), que pregunta «¿Ya pidieron todos?» en una mesa de dos o más. DP-10.3 (DP-D33): el QR de una mesa unida a otra dice «Esta mesa está unida a la mesa N» bajo el número de la principal.",
       "testigos": [
         "+ clase:flex",
         "+ clase:gap-1.5",
@@ -183,7 +183,9 @@
         "- aviso:¡Pedido enviado a cocina!",
         "- aviso:No pudimos enviar tu pedido. Intenta de nuevo.",
         "+ aviso:${producto.nombre || 'Producto'} agregado al pedido de la mesa",
-        "+ aviso:No pudimos agregarlo. Intenta de nuevo."
+        "+ aviso:No pudimos agregarlo. Intenta de nuevo.",
+        "+ clase:font-semibold",
+        "+ clase:text-primary"
       ]
     },
     {
@@ -309,6 +311,33 @@
       "archivo": "apps/web/heredado/components/portalqr/CarritoQR.jsx",
       "borrado": true,
       "porque": "DP-9.5 (fase B): el carrito local de cada teléfono se va; lo reemplaza el pedido compartido de la mesa (src/portal/carrito-compartido/CarritoDeLaMesa.tsx).",
+      "testigos": []
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx",
+      "porque": "DP-10.1 (DP-D31): «Hacer general» nombra general una estación que ya existe (restaurante.marcar_estacion_general), mientras el negocio no tenga ninguna; el aviso lo ofrece junto a «Crear Cocina general».",
+      "testigos": [
+        "- texto:. Es la estación por defecto donde caen las categorías sin asignar. Crea Cocina general para evitar inconsistencias futuras.",
+        "+ texto:. Es la estación por defecto donde caen las categorías sin asignar. Crea Cocina general o toca «Hacer general» en una de las tuyas.",
+        "+ texto:Hacer general",
+        "+ aviso:«${estacion.nombre}» es ahora la estación general",
+        "+ aviso:No se pudo:"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Cocina.jsx",
+      "porque": "DP-10.1 (DP-D31): el aviso del cocinero sin estación dice lo que pidió el cliente: «Tu usuario no tiene estación asignada; pide al administrador que te asigne una.», y dónde se asigna.",
+      "testigos": [
+        "- texto:Este usuario de cocina no tiene estación asignada",
+        "- texto:Pide al administrador que te asigne una estación o te marque como \"Todas las estaciones\" en",
+        "+ texto:Se asigna en",
+        "+ texto:, o ahí mismo se le marca «Todas las estaciones»."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/utils/preparacionEstacionUtils.js",
+      "borrado": true,
+      "porque": "DP-10.1 (DP-D31): nadie lo importaba; la estación de cada comanda la decide el servidor (restaurante/estaciones.ts y portal/estaciones.ts).",
       "testigos": []
     }
   ]
