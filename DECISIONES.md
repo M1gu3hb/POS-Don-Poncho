@@ -579,3 +579,46 @@ puerta los denuncia todos.
   ensayo con los datos reales (ver el reporte 003): exportar de la compartida en sólo lectura,
   importar a bases desechables con las migraciones de `main` y de `fase-b`, filas y md5
   idénticos; repetir se niega; una fila alterada en el destino la señala la verificación.
+
+## DP-D35 · DP-11 se publica en `main` paso por paso; no hay rama `diseno` · 29-10-2026
+
+- **Contexto:** el encargo DP-11 mandaba el diseño nuevo (11.4 y 11.5) a una rama `diseno` sacada
+  de `fase-b`, sin publicar hasta después de la mudanza. El arranque de la sesión, que manda sobre
+  los encargos, dice lo contrario: todo a `main` y a producción en cuanto quede verificado, para
+  que Miguel lo pruebe ahí; se queda la pausa de DP-11.4.
+- **Elección:** cada paso de DP-11 entra a `main` con la CI a mano en verde, se despliega y se
+  comprueba con humo y huella. Las tres pantallas piloto salen a producción y ahí se detiene hasta
+  el OK de Miguel. Al cerrar cada paso, `main` se fusiona en `fase-b` (merge) con su CI en verde.
+  Si el restaurante ya opera, lo grande de diseño se publica fuera de su horario y con aviso.
+- **Consecuencia:** lo que sólo existe en `fase-b` (unir mesas desde el mapa con su efecto
+  líquido, el carrito compartido del portal) recibe el lenguaje nuevo en `fase-b`, al fusionar.
+  Ninguna preferencia nueva pide migración: van en `configuracion.valores` o en el aparato.
+
+## DP-D36 · El diseño nuevo se aplica a las pantallas reales, no a sus gemelas · 29-10-2026
+
+- **Lo que hay (inventario de DP-11.0):** lo que cada puesto usa a diario es heredado o mixto
+  (`Mesero.jsx`, `Caja.jsx`, `Cocina.jsx`, `Dashboard.jsx`). Las 12 gemelas recompuestas de
+  `app/(modelos)/restaurante/*` no cuelgan del menú (D-52) y sólo las abren las pruebas.
+- **Alternativas:** (a) recomponer las gemelas y cambiar el menú a ellas; (b) recomponer las
+  reales: se queda su lógica (consultas, comandos, estados, textos que usan las pruebas) y se
+  cambia su capa visual.
+- **Elección: (b).** Las gemelas no tienen todo lo que hoy usa Don Poncho (globos y vista de
+  solicitudes, unir mesas de `fase-b`, la pregunta al liberar, los diálogos de la caja) y las
+  suites de navegador prueban las reales. La parte visual de cada pantalla real se rehace como
+  piezas de `apps/web/src` con `@morphiqpos/ui/sistema` (así `verify:adopcion` las mide) y la
+  página heredada las monta con sus mismos datos. Lo compartido —`AppLayout`, `Sidebar`, `Card`,
+  `Dialog`— cambia en el sistema de diseño y mueve todas las pantallas a la vez.
+
+## DP-D37 · Un id al azar que también sirve por http · 29-10-2026
+
+- **Defecto:** `crypto.randomUUID` sólo existe en un contexto seguro (https o `localhost`). Por la
+  IP de la red (la demo con teléfonos de DP-D27 y el servidor del restaurante de la Fase C) no
+  está: el teléfono de cocina no podía mover una comanda, el editor de botones del menú QR no
+  agregaba uno y, en `fase-b`, el portal del comensal no cargaba el menú
+  («crypto.randomUUID is not a function»). Se vio al probar la demo de `fase-b` por la IP.
+- **Elección:** `idAlAzar()` (`apps/web/src/cliente/id-al-azar.ts`): `randomUUID` si está; si no,
+  un UUID v4 con `crypto.getRandomValues`, que existe en cualquier contexto y da el mismo azar.
+  Las claves de idempotencia (`nuevaClave`) dejan el respaldo con `Math.random`. Un contrato
+  exige que ningún archivo del navegador llame `randomUUID` directo.
+- **Prueba:** unidad (sin `randomUUID`, 500 UUID v4 distintos con `getRandomValues`; con él, el
+  del navegador) y el contrato. Seis mutaciones, todas muertas.

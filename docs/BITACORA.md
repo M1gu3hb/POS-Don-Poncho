@@ -255,3 +255,45 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
 - Limpieza: las dos bases locales del ensayo con datos reales (`dp_ensayo_main`,
   `dp_ensayo_faseb`) se borraron; las exportaciones se quedan en `..\_PRIVADO\mudanza\`. Reporte
   en `docs/reports/003-funcionamiento.md`.
+
+## 29-10-2026 · DP-11 · Morfi, modo espera, sonidos y el diseño nuevo
+
+Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre el encargo): todo a
+`main` y a producción en cuanto queda verificado; no hay rama `diseno` (DP-D35). Rama de trabajo:
+`dp-11` desde `main`.
+
+### Para retomar
+
+- Postgres de desarrollo: `pg_ctl -D ".work/pg/data" start` (55433). Bases desechables de DP-11:
+  `don_poncho_demo_main` (migraciones de `main`, para medir) y `don_poncho_demo_faseb` (la demo de
+  Miguel). En las dos las 10 mesas se acomodaron en cuadrícula 5×2 (en producción están todas en
+  100,100: ver el inventario).
+- Los secretos y PIN de las demos van en `%LOCALAPPDATA%\Temp\pos-don-poncho-demo\demo.json`.
+  **Ojo:** `.work/env.sh` cambia `TEMP` a `D:\mpos-tmp`, donde hay OTRO `demo.json` (otra
+  pimienta): las bases de DP-11 se prepararon con `TEMP` de Windows, la que usa PowerShell.
+- Demo de `fase-b` para Miguel: worktree desprendido en `.work/demo-fase-b` (sobre `origin/fase-b`)
+  y el lanzador `.work/demo-fase-b.ps1` (arranca Postgres, enseña los PIN de demo y sirve en
+  `http://<IP>:3300`). Fuera del repositorio.
+- Medir: `node scripts/medir-fluidez.mjs --url http://localhost:3400 --secretos <demo.json>`
+  contra `demo-local.mjs servir --puerto 3400` sobre `don_poncho_demo_main`.
+- Morfi: `M1gu3hb/Morfi-pet` en `c61aab2` (rama `claude/compassionate-cori-xn0xjj`), clonado en el
+  scratchpad, sólo lectura.
+
+### DP-11.0 · Inventario, línea base y plan
+
+- Inventario y plan en `docs/diseno/INVENTARIO-DP-11.md`. Hallazgo: lo que cada puesto usa es
+  heredado o mixto; las gemelas recompuestas de `(modelos)/restaurante/*` no están en el menú
+  (DP-D36: el diseño va a las pantallas reales).
+- **Subagentes:** dos Sonnet en paralelo, sólo lectura, sin worktree porque no escribieron nada
+  (uno con `git archive` de `fase-b` en el scratchpad): «inventario del menú real» e «inventario
+  de `src` y `fase-b`». Resultado revisado y condensado aquí; 202 llamadas, ~17 min.
+- Línea base de rendimiento (CPU 4×): desplazarse 55–60 cuadros; abrir una mesa 16–20 cuadros
+  (el diálogo monta los 107 platillos). `docs/reports/evidencia-004/fluidez-antes.json`.
+- Producción, sólo lectura: Don Poncho con 0 órdenes y 0 pagos (aún no opera en el sistema); las
+  10 mesas en la misma posición (100, 100).
+- Al probar la demo de `fase-b` por la IP, el portal del comensal no cargaba:
+  `crypto.randomUUID` no existe por http. Arreglo en `main` (DP-D37, `idAlAzar`, seis mutaciones
+  muertas); el sitio de `fase-b` (carrito compartido) se arregla al fusionar `main`, y el contrato
+  lo exige.
+- Morfi en Safari: WebM con alfa no; APNG pesa 5.5 MB (a media escala); WebP animado con alfa
+  2.7–3.0 MB a escala completa, 1.4 MB a media. El `ffmpeg` de esta PC no codifica HEVC con alfa.
