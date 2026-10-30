@@ -7,31 +7,13 @@ import { usePOSAuth } from '@/lib/POSAuthContext';
 
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Superficie } from '@morphiqpos/ui/sistema';
-import {
-  BookOpen,
-  ChefHat,
-  ClipboardCheck,
-  CreditCard,
-  FileText,
-  Landmark,
-  LayoutDashboard,
-  LayoutGrid,
-  Menu,
-  Package,
-  QrCode,
-  Receipt,
-  ReceiptText,
-  Settings,
-  ShoppingCart,
-  Tag,
-  UtensilsCrossed,
-  type LucideIcon,
-} from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { useVocabulario } from '~/cliente/vocabulario';
 
+import { iconoDeLaSeccion } from './iconos-del-dock';
 import { esLaSeccionActual, seccionesDelDock } from './secciones-del-dock';
 
 /**
@@ -45,25 +27,6 @@ import { esLaSeccionActual, seccionesDelDock } from './secciones-del-dock';
  * Mientras el cajón está abierto el dock queda inerte: el cajón lo tapa, y un lector de pantalla
  * no debe encontrar dos veces la misma sección.
  */
-
-const ICONOS: Readonly<Record<string, LucideIcon>> = {
-  BookOpen,
-  ChefHat,
-  ClipboardCheck,
-  CreditCard,
-  FileText,
-  Landmark,
-  LayoutDashboard,
-  LayoutGrid,
-  Package,
-  QrCode,
-  Receipt,
-  ReceiptText,
-  Settings,
-  ShoppingCart,
-  Tag,
-  UtensilsCrossed,
-};
 
 interface DockDelPuestoProps {
   readonly menuAbierto: boolean;
@@ -110,7 +73,7 @@ export function DockDelPuesto({ menuAbierto, alAbrirMenu }: DockDelPuestoProps) 
       className="no-print fixed inset-x-0 bottom-(--espacio-3) z-40 mx-auto hidden w-fit items-center gap-(--espacio-1) p-(--espacio-1) tactil:flex"
     >
       {secciones.map((seccion) => {
-        const Icono = ICONOS[seccion.icono] ?? Tag;
+        const Icono = iconoDeLaSeccion(seccion.icono);
         const actual = esLaSeccionActual(seccion.ruta, pathname);
         return (
           <Link
