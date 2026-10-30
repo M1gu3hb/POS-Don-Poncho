@@ -88,7 +88,8 @@
     [data-slot='dialog-content'],
     [data-slot='alert-dialog-content'],
     [data-slot='sheet-content'],
-    [data-capa='flotante']
+    [data-capa='flotante'],
+    [data-capa='lateral']
   ) {
   border: 5px solid transparent;
   background:
@@ -101,6 +102,24 @@
     0 0 0 1px hsl(var(--sombra-tinte) / 0.55),
     inset 0 0 0 1px hsl(var(--luz-borde) / 0.75),
     var(--resplandor-ventana);
+}
+
+/* ═══════════════════════════════════════════════════════ LA BARRA LATERAL (PC)
+   Un panel que flota a un lado, no una pared pegada al borde: separado del canto, con el
+   radio del estilo, el canto de luz y la sombra larga. Su fondo sigue siendo el de la barra
+   (oscuro en los dos modos): su letra clara no se lee sobre vidrio claro. */
+[data-elevacion='capas'] [data-capa='lateral'],
+[data-elevacion='aero'] [data-capa='lateral'] {
+  inset-block: var(--espacio-2);
+  inset-inline-start: var(--espacio-2);
+  border-radius: var(--radio-lg);
+  overflow: hidden;
+}
+
+[data-elevacion='capas'] [data-capa='lateral'] {
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--luz-borde) / 0.16),
+    var(--sombra-4);
 }
 
 /* El título sobre vidrio lleva su halo claro detrás, como los de su época. Sólo en claro: en

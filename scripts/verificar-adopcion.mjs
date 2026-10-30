@@ -87,6 +87,93 @@ export const SIN_ESTADO = [
     razon:
       'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
   },
+  // ── El tablero del dueño recompuesto (DP-11.4): `heredado/pages/Dashboard.jsx` es el cascarón
+  //    que lee los datos; estas piezas sólo los pintan. La espera, el vacío y el fallo de cada
+  //    lectura los pintan FilaDeCifras, DonaDeMetodosDePago y AlertasDeInventario, que sí los dicen.
+  {
+    pantalla: 'tablero/CifraDelTablero',
+    estado: 'vacio',
+    razon:
+      'UNA tarjeta de cifra del tablero (DP-11.4): recibe su título y su importe por props y siempre trae un valor; la fila que la monta dice cuándo no hay cifras.',
+  },
+  {
+    pantalla: 'tablero/CifraDelTablero',
+    estado: 'cargando',
+    razon:
+      'No lee nada: el tablero no la monta mientras las cifras llegan y en su lugar pinta los esqueletos de FilaDeCifras.',
+  },
+  {
+    pantalla: 'tablero/CifraDelTablero',
+    estado: 'error',
+    razon:
+      'No lee ni escribe: si la lectura de las cifras falla, FilaDeCifras pinta su ErrorDeLectura en lugar de las tarjetas.',
+  },
+  {
+    pantalla: 'tablero/FilaDeCifras',
+    estado: 'vacio',
+    razon:
+      'Siempre hay cifras que enseñar: sin caja abierta o sin ventas valen cero, y el aviso de la caja (AvisoDeCaja) explica por qué. Un «sin datos» aquí escondería los ceros reales.',
+  },
+  {
+    pantalla: 'tablero/AvisoDeCaja',
+    estado: 'vacio',
+    razon:
+      'Es un aviso sobre el estado de la caja, no una lista: con caja abierta no se pinta nada y sin ella pinta su Aviso de atención con la salida a Caja.',
+  },
+  {
+    pantalla: 'tablero/CortesRecientes',
+    estado: 'vacio',
+    razon:
+      'Sólo es el marco de la lista de cortes: el vacío («aún no hay cortes») lo pinta CorteHistorialList, la heredada que también usa Caja → Historial.',
+  },
+  {
+    pantalla: 'tablero/CortesRecientes',
+    estado: 'cargando',
+    razon:
+      'Sólo es el marco de la lista de cortes: CorteHistorialList hace su propia lectura y pinta su propia espera con esqueletos.',
+  },
+  {
+    pantalla: 'tablero/CortesRecientes',
+    estado: 'error',
+    razon:
+      'Sólo es el marco de la lista de cortes: CorteHistorialList hace su propia lectura y decide cómo decir que falló; el marco no lee nada.',
+  },
+  {
+    pantalla: 'tablero/EncabezadoDelTablero',
+    estado: 'vacio',
+    razon:
+      'El encabezado del tablero (DP-11.4): un título, una fecha y dos botones de navegación. No tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'tablero/EncabezadoDelTablero',
+    estado: 'cargando',
+    razon:
+      'No lee nada: el nombre del negocio y la fecha llegan por props desde el tablero, que ya tiene la configuración cuando lo pinta.',
+  },
+  {
+    pantalla: 'tablero/EncabezadoDelTablero',
+    estado: 'error',
+    razon:
+      'Son enlaces a Nueva venta, Caja y Compras: no lee ni escribe, así que no hay operación que pueda fallar dentro de la pieza.',
+  },
+  {
+    pantalla: 'navegacion/DockDelPuesto',
+    estado: 'vacio',
+    razon:
+      'Las secciones salen del menú que declara el servidor para el puesto (DP-11.4): siempre hay al menos una, y «Abrir menú» está siempre.',
+  },
+  {
+    pantalla: 'navegacion/DockDelPuesto',
+    estado: 'cargando',
+    razon:
+      'Se monta dentro del armazón, que ya esperó la sesión y la configuración (MorfiCargando): no hay nada que cargar aquí.',
+  },
+  {
+    pantalla: 'navegacion/DockDelPuesto',
+    estado: 'error',
+    razon:
+      'No lee del servidor: arma las secciones con la sesión y la configuración que ya tiene el armazón. No tiene un fallo propio que avisar.',
+  },
   {
     pantalla: 'configuracion/ModoDelAparato',
     estado: 'vacio',

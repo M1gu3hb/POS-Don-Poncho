@@ -435,3 +435,13 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   1,577 en verde; navegador: PIN al despertar 9/9, sonidos 19/19, operaciones 17/17, jornada en
   teléfono verde; en escritorio y tableta, dos tiempos agotados por carga de la máquina (el reseteo
   y la lista de empleados no respondieron en 20 s con dos subagentes trabajando): se repiten.
+- **11.4.d integrado** (parche del subagente; `aspecto-permitido.json` y `verificar-adopcion.mjs`
+  a mano porque tenían cambios de aquí): `Dashboard.jsx` de 662 a 246 líneas, `src/tablero/`
+  (cifras del día en centavos con su prueba, cifras, dona del sistema, alertas como `Tabla`, aviso
+  de caja, cortes, encabezado con «Nueva venta» `data-principal`). El subagente: 3 + 2 mutantes en
+  rojo; dejó anotado un detalle heredado sin tocar (`alertIngredients` con `|| 3` manda los
+  agotados al final).
+- **11.4.f (navegación):** DP-D42. `tactil:`/`raton:`, el dock, la barra lateral flotante, el
+  abanico del dueño borrado. `navegacion.spec.ts` en los tres aparatos.
+- **Ojo, worktrees en Windows:** `git worktree remove` no puede borrar `node_modules` por rutas
+  largas; se borran con PowerShell, con `\\?\` delante de la ruta.

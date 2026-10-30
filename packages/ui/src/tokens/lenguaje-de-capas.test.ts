@@ -32,6 +32,7 @@ const LO_QUE_FLOTA = [
   "[data-slot='popover-content']",
   "[data-slot='dropdown-menu-content']",
   "[data-capa='flotante']",
+  "[data-capa='lateral']",
   '[data-sonner-toast]',
 ];
 

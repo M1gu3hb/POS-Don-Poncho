@@ -778,3 +778,19 @@ puerta los denuncia todos.
 - **Producción:** el negocio guarda sus perillas (`configuracion.valores.apariencia`, sin
   migración) y Don Poncho se dio de alta con `elevacion: sombra` explícito. Para que estrene el
   lenguaje, al publicar se fija `capas` por el comando de apariencia, con huella antes y después.
+
+## DP-D42 · La navegación: dock en táctil, barra lateral flotante con ratón · 30-10-2026
+
+- **Táctil o ratón, no el ancho.** Táctil es un puntero grueso o menos de 64rem
+  (`@custom-variant tactil` y `raton` en `globals.css`): la tableta del local mide 1280 px en
+  horizontal, así que con `lg:` se quedaba con la barra de la PC. Las dos variantes se complementan.
+- **En táctil, un dock** (`src/navegacion/DockDelPuesto.tsx`): una isla abajo (`Superficie` nivel 4:
+  vidrio con `capas`) con las cuatro primeras secciones del menú que declara el servidor para el
+  puesto —el dueño: Inicio, Mesas, Cocina, Caja; la mesera, sólo Mesas— y «Abrir menú», el mismo
+  botón de antes (nombre, ícono, contraste), que abre el mismo cajón con el «Menú principal». El
+  dock se llama «Secciones» y queda inerte mientras el cajón está abierto. El estado del cajón pasa
+  al `AppLayout`. El contenido deja hueco abajo en táctil.
+- **Con ratón, la barra lateral de siempre**, y con `capas` o `aero` flota a un lado
+  (`data-capa="lateral"`): separada del canto, con radio, canto de luz y sombra larga; en «Retro»,
+  marco de ventana. Su fondo sigue siendo el de la barra: su letra clara no se lee sobre vidrio claro.
+- **El abanico del dueño se va:** el dock da las mismas secciones al pulgar, a todos los puestos.

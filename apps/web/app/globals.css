@@ -56,6 +56,13 @@
    cambio, así que hay UN modo oscuro y cada código lo llama en su idioma. */
 @custom-variant oscuro (&:where([data-modo='oscuro'], [data-modo='oscuro'] *));
 
+/* DP-11.4 · TÁCTIL O RATÓN, la decisión de la navegación. Táctil es un puntero grueso o menos de
+   64rem: la tableta del local mide 1280 px en horizontal, así que el ancho solo no basta. En
+   táctil se ve el dock de abajo; con ratón, la barra lateral. Son complementarias: una pantalla
+   siempre es una de las dos. */
+@custom-variant tactil (@media (pointer: coarse), (max-width: 63.999rem));
+@custom-variant raton (@media (min-width: 64rem) and (not (pointer: coarse)));
+
 @theme inline {
   /* --- colors, de su tailwind.config.js ------------------------------- */
   --color-background: hsl(var(--background));
