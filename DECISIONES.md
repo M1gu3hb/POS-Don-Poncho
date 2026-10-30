@@ -772,3 +772,39 @@ puerta los denuncia todos.
   otra vez al despertar con lo que el negocio pide entonces. Así un «Pedir PIN» encendido en otro
   aparato vale al siguiente despertar, sin recargar la tableta.
 - **Sin migración.**
+
+## DP-D40 · Los sonidos de la interfaz: un gestor, Sound Lab como código, el aparato y el negocio · 30-10-2026
+
+- **Fuente:** React Bits · Sound Lab (`DavidHDev/react-bits`, commit `e12c221`): el motor de Web
+  Audio y 25 recetas, **como código** (se sintetizan en el navegador: sin archivos de audio, suenan
+  sin internet en el servidor privado). Licencia MIT + Commons Clause, en `licencias/`: se usan
+  dentro del producto; no se venden ni se redistribuyen sueltos. El motor se partió en módulos de
+  menos de 300 líneas y sólo se guardaron las lecturas que el TypeScript estricto exige.
+- **Un solo gestor** (`apps/web/src/sonidos/gestor.ts`, `sonar(evento)`): perfil de **este
+  aparato** —Apagado, Suave (por omisión, al 70) o Normal, y el volumen— en Configuración → Este
+  aparato (`localStorage`, como el modo espera); se desbloquea con el primer toque, dentro del
+  mismo gesto (Safari); nunca se encima con la voz de Cocina o de Solicitudes (`speechSynthesis`
+  hablando o en cola); un mismo sonido no se repite antes de 80 ms; el toque genérico espera 40 ms
+  y se calla si en ese instante suena algo más preciso (un toque, un sonido). «Reducir
+  movimiento» no apaga el sonido; el perfil sí.
+- **Un oyente único** en la pestaña: lo que se toca (un botón, Felt; una pestaña o el menú,
+  Notch; un interruptor, Clasp o Unclasp según quede; `data-sonido` manda; deshabilitado, nada) y
+  lo que aparece (un diálogo o cajón, Popover al abrir y Fold al cerrar; un aviso de error, Shrug;
+  uno de advertencia, Hint). Las pantallas llaman a `sonar` sólo para lo que el DOM no dice:
+  agregar (Pebble), cambiar la cantidad (Bead), quitar (Fold), enviar a cocina (Dispatch), el
+  cobro (Halo), el ticket (Receipt), la comanda lista (Check), la solicitud atendida (Boop),
+  dormir y despertar (Dusk, Dawn: despertar suena sólo al tocar la pantalla), entrar y salir
+  (Arrive, Retreat). Entrar y salir recargan la página y la recarga corta el audio: esperan 300 ms,
+  sólo si de verdad va a sonar, y suenan **antes** de cambiar la sesión; si no, la pantalla navega
+  sola y la recarga llega encima (dos navegaciones). Siempre en el camino del éxito: después del
+  aviso o del comando que lo confirma, nunca en el clic. Los teclados de PIN llevan
+  `data-sonido="tecla"`.
+- **Del negocio** (`configuracion.valores.experiencia`, validado, sin migración): el sonido del
+  teclado —Nib por omisión, o Keycap, Thock o Clasp: «Block» no existe en la biblioteca— y si el
+  portal del comensal suena (apagado). Configuración → **Sonidos** enseña cada momento con su
+  sonido y un botón para oírlo, aunque el aparato esté en Apagado: ahí se aprueba el mapa.
+- **No se tocó:** el timbre y la voz de Cocina (lo pidió Miguel), la alerta del mesero cuando llega
+  una solicitud (con su voz), y el sistema no tiene meta del día. Ping, Signal y Confetti quedan en
+  el mapa con su nota hasta que Miguel decida.
+- Las recetas se cargan cuando hacen falta: Keycap y Thock traen su muestra (50 KB cada una); las
+  demás pesan menos de 1 KB.

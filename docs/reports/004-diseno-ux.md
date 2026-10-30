@@ -144,3 +144,80 @@ de demo en la carpeta temporal de la PC.
   que dos pestañas a la vez se sincronicen y el `FOR UPDATE` de dos guardados simultáneos no
   tienen prueba propia (el código se revisó); los interruptores de Configuración pueden pintar un
   valor viejo de la otra llave hasta recargar, sin perder nada (el servidor mezcla).
+
+- **Publicación:** primer CI a mano (`41009188004`) en rojo por dos cosas: la prueba de Cocina
+  encontró la cocina de la demo con pendientes de otras suites (ahora resetea la demo al empezar,
+  como las demás) y la galería vio la pestaña nueva de Configuración sin declarar (regenerada en
+  CI, `41011423713`; se subieron sólo los nueve retratos de Configuración: los demás difieren de 0
+  a 6 píxeles). CI de confirmación `41013410279` verde. `main` = `93f2884` (avance sin fusión);
+  Production lista; humo verde (raíz, el 404, los clips de dormir y despertar, el QR inválido, y
+  el modo espera viaja en los chunks del cliente); huella de las otras 10 organizaciones
+  IDÉNTICA (119 tablas, 06:40:29 → 06:51:19 UTC del 30-10). `fase-b`: fusión `2aec862` sin
+  conflictos, CI `41016832529`.
+
+## DP-11.3 · Los sonidos de la interfaz (30-10-2026)
+
+- **Qué quedó:** React Bits · Sound Lab instalado como código (motor de Web Audio y 25 recetas,
+  sin archivos de audio, suena sin internet), con su licencia en `licencias/`. Un solo gestor con
+  el perfil de cada aparato (Apagado, Suave —por omisión, al 70—, Normal, y el volumen) en
+  Configuración → Este aparato; se desbloquea con el primer toque; nunca se encima con la voz; un
+  mismo sonido no se repite antes de 80 ms y un toque suena una sola vez. Configuración →
+  **Sonidos**: cada momento con su sonido y «Oír», el sonido del teclado del negocio y si el
+  portal del comensal suena (apagado). DP-D40, ficha 16. Sin migración.
+- **El mapa final** (Miguel lo aprueba oyéndolo en Configuración → Sonidos):
+
+  | Momento                             | Sonido                         |
+  | ----------------------------------- | ------------------------------ |
+  | Toque de botón                      | Felt                           |
+  | Teclado de PIN y numérico           | Nib (o Keycap, Thock, Clasp)   |
+  | Agregar platillo                    | Pebble                         |
+  | Cambiar la cantidad                 | Bead                           |
+  | Quitar platillo                     | Fold                           |
+  | Cambiar de sección, pestaña o zona  | Notch                          |
+  | Abrir / cerrar un diálogo o cajón   | Popover / Fold                 |
+  | Interruptor encendido / apagado     | Clasp / Unclasp                |
+  | Enviar a cocina                     | Dispatch                       |
+  | Comanda lista                       | Check                          |
+  | Solicitud atendida                  | Boop                           |
+  | Cobro hecho                         | Halo                           |
+  | Ticket impreso                      | Receipt                        |
+  | Error / aviso                       | Shrug / Hint                   |
+  | Modo espera: dormir / despertar     | Dusk / Dawn                    |
+  | Entrar con PIN / salir              | Arrive / Retreat               |
+  | Comanda nueva (antes de la voz)     | Ping — sin usar: Cocina conserva su timbre y su voz |
+  | Solicitud del comensal              | Signal — sin usar: sigue la alerta del mesero con su voz |
+  | Meta del día                        | Confetti — sin usar: el sistema no tiene meta del día |
+
+- **Pendiente de Miguel:** con qué sonido se queda el teclado («Block» no existe: Nib, Keycap,
+  Thock o Clasp) y si Ping, Signal o Confetti reemplazan lo de hoy.
+- **Evidencia:** unidad (el mapa, el perfil, cuándo suena, el gestor con reloj falso, qué suena
+  al tocar, lo que aparece, el contrato de las teclas con el servidor) y la integración de la
+  experiencia contra Postgres; 22 mutaciones de la lógica, 22 muertas. Navegador
+  (`pruebas/e2e/sonidos.spec.ts`, tres aparatos, sin tarjeta de audio: lo que sonó queda en
+  `data-ultimo-sonido`): pestaña y sección, interruptor, diálogo que abre y cierra, «Apagado»
+  calla y «Oír» suena, el teclado del PIN con el sonido que eligió el negocio, el mesero agrega y
+  envía a cocina, y el toque de siempre. Mutaciones de navegador: 8 de 8 (el primer toque que no
+  desbloquea, lo que aparece sin sonar, el perfil del aparato que no cuenta o no se guarda, el
+  teclado que no sigue al negocio, el PIN que suena como botón, agregar y enviar a cocina sin
+  sonar). En total 22 de lógica y 8 de navegador, muertas.
+- **Revisión adversarial** (14 agentes Sonnet sobre una copia limpia: audio y rendimiento;
+  cableado, licencia y pruebas; cada hallazgo, con un escéptico que intentó refutarlo): 11
+  confirmados, todos corregidos antes del commit. Lo que quedó: el audio se reanuda en cada toque
+  (iPad lo deja «interrumpido» tras una llamada o al bloquearse); una receta que falló al cargar o
+  al sintetizarse no se queda guardada rota; sólo se precarga si de verdad va a sonar; tocar un
+  hueco o un texto ya no suena (sólo los controles); los avisos que llegan en grupo suenan; tras
+  una acción (agregar, cobrar, enviar) no suenan encima el toque ni el diálogo que se cierra
+  (400 ms); si el audio falla, Configuración → Este aparato lo dice, y lo quita cuando vuelve;
+  la voz en cola cuenta como voz; despertar suena sólo al tocar. Las llamadas a `sonar` pasaron
+  al camino del éxito y un contrato lee el código para exigirlas ahí (23 llamadas; 25 mutantes
+  del contrato, 25 muertos, dos de ellos de orden).
+- **Lo que encontró el navegador después:** entrar con PIN sonaba 300 ms después de cambiar la
+  sesión; para entonces la pantalla ya navegaba sola y la recarga llegaba encima (en tablet y
+  teléfono, la siguiente navegación se abortaba). Ahora entrar y salir suenan **antes** de cambiar
+  la sesión. Con eso, sonidos y modo espera en los tres aparatos: 55 pasan y 5 se saltan (las de
+  escritorio sólo).
+- **`verify` local** (sin las puertas de la base viva ni la de Postgres 17, que corren aparte o en
+  GitHub): verde; unidad 344 archivos · 4,337 pruebas, integración 45 · 185. `verify:esquema` y
+  `verify:rls` en sólo lectura contra la base compartida: verdes. La CI cazó la etiqueta de
+  `MesaActiva.tsx` fuera de las 60 líneas que lee `verify:cobertura` (bitácora); la galería se
+  regeneró en CI y sólo cambiaron de verdad los 9 retratos de Configuración (la pestaña Sonidos).

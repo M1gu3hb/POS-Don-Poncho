@@ -89,6 +89,7 @@ import {
 } from '~/restaurante/vista-de-solicitudes';
 import { playNewOrder } from '@/lib/sounds';
 import { frasePorSolicitud, getAlertConfig, speak } from '@/lib/voiceAlert';
+import { sonar } from '~/sonidos/gestor';
 
 const MAP_HEIGHT = 600;
 // Hook simple para detectar móvil
@@ -591,6 +592,7 @@ function Mesero() {
       setProductoParaPersonalizar(producto);
       return;
     }
+    sonar('agregar');
     setCarrito((prev) => {
       const existe = prev.find((i) => i.id === producto.id);
       if (existe)
@@ -621,6 +623,7 @@ function Mesero() {
       return;
     }
     const precioLinea = Number(snapshot?.precio_total_linea) || 0;
+    sonar('agregar');
     setCarrito((prev) => [
       ...prev,
       {
@@ -657,6 +660,7 @@ function Mesero() {
       )
       .join(' · ');
     const notasFinales = [textoMod, (notas || '').trim()].filter(Boolean).join(' · ');
+    sonar('agregar');
     setCarrito((prev) => [
       ...prev,
       {
@@ -690,6 +694,9 @@ function Mesero() {
   };
 
   const cambiarCantidad = (id, delta) => {
+    // DP-11.3: fuera del actualizador (StrictMode lo corre dos veces).
+    const linea = carrito.find((i) => i.id === id);
+    sonar(linea && linea.cantidad + delta > 0 ? 'cantidad' : 'quitar');
     setCarrito((prev) =>
       prev
         .map((i) => (i.id === id ? { ...i, cantidad: i.cantidad + delta } : i))
@@ -787,6 +794,7 @@ function Mesero() {
       queryClient.invalidateQueries({ queryKey: ['pedidos_listos_watcher'] });
       queryClient.refetchQueries({ queryKey: ['pedidos_cocina'], type: 'active' }).catch(() => {});
       toast.success('¡Pedido enviado a cocina!');
+      sonar('enviarACocina');
       setCarrito([]);
       setNotaMesa('');
       setVentaActiva(ventaFresca);
@@ -994,6 +1002,7 @@ function Mesero() {
   };
 
   const imprimirPreCuenta = () => {
+    sonar('ticket');
     printDocument({ mode: 'thermal', title: `PreCuenta-${preCuentaData?.venta?.folio || ''}` });
   };
 

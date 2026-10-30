@@ -392,3 +392,39 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   altos corregidos), «motor de Sound Lab con TypeScript estricto» (Haiku, en el scratchpad, sin
   repo) y «dónde suenan los momentos del POS» (Sonnet, sólo lectura), estos dos para DP-11.3;
   y el flujo «re-revisión del modo espera» (dos Sonnet a la vez, más quien refuta cada hallazgo).
+
+- **Ojo, `vercel ls` en un bucle de fondo:** sin terminal se queda colgado y no imprime nada. Para
+  esperar la fila Production, correrlo en primer plano cada vez.
+- **Ojo, la galería:** un cambio visible en una pantalla retratada (una pestaña nueva) pone roja la
+  galería. Se declara corriendo el flujo a mano con `actualizar_galeria`, bajando el artefacto y
+  subiendo SÓLO los retratos que cambian de verdad (medir los píxeles: los demás difieren por
+  ruido de compresión, dentro de la tolerancia).
+
+### DP-11.3 · Los sonidos de la interfaz
+
+- Sound Lab entró como código: el motor (1,084 líneas) partido en siete módulos de menos de 300,
+  con las lecturas por índice guardadas para el TypeScript estricto (subagente Haiku en el
+  scratchpad, 41 errores, sin cambiar lo que calcula), y las 25 recetas del registro. Licencia en
+  `licencias/`.
+- Los momentos se encontraron con un subagente Sonnet de sólo lectura (dónde se agrega, se cobra,
+  se envía a cocina; que entrar y salir RECARGAN la página y cortan el audio: por eso esperan
+  300 ms si de verdad va a sonar; que la voz de Cocina es Web Speech y su cola es privada: el
+  gestor mira `speechSynthesis.speaking` y `pending`).
+- **Ojo, pruebas de sonido:** no hay tarjeta de audio que oír; el gestor deja `data-ultimo-sonido`
+  en el documento. Y el primer toque desbloquea: una prueba que sólo teclea no oye nada.
+- **Ojo, la mesa del mapa:** el mapa abre en «Interior»; la mesa 7 está en «Terraza». La prueba del
+  mesero usa la 1 y la deja como estaba.
+- **Ojo, sonar antes de recargar:** `login()` y soltar la sesión ya hacen navegar a la pantalla. Un
+  `await` de 300 ms DESPUÉS de cambiar la sesión deja que esa navegación arranque y la recarga le
+  cae encima (la prueba del PIN, en tablet y teléfono, veía `ERR_ABORTED` en el siguiente
+  `goto`). El sonido va antes de tocar la sesión; el contrato lo exige y dos mutantes de orden lo
+  prueban.
+- **Ojo, la cabecera de 60 líneas:** `verify:cobertura` busca `PANTALLA · modelo · pantalla` sólo en
+  las primeras 60 líneas. En `MesaActiva.tsx` la etiqueta estaba justo en la 60 (también en
+  `fase-b`); un `import` más la sacó y la CI lo cazó. La etiqueta pasó a la primera línea de su
+  comentario.
+- **Ojo, los worktrees de los subagentes viven dentro del repo** (`.claude/worktrees/`): mientras
+  existen, `verify:pruebas` ve sus pruebas de integración como huérfanas. El `verify` local se corre
+  cuando ya no hay ninguno.
+- Reconocimiento de DP-11.4 con dos lectores Sonnet de sólo lectura, cada uno en su worktree (el
+  sistema de diseño; los pilotos, la navegación y lo que exigen las pruebas). Sin cambios.
