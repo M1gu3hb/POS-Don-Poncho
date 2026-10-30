@@ -294,7 +294,7 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
 
 - Postgres de desarrollo: `pg_ctl -D ".work/pg/data" start` (55433). Bases desechables de DP-11:
   `don_poncho_demo_main` (migraciones de `main`, para medir) y `don_poncho_demo_faseb` (la demo de
-  Miguel). En las dos las 10 mesas se acomodaron en cuadrícula 5×2 (en producción están todas en
+  Miguel). En las dos las 10 mesas se acomodaron en cuadrícula 5×2 de 160 × 220 puntos (en producción están todas en
   100,100: ver el inventario).
 - Los secretos y PIN de las demos van en `%LOCALAPPDATA%\Temp\pos-don-poncho-demo\demo.json`.
   **Ojo:** `.work/env.sh` cambia `TEMP` a `D:\mpos-tmp`, donde hay OTRO `demo.json` (otra
@@ -325,3 +325,47 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   lo exige.
 - Morfi en Safari: WebM con alfa no; APNG pesa 5.5 MB (a media escala); WebP animado con alfa
   2.7–3.0 MB a escala completa, 1.4 MB a media. El `ffmpeg` de esta PC no codifica HEVC con alfa.
+
+### DP-11.1 · Morfi en el POS
+
+- Clips 03, 07 y 11 (partido en dormido 1–76 y despertar 77–164, por medida de diferencia entre
+  cuadros). WebM, WebP a 15 cuadros para WebKit y fija, en `apps/web/public/morfi/` (DP-D38).
+- `PantallaDeCarga` nueva en `@morphiqpos/ui/sistema`; `verify:adopcion` la reconoce como espera.
+  Morfi en `AppLayout` (carga al entrar), el portal (carga del menú y QR sin mesa) y el 404.
+- «Mascota Morfi» en `configuracion.valores.experiencia`, leída por el servidor al pintar; el
+  interruptor en Configuración → Apariencia.
+- Mutaciones: 15 de la lógica (dos sobrevivieron al principio y destaparon un hueco real: los
+  navegadores dentro de apps del iPhone y el iPad no dicen «Safari/»; dos casos nuevos los
+  matan) y 3 del servidor contra Postgres: 18 de 18.
+- `scripts/huella-ajena.mjs` (sólo lectura) en el repositorio: sólo tablas, no vistas
+  (`fila_barra` calcula con `now()` y su md5 cambia con el reloj).
+- **Ojo, base desechable en Windows:** `base-desechable.mjs subir` se queda esperando después de
+  `pg_ctl start` (el postgres hijo hereda las tuberías). Con el clúster ya arriba, matar el guion
+  y correrlo otra vez: se salta el arranque y termina.
+- Publicación de DP-11.0: `main` = `cc8cf91` (avance sin fusión), CI `40975902351` verde,
+  Production lista; humo verde; huella IDÉNTICA (119 tablas, 10 organizaciones). `fase-b`:
+  fusión `1d803f9` + carrito con `idAlAzar` `38a94f2`, CI del PR `40979195835` verde (8).
+
+### Las mesas de producción, a la cuadrícula (decisión de Miguel, 29-10)
+
+- `scripts/acomodar-mesas.mjs` (`21637fa`): las mesas encimadas (sin posición o en el mismo punto
+  que otra) van a `sala.plano` del archivo de datos (5 por fila, 160 × 220 desde (30, 40)), por
+  número; lo ya acomodado no se toca. `puente.escribir` de `Mesa`, firmado por «Miguel · Morphiq».
+  Ensayo en `don_poncho_demo_main` (dos vueltas: la segunda no hace nada) y mutaciones 3 de 3.
+- Producción, 01:06:21–01:06:29 UTC del 30-10: ensayo antes (10 de 10), escritura, ensayo
+  después (0 por acomodar). Exportaciones antes y después (`_PRIVADO\mudanza\dp11-mesas-*`):
+  972 → 992 filas; sólo cambian `mesas` (las 10 posiciones), `auditoria` +10 y
+  `comandos_ejecutados` +10. Humo verde antes y después; huella de las otras 10 organizaciones
+  IDÉNTICA (01:02:07 → 01:07:15 UTC).
+
+### Subagentes de DP-11.1 y DP-11.2 (todos Sonnet, sólo lectura, sin commit)
+
+- «Exploración del modo espera» (2 en paralelo): qué despierta a Cocina y a Caja, ajustes por
+  aparato, PIN al despertar, Wake Lock y dónde montar. Resultado en el scratchpad
+  (`exploracion-dp11-2.md`); decisiones tomadas en DP-11.2.
+- «Revisión de DP-11.1» (code-reviewer): aprobado sin críticos ni altos; un medio y tres bajos,
+  atendidos o anotados en el reporte 004.
+- Navegador local: `base-desechable.mjs subir` (ver el «Ojo» de arriba) y, como el servidor de
+  pruebas tarda más de 5 min en compilar en esta PC, compilar antes con
+  `pnpm turbo run build --filter=@morphiqpos/web` y luego `pnpm test:e2e …` (lo reusa del caché).
+

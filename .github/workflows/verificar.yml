@@ -719,7 +719,8 @@ jobs:
       # vista «Solicitudes» de Mesas, con la voz sólo ahí (DP-9.3); el teléfono de una estación de
       # cocina, sin sesión, con la botonera (DP-9.4); los botones sobre la carta del menú QR y el
       # aspecto del portal (DP-9.7); cada estación de cocina ve lo suyo (DP-10.1); el QR de una
-      # mesa unida lleva a la principal (DP-10.3). En `fase-b`: el pedido compartido de la mesa
+      # mesa unida lleva a la principal (DP-10.3); Morfi en el 404, el portal y la carga larga,
+      # con la mascota encendida y apagada (DP-11.1). En `fase-b`: el pedido compartido de la mesa
       # (DP-9.5) y unir mesas arrastrándolas en el mapa, con su QR y separarlas (DP-9.6).
       # Cada una resetea la demo al empezar.
       - name: Los cambios del cliente
@@ -735,6 +736,7 @@ jobs:
           pnpm test:e2e pruebas/e2e/qr-de-mesas.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/estaciones-de-cocina.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/qr-de-mesa-unida.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/morfi.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
 
       - name: Las trazas del día
         if: always()

@@ -29,6 +29,7 @@
     "zona": "Salón",
     "mesas": 10,
     "capacidad": 4,
+    "plano": { "columnas": 5, "x": 30, "y": 40, "pasoX": 160, "pasoY": 220 },
     "asignacion": {
       "Mesero 1": [1, 2, 3, 4, 5],
       "Mesero 2": [6, 7, 8, 9, 10]

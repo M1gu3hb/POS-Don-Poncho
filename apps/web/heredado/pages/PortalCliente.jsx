@@ -24,6 +24,8 @@ import ErrorBoundary from '@/components/common/ErrorBoundary';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import { useIsDark } from '@/lib/ThemeContext';
 import { nombreVisibleDelNegocio } from '~/marca/nombre-visible';
+import { MorfiCargando } from '~/morfi/MorfiCargando';
+import { MorfiNoEncontrada } from '~/morfi/MorfiNoEncontrada';
 import { PaginaConBotones } from '~/restaurante/menu-qr/PaginaConBotones';
 import { atributosDelTema, temaDelPortal } from '~/restaurante/menu-qr/tema-del-portal';
 import { AvisoDeLaMesa } from '~/portal/carrito-compartido/AvisoDeLaMesa';
@@ -313,7 +315,7 @@ function PortalCliente() {
 
   // Estados de no-disponibilidad
   if (!token) {
-    return <ScreenError titulo="QR inválido" texto="Este enlace no es válido." />;
+    return <ScreenNoEncontrada titulo="QR inválido" texto="Este enlace no es válido." />;
   }
   // Loader mientras carga config/mesa — evita flash de "Portal no disponible".
   if (cargando) {
@@ -338,7 +340,10 @@ function PortalCliente() {
     }
     if (errorPortal.codigo === 'QR_TOKEN_INVALIDO') {
       return (
-        <ScreenError titulo="Mesa no encontrada" texto="Llama a un mesero para que te ayude." />
+        <ScreenNoEncontrada
+          titulo="Mesa no encontrada"
+          texto="Llama a un mesero para que te ayude."
+        />
       );
     }
     return (
@@ -349,7 +354,9 @@ function PortalCliente() {
     );
   }
   if (!mesa) {
-    return <ScreenError titulo="Mesa no encontrada" texto="Llama a un mesero para que te ayude." />;
+    return (
+      <ScreenNoEncontrada titulo="Mesa no encontrada" texto="Llama a un mesero para que te ayude." />
+    );
   }
 
   const enviarSolicitud = async (tipo) => {
@@ -820,13 +827,18 @@ function ScreenError({ titulo, texto }) {
   );
 }
 
-function ScreenLoading() {
+// DP-11.1: el QR que no lleva a ninguna mesa es la página que no existe del portal: Morfi se
+// asoma por el hoyo (o el vacío del sistema, sin mascota). Sin botón: recargar el mismo QR no lo
+// arregla, y el texto ya dice qué hacer (llamar a un mesero).
+function ScreenNoEncontrada({ titulo, texto }) {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 border-4 border-border border-t-primary rounded-full animate-spin" />
-        <p className="text-sm text-muted-foreground">Cargando menú…</p>
-      </div>
+      <MorfiNoEncontrada titulo={titulo} explicacion={texto} />
     </div>
   );
+}
+
+// DP-11.1: la carga larga del sistema; nada antes de 600 ms. Antes, un círculo girando.
+function ScreenLoading() {
+  return <MorfiCargando titulo="Cargando el menú" />;
 }
