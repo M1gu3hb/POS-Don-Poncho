@@ -108,3 +108,16 @@ export async function abrirConReloj(pagina: Page, ruta: string): Promise<void> {
   await pagina.goto(ruta);
   await expect(pagina.getByRole('heading', { level: 1 }).first()).toBeVisible();
 }
+
+/**
+ * Deja la demo como recién sembrada: sin comandas pendientes de otras suites. En CI corren antes
+ * en el mismo trabajo y dejan la cocina con pendientes, y con pendientes la cocina no se duerme
+ * (que es justo la regla). Lo mismo que hacen las demás suites del restaurante al empezar.
+ */
+export async function resetearLaDemo(duena: Page): Promise<void> {
+  const reseteo = await duena.request.post('/api/pruebas/resetear', {
+    headers: cabecerasDeEscrituraDePrueba(),
+    data: { confirmacion: 'RESETEAR' },
+  });
+  expect(reseteo.status(), `resetear la demo: ${await reseteo.text()}`).toBe(200);
+}

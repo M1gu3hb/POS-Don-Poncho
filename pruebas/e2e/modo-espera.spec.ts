@@ -9,6 +9,7 @@ import {
   escribir,
   espera,
   experiencia,
+  resetearLaDemo,
   SLUG,
 } from './ayudantes/modo-espera.ts';
 import { exigirDemostracion } from './ayudantes/sesion.ts';
@@ -112,6 +113,7 @@ test.describe('el modo espera', () => {
     browser,
   }, info) => {
     const duena = await new Equipo(browser, SLUG).pagina(info, 'dueno');
+    await resetearLaDemo(duena);
     await cancelarLaCuentaDeLaMesa(duena);
     try {
       await abrirConReloj(duena, '/cocina');
