@@ -216,3 +216,8 @@ de demo en la carpeta temporal de la PC.
   teléfono, la siguiente navegación se abortaba). Ahora entrar y salir suenan **antes** de cambiar
   la sesión. Con eso, sonidos y modo espera en los tres aparatos: 55 pasan y 5 se saltan (las de
   escritorio sólo).
+- **`verify` local** (sin las puertas de la base viva ni la de Postgres 17, que corren aparte o en
+  GitHub): verde; unidad 344 archivos · 4,337 pruebas, integración 45 · 185. `verify:esquema` y
+  `verify:rls` en sólo lectura contra la base compartida: verdes. La CI cazó la etiqueta de
+  `MesaActiva.tsx` fuera de las 60 líneas que lee `verify:cobertura` (bitácora); la galería se
+  regeneró en CI y sólo cambiaron de verdad los 9 retratos de Configuración (la pestaña Sonidos).

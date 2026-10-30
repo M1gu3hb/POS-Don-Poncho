@@ -391,3 +391,12 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   cae encima (la prueba del PIN, en tablet y teléfono, veía `ERR_ABORTED` en el siguiente
   `goto`). El sonido va antes de tocar la sesión; el contrato lo exige y dos mutantes de orden lo
   prueban.
+- **Ojo, la cabecera de 60 líneas:** `verify:cobertura` busca `PANTALLA · modelo · pantalla` sólo en
+  las primeras 60 líneas. En `MesaActiva.tsx` la etiqueta estaba justo en la 60 (también en
+  `fase-b`); un `import` más la sacó y la CI lo cazó. La etiqueta pasó a la primera línea de su
+  comentario.
+- **Ojo, los worktrees de los subagentes viven dentro del repo** (`.claude/worktrees/`): mientras
+  existen, `verify:pruebas` ve sus pruebas de integración como huérfanas. El `verify` local se corre
+  cuando ya no hay ninguno.
+- Reconocimiento de DP-11.4 con dos lectores Sonnet de sólo lectura, cada uno en su worktree (el
+  sistema de diseño; los pilotos, la navegación y lo que exigen las pruebas). Sin cambios.
