@@ -79,15 +79,56 @@ async function retratar(page, carpeta, nombre) {
   await page.screenshot({ path: join(carpeta, `${nombre}.jpg`), type: 'jpeg', quality: 82 });
 }
 
-/** La caja abierta, para que el diálogo de cobro se pueda abrir. */
+/** La caja abierta EN ESTA terminal, para que el diálogo de cobro se pueda abrir. */
 async function cajaAbierta(page) {
+  // Si quedó abierta en otra terminal (otra corrida, otro aparato), se usa aquí.
+  const usarAqui = page.getByRole('button', { name: 'Usar esta caja aquí' });
+  if (await usarAqui.isVisible()) {
+    await usarAqui.click();
+    await usarAqui.waitFor({ state: 'hidden', timeout: 30_000 });
+  }
   const abrir = page.getByRole('button', { name: 'Abrir caja' }).first();
-  if (!(await abrir.isVisible())) return;
+  if (!(await abrir.isVisible()) || !(await abrir.isEnabled())) return;
   await abrir.click();
   const apertura = page.getByRole('dialog').filter({ hasText: 'Efectivo inicial contado' });
   await apertura.getByPlaceholder('0.00').fill('500.00');
   await apertura.getByRole('button', { name: 'Abrir caja' }).click();
   await page.getByText('Caja abierta. Ya puedes cobrar.').first().waitFor({ timeout: 30_000 });
+}
+
+/** La cuenta pendiente de la mesa 1, hasta su diálogo de cobro (la caja pregunta antes la propina). */
+async function abrirElCobro(page) {
+  await page.getByRole('tab', { name: /^Pendientes/ }).click();
+  const cuenta = page.getByRole('button', { name: /^Mesa 1 Cuenta/ }).first();
+  if (!(await cuenta.isVisible())) return null;
+  await cuenta.click();
+  const cobro = page.getByRole('dialog').filter({ hasText: 'Cobrar — Mesa 1' });
+  const sinPropina = page.getByText('Sin propina', { exact: true });
+  await sinPropina.or(cobro).first().waitFor({ timeout: 30_000 });
+  if (await sinPropina.isVisible()) await sinPropina.click();
+  await cobro.waitFor({ timeout: 30_000 });
+  return cobro;
+}
+
+/** La mesera pide la cuenta de la mesa 1 (sin propina), para que la caja la tenga pendiente. */
+async function pedirLaCuenta(page) {
+  await laMesa(page, 1).click();
+  const mesa = dialogoDeLaMesa(page, 1);
+  await mesa.waitFor();
+  const pedir = mesa.getByRole('button', { name: 'Solicitar cuenta', exact: true });
+  if (!(await pedir.isVisible())) {
+    await page.keyboard.press('Escape');
+    return;
+  }
+  await pedir.click();
+  // La pregunta de la propina sólo sale si el negocio la tiene encendida.
+  const pregunta = page.getByRole('dialog').filter({ hasText: '¿Desean agregar propina?' });
+  const precuenta = page.getByText('PRE-CUENTA').first();
+  await pregunta.or(precuenta).first().waitFor({ timeout: 30_000 });
+  if (await pregunta.isVisible())
+    await pregunta.getByRole('button', { name: 'Sin propina' }).click();
+  await precuenta.waitFor({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Cerrar', exact: true }).first().click();
 }
 
 async function capturas(navegador) {
@@ -105,6 +146,7 @@ async function capturas(navegador) {
       await prepararLaMesa(page, URL_BASE);
       await page.goto(`${URL_BASE}/mesero`);
       await laMesa(page, 1).waitFor();
+      await pedirLaCuenta(page);
       for (const estilo of ESTILOS) {
         await ponerEstilo(page, estilo);
         await retratar(page, carpeta, `mesero-${estilo}`);
@@ -128,10 +170,8 @@ async function capturas(navegador) {
       for (const estilo of ESTILOS) {
         await ponerEstilo(page, estilo);
         await retratar(page, carpeta, `caja-${estilo}`);
-        const cuenta = page.getByRole('button', { name: /^Mesa 1 .*Cuenta/ }).first();
-        if (await cuenta.isVisible()) {
-          await cuenta.click();
-          await page.getByRole('dialog', { name: /Cobrar — Mesa 1/ }).waitFor();
+        const cobro = await abrirElCobro(page);
+        if (cobro !== null) {
           await page.waitForTimeout(600);
           await retratar(page, carpeta, `cobro-${estilo}`);
           await page.keyboard.press('Escape');
@@ -178,12 +218,8 @@ async function video(navegador) {
   await page.getByRole('heading', { name: 'Caja', level: 1 }).waitFor();
   await cajaAbierta(page);
   await page.waitForTimeout(800);
-  await page
-    .getByRole('button', { name: /^Mesa 1 .*Cuenta/ })
-    .first()
-    .click();
-  const cobro = page.getByRole('dialog', { name: /Cobrar — Mesa 1/ });
-  await cobro.waitFor();
+  const cobro = await abrirElCobro(page);
+  if (cobro === null) throw new Error('La mesa 1 no tiene cuenta pendiente en la caja.');
   await page.waitForTimeout(800);
   await cobro.getByRole('button', { name: 'Efectivo', exact: true }).click();
   await page.waitForTimeout(400);

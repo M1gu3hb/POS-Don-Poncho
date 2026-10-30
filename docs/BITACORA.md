@@ -453,5 +453,15 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   un atajo suyo: componía `text-[10px]`/`bg-card` para que `verify:primitivas` no los viera y la
   prueba encontrara la leyenda; ahora la leyenda lleva `data-leyenda`/`data-estado-de-la-leyenda`
   y `estados-de-mesa.spec.ts` la busca así.
+- **Rendimiento y evidencia (11.4.h):** `medir-fluidez` antes y después (y con vidrio sólido);
+  un perfil de CPU encontró que el sonido se sintetizaba en el toque (DP-11.3): ahora en reposo.
+  `capturar-pilotos.mjs`: 90 capturas, seis hojas de contacto y el video del recorrido, contra la
+  demo de `main` en el 3400 (`demo-local.mjs servir`, con el `TEMP` de Windows para sus PIN).
+  **Ojo:** en la Caja de la demo la cuenta pregunta la propina en un aviso que no es `dialog`, y la
+  caja puede estar abierta en otra terminal («Usar esta caja aquí»).
+- **Para retomar la publicación de DP-11.4** (pendiente de la hora que diga Miguel; el reporte 004
+  tiene los pasos): CI a mano en verde sobre el último commit de `dp-11`, `main`, Production,
+  fijar `capas` en la apariencia de Don Poncho (comando de apariencia, huella y exportación antes
+  y después), humo, huella, fusión en `fase-b` con sus choques. Después, la pausa.
 - **Ojo, worktrees en Windows:** `git worktree remove` no puede borrar `node_modules` por rutas
   largas; se borran con PowerShell, con `\\?\` delante de la ruta.
