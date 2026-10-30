@@ -20,3 +20,4 @@ Poncho, y cómo portarlo.
 | 12  | [Mudar un negocio a su propia base](12-mudanza-de-un-negocio.md)                                    | DP-10.5 | En `fase-b`, la 188 |
 | 13  | [Un id al azar que también sirve por http](13-id-al-azar-por-http.md)                               | DP-11.0 | No                  |
 | 14  | [Morfi en el POS](14-morfi-en-el-pos.md)                                                            | DP-11.1 | No                  |
+| 15  | [El modo espera](15-modo-espera.md)                                                                 | DP-11.2 | No                  |

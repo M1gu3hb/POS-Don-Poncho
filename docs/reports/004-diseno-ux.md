@@ -55,3 +55,92 @@ de demo en la carpeta temporal de la PC.
   no sirve. Anotado sin cambiar: el servidor lee dos veces la fila de configuración al pintar
   (apariencia y experiencia), costo despreciable.
 
+- **Mutaciones de navegador:** 3 de 3 muertas (el 404 que ignora «Mascota Morfi», el `<main>`
+  sin `min-w-0` y la carga sin Morfi). En total, 21 de 21.
+- **Publicación:** `main` = `6d53338` (avance sin fusión), CI `40987070269` verde; Production
+  lista; humo verde (raíz 200, el 404 con «Esta página no existe», los clips servidos, el QR
+  inválido con su mensaje); huella de las otras 10 organizaciones IDÉNTICA (119 tablas,
+  01:59:58 → 02:23:10 UTC del 30-10). `fase-b`: fusión `dacea35` (dos conflictos de texto
+  resueltos con lo de los dos lados), CI `40991954903` verde.
+
+## DP-11.2 · El modo espera (29-10-2026)
+
+- **Qué quedó:** tras unos minutos sin tocar (3 en Caja, Tablero y administración; 2 en Cocina),
+  una capa casi negra con la hora de la Ciudad de México, la fecha, el logo y Morfi dormido; hora
+  y logo se mueven muy despacio contra el quemado. Al tocar, Morfi despierta y la pantalla vuelve
+  tal cual (es una capa: lo tecleado sigue ahí); otro toque se salta el despertar. Nunca en el
+  mesero, el mapa, la mesa activa, el portal ni el teléfono de cocina. La despierta sola una
+  comanda nueva (Cocina) o una cuenta pedida o un cobro de otra terminal (Caja), sin peticiones
+  nuevas: escucha las lecturas que esas pantallas ya hacen. Cocina con comandas por preparar no se
+  duerme. Wake Lock mientras el puesto admite espera. Por aparato (Configuración → **Este
+  aparato**, pestaña nueva): encendido y minutos. Por negocio (Apariencia): «Pedir PIN al
+  despertar», apagado; usa la entrada de siempre con su límite de intentos, sin recargar.
+  DP-D39, ficha 15. Sin migración.
+- **Hallazgo al probar:** las pruebas adelantaban el reloj de Playwright antes de que la pantalla
+  se montara; el modo espera empezaba a contar DESPUÉS del salto. Dos pruebas fallaban por eso y
+  una («apagado, no se duerme») pasaba sin probar nada. Ahora cada prueba espera a que la pantalla
+  esté pintada antes de mover el reloj (anotado en la ficha 15 para el maestro).
+- **Evidencia:** unidad en verde (reglas, preferencia del aparato, reloj, despertador, cambios de
+  la lista, experiencia); 18 mutaciones de la lógica, 18 muertas (tres sobrevivieron al principio
+  y destaparon huecos reales: minutos de más de una hora, minutos con decimales y la hora con la
+  zona del aparato, que en esta PC es la misma que la del negocio); `verify:adopcion`,
+  `verify:aspecto` (la pestaña nueva declarada) y los demás guardianes en verde.
+- **Navegador:** `pruebas/e2e/modo-espera.spec.ts`, 36 de 36 en escritorio, tableta y teléfono (y
+  tres omitidas a propósito: el toque en la PC y el menú lateral en tableta y teléfono),
+  con el reloj de Playwright: Caja a los 3 minutos y no antes, con la hora y Morfi; una cuenta
+  pedida despierta la Caja; el mesero nunca; Cocina se duerme a los 2, una comanda nueva la
+  despierta y con pendientes no se vuelve a dormir; vuelve con lo tecleado y el despertar se
+  salta; «reducir movimiento» duerme en la imagen fija; Este aparato (minutos y apagado); y con
+  «Pedir PIN al despertar», un PIN equivocado no deja volver y el bueno sí, sin perder lo
+  tecleado; recargar no quita el candado y el Tab no sale de su capa; una cuenta pedida despierta
+  al PIN y no a la caja, la pantalla del PIN vuelve a dormirse y «Cambiar de persona» lleva a la
+  entrada; un diálogo abierto debajo sigue abierto y un toque no cae en el botón de abajo; ni Esc
+  dos veces ni un cierre del navegador quitan el PIN; volver a entrar con el PIN quita un candado
+  viejo; el PIN encendido en otro aparato vale al despertar; una tecla despierta sin escribir en
+  el campo de abajo; y la espera no se queda guardada al cambiar de pantalla. Cada prueba deja la
+  cocina, la mesa y la configuración como las encontró.
+- **Mutaciones de navegador:** primera ronda 9 de 9 (Cocina que no se mantiene despierta, la
+  comanda o la cuenta que no despiertan, el despertar de Morfi, «reducir movimiento», el PIN que
+  se ignora o que deja volver con uno equivocado, el interruptor y los minutos del aparato);
+  segunda ronda, sobre las correcciones, 9 de 9 (la capa sin `showModal`, sin `pointer-events`,
+  despertando con el dedo que baja, dejando salir el foco, el toque o el teclado, sin pasarle el
+  teclado a quien la monta, el candado sin guardar y el PIN que no vuelve a dormirse). Tres de
+  esas sobrevivieron al principio: la prueba sólo miraba que el diálogo de abajo siguiera abierto;
+  ahora pone espías donde escuchan los atajos de la ventana y Radix y exige que no les llegue
+  nada. Tercera ronda, sobre lo que encontró la segunda revisión, 7 de 7 (el navegador que la cierra
+  y no vuelve, la letra que despierta y cae abajo, entrar o cerrar la sesión sin quitar el
+  candado, dormida sin releer la configuración, el candado sin decidirse al despertar, la espera
+  guardada al cambiar de ruta). Mutaciones en total: 25 de lógica y 25 de navegador, todas
+  muertas.
+- **Revisión independiente** (subagente Sonnet, sólo lectura, sobre una copia limpia): sin
+  críticos; **cuatro altos, corregidos antes de publicar**: (1) despertaba con el dedo que baja y
+  el clic caía en el botón de abajo (ahora despierta con el clic completo); (2) con un diálogo de
+  Radix abierto debajo, la capa no recibía toques ni foco; (3) el teclado salía de la capa del PIN
+  a la pantalla de abajo; (4) recargar o cambiar de ruta quitaba el candado del PIN. Las dos capas
+  son ahora un `<dialog>` modal en la capa superior del navegador (lo de abajo queda inerte) y el
+  candado vive en el aparato. Medios atendidos: fondo casi negro en todos los estilos (en «papel»
+  era casi blanco), avisos y vistas que quedaban encima, fondo del PIN opaco, el clip de despertar
+  con respaldo si no termina, la pantalla del PIN que vuelve a dormirse a los 30 s, foco y teclado
+  físico en el PIN, mensajes del PIN (sin conexión, PIN equivocado, bloqueo), la experiencia que
+  se mezcla interruptor por interruptor en el servidor, y pruebas que ahora leen la decisión de
+  cada revisión en vez de esperar a que React pinte. Bajos: la hora cambia justo al cambiar el
+  minuto y el «Toca la pantalla» también se mueve; se quitó una suscripción que nadie usaba.
+  Anotado sin cambiar: el tiempo sin tocar se mide con el reloj de pared (un salto de hora lo
+  mueve); el candado es de pantalla, no del servidor.
+- **Segunda revisión, adversarial** (un flujo de 26 agentes Sonnet, dos a la vez: dos lentes, y
+  cada hallazgo a un escéptico que intentó refutarlo; 24 confirmados, que se reducen a estos):
+  (1) Esc dos veces o el gesto Atrás de Android cerraban la capa nativa y se saltaba el PIN; ahora
+  `closedby="none"` y, si el navegador la cierra igual, se vuelve a abrir; (2) con un diálogo de
+  Radix abierto debajo, el toque o Escape lo cerraban, y las teclas llegaban a los atajos de la
+  ventana (el F12 de Cobro cobra): la capa ya no deja salir foco, toques ni teclas, y la prueba
+  pone espías donde escuchan para exigir que no les llegue nada; (3) «Cambiar de persona» quitaba
+  el candado antes de saber si la sesión se cerró: ahora lo quita `POSAuthContext` después de
+  `salir`, y entrar con PIN también lo quita (antes uno viejo volvía a pedir el PIN recién
+  entrado); (4) el cambio de «Pedir PIN» no llegaba a una tableta quieta: se relee la
+  configuración al dormirse y cada minuto dormida, y el candado se decide al despertar. Además:
+  la tecla que despierta ya no cae en el campo de abajo, el PIN ignora la autorrepetición y
+  Ctrl/Alt/⌘, la espera de una pantalla no se queda guardada al cambiar de ruta, otra pestaña se
+  entera del candado, y sin `showModal` (Safari viejo) la capa se abre igual. Anotado sin cambiar:
+  que dos pestañas a la vez se sincronicen y el `FOR UPDATE` de dos guardados simultáneos no
+  tienen prueba propia (el código se revisó); los interruptores de Configuración pueden pintar un
+  valor viejo de la otra llave hasta recargar, sin perder nada (el servidor mezcla).

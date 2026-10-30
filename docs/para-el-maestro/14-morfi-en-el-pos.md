@@ -31,7 +31,7 @@ por negocio, «Mascota Morfi», en Configuración → Apariencia.
 | `apps/web/public/morfi/*`                                         | 4 clips × (WebM, WebP, fija)                          |
 | `packages/app/src/configuracion/experiencia.ts`                   | «Mascota Morfi» en `configuracion.valores`            |
 | `apps/web/src/proveedores/Experiencia.tsx`, `app/layout.tsx`      | El servidor la lee al pintar                          |
-| `apps/web/src/configuracion/MascotaDelNegocio.tsx`                | El interruptor                                        |
+| `apps/web/src/configuracion/ExperienciaDelNegocio.tsx`            | El interruptor (con el del PIN al despertar, DP-11.2) |
 | `scripts/lib/adopcion.mjs`                                        | La puerta reconoce `PantallaDeCarga`                  |
 | `pruebas/e2e/morfi.spec.ts`                                       | Navegador, tres aparatos                              |
 

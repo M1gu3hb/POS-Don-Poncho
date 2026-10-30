@@ -39,8 +39,9 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Configuracion.jsx",
-      "porque": "DP-2 (DP-D05): sale la pestaña «Presentación» (su icono Sparkles de 3×3 con margen). Sin modo presentación no hay qué configurar; las demás pestañas quedan igual. DP-9.2 (DP-D23): los pedidos desde el QR ya no dependen de la asignación de mesas; sale el aviso ámbar «activa primero la asignación de mesas» y la explicación dice que funciona con y sin ella.",
+      "porque": "DP-2 (DP-D05): sale la pestaña «Presentación» (su icono Sparkles de 3×3 con margen). Sin modo presentación no hay qué configurar; las demás pestañas quedan igual. DP-9.2 (DP-D23): los pedidos desde el QR ya no dependen de la asignación de mesas; sale el aviso ámbar «activa primero la asignación de mesas» y la explicación dice que funciona con y sin ella. DP-11.2 (DP-D39): pestaña nueva «Este aparato» (icono Tablet, del mismo tamaño que las demás) con el modo espera de ESE aparato; lo del negocio sigue en Apariencia.",
       "testigos": [
+        "+ icono:Tablet",
         "- clase:w-3",
         "- clase:h-3",
         "- clase:mr-1",

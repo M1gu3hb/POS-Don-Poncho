@@ -719,3 +719,56 @@ puerta los denuncia todos.
   también: sin eso, una fila que no se encoge estiraba la página a lo ancho (Configuración →
   Apariencia medía 543 px en un teléfono de 412). Declarado en `verify:aspecto`.
 
+
+## DP-D39 · El modo espera: una capa encima del puesto, por aparato, sin migración · 29-10-2026
+
+- **Qué:** tras unos minutos sin tocar, una capa casi negra con la hora grande (en la zona del
+  negocio, `America/Mexico_City`, no la del aparato), la fecha, el logo y Morfi dormido en bucle.
+  Hora y logo se desplazan muy despacio contra el quemado (±24 px, en vueltas de 41 y 29 minutos).
+  Al tocar, Morfi despierta (se asoma, sonríe, saluda) y la capa se va; otro toque se lo salta.
+  Sin mascota o con «reducir movimiento», se va al primer toque.
+- **Dónde y cuánto:** Caja (`/caja`, `/pos`, cierre del día) 3 minutos; Tablero (`/`) 3; Cocina
+  (`/cocina`, también sus estaciones como Bebidas) 2; administración (ventas, inventario, compras,
+  recetas, platillos, registros, portal QR, configuración) 3. **Nunca:** el mesero, el mapa y la
+  mesa activa (se usan con la charola en la otra mano), el portal del comensal, el teléfono de
+  cocina y la entrada.
+- **Es una capa, no una pantalla:** la de abajo sigue montada; lo tecleado sigue ahí al volver.
+  La capa (y la del PIN) es un `<dialog>` abierto con `showModal`, en la **capa superior** del
+  navegador: va encima de todo (avisos, diálogos de Radix, la vista de un reporte), el resto de la
+  página queda inerte (ni toques ni Tab llegan abajo) y al cerrarse el foco vuelve a donde
+  estaba. Va en un portal al `<body>` (un diálogo de Radix abierto esconde con `aria-hidden` todo
+  lo demás) y NADA sale de ella: ni el foco, ni el toque, ni una tecla (Radix cerraría su diálogo
+  con lo tecleado, y hay atajos de ventana como el F12 que cobra). Despierta con el clic completo,
+  no con el dedo que baja: así el toque no cae en el botón de abajo. El fondo es casi negro en todos los estilos (`--espera-fondo`, en `base.css`, no el
+  lateral de cada estilo: en «papel» claro era casi blanco).
+- **Despierta sola:** con una comanda nueva de su estación (Cocina), una cuenta pedida o un cobro
+  de otra terminal (Caja). No hace peticiones propias: Cocina avisa desde su vigía de comandas y el
+  despertador de la Caja escucha la lectura que la Caja ya hace cada 2 s. Cocina con comandas por
+  preparar no se duerme.
+- **Wake Lock:** mientras el puesto admite espera y el aparato la tiene encendida, para que el
+  sistema operativo no apague la pantalla antes que el modo espera.
+- **Por aparato** (`localStorage`, `morphiqpos.modo-espera`, como la vista «Solicitudes» de
+  DP-D24): encendido o apagado y los minutos (1 a 60, o los de cada pantalla), en una pestaña nueva
+  de Configuración, «Este aparato». La tableta de la caja puede dormirse y la de la barra no.
+- **Por negocio:** «Pedir PIN al despertar», apagado por omisión, en
+  `configuracion.valores.experiencia.pin_al_despertar` junto a «Mascota Morfi» (Configuración →
+  Apariencia). Usa la entrada de siempre (`/api/auth/entrar`, con su límite de intentos y su
+  bloqueo) con el empleo de la sesión, sin recargar. También cuando la despierta un aviso: ver la
+  cuenta no es poder cobrarla. «Cambiar de persona» cierra la sesión.
+- **El candado del PIN vive en el aparato** (`localStorage`, con el empleo de la sesión): una
+  recarga, otra pestaña o cambiar de ruta no lo quitan, y vale en todas las rutas del marco
+  interno; otra pestaña del aparato se entera (evento `storage`). Lo quitan sólo el PIN correcto,
+  entrar con PIN (las dos pantallas de acceso) y cerrar la sesión **cuando el servidor la cerró**
+  (si `salir` falla, sigue puesto). Ni Escape ni el gesto Atrás de Android cierran la capa
+  (`closedby="none"`), y si el navegador la cierra igual (uno que no conoce `closedby` sólo deja
+  cancelar una petición de cierre, no dos seguidas) se vuelve a abrir. La pantalla del PIN vuelve
+  a dormirse a los 30 s sin tocar; su fondo es opaco (no deja ver cuentas ni importes). Es un
+  candado de pantalla, no del servidor: quien abra las herramientas del navegador lo salta; para
+  eso está cerrar la sesión.
+- **La experiencia se guarda interruptor por interruptor:** cada uno manda sólo lo que cambió y el
+  servidor lo mezcla con lo guardado (antes reemplazaba el objeto entero y una pestaña vieja
+  podía apagar el PIN que otro aparato encendió). El modo espera lee el PIN de la configuración
+  del negocio, que vuelve a pedir al dormirse y cada minuto mientras duerme; el candado se decide
+  otra vez al despertar con lo que el negocio pide entonces. Así un «Pedir PIN» encendido en otro
+  aparato vale al siguiente despertar, sin recargar la tableta.
+- **Sin migración.**
