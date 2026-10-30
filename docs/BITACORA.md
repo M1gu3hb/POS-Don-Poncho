@@ -341,3 +341,26 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   pruebas tarda más de 5 min en compilar en esta PC, compilar antes con
   `pnpm turbo run build --filter=@morphiqpos/web` y luego `pnpm test:e2e …` (lo reusa del caché).
 
+### DP-11.2 · El modo espera
+
+- `apps/web/src/espera/` (reglas, preferencia del aparato, reloj, despertador, cambios de la
+  lista, el gancho, la capa, el PIN) y dos piezas de configuración: «Este aparato» (pestaña nueva)
+  y «Pedir PIN al despertar» junto a «Mascota Morfi» (`MascotaDelNegocio` pasó a
+  `ExperienciaDelNegocio`).
+- Cocina avisa por `despertador.ts` (comanda nueva; con pendientes la mantiene despierta); la Caja
+  escucha en la caché de consultas la lectura `ventas_pendientes_caja` que ya hace cada 2 s.
+- **Ojo, pruebas con `page.clock`:** adelantar el reloj ANTES de que la pantalla se monte no
+  prueba nada (el modo espera empieza a contar después del salto). Esperar el `h1` primero.
+- **Ojo, la cocina de la demo:** una comanda que deja una prueba sigue pendiente y, con
+  pendientes, la cocina no se duerme. La prueba cancela la cuenta de su mesa al empezar y al
+  terminar.
+- Mutantes de navegador que no compilaban (una variable que queda sin usar rompe el build por
+  `noUnusedLocals`): reescritos como mutantes que compilan y corridos en un segundo banco.
+- **Ojo, una capa encima de un diálogo de Radix:** con el diálogo abierto, Radix marca con
+  `aria-hidden` todo lo demás y deja el `body` sin toques; y se cierra si ve el foco, un toque o
+  Escape fuera de él. La capa va en un portal al `<body>`, con `pointer-events-auto`, y no deja
+  salir foco, toques ni teclas (DP-D39).
+- Subagentes: «revisión del modo espera» (Sonnet, sólo lectura, sobre una copia limpia: cuatro
+  altos corregidos), «motor de Sound Lab con TypeScript estricto» (Haiku, en el scratchpad, sin
+  repo) y «dónde suenan los momentos del POS» (Sonnet, sólo lectura), estos dos para DP-11.3;
+  y el flujo «re-revisión del modo espera» (dos Sonnet a la vez, más quien refuta cada hallazgo).
