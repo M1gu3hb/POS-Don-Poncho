@@ -19,3 +19,4 @@ Poncho, y cómo portarlo.
 | 13  | [Un id al azar que también sirve por http](13-id-al-azar-por-http.md)                               | DP-11.0 | No                  |
 | 14  | [Morfi en el POS](14-morfi-en-el-pos.md)                                                            | DP-11.1 | No                  |
 | 15  | [El modo espera](15-modo-espera.md)                                                                 | DP-11.2 | No                  |
+| 16  | [Los sonidos de la interfaz](16-sonidos.md)                                                         | DP-11.3 | No                  |
