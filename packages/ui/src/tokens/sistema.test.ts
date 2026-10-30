@@ -165,7 +165,10 @@ describe('las 4 perillas estructurales', () => {
       const tokens = resolverTokens(base, [':root', `[data-elevacion='${valor}']`]);
       return tokens.get('sombra-2');
     });
-    expect(new Set(sombras).size, 'las 4 elevaciones deben dar 4 sombras distintas').toBe(4);
+    expect(
+      new Set(sombras).size,
+      `las ${String(PERILLAS.elevacion.length)} elevaciones deben dar otras tantas sombras distintas`,
+    ).toBe(PERILLAS.elevacion.length);
   });
 
   it('el movimiento cambia las duraciones, y la perilla nula las anula', () => {

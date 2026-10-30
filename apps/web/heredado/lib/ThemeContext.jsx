@@ -1,6 +1,12 @@
 'use client';
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
+import {
+  CONSULTA_DEL_SISTEMA,
+  leerPreferenciaDeModo,
+  resolverModo,
+} from '~/proveedores/preferencia-de-modo';
+
 /**
  * ThemeContext — modo claro / oscuro global.
  *
@@ -13,6 +19,11 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
  *   y no permanentemente (evita reflows costosos en móvil).
  *
  * NO toca lógica de negocio, datos, entidades ni queries.
+ *
+ * DP-11.4 · la PREFERENCIA (`light`, `dark` o automático) es lo guardado; el tema que se pinta
+ * sale de ella y del sistema, y en automático lo sigue en vivo. `setTheme`/`toggle` siguen
+ * eligiendo a mano (el «Modo oscuro» de la barra lateral); `setPreference` es el selector de
+ * Apariencia (Automático / Claro / Oscuro).
  */
 
 const STORAGE_KEY = 'mh_theme';
@@ -21,10 +32,18 @@ const ANIM_MS = 500;
 
 function readStored() {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    if (v === 'dark' || v === 'light') return v;
-  } catch {}
-  return 'light';
+    return leerPreferenciaDeModo(localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return 'auto';
+  }
+}
+
+function systemIsDark() {
+  try {
+    return window.matchMedia(CONSULTA_DEL_SISTEMA).matches;
+  } catch {
+    return false;
+  }
 }
 
 function applyThemeToRoot(theme) {
@@ -52,39 +71,72 @@ function pulseAnimClass() {
 const ThemeContext = createContext({
   theme: 'light',
   isDark: false,
+  preference: 'auto',
   toggle: () => {},
   setTheme: () => {},
+  /** @type {(siguiente: string) => void} */
+  setPreference: () => {},
 });
 
 export function ThemeProvider({ children }) {
   // Inicialización síncrona — antes del primer paint — para evitar flash.
-  const [theme, setThemeState] = useState(() => {
-    if (typeof window === 'undefined') return 'light';
-    const t = readStored();
-    applyThemeToRoot(t);
-    return t;
-  });
+  const [preference, setPreferenceState] = useState(() =>
+    typeof window === 'undefined' ? 'auto' : readStored(),
+  );
+  const [systemDark, setSystemDark] = useState(() =>
+    typeof window === 'undefined' ? false : systemIsDark(),
+  );
+  const theme = resolverModo(preference, systemDark);
 
   // En cliente, garantizamos que el <html> tenga la clase correcta.
   useEffect(() => {
     applyThemeToRoot(theme);
   }, [theme]);
 
-  const setTheme = useCallback((next) => {
-    const value = next === 'dark' ? 'dark' : 'light';
+  // En automático el tema sigue al sistema en vivo (el atardecer del teléfono, por ejemplo).
+  useEffect(() => {
+    let consulta;
+    try {
+      consulta = window.matchMedia(CONSULTA_DEL_SISTEMA);
+    } catch {
+      return undefined;
+    }
+    const alCambiar = (evento) => setSystemDark(evento.matches);
+    consulta.addEventListener('change', alCambiar);
+    return () => consulta.removeEventListener('change', alCambiar);
+  }, []);
+
+  // Lo elegido en otra pestaña del mismo aparato.
+  useEffect(() => {
+    const alGuardar = (evento) => {
+      if (evento.key === STORAGE_KEY) setPreferenceState(readStored());
+    };
+    window.addEventListener('storage', alGuardar);
+    return () => window.removeEventListener('storage', alGuardar);
+  }, []);
+
+  const setPreference = useCallback((next) => {
+    const value = leerPreferenciaDeModo(next);
     pulseAnimClass();
-    setThemeState(value);
+    setPreferenceState(value);
     try {
       localStorage.setItem(STORAGE_KEY, value);
     } catch {}
   }, []);
+
+  const setTheme = useCallback(
+    (next) => setPreference(next === 'dark' ? 'dark' : 'light'),
+    [setPreference],
+  );
 
   const toggle = useCallback(() => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   }, [theme, setTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, isDark: theme === 'dark', toggle, setTheme }}>
+    <ThemeContext.Provider
+      value={{ theme, isDark: theme === 'dark', preference, toggle, setTheme, setPreference }}
+    >
       {children}
     </ThemeContext.Provider>
   );

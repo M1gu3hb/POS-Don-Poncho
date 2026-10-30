@@ -406,3 +406,23 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   de imports en `Caja.jsx` (unir mesas y sonar: se quedan los dos).
 - **Para retomar DP-11.4:** el plan y sus decisiones están en `docs/diseno/PLAN-DP-11.4.md`; el
   reconocimiento, en `docs/diseno/RECONOCIMIENTO-DP-11.4-SISTEMA.md` y `…-PILOTOS.md`.
+
+### DP-11.4 · El lenguaje de capas, sus estilos y los pilotos
+
+- **11.4.a–c (sistema, estilos, modo automático):** `capas` y `aero` en la perilla de elevación;
+  vidrio sólo en lo que flota (`lenguaje.css`, por atributo, sin nombrar estilos); vidrio sólido
+  con «menos transparencia» o si el aparato no da 60 cuadros (`MedidorDelVidrio`, una vez, guardado
+  en `morphiqpos.vidrio`); `morphiq` rehecho con la marca, `don-poncho` con `capas`, «Retro»
+  nuevo; Automático / Claro / Oscuro por aparato en Apariencia. DP-D41, ficha 17. Pruebas primero
+  (`lenguaje-de-capas.test.ts`, `vidrio.test.ts`, `preferencia-de-modo.test.ts`, el guion de
+  arranque) y 25 de 25 mutantes muertos.
+- **Ojo, producción:** Don Poncho guarda `elevacion: sombra` explícito (se dio de alta así). Al
+  publicar, fijar `capas` por el comando de apariencia, con huella; si no, producción no estrena
+  el lenguaje.
+- **Ojo, el fondo:** un `body::before` fijo queda TAPADO por el fondo del `body` y del armazón. El
+  escritorio se pinta en la capa fija de `BrandedBackground` (`data-fondo="escritorio"`).
+- **Ojo, vista previa:** `preview_stop` no mata el `next start` hijo; quedan dueños del puerto.
+  Lanzador fuera del repositorio (`.work/servir-dp11.sh`, configuración `dp11-vista`).
+- **Subagentes (Sonnet, cada uno en su worktree, sin commit):** 11.4.d Tablero recompuesto; 11.4.e
+  Caja/Cobro recompuestos con el teclado de cobro y el teclado numérico compartido. Resultado: al
+  integrarlos.

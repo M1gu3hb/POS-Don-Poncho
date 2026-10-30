@@ -69,6 +69,14 @@
   --lateral-activo-texto: 24 40% 10%;
   --lateral-hover: 24 16% 22%;
   --lateral-borde: 24 14% 26%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 0 0% 100%;
+  --halo: 22 90% 38%;
+  --malla-1: 22 90% 38%;
+  --malla-2: 30 40% 88%;
+  --malla-3: 30 16% 87%;
 }
 
 [data-estilo='taller'][data-modo='oscuro'] {
@@ -118,4 +126,12 @@
   --lateral-activo-texto: 24 50% 8%;
   --lateral-hover: 24 14% 16%;
   --lateral-borde: 24 12% 20%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 36 20% 92%;
+  --halo: 22 95% 62%;
+  --malla-1: 22 95% 62%;
+  --malla-2: 24 16% 22%;
+  --malla-3: 24 12% 15%;
 }

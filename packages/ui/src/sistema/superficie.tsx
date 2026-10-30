@@ -131,7 +131,7 @@ export function Superficie({
         ELEVACION[nivel],
         conBorde ? 'border border-borde' : '',
         interactiva
-          ? 'cursor-pointer text-left transition-[box-shadow,transform] duration-(--duracion-rapida) ease-(--curva-entrada) outline-none hover:shadow-2 focus-visible:ring-[3px] focus-visible:ring-anillo/60 focus-visible:ring-offset-2 focus-visible:ring-offset-fondo active:scale-[0.98] active:shadow-0 disabled:cursor-not-allowed disabled:opacity-50'
+          ? 'cursor-pointer text-left transition-[box-shadow,transform,scale] duration-(--duracion-rapida) ease-(--curva-entrada) outline-none hover:shadow-2 focus-visible:ring-[3px] focus-visible:ring-anillo/60 focus-visible:ring-offset-2 focus-visible:ring-offset-fondo active:scale-(--escala-presion) active:shadow-0 disabled:cursor-not-allowed disabled:opacity-50'
           : '',
         activa ? 'border-primario ring-2 ring-primario' : '',
         className,

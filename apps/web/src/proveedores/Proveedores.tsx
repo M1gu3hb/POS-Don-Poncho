@@ -14,6 +14,7 @@ import { ProveedorDeSonidos } from '~/sonidos/ProveedorDeSonidos';
 
 import { ProveedorDeApariencia } from './Apariencia';
 import { ProveedorDeExperiencia, type ExperienciaDelNegocio } from './Experiencia';
+import { MedidorDelVidrio } from './MedidorDelVidrio';
 import { GuardiaDePlantilla, ProveedorDeConsultas } from './ProveedorDeConsultas';
 
 /**
@@ -59,6 +60,8 @@ export function Proveedores({
 }) {
   return (
     <ProveedorDeApariencia aparienciaInicial={apariencia}>
+      {/* DP-11.4: una vez por aparato, si aguanta el vidrio del lenguaje de capas. */}
+      <MedidorDelVidrio />
       <ProveedorDeExperiencia inicial={experiencia}>
         {/* DP-11.3: el gestor de sonido de la pestaña (el aparato, el negocio y el oyente único). */}
         <ProveedorDeSonidos>

@@ -129,8 +129,14 @@ pantalla del modelo más parecido: si no se distinguen, falta trabajo.
 
 ## 7 · Lo que no se hace
 
-- Degradados, cristal por todas partes, todo a `rounded-xl`, sombras sin lógica de luz, bordes
+- Degradados, vidrio, halos o sombras escritos A MANO en una pantalla, todo a `rounded-xl`, bordes
   laterales de color como acento, texto de relleno. Cada etiqueta dice lo que ese giro dice.
+- **El lenguaje de capas (DP-11.4) no es una excepción a esto: es el sistema quien lo pinta.** La
+  pantalla sólo dice qué es cada cosa —`Superficie` nivel 3 o 4 para lo que flota (la cuenta, la
+  isla), `data-capa="flotante"` para una barra o un dock, `data-principal` en la acción principal,
+  `Superficie activa` en lo elegido, `data-tacto` en lo que se aprieta mucho— y el estilo decide si
+  eso es vidrio, sombra o nada. Vidrio en una tarjeta de una lista, nunca: lo prueba
+  `packages/ui/src/tokens/lenguaje-de-capas.test.ts`.
 - Cambiar el comportamiento: los mismos comandos, las mismas rutas, los mismos datos. Esto es
   lenguaje visual, no lógica.
 - Cambiar sin necesidad un texto visible, un `id`, un `aria-label` o el nombre de un botón: las

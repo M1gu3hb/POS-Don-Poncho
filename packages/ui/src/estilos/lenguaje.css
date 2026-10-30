@@ -1,0 +1,206 @@
+/**
+ * EL LENGUAJE DE CAPAS (DP-11.4) · lo que flota es vidrio; lo que está en el piso, sólido.
+ *
+ * ── Las reglas ─────────────────────────────────────────────────────────────
+ *   · Vidrio SÓLO en lo que flota: la isla y la cuenta (`Superficie` nivel 3 y 4), los diálogos,
+ *     cajones, menús y avisos, y lo que una pantalla marca `data-capa="flotante"` (el dock, la
+ *     barra lateral). Nunca en una tarjeta de una lista: con doscientas, el desenfoque mata el
+ *     cuadro en una tableta barata. Una prueba lo exige (`tokens/lenguaje-de-capas.test.ts`).
+ *   · El velo de un diálogo NO se desenfoca: es la capa más grande de la pantalla.
+ *   · Cada desenfoque es `var(--filtro-vidrio)`, así que el vidrio sólido (`data-vidrio`, o
+ *     «menos transparencia» del sistema) llega a todos con dos tokens, sin otra regla.
+ *   · El tacto (`data-tacto`), el halo (`data-principal`, `data-activa`) y la presión son
+ *     atributos que cualquier pantalla pone; aquí no se nombra ningún estilo.
+ *
+ * Todo cuelga de `capas` o de `aero`: los demás estilos se ven exactamente como antes.
+ */
+
+/* ═══════════════════════════════════════════════════════════════ EL FONDO
+   La capa fija de fondo de cada armazón (`data-fondo="escritorio"`: la de `BrandedBackground`
+   en la aplicación, la de `/sistema`) pinta el escritorio del estilo: la malla de capas o el
+   cielo de Retro. Es una capa fija con su propio plano: un `background-attachment: fixed` se
+   repintaría en cada desplazamiento. La malla es casi imperceptible y nunca queda detrás de
+   texto denso: las tablas y las listas van sobre superficie sólida. */
+[data-elevacion='capas'] [data-fondo='escritorio'],
+[data-elevacion='aero'] [data-fondo='escritorio'] {
+  background-image: var(--fondo-escritorio);
+}
+
+/* ═══════════════════════════════════════════════════════════════ EL VIDRIO
+   Superficie elevada traslúcida, el desenfoque del token, el canto de luz de 1 px arriba y
+   un grano finísimo que le quita el aspecto de plástico. */
+[data-elevacion='capas']
+  :is(
+    [data-nivel='3'],
+    [data-nivel='4'],
+    [data-slot='dialog-content'],
+    [data-slot='alert-dialog-content'],
+    [data-slot='sheet-content'],
+    [data-slot='popover-content'],
+    [data-slot='dropdown-menu-content'],
+    [data-capa='flotante'],
+    [data-sonner-toast]
+  ),
+[data-elevacion='aero']
+  :is(
+    [data-nivel='3'],
+    [data-nivel='4'],
+    [data-slot='popover-content'],
+    [data-slot='dropdown-menu-content'],
+    [data-sonner-toast]
+  ) {
+  background-color: hsl(var(--superficie-elevada) / var(--vidrio-alfa));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  backdrop-filter: var(--filtro-vidrio);
+  -webkit-backdrop-filter: var(--filtro-vidrio);
+}
+
+/* Las sombras de lo que flota: el canto de luz por dentro y la distancia de su nivel. */
+[data-elevacion='capas'] [data-nivel='3'] {
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--luz-borde) / 0.5),
+    var(--sombra-3);
+}
+
+[data-elevacion='capas']
+  :is(
+    [data-nivel='4'],
+    [data-slot='dialog-content'],
+    [data-slot='alert-dialog-content'],
+    [data-slot='sheet-content'],
+    [data-slot='popover-content'],
+    [data-slot='dropdown-menu-content'],
+    [data-capa='flotante'],
+    [data-sonner-toast]
+  ) {
+  border-color: hsl(var(--luz-borde) / 0.14);
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--luz-borde) / 0.55),
+    var(--sombra-4);
+}
+
+/* ═══════════════════════════════════════════════════════════ LA VENTANA (aero)
+   El vidrio es el MARCO: un borde de cinco puntos con el brillo especular de su época, el
+   contenido sobre superficie casi opaca, un filo oscuro por fuera, uno blanco por dentro y el
+   resplandor alrededor. En sólido, el marco queda como degradado brilloso sin desenfoque. */
+[data-elevacion='aero']
+  :is(
+    [data-slot='dialog-content'],
+    [data-slot='alert-dialog-content'],
+    [data-slot='sheet-content'],
+    [data-capa='flotante']
+  ) {
+  border: 5px solid transparent;
+  background:
+    linear-gradient(hsl(var(--superficie) / 0.95), hsl(var(--superficie) / 0.95)) padding-box,
+    var(--marco-ventana) border-box,
+    hsl(var(--superficie-elevada) / var(--vidrio-alfa)) border-box;
+  backdrop-filter: var(--filtro-vidrio);
+  -webkit-backdrop-filter: var(--filtro-vidrio);
+  box-shadow:
+    0 0 0 1px hsl(var(--sombra-tinte) / 0.55),
+    inset 0 0 0 1px hsl(var(--luz-borde) / 0.75),
+    var(--resplandor-ventana);
+}
+
+/* El título sobre vidrio lleva su halo claro detrás, como los de su época. Sólo en claro: en
+   oscuro el texto ya es claro y un halo claro le restaría contraste. */
+[data-elevacion='aero']:not([data-modo='oscuro'])
+  :is([data-slot='dialog-title'], [data-slot='sheet-title'], [data-slot='alert-dialog-title']) {
+  text-shadow:
+    0 0 10px hsl(var(--luz-borde) / 0.95),
+    0 0 2px hsl(var(--luz-borde));
+}
+
+/* Las ventanas se abren con escalado y fundido; con la perilla en nula, secas. */
+@keyframes ventana-abre {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+}
+
+[data-elevacion='aero']
+  :is([data-slot='dialog-content'], [data-slot='alert-dialog-content'])[data-state='open'] {
+  animation: ventana-abre var(--duracion-normal) var(--curva-entrada) both;
+}
+
+/* Campos hundidos, con sombra interior. */
+[data-elevacion='aero'] [data-slot='input'] {
+  box-shadow: inset 0 1px 3px 0 hsl(var(--sombra-tinte) / 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════ EL TACTO
+   Sólo en lo que se aprieta mucho: los teclados de cobro y de PIN, el botón Cobrar y los
+   interruptores. En reposo, un relieve suave; al apretar, se hunde y la luz pasa abajo. Vuelve
+   con la curva de resorte. */
+[data-elevacion='capas'] :is([data-tacto], [data-slot='switch']),
+[data-elevacion='aero'] :is([data-tacto], [data-slot='switch']) {
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--luz-borde) / 0.7),
+    0 1px 2px 0 hsl(var(--sombra-tinte) / 0.16),
+    0 4px 10px -4px hsl(var(--sombra-tinte) / 0.24);
+  transition:
+    transform var(--duracion-rapida) var(--curva-resorte),
+    box-shadow var(--duracion-rapida) var(--curva-entrada),
+    background-color var(--duracion-rapida) var(--curva-entrada);
+}
+
+[data-elevacion='capas'] [data-tacto]:active:not(:disabled, [aria-disabled='true']),
+[data-elevacion='aero'] [data-tacto]:active:not(:disabled, [aria-disabled='true']) {
+  transform: scale(var(--escala-presion));
+  box-shadow:
+    inset 0 2px 5px 0 hsl(var(--sombra-tinte) / 0.28),
+    inset 0 -1px 0 0 hsl(var(--luz-borde) / 0.45);
+}
+
+/* ═══════════════════════════════════════════════════════════════ EL HALO
+   El resplandor del acento detrás de lo activo o principal, y de nada más. Lo activo lleva
+   además un anillo de 2 px: elegir algo tiene que verse sin depender del brillo. */
+[data-elevacion='capas'] [data-principal],
+[data-elevacion='aero'] [data-principal] {
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--luz-borde) / 0.45),
+    0 0 0 1px hsl(var(--halo) / 0.4),
+    0 10px 30px -8px hsl(var(--halo) / 0.55);
+}
+
+[data-elevacion='capas'] [data-activa],
+[data-elevacion='aero'] [data-activa] {
+  box-shadow:
+    0 0 0 2px hsl(var(--halo)),
+    0 12px 32px -10px hsl(var(--halo) / 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════ EL GEL (aero)
+   Los botones principales de su época: degradado vertical con el reflejo arriba, un brillo
+   que lo recorre al pasar y, el principal, un latido suave como el botón por omisión. */
+[data-elevacion='aero'] :is([data-slot='button'][data-variant='default'], [data-principal]) {
+  background-image:
+    var(--brillo-gel),
+    linear-gradient(100deg, transparent 30%, hsl(var(--luz-borde) / 0.4) 50%, transparent 70%);
+  background-size:
+    100% 100%,
+    250% 100%;
+  background-position:
+    0 0,
+    150% 0;
+  background-repeat: no-repeat;
+  transition: background-position var(--duracion-lenta) var(--curva-entrada);
+}
+
+[data-elevacion='aero'] :is([data-slot='button'][data-variant='default'], [data-principal]):hover {
+  background-position:
+    0 0,
+    -50% 0;
+}
+
+@keyframes latido-gel {
+  50% {
+    filter: brightness(1.12);
+  }
+}
+
+[data-elevacion='aero'] [data-principal] {
+  animation: latido-gel calc(var(--duracion-lenta) * 6) ease-in-out infinite;
+}

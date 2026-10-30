@@ -743,3 +743,38 @@ puerta los denuncia todos.
   el mapa con su nota hasta que Miguel decida.
 - Las recetas se cargan cuando hacen falta: Keycap y Thock traen su muestra (50 KB cada una); las
   demás pesan menos de 1 KB.
+
+## DP-D41 · El lenguaje de capas: vidrio en lo que flota, `capas` y `aero`, «Retro» y el modo automático · 30-10-2026
+
+- **Vive en el sistema, no en las pantallas.** Dos valores nuevos de la perilla `elevacion`:
+  `capas` (sombras largas en tres capas teñidas con `--sombra-tinte`, vidrio ahumado en lo que
+  flota, malla casi imperceptible en el fondo) y `aero` (el de «Retro»: marco de ventana, gel y
+  resplandor). Los otros siete estilos no cambian de aspecto. Un estilo sigue siendo un archivo de
+  tokens: `lenguaje.css` lee tokens y atributos y no nombra ningún estilo (una prueba lo exige).
+- **Vidrio sólo en lo que flota:** `Superficie` nivel 3 y 4, diálogos, cajones, menús, avisos y lo
+  que una pantalla marca `data-capa="flotante"` (el dock, la barra lateral). Nunca en una tarjeta
+  de una lista ni en el velo de un diálogo. Cada desenfoque es `var(--filtro-vidrio)`.
+- **Vidrio sólido** con «menos transparencia» del sistema o en el aparato que, medido una vez en
+  reposo, no da 60 cuadros (mediana de 60 cuadros sobre 22 ms → `data-vidrio="solido"`, guardado
+  en el aparato y aplicado por el guion de arranque). No se mide bajo un navegador automatizado:
+  el retrato de una prueba no puede depender de la CPU.
+- **Tacto, halo y presión, por atributo:** `data-tacto` (teclados de cobro y PIN, Cobrar,
+  interruptores), `data-principal` y `data-activa` (el halo del acento, y un anillo de 2 px en lo
+  elegido para que no dependa del brillo). La presión es `--escala-presion` (0.97; 1 sin
+  movimiento) y lo que tiene tacto vuelve con la curva de resorte.
+- **Estilos.** `morphiq` se rehace con la marca: negro azulado `#0A0E1A`, azul eléctrico `#1E5BFF`
+  (el mismo en claro y oscuro, letra blanca 5.3:1) y acero como acento secundario. `don-poncho`
+  conserva los colores del logo y estrena `capas`; sigue siendo el predeterminado. «Retro» (clave
+  `retro`) es nuevo: Frutiger Aero inspirado, no copiado; sólo tokens, escritorio de CSS propio
+  (sin `url()`), pila tipográfica de la época sin descargas, claro por omisión y vidrio ahumado en
+  oscuro. Los diez, AA en claro y oscuro.
+- **El contrato crece:** `sombra-tinte`, `luz-borde`, `halo` y `malla-1..3` son tokens de color
+  obligatorios (antes un estilo podía olvidar `sombra-tinte` sin que nada fallara); los del vidrio,
+  la presión y lo de «Retro» son tokens base con valor vacío por omisión.
+- **Claro, oscuro o automático, por aparato** (Configuración → Apariencia): `mh_theme` guarda la
+  preferencia (`light`, `dark`, o automático sin valor o con `auto`); el guion de arranque y el
+  `ThemeContext` resuelven `prefers-color-scheme` y lo siguen en vivo. `.dark` y `data-modo` siguen
+  siendo `claro`/`oscuro`. Un aparato sin nada elegido —todos hoy— pasa a seguir al sistema.
+- **Producción:** el negocio guarda sus perillas (`configuracion.valores.apariencia`, sin
+  migración) y Don Poncho se dio de alta con `elevacion: sombra` explícito. Para que estrene el
+  lenguaje, al publicar se fija `capas` por el comando de apariencia, con huella antes y después.

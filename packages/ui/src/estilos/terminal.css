@@ -67,6 +67,14 @@
   --lateral-activo-texto: 120 20% 8%;
   --lateral-hover: 120 16% 16%;
   --lateral-borde: 120 14% 24%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 0 0% 100%;
+  --halo: 30 90% 32%;
+  --malla-1: 30 90% 32%;
+  --malla-2: 120 30% 88%;
+  --malla-3: 60 10% 86%;
 }
 
 /**
@@ -124,4 +132,12 @@
   --lateral-activo-texto: 120 20% 6%;
   --lateral-hover: 120 18% 12%;
   --lateral-borde: 120 18% 18%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 40 92% 70%;
+  --halo: 40 100% 62%;
+  --malla-1: 40 100% 62%;
+  --malla-2: 120 30% 16%;
+  --malla-3: 120 14% 10%;
 }

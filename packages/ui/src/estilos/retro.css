@@ -1,0 +1,189 @@
+/**
+ * Estilo `retro` — «Retro», la estética que hoy se llama Frutiger Aero (2004–2012). DP-11.4.
+ *
+ * INSPIRADO, NO COPIADO: el lenguaje del vidrio de ventana, los botones de gel y las barras
+ * brillosas de su época, sin un solo logo, icono, fondo, cursor ni sonido de nadie. Todo lo de
+ * aquí son tokens: las primitivas leen `--marco-ventana`, `--brillo-gel`, `--resplandor-ventana`
+ * y `--fondo-escritorio` igual en todos los estilos, y los demás los dejan vacíos.
+ *
+ *   · El vidrio es el MARCO, no el fondo del texto: el contenido va sobre superficie casi opaca.
+ *   · Acento azul cielo y agua; claro por omisión (es una estética luminosa) y una variante de
+ *     vidrio ahumado para el oscuro.
+ *   · La pila tipográfica de la época, sin descargar fuentes.
+ *   · El escritorio es CSS propio: cielo que se vuelve agua, bokeh, burbujas y dos rayos de luz.
+ */
+
+[data-estilo='retro'] {
+  --fuente-ui: 'Segoe UI', 'Lucida Grande', 'Helvetica Neue', Arial, sans-serif;
+  --fuente-display: 'Segoe UI', 'Lucida Grande', 'Helvetica Neue', Arial, sans-serif;
+
+  --sombra-tinte: 205 60% 20%;
+
+  --fondo: 200 70% 94%;
+  --fondo-sutil: 200 50% 88%;
+  --superficie: 0 0% 100%;
+  --superficie-elevada: 200 60% 98%;
+
+  --texto: 210 50% 12%;
+  --texto-sutil: 208 30% 30%;
+  --texto-tenue: 205 20% 44%;
+
+  --borde: 200 35% 78%;
+  --borde-fuerte: 205 30% 40%;
+  --anillo: 196 100% 32%;
+
+  --primario: 196 100% 30%;
+  --primario-texto: 0 0% 100%;
+  --acento: 205 80% 32%;
+  --acento-texto: 0 0% 100%;
+  --acento-suave: 195 90% 90%;
+  --acento-suave-texto: 205 80% 22%;
+
+  --exito: 140 60% 28%;
+  --exito-texto: 0 0% 100%;
+  --advertencia: 38 92% 50%;
+  --advertencia-texto: 210 50% 12%;
+  --peligro: 0 72% 42%;
+  --peligro-texto: 0 0% 100%;
+  --info: 205 80% 32%;
+  --info-texto: 0 0% 100%;
+
+  --grafico-1: 196 100% 34%;
+  --grafico-2: 140 55% 32%;
+  --grafico-3: 38 92% 44%;
+  --grafico-4: 280 50% 48%;
+  --grafico-5: 350 70% 44%;
+  --grafico-6: 225 60% 42%;
+
+  --velo: 205 60% 12%;
+
+  /* La barra: vidrio azul profundo, como la barra de tareas de su época, con letra clara. */
+  --lateral-fondo: 205 60% 16%;
+  --lateral-texto: 200 40% 92%;
+  --lateral-activo: 196 100% 30%;
+  --lateral-activo-texto: 0 0% 100%;
+  --lateral-hover: 205 50% 24%;
+  --lateral-borde: 205 45% 26%;
+
+  --luz-borde: 0 0% 100%;
+  --halo: 190 100% 50%;
+  --malla-1: 190 90% 75%;
+  --malla-2: 140 60% 80%;
+  --malla-3: 205 80% 70%;
+
+  /* El marco de la ventana: el brillo especular en la mitad de arriba y el corte del reflejo a
+     la mitad, que es lo que hace que se lea como vidrio de su época y no como cristal de hoy. */
+  --marco-ventana: linear-gradient(
+    180deg,
+    hsl(0 0% 100% / 0.72) 0%,
+    hsl(200 80% 94% / 0.5) 46%,
+    hsl(200 70% 78% / 0.42) 50%,
+    hsl(200 80% 90% / 0.55) 100%
+  );
+  --brillo-gel: linear-gradient(
+    180deg,
+    hsl(0 0% 100% / 0.62) 0%,
+    hsl(0 0% 100% / 0.2) 48%,
+    transparent 50%,
+    hsl(0 0% 100% / 0.14) 100%
+  );
+  --resplandor-ventana:
+    0 0 22px 2px hsl(195 100% 70% / 0.35), 0 14px 34px -10px hsl(205 60% 20% / 0.45);
+  --fondo-escritorio:
+    radial-gradient(circle at 16% 74%, hsl(0 0% 100% / 0.6) 0 1.1rem, transparent 1.2rem),
+    radial-gradient(circle at 22% 66%, hsl(0 0% 100% / 0.4) 0 0.55rem, transparent 0.65rem),
+    radial-gradient(circle at 12% 60%, hsl(0 0% 100% / 0.32) 0 0.35rem, transparent 0.42rem),
+    radial-gradient(circle at 84% 24%, hsl(190 100% 88% / 0.55), transparent 16rem),
+    radial-gradient(circle at 66% 86%, hsl(140 70% 72% / 0.4), transparent 20rem),
+    linear-gradient(115deg, transparent 0 36%, hsl(0 0% 100% / 0.22) 41%, transparent 47%),
+    linear-gradient(126deg, transparent 0 52%, hsl(0 0% 100% / 0.14) 55%, transparent 60%),
+    linear-gradient(
+      180deg,
+      hsl(200 90% 84%) 0%,
+      hsl(195 85% 92%) 44%,
+      hsl(190 70% 80%) 46%,
+      hsl(198 75% 68%) 100%
+    );
+  /* El agua no baja de 68 % de claridad: los títulos de pantalla van directo sobre el
+     escritorio, y la tinta de Retro tiene que seguir leyéndose encima (más de 7:1). */
+}
+
+/** Vidrio ahumado: la misma ventana de noche, con el agua profunda y el gel más contenido. */
+[data-estilo='retro'][data-modo='oscuro'] {
+  --sombra-tinte: 210 70% 3%;
+
+  --fondo: 210 45% 9%;
+  --fondo-sutil: 210 35% 14%;
+  --superficie: 210 35% 12%;
+  --superficie-elevada: 210 30% 16%;
+
+  --texto: 200 40% 94%;
+  --texto-sutil: 200 20% 72%;
+  --texto-tenue: 200 12% 56%;
+
+  --borde: 210 25% 22%;
+  --borde-fuerte: 200 15% 54%;
+  --anillo: 195 100% 60%;
+
+  --primario: 195 90% 58%;
+  --primario-texto: 210 50% 8%;
+  --acento: 205 80% 70%;
+  --acento-texto: 210 50% 8%;
+  --acento-suave: 205 40% 20%;
+  --acento-suave-texto: 200 40% 94%;
+
+  --exito: 140 50% 60%;
+  --exito-texto: 140 45% 7%;
+  --advertencia: 38 92% 62%;
+  --advertencia-texto: 210 50% 8%;
+  --peligro: 0 80% 70%;
+  --peligro-texto: 0 50% 9%;
+  --info: 205 80% 70%;
+  --info-texto: 210 50% 8%;
+
+  --grafico-1: 195 90% 58%;
+  --grafico-2: 140 50% 55%;
+  --grafico-3: 38 92% 62%;
+  --grafico-4: 270 65% 74%;
+  --grafico-5: 350 75% 66%;
+  --grafico-6: 225 80% 66%;
+
+  --velo: 210 70% 3%;
+
+  --lateral-fondo: 210 50% 6%;
+  --lateral-texto: 200 30% 88%;
+  --lateral-activo: 195 90% 58%;
+  --lateral-activo-texto: 210 50% 8%;
+  --lateral-hover: 210 40% 12%;
+  --lateral-borde: 210 35% 14%;
+
+  --luz-borde: 200 60% 85%;
+  --halo: 195 100% 55%;
+  --malla-1: 195 80% 30%;
+  --malla-2: 140 50% 20%;
+  --malla-3: 215 60% 22%;
+
+  --marco-ventana: linear-gradient(
+    180deg,
+    hsl(200 40% 60% / 0.5) 0%,
+    hsl(205 40% 28% / 0.45) 48%,
+    hsl(210 50% 14% / 0.5) 50%,
+    hsl(205 45% 20% / 0.55) 100%
+  );
+  --brillo-gel: linear-gradient(
+    180deg,
+    hsl(0 0% 100% / 0.36) 0%,
+    hsl(0 0% 100% / 0.08) 48%,
+    transparent 50%,
+    hsl(0 0% 100% / 0.06) 100%
+  );
+  --resplandor-ventana:
+    0 0 18px 1px hsl(195 100% 60% / 0.25), 0 14px 34px -10px hsl(210 70% 2% / 0.6);
+  --fondo-escritorio:
+    radial-gradient(circle at 16% 74%, hsl(195 80% 70% / 0.18) 0 1.1rem, transparent 1.2rem),
+    radial-gradient(circle at 22% 66%, hsl(195 80% 70% / 0.12) 0 0.55rem, transparent 0.65rem),
+    radial-gradient(circle at 84% 24%, hsl(195 90% 40% / 0.35), transparent 16rem),
+    radial-gradient(circle at 66% 86%, hsl(140 60% 30% / 0.3), transparent 20rem),
+    linear-gradient(115deg, transparent 0 36%, hsl(195 80% 70% / 0.08) 41%, transparent 47%),
+    linear-gradient(180deg, hsl(210 60% 12%) 0%, hsl(205 55% 16%) 46%, hsl(210 60% 7%) 100%);
+}

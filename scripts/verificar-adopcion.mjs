@@ -88,6 +88,24 @@ export const SIN_ESTADO = [
       'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
   },
   {
+    pantalla: 'configuracion/ModoDelAparato',
+    estado: 'vacio',
+    razon:
+      'Tres opciones fijas de ESTE aparato (DP-11.4): Automático, Claro y Oscuro. No tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/ModoDelAparato',
+    estado: 'cargando',
+    razon:
+      'Lee la preferencia del ThemeContext, que sale del almacén del navegador al instante. No hay viaje al servidor.',
+  },
+  {
+    pantalla: 'configuracion/ModoDelAparato',
+    estado: 'error',
+    razon:
+      'Guardar es escribir en el almacén del navegador; si está bloqueado, el modo cambia igual en esta visita y no hay nada que avisar.',
+  },
+  {
     pantalla: 'configuracion/SonidosDelNegocio',
     estado: 'vacio',
     razon:

@@ -73,6 +73,14 @@
   --lateral-activo-texto: 190 60% 8%;
   --lateral-hover: 220 18% 22%;
   --lateral-borde: 220 14% 28%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 0 0% 100%;
+  --halo: 175 90% 62%;
+  --malla-1: 175 90% 62%;
+  --malla-2: 220 18% 33%;
+  --malla-3: 220 16% 27%;
 }
 
 /** La noche de verdad: negro real y luz mínima suficiente. */
@@ -124,4 +132,12 @@
   --lateral-activo-texto: 190 70% 5%;
   --lateral-hover: 220 20% 10%;
   --lateral-borde: 220 16% 14%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 210 14% 88%;
+  --halo: 175 95% 58%;
+  --malla-1: 175 95% 58%;
+  --malla-2: 220 22% 15%;
+  --malla-3: 220 18% 8%;
 }

@@ -102,6 +102,18 @@
   --duracion-normal: 200ms;
   --duracion-lenta: 320ms;
 
+  /* --------------------------------------------------- el lenguaje de capas (DP-11.4)
+     Apagado por omisión: sin vidrio (opaco y sin desenfoque), sin fondo de escritorio y
+     sin lo de `retro`. Lo enciende la elevación `capas` o `aero`; lo apaga, pase lo que
+     pase, el vidrio sólido de abajo. La presión de un toque es la misma para todos. */
+  --vidrio-alfa: 1;
+  --filtro-vidrio: none;
+  --escala-presion: 0.97;
+  --fondo-escritorio: none;
+  --marco-ventana: none;
+  --brillo-gel: none;
+  --resplandor-ventana: 0 0 0 0 transparent;
+
   /* ------------------------------------------------------------ modo espera
      DP-11.2: casi negro en TODOS los estilos y modos, no el lateral de cada uno (en
      «papel» claro es casi blanco). Una pantalla que pasa horas encendida no se quema ni
@@ -267,12 +279,69 @@
   --borde-ancho: 2px;
 }
 
+/* CAPAS (DP-11.4) · lo que flota se separa del piso por luz y distancia, no por un borde.
+   Cada sombra son tres: el contacto (corta y densa), la distancia (larga y suave) y el
+   ambiente (muy larga, muy tenue), todas del color del estilo. Lo que flota es vidrio
+   ahumado (`lenguaje.css`); el fondo, un gradiente de malla casi imperceptible. */
+[data-elevacion='capas'] {
+  --sombra-0: none;
+  --sombra-1:
+    0 1px 1px 0 hsl(var(--sombra-tinte) / 0.06), 0 2px 6px -2px hsl(var(--sombra-tinte) / 0.08);
+  --sombra-2:
+    0 1px 2px 0 hsl(var(--sombra-tinte) / 0.06), 0 6px 16px -6px hsl(var(--sombra-tinte) / 0.14),
+    0 16px 32px -16px hsl(var(--sombra-tinte) / 0.1);
+  --sombra-3:
+    0 1px 2px 0 hsl(var(--sombra-tinte) / 0.08), 0 12px 28px -10px hsl(var(--sombra-tinte) / 0.22),
+    0 32px 64px -24px hsl(var(--sombra-tinte) / 0.18);
+  --sombra-4:
+    0 2px 4px 0 hsl(var(--sombra-tinte) / 0.08), 0 20px 44px -14px hsl(var(--sombra-tinte) / 0.3),
+    0 48px 96px -32px hsl(var(--sombra-tinte) / 0.26);
+  --vidrio-alfa: 0.74;
+  --filtro-vidrio: blur(18px) saturate(160%);
+  --fondo-escritorio:
+    radial-gradient(60rem 40rem at 0% 0%, hsl(var(--malla-1) / 0.5), transparent 62%),
+    radial-gradient(52rem 38rem at 100% 8%, hsl(var(--malla-2) / 0.42), transparent 60%),
+    radial-gradient(72rem 52rem at 50% 112%, hsl(var(--malla-3) / 0.46), transparent 60%);
+}
+
+/* AERO (DP-11.4, `retro`) · la ventana de vidrio de su época: un filo oscuro de 1 px por
+   fuera, uno blanco por dentro y el resplandor alrededor (`--resplandor-ventana`). El vidrio
+   es el MARCO: el contenido va sobre superficie casi opaca (`lenguaje.css`). */
+[data-elevacion='aero'] {
+  --sombra-0: none;
+  --sombra-1: 0 1px 2px 0 hsl(var(--sombra-tinte) / 0.2);
+  --sombra-2:
+    0 0 0 1px hsl(var(--sombra-tinte) / 0.28), 0 3px 8px -2px hsl(var(--sombra-tinte) / 0.3);
+  --sombra-3:
+    0 0 0 1px hsl(var(--sombra-tinte) / 0.4), 0 8px 22px -6px hsl(var(--sombra-tinte) / 0.38);
+  --sombra-4:
+    0 0 0 1px hsl(var(--sombra-tinte) / 0.45), 0 14px 36px -8px hsl(var(--sombra-tinte) / 0.45);
+  --vidrio-alfa: 0.5;
+  --filtro-vidrio: blur(12px) saturate(180%);
+}
+
+/* EL VIDRIO SÓLIDO · el mismo diseño con superficie opaca. Va DESPUÉS de las elevaciones:
+   con la misma especificidad gana el último. Lo pone el aparato que no da 60 cuadros
+   (`data-vidrio`, lo mide la aplicación una vez) o la persona que pide menos transparencia. */
+[data-vidrio='solido'] {
+  --vidrio-alfa: 1;
+  --filtro-vidrio: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --vidrio-alfa: 1;
+    --filtro-vidrio: none;
+  }
+}
+
 /* =========================================================== PERILLA 4
    Intensidad de movimiento. */
 [data-movimiento='nula'] {
   --duracion-rapida: 0ms;
   --duracion-normal: 0ms;
   --duracion-lenta: 0ms;
+  --escala-presion: 1;
 }
 
 [data-movimiento='sutil'] {
@@ -300,6 +369,7 @@
     --duracion-rapida: 0ms;
     --duracion-normal: 0ms;
     --duracion-lenta: 0ms;
+    --escala-presion: 1;
   }
 }
 

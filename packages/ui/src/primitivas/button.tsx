@@ -7,7 +7,7 @@ import { Slot } from "radix-ui"
  * EL ESTADO ACTIVO TIENE QUE SENTIRSE. (Etapa 2.35 §2.2)
  *
  * Un botón que no responde al pulsarlo se siente muerto aunque funcione: el dedo ya
- * salió y la pantalla todavía no dijo nada. `active:scale-[0.97]` es la confirmación
+ * salió y la pantalla todavía no dijo nada. `active:scale-(--escala-presion)` (0.97, el token de DP-11.4) es la confirmación
  * instantánea de que la interfaz oyó, y `active:shadow-0` acorta su sombra —lo que
  * se hunde se acerca al fondo y proyecta menos—, que es la lógica de luz del
  * sistema y no un efecto suelto.
@@ -21,7 +21,7 @@ import { Slot } from "radix-ui"
  * desaparece; la caja se opera con teclado diez horas al día.
  */
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,opacity,transform] duration-(--duracion-rapida) ease-(--curva-entrada) outline-none focus-visible:ring-[3px] focus-visible:ring-anillo/60 focus-visible:ring-offset-2 focus-visible:ring-offset-fondo active:scale-[0.97] active:shadow-0 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-peligro aria-invalid:ring-peligro/20 oscuro:aria-invalid:ring-peligro/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,opacity,transform,scale] duration-(--duracion-rapida) ease-(--curva-entrada) outline-none focus-visible:ring-[3px] focus-visible:ring-anillo/60 focus-visible:ring-offset-2 focus-visible:ring-offset-fondo active:scale-(--escala-presion) active:shadow-0 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-peligro aria-invalid:ring-peligro/20 oscuro:aria-invalid:ring-peligro/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {

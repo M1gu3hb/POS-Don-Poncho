@@ -25,7 +25,7 @@ export const APARIENCIA_DE_PRUEBA: AparienciaGuardada = {
   estilo: 'don-poncho',
   densidad: 'comoda',
   redondeo: 'sutil',
-  elevacion: 'sombra',
+  elevacion: 'capas',
   movimiento: 'sutil',
 };
 

@@ -134,3 +134,62 @@ export function resolverTokens(
 export function leerArchivo(ruta: string): BloqueCss[] {
   return leerBloques(readFileSync(ruta, 'utf8'));
 }
+
+/** Una regla completa: su selector (con el contexto `@` delante) y el texto de su cuerpo. */
+export interface ReglaCss {
+  readonly selector: string;
+  readonly cuerpo: string;
+}
+
+/**
+ * Las reglas con su cuerpo entero, no sólo sus tokens (DP-11.4).
+ *
+ * El lenguaje de capas se prueba por DÓNDE cuelga una propiedad —el vidrio sólo en lo que
+ * flota—, y eso no lo dicen los tokens: lo dice el selector de la regla que declara
+ * `backdrop-filter`. Mismo recorrido que `leerBloques`.
+ */
+export function leerReglas(css: string): ReglaCss[] {
+  const texto = sinComentarios(css);
+  const reglas: ReglaCss[] = [];
+  let inicioSelector = 0;
+  const pila: { selector: string; inicioCuerpo: number }[] = [];
+
+  for (let i = 0; i < texto.length; i += 1) {
+    const caracter = texto[i];
+    if (caracter === '{') {
+      pila.push({ selector: texto.slice(inicioSelector, i).trim(), inicioCuerpo: i + 1 });
+      inicioSelector = i + 1;
+    } else if (caracter === '}') {
+      const abierto = pila.pop();
+      if (abierto && !abierto.selector.startsWith('@')) {
+        const contexto = pila.map((nivel) => nivel.selector).join(' ');
+        reglas.push({
+          selector: `${contexto} ${abierto.selector}`.trim(),
+          cuerpo: texto.slice(abierto.inicioCuerpo, i),
+        });
+      }
+      inicioSelector = i + 1;
+    }
+  }
+
+  return reglas;
+}
+
+/** Parte una lista de selectores por sus comas de primer nivel (las de `:is(…)` no cuentan). */
+export function partirSelectores(lista: string): string[] {
+  const partes: string[] = [];
+  let profundidad = 0;
+  let actual = '';
+  for (const caracter of lista) {
+    if (caracter === '(') profundidad += 1;
+    if (caracter === ')') profundidad -= 1;
+    if (caracter === ',' && profundidad === 0) {
+      partes.push(actual.trim());
+      actual = '';
+      continue;
+    }
+    actual += caracter;
+  }
+  if (actual.trim().length > 0) partes.push(actual.trim());
+  return partes;
+}
