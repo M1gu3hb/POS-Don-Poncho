@@ -622,3 +622,35 @@ puerta los denuncia todos.
   exige que ningún archivo del navegador llame `randomUUID` directo.
 - **Prueba:** unidad (sin `randomUUID`, 500 UUID v4 distintos con `getRandomValues`; con él, el
   del navegador) y el contrato. Seis mutaciones, todas muertas.
+
+## DP-D38 · Morfi en el POS: tres clips, tres formatos, uno a la vez · 29-10-2026
+
+- **Fuente:** `M1gu3hb/Morfi-pet`, carpeta `ux-pos/`, commit `c61aab2` (sólo se leyó). Entran los
+  tres que Miguel aprobó: `03_cargando_loop`, `07_pagina_no_encontrada` y `11_modo_espera`
+  (partido en **dormido**, cuadros 1–76, y **despertar**, 77–164: el 77 casi repite al 1, 2.7
+  contra 2.3 de un paso normal entre cuadros). Las otras 14 no.
+- **Formatos (medidos):** Safari —y todo el iPhone y el iPad, que son WebKit— no reproduce WebM con
+  transparencia. Se sirve WebM (VP9 con alfa, 2.2 MB los cuatro) en Chromium, Edge, Firefox y
+  Android; **WebP animado a 15 cuadros** («en dos», la cadencia que la investigación de Morfi
+  acepta; 3.9 MB los cuatro) en WebKit; y una **imagen fija** (23 KB) con «reducir movimiento» o
+  la perilla `movimiento: nula`. Descartados: APNG (5.5 MB uno solo a media escala) y HEVC con
+  alfa (el `ffmpeg` de Windows no lo codifica y no hay cómo probarlo aquí). El navegador se
+  reconoce por su identificación, con los navegadores dentro de apps del iPhone y el iPad.
+- **Geometría:** sale de `escenas.json` y `recortes.json`: las manos de «Cargando» quedan en la
+  orilla de la tarjeta por cálculo, no a ojo (prueba). El hoyo del 404 es interfaz (SVG con
+  tokens), con la misma orilla que el clip.
+- **Dónde:** la carga de pantalla completa de `AppLayout` (entrar con PIN, recargar), la del menú
+  del portal QR, el 404 de la aplicación y el QR que no lleva a ninguna mesa. La tarjeta de carga
+  es una pieza nueva del sistema, `PantallaDeCarga` (texto que dice qué carga, barra, nada antes
+  de 600 ms por CSS), con un hueco para la mascota; `verify:adopcion` la reconoce como la espera
+  de una pantalla entera. Las cargas dentro de una pantalla siguen con `Esqueleto`.
+- **Reglas:** nunca dos clips a la vez (`turno.ts`: espera > 404 > carga); se cierran con un toque;
+  la sombra azul eléctrico sólida viene en el clip, sin filtros.
+- **«Mascota Morfi»:** por negocio, encendida por omisión, en `configuracion.valores.experiencia`
+  (clave nueva, validada con zod en el guardado genérico; sin migración). El servidor la lee al
+  pintar, como la apariencia; se cambia en Configuración → Apariencia. Apagada, cada lugar usa su
+  versión sin mascota (la tarjeta sola, el vacío del sistema).
+- **De paso (teléfono):** el `<main>` de `AppLayout` lleva `min-w-0` y el `fieldset` de las voces
+  también: sin eso, una fila que no se encoge estiraba la página a lo ancho (Configuración →
+  Apariencia medía 543 px en un teléfono de 412). Declarado en `verify:aspecto`.
+
