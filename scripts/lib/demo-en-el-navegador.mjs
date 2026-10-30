@@ -18,6 +18,9 @@ export function crearEntrada(urlBase, pinesPorNombre) {
       await page.getByRole('button', { name: digito, exact: true }).click();
     }
     await page.waitForURL((url) => !url.pathname.endsWith('/login-pos'));
+    // Entrar navega dos veces (la sesión nueva y la recarga que limpia la anterior): sin esperar
+    // a que la red repose, el siguiente `goto` choca con la recarga.
+    await page.waitForLoadState('networkidle');
   };
 }
 

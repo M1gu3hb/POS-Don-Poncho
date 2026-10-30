@@ -1,0 +1,94 @@
+{
+  "cpu": 4,
+  "url": "http://localhost:3400",
+  "vidrio": "solido",
+  "fecha": "2026-10-30T12:55:11.057Z",
+  "aparatos": {
+    "tablet": {
+      "preparacion": "la mesa 1 ya estaba ocupada",
+      "mesero": {
+        "carga": 1349,
+        "desplazamiento": {
+          "ms": 2861,
+          "fps": 60,
+          "p95": 17,
+          "tirones": 0,
+          "peor": 17,
+          "recorrido": 199
+        },
+        "abrirMesaLibre": {
+          "ms": 449,
+          "fps": 20.8,
+          "p95": 283,
+          "tirones": 1,
+          "peor": 283
+        },
+        "abrirMesaOcupada": {
+          "ms": 558,
+          "fps": 22.9,
+          "p95": 217,
+          "tirones": 3,
+          "peor": 217
+        }
+      },
+      "caja": {
+        "carga": 1463,
+        "desplazamiento": null
+      },
+      "tablero": {
+        "carga": 1346,
+        "desplazamiento": {
+          "ms": 3996,
+          "fps": 41.2,
+          "p95": 67,
+          "tirones": 11,
+          "peor": 150,
+          "recorrido": 1742
+        }
+      }
+    },
+    "telefono": {
+      "preparacion": "la mesa 1 ya estaba ocupada",
+      "mesero": {
+        "carga": 1159,
+        "desplazamiento": {
+          "ms": 2807,
+          "fps": 60,
+          "p95": 17,
+          "tirones": 0,
+          "peor": 17,
+          "recorrido": 99
+        },
+        "abrirMesaLibre": {
+          "ms": 528,
+          "fps": 16,
+          "p95": 350,
+          "tirones": 1,
+          "peor": 350
+        },
+        "abrirMesaOcupada": {
+          "ms": 649,
+          "fps": 27,
+          "p95": 233,
+          "tirones": 3,
+          "peor": 233
+        }
+      },
+      "caja": {
+        "carga": 1315,
+        "desplazamiento": null
+      },
+      "tablero": {
+        "carga": 1249,
+        "desplazamiento": {
+          "ms": 3911,
+          "fps": 44,
+          "p95": 50,
+          "tirones": 8,
+          "peor": 117,
+          "recorrido": 2958
+        }
+      }
+    }
+  }
+}

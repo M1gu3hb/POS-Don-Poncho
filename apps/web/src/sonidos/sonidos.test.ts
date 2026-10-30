@@ -7,6 +7,7 @@ import {
   TECLAS_A_ELEGIR,
   esEventoDeSonido,
   recetaDe,
+  recetasDelMapa,
   type NombreDeReceta,
 } from './mapa';
 import {
@@ -57,6 +58,20 @@ describe('el mapa', () => {
     for (const tecla of TECLAS_A_ELEGIR) expect(recetaDe('tecla', tecla)).toBe(tecla);
     expect(recetaDe('cobro', 'thock')).toBe('halo');
     expect(recetaDe('toque', 'keycap')).toBe('felt');
+  });
+
+  it('DP-11.4 · lo que se sintetiza de antemano: lo que suena, una vez, y no lo que espera a Miguel', () => {
+    const recetas = recetasDelMapa('keycap');
+    expect(recetas[0]).toBe('felt');
+    expect(recetas).toContain('keycap');
+    expect(recetas).not.toContain('nib');
+    expect(new Set(recetas).size).toBe(recetas.length);
+    for (const sinUsar of ['ping', 'signal', 'confetti'] as const)
+      expect(recetas).not.toContain(sinUsar);
+    for (const evento of EVENTOS) {
+      if (MAPA[evento].nota !== undefined) continue;
+      expect(recetas, evento).toContain(recetaDe(evento, 'keycap'));
+    }
   });
 
   it('reconoce sus eventos y nada más', () => {

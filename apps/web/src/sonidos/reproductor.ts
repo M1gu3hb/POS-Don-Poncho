@@ -56,9 +56,9 @@ export async function reproducir(nombre: NombreDeReceta, ganancia: number): Prom
   await playSound(lista);
 }
 
-/** La deja sintetizada de antemano, para que el primer toque no espere. */
+/** La deja sintetizada de antemano, para que el toque no espere. Termina cuando quedó lista. */
 export async function precargar(nombre: NombreDeReceta): Promise<void> {
-  preloadSound(await receta(nombre));
+  await preloadSound(await receta(nombre));
 }
 
 /** Desbloquea el audio en el gesto mismo (ver `prepararAudio`). */

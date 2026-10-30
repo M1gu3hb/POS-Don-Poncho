@@ -122,6 +122,21 @@ export function recetaDe(evento: EventoDeSonido, tecla: SonidoDeTecla): NombreDe
   return evento === 'tecla' ? tecla : MAPA[evento].receta;
 }
 
+/**
+ * LO QUE SE SINTETIZA DE ANTEMANO (DP-11.4): las recetas de los momentos que suenan, sin repetir
+ * y en el orden del mapa (del toque de todos los días a lo que pasa poco). Las que esperan a que
+ * Miguel decida (las que llevan nota) no suenan, así que no se sintetizan.
+ */
+export function recetasDelMapa(tecla: SonidoDeTecla): NombreDeReceta[] {
+  const recetas: NombreDeReceta[] = [];
+  for (const evento of EVENTOS) {
+    if (MAPA[evento].nota !== undefined) continue;
+    const receta = recetaDe(evento, tecla);
+    if (!recetas.includes(receta)) recetas.push(receta);
+  }
+  return recetas;
+}
+
 export function esEventoDeSonido(valor: string): valor is EventoDeSonido {
   return Object.hasOwn(MAPA, valor);
 }

@@ -5,7 +5,7 @@
  * base del diseño nuevo (DP-11.4): se corre antes y después, contra la misma base de demo.
  *
  *   node scripts/medir-fluidez.mjs --url http://localhost:3400 --secretos <demo.json> \
- *        [--salida fluidez.json] [--cpu 4] [--aparatos tablet,telefono]
+ *        [--salida fluidez.json] [--cpu 4] [--aparatos tablet,telefono] [--vidrio solido]
  *
  * `--secretos` es el `demo.json` que deja `scripts/demo-local.mjs` (PIN de DEMO, nunca los de
  * producción). Se niega con un servidor que no sea de esta máquina.
@@ -42,6 +42,8 @@ const SECRETOS = argumento('secretos', '');
 const SALIDA = argumento('salida', '');
 const CPU = Number(argumento('cpu', '4'));
 const APARATOS = argumento('aparatos', 'tablet,telefono').split(',');
+// DP-11.4: `--vidrio solido` mide el mismo aparato con el vidrio apagado, para separar su costo.
+const VIDRIO = argumento('vidrio', '');
 
 if (!['localhost', '127.0.0.1'].includes(new URL(URL_BASE).hostname) || SECRETOS === '') {
   console.error('Uso: medir-fluidez.mjs --url http://localhost:<puerto> --secretos <demo.json>');
@@ -145,11 +147,22 @@ async function abrirMesa(page, numero, dialogo) {
   });
 }
 
-const resultados = { cpu: CPU, url: URL_BASE, fecha: new Date().toISOString(), aparatos: {} };
+const resultados = {
+  cpu: CPU,
+  url: URL_BASE,
+  vidrio: VIDRIO || 'el del aparato',
+  fecha: new Date().toISOString(),
+  aparatos: {},
+};
 const navegador = await chromium.launch();
 try {
   for (const aparato of APARATOS) {
     const contexto = await navegador.newContext({ ...EMULACION[aparato] });
+    if (VIDRIO === 'solido') {
+      await contexto.addInitScript(() => {
+        window.localStorage.setItem('morphiqpos.vidrio', 'solido');
+      });
+    }
     const page = await contexto.newPage();
     const cdp = await contexto.newCDPSession(page);
     const fila = {};

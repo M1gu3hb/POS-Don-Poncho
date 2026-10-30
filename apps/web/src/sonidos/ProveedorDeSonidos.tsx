@@ -7,7 +7,7 @@ import { useTextoDelAparato } from '~/cliente/texto-del-aparato';
 import { useExperiencia } from '~/proveedores/Experiencia';
 
 import { cadenaDe, eventoDelClic } from './evento-del-clic';
-import { configurarSonidos, desbloquearSonidos, sonar } from './gestor';
+import { configurarSonidos, desbloquearSonidos, precalentarSonidos, sonar } from './gestor';
 import { observarLoQueAparece } from './observador';
 import { CLAVE_DEL_SONIDO, gananciaDe, leerPreferenciaDeSonido } from './perfil-del-aparato';
 import { silencioDelPortal } from './reglas-del-gestor';
@@ -32,6 +32,8 @@ export function ProveedorDeSonidos({ children }: { readonly children: ReactNode 
       tecla: experiencia.tecla,
       silencioDelPortal: callar,
     });
+    // DP-11.4: los sonidos del mapa, sintetizados en reposo antes del primer toque.
+    precalentarSonidos();
   }, [ganancia, experiencia.tecla, callar]);
 
   useEffect(() => {
