@@ -33,14 +33,14 @@ export const ESTILOS: Readonly<Record<string, DefinicionEstilo>> = {
   morphiq: {
     clave: 'morphiq',
     nombre: 'Morphiq',
-    referencia: 'el de Miguel',
+    referencia: 'la marca de Miguel: negro azulado, azul eléctrico y acero',
     para:
-      'EL BASE. Es el que ya vende y el que el cliente conoce: su azul, su radio de ' +
-      '0.75rem, sus sombras suaves. Todo lo demas son variaciones sobre este esqueleto.',
+      'EL BASE, y el predeterminado del maestro. Tecnológico y serio: un solo azul, capas de ' +
+      'vidrio ahumado en lo que flota y sombras largas; nada que parezca hecho por una IA.',
     perillas: {
       densidad: 'normal',
       redondeo: 'media',
-      elevacion: 'sombra',
+      elevacion: 'capas',
       movimiento: 'normal',
     },
   },
@@ -154,8 +154,22 @@ export const ESTILOS: Readonly<Record<string, DefinicionEstilo>> = {
     perillas: {
       densidad: 'comoda',
       redondeo: 'sutil',
-      elevacion: 'sombra',
+      elevacion: 'capas',
       movimiento: 'sutil',
+    },
+  },
+  retro: {
+    clave: 'retro',
+    nombre: 'Retro',
+    referencia: 'Frutiger Aero · el vidrio y el gel de 2004 a 2012',
+    para:
+      'Para quien extraña las pantallas luminosas de su época: ventanas de vidrio con brillo, ' +
+      'botones de gel y un escritorio de cielo y agua. El contenido, siempre sobre opaco.',
+    perillas: {
+      densidad: 'normal',
+      redondeo: 'sutil',
+      elevacion: 'aero',
+      movimiento: 'normal',
     },
   },
 };

@@ -428,3 +428,68 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   cuando ya no hay ninguno.
 - Reconocimiento de DP-11.4 con dos lectores Sonnet de sólo lectura, cada uno en su worktree (el
   sistema de diseño; los pilotos, la navegación y lo que exigen las pruebas). Sin cambios.
+- Publicación de DP-11.3: CI a mano `41026095330` verde (16/16) → `main` = `2feb661` (avance sin
+  fusión) → Production `READY` (consultada con la herramienta de Vercel: `vercel ls` se colgaba
+  también en primer plano) → humo verde → huella IDÉNTICA. `fase-b`: fusión `16d621b`, conflicto
+  de imports en `Caja.jsx` (unir mesas y sonar: se quedan los dos).
+- **Para retomar DP-11.4:** el plan y sus decisiones están en `docs/diseno/PLAN-DP-11.4.md`; el
+  reconocimiento, en `docs/diseno/RECONOCIMIENTO-DP-11.4-SISTEMA.md` y `…-PILOTOS.md`.
+
+### DP-11.4 · El lenguaje de capas, sus estilos y los pilotos
+
+- **11.4.a–c (sistema, estilos, modo automático):** `capas` y `aero` en la perilla de elevación;
+  vidrio sólo en lo que flota (`lenguaje.css`, por atributo, sin nombrar estilos); vidrio sólido
+  con «menos transparencia» o si el aparato no da 60 cuadros (`MedidorDelVidrio`, una vez, guardado
+  en `morphiqpos.vidrio`); `morphiq` rehecho con la marca, `don-poncho` con `capas`, «Retro»
+  nuevo; Automático / Claro / Oscuro por aparato en Apariencia. DP-D41, ficha 17. Pruebas primero
+  (`lenguaje-de-capas.test.ts`, `vidrio.test.ts`, `preferencia-de-modo.test.ts`, el guion de
+  arranque) y 25 de 25 mutantes muertos.
+- **Ojo, producción:** Don Poncho guarda `elevacion: sombra` explícito (se dio de alta así). Al
+  publicar, fijar `capas` por el comando de apariencia, con huella; si no, producción no estrena
+  el lenguaje.
+- **Ojo, el fondo:** un `body::before` fijo queda TAPADO por el fondo del `body` y del armazón. El
+  escritorio se pinta en la capa fija de `BrandedBackground` (`data-fondo="escritorio"`).
+- **Ojo, vista previa:** `preview_stop` no mata el `next start` hijo; quedan dueños del puerto.
+  Lanzador fuera del repositorio (`.work/servir-dp11.sh`, configuración `dp11-vista`).
+- **Subagentes (Sonnet, cada uno en su worktree, sin commit):** 11.4.d Tablero recompuesto; 11.4.e
+  Caja/Cobro recompuestos con el teclado de cobro y el teclado numérico compartido; 11.4.g Mesero
+  recompuesto (lanzado al terminar el de Caja: nunca más de dos a la vez).
+- **11.4.e integrado** (parche del subagente, sin conflictos): `src/caja/` (cabecera, pendientes,
+  teselas de método, resumen, recibido), `src/teclados/` (teclado de cobro con billetes y
+  «Exacto»; `TecladoNumerico` compartido por el acceso y el despertar). «Cobrar» con
+  `data-principal` y `data-tacto`. El subagente: 51 mutaciones a mano, todas en rojo; sin
+  Testing Library (no está instalada), las pruebas de componente pintan con
+  `renderToStaticMarkup`, y `vitest.config.ts` recoge `apps/*/src/**/*.test.tsx`. Aquí: unidad
+  1,577 en verde; navegador: PIN al despertar 9/9, sonidos 19/19, operaciones 17/17, jornada en
+  teléfono verde; en escritorio y tableta, dos tiempos agotados por carga de la máquina (el reseteo
+  y la lista de empleados no respondieron en 20 s con dos subagentes trabajando): se repiten.
+- **11.4.d integrado** (parche del subagente; `aspecto-permitido.json` y `verificar-adopcion.mjs`
+  a mano porque tenían cambios de aquí): `Dashboard.jsx` de 662 a 246 líneas, `src/tablero/`
+  (cifras del día en centavos con su prueba, cifras, dona del sistema, alertas como `Tabla`, aviso
+  de caja, cortes, encabezado con «Nueva venta» `data-principal`). El subagente: 3 + 2 mutantes en
+  rojo; dejó anotado un detalle heredado sin tocar (`alertIngredients` con `|| 3` manda los
+  agotados al final).
+- **11.4.f (navegación):** DP-D42. `tactil:`/`raton:`, el dock, la barra lateral flotante, el
+  abanico del dueño borrado. `navegacion.spec.ts` en los tres aparatos.
+- **11.4.g integrado** (parche del subagente, sin lo que trajo de `dp-11`; las filas de adopción con
+  un conflicto de final de lista resuelto a mano): `src/mesero/` (plano y rejilla con teselas
+  memoizadas, zonas, leyenda, cabecera de la mesa, catálogo en dos tiempos con `useDeferredValue`,
+  la cuenta flotando con «Enviar a Cocina» `data-principal`, y el borrador de la mesa en un
+  almacén fuera de `Mesero`: un toque a un platillo ya no redibuja el mapa ni los 107 botones).
+  `Mesero.jsx` de 1545 a 1168 líneas (los manejadores se quedan, por la fusión con `fase-b`). El
+  subagente: 54 mutaciones con su arnés, dos sobrevivieron y endureció las pruebas. Aquí se quitó
+  un atajo suyo: componía `text-[10px]`/`bg-card` para que `verify:primitivas` no los viera y la
+  prueba encontrara la leyenda; ahora la leyenda lleva `data-leyenda`/`data-estado-de-la-leyenda`
+  y `estados-de-mesa.spec.ts` la busca así.
+- **Rendimiento y evidencia (11.4.h):** `medir-fluidez` antes y después (y con vidrio sólido);
+  un perfil de CPU encontró que el sonido se sintetizaba en el toque (DP-11.3): ahora en reposo.
+  `capturar-pilotos.mjs`: 90 capturas, seis hojas de contacto y el video del recorrido, contra la
+  demo de `main` en el 3400 (`demo-local.mjs servir`, con el `TEMP` de Windows para sus PIN).
+  **Ojo:** en la Caja de la demo la cuenta pregunta la propina en un aviso que no es `dialog`, y la
+  caja puede estar abierta en otra terminal («Usar esta caja aquí»).
+- **Para retomar la publicación de DP-11.4** (pendiente de la hora que diga Miguel; el reporte 004
+  tiene los pasos): CI a mano en verde sobre el último commit de `dp-11`, `main`, Production,
+  fijar `capas` en la apariencia de Don Poncho (comando de apariencia, huella y exportación antes
+  y después), humo, huella, fusión en `fase-b` con sus choques. Después, la pausa.
+- **Ojo, worktrees en Windows:** `git worktree remove` no puede borrar `node_modules` por rutas
+  largas; se borran con PowerShell, con `\\?\` delante de la ruta.

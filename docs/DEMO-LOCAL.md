@@ -80,6 +80,22 @@ node --conditions=react-server scripts/demo-local.mjs preparar --base postgres:/
 Aplica las migraciones nuevas de `fase-b` a la misma base (o usa otro nombre de base para empezar
 en limpio) y vuelve a levantar el servidor con `servir`.
 
+## 5 · Ver el diseño nuevo (DP-11.4)
+
+Está en `main` (y en la rama `dp-11` mientras se publica): con `servir` ya se ve.
+
+- **Estilo:** entra como dueño → Configuración → Apariencia. «Don Poncho» y «Morphiq» usan el
+  lenguaje de capas (perilla Elevación en `capas`); «Retro» es el nuevo. Si la demo se preparó
+  antes de DP-11.4, su perilla de elevación dice `sombra`: cámbiala a `capas` y «Guardar para el
+  negocio».
+- **Claro u oscuro:** en la misma pestaña, «Claro u oscuro, en este aparato» (Automático sigue al
+  aparato).
+- **Las tres pantallas piloto:** el Tablero (dueño), Mesas y pedidos (mesera; abre una mesa) y
+  Caja (caja; el diálogo de cobro trae el teclado táctil). En la tablet y el teléfono, la
+  navegación es el dock de abajo; en la PC, la barra lateral.
+- **Capturas y video para comparar:** `node scripts/capturar-pilotos.mjs --url
+  http://localhost:3300 --secretos <demo.json> --salida <carpeta> --video`.
+
 ## Borrar la demo
 
 ```sql

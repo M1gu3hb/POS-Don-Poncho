@@ -9,6 +9,13 @@ import { clamp, db } from './formas';
 import { renderSound } from './render';
 import { type Recipe, type Tune } from './tipos';
 
+/**
+ * Añadido en POS Don Poncho (DP-11.4): la síntesis va a una tasa FIJA y no a la del contexto en
+ * vivo. Así se puede sintetizar en reposo antes del primer toque —un `OfflineAudioContext` no
+ * necesita gesto—, y al tocar el navegador remuestrea si el aparato va a otra tasa.
+ */
+export const TASA_DE_SINTESIS = 48000;
+
 let sharedContext: AudioContext | null = null;
 let masterVolume = 1;
 let muted = false;
@@ -102,18 +109,20 @@ export function setSoundMuted(value: boolean) {
   muted = value;
 }
 
-export function preloadSound(recipe: Recipe, tune: Tune = {}) {
+/** Añadido en POS Don Poncho (DP-11.4): termina cuando las variantes quedaron sintetizadas. */
+export async function preloadSound(recipe: Recipe, tune: Tune = {}): Promise<void> {
   if (typeof window === 'undefined') return;
-  for (let variant = 0; variant < variantsOf(recipe); variant += 1) {
-    bufferFor(recipe, tune, audio().sampleRate, variant).catch(() => undefined);
-  }
+  const variantes = Array.from({ length: variantsOf(recipe) }, (_, variant) =>
+    bufferFor(recipe, tune, TASA_DE_SINTESIS, variant).catch(() => undefined),
+  );
+  await Promise.all(variantes);
 }
 
 export async function playSound(recipe: Recipe, tune: Tune = {}) {
   if (typeof window === 'undefined' || muted || masterVolume <= 0) return;
   const context = audio();
   if (context.state === 'suspended') await context.resume();
-  const buffer = await bufferFor(recipe, tune, context.sampleRate, pickVariant(recipe));
+  const buffer = await bufferFor(recipe, tune, TASA_DE_SINTESIS, pickVariant(recipe));
   const source = context.createBufferSource();
   source.buffer = buffer;
   const variation = clamp(tune.variation ?? 0, 0, 1);

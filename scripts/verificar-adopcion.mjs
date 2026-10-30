@@ -87,6 +87,111 @@ export const SIN_ESTADO = [
     razon:
       'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
   },
+  // ── El tablero del dueño recompuesto (DP-11.4): `heredado/pages/Dashboard.jsx` es el cascarón
+  //    que lee los datos; estas piezas sólo los pintan. La espera, el vacío y el fallo de cada
+  //    lectura los pintan FilaDeCifras, DonaDeMetodosDePago y AlertasDeInventario, que sí los dicen.
+  {
+    pantalla: 'tablero/CifraDelTablero',
+    estado: 'vacio',
+    razon:
+      'UNA tarjeta de cifra del tablero (DP-11.4): recibe su título y su importe por props y siempre trae un valor; la fila que la monta dice cuándo no hay cifras.',
+  },
+  {
+    pantalla: 'tablero/CifraDelTablero',
+    estado: 'cargando',
+    razon:
+      'No lee nada: el tablero no la monta mientras las cifras llegan y en su lugar pinta los esqueletos de FilaDeCifras.',
+  },
+  {
+    pantalla: 'tablero/CifraDelTablero',
+    estado: 'error',
+    razon:
+      'No lee ni escribe: si la lectura de las cifras falla, FilaDeCifras pinta su ErrorDeLectura en lugar de las tarjetas.',
+  },
+  {
+    pantalla: 'tablero/FilaDeCifras',
+    estado: 'vacio',
+    razon:
+      'Siempre hay cifras que enseñar: sin caja abierta o sin ventas valen cero, y el aviso de la caja (AvisoDeCaja) explica por qué. Un «sin datos» aquí escondería los ceros reales.',
+  },
+  {
+    pantalla: 'tablero/AvisoDeCaja',
+    estado: 'vacio',
+    razon:
+      'Es un aviso sobre el estado de la caja, no una lista: con caja abierta no se pinta nada y sin ella pinta su Aviso de atención con la salida a Caja.',
+  },
+  {
+    pantalla: 'tablero/CortesRecientes',
+    estado: 'vacio',
+    razon:
+      'Sólo es el marco de la lista de cortes: el vacío («aún no hay cortes») lo pinta CorteHistorialList, la heredada que también usa Caja → Historial.',
+  },
+  {
+    pantalla: 'tablero/CortesRecientes',
+    estado: 'cargando',
+    razon:
+      'Sólo es el marco de la lista de cortes: CorteHistorialList hace su propia lectura y pinta su propia espera con esqueletos.',
+  },
+  {
+    pantalla: 'tablero/CortesRecientes',
+    estado: 'error',
+    razon:
+      'Sólo es el marco de la lista de cortes: CorteHistorialList hace su propia lectura y decide cómo decir que falló; el marco no lee nada.',
+  },
+  {
+    pantalla: 'tablero/EncabezadoDelTablero',
+    estado: 'vacio',
+    razon:
+      'El encabezado del tablero (DP-11.4): un título, una fecha y dos botones de navegación. No tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'tablero/EncabezadoDelTablero',
+    estado: 'cargando',
+    razon:
+      'No lee nada: el nombre del negocio y la fecha llegan por props desde el tablero, que ya tiene la configuración cuando lo pinta.',
+  },
+  {
+    pantalla: 'tablero/EncabezadoDelTablero',
+    estado: 'error',
+    razon:
+      'Son enlaces a Nueva venta, Caja y Compras: no lee ni escribe, así que no hay operación que pueda fallar dentro de la pieza.',
+  },
+  {
+    pantalla: 'navegacion/DockDelPuesto',
+    estado: 'vacio',
+    razon:
+      'Las secciones salen del menú que declara el servidor para el puesto (DP-11.4): siempre hay al menos una, y «Abrir menú» está siempre.',
+  },
+  {
+    pantalla: 'navegacion/DockDelPuesto',
+    estado: 'cargando',
+    razon:
+      'Se monta dentro del armazón, que ya esperó la sesión y la configuración (MorfiCargando): no hay nada que cargar aquí.',
+  },
+  {
+    pantalla: 'navegacion/DockDelPuesto',
+    estado: 'error',
+    razon:
+      'No lee del servidor: arma las secciones con la sesión y la configuración que ya tiene el armazón. No tiene un fallo propio que avisar.',
+  },
+  {
+    pantalla: 'configuracion/ModoDelAparato',
+    estado: 'vacio',
+    razon:
+      'Tres opciones fijas de ESTE aparato (DP-11.4): Automático, Claro y Oscuro. No tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/ModoDelAparato',
+    estado: 'cargando',
+    razon:
+      'Lee la preferencia del ThemeContext, que sale del almacén del navegador al instante. No hay viaje al servidor.',
+  },
+  {
+    pantalla: 'configuracion/ModoDelAparato',
+    estado: 'error',
+    razon:
+      'Guardar es escribir en el almacén del navegador; si está bloqueado, el modo cambia igual en esta visita y no hay nada que avisar.',
+  },
   {
     pantalla: 'configuracion/SonidosDelNegocio',
     estado: 'vacio',
@@ -881,7 +986,181 @@ export const SIN_ESTADO = [
     razon:
       'Va dentro del renglón de un ajuste de inventario: si los motivos no se leen lo dice en una línea bajo el selector y deja la corrección de conteo. Un Aviso o un ErrorDePantalla ahí ocuparía el renglón entero.',
   },
+  // ── DP-11.4: los teclados y las piezas recompuestas de la caja (piloto 3). Ninguna lee nada ni
+  //    decide un error: son controles y resúmenes que montan el diálogo de cobro y el acceso.
+  {
+    pantalla: 'teclados/TecladoNumerico',
+    estado: 'vacio',
+    razon:
+      'Un teclado de PIN: sus doce teclas siempre están. No pinta ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'teclados/TecladoNumerico',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la pantalla que lo monta le pasa lo tecleado. Mientras comprueba el PIN, sus teclas quedan deshabilitadas o con aria-disabled.',
+  },
+  {
+    pantalla: 'teclados/TecladoNumerico',
+    estado: 'error',
+    razon:
+      'No decide si un PIN es correcto: lo decide el servidor, y la pantalla que lo monta (acceso o despertar) pinta su Aviso junto a las teclas.',
+  },
+  {
+    pantalla: 'teclados/TecladoDeCobro',
+    estado: 'vacio',
+    razon:
+      'Un teclado de importes: sus dieciocho teclas siempre están. No pinta ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'teclados/TecladoDeCobro',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la caja le pasa lo recibido y el total por props. Mientras cobra, todas sus teclas quedan deshabilitadas.',
+  },
+  {
+    pantalla: 'teclados/TecladoDeCobro',
+    estado: 'error',
+    razon:
+      'No valida un importe contra el servidor: edita el texto de «Recibido» con el filtro de `limpiarImporte`, y el cobro lo valida y lo avisa la caja.',
+  },
+  {
+    pantalla: 'caja/CabeceraDeCaja',
+    estado: 'vacio',
+    razon: 'Es una cabecera con tres acciones: no pinta ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'caja/CabeceraDeCaja',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la caja le pasa si hay caja abierta y si sigue cargando. Mientras tanto «Abrir caja» queda deshabilitado.',
+  },
+  {
+    pantalla: 'caja/CabeceraDeCaja',
+    estado: 'error',
+    razon:
+      'No lee nada que pueda fallar: el error de abrir, cortar o cerrar la caja lo avisa el diálogo de cada acción con un toast.',
+  },
+  {
+    pantalla: 'caja/TeselasDeMetodo',
+    estado: 'vacio',
+    razon: 'Son cuatro métodos de pago fijos: no hay lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'caja/TeselasDeMetodo',
+    estado: 'cargando',
+    razon: 'No lee nada: recibe el método elegido por props, y elegir es instantáneo.',
+  },
+  {
+    pantalla: 'caja/TeselasDeMetodo',
+    estado: 'error',
+    razon: 'Elegir un método no puede fallar: el cobro que lo usa valida y avisa su propio error.',
+  },
+  {
+    pantalla: 'caja/ResumenDeCobro',
+    estado: 'vacio',
+    razon:
+      'Resume UNA cuenta ya abierta en el diálogo de cobro: no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'caja/ResumenDeCobro',
+    estado: 'cargando',
+    razon:
+      'No lee nada: recibe los importes de la cuenta por props, que el diálogo ya tiene cuando se abre.',
+  },
+  {
+    pantalla: 'caja/ResumenDeCobro',
+    estado: 'error',
+    razon:
+      'Sólo muestra importes que ya están leídos: el fallo de un cobro lo avisa la caja con un toast, no este resumen.',
+  },
+  {
+    pantalla: 'caja/RecibidoDelCobro',
+    estado: 'vacio',
+    razon: 'Es un campo con su teclado: no pinta ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'caja/RecibidoDelCobro',
+    estado: 'cargando',
+    razon:
+      'No lee nada: lo recibido vive en la caja y llega por props. Mientras cobra, el teclado de la pantalla queda deshabilitado.',
+  },
+  {
+    pantalla: 'caja/RecibidoDelCobro',
+    estado: 'error',
+    razon:
+      'Un campo no decide si lo recibido alcanza: lo decide el cobro, y el servidor rechaza el que no cubre; la caja pinta ese aviso.',
+  },
+  ...piezasDelMesero(),
 ];
+
+/**
+ * LAS PIEZAS DE `src/mesero/` QUE SÓLO PINTAN LO QUE RECIBEN (DP-11.4).
+ *
+ * `Mesero.jsx` lee las mesas, el menú y las solicitudes; los estados de esas lecturas —leyendo, sin
+ * poder leer, vacío— los pintan `EstadosDelSalon` (el plano y la rejilla) y `CatalogoDeLaMesa` (el
+ * menú), con el sistema. Lo demás son piezas hoja: una tesela, una pastilla, una leyenda, un
+ * encabezado. No leen nada, así que no tienen un «cargando» ni un «error» propios que pintar; y su
+ * «vacío» es que el padre no las monta. Una fila por pieza y estado, con SU razón.
+ */
+function piezasDelMesero() {
+  const TRES = ['vacio', 'cargando', 'error'];
+  const piezas = [
+    [
+      'mesero/TeselaDeMesa',
+      TRES,
+      'Despacha a la tesela del plano o de la rejilla; una mesa siempre trae su estado de servicio, que se pinta con su palabra y su color.',
+    ],
+    [
+      'mesero/TeselaDelPlano',
+      TRES,
+      'Una mesa del plano: recibe la mesa ya leída por props. Si la lectura no llegó, el plano (EstadosDelSalon) dice que está leyendo o que falló; la tesela no existe todavía.',
+    ],
+    [
+      'mesero/TeselaDeLaRejilla',
+      TRES,
+      'Una tarjeta de la rejilla del teléfono: recibe la mesa ya leída por props. Leer, fallar o estar vacía lo dice la rejilla (EstadosDelSalon), no cada tarjeta.',
+    ],
+    [
+      'mesero/LeyendaDeEstados',
+      TRES,
+      'Los estados de mesa son una lista fija del código (MESA_STATUS_CONFIG): no se lee del servidor, no puede llegar vacía ni fallar.',
+    ],
+    [
+      'mesero/EncabezadoDelMesero',
+      TRES,
+      'El título de la pantalla y la fila de acciones que le pasa Mesero.jsx: no lee nada, y sus acciones son botones que siempre existen.',
+    ],
+    [
+      'mesero/CabeceraDeLaMesa',
+      TRES,
+      'El contenido del título del diálogo de la mesa: recibe la mesa y la cuenta ya leídas. Mientras la cuenta llega, el título sólo omite las pastillas de personas y cliente.',
+    ],
+    [
+      'mesero/PlatilloTesela',
+      TRES,
+      'Un platillo de la cuadrícula: recibe el platillo ya leído por props. El menú leyendo, vacío o sin poder leerse lo dice CatalogoDeLaMesa.',
+    ],
+    [
+      'mesero/CarritoFlotante',
+      TRES,
+      'Adaptador del carrito del teléfono (MeseroCartFAB, heredado): lee el borrador de la mesa, que está en memoria, y no hay viaje al servidor. Se oculta solo cuando no hay nada que mostrar.',
+    ],
+    [
+      'mesero/PedidoDeLaMesa',
+      ['cargando', 'error'],
+      'La cuenta lee el borrador (en memoria) y lo que la mesa ya envió, que recibe por props; no hay lectura propia. Mientras el envío viaja, «Enviar a Cocina» dice «Enviando…»; si falla, lo avisa el toast del manejador de Mesero.jsx.',
+    ],
+    [
+      'mesero/ZonasDelSalon',
+      ['vacio', 'cargando'],
+      'Las pestañas de zona salen de las mesas ya leídas; con una sola zona no se pintan, y mientras las mesas llegan las pinta EstadosDelSalon.',
+    ],
+  ];
+  return piezas.flatMap(([pantalla, estados, razon]) =>
+    estados.map((estado) => ({ pantalla, estado, razon })),
+  );
+}
 
 const argumentos = process.argv.slice(2);
 const conDetalle = argumentos.includes('--detalle');

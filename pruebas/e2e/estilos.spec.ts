@@ -49,6 +49,7 @@ const ESTILOS = [
   'papel',
   'noche',
   'don-poncho',
+  'retro',
 ] as const;
 
 /**

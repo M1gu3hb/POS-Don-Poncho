@@ -1,6 +1,7 @@
 import {
   TECLA_DE_OMISION,
   recetaDe,
+  recetasDelMapa,
   type EventoDeSonido,
   type NombreDeReceta,
   type SonidoDeTecla,
@@ -37,6 +38,7 @@ let configuracion: ConfiguracionDeSonido = {
   silencioDelPortal: false,
 };
 let desbloqueado = false;
+let precalentado = false;
 const ultimas = new Map<NombreDeReceta, number>();
 const escuchasDelFallo = new Set<() => void>();
 let fallo: string | null = null;
@@ -54,13 +56,48 @@ export function desbloquearSonidos(): void {
   } catch (error: unknown) {
     anotarFallo(error);
   }
-  if (desbloqueado) return;
   desbloqueado = true;
-  // Lo que más suena y lo que va antes de recargar (entrar, salir), ya sintetizado. Si este
-  // aparato no suena (Apagado, el portal callado), no se gasta en nada.
-  if (configuracion.ganancia <= 0 || configuracion.silencioDelPortal) return;
-  for (const receta of ['felt', configuracion.tecla, 'arrive', 'retreat'] as const)
-    void precargar(receta).catch(anotarFallo);
+}
+
+/** Cuánto puede esperar una receta a que la pantalla repose antes de sintetizarse igual. */
+const REPOSO_MAXIMO_MS = 4000;
+/** Sin `requestIdleCallback` (Safari viejo): una pausa corta entre receta y receta. */
+const PAUSA_SIN_REPOSO_MS = 200;
+
+function enReposo(tarea: () => void): void {
+  if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(
+      () => {
+        tarea();
+      },
+      { timeout: REPOSO_MAXIMO_MS },
+    );
+    return;
+  }
+  setTimeout(tarea, PAUSA_SIN_REPOSO_MS);
+}
+
+/**
+ * DP-11.4 · LOS SONIDOS, SINTETIZADOS ANTES DEL PRIMER TOQUE. Sintetizar en el gesto mismo costaba
+ * medio segundo de hilo con la CPU 4× más lenta (la primera mesa que se abría). La síntesis es
+ * de un `OfflineAudioContext`, que no necesita gesto: se hace en reposo, una receta a la vez y una
+ * sola vez por pestaña, y el toque sólo reanuda el audio y toca lo ya hecho. Si este aparato no
+ * suena (Apagado, el portal callado), no se gasta en nada.
+ */
+export function precalentarSonidos(programar: (tarea: () => void) => void = enReposo): void {
+  if (precalentado || configuracion.ganancia <= 0 || configuracion.silencioDelPortal) return;
+  precalentado = true;
+  const pendientes = recetasDelMapa(configuracion.tecla);
+  const siguiente = (): void => {
+    const receta = pendientes.shift();
+    if (receta === undefined) return;
+    void precargar(receta)
+      .catch(anotarFallo)
+      .finally(() => {
+        programar(siguiente);
+      });
+  };
+  programar(siguiente);
 }
 
 /** La voz de Cocina y de Solicitudes es Web Speech: lo público es `speaking` y `pending`. */

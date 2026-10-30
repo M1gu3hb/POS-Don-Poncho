@@ -9,17 +9,12 @@ import { hasPermission } from '@/lib/permissions';
 import { canAccessModule } from '@/lib/packageConfig';
 import { toast } from 'sonner';
 import {
-  Landmark,
   Search,
   DollarSign,
-  CreditCard,
-  Banknote,
   Smartphone,
   Receipt,
   TrendingUp,
   CheckCircle2,
-  Layers,
-  Scissors,
   Printer,
   FileText,
   ShoppingCart,
@@ -76,33 +71,12 @@ import StatCard from '@/components/common/StatCard';
 import { claves } from '~/cliente/claves-de-consulta';
 import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
 import { sonar } from '~/sonidos/gestor';
-
-const METODOS = [
-  {
-    key: 'efectivo',
-    label: 'Efectivo',
-    Icon: Banknote,
-    color: 'border-exito bg-exito/10 text-exito',
-  },
-  {
-    key: 'tarjeta',
-    label: 'Tarjeta',
-    Icon: CreditCard,
-    color: 'border-info bg-info/10 text-info',
-  },
-  {
-    key: 'transferencia',
-    label: 'Transferencia',
-    Icon: Smartphone,
-    color: 'border-acento bg-acento/10 text-acento',
-  },
-  {
-    key: 'mixto',
-    label: 'Mixto',
-    Icon: Layers,
-    color: 'border-advertencia bg-advertencia/10 text-advertencia',
-  },
-];
+// DP-11.4: lo visible del día a día de la caja se recompone en `src/caja` con el sistema de diseño.
+import { CabeceraDeCaja } from '~/caja/CabeceraDeCaja';
+import { CuentasPendientes } from '~/caja/CuentasPendientes';
+import { RecibidoDelCobro } from '~/caja/RecibidoDelCobro';
+import { ResumenDeCobro } from '~/caja/ResumenDeCobro';
+import { TeselasDeMetodo } from '~/caja/TeselasDeMetodo';
 
 /**
  * Los valores que `venta.cobrar` acepta como metadato de la propina.
@@ -187,10 +161,20 @@ export default function Caja() {
 
   // BLOQUE 0: refetch cada 2s para que QR/Mesero → Caja sea casi en vivo.
   // Sin esto, una cuenta solicitada podía tardar hasta 6s en aparecer en Caja.
-  const { data: ventasPendientes = [] } = useQuery({
+  // `isFetched` y `isError` dicen los tres estados de la lista (DP-11.4): la lista empieza
+  // vacía por construcción (`initialData`), así que «vacía» sólo es verdad tras la primera lectura.
+  const {
+    data: ventasPendientes = [],
+    isFetched: pendientesLeidas,
+    isError: pendientesFallaron,
+    refetch: releerPendientes,
+  } = useQuery({
     queryKey: ['ventas_pendientes_caja'],
     queryFn: () => api.entidades.Venta.filter({ estado: 'cuenta_solicitada' }),
     initialData: [],
+    // El vacío de arranque cuenta como viejo: la primera lectura sale al montar y no a los 2 s,
+    // que es lo que ahora tardaría en dejar el esqueleto.
+    initialDataUpdatedAt: 0,
     refetchInterval: 2000,
     staleTime: 1000,
   });
@@ -444,11 +428,6 @@ export default function Caja() {
     const p = Number(ventaSeleccionada?.propina_monto) || 0;
     return t + p;
   }, [ventaSeleccionada]);
-
-  const calcularCambio = () => {
-    const recibido = parseFloat(montoEfectivo) || 0;
-    return Math.max(0, recibido - totalACobrarVenta);
-  };
 
   // Guarda la propina elegida en caja sobre la venta actual.
   //
@@ -1081,78 +1060,18 @@ export default function Caja() {
 
   return (
     <div className="space-y-4 px-1 sm:px-0 max-w-full overflow-x-hidden">
-      {/* Header — responsive: stack en móvil, botones en grid 3-col */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{
-              background: 'linear-gradient(135deg, hsl(4,72%,46%) 0%, hsl(4,72%,34%) 100%)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-            }}
-          >
-            <Landmark className="w-5 h-5 text-primario-texto" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-xl font-heading font-bold">Caja</h1>
-            <p className="text-xs text-muted-foreground truncate">
-              {hayCaja
-                ? isCajaDirecta
-                  ? 'Punto de venta directo'
-                  : `${ventasPendientes.length} cobros pendientes`
-                : 'Caja cerrada'}
-            </p>
-          </div>
-        </div>
-
-        {/* === 3 BOTONES PRINCIPALES — grid en móvil para que se vean enteros === */}
-        <div className="grid grid-cols-3 sm:flex gap-2 w-full sm:w-auto">
-          <Button
-            size="sm"
-            onClick={() => setShowAbrirCaja(true)}
-            disabled={hayCaja || cargandoCaja || !puedoAbrir}
-            variant={hayCaja || !puedoAbrir ? 'outline' : 'default'}
-            title={
-              hayCaja || !puedoAbrir ? 'Ya hay una caja abierta' : 'Abrir caja para comenzar operación'
-            }
-            className="px-2"
-          >
-            <DoorOpen className="w-4 h-4 sm:mr-1" />
-            <span className="hidden sm:inline">Abrir caja</span>
-            <span className="sm:hidden text-[10px]">Abrir</span>
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowCorteTurno(true)}
-            disabled={!hayCaja}
-            title={!hayCaja ? 'Necesitas una caja abierta' : 'Corte parcial de turno'}
-            className="px-2"
-          >
-            <Scissors className="w-4 h-4 sm:mr-1" />
-            <span className="hidden sm:inline">Corte de turno</span>
-            <span className="sm:hidden text-[10px]">Turno</span>
-          </Button>
-          <Button
-            size="sm"
-            onClick={intentarAbrirCierreDiario}
-            disabled={!hayCaja || verificandoMesas}
-            title={!hayCaja ? 'Necesitas una caja abierta' : 'Cierre final del día'}
-            className="px-2"
-            style={
-              hayCaja
-                ? { background: 'linear-gradient(135deg, hsl(0,72%,46%) 0%, hsl(0,72%,36%) 100%)' }
-                : undefined
-            }
-          >
-            <Lock className="w-4 h-4 sm:mr-1" />
-            <span className="hidden sm:inline">
-              {verificandoMesas ? 'Verificando…' : 'Cierre diario'}
-            </span>
-            <span className="sm:hidden text-[10px]">{verificandoMesas ? '…' : 'Cierre'}</span>
-          </Button>
-        </div>
-      </div>
+      {/* Cabecera (DP-11.4): el título y las tres acciones de la caja, recompuestos en src/caja. */}
+      <CabeceraDeCaja
+        hayCaja={hayCaja}
+        esCajaDirecta={isCajaDirecta}
+        cobrosPendientes={ventasPendientes.length}
+        cargandoCaja={cargandoCaja}
+        puedoAbrir={puedoAbrir}
+        verificandoMesas={verificandoMesas}
+        alAbrirCaja={() => setShowAbrirCaja(true)}
+        alCorteDeTurno={() => setShowCorteTurno(true)}
+        alCierreDiario={intentarAbrirCierreDiario}
+      />
 
       {/* La caja de la sucursal está abierta en OTRA terminal: traerla, no abrir otra. */}
       {!hayCaja && !cargandoCaja && cajaEnOtraTerminal && (
@@ -1254,99 +1173,16 @@ export default function Caja() {
         {/* COBROS PENDIENTES (solo con sala: el módulo `mesas`) */}
         {!isCajaDirecta && (
           <TabsContent value="cobros">
-            {ventasPendientes.length === 0 ? (
-              <div className="text-center py-16 text-muted-foreground">
-                <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-exito" />
-                <p className="font-medium">Sin cobros pendientes</p>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {ventasPendientes.map((v) => {
-                  const esCero = !v.total || v.total <= 0;
-                  return (
-                    <button
-                      key={v.id}
-                      type="button"
-                      onClick={() => (esCero ? handleEliminarTicketCero(v) : abrirVenta(v))}
-                      className={`w-full p-4 rounded-xl border-2 text-left transition-all active:scale-[0.98] ${esCero ? 'border-peligro/30 bg-peligro/10 hover:bg-peligro/15' : 'border-acento/30 bg-acento/10 hover:bg-acento/15'}`}
-                      style={{
-                        boxShadow:
-                          '0 2px 0 rgba(255,255,255,0.8) inset, 0 3px 8px rgba(0,0,0,0.08)',
-                        touchAction: 'manipulation',
-                      }}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="font-heading font-bold text-base">
-                            Mesa {v.mesa_numero || '—'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">{v.folio}</p>
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${esCero ? 'bg-peligro/20 text-peligro' : 'bg-acento/20 text-acento'}`}
-                        >
-                          {esCero ? 'En cero' : 'Cuenta'}
-                        </span>
-                      </div>
-                      <p
-                        className={`text-2xl font-heading font-black ${config?.colorear_importes_monetarios !== false ? 'text-primary' : 'text-foreground'}`}
-                      >
-                        {formatCurrency(v.total)}
-                      </p>
-                      {/* Badges QR — diferencian estado de la propina del comensal */}
-                      {(v.propina_origen === 'portal_qr' ||
-                        v.propina_origen === 'pendiente_portal_qr') && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {v.propina_origen === 'pendiente_portal_qr' ||
-                          v.propina_tipo === 'pendiente_cliente' ? (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-advertencia/15 text-advertencia border border-advertencia/30">
-                              QR: esperando propina
-                            </span>
-                          ) : v.propina_tipo === 'decidir_en_caja' ? (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-info/15 text-info border border-info/30">
-                              QR: decidir en caja
-                            </span>
-                          ) : v.propina_tipo === 'sin_propina' ? (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-fondo-sutil text-texto border border-borde">
-                              QR: sin propina
-                            </span>
-                          ) : v.propina_tipo === 'porcentaje' &&
-                            Number(v.propina_porcentaje) > 0 ? (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-peligro/15 text-peligro border border-peligro/30">
-                              QR: propina {v.propina_porcentaje}% (
-                              {formatCurrency(propinaDerivada(v))})
-                            </span>
-                          ) : propinaDerivada(v) > 0 ? (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-peligro/15 text-peligro border border-peligro/30">
-                              QR: propina {formatCurrency(propinaDerivada(v))}
-                            </span>
-                          ) : (
-                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-info/15 text-info border border-info/30">
-                              QR: cuenta solicitada
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {v.codigo_caja && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Código: <span className="font-mono font-bold">{v.codigo_caja}</span>
-                        </p>
-                      )}
-                      {v.personas > 0 && (
-                        <p className="text-[10px] text-muted-foreground">
-                          {v.personas} personas{v.cliente_nombre ? ` · ${v.cliente_nombre}` : ''}
-                        </p>
-                      )}
-                      <p
-                        className={`mt-2 text-xs font-semibold ${esCero ? 'text-peligro' : 'text-primary'}`}
-                      >
-                        {esCero ? '🗑 Borrar ticket en cero →' : 'Toca para cobrar →'}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <CuentasPendientes
+              ventas={ventasPendientes}
+              cargando={!pendientesLeidas && ventasPendientes.length === 0}
+              fallo={pendientesFallaron && ventasPendientes.length === 0}
+              alReintentar={() => releerPendientes()}
+              colorearImportes={config?.colorear_importes_monetarios !== false}
+              propinaDeLaVenta={propinaDerivada}
+              alCobrar={abrirVenta}
+              alBorrarEnCero={handleEliminarTicketCero}
+            />
           </TabsContent>
         )}
 
@@ -1397,7 +1233,7 @@ export default function Caja() {
 
       {/* COBRO DIALOG */}
       <Dialog open={!!ventaSeleccionada} onOpenChange={() => setVentaSeleccionada(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading">
               Cobrar — Mesa {ventaSeleccionada?.mesa_numero || ventaSeleccionada?.folio}
@@ -1467,89 +1303,30 @@ export default function Caja() {
                 );
               })}
             </div>
-            {/* Subtotal + Propina + Total a cobrar */}
-            <div className="border-t pt-2 space-y-1">
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Subtotal</span>
-                <span>{formatCurrency(ventaSeleccionada?.total || 0)}</span>
-              </div>
-              {(Number(ventaSeleccionada?.propina_monto) || 0) > 0 && (
-                <div className="flex justify-between text-sm text-peligro">
-                  <span>
-                    Propina{' '}
-                    {ventaSeleccionada?.propina_porcentaje > 0
-                      ? `(${ventaSeleccionada.propina_porcentaje}%)`
-                      : ''}
-                  </span>
-                  <span>+ {formatCurrency(Number(ventaSeleccionada?.propina_monto) || 0)}</span>
-                </div>
-              )}
-              {(ventaSeleccionada?.propina_tipo === 'pendiente' ||
-                ventaSeleccionada?.propina_tipo === 'pendiente_cliente' ||
-                ventaSeleccionada?.propina_tipo === 'decidir_en_caja') && (
-                <button
-                  type="button"
-                  onClick={() => setShowPropinaCaja(true)}
-                  className="w-full text-left text-xs text-advertencia bg-advertencia/10 border border-advertencia/30 rounded-md px-2 py-1.5"
-                >
-                  {ventaSeleccionada?.propina_tipo === 'decidir_en_caja'
-                    ? 'Cliente eligió decidir en caja — toca para definir propina'
-                    : ventaSeleccionada?.propina_tipo === 'pendiente_cliente'
-                      ? 'Cliente no eligió propina en QR — toca para definirla'
-                      : 'Propina pendiente — toca para definirla'}
-                </button>
-              )}
-              <div className="flex justify-between font-black text-lg border-t pt-2">
-                <span>TOTAL A COBRAR</span>
-                <span
-                  className={
-                    config?.colorear_importes_monetarios !== false
-                      ? 'text-primary'
-                      : 'text-foreground'
-                  }
-                >
-                  {formatCurrency(totalACobrarVenta)}
-                </span>
-              </div>
-            </div>
+            {/* Subtotal + Propina + Total a cobrar (DP-11.4: recompuesto en src/caja) */}
+            <ResumenDeCobro
+              subtotalCentavos={aCentavos(ventaSeleccionada?.total || 0)}
+              propinaCentavos={aCentavos(Number(ventaSeleccionada?.propina_monto) || 0)}
+              propinaPorcentaje={Number(ventaSeleccionada?.propina_porcentaje) || 0}
+              totalCentavos={aCentavos(totalACobrarVenta)}
+              colorearImportes={config?.colorear_importes_monetarios !== false}
+              propinaTipo={ventaSeleccionada?.propina_tipo}
+              alDefinirPropina={() => setShowPropinaCaja(true)}
+            />
             {(!ventaSeleccionada?.total || ventaSeleccionada.total <= 0) && (
               <div className="p-3 rounded-xl bg-peligro/10 border border-peligro/30 text-xs text-peligro">
                 Este ticket está en $0.00. No se puede cobrar. Puedes eliminarlo para limpiar la
                 caja.
               </div>
             )}
-            <div>
-              <Label className="text-xs text-muted-foreground">Método de pago</Label>
-              <div className="grid grid-cols-2 gap-2 mt-1.5">
-                {METODOS.map((m) => (
-                  <button
-                    key={m.key}
-                    onClick={() => setMetodoPago(m.key)}
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${metodoPago === m.key ? m.color + ' shadow-md' : 'border-border bg-superficie text-muted-foreground hover:bg-muted'}`}
-                  >
-                    <m.Icon className="w-4 h-4 shrink-0" />
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <TeselasDeMetodo metodo={metodoPago} alElegir={setMetodoPago} />
             {metodoPago === 'efectivo' && (
-              <div>
-                <Label className="text-xs">Recibido</Label>
-                <NumericInput
-                  value={montoEfectivo}
-                  onChange={(e) => setMontoEfectivo(e.target.value)}
-                  placeholder="0.00"
-                  className="text-xl font-bold h-12 mt-1"
-                />
-                {montoEfectivo && (
-                  <p
-                    className={`text-sm font-bold mt-1 ${calcularCambio() >= 0 ? 'text-exito' : 'text-peligro'}`}
-                  >
-                    Cambio: {formatCurrency(calcularCambio())}
-                  </p>
-                )}
-              </div>
+              <RecibidoDelCobro
+                recibido={montoEfectivo}
+                alCambiarRecibido={setMontoEfectivo}
+                totalCentavos={aCentavos(totalACobrarVenta)}
+                procesando={procesando}
+              />
             )}
             {metodoPago === 'mixto' && (
               <>
@@ -1685,9 +1462,9 @@ export default function Caja() {
                 onClick={handleCobrar}
                 disabled={procesando}
                 className="min-w-[140px]"
-                style={{
-                  background: 'linear-gradient(135deg, hsl(4,72%,46%) 0%, hsl(4,72%,36%) 100%)',
-                }}
+                // DP-11.4: la acción principal del cobro. El color y el halo los pone el sistema.
+                data-principal
+                data-tacto
               >
                 {procesando ? (
                   <span className="flex items-center gap-2">

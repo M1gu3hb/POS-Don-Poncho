@@ -6,25 +6,12 @@ import { usePOSAuth } from '@/lib/POSAuthContext';
 import { useConfig } from '@/lib/ConfigContext';
 // `generateFolio` se fue con `Venta.create`: el folio lo pone `abrir_mesa`
 // dentro de su transacción, y dos pestañas ya no pueden inventar el mismo.
-import { formatCurrency } from '@/utils/financialUtils';
 import { toast } from 'sonner';
-import {
-  UtensilsCrossed,
-  Send,
-  Receipt,
-  ChefHat,
-  Search,
-  Users,
-  Printer,
-  Sparkles,
-} from 'lucide-react';
 // `ventaTotales` ya no se importa aquí: el subtotal, el costo y el margen los
 // devuelve `enviar_pedido` calculados sobre las líneas que acaba de escribir,
 // en la misma transacción. Sumar detalles en el navegador era la mitad del
 // defecto D-05 y todo el «HOTFIX 6A — rescate de totales en CERO».
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -32,10 +19,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { MESA_STATUS_CONFIG, ZONAS_MESA, insigniaDeEstadoDeMesa } from '@/lib/constants';
-import MesaShape from '@/components/mesas/MesaShape';
-import MesaGridMobile from '@/components/mesero/MesaGridMobile';
-import MeseroCartFAB from '@/components/mesero/MeseroCartFAB';
+import { ZONAS_MESA } from '@/lib/constants';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
 import PropinaDialog from '@/components/propinas/PropinaDialog';
 import SoundUnlockButton from '@/components/common/SoundUnlockButton';
@@ -48,12 +32,10 @@ import SeleccionModificadoresDialog from '@/components/mesero/SeleccionModificad
 import ListosParaRecogerCard from '@/components/mesero/ListosParaRecogerCard';
 import AbrirMesaDialog from '@/components/mesero/AbrirMesaDialog';
 import CantidadVariableDialog from '@/components/mesero/CantidadVariableDialog';
-import { TIPO_VENTA, formatearCantidadVariable } from '@/utils/tipoVentaUtils';
-import PrecioProductoMesero, { VariableBadge } from '@/components/mesero/PrecioProductoMesero';
-import { Combine, Volume2 } from 'lucide-react';
+import { TIPO_VENTA } from '@/utils/tipoVentaUtils';
+import { Combine, Printer, Volume2 } from 'lucide-react';
 import { useCajaAbierta } from '@/lib/useCajaAbierta';
 import { useIsDark } from '@/lib/ThemeContext';
-import { FLOOR_BG } from '@/lib/darkPalettes';
 import { printDocument } from '@/lib/print';
 import { tipsEnabled, getPorcentajesSugeridos } from '@/utils/tipsUtils';
 import {
@@ -75,7 +57,6 @@ import {
   zonasDelNegocio,
 } from '~/cliente/mesas-del-mapa';
 import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
-import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
 import { solicitudesPorMesa } from '~/restaurante/globos-de-solicitud';
 import { SelectorDeVista } from '~/restaurante/SelectorDeVista';
 import { UnirMesasEnElMapa } from '~/restaurante/unir-mesas/UnirMesasEnElMapa';
@@ -90,8 +71,21 @@ import {
 import { playNewOrder } from '@/lib/sounds';
 import { frasePorSolicitud, getAlertConfig, speak } from '@/lib/voiceAlert';
 import { sonar } from '~/sonidos/gestor';
+// DP-11.4: lo VISIBLE de esta pantalla vive en `src/mesero/` con el sistema de diseño; aquí quedan
+// las consultas, los comandos con sus claves de idempotencia y los manejadores.
+import { productoTieneModificadores } from '~/mesero/borrador-de-la-mesa';
+import { CarritoFlotante } from '~/mesero/CarritoFlotante';
+import { CatalogoDeLaMesa } from '~/mesero/CatalogoDeLaMesa';
+import { IndicacionesDeLaMesa, TituloDeLaMesa } from '~/mesero/CabeceraDeLaMesa';
+import { EncabezadoDelMesero } from '~/mesero/EncabezadoDelMesero';
+import { LeyendaDeEstados } from '~/mesero/LeyendaDeEstados';
+import { PedidoDeLaMesa } from '~/mesero/PedidoDeLaMesa';
+import { PlanoDelSalon } from '~/mesero/PlanoDelSalon';
+import { RejillaDeMesas } from '~/mesero/RejillaDeMesas';
+import { useFuncionEstable } from '~/mesero/use-funcion-estable';
+import { useCrearBorrador } from '~/mesero/use-borrador-de-la-mesa';
+import { AvisoSinMesasAsignadas, ZonasDelSalon } from '~/mesero/ZonasDelSalon';
 
-const MAP_HEIGHT = 600;
 // Hook simple para detectar móvil
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(
@@ -123,6 +117,10 @@ const cantidadParaComando = (valor) => {
   return texto.replace(/0+$/, '').replace(/\.$/, '');
 };
 
+// Una lista vacía que no cambia entre dibujos: el catálogo está memoizado y una `[]` nueva en cada
+// dibujo lo haría pintar de nuevo.
+const SIN_PRODUCTOS = [];
+
 export default function MeseroWithBoundary() {
   return (
     <ErrorBoundary
@@ -140,18 +138,20 @@ function Mesero() {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const isDark = useIsDark();
-  const floor = isDark ? FLOOR_BG.dark : FLOOR_BG.light;
   const { hayCaja: cajaAbiertaActiva, refetch: refetchCaja } = useCajaAbierta();
 
   const [zonaActiva, setZonaActiva] = useState('Interior');
   const [mesaActiva, setMesaActiva] = useState(null);
   const [ventaActiva, setVentaActiva] = useState(null);
   const [detallesVenta, setDetallesVenta] = useState([]);
-  const [carrito, setCarrito] = useState([]);
-  const [busquedaProducto, setBusquedaProducto] = useState('');
-  const [categoriaFiltro, setCategoriaFiltro] = useState('todas');
   const [loading, setLoading] = useState(false);
-  const [notaMesa, setNotaMesa] = useState('');
+
+  // DP-11.4: el carrito, la búsqueda, el filtro de categoría y la nota para cocina ya NO son estado
+  // de este componente. Viven en un almacén (`src/mesero/almacen-del-borrador.ts`) que `Mesero`
+  // crea y reparte pero no lee: cada toque a un platillo, cada tecla del buscador y cada sondeo
+  // volvían a dibujar el mapa y los 107 botones del catálogo. Los manejadores piden `leer()`
+  // cuando los llaman; sólo se suscriben quienes pintan el carrito o el buscador.
+  const borrador = useCrearBorrador();
 
   // Open table modal (6A: ahora con alergias + celebración)
   const [showAbrirMesa, setShowAbrirMesa] = useState(false);
@@ -187,6 +187,9 @@ function Mesero() {
     initialData: [],
     refetchInterval: 6000,
     enabled: config?.portal_qr_activo === true,
+    // DP-11.4: sólo avisa a esta pantalla cuando cambia lo que lee (el dato, el error o la espera),
+    // no en cada sondeo (`isFetching` sube y baja dos veces cada 6 s y cada una era un dibujo).
+    notifyOnChangeProps: ['data', 'error', 'isFetched'],
   });
   // Cuenta filtrada según asignación
   const solicitudesActivas = useMemo(() => {
@@ -205,24 +208,12 @@ function Mesero() {
     () => solicitudesPorMesa(solicitudesActivas),
     [solicitudesActivas],
   );
-  const releerTrasAtender = () => {
+  const releerTrasAtender = useFuncionEstable(() => {
     queryClient.invalidateQueries({ queryKey: ['solicitudes_qr_mesero_count'] });
     queryClient.invalidateQueries({ queryKey: ['solicitudes_qr_mesero'] });
     queryClient.invalidateQueries({ queryKey: ['solicitudes_qr_admin'] });
     queryClient.invalidateQueries({ queryKey: claves.mesas.activas() });
-  };
-  const globosDe = (mesa, lugar) => {
-    const deLaMesa = solicitudesDeCadaMesa.get(mesa.id);
-    if (!deLaMesa || deLaMesa.length === 0) return null;
-    return (
-      <GlobosDeSolicitud
-        solicitudes={deLaMesa}
-        mesaNumero={mesa.numero}
-        alAtender={releerTrasAtender}
-        lugar={lugar}
-      />
-    );
-  };
+  });
 
   // DP-9.3: la voz de las solicitudes suena SÓLO en la vista «Solicitudes» (antes la soltaba el
   // vigilante global en cualquier pantalla). Cada aparato la configura en Alertas: sonido, voz o
@@ -255,7 +246,12 @@ function Mesero() {
   const claveCuentaRef = useRef(null);
 
   // Sin initialData:[] (evita "no hay mesas" antes del primer fetch).
-  const { data: mesasRaw, isPending: mesasLoading } = useQuery({
+  const {
+    data: mesasRaw,
+    isPending: mesasLoading,
+    isError: mesasConError,
+    refetch: releerMesas,
+  } = useQuery({
     // Sólo las activas, con su clave propia (ver Cocina): el dato previo que conserva
     // `placeholderData` es siempre el de ESTA consulta, nunca la lista con las de baja.
     queryKey: claves.mesas.activas(),
@@ -263,6 +259,9 @@ function Mesero() {
     refetchInterval: 5000,
     placeholderData: (prev) => prev,
     staleTime: 3000,
+    // DP-11.4: ver arriba. Las mesas se sondean cada 5 s; sin esto, cada sondeo dibujaba la pantalla
+    // dos veces aunque no hubiera cambiado ni una mesa.
+    notifyOnChangeProps: ['data', 'error', 'isPending'],
   });
   const mesasRawSafe = Array.isArray(mesasRaw) ? mesasRaw : [];
   const cargandoMesas = mesasLoading && !mesasRaw;
@@ -276,7 +275,7 @@ function Mesero() {
   const sinMesasAsignadas =
     asignActiva && posUser?.rol === ROLES.WAITER && mesas.length === 0 && mesasRawSafe.length > 0;
 
-  // Helper que MesaShape/MesaGridMobile usan para pintar la banda de color.
+  // Helper que el plano y la rejilla usan para pintar quién atiende cada mesa.
   const getResponsable = useCallback(
     (mesa) => {
       const nombre = responsableTexto(mesa, config);
@@ -294,13 +293,15 @@ function Mesero() {
     data: productos,
     isFetched: productosFetched,
     isLoading: productosLoading,
+    isError: productosConError,
+    refetch: releerProductos,
   } = useQuery({
     queryKey: ['productos_pos'],
     queryFn: () => api.entidades.ProductoTerminado.filter({ activo: true, visible_en_pos: true }),
     placeholderData: (prev) => prev,
     staleTime: 5000,
   });
-  const productosArr = Array.isArray(productos) ? productos : [];
+  const productosArr = Array.isArray(productos) ? productos : SIN_PRODUCTOS;
   const cargandoProductos = !productosFetched && productosLoading;
 
   const { data: categorias = [] } = useQuery({
@@ -317,20 +318,6 @@ function Mesero() {
   // obligatorio. Cuando ese ruteo vivía en el navegador, una lectura fallida
   // mandaba el pedido entero a la cocina genérica en vez de a la barra.
 
-  const productosFiltrados = useMemo(() => {
-    let list = productosArr;
-    if (categoriaFiltro !== 'todas') list = list.filter((p) => p?.categoria_id === categoriaFiltro);
-    if (busquedaProducto) {
-      const q = busquedaProducto.toLowerCase();
-      list = list.filter((p) => (p?.nombre || '').toLowerCase().includes(q));
-    }
-    return list;
-  }, [productosArr, categoriaFiltro, busquedaProducto]);
-
-  const totalCarrito = useMemo(
-    () => carrito.reduce((s, i) => s + i.precio_venta * i.cantidad, 0),
-    [carrito],
-  );
   const totalActual = useMemo(
     () => detallesVenta.reduce((s, d) => s + (d.subtotal || 0), 0),
     [detallesVenta],
@@ -430,17 +417,20 @@ function Mesero() {
       }
       // Open existing sale
       setLoading(true);
-      setCarrito([]);
-      setBusquedaProducto('');
-      setCategoriaFiltro('todas');
+      borrador.reiniciar();
       setMesaActiva(mesa);
       if (mesa.venta_activa_id) {
         // Sin `.catch(() => null)` ni `.catch(() => [])`: el puente ya
         // distingue «no hay cuenta» de «no pude leerla», y esos dos rellenos
         // volvían a confundirlo — la mesa ocupada se abría como si no tuviera
         // cuenta y el mesero creía que no se había pedido nada (F1-06 §4.3).
-        const venta = await api.entidades.Venta.get(mesa.venta_activa_id);
-        const detalles = await api.entidades.DetalleVenta.filter({ venta_id: venta.id });
+        //
+        // DP-11.4: la cuenta y sus líneas se piden JUNTAS (antes `Venta.get` y, hasta que
+        // volvía, `DetalleVenta.filter`: dos viajes en serie con el diálogo ya abierto).
+        const [venta, detalles] = await Promise.all([
+          api.entidades.Venta.get(mesa.venta_activa_id),
+          api.entidades.DetalleVenta.filter({ venta_id: mesa.venta_activa_id }),
+        ]);
         setVentaActiva(venta);
         setDetallesVenta(Array.isArray(detalles) ? detalles : []);
       } else {
@@ -456,6 +446,9 @@ function Mesero() {
       setLoading(false);
     }
   };
+  // El plano y la rejilla memoizan cada mesa: el manejador llega con UNA identidad y siempre es el
+  // de este dibujo (ver `use-funcion-estable.ts`).
+  const alTocarLaMesa = useFuncionEstable(onMesaClick);
 
   const confirmarAbrirMesa = async (formData) => {
     if (!mesaParaAbrir?.id) {
@@ -548,8 +541,7 @@ function Mesero() {
           setMesaActiva(null);
           setVentaActiva(null);
           setDetallesVenta([]);
-          setCarrito([]);
-          setNotaMesa('');
+          borrador.vaciarPedido();
           setLoading(false);
         } catch (err) {
           console.error('[Mesero] cerrarDialog error:', err);
@@ -561,23 +553,12 @@ function Mesero() {
         }
       });
     });
-  }, []);
+  }, [borrador]);
 
-  // Detecta si el producto tiene modificadores activos con opciones activas.
-  // Si los tiene, abrimos modal de personalización; si no, agregamos directo.
-  const productoTieneModificadores = (producto) => {
-    const arr = Array.isArray(producto?.modificadores) ? producto.modificadores : [];
-    return arr.some(
-      (g) =>
-        g?.activo !== false &&
-        String(g?.nombre || '').trim() &&
-        (Array.isArray(g.opciones) ? g.opciones : []).some(
-          (o) => o?.activo !== false && String(o?.nombre || '').trim(),
-        ),
-    );
-  };
-
-  const agregarAlCarrito = (producto) => {
+  // Agregar un platillo al borrador (DP-11.4: las reglas de agrupar o no agrupar están en
+  // `src/mesero/borrador-de-la-mesa.ts`, con su prueba). Aquí sólo se decide POR DÓNDE entra:
+  // los de kilo o porción y los que piden elegir opciones pasan antes por su diálogo.
+  const agregarAlCarrito = useFuncionEstable((producto) => {
     // 6B / 1.D — Si es producto variable, abrir modal de cantidad/porción.
     // El flujo de modificadores y precio_fijo queda intacto.
     if (
@@ -593,28 +574,13 @@ function Mesero() {
       return;
     }
     sonar('agregar');
-    setCarrito((prev) => {
-      const existe = prev.find((i) => i.id === producto.id);
-      if (existe)
-        return prev.map((i) => (i.id === producto.id ? { ...i, cantidad: i.cantidad + 1 } : i));
-      return [
-        ...prev,
-        {
-          ...producto,
-          cantidad: 1,
-          notas: '',
-          _notaUsuario: '',
-          _exclusiones: [],
-          _modificadores: [],
-        },
-      ];
-    });
-  };
+    borrador.agregarProducto(producto);
+  });
 
   // 6B / 1.D — Confirma el modal de cantidad/porción y agrega línea nueva al carrito.
   // Cada línea variable es independiente (no agrupa) porque cada cantidad puede diferir.
   // El item lleva flag `_variable` con todos los snapshots; `precio_venta` y `cantidad`
-  // se setean para que totalCarrito, ProductoFichaExpandible y enviarPedido funcionen
+  // se setean para que el total, ProductoFichaExpandible y enviarPedido funcionen
   // sin tocar su lógica (precio_venta * cantidad = precio_total_linea con cantidad=1).
   const confirmarCantidadVariable = (snapshot) => {
     const producto = productoVariable;
@@ -622,23 +588,8 @@ function Mesero() {
       setProductoVariable(null);
       return;
     }
-    const precioLinea = Number(snapshot?.precio_total_linea) || 0;
     sonar('agregar');
-    setCarrito((prev) => [
-      ...prev,
-      {
-        ...producto,
-        // En carrito: cantidad lógica = 1 (la cantidad real está en _variable)
-        cantidad: 1,
-        // precio_venta efectivo = precio total ya calculado (incluye cantidad real)
-        precio_venta: precioLinea,
-        notas: '',
-        _notaUsuario: '',
-        _exclusiones: [],
-        _modificadores: [],
-        _variable: snapshot, // bandera con todos los snapshots para enviarPedido
-      },
-    ]);
+    borrador.agregarVariable(producto, snapshot);
     setProductoVariable(null);
   };
 
@@ -648,63 +599,34 @@ function Mesero() {
   const confirmarPersonalizacion = ({ modificadores, notas }) => {
     const producto = productoParaPersonalizar;
     if (!producto) return;
-    // Texto plano para mostrar en carrito/cocina (sin JSON crudo).
-    const textoMod = (Array.isArray(modificadores) ? modificadores : [])
-      .filter((m) => m && Array.isArray(m.opciones) && m.opciones.length > 0)
-      .map(
-        (m) =>
-          `${m.grupo_nombre}: ${m.opciones
-            .map((o) => o.nombre)
-            .filter(Boolean)
-            .join(', ')}`,
-      )
-      .join(' · ');
-    const notasFinales = [textoMod, (notas || '').trim()].filter(Boolean).join(' · ');
     sonar('agregar');
-    setCarrito((prev) => [
-      ...prev,
-      {
-        ...producto,
-        cantidad: 1,
-        notas: notasFinales,
-        _notaUsuario: (notas || '').trim(),
-        _exclusiones: [],
-        _modificadores: Array.isArray(modificadores) ? modificadores : [],
-      },
-    ]);
+    borrador.agregarPersonalizado(producto, { modificadores, notas });
     setProductoParaPersonalizar(null);
   };
 
-  // Actualiza la nota final que viajará a cocina para un item del carrito.
-  const actualizarNotasItem = (id, nuevasNotas) => {
-    setCarrito((prev) =>
-      prev.map((i) =>
-        i?.id === id
-          ? { ...i, notas: nuevasNotas || '', _notaUsuario: nuevasNotas || i._notaUsuario || '' }
-          : i,
-      ),
-    );
-  };
-  const actualizarExclusionesItem = (id, exclusiones) => {
-    setCarrito((prev) =>
-      prev.map((i) =>
-        i?.id === id ? { ...i, _exclusiones: Array.isArray(exclusiones) ? exclusiones : [] } : i,
-      ),
-    );
-  };
-
-  const cambiarCantidad = (id, delta) => {
-    // DP-11.3: fuera del actualizador (StrictMode lo corre dos veces).
-    const linea = carrito.find((i) => i.id === id);
+  const cambiarCantidad = useFuncionEstable((id, delta) => {
+    // DP-11.3: se lee antes de cambiar (y fuera de cualquier actualizador, que StrictMode corre dos veces).
+    const linea = borrador.leer().carrito.find((i) => i.id === id);
     sonar(linea && linea.cantidad + delta > 0 ? 'cantidad' : 'quitar');
-    setCarrito((prev) =>
-      prev
-        .map((i) => (i.id === id ? { ...i, cantidad: i.cantidad + delta } : i))
-        .filter((i) => i.cantidad > 0),
-    );
-  };
+    borrador.cambiarCantidad(id, delta);
+  });
+
+  // Cómo se pinta cada línea del pedido nuevo en la columna de la cuenta (tableta y PC).
+  const renderizarLinea = useCallback(
+    (item) => (
+      <ProductoFichaExpandible
+        item={item}
+        onCambiarCantidad={cambiarCantidad}
+        onUpdateNotas={borrador.ponerNotasDeLinea}
+        onUpdateExclusiones={borrador.ponerExclusionesDeLinea}
+      />
+    ),
+    [borrador, cambiarCantidad],
+  );
 
   const enviarPedido = async () => {
+    // El borrador se lee AHORA, cuando se toca «Enviar»: no es estado de este componente.
+    const { carrito, nota: notaMesa } = borrador.leer();
     if (!Array.isArray(carrito) || carrito.length === 0) {
       toast.error('El carrito está vacío');
       return;
@@ -795,8 +717,7 @@ function Mesero() {
       queryClient.refetchQueries({ queryKey: ['pedidos_cocina'], type: 'active' }).catch(() => {});
       toast.success('¡Pedido enviado a cocina!');
       sonar('enviarACocina');
-      setCarrito([]);
-      setNotaMesa('');
+      borrador.vaciarPedido();
       setVentaActiva(ventaFresca);
       setDetallesVenta(Array.isArray(detallesFrescos) ? detallesFrescos : []);
     } catch (err) {
@@ -1035,46 +956,40 @@ function Mesero() {
     }
   };
 
+  // Lo que el salón recibe, igual para el plano (PC y tableta) y la rejilla (teléfono).
+  const propiedadesDelSalon = {
+    oscuro: isDark,
+    mesaActivaId: mesaActiva?.id ?? null,
+    cargando: cargandoMesas,
+    sinLeer: mesasConError && !mesasRaw,
+    responsableDe: getResponsable,
+    solicitudesDeCadaMesa,
+    alTocar: alTocarLaMesa,
+    alAtender: releerTrasAtender,
+    alReintentar: releerMesas,
+  };
+
   return (
     <div className="space-y-4">
-      {/* Header — flex-wrap para que en móvil no se desborde la fila de botones
-          (Solicitudes / Alertas / Audio). En desktop queda en una línea. */}
-      <div className="flex items-start sm:items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{
-              background: 'linear-gradient(135deg, hsl(4,72%,46%) 0%, hsl(4,72%,34%) 100%)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-            }}
+      {/* Header — las acciones se envuelven para que en móvil no se desborde la fila de botones
+          (Alertas / Audio). En desktop queda en una línea. */}
+      <EncabezadoDelMesero>
+        {/* Configuración personal de voz/alertas — solo para meseros */}
+        {posUser?.rol === ROLES.WAITER && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setShowAlertasMesero(true)}
+            className="gap-1.5 shrink-0"
+            title="Configurar mi voz y alertas"
           >
-            <UtensilsCrossed className="w-5 h-5 text-primario-texto" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-xl font-heading font-bold leading-tight">Mesero</h1>
-            <p className="text-xs text-muted-foreground truncate">
-              Toca una mesa para abrir o gestionar
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-          {/* Configuración personal de voz/alertas — solo para meseros */}
-          {posUser?.rol === ROLES.WAITER && (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => setShowAlertasMesero(true)}
-              className="gap-1.5 shrink-0"
-              title="Configurar mi voz y alertas"
-            >
-              <Volume2 className="w-4 h-4" />
-              <span>Alertas</span>
-            </Button>
-          )}
-          <SoundUnlockButton />
-        </div>
-      </div>
+            <Volume2 className="w-4 h-4" />
+            <span>Alertas</span>
+          </Button>
+        )}
+        <SoundUnlockButton />
+      </EncabezadoDelMesero>
 
       {/* DP-9.3: arriba de las zonas, Mesas o Solicitudes. «Solicitudes» es la pantalla entera. */}
       {portalActivo && (
@@ -1094,150 +1009,52 @@ function Mesero() {
         />
       ) : (
         <>
-      {/* Zone tabs */}
-      {zonasConCount.length > 1 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {zonasConCount.map(({ zona, count }) => (
-            <button
-              key={zona}
-              onClick={() => setZonaActiva(zona)}
-              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${zonaActiva === zona ? 'bg-primary text-primario-texto shadow-md' : 'bg-superficie border text-muted-foreground'}`}
-            >
-              {zona} <span className="opacity-60">({count})</span>
-            </button>
-          ))}
-        </div>
-      )}
+          <ZonasDelSalon zonas={zonasConCount} zonaActiva={zonaActiva} alElegir={setZonaActiva} />
 
-      {/* Aviso si mesero sin mesas asignadas */}
-      {sinMesasAsignadas && (
-        <div className="px-4 py-3 rounded-xl bg-advertencia/10 border-2 border-advertencia/30 text-sm text-advertencia flex items-start gap-2">
-          <UtensilsCrossed className="w-5 h-5 shrink-0 mt-0.5 text-advertencia" />
-          <div className="flex-1">
-            <p className="font-bold">No tienes mesas asignadas</p>
-            <p className="text-xs opacity-90">
-              Pide al administrador que te asigne mesas desde Configuración → Mesas.
-            </p>
-          </div>
-        </div>
-      )}
+          {/* Aviso si mesero sin mesas asignadas */}
+          {sinMesasAsignadas && <AvisoSinMesasAsignadas />}
 
-      {/* MAP — Desktop usa posiciones libres; mobile usa grid.
-          Fondo "madera" dark-aware (FLOOR_BG). */}
-      {puedeUnir && !uniendo && (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="gap-1.5"
-            disabled={mesasLoading}
-            onClick={() => setUniendo(true)}
-          >
-            <Combine className="w-4 h-4" /> Unir mesas
-          </Button>
-        </div>
-      )}
-
-      {uniendo ? (
-        <UnirMesasEnElMapa
-          mesas={mesasDeLaZona}
-          anclaInicial={unirDesde}
-          alTerminar={(unidas) => {
-            setUniendo(false);
-            if (unidas) queryClient.invalidateQueries({ queryKey: ['mesas'] });
-          }}
-        />
-      ) : isMobile ? (
-        <div
-          className="rounded-2xl border-2 p-3"
-          style={{
-            background: floor.bg,
-            borderColor: floor.border,
-            boxShadow: isDark
-              ? 'inset 0 2px 6px rgba(0,0,0,0.5)'
-              : 'inset 0 2px 6px rgba(0,0,0,0.1)',
-          }}
-        >
-          <MesaGridMobile
-            mesas={mesasZona}
-            onMesaClick={onMesaClick}
-            getResponsable={getResponsable}
-            loading={cargandoMesas}
-            globosDe={(mesa) => globosDe(mesa, 'en-linea')}
-          />
-        </div>
-      ) : (
-        <div
-          className="relative rounded-2xl overflow-hidden border-2"
-          style={{
-            height: MAP_HEIGHT,
-            background: floor.bg,
-            backgroundImage: floor.dotPattern,
-            backgroundSize: '24px 24px',
-            borderColor: floor.border,
-            boxShadow: isDark
-              ? 'inset 0 4px 14px rgba(0,0,0,0.6), inset 0 -2px 6px rgba(255,255,255,0.05)'
-              : 'inset 0 4px 10px rgba(0,0,0,0.15), inset 0 -2px 6px rgba(255,255,255,0.5)',
-          }}
-        >
-          {mesasZona.map((mesa) => {
-            const resp = getResponsable(mesa);
-            return (
-              <MesaShape
-                key={mesa.id}
-                mesa={mesa}
-                onClick={() => onMesaClick(mesa)}
-                responsableColor={resp?.color || null}
-                responsableNombre={resp?.nombre || ''}
-                // Pegada al borde de arriba, el lienzo recortaría la pila: va debajo.
-                globos={globosDe(mesa, (mesa.posicion_y ?? 100) < 80 ? 'abajo' : 'arriba')}
-              />
-            );
-          })}
-          {mesasZona.length === 0 && !sinMesasAsignadas && !cargandoMesas && (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/60">
-              <div className="text-center">
-                <UtensilsCrossed className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No hay mesas en {zonaActiva}.</p>
-                <p className="text-xs">Configúralas en Configuración → Mapa de mesas.</p>
-              </div>
+          {/* MAP — Desktop usa posiciones libres; mobile usa grid. */}
+          {puedeUnir && !uniendo && (
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                disabled={mesasLoading}
+                onClick={() => setUniendo(true)}
+              >
+                <Combine className="w-4 h-4" /> Unir mesas
+              </Button>
             </div>
           )}
-          {cargandoMesas && (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/70">
-              <div className="text-center">
-                <div className="w-10 h-10 rounded-2xl bg-muted/60 mx-auto mb-2 flex items-center justify-center">
-                  <UtensilsCrossed className="w-5 h-5 animate-pulse" />
-                </div>
-                <p className="text-sm">Cargando mapa de mesas…</p>
-              </div>
-            </div>
+
+          {uniendo ? (
+            <UnirMesasEnElMapa
+              mesas={mesasDeLaZona}
+              anclaInicial={unirDesde}
+              alTerminar={(unidas) => {
+                setUniendo(false);
+                if (unidas) queryClient.invalidateQueries({ queryKey: ['mesas'] });
+              }}
+            />
+          ) : isMobile ? (
+            <RejillaDeMesas {...propiedadesDelSalon} mesas={mesasZona} />
+          ) : (
+            <PlanoDelSalon
+              {...propiedadesDelSalon}
+              mesas={mesasZona}
+              zona={zonaActiva}
+              sinMesasAsignadas={sinMesasAsignadas}
+            />
           )}
-        </div>
-      )}
 
-      {/* Cards persistentes de solicitudes QR debajo del mapa */}
-      <SolicitudesQRCardList />
+          {/* Cards persistentes de solicitudes QR debajo del mapa */}
+          <SolicitudesQRCardList />
 
-      {/* Legend — chips dark-aware (fondo card sólido) */}
-      <div className="flex flex-wrap gap-2 text-[10px]">
-        {Object.entries(MESA_STATUS_CONFIG)
-          .filter(([k]) => !['pagada', 'cancelada'].includes(k))
-          .map(([k, v]) => (
-            <div
-              key={k}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-card border text-card-foreground"
-            >
-              <div
-                className="w-3 h-3 rounded-full border"
-                style={{ background: v.fill, borderColor: v.stroke }}
-              />
-              <span className="text-muted-foreground">{v.label}</span>
-            </div>
-          ))}
-      </div>
-
+          {/* Legend — cada estado con su muestra y su palabra */}
+          <LeyendaDeEstados />
         </>
       )}
 
@@ -1274,57 +1091,14 @@ function Mesero() {
             [&>button.absolute]:w-11 [&>button.absolute]:h-11 [&>button.absolute]:rounded-full [&>button.absolute]:bg-muted [&>button.absolute]:opacity-100 [&>button.absolute]:flex [&>button.absolute]:items-center [&>button.absolute]:justify-center [&>button.absolute]:top-3 [&>button.absolute]:right-3 [&>button.absolute>svg]:w-5 [&>button.absolute>svg]:h-5"
         >
           <DialogHeader className="px-4 pt-4 pb-3 border-b shrink-0">
+            {/* El contenido del título (src/mesero/CabeceraDeLaMesa.tsx): el título sigue siendo
+                un `flex`, por eso el nombre del diálogo sale «Mesa 5 Ocupada 4…». */}
             <DialogTitle className="font-heading flex items-center gap-2 flex-wrap pr-14">
-              <UtensilsCrossed className="w-5 h-5 text-primary" />
-              Mesa {mesaActiva?.numero}
-              <span
-                className="text-xs font-normal px-2 py-0.5 rounded-full"
-                style={insigniaDeEstadoDeMesa(MESA_STATUS_CONFIG[mesaActiva?.estado])}
-              >
-                {MESA_STATUS_CONFIG[mesaActiva?.estado]?.label}
-              </span>
-              {ventaActiva?.personas > 0 && (
-                <span className="text-xs font-normal text-muted-foreground flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  {ventaActiva.personas}
-                </span>
-              )}
-              {ventaActiva?.cliente_nombre && (
-                <span className="text-xs font-normal text-muted-foreground">
-                  · {ventaActiva.cliente_nombre}
-                </span>
-              )}
-              {/* 6A: badge celebración — discreto, nunca tapa el bloque de listos */}
-              {(mesaActiva?.celebracion_especial === true ||
-                ventaActiva?.celebracion_especial === true) && (
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-acento/10 text-acento border-acento/30 inline-flex items-center gap-1"
-                  title={
-                    mesaActiva?.tipo_celebracion || ventaActiva?.tipo_celebracion || 'Celebración'
-                  }
-                >
-                  🎉{' '}
-                  {mesaActiva?.tipo_celebracion || ventaActiva?.tipo_celebracion || 'Celebración'}
-                </span>
-              )}
-              {/* 6A: badge alergia — texto compacto, sin banner gigante */}
-              {(mesaActiva?.notas_alergias || ventaActiva?.notas_alergias) && (
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-advertencia/10 text-advertencia border-advertencia/30 inline-flex items-center gap-1"
-                  title={mesaActiva?.notas_alergias || ventaActiva?.notas_alergias}
-                >
-                  ⚠ Alergia
-                </span>
-              )}
+              <TituloDeLaMesa mesa={mesaActiva} venta={ventaActiva} />
             </DialogTitle>
             {/* 6A: línea pequeña con el detalle de alergia bajo el título.
                 NO se renderiza encima del bloque "Listo para recoger". */}
-            {(mesaActiva?.notas_alergias || ventaActiva?.notas_alergias) && (
-              <p className="text-[11px] text-advertencia mt-1 leading-snug">
-                <span className="font-semibold">Alergia / indicaciones:</span>{' '}
-                {mesaActiva?.notas_alergias || ventaActiva?.notas_alergias}
-              </p>
-            )}
+            <IndicacionesDeLaMesa mesa={mesaActiva} venta={ventaActiva} />
           </DialogHeader>
 
           {/* F3.2: Card "Listo para recoger" — se auto-muestra solo cuando
@@ -1344,204 +1118,44 @@ function Mesero() {
           )}
 
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
-            <div className="flex-1 flex flex-col overflow-hidden md:border-r">
-              <div className="px-4 py-3 space-y-2 border-b bg-muted/30 shrink-0">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    value={busquedaProducto}
-                    onChange={(e) => setBusquedaProducto(e.target.value)}
-                    placeholder="Buscar producto..."
-                    className="pl-9 h-9"
-                  />
-                </div>
-                <div className="flex gap-1.5 overflow-x-auto pb-1">
-                  <button
-                    onClick={() => setCategoriaFiltro('todas')}
-                    className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${categoriaFiltro === 'todas' ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'}`}
-                  >
-                    Todas
-                  </button>
-                  {categorias.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => setCategoriaFiltro(c.id)}
-                      className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${categoriaFiltro === c.id ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'}`}
-                    >
-                      {c.nombre}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto p-3 pb-32 md:pb-3 grid grid-cols-2 gap-2 content-start">
-                {/* HOTFIX 6A.3: loading explícito antes de mostrar "Sin productos".
-                    Antes en móvil con red lenta salía "Sin productos" falso. */}
-                {cargandoProductos ? (
-                  <div className="col-span-2 flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground">
-                    <div className="w-6 h-6 border-2 border-border border-t-primary rounded-full animate-spin" />
-                    <p className="text-xs">Cargando productos…</p>
-                  </div>
-                ) : (
-                  <>
-                    {productosFiltrados.map((p) => {
-                      const tieneOpc = productoTieneModificadores(p);
-                      const colorize = config?.colorear_importes_monetarios !== false;
-                      return (
-                        <button
-                          key={p.id}
-                          onClick={() => agregarAlCarrito(p)}
-                          className="p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:scale-95 transition-all relative"
-                          style={{
-                            boxShadow:
-                              '0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 4px rgba(0,0,0,0.06)',
-                          }}
-                        >
-                          <p className="font-semibold text-sm leading-tight">{p?.nombre}</p>
-                          <PrecioProductoMesero producto={p} colorize={colorize} />
-                          <div className="flex items-center gap-1 mt-1 flex-wrap">
-                            <ChefHat className="w-3 h-3 text-muted-foreground" />
-                            <span className="text-[10px] text-muted-foreground capitalize">
-                              {p?.area_preparacion || 'cocina'}
-                            </span>
-                            <VariableBadge producto={p} />
-                            {tieneOpc && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
-                                Opciones
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
-                    {productosFiltrados.length === 0 && productosArr.length > 0 && (
-                      <p className="col-span-2 text-center text-sm text-muted-foreground py-8">
-                        Sin resultados para tu búsqueda
-                      </p>
-                    )}
-                    {productosArr.length === 0 && productosFetched && (
-                      <p className="col-span-2 text-center text-sm text-muted-foreground py-8">
-                        Sin productos disponibles
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="hidden md:flex w-full md:w-72 flex-col shrink-0">
-              {(detallesVenta || []).length > 0 && (
-                <div className="px-4 py-3 border-b bg-muted/20">
-                  <p className="text-xs font-semibold text-muted-foreground mb-2">PEDIDO ACTUAL</p>
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {(detallesVenta || []).map((d, i) => (
-                      <div key={d?.id || `det-d-${i}`} className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          {d?.producto_nombre || '—'} ×{d?.cantidad || 0}
-                        </span>
-                        <span className="font-medium">{formatCurrency(d?.subtotal || 0)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs font-bold border-t pt-1 mt-1 text-right">
-                    Total: {formatCurrency(totalActual || 0)}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex-1 overflow-y-auto px-4 py-3">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">
-                  {(detallesVenta || []).length > 0 ? 'AGREGAR AL PEDIDO' : 'NUEVO PEDIDO'}
-                </p>
-                {(carrito || []).length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-4">
-                    Selecciona productos
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {(carrito || []).map((item, idx) => (
-                      <ProductoFichaExpandible
-                        key={item?.id || `cart-d-${idx}`}
-                        item={item}
-                        onCambiarCantidad={cambiarCantidad}
-                        onUpdateNotas={actualizarNotasItem}
-                        onUpdateExclusiones={actualizarExclusionesItem}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="px-4 py-3 border-t space-y-2 shrink-0">
-                {carrito.length > 0 && (
-                  <>
-                    <Input
-                      value={notaMesa}
-                      onChange={(e) => setNotaMesa(e.target.value)}
-                      placeholder="Nota para cocina..."
-                      className="text-xs h-8"
-                    />
-                    <div className="flex justify-between text-sm font-bold">
-                      <span>Nuevo</span>
-                      <span
-                        className={
-                          config?.colorear_importes_monetarios !== false
-                            ? 'text-primary'
-                            : 'text-foreground'
-                        }
-                      >
-                        {formatCurrency(totalCarrito)}
-                      </span>
-                    </div>
-                    <Button
-                      onClick={enviarPedido}
-                      disabled={loading}
-                      className="w-full"
-                      style={{
-                        background:
-                          'linear-gradient(135deg, hsl(4,72%,46%) 0%, hsl(4,72%,36%) 100%)',
-                      }}
-                    >
-                      <Send className="w-4 h-4 mr-1" />
-                      {loading ? 'Enviando...' : 'Enviar a Cocina'}
-                    </Button>
-                  </>
-                )}
-                {ventaActiva &&
-                  carrito.length === 0 &&
-                  mesaActiva?.estado !== 'cuenta_solicitada' && (
-                    <Button
-                      onClick={pedirCuenta}
-                      disabled={loading}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      <Receipt className="w-4 h-4 mr-1" />
-                      Solicitar cuenta
-                    </Button>
-                  )}
-              </div>
-            </div>
+            <CatalogoDeLaMesa
+              borrador={borrador}
+              productos={productosArr}
+              categorias={categorias}
+              cargando={cargandoProductos}
+              leido={productosFetched}
+              sinLeer={productosConError}
+              colorear={config?.colorear_importes_monetarios !== false}
+              alElegir={agregarAlCarrito}
+              alReintentar={releerProductos}
+            />
+            <PedidoDeLaMesa
+              borrador={borrador}
+              yaEnviado={detallesVenta}
+              hayCuenta={!!ventaActiva}
+              estadoDeLaMesa={mesaActiva?.estado}
+              ocupado={loading}
+              enviando={loading}
+              colorear={config?.colorear_importes_monetarios !== false}
+              renderizarLinea={renderizarLinea}
+              alEnviar={enviarPedido}
+              alPedirCuenta={pedirCuenta}
+            />
           </div>
 
           {/* Carrito flotante móvil — solo dentro del dialog de mesa */}
-          <MeseroCartFAB
-            ref={cartFabRef}
-            carrito={carrito}
-            totalCarrito={totalCarrito}
-            totalActual={totalActual}
+          <CarritoFlotante
+            borrador={borrador}
             detallesVenta={detallesVenta}
-            notaMesa={notaMesa}
-            setNotaMesa={setNotaMesa}
+            totalActual={totalActual}
+            estadoMesa={mesaActiva?.estado}
+            ventaActiva={ventaActiva}
+            loading={loading}
+            config={config}
             cambiarCantidad={cambiarCantidad}
             enviarPedido={enviarPedido}
             pedirCuenta={pedirCuenta}
-            loading={loading}
-            estadoMesa={mesaActiva?.estado}
-            ventaActiva={ventaActiva}
-            formatCurrency={formatCurrency}
-            config={config}
-            onUpdateNotas={actualizarNotasItem}
-            onUpdateExclusiones={actualizarExclusionesItem}
+            refDelCarrito={cartFabRef}
           />
         </DialogContent>
       </Dialog>

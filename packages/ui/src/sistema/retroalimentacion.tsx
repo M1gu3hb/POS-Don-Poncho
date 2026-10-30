@@ -233,14 +233,14 @@ export function ConfirmacionDestructiva({
             ref={cancelar}
             type="button"
             onClick={alCancelar}
-            className="h-(--altura-control) rounded-md border border-borde px-(--espacio-4) text-sm hover:bg-fondo-sutil focus-visible:ring-2 focus-visible:ring-anillo focus-visible:outline-none active:scale-[0.97]"
+            className="h-(--altura-control) rounded-md border border-borde px-(--espacio-4) text-sm hover:bg-fondo-sutil focus-visible:ring-2 focus-visible:ring-anillo focus-visible:outline-none active:scale-(--escala-presion)"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={alConfirmar}
-            className="h-(--altura-control) rounded-md bg-peligro px-(--espacio-4) text-sm font-medium text-peligro-texto hover:bg-peligro/90 focus-visible:ring-2 focus-visible:ring-anillo focus-visible:outline-none active:scale-[0.97]"
+            className="h-(--altura-control) rounded-md bg-peligro px-(--espacio-4) text-sm font-medium text-peligro-texto hover:bg-peligro/90 focus-visible:ring-2 focus-visible:ring-anillo focus-visible:outline-none active:scale-(--escala-presion)"
           >
             {textoConfirmar}
           </button>

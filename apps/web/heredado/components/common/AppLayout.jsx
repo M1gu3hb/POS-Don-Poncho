@@ -11,11 +11,11 @@ import BrandColorsApplier from './BrandColorsApplier';
 import NotificationsWatcher from './NotificationsWatcher';
 import SolicitudesQRWatcher from './SolicitudesQRWatcher';
 import PedidoListoWatcher from './PedidoListoWatcher';
-import MobileAdminRadialMenu from './MobileAdminRadialMenu';
 import { useRouteCleanup } from '@/lib/useRouteCleanup';
 import { MorfiCargando } from '~/morfi/MorfiCargando';
 import { textoDeCarga } from '~/morfi/textos-de-carga';
 import { ModoEspera } from '~/espera/ModoEspera';
+import { DockDelPuesto } from '~/navegacion/DockDelPuesto';
 
 /**
  * `marco="modelo"` (bloque D de la 2.4): las pantallas de los cinco modelos no tenían
@@ -31,6 +31,8 @@ export default function AppLayout({ marco = 'interno' }) {
   // (`useState(false)`): con 240 px de barra, la nota de entrada de la tienda no cabía en la
   // tableta y su «Agregar canje» quedaba debajo de otros elementos.
   const [collapsed, setCollapsed] = useState(deModelo);
+  // DP-11.4: el cajón del menú lo abren el dock (táctil) y lo cierra el propio cajón.
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const { posUser, isLoading } = usePOSAuth();
   const navigate = useNavigate();
   // Libera body locks (overflow/pointer-events) si quedó algún portal pegado al cambiar de ruta.
@@ -81,15 +83,21 @@ export default function AppLayout({ marco = 'interno' }) {
     <div className="flex relative" style={{ minHeight: '100dvh' }}>
       <BrandColorsApplier />
       <BrandedBackground />
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
+      <Sidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((c) => !c)}
+        mobileOpen={menuAbierto}
+        setMobileOpen={setMenuAbierto}
+      />
       <main
         // `min-w-0` (DP-11.1): un hijo de flex mide por omisión lo que su contenido más ancho, y en el
         // teléfono una fila que no se encoge estiraba la página a lo ancho (Configuración: 543 de 412).
-        className={`min-w-0 flex-1 transition-all duration-300 ${collapsed ? 'lg:ml-16' : 'lg:ml-60'} relative z-10`}
+        // DP-11.4: la barra lateral sólo con ratón; en táctil, el dock de abajo (y su hueco).
+        className={`min-w-0 flex-1 transition-all duration-300 ${collapsed ? 'raton:ml-16' : 'raton:ml-60'} relative z-10`}
         style={{ minHeight: '100dvh' }}
       >
         <div
-          className={deModelo ? 'pt-14 lg:pt-0' : 'p-4 md:p-6 lg:p-8 pt-14 md:pt-14 lg:pt-6'}
+          className={deModelo ? 'tactil:pb-28' : 'p-4 md:p-6 raton:p-8 raton:pt-6 tactil:pb-28'}
           style={{ minHeight: '100dvh' }}
         >
           <Outlet />
@@ -98,7 +106,7 @@ export default function AppLayout({ marco = 'interno' }) {
       <NotificationsWatcher />
       <SolicitudesQRWatcher />
       <PedidoListoWatcher />
-      <MobileAdminRadialMenu />
+      <DockDelPuesto menuAbierto={menuAbierto} alAbrirMenu={() => setMenuAbierto(true)} />
       {/* DP-11.2: el modo espera, una capa encima; la pantalla de abajo sigue montada. */}
       <ModoEspera ruta={pathname} />
     </div>

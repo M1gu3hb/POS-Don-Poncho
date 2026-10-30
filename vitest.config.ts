@@ -76,11 +76,16 @@ export default defineConfig({
       {
         test: {
           name: 'componentes',
-          include: ['packages/ui/src/**/*.test.tsx'],
+          // Las piezas del sistema y los componentes sin estado de `apps/web/src` (los
+          // teclados): se pintan o se llaman, y se lee lo que sale.
+          include: ['packages/ui/src/**/*.test.tsx', 'apps/*/src/**/*.test.tsx'],
           exclude: ['**/node_modules/**'],
           environment: 'node',
           testTimeout: 5_000,
         },
+        // `apps/web` compila con `jsx: preserve` (lo transforma Next) y Vite se niega a leer un
+        // `.tsx` así; aquí el JSX se transforma de verdad. `packages/ui` ya usa `react-jsx`.
+        oxc: { jsx: { runtime: 'automatic' } },
         resolve: { alias: ALIAS },
       },
     ],

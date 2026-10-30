@@ -72,6 +72,14 @@
   --lateral-activo-texto: 220 30% 97%;
   --lateral-hover: 220 16% 78%;
   --lateral-borde: 220 14% 74%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 0 0% 100%;
+  --halo: 228 70% 44%;
+  --malla-1: 228 70% 44%;
+  --malla-2: 228 40% 86%;
+  --malla-3: 220 16% 86%;
 }
 
 [data-estilo='relieve'][data-modo='oscuro'] {
@@ -123,4 +131,12 @@
   --lateral-activo-texto: 228 50% 10%;
   --lateral-hover: 220 14% 19%;
   --lateral-borde: 220 12% 22%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 220 18% 93%;
+  --halo: 228 90% 72%;
+  --malla-1: 228 90% 72%;
+  --malla-2: 220 16% 24%;
+  --malla-3: 220 14% 13%;
 }

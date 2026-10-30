@@ -46,6 +46,8 @@ export const ESTILOS_CONSTRUIDOS = [
   'papel',
   'noche',
   'don-poncho',
+  /** DP-11.4 · Frutiger Aero: vidrio de ventana, gel y cielo. El único con elevación `aero`. */
+  'retro',
 ] as const;
 export type EstiloConstruido = (typeof ESTILOS_CONSTRUIDOS)[number];
 
@@ -120,6 +122,22 @@ export const TOKENS_COLOR = [
    */
   'lateral-hover',
   'lateral-borde',
+  /**
+   * DP-11.4 · EL LENGUAJE DE CAPAS. Los cinco son color y por estilo, así que entran aquí: un
+   * estilo que los olvide falla en CI en vez de pintar sombras rotas en silencio, que es lo que
+   * pasaba con `sombra-tinte` (cada estilo la declaraba y ninguna prueba lo exigía).
+   *
+   *   · `sombra-tinte` · el color de TODAS las sombras: largas y teñidas, no grises.
+   *   · `luz-borde` · el canto de luz de 1 px arriba de lo que flota.
+   *   · `halo` · el resplandor del acento detrás de lo activo o principal, y de nada más.
+   *   · `malla-1..3` · los tres tonos del gradiente de malla del fondo, muy sutil.
+   */
+  'sombra-tinte',
+  'luz-borde',
+  'halo',
+  'malla-1',
+  'malla-2',
+  'malla-3',
 ] as const;
 
 /** Tokens que no son color y viven una sola vez, en la base (§3). */
@@ -187,6 +205,15 @@ export const TOKENS_BASE = [
   'curva-resorte',
   // altura de control, que depende de la densidad
   'altura-control',
+  // DP-11.4 · el vidrio (lo enciende la elevación; lo apaga el sólido), la presión de un toque
+  // y lo de `retro`, que los demás estilos dejan vacío.
+  'vidrio-alfa',
+  'filtro-vidrio',
+  'escala-presion',
+  'fondo-escritorio',
+  'marco-ventana',
+  'brillo-gel',
+  'resplandor-ventana',
 ] as const;
 
 /**
@@ -206,7 +233,11 @@ export const PERILLAS = {
    */
   densidad: ['guantes', 'comoda', 'normal', 'compacta'],
   redondeo: ['nula', 'sutil', 'media', 'amplia', 'pastilla'],
-  elevacion: ['plana', 'sombra', 'doble-bisel', 'linea-dura'],
+  /**
+   * `capas` es el lenguaje de DP-11.4: sombras largas en varias capas y vidrio en lo que flota.
+   * `aero` es el de `retro`: el marco de ventana, el gel y el resplandor de su época.
+   */
+  elevacion: ['plana', 'sombra', 'doble-bisel', 'linea-dura', 'capas', 'aero'],
   movimiento: ['nula', 'sutil', 'normal', 'expresiva'],
 } as const;
 

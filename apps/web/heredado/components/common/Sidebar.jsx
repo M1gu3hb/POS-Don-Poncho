@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { marcaVisibleDePlataforma, nombreVisibleDelNegocio } from '~/marca/nombre-visible';
 import { Link, useLocation } from '@/enrutado';
 import { usePOSAuth } from '@/lib/POSAuthContext';
@@ -31,7 +31,6 @@ import {
   LayoutGrid,
   ListChecks,
   LogOut,
-  Menu,
   NotebookPen,
   Package,
   PlusCircle,
@@ -122,11 +121,12 @@ const ICON_MAP = {
 // componente se limita a pintarlo. Ordenar aquí volvería a crear la segunda
 // lista que se queda atrás.
 
-export default function Sidebar({ collapsed, onToggle }) {
+// DP-11.4: el cajón lo abre el dock de la tableta y el teléfono (`~/navegacion/DockDelPuesto`,
+// con el mismo «Abrir menú» de antes), así que su estado vive en `AppLayout`.
+export default function Sidebar({ collapsed, onToggle, mobileOpen, setMobileOpen }) {
   const { posUser, logout } = usePOSAuth();
   const { config, paquete_modo } = useConfig();
   const location = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Cerrar al cambiar de ruta
   useEffect(() => {
@@ -314,20 +314,9 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   return (
     <>
-      {/* Hamburguesa móvil/tablet (oculto en lg+) */}
-      <button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-3 left-3 z-[70] w-11 h-11 bg-sidebar rounded-xl flex items-center justify-center text-sidebar-foreground shadow-lg active:scale-95 transition-transform"
-        aria-label="Abrir menú"
-        style={{ touchAction: 'manipulation' }}
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-
-      {/* Drawer móvil/tablet */}
+      {/* Drawer móvil/tablet (DP-11.4: lo abre «Abrir menú» del dock; sólo en táctil) */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[80] lg:hidden">
+        <div className="fixed inset-0 z-[80] raton:hidden">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-velo/60"
@@ -351,9 +340,10 @@ export default function Sidebar({ collapsed, onToggle }) {
         </div>
       )}
 
-      {/* Sidebar escritorio */}
+      {/* Sidebar escritorio (DP-11.4: con ratón; con el lenguaje de capas, panel flotante) */}
       <div
-        className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-30 transition-all duration-300 shadow-xl ${collapsed ? 'w-16' : 'w-60'}`}
+        data-capa="lateral"
+        className={`hidden raton:flex flex-col fixed left-0 top-0 bottom-0 z-30 transition-all duration-300 shadow-xl ${collapsed ? 'w-16' : 'w-60'}`}
       >
         <SidebarContent />
       </div>

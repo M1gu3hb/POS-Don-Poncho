@@ -253,15 +253,16 @@ test.describe('el estilo del negocio', () => {
     }
   });
 
-  test('los estilos de la pantalla son los que el servidor acepta, y son nueve', () => {
+  test('los estilos de la pantalla son los que el servidor acepta, y son diez', () => {
     // La pantalla ofrece `CLAVES_ESTILO` y el comando valida contra `ESTILOS_DISPONIBLES`: dos
     // listas escritas a mano en dos paquetes. Si una crece sola, el estilo nuevo se elige y el
     // servidor lo rechaza con «Hay datos incompletos o mal escritos», o al revés.
     expect([...CLAVES_ESTILO].sort()).toEqual(estilosDelServidor().sort());
     expect(
       CLAVES_ESTILO,
-      'Cambió la cantidad de estilos: los ocho del maestro y el de la casa, `don-poncho` (DP-3).',
-    ).toHaveLength(9);
+      'Cambió la cantidad de estilos: los ocho del maestro, el de la casa (`don-poncho`, DP-3) y ' +
+        '«Retro» (DP-11.4).',
+    ).toHaveLength(10);
   });
 
   for (const estilo of CLAVES_ESTILO) {

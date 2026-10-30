@@ -5,7 +5,7 @@
  * base del diseño nuevo (DP-11.4): se corre antes y después, contra la misma base de demo.
  *
  *   node scripts/medir-fluidez.mjs --url http://localhost:3400 --secretos <demo.json> \
- *        [--salida fluidez.json] [--cpu 4] [--aparatos tablet,telefono]
+ *        [--salida fluidez.json] [--cpu 4] [--aparatos tablet,telefono] [--vidrio solido]
  *
  * `--secretos` es el `demo.json` que deja `scripts/demo-local.mjs` (PIN de DEMO, nunca los de
  * producción). Se niega con un servidor que no sea de esta máquina.
@@ -26,6 +26,13 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 import { chromium, devices } from '@playwright/test';
 
+import {
+  crearEntrada,
+  dialogoDeLaMesa,
+  laMesa,
+  prepararLaMesa,
+} from './lib/demo-en-el-navegador.mjs';
+
 const argumento = (nombre, porOmision) => {
   const i = process.argv.indexOf(`--${nombre}`);
   return i === -1 ? porOmision : (process.argv[i + 1] ?? porOmision);
@@ -35,6 +42,8 @@ const SECRETOS = argumento('secretos', '');
 const SALIDA = argumento('salida', '');
 const CPU = Number(argumento('cpu', '4'));
 const APARATOS = argumento('aparatos', 'tablet,telefono').split(',');
+// DP-11.4: `--vidrio solido` mide el mismo aparato con el vidrio apagado, para separar su costo.
+const VIDRIO = argumento('vidrio', '');
 
 if (!['localhost', '127.0.0.1'].includes(new URL(URL_BASE).hostname) || SECRETOS === '') {
   console.error('Uso: medir-fluidez.mjs --url http://localhost:<puerto> --secretos <demo.json>');
@@ -45,51 +54,7 @@ const DUENO = 'Miguel · Morphiq';
 const PIN = { [DUENO]: pinDelDueno, ...pines };
 const EMULACION = { tablet: devices['Galaxy Tab S4 landscape'], telefono: devices['Pixel 7'] };
 
-async function entrar(page, nombre) {
-  // Con una sesión abierta, la pantalla de acceso salta al inicio del rol: se sale antes.
-  await page.context().clearCookies();
-  await page.goto(`${URL_BASE}/n/don-poncho/login-pos`);
-  await page
-    .getByRole('button')
-    .filter({ has: page.getByText(nombre, { exact: true }) })
-    .click();
-  for (const digito of PIN[nombre]) {
-    await page.getByRole('button', { name: digito, exact: true }).click();
-  }
-  await page.waitForURL((url) => !url.pathname.endsWith('/login-pos'));
-}
-
-const laMesa = (page, n) =>
-  page
-    .locator('span.font-heading')
-    .filter({ hasText: new RegExp(`^${String(n)}$`) })
-    .first();
-const dialogoDeLaMesa = (page, n) =>
-  page.getByRole('dialog', { name: new RegExp(`^Mesa ${String(n)} `) });
-
-/** La mesa 1 ocupada con tres platillos en cocina, si aún no lo está. */
-async function prepararLaMesa(page) {
-  await page.goto(`${URL_BASE}/mesero`);
-  await laMesa(page, 1).waitFor();
-  await laMesa(page, 1).click();
-  const apertura = page.getByRole('dialog', { name: 'Abrir mesa 1' });
-  const yaOcupada = dialogoDeLaMesa(page, 1);
-  await apertura.or(yaOcupada).first().waitFor();
-  if (!(await apertura.isVisible())) {
-    await page.keyboard.press('Escape');
-    return 'la mesa 1 ya estaba ocupada';
-  }
-  await apertura.getByRole('spinbutton').first().fill('4');
-  await apertura.getByRole('button', { name: 'Abrir mesa' }).click();
-  await yaOcupada.waitFor();
-  const teselas = yaOcupada.getByRole('button', { name: / \$\d/ });
-  for (let i = 0; i < 3; i += 1) await teselas.nth(i).click();
-  const enviar = yaOcupada.getByRole('button', { name: 'Enviar a Cocina', exact: true });
-  await enviar.click();
-  await page.getByText('¡Pedido enviado a cocina!').first().waitFor({ timeout: 30_000 });
-  await page.keyboard.press('Escape');
-  return 'mesa 1 abierta con 3 platillos en cocina';
-}
+const entrar = crearEntrada(URL_BASE, PIN);
 
 /** Mide los cuadros del hilo principal mientras corre `accion`. */
 async function cuadrosDurante(page, accion) {
@@ -182,16 +147,27 @@ async function abrirMesa(page, numero, dialogo) {
   });
 }
 
-const resultados = { cpu: CPU, url: URL_BASE, fecha: new Date().toISOString(), aparatos: {} };
+const resultados = {
+  cpu: CPU,
+  url: URL_BASE,
+  vidrio: VIDRIO || 'el del aparato',
+  fecha: new Date().toISOString(),
+  aparatos: {},
+};
 const navegador = await chromium.launch();
 try {
   for (const aparato of APARATOS) {
     const contexto = await navegador.newContext({ ...EMULACION[aparato] });
+    if (VIDRIO === 'solido') {
+      await contexto.addInitScript(() => {
+        window.localStorage.setItem('morphiqpos.vidrio', 'solido');
+      });
+    }
     const page = await contexto.newPage();
     const cdp = await contexto.newCDPSession(page);
     const fila = {};
     await entrar(page, 'Mesero 1');
-    fila.preparacion = await prepararLaMesa(page);
+    fila.preparacion = await prepararLaMesa(page, URL_BASE);
 
     fila.mesero = await medirPantalla(page, cdp, {
       quien: 'Mesero 1',

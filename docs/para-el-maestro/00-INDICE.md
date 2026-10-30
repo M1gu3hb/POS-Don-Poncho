@@ -22,3 +22,4 @@ Poncho, y cómo portarlo.
 | 14  | [Morfi en el POS](14-morfi-en-el-pos.md)                                                            | DP-11.1 | No                  |
 | 15  | [El modo espera](15-modo-espera.md)                                                                 | DP-11.2 | No                  |
 | 16  | [Los sonidos de la interfaz](16-sonidos.md)                                                         | DP-11.3 | No                  |
+| 17  | [El lenguaje de capas y «Retro»](17-lenguaje-de-capas.md)                                           | DP-11.4 | No                  |

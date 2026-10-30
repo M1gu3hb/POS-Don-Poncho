@@ -442,15 +442,6 @@ const PALETA_PERMITIDA_EN_EL_HEREDADO = new Map([
     },
   ],
   [
-    'components/common/MobileAdminRadialMenu.jsx',
-    {
-      cuantas: 3,
-      porque:
-        'Texto blanco sobre círculos cuyo fondo es el color de cada destino, en línea y en tiempo de ' +
-        'ejecución: un token de texto se despegaría de un fondo que no es del sistema.',
-    },
-  ],
-  [
     'components/mesas/MesaListMobile.jsx',
     {
       cuantas: 2,

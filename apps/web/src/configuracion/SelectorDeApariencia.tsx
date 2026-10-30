@@ -9,6 +9,7 @@ import { Check, Palette } from 'lucide-react';
 
 import { ErrorApi, ErrorSinRespuesta, invocarComando } from '~/cliente/api';
 import { useAparienciaEnVivo } from '~/proveedores/Apariencia';
+import { ModoDelAparato } from './ModoDelAparato';
 
 /**
  * EL SELECTOR DE ESTILO VISUAL · donde Miguel lo pidió.
@@ -150,6 +151,9 @@ export function SelectorDeApariencia() {
           esta computadora.
         </p>
       </header>
+
+      {/* DP-11.4: el modo es de ESTE aparato; el estilo, de abajo, del negocio. */}
+      <ModoDelAparato />
 
       {/* Dos por renglón en teléfono, cuatro desde tableta: los ocho caben en dos
           filas y se comparan de un vistazo, que es lo que pide la conversación. */}

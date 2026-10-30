@@ -24,7 +24,7 @@ describe('ESTILO_PREDETERMINADO', () => {
     expect(ESTILOS_CONSTRUIDOS).toContain(ESTILO_PREDETERMINADO);
   });
 
-  it('conserva los ocho estilos del maestro y suma el de la casa: elegir otro sigue siendo posible', () => {
+  it('conserva los ocho estilos del maestro y suma el de la casa y «Retro»: elegir otro sigue siendo posible', () => {
     expect([...ESTILOS_CONSTRUIDOS].sort()).toEqual(
       [
         'bloque',
@@ -36,6 +36,7 @@ describe('ESTILO_PREDETERMINADO', () => {
         'relieve',
         'taller',
         'terminal',
+        'retro',
       ].sort(),
     );
     expect([...CLAVES_ESTILO].sort()).toEqual([...ESTILOS_CONSTRUIDOS].sort());

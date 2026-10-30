@@ -143,7 +143,13 @@ export function PaginaDelSistema() {
   const [cargando, setCargando] = useState(false);
 
   return (
-    <div className="min-h-dvh bg-fondo text-texto">
+    <div className="relative isolate min-h-dvh text-texto">
+      {/* DP-11.4: el escritorio del estilo detrás de todo (la malla de capas, el cielo de Retro). */}
+      <div
+        aria-hidden
+        data-fondo="escritorio"
+        className="pointer-events-none fixed inset-0 -z-10 bg-fondo"
+      />
       <BarraFija className="border-b border-borde">
         <div className="mx-auto flex max-w-5xl flex-col gap-(--espacio-3) px-(--espacio-4) py-(--espacio-4)">
           <Migas pasos={[{ rotulo: 'MorphiqPOS' }, { rotulo: 'Sistema de diseño' }]} />

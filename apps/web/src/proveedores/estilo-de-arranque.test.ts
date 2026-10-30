@@ -1,10 +1,10 @@
 import { APARIENCIA_POR_OMISION, normalizarEstilo } from '@morphiqpos/app/configuracion';
-import { ESTILO_PREDETERMINADO } from '@morphiqpos/ui/tokens';
+import { ESTILOS, ESTILO_PREDETERMINADO } from '@morphiqpos/ui/tokens';
 import { runInNewContext } from 'node:vm';
 
 import { describe, expect, it } from 'vitest';
 
-import { CLAVE_TEMA, GUION_SIN_PARPADEO } from '../../heredado/tema-arranque';
+import { CLAVE_DEL_VIDRIO, CLAVE_TEMA, GUION_SIN_PARPADEO } from '../../heredado/tema-arranque';
 
 /**
  * EL ESTILO CON QUE ARRANCA LA PRIMERA PINTURA Y LA PANTALLA DE ACCESO.
@@ -44,12 +44,29 @@ interface AlmacenSimulado {
 }
 
 /** Corre el guion como lo corre el navegador: texto suelto, con `document` y `localStorage`. */
-function correrElGuion(html: ReturnType<typeof htmlSimulado>, almacen: AlmacenSimulado): void {
-  // En un contexto aparte, con sólo `document` y `localStorage`: como lo ve una página.
+function correrElGuion(
+  html: ReturnType<typeof htmlSimulado>,
+  almacen: AlmacenSimulado,
+  sistemaOscuro?: boolean,
+): void {
+  // En un contexto aparte, con sólo `document`, `localStorage` y, si se da, `matchMedia`: como
+  // lo ve una página (un navegador viejo no tiene `matchMedia`).
   runInNewContext(GUION_SIN_PARPADEO, {
     document: { documentElement: html },
     localStorage: almacen,
+    ...(sistemaOscuro === undefined
+      ? {}
+      : {
+          matchMedia: (consulta: string) => ({
+            matches: consulta === '(prefers-color-scheme: dark)' && sistemaOscuro,
+          }),
+        }),
   });
+}
+
+/** Un almacén con sólo esas claves. */
+function almacenCon(valores: Record<string, string>): AlmacenSimulado {
+  return { getItem: (clave) => valores[clave] ?? null };
 }
 
 const SIN_PREFERENCIA: AlmacenSimulado = { getItem: () => null };
@@ -63,6 +80,11 @@ describe('el predeterminado dicho por las tres capas', () => {
   it('el servidor y el sistema de diseño coinciden: don-poncho', () => {
     expect(APARIENCIA_POR_OMISION.estilo).toBe('don-poncho');
     expect(ESTILO_PREDETERMINADO).toBe(APARIENCIA_POR_OMISION.estilo);
+  });
+
+  it('y con las mismas perillas: la casa estrena el lenguaje de capas en los dos lados', () => {
+    const { estilo, ...perillas } = APARIENCIA_POR_OMISION;
+    expect(perillas).toEqual(ESTILOS[estilo]?.perillas);
   });
 
   it('un negocio sin estilo guardado, o con uno que ya no existe, es don-poncho', () => {
@@ -128,11 +150,38 @@ describe('el guion de arranque, antes del primer pintado', () => {
     expect(html.getAttribute('data-estilo')).toBe('don-poncho');
   });
 
-  it('sin preferencia de modo, arranca en claro', () => {
+  it('sin preferencia de modo y con el sistema en claro (o sin saberlo), arranca en claro', () => {
+    for (const sistemaOscuro of [false, undefined]) {
+      const html = htmlSimulado();
+      correrElGuion(html, SIN_PREFERENCIA, sistemaOscuro);
+      expect(html.clases.has('dark')).toBe(false);
+      expect(html.style.colorScheme).toBe('light');
+    }
+  });
+
+  it('DP-11.4 · sin preferencia, o en «auto», sigue al sistema: oscuro si el sistema es oscuro', () => {
+    for (const almacen of [SIN_PREFERENCIA, almacenCon({ [CLAVE_TEMA]: 'auto' })]) {
+      const html = htmlSimulado();
+      correrElGuion(html, almacen, true);
+      expect(html.clases.has('dark')).toBe(true);
+      expect(html.style.colorScheme).toBe('dark');
+    }
+  });
+
+  it('DP-11.4 · «Claro» elegido a mano gana aunque el sistema esté en oscuro', () => {
     const html = htmlSimulado();
-    correrElGuion(html, SIN_PREFERENCIA);
+    correrElGuion(html, almacenCon({ [CLAVE_TEMA]: 'light' }), true);
     expect(html.clases.has('dark')).toBe(false);
-    expect(html.style.colorScheme).toBe('light');
+  });
+
+  it('DP-11.4 · el aparato que quedó en vidrio sólido arranca sólido; sin decisión, no se toca', () => {
+    const solido = htmlSimulado();
+    correrElGuion(solido, almacenCon({ [CLAVE_DEL_VIDRIO]: 'solido' }));
+    expect(solido.getAttribute('data-vidrio')).toBe('solido');
+
+    const nuevo = htmlSimulado();
+    correrElGuion(nuevo, SIN_PREFERENCIA);
+    expect(nuevo.getAttribute('data-vidrio')).toBeNull();
   });
 
   it('usa la misma clave de tema que el ThemeContext del heredado', () => {

@@ -22,6 +22,17 @@ import { ESTILO_PREDETERMINADO } from '@morphiqpos/ui/tokens';
 
 export const CLAVE_TEMA = 'mh_theme';
 
+/**
+ * DP-11.4 · el aparato que no da 60 cuadros con vidrio queda en vidrio SÓLIDO (lo mide una vez
+ * `src/proveedores/vidrio.ts`). Se aplica aquí, antes del primer pintado: si no, la primera
+ * pintura de un aparato lento se haría con desenfoque y luego saltaría.
+ */
+export const CLAVE_DEL_VIDRIO = 'morphiqpos.vidrio';
+
+/**
+ * El modo: `dark` u `light` si se eligió a mano; si no (sin valor o `auto`, DP-11.4), el del
+ * sistema, `prefers-color-scheme`. Un navegador sin `matchMedia` arranca en claro, como antes.
+ */
 export const GUION_SIN_PARPADEO =
   // Primero y en su propio bloque: si `localStorage` lanza (ventana privada), el estilo
   // igual tiene que quedar puesto.
@@ -31,8 +42,9 @@ export const GUION_SIN_PARPADEO =
   `}catch(e){}` +
   `try{` +
   `var t=localStorage.getItem(${JSON.stringify(CLAVE_TEMA)});` +
-  `var d=t==='dark';` +
+  `var d=t==='dark'||(t!=='light'&&typeof matchMedia==='function'&&matchMedia('(prefers-color-scheme: dark)').matches);` +
   `var r=document.documentElement;` +
   `r.classList.toggle('dark',d);` +
   `r.style.colorScheme=d?'dark':'light';` +
+  `if(localStorage.getItem(${JSON.stringify(CLAVE_DEL_VIDRIO)})==='solido')r.setAttribute('data-vidrio','solido');` +
   `}catch(e){}`;

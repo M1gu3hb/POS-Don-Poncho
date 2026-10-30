@@ -26,7 +26,7 @@ import { definirComando } from '../comando.ts';
  * eso se guarda por ORGANIZACIÓN y la cambia quien responde por la marca.
  */
 
-/** Los nueve estilos. Es la misma lista que `ESTILOS_CONSTRUIDOS` de `@morphiqpos/ui`. */
+/** Los diez estilos. Es la misma lista que `ESTILOS_CONSTRUIDOS` de `@morphiqpos/ui`. */
 export const ESTILOS_DISPONIBLES = [
   'morphiq',
   'cristal',
@@ -37,11 +37,19 @@ export const ESTILOS_DISPONIBLES = [
   'papel',
   'noche',
   'don-poncho',
+  'retro',
 ] as const;
 
 export const DENSIDADES = ['guantes', 'comoda', 'normal', 'compacta'] as const;
 export const REDONDEOS = ['nula', 'sutil', 'media', 'amplia', 'pastilla'] as const;
-export const ELEVACIONES = ['plana', 'sombra', 'doble-bisel', 'linea-dura'] as const;
+export const ELEVACIONES = [
+  'plana',
+  'sombra',
+  'doble-bisel',
+  'linea-dura',
+  'capas',
+  'aero',
+] as const;
 export const MOVIMIENTOS = ['nula', 'sutil', 'normal', 'expresiva'] as const;
 
 export const entradaFijarApariencia = z.object({
@@ -200,7 +208,7 @@ export const APARIENCIA_POR_OMISION: AparienciaGuardada = {
   estilo: 'don-poncho',
   densidad: 'comoda',
   redondeo: 'sutil',
-  elevacion: 'sombra',
+  elevacion: 'capas',
   movimiento: 'sutil',
 };
 

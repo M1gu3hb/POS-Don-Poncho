@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const reproducir = vi.fn<(receta: string, ganancia: number) => Promise<void>>();
 const precargar = vi.fn<(receta: string) => Promise<void>>();
 const desbloquearAudio = vi.fn<() => Promise<void>>();
+const { recetasDelMapa } = await import('./mapa');
 
 vi.mock('./reproductor', () => ({
   reproducir: (receta: string, ganancia: number) => reproducir(receta, ganancia),
@@ -160,30 +161,63 @@ describe('el gestor de sonido', () => {
     });
   });
 
-  it('el audio se reanuda en CADA gesto (iOS lo interrumpe); lo que más suena, precargado una vez', async () => {
+  it('el audio se reanuda en CADA gesto (iOS lo interrumpe), y el gesto no sintetiza nada', async () => {
     const { desbloquearSonidos } = await gestorNuevo();
     desbloquearSonidos();
     desbloquearSonidos();
     expect(desbloquearAudio).toHaveBeenCalledTimes(3);
-    expect(precargar.mock.calls.map(([receta]) => receta).sort()).toEqual([
-      'arrive',
-      'felt',
-      'nib',
-      'retreat',
-    ]);
+    // DP-11.4: sintetizar en el toque costaba ~0.5 s de hilo con la CPU 4× más lenta.
+    expect(precargar).not.toHaveBeenCalled();
   });
 
-  it('en «Apagado» o en el portal callado no se precarga nada', async () => {
+  it('DP-11.4 · en reposo, antes del primer toque, se sintetiza el mapa: una receta a la vez y una vez', async () => {
+    const gestor = await gestorNuevo();
+    const tareas: (() => void)[] = [];
+    const programar = (tarea: () => void): void => {
+      tareas.push(tarea);
+    };
+    let terminar = (): void => undefined;
+    precargar.mockImplementation(
+      () =>
+        new Promise<void>((listo) => {
+          terminar = listo;
+        }),
+    );
+    gestor.precalentarSonidos(programar);
+    gestor.precalentarSonidos(programar);
+    expect(tareas).toHaveLength(1);
+    expect(precargar).not.toHaveBeenCalled();
+
+    const esperadas = recetasDelMapa('nib');
+    for (const [i, receta] of esperadas.entries()) {
+      tareas.shift()?.();
+      expect(precargar).toHaveBeenCalledTimes(i + 1);
+      expect(precargar).toHaveBeenLastCalledWith(receta);
+      // La siguiente receta espera a que ésta termine, y a otro rato de reposo.
+      expect(tareas).toHaveLength(0);
+      terminar();
+      await vi.waitFor(() => {
+        expect(tareas).toHaveLength(1);
+      });
+    }
+    tareas.shift()?.();
+    expect(precargar).toHaveBeenCalledTimes(esperadas.length);
+  });
+
+  it('en «Apagado» o en el portal callado no se sintetiza nada', async () => {
+    const tareas: (() => void)[] = [];
+    const programar = (tarea: () => void): void => {
+      tareas.push(tarea);
+    };
     vi.resetModules();
     const gestor = await import('./gestor');
     gestor.configurarSonidos({ ganancia: 0, tecla: 'nib', silencioDelPortal: false });
-    gestor.desbloquearSonidos();
+    gestor.precalentarSonidos(programar);
     vi.resetModules();
     const otro = await import('./gestor');
     otro.configurarSonidos({ ganancia: 1, tecla: 'nib', silencioDelPortal: true });
-    otro.desbloquearSonidos();
-    expect(precargar).not.toHaveBeenCalled();
-    expect(desbloquearAudio).toHaveBeenCalledTimes(2);
+    otro.precalentarSonidos(programar);
+    expect(tareas).toEqual([]);
   });
 
   it('«Oír» suena aunque el aparato esté apagado', async () => {

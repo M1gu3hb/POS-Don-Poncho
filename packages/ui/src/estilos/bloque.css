@@ -71,6 +71,14 @@
   --lateral-activo-texto: 0 0% 8%;
   --lateral-hover: 0 0% 18%;
   --lateral-borde: 0 0% 30%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 0 0% 100%;
+  --halo: 250 90% 50%;
+  --malla-1: 250 90% 50%;
+  --malla-2: 320 80% 92%;
+  --malla-3: 48 24% 88%;
 }
 
 [data-estilo='bloque'][data-modo='oscuro'] {
@@ -122,4 +130,12 @@
   --lateral-activo-texto: 0 0% 8%;
   --lateral-hover: 0 0% 16%;
   --lateral-borde: 0 0% 40%;
+
+  /* DP-11.4 · el lenguaje de capas. Este estilo no lo usa (su elevación no es `capas`
+     ni `aero`); los valores salen de su propia paleta por si se le cambia la perilla. */
+  --luz-borde: 48 30% 94%;
+  --halo: 250 100% 76%;
+  --malla-1: 250 100% 76%;
+  --malla-2: 320 40% 22%;
+  --malla-3: 0 0% 14%;
 }

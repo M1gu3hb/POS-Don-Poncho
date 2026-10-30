@@ -27,8 +27,13 @@ export default function BrandedBackground() {
       aria-hidden="true"
       className="no-print fixed inset-0 pointer-events-none overflow-hidden -z-0"
     >
-      {/* Base sutil — usa tokens para que el degradado funcione en claro y oscuro */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-accent/30 dark:to-accent/10" />
+      {/* Base sutil — usa tokens para que el degradado funcione en claro y oscuro.
+          DP-11.4: con el lenguaje de capas, aquí se pinta el escritorio (la malla, o el cielo
+          de «Retro»): `data-fondo` lo lee `packages/ui/src/estilos/lenguaje.css`. */}
+      <div
+        data-fondo="escritorio"
+        className="absolute inset-0 bg-gradient-to-br from-background via-background to-accent/30 dark:to-accent/10"
+      />
 
       {fondo && (
         <div

@@ -221,3 +221,87 @@ de demo en la carpeta temporal de la PC.
   `verify:rls` en sólo lectura contra la base compartida: verdes. La CI cazó la etiqueta de
   `MesaActiva.tsx` fuera de las 60 líneas que lee `verify:cobertura` (bitácora); la galería se
   regeneró en CI y sólo cambiaron de verdad los 9 retratos de Configuración (la pestaña Sonidos).
+- **Publicado** (30-10-2026, 02:47–03:00 hora del centro, fuera de servicio): CI a mano en verde
+  (41026095330, 16/16) → `main` = `2feb661` → Production `READY` → humo verde (rutas públicas, el
+  gestor viaja en los chunks de la entrada) → huella IDÉNTICA (08:47:15 → 09:00:45 UTC, 119 tablas,
+  10 organizaciones). Ninguna escritura en producción. `fase-b`: fusión `16d621b` (un conflicto de
+  imports en `Caja.jsx`: se quedan los dos). Después, la licencia de Sound Lab también se sirve en
+  `/licencias/` (sale con la siguiente publicación).
+
+## DP-11.4 · El lenguaje de capas, sus estilos y las tres pantallas piloto (30-10-2026)
+
+- **Qué quedó** (rama `dp-11`; se publica entero, ver «Publicación»):
+  - **El sistema** (DP-D41): dos valores nuevos de la perilla de elevación, `capas` (sombras
+    largas en tres capas teñidas, vidrio ahumado en lo que flota, malla de fondo casi
+    imperceptible) y `aero` (el de «Retro»). Vidrio SÓLO en lo que flota —la isla, la cuenta, los
+    diálogos y cajones, los menús, los avisos, el dock— y nunca en una tarjeta de una lista; pasa
+    solo a superficie sólida con «menos transparencia» o si el aparato no da 60 cuadros (se mide
+    una vez en reposo). Tacto (`data-tacto`), halo (`data-principal`, `data-activa`) y presión
+    (`--escala-presion`, con resorte) por atributo. Los otros siete estilos no cambian.
+  - **Los estilos:** `morphiq` con la marca de Miguel (negro azulado `#0A0E1A`, azul eléctrico
+    `#1E5BFF`, acero); `don-poncho` con los colores del logo y `capas` (sigue siendo el de la
+    casa); **«Retro»** nuevo (Frutiger Aero inspirado: ventanas de vidrio con brillo, gel,
+    escritorio de cielo y agua hecho con CSS propio, sin un logo, fondo ni fuente de nadie). Los
+    diez estilos en AA, claro y oscuro.
+  - **Claro, oscuro o automático** por aparato (Configuración → Apariencia); automático sigue al
+    sistema en vivo.
+  - **La navegación** (DP-D42): en táctil (puntero grueso o menos de 64rem: la tableta del local
+    mide 1280 px) un dock flotante abajo con las secciones del puesto y «Abrir menú»; con ratón,
+    la barra lateral, que flota a un lado. El abanico del dueño se va.
+  - **Los tres pilotos**, recompuestos en `src/` con el sistema (mismos comandos, rutas, textos y
+    selectores de las pruebas): el **Tablero** (`Dashboard.jsx` de 662 a 246 líneas), **Mesero**
+    (el plano, la rejilla, la mesa abierta con la cuenta flotando y el borrador fuera de la
+    pantalla: un toque ya no redibuja el salón) y **Caja / Cobro** (con un teclado de cobro
+    táctil junto al campo «Recibido», con billetes y «Exacto»; el teclado de PIN, compartido).
+- **Cómo se hizo:** el sistema, los estilos, el modo y la navegación, aquí; los tres pilotos, tres
+  subagentes Sonnet (uno a la vez o dos, cada uno en su worktree, sin commit), integrados y
+  verificados aquí. De la integración salieron dos correcciones: la leyenda de Mesero se encontraba
+  componiendo clases para esquivar `verify:primitivas` (ahora por atributos `data-`), y la etiqueta
+  de la mesa perdía el aire de sus esquinas en los estilos de radio amplio (4.44:1; vuelve a pasar).
+- **Una corrección de DP-11.3 que sale aquí:** la primera vez que se abría una mesa, el sonido se
+  SINTETIZABA en el toque (medio segundo de hilo con la CPU 4× más lenta). Ahora los sonidos del
+  mapa se sintetizan en reposo antes del primer toque, una receta a la vez; el toque sólo reanuda
+  el audio. 8 de 8 mutantes muertos.
+- **Rendimiento** (`scripts/medir-fluidez.mjs`, CPU 4× más lenta, demo de `main` con `capas`;
+  `evidencia-004/fluidez-antes.json`, `fluidez-despues.json` y `fluidez-despues-solido.json`):
+
+  | Aparato  | Acción              | Antes                    | Después                  |
+  | -------- | ------------------- | ------------------------ | ------------------------ |
+  | tableta  | Mesero: cargar      | 1.8 s                    | 1.3 s                    |
+  | tableta  | abrir mesa libre    | 0.40 s · 15.7 fps · p95 283 | 0.39 s · 19.1 fps · p95 267 |
+  | tableta  | abrir mesa ocupada  | 1.3 s · 20.5 fps · 5 tirones | 0.57 s · 22.9 fps · 2 tirones |
+  | tableta  | Caja: cargar        | 1.6 s                    | 1.4 s                    |
+  | tableta  | Tablero: cargar     | 1.4 s                    | 1.2 s                    |
+  | teléfono | abrir mesa libre    | 0.40 s · 20 fps          | 0.41 s · 16.2 fps        |
+  | teléfono | abrir mesa ocupada  | 0.98 s · p95 533 ms      | 0.55 s · p95 217 ms      |
+  | teléfono | Caja: cargar        | 1.6 s                    | 1.3 s                    |
+
+  Abrir una mesa ocupada (lo que pasa todo el día) es 2.3× más rápido en la tableta. Desplazar el
+  Tablero varió entre corridas del mismo código de 41 a 57 fps: la medición desplaza mientras
+  todavía cargan las gráficas; ya cargado, se desplaza a 60 en tableta y teléfono, con vidrio y
+  sin él. El vidrio no cambia los números (con vidrio sólido dan lo mismo). **Pendiente honesto:**
+  abrir una mesa todavía no va a 60 cuadros (16–23): el diálogo pinta de un golpe; el siguiente
+  paso es partir el primer dibujo del catálogo.
+- **Evidencia:** unidad 4,539 pruebas; mutantes 25/25 (sistema), 8/8 (sonido), y los de los
+  subagentes (51 Caja, 5 Tablero, 54 Mesero); navegador: navegación 5/5 (en tableta y teléfono,
+  el dock), jornada completa 3/3, estados de mesa 20/20 (diez estilos), restaurante 9/9, sonidos
+  19/19, solicitudes 3/3, portal 3/3, operaciones 17/17, PIN al despertar 9/9, modo del aparato
+  6/6, estilos y contraste 22/22, apariencia del negocio 13/13.
+- **Sin migración.** La apariencia del negocio ya vivía en `configuracion.valores`; el modo y el
+  vidrio, en el aparato.
+- **Capturas y video:** `evidencia-004/dp11-4/` tiene seis hojas de contacto (escritorio, tableta y
+  teléfono, en claro y oscuro: el Tablero, el mapa de Mesero, la mesa abierta, la Caja y el cobro,
+  en `don-poncho`, `morphiq` y «Retro») y `recorrido-tableta.webm` (abrir una mesa, agregar,
+  enviar a cocina y cobrar con el teclado, con el estilo de la casa). Las 90 capturas sueltas se
+  rehacen con `node scripts/capturar-pilotos.mjs` contra la demo local (`docs/DEMO-LOCAL.md` §5).
+- **Las imágenes de referencia** («Mesa 08», carruseles) que menciona el encargo no llegaron a la
+  sesión: el lenguaje salió del texto del encargo.
+- **CI:** galería regenerada `41057249862` (verde); confirmación `41061664223`.
+- **Publicación (pendiente, con aviso a Miguel):** es un cambio grande de diseño y el restaurante
+  abre de día, así que sale fuera del horario de servicio. Al publicar: CI a mano en verde sobre
+  el commit → `main` → Production `READY` → **fijar `capas` en la apariencia de Don Poncho** por
+  el comando de apariencia (hoy guarda `sombra`, la de su alta; sin eso producción no estrena el
+  lenguaje), con huella antes y después y exportación del negocio → humo → huella → fusión en
+  `fase-b` (choques esperados en `Mesero.jsx`, `Caja.jsx`, `Dashboard.jsx` y la galería: allí
+  vive «unir mesas», cuyo efecto líquido entra al lenguaje en esa fusión).
+- **Después, la pausa:** sin el OK de Miguel no se recompone ninguna otra pantalla (DP-11.5).

@@ -234,7 +234,7 @@ export function AbanicoInferior({
             aria-current={esActivo ? 'page' : undefined}
             className={cn(
               'relative flex flex-1 flex-col items-center gap-1 py-(--espacio-2) text-xs',
-              'transition-colors duration-(--duracion-rapida) active:scale-[0.97]',
+              'transition-colors duration-(--duracion-rapida) active:scale-(--escala-presion)',
               '[&_svg]:size-5',
               esActivo ? 'text-primario' : 'text-texto-sutil',
             )}

@@ -164,9 +164,12 @@ describe('el mapa del mesero', () => {
     ]);
     // DP-9.6: lo que se pinta es ese plano sin las mesas absorbidas en una unión.
     expect(inicializadorDe(mesero, 'mesasZona').join('')).toContain('sinAbsorbidas(mesasDeLaZona)');
-    expect(propsDe(mesero, 'MesaGridMobile').map((p) => p['mesas'])).toEqual(['mesasZona']);
-    // El lienzo de escritorio pinta cada mesa de `mesasZona`.
-    expect(texto(mesero, mesero)).toContain('mesasZona.map((mesa)=>');
+    // DP-11.4: el lienzo y la rejilla son componentes de `src/mesero` y reciben `mesasZona`…
+    expect(propsDe(mesero, 'RejillaDeMesas').map((p) => p['mesas'])).toEqual(['mesasZona']);
+    expect(propsDe(mesero, 'PlanoDelSalon').map((p) => p['mesas'])).toEqual(['mesasZona']);
+    // …y el lienzo de escritorio pinta cada mesa que recibe (antes: `mesasZona.map((mesa)=>`).
+    const plano = leer('src/mesero/PlanoDelSalon.tsx');
+    expect(texto(plano, plano)).toContain('mesas.map((mesa)=>');
   });
 
   it('las pestañas de zona cuentan sólo mesas en servicio', () => {
