@@ -400,3 +400,9 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   cuando ya no hay ninguno.
 - Reconocimiento de DP-11.4 con dos lectores Sonnet de sólo lectura, cada uno en su worktree (el
   sistema de diseño; los pilotos, la navegación y lo que exigen las pruebas). Sin cambios.
+- Publicación de DP-11.3: CI a mano `41026095330` verde (16/16) → `main` = `2feb661` (avance sin
+  fusión) → Production `READY` (consultada con la herramienta de Vercel: `vercel ls` se colgaba
+  también en primer plano) → humo verde → huella IDÉNTICA. `fase-b`: fusión `16d621b`, conflicto
+  de imports en `Caja.jsx` (unir mesas y sonar: se quedan los dos).
+- **Para retomar DP-11.4:** el plan y sus decisiones están en `docs/diseno/PLAN-DP-11.4.md`; el
+  reconocimiento, en `docs/diseno/RECONOCIMIENTO-DP-11.4-SISTEMA.md` y `…-PILOTOS.md`.
