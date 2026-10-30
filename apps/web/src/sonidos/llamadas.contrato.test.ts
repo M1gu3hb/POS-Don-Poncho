@@ -18,6 +18,11 @@ function fuente(ruta: string): string {
   return readFileSync(join(WEB, ruta), 'utf8');
 }
 
+/** El código sin sus comentarios (de bloque, de JSX y de línea): lo dicho en uno no corre. */
+function sinComentarios(texto: string): string {
+  return texto.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|\s)\/\/.*$/gm, '$1');
+}
+
 /** `antes` y luego, a menos de `distancia` caracteres, `despues`. */
 function seguido(texto: string, antes: RegExp, despues: string, distancia = 240): boolean {
   for (const encontrado of texto.matchAll(new RegExp(antes.source, 'g'))) {
@@ -158,8 +163,19 @@ const LLAMADAS: readonly Llamada[] = [
   },
 ];
 
+/**
+ * Quién PINTA un teclado con el sonido de teclado. DP-11.4: el del acceso por PIN y el del
+ * despertar dejaron de ser dos copias; viven en `TecladoNumerico`, y el de importes de la caja
+ * (`TecladoDeCobro`) es de los mismos.
+ */
 const TECLADOS = [
   'heredado/pages/POSLogin.jsx',
+  'src/teclados/TecladoNumerico.tsx',
+  'src/teclados/TecladoDeCobro.tsx',
+] as const;
+
+/** Las pantallas de PIN que NO pintan teclas: usan el teclado compartido. */
+const USAN_EL_TECLADO_COMPARTIDO = [
   'src/restaurante/AccesoPorPin.tsx',
   'src/espera/PedirPinAlDespertar.tsx',
 ] as const;
@@ -181,8 +197,21 @@ describe('las llamadas a `sonar` de cada pantalla', () => {
     expect(pos.match(/await refrescarCarrito\(\);\s*sonar\('agregar'\);/g)?.length).toBe(2);
   });
 
-  it('los teclados de PIN suenan con el sonido de teclado del negocio', () => {
+  it('los teclados de PIN y de importes suenan con el sonido de teclado del negocio', () => {
+    // Sin comentarios: la frase «data-sonido="tecla"» dicha en un comentario no hace sonar nada.
     for (const archivo of TECLADOS)
-      expect(fuente(archivo), archivo).toMatch(/data-sonido=(?:"tecla"|\{[^}]*'tecla'[^}]*\})/);
+      expect(sinComentarios(fuente(archivo)), archivo).toMatch(
+        /data-sonido=(?:"tecla"|\{[^}]*'tecla'[^}]*\})/,
+      );
+  });
+
+  it('el acceso por PIN y el PIN del despertar pintan el teclado compartido, no el suyo', () => {
+    for (const archivo of USAN_EL_TECLADO_COMPARTIDO) {
+      const texto = sinComentarios(fuente(archivo));
+      expect(texto, `${archivo}: no importa TecladoNumerico`).toMatch(
+        /import \{ TecladoNumerico \} from '~\/teclados\/TecladoNumerico'/,
+      );
+      expect(texto, `${archivo}: no pinta <TecladoNumerico`).toMatch(/<TecladoNumerico[\s/>]/);
+    }
   });
 });

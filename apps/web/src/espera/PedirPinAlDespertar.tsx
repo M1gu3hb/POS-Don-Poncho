@@ -4,16 +4,15 @@ import { useState } from 'react';
 
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Aviso, Superficie } from '@morphiqpos/ui/sistema';
-import { Delete } from 'lucide-react';
 
 import { invocarComando } from '~/cliente/api';
 import { negocioParaEntrar } from '~/cliente/entrada';
+import { TecladoNumerico } from '~/teclados/TecladoNumerico';
 
 import { CapaModal } from './CapaModal';
 import { mensajeDelPin } from './mensaje-del-pin';
 
 const LARGO_DEL_PIN = 4;
-const TECLAS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
 /**
  * «PEDIR PIN AL DESPERTAR» (DP-11.2): quien tiene la sesión teclea su PIN para volver.
  *
@@ -118,40 +117,16 @@ export function PedirPinAlDespertar({
             {pin.length} de {LARGO_DEL_PIN} dígitos
           </p>
           {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} anuncio="alerta" />}
-          <div data-sonido="tecla" className="grid grid-cols-3 gap-(--espacio-2)">
-            {TECLAS.map((digito) => (
-              <Button
-                key={digito}
-                variant="outline"
-                size="lg"
-                aria-disabled={ocupado}
-                onClick={() => {
-                  teclear(digito);
-                }}
-              >
-                {digito}
-              </Button>
-            ))}
-            <Button
-              variant="ghost"
-              size="lg"
-              aria-label="Borrar"
-              aria-disabled={ocupado || pin === ''}
-              onClick={borrar}
-            >
-              <Delete aria-hidden />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              aria-disabled={ocupado}
-              onClick={() => {
-                teclear('0');
-              }}
-            >
-              0
-            </Button>
-          </div>
+          {/* DP-11.4: el teclado es el compartido con el acceso por PIN. `suave`: sus teclas dicen
+              `aria-disabled` y se ignoran, en vez de `disabled`, que soltaría el foco. */}
+          <TecladoNumerico
+            alDigito={teclear}
+            alBorrar={borrar}
+            deshabilitado={ocupado}
+            nadaQueBorrar={pin === ''}
+            tamano="normal"
+            suave
+          />
           <Button
             variant="ghost"
             aria-disabled={ocupado}

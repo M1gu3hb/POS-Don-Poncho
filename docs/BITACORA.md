@@ -424,5 +424,14 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
 - **Ojo, vista previa:** `preview_stop` no mata el `next start` hijo; quedan dueños del puerto.
   Lanzador fuera del repositorio (`.work/servir-dp11.sh`, configuración `dp11-vista`).
 - **Subagentes (Sonnet, cada uno en su worktree, sin commit):** 11.4.d Tablero recompuesto; 11.4.e
-  Caja/Cobro recompuestos con el teclado de cobro y el teclado numérico compartido. Resultado: al
-  integrarlos.
+  Caja/Cobro recompuestos con el teclado de cobro y el teclado numérico compartido; 11.4.g Mesero
+  recompuesto (lanzado al terminar el de Caja: nunca más de dos a la vez).
+- **11.4.e integrado** (parche del subagente, sin conflictos): `src/caja/` (cabecera, pendientes,
+  teselas de método, resumen, recibido), `src/teclados/` (teclado de cobro con billetes y
+  «Exacto»; `TecladoNumerico` compartido por el acceso y el despertar). «Cobrar» con
+  `data-principal` y `data-tacto`. El subagente: 51 mutaciones a mano, todas en rojo; sin
+  Testing Library (no está instalada), las pruebas de componente pintan con
+  `renderToStaticMarkup`, y `vitest.config.ts` recoge `apps/*/src/**/*.test.tsx`. Aquí: unidad
+  1,577 en verde; navegador: PIN al despertar 9/9, sonidos 19/19, operaciones 17/17, jornada en
+  teléfono verde; en escritorio y tableta, dos tiempos agotados por carga de la máquina (el reseteo
+  y la lista de empleados no respondieron en 20 s con dos subagentes trabajando): se repiten.

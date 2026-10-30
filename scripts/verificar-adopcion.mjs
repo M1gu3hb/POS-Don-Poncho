@@ -817,6 +817,111 @@ export const SIN_ESTADO = [
     estado: 'cargando',
     razon: 'No lee nada: recibe la unión por props. Mientras separa, su botón dice «Separando…».',
   },
+  // ── DP-11.4: los teclados y las piezas recompuestas de la caja (piloto 3). Ninguna lee nada ni
+  //    decide un error: son controles y resúmenes que montan el diálogo de cobro y el acceso.
+  {
+    pantalla: 'teclados/TecladoNumerico',
+    estado: 'vacio',
+    razon:
+      'Un teclado de PIN: sus doce teclas siempre están. No pinta ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'teclados/TecladoNumerico',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la pantalla que lo monta le pasa lo tecleado. Mientras comprueba el PIN, sus teclas quedan deshabilitadas o con aria-disabled.',
+  },
+  {
+    pantalla: 'teclados/TecladoNumerico',
+    estado: 'error',
+    razon:
+      'No decide si un PIN es correcto: lo decide el servidor, y la pantalla que lo monta (acceso o despertar) pinta su Aviso junto a las teclas.',
+  },
+  {
+    pantalla: 'teclados/TecladoDeCobro',
+    estado: 'vacio',
+    razon:
+      'Un teclado de importes: sus dieciocho teclas siempre están. No pinta ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'teclados/TecladoDeCobro',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la caja le pasa lo recibido y el total por props. Mientras cobra, todas sus teclas quedan deshabilitadas.',
+  },
+  {
+    pantalla: 'teclados/TecladoDeCobro',
+    estado: 'error',
+    razon:
+      'No valida un importe contra el servidor: edita el texto de «Recibido» con el filtro de `limpiarImporte`, y el cobro lo valida y lo avisa la caja.',
+  },
+  {
+    pantalla: 'caja/CabeceraDeCaja',
+    estado: 'vacio',
+    razon: 'Es una cabecera con tres acciones: no pinta ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'caja/CabeceraDeCaja',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la caja le pasa si hay caja abierta y si sigue cargando. Mientras tanto «Abrir caja» queda deshabilitado.',
+  },
+  {
+    pantalla: 'caja/CabeceraDeCaja',
+    estado: 'error',
+    razon:
+      'No lee nada que pueda fallar: el error de abrir, cortar o cerrar la caja lo avisa el diálogo de cada acción con un toast.',
+  },
+  {
+    pantalla: 'caja/TeselasDeMetodo',
+    estado: 'vacio',
+    razon: 'Son cuatro métodos de pago fijos: no hay lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'caja/TeselasDeMetodo',
+    estado: 'cargando',
+    razon: 'No lee nada: recibe el método elegido por props, y elegir es instantáneo.',
+  },
+  {
+    pantalla: 'caja/TeselasDeMetodo',
+    estado: 'error',
+    razon: 'Elegir un método no puede fallar: el cobro que lo usa valida y avisa su propio error.',
+  },
+  {
+    pantalla: 'caja/ResumenDeCobro',
+    estado: 'vacio',
+    razon:
+      'Resume UNA cuenta ya abierta en el diálogo de cobro: no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'caja/ResumenDeCobro',
+    estado: 'cargando',
+    razon:
+      'No lee nada: recibe los importes de la cuenta por props, que el diálogo ya tiene cuando se abre.',
+  },
+  {
+    pantalla: 'caja/ResumenDeCobro',
+    estado: 'error',
+    razon:
+      'Sólo muestra importes que ya están leídos: el fallo de un cobro lo avisa la caja con un toast, no este resumen.',
+  },
+  {
+    pantalla: 'caja/RecibidoDelCobro',
+    estado: 'vacio',
+    razon: 'Es un campo con su teclado: no pinta ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'caja/RecibidoDelCobro',
+    estado: 'cargando',
+    razon:
+      'No lee nada: lo recibido vive en la caja y llega por props. Mientras cobra, el teclado de la pantalla queda deshabilitado.',
+  },
+  {
+    pantalla: 'caja/RecibidoDelCobro',
+    estado: 'error',
+    razon:
+      'Un campo no decide si lo recibido alcanza: lo decide el cobro, y el servidor rechaza el que no cubre; la caja pinta ese aviso.',
+  },
 ];
 
 const argumentos = process.argv.slice(2);

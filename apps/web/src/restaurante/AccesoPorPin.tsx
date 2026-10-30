@@ -12,7 +12,7 @@ import {
   conTransicion,
   viaje,
 } from '@morphiqpos/ui/sistema';
-import { Circle, Delete, UsersRound } from 'lucide-react';
+import { Circle, UsersRound } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 
@@ -20,6 +20,7 @@ import { ErrorApi, invocarComando, obtenerApi } from '~/cliente/api';
 import { negocioParaEntrar, rutaDeEmpleados } from '~/cliente/entrada';
 import { abrir as abrirElCandado } from '~/espera/candado-del-pin';
 import { sonarAntesDeIrse } from '~/sonidos/gestor';
+import { TecladoNumerico } from '~/teclados/TecladoNumerico';
 
 import { almacenDelAparato } from './vista-de-solicitudes';
 
@@ -89,7 +90,6 @@ const HTTP_DEMASIADOS_INTENTOS = 429;
 const SIN_PLANTILLA = 'No se pudo leer la plantilla.';
 /** Lo que se reserva mientras llega la plantilla: una sala típica, no una rueda. */
 const TARJETAS_DE_ESPERA = 8;
-const DIGITOS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
 const CLASES_REJILLA =
   'mx-auto grid w-full max-w-4xl grid-cols-2 gap-(--espacio-3) md:grid-cols-3 md:gap-(--espacio-6) xl:grid-cols-4';
 const CLASES_TARJETA =
@@ -186,7 +186,7 @@ function AvisosDeAcceso({ sinConexion, segundosBloqueo, error, className }: Avis
   return null;
 }
 
-interface TecladoNumericoProps {
+interface PanelDelPinProps {
   readonly empleado: EmpleadoDeAcceso;
   readonly digitos: number;
   readonly deshabilitado: boolean;
@@ -198,7 +198,8 @@ interface TecladoNumericoProps {
   readonly onVolver: () => void;
 }
 
-function TecladoNumerico({
+/** El panel del PIN: la cara de quien entra, los puntos y el teclado compartido. */
+function PanelDelPin({
   empleado,
   digitos,
   deshabilitado,
@@ -206,19 +207,7 @@ function TecladoNumerico({
   avisos,
   onTecla,
   onVolver,
-}: TecladoNumericoProps) {
-  const teclas = [
-    ...DIGITOS.map((digito) => ({
-      texto: digito,
-      valor: digito,
-      tipo: 'outline' as const,
-      apagada: false,
-    })),
-    { texto: 'Borrar', valor: 'borrar', tipo: 'ghost', apagada: digitos === 0 },
-    { texto: '0', valor: '0', tipo: 'outline', apagada: false },
-    { texto: 'Entrar', valor: 'entrar', tipo: 'default', apagada: digitos < LARGO_PIN },
-  ] as const;
-
+}: PanelDelPinProps) {
   /**
    * EL FOCO LLEGA CON EL PANEL. La tarjeta que lo tenía se desmonta al elegir, y
    * sin esto caía en `body`: un lector de pantalla no se enteraba de que salió el
@@ -271,26 +260,22 @@ function TecladoNumerico({
         ))}
       </p>
 
-      <div className="grid grid-cols-3 gap-(--espacio-3)">
-        {teclas.map((tecla) => (
-          <Button
-            key={tecla.valor}
-            type="button"
-            variant={tecla.tipo}
-            disabled={deshabilitado || tecla.apagada}
-            cargando={tecla.valor === 'entrar' && enviando}
-            className={`h-20 md:h-24 ${tecla.valor.length === 1 ? 'font-numeros text-2xl font-semibold' : 'text-base'}`}
-            // DP-11.3: los dígitos y borrar suenan con el sonido de teclado; «Entrar», como botón.
-            data-sonido={tecla.valor === 'entrar' ? undefined : 'tecla'}
-            onClick={() => {
-              onTecla(tecla.valor);
-            }}
-          >
-            {tecla.valor === 'borrar' ? <Delete aria-hidden /> : null}
-            {tecla.texto}
-          </Button>
-        ))}
-      </div>
+      {/* DP-11.4: el teclado es el compartido con el PIN del despertar. Los dígitos y borrar
+          suenan a teclado (DP-11.3); «Entrar» suena como el botón que es. */}
+      <TecladoNumerico
+        alDigito={onTecla}
+        alBorrar={() => {
+          onTecla('borrar');
+        }}
+        alEntrar={() => {
+          onTecla('entrar');
+        }}
+        deshabilitado={deshabilitado}
+        nadaQueBorrar={digitos === 0}
+        incompleto={digitos < LARGO_PIN}
+        entrando={enviando}
+        textoEnBorrar
+      />
     </Superficie>
   );
 }
@@ -519,7 +504,7 @@ export function AccesoPorPin({ empleadosIniciales, onEntro }: AccesoPorPinProps)
   function cuerpo(): ReactNode {
     if (seleccionado !== null) {
       return (
-        <TecladoNumerico
+        <PanelDelPin
           empleado={seleccionado}
           digitos={pin.length}
           deshabilitado={deshabilitado}
