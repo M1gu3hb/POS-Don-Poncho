@@ -31,7 +31,10 @@ async function tomar(salida) {
   const requerir = createRequire(join(process.cwd(), 'packages', 'data', 'package.json'));
   const { Client } = requerir('pg');
   const local = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
-  const c = new Client({ connectionString: url, ssl: local ? false : { rejectUnauthorized: false } });
+  const c = new Client({
+    connectionString: url,
+    ssl: local ? false : { rejectUnauthorized: false },
+  });
   await c.connect();
   try {
     await c.query('begin transaction isolation level repeatable read read only');
