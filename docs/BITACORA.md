@@ -255,3 +255,73 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   la mesa N». Decisiones, índice, bitácora, aspecto y CI llevan lo de los dos lados.
 - De paso: `open(p, 'w')` de Python en Windows escribe CRLF; los guiones de edición usan
   `newline=''`.
+- Ensayo contra las migraciones de `fase-b` (hasta la 188): migrar 7 s, importar 2,2 s,
+  idénticos; las demostraciones de la 042 quedan apagadas y Don Poncho activo. En los dos
+  ensayos la app compilada, con la pimienta de producción, lista al personal y entra con PIN (un
+  gerente de ensayo dado de alta sólo en la copia) y pasa la jornada completa.
+- Banco de mutaciones de DP-10.1 a 10.3: 35 mutantes más uno a mano sobre la clave del portal,
+  todos muertos por una prueba que falla (el de la respuesta del PIN no lo veía el navegador,
+  porque la pantalla vuelve a preguntar a `/api/catalogo/sesion`: lo mata la prueba de la ruta).
+- La e2e del pedido compartido en `fase-b` destapó que el portal fundía cocina y barra en una
+  comanda cuando había estaciones (la clave del grupo no llevaba el área): arreglado en `main`
+  (`d1d6b01`). La jornada de concurrencia cerraba la última caja con dos mesas vivas: con
+  DP-10.2 ya no se deja; la prueba lo exige y luego cancela esas cuentas.
+- `main` (d1d6b01, 27-10, 20:20 UTC): CI `40573919299` verde (16 trabajos), acople verde contra
+  producción, Production lista a las 20:21. Escrito en producción con `preparar-negocio.mjs`
+  (datos v2), entre las 20:22:54 y las 20:22:58 UTC: la bandera
+  `estaciones_preparacion_activas`, «Cocina» como general, el usuario Cocina a la estación
+  Cocina y el alta de Bebidas (cocina, estación Bebidas, PIN al azar sólo en `_PRIVADO`); la
+  apariencia se volvió a fijar con los mismos valores. Comparado contra una exportación de
+  antes: sólo cambiaron esas filas y su auditoría (950 → 964 filas). La pantalla de acceso lista
+  9 personas. Almacén: un PNG de prueba subido, leído, listado y borrado (el bucket quedó
+  vacío). Humo verde antes y después; huella de las otras 10 organizaciones idéntica
+  (20:21:43 → 20:25:18 UTC); sin cajas, cobros ni cuentas.
+- `fase-b`: `main` fusionado otra vez (`42fc58a`); puertas, unidad (4 231) e integración (209)
+  verdes; concurrencia 18 de 18 en los tres aparatos y pedido compartido 3 de 3. Banco de la 188:
+  5 de 5. Subida (sólo avance); CI del PR #1 `40578188619` verde (8 trabajos). Descripción del PR
+  al día con la 188, las fusiones y el ensayo.
+- Limpieza: las dos bases locales del ensayo con datos reales (`dp_ensayo_main`,
+  `dp_ensayo_faseb`) se borraron; las exportaciones se quedan en `..\_PRIVADO\mudanza\`. Reporte
+  en `docs/reports/003-funcionamiento.md`.
+
+## 29-10-2026 · DP-11 · Morfi, modo espera, sonidos y el diseño nuevo
+
+Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre el encargo): todo a
+`main` y a producción en cuanto queda verificado; no hay rama `diseno` (DP-D35). Rama de trabajo:
+`dp-11` desde `main`.
+
+### Para retomar
+
+- Postgres de desarrollo: `pg_ctl -D ".work/pg/data" start` (55433). Bases desechables de DP-11:
+  `don_poncho_demo_main` (migraciones de `main`, para medir) y `don_poncho_demo_faseb` (la demo de
+  Miguel). En las dos las 10 mesas se acomodaron en cuadrícula 5×2 (en producción están todas en
+  100,100: ver el inventario).
+- Los secretos y PIN de las demos van en `%LOCALAPPDATA%\Temp\pos-don-poncho-demo\demo.json`.
+  **Ojo:** `.work/env.sh` cambia `TEMP` a `D:\mpos-tmp`, donde hay OTRO `demo.json` (otra
+  pimienta): las bases de DP-11 se prepararon con `TEMP` de Windows, la que usa PowerShell.
+- Demo de `fase-b` para Miguel: worktree desprendido en `.work/demo-fase-b` (sobre `origin/fase-b`)
+  y el lanzador `.work/demo-fase-b.ps1` (arranca Postgres, enseña los PIN de demo y sirve en
+  `http://<IP>:3300`). Fuera del repositorio.
+- Medir: `node scripts/medir-fluidez.mjs --url http://localhost:3400 --secretos <demo.json>`
+  contra `demo-local.mjs servir --puerto 3400` sobre `don_poncho_demo_main`.
+- Morfi: `M1gu3hb/Morfi-pet` en `c61aab2` (rama `claude/compassionate-cori-xn0xjj`), clonado en el
+  scratchpad, sólo lectura.
+
+### DP-11.0 · Inventario, línea base y plan
+
+- Inventario y plan en `docs/diseno/INVENTARIO-DP-11.md`. Hallazgo: lo que cada puesto usa es
+  heredado o mixto; las gemelas recompuestas de `(modelos)/restaurante/*` no están en el menú
+  (DP-D36: el diseño va a las pantallas reales).
+- **Subagentes:** dos Sonnet en paralelo, sólo lectura, sin worktree porque no escribieron nada
+  (uno con `git archive` de `fase-b` en el scratchpad): «inventario del menú real» e «inventario
+  de `src` y `fase-b`». Resultado revisado y condensado aquí; 202 llamadas, ~17 min.
+- Línea base de rendimiento (CPU 4×): desplazarse 55–60 cuadros; abrir una mesa 16–20 cuadros
+  (el diálogo monta los 107 platillos). `docs/reports/evidencia-004/fluidez-antes.json`.
+- Producción, sólo lectura: Don Poncho con 0 órdenes y 0 pagos (aún no opera en el sistema); las
+  10 mesas en la misma posición (100, 100).
+- Al probar la demo de `fase-b` por la IP, el portal del comensal no cargaba:
+  `crypto.randomUUID` no existe por http. Arreglo en `main` (DP-D37, `idAlAzar`, seis mutaciones
+  muertas); el sitio de `fase-b` (carrito compartido) se arregla al fusionar `main`, y el contrato
+  lo exige.
+- Morfi en Safari: WebM con alfa no; APNG pesa 5.5 MB (a media escala); WebP animado con alfa
+  2.7–3.0 MB a escala completa, 1.4 MB a media. El `ffmpeg` de esta PC no codifica HEVC con alfa.

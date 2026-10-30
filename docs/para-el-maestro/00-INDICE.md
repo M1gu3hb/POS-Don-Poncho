@@ -18,3 +18,4 @@ Poncho, y cómo portarlo.
 | 10  | [La última caja no cierra con cuentas vivas](10-cierre-de-caja-con-cuentas-vivas.md)                | DP-10.2 | No                  |
 | 11  | [Puente de las mesas unidas hasta la mudanza](11-puente-de-mesas-unidas.md)                         | DP-10.3 | No                  |
 | 12  | [Mudar un negocio a su propia base](12-mudanza-de-un-negocio.md)                                    | DP-10.5 | En `fase-b`, la 188 |
+| 13  | [Un id al azar que también sirve por http](13-id-al-azar-por-http.md)                               | DP-11.0 | No                  |

@@ -91,7 +91,12 @@ desechables de esta PC:
 - **Con las migraciones de `main`** (hasta la 185): exportar 16,9 s (132 tablas, 950 filas; el
   bucket está vacío: 0 archivos), migrar desde cero 8 s, importar 1,4 s; filas y md5 idénticos,
   sin llaves rotas.
-- **Con las migraciones de `fase-b`** (hasta la 188): ver el reporte 003.
+- **Con las migraciones de `fase-b`** (hasta la 188): migrar desde cero 7 s, importar 2,2 s (3 s
+  de reloj); filas y md5 idénticos; la 188 deja apagadas las tres demostraciones de la 042 y a
+  Don Poncho activo.
+- En las dos: la aplicación compilada, con la `PIN_PEPPER` de producción, lista al personal y
+  entra con PIN (un gerente de ensayo dado de alta sólo en la copia; ningún PIN real), y la
+  jornada completa del restaurante pasa en el navegador. Detalle en el reporte 003.
 
 ## Después
 

@@ -1,0 +1,86 @@
+{
+  "cpu": 4,
+  "url": "http://localhost:3400",
+  "fecha": "2026-10-29T23:30:32.615Z",
+  "aparatos": {
+    "tablet": {
+      "preparacion": "la mesa 1 ya estaba ocupada",
+      "mesero": {
+        "carga": 1806,
+        "desplazamiento": {
+          "ms": 2824,
+          "fps": 59.6,
+          "p95": 17,
+          "tirones": 0,
+          "peor": 33,
+          "recorrido": 146
+        },
+        "abrirMesaLibre": {
+          "ms": 404,
+          "fps": 15.7,
+          "p95": 283,
+          "tirones": 1,
+          "peor": 283
+        },
+        "abrirMesaOcupada": {
+          "ms": 1315,
+          "fps": 20.5,
+          "p95": 183,
+          "tirones": 5,
+          "peor": 567
+        }
+      },
+      "caja": {
+        "carga": 1572,
+        "desplazamiento": null
+      },
+      "tablero": {
+        "carga": 1425,
+        "desplazamiento": {
+          "ms": 3059,
+          "fps": 54.8,
+          "p95": 17,
+          "tirones": 3,
+          "peor": 83,
+          "recorrido": 1690
+        }
+      }
+    },
+    "telefono": {
+      "preparacion": "la mesa 1 ya estaba ocupada",
+      "mesero": {
+        "carga": 1263,
+        "desplazamiento": null,
+        "abrirMesaLibre": {
+          "ms": 401,
+          "fps": 20,
+          "p95": 267,
+          "tirones": 1,
+          "peor": 267
+        },
+        "abrirMesaOcupada": {
+          "ms": 980,
+          "fps": 16.8,
+          "p95": 533,
+          "tirones": 2,
+          "peor": 533
+        }
+      },
+      "caja": {
+        "carga": 1575,
+        "desplazamiento": null
+      },
+      "tablero": {
+        "carga": 1524,
+        "desplazamiento": {
+          "ms": 2937,
+          "fps": 58,
+          "p95": 17,
+          "tirones": 1,
+          "peor": 83,
+          "recorrido": 2724
+        }
+      }
+    }
+  }
+}
