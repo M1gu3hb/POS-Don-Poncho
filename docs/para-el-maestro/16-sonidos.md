@@ -15,24 +15,25 @@ Sound Lab, instalado **como código** (Web Audio): no hay archivos de audio y su
 
 ## Archivos
 
-| Archivo                                            | Qué                                                         |
-| -------------------------------------------------- | ----------------------------------------------------------- |
-| `apps/web/src/sonidos/motor/*`                     | El motor de Sound Lab, partido en módulos (licencia aparte) |
-| `apps/web/src/sonidos/recetas/*`                   | Las 25 recetas                                              |
-| `apps/web/src/sonidos/mapa.ts`                     | Qué suena en cada momento                                   |
-| `apps/web/src/sonidos/gestor.ts`                   | `sonar`, `oir`, `sonarAntesDeIrse`                          |
-| `apps/web/src/sonidos/reglas-del-gestor.ts`        | Cuándo suena y cuándo calla (puro)                          |
-| `apps/web/src/sonidos/perfil-del-aparato.ts`       | Apagado, Suave, Normal y volumen (`localStorage`)           |
-| `apps/web/src/sonidos/evento-del-clic.ts`          | Qué suena al tocar (puro)                                   |
-| `apps/web/src/sonidos/observador.ts`               | Diálogos y avisos que aparecen                              |
-| `apps/web/src/sonidos/reproductor.ts`              | Carga cada receta cuando hace falta y la toca               |
-| `apps/web/src/sonidos/ProveedorDeSonidos.tsx`      | Configura el gestor y pone el oyente único                  |
-| `apps/web/src/configuracion/SonidoDelAparato.tsx`  | El panel de «Este aparato»                                  |
-| `apps/web/src/configuracion/SonidosDelNegocio.tsx` | La pestaña «Sonidos»                                        |
-| `apps/web/src/cliente/texto-del-aparato.ts`        | Lo guardado en el aparato, en vivo                          |
-| `packages/app/src/configuracion/experiencia.ts`    | `tecla` y `sonidos_en_el_portal`                            |
-| `licencias/react-bits-sound-lab.md`                | Origen y licencia                                           |
-| `pruebas/e2e/sonidos.spec.ts`                      | Navegador, tres aparatos (`data-ultimo-sonido`)             |
+| Archivo                                                                 | Qué                                                         |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `apps/web/src/sonidos/motor/*`                                          | El motor de Sound Lab, partido en módulos (licencia aparte) |
+| `apps/web/src/sonidos/recetas/*`                                        | Las 25 recetas                                              |
+| `apps/web/src/sonidos/mapa.ts`                                          | Qué suena en cada momento                                   |
+| `apps/web/src/sonidos/gestor.ts`                                        | `sonar`, `oir`, `sonarAntesDeIrse`                          |
+| `apps/web/src/sonidos/reglas-del-gestor.ts`                             | Cuándo suena y cuándo calla (puro)                          |
+| `apps/web/src/sonidos/perfil-del-aparato.ts`                            | Apagado, Suave, Normal y volumen (`localStorage`)           |
+| `apps/web/src/sonidos/evento-del-clic.ts`                               | Qué suena al tocar (puro)                                   |
+| `apps/web/src/sonidos/observador.ts`                                    | Diálogos y avisos que aparecen                              |
+| `apps/web/src/sonidos/reproductor.ts`                                   | Carga cada receta cuando hace falta y la toca               |
+| `apps/web/src/sonidos/ProveedorDeSonidos.tsx`                           | Configura el gestor y pone el oyente único                  |
+| `apps/web/src/configuracion/SonidoDelAparato.tsx`                       | El panel de «Este aparato»                                  |
+| `apps/web/src/configuracion/SonidosDelNegocio.tsx`                      | La pestaña «Sonidos»                                        |
+| `apps/web/src/cliente/texto-del-aparato.ts`                             | Lo guardado en el aparato, en vivo                          |
+| `packages/app/src/configuracion/experiencia.ts`                         | `tecla` y `sonidos_en_el_portal`                            |
+| `licencias/react-bits-sound-lab.md`                                     | Origen y licencia                                           |
+| `apps/web/public/licencias/react-bits-sound-lab-MIT-Commons-Clause.txt` | La licencia, servida (el código llega al navegador)         |
+| `pruebas/e2e/sonidos.spec.ts`                                           | Navegador, tres aparatos (`data-ultimo-sonido`)             |
 
 ## Migraciones
 

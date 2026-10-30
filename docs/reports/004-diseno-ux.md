@@ -221,3 +221,9 @@ de demo en la carpeta temporal de la PC.
   `verify:rls` en sólo lectura contra la base compartida: verdes. La CI cazó la etiqueta de
   `MesaActiva.tsx` fuera de las 60 líneas que lee `verify:cobertura` (bitácora); la galería se
   regeneró en CI y sólo cambiaron de verdad los 9 retratos de Configuración (la pestaña Sonidos).
+- **Publicado** (30-10-2026, 02:47–03:00 hora del centro, fuera de servicio): CI a mano en verde
+  (41026095330, 16/16) → `main` = `2feb661` → Production `READY` → humo verde (rutas públicas, el
+  gestor viaja en los chunks de la entrada) → huella IDÉNTICA (08:47:15 → 09:00:45 UTC, 119 tablas,
+  10 organizaciones). Ninguna escritura en producción. `fase-b`: fusión `16d621b` (un conflicto de
+  imports en `Caja.jsx`: se quedan los dos). Después, la licencia de Sound Lab también se sirve en
+  `/licencias/` (sale con la siguiente publicación).
