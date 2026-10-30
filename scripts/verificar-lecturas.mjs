@@ -44,9 +44,9 @@ const LECTURAS_PERMITIDAS = [
   },
   {
     campo: 'modificadores',
-    cantidad: 19,
+    cantidad: 17,
     razon:
-      'Son DTO de catálogo, selección y carrito; el producto normalizado los guarda mediante catalogo.guardar_modificadores y no como una columna.',
+      'Son DTO de catálogo, selección y carrito; el producto normalizado los guarda mediante catalogo.guardar_modificadores y no como una columna. (DP-11.4: las dos de Mesero.jsx se mudaron a src/mesero/borrador-de-la-mesa.ts, que esta puerta no recorre.)',
   },
   {
     campo: 'fecha_inicio',

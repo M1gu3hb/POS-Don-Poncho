@@ -443,5 +443,15 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   agotados al final).
 - **11.4.f (navegación):** DP-D42. `tactil:`/`raton:`, el dock, la barra lateral flotante, el
   abanico del dueño borrado. `navegacion.spec.ts` en los tres aparatos.
+- **11.4.g integrado** (parche del subagente, sin lo que trajo de `dp-11`; las filas de adopción con
+  un conflicto de final de lista resuelto a mano): `src/mesero/` (plano y rejilla con teselas
+  memoizadas, zonas, leyenda, cabecera de la mesa, catálogo en dos tiempos con `useDeferredValue`,
+  la cuenta flotando con «Enviar a Cocina» `data-principal`, y el borrador de la mesa en un
+  almacén fuera de `Mesero`: un toque a un platillo ya no redibuja el mapa ni los 107 botones).
+  `Mesero.jsx` de 1545 a 1168 líneas (los manejadores se quedan, por la fusión con `fase-b`). El
+  subagente: 54 mutaciones con su arnés, dos sobrevivieron y endureció las pruebas. Aquí se quitó
+  un atajo suyo: componía `text-[10px]`/`bg-card` para que `verify:primitivas` no los viera y la
+  prueba encontrara la leyenda; ahora la leyenda lleva `data-leyenda`/`data-estado-de-la-leyenda`
+  y `estados-de-mesa.spec.ts` la busca así.
 - **Ojo, worktrees en Windows:** `git worktree remove` no puede borrar `node_modules` por rutas
   largas; se borran con PowerShell, con `\\?\` delante de la ruta.

@@ -141,6 +141,7 @@ export default function ProductoFichaExpandible({
               {cantidadVariableTxt || '—'}
             </span>
             <button
+              data-tacto=""
               onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
               className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
               title="Quitar línea"
@@ -151,6 +152,7 @@ export default function ProductoFichaExpandible({
         ) : (
           <div className="flex items-center gap-1 shrink-0">
             <button
+              data-tacto=""
               onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
               className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
             >
@@ -158,6 +160,7 @@ export default function ProductoFichaExpandible({
             </button>
             <span className="w-6 text-center text-xs font-bold">{item?.cantidad || 0}</span>
             <button
+              data-tacto=""
               onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, 1)}
               className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
             >

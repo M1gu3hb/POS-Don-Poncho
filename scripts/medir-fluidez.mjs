@@ -26,6 +26,13 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 import { chromium, devices } from '@playwright/test';
 
+import {
+  crearEntrada,
+  dialogoDeLaMesa,
+  laMesa,
+  prepararLaMesa,
+} from './lib/demo-en-el-navegador.mjs';
+
 const argumento = (nombre, porOmision) => {
   const i = process.argv.indexOf(`--${nombre}`);
   return i === -1 ? porOmision : (process.argv[i + 1] ?? porOmision);
@@ -45,51 +52,7 @@ const DUENO = 'Miguel · Morphiq';
 const PIN = { [DUENO]: pinDelDueno, ...pines };
 const EMULACION = { tablet: devices['Galaxy Tab S4 landscape'], telefono: devices['Pixel 7'] };
 
-async function entrar(page, nombre) {
-  // Con una sesión abierta, la pantalla de acceso salta al inicio del rol: se sale antes.
-  await page.context().clearCookies();
-  await page.goto(`${URL_BASE}/n/don-poncho/login-pos`);
-  await page
-    .getByRole('button')
-    .filter({ has: page.getByText(nombre, { exact: true }) })
-    .click();
-  for (const digito of PIN[nombre]) {
-    await page.getByRole('button', { name: digito, exact: true }).click();
-  }
-  await page.waitForURL((url) => !url.pathname.endsWith('/login-pos'));
-}
-
-const laMesa = (page, n) =>
-  page
-    .locator('span.font-heading')
-    .filter({ hasText: new RegExp(`^${String(n)}$`) })
-    .first();
-const dialogoDeLaMesa = (page, n) =>
-  page.getByRole('dialog', { name: new RegExp(`^Mesa ${String(n)} `) });
-
-/** La mesa 1 ocupada con tres platillos en cocina, si aún no lo está. */
-async function prepararLaMesa(page) {
-  await page.goto(`${URL_BASE}/mesero`);
-  await laMesa(page, 1).waitFor();
-  await laMesa(page, 1).click();
-  const apertura = page.getByRole('dialog', { name: 'Abrir mesa 1' });
-  const yaOcupada = dialogoDeLaMesa(page, 1);
-  await apertura.or(yaOcupada).first().waitFor();
-  if (!(await apertura.isVisible())) {
-    await page.keyboard.press('Escape');
-    return 'la mesa 1 ya estaba ocupada';
-  }
-  await apertura.getByRole('spinbutton').first().fill('4');
-  await apertura.getByRole('button', { name: 'Abrir mesa' }).click();
-  await yaOcupada.waitFor();
-  const teselas = yaOcupada.getByRole('button', { name: / \$\d/ });
-  for (let i = 0; i < 3; i += 1) await teselas.nth(i).click();
-  const enviar = yaOcupada.getByRole('button', { name: 'Enviar a Cocina', exact: true });
-  await enviar.click();
-  await page.getByText('¡Pedido enviado a cocina!').first().waitFor({ timeout: 30_000 });
-  await page.keyboard.press('Escape');
-  return 'mesa 1 abierta con 3 platillos en cocina';
-}
+const entrar = crearEntrada(URL_BASE, PIN);
 
 /** Mide los cuadros del hilo principal mientras corre `accion`. */
 async function cuadrosDurante(page, accion) {
@@ -191,7 +154,7 @@ try {
     const cdp = await contexto.newCDPSession(page);
     const fila = {};
     await entrar(page, 'Mesero 1');
-    fila.preparacion = await prepararLaMesa(page);
+    fila.preparacion = await prepararLaMesa(page, URL_BASE);
 
     fila.mesero = await medirPantalla(page, cdp, {
       quien: 'Mesero 1',

@@ -685,7 +685,8 @@ test.describe('los estados de la mesa se leen', () => {
           exigirQueSeDistingan(rev, pantalla, dichoMesero);
 
           // La leyenda de colores, al pie: cada estado con su muestra y su palabra.
-          const leyenda = mesera.locator('div[class~="text-[10px]"] div.bg-card');
+          // DP-11.4: la leyenda recompuesta se encuentra por su marca, no por una clase de estilo.
+          const leyenda = mesera.locator('[data-leyenda="estados"] [data-estado-de-la-leyenda]');
           for (const e of CICLO_DE_LA_MESA) {
             const etiqueta = leyenda.getByText(e.etiqueta, { exact: true });
             const medida = await medirEtiqueta(mesera, etiqueta, e.etiqueta);

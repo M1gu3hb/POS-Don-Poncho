@@ -188,8 +188,14 @@ describe('las llamadas a `sonar` de cada pantalla', () => {
   }
 
   it('agregar suena en los tres caminos del mesero (directo, cantidad variable y personalizado)', () => {
+    // DP-11.4: el carrito ya no es el `setCarrito` de la pantalla sino el borrador de la mesa
+    // (`src/mesero/almacen-del-borrador.ts`); el sonido sigue justo ANTES de que la línea entre,
+    // en el camino que ya decidió que no abre ningún diálogo.
     const mesero = fuente('heredado/pages/Mesero.jsx');
-    expect(mesero.match(/sonar\('agregar'\);\n\s*setCarrito\(/g)?.length).toBe(3);
+    for (const camino of ['Producto', 'Variable', 'Personalizado']) {
+      const suena = new RegExp(`sonar\\('agregar'\\);\\n\\s*borrador\\.agregar${camino}\\(`, 'g');
+      expect(mesero.match(suena)?.length, `agregar${camino}`).toBe(1);
+    }
   });
 
   it('agregar suena en los dos caminos del POS (el producto y el de cantidad variable)', () => {

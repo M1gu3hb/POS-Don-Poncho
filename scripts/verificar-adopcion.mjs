@@ -1009,7 +1009,76 @@ export const SIN_ESTADO = [
     razon:
       'Un campo no decide si lo recibido alcanza: lo decide el cobro, y el servidor rechaza el que no cubre; la caja pinta ese aviso.',
   },
+  ...piezasDelMesero(),
 ];
+
+/**
+ * LAS PIEZAS DE `src/mesero/` QUE SÓLO PINTAN LO QUE RECIBEN (DP-11.4).
+ *
+ * `Mesero.jsx` lee las mesas, el menú y las solicitudes; los estados de esas lecturas —leyendo, sin
+ * poder leer, vacío— los pintan `EstadosDelSalon` (el plano y la rejilla) y `CatalogoDeLaMesa` (el
+ * menú), con el sistema. Lo demás son piezas hoja: una tesela, una pastilla, una leyenda, un
+ * encabezado. No leen nada, así que no tienen un «cargando» ni un «error» propios que pintar; y su
+ * «vacío» es que el padre no las monta. Una fila por pieza y estado, con SU razón.
+ */
+function piezasDelMesero() {
+  const TRES = ['vacio', 'cargando', 'error'];
+  const piezas = [
+    [
+      'mesero/TeselaDeMesa',
+      TRES,
+      'Despacha a la tesela del plano o de la rejilla; una mesa siempre trae su estado de servicio, que se pinta con su palabra y su color.',
+    ],
+    [
+      'mesero/TeselaDelPlano',
+      TRES,
+      'Una mesa del plano: recibe la mesa ya leída por props. Si la lectura no llegó, el plano (EstadosDelSalon) dice que está leyendo o que falló; la tesela no existe todavía.',
+    ],
+    [
+      'mesero/TeselaDeLaRejilla',
+      TRES,
+      'Una tarjeta de la rejilla del teléfono: recibe la mesa ya leída por props. Leer, fallar o estar vacía lo dice la rejilla (EstadosDelSalon), no cada tarjeta.',
+    ],
+    [
+      'mesero/LeyendaDeEstados',
+      TRES,
+      'Los estados de mesa son una lista fija del código (MESA_STATUS_CONFIG): no se lee del servidor, no puede llegar vacía ni fallar.',
+    ],
+    [
+      'mesero/EncabezadoDelMesero',
+      TRES,
+      'El título de la pantalla y la fila de acciones que le pasa Mesero.jsx: no lee nada, y sus acciones son botones que siempre existen.',
+    ],
+    [
+      'mesero/CabeceraDeLaMesa',
+      TRES,
+      'El contenido del título del diálogo de la mesa: recibe la mesa y la cuenta ya leídas. Mientras la cuenta llega, el título sólo omite las pastillas de personas y cliente.',
+    ],
+    [
+      'mesero/PlatilloTesela',
+      TRES,
+      'Un platillo de la cuadrícula: recibe el platillo ya leído por props. El menú leyendo, vacío o sin poder leerse lo dice CatalogoDeLaMesa.',
+    ],
+    [
+      'mesero/CarritoFlotante',
+      TRES,
+      'Adaptador del carrito del teléfono (MeseroCartFAB, heredado): lee el borrador de la mesa, que está en memoria, y no hay viaje al servidor. Se oculta solo cuando no hay nada que mostrar.',
+    ],
+    [
+      'mesero/PedidoDeLaMesa',
+      ['cargando', 'error'],
+      'La cuenta lee el borrador (en memoria) y lo que la mesa ya envió, que recibe por props; no hay lectura propia. Mientras el envío viaja, «Enviar a Cocina» dice «Enviando…»; si falla, lo avisa el toast del manejador de Mesero.jsx.',
+    ],
+    [
+      'mesero/ZonasDelSalon',
+      ['vacio', 'cargando'],
+      'Las pestañas de zona salen de las mesas ya leídas; con una sola zona no se pintan, y mientras las mesas llegan las pinta EstadosDelSalon.',
+    ],
+  ];
+  return piezas.flatMap(([pantalla, estados, razon]) =>
+    estados.map((estado) => ({ pantalla, estado, razon })),
+  );
+}
 
 const argumentos = process.argv.slice(2);
 const conDetalle = argumentos.includes('--detalle');
