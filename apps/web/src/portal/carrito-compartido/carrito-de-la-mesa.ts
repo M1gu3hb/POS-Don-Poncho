@@ -4,6 +4,8 @@
  * que se guarda en el navegador.
  */
 
+import { idAlAzar } from '~/cliente/id-al-azar';
+
 export interface LineaDelCarrito {
   readonly id: string;
   readonly productoId: string;
@@ -59,7 +61,8 @@ export function dispositivoDelTelefono(): string {
     enLaPestana = conocido;
     return conocido;
   }
-  const nuevo = crypto.randomUUID().replaceAll('-', '');
+  // Por http (la red del local) no hay `randomUUID`: `idAlAzar` (DP-D37) arma el mismo UUID.
+  const nuevo = idAlAzar().replaceAll('-', '');
   enLaPestana = nuevo;
   try {
     window.localStorage.setItem(CLAVE, nuevo);
