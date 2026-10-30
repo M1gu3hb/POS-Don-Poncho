@@ -194,7 +194,11 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   mesa en `configuracion` (sin migración), y exportación PNG/SVG/PDF en mm que sólo sale si cada
   QR se lee con jsQR. De paso: instalar `jsqr` falló a medias con «Acceso denegado» y dejó
   `node_modules` sin su almacén virtual; `pnpm install --frozen-lockfile` lo repuso (7 min) y el
-  segundo intento entró limpio.
+  segundo intento entró limpio. En producción (408fb69, 26-10): CI `40447773811` verde, acople verde contra
+  producción, humo sin dinero verde, licencia de jsQR servida en `/licencias/`; ninguna escritura
+  en la base (el diseño por omisión es el de siempre); huella de las otras 10 organizaciones
+  idéntica. Sus 17 mutaciones se repitieron el 27-10 con el arnés corregido (ver reporte 002):
+  17 de 17 atrapadas.
 - DP-9.5 (DP-D29, rama `fase-b`, migración 186): el pedido compartido de la mesa. Un carrito por
   mesa en el servidor, sondeo de 2.5 s con latido, «personas conectadas», «¿Ya pidieron todos?» y
   un solo envío aunque dos lo manden a la vez. Las bases locales `dp_integ` y `dp_e2e` quedaron
@@ -216,12 +220,6 @@ Siete commits (`DP-2a` … `DP-2g`). Lo que quedó fuera y lo que se conservó e
   pasar sin mutar antes de mutar nada; los tres bancos se volvieron a correr con el arnés bueno
   (resultados en el reporte 002). Los bancos de DP-9.1 a DP-9.4 y DP-9.7 usaban `shell=True`
   (cmd) y no tenían el problema.
-
-  segundo intento entró limpio. En producción (408fb69, 26-10): CI `40447773811` verde, acople verde contra
-  producción, humo sin dinero verde, licencia de jsQR servida en `/licencias/`; ninguna escritura
-  en la base (el diseño por omisión es el de siempre); huella de las otras 10 organizaciones
-  idéntica. Sus 17 mutaciones se repitieron el 27-10 con el arnés corregido (ver reporte 002):
-  17 de 17 atrapadas.
 
 ## 27-10-2026 · DP-10 · Dejar el funcionamiento listo para operar
 

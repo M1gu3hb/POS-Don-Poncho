@@ -159,8 +159,9 @@ describe('el mapa del mesero', () => {
   });
 
   it('el plano sale de `mesasDelPlano` (activas, de la zona que se mira), y lo reciben el lienzo y la rejilla', () => {
+    // Memoizado sobre las mismas dos entradas: la tesela del plano (memo) necesita la misma mesa.
     expect(inicializadorDe(mesero, 'mesasDeLaZona')).toEqual([
-      'mesasDelPlano(mesas||[],zonaActiva)',
+      'useMemo(()=>mesasDelPlano(mesas||[],zonaActiva),[mesas,zonaActiva])',
     ]);
     // DP-9.6: lo que se pinta es ese plano sin las mesas absorbidas en una unión.
     expect(inicializadorDe(mesero, 'mesasZona').join('')).toContain('sinAbsorbidas(mesasDeLaZona)');

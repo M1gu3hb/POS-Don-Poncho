@@ -324,7 +324,12 @@ function Mesero() {
   );
 
   // El plano de la zona y sus pestañas cuentan sólo mesas en servicio (21-10).
-  const mesasDeLaZona = mesasDelPlano(mesas || [], zonaActiva);
+  // Memoizado: con la unión, la principal se copia con su nombre «· unidas», y la tesela del plano
+  // (DP-11.4, memoizada) sólo se salva de redibujarse si la mesa es el mismo objeto entre sondeos.
+  const mesasDeLaZona = useMemo(
+    () => mesasDelPlano(mesas || [], zonaActiva),
+    [mesas, zonaActiva],
+  );
   // DP-9.6: las mesas absorbidas en una unión no se pintan; la principal dice con cuáles va.
   const mesasZona = useMemo(
     () =>
