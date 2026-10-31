@@ -482,9 +482,74 @@ puerta los denuncia todos.
   SVG en mm). Diecisiete mutaciones (seis del servidor, siete de la lógica, cuatro del
   navegador), todas atrapadas.
 
-## DP-D31 · La estación de cocina sale de la sesión del servidor; el portal sigue la cadena del mesero · 27-10-2026
+## DP-D29 · El pedido compartido de la mesa: un carrito en el servidor, un solo envío (fase B) · 26-10-2026
 
-> DP-D29 y DP-D30 viven en la rama `fase-b` (pedido compartido y unir mesas desde el mapa).
+- **Lo que había:** cada teléfono armaba su carrito en su memoria y cada «Enviar» salía a cocina
+  como comandas aparte; nadie sabía cuántos estaban pidiendo.
+- **Elección:**
+  - Migración 186 (rama `fase-b`, sin aplicar en la base compartida): `carrito_mesa_lineas`,
+    `dispositivos_mesa` y `carritos_mesa`. La línea no lleva precio (R9): el envío reusa
+    `pedirEnLaMesa`, la misma función del pedido de siempre, con el precio del catálogo.
+  - El teléfono se reconoce por un id que inventa su navegador; el servidor guarda sólo su huella
+    (HMAC con la pimienta). Cada quien quita sólo lo suyo.
+  - Agregar, quitar y enviar son comandos públicos auditados e idempotentes. El SONDEO (cada
+    2.5 s) no: deja el latido —presencia, no un hecho del negocio— y devuelve el carrito; auditarlo
+    escribiría una fila por teléfono cada tres segundos. Tiene su límite por token.
+  - Conectados = teléfonos que latieron en el último minuto desde que se abrió la cuenta. Con dos
+    o más, o una mesa abierta para dos o más, «Esperen a que todos…» y el envío exige
+    confirmación también en el servidor (`QR_CARRITO_SIN_CONFIRMAR`, 409).
+  - Un solo pedido: el envío toma la fila de `carritos_mesa` CON CANDADO; el segundo «Enviar»
+    simultáneo espera y encuentra el carrito vacío (`enviado: false`). El candado de la CUENTA
+    (el de siempre del pedido del portal) cubre otra carrera: enviar mientras la caja cierra la
+    cuenta; probada de forma determinista (`carrito-y-caja.integracion.test.ts`). La ronda de la mesa sube con cada envío y los
+    demás teléfonos ven «Pedido enviado». Lo de una cuenta anterior no aparece en la siguiente.
+  - Contrato del esquema: en `fase-b`, `scripts/esquema-esperado.json` incluye las tablas nuevas
+    (generadas de una base local migrada, sólo altas). Por eso `verify:esquema` y `verify:rls`,
+    que comparan con la base COMPARTIDA, no pasan en esta rama hasta aplicar la 186 en Fase B.
+- **Prueba:** integración contra Postgres (dos teléfonos, lo ajeno, confirmar, envío simultáneo
+  en paralelo de verdad, precio del catálogo y una comanda por estación, ventana de conectados,
+  cuenta anterior, tope, sin pedidos no hay latido); unidad del teléfono; navegador con dos
+  teléfonos en la misma mesa. Las cuatro suites que pedían desde el portal pasan por el pedido de
+  la mesa (`ayudantes/pedido-de-la-mesa.ts`).
+
+## DP-D30 · Unir mesas desde el mapa: la unión es del salón (fase B) · 26-10-2026
+
+- **Lo que había:** `restaurante.unir_mesas` con la principal elegida de una lista y un tope de
+  seis (`.max(5)`); las mesas no se movían en el mapa; ninguna pantalla separaba (D-2); «Marcar
+  entregado» no alcanzaba a la mesa unida (D-3); el QR de una mesa unida abría su propia cuenta,
+  y la unión nacía con una cuenta y moría con ella.
+- **Elección:**
+  - Migración 187 (rama `fase-b`, sin aplicar en la base compartida): la unión puede vivir sin
+    cuenta (`uniones_mesa.orden_id` nulo), guarda las posiciones ORIGINALES de cada mesa y
+    `mesas.unida_a_mesa_id` marca a las absorbidas.
+  - **Criterio de «juntas»:** cada mesa del grupo toca a otra (8 puntos de tolerancia, por su caja
+    en el plano) y el grupo cabe en 640 × 400 puntos (una hilera de cinco rectangulares medianas o
+    un bloque de tres por dos). Sin tope de cantidad; el tope técnico de la entrada (40) no es de
+    negocio. La regla vive en el dominio (`sala/union.ts`) y la aplican pantalla y servidor.
+  - El imán (36 puntos) y el efecto líquido son de la pantalla: un filtro SVG, sin librerías. Con
+    movimiento reducido no tiemblan.
+  - El número que queda es el de la principal elegida: las demás se ocultan y su QR cae en ella.
+    No se renumera nada; al separar, cada mesa vuelve a su posición (zona y número nunca
+    cambiaron).
+  - **La unión es del salón:** sobrevive al cobro y a la cancelación. Al limpiar la principal,
+    `liberar_mesa` exige decidir (`MESA_UNIDA_SIN_DECISION`): separar o dejarlas unidas para el
+    siguiente cliente. Una unión libre se separa desde el mapa.
+  - D-3: al unir, las comandas de la unida pasan a la cuenta del grupo (siguen diciendo su mesa en
+    el tablero). D-2: «Separar mesas» en la mesa activa de la principal y en el mapa.
+  - De paso: `ErrorPuente` (cliente heredado) conserva los `datos` del error; sin eso, la mesa de
+    meseros y la caja no podían saber qué regla las detuvo.
+  - Guardas de una revisión independiente (sólo lectura) del código: principal ya cobrada no se
+    une; posiciones sólo del grupo; ninguna cuenta se muda a una mesa oculta y la que llega a una
+    principal libre toma la unión; la cuenta sin cobrar se dice antes que la pregunta del grupo;
+    candados en el orden cuenta → principal → demás (el del cobro y el de liberar).
+- **Prueba:** unidad del dominio (imán, grupo, regla, medidas) y de la pantalla (plano, toque,
+  escala, la pregunta al liberar); integración contra Postgres (regla y perímetro en el servidor,
+  posiciones originales, QR de la absorbida, cuenta del grupo desde el QR, cobro sin cerrar la
+  unión, separar o mantener al limpiar, cancelar); navegador: arrastre con imán, número, QR y
+  separar en tableta, PC y teléfono, y el día completo de operaciones con el mapa (D-2 y D-3 dejan
+  de ser `fixme`).
+
+## DP-D31 · La estación de cocina sale de la sesión del servidor; el portal sigue la cadena del mesero · 27-10-2026
 
 - **Lo que había (producción, 27-10):** `estaciones_preparacion_activas` apagada y el único
   usuario de cocina viendo comida y bebidas revueltas. Encenderla dejaba la pantalla vacía: la

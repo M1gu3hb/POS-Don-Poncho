@@ -18,6 +18,13 @@ mal; aquí se arreglan sin migración.
   grupo (`comandas.orden_id`), igual que sus líneas. «Marcar entregado» en la principal las
   alcanza; antes se quedaban en «listo» hasta que cocina las quitaba.
 
+## En `fase-b` (DP-10.4)
+
+Al fusionar `main` en `fase-b` ganó la unión de la fase B (DP-9.6, migración 187): el QR de la
+mesa unida cae en la principal por `mesas.unida_a_mesa_id`, el botón «Separar mesas» y las
+comandas que pasan al grupo son los de DP-9.6. Del puente sólo se conserva el aviso «Esta mesa
+está unida a la mesa N», ahora sobre `unida_a_mesa_id`.
+
 ## Archivos
 
 | Archivo                                                                | Qué                                             |

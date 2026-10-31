@@ -12,6 +12,8 @@ Poncho, y cómo portarlo.
 | 04  | [Cocina en el teléfono](04-cocina-en-el-telefono.md)                                                | DP-9.4  | No                  |
 | 05  | [Botones sobre las páginas del menú QR y aspecto del portal](05-botones-del-menu-qr.md)             | DP-9.7  | No                  |
 | 06  | [QR de las mesas con diseño](06-qr-de-mesas-con-diseno.md)                                          | DP-9.8  | No                  |
+| 07  | [El pedido compartido de la mesa](07-pedido-compartido.md)                                          | DP-9.5  | 186                 |
+| 08  | [Unir mesas desde el mapa](08-unir-mesas-en-el-mapa.md)                                             | DP-9.6  | 187                 |
 | 09  | [Estaciones Cocina y Bebidas](09-estaciones-cocina-y-bebidas.md)                                    | DP-10.1 | No                  |
 | 10  | [La última caja no cierra con cuentas vivas](10-cierre-de-caja-con-cuentas-vivas.md)                | DP-10.2 | No                  |
 | 11  | [Puente de las mesas unidas hasta la mudanza](11-puente-de-mesas-unidas.md)                         | DP-10.3 | No                  |
