@@ -88,9 +88,13 @@ que elegir de una lista y luego nadie las puede separar».
 
 ## Migraciones
 
-`187_unir_mesas_desde_el_mapa.sql`. Vive en la rama `fase-b`: la base compartida no admite DDL,
-así que se aplica cuando Don Poncho tenga su propia base (Fase B). Probada desde cero en base
+`187_unir_mesas_desde_el_mapa.sql`. Vive en la rama `fase-b`. Probada desde cero en base
 desechable.
+
+PAR-1 (31-10-2026): la aplica el MAESTRO a la base compartida, idéntica byte por byte (mismo
+hash), con `scripts/paridad-laptop.mjs` de su PR #21 (fase 3), que compara la huella de todos los
+negocios antes y después (sólo cambia el relleno de las mesas absorbidas). Don Poncho no la migra:
+su `db:migrate` se niega contra la compartida. `fase-b` se fusiona justo después (fase 4).
 
 ## Cómo probarlo
 

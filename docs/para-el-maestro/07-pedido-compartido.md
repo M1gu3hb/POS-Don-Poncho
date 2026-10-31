@@ -57,8 +57,11 @@ seis comandas sueltas y nadie sabía si ya habían pedido todos».
 
 ## Migraciones
 
-`186_pedido_compartido.sql`. Vive en la rama `fase-b`: la base compartida no admite DDL, así que
-se aplica cuando Don Poncho tenga su propia base (Fase B). Probada desde cero en base desechable.
+`186_pedido_compartido.sql`. Vive en la rama `fase-b`. Probada desde cero en base desechable.
+
+PAR-1 (31-10-2026): la aplica el MAESTRO a la base compartida, idéntica byte por byte (mismo
+hash), con `scripts/paridad-laptop.mjs` de su PR #21 (fase 3). Don Poncho no la migra: su
+`db:migrate` se niega contra la compartida. `fase-b` se fusiona justo después (fase 4).
 
 ## Cómo probarlo
 
@@ -68,3 +71,13 @@ wifi.
 ## Genérico o de Don Poncho
 
 Genérico.
+
+## Pendiente conocido (PAR-1, 31-10-2026)
+
+Si el negocio oculta o desactiva un producto que ya está en el carrito de una mesa, «Enviar» falla
+para toda la mesa (`PRODUCTO_NO_ENCONTRADO`): `estadoDelCarrito` sigue mostrando la línea, pero
+`pedirEnLaMesa` sólo acepta lo visible en el menú digital. Sólo el teléfono que la agregó puede
+quitarla (`QR_LINEA_AJENA` para los demás). Se destraba reactivando el producto o quitando la línea
+desde ese teléfono. Arreglo propuesto, para los dos repos: que el envío descarte y avise las líneas
+no disponibles, y que cualquier teléfono de la mesa pueda quitar una línea no disponible. Lo
+encontró la revisión del PR #21 del maestro; no se corrigió en la paridad para no separar el código.
