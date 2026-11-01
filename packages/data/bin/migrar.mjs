@@ -67,6 +67,18 @@ const cliPath = process.env['SUPABASE_CLI_PATH'];
 const ejecutor = await import('../src/migraciones/ejecutor.ts');
 let cerrar = () => Promise.resolve();
 
+// PAR-1: mientras Don Poncho viva en la base compartida de la Fase A, sus migraciones las aplica
+// el MAESTRO (la 186 y la 187 son idénticas en los dos). Aplicar desde aquí metería la 188, que
+// el maestro no tiene, y su ledger dejaría de cuadrar. `--emitir` sólo lee: ése sí se permite.
+const { esLaBaseCompartida } = await import('../src/migraciones/base-compartida.ts');
+if (emitir === undefined && esLaBaseCompartida({ projectRef, url: process.env['DATABASE_URL'] })) {
+  console.error(
+    '\n✗ POS Don Poncho no migra la base COMPARTIDA (wyqmzhliurwyxuyxznpb): la migra el maestro' +
+      ' MorphiqPOS (`scripts/paridad-laptop.mjs`). La 188 es sólo de la base propia.\n',
+  );
+  process.exit(1);
+}
+
 try {
   let resultado;
   if (emitir !== undefined) {

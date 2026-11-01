@@ -41,6 +41,7 @@ import { dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { leerMigraciones } from '../packages/data/src/migraciones/lectura.ts';
+import { faltantesQueCuentan } from '../packages/data/src/migraciones/base-compartida.ts';
 import {
   cadenaDeVerificacion,
   consultarViva,
@@ -114,7 +115,15 @@ async function comprobarMigraciones() {
   }
 
   const porVersion = new Map(registradas.map((fila) => [Number(fila.version), fila]));
-  const faltan = enDisco.filter((m) => !porVersion.has(m.version));
+  // PAR-1: en la base compartida, las migraciones de la base propia (la 188) se quedan sin
+  // aplicar a propósito: ahí migra el maestro, que no las tiene (`base-compartida.ts`).
+  const cuentan = new Set(
+    faltantesQueCuentan(
+      PROYECTO_MORPHIQPOS,
+      enDisco.filter((m) => !porVersion.has(m.version)).map((m) => m.version),
+    ),
+  );
+  const faltan = enDisco.filter((m) => cuentan.has(m.version));
   const sobran = registradas.filter(
     (fila) => !enDisco.some((m) => m.version === Number(fila.version)),
   );

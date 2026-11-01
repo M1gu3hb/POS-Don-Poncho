@@ -4,19 +4,26 @@ Cada cambio se hace primero en POS Don Poncho y después se lleva a MorphiqPOS. 
 qué hace y por qué, los archivos, las migraciones, las pruebas, qué es genérico y qué es de Don
 Poncho, y cómo portarlo.
 
-| #   | Ficha                                                                                               | Encargo | Migración           |
-| --- | --------------------------------------------------------------------------------------------------- | ------- | ------------------- |
-| 01  | [Recetas y Platillos no pisan el área ni la visibilidad](01-recetas-area-y-visibilidad.md)          | DP-9.1  | No                  |
-| 02  | [El portal sin asignación de mesas y los globos de solicitud](02-portal-sin-asignacion-y-globos.md) | DP-9.2  | No                  |
-| 03  | [La vista «Solicitudes» dentro de Mesas](03-vista-de-solicitudes.md)                                | DP-9.3  | No                  |
-| 04  | [Cocina en el teléfono](04-cocina-en-el-telefono.md)                                                | DP-9.4  | No                  |
-| 05  | [Botones sobre las páginas del menú QR y aspecto del portal](05-botones-del-menu-qr.md)             | DP-9.7  | No                  |
-| 06  | [QR de las mesas con diseño](06-qr-de-mesas-con-diseno.md)                                          | DP-9.8  | No                  |
-| 09  | [Estaciones Cocina y Bebidas](09-estaciones-cocina-y-bebidas.md)                                    | DP-10.1 | No                  |
-| 10  | [La última caja no cierra con cuentas vivas](10-cierre-de-caja-con-cuentas-vivas.md)                | DP-10.2 | No                  |
-| 11  | [Puente de las mesas unidas hasta la mudanza](11-puente-de-mesas-unidas.md)                         | DP-10.3 | No                  |
-| 12  | [Mudar un negocio a su propia base](12-mudanza-de-un-negocio.md)                                    | DP-10.5 | En `fase-b`, la 188 |
-| 13  | [Un id al azar que también sirve por http](13-id-al-azar-por-http.md)                               | DP-11.0 | No                  |
-| 14  | [Morfi en el POS](14-morfi-en-el-pos.md)                                                            | DP-11.1 | No                  |
-| 15  | [El modo espera](15-modo-espera.md)                                                                 | DP-11.2 | No                  |
-| 16  | [Los sonidos de la interfaz](16-sonidos.md)                                                         | DP-11.3 | No                  |
+**PAR-1 (31-10-2026): las 16 fichas están portadas al maestro** (`M1gu3hb/MorphiqPOS`, progreso
+en su `docs/paridad/PARIDAD-DON-PONCHO.md`). Las que no piden migración, en el PR A (#20, en
+producción). El pedido compartido y unir mesas, con la 186 y la 187 idénticas byte por byte, en el
+PR B (#21), que se fusiona tras migrar la base compartida desde la laptop.
+
+| #   | Ficha                                                                                               | Encargo | Migración           | Portada al maestro                               |
+| --- | --------------------------------------------------------------------------------------------------- | ------- | ------------------- | ------------------------------------------------ |
+| 01  | [Recetas y Platillos no pisan el área ni la visibilidad](01-recetas-area-y-visibilidad.md)          | DP-9.1  | No                  | PR A #20                                         |
+| 02  | [El portal sin asignación de mesas y los globos de solicitud](02-portal-sin-asignacion-y-globos.md) | DP-9.2  | No                  | PR A #20                                         |
+| 03  | [La vista «Solicitudes» dentro de Mesas](03-vista-de-solicitudes.md)                                | DP-9.3  | No                  | PR A #20                                         |
+| 04  | [Cocina en el teléfono](04-cocina-en-el-telefono.md)                                                | DP-9.4  | No                  | PR A #20                                         |
+| 05  | [Botones sobre las páginas del menú QR y aspecto del portal](05-botones-del-menu-qr.md)             | DP-9.7  | No                  | PR A #20                                         |
+| 06  | [QR de las mesas con diseño](06-qr-de-mesas-con-diseno.md)                                          | DP-9.8  | No                  | PR A #20                                         |
+| 07  | [El pedido compartido de la mesa](07-pedido-compartido.md)                                          | DP-9.5  | 186                 | PR B #21 (sin fusionar hasta la fase 3)          |
+| 08  | [Unir mesas desde el mapa](08-unir-mesas-en-el-mapa.md)                                             | DP-9.6  | 187                 | PR B #21 (sin fusionar hasta la fase 3)          |
+| 09  | [Estaciones Cocina y Bebidas](09-estaciones-cocina-y-bebidas.md)                                    | DP-10.1 | No                  | PR A #20                                         |
+| 10  | [La última caja no cierra con cuentas vivas](10-cierre-de-caja-con-cuentas-vivas.md)                | DP-10.2 | No                  | PR A #20                                         |
+| 11  | [Puente de las mesas unidas hasta la mudanza](11-puente-de-mesas-unidas.md)                         | DP-10.3 | No                  | PR A #20 (lo reemplaza el PR B)                  |
+| 12  | [Mudar un negocio a su propia base](12-mudanza-de-un-negocio.md)                                    | DP-10.5 | En `fase-b`, la 188 | PR A #20 (parametrizada por negocio, sin la 188) |
+| 13  | [Un id al azar que también sirve por http](13-id-al-azar-por-http.md)                               | DP-11.0 | No                  | PR A #20                                         |
+| 14  | [Morfi en el POS](14-morfi-en-el-pos.md)                                                            | DP-11.1 | No                  | PR A #20                                         |
+| 15  | [El modo espera](15-modo-espera.md)                                                                 | DP-11.2 | No                  | PR A #20                                         |
+| 16  | [Los sonidos de la interfaz](16-sonidos.md)                                                         | DP-11.3 | No                  | PR A #20                                         |
