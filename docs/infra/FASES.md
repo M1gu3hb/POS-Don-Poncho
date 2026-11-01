@@ -64,6 +64,13 @@ herramientas: `scripts/exportar-negocio.mjs` y `scripts/importar-negocio.mjs` (D
   variables (DP-D20). Al mudar de base cambian `DATABASE_URL` y `STORAGE_*`, y se redespliega.
 - Todo el menú con receta pendiente: el costo y la utilidad son desconocidos hasta capturarlas.
 
+**Las tablas de la Fase B ya viven en la compartida** (31-10-2026): la 186 y la 187
+(`carritos_mesa`, `carrito_mesa_lineas`, `dispositivos_mesa` y `mesas.unida_a_mesa_id`) las aplicó
+el maestro con su guion (PAR-1) y `fase-b` está en `main` y en producción. La 188 (archivar las
+demostraciones) sigue siendo sólo para la base propia: en la compartida no se aplica y
+`db:migrate` se niega a migrarla. La mudanza a su propio Supabase sigue pendiente; el exportador
+descubre las tablas por catálogo y ya incluye las tres nuevas.
+
 ## Antes de cada despliegue
 
 - `pnpm audit --audit-level high --prod` en verde (la CI lo corre). El 25-10-2026 apareció Next.js

@@ -428,3 +428,24 @@ Encargo DP-11 + extensión «Retro». Regla de esta etapa (arranque, manda sobre
   cuando ya no hay ninguno.
 - Reconocimiento de DP-11.4 con dos lectores Sonnet de sólo lectura, cada uno en su worktree (el
   sistema de diseño; los pilotos, la navegación y lo que exigen las pruebas). Sin cambios.
+
+## 31-10-2026 · PAR-1 · `fase-b` en `main` (fase 4) y lo que ya no se puede pedir del carrito
+
+Sesión local en la laptop, en un worktree aparte (`.work/dp-main`, rama
+`claude/carrito-producto-oculto`): la carpeta de Don Poncho se quedó en `dp-11` con su
+`.claude/launch.json` sin tocar.
+
+- **Antes:** el maestro aplicó la 186 y la 187 a la base compartida con su guion (ledger 117 → 119,
+  huella de 11 negocios IDÉNTICA) y puso su PR #21 en producción. A las 19:07, Don Poncho sin caja ni
+  ventas; las únicas entradas del día, de «Miguel · Morphiq».
+- **PR #1 (`fase-b` → `main`) fusionado con merge** (`6ade1d9`); CI a mano sobre `main` (corrida
+  41259830541) 16/16; Production `READY`. `verify:esquema` contra la compartida: verde.
+- **Humo** (sin crear cuentas ni comandas; el PIN lo tecleó Miguel, con el suyo): unir la 3 a la 2 en
+  el mapa y separarlas; el QR de la Mesa 1 en dos pestañas, agregar sin enviar y vaciar. Huella de
+  los otros 10: IDÉNTICA. Detalle en `docs/reports/005-par-1-fase-4.md`.
+- **Lo que ya no se puede pedir del carrito** (DP-D43): el mismo cambio que el maestro, con las
+  pruebas primero en rojo, 7 mutaciones muertas y la base desechable `dp_par1_oculto`.
+- **Ojo, el carrito exige una cuenta abierta** («Abre la mesa antes de pedir»): para probarlo sin
+  crear cuentas sólo sirve una mesa que ya tenga una.
+- **Ojo, unir dos mesas libres no tiene vuelta en la pantalla:** la principal dice «Unida con 3» y
+  sólo ofrece «Abrir la mesa». Se separaron con `restaurante.separar_mesas` (el comando del botón).

@@ -72,7 +72,7 @@ wifi.
 
 Genérico.
 
-## Pendiente conocido (PAR-1, 31-10-2026)
+## Pendiente conocido (PAR-1, 31-10-2026) · arreglado el mismo día (DP-D43)
 
 Si el negocio oculta o desactiva un producto que ya está en el carrito de una mesa, «Enviar» falla
 para toda la mesa (`PRODUCTO_NO_ENCONTRADO`): `estadoDelCarrito` sigue mostrando la línea, pero
@@ -81,3 +81,8 @@ quitarla (`QR_LINEA_AJENA` para los demás). Se destraba reactivando el producto
 desde ese teléfono. Arreglo propuesto, para los dos repos: que el envío descarte y avise las líneas
 no disponibles, y que cualquier teléfono de la mesa pueda quitar una línea no disponible. Lo
 encontró la revisión del PR #21 del maestro; no se corrigió en la paridad para no separar el código.
+
+**Arreglado en los dos repos el 31-10** (DP-D43 aquí, A-59 en el maestro): todos los teléfonos ven
+la línea marcada («Ya no está disponible: no se enviará»), el envío la quita, manda lo demás y lo
+dice; también si lo que cambió fue la regla de cantidad, y agregar ya la valora. Quitar una línea
+ajena sigue siendo sólo de quien la agregó: ya no hace falta para enviar.

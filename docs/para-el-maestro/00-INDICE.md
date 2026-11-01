@@ -17,8 +17,8 @@ PR B (#21), que se fusiona tras migrar la base compartida desde la laptop.
 | 04  | [Cocina en el teléfono](04-cocina-en-el-telefono.md)                                                | DP-9.4  | No                  | PR A #20                                         |
 | 05  | [Botones sobre las páginas del menú QR y aspecto del portal](05-botones-del-menu-qr.md)             | DP-9.7  | No                  | PR A #20                                         |
 | 06  | [QR de las mesas con diseño](06-qr-de-mesas-con-diseno.md)                                          | DP-9.8  | No                  | PR A #20                                         |
-| 07  | [El pedido compartido de la mesa](07-pedido-compartido.md)                                          | DP-9.5  | 186                 | PR B #21 (sin fusionar hasta la fase 3)          |
-| 08  | [Unir mesas desde el mapa](08-unir-mesas-en-el-mapa.md)                                             | DP-9.6  | 187                 | PR B #21 (sin fusionar hasta la fase 3)          |
+| 07  | [El pedido compartido de la mesa](07-pedido-compartido.md)                                          | DP-9.5  | 186                 | PR B #21 (`e3edecd`, en producción el 31-10)     |
+| 08  | [Unir mesas desde el mapa](08-unir-mesas-en-el-mapa.md)                                             | DP-9.6  | 187                 | PR B #21 (`e3edecd`, en producción el 31-10)     |
 | 09  | [Estaciones Cocina y Bebidas](09-estaciones-cocina-y-bebidas.md)                                    | DP-10.1 | No                  | PR A #20                                         |
 | 10  | [La última caja no cierra con cuentas vivas](10-cierre-de-caja-con-cuentas-vivas.md)                | DP-10.2 | No                  | PR A #20                                         |
 | 11  | [Puente de las mesas unidas hasta la mudanza](11-puente-de-mesas-unidas.md)                         | DP-10.3 | No                  | PR A #20 (lo reemplaza el PR B)                  |
