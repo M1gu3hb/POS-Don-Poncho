@@ -8,7 +8,7 @@ import { almacenDelAparato } from '~/restaurante/vista-de-solicitudes';
 import { abrir as abrirElCandado } from '~/espera/candado-del-pin';
 import { sonarAntesDeIrse } from '~/sonidos/gestor';
 
-/** @typedef {{id: string, nombre: string, rol: string, etiqueta?: string, paquete?: string, organizacionId?: string, estacion_preparacion_id?: string | null, estacion_preparacion_nombre?: string | null, estacion_preparacion_color?: string | null, puede_ver_todas_estaciones?: boolean}} UsuarioDePOS */
+/** @typedef {{id: string, nombre: string, rol: string, etiqueta?: string, paquete?: string, organizacionId?: string, estacion_preparacion_id?: string | null, estacion_preparacion_nombre?: string | null, estacion_preparacion_color?: string | null, puede_ver_todas_estaciones?: boolean, es_plataforma?: boolean}} UsuarioDePOS */
 /** @type {React.Context<{posUser: UsuarioDePOS | null, isLoading: boolean, verificada: boolean, sesion: number, login: (user: UsuarioDePOS) => void, logout: () => Promise<void>} | null>} */
 const POSAuthContext = createContext(null);
 

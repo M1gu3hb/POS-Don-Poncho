@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Trash2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSAuth } from '@/lib/POSAuthContext';
+import { esUsuarioDePlataforma } from '@/lib/permissions';
 import { useQueryClient } from '@tanstack/react-query';
 
 const LABELS = {
@@ -46,7 +47,7 @@ export default function LimpiarSeccionButton({ seccion, onCleared }) {
   const [working, setWorking] = useState(false);
   const [open, setOpen] = useState(false);
 
-  if (posUser?.rol !== 'administrador') return null;
+  if (posUser?.rol !== 'administrador' || !esUsuarioDePlataforma(posUser)) return null;
 
   const handle = async () => {
     // Antes se comparaba contra la palabra «ELIMINAR», impresa en esta misma

@@ -7,8 +7,10 @@ import { z } from 'zod';
 
 import { definirComando } from '../comando.ts';
 import { exigirNombreDelNegocio } from './confirmacion.ts';
+import { exigirPlataforma } from './plataforma.ts';
 import {
   contar,
+  purgarCatalogo,
   purgarSeccion,
   SECCIONES,
   SECCIONES_DEL_HISTORICO,
@@ -46,7 +48,11 @@ import {
  * Aquí cada operación tiene su ruta, su rol y su nivel de confirmación.
  */
 
-/** Las cinco irreversibles exigen DUEÑO, no administrador. Ver F1-07 §4.3. */
+/**
+ * Las cinco irreversibles exigen DUEÑO, no administrador. Ver F1-07 §4.3. Y las cinco de este archivo,
+ * además, al usuario de plataforma (DP-12.1, `plataforma.ts`): el dueño del restaurante ya no las ve ni
+ * las ejecuta.
+ */
 const SOLO_DUENO = ['dueno'] as const;
 /** Las dos reversibles admiten también administrador. */
 const ADMINISTRACION = ['dueno', 'administrador'] as const;
@@ -106,6 +112,7 @@ export const vaciarMesas = definirComando<Transaccion, typeof entradaVacia, Resu
     paquetes: PAQUETES_TODOS,
     entrada: entradaVacia,
     async ejecutar(ctx) {
+      await exigirPlataforma(ctx.tx, ctx.ambito);
       const org = ctx.ambito.organizacionId;
 
       const ocupadas = await ctx.tx
@@ -156,6 +163,7 @@ export const purgarSeccionDelHistorico = definirComando<
   paquetes: PAQUETES_TODOS,
   entrada: entradaSeccion,
   async ejecutar(ctx, entrada) {
+    await exigirPlataforma(ctx.tx, ctx.ambito);
     const org = ctx.ambito.organizacionId;
     const negocio = await exigirNombreDelNegocio(ctx.tx, org, entrada.confirmacionNombreNegocio);
     const borrado = await ctx.paso('purgar', () => purgarSeccion(ctx.tx, org, entrada.seccion));
@@ -182,6 +190,7 @@ export const purgarVentas = definirComando<
   paquetes: PAQUETES_TODOS,
   entrada: entradaPurgarVentas,
   async ejecutar(ctx, entrada) {
+    await exigirPlataforma(ctx.tx, ctx.ambito);
     const org = ctx.ambito.organizacionId;
     const negocio = await exigirNombreDelNegocio(ctx.tx, org, entrada.confirmacionNombreNegocio);
 
@@ -237,6 +246,7 @@ export const reiniciarPruebas = definirComando<
   paquetes: PAQUETES_TODOS,
   entrada: entradaConfirmada,
   async ejecutar(ctx, entrada) {
+    await exigirPlataforma(ctx.tx, ctx.ambito);
     const org = ctx.ambito.organizacionId;
     const negocio = await exigirNombreDelNegocio(ctx.tx, org, entrada.confirmacionNombreNegocio);
 
@@ -278,6 +288,7 @@ export const reiniciarTodo = definirComando<
   paquetes: PAQUETES_TODOS,
   entrada: entradaConfirmada,
   async ejecutar(ctx, entrada) {
+    await exigirPlataforma(ctx.tx, ctx.ambito);
     const org = ctx.ambito.organizacionId;
     const negocio = await exigirNombreDelNegocio(ctx.tx, org, entrada.confirmacionNombreNegocio);
 
@@ -290,11 +301,7 @@ export const reiniciarTodo = definirComando<
     }
 
     const antesCatalogo = await contar(ctx.tx, TABLAS_DEL_CATALOGO, org);
-    await ctx.paso('purgar_catalogo', async () => {
-      for (const tabla of TABLAS_DEL_CATALOGO) {
-        await sql`delete from ${sql.table(tabla)} where organizacion_id = ${org}`.execute(ctx.tx);
-      }
-    });
+    await ctx.paso('purgar_catalogo', () => purgarCatalogo(ctx.tx, org));
     for (const [tabla, n] of Object.entries(antesCatalogo)) borrado[tabla] = n;
 
     // Y se vuelve a sembrar lo que el restaurante no puede no tener.

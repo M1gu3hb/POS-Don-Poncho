@@ -118,6 +118,9 @@ const NUNCA_SALEN = new Set([
   // DP-9.4: la versión vigente del teléfono de cada estación de cocina. No es secreta —el token
   // va firmado—, pero es del servidor: ni se lee ni se escribe por el camino genérico.
   'telefonos_de_cocina',
+  // DP-12.1: los empleos de plataforma (`mantenimiento/plataforma.ts`). Si el dueño la pudiera
+  // escribir aquí, se pondría a sí mismo los botones que borran en masa.
+  'plataforma',
 ]);
 
 /**

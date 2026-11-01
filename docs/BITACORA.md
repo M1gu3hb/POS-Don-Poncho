@@ -449,3 +449,34 @@ Sesión local en la laptop, en un worktree aparte (`.work/dp-main`, rama
   crear cuentas sólo sirve una mesa que ya tenga una.
 - **Ojo, unir dos mesas libres no tiene vuelta en la pantalla:** la principal dice «Unida con 3» y
   sólo ofrece «Abrir la mesa». Se separaron con `restaurante.separar_mesas` (el comando del botón).
+
+## 01-11-2026 · DP-12 · Correcciones y funcionamiento final
+
+Encargo en el chat de Miguel (el orquestador). Trabajo en el worktree `.claude/worktrees/dp12`,
+rama `dp-12` sacada de `main` @ `4b00f9e` (la carpeta de Don Poncho sigue en `dp-11`, que no se
+toca). `pnpm install` en el worktree tarda ~11 min.
+
+### DP-12.1 · Datos de prueba fuera y mantenimiento sólo para plataforma
+
+- Decisiones de Miguel (01-11): marca en `configuracion.valores.plataforma` (DP-D44) y que la mesa
+  abierta del POS enseñe el carrito pendiente del portal (DP-12.2).
+- `scripts/limpiar-ventas-de-prueba.mjs` (se niega si hay pagos, cajas u otra cuenta) y
+  `scripts/marcar-plataforma.mjs`. Ensayo: exportación de producción importada a
+  `dp12_ensayo` en la base desechable (135 tablas, 1171 filas, idénticas); ahí el dueño del
+  restaurante recibe `SIN_PERMISO` y el de plataforma purga.
+- **Producción, 20:43:27–20:43:36 UTC:** marca de «Miguel · Morphiq»; la cuenta de la Mesa 1
+  (`e8074bb7…`, $145, «Conejo al pastor», 31-10 12:02) cancelada con «Prueba» y la mesa libre;
+  `purgar_ventas` sin revertir inventario (1 orden, 1 línea, 1 comanda, 1 renglón de comanda).
+  Exportaciones `_PRIVADO\mudanza\antes-dp12` y `despues-dp12-1` (1171 → 1174 filas): sólo
+  cambian `auditoria` +3, `comandos_ejecutados` +3, `configuracion`, `eventos_mesa` +1, `mesas`
+  (la 1, libre) y lo purgado. Huella de los otros 10 negocios IDÉNTICA (20:36:32 → 20:43:55 UTC,
+  `_PRIVADO\mudanza\huellas-dp12`).
+- **Ojo, el guion corre con el código del worktree:** con la guarda ya escrita, la purga desde el
+  guion también exige la marca. Por eso se marcó antes de purgar.
+- **Ojo, base desechable:** si `subir` se cuelga, NO matar la tarea (mata al postgres hijo y queda
+  a medias): `pg_ctl -D "D:\mpos-tmp\morphiqpos-base-desechable" stop -m fast`, arrancarlo con
+  `pg_ctl ... -o "-p 5435" -w start < /dev/null > /dev/null 2>&1` y correr `subir` otra vez (se
+  salta el arranque). Su superusuario es `morphiqpos`. Integración:
+  `DATABASE_URL_PRUEBAS=postgres://morphiqpos@localhost:5435/morphiqpos_desechable`.
+- Subagentes: flujo «dp12-mapa», 7 Sonnet de sólo lectura, dos a la vez (mapa del código de cada
+  punto del encargo).

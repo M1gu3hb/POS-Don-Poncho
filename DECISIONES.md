@@ -828,3 +828,34 @@ puerta los denuncia todos.
   luego el «Pedido enviado» de siempre. Avisarles la lista pediría una columna en `carritos_mesa`
   (migración, en la compartida la aplica el maestro): no entra hasta que haga falta.
 
+
+## DP-D44 · El usuario de plataforma: una marca en la configuración, exigida en el servidor · 01-11-2026
+
+- **Lo que había:** los cinco comandos de mantenimiento que borran en masa (`vaciar_mesas`,
+  `purgar_seccion`, `purgar_ventas`, `reiniciar_pruebas`, `reiniciar_todo`) los ejecutaba
+  cualquier dueño (y `vaciar_mesas` también el administrador). «Miguel · Morphiq» y el dueño del
+  restaurante tienen el mismo rol, y los siete roles de `empleos.rol` los fija un `check` de la
+  base.
+- **Alternativas** (Miguel eligió la primera, 01-11): (a) una marca en
+  `configuracion.valores.plataforma` con los empleos de plataforma; (b) una variable de entorno
+  del servidor con esos empleos (no viaja con los datos y hay que darla de alta en cada
+  despliegue); (c) un rol nuevo con migración (DDL que aplica el maestro).
+- **Elección (a):**
+  - `mantenimiento/plataforma.ts`: `exigirPlataforma` al principio de los cinco comandos, dentro
+    de su transacción y antes de leer o borrar nada: 403 `SIN_PERMISO` con su rastro de
+    «denegado», como un rol que no alcanza.
+  - La marca no se lee ni se escribe por el camino genérico de Configuración (`NUNCA_SALEN`): el
+    dueño no se la puede poner. La escribe `mantenimiento.marcar_plataforma`, que marca el empleo
+    DE QUIEN LO EJECUTA y no tiene ruta HTTP (un contrato lo vigila); sólo la corre
+    `scripts/marcar-plataforma.mjs`, con acceso a la base.
+  - La sesión dice `es_plataforma` (PIN y `/api/catalogo/sesion`) y las pantallas sólo enseñan los
+    botones a quien sí (`esUsuarioDePlataforma` en `permissions.js`): «Limpiar ventas de prueba»,
+    «Eliminar todas» las mesas, «Limpiar sección» de Registros y la pestaña «Mantenimiento».
+  - Viaja con las filas del negocio en la mudanza (Fase B y C) sin configurar nada más.
+- **De paso:** `reiniciar_todo` no corría nunca contra una base real: borraba el catálogo con un
+  `where organizacion_id` crudo (dos tablas cuelgan de su padre) y `returning id` (dos no tienen
+  `id`). Ahora usa el mismo acotado que las secciones y cuenta con `numAffectedRows`.
+- **Prueba:** unidad (la forma de la marca; ningún `route.ts` sirve `marcarPlataforma`) e
+  integración contra Postgres (sin marca ningún dueño ejecuta los cinco; marcado, sí, y el otro
+  dueño no; Configuración no la escribe ni la enseña y guardar otra cosa no la borra; reiniciar
+  todo funciona). Seis mutaciones, todas muertas.

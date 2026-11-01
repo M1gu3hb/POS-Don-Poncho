@@ -12,6 +12,7 @@ import {
   leerEstacionDeLaSesion,
   organizacionDeQuienEntra,
 } from '@morphiqpos/app/identidad';
+import { leerEsDePlataforma } from '@morphiqpos/app/mantenimiento';
 import { elegirNegocioDeLaEntrada, negociosDelDespliegue } from '@morphiqpos/app/negocio';
 import { correlationIdDe, registrar } from '@morphiqpos/app/observabilidad';
 import { terminosDeLaOrganizacion } from '@morphiqpos/app/configuracion';
@@ -234,6 +235,8 @@ export async function POST(peticion: Request): Promise<Response> {
             : etiquetaDeRolEnElGiro(resultado.rol, terminos.giro, terminos.personalizado),
         activo: true,
         organizacionId: resultado.organizacionId,
+        // DP-12.1: los botones de mantenimiento sólo para el usuario de plataforma.
+        es_plataforma: await leerEsDePlataforma(resultado.organizacionId, validada.data.empleoId),
         ...estacion,
       },
     },

@@ -43,6 +43,16 @@ export const PERMISSIONS = {
   eliminar_mesas: [ROLES.ADMIN],
 };
 
+/**
+ * DP-12.1 · Los botones de mantenimiento que borran en masa —limpiar ventas, eliminar las mesas,
+ * limpiar una sección, reiniciar— sólo los ve el usuario de plataforma («Miguel · Morphiq»),
+ * nunca el dueño ni el gerente. La sesión lo dice (`es_plataforma`); el servidor lo vuelve a
+ * exigir al ejecutar (`mantenimiento/plataforma.ts`): esto sólo esconde.
+ */
+export function esUsuarioDePlataforma(usuario) {
+  return usuario?.es_plataforma === true;
+}
+
 export function hasPermission(role, permission) {
   if (!role || !PERMISSIONS[permission]) return false;
   return PERMISSIONS[permission].includes(role === 'dueno' ? ROLES.ADMIN : role);

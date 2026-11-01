@@ -63,11 +63,12 @@ function condicion(tabla: string, organizacionId: string): RawBuilder<unknown> {
     : porPadre(organizacionId);
 }
 
+/** Sin `returning id`: `producto_modificadores` y `existencias` no tienen `id`. */
 async function borrar(tx: Transaccion, tabla: string, organizacionId: string): Promise<number> {
-  const resultado = await sql<{ id: string }>`
-    delete from ${sql.table(tabla)} where ${condicion(tabla, organizacionId)} returning id
+  const resultado = await sql`
+    delete from ${sql.table(tabla)} where ${condicion(tabla, organizacionId)}
   `.execute(tx);
-  return resultado.rows.length;
+  return Number(resultado.numAffectedRows ?? 0n);
 }
 
 /**
@@ -148,6 +149,15 @@ export async function purgarSeccion(
 
   for (const tabla of tablas) await borrar(tx, tabla, organizacionId);
   return antes;
+}
+
+/**
+ * El catálogo, con el mismo acotado por padre que las secciones. `reiniciar_todo` lo borraba con
+ * un `where organizacion_id` crudo y moría con «column "organizacion_id" does not exist» en
+ * `orden_linea_modificadores` y `modificador_opciones` (lo encontró una mutación de DP-12.1).
+ */
+export async function purgarCatalogo(tx: Transaccion, organizacionId: string): Promise<void> {
+  for (const tabla of TABLAS_DEL_CATALOGO) await borrar(tx, tabla, organizacionId);
 }
 
 /**

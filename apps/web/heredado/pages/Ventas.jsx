@@ -4,7 +4,7 @@ import { api } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency, formatPercent } from '@/utils/financialUtils';
 import { usePOSAuth } from '@/lib/POSAuthContext';
-import { hasPermission } from '@/lib/permissions';
+import { esUsuarioDePlataforma, hasPermission } from '@/lib/permissions';
 import PageHeader from '@/components/common/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
 import LoadingState from '@/components/common/LoadingState';
@@ -49,7 +49,8 @@ export default function Ventas() {
   const { config } = useConfig();
   const colorize = config?.colorear_importes_monetarios !== false;
   const queryClient = useQueryClient();
-  const puedeLimpiar = hasPermission(posUser?.rol, 'limpiar_ventas');
+  const puedeLimpiar =
+    esUsuarioDePlataforma(posUser) && hasPermission(posUser?.rol, 'limpiar_ventas');
   const [search, setSearch] = useState('');
   const [filterEstado, setFilterEstado] = useState('all');
   const [selectedVenta, setSelectedVenta] = useState(null);

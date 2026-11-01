@@ -58,7 +58,7 @@ import UnidadesMedidaSection from '@/components/configuracion/UnidadesMedidaSect
 import ProveedoresSection from '@/components/configuracion/ProveedoresSection';
 import { ROLE_LABELS, ZONAS_MESA } from '@/lib/constants';
 import { usePOSAuth } from '@/lib/POSAuthContext';
-import { hasPermission } from '@/lib/permissions';
+import { esUsuarioDePlataforma, hasPermission } from '@/lib/permissions';
 import MesaMapEditor from '@/components/mesas/MesaMapEditor';
 import MesaListMobile from '@/components/mesas/MesaListMobile';
 import MesaEditDialog from '@/components/mesas/MesaEditDialog';
@@ -93,7 +93,8 @@ export default function Configuracion() {
   // La pestaña de mesas la gobierna el MÓDULO, no el nombre de la plantilla:
   // con el renombre de D-01 ningún negocio se llama ya `restaurante_pro`.
   const showMesasTab = canAccessModule('mesas', paquete_modo);
-  const puedeEliminarMesas = hasPermission(posUser?.rol, 'eliminar_mesas');
+  const puedeEliminarMesas =
+    esUsuarioDePlataforma(posUser) && hasPermission(posUser?.rol, 'eliminar_mesas');
   const isMobile = useIsMobile();
   const [showUserForm, setShowUserForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null); // usuario en edición (null = crear nuevo)
@@ -544,7 +545,7 @@ export default function Configuracion() {
               Integraciones
             </TabsTrigger>
           )}
-          {posUser?.rol === 'administrador' && (
+          {posUser?.rol === 'administrador' && esUsuarioDePlataforma(posUser) && (
             <TabsTrigger value="mantenimiento">
               <ShieldAlert className="w-3 h-3 mr-1" />
               Mantenimiento
@@ -969,7 +970,7 @@ export default function Configuracion() {
           </TabsContent>
         )}
 
-        {posUser?.rol === 'administrador' && (
+        {posUser?.rol === 'administrador' && esUsuarioDePlataforma(posUser) && (
           <TabsContent value="mantenimiento">
             <ReiniciarSistemaSection />
           </TabsContent>
