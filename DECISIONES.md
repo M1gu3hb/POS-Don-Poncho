@@ -808,3 +808,23 @@ puerta los denuncia todos.
   el mapa con su nota hasta que Miguel decida.
 - Las recetas se cargan cuando hacen falta: Keycap y Thock traen su muestra (50 KB cada una); las
   demás pesan menos de 1 KB.
+
+## DP-D43 · Lo que ya no se puede pedir sale del carrito compartido al enviar · 31-10-2026
+
+- **Problema** (encontrado al portar el carrito al maestro, PAR-1): si el negocio oculta, desactiva
+  o cambia la regla de cantidad de un producto que ya está en el carrito de una mesa, «Enviar»
+  fallaba para TODOS (`PRODUCTO_NO_ENCONTRADO` o `CATALOGO_INVALIDO`) y sólo el teléfono que lo
+  agregó podía quitar la línea.
+- **Elección:** al enviar, en la misma transacción y bajo el mismo candado, se apartan las líneas
+  que ya no se pueden pedir (`portal/carrito-disponibilidad.ts`), se quitan, el pedido sale con lo
+  demás y la respuesta dice qué se quitó (`noDisponibles`). El estado del carrito marca cada línea
+  con `disponible` y el teléfono la enseña «Ya no está disponible: no se enviará» y no la suma.
+  Agregar valora la cantidad con las reglas del envío (media pieza no entra). El mismo código que
+  el maestro (A-59).
+- **Descartado:** quitar las líneas al ocultar el producto (acopla el catálogo con el portal y no
+  cubre el cambio de regla); dejar que cualquier teléfono quite una línea ajena no disponible
+  (sigue trabando hasta que alguien la vea).
+- **Consecuencia:** el teléfono que envía ve qué se quitó; los demás ven la línea marcada antes y
+  luego el «Pedido enviado» de siempre. Avisarles la lista pediría una columna en `carritos_mesa`
+  (migración, en la compartida la aplica el maestro): no entra hasta que haga falta.
+
