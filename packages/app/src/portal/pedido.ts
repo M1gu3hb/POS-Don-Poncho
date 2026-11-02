@@ -62,6 +62,13 @@ export const enviarPedidoDesdeQR = definirComandoPublico<
   entrada: entradaEnviarPedido,
   async ejecutar(ctx, entrada) {
     exigirPedidosDesdeElTelefono(ctx);
+    // DP-12.2: el pedido directo (sin carrito) también respeta quién manda a cocina.
+    if (ctx.banderas.quienEnvia !== 'comensales') {
+      throw new ErrorDominio(
+        'QR_SOLO_EL_MESERO_ENVIA',
+        'Tu mesero confirma el pedido y lo manda a cocina: llámalo para confirmar.',
+      );
+    }
 
     const orden = await ctx.paso('cargar_venta', () => ordenAbiertaDeLaMesa(ctx));
     const resultado = await pedirEnLaMesa(ctx, orden, entrada.items, entrada.notaGeneral);

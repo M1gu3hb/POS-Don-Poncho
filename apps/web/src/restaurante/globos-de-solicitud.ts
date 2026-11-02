@@ -18,6 +18,19 @@ export interface SolicitudPendiente {
   readonly mesa_numero?: number | null;
   readonly tipo: string;
   readonly created_date?: string | null;
+  /** DP-12.2 · «Pedido listo para confirmar (3 platillos)»: lo que dejó el comensal. */
+  readonly notas?: string | null;
+}
+
+/**
+ * DP-12.2 · El aviso que deja «Llamar a mi mesero para confirmar»: atenderlo abre el pedido de la
+ * mesa en modo mesero, para confirmarlo y mandarlo a cocina.
+ */
+export function esPedidoListo(solicitud: SolicitudPendiente): boolean {
+  return (
+    solicitud.tipo === 'ordenar' &&
+    (solicitud.notas ?? '').startsWith('Pedido listo para confirmar')
+  );
 }
 
 export interface DescripcionDelTipo {

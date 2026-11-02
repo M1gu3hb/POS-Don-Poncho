@@ -68,7 +68,8 @@ export function VistaDeSolicitudes({
 }: {
   readonly solicitudes: readonly SolicitudPendiente[];
   readonly cargando: boolean;
-  readonly alAtender: () => void;
+  /** Después de atenderla. DP-12.2: con la solicitud, para abrir el pedido si es uno listo. */
+  readonly alAtender: (solicitud: SolicitudPendiente) => void;
   readonly alAnunciar: (nuevas: readonly SolicitudPendiente[]) => void;
 }) {
   const ahora = useAhora();
@@ -89,13 +90,13 @@ export function VistaDeSolicitudes({
     );
   }
 
-  async function atender(id: string): Promise<void> {
+  async function atender(solicitud: SolicitudPendiente): Promise<void> {
     if (enCurso !== null) return;
-    setEnCurso(id);
+    setEnCurso(solicitud.id);
     setFallo(null);
     try {
-      await atenderLaSolicitud(id);
-      alAtender();
+      await atenderLaSolicitud(solicitud.id);
+      alAtender(solicitud);
     } catch (error: unknown) {
       setFallo(motivoDelFallo(error));
     } finally {
@@ -129,6 +130,9 @@ export function VistaDeSolicitudes({
                     {haceCuanto(solicitud.created_date, ahora)}
                   </span>
                 </p>
+                {solicitud.notas ? (
+                  <p className="text-sm font-semibold text-texto-sutil">{solicitud.notas}</p>
+                ) : null}
               </div>
               <Button
                 type="button"
@@ -137,7 +141,7 @@ export function VistaDeSolicitudes({
                 disabled={enCurso !== null}
                 aria-label={`Atender ${mesa}: ${tipo.completo}`}
                 onClick={() => {
-                  void atender(solicitud.id);
+                  void atender(solicitud);
                 }}
               >
                 Atender

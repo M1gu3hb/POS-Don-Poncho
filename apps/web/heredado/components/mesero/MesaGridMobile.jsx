@@ -94,8 +94,10 @@ export default function MesaGridMobile({
           <div key={mesa.id} className="flex flex-col gap-1">
             {globosDe ? globosDe(mesa) : null}
           <button
+            // DP-12.2: el mapa reconoce la mesa mantenida presionada (`usePulsacionLarga`).
+            data-mesa-id={mesa.id}
             onClick={() => onMesaClick(mesa)}
-            className="rounded-2xl p-3 border-2 active:scale-95 transition-all flex flex-col items-center justify-center min-h-[110px] relative overflow-hidden"
+            className="rounded-2xl p-3 border-2 active:scale-95 transition-all flex flex-col items-center justify-center min-h-[110px] relative overflow-hidden select-none [-webkit-touch-callout:none]"
             style={{
               background: isDark
                 ? `linear-gradient(135deg, ${cfg.fill} 0%, ${shade(cfg.fill, -8)} 100%)`

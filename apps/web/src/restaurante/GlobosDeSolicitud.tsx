@@ -41,7 +41,8 @@ export function GlobosDeSolicitud({
 }: {
   readonly solicitudes: readonly SolicitudPendiente[];
   readonly mesaNumero: number;
-  readonly alAtender: () => void;
+  /** Después de atenderla. DP-12.2: con la solicitud, para abrir el pedido si es uno listo. */
+  readonly alAtender: (solicitud: SolicitudPendiente) => void;
   readonly lugar?: LugarDeLosGlobos;
 }) {
   const [enCurso, setEnCurso] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export function GlobosDeSolicitud({
     setFallo(null);
     try {
       await atenderLaSolicitud(solicitud.id);
-      alAtender();
+      alAtender(solicitud);
     } catch (error: unknown) {
       setFallo(motivoDelFallo(error));
     } finally {

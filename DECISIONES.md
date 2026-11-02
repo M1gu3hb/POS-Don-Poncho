@@ -859,3 +859,85 @@ puerta los denuncia todos.
   integración contra Postgres (sin marca ningún dueño ejecuta los cinco; marcado, sí, y el otro
   dueño no; Configuración no la escribe ni la enseña y guardar otra cosa no la borra; reiniciar
   todo funciona). Seis mutaciones, todas muertas.
+
+## DP-D45 · El portal: los comensales arman, el mesero confirma (y el portal en modo mesero) · 01-11-2026
+
+- **Lo que había:** el carrito compartido (DP-D29) exigía una cuenta abierta («Abre la mesa antes de
+  pedir», un texto para el personal que veía el comensal) y escondía lo armado antes de abrirla
+  (`created_at >= ordenes.created_at`); cualquier comensal mandaba a cocina; el límite del sondeo
+  era uno por mesa (240 al minuto: con diez teléfonos se cortaba) y el latido se escribía en cada
+  sondeo; el id crudo del teléfono quedaba en la auditoría; 999.5 era un 500.
+- **Elección:**
+  - Dos opciones en `configuracion.valores`, validadas al guardar y leídas en el servidor
+    (`banderas.ts`): `portal_qr_envia_a_cocina` = `mesero` (por omisión) | `comensales`, y
+    `portal_qr_comensales_abren_mesa` (apagada; sólo cuenta si envían los comensales). Portal QR →
+    Configuración → «Pedidos desde el portal».
+  - El carrito se arma con la mesa cerrada; las líneas cuelgan de la mesa y se olvidan cuando la
+    cuenta se cierra (cancelada, cobrada o la vacía que se libera) y al cerrar la última caja de la
+    sucursal, que es cerrar el día (`restaurante/carrito-del-salon.ts`). Al unir mesas o cambiar de
+    mesa, las líneas y los teléfonos siguen a la cuenta.
+  - Qué hace el comensal lo decide el servidor (`quien-envia.ts`, `envio` en el estado):
+    «Llamar a mi mesero para confirmar» (una solicitud `ordenar` con la nota «Pedido listo para
+    confirmar (N platillos)»; si ya hay una pendiente, se pone al día su nota), «Pide a tu mesero
+    que te atienda para enviar tu pedido», «Abrir la mesa y enviar» (con el diálogo de siempre:
+    personas, alergias) o «Enviar a cocina» (con «¿Ya pidieron todos?» de dos teléfonos en
+    adelante). El envío del comensal lo rechaza el servidor si no le toca.
+  - **Portal en modo mesero**, dentro de su sesión (rol y sucursal del servidor): «Escanear QR» en
+    «Mesas y pedidos» (el lector de siempre, `BarcodeDetector` o ZXing, o el código a mano), el
+    aviso «Pedido listo para confirmar» y la mesa abierta en el POS (decisión de Miguel) abren lo que
+    armaron los teléfonos: cambiar cantidades, quitar cualquier línea, borrar el pedido, abrir la
+    mesa y confirmar y enviar a SU nombre por el mismo camino que su pedido (`comandarLasLineas`).
+    Cuatro comandos auditados (`restaurante.carrito_*`) y dos lecturas POST (el token del QR no va en
+    la URL). Un comensal no tiene cómo hacerse pasar por mesero: las rutas públicas no aceptan nada
+    parecido.
+  - **Mantener presionada una mesa** (o clic derecho) abre «Ver mesa / Ver QR de la mesa»: la mesa
+    se reconoce por `data-mesa-id` en el contenedor del mapa, sin tocar el toque normal; el QR sale
+    grande en la pantalla para escanearlo desde el teléfono del mesero.
+  - Arreglos: el límite del sondeo por teléfono (60/min) más un techo por mesa (2400/min); el token
+    se valida SIEMPRE antes de contar (también con un solo negocio en el despliegue); el latido se
+    escribe a lo mucho cada 30 s; sin «Mostrar precios» el carrito no los trae; `dispositivo` (la
+    clave exacta) en `CLAVES_SENSIBLES`; la cantidad tope 999 en zod; el diálogo de confirmar se
+    cierra cuando otro teléfono envía; «Sin conexión, reintentando» cuando el sondeo falla.
+- **Descartado:** borrar las líneas al vuelo con una regla de tiempo (cuál cuenta se cerró
+  después); deja huérfanas y depende del reloj. Y un rol `mesero` dentro del portal público: el
+  portal en modo mesero es la sesión del mesero, no el portal con otra bandera.
+- **Sin migración.** Los tipos de solicitud siguen siendo los del `check` (`ordenar`); la nota va
+  en `solicitudes_qr.notas`.
+
+## DP-D46 · Unir mesas: la misma mesa que tiembla, el imán en la vecina, la forma fundida · 01-11-2026
+
+- **Lo que había:** al entrar a «Unir mesas» las mesas cambiaban de forma (cajas grises); el imán
+  movía la mesa ARRASTRADA mientras se arrastraba (brincaba bajo el dedo); el grupo se veía como
+  cajas sueltas; «Separar mesas» sólo existía en la mesa abierta; unir una mesa con gente no
+  preguntaba y sus alergias y su celebración se quedaban en la absorbida, ocultas (un tema de
+  inocuidad: la cocina copia las de la principal); una mesa en limpieza daba un error genérico;
+  el editor y «vaciar el mapa» podían apagar una mesa de una unión viva y dejar las absorbidas
+  ocultas para siempre; `?unir=` se quedaba en la dirección.
+- **Elección:**
+  - En «Unir mesas» la pantalla dibuja la MISMA `MesaShape` del mapa (forma, tamaño, color, número,
+    estado, mesero) dentro de `MesaQueTiembla`: tiembla como los íconos al acomodarlos, cada una
+    con su desfase; con «reducir movimiento», un contorno punteado en lugar del temblor.
+  - El arrastre son eventos de puntero con el puntero capturado y `touch-action: none` en la mesa:
+    sigue al dedo 1:1 (`adondeVa`, puro). El imán ya no la mueve: la VECINA se inclina y se estira
+    hacia ella (`vecinaQueLlama`, del dominio) y, al soltar a 36 puntos o menos, se pegan
+    (`atraer`). El arrastre, la inclinación y el asentarse van en `translate`/`scale`, que se
+    componen con el temblor (`transform`) sin pisarlo.
+  - El grupo se ve fundido en la forma que le toca (`formaDeLaUnion`, del dominio): redondas lado a
+    lado, cápsula horizontal; una sobre otra, vertical; cuadradas o mixtas, rectángulo; casi igual
+    de ancho que de alto, cuadrado. En el mapa del mesero una unión viva se pinta igual, en la caja
+    del grupo, con el número de la principal.
+  - Con gente, antes de «¿Qué número queda?»: «La Mesa N tiene gente y un pedido de $X.
+    ¿Unir de todos modos?» (Cancelar / Unir; sin el importe si no se puede leer). Al unir, las
+    alergias y la celebración de la absorbida llegan a la mesa y a la cuenta que quedan, sin
+    repetir (`notas-de-la-union.ts`), junto con su carrito del portal (DP-D45).
+  - En limpieza: «La Mesa N está en limpieza: márcala libre primero», en pantalla y en el servidor.
+  - Separar: tocar la unión en «Unir mesas» o, en el mapa, mantenerla presionada → «Separar mesas»
+    (también para uniones libres, sin cuenta). Las absorbidas salen de la principal y vuelven a su
+    lugar con una animación; luego, al mapa.
+  - Ninguna unión se queda varada: el editor no apaga ni la principal ni una absorbida de una
+    unión viva («sepáralas antes de quitarla del mapa», `sinCabezaViva` en la guarda del puente) y
+    «vaciar el mapa» se niega con mesas unidas. `?unir=` se limpia al entrar (y avisa si la mesa ya
+    no se puede unir).
+- **Descartado:** cambiar la forma de las mesas al unir (lo que se pidió es lo contrario) y una
+  biblioteca de arrastre: los eventos de puntero alcanzan y el 1:1 se mide en la prueba.
+- **Sin migración.**

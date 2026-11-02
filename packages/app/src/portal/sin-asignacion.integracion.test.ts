@@ -58,6 +58,9 @@ async function negocioCon(asignacion: boolean) {
     const banderas = {
       portal_qr_activo: true,
       portal_qr_permitir_pedidos_cliente: true,
+      // DP-12.2: estas pruebas hablan del comensal que abre y pide.
+      portal_qr_envia_a_cocina: 'comensales',
+      portal_qr_comensales_abren_mesa: true,
       portal_qr_permitir_ayuda: true,
       asignacion_mesas_activa: asignacion,
     };

@@ -480,3 +480,51 @@ toca). `pnpm install` en el worktree tarda ~11 min.
   `DATABASE_URL_PRUEBAS=postgres://morphiqpos@localhost:5435/morphiqpos_desechable`.
 - Subagentes: flujo «dp12-mapa», 7 Sonnet de sólo lectura, dos a la vez (mapa del código de cada
   punto del encargo).
+
+### DP-12.2 · El portal: los comensales arman, el mesero confirma (DP-D45)
+
+- Servidor: `portal/quien-envia.ts`, `carrito-llamar.ts`, los cambios de `carrito*.ts`;
+  `restaurante/carrito-del-salon.ts` (olvidar al cerrar la cuenta, al cobrar y al cerrar la última
+  caja; mover al unir o cambiar de mesa) y `carrito-del-mesero*.ts` (cuatro comandos y dos lecturas
+  POST). `pedido.ts` expone `comandarLasLineas` (el cuerpo de `enviar_pedido`).
+- Pruebas contra Postgres: `carrito-sin-cuenta` (12), `carrito-doce-telefonos` (3),
+  `restaurante/carrito-del-mesero` (7); las de DP-9.5 siguen en verde (la de «cuenta anterior»
+  se reemplazó por la regla nueva: se conserva lo de antes de abrir y se olvida al cerrar).
+- **Ojo, `mesaConPortal`:** por omisión envían los comensales (las pruebas de DP-9.5 hablan de
+  eso); el negocio real nace con el mesero. `envian: 'mesero'` para las nuevas.
+- **Ojo, el camino del mesero exige estación** (regla 10): una prueba que lo use siembra la general.
+- **Ojo, e2e:** `prepararElPortalDelComensal` con `pedidosDelComensal` y sin `envian` deja
+  «También los comensales» y que abran su mesa (como antes de DP-12). `enviarElPedidoDeLaMesa`
+  abre la mesa desde el carrito cuando el botón es «Abrir la mesa y enviar».
+- **Ojo, la CI del PR #3:** `auth-entrar-cuota.test.ts` simula la entrada sin base; leer
+  `es_plataforma` en la ruta pide su doble (`vi.mock('@morphiqpos/app/mantenimiento')`). Correr
+  `pnpm test:unit` entero antes de subir.
+- **Ojo, la galería de retratos:** Configuración (sin «Mantenimiento» para el dueño), Portal QR
+  (la sección «Pedidos desde el portal») y Mesas («Escanear QR») cambian a propósito: se declaran
+  con el flujo `actualizar_galeria`.
+- Ojo, un `next build` local puede fallar por la red al bajar Inter de Google Fonts: reintentar.
+
+### DP-12.3 · Unir mesas (DP-D46)
+
+- Dominio: `sala/forma-de-la-union.ts` (`formaDeLaUnion`, `vecinaQueLlama`). Servidor:
+  `restaurante/notas-de-la-union.ts` (alergias y celebración a la principal), la guarda de limpieza
+  en `union-de-mesas.ts`, `sinCabezaViva` en la guarda del puente (`puente/tipos.ts`, `escribir.ts`,
+  `mapa.ts`) y «vaciar el mapa» con uniones vivas.
+- Pantalla: `apps/web/src/restaurante/unir-mesas/` (`MesaQueTiembla`, `use-arrastre-de-mesas`,
+  `AvisoDeMesasOcupadas`, `UnirMesasEnElMapa` rehecho), `MesaShape.jsx` con `caja`, y `Mesero.jsx`
+  (la unión fundida en el mapa, «Separar mesas» en el globo, `?unir=` limpio).
+- Pruebas: `union-con-gente.integracion.test.ts` (5), `forma-de-la-union.test.ts` (7),
+  `union-dp12-3.test.ts`; e2e `unir-mesas-al-tacto.spec.ts` (tacto real por CDP; la distancia
+  dedo-mesa cuadro por cuadro) con sus ayudantes en `pruebas/e2e/ayudantes/tacto.ts`.
+- Resultados: mutaciones 16 de 16 (servidor, dominio y pantalla); `unir-mesas-al-tacto` en tableta
+  1280 × 800, teléfono y PC; las vecinas de 12.2 y 12.3 en verde en los tres (10 en tableta, 8 en
+  teléfono y PC). El aviso con gente no nombra la mesa desde la que se entró a unir (la propia).
+- Ojo, `restaurante-operaciones` 6 y 6b: unir dos mesas con cuenta pasa por «¿Unir de todos
+  modos?» antes de «¿Qué número queda?» (`unirPorLaPantalla`).
+- **Ojo, la prueba de tacto usa el salón de la demo tal cual:** Interior 1 y 2 (cuadradas), 3 y 6
+  (redondas chicas, una sobre otra) y Terraza 7 y 8 (redondas). Si se reacomoda la demo, se
+  reacomoda la prueba.
+- **Ojo, el temblor es `transform`:** lo que mueve la mesa (arrastre, vecina, asentarse) va en
+  `translate`/`scale`. Ponerlo en `transform` apaga el temblor.
+- **Ojo, el aviso con gente lee el total de la cuenta por el puente** (`Venta`): si el rol no la
+  lee, el aviso sale sin importe; nunca se une sin preguntar.

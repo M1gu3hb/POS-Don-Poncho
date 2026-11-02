@@ -21,17 +21,21 @@ import { z } from 'zod';
 const CANTIDAD = /^\d{1,3}(?:\.\d{1,4})?$/;
 
 const MAXIMO_LINEAS = 40;
+const MAXIMO_CANTIDAD = 999;
 const MAXIMO_PERSONAS = 50;
 const MAXIMO_NOTA = 300;
 const MAXIMO_COMENTARIO = 500;
 const MAXIMO_NOMBRE = 80;
 
-const cantidadPedida = z
+export const cantidadPedida = z
   .string()
   // Sin `abort`, zod 4 corre el `refine` aunque esto no pase, y su `BigInt` LANZA: el portal
   // público contestaba 500 a una cantidad mal escrita.
   .regex(CANTIDAD, { error: 'La cantidad no es válida.', abort: true })
-  .refine((valor) => BigInt(valor.replace('.', '')) !== 0n, 'La cantidad debe ser mayor que cero.');
+  .refine((valor) => BigInt(valor.replace('.', '')) !== 0n, 'La cantidad debe ser mayor que cero.')
+  // DP-12.2: el mismo tope que el `check` de `carrito_mesa_lineas` (`cantidad <= 999`). Sin él,
+  // 999.5 pasaba el esquema y reventaba en la base como un 500 en vez de decir qué está mal.
+  .refine((valor) => Number(valor) <= MAXIMO_CANTIDAD, 'La cantidad no puede pasar de 999.');
 
 const notaCorta = z.string().trim().max(MAXIMO_NOTA).default('');
 

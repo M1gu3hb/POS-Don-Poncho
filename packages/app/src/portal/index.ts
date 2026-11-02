@@ -20,6 +20,8 @@ export {
   type ResultadoDelEnvio,
 } from './carrito-comandos.ts';
 export { servirElCarrito } from './carrito-http.ts';
+export { llamarAlMeseroParaConfirmar, type ResultadoDelLlamado } from './carrito-llamar.ts';
+export { QUIEN_ENVIA, type ComoSeEnvia, type QuienEnvia } from './quien-envia.ts';
 export type { EstadoDelCarrito, LineaDelCarrito } from './carrito.ts';
 export { crearSolicitudQR, type ResultadoSolicitud } from './solicitudes.ts';
 export { pedirCuentaQR, type ResultadoCuenta } from './cuenta.ts';

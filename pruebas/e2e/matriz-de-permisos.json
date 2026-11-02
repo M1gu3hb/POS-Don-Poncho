@@ -358,6 +358,34 @@
       "paquetes": ["restaurante"]
     },
     {
+      "ruta": "/api/restaurante/carrito-cambiar",
+      "comando": "restaurante.carrito_cambiar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-enviar",
+      "comando": "restaurante.carrito_enviar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-quitar",
+      "comando": "restaurante.carrito_quitar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-vaciar",
+      "comando": "restaurante.carrito_vaciar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
       "ruta": "/api/restaurante/crear-estacion",
       "comando": "restaurante.crear_estacion",
       "escribe": true,
@@ -757,6 +785,10 @@
       "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     },
     {
+      "ruta": "/api/publico/qr/[token]/carrito/llamar",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
+    },
+    {
       "ruta": "/api/publico/qr/[token]/carrito/quitar",
       "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     },
@@ -797,8 +829,16 @@
       "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     },
     {
+      "ruta": "/api/restaurante/carrito-de-la-mesa",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
+    },
+    {
       "ruta": "/api/restaurante/conectar-telefono-de-cocina",
       "razon": "no sirve UN comando por la tubería estándar: valida o encadena antes del comando"
+    },
+    {
+      "ruta": "/api/restaurante/qr-de-la-mesa",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     }
   ]
 }

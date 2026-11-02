@@ -34,6 +34,9 @@ export default function ConfiguracionQRTab({ config }) {
     portal_qr_permitir_propina_cliente: true,
     portal_qr_cuenta_modo: 'mesero_dispara',
     portal_qr_mensaje_bienvenida: '',
+    // DP-12.2: quién manda a cocina (por omisión el mesero) y si los comensales abren su mesa.
+    portal_qr_envia_a_cocina: 'mesero',
+    portal_qr_comensales_abren_mesa: false,
   });
   const [saving, setSaving] = useState(false);
 
@@ -53,6 +56,9 @@ export default function ConfiguracionQRTab({ config }) {
       portal_qr_mensaje_bienvenida:
         config.portal_qr_mensaje_bienvenida ||
         '¡Bienvenido! Explora nuestro menú y pídenos atención cuando quieras.',
+      portal_qr_envia_a_cocina:
+        config.portal_qr_envia_a_cocina === 'comensales' ? 'comensales' : 'mesero',
+      portal_qr_comensales_abren_mesa: config.portal_qr_comensales_abren_mesa === true,
     });
   }, [config]);
 
@@ -149,6 +155,46 @@ export default function ConfiguracionQRTab({ config }) {
           <Switch
             checked={form.portal_qr_mostrar_sin_imagen}
             onCheckedChange={(v) => setForm({ ...form, portal_qr_mostrar_sin_imagen: v })}
+          />
+        </Row>
+      </div>
+
+      {/* DP-12.2 · Pedidos desde el portal: el mesero confirma lo que arman los comensales. */}
+      <div className="rounded-xl border bg-superficie p-4">
+        <p className="text-sm font-bold mb-1">Pedidos desde el portal</p>
+        <p className="text-xs text-muted-foreground mb-2">
+          Los comensales arman el pedido de su mesa desde sus teléfonos, aunque la mesa esté
+          cerrada. Aquí decides quién lo manda a cocina.
+        </p>
+        <Row
+          label="Quién manda a cocina"
+          hint="Con «Sólo el mesero», los comensales lo llaman para confirmar y él lo envía a su nombre."
+        >
+          <Select
+            value={form.portal_qr_envia_a_cocina}
+            onValueChange={(v) => setForm({ ...form, portal_qr_envia_a_cocina: v })}
+          >
+            <SelectTrigger className="w-64 max-w-full h-9" aria-label="Quién manda a cocina">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mesero">Sólo el mesero confirma y envía</SelectItem>
+              <SelectItem value="comensales">También los comensales</SelectItem>
+            </SelectContent>
+          </Select>
+        </Row>
+        <Row
+          label="Los comensales pueden abrir su mesa"
+          hint="Sólo si también envían los comensales: al enviar, abren la mesa ellos mismos."
+        >
+          <Switch
+            aria-label="Los comensales pueden abrir su mesa"
+            disabled={form.portal_qr_envia_a_cocina !== 'comensales'}
+            checked={
+              form.portal_qr_envia_a_cocina === 'comensales' &&
+              form.portal_qr_comensales_abren_mesa
+            }
+            onCheckedChange={(v) => setForm({ ...form, portal_qr_comensales_abren_mesa: v })}
           />
         </Row>
       </div>

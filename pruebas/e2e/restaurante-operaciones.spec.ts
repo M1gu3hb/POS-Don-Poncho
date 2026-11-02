@@ -1709,6 +1709,11 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
       .getByRole('button', { name: `Mesa ${String(numeroDeLaQueSeUne)}`, exact: true })
       .click();
     await plano.getByRole('button', { name: /^Unir 2 mesas/ }).click();
+    // DP-12.3: la otra mesa tiene gente y su cuenta: se pregunta antes (la suya no se nombra).
+    const aviso = sala.getByRole('alertdialog', { name: '¿Unir de todos modos?' });
+    await expect(aviso).toContainText(`La Mesa ${String(numeroDeLaQueSeUne)} tiene gente`);
+    await expect(aviso).not.toContainText(`La Mesa ${String(numeroPrincipal)} tiene gente`);
+    await aviso.getByRole('button', { name: 'Unir', exact: true }).click();
     const numero = sala.getByRole('alertdialog', { name: '¿Qué número queda?' });
     await numero
       .getByRole('radio', { name: `Mesa ${String(numeroPrincipal)}`, exact: true })

@@ -131,6 +131,19 @@ export const vaciarMesas = definirComando<Transaccion, typeof entradaVacia, Resu
           `Hay mesas con venta abierta (${lista}). Cóbralas o cancélalas antes de vaciar el mapa.`,
         );
       }
+      // DP-12.3: apagar las mesas de una unión viva la dejaba varada (las absorbidas, ocultas).
+      const unidas = await ctx.tx
+        .selectFrom('uniones_mesa')
+        .select('id')
+        .where('organizacion_id', '=', org)
+        .where('cerrada_en', 'is', null)
+        .executeTakeFirst();
+      if (unidas !== undefined) {
+        throw new ErrorDominio(
+          'MESA_NO_LIBERABLE',
+          'Hay mesas unidas: sepáralas antes de vaciar el mapa.',
+        );
+      }
 
       const antes = await contar(ctx.tx, ['mesas'], org);
       const apagadas = await ctx.paso('apagar_mesas', () =>

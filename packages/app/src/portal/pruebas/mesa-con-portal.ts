@@ -15,6 +15,7 @@ import {
 } from '../../pruebas/negocio-real.ts';
 import { rotarQr } from '../../restaurante/qr.ts';
 import { agregarAlCarrito, enviarElCarrito } from '../carrito-comandos.ts';
+import { llamarAlMeseroParaConfirmar } from '../carrito-llamar.ts';
 import { leerElCarrito } from '../carrito-http.ts';
 import { ejecutarComandoPublico } from '../comando-publico.ts';
 import type { ComandoPublico } from '../definicion-publica.ts';
@@ -29,7 +30,19 @@ export const PIMIENTA = 'pimienta-de-la-prueba-del-carrito-0123456789';
 export const TELEFONO_A = 'telefonoA_0123456789abcdef';
 export const TELEFONO_B = 'telefonoB_0123456789abcdef';
 
-export async function mesaConPortal({ pedidos = true }: { readonly pedidos?: boolean } = {}) {
+/**
+ * `envian`: quién manda a cocina (DP-12.2). Las pruebas del carrito de DP-9.5 hablan del envío del
+ * comensal, así que por omisión aquí envían los comensales; el negocio real nace con el mesero.
+ */
+export async function mesaConPortal({
+  pedidos = true,
+  envian = 'comensales',
+  abrenMesa = envian === 'comensales',
+}: {
+  readonly pedidos?: boolean;
+  readonly envian?: 'mesero' | 'comensales';
+  readonly abrenMesa?: boolean;
+} = {}) {
   const negocio = await sembrarNegocio({
     nombre: 'Fonda del carrito',
     rol: 'dueno',
@@ -64,6 +77,8 @@ export async function mesaConPortal({ pedidos = true }: { readonly pedidos?: boo
       portal_qr_activo: true,
       portal_qr_permitir_pedidos_cliente: pedidos,
       asignacion_mesas_activa: false,
+      portal_qr_envia_a_cocina: envian,
+      portal_qr_comensales_abren_mesa: abrenMesa,
     };
     await sql`
       insert into configuracion (organizacion_id, valores)
@@ -121,8 +136,13 @@ export async function mesaConPortal({ pedidos = true }: { readonly pedidos?: boo
     publico(agregarAlCarrito, { dispositivo, item: { productoId, cantidad, notas } });
   const enviar = (dispositivo: string, confirmado: boolean) =>
     publico(enviarElCarrito, { dispositivo, confirmado });
+  const llamar = (dispositivo: string) => publico(llamarAlMeseroParaConfirmar, { dispositivo });
   return {
     negocio,
+    ambito,
+    sucursalId: sucursal.sucursalId,
+    qrToken,
+    llamar,
     mesaId,
     taco: taco.productoId,
     agua: agua.productoId,

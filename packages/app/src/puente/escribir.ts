@@ -2,6 +2,7 @@ import 'server-only';
 
 import { ErrorDominio } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
+import { sql, type RawBuilder } from 'kysely';
 
 import { transaccionLibre } from './db-dinamica.ts';
 
@@ -53,6 +54,7 @@ type Fila = Record<string, unknown>;
 /** Los métodos que se encadenan en un `update`. Ver `db-dinamica.ts`. */
 interface ActualizacionLibre {
   where(columna: string, operador: string, valor: unknown): ActualizacionLibre;
+  where(expresion: RawBuilder<unknown>): ActualizacionLibre;
   returning(columnas: string[]): { executeTakeFirst(): Promise<Fila | undefined> };
 }
 
@@ -229,6 +231,13 @@ async function actualizar(
   if (guarda !== undefined) {
     consulta = consulta.where(guarda.columnaEstado, 'in', guarda.estados);
     for (const columna of guarda.vacias) consulta = consulta.where(columna, 'is', null);
+    const cabeza = guarda.sinCabezaViva;
+    if (cabeza !== undefined) {
+      consulta = consulta.where(sql`not exists (
+        select 1 from ${sql.table(cabeza.tabla)} as viva
+         where ${sql.ref(`viva.${cabeza.columna}`)} = ${sql.ref(`${mapa.tabla}.id`)}
+           and ${sql.ref(`viva.${cabeza.abiertaSi}`)} is null)`);
+    }
   }
 
   const fila = await consulta.returning(columnasDeSalida(mapa, ambito.rol)).executeTakeFirst();

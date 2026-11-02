@@ -73,10 +73,8 @@ test.describe('el pedido compartido de la mesa', () => {
       const [a, b] = [uno.page, dos.page];
       fallos.push(vigilarFallos(a), vigilarFallos(b));
 
-      await test.step('un teléfono abre la mesa (para dos) y cada quien agrega lo suyo', async () => {
-        await tarjetaDe(a, CARTA.cerveza.nombre).click();
-        await a.getByRole('button', { name: 'Abrir mesa' }).click();
-        await expect.poll(async () => (await mesaEnElServidor(duena, MESA)).ordenId).not.toBeNull();
+      // DP-12.2: con la mesa cerrada también se arma el pedido; se abre al enviarlo.
+      await test.step('con la mesa cerrada, cada quien agrega lo suyo', async () => {
         await agregar(a, CARTA.cerveza.nombre);
         await expect(b.getByRole('button', { name: /^Pedido de la mesa \(1\)/ })).toBeVisible();
         await agregar(b, CARTA.arrachera.nombre);

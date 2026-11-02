@@ -157,6 +157,16 @@ export const CODIGOS_ERROR = {
   QR_LINEA_AJENA: 'QR_LINEA_AJENA',
   /** DP-9.5 · El carrito de la mesa llegó a su tope de líneas. */
   QR_CARRITO_LLENO: 'QR_CARRITO_LLENO',
+  /** DP-12.2 · Sólo el mesero manda a cocina: el comensal lo llama para confirmar. */
+  QR_SOLO_EL_MESERO_ENVIA: 'QR_SOLO_EL_MESERO_ENVIA',
+  /** DP-12.2 · Los comensales envían, pero la mesa está cerrada y no la pueden abrir. */
+  QR_PIDE_QUE_TE_ATIENDAN: 'QR_PIDE_QUE_TE_ATIENDAN',
+  /** DP-12.2 · No hay nada en el carrito que confirmar. */
+  QR_CARRITO_VACIO: 'QR_CARRITO_VACIO',
+  /** DP-12.2 · El mesero envía el carrito de una mesa sin cuenta: primero se abre. */
+  CARRITO_SIN_CUENTA: 'CARRITO_SIN_CUENTA',
+  /** DP-12.2 · Esa línea ya no está en el carrito de la mesa (otro la quitó o ya salió). */
+  CARRITO_LINEA_NO_ENCONTRADA: 'CARRITO_LINEA_NO_ENCONTRADA',
   /**
    * El aviso no existe, o es de otra organización, que se ve igual.
    *

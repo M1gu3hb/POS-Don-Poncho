@@ -5,6 +5,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import type { z } from 'zod';
 
 import { cerrarAvisosDeLaMesa } from './avisos-de-la-mesa.ts';
+import { olvidarElCarritoDeLaCuenta, olvidarElCarritoDeLaMesa } from './carrito-del-salon.ts';
 import { esViolacionDeUnicidad } from './datos.ts';
 import type { entradaAbrirMesa } from './esquemas.ts';
 import { sellarTransicionDeMesa } from './sala-escrituras.ts';
@@ -222,7 +223,11 @@ export async function cerrarOrdenCancelada(
     .where('estado', 'not in', [...ORDEN_YA_CERRADA])
     .executeTakeFirst();
 
-  return Number(resultado.numUpdatedRows);
+  const filas = Number(resultado.numUpdatedRows);
+  // DP-12.2: la cuenta se cerró (cancelada, o vacía al liberar): lo que quedó sin enviar en el
+  // carrito del portal de su mesa ya no es de nadie.
+  if (filas === 1) await olvidarElCarritoDeLaCuenta(tx, datos.organizacionId, datos.ordenId);
+  return filas;
 }
 
 export async function cancelarOrdenVacia(
@@ -379,6 +384,9 @@ export async function pasarMesaCobradaALimpieza(
     empleadoId: quien.empleoId,
     ahora: quien.ahora,
   });
+
+  // DP-12.2: la cuenta se cobró; lo que quedó sin enviar en el carrito del portal se va con ella.
+  await olvidarElCarritoDeLaMesa(tx, organizacionId, mesa.id);
 
   // Si era la principal de un grupo, el grupo entero se recoge con ella.
   await llevarElGrupoConLaPrincipal(tx, organizacionId, mesa.id, {

@@ -4,6 +4,8 @@ import { ErrorDominio } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 
 import { cerrarAvisosDeLaMesa } from './avisos-de-la-mesa.ts';
+import { moverElCarrito } from './carrito-del-salon.ts';
+import { llevarLasNotasALaPrincipal } from './notas-de-la-union.ts';
 import { bloquearElGrupo } from './union-del-salon.ts';
 
 /**
@@ -223,6 +225,9 @@ export async function cambiarDeMesa(
     .where('id', '=', datos.ordenId)
     .execute();
 
+  // DP-12.2: el carrito del portal sigue a la cuenta: lo armado en la vieja pasa a la nueva.
+  await moverElCarrito(tx, datos.organizacionId, origen.id, destino.id);
+
   // LA MITAD QUE NADIE SE ACUERDA DE HACER. Sin esto la comanda viva sigue
   // diciendo «mesa 4» y el plato sale a una mesa vacía.
   const comandas = await tx
@@ -439,6 +444,17 @@ export async function unirMesas(tx: Transaccion, datos: DatosDeUnion): Promise<U
       empleadoId: datos.empleadoId,
       ahora: datos.ahora,
     });
+
+    // DP-12.2: el carrito del portal de la absorbida (y sus teléfonos) pasa a la principal: su QR
+    // ya cae ahí, y lo que habían armado no se queda huérfano hasta separar.
+    await moverElCarrito(tx, datos.organizacionId, mesa.id, datos.principal.id);
+    // DP-12.3: y sus alergias y su celebración, que se quedaban ocultas en la absorbida.
+    await llevarLasNotasALaPrincipal(
+      tx,
+      datos.organizacionId,
+      { mesaId: datos.principal.id, ordenId: datos.ordenPrincipalId },
+      { mesaId: mesa.id, ordenId },
+    );
 
     personas += mesa.personas;
   }

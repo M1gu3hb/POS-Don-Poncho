@@ -6,7 +6,7 @@ import { repoOrdenes } from '@morphiqpos/data';
 import type { TotalesOrden } from '@morphiqpos/domain/venta';
 import type { z } from 'zod';
 
-import { definirComando } from '../definicion.ts';
+import { definirComando, type ContextoComando } from '../definicion.ts';
 import { cotizar } from '../venta/cotizar.ts';
 import { estacionesActivas, mesaOperable, ordenDeMesa } from './datos.ts';
 import { productosDeComanda } from './catalogo-comanda.ts';
@@ -76,97 +76,110 @@ export const enviarPedido = definirComando<
   sucursal: { ordenId: 'ordenes' },
   entrada: entradaEnviarPedido,
   async ejecutar(ctx, entrada) {
-    const { organizacionId, empleoId } = ctx.ambito;
-
-    const orden = await ctx.paso('cargar_orden', () =>
-      ordenDeMesa(ctx.tx, organizacionId, entrada.ordenId),
-    );
-    if (!(ORDEN_ADMITE_PEDIDO as readonly string[]).includes(orden.estado)) {
-      throw new ErrorDominio(
-        'ORDEN_NO_EDITABLE',
-        'Esa cuenta ya se cerró; no se le pueden mandar más platos.',
-        { estado: orden.estado },
-      );
-    }
-
-    // El precio sale del catálogo DENTRO de esta transacción. El endpoint no
-    // recibe importes: si los recibiera, quien llama elegiría lo que paga.
-    const preparadas = await ctx.paso('valorar_lineas', () =>
-      prepararTodas(ctx.tx, organizacionId, entrada),
-    );
-
-    await ctx.paso('escribir_lineas', () =>
-      insertarLineas(ctx.tx, organizacionId, entrada.ordenId, preparadas),
-    );
-
-    // LO RETENIDO NO SE COMANDA. Es la mitad de F-323 que se puede olvidar sin
-    // que nada falle: las líneas se escriben igual y la cuenta cuadra igual,
-    // sólo que el fuerte sale con la sopa.
-    const grupos = agruparEnComandas(preparadas.filter((l) => l.marchaEstado !== 'retenida'));
-    const comandas = grupos.map((grupo) => ({ id: crypto.randomUUID(), grupo }));
-
-    if (comandas.length > 0) {
-      await ctx.paso('escribir_comandas', () =>
-        insertarComandas(ctx.tx, {
-          organizacionId,
-          orden,
-          notas: entrada.notas ?? null,
-          comandas,
-          marchadaEn: ctx.ahora,
-        }),
-      );
-      await ctx.paso('escribir_items', () => insertarItems(ctx.tx, organizacionId, comandas));
-    }
-
-    // Los totales se recalculan sobre las líneas persistidas, no sobre lo que
-    // trajo la pantalla. Es lo que hace innecesario el rescate de totales en
-    // cero de `ventaTotales.js` antes de la precuenta (F1-01 §4).
-    const { totales } = await ctx.paso('cotizar', () =>
-      cotizar(ctx.tx, organizacionId, entrada.ordenId),
-    );
-    await ctx.paso('confirmar_orden', () =>
-      confirmarOrden(ctx.tx, organizacionId, entrada.ordenId, totales),
-    );
-
-    const mesaId = orden.mesaId;
-    if (mesaId !== null) {
-      await ctx.paso('avanzar_mesa', () =>
-        avanzarMesa(ctx.tx, organizacionId, mesaId, comandas.length > 0, {
-          ordenId: orden.id,
-          empleoId,
-          ahora: ctx.ahora,
-        }),
-      );
-    }
-
-    const emitidas = comandas.map(({ id, grupo }) => ({
-      id,
-      area: grupo.area,
-      estacionId: grupo.estacion.id,
-      estacionNombre: grupo.estacion.nombre,
-      items: grupo.lineas.length,
-    }));
-
+    const resultado = await comandarLasLineas(ctx, entrada);
     ctx.auditar({
       entidadId: entrada.ordenId,
       payload: {
-        lineas: preparadas.length,
-        comandas: emitidas.length,
-        estaciones: emitidas.map((c) => c.estacionNombre),
-        totalCentavos: totales.totalCentavos.toString(),
+        lineas: resultado.lineas,
+        comandas: resultado.comandas.length,
+        estaciones: resultado.comandas.map((c) => c.estacionNombre),
+        totalCentavos: resultado.totalCentavos,
       },
     });
-
-    return {
-      ordenId: entrada.ordenId,
-      lineas: preparadas.length,
-      comandas: emitidas,
-      totalCentavos: totales.totalCentavos.toString(),
-    };
+    return resultado;
   },
 });
 
-type EntradaPedido = z.output<typeof entradaEnviarPedido>;
+/**
+ * El cuerpo de `restaurante.enviar_pedido`, sin su auditoría: las líneas, las comandas por
+ * estación, los totales y la mesa. Lo comparte el envío del carrito del portal que confirma el
+ * mesero (DP-12.2, `carrito-del-mesero.ts`): lo que los comensales armaron sale a cocina por el
+ * MISMO camino que lo que captura el mesero, a su nombre y con el precio del catálogo.
+ */
+export async function comandarLasLineas(
+  ctx: ContextoComando<Transaccion>,
+  entrada: EntradaPedido,
+): Promise<ResultadoEnviarPedido> {
+  const { organizacionId, empleoId } = ctx.ambito;
+
+  const orden = await ctx.paso('cargar_orden', () =>
+    ordenDeMesa(ctx.tx, organizacionId, entrada.ordenId),
+  );
+  if (!(ORDEN_ADMITE_PEDIDO as readonly string[]).includes(orden.estado)) {
+    throw new ErrorDominio(
+      'ORDEN_NO_EDITABLE',
+      'Esa cuenta ya se cerró; no se le pueden mandar más platos.',
+      { estado: orden.estado },
+    );
+  }
+
+  // El precio sale del catálogo DENTRO de esta transacción. El endpoint no
+  // recibe importes: si los recibiera, quien llama elegiría lo que paga.
+  const preparadas = await ctx.paso('valorar_lineas', () =>
+    prepararTodas(ctx.tx, organizacionId, entrada),
+  );
+
+  await ctx.paso('escribir_lineas', () =>
+    insertarLineas(ctx.tx, organizacionId, entrada.ordenId, preparadas),
+  );
+
+  // LO RETENIDO NO SE COMANDA. Es la mitad de F-323 que se puede olvidar sin
+  // que nada falle: las líneas se escriben igual y la cuenta cuadra igual,
+  // sólo que el fuerte sale con la sopa.
+  const grupos = agruparEnComandas(preparadas.filter((l) => l.marchaEstado !== 'retenida'));
+  const comandas = grupos.map((grupo) => ({ id: crypto.randomUUID(), grupo }));
+
+  if (comandas.length > 0) {
+    await ctx.paso('escribir_comandas', () =>
+      insertarComandas(ctx.tx, {
+        organizacionId,
+        orden,
+        notas: entrada.notas ?? null,
+        comandas,
+        marchadaEn: ctx.ahora,
+      }),
+    );
+    await ctx.paso('escribir_items', () => insertarItems(ctx.tx, organizacionId, comandas));
+  }
+
+  // Los totales se recalculan sobre las líneas persistidas, no sobre lo que
+  // trajo la pantalla. Es lo que hace innecesario el rescate de totales en
+  // cero de `ventaTotales.js` antes de la precuenta (F1-01 §4).
+  const { totales } = await ctx.paso('cotizar', () =>
+    cotizar(ctx.tx, organizacionId, entrada.ordenId),
+  );
+  await ctx.paso('confirmar_orden', () =>
+    confirmarOrden(ctx.tx, organizacionId, entrada.ordenId, totales),
+  );
+
+  const mesaId = orden.mesaId;
+  if (mesaId !== null) {
+    await ctx.paso('avanzar_mesa', () =>
+      avanzarMesa(ctx.tx, organizacionId, mesaId, comandas.length > 0, {
+        ordenId: orden.id,
+        empleoId,
+        ahora: ctx.ahora,
+      }),
+    );
+  }
+
+  const emitidas = comandas.map(({ id, grupo }) => ({
+    id,
+    area: grupo.area,
+    estacionId: grupo.estacion.id,
+    estacionNombre: grupo.estacion.nombre,
+    items: grupo.lineas.length,
+  }));
+
+  return {
+    ordenId: entrada.ordenId,
+    lineas: preparadas.length,
+    comandas: emitidas,
+    totalCentavos: totales.totalCentavos.toString(),
+  };
+}
+
+export type EntradaPedido = z.output<typeof entradaEnviarPedido>;
 
 /**
  * Valora todas las líneas contra el catálogo antes de escribir ninguna.

@@ -4,6 +4,7 @@ import { ErrorDominio, PAQUETES_PORTAL } from '@morphiqpos/contracts';
 
 import {
   MAXIMO_EN_EL_CARRITO,
+  aperturaDeLaCuenta,
   entradaAgregarAlCarrito,
   entradaEnviarElCarrito,
   entradaQuitarDelCarrito,
@@ -14,32 +15,43 @@ import {
 } from './carrito.ts';
 import { apartarLoQueYaNoSePide } from './carrito-disponibilidad.ts';
 import { definirComandoPublico, type ContextoPortal } from './definicion-publica.ts';
-import { exigirPedidosDesdeElTelefono } from './mesa.ts';
+import { abrirLaMesaDelPortal, exigirPedidosDesdeElTelefono } from './mesa.ts';
 import { ordenAbiertaDeLaMesa, pedirEnLaMesa, type ResultadoPedido } from './pedido.ts';
 import { cargarProductosDelMenu, valorarParaPedido } from './productos.ts';
+import { comensalEnvia } from './quien-envia.ts';
 
 /**
  * LOS TRES COMANDOS DEL CARRITO COMPARTIDO (DP-9.5): agregar, quitar lo propio y enviar.
  *
- * Los tres leen la cuenta de la mesa CON CANDADO (`ordenAbiertaDeLaMesa`), como el pedido de
- * siempre y el cobro: dos «Enviar» a la vez se forman, el segundo espera al primero y encuentra
- * el carrito vacío. Un pedido, no dos (R10).
+ * DP-12.2 · Agregar y quitar ya no exigen cuenta: los comensales arman su carrito con la mesa
+ * cerrada y lo armado se conserva al abrirla. Enviar toma la fila de `carritos_mesa` con candado y
+ * la cuenta con el suyo (`ordenAbiertaDeLaMesa`), como el pedido de siempre y el cobro: dos
+ * «Enviar» a la vez se forman, el segundo espera al primero y encuentra el carrito vacío. Un
+ * pedido, no dos (R10). Y sólo envía el comensal si el negocio lo eligió (`quien-envia.ts`); si no,
+ * lo confirma el mesero (`restaurante/carrito-del-mesero.ts`).
  */
 
 function huellaDe(ctx: ContextoPortal, dispositivo: string): string {
   return huellaDelDispositivo(ctx.pimienta, dispositivo);
 }
 
-async function lineasPendientes(ctx: ContextoPortal, desde: Date) {
+async function lineasPendientes(ctx: ContextoPortal) {
   return ctx.tx
     .selectFrom('carrito_mesa_lineas')
     .select(['id', 'producto_id', 'cantidad', 'notas'])
     .where('organizacion_id', '=', ctx.ambito.organizacionId)
     .where('mesa_id', '=', ctx.ambito.mesaId)
-    .where('created_at', '>=', desde)
     .orderBy('created_at')
     .orderBy('id')
     .execute();
+}
+
+async function estadoPara(ctx: ContextoPortal, huella: string): Promise<EstadoDelCarrito> {
+  return estadoDelCarrito(ctx.tx, ctx.ambito, huella, {
+    desde: await aperturaDeLaCuenta(ctx.tx, ctx.ambito),
+    ahora: ctx.ahora,
+    banderas: ctx.banderas,
+  });
 }
 
 export const agregarAlCarrito = definirComandoPublico<
@@ -54,7 +66,6 @@ export const agregarAlCarrito = definirComandoPublico<
   async ejecutar(ctx, entrada) {
     exigirPedidosDesdeElTelefono(ctx);
     const huella = huellaDe(ctx, entrada.dispositivo);
-    const orden = await ctx.paso('cargar_venta', () => ordenAbiertaDeLaMesa(ctx));
 
     const productos = await ctx.paso('cargar_menu', () =>
       cargarProductosDelMenu(ctx.tx, ctx.ambito.organizacionId, [entrada.item.productoId]),
@@ -70,16 +81,7 @@ export const agregarAlCarrito = definirComandoPublico<
     // entrara, trabaría el envío de toda la mesa). Lanza con el motivo exacto.
     valorarParaPedido(producto.paraVender, entrada.item.cantidad);
 
-    // Lo que quedó de una cuenta anterior ya no es de nadie: se va antes de contar.
-    await ctx.paso('olvidar_lo_viejo', () =>
-      ctx.tx
-        .deleteFrom('carrito_mesa_lineas')
-        .where('organizacion_id', '=', ctx.ambito.organizacionId)
-        .where('mesa_id', '=', ctx.ambito.mesaId)
-        .where('created_at', '<', orden.created_at)
-        .execute(),
-    );
-    const hay = await lineasPendientes(ctx, orden.created_at);
+    const hay = await lineasPendientes(ctx);
     if (hay.length >= MAXIMO_EN_EL_CARRITO) {
       throw new ErrorDominio(
         'QR_CARRITO_LLENO',
@@ -108,10 +110,7 @@ export const agregarAlCarrito = definirComandoPublico<
       entidadId: ctx.ambito.mesaId,
       payload: { lineaId: linea.id, productoId: entrada.item.productoId },
     });
-    return estadoDelCarrito(ctx.tx, ctx.ambito, huella, {
-      desde: orden.created_at,
-      ahora: ctx.ahora,
-    });
+    return estadoPara(ctx, huella);
   },
 });
 
@@ -127,7 +126,6 @@ export const quitarDelCarrito = definirComandoPublico<
   async ejecutar(ctx, entrada) {
     exigirPedidosDesdeElTelefono(ctx);
     const huella = huellaDe(ctx, entrada.dispositivo);
-    const orden = await ctx.paso('cargar_venta', () => ordenAbiertaDeLaMesa(ctx));
 
     // Sólo la suya: la de otro teléfono responde igual que una que ya no está.
     const quitada = await ctx.paso('quitar', () =>
@@ -148,10 +146,7 @@ export const quitarDelCarrito = definirComandoPublico<
     }
 
     ctx.auditar({ entidadId: ctx.ambito.mesaId, payload: { lineaId: entrada.lineaId } });
-    return estadoDelCarrito(ctx.tx, ctx.ambito, huella, {
-      desde: orden.created_at,
-      ahora: ctx.ahora,
-    });
+    return estadoPara(ctx, huella);
   },
 });
 
@@ -181,8 +176,6 @@ export const enviarElCarrito = definirComandoPublico<
     const huella = huellaDe(ctx, entrada.dispositivo);
     const { organizacionId, mesaId } = ctx.ambito;
 
-    // La cuenta, con su candado: si la caja la cierra mientras tanto, aquí se espera y se dice.
-    const orden = await ctx.paso('cargar_venta', () => ordenAbiertaDeLaMesa(ctx));
     await ctx.paso('fila_del_carrito', () =>
       ctx.tx
         .insertInto('carritos_mesa')
@@ -200,16 +193,25 @@ export const enviarElCarrito = definirComandoPublico<
       .forUpdate()
       .executeTakeFirstOrThrow();
 
-    const pendientes = await lineasPendientes(ctx, orden.created_at);
+    const pendientes = await lineasPendientes(ctx);
     if (pendientes.length === 0) {
-      ctx.auditar({ entidadId: orden.id, payload: { enviado: false, ronda: antes.ronda } });
+      ctx.auditar({ entidadId: mesaId, payload: { enviado: false, ronda: antes.ronda } });
       return { enviado: false, ronda: antes.ronda, pedido: null, noDisponibles: [] };
     }
 
-    const estado = await estadoDelCarrito(ctx.tx, ctx.ambito, huella, {
-      desde: orden.created_at,
-      ahora: ctx.ahora,
-    });
+    const estado = await estadoPara(ctx, huella);
+    // DP-12.2 · Quién manda a cocina, decidido aquí y no en la pantalla.
+    if (!comensalEnvia(estado.envio)) {
+      throw estado.envio === 'llamar_mesero'
+        ? new ErrorDominio(
+            'QR_SOLO_EL_MESERO_ENVIA',
+            'Tu mesero confirma el pedido y lo manda a cocina: llámalo para confirmar.',
+          )
+        : new ErrorDominio(
+            'QR_PIDE_QUE_TE_ATIENDAN',
+            'Pide a tu mesero que te atienda para enviar tu pedido.',
+          );
+    }
     if (estado.esperarATodos && !entrada.confirmado) {
       throw new ErrorDominio(
         'QR_CARRITO_SIN_CONFIRMAR',
@@ -242,11 +244,31 @@ export const enviarElCarrito = definirComandoPublico<
     }
     if (lineas.length === 0) {
       ctx.auditar({
-        entidadId: orden.id,
+        entidadId: mesaId,
         payload: { enviado: false, ronda: antes.ronda, ...quitado },
       });
       return { enviado: false, ronda: antes.ronda, pedido: null, noDisponibles: nombres };
     }
+
+    // Con la mesa cerrada y el negocio dejando abrirla al enviar, se abre aquí, para tantas personas
+    // como teléfonos hay conectados (el mesero lo corrige al llegar).
+    const abrio = estado.envio === 'abrir_y_enviar';
+    if (abrio) {
+      await abrirLaMesaDelPortal(
+        ctx,
+        {
+          personas: Math.max(1, estado.conectados),
+          clienteNombre: '',
+          notas: '',
+          notasAlergias: '',
+          celebracionEspecial: false,
+          tipoCelebracion: '',
+        },
+        ctx.ambito.empleadoAsignadoId ?? ctx.ambito.empleadoAtiendeId,
+      );
+    }
+    // La cuenta, con su candado: si la caja la cierra mientras tanto, aquí se espera y se dice.
+    const orden = await ctx.paso('cargar_venta', () => ordenAbiertaDeLaMesa(ctx));
 
     const pedido = await pedirEnLaMesa(
       ctx,
@@ -282,6 +304,7 @@ export const enviarElCarrito = definirComandoPublico<
       payload: {
         enviado: true,
         ronda,
+        abrioLaMesa: abrio,
         lineas: pedido.lineas,
         comandas: pedido.comandas,
         totalCentavos: pedido.totalCentavos,

@@ -169,3 +169,17 @@ export {
   type CuentaRelevada,
   type ResultadoRelevo,
 } from './relevo.ts';
+
+export {
+  cambiarEnElCarrito,
+  enviarElCarritoDeLaMesa,
+  quitarDelCarritoDeLaMesa,
+  vaciarElCarrito,
+  type ResultadoDelEnvioDelMesero,
+} from './carrito-del-mesero.ts';
+export {
+  leerElCarritoParaElMesero,
+  qrDeLaMesaParaElPersonal,
+  type CarritoParaElMesero,
+  type MesaDelCarritoDelMesero,
+} from './carrito-del-mesero-lectura.ts';

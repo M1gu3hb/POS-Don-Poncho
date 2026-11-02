@@ -6,7 +6,10 @@ import type { Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import type { AmbitoPortal } from './ambito.ts';
+import type { BanderasPortal } from './banderas.ts';
 import { itemDelCarrito } from './esquemas.ts';
+import { faltaMesero } from './negocio.ts';
+import { comoSeEnvia, type ComoSeEnvia } from './quien-envia.ts';
 
 /**
  * EL CARRITO COMPARTIDO DE LA MESA (DP-9.5).
@@ -19,10 +22,19 @@ import { itemDelCarrito } from './esquemas.ts';
  * Los tres comandos están en `carrito-comandos.ts`.
  */
 
+/** De la mesa, lo que el carrito necesita: el portal y el mesero (DP-12.2) lo arman cada uno. */
+export type MesaDelCarrito = Pick<AmbitoPortal, 'organizacionId' | 'mesaId' | 'empleadoAsignadoId'>;
+
 /** Más de esto en un carrito ya no es una mesa pidiendo. */
 export const MAXIMO_EN_EL_CARRITO = 60;
 /** Un teléfono cuenta como conectado si latió en este último rato. */
 export const SEGUNDOS_CONECTADO = 60;
+/**
+ * DP-12.2 · El latido se escribe a lo mucho una vez en este rato por teléfono: el sondeo es cada
+ * 2.5 s y, con diez teléfonos, cada uno escribía 24 veces por minuto la misma fila. Con 30 s el
+ * teléfono sigue contando como conectado (la ventana es de 60).
+ */
+export const SEGUNDOS_ENTRE_LATIDOS = 30;
 
 /** El id que inventa el navegador del teléfono: sólo letras, números, «-» y «_». */
 const DISPOSITIVO = z
@@ -58,10 +70,15 @@ export interface LineaDelCarrito {
   readonly nombre: string;
   readonly cantidad: string;
   readonly notas: string;
-  /** El precio vigente del catálogo, sólo para enseñarlo: lo que se cobra lo pone el envío. */
-  readonly precioCentavos: string;
+  /**
+   * El precio vigente del catálogo, sólo para enseñarlo: lo que se cobra lo pone el envío. `null`
+   * cuando el negocio no enseña precios en el portal (DP-12.2: la respuesta tampoco los trae).
+   */
+  readonly precioCentavos: string | null;
   /** La agregó ESTE teléfono: sólo ésas se pueden quitar desde aquí. */
   readonly esMia: boolean;
+  /** De qué teléfono es, numerados por orden de llegada: «Teléfono 2» para el mesero. */
+  readonly telefono: number;
   /**
    * `false`: el negocio la ocultó del menú o la desactivó después de que se agregara. Todos los
    * teléfonos la ven marcada; al enviar se quita y el pedido sale sin ella.
@@ -80,6 +97,12 @@ export interface EstadoDelCarrito {
   /** Cuántas veces ha salido el carrito de esta mesa: si sube, alguien lo mandó. */
   readonly ronda: number;
   readonly ultimoEnvio: { readonly en: string; readonly porEsteTelefono: boolean } | null;
+  /** DP-12.2 · La mesa tiene cuenta abierta. Sin ella el carrito se arma igual. */
+  readonly cuentaAbierta: boolean;
+  /** DP-12.2 · Qué puede hacer el comensal con lo armado (`quien-envia.ts`). */
+  readonly envio: ComoSeEnvia;
+  /** DP-12.2 · Ya hay un «Pedido listo para confirmar» esperando al mesero. */
+  readonly meseroAvisado: boolean;
 }
 
 /** `2.5000` → `2.5`, `3.0000` → `3`: como la escribió el comensal. */
@@ -90,7 +113,7 @@ export function cantidadLegible(cantidad: string): string {
 /** El teléfono sigue aquí: su último latido es ahora. */
 export async function latir(
   tx: Transaccion,
-  ambito: AmbitoPortal,
+  ambito: MesaDelCarrito,
   huella: string,
   ahora: Date,
 ): Promise<void> {
@@ -105,7 +128,12 @@ export async function latir(
     .onConflict((oc) =>
       oc
         .columns(['organizacion_id', 'mesa_id', 'dispositivo_huella'])
-        .doUpdateSet({ visto_en: ahora }),
+        .doUpdateSet({ visto_en: ahora })
+        .where(
+          'dispositivos_mesa.visto_en',
+          '<',
+          new Date(ahora.getTime() - SEGUNDOS_ENTRE_LATIDOS * 1000),
+        ),
     )
     .execute();
 }
@@ -113,7 +141,7 @@ export async function latir(
 /** La cuenta abierta de la mesa, sin candado: sólo para saber desde cuándo cuenta el carrito. */
 export async function aperturaDeLaCuenta(
   tx: Transaccion,
-  ambito: AmbitoPortal,
+  ambito: MesaDelCarrito,
 ): Promise<Date | null> {
   const orden = await tx
     .selectFrom('ordenes')
@@ -133,42 +161,43 @@ export async function aperturaDeLaCuenta(
 }
 
 /**
- * El carrito de la mesa como lo ve un teléfono. Sin cuenta abierta no hay carrito: lo de una
- * cuenta anterior no se le enseña a la siguiente mesa.
+ * El carrito de la mesa como lo ve un teléfono (DP-12.2: con la mesa cerrada también).
+ *
+ * Son todas las líneas de la mesa: lo armado antes de abrir la cuenta se conserva, y lo de una
+ * cuenta anterior ya no está porque se olvida al cerrarse (`restaurante/carrito-del-salon.ts`).
+ * `desde` es la apertura de la cuenta, o `null` sin cuenta; sólo cuenta a los conectados.
  */
 export async function estadoDelCarrito(
   tx: Transaccion,
-  ambito: AmbitoPortal,
+  ambito: MesaDelCarrito,
   huella: string,
-  { desde, ahora }: { readonly desde: Date | null; readonly ahora: Date },
+  {
+    desde,
+    ahora,
+    banderas,
+  }: { readonly desde: Date | null; readonly ahora: Date; readonly banderas: BanderasPortal },
 ): Promise<EstadoDelCarrito> {
-  const lineas =
-    desde === null
-      ? []
-      : await tx
-          .selectFrom('carrito_mesa_lineas as l')
-          .innerJoin('productos as p', (j) =>
-            j
-              .onRef('p.id', '=', 'l.producto_id')
-              .onRef('p.organizacion_id', '=', 'l.organizacion_id'),
-          )
-          .select([
-            'l.id',
-            'l.producto_id',
-            'l.cantidad',
-            'l.notas',
-            'l.dispositivo_huella',
-            'p.nombre',
-            'p.precio_venta_centavos',
-            'p.activo',
-            'p.visible_en_menu_digital',
-          ])
-          .where('l.organizacion_id', '=', ambito.organizacionId)
-          .where('l.mesa_id', '=', ambito.mesaId)
-          .where('l.created_at', '>=', desde)
-          .orderBy('l.created_at')
-          .orderBy('l.id')
-          .execute();
+  const lineas = await tx
+    .selectFrom('carrito_mesa_lineas as l')
+    .innerJoin('productos as p', (j) =>
+      j.onRef('p.id', '=', 'l.producto_id').onRef('p.organizacion_id', '=', 'l.organizacion_id'),
+    )
+    .select([
+      'l.id',
+      'l.producto_id',
+      'l.cantidad',
+      'l.notas',
+      'l.dispositivo_huella',
+      'p.nombre',
+      'p.precio_venta_centavos',
+      'p.activo',
+      'p.visible_en_menu_digital',
+    ])
+    .where('l.organizacion_id', '=', ambito.organizacionId)
+    .where('l.mesa_id', '=', ambito.mesaId)
+    .orderBy('l.created_at')
+    .orderBy('l.id')
+    .execute();
 
   const umbral = new Date(ahora.getTime() - SEGUNDOS_CONECTADO * 1000);
   const desdeConectados = desde !== null && desde > umbral ? desde : umbral;
@@ -191,7 +220,21 @@ export async function estadoDelCarrito(
     .where('organizacion_id', '=', ambito.organizacionId)
     .where('mesa_id', '=', ambito.mesaId)
     .executeTakeFirst();
+  const aviso = await tx
+    .selectFrom('solicitudes_qr')
+    .select('id')
+    .where('organizacion_id', '=', ambito.organizacionId)
+    .where('mesa_id', '=', ambito.mesaId)
+    .where('tipo', '=', 'ordenar')
+    .where('estado', '=', 'pendiente')
+    .executeTakeFirst();
 
+  const telefonos = new Map<string, number>();
+  for (const l of lineas) {
+    if (!telefonos.has(l.dispositivo_huella)) {
+      telefonos.set(l.dispositivo_huella, telefonos.size + 1);
+    }
+  }
   const nConectados = Number(conectados?.n ?? 0);
   const personas = desde === null ? 0 : (mesa?.personas_actuales ?? 0);
   return {
@@ -201,8 +244,9 @@ export async function estadoDelCarrito(
       nombre: l.nombre,
       cantidad: cantidadLegible(l.cantidad),
       notas: l.notas,
-      precioCentavos: l.precio_venta_centavos.toString(),
+      precioCentavos: banderas.mostrarPrecios ? l.precio_venta_centavos.toString() : null,
       esMia: l.dispositivo_huella === huella,
+      telefono: telefonos.get(l.dispositivo_huella) ?? 0,
       disponible: l.activo && l.visible_en_menu_digital,
     })),
     conectados: nConectados,
@@ -216,5 +260,11 @@ export async function estadoDelCarrito(
             en: carrito.enviado_en.toISOString(),
             porEsteTelefono: carrito.enviado_por_huella === huella,
           },
+    cuentaAbierta: desde !== null,
+    envio: comoSeEnvia(banderas, {
+      cuentaAbierta: desde !== null,
+      faltaMesero: faltaMesero(banderas, ambito.empleadoAsignadoId),
+    }),
+    meseroAvisado: aviso !== undefined,
   };
 }

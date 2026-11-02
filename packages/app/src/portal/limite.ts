@@ -67,9 +67,11 @@ export const LIMITES_PORTAL = {
    * aire para dos pestañas abiertas sin dejar que alguien barra el endpoint con un token.
    */
   cocina_consulta: { intentos: 120, ventanaSegundos: MINUTO },
-  // El carrito compartido (DP-9.5): cada teléfono de la mesa lo mira cada 2-3 s —seis
-  // teléfonos son ~150 por minuto—, y agregar o quitar es lo que una mesa hace pidiendo.
-  carrito_estado: { intentos: 240, ventanaSegundos: MINUTO },
+  // El carrito compartido (DP-9.5): cada teléfono de la mesa lo mira cada 2-3 s (~24 al minuto),
+  // y agregar o quitar es lo que una mesa hace pidiendo. DP-12.2: el sondeo se cuenta POR
+  // TELÉFONO (60 deja aire para dos pestañas) y, aparte, por mesa con techo para 40 teléfonos.
+  carrito_estado: { intentos: 60, ventanaSegundos: MINUTO },
+  carrito_mesa: { intentos: 2400, ventanaSegundos: MINUTO },
   carrito: { intentos: 150, ventanaSegundos: CINCO_MINUTOS },
   /** Preparar y Listo: una cocina con prisa no pasa de unos cuantos por minuto. */
   cocina_transicion: { intentos: 60, ventanaSegundos: CINCO_MINUTOS },

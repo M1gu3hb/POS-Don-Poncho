@@ -65,6 +65,14 @@ vi.mock('@morphiqpos/app/identidad', async () => {
   };
 });
 
+// DP-12.1: si es el usuario de plataforma también se lee de la base; aquí, ninguno lo es.
+vi.mock('@morphiqpos/app/mantenimiento', async () => {
+  const original = await vi.importActual<typeof import('@morphiqpos/app/mantenimiento')>(
+    '@morphiqpos/app/mantenimiento',
+  );
+  return { ...original, leerEsDePlataforma: () => Promise.resolve(false) };
+});
+
 vi.mock('@morphiqpos/app/negocio', async () => {
   const original =
     await vi.importActual<typeof import('@morphiqpos/app/negocio')>('@morphiqpos/app/negocio');

@@ -159,6 +159,7 @@ export async function payloadDelPortal(
       ambito,
       cuenta,
       puedeOrdenar && !faltaMesero(banderas, ambito.empleadoAsignadoId),
+      banderas.quienEnvia === 'comensales' && banderas.comensalesAbrenMesa,
     ),
     productos,
     categorias,
@@ -210,6 +211,7 @@ function mesaPublica(
   ambito: AmbitoPortal,
   cuenta: CuentaPublica | null,
   puedeOrdenarAqui: boolean,
+  comensalesAbren: boolean,
 ): MesaPublica {
   const tieneMesero = ambito.empleadoAsignadoId !== null;
   const abierta = cuenta !== null || ambito.ordenActivaId !== null || ambito.estadoMesa !== 'libre';
@@ -221,7 +223,8 @@ function mesaPublica(
     estado: ambito.estadoMesa,
     tiene_mesero: tieneMesero,
     venta_activa_id: cuenta?.id ?? null,
-    puede_abrir: puedeOrdenarAqui && !abierta,
+    // DP-12.2: abrir es de los comensales sólo si el negocio los deja enviar y abrir.
+    puede_abrir: puedeOrdenarAqui && comensalesAbren && !abierta,
     // `puedeOrdenar` ya contiene `portal_qr_permitir_pedidos_cliente`: repetirlo
     // aquí daría dos sitios donde decidir lo mismo, y con el tiempo dirían cosas
     // distintas.

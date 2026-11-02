@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { CLAVE_DE_EXPERIENCIA, EXPERIENCIA } from '../configuracion/experiencia.ts';
 import { BOTONES_DEL_MENU, CLAVE_DE_BOTONES } from '../portal/botones-del-menu.ts';
 import { CLAVE_DE_QR_DE_MESAS, QR_DE_MESAS } from '../portal/qr-de-mesas.ts';
+import { QUIEN_ENVIA } from '../portal/quien-envia.ts';
 import { CLAVE_DEL_TEMA, TEMA_DEL_PORTAL } from '../portal/tema-del-portal.ts';
 
 /**
@@ -190,6 +191,9 @@ const CLAVES_EDITABLES = new Set([
   'portal_qr_permitir_pedidos_cliente',
   'portal_qr_cuenta_modo',
   'portal_qr_mensaje_bienvenida',
+  // DP-12.2: quién manda a cocina y si los comensales abren su mesa, validados al guardar.
+  'portal_qr_envia_a_cocina',
+  'portal_qr_comensales_abren_mesa',
   // DP-9.7: los botones sobre las páginas del menú y el aspecto del portal, validados al guardar.
   'portal_qr_botones',
   'portal_qr_tema',
@@ -432,6 +436,20 @@ export async function guardarConfiguracionParcial(
     );
   }
   if ('comision_terminal_bp' in parche) exigirTasaDeTerminal(parche['comision_terminal_bp']);
+  if ('portal_qr_envia_a_cocina' in parche) {
+    exigirForma(
+      z.enum(QUIEN_ENVIA),
+      parche['portal_qr_envia_a_cocina'],
+      'Quién manda a cocina: el mesero o también los comensales.',
+    );
+  }
+  if ('portal_qr_comensales_abren_mesa' in parche) {
+    exigirForma(
+      z.boolean(),
+      parche['portal_qr_comensales_abren_mesa'],
+      '«Los comensales pueden abrir su mesa» es sí o no.',
+    );
+  }
 
   const nombreNuevo = parche['nombre_negocio'];
   let nombreNormalizado: string | null = null;

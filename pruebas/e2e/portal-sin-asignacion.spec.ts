@@ -123,10 +123,11 @@ test.describe('el portal sin asignación de mesas', () => {
           'Sin asignación el menú no deja pedir: las tarjetas no se pueden tocar.',
         ).toHaveCount(1);
 
-        // Primer toque: la mesa está libre, se abre.
+        // DP-12.2: con la mesa libre el comensal arma su pedido; al enviarlo abre la mesa.
         await tarjeta.click();
-        await expect(telefono.getByText(`Abrir Mesa ${String(MESA)}`)).toBeVisible();
-        await telefono.getByRole('button', { name: 'Abrir mesa' }).click();
+        await telefono.getByRole('button', { name: /^Agregar/ }).click();
+        const enviado = enviarElPedidoDeLaMesa(telefono, token);
+        expect((await enviado).status(), 'El servidor rechazó el pedido del comensal.').toBe(200);
         await expect
           .poll(async () => (await mesaEnElServidor(duena, MESA)).ordenId, {
             message: 'La mesa no quedó abierta en el servidor.',
@@ -136,12 +137,6 @@ test.describe('el portal sin asignación de mesas', () => {
           mesa: null,
           cuenta: null,
         });
-
-        // Y ahora sí, el pedido.
-        await tarjeta.click();
-        await telefono.getByRole('button', { name: /^Agregar/ }).click();
-        const enviado = enviarElPedidoDeLaMesa(telefono, token);
-        expect((await enviado).status(), 'El servidor rechazó el pedido del comensal.').toBe(200);
         await expect(telefono.getByText('¡Pedido enviado a cocina!')).toBeVisible();
         const { ordenId } = await mesaEnElServidor(duena, MESA);
         const comandas = await comandasDeLaCuenta(duena, ordenId ?? '');

@@ -969,8 +969,17 @@ export async function prepararElPortalDelComensal(
     readonly mesero: string | null;
     /** Además de pedir atención y la cuenta, que el comensal pueda mandar pedidos a cocina. */
     readonly pedidosDelComensal?: boolean;
+    /**
+     * DP-12.2 · Quién manda a cocina. Con pedidos del comensal y sin decirlo, como antes de DP-12:
+     * también los comensales, que abren su mesa al enviar. Las pruebas del mesero que confirma
+     * piden `'mesero'`.
+     */
+    readonly envian?: 'mesero' | 'comensales';
+    readonly abrenMesa?: boolean;
   },
 ): Promise<string> {
+  const envian = que.envian ?? (que.pedidosDelComensal === true ? 'comensales' : 'mesero');
+  const abrenMesa = envian === 'comensales' && (que.abrenMesa ?? que.envian === undefined);
   // 1 · Configuración → Operación: «Activar asignación de mesas a meseros», encendida si la mesa
   // lleva mesero y apagada si no.
   const conAsignacion = que.mesero !== null;
@@ -1026,16 +1035,32 @@ export async function prepararElPortalDelComensal(
   await expect(portal).toHaveAttribute('aria-checked', 'true');
   await fila('¿Quién dispara la pantalla de propina del QR?').getByRole('combobox').click();
   await duena.getByRole('option', { name: 'Cliente solicita' }).click();
+  // DP-12.2 · Pedidos desde el portal: quién manda a cocina y si los comensales abren su mesa.
+  await fila('Quién manda a cocina').getByRole('combobox').click();
+  await duena
+    .getByRole('option', {
+      name: envian === 'mesero' ? 'Sólo el mesero confirma y envía' : 'También los comensales',
+    })
+    .click();
+  const abren = fila('Los comensales pueden abrir su mesa').getByRole('switch');
+  if (envian === 'comensales' && (await abren.getAttribute('aria-checked')) !== String(abrenMesa)) {
+    await abren.click();
+  }
   await duena.getByRole('button', { name: 'Guardar configuración' }).click();
   await expect
     .poll(
       async () => {
         const guardada = await configuracionDelNegocio(duena);
-        return [guardada['portal_qr_activo'], guardada['portal_qr_cuenta_modo']];
+        return [
+          guardada['portal_qr_activo'],
+          guardada['portal_qr_cuenta_modo'],
+          guardada['portal_qr_envia_a_cocina'],
+          guardada['portal_qr_comensales_abren_mesa'] === true,
+        ];
       },
-      { message: 'El portal QR no quedó encendido con «Cliente solicita» en el servidor.' },
+      { message: 'El portal QR no quedó como se pidió en el servidor.' },
     )
-    .toEqual([true, 'cliente_solicita']);
+    .toEqual([true, 'cliente_solicita', envian, abrenMesa]);
 
   // 4 · Portal QR → Mesas QR: los códigos que se imprimen. El botón pregunta con el diálogo del
   // navegador.
