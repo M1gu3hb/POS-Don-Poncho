@@ -456,6 +456,28 @@ Encargo en el chat de Miguel (el orquestador). Trabajo en el worktree `.claude/w
 rama `dp-12` sacada de `main` @ `4b00f9e` (la carpeta de Don Poncho sigue en `dp-11`, que no se
 toca). `pnpm install` en el worktree tarda ~11 min.
 
+### Para retomar DP-12
+
+- Hecho en `dp-12` (sin subir): `23baf5b` (12.1), `22b0322` (12.2 y 12.3), `df8827d` (12.6.6, 25
+  mesas sin encimarse). El PR #3 tiene sólo 12.1 y su CI estaba roja por
+  `auth-entrar-cuota.test.ts` (ya arreglado en `22b0322`) y por la galería (Configuración, Portal
+  QR y Mesas cambian a propósito: declararla con `actualizar_galeria`).
+- Subagentes en sus worktrees (sin commit; se integran con `git diff` → `git apply -3`):
+  `agent-aae7355ccdfa9cbb4` (12.4, cancelar y corte; base 5436, puerto 3201) y
+  `agent-a2dba111da2fb3b4b` (12.6 sin el punto 6; base 5437, puerto 3202). Su progreso:
+  `progreso-dp12-4.md` y `progreso-dp12-6.md` en el scratchpad de la sesión. 12.5 (estaciones) va
+  a un tercero con el encargo en `brief-s3.txt` (base 5438, puerto 3203) en cuanto haya lugar.
+- Choques al integrar: `Mesero.jsx` (12.2, 12.3, 12.4 y 12.6), `MesaGridMobile.jsx` y
+  `PortalCliente.jsx` (12.2/12.3 y 12.6), `matriz-de-permisos.json` y `aislamiento.json`
+  (regenerarlos), `restaurante-operaciones.spec.ts` (12.3 y 12.4, zonas distintas).
+- Pendiente mío: el margen «sin receta» también en el corte (`apps/web/src/corte/hoja.ts`), el
+  Cierre del día (`restaurante/resumen-del-dia.ts`), `Caja.jsx` y `CorteCaja.jsx`, con el ayudante
+  que trae 12.6; la reauditoría (12.8); la galería; subir, CI, fusionar con merge, humo y huella.
+- 12.7: no se rescata (la mejora de `dp-11` viene fundida con el rediseño de Mesero).
+- Servidor de pruebas: `next start -p 3200` sobre la base desechable 5435
+  (`export $(node --conditions=react-server scripts/base-desechable.mjs entorno | grep -v "^$" |
+  xargs)`). Si `TaskStop` no lo mata, el PID del 3200 sigue vivo: detenerlo antes de reconstruir.
+
 ### DP-12.1 · Datos de prueba fuera y mantenimiento sólo para plataforma
 
 - Decisiones de Miguel (01-11): marca en `configuracion.valores.plataforma` (DP-D44) y que la mesa
