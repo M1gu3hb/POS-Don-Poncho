@@ -458,25 +458,24 @@ toca). `pnpm install` en el worktree tarda ~11 min.
 
 ### Para retomar DP-12
 
-- Hecho en `dp-12` (sin subir): `23baf5b` (12.1), `22b0322` (12.2 y 12.3), `df8827d` (12.6.6, 25
-  mesas sin encimarse). El PR #3 tiene sólo 12.1 y su CI estaba roja por
-  `auth-entrar-cuota.test.ts` (ya arreglado en `22b0322`) y por la galería (Configuración, Portal
-  QR y Mesas cambian a propósito: declararla con `actualizar_galeria`).
-- Subagentes en sus worktrees (sin commit; se integran con `git diff` → `git apply -3`):
-  `agent-aae7355ccdfa9cbb4` (12.4, cancelar y corte; base 5436, puerto 3201) y
-  `agent-a2dba111da2fb3b4b` (12.6 sin el punto 6; base 5437, puerto 3202). Su progreso:
-  `progreso-dp12-4.md` y `progreso-dp12-6.md` en el scratchpad de la sesión. 12.5 (estaciones) va
-  a un tercero con el encargo en `brief-s3.txt` (base 5438, puerto 3203) en cuanto haya lugar.
-- Choques al integrar: `Mesero.jsx` (12.2, 12.3, 12.4 y 12.6), `MesaGridMobile.jsx` y
-  `PortalCliente.jsx` (12.2/12.3 y 12.6), `matriz-de-permisos.json` y `aislamiento.json`
-  (regenerarlos), `restaurante-operaciones.spec.ts` (12.3 y 12.4, zonas distintas).
-- Pendiente mío: el margen «sin receta» también en el corte (`apps/web/src/corte/hoja.ts`), el
-  Cierre del día (`restaurante/resumen-del-dia.ts`), `Caja.jsx` y `CorteCaja.jsx`, con el ayudante
-  que trae 12.6; la reauditoría (12.8); la galería; subir, CI, fusionar con merge, humo y huella.
-- 12.7: no se rescata (la mejora de `dp-11` viene fundida con el rediseño de Mesero).
+- Todo DP-12 está en `dp-12` y en el PR #3 (subido hasta `8b2417f`): 12.1 a 12.6, la galería
+  declarada (27 retratos) y el reporte `docs/reports/006-correcciones.md`. 12.7 no se rescata.
+  Integración completa 59/278 y unidad en verde en local; navegador de DP-12 en verde en los tres
+  aparatos; reauditoría limpia.
+- Falta: la CI del PR #3 en verde → fusionar con merge (sin squash ni rebase) → esperar la fila
+  Production de Vercel → humo sin PIN (entrada 200, 404 con Morfi, cabeceras) → huella de los otros
+  10 negocios contra `_PRIVADO\mudanza\huellas-dp12\antes-despliegue-dp12.json` (IDÉNTICA desde
+  12.1). Los PIN reales los teclea Miguel (sección 3 del reporte).
+- Los subagentes de 12.4 y 12.6 ya se integraron; sus worktrees (`agent-aae7355ccdfa9cbb4`,
+  `agent-a2dba111da2fb3b4b`) se pueden borrar. El encargo de 12.5 para un tercero (`brief-s3.txt`)
+  no se usó: 12.5 se hizo aquí.
+- Pendiente para después de DP-12: el margen «sin receta» en el Cierre del día, el corte y Caja.
 - Servidor de pruebas: `next start -p 3200` sobre la base desechable 5435
   (`export $(node --conditions=react-server scripts/base-desechable.mjs entorno | grep -v "^$" |
   xargs)`). Si `TaskStop` no lo mata, el PID del 3200 sigue vivo: detenerlo antes de reconstruir.
+- **Ojo, integrar un subagente:** su parche sale de `git diff HEAD` (no de `git diff`: lo que
+  dejó en su índice, como un borrado, no viene). Correr TODAS las puertas `verify:*` antes de
+  subir: la CI las corre y una sola roja cuesta otra vuelta de 20 minutos.
 
 ### DP-12.1 · Datos de prueba fuera y mantenimiento sólo para plataforma
 
