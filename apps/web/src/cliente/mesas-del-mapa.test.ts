@@ -205,6 +205,37 @@ describe('dónde nace una mesa nueva', () => {
     expect(caeSobreAlgunaMesa(nueva.x, nueva.y, delDueno)).toBe(false);
   });
 
+  it('veinticinco mesas, una tras otra en el mismo salón: ninguna encima de otra y todas a la vista (DP-12.6)', () => {
+    let salon: MesaDelPlano[] = [];
+    for (let i = 0; i < 25; i += 1) {
+      const { x, y } = siguientePosicionLibre(salon);
+      salon = [
+        ...salon,
+        { id: `m${String(i)}`, posicion_x: x, posicion_y: y, forma: 'redonda', tamano: 'mediana' },
+      ];
+    }
+    const cajas = salon.map((m) => ({ x: m.posicion_x ?? 0, y: m.posicion_y ?? 0 }));
+    const encimadas = cajas.flatMap((a, i) =>
+      cajas
+        .slice(i + 1)
+        .filter((b) => a.x < b.x + 80 && b.x < a.x + 80 && a.y < b.y + 80 && b.y < a.y + 80),
+    );
+    expect(encimadas).toEqual([]);
+    expect(Math.max(...cajas.map((c) => c.y + 80))).toBeLessThanOrEqual(LIENZO.alto);
+  });
+
+  it('con la rejilla visible llena, la siguiente baja de fila y tampoco se encima', () => {
+    const llena: MesaDelPlano[] = Array.from({ length: 40 }, (_, i) => ({
+      id: `m${String(i)}`,
+      posicion_x: LIENZO.margen + (i % LIENZO.columnas) * LIENZO.pasoX,
+      posicion_y: LIENZO.margen + Math.floor(i / LIENZO.columnas) * LIENZO.pasoY,
+      forma: 'redonda',
+      tamano: 'mediana',
+    }));
+    const nueva = siguientePosicionLibre(llena);
+    expect(caeSobreAlgunaMesa(nueva.x, nueva.y, llena)).toBe(false);
+  });
+
   it('las mesas dadas de baja no ocupan lugar', () => {
     const soloBajas: MesaDelPlano[] = [
       { id: 'x', posicion_x: LIENZO.margen, posicion_y: LIENZO.margen, activo: false },
