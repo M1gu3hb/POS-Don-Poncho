@@ -388,7 +388,9 @@ function Mesero() {
   const [separarAlEntrar, setSepararAlEntrar] = useState(null);
   const anclaUbicada = useRef(null);
   useEffect(() => {
-    if (!unirDesde || anclaUbicada.current === unirDesde || !mesas) return;
+    // `mesas` es una lista vacía hasta que llega la primera lectura: antes de eso no se decide
+    // que la mesa ya no existe.
+    if (!unirDesde || anclaUbicada.current === unirDesde || cargandoMesas) return;
     anclaUbicada.current = unirDesde;
     // La zona de la mesa desde la que se llegó, para que esté en el plano. Una sola vez: luego
     // el mesero puede cambiar de zona.
@@ -403,7 +405,7 @@ function Mesero() {
     setZonaActiva(zonaDeLaMesa(ancla));
     setUniendo(true);
     window.history.replaceState(null, '', window.location.pathname);
-  }, [unirDesde, mesas]);
+  }, [unirDesde, mesas, cargandoMesas]);
   const puedeUnir = posUser?.rol === ROLES.WAITER || posUser?.rol === ROLES.ADMIN;
   // Las zonas del NEGOCIO, no sólo la lista fija: una mesa en «Salón» se ve (DP-5).
   const zonasConCount = zonasConMesas(

@@ -85,6 +85,8 @@ async function elMapaLasPinta(duena: Page, cuantas: number): Promise<void> {
   await duena.goto('/mesero');
   const pintadas = duena.locator('[data-mesa-id]');
   await expect(pintadas).toHaveCount(cuantas);
+  // En el teléfono es una rejilla que se desplaza con la página: no hay marco que recorte.
+  if ((duena.viewportSize()?.width ?? 1024) < 768) return;
   const mapa = pintadas.first().locator('xpath=..');
   const marco = await mapa.boundingBox();
   if (marco === null) throw new Error('El mapa no está a la vista.');
