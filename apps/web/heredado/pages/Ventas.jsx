@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatCurrency, formatPercent } from '@/utils/financialUtils';
+import { formatCurrency } from '@/utils/financialUtils';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { esUsuarioDePlataforma, hasPermission } from '@/lib/permissions';
 import PageHeader from '@/components/common/PageHeader';
@@ -33,6 +33,14 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import TicketViewerDialog from '@/components/tickets/TicketViewerDialog';
 import { useConfig } from '@/lib/ConfigContext';
+import { MargenEnLaLista } from '~/restaurante/MargenDeLaVenta';
+import {
+  SIN_RECETA,
+  economiaDeLaVenta,
+  resumenDeLasVentas,
+  textoDelMargen,
+  textoDelResumenDeVentas,
+} from '~/restaurante/margen-de-las-ventas';
 
 /** La lista de «todavía no llegó nada»: una sola, estable entre pintadas. */
 const SIN_FILAS = [];
@@ -103,9 +111,12 @@ export default function Ventas() {
     });
   }, [safeVentas, search, filterEstado]);
 
-  const totalVentas = filtered
-    .filter((v) => v.estado === 'pagada')
-    .reduce((s, v) => s + (v.total || 0), 0);
+  // DP-12.6: «1 transacción · 0 pagadas · Cobrado: $0.00» dice qué suma el total (sólo las
+  // pagadas); antes «Total: $0.00» junto a una cuenta abierta no decía qué contaba.
+  const resumen = resumenDeLasVentas(filtered);
+  // El costo, la utilidad y el margen de la venta abierta: «—, sin receta» si no tiene receta.
+  const economia = selectedVenta ? economiaDeLaVenta(selectedVenta) : null;
+  const sinReceta = economia?.estado === 'sin_receta';
 
   const handleLimpiar = async () => {
     setLimpiando(true);
@@ -153,7 +164,7 @@ export default function Ventas() {
     <div className="space-y-6">
       <PageHeader
         title="Historial de ventas"
-        description={`${filtered.length} transacciones · Total: ${formatCurrency(totalVentas)}`}
+        description={textoDelResumenDeVentas(resumen, formatCurrency)}
         actions={
           puedeLimpiar && (
             <Button variant="destructive" size="sm" onClick={() => setShowLimpiar(true)}>
@@ -207,15 +218,15 @@ export default function Ventas() {
               <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedVenta(v)}>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-heading font-bold">{v.folio}</span>
+                    {/* DP-12.6: sin folio (una cuenta abierta todavía no lo tiene) no se pinta nada. */}
+                    {v.folio ? <span className="font-heading font-bold">{v.folio}</span> : null}
                     <Badge
                       className={`${ESTADO_COLORS[v.estado] || 'bg-fondo-sutil text-texto-sutil'} text-[10px] border-0`}
                     >
                       {v.estado}
                     </Badge>
-                    <Badge variant="outline" className="text-[10px]">
-                      {v.tipo_venta}
-                    </Badge>
+                    {/* DP-12.6: aquí había una pastilla con el tipo de venta, que la venta nunca trae (el
+                        puente no lo mapea para Venta): salía SIEMPRE, y vacía. */}
                     {v.mesa_numero && (
                       <Badge variant="outline" className="text-[10px]">
                         Mesa {v.mesa_numero}
@@ -235,7 +246,7 @@ export default function Ventas() {
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {v.fecha_cierre
                       ? format(new Date(v.fecha_cierre), 'd MMM yyyy, HH:mm', { locale: es })
-                      : 'Abierta'}
+                      : 'Cuenta abierta'}
                     {v.usuario_cajero_nombre && ` · ${v.usuario_cajero_nombre}`}
                   </div>
                   {v.satisfaccion_comentario && (
@@ -248,13 +259,7 @@ export default function Ventas() {
                   <p className="font-heading font-bold text-lg text-foreground">
                     {formatCurrency(v.total)}
                   </p>
-                  {v.margen_snapshot > 0 && (
-                    <p
-                      className={`text-xs ${colorize ? 'text-exito' : 'text-muted-foreground'}`}
-                    >
-                      {formatPercent(v.margen_snapshot)} margen
-                    </p>
-                  )}
+                  <MargenEnLaLista venta={v} colorear={colorize} />
                   <p className="text-xs text-muted-foreground">{v.metodo_pago || '—'}</p>
                 </div>
                 <Button
@@ -346,7 +351,9 @@ export default function Ventas() {
       <Dialog open={!!selectedVenta} onOpenChange={() => setSelectedVenta(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-heading">Detalle: {selectedVenta?.folio}</DialogTitle>
+            <DialogTitle className="font-heading">
+              {selectedVenta?.folio ? `Detalle: ${selectedVenta.folio}` : 'Detalle de la cuenta'}
+            </DialogTitle>
           </DialogHeader>
           {selectedVenta && (
             <div className="space-y-4">
@@ -360,7 +367,7 @@ export default function Ventas() {
                   <p
                     className={`font-bold ${colorize ? 'text-advertencia' : ''}`}
                   >
-                    {formatCurrency(selectedVenta.costo_total_snapshot)}
+                    {sinReceta ? SIN_RECETA : formatCurrency(selectedVenta.costo_total_snapshot)}
                   </p>
                 </div>
                 <div>
@@ -368,12 +375,14 @@ export default function Ventas() {
                   <p
                     className={`font-bold ${colorize ? 'text-exito' : ''}`}
                   >
-                    {formatCurrency(selectedVenta.utilidad_bruta_snapshot)}
+                    {sinReceta ? SIN_RECETA : formatCurrency(selectedVenta.utilidad_bruta_snapshot)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Margen</p>
-                  <p className="font-bold">{formatPercent(selectedVenta.margen_snapshot)}</p>
+                  <p className="font-bold">
+                    {sinReceta ? SIN_RECETA : textoDelMargen(economia?.margen ?? null)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Pago</p>

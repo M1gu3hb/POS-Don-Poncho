@@ -881,6 +881,26 @@ export const SIN_ESTADO = [
     razon:
       'Va dentro del renglón de un ajuste de inventario: si los motivos no se leen lo dice en una línea bajo el selector y deja la corrección de conteo. Un Aviso o un ErrorDePantalla ahí ocuparía el renglón entero.',
   },
+  // DP-12.6: el margen de una fila del historial de ventas, que salió de Ventas.jsx. Una línea de
+  // texto que recibe la venta por props: no lee, no lista y no escribe.
+  {
+    pantalla: 'restaurante/MargenDeLaVenta',
+    estado: 'vacio',
+    razon:
+      'Es una línea de texto dentro de la fila de una venta, no una lista: sin costo conocido dice «Margen —, sin receta» y sin permiso para ver costos no se pinta.',
+  },
+  {
+    pantalla: 'restaurante/MargenDeLaVenta',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la venta llega por props desde Ventas, que pinta su esqueleto mientras la lee.',
+  },
+  {
+    pantalla: 'restaurante/MargenDeLaVenta',
+    estado: 'error',
+    razon:
+      'Sin operación propia que falle: si la lista de ventas no se puede leer lo dice Ventas con su ErrorDeLectura.',
+  },
 ];
 
 const argumentos = process.argv.slice(2);

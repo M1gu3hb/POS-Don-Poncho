@@ -32,6 +32,25 @@ export function cajaDelBoton(boton: Pick<BotonDePagina, 'x' | 'y' | 'ancho' | 'a
   };
 }
 
+/**
+ * El alto de UN renglón de la carta, en % de la imagen: el del botón más bajo de la página (los
+ * de dos líneas —nombre y detalle— miden más). El precio impreso va en la primera línea.
+ */
+export function alturaDeUnRenglon(botones: readonly Pick<BotonDePagina, 'alto'>[]): number {
+  return botones.length === 0 ? 100 : Math.min(...botones.map((b) => b.alto));
+}
+
+/**
+ * Qué parte del botón (en %, de arriba abajo) tapa su marca con el precio vigente (DP-12.6).
+ *
+ * Estaba centrada y de un alto fijo: en un botón de dos líneas se corría hacia el detalle y dejaba
+ * ver, arriba, el precio impreso de la carta. Ahora va anclada arriba y mide un renglón —donde está
+ * el precio impreso—, o todo el botón si es más bajo que eso.
+ */
+export function alturaDeLaMarca(boton: Pick<BotonDePagina, 'alto'>, renglon: number): number {
+  return Math.min(100, (renglon / boton.alto) * 100);
+}
+
 /** Los platillos del botón, en su orden, de los que el portal tiene: nunca uno inventado. */
 export function platillosDelBoton<P extends { readonly id: string }>(
   boton: Pick<BotonDePagina, 'productoIds'>,

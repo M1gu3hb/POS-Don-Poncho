@@ -11,7 +11,6 @@ import {
   recalcBestVoice,
   ensureVoicesLoaded,
 } from '@/lib/voiceAlert';
-import { unlockAudio } from '@/lib/sounds';
 import { toast } from 'sonner';
 
 /**
@@ -41,7 +40,6 @@ export default function CocinaVozControl() {
   }, [cfg.lang]);
 
   const toggle = () => {
-    unlockAudio();
     const next = setCocinaVozConfig({ voz_activa: !cfg.voz_activa });
     setCfg(next);
     if (next.voz_activa && !isVoiceSupported()) {
@@ -52,7 +50,6 @@ export default function CocinaVozControl() {
   };
 
   const probar = () => {
-    unlockAudio();
     if (!isVoiceSupported()) {
       toast.info('La voz local no está soportada en este navegador.');
       return;

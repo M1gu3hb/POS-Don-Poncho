@@ -28,6 +28,7 @@ import { MorfiCargando } from '~/morfi/MorfiCargando';
 import { MorfiNoEncontrada } from '~/morfi/MorfiNoEncontrada';
 import { PaginaConBotones } from '~/restaurante/menu-qr/PaginaConBotones';
 import { atributosDelTema, temaDelPortal } from '~/restaurante/menu-qr/tema-del-portal';
+import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { AvisoDeLaMesa } from '~/portal/carrito-compartido/AvisoDeLaMesa';
 import { CarritoDeLaMesa } from '~/portal/carrito-compartido/CarritoDeLaMesa';
 import { useCarritoDeLaMesa } from '~/portal/carrito-compartido/use-carrito-de-la-mesa';
@@ -455,7 +456,7 @@ function PortalCliente() {
             </p>
             <p className="text-xs text-muted-foreground">
               Mesa {mesa?.numero}
-              {mesa?.nombre ? ` · ${mesa.nombre}` : ''}
+              {sufijoDelNombreDeLaMesa(mesa)}
             </p>
             {/* DP-10.3: el QR es de una mesa unida a ésta; todo cae en la cuenta de la principal. */}
             {mesa?.unida_a_la_mesa != null && (

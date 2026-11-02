@@ -7,6 +7,7 @@ import { propinaDerivada } from '@/utils/tipsUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
+import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 
 /**
  * Ticket / pre-cuenta optimizado para impresora térmica de 80mm.
@@ -75,7 +76,7 @@ export default function PreCuentaTicket({
       {/* Datos */}
       <div style={{ fontSize: '10px', marginBottom: '6px' }}>
         <Row label="Folio" value={venta.folio} bold />
-        {mesa && <Row label="Mesa" value={`#${mesa.numero} ${mesa.nombre || ''}`} />}
+        {mesa && <Row label="Mesa" value={`#${mesa.numero}${sufijoDelNombreDeLaMesa(mesa)}`} />}
         {venta.personas > 0 && <Row label="Personas" value={venta.personas} />}
         {venta.cliente_nombre && <Row label="Cliente" value={venta.cliente_nombre} />}
         {venta.usuario_mesero_nombre && <Row label="Mesero" value={venta.usuario_mesero_nombre} />}

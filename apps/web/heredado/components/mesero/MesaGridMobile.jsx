@@ -4,6 +4,7 @@ import { MESA_STATUS_CONFIG } from '@/lib/constants';
 import { Users, UtensilsCrossed, Loader2 } from 'lucide-react';
 import { useIsDark } from '@/lib/ThemeContext';
 import { MESA_STATUS_DARK } from '@/lib/darkPalettes';
+import { nombreDistintivoDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 
 /**
  * Grid de mesas para móvil. Reemplaza el canvas posicional.
@@ -143,9 +144,9 @@ export default function MesaGridMobile({
             >
               {mesa.numero}
             </span>
-            {mesa.nombre && (
+            {nombreDistintivoDeLaMesa(mesa) && (
               <span className="text-[10px] mt-0.5 opacity-80" style={{ color: cfg.text }}>
-                {mesa.nombre}
+                {nombreDistintivoDeLaMesa(mesa)}
               </span>
             )}
             <span

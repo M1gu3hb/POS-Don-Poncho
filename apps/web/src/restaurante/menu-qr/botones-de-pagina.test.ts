@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { cajaDelBoton, platillosDelBoton, precioDelBoton } from './botones-de-pagina.ts';
+import {
+  alturaDeLaMarca,
+  alturaDeUnRenglon,
+  cajaDelBoton,
+  platillosDelBoton,
+  precioDelBoton,
+} from './botones-de-pagina.ts';
 
 /**
  * DP-9.7 · LOS BOTONES SOBRE LA PÁGINA, del lado de la pantalla.
@@ -24,6 +30,21 @@ describe('los botones de una página', () => {
       { id: 'b' },
       { id: 'a' },
     ]);
+  });
+
+  it('DP-12.6 · el alto de UN renglón es el del botón más bajo de la página', () => {
+    expect(alturaDeUnRenglon([{ alto: 5.07 }, { alto: 2.75 }, { alto: 3.91 }])).toBe(2.75);
+    // Sin botones no hay renglón que medir: se devuelve algo que nunca encoge una marca.
+    expect(alturaDeUnRenglon([])).toBe(100);
+  });
+
+  it('DP-12.6 · la marca mide un renglón, anclada arriba, y nunca más que el botón', () => {
+    // Un botón de una línea: la marca lo cubre entero.
+    expect(alturaDeLaMarca({ alto: 2.75 }, 2.75)).toBe(100);
+    // Uno de dos líneas (nombre y detalle): la marca cubre la primera, donde va el precio impreso.
+    expect(alturaDeLaMarca({ alto: 5.5 }, 2.75)).toBe(50);
+    // Un botón más bajo que un renglón (lo dibujó la dueña a mano): entero, no más.
+    expect(alturaDeLaMarca({ alto: 2 }, 2.75)).toBe(100);
   });
 
   it('el precio vigente: sólo si el botón lo pide, si hay precios y si es un precio', () => {

@@ -54,6 +54,26 @@ export class Reintento extends Error {
   }
 }
 
+/**
+ * El comando decidió, DENTRO de su transacción, que no le tocaba hacer nada (DP-12.6): la
+ * limpieza de solicitudes que ya corrió hace menos de una hora.
+ *
+ * Aborta la transacción —y con ella la clave de idempotencia que se reclamó al entrar— y el
+ * envoltorio contesta ÉXITO con lo que el comando dijo. Así un «no hice nada» no deja una fila de
+ * auditoría ni de idempotencia por cada visita; todo comando que escribe deja las dos, y esta es
+ * la única salida que no las deja. Lo que el comando hubiera escrito antes de lanzarla se
+ * revierte igual, pero lo normal es decidir antes de escribir.
+ */
+export class SinNovedad extends Error {
+  readonly datos: unknown;
+
+  constructor(datos: unknown) {
+    super('sin novedad');
+    this.datos = datos;
+    this.name = 'SinNovedad';
+  }
+}
+
 export class SinRastro extends Error {
   constructor(nombre: string) {
     super(

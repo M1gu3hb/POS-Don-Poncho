@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { ErrorDominio } from '@morphiqpos/contracts';
+import { costoDeLaVentaEsDesconocido } from '@morphiqpos/domain/venta';
 
 import { consultar, entidadMapeada, type Ambito } from '../puente/index.ts';
 
@@ -124,6 +125,49 @@ function escapar(texto: string): string {
   return /[",\n\r]/.test(seguro) ? `"${seguro.replaceAll('"', '""')}"` : seguro;
 }
 
+/**
+ * El costo, la utilidad y el margen de una venta SIN RECETA salen vacíos (DP-12.6).
+ *
+ * Al cobrar, un platillo sin receta cuesta cero en la foto de la venta, y el archivo del contador
+ * decía «costo 0, utilidad = total, margen 100» de una cuenta cuyo costo NADIE conoce. Una celda
+ * vacía es lo que el contador entiende como «no hay dato»; un 100 es una cifra que va a creer.
+ * Sólo toca las filas de ventas que traen el costo (quien no ve costos no las recibe) y no
+ * inventa columnas.
+ */
+const CAMPOS_DEL_MARGEN = [
+  'costo_total_snapshot',
+  'utilidad_bruta_snapshot',
+  'margen_snapshot',
+] as const;
+
+export function sinMargenFalso(
+  entidad: string,
+  filas: readonly Record<string, unknown>[],
+): Record<string, unknown>[] {
+  if (entidad !== 'Venta') return [...filas];
+  return filas.map((fila) => {
+    if (
+      !costoDeLaVentaEsDesconocido(
+        comoCantidad(fila['total']),
+        comoCantidad(fila['costo_total_snapshot']),
+      )
+    )
+      return fila;
+    const vacias = Object.fromEntries(
+      CAMPOS_DEL_MARGEN.filter((campo) => campo in fila).map((campo) => [campo, null]),
+    );
+    return { ...fila, ...vacias };
+  });
+}
+
+/** Un valor del puente como cantidad para el predicado del dominio; lo que no lo es, no cuenta. */
+function comoCantidad(valor: unknown): number | bigint | string | null | undefined {
+  if (valor === undefined || valor === null) return valor;
+  return typeof valor === 'number' || typeof valor === 'bigint' || typeof valor === 'string'
+    ? valor
+    : null;
+}
+
 /** Las filas del puente como CSV, con la cabecera de sus columnas. */
 export function aCsv(filas: readonly Record<string, unknown>[]): string {
   const columnas = [...new Set(filas.flatMap((fila) => Object.keys(fila)))];
@@ -164,7 +208,7 @@ export async function armarExporte(
     ...rango,
   });
 
-  const texto = aCsv(filas);
+  const texto = aCsv(sinMargenFalso(peticion.entidad, filas));
   // Con BOM: sin él, Excel en Windows abre los acentos como «Ã±» y el contador
   // devuelve el archivo diciendo que está roto.
   // El BOM por su código y no como carácter invisible en el fuente: un byte que

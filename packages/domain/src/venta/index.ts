@@ -5,6 +5,7 @@ export {
   type ReglaImpuesto,
   type TotalesOrden,
 } from './totales.ts';
+export { costoDeLaVentaEsDesconocido } from './costo-de-la-venta.ts';
 export {
   calcularDivision,
   type DivisionCalculada,

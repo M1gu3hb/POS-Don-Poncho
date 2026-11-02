@@ -6,7 +6,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChefHat, Check, Flame, Volume2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { unlockAudio } from '@/lib/sounds';
 import { fraseNuevoPedidoCocina, speak, speakSample } from '@/lib/voiceAlert';
 import { haceCuanto } from '~/restaurante/vista-de-solicitudes';
 
@@ -142,7 +141,6 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
         type="button"
         className="h-dvh w-full flex-col gap-(--espacio-3) rounded-none text-2xl"
         onClick={() => {
-          unlockAudio();
           speakSample('Sonido activado');
           setSonidoActivo(true);
         }}

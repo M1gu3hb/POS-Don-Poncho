@@ -805,7 +805,9 @@ puerta los denuncia todos.
   sonido y un botón para oírlo, aunque el aparato esté en Apagado: ahí se aprueba el mapa.
 - **No se tocó:** el timbre y la voz de Cocina (lo pidió Miguel), la alerta del mesero cuando llega
   una solicitud (con su voz), y el sistema no tiene meta del día. Ping, Signal y Confetti quedan en
-  el mapa con su nota hasta que Miguel decida.
+  el mapa con su nota hasta que Miguel decida. **DP-12.6 (DP-D49) lo cambió:** el timbre de
+  Cocina (Ping), el aviso del mesero (Signal) y el pedido listo (Check) pasan al gestor, con su
+  voz después del sonido; el sistema viejo (`lib/sounds`, «Activar sonidos») ya no existe.
 - Las recetas se cargan cuando hacen falta: Keycap y Thock traen su muestra (50 KB cada una); las
   demás pesan menos de 1 KB.
 
@@ -981,3 +983,35 @@ puerta los denuncia todos.
   comparten la consulta) y la definición más estricta del dominio (`elConsumoSePerdio`) para el
   corte: Miguel pidió «listo o entregado».
 - **Sin migración.** Dividir la cuenta sigue siendo de caja.
+
+## DP-D49 · Las pantallas: menú QR, Cocina y teléfono, Ventas, nombre de mesa, 25 mesas, un solo sonido y la limpieza por hora · 01-11-2026
+
+- **Menú QR:** la marca del precio va anclada arriba, mide un renglón y sobresale 3 px: tapa el
+  precio impreso en 320–430 px. «Atención» pasa a la esquina inferior IZQUIERDA (la columna de
+  precios está a la derecha).
+- **Cocina en el teléfono y el botón redondo del menú:** el encabezado se acomoda en dos renglones
+  si no cabe; el contenido deja aire abajo cuando el administrador tiene el botón flotante.
+  Solicitudes: las pestañas de filtro se acomodan en renglones.
+- **Ventas sin receta:** costo cero (o nulo) en una venta con importe es costo DESCONOCIDO: margen
+  y utilidad «—, sin receta» (`costo-de-la-venta.ts`, del dominio). En un periodo el margen sale
+  sólo de las ventas con costo y se dice cuántas quedaron fuera: Ventas, tablero, gráfica,
+  Registros, su PDF y el CSV. La pastilla vacía era `tipo_venta` (la venta no lo trae): sale; sin
+  folio no se pinta y la cuenta abierta lo dice. El encabezado dice qué cuenta («2 transacciones
+  · 1 pagada · Cobrado: $200.00»).
+- **El nombre de la mesa** no se repite si es vacío o igual a «Mesa N» (`nombre-de-la-mesa.ts`, en
+  nueve pantallas).
+- **25 mesas:** cada mesa puesta reserva su medida real al buscar dónde nace la siguiente (antes la
+  caja más grande tapaba la casilla de al lado y la 21 caía encima de otra); con la rejilla llena
+  baja de fila.
+- **Un solo sistema de sonido:** sale el viejo (`lib/sounds`, `SoundUnlockButton`); Ping, Signal y
+  Check por el gestor, con `sonarAntesDeHablar`: la voz empieza cuando termina el sonido.
+- **La limpieza de solicitudes** automática corre a lo mucho una vez por hora por negocio, decidido
+  en el servidor (la última, de `auditoria`, con un cerrojo consultivo). Si no le toca, no escribe
+  nada: la señal `SinNovedad` revierte la transacción —ni auditoría ni clave— y contesta éxito.
+  Es un cambio al envoltorio de comandos, con su prueba. El botón «Limpiar antiguas» limpia
+  siempre.
+- **Pendiente (para Miguel):** el Cierre del día, el corte y las pantallas de Caja (`Caja.jsx`,
+  `CorteCaja.jsx`) todavía calculan el margen con costo cero = 100 %. El Cierre tiene cada venta y
+  puede usar `economiaDelPeriodo`; el corte suma costos en el servidor y necesita contar las ventas
+  sin costo. No se hizo en DP-12 para no retrasar la publicación.
+- **Sin migración.**

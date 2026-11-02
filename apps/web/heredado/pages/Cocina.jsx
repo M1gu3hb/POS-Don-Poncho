@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import { Clock, CheckCircle, Flame, ChefHat, Layers, AlertTriangle } from 'lucide-react';
 import CocinaPedidoCardPremium from '@/components/cocina/CocinaPedidoCardPremium';
 import CocinaMesaGroupCard from '@/components/cocina/CocinaMesaGroupCard';
-import SoundUnlockButton from '@/components/common/SoundUnlockButton';
 import CocinaVozControl from '@/components/cocina/CocinaVozControl';
 import { ConectarTelefono } from '~/telefono-de-cocina/ConectarTelefono';
 import CocinaNuevoPedidoWatcher from '@/components/cocina/CocinaNuevoPedidoWatcher';
@@ -338,7 +337,10 @@ export default function Cocina() {
         >
           <ChefHat className="w-5 h-5 text-primario-texto" />
         </div>
-        <div className="flex-1 min-w-0">
+        {/* DP-12.6: `basis-48` (12 rem) en vez de `flex-1`: con base cero el título se dejaba
+            apretar hasta una columna de letras y «Conectar teléfono» se le montaba encima; ahora,
+            si no caben, los botones pasan al renglón de abajo. */}
+        <div className="grow basis-48 min-w-0">
           <h1 className="text-xl font-heading font-bold leading-tight">
             Cocina
             {userScope.mode === 'station' && userScope.label && (
@@ -370,7 +372,6 @@ export default function Cocina() {
           }
         />
         <CocinaVozControl />
-        <SoundUnlockButton />
       </div>
 
       {/* Watcher local: reproduce voz/sonido SOLO para pedidos NUEVOS, nunca para "listo". */}

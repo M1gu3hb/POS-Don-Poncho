@@ -38,7 +38,6 @@ import MesaGridMobile from '@/components/mesero/MesaGridMobile';
 import MeseroCartFAB from '@/components/mesero/MeseroCartFAB';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
 import PropinaDialog from '@/components/propinas/PropinaDialog';
-import SoundUnlockButton from '@/components/common/SoundUnlockButton';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import MesaHuerfanaDialog from '@/components/mesero/MesaHuerfanaDialog';
 import ProductoFichaExpandible from '@/components/mesero/ProductoFichaExpandible';
@@ -101,9 +100,8 @@ import {
   guardarVista,
   leerVistaGuardada,
 } from '~/restaurante/vista-de-solicitudes';
-import { playNewOrder } from '@/lib/sounds';
 import { frasePorSolicitud, getAlertConfig, speak } from '@/lib/voiceAlert';
-import { sonar } from '~/sonidos/gestor';
+import { sonar, sonarAntesDeHablar } from '~/sonidos/gestor';
 
 const MAP_HEIGHT = 600;
 // Hook simple para detectar móvil
@@ -253,12 +251,18 @@ function Mesero() {
   // las dos; `speak` respeta el modo. El nombre del mesero sólo va en las suyas.
   const anunciarSolicitudes = (nuevas) => {
     const alertas = getAlertConfig();
-    if (alertas.modo === 'sonido' || alertas.modo === 'sonido_voz') playNewOrder();
+    // DP-12.6: el aviso (Signal) es del gestor de sonido y la voz empieza cuando termina.
+    const sonido =
+      alertas.modo === 'sonido' || alertas.modo === 'sonido_voz'
+        ? sonarAntesDeHablar('solicitud')
+        : Promise.resolve();
     nuevas.forEach((s, i) => {
       const propia = Boolean(s.mesero_destino_id) && s.mesero_destino_id === posUser?.id;
       const nombre =
         propia && alertas.decir_nombre && debeUsarNombreEnVoz(config, s) ? posUser?.nombre || '' : '';
-      setTimeout(() => speak(frasePorSolicitud(s.tipo, s.mesa_numero, nombre)), 280 + i * 1400);
+      sonido.then(() =>
+        setTimeout(() => speak(frasePorSolicitud(s.tipo, s.mesa_numero, nombre)), 280 + i * 1400),
+      );
     });
   };
   const portalActivo = config?.portal_qr_activo === true;
@@ -1110,7 +1114,6 @@ function Mesero() {
               <span>Alertas</span>
             </Button>
           )}
-          <SoundUnlockButton />
         </div>
       </div>
 

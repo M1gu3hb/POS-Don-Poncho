@@ -67,6 +67,7 @@ import UsuarioPOSDialog from '@/components/configuracion/UsuarioPOSDialog';
 import { useConfig } from '@/lib/ConfigContext';
 import { soloCamposEditablesMesa } from '@/utils/mesaConfigUtils';
 import { claves } from '~/cliente/claves-de-consulta';
+import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import {
   mesasDelPlano,
   siguientePosicionLibre,
@@ -1068,7 +1069,7 @@ export default function Configuracion() {
                         <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
                           <span>
                             Mesa {m.numero}
-                            {m.nombre ? ` · ${m.nombre}` : ''} · {m.zona || 'Interior'}
+                            {sufijoDelNombreDeLaMesa(m)} · {m.zona || 'Interior'}
                           </span>
                           <Button size="sm" variant="outline" onClick={() => reactivarMesa(m)}>
                             Reactivar

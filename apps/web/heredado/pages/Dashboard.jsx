@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useConfig } from '@/lib/ConfigContext';
 import { canAccessModule } from '@/lib/packageConfig';
 import { useIsDark } from '@/lib/ThemeContext';
-import { formatCurrency, formatPercent } from '@/utils/financialUtils';
+import { formatCurrency } from '@/utils/financialUtils';
 import { getStockStatus } from '@/utils/inventoryUtils';
 import PageHeader from '@/components/common/PageHeader';
 import { StockStatusBadge } from '@/components/common/StatusBadge';
@@ -39,6 +39,11 @@ import PrimerosPasosCard, { primerosPasosVigente } from '@/components/dashboard/
 import { AccesosDelDueno } from '~/restaurante/AccesosDelDueno';
 import { RecetasPendientes } from '~/restaurante/RecetasPendientes';
 import { claves } from '~/cliente/claves-de-consulta';
+import {
+  economiaDelPeriodo,
+  notaDeLasVentasSinReceta,
+  subtituloDelMargen,
+} from '~/restaurante/margen-de-las-ventas';
 import { EsqueletoDeCifras, EsqueletoDeFilas } from '~/cliente/EstadosDeCarga';
 
 /**
@@ -160,6 +165,7 @@ export default function Dashboard() {
         ticketPromedio: 0,
         numTickets: 0,
         utilidadNeta: 0,
+        economia: economiaDelPeriodo([]),
       };
     }
     const aperturaIso =
@@ -181,9 +187,13 @@ export default function Dashboard() {
     });
 
     const totalVentas = ventasCaja.reduce((s, v) => s + (v.total || 0), 0);
-    const totalCosto = ventasCaja.reduce((s, v) => s + (v.costo_total_snapshot || 0), 0);
-    const utilidadBruta = totalVentas - totalCosto;
-    const margen = totalVentas > 0 ? (utilidadBruta / totalVentas) * 100 : 0;
+    // DP-12.6: una venta SIN RECETA tiene el costo desconocido, no cero: no entra en el costo, la
+    // utilidad ni el margen (antes sumaba «utilidad = venta» y el tablero decía 100 % de margen).
+    // Si ninguna tiene costo, costo y utilidad son nulos y las tarjetas dicen «sin receta».
+    const economia = economiaDelPeriodo(ventasCaja);
+    const totalCosto = economia.costo;
+    const utilidadBruta = economia.utilidad;
+    const margen = economia.margen ?? 0;
     const totalEfectivo = ventasCaja.reduce((s, v) => s + (v.monto_efectivo || 0), 0);
     const totalTarjeta = ventasCaja.reduce((s, v) => s + (v.monto_tarjeta || 0), 0);
     const totalTransferencia = ventasCaja.reduce((s, v) => s + (v.monto_transferencia || 0), 0);
@@ -201,7 +211,8 @@ export default function Dashboard() {
       totalGastos,
       ticketPromedio,
       numTickets: ventasCaja.length,
-      utilidadNeta: utilidadBruta - totalGastos,
+      utilidadNeta: utilidadBruta === null ? null : utilidadBruta - totalGastos,
+      economia,
     };
   }, [ventas, gastos, cajaAbierta]);
 
@@ -357,17 +368,18 @@ export default function Dashboard() {
           {showCostos && (
             <ColoredStatCard
               title="Costo de ventas"
-              value={formatCurrency(stats.totalCosto)}
+              value={stats.totalCosto === null ? '—' : formatCurrency(stats.totalCosto)}
               icon={Receipt}
+              subtitle={stats.totalCosto === null ? 'sin receta' : undefined}
               color="amber"
             />
           )}
           {showCostos && (
             <ColoredStatCard
               title="Utilidad bruta"
-              value={formatCurrency(stats.utilidadBruta)}
+              value={stats.utilidadBruta === null ? '—' : formatCurrency(stats.utilidadBruta)}
               icon={TrendingUp}
-              subtitle={formatPercent(stats.margen) + ' margen'}
+              subtitle={subtituloDelMargen(stats.economia)}
               color="cyan"
             />
           )}
@@ -414,9 +426,16 @@ export default function Dashboard() {
           {showCostos && (
             <ColoredStatCard
               title="Utilidad neta est."
-              value={formatCurrency(stats.utilidadNeta)}
+              value={stats.utilidadNeta === null ? '—' : formatCurrency(stats.utilidadNeta)}
               icon={Wallet}
-              color={stats.utilidadNeta >= 0 ? 'green' : 'rose'}
+              subtitle={
+                stats.utilidadNeta === null
+                  ? 'sin receta'
+                  : stats.economia.estado === 'parcial'
+                    ? `sin contar ${notaDeLasVentasSinReceta(stats.economia.sinReceta)}`
+                    : undefined
+              }
+              color={stats.utilidadNeta === null ? 'slate' : stats.utilidadNeta >= 0 ? 'green' : 'rose'}
               accent
             />
           )}

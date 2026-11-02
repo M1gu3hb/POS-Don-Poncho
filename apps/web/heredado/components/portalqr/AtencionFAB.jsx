@@ -103,7 +103,9 @@ export default function AtencionFAB({
         )}
       </AnimatePresence>
 
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
+      {/* DP-12.6: a la IZQUIERDA. La columna derecha de la carta es donde están las marcas con el
+          precio (las que se tocan) y el botón, a la derecha, las tapaba. */}
+      <div className="fixed bottom-5 left-5 z-50 flex flex-col items-start gap-3">
         <AnimatePresence>
           {open &&
             !bloqueado &&
@@ -112,9 +114,9 @@ export default function AtencionFAB({
               return (
                 <motion.button
                   key={tipo}
-                  initial={{ opacity: 0, x: 30, scale: 0.85 }}
+                  initial={{ opacity: 0, x: -30, scale: 0.85 }}
                   animate={{ opacity: 1, x: 0, scale: 1, transition: { delay: i * 0.04 } }}
-                  exit={{ opacity: 0, x: 30, scale: 0.85 }}
+                  exit={{ opacity: 0, x: -30, scale: 0.85 }}
                   onClick={() => pedir(tipo)}
                   disabled={disabled}
                   className={`flex items-center gap-3 pl-4 pr-5 h-14 rounded-full shadow-2xl font-bold text-base ${COLORS[tipo]} active:scale-95 transition-transform disabled:opacity-50`}

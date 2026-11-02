@@ -5,6 +5,7 @@ import { Equipo, opcionesDelProyecto } from './ayudantes/roles.ts';
 import {
   abrirConReloj,
   cancelarLaCuentaDeLaMesa,
+  comandaNueva,
   escribir,
   espera,
   experiencia,
@@ -177,6 +178,61 @@ test.describe('los sonidos de la interfaz', () => {
       await sono(entrada, 'shrug');
     } finally {
       await contexto.close();
+    }
+  });
+
+  test('Cocina: la comanda nueva suena a Ping tras el primer toque, y el botón «Activar sonidos» ya no existe', async ({
+    browser,
+  }, info) => {
+    // DP-12.6 · Un solo sistema de sonido: el timbre de la comanda nueva es del gestor.
+    test.setTimeout(3 * 60_000);
+    const duena = await new Equipo(browser, SLUG).pagina(info, 'dueno');
+    await resetearLaDemo(duena);
+    try {
+      await duena.goto('/cocina');
+      await expect(duena.getByRole('heading', { level: 1, name: /^Cocina/ })).toBeVisible();
+      await expect(duena.getByRole('button', { name: /Activar sonidos/ })).toHaveCount(0);
+      // El primer toque desbloquea el sonido (el mismo gesto que lo pide el navegador).
+      await duena.getByRole('heading', { level: 1, name: /^Cocina/ }).click();
+      await olvidarLoQueSono(duena);
+
+      await comandaNueva(duena);
+
+      await expect(duena.locator('html')).toHaveAttribute('data-ultimo-sonido', 'ping', {
+        timeout: 30_000,
+      });
+    } finally {
+      await cancelarLaCuentaDeLaMesa(duena);
+    }
+  });
+
+  test('Cocina: con la voz hablando, el timbre NO se le encima', async ({ browser }, info) => {
+    test.setTimeout(3 * 60_000);
+    const duena = await new Equipo(browser, SLUG).pagina(info, 'dueno');
+    await resetearLaDemo(duena);
+    try {
+      await duena.goto('/cocina');
+      await expect(duena.getByRole('heading', { level: 1, name: /^Cocina/ })).toBeVisible();
+      await duena.getByRole('heading', { level: 1, name: /^Cocina/ }).click();
+      // Una voz de Cocina hablando: lo que `speechSynthesis` dice cuando hay una frase en curso.
+      await duena.evaluate(() => {
+        Object.defineProperty(window.speechSynthesis, 'speaking', {
+          configurable: true,
+          get: () => true,
+        });
+      });
+      await olvidarLoQueSono(duena);
+
+      await comandaNueva(duena);
+
+      // El aviso visual llega primero; el timbre (con 280 ms de pausa) ya tuvo su turno y se calló.
+      await expect(duena.getByText('Nuevo pedido recibido').first()).toBeVisible({
+        timeout: 30_000,
+      });
+      await duena.waitForTimeout(1_000);
+      await expect(duena.locator('html')).not.toHaveAttribute('data-ultimo-sonido', /.+/);
+    } finally {
+      await cancelarLaCuentaDeLaMesa(duena);
     }
   });
 

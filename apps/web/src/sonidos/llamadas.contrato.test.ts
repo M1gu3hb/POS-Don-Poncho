@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -16,6 +16,14 @@ const WEB = join(__dirname, '..', '..');
 
 function fuente(ruta: string): string {
   return readFileSync(join(WEB, ruta), 'utf8');
+}
+
+function archivosDe(dir: string): string[] {
+  return readdirSync(dir).flatMap((nombre) => {
+    const ruta = join(dir, nombre);
+    if (statSync(ruta).isDirectory()) return archivosDe(ruta);
+    return /\.(jsx?|tsx?)$/.test(nombre) ? [ruta] : [];
+  });
 }
 
 /** `antes` y luego, a menos de `distancia` caracteres, `despues`. */
@@ -145,6 +153,30 @@ const LLAMADAS: readonly Llamada[] = [
     llamada: "sonar('solicitudAtendida')",
   },
   {
+    archivo: 'heredado/components/cocina/CocinaNuevoPedidoWatcher.jsx',
+    que: 'el timbre de la comanda nueva (Ping): antes de la voz, que espera a que termine',
+    tras: /setTimeout\(\(\) => \{\s*/,
+    llamada: "sonarAntesDeHablar('comandaNueva').then(",
+  },
+  {
+    archivo: 'heredado/pages/Mesero.jsx',
+    que: 'el aviso de la solicitud del comensal (Signal): antes de la voz',
+    tras: /alertas\.modo === 'sonido_voz'\s*\? /,
+    llamada: "sonarAntesDeHablar('solicitud')",
+  },
+  {
+    archivo: 'heredado/components/common/PedidoListoWatcher.jsx',
+    que: 'el pedido listo para el mesero (Check): antes de la voz',
+    tras: /setTimeout\(\(\) => \{\s*/,
+    llamada: "sonarAntesDeHablar('comandaLista')",
+  },
+  {
+    archivo: 'heredado/components/mesero/AlertasMeseroDialog.jsx',
+    que: 'probar la alerta del mesero suena a Signal, como la de verdad',
+    tras: /const probar = \(\) => \{\s*/,
+    llamada: "sonar('solicitud')",
+  },
+  {
     archivo: 'src/espera/PantallaDeEspera.tsx',
     que: 'despertar al TOCAR (no con un aviso)',
     tras: /const tocar = \(\): void => \{[\s\S]{0,200}?/,
@@ -179,6 +211,32 @@ describe('las llamadas a `sonar` de cada pantalla', () => {
   it('agregar suena en los dos caminos del POS (el producto y el de cantidad variable)', () => {
     const pos = fuente('heredado/pages/POS.jsx');
     expect(pos.match(/await refrescarCarrito\(\);\s*sonar\('agregar'\);/g)?.length).toBe(2);
+  });
+
+  it('UN SOLO SISTEMA DE SONIDO (DP-12.6): el viejo («Activar sonidos») ya no existe', () => {
+    for (const viejo of [
+      'heredado/lib/sounds.jsx',
+      'heredado/components/common/SoundUnlockButton.jsx',
+    ])
+      expect(existsSync(join(WEB, viejo)), `${viejo} sigue existiendo`).toBe(false);
+
+    const usuarios = [...archivosDe(join(WEB, 'heredado')), ...archivosDe(join(WEB, 'src'))].filter(
+      (ruta) =>
+        !ruta.endsWith('llamadas.contrato.test.ts') &&
+        /@\/lib\/sounds|SoundUnlockButton|ActivarSonidoButton|\b(?:unlockAudio|playNewOrder|playReady)\b/.test(
+          readFileSync(ruta, 'utf8'),
+        ),
+    );
+    expect(usuarios.map((ruta) => relative(WEB, ruta))).toEqual([]);
+  });
+
+  it('la voz de Cocina y del mesero espera al sonido en TODOS sus caminos (nunca se le encima)', () => {
+    for (const archivo of [
+      'heredado/components/cocina/CocinaNuevoPedidoWatcher.jsx',
+      'heredado/pages/Mesero.jsx',
+      'heredado/components/common/PedidoListoWatcher.jsx',
+    ])
+      expect(fuente(archivo), archivo).toMatch(/sonarAntesDeHablar\('/);
   });
 
   it('los teclados de PIN suenan con el sonido de teclado del negocio', () => {

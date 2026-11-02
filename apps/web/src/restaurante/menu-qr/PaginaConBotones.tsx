@@ -8,6 +8,8 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { PlatilloParaPedir, type PlatilloPublico } from '../PlatilloParaPedir';
 import {
+  alturaDeLaMarca,
+  alturaDeUnRenglon,
   cajaDelBoton,
   platillosDelBoton,
   precioDelBoton,
@@ -28,16 +30,30 @@ export interface PaginaConBotonesProps {
   readonly alPedir: (platillo: PlatilloPublico) => void;
 }
 
-/** La marca del botón sobre la imagen: «+» y, si se pide, el precio vigente del sistema. */
+/**
+ * La marca del botón sobre la imagen: «+» y, si se pide, el precio vigente del sistema.
+ *
+ * DP-12.6 · Va anclada ARRIBA y mide un renglón de la carta (`altura`, en % del botón): ahí está
+ * el precio impreso, que la marca tiene que tapar entero en cualquier ancho de teléfono. Centrada
+ * y de alto fijo se corría hacia el detalle de los renglones de dos líneas y dejaba ver arriba el
+ * precio de la imagen. Sobresale 3 px del borde derecho para que sus puntas redondas no
+ * descubran la última cifra impresa.
+ */
 function Marca({
   centavos,
   icono,
+  altura,
 }: {
   readonly centavos: number | null;
   readonly icono: ReactElement;
+  /** Cuánto del botón tapa, de arriba abajo, en %. */
+  readonly altura: number;
 }) {
   return (
-    <Badge className="pointer-events-none absolute top-1/2 right-0 max-h-full -translate-y-1/2 gap-0.5 rounded-full px-1.5 py-0 leading-none shadow-2">
+    <Badge
+      className="pointer-events-none absolute top-0 -right-[3px] gap-0.5 rounded-full px-1.5 py-0 leading-none shadow-2"
+      style={{ height: `${String(altura)}%` }}
+    >
       {centavos === null ? null : <Dinero centavos={centavos} tamano="xs" />}
       {icono}
     </Badge>
@@ -68,6 +84,7 @@ export function PaginaConBotones({
     if (img?.complete === true) setImagen(img.naturalWidth > 0 ? 'lista' : 'fallo');
   }, []);
   const botones = pagina.botones ?? [];
+  const renglon = alturaDeUnRenglon(botones);
   const grupo = botones.find((b) => b.id === abierto && b.tipo === 'grupo');
   const delGrupo =
     imagen === 'fallo'
@@ -121,6 +138,7 @@ export function PaginaConBotones({
                 className="absolute h-auto rounded-md p-0 hover:bg-primario/10 active:bg-primario/20"
               >
                 <Marca
+                  altura={alturaDeLaMarca(boton, renglon)}
                   centavos={esGrupo ? null : precioDelBoton(boton, primero, mostrarPrecios)}
                   icono={
                     esGrupo ? (

@@ -5,6 +5,8 @@ import type { Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
+import { SinNovedad } from '../fallos.ts';
+import { leTocaLimpiar } from './limpieza-de-solicitudes.ts';
 import { quedarseConLaMesa } from './responsable-de-la-mesa.ts';
 
 import { mesaOperable } from './datos.ts';
@@ -76,7 +78,11 @@ export const entradaAtenderSolicitud = z.object({
 });
 
 /**
- * Los dos comandos de limpieza no llevan campos, y eso es deliberado.
+ * Los dos comandos de limpieza no llevan campos que cambien QUÉ se borra, y eso es deliberado.
+ *
+ * (Lo único que lleva `limpiar_solicitudes` es `automatica`, que no amplía nada: sólo la somete
+ * a la hora de espera de `limpieza-de-solicitudes.ts`. Es la limpieza que pide la pantalla del
+ * mesero sola; el botón del dueño no la manda y limpia siempre.)
  *
  * Había uno solo, con `alcance: 'antiguas' | 'todas'`, y el estrechamiento de
  * `todas` a dueño y administrador vivía DENTRO del cuerpo. Funcionaba y quedaba
@@ -89,7 +95,14 @@ export const entradaAtenderSolicitud = z.object({
  * antes de tocar la base (`comando.ts:98`) y el rechazo queda igual de auditado
  * (`comando.ts:99`).
  */
-export const entradaLimpiarSolicitudes = z.object({});
+export const entradaLimpiarSolicitudes = z.object({
+  /**
+   * `true` = la limpieza que la pantalla del mesero pide SOLA al entrar (DP-12.6). El servidor
+   * decide si le toca (una vez por hora y por negocio) y, si no, no escribe nada. Sin él, o en
+   * `false`, es el botón «Limpiar antiguas» de Portal QR: el dueño lo pidió y corre siempre.
+   */
+  automatica: z.boolean().default(false),
+});
 export const entradaVaciarSolicitudes = z.object({});
 
 export const entradaAsignarMesero = z.object({
@@ -382,6 +395,8 @@ export interface ResultadoLimpiarSolicitudes {
   readonly alcance: 'antiguas' | 'todas';
   /** Las que la base dice que borró. No un contador de intentos. */
   readonly borradas: number;
+  /** Sólo en la limpieza automática que no tocaba (corrió hace menos de una hora): no hizo nada. */
+  readonly omitida?: true;
 }
 
 /**
@@ -410,8 +425,25 @@ export const limpiarSolicitudes = definirComando<
   roles: [...ROLES_DE_SOLICITUDES],
   paquetes: PAQUETES_RESTAURANTE,
   entrada: entradaLimpiarSolicitudes,
-  async ejecutar(ctx) {
+  async ejecutar(ctx, entrada) {
     const { organizacionId } = ctx.ambito;
+
+    // DP-12.6 · La automática corre a lo mucho una vez por hora y por negocio, y lo decide el
+    // servidor. Si no le toca, no escribe NADA —ni auditoría ni clave de idempotencia— y contesta
+    // éxito con «omitida». El botón del dueño (sin `automatica`) limpia siempre.
+    if (entrada.automatica) {
+      const toca = await ctx.paso('ver_si_toca', () =>
+        leTocaLimpiar(ctx.tx, organizacionId, ctx.ahora),
+      );
+      if (!toca) {
+        const omitida: ResultadoLimpiarSolicitudes = {
+          alcance: 'antiguas',
+          borradas: 0,
+          omitida: true,
+        };
+        throw new SinNovedad(omitida);
+      }
+    }
 
     const borradas = await ctx.paso('borrar_solicitudes', () =>
       borrarSolicitudes(ctx.tx, organizacionId, 'antiguas', ctx.ahora),
@@ -419,7 +451,12 @@ export const limpiarSolicitudes = definirComando<
 
     ctx.auditar({
       entidadId: null,
-      payload: { alcance: 'antiguas', borradas, horas: HORAS_PARA_CONSIDERARLA_ANTIGUA },
+      payload: {
+        alcance: 'antiguas',
+        borradas,
+        horas: HORAS_PARA_CONSIDERARLA_ANTIGUA,
+        automatica: entrada.automatica,
+      },
     });
 
     return { alcance: 'antiguas', borradas };

@@ -28,7 +28,7 @@ import {
   recalcBestVoice,
   ensureVoicesLoaded,
 } from '@/lib/voiceAlert';
-import { playNewOrder, unlockAudio, setSoundsVolume } from '@/lib/sounds';
+import { sonar } from '~/sonidos/gestor';
 import { toast } from 'sonner';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { useConfig } from '@/lib/ConfigContext';
@@ -73,15 +73,13 @@ export default function AlertasMeseroDialog({ open, onClose }) {
   };
 
   const update = (patch) => {
+    // El volumen es el de la VOZ. El del sonido es el de este aparato (Configuración → Este aparato).
     const next = setAlertConfig(patch);
     setCfg(next);
-    if (Object.prototype.hasOwnProperty.call(patch, 'volumen')) {
-      setSoundsVolume(next.volumen);
-    }
   };
 
   const activarAudio = () => {
-    unlockAudio();
+    // El sonido se desbloquea solo con este toque (el gestor de sonido escucha todos).
     // Algunos navegadores requieren un primer "speak" en gesto del usuario.
     if (isVoiceSupported()) {
       try {
@@ -94,9 +92,7 @@ export default function AlertasMeseroDialog({ open, onClose }) {
   };
 
   const probar = () => {
-    try {
-      playNewOrder();
-    } catch {}
+    sonar('solicitud');
     if (cfg.modo === 'voz' || cfg.modo === 'sonido_voz') {
       // Solo decir nombre si la asignación está activa.
       testVoice(cfg.decir_nombre && asignOn ? posUser?.nombre : '');
@@ -175,7 +171,7 @@ export default function AlertasMeseroDialog({ open, onClose }) {
           </div>
 
           <div>
-            <Label className="text-xs">Volumen</Label>
+            <Label className="text-xs">Volumen de la voz</Label>
             <input
               type="range"
               min="0"

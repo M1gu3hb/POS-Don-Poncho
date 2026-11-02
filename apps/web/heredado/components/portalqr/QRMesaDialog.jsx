@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { buildPortalQRUrl } from '@/utils/qrUtils';
+import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { MiniaturaDelQr } from '~/restaurante/qr-de-mesas/MiniaturaDelQr';
 import { DescargasDeLaMesa } from '~/restaurante/qr-de-mesas/DescargasDeLaMesa';
 
@@ -50,7 +51,7 @@ export default function QRMesaDialog({ mesa, open, onClose, diseno, logo }) {
         <DialogHeader>
           <DialogTitle className="font-heading">
             QR Mesa {mesa?.numero}
-            {mesa?.nombre ? ` · ${mesa.nombre}` : ''}
+            {sufijoDelNombreDeLaMesa(mesa)}
           </DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center gap-3 py-2">

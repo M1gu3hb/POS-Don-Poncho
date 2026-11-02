@@ -115,10 +115,14 @@ function anotarLoQueSono(receta: NombreDeReceta): void {
     document.documentElement.setAttribute('data-ultimo-sonido', receta);
 }
 
-function tocar(evento: EventoDeSonido): boolean {
+/**
+ * Decide y arranca el sonido. Devuelve la reproducción —que termina cuando acaba de sonar, salga
+ * bien o mal— o `null` si no suena (apagado, sin desbloquear, la voz hablando, el portal callado).
+ */
+function arrancar(evento: EventoDeSonido): Promise<void> | null {
   const receta = recetaDe(evento, configuracion.tecla);
   const ahora = performance.now();
-  if (callaPorUnaAccion(evento, ahora, calladoHasta)) return false;
+  if (callaPorUnaAccion(evento, ahora, calladoHasta)) return null;
   const estado = {
     desbloqueado,
     ganancia: configuracion.ganancia,
@@ -126,12 +130,25 @@ function tocar(evento: EventoDeSonido): boolean {
     silencioDelPortal: configuracion.silencioDelPortal,
     ultimas,
   };
-  if (!debeSonar(estado, receta, ahora)) return false;
+  if (!debeSonar(estado, receta, ahora)) return null;
   ultimas.set(receta, ahora);
   if (esAccion(evento)) calladoHasta = ahora + VENTANA_DE_LA_ACCION_MS;
   anotarLoQueSono(receta);
-  reproducir(receta, configuracion.ganancia).then(quitarElFallo, anotarFallo);
-  return true;
+  return reproducir(receta, configuracion.ganancia).then(quitarElFallo, anotarFallo);
+}
+
+function tocar(evento: EventoDeSonido): boolean {
+  return arrancar(evento) !== null;
+}
+
+/**
+ * Para lo que habla justo después (la comanda nueva de Cocina, el aviso del comensal al mesero):
+ * el sonido va primero y la voz empieza cuando TERMINA, así que nunca se le encima. Si el sonido
+ * no suena (apagado, sin desbloquear, o ya hablaba otra voz) o falla, no espera nada: la voz no
+ * se queda callada por un sonido que no salió.
+ */
+export function sonarAntesDeHablar(evento: EventoDeSonido): Promise<void> {
+  return arrancar(evento) ?? Promise.resolve();
 }
 
 /** Lo que se espera antes de recargar la página para que el sonido alcance a oírse. */

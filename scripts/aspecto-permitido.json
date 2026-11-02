@@ -181,7 +181,7 @@
     },
     {
       "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
-      "porque": "DP-5 (DP-D18): el menú personalizado (modo «menú subido») también pide. Cada página lleva debajo los platillos de las categorías que nombra su título, con el mismo «Agregar» que el menú de siempre (renglones separados por divide-y bajo un border-t), y con más de una página hay una fila de accesos para saltar a cada una (nav «Páginas del menú»). La página guarda su ancla (scroll-mt-20) para no quedar bajo el encabezado fijo. DP-9.7 (DP-D26): cada página del menú subido se pinta con `src/restaurante/menu-qr/PaginaConBotones` —los botones van ENCIMA de la imagen— y se va la lista repetida de platillos de abajo; el portal toma el estilo, la tipografía y el fondo que eligió el negocio. DP-9.5 (fase B): el carrito deja de vivir en el teléfono. Lo elegido va al carrito de la MESA en el servidor —lo ven todos los teléfonos— con «agregado al pedido de la mesa»; enviarlo, sus avisos y «Tu pedido está vacío» pasan al pedido de la mesa (src/portal/carrito-compartido), que pregunta «¿Ya pidieron todos?» en una mesa de dos o más. DP-10.3 (DP-D33): el QR de una mesa unida a otra dice «Esta mesa está unida a la mesa N» bajo el número de la principal. DP-11.1 (DP-D38): la carga del menú deja su círculo girando y es la carga larga del sistema (tarjeta «Cargando el menú», con Morfi si el negocio lo tiene encendido); el QR que no lleva a ninguna mesa («QR inválido», «Mesa no encontrada», mismos textos) es la página que no existe con Morfi asomado por el hoyo, sin botón (recargar el mismo QR no lo arregla).",
+      "porque": "DP-5 (DP-D18): el menú personalizado (modo «menú subido») también pide. Cada página lleva debajo los platillos de las categorías que nombra su título, con el mismo «Agregar» que el menú de siempre (renglones separados por divide-y bajo un border-t), y con más de una página hay una fila de accesos para saltar a cada una (nav «Páginas del menú»). La página guarda su ancla (scroll-mt-20) para no quedar bajo el encabezado fijo. DP-9.7 (DP-D26): cada página del menú subido se pinta con `src/restaurante/menu-qr/PaginaConBotones` —los botones van ENCIMA de la imagen— y se va la lista repetida de platillos de abajo; el portal toma el estilo, la tipografía y el fondo que eligió el negocio. DP-9.5 (fase B): el carrito deja de vivir en el teléfono. Lo elegido va al carrito de la MESA en el servidor —lo ven todos los teléfonos— con «agregado al pedido de la mesa»; enviarlo, sus avisos y «Tu pedido está vacío» pasan al pedido de la mesa (src/portal/carrito-compartido), que pregunta «¿Ya pidieron todos?» en una mesa de dos o más. DP-10.3 (DP-D33): el QR de una mesa unida a otra dice «Esta mesa está unida a la mesa N» bajo el número de la principal. DP-11.1 (DP-D38): la carga del menú deja su círculo girando y es la carga larga del sistema (tarjeta «Cargando el menú», con Morfi si el negocio lo tiene encendido); el QR que no lleva a ninguna mesa («QR inválido», «Mesa no encontrada», mismos textos) es la página que no existe con Morfi asomado por el hoyo, sin botón (recargar el mismo QR no lo arregla). DP-12.6: el nombre de la mesa no se repite («Mesa 2 · Mesa 2»).",
       "testigos": [
         "+ clase:flex",
         "+ clase:gap-1.5",
@@ -369,12 +369,15 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Cocina.jsx",
-      "porque": "DP-10.1 (DP-D31): el aviso del cocinero sin estación dice lo que pidió el cliente: «Tu usuario no tiene estación asignada; pide al administrador que te asigne una.», y dónde se asigna.",
+      "porque": "DP-10.1 (DP-D31): el aviso del cocinero sin estación dice lo que pidió el cliente: «Tu usuario no tiene estación asignada; pide al administrador que te asigne una.», y dónde se asigna. DP-12.6: el encabezado en el teléfono: el título pide su sitio (`grow basis-48` en vez de `flex-1`) y, si no caben, «Conectar teléfono» y la voz pasan al renglón de abajo en vez de montársele encima; sale el botón «Activar sonidos» (sonido viejo).",
       "testigos": [
         "- texto:Este usuario de cocina no tiene estación asignada",
         "- texto:Pide al administrador que te asigne una estación o te marque como \"Todas las estaciones\" en",
         "+ texto:Se asigna en",
-        "+ texto:, o ahí mismo se le marca «Todas las estaciones»."
+        "+ texto:, o ahí mismo se le marca «Todas las estaciones».",
+        "- clase:flex-1",
+        "+ clase:grow",
+        "+ clase:basis-48"
       ]
     },
     {
@@ -438,6 +441,62 @@
         "+ clase:mt-4",
         "+ clase:space-y-3",
         "+ icono:Ban"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/barcode/BarcodeScanner.jsx",
+      "porque": "DP-12.6 (un solo sistema de sonido, DP-D40): sale el botón flotante «Activar sonidos» del escáner —el de SoundUnlockButton, que armaba el audio viejo—; el primer toque de la pestaña ya desbloquea el gestor de sonido nuevo. Nada más cambia en el escáner.",
+      "testigos": [
+        "- clase:absolute",
+        "- clase:left-1/2",
+        "- clase:-translate-x-1/2",
+        "- clase:z-30",
+        "- clase:pointer-events-none"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/SoundUnlockButton.jsx",
+      "borrado": true,
+      "porque": "DP-12.6 (DP-D40): el botón «Activar sonidos» era del sistema de sonido viejo (heredado/lib/sounds.jsx). Hay UN solo sistema —el gestor de apps/web/src/sonidos—, que se desbloquea con el primer toque de la pestaña. Un contrato exige que ya no exista ni se use.",
+      "testigos": []
+    },
+    {
+      "archivo": "apps/web/heredado/lib/sounds.jsx",
+      "borrado": true,
+      "porque": "DP-12.6 (DP-D40): el sonido viejo (campana doble, desbloqueo propio y volumen en localStorage) sale; el timbre de la comanda nueva, el aviso del mesero y el pedido listo suenan por el gestor (Ping, Signal, Check), con la voz de siempre después.",
+      "testigos": []
+    },
+    {
+      "archivo": "apps/web/heredado/components/dashboard/FinancialChart.jsx",
+      "porque": "DP-12.6: una venta SIN RECETA (costo desconocido, no cero) ya no suma «utilidad = venta» ni un 100 % de margen: su importe entra en «Ventas» y una nota debajo de las cifras dice cuántas quedaron fuera del costo, la utilidad y el margen (sólo aparece si las hay).",
+      "testigos": ["+ clase:mb-3", "+ clase:text-muted-foreground", "+ clase:text-[11px]"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/AlertasMeseroDialog.jsx",
+      "porque": "DP-12.6: el control de volumen del diálogo de alertas manejaba la voz y, de rebote, el sonido viejo. El sonido es ahora el de ESTE aparato (Configuración → Este aparato); el control queda como lo que es: «Volumen de la voz».",
+      "testigos": ["- texto:Volumen", "+ texto:Volumen de la voz"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/AtencionFAB.jsx",
+      "porque": "DP-12.6: el botón flotante «Atención» del comensal pasa de la esquina inferior DERECHA a la IZQUIERDA (y sus opciones se abren hacia ese lado): a la derecha tapaba las marcas con el precio de la carta, que es donde se toca.",
+      "testigos": ["- clase:items-end", "- clase:right-5", "+ clase:items-start", "+ clase:left-5"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/SolicitudesQRTab.jsx",
+      "porque": "DP-12.6: las pestañas de filtros de Solicitudes (Activas, Pendientes, Atendidas, Resueltas, Todas) se acomodan en renglones en vez de una tira que se desliza: en un teléfono la quinta quedaba cortada («Atendidas (»). En tableta y PC siguen en un renglón.",
+      "testigos": ["- clase:overflow-x-auto", "- clase:pb-1", "+ clase:flex-wrap"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Ventas.jsx",
+      "porque": "DP-12.6: «100 % margen» en una cuenta sin receta era una cifra falsa (costo cero = costo desconocido). El margen de cada fila lo pinta ahora una pieza de apps/web/src (MargenEnLaLista: el porcentaje, o «Margen —, sin receta»), con las mismas clases que tenía el párrafo; el detalle dice «—, sin receta» en costo, utilidad y margen; el encabezado dice qué suma cada cifra; y no se pintan pastillas vacías: sin folio (una cuenta abierta) no se pinta el folio, y sale la pastilla del tipo de venta, que la venta nunca trae y salía siempre vacía.",
+      "testigos": [
+        "- clase:text-xs",
+        "- clase:${colorize",
+        "- clase:?",
+        "- clase:'text-exito'",
+        "- clase::",
+        "- clase:'text-muted-foreground'}",
+        "- clase:text-[10px]"
       ]
     }
   ]

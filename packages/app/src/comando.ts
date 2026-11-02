@@ -9,7 +9,14 @@ import type { ZodType } from 'zod';
 import { auditar } from './auditoria.ts';
 import { type ContextoComando, type DefinicionComando } from './definicion.ts';
 import { fallo, mensajeDe, validar } from './errores.ts';
-import { atenderReintento, PasoInexistente, Rechazo, Reintento, SinRastro } from './fallos.ts';
+import {
+  atenderReintento,
+  PasoInexistente,
+  Rechazo,
+  Reintento,
+  SinNovedad,
+  SinRastro,
+} from './fallos.ts';
 import type { RepositorioComandos } from './repositorio.ts';
 import { huella } from './saneado.ts';
 import { dentroDeLaSucursal, fronteraDelAmbito } from './sucursal/frontera.ts';
@@ -277,6 +284,13 @@ export function crearComando<TX>(deps: Dependencias<TX>) {
               peticion.idempotencyKey ?? '',
             ),
         });
+      }
+
+      // «No me tocaba» (DP-12.6): la transacción ya se revirtió —sin auditoría ni clave— y el
+      // cliente recibe un éxito con lo que el comando dijo. El tipo de `datos` es el de la salida
+      // del comando que lo lanzó: ningún otro lanza esta señal.
+      if (error instanceof SinNovedad) {
+        return { ok: true, datos: error.datos as S, correlationId, reintento: false };
       }
 
       if (error instanceof Rechazo) {

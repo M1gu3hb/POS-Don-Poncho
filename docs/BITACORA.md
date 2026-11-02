@@ -588,3 +588,23 @@ toca). `pnpm install` en el worktree tarda ~11 min.
   servidor se espera con `expect.poll`.
 - Hecho aquí, sin subagente (el lugar de un tercero no se había liberado y así se ahorraba su
   instalación y su build).
+
+### DP-12.6 · Las pantallas (DP-D49)
+
+- Hecho por un subagente (Sonnet, en su worktree `agent-a2dba111da2fb3b4b`, base 5437, puerto
+  3202; sin commit) salvo el punto 6 (25 mesas, `df8827d`, hecho aquí). Integrado con
+  `git apply -3`: sólo chocó `scripts/aspecto-permitido.json` (12.4 y 12.6 agregaron entradas; se
+  conservan las dos). **Ojo:** los dos borrados del sonido viejo estaban en el ÍNDICE del
+  subagente y `git diff` no los trae: se borraron a mano (usar `git diff HEAD` la próxima vez).
+- Pruebas: unidad y contratos (nombre de mesa, margen, sonido, pantallas sin estorbos),
+  integración `limpieza-de-solicitudes` (10) y `comando.sin-novedad`; navegador
+  `pantallas-sin-estorbos.spec.ts` (teléfono 5 de 5; en tableta y PC dos pasan y tres se saltan
+  por ser de teléfono) y las vecinas (sonidos, menú QR, solicitudes, portal, teléfono de cocina).
+  Mutaciones 61 de 61 (12 de navegador contra `next dev`).
+- **Ojo, la galería:** `heredado-mesero` cambia en todos los estilos (sale «Activar sonidos»), y
+  también Configuración, Portal QR y Ventas: declararla con `actualizar_galeria`.
+- **Ojo, una tableta de cocina recargada sin tocar** no suena hasta el primer toque (ya no hay
+  botón «Activar sonidos»); el teléfono de cocina conserva «Toca para activar el sonido».
+- Lo que el subagente no verificó en el navegador: el margen en tablero, Registros, PDF, gráfica y
+  CSV (unidad y contratos), la insignia «Vista general» de Cocina y Ventas después de quitar la
+  pastilla.

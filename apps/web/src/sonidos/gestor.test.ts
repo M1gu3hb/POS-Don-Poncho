@@ -186,6 +186,89 @@ describe('el gestor de sonido', () => {
     expect(desbloquearAudio).toHaveBeenCalledTimes(2);
   });
 
+  it('la comanda nueva de Cocina suena a Ping y el aviso del comensal a Signal (DP-12.6)', async () => {
+    const { sonar } = await gestorNuevo();
+    sonar('comandaNueva');
+    sonar('solicitud');
+    expect(reproducir.mock.calls.map(([receta]) => receta)).toEqual(['ping', 'signal']);
+  });
+
+  it('lo que sonó queda escrito en el documento, para que el navegador lo lea (DP-12.6)', async () => {
+    const atributos = new Map<string, string>();
+    vi.stubGlobal('document', {
+      documentElement: {
+        setAttribute: (nombre: string, valor: string) => atributos.set(nombre, valor),
+      },
+    });
+    const { sonar } = await gestorNuevo();
+    sonar('comandaNueva');
+    expect(atributos.get('data-ultimo-sonido')).toBe('ping');
+    sonar('solicitud');
+    expect(atributos.get('data-ultimo-sonido')).toBe('signal');
+  });
+
+  it('con la voz hablando o en cola, ni el timbre de Cocina ni el aviso suenan (DP-12.6)', async () => {
+    const { sonar } = await gestorNuevo();
+    vi.stubGlobal('window', { speechSynthesis: { speaking: true, pending: false } });
+    sonar('comandaNueva');
+    vi.stubGlobal('window', { speechSynthesis: { speaking: false, pending: true } });
+    sonar('solicitud');
+    expect(reproducir).not.toHaveBeenCalled();
+  });
+
+  it('el primer toque desbloquea: antes no suena, y desde ahí sí (DP-12.6)', async () => {
+    vi.resetModules();
+    const { sonar, configurarSonidos, desbloquearSonidos } = await import('./gestor');
+    configurarSonidos({ ganancia: 1, tecla: 'nib', silencioDelPortal: false });
+    sonar('comandaNueva');
+    expect(reproducir).not.toHaveBeenCalled();
+    desbloquearSonidos();
+    vi.advanceTimersByTime(100);
+    sonar('comandaNueva');
+    expect(reproducir).toHaveBeenCalledExactlyOnceWith('ping', 1);
+  });
+
+  it('la voz espera a que el sonido termine; si no suena, no espera (DP-12.6)', async () => {
+    const { sonarAntesDeHablar, configurarSonidos } = await gestorNuevo();
+    let termina: () => void = () => undefined;
+    reproducir.mockReturnValueOnce(
+      new Promise<void>((resolver) => {
+        termina = resolver;
+      }),
+    );
+    let habla = false;
+    void sonarAntesDeHablar('comandaNueva').then(() => {
+      habla = true;
+    });
+    await Promise.resolve();
+    expect(reproducir).toHaveBeenCalledWith('ping', 0.5);
+    expect(habla).toBe(false);
+    termina();
+    await vi.waitFor(() => {
+      expect(habla).toBe(true);
+    });
+
+    configurarSonidos({ ganancia: 0, tecla: 'nib', silencioDelPortal: false });
+    let sinSonido = false;
+    void sonarAntesDeHablar('comandaNueva').then(() => {
+      sinSonido = true;
+    });
+    await Promise.resolve();
+    expect(sinSonido).toBe(true);
+  });
+
+  it('si el sonido falla, la voz habla igual: no se queda esperando (DP-12.6)', async () => {
+    const { sonarAntesDeHablar } = await gestorNuevo();
+    reproducir.mockRejectedValueOnce(new Error('NotAllowedError'));
+    let habla = false;
+    void sonarAntesDeHablar('solicitud').then(() => {
+      habla = true;
+    });
+    await vi.waitFor(() => {
+      expect(habla).toBe(true);
+    });
+  });
+
   it('«Oír» suena aunque el aparato esté apagado', async () => {
     const { oir, configurarSonidos } = await gestorNuevo();
     configurarSonidos({ ganancia: 0, tecla: 'nib', silencioDelPortal: false });
