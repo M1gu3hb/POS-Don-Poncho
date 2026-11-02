@@ -24,23 +24,23 @@ el mesero sea quien manda a cocina».
 
 ## Archivos
 
-| Archivo | Qué |
-| --- | --- |
-| `packages/app/src/portal/quien-envia.ts` (+test) | Quién manda a cocina y qué le toca al comensal |
-| `packages/app/src/portal/banderas.ts`, `puente/configuracion.ts` | Las dos opciones, leídas y validadas |
-| `packages/app/src/portal/carrito.ts`, `carrito-comandos.ts`, `carrito-http.ts` | Sin cuenta, el envío según la regla, el límite por teléfono, el latido |
-| `packages/app/src/portal/carrito-llamar.ts` | `portal.carrito_llamar_mesero` |
-| `packages/app/src/portal/mesa.ts` | `abrirLaMesaDelPortal`, compartida |
-| `packages/app/src/negocio/despliegue.ts` | El token se busca siempre antes de contar |
-| `packages/app/src/restaurante/carrito-del-salon.ts` | Olvidar el carrito (cuenta cerrada, fin del día) y moverlo |
-| `packages/app/src/restaurante/carrito-del-mesero*.ts` | Los cuatro comandos y las lecturas del mesero |
-| `packages/app/src/restaurante/pedido.ts` | `comandarLasLineas`, el cuerpo de `enviar_pedido` |
-| `packages/app/src/restaurante/mesas-escrituras.ts`, `sala-escrituras.ts`, `caja/sesion.ts` | Dónde se olvida y se mueve el carrito |
-| `apps/web/app/api/restaurante/carrito-*`, `qr-de-la-mesa`, `api/publico/qr/[token]/carrito/llamar` | Las rutas |
-| `apps/web/src/portal/carrito-compartido/*` | El teléfono: el botón según la regla, «Sin conexión» |
-| `apps/web/src/restaurante/portal-mesero/*` | El modo mesero, el QR escaneado, la pulsación larga, el QR en pantalla |
-| `apps/web/heredado/pages/Mesero.jsx`, `PortalCliente.jsx`, `ConfiguracionQRTab.jsx` | Las pantallas reales |
-| Pruebas: `carrito-sin-cuenta`, `carrito-doce-telefonos`, `carrito-del-mesero` (integración), `pruebas/e2e/portal-modo-mesero.spec.ts` | |
+| Archivo                                                                                                                               | Qué                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `packages/app/src/portal/quien-envia.ts` (+test)                                                                                      | Quién manda a cocina y qué le toca al comensal                         |
+| `packages/app/src/portal/banderas.ts`, `puente/configuracion.ts`                                                                      | Las dos opciones, leídas y validadas                                   |
+| `packages/app/src/portal/carrito.ts`, `carrito-comandos.ts`, `carrito-http.ts`                                                        | Sin cuenta, el envío según la regla, el límite por teléfono, el latido |
+| `packages/app/src/portal/carrito-llamar.ts`                                                                                           | `portal.carrito_llamar_mesero`                                         |
+| `packages/app/src/portal/mesa.ts`                                                                                                     | `abrirLaMesaDelPortal`, compartida                                     |
+| `packages/app/src/negocio/despliegue.ts`                                                                                              | El token se busca siempre antes de contar                              |
+| `packages/app/src/restaurante/carrito-del-salon.ts`                                                                                   | Olvidar el carrito (cuenta cerrada, fin del día) y moverlo             |
+| `packages/app/src/restaurante/carrito-del-mesero*.ts`                                                                                 | Los cuatro comandos y las lecturas del mesero                          |
+| `packages/app/src/restaurante/pedido.ts`                                                                                              | `comandarLasLineas`, el cuerpo de `enviar_pedido`                      |
+| `packages/app/src/restaurante/mesas-escrituras.ts`, `sala-escrituras.ts`, `caja/sesion.ts`                                            | Dónde se olvida y se mueve el carrito                                  |
+| `apps/web/app/api/restaurante/carrito-*`, `qr-de-la-mesa`, `api/publico/qr/[token]/carrito/llamar`                                    | Las rutas                                                              |
+| `apps/web/src/portal/carrito-compartido/*`                                                                                            | El teléfono: el botón según la regla, «Sin conexión»                   |
+| `apps/web/src/restaurante/portal-mesero/*`                                                                                            | El modo mesero, el QR escaneado, la pulsación larga, el QR en pantalla |
+| `apps/web/heredado/pages/Mesero.jsx`, `PortalCliente.jsx`, `ConfiguracionQRTab.jsx`                                                   | Las pantallas reales                                                   |
+| Pruebas: `carrito-sin-cuenta`, `carrito-doce-telefonos`, `carrito-del-mesero` (integración), `pruebas/e2e/portal-modo-mesero.spec.ts` |                                                                        |
 
 ## Migraciones
 

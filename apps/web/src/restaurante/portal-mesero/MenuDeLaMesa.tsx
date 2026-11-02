@@ -1,5 +1,6 @@
 'use client';
 
+import { Superficie } from '@morphiqpos/ui/sistema';
 import { Eye, QrCode, Split } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -52,13 +53,16 @@ export function MenuDeLaMesa({
   const { left, top } = lugarDelGlobo(mesa.x, mesa.y, pantalla, globo);
 
   const opcion =
-    'flex min-h-11 w-full items-center gap-(--espacio-2) rounded-lg px-(--espacio-3) text-left text-sm font-semibold hover:bg-fondo/15 focus-visible:outline-2';
+    'flex min-h-(--altura-control) w-full items-center gap-(--espacio-2) rounded-lg px-(--espacio-3) text-left text-sm font-semibold hover:bg-fondo/15 focus-visible:outline-2';
   return (
     <div className="fixed inset-0 z-50" onPointerDown={alCerrar} data-menu-de-la-mesa={mesa.id}>
-      <div
+      <Superficie
         role="menu"
         aria-label={`Mesa ${String(mesa.numero)}`}
-        className="absolute flex flex-col gap-1 rounded-xl bg-texto p-(--espacio-2) text-fondo shadow-lg"
+        nivel={3}
+        relleno={0}
+        conBorde={false}
+        className="absolute flex flex-col gap-1 bg-texto p-(--espacio-2) text-fondo"
         style={{ left, top, width: globo.ancho }}
         onPointerDown={(e) => {
           e.stopPropagation();
@@ -99,7 +103,7 @@ export function MenuDeLaMesa({
             <Split className="size-4" aria-hidden /> Separar mesas
           </button>
         )}
-      </div>
+      </Superficie>
     </div>
   );
 }

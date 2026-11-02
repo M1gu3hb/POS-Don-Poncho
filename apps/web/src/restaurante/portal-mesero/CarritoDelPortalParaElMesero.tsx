@@ -13,8 +13,8 @@ import {
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Input } from '@morphiqpos/ui/primitivas/input';
 import { Label } from '@morphiqpos/ui/primitivas/label';
-import { Aviso, Dinero } from '@morphiqpos/ui/sistema';
-import { Minus, Plus, Send, Smartphone, Trash2 } from 'lucide-react';
+import { Aviso, EsqueletoDeLista, Superficie, Vacio } from '@morphiqpos/ui/sistema';
+import { Send, Smartphone, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,6 +30,7 @@ import {
   useCarritoDelMesero,
   type MesaBuscada,
 } from './api-del-carrito-del-mesero';
+import { RenglonDelCarritoDelMesero } from './RenglonDelCarritoDelMesero';
 
 /**
  * EL PORTAL EN MODO MESERO (DP-12.2): lo que armaron los teléfonos de la mesa, con los poderes del
@@ -38,8 +39,6 @@ import {
  * a cocina a su nombre. Lo usa la pantalla del mesero al escanear el QR, al tocar el aviso
  * «Pedido listo para confirmar» y dentro de la mesa abierta.
  */
-
-const ENTERO = /^\d+$/;
 
 function porTelefono(lineas: readonly LineaDelCarrito[]) {
   const grupos = new Map<number, LineaDelCarrito[]>();
@@ -70,7 +69,7 @@ export function CarritoDelPortalParaElMesero({
   const [personas, setPersonas] = useState('2');
   const [borrando, setBorrando] = useState(false);
 
-  if (cargando) return compacto ? null : <p className="text-sm text-texto-sutil">Cargando…</p>;
+  if (cargando) return compacto ? null : <EsqueletoDeLista filas={3} />;
   if (datos === null) {
     return compacto ? null : (
       <Aviso tono="peligro" titulo={mensajeDe(error, 'No pudimos leer el pedido de la mesa.')} />
@@ -114,8 +113,11 @@ export function CarritoDelPortalParaElMesero({
   };
 
   return (
-    <section
-      className="flex flex-col gap-(--espacio-3) rounded-xl border border-borde bg-superficie p-(--espacio-3)"
+    <Superficie
+      como="section"
+      nivel={0}
+      relleno={3}
+      className="flex flex-col gap-(--espacio-3)"
       data-carrito-del-portal={mesa.id}
       aria-label={`Pedido del portal de la mesa ${String(mesa.numero)}`}
     >
@@ -128,79 +130,24 @@ export function CarritoDelPortalParaElMesero({
       </header>
       {sinConexion ? <Aviso tono="atencion" titulo="Sin conexión, reintentando…" /> : null}
       {carrito.lineas.length === 0 ? (
-        <p className="text-sm text-texto-sutil">Los comensales todavía no han armado nada.</p>
+        <Vacio tamano="compacto" titulo="Los comensales todavía no han armado nada." />
       ) : (
         porTelefono(carrito.lineas).map(([telefono, lineas]) => (
           <div key={telefono} className="flex flex-col gap-(--espacio-1)">
             <p className="text-xs font-semibold text-texto-sutil">Teléfono {telefono}</p>
             <ul className="flex flex-col">
               {lineas.map((linea) => (
-                <li
+                <RenglonDelCarritoDelMesero
                   key={linea.id}
-                  className="flex items-center gap-(--espacio-2) border-b border-borde py-(--espacio-2)"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold">{linea.nombre}</span>
-                    {linea.notas === '' ? null : (
-                      <span className="block text-xs text-texto-sutil">«{linea.notas}»</span>
-                    )}
-                    {linea.disponible === false ? (
-                      <span className="block text-xs font-semibold text-peligro">
-                        Ya no está en el menú digital
-                      </span>
-                    ) : null}
-                  </span>
-                  {ENTERO.test(linea.cantidad) ? (
-                    <span className="flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        aria-label={`Uno menos de ${linea.nombre}`}
-                        disabled={ocupado !== null || linea.cantidad === '1'}
-                        onClick={() =>
-                          void hacer(linea.id, () =>
-                            cambiarCantidad(mesa.id, linea.id, String(Number(linea.cantidad) - 1)),
-                          )
-                        }
-                      >
-                        <Minus className="size-4" aria-hidden />
-                      </Button>
-                      <span className="w-8 text-center text-sm font-semibold tabular-nums">
-                        {linea.cantidad}
-                      </span>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        aria-label={`Uno más de ${linea.nombre}`}
-                        disabled={ocupado !== null}
-                        onClick={() =>
-                          void hacer(linea.id, () =>
-                            cambiarCantidad(mesa.id, linea.id, String(Number(linea.cantidad) + 1)),
-                          )
-                        }
-                      >
-                        <Plus className="size-4" aria-hidden />
-                      </Button>
-                    </span>
-                  ) : (
-                    <span className="text-sm font-semibold tabular-nums">{linea.cantidad}</span>
-                  )}
-                  {linea.precioCentavos === null ? null : (
-                    <Dinero
-                      centavos={Math.round(Number(linea.cantidad) * Number(linea.precioCentavos))}
-                    />
-                  )}
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-peligro"
-                    aria-label={`Quitar ${linea.nombre}`}
-                    disabled={ocupado !== null}
-                    onClick={() => void hacer(linea.id, () => quitarLinea(mesa.id, linea.id))}
-                  >
-                    <Trash2 className="size-4" aria-hidden />
-                  </Button>
-                </li>
+                  linea={linea}
+                  ocupado={ocupado !== null}
+                  alCambiar={(cantidad) => {
+                    void hacer(linea.id, () => cambiarCantidad(mesa.id, linea.id, cantidad));
+                  }}
+                  alQuitar={() => {
+                    void hacer(linea.id, () => quitarLinea(mesa.id, linea.id));
+                  }}
+                />
               ))}
             </ul>
           </div>
@@ -272,6 +219,6 @@ export function CarritoDelPortalParaElMesero({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </section>
+    </Superficie>
   );
 }

@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@morphiqpos/ui/primitivas/dialog';
-import { Aviso } from '@morphiqpos/ui/sistema';
+import { Aviso, Esqueleto, Vacio } from '@morphiqpos/ui/sistema';
 import { useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
@@ -80,9 +80,13 @@ export function QrDeLaMesaEnPantalla({
         {consulta.isError ? (
           <Aviso tono="peligro" titulo="No pudimos leer el QR de esta mesa." />
         ) : consulta.data !== undefined && token === null ? (
-          <Aviso tono="atencion" titulo="Esta mesa todavía no tiene QR. Genéralo en Portal QR." />
+          <Vacio
+            tamano="compacto"
+            titulo="Esta mesa todavía no tiene QR."
+            explicacion="Genéralo en Portal QR → Mesas QR."
+          />
         ) : imagen === null ? (
-          <div className="mx-auto aspect-square w-full max-w-80 animate-pulse rounded-lg bg-superficie-hundida" />
+          <Esqueleto className="mx-auto aspect-square w-full max-w-80" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element -- un QR dibujado aquí (data:), fuera de `next/image`
           <img
@@ -90,7 +94,7 @@ export function QrDeLaMesaEnPantalla({
             alt={`QR de la mesa ${String(mesa?.numero ?? '')}`}
             width={480}
             height={480}
-            className="mx-auto aspect-square w-full max-w-80 rounded-lg bg-white"
+            className="mx-auto aspect-square w-full max-w-80 rounded-lg"
             data-qr-de-la-mesa={mesa?.id}
           />
         )}

@@ -189,6 +189,12 @@ test.describe('con 3 y con 25 mesas (DP-12.6)', () => {
           .sort((a, b) => a.numero - b.numero)
           .slice(-2);
         if (penultima === undefined || ultima === undefined) throw new Error('Faltan mesas.');
+        // La demo trae el portal apagado: se enciende para abrir el QR de la última.
+        await escribir(duena, '/api/datos/escribir', {
+          entidad: 'ConfiguracionNegocio',
+          operacion: 'update',
+          datos: { portal_qr_activo: true },
+        });
         const telefono = await abrirElQrDeLaMesa(browser, info, SLUG, ultima.qr_token ?? '');
         telefonos.push(telefono);
         const rotulo = new RegExp(`\\bMesa ${String(ultima.numero)}(?!\\d)`);

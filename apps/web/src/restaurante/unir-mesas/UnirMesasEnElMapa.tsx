@@ -16,6 +16,7 @@ import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'rea
 import { toast } from 'sonner';
 
 import { consultarPuente, invocarComando } from '~/cliente/api';
+import { centavosDe } from '~/cliente/dinero-del-puente';
 
 import { AvisoDeMesasOcupadas, type MesaOcupada } from './AvisoDeMesasOcupadas';
 import { EligeElNumero } from './EligeElNumero';
@@ -228,11 +229,7 @@ export function UnirMesasEnElMapa({
             filtro: { id },
             limite: 1,
           });
-          const total = venta[0]?.total;
-          return {
-            numero: m.numero,
-            totalCentavos: typeof total === 'number' ? Math.round(total * 100) : null,
-          };
+          return { numero: m.numero, totalCentavos: centavosDe('Venta', 'total', venta[0]?.total) };
         } catch (error: unknown) {
           // Sin el importe (el rol no lo lee, o no se pudo) el aviso se dice igual, sin él: lo que
           // no puede pasar es unir una mesa con gente sin preguntar.
@@ -284,7 +281,7 @@ export function UnirMesasEnElMapa({
           <div
             aria-hidden="true"
             data-forma-de-la-union={fundida.figura}
-            className="pointer-events-none absolute bg-primario/15 ring-2 ring-primario/60 transition-opacity duration-200"
+            className="pointer-events-none absolute bg-primario/15 ring-2 ring-primario/60 transition-opacity duration-(--duracion-normal)"
             style={{
               left: (fundida.x - 6) * escala,
               top: (fundida.y - 6) * escala,
