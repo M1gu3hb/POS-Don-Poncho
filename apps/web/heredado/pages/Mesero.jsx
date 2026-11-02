@@ -386,6 +386,8 @@ function Mesero() {
   const [uniendo, setUniendo] = useState(false);
   // DP-12.3: se entró a «Unir mesas» para separar una unión (el globo de la mesa, la mesa libre).
   const [separarAlEntrar, setSepararAlEntrar] = useState(null);
+  // La mesa desde la que se llegó con `?unir=`: la dirección se limpia al entrar, el ancla no.
+  const [anclaDeUnir, setAnclaDeUnir] = useState(null);
   const anclaUbicada = useRef(null);
   useEffect(() => {
     // `mesas` es una lista vacía hasta que llega la primera lectura: antes de eso no se decide
@@ -403,6 +405,7 @@ function Mesero() {
       return;
     }
     setZonaActiva(zonaDeLaMesa(ancla));
+    setAnclaDeUnir(ancla.id);
     setUniendo(true);
     window.history.replaceState(null, '', window.location.pathname);
   }, [unirDesde, mesas, cargandoMesas]);
@@ -1233,7 +1236,7 @@ function Mesero() {
       {uniendo ? (
         <UnirMesasEnElMapa
           mesas={mesasDeLaZona}
-          anclaInicial={separarAlEntrar ?? unirDesde}
+          anclaInicial={separarAlEntrar ?? anclaDeUnir}
           separarAlEntrar={separarAlEntrar !== null}
           alReleer={() => queryClient.invalidateQueries({ queryKey: ['mesas'] })}
           // DP-12.3: en «Unir mesas» las mesas NO cambian: la misma `MesaShape` del mapa.
@@ -1251,6 +1254,7 @@ function Mesero() {
           }}
           alTerminar={(unidas) => {
             setUniendo(false);
+            setAnclaDeUnir(null);
             setSepararAlEntrar(null);
             if (unidas) queryClient.invalidateQueries({ queryKey: ['mesas'] });
           }}

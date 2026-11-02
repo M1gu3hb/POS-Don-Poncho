@@ -440,22 +440,6 @@ export const SIN_ESTADO = [
       'No lee el salón: recibe las mesas del mapa, que ya cargó. Su fallo al unir lo dice un Aviso.',
   },
   {
-    pantalla: 'restaurante/unir-mesas/MesasQueSeFunden',
-    estado: 'vacio',
-    razon:
-      'Es sólo el dibujo de las mesas bajo sus botones (DP-9.6): sin mesas no dibuja nada y el mapa dice su vacío.',
-  },
-  {
-    pantalla: 'restaurante/unir-mesas/MesasQueSeFunden',
-    estado: 'cargando',
-    razon: 'No lee nada: dibuja el plano que le da UnirMesasEnElMapa.',
-  },
-  {
-    pantalla: 'restaurante/unir-mesas/MesasQueSeFunden',
-    estado: 'error',
-    razon: 'No lee ni escribe: es un SVG de adorno, sin nada que pueda fallar.',
-  },
-  {
     pantalla: 'restaurante/unir-mesas/EligeElNumero',
     estado: 'vacio',
     razon:
