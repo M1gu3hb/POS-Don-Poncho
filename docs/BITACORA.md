@@ -550,3 +550,21 @@ toca). `pnpm install` en el worktree tarda ~11 min.
   `translate`/`scale`. Ponerlo en `transform` apaga el temblor.
 - **Ojo, el aviso con gente lee el total de la cuenta por el puente** (`Venta`): si el rol no la
   lee, el aviso sale sin importe; nunca se une sin preguntar.
+
+### DP-12.5 · Estaciones de punta a punta (DP-D47)
+
+- Prueba nueva `pruebas/e2e/estaciones-de-punta-a-punta.spec.ts` (ayudantes en
+  `pruebas/e2e/ayudantes/estaciones.ts`): en Configuración → Negocio se crean cuatro estaciones,
+  una se renombra y otra se desactiva (su categoría vuelve a la general); cada estación recibe su
+  categoría y su cocinero; el mesero manda un platillo de cada una y salen 5 comandas, una por
+  estación; cada Cocina ve y ANUNCIA (voz espiada) sólo lo suyo y la dueña ve las 5; cada estación
+  conecta sólo su teléfono y el de Parrilla ve lo suyo; el pedido del comensal desde el portal
+  también se parte. Verde en tableta, teléfono y PC; `estaciones-de-cocina` sigue verde.
+- Arreglo: `EstacionesPreparacionSection.jsx` ya no traga el error al mover las categorías de la
+  estación que se apaga (contrato `estaciones-heredado.contrato.test.ts`, visto en rojo).
+- **Ojo, el reseteo de la demo no borra las estaciones que crea una prueba:** la prueba usa nombres
+  propios por corrida y al final apaga las suyas.
+- **Ojo, la pregunta «¿Desactivar estación?» se cierra al tocar «Sí, desactivar»:** lo del
+  servidor se espera con `expect.poll`.
+- Hecho aquí, sin subagente (el lugar de un tercero no se había liberado y así se ahorraba su
+  instalación y su build).

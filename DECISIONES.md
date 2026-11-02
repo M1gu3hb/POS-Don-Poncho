@@ -941,3 +941,19 @@ puerta los denuncia todos.
 - **Descartado:** cambiar la forma de las mesas al unir (lo que se pidió es lo contrario) y una
   biblioteca de arrastre: los eventos de puntero alcanzan y el 1:1 se mide en la prueba.
 - **Sin migración.**
+
+## DP-D47 · Las estaciones no son sólo Cocina y Bebidas: verificadas de punta a punta · 01-11-2026
+
+- **Lo que se pidió:** Don Poncho tendrá varias estaciones sin nombre todavía; verificar con 3 o
+  más, y arreglar lo que falle.
+- **Lo que se encontró:** el reparto ya era genérico (Producto → Categoría → Estación, la general
+  de respaldo; DP-10.1) y la pantalla, la voz y el teléfono de cocina ya filtran por la estación de
+  la sesión. Un defecto: al desactivar una estación, Configuración movía sus categorías a la
+  general tragándose cada error; si uno fallaba, la estación se apagaba igual y la categoría
+  quedaba apuntando a una estación apagada. Ahora, si una no se mueve, no se apaga y se dice por
+  qué.
+- **Por platillo no se asigna:** el modelo toma la estación de la categoría (no hay columna en el
+  producto). No se agrega: es DDL y no se pidió.
+- **Lo que no es defecto:** `comandas.area` (`cocina`/`barra`) y `productos.area_preparacion` son
+  valores de la base; el aviso del rol antiguo «Barra» en el diálogo de usuario.
+- **Sin migración.**
