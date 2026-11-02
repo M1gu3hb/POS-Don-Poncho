@@ -27,3 +27,12 @@ export {
   seTocan,
   type MesaEnPlano,
 } from './union.ts';
+export {
+  DISTANCIA_DE_LLAMADO,
+  formaDeLaUnion,
+  vecinaQueLlama,
+  type Figura,
+  type FormaDeLaUnion,
+  type Llamado,
+  type MesaConForma,
+} from './forma-de-la-union.ts';

@@ -30,6 +30,7 @@ import { useConfig } from '@/lib/ConfigContext';
 import { canAccessModule } from '@/lib/packageConfig';
 import { sumarPropinas } from '@/utils/tipsUtils';
 import { EsqueletoDeBloque, EsqueletoDeCifras } from '~/cliente/EstadosDeCarga';
+import { economiaDelPeriodo, subtituloDelMargen } from '~/restaurante/margen-de-las-ventas';
 
 const PERIODOS = [
   { id: 'today', label: 'Hoy' },
@@ -77,9 +78,13 @@ export default function ResumenPeriodo({
   const comprasP = compras.filter((c) => inRange(c.fecha || c.created_date));
   const gastosP = gastos.filter((g) => inRange(g.fecha || g.created_date));
 
+  // DP-12.6: la utilidad y el margen son los de las ventas con costo conocido. Las SIN RECETA
+  // tienen el costo desconocido (no cero): no entran, y se dice cuántas son. Si ninguna tiene
+  // costo, la utilidad y el margen son nulos y la tarjeta dice «sin receta».
+  const economia = economiaDelPeriodo(ventasP);
   const totals = {
     ingresos: ventasP.reduce((s, v) => s + (v.total || 0), 0),
-    utilidad: ventasP.reduce((s, v) => s + (v.utilidad_bruta_snapshot || 0), 0),
+    utilidad: economia.utilidad,
     nVentas: ventasP.length,
     compras: comprasP.reduce((s, c) => s + (c.total_compra || 0), 0),
     gastos: gastosP.reduce((s, g) => s + (g.monto || 0), 0),
@@ -87,7 +92,7 @@ export default function ResumenPeriodo({
   };
   // Neto NO incluye propinas (no son del restaurante).
   const neto = totals.ingresos - totals.compras - totals.gastos;
-  const margen = totals.ingresos > 0 ? (totals.utilidad / totals.ingresos) * 100 : 0;
+  const margen = economia.margen;
 
   return (
     <Card className="p-4 bg-superficie/70 backdrop-blur-sm">
@@ -107,6 +112,7 @@ export default function ResumenPeriodo({
               gastos: gastosP,
               totals,
               margen,
+              economia,
               propinas: totals.propinas,
             })
           }
@@ -179,8 +185,8 @@ export default function ResumenPeriodo({
               <Stat
                 icon={TrendingUp}
                 label="Utilidad bruta"
-                value={formatCurrency(totals.utilidad)}
-                sub={`${(Number.isFinite(Number(margen)) ? Number(margen) : 0).toFixed(1)}% margen`}
+                value={totals.utilidad === null ? '—' : formatCurrency(totals.utilidad)}
+                sub={subtituloDelMargen(economia)}
                 color={colorize ? 'text-exito' : 'text-foreground'}
               />
               <Stat

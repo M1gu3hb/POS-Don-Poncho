@@ -112,6 +112,8 @@ interface DatosSolicitud {
   readonly ordenId: string | null;
   readonly ruteo: RuteoDeMesa;
   readonly cuenta?: SnapshotDeCuenta;
+  /** DP-12.2 · Lo que lee el mesero: «Pedido listo para confirmar (3 platillos)». */
+  readonly notas?: string;
 }
 
 /**
@@ -143,6 +145,7 @@ export async function insertarSolicitud(
         propina_sugerida_centavos: datos.cuenta?.propinaCentavos ?? null,
         propina_sugerida_bp: datos.cuenta?.propinaBp ?? null,
         propina_tipo: datos.cuenta?.propinaTipo ?? null,
+        notas: datos.notas ?? null,
       })
       .returning('id')
       .executeTakeFirstOrThrow();

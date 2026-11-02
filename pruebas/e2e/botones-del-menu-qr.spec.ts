@@ -4,7 +4,6 @@ import {
   abrirElQrDeLaMesa,
   CARTA,
   configuracionDelNegocio,
-  mesaEnElServidor,
   prepararElPortalDelComensal,
   type TelefonoDelComensal,
 } from './ayudantes/mesas-heredadas.ts';
@@ -169,9 +168,7 @@ test.describe('los botones del menú QR', () => {
           carta.getByRole('button', { name: `Agregar ${CARTA.cerveza.nombre}` }),
         ).toBeVisible();
 
-        await agregar.click();
-        await telefono.getByRole('button', { name: 'Abrir mesa' }).click();
-        await expect.poll(async () => (await mesaEnElServidor(duena, MESA)).ordenId).not.toBeNull();
+        // DP-12.2: con la mesa cerrada el botón ya agrega; la mesa se abre al enviar.
         await agregar.click();
         await telefono
           .getByRole('button', { name: /^Agregar/ })

@@ -215,8 +215,9 @@ export const liberarMesa = definirComando<
         if (consumida) {
           throw new ErrorDominio(
             'MESA_NO_LIBERABLE',
-            `La mesa ${mesa.numero} tiene una cuenta sin cobrar. Cóbrala o cancélala en Caja ` +
-              'antes de liberarla.',
+            // DP-12.4: el mesero cancela desde su mesa; la caja sigue cobrando.
+            `La mesa ${mesa.numero} tiene una cuenta sin cobrar. Cóbrala en Caja o cancélala ` +
+              'desde la mesa (Cancelar la cuenta) antes de liberarla.',
             { ordenId: ordenActivaId, estado: orden.estado },
           );
         }

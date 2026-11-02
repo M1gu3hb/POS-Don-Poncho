@@ -39,9 +39,9 @@ const LECTURAS_PERMITIDAS = [
   {
     campo: 'tipo_venta',
     // 41 desde DP-9.5: se fue el carrito local del portal (`CarritoQR`), que lo leía del snapshot.
-    cantidad: 41,
-    razon:
-      'Casi todas las lecturas son de ProductoTerminado y PedidoPreparacionItem, donde sí está mapeado; Venta conserva un badge opcional de compatibilidad.',
+    // 40 desde DP-12.6: se fue la pastilla de Ventas, que lo leía de una venta que nunca lo trae.
+    cantidad: 40,
+    razon: 'Las lecturas son de ProductoTerminado y PedidoPreparacionItem, donde sí está mapeado.',
   },
   {
     campo: 'modificadores',

@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { colorParaUsuario } from '@/lib/asignacionMesas';
+import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 
 const TAMANO_KEYS = Object.keys(TAMANOS_MESA);
 
@@ -354,7 +355,7 @@ export default function MesaEditDialog({
                 La mesa{' '}
                 <strong>
                   #{mesa?.numero}
-                  {mesa?.nombre ? ` · ${mesa.nombre}` : ''}
+                  {sufijoDelNombreDeLaMesa(mesa)}
                 </strong>{' '}
                 deja de aparecer en el mapa y con los meseros.
               </span>

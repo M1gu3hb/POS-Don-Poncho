@@ -106,6 +106,9 @@ async function cocinaConPortal(estacionesActivas: boolean) {
   const banderas = {
     portal_qr_activo: true,
     portal_qr_permitir_pedidos_cliente: true,
+    // DP-12.2: estas pruebas hablan del comensal que abre y pide.
+    portal_qr_envia_a_cocina: 'comensales',
+    portal_qr_comensales_abren_mesa: true,
     asignacion_mesas_activa: false,
     estaciones_preparacion_activas: estacionesActivas,
   };

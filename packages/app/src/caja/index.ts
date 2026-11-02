@@ -50,6 +50,14 @@ export {
 } from './entrada-cambio.ts';
 
 export {
+  cancelacionesDelCorteComando,
+  cancelacionesRegistradasComando,
+  entradaCancelacionesDelCorte,
+  entradaCancelacionesRegistradas,
+  type CancelacionesLeidas,
+} from './corte/lectura-de-cancelaciones.ts';
+
+export {
   entradaHojaDelCorte,
   hojaDelCorte,
   negocioDe,

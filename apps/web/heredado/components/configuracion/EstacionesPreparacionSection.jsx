@@ -288,9 +288,9 @@ export default function EstacionesPreparacionSection({ embedded = false }) {
           : {
               estacion_preparacion_id: '',
             };
-        await Promise.all(
-          cats.map((c) => api.entidades.CategoriaProducto.update(c.id, reasigna).catch(() => {})),
-        );
+        // DP-12.5: si una no se mueve, la estación no se apaga y se dice por qué (antes cada
+        // error se tragaba y la categoría quedaba apuntando a una estación apagada).
+        await Promise.all(cats.map((c) => api.entidades.CategoriaProducto.update(c.id, reasigna)));
       }
       await api.entidades.EstacionPreparacion.update(estacion.id, { activo: false });
       toast.success(`Estación "${estacion.nombre}" desactivada`);

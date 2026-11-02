@@ -283,8 +283,11 @@ export async function negocioDelTokenDeMesa(
   token: string,
 ): Promise<NegocioDelDespliegue> {
   const candidatos = await negociosDelPortal(slugConfigurado, host);
+  // DP-12.2 · El token se busca SIEMPRE, también con un solo negocio en el despliegue: antes, con
+  // uno, cualquier texto con forma de token pasaba hasta el límite de peticiones y cada código
+  // inventado abría su propia fila en `limite_tasa`. Un índice sobre `qr_token` lo resuelve.
   const filas =
-    candidatos.length === 1 || !/^[A-Za-z0-9_-]{6,120}$/.test(token)
+    candidatos.length === 0 || !/^[A-Za-z0-9_-]{6,120}$/.test(token)
       ? []
       : await obtenerDb()
           .selectFrom('mesas')
@@ -297,7 +300,8 @@ export async function negocioDelTokenDeMesa(
           )
           .limit(2)
           .execute();
-  const negocio = elegirNegocioDelToken(candidatos, filas);
+  // Sin fila no hay mesa con ese código, aunque el despliegue sirva un solo negocio.
+  const negocio = filas.length === 0 ? null : elegirNegocioDelToken(candidatos, filas);
   if (negocio === null)
     throw new ErrorDominio(
       'QR_TOKEN_INVALIDO',

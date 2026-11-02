@@ -6,7 +6,7 @@ import { usePOSAuth } from '@/lib/POSAuthContext';
 import { useConfig } from '@/lib/ConfigContext';
 import { ROLES } from '@/lib/constants';
 import { canAccessModule } from '@/lib/packageConfig';
-import { playReady } from '@/lib/sounds';
+import { sonarAntesDeHablar } from '~/sonidos/gestor';
 import { speak, fraseListoCocina, getAlertConfig } from '@/lib/voiceAlert';
 import { toast } from 'sonner';
 import { claves } from '~/cliente/claves-de-consulta';
@@ -180,21 +180,20 @@ export default function PedidoListoWatcher() {
 
     saveSet(notifiedRef.current);
 
-    // Visual → luego voz/sonido con ~280ms de delay.
+    // Visual → luego voz/sonido con ~280ms de delay. DP-12.6: el sonido (Check) es del gestor
+    // y la voz empieza cuando termina; nunca se le encima.
     if (debeSonarUna || debeHablar.length > 0) {
       setTimeout(() => {
-        if (debeSonarUna) {
-          try {
-            playReady();
-          } catch {}
-        }
-        debeHablar.forEach((frase, i) => {
-          // Pequeño stagger entre frases si hay varias.
-          setTimeout(() => {
-            try {
-              speak(frase);
-            } catch {}
-          }, i * 1400);
+        const sonido = debeSonarUna ? sonarAntesDeHablar('comandaLista') : Promise.resolve();
+        sonido.then(() => {
+          debeHablar.forEach((frase, i) => {
+            // Pequeño stagger entre frases si hay varias.
+            setTimeout(() => {
+              try {
+                speak(frase);
+              } catch {}
+            }, i * 1400);
+          });
         });
       }, 280);
     }

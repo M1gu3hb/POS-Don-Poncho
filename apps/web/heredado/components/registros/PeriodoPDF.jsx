@@ -5,6 +5,11 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { MH_LOGO_URL as AZECAFE_LOGO_URL } from '@/lib/ConfigContext';
 import { NOMBRE_DEL_NEGOCIO, nombreVisibleDelSistema } from '~/marca/nombre-visible';
+import {
+  SIN_RECETA,
+  notaDeLasVentasSinReceta,
+  textoDelMargen,
+} from '~/restaurante/margen-de-las-ventas';
 
 /**
  * PDF imprimible de un periodo seleccionado en Registros.
@@ -20,8 +25,12 @@ export default function PeriodoPDF({ data, config = {}, sinCostos = false }) {
     compras = [],
     gastos = [],
     totals = {},
-    margen = 0,
+    margen = null,
+    economia = null,
   } = data;
+  // DP-12.6: sin receta el costo es desconocido; las que quedaron fuera de la utilidad se dicen.
+  const nota =
+    economia?.estado === 'parcial' ? ` (sin contar ${notaDeLasVentasSinReceta(economia.sinReceta)})` : '';
   // Neto NO incluye propinas porque no son ingreso del restaurante.
   const neto = (totals.ingresos || 0) - (totals.compras || 0) - (totals.gastos || 0);
 
@@ -95,13 +104,18 @@ export default function PeriodoPDF({ data, config = {}, sinCostos = false }) {
               <tr>
                 <td className="border px-2 py-1.5 font-medium">Utilidad bruta</td>
                 <td className="border px-2 py-1.5 text-right text-exito">
-                  {formatCurrency(totals.utilidad || 0)}
+                  {totals.utilidad === null || totals.utilidad === undefined
+                    ? SIN_RECETA
+                    : formatCurrency(totals.utilidad)}
+                  {nota}
                 </td>
               </tr>
               <tr>
                 <td className="border px-2 py-1.5 font-medium">Margen promedio</td>
                 <td className="border px-2 py-1.5 text-right">
-                  {(Number.isFinite(Number(margen)) ? Number(margen) : 0).toFixed(1)}%
+                  {margen === null || !Number.isFinite(Number(margen))
+                    ? SIN_RECETA
+                    : textoDelMargen(Number(margen))}
                 </td>
               </tr>
               <tr>

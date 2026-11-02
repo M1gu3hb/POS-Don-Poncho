@@ -156,7 +156,9 @@ export default function SolicitudesQRTab() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {/* DP-12.6: en renglones (`flex-wrap`), no en una tira que se desliza: en un teléfono la
+            quinta pestaña quedaba cortada («Atendidas (»). */}
+        <div className="flex flex-wrap gap-1.5">
           {filtros.map((f) => (
             <button
               key={f.key}

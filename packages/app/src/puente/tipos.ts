@@ -310,6 +310,16 @@ export interface MapaEntidad {
     readonly columnaEstado: string;
     readonly estados: readonly string[];
     readonly vacias: readonly string[];
+    /**
+     * DP-12.3 · Además, que no encabece nada vivo en otra tabla: la principal de una unión de mesas
+     * abierta (`uniones_mesa.mesa_principal_id` con `cerrada_en` nulo). Apagarla dejaba sus mesas
+     * absorbidas ocultas para siempre.
+     */
+    readonly sinCabezaViva?: {
+      readonly tabla: string;
+      readonly columna: string;
+      readonly abiertaSi: string;
+    };
     readonly codigo: CodigoError;
     readonly mensaje: string;
   };

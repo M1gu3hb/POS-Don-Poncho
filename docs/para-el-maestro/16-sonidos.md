@@ -41,7 +41,8 @@ Ninguna.
 ## Genérico o de Don Poncho
 
 Genérico. Lo de Don Poncho es dónde se llamó a `sonar` (sus pantallas del restaurante) y que
-Cocina conserva su timbre y su voz.
+Cocina conserva su voz. Desde DP-12.6 (ficha 23) el timbre de Cocina, el aviso del mesero y el
+pedido listo también pasan por el gestor y el sistema viejo ya no existe.
 
 ## Cómo portarlo
 

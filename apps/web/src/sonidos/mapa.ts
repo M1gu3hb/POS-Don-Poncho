@@ -88,17 +88,11 @@ export const MAPA: Readonly<Record<EventoDeSonido, SonidoDelEvento>> = {
   encender: { titulo: 'Interruptor encendido', receta: 'clasp' },
   apagar: { titulo: 'Interruptor apagado', receta: 'unclasp' },
   enviarACocina: { titulo: 'Enviar a cocina', receta: 'dispatch' },
-  comandaNueva: {
-    titulo: 'Comanda nueva (antes de la voz)',
-    receta: 'ping',
-    nota: 'Hoy Cocina conserva su timbre y su voz de siempre.',
-  },
+  // DP-12.6: el timbre de Cocina y el aviso del mesero ya suenan por el gestor; la voz de siempre
+  // va después de ellos, nunca encima (`sonarAntesDeHablar`).
+  comandaNueva: { titulo: 'Comanda nueva (antes de la voz)', receta: 'ping' },
   comandaLista: { titulo: 'Comanda lista', receta: 'check' },
-  solicitud: {
-    titulo: 'Solicitud del comensal',
-    receta: 'signal',
-    nota: 'Hoy suena la alerta del mesero de siempre, con su voz.',
-  },
+  solicitud: { titulo: 'Solicitud del comensal', receta: 'signal' },
   solicitudAtendida: { titulo: 'Solicitud atendida', receta: 'boop' },
   cobro: { titulo: 'Cobro hecho', receta: 'halo' },
   ticket: { titulo: 'Ticket impreso o enviado', receta: 'receipt' },

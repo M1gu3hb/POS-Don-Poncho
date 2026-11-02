@@ -8,10 +8,6 @@ import { BrowserMultiFormatReader } from '@zxing/browser';
 import { normalizeBarcode, isLikelyValidBarcode, isSuspiciousBarcode } from '@/utils/barcodeUtils';
 import ScanFeedbackOverlay from './ScanFeedbackOverlay';
 import ScannerMiniCart from './ScannerMiniCart';
-// El restaurante llama a este botón `SoundUnlockButton`; la tiendita lo llamaba
-// `ActivarSonidoButton`. Es el mismo trabajo: desbloquear el audio con el
-// primer gesto del usuario, que es lo único que los navegadores aceptan.
-import ActivarSonidoButton from '@/components/common/SoundUnlockButton';
 
 /**
  * BarcodeScanner — modal reutilizable con lectura ESTABLE.
@@ -421,14 +417,6 @@ export default function BarcodeScanner({
                 onViewCart={onViewCart}
                 onFinish={onFinish}
               />
-            )}
-
-            {/* Botón contextual "Activar sonido" — flotante, no tapa cámara ni carrito */}
-            {!pendingCode && (
-              <div className="absolute left-1/2 -translate-x-1/2 z-30 pointer-events-none"
-                   style={{ top: miniCart ? '110px' : '16px' }}>
-                <ActivarSonidoButton variant="overlay" />
-              </div>
             )}
 
             {/* Feedback verde "Producto agregado" */}

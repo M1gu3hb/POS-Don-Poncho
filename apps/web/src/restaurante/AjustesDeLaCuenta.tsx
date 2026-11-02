@@ -118,9 +118,16 @@ export function DescuentoDeLaCuenta({
 export function CancelarLaCuenta({
   ordenId,
   alCancelar,
+  aviso = null,
 }: {
   readonly ordenId: string;
   readonly alCancelar: (cancelada: boolean) => void;
+  /**
+   * DP-12.4 · Lo que hay que saber ANTES de cancelar, si hay algo: «la cocina ya preparó X, queda
+   * como pérdida». Lo calcula quien monta el botón (la pantalla del mesero); sin él, el diálogo
+   * es el de siempre.
+   */
+  readonly aviso?: string | null;
 }) {
   const voc = useVocabulario();
   const [abierto, setAbierto] = useState(false);
@@ -169,6 +176,11 @@ export function CancelarLaCuenta({
               nombre.
             </DialogDescription>
           </DialogHeader>
+          {aviso === null ? null : (
+            <Aviso tono="atencion" titulo={aviso}>
+              Queda en el corte con quién la canceló, cuándo, por qué y cuánto.
+            </Aviso>
+          )}
           <div className="flex flex-col gap-(--espacio-1)">
             <Label htmlFor="cancelar-cuenta-motivo">Por qué</Label>
             <Textarea

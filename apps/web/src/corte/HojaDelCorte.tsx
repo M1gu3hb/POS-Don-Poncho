@@ -100,10 +100,29 @@ function TablaDelDocumento({
   );
 }
 
-function SeccionPintada({ seccion }: { readonly seccion: Seccion }) {
+/** Una sección del documento, pintada. También la usa el corte heredado de la Caja. */
+export function SeccionPintada({ seccion }: { readonly seccion: Seccion }) {
+  // Una pérdida (DP-12.4) se ve aunque el dueño sólo hojee: filete y título en el rojo del
+  // sistema, sin transparencias —el PDF se captura con html2canvas— y con la palabra, para que
+  // el color no sea lo único que lo diga en una impresión en blanco y negro.
+  const esPerdida = seccion.tipo === 'tabla' && seccion.tono === 'perdida';
   return (
-    <section className="mb-(--espacio-4) break-inside-avoid">
-      <h2 className="mb-(--espacio-2) border-b border-borde-fuerte text-sm font-bold uppercase">
+    <section
+      className={
+        esPerdida
+          ? 'mb-(--espacio-4) break-inside-avoid border-l-4 border-peligro pl-(--espacio-2)'
+          : 'mb-(--espacio-4) break-inside-avoid'
+      }
+      data-tono={esPerdida ? 'perdida' : undefined}
+    >
+      <h2
+        className={
+          esPerdida
+            ? 'mb-(--espacio-2) border-b border-peligro text-sm font-black text-peligro uppercase'
+            : 'mb-(--espacio-2) border-b border-borde-fuerte text-sm font-bold uppercase'
+        }
+      >
+        {esPerdida ? <span aria-hidden="true">⚠ </span> : null}
         {seccion.titulo}
       </h2>
       {seccion.tipo === 'celdas' ? (

@@ -1,75 +1,102 @@
 'use client';
 
-import { atraer, grupoDe, revisarUnion, type MesaEnPlano } from '@morphiqpos/domain/sala';
+import {
+  atraer,
+  formaDeLaUnion,
+  grupoDe,
+  revisarUnion,
+  vecinaQueLlama,
+  type FormaDeLaUnion,
+  type MesaEnPlano,
+} from '@morphiqpos/domain/sala';
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Aviso, Superficie } from '@morphiqpos/ui/sistema';
 import { Combine, Split } from 'lucide-react';
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 
-import { invocarComando } from '~/cliente/api';
+import { consultarPuente, invocarComando } from '~/cliente/api';
+import { centavosDe } from '~/cliente/dinero-del-puente';
 
+import { AvisoDeMesasOcupadas, type MesaOcupada } from './AvisoDeMesasOcupadas';
 import { EligeElNumero } from './EligeElNumero';
-import { MesasQueSeFunden } from './MesasQueSeFunden';
+import { MesaQueTiembla, type Desplazamiento } from './MesaQueTiembla';
 import { SepararMesasDialog } from './SepararMesasDialog';
 import {
+  cajaDeLaUnion,
+  conGente,
+  enLimpieza,
   escalaDelPlano,
   juntarAlGrupo,
   mesasEnPlano,
   sinAbsorbidas,
   type MesaDelPlanoDeUnion,
 } from './plano-de-union';
+import { useArrastreDeMesas } from './use-arrastre-de-mesas';
 import { useUnionDeLaMesa } from './use-union-de-la-mesa';
 
 /**
- * «UNIR MESAS» EN EL MAPA (DP-9.6). Las mesas tiemblan: se arrastran con el dedo o el mouse, al
- * acercarse se atraen (imán) y al tocarse se funden (un filtro SVG, sin librerías). También con
- * toques —una mesa, luego las que se le juntan—, para quien no puede o no quiere arrastrar. Al
- * unir se elige qué número queda. Nada se guarda hasta «Unir»: «Cancelar» deja el mapa igual.
- * Tocar la principal de una unión ofrece «Separar mesas»: así se separa una que quedó libre.
+ * «UNIR MESAS» EN EL MAPA (DP-9.6, rehecho en DP-12.3).
+ *
+ * Las mesas NO cambian al entrar: la misma forma, tamaño, color, número, estado y mesero que en el
+ * mapa (las dibuja la pantalla con `pintarMesa`). Tiemblan para decir «me puedes mover» y se
+ * arrastran con el dedo o el ratón, 1:1. El imán es la VECINA, que se inclina hacia la que llevas;
+ * al soltar cerca, se pegan y el grupo se ve fundido en la forma que le toca (cápsula, rectángulo,
+ * cuadrado). También con toques, para quien no puede arrastrar. Con gente, se pregunta antes de
+ * unir; en limpieza, no se puede. Al separar, cada mesa sale de la unida y vuelve a su lugar.
  */
 
 /** El alto del mapa del mesero, en puntos del plano. */
 const ALTO_DEL_PLANO = 600;
-/** Menos que esto entre que se pisa y se suelta es un toque, no un arrastre. */
-const TOQUE = 6;
+/** Lo que dura la animación de separar antes de volver al mapa. */
+const MS_DE_SEPARAR = 650;
 
-interface Arrastre {
-  readonly id: string;
-  readonly dx: number;
-  readonly dy: number;
-  readonly x0: number;
-  readonly y0: number;
+interface Separacion {
+  readonly desde: { readonly x: number; readonly y: number };
+  readonly mesas: readonly string[];
+  readonly fase: 'antes' | 'despues';
 }
 
 export function UnirMesasEnElMapa({
   mesas,
   anclaInicial = null,
+  separarAlEntrar = false,
   alTerminar,
+  alReleer,
+  pintarMesa,
 }: {
   readonly mesas: readonly MesaDelPlanoDeUnion[];
   readonly anclaInicial?: string | null;
+  /** DP-12.3: se entró para separar una unión (el globo de la mesa o la mesa libre). */
+  readonly separarAlEntrar?: boolean;
   readonly alTerminar: (unidas: boolean) => void;
+  /** DP-12.3: relee las mesas (separar se anima con las posiciones nuevas). */
+  readonly alReleer?: () => void;
+  readonly pintarMesa: (mesa: MesaDelPlanoDeUnion, caja: FormaDeLaUnion | null) => ReactNode;
 }) {
-  // Sólo se guarda lo que el mesero MOVIÓ; el resto sale de las mesas que llegan. Así una mesa
-  // que llega tarde —el mapa todavía cargaba al tocar «Unir mesas»— también aparece, y releer
-  // el salón no deshace lo que ya se arrastró.
+  // Sólo se guarda lo que el mesero MOVIÓ; el resto sale de las mesas que llegan.
   const [movidas, setMovidas] = useState<ReadonlyMap<string, { x: number; y: number }>>(
     () => new Map(),
   );
-  const plano: MesaEnPlano[] = mesasEnPlano(sinAbsorbidas(mesas)).map((m) => {
+  const visibles = sinAbsorbidas(mesas);
+  const cajas = new Map(visibles.map((m) => [m.id, cajaDeLaUnion(m, mesas)] as const));
+  const plano: MesaEnPlano[] = mesasEnPlano(visibles).map((m) => {
+    const caja = cajas.get(m.id) ?? null;
+    const base =
+      caja === null ? m : { ...m, x: caja.x, y: caja.y, ancho: caja.ancho, alto: caja.alto };
     const movida = movidas.get(m.id);
-    return movida === undefined ? m : { ...m, ...movida };
+    return movida === undefined ? base : { ...base, ...movida };
   });
   const [ancla, setAncla] = useState<string | null>(anclaInicial);
-  const [arrastre, setArrastre] = useState<Arrastre | null>(null);
   const [principal, setPrincipal] = useState<string | null>(null);
+  const [ocupadas, setOcupadas] = useState<readonly MesaOcupada[] | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
   const [ancho, setAncho] = useState(1000);
-  const [separando, setSeparando] = useState(false);
+  const [separando, setSeparando] = useState(separarAlEntrar);
+  const [asentando, setAsentando] = useState<{ id: string; dx: number; dy: number } | null>(null);
+  const [separacion, setSeparacion] = useState<Separacion | null>(null);
   const contenedor = useRef<HTMLElement>(null);
-  const seArrastro = useRef(false);
 
   useEffect(() => {
     const nodo = contenedor.current;
@@ -82,21 +109,50 @@ export function UnirMesasEnElMapa({
       observador.disconnect();
     };
   }, []);
+  // La mesa soltada se asienta: un cuadro en donde la dejó el dedo, y luego a donde la pegó el imán.
+  useEffect(() => {
+    if (asentando === null) return undefined;
+    const cuadro = requestAnimationFrame(() => {
+      setAsentando(null);
+    });
+    return () => {
+      cancelAnimationFrame(cuadro);
+    };
+  }, [asentando]);
+  // Separar: las que estaban unidas salen de la principal y vuelven a su lugar; luego, al mapa.
+  const terminarLaSeparacion = useEffectEvent(() => {
+    alTerminar(true);
+  });
+  const llegaron = separacion?.mesas.every((id) => visibles.some((m) => m.id === id)) ?? false;
+  useEffect(() => {
+    if (separacion?.fase !== 'antes' || !llegaron) return undefined;
+    const cuadro = requestAnimationFrame(() => {
+      setSeparacion({ ...separacion, fase: 'despues' });
+    });
+    return () => {
+      cancelAnimationFrame(cuadro);
+    };
+  }, [separacion, llegaron]);
+  useEffect(() => {
+    if (separacion?.fase !== 'despues') return undefined;
+    const fin = setTimeout(() => {
+      terminarLaSeparacion();
+    }, MS_DE_SEPARAR);
+    return () => {
+      clearTimeout(fin);
+    };
+  }, [separacion]);
 
-  const encabezaUnion = ancla !== null && mesas.some((m) => m.unida_a_mesa_id === ancla);
-  const unionDelAncla = useUnionDeLaMesa(encabezaUnion ? ancla : null, 0)?.unionId ?? null;
   const escala = escalaDelPlano(ancho, plano);
-  const grupo = ancla === null ? [] : grupoDe(ancla, plano);
-  const delGrupo = plano.filter((m) => grupo.includes(m.id));
-  const problema = grupo.length < 2 ? null : revisarUnion(delGrupo);
   const numeroDe = (id: string) => mesas.find((m) => m.id === id)?.numero ?? 0;
   const formaDe = (id: string) => mesas.find((m) => m.id === id)?.forma ?? 'redonda';
+  const esUnionViva = (id: string) => (cajas.get(id) ?? null) !== null;
   const mover = (id: string, x: number, y: number) => {
     setMovidas((actual) => new Map(actual).set(id, { x, y }));
   };
 
   const tocar = (id: string) => {
-    if (ancla === null || ancla === id) {
+    if (ancla === null || ancla === id || esUnionViva(id) || esUnionViva(ancla)) {
       setAncla(ancla === id ? null : id);
       return;
     }
@@ -104,34 +160,85 @@ export function UnirMesasEnElMapa({
     const destino = juntarAlGrupo(id, grupo, plano);
     mover(id, destino.x, destino.y);
   };
+  const soltar = (id: string, x: number, y: number) => {
+    const m = plano.find((p) => p.id === id);
+    if (m === undefined) return;
+    const suelta = { ...m, x, y };
+    const final = vecinaQueLlama(suelta, plano)?.seFunden === true ? atraer(suelta, plano) : suelta;
+    mover(id, final.x, final.y);
+    setAsentando({ id, dx: x - final.x, dy: y - final.y });
+    if (ancla === null) setAncla(id);
+  };
+  const { arrastre, manejadoresDe } = useArrastreDeMesas({
+    escala,
+    anchoDelPlano: ancho / escala,
+    altoDelPlano: ALTO_DEL_PLANO,
+    alSoltar: soltar,
+    alTocar: tocar,
+  });
 
-  const alPisar = (e: PointerEvent<HTMLButtonElement>, m: MesaEnPlano) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    seArrastro.current = false;
-    setArrastre({
-      id: m.id,
-      dx: e.clientX / escala - m.x,
-      dy: e.clientY / escala - m.y,
-      x0: e.clientX,
-      y0: e.clientY,
-    });
+  const vivo = plano.map((m) =>
+    arrastre?.id === m.id ? { ...m, x: arrastre.x, y: arrastre.y } : m,
+  );
+  const arrastrada = arrastre === null ? undefined : vivo.find((m) => m.id === arrastre.id);
+  const llamado = arrastrada === undefined ? null : vecinaQueLlama(arrastrada, vivo);
+  const grupo =
+    ancla === null || esUnionViva(ancla) ? (ancla === null ? [] : [ancla]) : grupoDe(ancla, vivo);
+  const delGrupo = vivo.filter((m) => grupo.includes(m.id));
+  const fundida =
+    grupo.length < 2 ? null : formaDeLaUnion(delGrupo.map((m) => ({ ...m, forma: formaDe(m.id) })));
+  const limpieza = enLimpieza(grupo, mesas);
+  const problema =
+    grupo.length < 2
+      ? null
+      : limpieza !== null
+        ? `La Mesa ${String(limpieza.numero)} está en limpieza: márcala libre primero.`
+        : revisarUnion(delGrupo);
+  const unionDelAncla =
+    useUnionDeLaMesa(ancla !== null && esUnionViva(ancla) ? ancla : null, 0)?.unionId ?? null;
+
+  const desplazamientoDe = (m: MesaEnPlano): Desplazamiento | null => {
+    if (asentando?.id === m.id)
+      return { dx: asentando.dx, dy: asentando.dy, estiron: 1, suave: false };
+    if (llamado?.id === m.id)
+      return { dx: llamado.dx, dy: llamado.dy, estiron: llamado.estiron, suave: true };
+    if (separacion?.fase === 'antes' && separacion.mesas.includes(m.id)) {
+      return {
+        dx: separacion.desde.x - m.x,
+        dy: separacion.desde.y - m.y,
+        estiron: 0.6,
+        suave: false,
+      };
+    }
+    return null;
   };
-  const alMover = (e: PointerEvent<HTMLButtonElement>, m: MesaEnPlano) => {
-    if (arrastre?.id !== m.id) return;
-    if (Math.hypot(e.clientX - arrastre.x0, e.clientY - arrastre.y0) < TOQUE) return;
-    seArrastro.current = true;
-    const suelta = {
-      ...m,
-      x: Math.max(0, e.clientX / escala - arrastre.dx),
-      y: Math.max(0, Math.min(ALTO_DEL_PLANO - m.alto, e.clientY / escala - arrastre.dy)),
-    };
-    // El imán: cerca de otra, se pega a ella mientras se arrastra.
-    const pegada = atraer(suelta, plano);
-    mover(m.id, pegada.x, pegada.y);
-  };
-  const alSoltar = (m: MesaEnPlano) => {
-    setArrastre(null);
-    if (seArrastro.current && ancla === null) setAncla(m.id);
+
+  const pedirElNumero = async () => {
+    // La mesa desde la que se entró (la suya, ya abierta) no se avisa: eso ya lo sabe quien une.
+    const conCuenta = conGente(grupo, mesas).filter((m) => m.id !== anclaInicial);
+    if (conCuenta.length === 0) {
+      setPrincipal(ancla);
+      return;
+    }
+    const conTotales = await Promise.all(
+      conCuenta.map(async (m): Promise<MesaOcupada> => {
+        const id = m.venta_activa_id ?? null;
+        if (id === null) return { numero: m.numero, totalCentavos: null };
+        try {
+          const venta = await consultarPuente<{ total?: number | null }>('Venta', {
+            filtro: { id },
+            limite: 1,
+          });
+          return { numero: m.numero, totalCentavos: centavosDe('Venta', 'total', venta[0]?.total) };
+        } catch (error: unknown) {
+          // Sin el importe (el rol no lo lee, o no se pudo) el aviso se dice igual, sin él: lo que
+          // no puede pasar es unir una mesa con gente sin preguntar.
+          console.warn('No se pudo leer el total de la mesa con gente', error);
+          return { numero: m.numero, totalCentavos: null };
+        }
+      }),
+    );
+    setOcupadas(conTotales);
   };
 
   const unir = async () => {
@@ -142,11 +249,7 @@ export function UnirMesasEnElMapa({
       await invocarComando('/api/restaurante/unir-mesas', {
         mesaPrincipalId: principal,
         mesaIds: grupo.filter((id) => id !== principal),
-        posiciones: delGrupo.map((m) => ({
-          mesaId: m.id,
-          x: Math.round(m.x),
-          y: Math.round(m.y),
-        })),
+        posiciones: delGrupo.map((m) => ({ mesaId: m.id, x: Math.round(m.x), y: Math.round(m.y) })),
       });
       toast.success(`Mesas unidas: queda la ${String(numeroDe(principal))}.`);
       alTerminar(true);
@@ -164,46 +267,52 @@ export function UnirMesasEnElMapa({
         tono="info"
         titulo="Arrastra las mesas para juntarlas, o toca una y luego las que se le unen."
       >
-        Al acercarse se atraen y al tocarse se funden. Nada se guarda hasta «Unir».
+        La vecina se acerca cuando la llevas cerca; al soltarla, se funden. Nada se guarda hasta
+        «Unir». Toca una mesa unida para separarla.
       </Aviso>
       <Superficie
         ref={contenedor}
         nivel={0}
         relleno={0}
-        className="relative w-full overflow-hidden bg-fondo-sutil"
+        className="relative w-full touch-pan-y overflow-hidden bg-fondo-sutil"
         style={{ height: ALTO_DEL_PLANO * escala }}
       >
-        <MesasQueSeFunden plano={plano} escala={escala} grupo={grupo} formaDe={formaDe} />
-        {plano.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            aria-label={`Mesa ${String(numeroDe(m.id))}`}
-            aria-pressed={grupo.includes(m.id)}
-            className="absolute flex touch-none select-none items-center justify-center rounded-full text-lg font-bold text-texto outline-none animate-temblar focus-visible:ring-2 focus-visible:ring-primario motion-reduce:animate-none aria-pressed:text-primario-texto"
+        {fundida === null ? null : (
+          <div
+            aria-hidden="true"
+            data-forma-de-la-union={fundida.figura}
+            className="pointer-events-none absolute bg-primario/15 ring-2 ring-primario/60 transition-opacity duration-(--duracion-normal)"
             style={{
-              left: m.x * escala,
-              top: m.y * escala,
-              width: m.ancho * escala,
-              height: m.alto * escala,
+              left: (fundida.x - 6) * escala,
+              top: (fundida.y - 6) * escala,
+              width: (fundida.ancho + 12) * escala,
+              height: (fundida.alto + 12) * escala,
+              borderRadius: (fundida.radio + 6) * escala,
             }}
-            onPointerDown={(e) => {
-              alPisar(e, m);
-            }}
-            onPointerMove={(e) => {
-              alMover(e, m);
-            }}
-            onPointerUp={() => {
-              alSoltar(m);
-            }}
-            onClick={() => {
-              if (seArrastro.current) seArrastro.current = false;
-              else tocar(m.id);
-            }}
-          >
-            {numeroDe(m.id)}
-          </button>
-        ))}
+          />
+        )}
+        {vivo.map((m, indice) => {
+          const original = mesas.find((x) => x.id === m.id);
+          if (original === undefined) return null;
+          return (
+            <MesaQueTiembla
+              key={m.id}
+              mesa={m}
+              numero={original.numero}
+              indice={indice}
+              escala={escala}
+              enElGrupo={grupo.includes(m.id)}
+              arrastrando={arrastre?.id === m.id}
+              desplazamiento={desplazamientoDe(m)}
+              manejadores={manejadoresDe(m, esUnionViva(m.id))}
+              alTeclear={() => {
+                tocar(m.id);
+              }}
+            >
+              {pintarMesa(original, cajas.get(m.id) ?? null)}
+            </MesaQueTiembla>
+          );
+        })}
       </Superficie>
       {problema === null ? null : <Aviso tono="atencion" titulo={problema} />}
       {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
@@ -231,14 +340,22 @@ export function UnirMesasEnElMapa({
         <Button
           className="gap-(--espacio-2)"
           disabled={grupo.length < 2 || problema !== null || enviando}
-          onClick={() => {
-            setPrincipal(ancla);
-          }}
+          onClick={() => void pedirElNumero()}
         >
           <Combine className="size-4" aria-hidden="true" />
           {grupo.length < 2 ? 'Unir mesas' : `Unir ${String(grupo.length)} mesas`}
         </Button>
       </div>
+      <AvisoDeMesasOcupadas
+        ocupadas={ocupadas}
+        alCancelar={() => {
+          setOcupadas(null);
+        }}
+        alUnir={() => {
+          setOcupadas(null);
+          setPrincipal(ancla);
+        }}
+      />
       <EligeElNumero
         abierto={principal !== null}
         opciones={grupo.map((id) => ({ id, numero: numeroDe(id) }))}
@@ -255,10 +372,19 @@ export function UnirMesasEnElMapa({
           unionId={unionDelAncla}
           alCerrar={() => {
             setSeparando(false);
+            if (separarAlEntrar) alTerminar(false);
           }}
           alHecho={() => {
             toast.success('Mesas separadas: cada una volvió a su lugar.');
-            alTerminar(true);
+            const caja = ancla === null ? null : (cajas.get(ancla) ?? null);
+            const absorbidas = mesas.filter((m) => m.unida_a_mesa_id === ancla).map((m) => m.id);
+            setSeparando(false);
+            if (caja === null || alReleer === undefined) {
+              alTerminar(true);
+              return;
+            }
+            setSeparacion({ desde: { x: caja.x, y: caja.y }, mesas: absorbidas, fase: 'antes' });
+            alReleer();
           }}
         />
       )}

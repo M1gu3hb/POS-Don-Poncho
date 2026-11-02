@@ -38,7 +38,6 @@ import MesaGridMobile from '@/components/mesero/MesaGridMobile';
 import MeseroCartFAB from '@/components/mesero/MeseroCartFAB';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
 import PropinaDialog from '@/components/propinas/PropinaDialog';
-import SoundUnlockButton from '@/components/common/SoundUnlockButton';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import MesaHuerfanaDialog from '@/components/mesero/MesaHuerfanaDialog';
 import ProductoFichaExpandible from '@/components/mesero/ProductoFichaExpandible';
@@ -50,7 +49,7 @@ import AbrirMesaDialog from '@/components/mesero/AbrirMesaDialog';
 import CantidadVariableDialog from '@/components/mesero/CantidadVariableDialog';
 import { TIPO_VENTA, formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import PrecioProductoMesero, { VariableBadge } from '@/components/mesero/PrecioProductoMesero';
-import { Combine, Volume2 } from 'lucide-react';
+import { Combine, ScanLine, Volume2 } from 'lucide-react';
 import { useCajaAbierta } from '@/lib/useCajaAbierta';
 import { useIsDark } from '@/lib/ThemeContext';
 import { FLOOR_BG } from '@/lib/darkPalettes';
@@ -78,18 +77,31 @@ import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pre
 import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
 import { solicitudesPorMesa } from '~/restaurante/globos-de-solicitud';
 import { SelectorDeVista } from '~/restaurante/SelectorDeVista';
+import { CancelarDelMesero } from '~/restaurante/CancelarDelMesero';
 import { UnirMesasEnElMapa } from '~/restaurante/unir-mesas/UnirMesasEnElMapa';
-import { nombreConUnidas, sinAbsorbidas } from '~/restaurante/unir-mesas/plano-de-union';
+import {
+  cajaDeLaUnion,
+  nombreConUnidas,
+  sinAbsorbidas,
+} from '~/restaurante/unir-mesas/plano-de-union';
 import { useLocation } from '@/enrutado';
 import { VistaDeSolicitudes } from '~/restaurante/VistaDeSolicitudes';
+// DP-12.2: el portal en modo mesero (escanear el QR, mantener presionada una mesa, el carrito).
+import BarcodeScanner from '@/components/barcode/BarcodeScanner';
+import { esPedidoListo } from '~/restaurante/globos-de-solicitud';
+import { CarritoDelPortalParaElMesero } from '~/restaurante/portal-mesero/CarritoDelPortalParaElMesero';
+import { DialogoDelPortalModoMesero } from '~/restaurante/portal-mesero/DialogoDelPortalModoMesero';
+import { MenuDeLaMesa } from '~/restaurante/portal-mesero/MenuDeLaMesa';
+import { QrDeLaMesaEnPantalla } from '~/restaurante/portal-mesero/QrDeLaMesaEnPantalla';
+import { tokenDelQrEscaneado } from '~/restaurante/portal-mesero/qr-escaneado';
+import { usePulsacionLarga } from '~/restaurante/portal-mesero/use-pulsacion-larga';
 import {
   almacenDelAparato,
   guardarVista,
   leerVistaGuardada,
 } from '~/restaurante/vista-de-solicitudes';
-import { playNewOrder } from '@/lib/sounds';
 import { frasePorSolicitud, getAlertConfig, speak } from '@/lib/voiceAlert';
-import { sonar } from '~/sonidos/gestor';
+import { sonar, sonarAntesDeHablar } from '~/sonidos/gestor';
 
 const MAP_HEIGHT = 600;
 // Hook simple para detectar móvil
@@ -205,7 +217,17 @@ function Mesero() {
     () => solicitudesPorMesa(solicitudesActivas),
     [solicitudesActivas],
   );
-  const releerTrasAtender = () => {
+  // DP-12.2: el portal de una mesa en modo mesero (por el QR escaneado o por el aviso «Pedido
+  // listo para confirmar»), el globo de la mesa mantenida presionada y su QR en la pantalla.
+  const [escaneandoQr, setEscaneandoQr] = useState(false);
+  const [portalDeMesa, setPortalDeMesa] = useState(null);
+  const [menuDeMesa, setMenuDeMesa] = useState(null);
+  const [qrEnPantalla, setQrEnPantalla] = useState(null);
+  const cerrarMenuDeMesa = useCallback(() => setMenuDeMesa(null), []);
+  const releerTrasAtender = (solicitud) => {
+    if (solicitud && esPedidoListo(solicitud) && solicitud.mesa_id) {
+      setPortalDeMesa({ mesaId: solicitud.mesa_id });
+    }
     queryClient.invalidateQueries({ queryKey: ['solicitudes_qr_mesero_count'] });
     queryClient.invalidateQueries({ queryKey: ['solicitudes_qr_mesero'] });
     queryClient.invalidateQueries({ queryKey: ['solicitudes_qr_admin'] });
@@ -229,15 +251,26 @@ function Mesero() {
   // las dos; `speak` respeta el modo. El nombre del mesero sólo va en las suyas.
   const anunciarSolicitudes = (nuevas) => {
     const alertas = getAlertConfig();
-    if (alertas.modo === 'sonido' || alertas.modo === 'sonido_voz') playNewOrder();
+    // DP-12.6: el aviso (Signal) es del gestor de sonido y la voz empieza cuando termina.
+    const sonido =
+      alertas.modo === 'sonido' || alertas.modo === 'sonido_voz'
+        ? sonarAntesDeHablar('solicitud')
+        : Promise.resolve();
     nuevas.forEach((s, i) => {
       const propia = Boolean(s.mesero_destino_id) && s.mesero_destino_id === posUser?.id;
       const nombre =
         propia && alertas.decir_nombre && debeUsarNombreEnVoz(config, s) ? posUser?.nombre || '' : '';
-      setTimeout(() => speak(frasePorSolicitud(s.tipo, s.mesa_numero, nombre)), 280 + i * 1400);
+      sonido.then(() =>
+        setTimeout(() => speak(frasePorSolicitud(s.tipo, s.mesa_numero, nombre)), 280 + i * 1400),
+      );
     });
   };
   const portalActivo = config?.portal_qr_activo === true;
+  // DP-12.2: mantener presionada una mesa (o clic derecho) abre su globo: «Ver mesa» y «Ver QR».
+  const pulsacionLarga = usePulsacionLarga((mesaId, x, y) => {
+    const mesa = mesasZona.find((m) => m.id === mesaId);
+    if (mesa) setMenuDeMesa({ id: mesa.id, numero: mesa.numero, x, y });
+  });
   const enSolicitudes = portalActivo && vista === 'solicitudes';
 
   // Refs para evitar doble cierre y cerrar el sheet hijo antes que el Dialog
@@ -351,17 +384,31 @@ function Mesero() {
   const { search } = useLocation();
   const unirDesde = new URLSearchParams(search).get('unir');
   const [uniendo, setUniendo] = useState(false);
+  // DP-12.3: se entró a «Unir mesas» para separar una unión (el globo de la mesa, la mesa libre).
+  const [separarAlEntrar, setSepararAlEntrar] = useState(null);
+  // La mesa desde la que se llegó con `?unir=`: la dirección se limpia al entrar, el ancla no.
+  const [anclaDeUnir, setAnclaDeUnir] = useState(null);
   const anclaUbicada = useRef(null);
   useEffect(() => {
-    if (!unirDesde || anclaUbicada.current === unirDesde) return;
+    // `mesas` es una lista vacía hasta que llega la primera lectura: antes de eso no se decide
+    // que la mesa ya no existe.
+    if (!unirDesde || anclaUbicada.current === unirDesde || cargandoMesas) return;
+    anclaUbicada.current = unirDesde;
     // La zona de la mesa desde la que se llegó, para que esté en el plano. Una sola vez: luego
     // el mesero puede cambiar de zona.
-    const ancla = (mesas || []).find((m) => m.id === unirDesde);
-    if (!ancla) return;
-    anclaUbicada.current = unirDesde;
+    const ancla = mesas.find((m) => m.id === unirDesde);
+    // DP-12.3: si la mesa ya no se puede unir (ya no existe, quedó dentro de otra unión), se dice
+    // y el ancla vieja sale de la dirección: no vuelve a abrir el modo unir con ella.
+    if (!ancla || ancla.unida_a_mesa_id) {
+      toast.info('Esa mesa ya no se puede unir desde aquí: elige las mesas en el mapa.');
+      window.history.replaceState(null, '', window.location.pathname);
+      return;
+    }
     setZonaActiva(zonaDeLaMesa(ancla));
+    setAnclaDeUnir(ancla.id);
     setUniendo(true);
-  }, [unirDesde, mesas]);
+    window.history.replaceState(null, '', window.location.pathname);
+  }, [unirDesde, mesas, cargandoMesas]);
   const puedeUnir = posUser?.rol === ROLES.WAITER || posUser?.rol === ROLES.ADMIN;
   // Las zonas del NEGOCIO, no sólo la lista fija: una mesa en «Salón» se ve (DP-5).
   const zonasConCount = zonasConMesas(
@@ -1072,7 +1119,6 @@ function Mesero() {
               <span>Alertas</span>
             </Button>
           )}
-          <SoundUnlockButton />
         </div>
       </div>
 
@@ -1124,32 +1170,98 @@ function Mesero() {
 
       {/* MAP — Desktop usa posiciones libres; mobile usa grid.
           Fondo "madera" dark-aware (FLOOR_BG). */}
-      {puedeUnir && !uniendo && (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="gap-1.5"
-            disabled={mesasLoading}
-            onClick={() => setUniendo(true)}
-          >
-            <Combine className="w-4 h-4" /> Unir mesas
-          </Button>
+      {!uniendo && (puedeUnir || portalActivo) && (
+        <div className="flex flex-wrap justify-end gap-2">
+          {portalActivo && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => setEscaneandoQr(true)}
+            >
+              <ScanLine className="w-4 h-4" /> Escanear QR
+            </Button>
+          )}
+          {puedeUnir && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              disabled={mesasLoading}
+              onClick={() => setUniendo(true)}
+            >
+              <Combine className="w-4 h-4" /> Unir mesas
+            </Button>
+          )}
         </div>
       )}
+
+      {/* DP-12.2: el portal de la mesa en modo mesero, el globo de la mesa y su QR. */}
+      <BarcodeScanner
+        open={escaneandoQr}
+        title="Escanear el QR de la mesa"
+        onClose={() => setEscaneandoQr(false)}
+        onDetected={(codigo) => {
+          const qr = tokenDelQrEscaneado(String(codigo || ''));
+          if (qr === null) {
+            toast.error('Ese código no es el QR de una mesa.');
+            return;
+          }
+          setEscaneandoQr(false);
+          setPortalDeMesa({ qr });
+        }}
+      />
+      <DialogoDelPortalModoMesero buscada={portalDeMesa} alCerrar={() => setPortalDeMesa(null)} />
+      <MenuDeLaMesa
+        mesa={menuDeMesa}
+        alCerrar={cerrarMenuDeMesa}
+        alVerMesa={(mesaId) => {
+          const mesa = mesasZona.find((m) => m.id === mesaId);
+          if (mesa) onMesaClick(mesa);
+        }}
+        alVerQr={(mesa) => setQrEnPantalla({ id: mesa.id, numero: mesa.numero })}
+        alSeparar={
+          menuDeMesa && mesasDeLaZona.some((m) => m.unida_a_mesa_id === menuDeMesa.id)
+            ? (mesaId) => {
+                setSepararAlEntrar(mesaId);
+                setUniendo(true);
+              }
+            : undefined
+        }
+      />
+      <QrDeLaMesaEnPantalla mesa={qrEnPantalla} alCerrar={() => setQrEnPantalla(null)} />
 
       {uniendo ? (
         <UnirMesasEnElMapa
           mesas={mesasDeLaZona}
-          anclaInicial={unirDesde}
+          anclaInicial={separarAlEntrar ?? anclaDeUnir}
+          separarAlEntrar={separarAlEntrar !== null}
+          alReleer={() => queryClient.invalidateQueries({ queryKey: ['mesas'] })}
+          // DP-12.3: en «Unir mesas» las mesas NO cambian: la misma `MesaShape` del mapa.
+          pintarMesa={(mesa, caja) => {
+            const resp = getResponsable(mesa);
+            return (
+              <MesaShape
+                mesa={mesa}
+                inline
+                caja={caja}
+                responsableColor={resp?.color || null}
+                responsableNombre={resp?.nombre || ''}
+              />
+            );
+          }}
           alTerminar={(unidas) => {
             setUniendo(false);
+            setAnclaDeUnir(null);
+            setSepararAlEntrar(null);
             if (unidas) queryClient.invalidateQueries({ queryKey: ['mesas'] });
           }}
         />
       ) : isMobile ? (
         <div
+          {...pulsacionLarga}
           className="rounded-2xl border-2 p-3"
           style={{
             background: floor.bg,
@@ -1169,6 +1281,7 @@ function Mesero() {
         </div>
       ) : (
         <div
+          {...pulsacionLarga}
           className="relative rounded-2xl overflow-hidden border-2"
           style={{
             height: MAP_HEIGHT,
@@ -1183,10 +1296,13 @@ function Mesero() {
         >
           {mesasZona.map((mesa) => {
             const resp = getResponsable(mesa);
+            // DP-12.3: una unión se pinta fundida (cápsula, rectángulo o cuadrado) con su número.
+            const caja = cajaDeLaUnion(mesa, mesasDeLaZona);
             return (
               <MesaShape
                 key={mesa.id}
-                mesa={mesa}
+                mesa={caja ? { ...mesa, posicion_x: caja.x, posicion_y: caja.y } : mesa}
+                caja={caja}
                 onClick={() => onMesaClick(mesa)}
                 responsableColor={resp?.color || null}
                 responsableNombre={resp?.nombre || ''}
@@ -1342,6 +1458,28 @@ function Mesero() {
               onAfterEntregar={handleAfterEntregar}
             />
           )}
+          {/* DP-12.2: lo que armaron los teléfonos de esta mesa, para confirmarlo desde aquí. */}
+          {portalActivo && mesaActiva?.id && (
+            <div className="px-4 pt-2 shrink-0">
+              <CarritoDelPortalParaElMesero buscada={{ mesaId: mesaActiva.id }} compacto />
+            </div>
+          )}
+
+          {/* DP-12.4: quitar un platillo y cancelar la cuenta, con motivo, desde la mesa. */}
+          <CancelarDelMesero
+            ventaId={ventaActiva?.id || mesaActiva?.venta_activa_id || null}
+            detalles={detallesVenta}
+            alActualizar={(cuenta) => {
+              setVentaActiva(cuenta.venta);
+              setDetallesVenta(cuenta.detalles);
+              queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
+            }}
+            alCancelarLaCuenta={() => {
+              queryClient.invalidateQueries({ queryKey: ['mesas'] });
+              queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
+              cerrarDialog();
+            }}
+          />
 
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
             <div className="flex-1 flex flex-col overflow-hidden md:border-r">

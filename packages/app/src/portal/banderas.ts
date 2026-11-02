@@ -1,3 +1,5 @@
+import { QUIEN_ENVIA, type QuienEnvia } from './quien-envia.ts';
+
 /**
  * Los interruptores de operación que gobiernan el portal QR.
  *
@@ -39,6 +41,10 @@ export interface BanderasPortal {
   /** Porcentajes ya validados. Se emiten como el CSV que su `tipsUtils` parsea. */
   readonly porcentajesPropina: readonly number[];
   readonly asignacionMesasActiva: boolean;
+  /** DP-12.2 · Quién manda a cocina: por omisión sólo el mesero (`quien-envia.ts`). */
+  readonly quienEnvia: QuienEnvia;
+  /** DP-12.2 · Sólo si los comensales envían: pueden abrir su mesa al enviar. Apagado. */
+  readonly comensalesAbrenMesa: boolean;
 }
 
 const MODOS_MENU: readonly string[] = ['productos_pos', 'menu_subido', 'mixto'];
@@ -123,6 +129,10 @@ export function banderasDe(valores: unknown): BanderasPortal {
     propinasActivas: bandera(doc, 'propinas_activas', true),
     porcentajesPropina: porcentajesValidos(doc['propina_porcentajes_sugeridos']),
     asignacionMesasActiva: bandera(doc, 'asignacion_mesas_activa', false),
+    // DP-12.2: el mesero confirma y envía siempre que se pueda pedir desde el portal, salvo que
+    // el negocio elija que también los comensales; y abrir su mesa, apagado.
+    quienEnvia: enumerado(doc, 'portal_qr_envia_a_cocina', QUIEN_ENVIA, 'mesero'),
+    comensalesAbrenMesa: bandera(doc, 'portal_qr_comensales_abren_mesa', false),
     // `estaciones_preparacion_activas` ya no se lee aquí: a dónde va la comanda no depende de
     // ella (DP-10.1, `estaciones.ts`). Sólo decide qué dibuja la pantalla de Cocina.
   };

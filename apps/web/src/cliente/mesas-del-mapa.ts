@@ -17,6 +17,8 @@
  * regla es de las que hay que poder ver fallar.
  */
 
+import { medidasDeMesa } from '@morphiqpos/domain/sala';
+
 /** La zona de una mesa que no la declara, tal como la pintaban el mapa y el editor. */
 export const ZONA_POR_OMISION = 'Interior';
 
@@ -27,6 +29,9 @@ export interface MesaDelPlano {
   readonly zona?: string | null | undefined;
   readonly posicion_x?: number | null | undefined;
   readonly posicion_y?: number | null | undefined;
+  /** DP-12.6: con su forma y su tamaño, la mesa ocupa lo suyo y no la caja más grande. */
+  readonly forma?: string | null | undefined;
+  readonly tamano?: string | null | undefined;
 }
 
 /** `activo` ausente cuenta como activa: sólo `false` es baja, igual que en el editor. */
@@ -115,9 +120,10 @@ export function zonasConMesas(
 /**
  * El lienzo del editor: sus dimensiones y la rejilla en la que nace una mesa nueva.
  *
- * `ALTO_DEL_LIENZO` es el `MAP_HEIGHT` de `MesaMapEditor` y de `Mesero`; la caja de una mesa
- * existente se toma del tamaño MÁS GRANDE que admite (`TAMANOS_MESA`: 120 × 100), porque aquí
- * sólo importa no caer encima de ninguna, sea del tamaño que sea.
+ * `ALTO_DEL_LIENZO` es el `MAP_HEIGHT` de `MesaMapEditor` y de `Mesero`. Una mesa existente
+ * ocupa su medida real (forma y tamaño, `medidasDeMesa`); sólo si no se sabe, la caja MÁS GRANDE
+ * que admite (120 × 100). Con la caja grande para todas, cada mesa tapaba la casilla de al lado
+ * (el paso es 90) y en una zona cabían 20 y no 40: la 21 caía encima de otra (DP-12.6).
  */
 export const LIENZO = {
   alto: 600,
@@ -140,24 +146,28 @@ export const LIENZO = {
  * seis mesas colocadas por el dueño, la séptima nacía en la rejilla de fábrica, en un punto
  * que ya ocupaba una de ellas. El mesero la veía encimada desde el primer día.
  *
- * Si la rejilla visible está llena, cae donde caía antes (por la cuenta), fuera de la vista,
- * y el dueño la arrastra.
+ * Si la rejilla visible está llena, sigue buscando en las filas de abajo —fuera de la vista: el
+ * dueño la arrastra—, nunca encima de otra.
  */
 export function siguientePosicionLibre(mesasDeLaZona: readonly MesaDelPlano[]): {
   readonly x: number;
   readonly y: number;
 } {
   const puestas = soloMesasEnServicio(mesasDeLaZona);
-  const filasVisibles = Math.floor((LIENZO.alto - LIENZO.margen) / LIENZO.pasoY);
-  for (let indice = 0; indice < filasVisibles * LIENZO.columnas; indice += 1) {
+  // Una casilla más que mesas puestas: siempre hay una libre entre ellas.
+  for (let indice = 0; ; indice += 1) {
     const x = LIENZO.margen + (indice % LIENZO.columnas) * LIENZO.pasoX;
     const y = LIENZO.margen + Math.floor(indice / LIENZO.columnas) * LIENZO.pasoY;
-    if (!caeSobreAlgunaMesa(x, y, puestas)) return { x, y };
+    if (!caeSobreAlgunaMesa(x, y, puestas) || indice > puestas.length * LIENZO.columnas) {
+      return { x, y };
+    }
   }
-  return {
-    x: LIENZO.margen + (puestas.length % LIENZO.columnas) * LIENZO.pasoX,
-    y: LIENZO.margen + Math.floor(puestas.length / LIENZO.columnas) * LIENZO.pasoY,
-  };
+}
+
+/** Lo que ocupa una mesa ya puesta: su medida, o la caja más grande si no se sabe cuál es. */
+function cajaDe(mesa: MesaDelPlano): { readonly ancho: number; readonly alto: number } {
+  const sinMedida = (mesa.forma ?? null) === null && (mesa.tamano ?? null) === null;
+  return sinMedida ? LIENZO.existente : medidasDeMesa(mesa.forma, mesa.tamano);
 }
 
 /** ¿Una mesa nueva puesta en (x, y) quedaría encima de alguna de estas? */
@@ -165,10 +175,11 @@ export function caeSobreAlgunaMesa(x: number, y: number, mesas: readonly MesaDel
   return mesas.some((otra) => {
     const ox = otra.posicion_x ?? 100;
     const oy = otra.posicion_y ?? 100;
+    const caja = cajaDe(otra);
     return (
-      x < ox + LIENZO.existente.ancho &&
+      x < ox + caja.ancho &&
       x + LIENZO.nueva.ancho > ox &&
-      y < oy + LIENZO.existente.alto &&
+      y < oy + caja.alto &&
       y + LIENZO.nueva.alto > oy
     );
   });

@@ -5,6 +5,7 @@ export {
   type ReglaImpuesto,
   type TotalesOrden,
 } from './totales.ts';
+export { costoDeLaVentaEsDesconocido } from './costo-de-la-venta.ts';
 export {
   calcularDivision,
   type DivisionCalculada,
@@ -16,6 +17,7 @@ export {
 export {
   MOTIVOS_ANULACION,
   elConsumoSePerdio,
+  etiquetaDelMotivoDeAnulacion,
   partirLineaParaAnular,
   type LineaAnulable,
   type LineaPartida,

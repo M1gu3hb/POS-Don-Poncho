@@ -55,6 +55,10 @@ const ESTADO_POR_REGLA: Readonly<Record<string, number>> = {
   QR_CARRITO_SIN_CONFIRMAR: 409,
   QR_LINEA_AJENA: 403,
   QR_CARRITO_LLENO: 422,
+  // DP-12.2: quién manda a cocina. No es un fallo: el teléfono enseña el botón de llamar.
+  QR_SOLO_EL_MESERO_ENVIA: 409,
+  QR_PIDE_QUE_TE_ATIENDAN: 409,
+  QR_CARRITO_VACIO: 422,
   // El teléfono de una estación de cocina (DP-9.4): mismo trato que el QR de la mesa.
   TELEFONO_DE_COCINA_INVALIDO: 404,
   TELEFONO_DEMASIADAS_PETICIONES: 429,

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Users, Loader2, AlertTriangle, PartyPopper } from 'lucide-react';
+import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 
 /**
  * Modal para que el comensal abra una mesa libre desde el Portal QR.
@@ -71,7 +72,7 @@ export default function AbrirMesaQRDialog({ mesa, loading, onClose, onConfirm })
           <Users className="w-5 h-5 text-primary shrink-0" />
           <p className="flex-1 font-heading font-bold">
             Abrir Mesa {mesa?.numero ?? '—'}
-            {mesa?.nombre ? ` · ${mesa.nombre}` : ''}
+            {sufijoDelNombreDeLaMesa(mesa)}
           </p>
           <button
             type="button"

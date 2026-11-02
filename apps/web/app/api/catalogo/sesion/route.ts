@@ -1,6 +1,7 @@
 import { ROLES } from '@morphiqpos/contracts';
 import { terminosDeLaOrganizacion } from '@morphiqpos/app/configuracion';
 import { leerEstacionDeLaSesion } from '@morphiqpos/app/identidad';
+import { leerEsDePlataforma } from '@morphiqpos/app/mantenimiento';
 import { etiquetaDeRol, etiquetaDeRolEnElGiro, rolMH } from '@morphiqpos/app/puente';
 
 import { responderConsulta } from '../../../../src/servidor/http';
@@ -27,6 +28,9 @@ export const dynamic = 'force-dynamic';
  *
  * Y la estación del empleo (DP-10.1): `estacion_preparacion_*` y `puede_ver_todas_estaciones`,
  * los mismos campos que el PIN, para que la cocina filtre con lo que dice el servidor.
+ *
+ * Y si es el usuario de plataforma (DP-12.1, `es_plataforma`): sólo a él se le enseñan los botones
+ * de mantenimiento que borran en masa. Es un rótulo: el servidor lo vuelve a exigir al ejecutar.
  */
 export function GET(): Promise<Response> {
   return responderConsulta(
@@ -54,6 +58,7 @@ export function GET(): Promise<Response> {
         nombreNegocio: sesion.nombreNegocio,
         nombreSucursal: sesion.nombreSucursal,
         tieneTerminal: sesion.terminalId !== null,
+        es_plataforma: await leerEsDePlataforma(sesion.organizacionId, sesion.empleoId),
         ...estacion,
       };
     },

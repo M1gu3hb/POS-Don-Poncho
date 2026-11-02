@@ -5,6 +5,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import { repoCaja, repoOrdenes } from '@morphiqpos/data';
 
 import { definirComando } from '../definicion.ts';
+import { olvidarLosCarritosDeLaSucursal } from '../restaurante/carrito-del-salon.ts';
 import { violaIndice } from '../portal/errores-sql.ts';
 import {
   bloquearLasCajasDeLaSucursal,
@@ -387,6 +388,14 @@ export const cerrarCaja = definirComando<Transaccion, typeof entradaCerrarCaja, 
     // sobrescribe el arqueo original.
     if (cierre.filas !== 1) {
       throw new ErrorDominio('CAJA_CERRADA', 'Esa caja ya se había cerrado.');
+    }
+
+    // DP-12.2 · Cerrar la ÚLTIMA caja de la sucursal es cerrar el día: lo que los comensales dejaron
+    // armado en el carrito del portal y nadie confirmó se olvida, para que mañana no aparezca.
+    if (abiertas.every((id) => id === sesion.id)) {
+      await ctx.paso('olvidar_los_carritos_del_dia', () =>
+        olvidarLosCarritosDeLaSucursal(ctx.tx, organizacionId, sesion.sucursalId),
+      );
     }
 
     if (entrada.denominaciones !== undefined && entrada.denominaciones.length > 0) {

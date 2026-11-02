@@ -16,6 +16,9 @@ export default function MesaShape({
   responsableNombre = '',
   // DP-9.2: los globos de solicitud de esta mesa, si tiene. Los arma la pantalla.
   globos = null,
+  // DP-12.3: la principal de una unión se pinta FUNDIDA con sus absorbidas: la caja del grupo
+  // (`cajaDeLaUnion`: cápsula, rectángulo o cuadrado) en vez de la suya.
+  caja = null,
 }) {
   const isDark = useIsDark();
   const lightCfg = MESA_STATUS_CONFIG[mesa.estado] || MESA_STATUS_CONFIG.libre;
@@ -25,10 +28,18 @@ export default function MesaShape({
   const cfg = isDark ? { ...lightCfg, ...darkOverride } : lightCfg;
   const forma = mesa.forma || 'redonda';
   const tamano = mesa.tamano || 'mediana';
-  const dim = TAMANOS_MESA[tamano]?.[forma] || { w: 80, h: 80 };
+  const dim = caja
+    ? { w: caja.ancho, h: caja.alto }
+    : TAMANOS_MESA[tamano]?.[forma] || { w: 80, h: 80 };
 
   const isRound = forma === 'redonda';
-  const borderRadius = isRound ? '50%' : forma === 'cuadrada' ? '12px' : '14px';
+  const borderRadius = caja
+    ? `${caja.radio}px`
+    : isRound
+      ? '50%'
+      : forma === 'cuadrada'
+        ? '12px'
+        : '14px';
   const borderColor = cfg.stroke;
   const borderWidth = '2.5px';
 
@@ -53,10 +64,12 @@ export default function MesaShape({
 
   return (
     <div
+      // DP-12.2: el mapa reconoce la mesa mantenida presionada (`usePulsacionLarga`).
+      data-mesa-id={mesa.id}
       onClick={onClick}
       draggable={draggable}
       onDragStart={onDragStart}
-      className={`${inline ? 'relative' : 'absolute'} cursor-pointer transition-transform hover:scale-105 active:scale-95 select-none`}
+      className={`${inline ? 'relative' : 'absolute'} cursor-pointer transition-transform hover:scale-105 active:scale-95 select-none [-webkit-touch-callout:none]`}
       style={{
         ...(inline ? {} : { left: mesa.posicion_x ?? 100, top: mesa.posicion_y ?? 100 }),
         width: dim.w,

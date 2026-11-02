@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { aCsv, campoDelRango, celdaCsv } from './exportar.ts';
+import { aCsv, campoDelRango, celdaCsv, sinMargenFalso } from './exportar.ts';
 
 /**
  * F-322 · El exporte de los registros.
@@ -74,6 +74,56 @@ describe('el CSV de los registros', () => {
 
   it('SIN FILAS sale sólo la cabecera vacía, no un error', () => {
     expect(aCsv([])).toBe('');
+  });
+});
+
+describe('el exporte de ventas SIN RECETA (DP-12.6)', () => {
+  const sinReceta = {
+    folio: 'A-1',
+    total: 200,
+    costo_total_snapshot: 0,
+    utilidad_bruta_snapshot: 200,
+    margen_snapshot: 100,
+  };
+  const conReceta = {
+    folio: 'A-2',
+    total: 200,
+    costo_total_snapshot: 80,
+    utilidad_bruta_snapshot: 120,
+    margen_snapshot: 60,
+  };
+
+  it('el costo, la utilidad y el margen de una venta sin receta salen VACÍOS, no «100»', () => {
+    const [fila] = sinMargenFalso('Venta', [sinReceta]);
+    expect(fila).toEqual({
+      folio: 'A-1',
+      total: 200,
+      costo_total_snapshot: null,
+      utilidad_bruta_snapshot: null,
+      margen_snapshot: null,
+    });
+  });
+
+  it('lo que sí tiene costo no se toca', () => {
+    expect(sinMargenFalso('Venta', [conReceta])).toEqual([conReceta]);
+  });
+
+  it('quien no ve costos (las columnas no llegan) no recibe columnas inventadas', () => {
+    const [fila] = sinMargenFalso('Venta', [{ folio: 'A-3', total: 200 }]);
+    expect(fila).toEqual({ folio: 'A-3', total: 200 });
+  });
+
+  it('otras entidades pasan tal cual, aunque tengan los mismos nombres', () => {
+    expect(sinMargenFalso('CorteCaja', [sinReceta])).toEqual([sinReceta]);
+  });
+
+  it('en el CSV el vacío es vacío, y el encabezado conserva las columnas', () => {
+    const csv = aCsv(sinMargenFalso('Venta', [sinReceta, conReceta]));
+    expect(csv.split('\n')).toEqual([
+      'folio,total,costo_total_snapshot,utilidad_bruta_snapshot,margen_snapshot',
+      'A-1,200,,,',
+      'A-2,200,80,120,60',
+    ]);
   });
 });
 

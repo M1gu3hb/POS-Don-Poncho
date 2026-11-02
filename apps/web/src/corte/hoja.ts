@@ -103,6 +103,10 @@ export interface HojaDelServidor {
     metodo: string;
     montoCentavos: string;
   }[];
+  /**
+   * Las cuentas canceladas y los platillos anulados, con QUIÉN canceló (no quien cobraba) y
+   * `perdida` si ya estaban preparados o entregados (DP-12.4). Las pinta `cancelaciones.ts`.
+   */
   readonly cancelaciones: readonly {
     tipo: 'orden' | 'linea';
     folio: string | null;
@@ -111,6 +115,8 @@ export interface HojaDelServidor {
     motivo: string | null;
     producto: string | null;
     montoCentavos: string;
+    mesa: string | null;
+    perdida: boolean;
   }[];
   readonly descuentosPorUsuario: readonly {
     usuario: string | null;
@@ -223,6 +229,8 @@ export type Seccion =
       readonly filas: readonly (readonly Valor[])[];
       readonly total?: readonly Valor[];
       readonly nota?: string;
+      /** `perdida`: la tabla se pinta resaltada, porque son pesos que no volverán (DP-12.4). */
+      readonly tono?: 'perdida';
     }
   | {
       readonly tipo: 'cascada';
@@ -690,37 +698,6 @@ export function inventarioBajo(
   alertas: readonly AlertaDeLaHoja[] = hoja.alertas,
 ): readonly Seccion[] {
   return tablaSiHay({ tipo: 'tabla', titulo, columnas, filas: alertas.map(fila) });
-}
-
-/** Cancelaciones, siempre con usuario: la señal más clara de un problema de caja. */
-export function cancelaciones(
-  hoja: HojaDelServidor,
-  titulo = 'Cancelaciones',
-  extra: readonly (readonly Valor[])[] = [],
-): readonly Seccion[] {
-  return tablaSiHay({
-    tipo: 'tabla',
-    titulo,
-    columnas: [
-      { titulo: 'Folio' },
-      { titulo: 'Hora' },
-      { titulo: 'Qué' },
-      { titulo: 'Usuario' },
-      { titulo: 'Motivo' },
-      { titulo: 'Monto', numerica: true },
-    ],
-    filas: [
-      ...hoja.cancelaciones.map((c) => [
-        texto(c.folio),
-        hora(c.hora),
-        texto(c.tipo === 'orden' ? 'Cuenta completa' : (c.producto ?? 'Producto')),
-        texto(c.usuario),
-        texto(c.motivo),
-        dinero(c.montoCentavos),
-      ]),
-      ...extra,
-    ],
-  });
 }
 
 export function descuentosPorUsuario(hoja: HojaDelServidor): readonly Seccion[] {

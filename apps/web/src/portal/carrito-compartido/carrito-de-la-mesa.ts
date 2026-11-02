@@ -12,8 +12,11 @@ export interface LineaDelCarrito {
   readonly nombre: string;
   readonly cantidad: string;
   readonly notas: string;
-  readonly precioCentavos: string;
+  /** `null`: el negocio no enseña precios en el portal (DP-12.2). */
+  readonly precioCentavos: string | null;
   readonly esMia: boolean;
+  /** DP-12.2 · De qué teléfono es, numerados por orden de llegada. */
+  readonly telefono?: number;
   /** `false`: el negocio ya no lo ofrece; al enviar se quita. Sin el campo, cuenta como sí. */
   readonly disponible?: boolean;
 }
@@ -25,6 +28,56 @@ export interface EstadoDelCarrito {
   readonly esperarATodos: boolean;
   readonly ronda: number;
   readonly ultimoEnvio: { readonly en: string; readonly porEsteTelefono: boolean } | null;
+  /** DP-12.2 · La mesa tiene cuenta. Sin ella el carrito se arma igual. */
+  readonly cuentaAbierta?: boolean;
+  /** DP-12.2 · Qué puede hacer el comensal con lo armado. Falta en un servidor anterior. */
+  readonly envio?: ComoSeEnvia;
+  /** DP-12.2 · Ya hay un «Pedido listo para confirmar» esperando al mesero. */
+  readonly meseroAvisado?: boolean;
+}
+
+/** DP-12.2 · Quién manda a cocina, visto desde el teléfono (`portal/quien-envia.ts`). */
+export type ComoSeEnvia = 'llamar_mesero' | 'enviar' | 'abrir_y_enviar' | 'pedir_que_atiendan';
+
+export interface BotonDelCarrito {
+  /** `llamar`: avisa al mesero; `abrir`: abre la mesa (y luego se envía); `enviar`: a cocina. */
+  readonly accion: 'llamar' | 'abrir' | 'enviar';
+  readonly texto: string;
+  /** Lo que el comensal tiene que saber, en sus palabras. Nunca un texto para el personal. */
+  readonly explicacion: string | null;
+}
+
+export const PEDIDO_GUARDADO =
+  'Tu pedido está guardado. Tu mesero lo confirma y lo manda a cocina.';
+const PIDE_QUE_TE_ATIENDAN = 'Pide a tu mesero que te atienda para enviar tu pedido.';
+
+/**
+ * El botón del carrito y su explicación (DP-12.2). Un servidor anterior no dice `envio`: entonces
+ * envía el comensal, como antes.
+ */
+export function botonDelCarrito(estado: EstadoDelCarrito): BotonDelCarrito {
+  const avisado = estado.meseroAvisado === true;
+  switch (estado.envio ?? 'enviar') {
+    case 'llamar_mesero':
+      return avisado
+        ? { accion: 'llamar', texto: 'Volver a llamar a mi mesero', explicacion: PEDIDO_GUARDADO }
+        : { accion: 'llamar', texto: 'Llamar a mi mesero para confirmar', explicacion: null };
+    case 'pedir_que_atiendan':
+      return {
+        accion: 'llamar',
+        texto: avisado ? 'Volver a llamar a mi mesero' : 'Llamar a mi mesero',
+        explicacion: PIDE_QUE_TE_ATIENDAN,
+      };
+    case 'abrir_y_enviar':
+      return { accion: 'abrir', texto: 'Abrir la mesa y enviar', explicacion: null };
+    case 'enviar':
+      return { accion: 'enviar', texto: 'Enviar a cocina', explicacion: null };
+  }
+}
+
+/** Todas traen precio: si el negocio no los enseña, tampoco hay subtotal que enseñar. */
+export function conPrecios(lineas: readonly LineaDelCarrito[]): boolean {
+  return lineas.every((l) => l.precioCentavos !== null);
 }
 
 export interface ResultadoDelEnvio {
@@ -126,7 +179,7 @@ export function dispositivoDelTelefono(): string {
 export function subtotalAproximadoCentavos(lineas: readonly LineaDelCarrito[]): number {
   return lineas
     .filter((l) => l.disponible !== false)
-    .reduce((suma, l) => suma + Math.round(Number(l.cantidad) * Number(l.precioCentavos)), 0);
+    .reduce((suma, l) => suma + Math.round(Number(l.cantidad) * Number(l.precioCentavos ?? 0)), 0);
 }
 
 export function personasConectadas(n: number): string {

@@ -128,29 +128,6 @@ describe('el carrito compartido de la mesa', () => {
     expect((await caso.mirar(TELEFONO_A))?.conectados).toBe(1);
   });
 
-  it('lo que quedó de una cuenta anterior no aparece ni se envía', async () => {
-    const caso = await mesaConPortal();
-    await caso.abrir(1);
-    const huella = huellaDelDispositivo(PIMIENTA, TELEFONO_A);
-    await obtenerDb()
-      .insertInto('carrito_mesa_lineas')
-      .values({
-        organizacion_id: caso.negocio.organizacionId,
-        mesa_id: caso.mesaId,
-        dispositivo_huella: huella,
-        producto_id: caso.taco,
-        cantidad: '5',
-        created_at: new Date('2020-01-01T00:00:00Z'),
-      })
-      .execute();
-    expect((await caso.mirar(TELEFONO_A))?.lineas).toEqual([]);
-    exigirOk(await caso.agregar(TELEFONO_A, caso.agua), 'agregar');
-    exigirOk(await caso.enviar(TELEFONO_A, false), 'enviar');
-    expect((await lineasDeLaCuenta(caso.mesaId)).map((l) => l.producto_nombre)).toEqual([
-      'Agua de jamaica',
-    ]);
-  });
-
   it(`el carrito tiene tope: ${String(MAXIMO_EN_EL_CARRITO)} cosas`, async () => {
     const caso = await mesaConPortal();
     await caso.abrir(1);

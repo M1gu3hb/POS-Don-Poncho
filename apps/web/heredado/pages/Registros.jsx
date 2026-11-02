@@ -21,6 +21,7 @@ import {
   Printer,
   Trash2,
   Heart,
+  Ban,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import CorteViewerDialog from '@/components/cortes/CorteViewerDialog';
@@ -47,6 +48,7 @@ import PropinasRegistros from '@/components/propinas/PropinasRegistros';
 import { tipsEnabled } from '@/utils/tipsUtils';
 import { useLocation } from '@/enrutado';
 import { claves } from '~/cliente/claves-de-consulta';
+import { CancelacionesRegistradas } from '~/corte/CancelacionesRegistradas';
 
 export default function Registros() {
   const { config, paquete_modo } = useConfig();
@@ -67,7 +69,12 @@ export default function Registros() {
     try {
       const sp = new URLSearchParams(location.search);
       const t = sp.get('tab');
-      if (t && ['cortes', 'ventas', 'propinas', 'compras', 'movimientos', 'gastos'].includes(t))
+      if (
+        t &&
+        ['cortes', 'ventas', 'cancelaciones', 'propinas', 'compras', 'movimientos', 'gastos'].includes(
+          t,
+        )
+      )
         return t;
     } catch (_) {
       /* noop */
@@ -80,7 +87,12 @@ export default function Registros() {
     try {
       const sp = new URLSearchParams(location.search);
       const t = sp.get('tab');
-      if (t && ['cortes', 'ventas', 'propinas', 'compras', 'movimientos', 'gastos'].includes(t)) {
+      if (
+        t &&
+        ['cortes', 'ventas', 'cancelaciones', 'propinas', 'compras', 'movimientos', 'gastos'].includes(
+          t,
+        )
+      ) {
         setActiveTab(t);
       }
     } catch (_) {
@@ -276,6 +288,12 @@ export default function Registros() {
             <Receipt className="w-3 h-3" />
             Ventas ({ventasFiltradas.length})
           </TabsTrigger>
+          {/* DP-12.4 · Las cuentas canceladas y los platillos anulados, con quién, cuándo, por qué,
+              cuánto y si ya estaban preparados (pérdida). Del servidor, como el corte. */}
+          <TabsTrigger value="cancelaciones" className="gap-1">
+            <Ban className="w-3 h-3" />
+            Cancelaciones
+          </TabsTrigger>
           {showPropinas && (
             <TabsTrigger value="propinas" className="gap-1">
               <Heart className="w-3 h-3" />
@@ -301,6 +319,11 @@ export default function Registros() {
             </TabsTrigger>
           )}
         </TabsList>
+
+        {/* CANCELACIONES (DP-12.4) */}
+        <TabsContent value="cancelaciones" className="mt-4 space-y-3">
+          <CancelacionesRegistradas busqueda={search} />
+        </TabsContent>
 
         {/* PROPINAS */}
         {showPropinas && (

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { crearComando, definirComando } from './comando.ts';
 import { ambitoDeCajero, crearFabrica, type TxFalsa } from './pruebas/dobles.ts';
+import { sanear } from './saneado.ts';
 
 /**
  * Auditoría de acciones sensibles.
@@ -199,5 +200,20 @@ describe('comando() · saneado del payload (R31)', () => {
     // Lo que no es secreto se conserva: si no, la auditoría no sirve para nada.
     expect(texto).toContain('Caja 1');
     expect(texto).toContain('esto sí se guarda');
+  });
+});
+
+describe('sanear · el id crudo del teléfono del comensal (DP-12.2)', () => {
+  it('redacta `dispositivo` y deja las claves que sólo lo contienen', () => {
+    const texto = JSON.stringify(
+      sanear({
+        dispositivo: 'telefono-del-comensal-1234567890',
+        item: { productoId: 'p1', cantidad: '2' },
+        dispositivoId: 'terminal-caja-1',
+      }),
+    );
+    expect(texto).not.toContain('telefono-del-comensal-1234567890');
+    expect(texto).toContain('terminal-caja-1');
+    expect(texto).toContain('"cantidad":"2"');
   });
 });

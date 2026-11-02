@@ -42,7 +42,7 @@ let arrachera = '';
 let mesas: readonly string[] = [];
 
 const ambito = () => ambitoDe(negocio, sucursal.sucursalId, null);
-/** Descontar, dividir y anular son de caja o de dirección: el mesero no puede. */
+/** Descontar y dividir son de caja o de dirección; anular, desde DP-12.4, también del mesero. */
 const ambitoDeLaGerente = () => ({ ...ambito(), rol: 'gerente' as const });
 
 beforeAll(async () => {

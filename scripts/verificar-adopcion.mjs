@@ -440,22 +440,6 @@ export const SIN_ESTADO = [
       'No lee el salón: recibe las mesas del mapa, que ya cargó. Su fallo al unir lo dice un Aviso.',
   },
   {
-    pantalla: 'restaurante/unir-mesas/MesasQueSeFunden',
-    estado: 'vacio',
-    razon:
-      'Es sólo el dibujo de las mesas bajo sus botones (DP-9.6): sin mesas no dibuja nada y el mapa dice su vacío.',
-  },
-  {
-    pantalla: 'restaurante/unir-mesas/MesasQueSeFunden',
-    estado: 'cargando',
-    razon: 'No lee nada: dibuja el plano que le da UnirMesasEnElMapa.',
-  },
-  {
-    pantalla: 'restaurante/unir-mesas/MesasQueSeFunden',
-    estado: 'error',
-    razon: 'No lee ni escribe: es un SVG de adorno, sin nada que pueda fallar.',
-  },
-  {
     pantalla: 'restaurante/unir-mesas/EligeElNumero',
     estado: 'vacio',
     razon:
@@ -880,6 +864,122 @@ export const SIN_ESTADO = [
     estado: 'error',
     razon:
       'Va dentro del renglón de un ajuste de inventario: si los motivos no se leen lo dice en una línea bajo el selector y deja la corrección de conteo. Un Aviso o un ErrorDePantalla ahí ocuparía el renglón entero.',
+  },
+  // DP-12.6: el margen de una fila del historial de ventas, que salió de Ventas.jsx. Una línea de
+  // texto que recibe la venta por props: no lee, no lista y no escribe.
+  {
+    pantalla: 'restaurante/MargenDeLaVenta',
+    estado: 'vacio',
+    razon:
+      'Es una línea de texto dentro de la fila de una venta, no una lista: sin costo conocido dice «Margen —, sin receta» y sin permiso para ver costos no se pinta.',
+  },
+  {
+    pantalla: 'restaurante/MargenDeLaVenta',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la venta llega por props desde Ventas, que pinta su esqueleto mientras la lee.',
+  },
+  {
+    pantalla: 'restaurante/MargenDeLaVenta',
+    estado: 'error',
+    razon:
+      'Sin operación propia que falle: si la lista de ventas no se puede leer lo dice Ventas con su ErrorDeLectura.',
+  },
+  {
+    pantalla: 'portal/carrito-compartido/RenglonDelCarrito',
+    estado: 'vacio',
+    razon:
+      'Es UNA línea del carrito del teléfono (DP-12.2): la lista y su vacío son de CarritoDeLaMesa.',
+  },
+  {
+    pantalla: 'portal/carrito-compartido/RenglonDelCarrito',
+    estado: 'cargando',
+    razon: 'No lee nada: la línea llega por props; el carrito pinta su carga.',
+  },
+  {
+    pantalla: 'portal/carrito-compartido/RenglonDelCarrito',
+    estado: 'error',
+    razon: 'Sin lectura propia que falle: quitar avisa con el toast del carrito, que relee.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/DialogoDelPortalModoMesero',
+    estado: 'vacio',
+    razon:
+      'Es el diálogo que envuelve a CarritoDelPortalParaElMesero (DP-12.2), que pinta su Vacio.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/DialogoDelPortalModoMesero',
+    estado: 'cargando',
+    razon: 'El carrito que envuelve pinta su EsqueletoDeLista mientras lee.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/DialogoDelPortalModoMesero',
+    estado: 'error',
+    razon: 'El carrito que envuelve pinta su Aviso si no se puede leer.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/MenuDeLaMesa',
+    estado: 'vacio',
+    razon:
+      'Es el globo de una mesa (DP-12.2): dos o tres opciones fijas, sin lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/MenuDeLaMesa',
+    estado: 'cargando',
+    razon: 'No lee nada: la mesa llega por props desde el mapa.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/MenuDeLaMesa',
+    estado: 'error',
+    razon: 'Sin operación propia: cada opción la hace la pantalla del mesero, que avisa si falla.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/RenglonDelCarritoDelMesero',
+    estado: 'vacio',
+    razon:
+      'Es UNA línea del carrito en modo mesero (DP-12.2): la lista y su vacío son de CarritoDelPortalParaElMesero.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/RenglonDelCarritoDelMesero',
+    estado: 'cargando',
+    razon: 'No lee nada: la línea llega por props; el carrito pinta su carga.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/RenglonDelCarritoDelMesero',
+    estado: 'error',
+    razon: 'Sin lectura propia: cambiar y quitar avisan con el toast del carrito, que relee.',
+  },
+  {
+    pantalla: 'restaurante/unir-mesas/AvisoDeMesasOcupadas',
+    estado: 'vacio',
+    razon:
+      'Es la pregunta «¿Unir de todos modos?» (DP-12.3): sólo se abre con mesas ocupadas que nombrar.',
+  },
+  {
+    pantalla: 'restaurante/unir-mesas/AvisoDeMesasOcupadas',
+    estado: 'cargando',
+    razon: 'Los importes llegan por props, ya leídos por UnirMesasEnElMapa antes de abrirla.',
+  },
+  {
+    pantalla: 'restaurante/unir-mesas/AvisoDeMesasOcupadas',
+    estado: 'error',
+    razon: 'Sin operación propia: unir lo hace UnirMesasEnElMapa, que pinta su Aviso si falla.',
+  },
+  {
+    pantalla: 'restaurante/unir-mesas/MesaQueTiembla',
+    estado: 'vacio',
+    razon:
+      'Es UNA mesa del plano de «Unir mesas» (DP-12.3): el plano y su vacío son de UnirMesasEnElMapa.',
+  },
+  {
+    pantalla: 'restaurante/unir-mesas/MesaQueTiembla',
+    estado: 'cargando',
+    razon: 'No lee nada: la mesa, su forma y su lugar llegan por props desde UnirMesasEnElMapa.',
+  },
+  {
+    pantalla: 'restaurante/unir-mesas/MesaQueTiembla',
+    estado: 'error',
+    razon: 'Sin operación propia: arrastrar y tocar los resuelve UnirMesasEnElMapa.',
   },
 ];
 

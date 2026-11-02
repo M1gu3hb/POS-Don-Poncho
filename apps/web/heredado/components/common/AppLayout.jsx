@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from '@/enrutado';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { useConfig } from '@/lib/ConfigContext';
 import { hasPermission } from '@/lib/permissions';
+import { ROLES } from '@/lib/constants';
 import { inicioDeLaSesion, rutaPermitidaParaElPuesto } from '@/lib/packageConfig';
 import Sidebar from './Sidebar';
 import BrandedBackground from './BrandedBackground';
@@ -77,6 +78,12 @@ export default function AppLayout({ marco = 'interno' }) {
   if (!posUser) return null;
   if (rutaAjena) return null;
 
+  // DP-12.6: el botón redondo del menú (abajo a la derecha, sólo el administrador y por debajo de
+  // 1024 px) tapaba lo último de Recetas, Platillos y demás: el contenido deja su lugar al final.
+  const conBotonRedondo = posUser.rol === ROLES.ADMIN;
+  // (Con `md:` y `lg:` aparte: las variantes de `p-*` de arriba también fijan el relleno de abajo.)
+  const espacioAlFinal = !conBotonRedondo ? '' : deModelo ? ' pb-24 lg:pb-0' : ' pb-24 md:pb-24 lg:pb-8';
+
   return (
     <div className="flex relative" style={{ minHeight: '100dvh' }}>
       <BrandColorsApplier />
@@ -89,7 +96,10 @@ export default function AppLayout({ marco = 'interno' }) {
         style={{ minHeight: '100dvh' }}
       >
         <div
-          className={deModelo ? 'pt-14 lg:pt-0' : 'p-4 md:p-6 lg:p-8 pt-14 md:pt-14 lg:pt-6'}
+          className={
+            (deModelo ? 'pt-14 lg:pt-0' : 'p-4 md:p-6 lg:p-8 pt-14 md:pt-14 lg:pt-6') +
+            espacioAlFinal
+          }
           style={{ minHeight: '100dvh' }}
         >
           <Outlet />

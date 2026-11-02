@@ -28,6 +28,7 @@ import { MorfiCargando } from '~/morfi/MorfiCargando';
 import { MorfiNoEncontrada } from '~/morfi/MorfiNoEncontrada';
 import { PaginaConBotones } from '~/restaurante/menu-qr/PaginaConBotones';
 import { atributosDelTema, temaDelPortal } from '~/restaurante/menu-qr/tema-del-portal';
+import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { AvisoDeLaMesa } from '~/portal/carrito-compartido/AvisoDeLaMesa';
 import { CarritoDeLaMesa } from '~/portal/carrito-compartido/CarritoDeLaMesa';
 import { useCarritoDeLaMesa } from '~/portal/carrito-compartido/use-carrito-de-la-mesa';
@@ -209,23 +210,16 @@ function PortalCliente() {
   // DP-9.2: el mesero sólo FALTA con la asignación encendida. Sin asignación nadie tiene mesas
   // fijas: el comensal abre, pide y llama igual, y la cuenta es de quien la atiende.
   const faltaMesero = config?.asignacion_mesas_activa === true && !tieneMeseroAsignado;
-  // "Mesa ya abierta" se miraba por TRES señales porque el navegador no podía
-  // fiarse de ninguna: la venta del sondeo, el puntero de la mesa y su estado,
-  // cada una de una consulta distinta y llegando en momentos distintos. Ahora
-  // las tres se leen en la misma consulta del servidor y la respuesta es un
-  // booleano, así que el latch anti-parpadeo deja de hacer falta.
-  const mesaLibreParaAbrir = mesa?.puede_abrir === true;
   // Sólo `cuenta_solicitada` puede verse aquí: una venta pagada o cancelada no
   // es la venta activa de la mesa y el endpoint público ya no la devuelve.
   const cuentaYaSolicitada = ventaActivaMesa?.estado === 'cuenta_solicitada';
-  const mesaPermitePedirAhora = mesa?.puede_pedir === true;
+  // DP-12.2: abrir la mesa ya no es requisito para armar el pedido (`puede_abrir`/`puede_pedir`
+  // siguen en la respuesta para quien los necesite).
 
   // DP-9.5: UN carrito por mesa, compartido por todos los teléfonos que escanean su QR. Se
-  // mira cada 2.5 s —con eso cada teléfono deja su latido— mientras la mesa tiene cuenta.
-  const carritoMesa = useCarritoDeLaMesa(
-    token || '',
-    pedidosQRActivos && !mesaLibreParaAbrir && !!ventaActivaMesa,
-  );
+  // mira cada 2.5 s —con eso cada teléfono deja su latido—. DP-12.2: también con la mesa
+  // cerrada: los comensales arman su pedido y el mesero lo confirma al llegar.
+  const carritoMesa = useCarritoDeLaMesa(token || '', pedidosQRActivos);
 
   // === HANDLERS PEDIDO QR ===
   const handleClickProducto = (producto) => {
@@ -237,18 +231,8 @@ function PortalCliente() {
       toast.info('La cuenta ya fue solicitada. Llama al mesero si necesitas algo más.');
       return;
     }
-    if (mesaLibreParaAbrir) {
-      abrirDialogoMesa();
-      return;
-    }
-    if (!mesaPermitePedirAhora) {
-      if (faltaMesero) {
-        toast.error('Esta mesa aún no tiene mesero asignado. Pide apoyo al personal.');
-      } else {
-        toast.info('No se pueden agregar productos en este momento.');
-      }
-      return;
-    }
+    // DP-12.2: con la mesa cerrada también se arma el pedido; abrirla (si el negocio deja que la
+    // abran los comensales) es parte de enviarlo, y si no, la abre el mesero al confirmar.
     setProductoSeleccionado(producto);
   };
 
@@ -301,9 +285,15 @@ function PortalCliente() {
       // mentía: la mesa y la venta se abren en una sola transacción, así que
       // basta con volver a leer. Si el comando no responde OK, no se pinta nada.
       queryClient.invalidateQueries({ queryKey: ['portal_publico', token] });
+      // DP-12.2: el carrito ya armado sigue ahí; con la mesa abierta, ya se puede enviar.
+      queryClient.invalidateQueries({ queryKey: ['carrito_de_la_mesa', token] });
 
       setShowAbrirMesaQR(false);
-      toast.success(`¡Mesa ${mesa.numero || ''} abierta! Ahora puedes agregar productos.`);
+      toast.success(
+        carritoMesa.estado?.lineas?.length
+          ? `¡Mesa ${mesa.numero || ''} abierta! Ya pueden enviar su pedido.`
+          : `¡Mesa ${mesa.numero || ''} abierta! Ahora puedes agregar productos.`,
+      );
     } catch (err) {
       // El mensaje viene traducido por el dominio («Esta mesa acaba de
       // abrirse…», «Esta mesa todavía no tiene mesero asignado…»).
@@ -466,7 +456,7 @@ function PortalCliente() {
             </p>
             <p className="text-xs text-muted-foreground">
               Mesa {mesa?.numero}
-              {mesa?.nombre ? ` · ${mesa.nombre}` : ''}
+              {sufijoDelNombreDeLaMesa(mesa)}
             </p>
             {/* DP-10.3: el QR es de una mesa unida a ésta; todo cae en la cuenta de la principal. */}
             {mesa?.unida_a_la_mesa != null && (
@@ -480,7 +470,9 @@ function PortalCliente() {
       </header>
 
       <main className="relative z-10 max-w-2xl mx-auto px-4 pt-4 space-y-4">
-        {pedidosQRActivos && !cuentaYaSolicitada && <AvisoDeLaMesa estado={carritoMesa.estado} />}
+        {pedidosQRActivos && !cuentaYaSolicitada && (
+          <AvisoDeLaMesa estado={carritoMesa.estado} sinConexion={carritoMesa.sinConexion} />
+        )}
         {/* Bienvenida */}
         {config?.portal_qr_mensaje_bienvenida && (
           <div className="rounded-2xl p-4 border bg-card text-card-foreground shadow-sm flex items-start gap-3">
@@ -712,7 +704,9 @@ function PortalCliente() {
         )}
       </AnimatePresence>
 
-      {pedidosQRActivos && !cuentaYaSolicitada && <CarritoDeLaMesa carrito={carritoMesa} />}
+      {pedidosQRActivos && !cuentaYaSolicitada && (
+        <CarritoDeLaMesa carrito={carritoMesa} alAbrirLaMesa={abrirDialogoMesa} />
+      )}
 
       <AnimatePresence>
         {showValoracion && valoracionVentaId && (

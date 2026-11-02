@@ -10,6 +10,8 @@ import {
   marcaVisibleDePlataforma,
   nombreVisibleDelSistema,
 } from '~/marca/nombre-visible';
+import { seccionesDeCancelaciones } from '~/corte/cancelaciones';
+import { SeccionPintada } from '~/corte/HojaDelCorte';
 
 /**
  * Internal printable corte de caja PDF/document.
@@ -559,33 +561,12 @@ const CorteTicket = React.forwardRef(function CorteTicket(
         </Section>
       )}
 
-      {/* Cancelaciones */}
-      {cancelaciones.length > 0 && (
-        <Section title="Cancelaciones">
-          <table className="w-full text-xs border">
-            <thead className="bg-fondo-sutil">
-              <tr>
-                <th className="border px-2 py-1 text-left">Folio</th>
-                <th className="border px-2 py-1 text-left">Motivo</th>
-                <th className="border px-2 py-1 text-left">Usuario</th>
-                <th className="border px-2 py-1 text-right">Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cancelaciones.map((c, i) => (
-                <tr key={i}>
-                  <td className="border px-2 py-1 font-mono">{c.folio}</td>
-                  <td className="border px-2 py-1">{c.motivo_cancelacion || '—'}</td>
-                  <td className="border px-2 py-1">
-                    {c.usuario_cajero_nombre || c.usuario_mesero_nombre || '—'}
-                  </td>
-                  <td className="border px-2 py-1 text-right">{formatCurrency(c.total)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Section>
-      )}
+      {/* Cancelaciones · DP-12.4: las filas son las del servidor (quién canceló, motivo, importe
+          y si ya estaba preparado) y las pinta el MISMO código que arma el corte de Cierre diario:
+          la pérdida aparte y resaltada, y lo cancelado antes de prepararse sin resaltar. */}
+      {seccionesDeCancelaciones(cancelaciones).map((seccion) => (
+        <SeccionPintada key={seccion.titulo} seccion={seccion} />
+      ))}
 
       {/* Firmas */}
       <div className="grid grid-cols-2 gap-8 mt-10 text-xs">

@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   avisoDelEnvio,
+  botonDelCarrito,
+  conPrecios,
   dispositivoDelTelefono,
+  PEDIDO_GUARDADO,
   envioDeOtroTelefono,
   personasConectadas,
   subtotalAproximadoCentavos,
@@ -137,5 +140,69 @@ describe('lo que enseña el carrito de la mesa', () => {
       tono: 'aviso',
       texto: 'No se envió nada: Taco ya no está disponible y se quitó del pedido.',
     });
+  });
+});
+
+describe('el botón del carrito según quién manda a cocina (DP-12.2)', () => {
+  const base: EstadoDelCarrito = {
+    lineas: [],
+    conectados: 1,
+    personas: 0,
+    esperarATodos: false,
+    ronda: 0,
+    ultimoEnvio: null,
+  };
+
+  it('sólo el mesero: llamarlo, y después decir que el pedido está guardado', () => {
+    expect(botonDelCarrito({ ...base, envio: 'llamar_mesero' })).toEqual({
+      accion: 'llamar',
+      texto: 'Llamar a mi mesero para confirmar',
+      explicacion: null,
+    });
+    expect(botonDelCarrito({ ...base, envio: 'llamar_mesero', meseroAvisado: true })).toEqual({
+      accion: 'llamar',
+      texto: 'Volver a llamar a mi mesero',
+      explicacion: PEDIDO_GUARDADO,
+    });
+  });
+
+  it('los comensales envían, con la mesa cerrada y sin poder abrirla: pedir que los atiendan', () => {
+    expect(botonDelCarrito({ ...base, envio: 'pedir_que_atiendan' })).toMatchObject({
+      accion: 'llamar',
+      explicacion: 'Pide a tu mesero que te atienda para enviar tu pedido.',
+    });
+  });
+
+  it('abrir y enviar, o enviar; un servidor anterior sin `envio` envía como antes', () => {
+    expect(botonDelCarrito({ ...base, envio: 'abrir_y_enviar' }).accion).toBe('abrir');
+    expect(botonDelCarrito({ ...base, envio: 'enviar' }).texto).toBe('Enviar a cocina');
+    expect(botonDelCarrito(base).accion).toBe('enviar');
+  });
+
+  it('ningún texto del comensal es para el personal («Abre la mesa»)', () => {
+    for (const envio of [
+      'llamar_mesero',
+      'enviar',
+      'abrir_y_enviar',
+      'pedir_que_atiendan',
+    ] as const) {
+      for (const meseroAvisado of [true, false]) {
+        const { texto, explicacion } = botonDelCarrito({ ...base, envio, meseroAvisado });
+        expect(`${texto} ${explicacion ?? ''}`).not.toMatch(/abre la mesa/i);
+      }
+    }
+  });
+
+  it('sin precios no hay subtotal que enseñar', () => {
+    const linea = {
+      id: 'l1',
+      productoId: 'p1',
+      nombre: 'Taco',
+      cantidad: '2',
+      notas: '',
+      esMia: true,
+    };
+    expect(conPrecios([{ ...linea, precioCentavos: '3500' }])).toBe(true);
+    expect(conPrecios([{ ...linea, precioCentavos: null }])).toBe(false);
   });
 });

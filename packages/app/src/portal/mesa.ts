@@ -47,6 +47,14 @@ export const abrirMesaDesdeQR = definirComandoPublico<typeof entradaAbrirMesa, R
   async ejecutar(ctx, entrada) {
     const { ambito } = ctx;
     exigirPedidosDesdeElTelefono(ctx);
+    // DP-12.2: abrir la mesa desde el teléfono sólo si el negocio deja que los comensales envíen Y
+    // abran su mesa. Si no, la abre el mesero al confirmar el pedido.
+    if (!(ctx.banderas.quienEnvia === 'comensales' && ctx.banderas.comensalesAbrenMesa)) {
+      throw new ErrorDominio(
+        'QR_PIDE_QUE_TE_ATIENDAN',
+        'Pide a tu mesero que te atienda: él abre la mesa y confirma tu pedido.',
+      );
+    }
 
     // DP-9.2: con la asignación encendida, sin mesero asignado no se abre (es el proceso que el
     // negocio eligió). Sin asignación la cuenta es de quien ya tomó la mesa, o de nadie hasta
@@ -74,51 +82,7 @@ export const abrirMesaDesdeQR = definirComandoPublico<typeof entradaAbrirMesa, R
       return { ventaId: abierta.id, reutilizada: true };
     }
 
-    const ordenId = await ctx.paso('abrir_venta', () => insertarOrden(ctx, entrada, meseroId));
-    // DP-9.6: con el QR de cualquier mesa del grupo se abre la principal, y es la cuenta del grupo.
-    await ctx.paso('tomar_la_union', () =>
-      tomarLaUnionDeLaMesa(ctx.tx, {
-        organizacionId: ctx.ambito.organizacionId,
-        mesaId: ctx.ambito.mesaId,
-        ordenId,
-        ahora: ctx.ahora,
-      }),
-    );
-
-    await ctx.paso('ocupar_mesa', () =>
-      ctx.tx
-        .updateTable('mesas')
-        .set({
-          estado: 'esperando_orden',
-          orden_activa_id: ordenId,
-          personas_actuales: entrada.personas,
-          cliente_temporal: entrada.clienteNombre === '' ? null : entrada.clienteNombre,
-          notas_alergias: entrada.notasAlergias === '' ? null : entrada.notasAlergias,
-          celebracion_especial: entrada.celebracionEspecial,
-          tipo_celebracion: entrada.tipoCelebracion === '' ? null : entrada.tipoCelebracion,
-          updated_at: ctx.ahora,
-        })
-        .where('organizacion_id', '=', ambito.organizacionId)
-        .where('id', '=', ambito.mesaId)
-        .execute(),
-    );
-
-    // F-305 · La abrió el COMENSAL desde su teléfono: sin empleado a quien
-    // atribuirla, y con `personas` que es justo lo que la rotación necesita
-    // para decir cuánto tarda una mesa de cuatro frente a una de dos.
-    await ctx.paso('sellar_apertura', () =>
-      sellarTransicionDeMesa(ctx.tx, {
-        organizacionId: ambito.organizacionId,
-        sucursalId: ambito.sucursalId,
-        mesaId: ambito.mesaId,
-        ordenId,
-        estadoAnterior: 'libre',
-        estadoNuevo: 'esperando_orden',
-        personas: entrada.personas,
-        empleadoId: null,
-        ahora: ctx.ahora,
-      }),
-    );
+    const ordenId = await abrirLaMesaDelPortal(ctx, entrada, meseroId);
 
     ctx.auditar({
       entidadId: ordenId,
@@ -128,6 +92,66 @@ export const abrirMesaDesdeQR = definirComandoPublico<typeof entradaAbrirMesa, R
     return { ventaId: ordenId, reutilizada: false };
   },
 });
+
+/**
+ * Abre la cuenta de la mesa desde el teléfono: la venta, la unión si la hay, la mesa ocupada y su
+ * sello. La usan `portal.abrir_mesa` y el envío del carrito cuando los comensales pueden abrir su
+ * mesa al enviar (DP-12.2). Quien llama ya comprobó que no hay otra cuenta viva.
+ */
+export async function abrirLaMesaDelPortal(
+  ctx: ContextoPortal,
+  entrada: z.output<typeof entradaAbrirMesa>,
+  meseroId: string | null,
+): Promise<string> {
+  const { ambito } = ctx;
+  const ordenId = await ctx.paso('abrir_venta', () => insertarOrden(ctx, entrada, meseroId));
+  // DP-9.6: con el QR de cualquier mesa del grupo se abre la principal, y es la cuenta del grupo.
+  await ctx.paso('tomar_la_union', () =>
+    tomarLaUnionDeLaMesa(ctx.tx, {
+      organizacionId: ctx.ambito.organizacionId,
+      mesaId: ctx.ambito.mesaId,
+      ordenId,
+      ahora: ctx.ahora,
+    }),
+  );
+
+  await ctx.paso('ocupar_mesa', () =>
+    ctx.tx
+      .updateTable('mesas')
+      .set({
+        estado: 'esperando_orden',
+        orden_activa_id: ordenId,
+        personas_actuales: entrada.personas,
+        cliente_temporal: entrada.clienteNombre === '' ? null : entrada.clienteNombre,
+        notas_alergias: entrada.notasAlergias === '' ? null : entrada.notasAlergias,
+        celebracion_especial: entrada.celebracionEspecial,
+        tipo_celebracion: entrada.tipoCelebracion === '' ? null : entrada.tipoCelebracion,
+        updated_at: ctx.ahora,
+      })
+      .where('organizacion_id', '=', ambito.organizacionId)
+      .where('id', '=', ambito.mesaId)
+      .execute(),
+  );
+
+  // F-305 · La abrió el COMENSAL desde su teléfono: sin empleado a quien
+  // atribuirla, y con `personas` que es justo lo que la rotación necesita
+  // para decir cuánto tarda una mesa de cuatro frente a una de dos.
+  await ctx.paso('sellar_apertura', () =>
+    sellarTransicionDeMesa(ctx.tx, {
+      organizacionId: ambito.organizacionId,
+      sucursalId: ambito.sucursalId,
+      mesaId: ambito.mesaId,
+      ordenId,
+      estadoAnterior: 'libre',
+      estadoNuevo: 'esperando_orden',
+      personas: entrada.personas,
+      empleadoId: null,
+      ahora: ctx.ahora,
+    }),
+  );
+
+  return ordenId;
+}
 
 /**
  * Inserta la orden, traduciendo el choque del índice único.

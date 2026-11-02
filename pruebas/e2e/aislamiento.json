@@ -81,6 +81,16 @@
       "ids": [{ "camino": "sesionCajaId", "tabla": "sesiones_caja" }]
     },
     {
+      "ruta": "/api/caja/cancelaciones-del-corte",
+      "comando": "caja.cancelaciones_del_corte",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "sesionCajaId": "⟨sesiones_caja⟩" },
+      "ids": [{ "camino": "sesionCajaId", "tabla": "sesiones_caja" }]
+    },
+    {
       "ruta": "/api/caja/eliminar-corte",
       "comando": "caja.eliminar_corte",
       "escribe": true,
@@ -570,7 +580,7 @@
       "ruta": "/api/restaurante/anular-linea",
       "comando": "restaurante.anular_linea",
       "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"],
       "idRequerido": true,
       "cuerpo": { "ordenId": "⟨ordenes⟩", "lineaId": "⟨orden_lineas⟩", "motivo": "error_cocina" },
@@ -616,11 +626,61 @@
       "ruta": "/api/restaurante/cancelar-orden",
       "comando": "restaurante.cancelar_orden",
       "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"],
       "idRequerido": true,
       "cuerpo": { "ordenId": "⟨ordenes⟩", "motivo": "prueba de aislamiento" },
       "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-cambiar",
+      "comando": "restaurante.carrito_cambiar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": {
+        "mesaId": "⟨mesas⟩",
+        "lineaId": "⟨orden_lineas⟩",
+        "cantidad": "prueba de aislamiento"
+      },
+      "ids": [
+        { "camino": "mesaId", "tabla": "mesas" },
+        { "camino": "lineaId", "tabla": "orden_lineas" }
+      ]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-enviar",
+      "comando": "restaurante.carrito_enviar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "mesaId": "⟨mesas⟩" },
+      "ids": [{ "camino": "mesaId", "tabla": "mesas" }]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-quitar",
+      "comando": "restaurante.carrito_quitar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "mesaId": "⟨mesas⟩", "lineaId": "⟨orden_lineas⟩" },
+      "ids": [
+        { "camino": "mesaId", "tabla": "mesas" },
+        { "camino": "lineaId", "tabla": "orden_lineas" }
+      ]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-vaciar",
+      "comando": "restaurante.carrito_vaciar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "mesaId": "⟨mesas⟩" },
+      "ids": [{ "camino": "mesaId", "tabla": "mesas" }]
     },
     {
       "ruta": "/api/restaurante/descontar-cuenta",

@@ -11,7 +11,7 @@
 //   • La pantalla está BLOQUEADA.
 //   • iOS Safari pausó audio por política de ahorro de batería.
 //   • El usuario aún NO interactuó con la pantalla (iOS exige un tap previo
-//     para habilitar audio — por eso existe el botón "Activar sonido").
+//     para habilitar audio; el gestor de sonido de la pestaña lo desbloquea con el primer toque).
 //
 // En PANTALLA ACTIVA (cocina o mesero con la pantalla visible y desbloqueada)
 // la voz funciona normalmente. No se puede saltar esta limitación sin usar

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { TITULO_DE_CANCELACIONES, TITULO_DE_PERDIDAS } from './cancelaciones.ts';
 import { documentoDelCorte } from './giros.ts';
 import type { Celda, ExtrasDelServidor, HojaDelServidor, Seccion } from './hoja.ts';
 
@@ -270,5 +271,93 @@ describe('el documento del restaurante', () => {
     expect(documentoDelCorte(hoja(RESTAURANTE)).nombreDeArchivo).toBe(
       'Demo-CORTE-DE-CAJA-CC-7.pdf',
     );
+  });
+});
+
+// DP-12.4 · Cancelar ya no es sólo de caja: el mesero cancela una cuenta o quita un platillo. El
+// papel tiene que separar lo que no costó comida de lo que sí.
+describe('las cancelaciones del corte', () => {
+  type Fila = HojaDelServidor['cancelaciones'][number];
+  const ANTES_DE_PREPARAR: Fila = {
+    tipo: 'linea',
+    folio: null,
+    hora: '2026-09-25T20:10:00.000Z',
+    usuario: 'Lupita',
+    motivo: 'Error del mesero al tomar la orden',
+    producto: 'Sopa de fideo',
+    montoCentavos: '8000',
+    mesa: 'Mesa 5',
+    perdida: false,
+  };
+  const YA_PREPARADA: Fila = {
+    tipo: 'orden',
+    folio: 'POS-9',
+    hora: '2026-09-25T21:40:00.000Z',
+    usuario: 'Beto',
+    motivo: 'Se fueron sin pagar',
+    producto: null,
+    montoCentavos: '45000',
+    mesa: 'Mesa 6',
+    perdida: true,
+  };
+  const tabla = (doc: ReturnType<typeof documentoDelCorte>, titulo: string) => {
+    const seccion = doc.secciones.find((s) => s.titulo === titulo);
+    return seccion?.tipo === 'tabla' ? seccion : undefined;
+  };
+
+  it('lo que ya estaba preparado o entregado sale APARTE, resaltado, con quién, cuándo, por qué y cuánto', () => {
+    const doc = documentoDelCorte(
+      hoja(RESTAURANTE, { cancelaciones: [ANTES_DE_PREPARAR, YA_PREPARADA] }),
+    );
+    const perdidas = tabla(doc, TITULO_DE_PERDIDAS);
+    expect(perdidas, 'La pérdida no salió en su propia sección.').toBeDefined();
+    expect(perdidas?.tono).toBe('perdida');
+    expect(perdidas?.columnas.map((c) => c.titulo)).toEqual([
+      'Cuenta',
+      'Hora',
+      'Qué',
+      'Quién canceló',
+      'Motivo',
+      'Importe',
+    ]);
+    expect(perdidas?.filas).toHaveLength(1);
+    const [cuenta, , que, quien, motivo, importe] = perdidas?.filas[0] ?? [];
+    expect(cuenta).toEqual({ tipo: 'texto', texto: 'Mesa 6 · POS-9' });
+    expect(que).toEqual({ tipo: 'texto', texto: 'Cuenta completa' });
+    expect(quien).toEqual({ tipo: 'texto', texto: 'Beto' });
+    expect(motivo).toEqual({ tipo: 'texto', texto: 'Se fueron sin pagar' });
+    expect(importe).toEqual({ tipo: 'dinero', centavos: 45_000 });
+    expect(perdidas?.total?.at(-1)).toEqual({ tipo: 'dinero', centavos: 45_000 });
+  });
+
+  it('lo cancelado antes de prepararse queda registrado, sin resaltar y SIN la pérdida', () => {
+    const doc = documentoDelCorte(
+      hoja(RESTAURANTE, { cancelaciones: [ANTES_DE_PREPARAR, YA_PREPARADA] }),
+    );
+    const sinCosto = tabla(doc, TITULO_DE_CANCELACIONES);
+    expect(sinCosto?.tono).toBeUndefined();
+    expect(sinCosto?.filas).toHaveLength(1);
+    const [cuenta, , que, quien, motivo, importe] = sinCosto?.filas[0] ?? [];
+    expect(cuenta).toEqual({ tipo: 'texto', texto: 'Mesa 5' });
+    expect(que).toEqual({ tipo: 'texto', texto: 'Sopa de fideo' });
+    expect(quien).toEqual({ tipo: 'texto', texto: 'Lupita' });
+    expect(motivo).toEqual({ tipo: 'texto', texto: 'Error del mesero al tomar la orden' });
+    expect(importe).toEqual({ tipo: 'dinero', centavos: 8_000 });
+    // La pérdida va primero: es lo que se ve aunque nadie lea el resto.
+    expect(titulos(doc.secciones).indexOf(TITULO_DE_PERDIDAS)).toBeLessThan(
+      titulos(doc.secciones).indexOf(TITULO_DE_CANCELACIONES),
+    );
+  });
+
+  it('sin pérdidas no hay sección de pérdidas, y sin cancelaciones no aparece ninguna', () => {
+    const soloAntes = documentoDelCorte(hoja(RESTAURANTE, { cancelaciones: [ANTES_DE_PREPARAR] }));
+    expect(titulos(soloAntes.secciones)).not.toContain(TITULO_DE_PERDIDAS);
+    expect(titulos(soloAntes.secciones)).toContain(TITULO_DE_CANCELACIONES);
+    const soloPerdida = documentoDelCorte(hoja(RESTAURANTE, { cancelaciones: [YA_PREPARADA] }));
+    expect(titulos(soloPerdida.secciones)).toContain(TITULO_DE_PERDIDAS);
+    expect(titulos(soloPerdida.secciones)).not.toContain(TITULO_DE_CANCELACIONES);
+    const ninguna = documentoDelCorte(hoja(RESTAURANTE));
+    expect(titulos(ninguna.secciones)).not.toContain(TITULO_DE_PERDIDAS);
+    expect(titulos(ninguna.secciones)).not.toContain(TITULO_DE_CANCELACIONES);
   });
 });

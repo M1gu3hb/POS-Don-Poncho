@@ -24,7 +24,7 @@ import {
   type PeticionDelPortal,
   type RespuestaDelPortal,
 } from './http.ts';
-import { permitirPortal } from './limite.ts';
+import { permitirPortal, type Permiso } from './limite.ts';
 import { exigirPortalAbierto, leerContextoDelNegocio, puedeOrdenarDesdeQR } from './negocio.ts';
 
 /**
@@ -55,8 +55,29 @@ export async function leerElCarrito(peticion: {
     const huella = huellaDelDispositivo(pimienta, dispositivo);
     await latir(tx, ambito, huella, ahora);
     const desde = await aperturaDeLaCuenta(tx, ambito);
-    return estadoDelCarrito(tx, ambito, huella, { desde, ahora });
+    return estadoDelCarrito(tx, ambito, huella, { desde, ahora, banderas });
   });
+}
+
+/**
+ * DP-12.2 · El límite del sondeo es por TELÉFONO y mesa: con un solo cubo por mesa, diez teléfonos
+ * sondeando cada 2.5 s (240 al minuto) cortaban el carrito a todos. Y uno por mesa, más alto, para
+ * que inventar teléfonos con un código válido no sea gratis. El token ya se validó en
+ * `resolverDespliegue`: un código inventado no llega a contar.
+ */
+export async function permitirElSondeo(
+  token: string,
+  dispositivo: string,
+  pimienta: string,
+  contexto: { readonly correlationId: string; readonly organizacionId: string },
+): Promise<Permiso> {
+  const delTelefono = await permitirPortal(
+    'carrito_estado',
+    `${token}:${dispositivo}`,
+    pimienta,
+    contexto,
+  );
+  return delTelefono.ok ? permitirPortal('carrito_mesa', token, pimienta, contexto) : delTelefono;
 }
 
 /**
@@ -95,7 +116,7 @@ export async function servirElCarrito(
       token,
       peticion.headers.get('host'),
     );
-    const permiso = await permitirPortal('carrito_estado', token, pimienta, {
+    const permiso = await permitirElSondeo(token, entrada.data.dispositivo, pimienta, {
       correlationId,
       organizacionId,
     });

@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
 import { speak, fraseNuevoPedidoCocina, getCocinaVozConfig } from '@/lib/voiceAlert';
-import { playNewOrder } from '@/lib/sounds';
+import { sonarAntesDeHablar } from '~/sonidos/gestor';
 import { toast } from 'sonner';
 import { despertarLaPantalla } from '~/espera/despertador';
 
@@ -109,14 +109,15 @@ export default function CocinaNuevoPedidoWatcher({ pedidos = [], cargando = fals
     // 3) Audio con pequeño delay después del visual.
     // La cola interna de speak() garantiza que TODAS las frases se lean en orden,
     // sin que una pise a la otra (antes solo se oía la última con setTimeout paralelos).
+    // DP-12.6: el timbre es del gestor de sonido (Ping) y la voz empieza cuando termina, así
+    // nunca se le encima; sin timbre (aparato en «Apagado», otra voz hablando) habla de inmediato.
     setTimeout(() => {
-      try {
-        playNewOrder();
-      } catch {}
-      frasesAHablar.forEach((frase) => {
-        try {
-          speak(frase, { cocina: true });
-        } catch {}
+      sonarAntesDeHablar('comandaNueva').then(() => {
+        frasesAHablar.forEach((frase) => {
+          try {
+            speak(frase, { cocina: true });
+          } catch {}
+        });
       });
     }, 280);
   }, [pedidos, cargando]);

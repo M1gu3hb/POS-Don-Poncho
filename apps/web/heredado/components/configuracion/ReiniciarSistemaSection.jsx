@@ -17,6 +17,7 @@ import {
 import { AlertTriangle, Trash2, RefreshCw, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSAuth } from '@/lib/POSAuthContext';
+import { esUsuarioDePlataforma } from '@/lib/permissions';
 
 /**
  * Sección administrativa de mantenimiento.
@@ -33,7 +34,7 @@ export default function ReiniciarSistemaSection() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const esAdmin = posUser?.rol === 'administrador';
+  const esAdmin = posUser?.rol === 'administrador' && esUsuarioDePlataforma(posUser);
 
   const [mode, setMode] = useState(null); // 'all' | 'tests' | null
   const [confirmText, setConfirmText] = useState('');

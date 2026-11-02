@@ -160,6 +160,16 @@ export const unirMesasComando = definirComando<
     let miembros = await ctx.paso('cargar_miembros', () =>
       cargarMiembros(ctx.tx, organizacionId, principal, entrada.mesaIds),
     );
+    // DP-12.3: una mesa en limpieza no se une; se dice con su nombre y qué hacer.
+    const enLimpieza = [principal, ...miembros.map((m) => m.mesa)].find(
+      (m) => m.estado === 'limpieza',
+    );
+    if (enLimpieza !== undefined) {
+      throw new ErrorDominio(
+        'UNION_DE_MESAS_INVALIDA',
+        `La mesa ${String(enLimpieza.numero)} está en limpieza: márcala libre primero.`,
+      );
+    }
 
     const originales = await ctx.paso('revisar_el_grupo', () =>
       revisarElGrupo(

@@ -12,7 +12,6 @@ import { useConfig } from '@/lib/ConfigContext';
 import { ROLES } from '@/lib/constants';
 import { navegacionParaRolYPlantilla, normalizarPlantilla } from '@/lib/packageConfig';
 import { hasPermission } from '@/lib/permissions';
-import { unlockAudio } from '@/lib/sounds';
 
 /**
  * Selector radial gestual para Administrador en móvil/tablet (<lg).
@@ -163,7 +162,6 @@ export default function MobileAdminRadialMenu() {
   // Gesto
   const onPointerDown = (e) => {
     e.preventDefault();
-    unlockAudio();
     pointerActiveRef.current = true;
     fabCenterRef.current = computeFabCenter();
     const target = e.currentTarget;

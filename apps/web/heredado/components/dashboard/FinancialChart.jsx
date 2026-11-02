@@ -17,6 +17,7 @@ import {
 import { format, subDays, startOfMonth, startOfYear, isAfter, isSameDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useIsDark } from '@/lib/ThemeContext';
+import { economiaDeLaVenta, notaDeLasVentasSinReceta } from '~/restaurante/margen-de-las-ventas';
 
 const PERIODOS = [
   { key: 'hoy', label: 'Hoy' },
@@ -164,11 +165,15 @@ export default function FinancialChart({ ventas = [], gastos = [] }) {
       key: k,
       label: lab,
       ventas: 0,
+      ventasConCosto: 0,
       costo: 0,
       utilidad: 0,
       gastos: 0,
       neta: 0,
     });
+    // DP-12.6: las ventas SIN RECETA tienen el costo desconocido. Su importe entra en «Ventas»,
+    // pero no en costo, utilidad ni margen (antes sumaban «utilidad = venta», un 100 % falso).
+    let sinReceta = 0;
 
     // Pre-fill buckets so empty days show
     const cursor = new Date(start);
@@ -190,10 +195,15 @@ export default function FinancialChart({ ventas = [], gastos = [] }) {
       if (!buckets[k]) buckets[k] = emptyBucket(k, labelOf(d));
       // SOLO ventas reales (sin propina). v.total ya excluye propina_monto.
       const ventaReal = N(v.total);
+      buckets[k].ventas += ventaReal;
+      if (economiaDeLaVenta(v).estado === 'sin_receta') {
+        sinReceta += 1;
+        return;
+      }
       const costo = N(v.costo_total_snapshot);
       const utilidadSnap = v.utilidad_bruta_snapshot;
       const utilidad = Number.isFinite(Number(utilidadSnap)) ? N(utilidadSnap) : ventaReal - costo;
-      buckets[k].ventas += ventaReal;
+      buckets[k].ventasConCosto += ventaReal;
       buckets[k].costo += costo;
       buckets[k].utilidad += utilidad;
     });
@@ -220,14 +230,18 @@ export default function FinancialChart({ ventas = [], gastos = [] }) {
     const tot = arr.reduce(
       (acc, b) => ({
         ventas: acc.ventas + N(b.ventas),
+        ventasConCosto: acc.ventasConCosto + N(b.ventasConCosto),
         costo: acc.costo + N(b.costo),
         utilidad: acc.utilidad + N(b.utilidad),
         gastos: acc.gastos + N(b.gastos),
         neta: acc.neta + N(b.neta),
       }),
-      { ventas: 0, costo: 0, utilidad: 0, gastos: 0, neta: 0 },
+      { ventas: 0, ventasConCosto: 0, costo: 0, utilidad: 0, gastos: 0, neta: 0 },
     );
-    tot.margen = tot.ventas > 0 ? (tot.utilidad / tot.ventas) * 100 : 0;
+    tot.margen = tot.ventasConCosto > 0 ? (tot.utilidad / tot.ventasConCosto) * 100 : 0;
+    tot.sinReceta = sinReceta;
+    // Todas las ventas del periodo sin receta: costo, utilidad y margen no existen.
+    tot.sinCostoConocido = sinReceta > 0 && tot.ventasConCosto === 0;
 
     return { data: arr, totales: tot };
   }, [ventas, gastos, periodo]);
@@ -263,17 +277,43 @@ export default function FinancialChart({ ventas = [], gastos = [] }) {
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-3">
           <Mini label="Ventas" value={totales.ventas} color="#16a34a" />
-          <Mini label="Costo" value={totales.costo} color="#f59e0b" />
-          <Mini label="Utilidad bruta" value={totales.utilidad} color="#0ea5e9" />
+          <Mini
+            label="Costo"
+            value={totales.sinCostoConocido ? '—' : totales.costo}
+            color="#f59e0b"
+            raw={totales.sinCostoConocido}
+          />
+          <Mini
+            label="Utilidad bruta"
+            value={totales.sinCostoConocido ? '—' : totales.utilidad}
+            color="#0ea5e9"
+            raw={totales.sinCostoConocido}
+          />
           <Mini label="Gastos" value={totales.gastos} color="#ef4444" />
-          <Mini label="Utilidad neta" value={totales.neta} color="#7c3aed" bold />
+          <Mini
+            label="Utilidad neta"
+            value={totales.sinCostoConocido ? '—' : totales.neta}
+            color="#7c3aed"
+            bold
+            raw={totales.sinCostoConocido}
+          />
           <Mini
             label="Margen"
-            value={`${(Number.isFinite(totales.margen) ? totales.margen : 0).toFixed(1)}%`}
+            value={
+              totales.sinCostoConocido
+                ? '—'
+                : `${(Number.isFinite(totales.margen) ? totales.margen : 0).toFixed(1)}%`
+            }
             color="#0f172a"
             raw
           />
         </div>
+        {totales.sinReceta > 0 && (
+          <p className="text-[11px] text-muted-foreground mb-3" data-ventas-sin-receta>
+            {notaDeLasVentasSinReceta(totales.sinReceta)}: su importe está en «Ventas», pero no
+            entra en el costo, la utilidad ni el margen.
+          </p>
+        )}
         <div className="w-full h-72 sm:h-80 lg:h-72 overflow-hidden">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart

@@ -805,7 +805,9 @@ puerta los denuncia todos.
   sonido y un botón para oírlo, aunque el aparato esté en Apagado: ahí se aprueba el mapa.
 - **No se tocó:** el timbre y la voz de Cocina (lo pidió Miguel), la alerta del mesero cuando llega
   una solicitud (con su voz), y el sistema no tiene meta del día. Ping, Signal y Confetti quedan en
-  el mapa con su nota hasta que Miguel decida.
+  el mapa con su nota hasta que Miguel decida. **DP-12.6 (DP-D49) lo cambió:** el timbre de
+  Cocina (Ping), el aviso del mesero (Signal) y el pedido listo (Check) pasan al gestor, con su
+  voz después del sonido; el sistema viejo (`lib/sounds`, «Activar sonidos») ya no existe.
 - Las recetas se cargan cuando hacen falta: Keycap y Thock traen su muestra (50 KB cada una); las
   demás pesan menos de 1 KB.
 
@@ -828,3 +830,188 @@ puerta los denuncia todos.
   luego el «Pedido enviado» de siempre. Avisarles la lista pediría una columna en `carritos_mesa`
   (migración, en la compartida la aplica el maestro): no entra hasta que haga falta.
 
+
+## DP-D44 · El usuario de plataforma: una marca en la configuración, exigida en el servidor · 01-11-2026
+
+- **Lo que había:** los cinco comandos de mantenimiento que borran en masa (`vaciar_mesas`,
+  `purgar_seccion`, `purgar_ventas`, `reiniciar_pruebas`, `reiniciar_todo`) los ejecutaba
+  cualquier dueño (y `vaciar_mesas` también el administrador). «Miguel · Morphiq» y el dueño del
+  restaurante tienen el mismo rol, y los siete roles de `empleos.rol` los fija un `check` de la
+  base.
+- **Alternativas** (Miguel eligió la primera, 01-11): (a) una marca en
+  `configuracion.valores.plataforma` con los empleos de plataforma; (b) una variable de entorno
+  del servidor con esos empleos (no viaja con los datos y hay que darla de alta en cada
+  despliegue); (c) un rol nuevo con migración (DDL que aplica el maestro).
+- **Elección (a):**
+  - `mantenimiento/plataforma.ts`: `exigirPlataforma` al principio de los cinco comandos, dentro
+    de su transacción y antes de leer o borrar nada: 403 `SIN_PERMISO` con su rastro de
+    «denegado», como un rol que no alcanza.
+  - La marca no se lee ni se escribe por el camino genérico de Configuración (`NUNCA_SALEN`): el
+    dueño no se la puede poner. La escribe `mantenimiento.marcar_plataforma`, que marca el empleo
+    DE QUIEN LO EJECUTA y no tiene ruta HTTP (un contrato lo vigila); sólo la corre
+    `scripts/marcar-plataforma.mjs`, con acceso a la base.
+  - La sesión dice `es_plataforma` (PIN y `/api/catalogo/sesion`) y las pantallas sólo enseñan los
+    botones a quien sí (`esUsuarioDePlataforma` en `permissions.js`): «Limpiar ventas de prueba»,
+    «Eliminar todas» las mesas, «Limpiar sección» de Registros y la pestaña «Mantenimiento».
+  - Viaja con las filas del negocio en la mudanza (Fase B y C) sin configurar nada más.
+- **De paso:** `reiniciar_todo` no corría nunca contra una base real: borraba el catálogo con un
+  `where organizacion_id` crudo (dos tablas cuelgan de su padre) y `returning id` (dos no tienen
+  `id`). Ahora usa el mismo acotado que las secciones y cuenta con `numAffectedRows`.
+- **Prueba:** unidad (la forma de la marca; ningún `route.ts` sirve `marcarPlataforma`) e
+  integración contra Postgres (sin marca ningún dueño ejecuta los cinco; marcado, sí, y el otro
+  dueño no; Configuración no la escribe ni la enseña y guardar otra cosa no la borra; reiniciar
+  todo funciona). Seis mutaciones, todas muertas.
+
+## DP-D45 · El portal: los comensales arman, el mesero confirma (y el portal en modo mesero) · 01-11-2026
+
+- **Lo que había:** el carrito compartido (DP-D29) exigía una cuenta abierta («Abre la mesa antes de
+  pedir», un texto para el personal que veía el comensal) y escondía lo armado antes de abrirla
+  (`created_at >= ordenes.created_at`); cualquier comensal mandaba a cocina; el límite del sondeo
+  era uno por mesa (240 al minuto: con diez teléfonos se cortaba) y el latido se escribía en cada
+  sondeo; el id crudo del teléfono quedaba en la auditoría; 999.5 era un 500.
+- **Elección:**
+  - Dos opciones en `configuracion.valores`, validadas al guardar y leídas en el servidor
+    (`banderas.ts`): `portal_qr_envia_a_cocina` = `mesero` (por omisión) | `comensales`, y
+    `portal_qr_comensales_abren_mesa` (apagada; sólo cuenta si envían los comensales). Portal QR →
+    Configuración → «Pedidos desde el portal».
+  - El carrito se arma con la mesa cerrada; las líneas cuelgan de la mesa y se olvidan cuando la
+    cuenta se cierra (cancelada, cobrada o la vacía que se libera) y al cerrar la última caja de la
+    sucursal, que es cerrar el día (`restaurante/carrito-del-salon.ts`). Al unir mesas o cambiar de
+    mesa, las líneas y los teléfonos siguen a la cuenta.
+  - Qué hace el comensal lo decide el servidor (`quien-envia.ts`, `envio` en el estado):
+    «Llamar a mi mesero para confirmar» (una solicitud `ordenar` con la nota «Pedido listo para
+    confirmar (N platillos)»; si ya hay una pendiente, se pone al día su nota), «Pide a tu mesero
+    que te atienda para enviar tu pedido», «Abrir la mesa y enviar» (con el diálogo de siempre:
+    personas, alergias) o «Enviar a cocina» (con «¿Ya pidieron todos?» de dos teléfonos en
+    adelante). El envío del comensal lo rechaza el servidor si no le toca.
+  - **Portal en modo mesero**, dentro de su sesión (rol y sucursal del servidor): «Escanear QR» en
+    «Mesas y pedidos» (el lector de siempre, `BarcodeDetector` o ZXing, o el código a mano), el
+    aviso «Pedido listo para confirmar» y la mesa abierta en el POS (decisión de Miguel) abren lo que
+    armaron los teléfonos: cambiar cantidades, quitar cualquier línea, borrar el pedido, abrir la
+    mesa y confirmar y enviar a SU nombre por el mismo camino que su pedido (`comandarLasLineas`).
+    Cuatro comandos auditados (`restaurante.carrito_*`) y dos lecturas POST (el token del QR no va en
+    la URL). Un comensal no tiene cómo hacerse pasar por mesero: las rutas públicas no aceptan nada
+    parecido.
+  - **Mantener presionada una mesa** (o clic derecho) abre «Ver mesa / Ver QR de la mesa»: la mesa
+    se reconoce por `data-mesa-id` en el contenedor del mapa, sin tocar el toque normal; el QR sale
+    grande en la pantalla para escanearlo desde el teléfono del mesero.
+  - Arreglos: el límite del sondeo por teléfono (60/min) más un techo por mesa (2400/min); el token
+    se valida SIEMPRE antes de contar (también con un solo negocio en el despliegue); el latido se
+    escribe a lo mucho cada 30 s; sin «Mostrar precios» el carrito no los trae; `dispositivo` (la
+    clave exacta) en `CLAVES_SENSIBLES`; la cantidad tope 999 en zod; el diálogo de confirmar se
+    cierra cuando otro teléfono envía; «Sin conexión, reintentando» cuando el sondeo falla.
+- **Descartado:** borrar las líneas al vuelo con una regla de tiempo (cuál cuenta se cerró
+  después); deja huérfanas y depende del reloj. Y un rol `mesero` dentro del portal público: el
+  portal en modo mesero es la sesión del mesero, no el portal con otra bandera.
+- **Sin migración.** Los tipos de solicitud siguen siendo los del `check` (`ordenar`); la nota va
+  en `solicitudes_qr.notas`.
+
+## DP-D46 · Unir mesas: la misma mesa que tiembla, el imán en la vecina, la forma fundida · 01-11-2026
+
+- **Lo que había:** al entrar a «Unir mesas» las mesas cambiaban de forma (cajas grises); el imán
+  movía la mesa ARRASTRADA mientras se arrastraba (brincaba bajo el dedo); el grupo se veía como
+  cajas sueltas; «Separar mesas» sólo existía en la mesa abierta; unir una mesa con gente no
+  preguntaba y sus alergias y su celebración se quedaban en la absorbida, ocultas (un tema de
+  inocuidad: la cocina copia las de la principal); una mesa en limpieza daba un error genérico;
+  el editor y «vaciar el mapa» podían apagar una mesa de una unión viva y dejar las absorbidas
+  ocultas para siempre; `?unir=` se quedaba en la dirección.
+- **Elección:**
+  - En «Unir mesas» la pantalla dibuja la MISMA `MesaShape` del mapa (forma, tamaño, color, número,
+    estado, mesero) dentro de `MesaQueTiembla`: tiembla como los íconos al acomodarlos, cada una
+    con su desfase; con «reducir movimiento», un contorno punteado en lugar del temblor.
+  - El arrastre son eventos de puntero con el puntero capturado y `touch-action: none` en la mesa:
+    sigue al dedo 1:1 (`adondeVa`, puro). El imán ya no la mueve: la VECINA se inclina y se estira
+    hacia ella (`vecinaQueLlama`, del dominio) y, al soltar a 36 puntos o menos, se pegan
+    (`atraer`). El arrastre, la inclinación y el asentarse van en `translate`/`scale`, que se
+    componen con el temblor (`transform`) sin pisarlo.
+  - El grupo se ve fundido en la forma que le toca (`formaDeLaUnion`, del dominio): redondas lado a
+    lado, cápsula horizontal; una sobre otra, vertical; cuadradas o mixtas, rectángulo; casi igual
+    de ancho que de alto, cuadrado. En el mapa del mesero una unión viva se pinta igual, en la caja
+    del grupo, con el número de la principal.
+  - Con gente, antes de «¿Qué número queda?»: «La Mesa N tiene gente y un pedido de $X.
+    ¿Unir de todos modos?» (Cancelar / Unir; sin el importe si no se puede leer). Al unir, las
+    alergias y la celebración de la absorbida llegan a la mesa y a la cuenta que quedan, sin
+    repetir (`notas-de-la-union.ts`), junto con su carrito del portal (DP-D45).
+  - En limpieza: «La Mesa N está en limpieza: márcala libre primero», en pantalla y en el servidor.
+  - Separar: tocar la unión en «Unir mesas» o, en el mapa, mantenerla presionada → «Separar mesas»
+    (también para uniones libres, sin cuenta). Las absorbidas salen de la principal y vuelven a su
+    lugar con una animación; luego, al mapa.
+  - Ninguna unión se queda varada: el editor no apaga ni la principal ni una absorbida de una
+    unión viva («sepáralas antes de quitarla del mapa», `sinCabezaViva` en la guarda del puente) y
+    «vaciar el mapa» se niega con mesas unidas. `?unir=` se limpia al entrar (y avisa si la mesa ya
+    no se puede unir).
+- **Descartado:** cambiar la forma de las mesas al unir (lo que se pidió es lo contrario) y una
+  biblioteca de arrastre: los eventos de puntero alcanzan y el 1:1 se mide en la prueba.
+- **Sin migración.**
+
+## DP-D47 · Las estaciones no son sólo Cocina y Bebidas: verificadas de punta a punta · 01-11-2026
+
+- **Lo que se pidió:** Don Poncho tendrá varias estaciones sin nombre todavía; verificar con 3 o
+  más, y arreglar lo que falle.
+- **Lo que se encontró:** el reparto ya era genérico (Producto → Categoría → Estación, la general
+  de respaldo; DP-10.1) y la pantalla, la voz y el teléfono de cocina ya filtran por la estación de
+  la sesión. Un defecto: al desactivar una estación, Configuración movía sus categorías a la
+  general tragándose cada error; si uno fallaba, la estación se apagaba igual y la categoría
+  quedaba apuntando a una estación apagada. Ahora, si una no se mueve, no se apaga y se dice por
+  qué.
+- **Por platillo no se asigna:** el modelo toma la estación de la categoría (no hay columna en el
+  producto). No se agrega: es DDL y no se pidió.
+- **Lo que no es defecto:** `comandas.area` (`cocina`/`barra`) y `productos.area_preparacion` son
+  valores de la base; el aviso del rol antiguo «Barra» en el diálogo de usuario.
+- **Sin migración.**
+
+## DP-D48 · El mesero cancela con motivo, y el corte dice quién y qué fue pérdida · 01-11-2026
+
+- **Lo que había:** cancelar una cuenta con consumo y anular un platillo enviado eran sólo de caja
+  y dirección; la mesa del cliente que se va sin pagar se quedaba clavada hasta encontrar al
+  cajero. El corte heredado de la Caja armaba las cancelaciones en el navegador y ponía como
+  «Usuario» a quien cobraba o atendía, no a quien canceló; lo ya preparado no se distinguía.
+- **Elección:**
+  - El rol `mesero` entra a `restaurante.cancelar_orden` y `restaurante.anular_linea` (cocina y
+    almacén siguen fuera; la sucursal se sigue exigiendo). El motivo es obligatorio y queda con su
+    nombre (`cancelada_por`, `empleado_anula_id`). El control es el registro, no negar la salida.
+  - En la mesa ocupada del mesero: «Quitar un platillo» y «Cancelar la cuenta», con su motivo;
+    si la cocina ya preparó algo, se avisa que es pérdida.
+  - Una sola lectura del servidor (`caja/corte/cancelaciones.ts`) para los dos cortes y para
+    Registros (pestaña «Cancelaciones»): quién canceló, cuándo, por qué, cuánto y la mesa. PÉRDIDA
+    = lo que ya estaba «listo» o «entregado» según la cocina (`comandas`/`comanda_items`), no
+    `estado_preparacion` (que la cancelación pisa); va en su propia sección, resaltada y con
+    total. Sin doble conteo: un platillo listo que se anula y luego se cancela la cuenta es una
+    sola pérdida.
+  - El motivo se dice en palabras (`etiquetaDelMotivoDeAnulacion`), no `error_mesero`.
+- **Descartado:** pedir la hoja del corte entera desde el heredado (dos lecturas chicas que
+  comparten la consulta) y la definición más estricta del dominio (`elConsumoSePerdio`) para el
+  corte: Miguel pidió «listo o entregado».
+- **Sin migración.** Dividir la cuenta sigue siendo de caja.
+
+## DP-D49 · Las pantallas: menú QR, Cocina y teléfono, Ventas, nombre de mesa, 25 mesas, un solo sonido y la limpieza por hora · 01-11-2026
+
+- **Menú QR:** la marca del precio va anclada arriba, mide un renglón y sobresale 3 px: tapa el
+  precio impreso en 320–430 px. «Atención» pasa a la esquina inferior IZQUIERDA (la columna de
+  precios está a la derecha).
+- **Cocina en el teléfono y el botón redondo del menú:** el encabezado se acomoda en dos renglones
+  si no cabe; el contenido deja aire abajo cuando el administrador tiene el botón flotante.
+  Solicitudes: las pestañas de filtro se acomodan en renglones.
+- **Ventas sin receta:** costo cero (o nulo) en una venta con importe es costo DESCONOCIDO: margen
+  y utilidad «—, sin receta» (`costo-de-la-venta.ts`, del dominio). En un periodo el margen sale
+  sólo de las ventas con costo y se dice cuántas quedaron fuera: Ventas, tablero, gráfica,
+  Registros, su PDF y el CSV. La pastilla vacía era `tipo_venta` (la venta no lo trae): sale; sin
+  folio no se pinta y la cuenta abierta lo dice. El encabezado dice qué cuenta («2 transacciones
+  · 1 pagada · Cobrado: $200.00»).
+- **El nombre de la mesa** no se repite si es vacío o igual a «Mesa N» (`nombre-de-la-mesa.ts`, en
+  nueve pantallas).
+- **25 mesas:** cada mesa puesta reserva su medida real al buscar dónde nace la siguiente (antes la
+  caja más grande tapaba la casilla de al lado y la 21 caía encima de otra); con la rejilla llena
+  baja de fila.
+- **Un solo sistema de sonido:** sale el viejo (`lib/sounds`, `SoundUnlockButton`); Ping, Signal y
+  Check por el gestor, con `sonarAntesDeHablar`: la voz empieza cuando termina el sonido.
+- **La limpieza de solicitudes** automática corre a lo mucho una vez por hora por negocio, decidido
+  en el servidor (la última, de `auditoria`, con un cerrojo consultivo). Si no le toca, no escribe
+  nada: la señal `SinNovedad` revierte la transacción —ni auditoría ni clave— y contesta éxito.
+  Es un cambio al envoltorio de comandos, con su prueba. El botón «Limpiar antiguas» limpia
+  siempre.
+- **Pendiente (para Miguel):** el Cierre del día, el corte y las pantallas de Caja (`Caja.jsx`,
+  `CorteCaja.jsx`) todavía calculan el margen con costo cero = 100 %. El Cierre tiene cada venta y
+  puede usar `economiaDelPeriodo`; el corte suma costos en el servidor y necesita contar las ventas
+  sin costo. No se hizo en DP-12 para no retrasar la publicación.
+- **Sin migración.**

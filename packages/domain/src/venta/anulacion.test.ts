@@ -1,7 +1,13 @@
 import { esErrorDominio } from '@morphiqpos/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { elConsumoSePerdio, partirLineaParaAnular, type LineaAnulable } from './anulacion.ts';
+import {
+  MOTIVOS_ANULACION,
+  elConsumoSePerdio,
+  etiquetaDelMotivoDeAnulacion,
+  partirLineaParaAnular,
+  type LineaAnulable,
+} from './anulacion.ts';
 
 /**
  * F-324 · Anular parte de una línea sin perder ni inventar un centavo.
@@ -118,5 +124,22 @@ describe('F-324 · si el insumo vuelve al almacén', () => {
     for (const estado of ['en_preparacion', 'listo', 'entregado']) {
       expect(elConsumoSePerdio(estado), estado).toBe(true);
     }
+  });
+});
+
+describe('DP-12.4 · cómo se dice el motivo de una anulación en el corte y en Registros', () => {
+  it('cada motivo del enum se dice con palabras, distintas entre sí, nunca con su clave', () => {
+    const etiquetas = MOTIVOS_ANULACION.map((motivo) => etiquetaDelMotivoDeAnulacion(motivo));
+    for (const [i, etiqueta] of etiquetas.entries()) {
+      expect(etiqueta, MOTIVOS_ANULACION[i]).not.toBeNull();
+      expect(etiqueta, MOTIVOS_ANULACION[i]).not.toMatch(/_/);
+    }
+    expect(new Set(etiquetas).size).toBe(MOTIVOS_ANULACION.length);
+  });
+
+  it('un texto libre (el motivo de una cuenta cancelada) pasa tal cual y lo vacío no se inventa', () => {
+    expect(etiquetaDelMotivoDeAnulacion('se fueron sin pagar')).toBe('se fueron sin pagar');
+    expect(etiquetaDelMotivoDeAnulacion(null)).toBeNull();
+    expect(etiquetaDelMotivoDeAnulacion('  ')).toBeNull();
   });
 });

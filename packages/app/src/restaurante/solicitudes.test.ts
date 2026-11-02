@@ -569,7 +569,7 @@ describe('limpiar_solicitudes · un solo delete y el conteo REAL', () => {
     const base = baseDeBorrado(HISTORIAL);
     const { ctx } = contextoFalso(base.tx, ambitoDe('mesero'), AHORA);
 
-    const salida = await limpiarSolicitudes.ejecutar(ctx, {});
+    const salida = await limpiarSolicitudes.ejecutar(ctx, { automatica: false });
 
     // El número sale de `numDeletedRows`, no de un contador de intentos como el
     // del bucle de `SolicitudesQRTab.jsx:73`.

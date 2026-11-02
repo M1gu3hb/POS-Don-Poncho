@@ -15,3 +15,11 @@ export {
   type Conteos,
   type Seccion,
 } from './purgas.ts';
+export {
+  CLAVE_DE_PLATAFORMA,
+  empleosDePlataforma,
+  exigirPlataforma,
+  leerEsDePlataforma,
+  marcarPlataforma,
+  type ResultadoMarcarPlataforma,
+} from './plataforma.ts';

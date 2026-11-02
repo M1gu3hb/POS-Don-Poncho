@@ -2975,12 +2975,20 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
     // Quitar del mapa una mesa en servicio dejaba su cuenta colgando de una mesa dada de baja.
     // Los estados son los que la pantalla deja quitar (`MesaEditDialog.jsx`, `ESTADOS_OCUPADA`):
     // una mesa unida a otra no tiene cuenta propia, pero lleva el estado de la principal.
+    // DP-12.3: tampoco una mesa unida a otra ni la principal de una unión viva: sus absorbidas se
+    // quedaban ocultas para siempre. Primero se separan.
     apagarSoloSi: {
       columnaEstado: 'estado',
       estados: ['libre', 'limpieza', 'pagada', 'cancelada'],
-      vacias: ['orden_activa_id'],
+      vacias: ['orden_activa_id', 'unida_a_mesa_id'],
+      sinCabezaViva: {
+        tabla: 'uniones_mesa',
+        columna: 'mesa_principal_id',
+        abiertaSi: 'cerrada_en',
+      },
       codigo: 'MESA_YA_ABIERTA',
-      mensaje: 'Esa mesa está en servicio: cóbrala o cancela su cuenta antes de quitarla del mapa.',
+      mensaje:
+        'Esa mesa está en servicio o unida a otras: cóbrala, o sepáralas, antes de quitarla del mapa.',
     },
     ordenPorOmision: 'numero',
     campos: {

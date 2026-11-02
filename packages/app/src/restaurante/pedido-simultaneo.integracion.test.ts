@@ -58,7 +58,7 @@ let sopa = '';
 let mesas: readonly string[] = [];
 
 const ambito = () => ambitoDe(negocio, sucursal.sucursalId, null);
-/** Quien anula es de caja o de dirección: el mesero no puede (`anulacion-linea.ts`). */
+/** Quien anula es de caja, de dirección o (DP-12.4) el mesero (`anulacion-linea.ts`). */
 const ambitoDeLaGerente = () => ({ ...ambito(), rol: 'gerente' as const });
 
 beforeAll(async () => {

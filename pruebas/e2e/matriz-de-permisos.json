@@ -22,6 +22,20 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/cancelaciones-del-corte",
+      "comando": "caja.cancelaciones_del_corte",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/caja/cancelaciones-registradas",
+      "comando": "caja.cancelaciones_registradas",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/cerrar",
       "comando": "caja.cerrar",
       "escribe": true,
@@ -326,7 +340,7 @@
       "ruta": "/api/restaurante/anular-linea",
       "comando": "restaurante.anular_linea",
       "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"]
     },
     {
@@ -354,7 +368,35 @@
       "ruta": "/api/restaurante/cancelar-orden",
       "comando": "restaurante.cancelar_orden",
       "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-cambiar",
+      "comando": "restaurante.carrito_cambiar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-enviar",
+      "comando": "restaurante.carrito_enviar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-quitar",
+      "comando": "restaurante.carrito_quitar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/carrito-vaciar",
+      "comando": "restaurante.carrito_vaciar",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"]
     },
     {
@@ -757,6 +799,10 @@
       "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     },
     {
+      "ruta": "/api/publico/qr/[token]/carrito/llamar",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
+    },
+    {
       "ruta": "/api/publico/qr/[token]/carrito/quitar",
       "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     },
@@ -797,8 +843,16 @@
       "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     },
     {
+      "ruta": "/api/restaurante/carrito-de-la-mesa",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
+    },
+    {
       "ruta": "/api/restaurante/conectar-telefono-de-cocina",
       "razon": "no sirve UN comando por la tubería estándar: valida o encadena antes del comando"
+    },
+    {
+      "ruta": "/api/restaurante/qr-de-la-mesa",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     }
   ]
 }

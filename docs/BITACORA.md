@@ -449,3 +449,161 @@ Sesión local en la laptop, en un worktree aparte (`.work/dp-main`, rama
   crear cuentas sólo sirve una mesa que ya tenga una.
 - **Ojo, unir dos mesas libres no tiene vuelta en la pantalla:** la principal dice «Unida con 3» y
   sólo ofrece «Abrir la mesa». Se separaron con `restaurante.separar_mesas` (el comando del botón).
+
+## 01-11-2026 · DP-12 · Correcciones y funcionamiento final
+
+Encargo en el chat de Miguel (el orquestador). Trabajo en el worktree `.claude/worktrees/dp12`,
+rama `dp-12` sacada de `main` @ `4b00f9e` (la carpeta de Don Poncho sigue en `dp-11`, que no se
+toca). `pnpm install` en el worktree tarda ~11 min.
+
+### Para retomar DP-12
+
+- Todo DP-12 está en `dp-12` y en el PR #3 (subido hasta `8b2417f`): 12.1 a 12.6, la galería
+  declarada (27 retratos) y el reporte `docs/reports/006-correcciones.md`. 12.7 no se rescata.
+  Integración completa 59/278 y unidad en verde en local; navegador de DP-12 en verde en los tres
+  aparatos; reauditoría limpia.
+- Falta: la CI del PR #3 en verde → fusionar con merge (sin squash ni rebase) → esperar la fila
+  Production de Vercel → humo sin PIN (entrada 200, 404 con Morfi, cabeceras) → huella de los otros
+  10 negocios contra `_PRIVADO\mudanza\huellas-dp12\antes-despliegue-dp12.json` (IDÉNTICA desde
+  12.1). Los PIN reales los teclea Miguel (sección 3 del reporte).
+- Los subagentes de 12.4 y 12.6 ya se integraron; sus worktrees (`agent-aae7355ccdfa9cbb4`,
+  `agent-a2dba111da2fb3b4b`) se pueden borrar. El encargo de 12.5 para un tercero (`brief-s3.txt`)
+  no se usó: 12.5 se hizo aquí.
+- Pendiente para después de DP-12: el margen «sin receta» en el Cierre del día, el corte y Caja.
+- Servidor de pruebas: `next start -p 3200` sobre la base desechable 5435
+  (`export $(node --conditions=react-server scripts/base-desechable.mjs entorno | grep -v "^$" |
+  xargs)`). Si `TaskStop` no lo mata, el PID del 3200 sigue vivo: detenerlo antes de reconstruir.
+- **Ojo, integrar un subagente:** su parche sale de `git diff HEAD` (no de `git diff`: lo que
+  dejó en su índice, como un borrado, no viene). Correr TODAS las puertas `verify:*` antes de
+  subir: la CI las corre y una sola roja cuesta otra vuelta de 20 minutos.
+
+### DP-12.1 · Datos de prueba fuera y mantenimiento sólo para plataforma
+
+- Decisiones de Miguel (01-11): marca en `configuracion.valores.plataforma` (DP-D44) y que la mesa
+  abierta del POS enseñe el carrito pendiente del portal (DP-12.2).
+- `scripts/limpiar-ventas-de-prueba.mjs` (se niega si hay pagos, cajas u otra cuenta) y
+  `scripts/marcar-plataforma.mjs`. Ensayo: exportación de producción importada a
+  `dp12_ensayo` en la base desechable (135 tablas, 1171 filas, idénticas); ahí el dueño del
+  restaurante recibe `SIN_PERMISO` y el de plataforma purga.
+- **Producción, 20:43:27–20:43:36 UTC:** marca de «Miguel · Morphiq»; la cuenta de la Mesa 1
+  (`e8074bb7…`, $145, «Conejo al pastor», 31-10 12:02) cancelada con «Prueba» y la mesa libre;
+  `purgar_ventas` sin revertir inventario (1 orden, 1 línea, 1 comanda, 1 renglón de comanda).
+  Exportaciones `_PRIVADO\mudanza\antes-dp12` y `despues-dp12-1` (1171 → 1174 filas): sólo
+  cambian `auditoria` +3, `comandos_ejecutados` +3, `configuracion`, `eventos_mesa` +1, `mesas`
+  (la 1, libre) y lo purgado. Huella de los otros 10 negocios IDÉNTICA (20:36:32 → 20:43:55 UTC,
+  `_PRIVADO\mudanza\huellas-dp12`).
+- **Ojo, el guion corre con el código del worktree:** con la guarda ya escrita, la purga desde el
+  guion también exige la marca. Por eso se marcó antes de purgar.
+- **Ojo, base desechable:** si `subir` se cuelga, NO matar la tarea (mata al postgres hijo y queda
+  a medias): `pg_ctl -D "D:\mpos-tmp\morphiqpos-base-desechable" stop -m fast`, arrancarlo con
+  `pg_ctl ... -o "-p 5435" -w start < /dev/null > /dev/null 2>&1` y correr `subir` otra vez (se
+  salta el arranque). Su superusuario es `morphiqpos`. Integración:
+  `DATABASE_URL_PRUEBAS=postgres://morphiqpos@localhost:5435/morphiqpos_desechable`.
+- Subagentes: flujo «dp12-mapa», 7 Sonnet de sólo lectura, dos a la vez (mapa del código de cada
+  punto del encargo).
+
+### DP-12.2 · El portal: los comensales arman, el mesero confirma (DP-D45)
+
+- Servidor: `portal/quien-envia.ts`, `carrito-llamar.ts`, los cambios de `carrito*.ts`;
+  `restaurante/carrito-del-salon.ts` (olvidar al cerrar la cuenta, al cobrar y al cerrar la última
+  caja; mover al unir o cambiar de mesa) y `carrito-del-mesero*.ts` (cuatro comandos y dos lecturas
+  POST). `pedido.ts` expone `comandarLasLineas` (el cuerpo de `enviar_pedido`).
+- Pruebas contra Postgres: `carrito-sin-cuenta` (12), `carrito-doce-telefonos` (3),
+  `restaurante/carrito-del-mesero` (7); las de DP-9.5 siguen en verde (la de «cuenta anterior»
+  se reemplazó por la regla nueva: se conserva lo de antes de abrir y se olvida al cerrar).
+- **Ojo, `mesaConPortal`:** por omisión envían los comensales (las pruebas de DP-9.5 hablan de
+  eso); el negocio real nace con el mesero. `envian: 'mesero'` para las nuevas.
+- **Ojo, el camino del mesero exige estación** (regla 10): una prueba que lo use siembra la general.
+- **Ojo, e2e:** `prepararElPortalDelComensal` con `pedidosDelComensal` y sin `envian` deja
+  «También los comensales» y que abran su mesa (como antes de DP-12). `enviarElPedidoDeLaMesa`
+  abre la mesa desde el carrito cuando el botón es «Abrir la mesa y enviar».
+- **Ojo, la CI del PR #3:** `auth-entrar-cuota.test.ts` simula la entrada sin base; leer
+  `es_plataforma` en la ruta pide su doble (`vi.mock('@morphiqpos/app/mantenimiento')`). Correr
+  `pnpm test:unit` entero antes de subir.
+- **Ojo, la galería de retratos:** Configuración (sin «Mantenimiento» para el dueño), Portal QR
+  (la sección «Pedidos desde el portal») y Mesas («Escanear QR») cambian a propósito: se declaran
+  con el flujo `actualizar_galeria`.
+- Ojo, un `next build` local puede fallar por la red al bajar Inter de Google Fonts: reintentar.
+
+### DP-12.3 · Unir mesas (DP-D46)
+
+- Dominio: `sala/forma-de-la-union.ts` (`formaDeLaUnion`, `vecinaQueLlama`). Servidor:
+  `restaurante/notas-de-la-union.ts` (alergias y celebración a la principal), la guarda de limpieza
+  en `union-de-mesas.ts`, `sinCabezaViva` en la guarda del puente (`puente/tipos.ts`, `escribir.ts`,
+  `mapa.ts`) y «vaciar el mapa» con uniones vivas.
+- Pantalla: `apps/web/src/restaurante/unir-mesas/` (`MesaQueTiembla`, `use-arrastre-de-mesas`,
+  `AvisoDeMesasOcupadas`, `UnirMesasEnElMapa` rehecho), `MesaShape.jsx` con `caja`, y `Mesero.jsx`
+  (la unión fundida en el mapa, «Separar mesas» en el globo, `?unir=` limpio).
+- Pruebas: `union-con-gente.integracion.test.ts` (5), `forma-de-la-union.test.ts` (7),
+  `union-dp12-3.test.ts`; e2e `unir-mesas-al-tacto.spec.ts` (tacto real por CDP; la distancia
+  dedo-mesa cuadro por cuadro) con sus ayudantes en `pruebas/e2e/ayudantes/tacto.ts`.
+- Resultados: mutaciones 16 de 16 (servidor, dominio y pantalla); `unir-mesas-al-tacto` en tableta
+  1280 × 800, teléfono y PC; las vecinas de 12.2 y 12.3 en verde en los tres (10 en tableta, 8 en
+  teléfono y PC). El aviso con gente no nombra la mesa desde la que se entró a unir (la propia).
+- Ojo, `restaurante-operaciones` 6 y 6b: unir dos mesas con cuenta pasa por «¿Unir de todos
+  modos?» antes de «¿Qué número queda?» (`unirPorLaPantalla`).
+- **Ojo, la prueba de tacto usa el salón de la demo tal cual:** Interior 1 y 2 (cuadradas), 3 y 6
+  (redondas chicas, una sobre otra) y Terraza 7 y 8 (redondas). Si se reacomoda la demo, se
+  reacomoda la prueba.
+- **Ojo, el temblor es `transform`:** lo que mueve la mesa (arrastre, vecina, asentarse) va en
+  `translate`/`scale`. Ponerlo en `transform` apaga el temblor.
+- **Ojo, el aviso con gente lee el total de la cuenta por el puente** (`Venta`): si el rol no la
+  lee, el aviso sale sin importe; nunca se une sin preguntar.
+
+### DP-12.4 · El mesero cancela, y el corte lo dice (DP-D48)
+
+- Hecho por un subagente (Sonnet, en su worktree `agent-aae7355ccdfa9cbb4`, base 5436, puerto
+  3201; sin commit): servidor, pantalla, corte, Registros y pruebas. Integrado aquí con
+  `git apply -3` sobre `dp-12` (sin conflictos); las matrices de permisos y aislamiento se
+  regeneraron sobre lo integrado y coinciden.
+- Pruebas: integración partida en `cancelacion-del-mesero` (quién puede) y
+  `cancelaciones-del-corte` (el corte y Registros), con el salón sembrado en
+  `restaurante/pruebas/cancelacion-real.ts` (el original pasaba de 300 líneas); unidad y contrato
+  `cancelaciones-heredado`; navegador `cancelacion-del-mesero.spec.ts` (ayudantes en
+  `pruebas/e2e/ayudantes/cancelar-desde-la-mesa.ts`), verde en tableta, teléfono y PC en el
+  worktree del subagente. Mutaciones: 28 de 28 (S11 sobrevivió y se agregó el caso de dos
+  platillos en una comanda; S14 y W7 no compilaban y se rehicieron).
+- **Ojo, el corte heredado y el de Cierre diario pintan las cancelaciones con el MISMO código**
+  (`corte/cancelaciones.ts`, `SeccionPintada`): cambiar uno cambia los dos.
+- **Ojo, `CancelarDelMesero` relee qué platillos siguen en la cuenta:** el puente sirve también los
+  anulados en `DetalleVenta`.
+- Lo que el subagente no verificó: mutantes del spec de navegador (cada uno pediría un build) y
+  una captura visual de Registros y los cortes (se miraron por texto).
+
+### DP-12.5 · Estaciones de punta a punta (DP-D47)
+
+- Prueba nueva `pruebas/e2e/estaciones-de-punta-a-punta.spec.ts` (ayudantes en
+  `pruebas/e2e/ayudantes/estaciones.ts`): en Configuración → Negocio se crean cuatro estaciones,
+  una se renombra y otra se desactiva (su categoría vuelve a la general); cada estación recibe su
+  categoría y su cocinero; el mesero manda un platillo de cada una y salen 5 comandas, una por
+  estación; cada Cocina ve y ANUNCIA (voz espiada) sólo lo suyo y la dueña ve las 5; cada estación
+  conecta sólo su teléfono y el de Parrilla ve lo suyo; el pedido del comensal desde el portal
+  también se parte. Verde en tableta, teléfono y PC; `estaciones-de-cocina` sigue verde.
+- Arreglo: `EstacionesPreparacionSection.jsx` ya no traga el error al mover las categorías de la
+  estación que se apaga (contrato `estaciones-heredado.contrato.test.ts`, visto en rojo).
+- **Ojo, el reseteo de la demo no borra las estaciones que crea una prueba:** la prueba usa nombres
+  propios por corrida y al final apaga las suyas.
+- **Ojo, la pregunta «¿Desactivar estación?» se cierra al tocar «Sí, desactivar»:** lo del
+  servidor se espera con `expect.poll`.
+- Hecho aquí, sin subagente (el lugar de un tercero no se había liberado y así se ahorraba su
+  instalación y su build).
+
+### DP-12.6 · Las pantallas (DP-D49)
+
+- Hecho por un subagente (Sonnet, en su worktree `agent-a2dba111da2fb3b4b`, base 5437, puerto
+  3202; sin commit) salvo el punto 6 (25 mesas, `df8827d`, hecho aquí). Integrado con
+  `git apply -3`: sólo chocó `scripts/aspecto-permitido.json` (12.4 y 12.6 agregaron entradas; se
+  conservan las dos). **Ojo:** los dos borrados del sonido viejo estaban en el ÍNDICE del
+  subagente y `git diff` no los trae: se borraron a mano (usar `git diff HEAD` la próxima vez).
+- Pruebas: unidad y contratos (nombre de mesa, margen, sonido, pantallas sin estorbos),
+  integración `limpieza-de-solicitudes` (10) y `comando.sin-novedad`; navegador
+  `pantallas-sin-estorbos.spec.ts` (teléfono 5 de 5; en tableta y PC dos pasan y tres se saltan
+  por ser de teléfono) y las vecinas (sonidos, menú QR, solicitudes, portal, teléfono de cocina).
+  Mutaciones 61 de 61 (12 de navegador contra `next dev`).
+- **Ojo, la galería:** `heredado-mesero` cambia en todos los estilos (sale «Activar sonidos»), y
+  también Configuración, Portal QR y Ventas: declararla con `actualizar_galeria`.
+- **Ojo, una tableta de cocina recargada sin tocar** no suena hasta el primer toque (ya no hay
+  botón «Activar sonidos»); el teléfono de cocina conserva «Toca para activar el sonido».
+- Lo que el subagente no verificó en el navegador: el margen en tablero, Registros, PDF, gráfica y
+  CSV (unidad y contratos), la insignia «Vista general» de Cocina y Ventas después de quitar la
+  pastilla.

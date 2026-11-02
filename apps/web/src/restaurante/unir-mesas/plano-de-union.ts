@@ -1,4 +1,9 @@
-import { medidasDeMesa, type MesaEnPlano } from '@morphiqpos/domain/sala';
+import {
+  formaDeLaUnion,
+  medidasDeMesa,
+  type FormaDeLaUnion,
+  type MesaEnPlano,
+} from '@morphiqpos/domain/sala';
 
 /**
  * EL PLANO PARA UNIR MESAS (DP-9.6), del lado de la pantalla: de las mesas del puente a cajas en
@@ -14,6 +19,9 @@ export interface MesaDelPlanoDeUnion {
   readonly forma?: string | null;
   readonly tamano?: string | null;
   readonly unida_a_mesa_id?: string | null;
+  /** DP-12.3 · Para avisar antes de unir una mesa con gente, o una en limpieza. */
+  readonly estado?: string | null;
+  readonly venta_activa_id?: string | null;
 }
 
 /** Donde el mapa pinta una mesa sin posición: igual que `MesaShape`. */
@@ -79,4 +87,40 @@ export function juntarAlGrupo(
 export function escalaDelPlano(ancho: number, plano: readonly MesaEnPlano[]): number {
   const derecha = Math.max(0, ...plano.map((m) => m.x + m.ancho)) + MARGEN;
   return derecha <= ancho ? 1 : Math.max(0.2, ancho / derecha);
+}
+
+/**
+ * DP-12.3 · La caja de una unión viva en el mapa: la principal y sus absorbidas, fundidas en la
+ * forma que les toca (cápsula, rectángulo, cuadrado). `null` si la mesa no encabeza una unión.
+ */
+export function cajaDeLaUnion(
+  principal: MesaDelPlanoDeUnion,
+  mesas: readonly MesaDelPlanoDeUnion[],
+): FormaDeLaUnion | null {
+  const absorbidas = mesas.filter((m) => m.unida_a_mesa_id === principal.id);
+  if (absorbidas.length === 0) return null;
+  const grupo = [principal, ...absorbidas];
+  const enPlano = mesasEnPlano(grupo);
+  return formaDeLaUnion(enPlano.map((m, i) => ({ ...m, forma: grupo[i]?.forma ?? 'redonda' })));
+}
+
+/** DP-12.3 · La primera mesa del grupo en limpieza, para decir «Márcala libre primero». */
+export function enLimpieza(
+  grupo: readonly string[],
+  mesas: readonly MesaDelPlanoDeUnion[],
+): MesaDelPlanoDeUnion | null {
+  return mesas.find((m) => grupo.includes(m.id) && m.estado === 'limpieza') ?? null;
+}
+
+/** DP-12.3 · Las mesas del grupo con gente o con cuenta: se pregunta antes de unirlas. */
+export function conGente(
+  grupo: readonly string[],
+  mesas: readonly MesaDelPlanoDeUnion[],
+): readonly MesaDelPlanoDeUnion[] {
+  return mesas.filter(
+    (m) =>
+      grupo.includes(m.id) &&
+      ((m.venta_activa_id ?? null) !== null ||
+        (m.estado !== undefined && m.estado !== null && !['libre', 'limpieza'].includes(m.estado))),
+  );
 }

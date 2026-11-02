@@ -33,7 +33,7 @@ import { ViewTransition, useEffect, useRef, useState, type ChangeEvent } from 'r
 import { consultarPuente, invocarComando, nuevaClave } from '~/cliente/api';
 import { valorDelPuente } from '~/cliente/dinero-del-puente';
 import { AccionesDeLaMesa } from './AccionesDeLaMesa';
-import { puedeAjustarLaCuenta } from './ajustes-de-la-cuenta-por-rol.ts';
+import { puedeAjustarLaCuenta, puedeCancelarPedidos } from './ajustes-de-la-cuenta-por-rol.ts';
 import { AnularLineaDialog } from './AnularLineaDialog';
 import {
   ESTADOS_DE_MESA,
@@ -83,8 +83,9 @@ import { sonar } from '~/sonidos/gestor';
  * la hoja; en PC, lo primero del panel.
  *
  * ── Lo que quita dinero no se le ofrece al mesero ───────────────────────
- * «Anular» y «Dividir» son de caja y de dirección: al mesero se las enseñaba y el
- * servidor las negaba. Ahora sólo las ve quien puede (`puedeAjustarLaCuenta`).
+ * «Dividir» es de caja y de dirección: al mesero se le enseñaba y el servidor la negaba. Ahora
+ * sólo la ve quien puede (`puedeAjustarLaCuenta`). «Anular» (DP-12.4) es también del mesero
+ * (`puedeCancelarPedidos`).
  *
  * ── En tablet el pedido es una HOJA, no un panel lateral ─────────────────
  * El mesero sostiene la tablet con la izquierda y opera con el pulgar derecho:
@@ -185,6 +186,8 @@ export function MesaActiva(props: MesaActivaProps) {
     delaCocina.falloDeLectura !== null;
   const rol = useRolDeLaSesion();
   const puedeAjustar = puedeAjustarLaCuenta(rol);
+  // DP-12.4: quitar un platillo también es del mesero (con motivo y a su nombre).
+  const puedeQuitar = puedeCancelarPedidos(rol);
 
   useEffect(() => {
     if (mesaInicial !== undefined) return;
@@ -526,7 +529,7 @@ export function MesaActiva(props: MesaActivaProps) {
           <>
             <Tabla
               etiqueta={`${voc.titulo('orden')} actual`}
-              columnas={columnasDeLoEnviado(voc, abrirAnular, puedeAjustar)}
+              columnas={columnasDeLoEnviado(voc, abrirAnular, puedeQuitar)}
               filas={enviadas}
               claveDe={(l) => l.id}
               alto="max-h-none"
@@ -901,7 +904,7 @@ export function MesaActiva(props: MesaActivaProps) {
           </Button>
         </DialogContent>
       </Dialog>
-      {puedeAjustar && anulando !== null && mesa?.venta_activa_id != null && (
+      {puedeQuitar && anulando !== null && mesa?.venta_activa_id != null && (
         <AnularLineaDialog
           abierto
           ordenId={mesa.venta_activa_id}

@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { generarTokenMesa, buildPortalQRUrl } from '@/utils/qrUtils';
 import QRMesaDialog from './QRMesaDialog';
 import { PanelDeLosQr } from '~/restaurante/qr-de-mesas/PanelDeLosQr';
+import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { DisenoDeLaMesa } from '~/restaurante/qr-de-mesas/DisenoDeLaMesa';
 import { disenoDeLaMesa } from '~/restaurante/qr-de-mesas/diseno';
 import { useLogoDelNegocio, useQrDeMesas } from '~/restaurante/qr-de-mesas/use-qr-de-mesas';
@@ -181,7 +182,7 @@ export default function MesasQRTab({ config }) {
               <div className="flex-1 min-w-0">
                 <p className="font-heading font-bold text-base leading-tight">
                   Mesa {mesa.numero}
-                  {mesa?.nombre ? ` · ${mesa.nombre}` : ''}
+                  {sufijoDelNombreDeLaMesa(mesa)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {mesa?.zona || 'Interior'} · cap. {mesa?.capacidad || 0}

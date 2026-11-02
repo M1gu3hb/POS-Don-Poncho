@@ -185,10 +185,16 @@ export function resolverMeseroResponsable(mesa, config) {
  * no el reloj de este dispositivo. Se conserva en la firma porque quien llama
  * (`SolicitudesQRWatcher`) sigue pasándolo.
  *
+ * DP-12.6: es la limpieza que la pantalla pide SOLA (`automatica: true`), y el servidor decide si
+ * le toca: a lo mucho una vez por hora y por negocio; si no, no escribe nada y contesta
+ * `borradas: 0`. El botón «Limpiar antiguas» de Portal QR no la manda y limpia siempre.
+ *
  * Devuelve { borradas: number }. Si falla, LANZA.
  */
 export async function cleanupOldSolicitudes(api, config) {
   void config;
-  const resultado = await api.comandos.ejecutar('/api/restaurante/limpiar-solicitudes', {});
+  const resultado = await api.comandos.ejecutar('/api/restaurante/limpiar-solicitudes', {
+    automatica: true,
+  });
   return { borradas: Number(resultado?.borradas) || 0 };
 }

@@ -418,61 +418,9 @@ export async function gastosDelCorte(
   return rows;
 }
 
-export interface Cancelacion {
-  readonly tipo: 'orden' | 'linea';
-  readonly folio: string | null;
-  readonly hora: Date | null;
-  readonly usuario: string | null;
-  readonly motivo: string | null;
-  readonly producto: string | null;
-  readonly montoCentavos: string;
-}
-
-/**
- * Las cancelaciones de la ventana de la sesión, SIEMPRE con usuario: una orden cancelada
- * entera y un platillo anulado de una cuenta viva. Una cancelada que nunca se cobró no
- * tiene sesión, así que se busca por su hora y su sucursal.
- */
-export async function cancelacionesDelCorte(
-  tx: Transaccion,
-  organizacionId: string,
-  sesion: Pick<SesionDelCorte, 'sucursalId' | 'abiertaEn' | 'cerradaEn'>,
-): Promise<readonly Cancelacion[]> {
-  const hasta = sesion.cerradaEn ?? new Date();
-  const { rows } = await sql<Cancelacion>`
-    select 'orden'                            as "tipo",
-           o.serie || '-' || coalesce(o.folio::text, '—') as "folio",
-           o.cancelada_en                     as "hora",
-           ev.nombre                          as "usuario",
-           o.motivo_cancelacion               as "motivo",
-           null::text                         as "producto",
-           o.total_centavos::text             as "montoCentavos"
-      from ordenes o
-      left join empleados_visibles ev on ev.id = o.cancelada_por
-     where o.organizacion_id = ${organizacionId}
-       and o.sucursal_id = ${sesion.sucursalId}
-       and o.estado = 'cancelada'
-       and o.cancelada_en between ${sesion.abiertaEn} and ${hasta}
-    union all
-    select 'linea',
-           o.serie || '-' || coalesce(o.folio::text, '—'),
-           l.anulada_en,
-           ev.nombre,
-           l.motivo_anulacion,
-           l.producto_nombre,
-           l.total_centavos::text
-      from orden_lineas l
-      join ordenes o on o.id = l.orden_id and o.organizacion_id = l.organizacion_id
-      left join empleados_visibles ev on ev.id = l.empleado_anula_id
-     where l.organizacion_id = ${organizacionId}
-       and o.sucursal_id = ${sesion.sucursalId}
-       and o.estado <> 'cancelada'
-       and l.anulada_en between ${sesion.abiertaEn} and ${hasta}
-     order by 3
-     limit ${TOPE_DE_FILAS}
-  `.execute(tx);
-  return rows;
-}
+// Las cancelaciones salieron a su propio archivo (DP-12.4): las leen la hoja del corte, la lectura
+// del corte heredado y Registros, y el archivo ya pasaba de 600 líneas.
+export { cancelacionesDelCorte, type Cancelacion } from './cancelaciones.ts';
 
 export interface DescuentoDeUsuario {
   readonly usuario: string | null;

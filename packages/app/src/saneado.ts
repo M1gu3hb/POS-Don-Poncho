@@ -13,7 +13,13 @@ import { createHash } from 'node:crypto';
  * los dos sentidos y falla en silencio.
  */
 
-const CLAVES_SENSIBLES = /(pin|hash|password|contrase|token|secret|authorization|cookie|pepper)/i;
+/**
+ * DP-12.2 · `dispositivo` va EXACTA: es el id crudo que inventa el navegador del comensal y con el
+ * que sus comandos del carrito se reconocen (en la base sólo vive su huella). Como subcadena se
+ * comería claves de la caja que no son secretas (`dispositivoId` de la terminal).
+ */
+const CLAVES_SENSIBLES =
+  /(pin|hash|password|contrase|token|secret|authorization|cookie|pepper|^dispositivo$)/i;
 
 const REDACTADO = '[redactado]';
 

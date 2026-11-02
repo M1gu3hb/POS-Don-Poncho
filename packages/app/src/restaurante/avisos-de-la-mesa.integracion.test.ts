@@ -42,7 +42,7 @@ let producto = '';
 let mesas: readonly string[] = [];
 
 const ambito = () => ambitoDe(negocio, sucursal.sucursalId, null);
-/** Cancelar una cuenta con consumo es de caja o de dirección: el mesero no puede. */
+/** Cancelar una cuenta con consumo es de caja, de dirección y (DP-12.4) del mesero; aquí lo hace la gerente. */
 const ambitoDeLaGerente = () => ({ ...ambito(), rol: 'gerente' as const });
 
 function mesaDe(indice: number): string {
