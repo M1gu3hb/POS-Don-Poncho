@@ -209,11 +209,20 @@ describe('bloqueante 1 · cancelar_orden es la salida que faltaba', () => {
     expect(base.campo('ordenes', 'estado')).toBe('pagada');
   });
 
-  it('el mesero no puede anular una cuenta, y el motivo es obligatorio', async () => {
+  it('DP-12.4 · el mesero SÍ cancela una cuenta; cocina y almacén no; el motivo es obligatorio', async () => {
     // La autorización sale de `ctx.ambito.rol` (sesión del servidor), no del
     // cuerpo: aquí se afirma sobre la DECLARACIÓN, que es lo que lee `comando()`.
-    expect(cancelarOrden.roles).not.toContain('mesero');
+    expect(cancelarOrden.roles).toContain('mesero');
     expect(cancelarOrden.roles).toContain('cajero');
+    expect(cancelarOrden.roles).not.toContain('cocina');
+    expect(cancelarOrden.roles).not.toContain('almacen');
+    expect([...cancelarOrden.roles].sort()).toEqual([
+      'administrador',
+      'cajero',
+      'dueno',
+      'gerente',
+      'mesero',
+    ]);
     expect(cancelarOrden.entrada.safeParse({ ordenId: CUENTA }).success).toBe(false);
     expect(cancelarOrden.entrada.safeParse({ ordenId: CUENTA, motivo: '  ' }).success).toBe(false);
   });

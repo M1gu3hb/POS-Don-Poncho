@@ -957,3 +957,27 @@ puerta los denuncia todos.
 - **Lo que no es defecto:** `comandas.area` (`cocina`/`barra`) y `productos.area_preparacion` son
   valores de la base; el aviso del rol antiguo «Barra» en el diálogo de usuario.
 - **Sin migración.**
+
+## DP-D48 · El mesero cancela con motivo, y el corte dice quién y qué fue pérdida · 01-11-2026
+
+- **Lo que había:** cancelar una cuenta con consumo y anular un platillo enviado eran sólo de caja
+  y dirección; la mesa del cliente que se va sin pagar se quedaba clavada hasta encontrar al
+  cajero. El corte heredado de la Caja armaba las cancelaciones en el navegador y ponía como
+  «Usuario» a quien cobraba o atendía, no a quien canceló; lo ya preparado no se distinguía.
+- **Elección:**
+  - El rol `mesero` entra a `restaurante.cancelar_orden` y `restaurante.anular_linea` (cocina y
+    almacén siguen fuera; la sucursal se sigue exigiendo). El motivo es obligatorio y queda con su
+    nombre (`cancelada_por`, `empleado_anula_id`). El control es el registro, no negar la salida.
+  - En la mesa ocupada del mesero: «Quitar un platillo» y «Cancelar la cuenta», con su motivo;
+    si la cocina ya preparó algo, se avisa que es pérdida.
+  - Una sola lectura del servidor (`caja/corte/cancelaciones.ts`) para los dos cortes y para
+    Registros (pestaña «Cancelaciones»): quién canceló, cuándo, por qué, cuánto y la mesa. PÉRDIDA
+    = lo que ya estaba «listo» o «entregado» según la cocina (`comandas`/`comanda_items`), no
+    `estado_preparacion` (que la cancelación pisa); va en su propia sección, resaltada y con
+    total. Sin doble conteo: un platillo listo que se anula y luego se cancela la cuenta es una
+    sola pérdida.
+  - El motivo se dice en palabras (`etiquetaDelMotivoDeAnulacion`), no `error_mesero`.
+- **Descartado:** pedir la hoja del corte entera desde el heredado (dos lecturas chicas que
+  comparten la consulta) y la definición más estricta del dominio (`elConsumoSePerdio`) para el
+  corte: Miguel pidió «listo o entregado».
+- **Sin migración.** Dividir la cuenta sigue siendo de caja.

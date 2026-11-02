@@ -382,6 +382,63 @@
       "borrado": true,
       "porque": "DP-10.1 (DP-D31): nadie lo importaba; la estación de cada comanda la decide el servidor (restaurante/estaciones.ts y portal/estaciones.ts).",
       "testigos": []
+    },
+    {
+      "archivo": "apps/web/heredado/components/tickets/CorteTicket.jsx",
+      "porque": "DP-12.4: la sección de cancelaciones del corte heredado ya no es una tabla propia que ponía como «Usuario» al cajero o al mesero de la venta: la arma el servidor (quién canceló, motivo, importe y si ya estaba preparado) y la pinta el mismo código que el corte de Cierre diario (web/src/corte/cancelaciones.ts), con la pérdida aparte y resaltada.",
+      "testigos": [
+        "- clase:text-xs",
+        "- clase:text-right",
+        "- clase:text-right",
+        "- clase:font-mono",
+        "- clase:border",
+        "- clase:border",
+        "- clase:border",
+        "- clase:border",
+        "- clase:border",
+        "- clase:border",
+        "- clase:border",
+        "- clase:border",
+        "- clase:border",
+        "- clase:w-full",
+        "- clase:bg-fondo-sutil",
+        "- clase:px-2",
+        "- clase:px-2",
+        "- clase:px-2",
+        "- clase:px-2",
+        "- clase:px-2",
+        "- clase:px-2",
+        "- clase:px-2",
+        "- clase:px-2",
+        "- clase:py-1",
+        "- clase:py-1",
+        "- clase:py-1",
+        "- clase:py-1",
+        "- clase:py-1",
+        "- clase:py-1",
+        "- clase:py-1",
+        "- clase:py-1",
+        "- clase:text-left",
+        "- clase:text-left",
+        "- clase:text-left",
+        "- texto:Folio",
+        "- texto:Monto",
+        "- texto:Motivo",
+        "- texto:Usuario",
+        "- title:Cancelaciones"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Registros.jsx",
+      "porque": "DP-12.4: pestaña «Cancelaciones» de Registros (cuentas canceladas y platillos anulados, con quién, cuándo, motivo, importe y marca de pérdida), porque el mesero ya cancela desde su pantalla y una cuenta cancelada no podía distinguirse de una venta más.",
+      "testigos": [
+        "+ clase:gap-1",
+        "+ clase:w-3",
+        "+ clase:h-3",
+        "+ clase:mt-4",
+        "+ clase:space-y-3",
+        "+ icono:Ban"
+      ]
     }
   ]
 }

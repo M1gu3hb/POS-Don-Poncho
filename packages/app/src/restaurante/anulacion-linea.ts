@@ -55,14 +55,16 @@ export interface ResultadoAnulacion {
 }
 
 /**
- * Anular es una decisión de CAJA.
+ * Quién anula un platillo.
  *
- * El mesero queda fuera por la misma razón que en la cancelación de la cuenta:
- * es quien tiene el incentivo más directo sobre la cuenta que atiende, y anular
- * una línea es hacer desaparecer consumo del ticket. Sale de `ctx.ambito.rol`,
- * de la sesión del servidor, nunca del cuerpo.
+ * DP-12.4 · El MESERO entra, igual que en la cancelación de la cuenta: es quien toma el pedido y
+ * quien primero se entera de que el cliente cambió de opinión o de que la cocina se equivocó, y
+ * mandarlo a buscar al cajero era un platillo más que se enfría. El motivo (cerrado, ver arriba)
+ * sigue siendo obligatorio y la anulación queda con su nombre (`empleado_anula_id`); si el plato
+ * ya había salido de cocina el corte lo saca aparte como PÉRDIDA. Cocina y almacén siguen fuera.
+ * Sale de `ctx.ambito.rol`, de la sesión del servidor, nunca del cuerpo.
  */
-const ROLES = ['cajero', 'gerente', 'administrador', 'dueno'] as const;
+const ROLES_DE_ANULACION = ['mesero', 'cajero', 'gerente', 'administrador', 'dueno'] as const;
 
 /** Estados en los que una cuenta todavía se puede tocar. */
 const EDITABLES = [
@@ -81,7 +83,7 @@ export const anularLineaComando = definirComando<
   nombre: 'restaurante.anular_linea',
   entidad: 'orden',
   escribe: true,
-  roles: [...ROLES],
+  roles: [...ROLES_DE_ANULACION],
   paquetes: PAQUETES_RESTAURANTE,
   sucursal: { ordenId: 'ordenes', lineaId: 'orden_lineas' },
   entrada: entradaAnularLinea,

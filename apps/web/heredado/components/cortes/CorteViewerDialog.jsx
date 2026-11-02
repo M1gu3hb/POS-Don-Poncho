@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import CorteTicket from '@/components/tickets/CorteTicket';
 import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
+import { cancelacionesDeLaCaja } from '~/corte/cancelaciones-leidas';
 
 export default function CorteViewerDialog({ corte, open, onClose }) {
   const { config, paquete_modo } = useConfig();
@@ -60,7 +61,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
         // neta sale inflada, sin descuentos el costo sale en cero y el margen al
         // 100 %. Un corte a medias no es un corte: se enseña el error y se deja
         // el diálogo vacío, que es lo que hace que alguien reintente.
-        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas] =
+        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelaciones] =
           await Promise.all([
             api.entidades.Venta.list('-fecha_cierre', 2000),
             api.entidades.GastoOperativo.list('-created_date', 500),
@@ -71,6 +72,11 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
             veCostos ? api.entidades.DescuentoInventarioVenta.list('-created_date', 3000) : [],
             veCostos ? api.entidades.Ingrediente.list() : [],
             veCostos ? api.entidades.RecetaEscandallo.list('-created_date', 2000) : [],
+            // DP-12.4 · Las cancelaciones salen del SERVIDOR, las mismas del corte de Cierre diario:
+            // con quién canceló (no quien cobraba), el motivo, el importe y, aparte, lo que ya
+            // estaba preparado. Antes se armaban aquí desde las ventas y un platillo anulado no
+            // aparecía. Sin `.catch`: un corte sin sus cancelaciones parecería uno sin ninguna.
+            cancelacionesDeLaCaja(corteId),
           ]);
 
         const matchVenta = (v) => {
@@ -86,16 +92,6 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
         };
 
         const ventasCorte = allVentas.filter((v) => v.estado === 'pagada' && matchVenta(v));
-        const cancelaciones = allVentas.filter((v) => {
-          if (v.estado !== 'cancelada') return false;
-          const t = v.fecha_cierre
-            ? new Date(v.fecha_cierre).getTime()
-            : v.fecha_apertura
-              ? new Date(v.fecha_apertura).getTime()
-              : 0;
-          return (corteId && v.corte_caja_id === corteId) || (t >= inicio && t <= cierre);
-        });
-
         const ventaIds = ventasCorte.map((v) => v.id);
         // Idem venta a venta: con `.catch(() => [])` el desglose por producto
         // salía incompleto y en silencio, ticket a ticket.

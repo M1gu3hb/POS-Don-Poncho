@@ -22,6 +22,20 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/cancelaciones-del-corte",
+      "comando": "caja.cancelaciones_del_corte",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/caja/cancelaciones-registradas",
+      "comando": "caja.cancelaciones_registradas",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/cerrar",
       "comando": "caja.cerrar",
       "escribe": true,
@@ -326,7 +340,7 @@
       "ruta": "/api/restaurante/anular-linea",
       "comando": "restaurante.anular_linea",
       "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"]
     },
     {
@@ -354,7 +368,7 @@
       "ruta": "/api/restaurante/cancelar-orden",
       "comando": "restaurante.cancelar_orden",
       "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"]
     },
     {

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import CorteTicket from '@/components/tickets/CorteTicket';
 import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
+import { cancelacionesDeLaCaja } from '~/corte/cancelaciones-leidas';
 
 /**
  * Renderiza el CorteTicket fuera de pantalla, genera el PDF y lo descarga.
@@ -53,7 +54,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
         // negocio como si fuera el corte del día. Aquí un fallo NO produce
         // archivo: `data` se queda nulo, el auto-disparo no ocurre y queda el
         // botón de reintento que ya existía.
-        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas] =
+        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelaciones] =
           await Promise.all([
             api.entidades.Venta.list('-fecha_cierre', 2000),
             api.entidades.GastoOperativo.list('-created_date', 500),
@@ -64,6 +65,9 @@ export default function CorteAutoDownloader({ corte, onDone }) {
             veCostos ? api.entidades.DescuentoInventarioVenta.list('-created_date', 3000) : [],
             veCostos ? api.entidades.Ingrediente.list() : [],
             veCostos ? api.entidades.RecetaEscandallo.list('-created_date', 2000) : [],
+            // DP-12.4 · Del servidor, como el visor y como el corte de Cierre diario. Si falla, el
+            // archivo NO se descarga (arriba): un PDF sin sus cancelaciones se guardaría como bueno.
+            cancelacionesDeLaCaja(corteId),
           ]);
 
         const matchVenta = (v) => {
@@ -79,14 +83,6 @@ export default function CorteAutoDownloader({ corte, onDone }) {
         };
 
         const ventasCorte = allVentas.filter((v) => v.estado === 'pagada' && matchVenta(v));
-        const cancelaciones = allVentas.filter(
-          (v) =>
-            v.estado === 'cancelada' &&
-            ((corteId && v.corte_caja_id === corteId) ||
-              (v.fecha_cierre &&
-                new Date(v.fecha_cierre).getTime() >= inicio &&
-                new Date(v.fecha_cierre).getTime() <= cierre)),
-        );
         const ventaIds = ventasCorte.map((v) => v.id);
         // Una lectura para todos los renglones del corte, no una petición por venta.
         const detalles = await detallesDeVentas(ventasCorte);

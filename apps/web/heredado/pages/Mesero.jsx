@@ -78,6 +78,7 @@ import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pre
 import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
 import { solicitudesPorMesa } from '~/restaurante/globos-de-solicitud';
 import { SelectorDeVista } from '~/restaurante/SelectorDeVista';
+import { CancelarDelMesero } from '~/restaurante/CancelarDelMesero';
 import { UnirMesasEnElMapa } from '~/restaurante/unir-mesas/UnirMesasEnElMapa';
 import {
   cajaDeLaUnion,
@@ -1454,6 +1455,22 @@ function Mesero() {
               <CarritoDelPortalParaElMesero buscada={{ mesaId: mesaActiva.id }} compacto />
             </div>
           )}
+
+          {/* DP-12.4: quitar un platillo y cancelar la cuenta, con motivo, desde la mesa. */}
+          <CancelarDelMesero
+            ventaId={ventaActiva?.id || mesaActiva?.venta_activa_id || null}
+            detalles={detallesVenta}
+            alActualizar={(cuenta) => {
+              setVentaActiva(cuenta.venta);
+              setDetallesVenta(cuenta.detalles);
+              queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
+            }}
+            alCancelarLaCuenta={() => {
+              queryClient.invalidateQueries({ queryKey: ['mesas'] });
+              queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
+              cerrarDialog();
+            }}
+          />
 
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
             <div className="flex-1 flex flex-col overflow-hidden md:border-r">

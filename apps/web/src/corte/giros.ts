@@ -1,6 +1,5 @@
 import {
   arqueo,
-  cancelaciones,
   centavos,
   datosDelCorte,
   detalleDeVentas,
@@ -21,6 +20,7 @@ import {
   type HojaDelServidor,
   type Seccion,
 } from './hoja.ts';
+import { cancelaciones } from './cancelaciones.ts';
 import { devolucionesDelDia } from './devoluciones.ts';
 
 /**

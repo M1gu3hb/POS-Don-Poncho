@@ -42,15 +42,20 @@ import { ESTADOS_COMANDA_ACTIVOS } from './transiciones.ts';
  */
 
 /**
- * Cancelar una cuenta con consumo es una decisión de CAJA, no de sala.
+ * Quién cancela una cuenta con consumo.
  *
- * El mesero queda fuera a propósito: es quien tiene el incentivo más directo
- * para hacer desaparecer una cuenta —la suya— y el mensaje de
- * `MESA_NO_LIBERABLE` ya lo manda al sitio correcto («cóbrala o cancélala en
- * Caja»). Sale de `ctx.ambito.rol`, de la sesión del servidor, nunca del cuerpo
- * (D-03: las cinco funciones de la fuente autorizaban con un string del body).
+ * DP-12.4 · El MESERO entra. Antes era sólo de caja y de dirección, y la mesa del cliente que se
+ * va sin pagar o el pedido capturado en la mesa equivocada se quedaba clavada hasta que el
+ * mesero fuera a buscar al cajero. El incentivo que preocupaba —que el mesero haga desaparecer
+ * SU cuenta— se contesta con control, no con negarle la salida: el motivo es obligatorio, queda
+ * con su nombre (`cancelada_por`), y si la cocina ya había preparado algo el corte lo saca aparte
+ * como PÉRDIDA con quién canceló, cuándo, por qué y cuánto (`caja/corte/cancelaciones.ts`).
+ *
+ * Cocina, almacén y cualquier otro rol siguen fuera. Sale de `ctx.ambito.rol`, de la sesión del
+ * servidor, nunca del cuerpo (D-03: las cinco funciones de la fuente autorizaban con un string
+ * del body); y la cuenta tiene que ser de la sucursal de quien cancela (`sucursal` abajo).
  */
-const ROLES_DE_CANCELACION = ['cajero', 'gerente', 'administrador', 'dueno'] as const;
+const ROLES_DE_CANCELACION = ['mesero', 'cajero', 'gerente', 'administrador', 'dueno'] as const;
 
 export interface ResultadoCancelacion {
   readonly ordenId: string;

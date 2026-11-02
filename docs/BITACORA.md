@@ -551,6 +551,26 @@ toca). `pnpm install` en el worktree tarda ~11 min.
 - **Ojo, el aviso con gente lee el total de la cuenta por el puente** (`Venta`): si el rol no la
   lee, el aviso sale sin importe; nunca se une sin preguntar.
 
+### DP-12.4 · El mesero cancela, y el corte lo dice (DP-D48)
+
+- Hecho por un subagente (Sonnet, en su worktree `agent-aae7355ccdfa9cbb4`, base 5436, puerto
+  3201; sin commit): servidor, pantalla, corte, Registros y pruebas. Integrado aquí con
+  `git apply -3` sobre `dp-12` (sin conflictos); las matrices de permisos y aislamiento se
+  regeneraron sobre lo integrado y coinciden.
+- Pruebas: integración partida en `cancelacion-del-mesero` (quién puede) y
+  `cancelaciones-del-corte` (el corte y Registros), con el salón sembrado en
+  `restaurante/pruebas/cancelacion-real.ts` (el original pasaba de 300 líneas); unidad y contrato
+  `cancelaciones-heredado`; navegador `cancelacion-del-mesero.spec.ts` (ayudantes en
+  `pruebas/e2e/ayudantes/cancelar-desde-la-mesa.ts`), verde en tableta, teléfono y PC en el
+  worktree del subagente. Mutaciones: 28 de 28 (S11 sobrevivió y se agregó el caso de dos
+  platillos en una comanda; S14 y W7 no compilaban y se rehicieron).
+- **Ojo, el corte heredado y el de Cierre diario pintan las cancelaciones con el MISMO código**
+  (`corte/cancelaciones.ts`, `SeccionPintada`): cambiar uno cambia los dos.
+- **Ojo, `CancelarDelMesero` relee qué platillos siguen en la cuenta:** el puente sirve también los
+  anulados en `DetalleVenta`.
+- Lo que el subagente no verificó: mutantes del spec de navegador (cada uno pediría un build) y
+  una captura visual de Registros y los cortes (se miraron por texto).
+
 ### DP-12.5 · Estaciones de punta a punta (DP-D47)
 
 - Prueba nueva `pruebas/e2e/estaciones-de-punta-a-punta.spec.ts` (ayudantes en

@@ -16,6 +16,7 @@ export {
 export {
   MOTIVOS_ANULACION,
   elConsumoSePerdio,
+  etiquetaDelMotivoDeAnulacion,
   partirLineaParaAnular,
   type LineaAnulable,
   type LineaPartida,

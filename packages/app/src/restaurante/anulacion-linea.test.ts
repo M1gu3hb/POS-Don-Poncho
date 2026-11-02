@@ -250,9 +250,18 @@ describe('F-324 · lo que rechaza', () => {
 });
 
 describe('F-324 · quién anula, y qué puede mandar', () => {
-  it('el mesero NO: anular es hacer desaparecer consumo del ticket', () => {
-    expect(anularLineaComando.roles).not.toContain('mesero');
+  it('DP-12.4 · el mesero SÍ anula un platillo; cocina y almacén no', () => {
+    expect(anularLineaComando.roles).toContain('mesero');
     expect(anularLineaComando.roles).toContain('cajero');
+    expect(anularLineaComando.roles).not.toContain('cocina');
+    expect(anularLineaComando.roles).not.toContain('almacen');
+    expect([...anularLineaComando.roles].sort()).toEqual([
+      'administrador',
+      'cajero',
+      'dueno',
+      'gerente',
+      'mesero',
+    ]);
   });
 
   it('EL MOTIVO ES OBLIGATORIO y está cerrado: sin él no hay responsable', () => {

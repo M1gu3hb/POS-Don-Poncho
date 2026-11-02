@@ -1,6 +1,7 @@
 import type { Transaccion } from '@morphiqpos/data';
 import { describe, expect, it } from 'vitest';
 
+import { leerCancelaciones } from './cancelaciones.ts';
 import * as consultas from './consultas.ts';
 import * as extras from './extras.ts';
 import { transaccionGrabadora } from '../../pruebas/grabadora.ts';
@@ -44,6 +45,16 @@ const CONSULTAS: readonly (readonly [string, Acotada, (tx: Transaccion) => Promi
   ['ventasPorPersona', 'sesion', (tx) => consultas.ventasPorPersona(tx, ORG, SESION)],
   ['gastosDelCorte', 'sesion', (tx) => consultas.gastosDelCorte(tx, ORG, SESION)],
   ['cancelacionesDelCorte', 'ventana', (tx) => consultas.cancelacionesDelCorte(tx, ORG, VENTANA)],
+  [
+    'leerCancelaciones (Registros)',
+    'negocio',
+    (tx) =>
+      leerCancelaciones(tx, ORG, {
+        sucursalId: null,
+        desde: VENTANA.abiertaEn,
+        hasta: VENTANA.cerradaEn,
+      }),
+  ],
   ['descuentosPorUsuario', 'sesion', (tx) => consultas.descuentosPorUsuario(tx, ORG, SESION)],
   ['alertasDeInventario', 'negocio', (tx) => consultas.alertasDeInventario(tx, ORG, AHORA)],
   ['insumosConsumidos', 'sesion', (tx) => consultas.insumosConsumidos(tx, ORG, SESION)],

@@ -31,3 +31,4 @@ PR B (#21), que se fusiona tras migrar la base compartida desde la laptop.
 | 19  | [Los comensales arman, el mesero confirma](19-portal-modo-mesero.md)                                | DP-12.2 | No                  | Pendiente                                        |
 | 20  | [Unir mesas con el dedo](20-unir-mesas-al-tacto.md)                                                 | DP-12.3 | No                  | Pendiente                                        |
 | 21  | [Las estaciones de punta a punta](21-estaciones-de-punta-a-punta.md)                                | DP-12.5 | No                  | Pendiente                                        |
+| 22  | [El mesero cancela, y el corte lo dice](22-cancelar-desde-el-mesero.md)                             | DP-12.4 | No                  | Pendiente                                        |

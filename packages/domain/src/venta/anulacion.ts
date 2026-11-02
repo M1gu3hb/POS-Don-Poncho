@@ -153,6 +153,35 @@ export const MOTIVOS_ANULACION = [
 export type MotivoAnulacion = (typeof MOTIVOS_ANULACION)[number];
 
 /**
+ * DP-12.4 · Las palabras con que el corte y Registros dicen el motivo de una anulación.
+ *
+ * La clave viaja a la base (`error_mesero`) y NO es lo que el dueño debe leer en un papel: el
+ * corte de caja del servidor y el heredado de la Caja salían con la clave cruda. Una sola tabla
+ * aquí, en el dominio, para que las dos hojas y Registros digan lo mismo.
+ */
+const ETIQUETA_DEL_MOTIVO: Readonly<Record<MotivoAnulacion, string>> = {
+  error_cocina: 'Error de cocina',
+  error_mesero: 'Error del mesero al tomar la orden',
+  cortesia: 'Cortesía de la casa',
+  cliente_cambio: 'El cliente cambió de opinión',
+};
+
+function esMotivoDeAnulacion(texto: string): texto is MotivoAnulacion {
+  return (MOTIVOS_ANULACION as readonly string[]).includes(texto);
+}
+
+/**
+ * El motivo en palabras: el del enum, con su etiqueta; cualquier otro texto (el que el cajero
+ * escribió al cancelar una cuenta) tal cual; y nada si no hay motivo, sin inventar uno.
+ */
+export function etiquetaDelMotivoDeAnulacion(motivo: string | null): string | null {
+  if (motivo === null) return null;
+  const limpio = motivo.trim();
+  if (limpio === '') return null;
+  return esMotivoDeAnulacion(limpio) ? ETIQUETA_DEL_MOTIVO[limpio] : limpio;
+}
+
+/**
  * Si el consumo de la porción anulada se perdió de verdad.
  *
  * Es la pregunta que decide si el insumo vuelve al almacén o se queda fuera:

@@ -115,9 +115,9 @@ import {
  * el supervisor, y no quien cobra— y «quién pidió» con quien cobró y con el corte por usuario.
  *
  * Tampoco está el IVA fuera del precio (cambiar la configuración del negocio a mitad del día
- * movería el total de todas las demás pruebas), ni que la mesera NO vea «Anular» en la pantalla
- * (ya no llega a ella: eso lo prueba `ajustes-de-la-cuenta-por-rol.test.ts`; aquí, lo que el
- * servidor le niega). Se corre en la PC (`--project=escritorio`), como las otras suites del
+ * movería el total de todas las demás pruebas), ni que la cocina NO vea «Anular» en la pantalla
+ * (eso lo prueba `ajustes-de-la-cuenta-por-rol.test.ts`; aquí, lo que el servidor le niega). Que
+ * la MESERA sí anula y cancela, con tacto real, lo prueba `cancelacion-del-mesero.spec.ts`. Se corre en la PC (`--project=escritorio`), como las otras suites del
  * restaurante que cuelgan de la jornada.
  */
 
@@ -1355,13 +1355,16 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         totalCentavos: importeDe(pedido),
       });
 
-      await test.step('la mesera NO puede anular: el servidor se lo niega y la cuenta no cambia', async () => {
-        const lupita = await dia.equipo.pagina(info, 'mesero');
+      // DP-12.4 · Anular ya es también de la mesera (con motivo y a su nombre: lo prueba
+      // `cancelacion-del-mesero.spec.ts`). Quien NO puede es el COCINERO (el empleo de cocina; la
+      // pantalla `cocina` de este día es la de la dueña), y el servidor se lo niega.
+      await test.step('el cocinero NO puede anular: el servidor se lo niega y la cuenta no cambia', async () => {
+        const cocinero = await dia.equipo.pagina(info, 'cocina');
         const sopa = (await todasLasLineas(duena, ordenId)).find(
           (l) => l.nombre === CARTA.sopa.nombre,
         );
         expect(sopa, 'La cuenta no tiene la sopa que se comandó.').toBeDefined();
-        const negado = await comando(lupita, '/api/restaurante/anular-linea', {
+        const negado = await comando(cocinero, '/api/restaurante/anular-linea', {
           ordenId,
           lineaId: sopa?.id,
           motivo: 'error_mesero',
@@ -1500,9 +1503,10 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
       await irALaMesa(duena, mesaId, 6);
       await pedirLaCuentaDeLaMesa(duena, /^La decide la caja/);
 
-      await test.step('la mesera NO puede cancelar la cuenta: el servidor se lo niega y la cuenta sigue viva', async () => {
-        const lupita = await dia.equipo.pagina(info, 'mesero');
-        const negado = await comando(lupita, '/api/restaurante/cancelar-orden', {
+      // DP-12.4 · Cancelar una cuenta también es de la mesera ahora; el cocinero sigue sin poder.
+      await test.step('el cocinero NO puede cancelar la cuenta: el servidor se lo niega y la cuenta sigue viva', async () => {
+        const cocinero = await dia.equipo.pagina(info, 'cocina');
+        const negado = await comando(cocinero, '/api/restaurante/cancelar-orden', {
           ordenId,
           motivo: 'no debería poder',
         });
