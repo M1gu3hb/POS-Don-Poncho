@@ -13,8 +13,10 @@ import { documentoDeCorte } from './documento.ts';
  * F-259 · El documento del corte.
  *
  * ── Lo que estas pruebas defienden ───────────────────────────────────────
- * Que el esperado sea fondo + lo que entró − lo retirado, y que la diferencia
- * se diga con signo. Un corte que sólo enseña lo contado no se puede cuadrar.
+ * Que el esperado sea lo que había en el cajón al cortar —todo lo de la sesión hasta
+ * ese instante, la apertura (el fondo) incluida: la MISMA cuenta que hace el corte
+ * (QA2-008, DP-13.5)—, y que la diferencia se diga con signo. Un corte que sólo enseña
+ * lo contado no se puede cuadrar.
  *
  * Que los movimientos sean los DEL TRAMO del corte y no los de la sesión
  * entera: una sesión con tres cortes de turno tiene tres documentos, y sumarle
@@ -84,8 +86,18 @@ async function codigoDe(fn: () => Promise<unknown>): Promise<string> {
 }
 
 describe('F-259 · el documento del corte', () => {
-  it('EL ESPERADO es fondo + entradas − retirado', async () => {
-    const base = baseDe({ movimientos_caja: [movimiento()] });
+  it('EL ESPERADO es lo del cajón al cortar: la apertura y lo que entró (como el corte)', async () => {
+    const base = baseDe({
+      movimientos_caja: [
+        movimiento({
+          id: 'apertura',
+          tipo: 'apertura',
+          created_at: hora(14),
+          monto_centavos: 100_000n,
+        }),
+        movimiento(),
+      ],
+    });
     const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'), AHORA);
 
     const salida = await documentoDeCorte.ejecutar(ctx, { corteId: CORTE });
@@ -119,7 +131,8 @@ describe('F-259 · el documento del corte', () => {
     const salida = await documentoDeCorte.ejecutar(ctx, { corteId: CORTE });
 
     expect(salida.movimientos.map((m) => m.movimientoId)).toEqual(['dentro']);
-    expect(salida.efectivoEsperadoCentavos).toBe('160000');
+    // El esperado sí cuenta lo de antes (sigue en el cajón) y no lo de después del corte.
+    expect(salida.efectivoEsperadoCentavos).toBe('159000');
   });
 
   it('CUENTA LOS MOVIMIENTOS SIN MOTIVO', async () => {
@@ -159,8 +172,8 @@ describe('F-259 · el documento del corte', () => {
     expect(salida.renglones.find((r) => r.tipo === 'venta_efectivo')?.montoCentavos).toBe('60000');
   });
 
-  it('lo RETIRADO se descuenta de lo esperado', async () => {
-    // El dinero que se llevó al banco no puede seguir estando en el cajón.
+  it('lo RETIRADO se informa aparte: no cambia lo que se esperaba al contar', async () => {
+    // Se cuenta ANTES de retirar: lo esperado al cortar es lo que había, como en el corte.
     const base = baseDe({
       cortes_turno: [corte({ efectivo_retirado_centavos: 50_000n })],
       movimientos_caja: [movimiento()],
@@ -169,7 +182,8 @@ describe('F-259 · el documento del corte', () => {
 
     const salida = await documentoDeCorte.ejecutar(ctx, { corteId: CORTE });
 
-    expect(salida.efectivoEsperadoCentavos).toBe('110000');
+    expect(salida.efectivoEsperadoCentavos).toBe('60000');
+    expect(salida.efectivoRetiradoCentavos).toBe('50000');
   });
 
   it('un corte de otro negocio no existe', async () => {
