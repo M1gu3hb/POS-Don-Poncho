@@ -5,6 +5,7 @@ import { repoSesion, type Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
+import { quitarMarcaDeEmpleo } from '../mantenimiento/plataforma-cambios.ts';
 import { FORMA_PIN, hashearPin } from './pin.ts';
 
 /**
@@ -237,6 +238,15 @@ export const guardarEmpleado = definirComando<
           .where('organizacion_id', '=', organizacionId)
           .execute(),
       );
+
+      // DP-13.3b · Un empleo desactivado deja de ser de plataforma: se le quita la marca en esta
+      // misma transacción. (Si dejara de ser dueño, `exigirPlataforma` ya no lo deja pasar: los
+      // cinco comandos piden el rol además de la marca.)
+      if (!entrada.activo) {
+        await ctx.paso('quitar_marca_de_plataforma', () =>
+          quitarMarcaDeEmpleo(ctx.tx, organizacionId, empleoId, ctx.ahora),
+        );
+      }
 
       if (rolPedido !== actual.rol || (actual.activo && !entrada.activo)) {
         await ctx.paso('revocar_sesiones', () =>

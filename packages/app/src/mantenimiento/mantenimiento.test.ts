@@ -148,10 +148,34 @@ describe('qué borra cada sección', () => {
     expect(ventas.indexOf('orden_lineas')).toBeLessThan(ventas.indexOf('ordenes'));
     expect(ventas.indexOf('comanda_items')).toBeLessThan(ventas.indexOf('comandas'));
     expect(ventas.indexOf('pagos')).toBeLessThan(ventas.indexOf('ordenes'));
+    // DP-13.3b · La bitácora de la cuenta y las uniones apuntan a la orden con `no action`; los
+    // miembros, a su unión. Un día real abortaba la purga entera (se prueba contra Postgres en
+    // `purgas-del-dia.integracion.test.ts`; aquí sólo el orden, que es lo que lo causa).
+    for (const hija of ['movimientos_cuenta', 'uniones_mesa', 'union_mesa_miembros']) {
+      expect(ventas.indexOf(hija), hija).toBeGreaterThanOrEqual(0);
+      expect(ventas.indexOf(hija), hija).toBeLessThan(ventas.indexOf('ordenes'));
+    }
+    expect(ventas.indexOf('union_mesa_miembros')).toBeLessThan(ventas.indexOf('uniones_mesa'));
     const compras = TABLAS_POR_SECCION.compras;
     expect(compras.indexOf('compra_lineas')).toBeLessThan(compras.indexOf('compras'));
     const cortes = TABLAS_POR_SECCION.cortes;
     expect(cortes.indexOf('cortes_turno')).toBeLessThan(cortes.indexOf('sesiones_caja'));
+  });
+
+  it('el salón de ese día (carritos, teléfonos, avisos y espera) lo borra la sección ventas', () => {
+    // DP-13.3b · Antes `solicitudes_qr` sólo la borraba `reiniciar_todo`, y el resto no la
+    // borraba nadie. En las dos listas, `reiniciar_todo` contaría la tabla dos veces y el
+    // segundo conteo, ya en cero, taparía el primero en la auditoría.
+    for (const tabla of [
+      'carrito_mesa_lineas',
+      'carritos_mesa',
+      'dispositivos_mesa',
+      'solicitudes_qr',
+      'lista_espera',
+    ]) {
+      expect(TABLAS_POR_SECCION.ventas, tabla).toContain(tabla);
+      expect(TABLAS_DEL_CATALOGO, tabla).not.toContain(tabla);
+    }
   });
 
   it('el histórico cubre las cinco secciones', () => {

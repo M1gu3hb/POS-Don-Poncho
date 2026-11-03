@@ -60,6 +60,7 @@ import {
   X,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { BotonDelSonido } from '~/configuracion/BotonDelSonido';
 
 const ICON_MAP = {
   BellRing,
@@ -296,6 +297,10 @@ export default function Sidebar({ collapsed, onToggle }) {
                 <p className="text-xs font-medium truncate">{posUser.nombre}</p>
                 <p className="text-[10px] text-sidebar-foreground/50">{posUser.etiqueta ?? ROLE_LABELS[posUser.rol]}</p>
               </div>
+            )}
+            {/* DP-13.3: el sonido de ESTE aparato, para cualquier puesto, sin entrar a Configuración. */}
+            {!collapsed && (
+              <BotonDelSonido className="text-sidebar-foreground/50 hover:text-sidebar-foreground" />
             )}
             {!collapsed && (
               <button

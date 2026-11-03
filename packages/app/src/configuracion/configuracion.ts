@@ -11,6 +11,7 @@ import { z } from 'zod';
 
 import { definirComando } from '../comando.ts';
 import { normalizarEstilo } from './apariencia.ts';
+import { leerDocumentoConCandado } from './documento-con-candado.ts';
 
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const urlONull = z.url().nullable();
@@ -181,12 +182,11 @@ export const guardarConfiguracion = definirComando<
   paquetes: PAQUETES,
   entrada: entradaGuardarConfiguracion,
   async ejecutar(ctx, entrada) {
+    // Con candado (DP-13.3b): este guardado lee el documento y lo escribe ENTERO. La versión que
+    // exige la entrada no ve lo que otros módulos escriben sin subirla (la apariencia, el
+    // teléfono de cocina), y esas escrituras se perderían.
     const actual = await ctx.paso('leer_configuracion_actual', () =>
-      ctx.tx
-        .selectFrom('configuracion')
-        .select(['valores', 'version'])
-        .where('organizacion_id', '=', ctx.ambito.organizacionId)
-        .executeTakeFirst(),
+      leerDocumentoConCandado(ctx.tx, ctx.ambito.organizacionId),
     );
     if (
       (entrada.version === 0 && actual !== undefined) ||

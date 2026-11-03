@@ -14,6 +14,7 @@ import { sql } from 'kysely';
 import { z } from 'zod';
 
 import { definirComando } from '../comando.ts';
+import { leerDocumentoConCandado } from '../configuracion/documento-con-candado.ts';
 import { Rechazo } from '../fallos.ts';
 import { recalcularCostosRecetas } from '../inventario/recetas.ts';
 import { sembrarArranque, type ResumenArranque } from './arranque.ts';
@@ -45,12 +46,12 @@ export const entradaResetearNegocioDePrueba = z.object({
  * LA CONFIGURACIÓN DEL RESTAURANTE DE PRUEBA, escrita entera (bloque B.2 de la 2.4): IVA
  * general incluido en el precio y su apariencia. Nada de lo que dejó la corrida anterior.
  */
-async function reponerConfiguracion(tx: Transaccion, organizacionId: string): Promise<void> {
-  const fila = await tx
-    .selectFrom('configuracion')
-    .select(['id', 'version'])
-    .where('organizacion_id', '=', organizacionId)
-    .executeTakeFirst();
+export async function reponerConfiguracion(tx: Transaccion, organizacionId: string): Promise<void> {
+  // Con candado (DP-13.3b). Este SÍ reemplaza el documento entero a propósito —una demo recién
+  // nacida no conserva nada de la corrida anterior, tampoco la marca de plataforma—, pero lee la
+  // versión de la que parte: sin el candado, una escritura que subiera la versión entre las dos
+  // la dejaba igual que la nuestra y UNA de las dos subidas se perdía.
+  const fila = await leerDocumentoConCandado(tx, organizacionId);
   const valores = {
     impuesto: { ...IMPUESTO_DE_PRUEBA },
     apariencia: { ...APARIENCIA_DE_PRUEBA },

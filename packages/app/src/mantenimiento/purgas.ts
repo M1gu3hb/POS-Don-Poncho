@@ -53,6 +53,9 @@ const SIN_ORGANIZACION_PROPIA: Readonly<Record<string, (org: string) => RawBuild
   // muriendo con «column "organizacion_id" does not exist».
   modificador_opciones: (org) =>
     sql`modificador_id in (select id from modificadores where organizacion_id = ${org})`,
+  // DP-13.3b · Los miembros de una unión de mesas cuelgan de su unión.
+  union_mesa_miembros: (org) =>
+    sql`union_id in (select id from uniones_mesa where organizacion_id = ${org})`,
 };
 
 /** El `where` que acota esta tabla a esta organización, venga de donde venga. */
@@ -98,6 +101,14 @@ export async function contar(
 export const TABLAS_POR_SECCION: Readonly<Record<Seccion, readonly string[]>> = {
   cortes: ['cortes_turno', 'sesiones_caja'],
   ventas: [
+    // DP-13.3b · El salón de ese día: lo que cuelga de las mesas y no de las cuentas (los
+    // carritos del portal con sus teléfonos y los avisos del comensal) y la lista de espera, cuya
+    // familia sentada apunta a una mesa y a una cuenta con una llave `no action`.
+    'carrito_mesa_lineas',
+    'carritos_mesa',
+    'dispositivos_mesa',
+    'solicitudes_qr',
+    'lista_espera',
     'comanda_items',
     'comandas',
     'orden_linea_modificadores',
@@ -107,12 +118,65 @@ export const TABLAS_POR_SECCION: Readonly<Record<Seccion, readonly string[]>> = 
     'orden_lineas',
     'pagos',
     'movimientos_caja',
+    // DP-13.3b · La bitácora de cada cuenta (división, unión, cambio de mesa, anulación) y las
+    // uniones de mesas apuntan a las órdenes con `no action`: abortaban la purga de cualquier
+    // día real. Los miembros van antes que su unión, y las dos antes que las órdenes.
+    'movimientos_cuenta',
+    'union_mesa_miembros',
+    'uniones_mesa',
+    // Abrir, ocupar y liberar cada mesa: sin la cuenta que se borra (`set null`) se quedaba como
+    // un día fantasma en los tiempos y la rotación del salón.
+    'eventos_mesa',
     'ordenes',
   ],
   compras: ['compra_lineas', 'compras'],
   gastos: ['gastos'],
   movimientos: ['movimientos_stock'],
 };
+
+/**
+ * El salón sin nadie, ANTES de borrar las cuentas (DP-13.3b).
+ *
+ * Antes sólo soltaba las mesas con cuenta (`orden_activa_id`) y dejaba el resto como estuviera:
+ * una mesa en limpieza, con gente sin cuenta o unida a otra seguía así sin la cuenta que la
+ * explicaba, y una unión viva dejaba la mesa absorbida oculta del mapa para siempre.
+ *
+ *   · Las uniones VIVAS devuelven cada mesa al lugar del plano donde estaba antes de unirse,
+ *     como «Separar mesas» (`separarMesas`). Las cerradas ya lo hicieron al cerrarse.
+ *   · Toda mesa queda libre, sin cuenta, sin gente, sin quien la atienda y sin unión.
+ *   · `ordenes.union_id` ↔ `uniones_mesa.orden_id` es un ciclo de llaves `no action`: ni la
+ *     unión ni la orden se pueden borrar primero. Se rompe por el lado de la orden.
+ */
+async function soltarLasMesas(tx: Transaccion, organizacionId: string): Promise<void> {
+  await sql`
+    update mesas m
+       set posicion_x = u.principal_x_original, posicion_y = u.principal_y_original
+      from uniones_mesa u
+     where u.organizacion_id = ${organizacionId} and u.cerrada_en is null
+       and m.id = u.mesa_principal_id
+       and u.principal_x_original is not null and u.principal_y_original is not null
+  `.execute(tx);
+  await sql`
+    update mesas m
+       set posicion_x = mm.posicion_x_original, posicion_y = mm.posicion_y_original
+      from union_mesa_miembros mm
+      join uniones_mesa u on u.id = mm.union_id
+     where u.organizacion_id = ${organizacionId} and u.cerrada_en is null
+       and m.id = mm.mesa_id
+       and mm.posicion_x_original is not null and mm.posicion_y_original is not null
+  `.execute(tx);
+  await sql`
+    update mesas set orden_activa_id = null, estado = 'libre', personas_actuales = 0,
+                     ocupada_desde = null, empleado_atiende_id = null, unida_a_mesa_id = null,
+                     cliente_temporal = null, notas_alergias = null,
+                     celebracion_especial = false, tipo_celebracion = null, updated_at = now()
+     where organizacion_id = ${organizacionId}
+  `.execute(tx);
+  await sql`
+    update ordenes set union_id = null, updated_at = now()
+     where organizacion_id = ${organizacionId} and union_id is not null
+  `.execute(tx);
+}
 
 export async function purgarSeccion(
   tx: Transaccion,
@@ -125,12 +189,7 @@ export async function purgarSeccion(
   // Las órdenes apuntan a la mesa y la mesa a la orden. Se suelta el lado de la
   // mesa antes de borrar, o la llave foránea aborta la transacción entera.
   if (seccion === 'ventas') {
-    await sql`
-      update mesas set orden_activa_id = null, estado = 'libre', personas_actuales = 0,
-                       cliente_temporal = null, notas_alergias = null,
-                       celebracion_especial = false, tipo_celebracion = null, updated_at = now()
-       where organizacion_id = ${organizacionId} and orden_activa_id is not null
-    `.execute(tx);
+    await soltarLasMesas(tx, organizacionId);
     // Y las liquidaciones apuntan a órdenes que van a desaparecer.
     await borrar(tx, 'liquidaciones_propina', organizacionId);
   }
@@ -201,7 +260,9 @@ export const TABLAS_DEL_CATALOGO: readonly string[] = [
   'plantillas_gasto',
   'plantillas_compra',
   'menu_qr_secciones',
-  'solicitudes_qr',
+  // `solicitudes_qr` ya no está aquí: es del día y la borra la sección `ventas` (DP-13.3b). Si
+  // estuviera también aquí, `reiniciar_todo` contaría DOS veces la tabla y el segundo conteo —ya
+  // en cero— taparía el primero en la auditoría.
   'mesas',
   'zonas',
   'bitacora_sincronizacion',

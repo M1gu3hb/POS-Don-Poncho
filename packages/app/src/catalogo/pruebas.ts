@@ -38,6 +38,10 @@ class ConsultaFalsa {
     return this;
   }
 
+  forUpdate(): this {
+    return this;
+  }
+
   select(): this {
     return this;
   }

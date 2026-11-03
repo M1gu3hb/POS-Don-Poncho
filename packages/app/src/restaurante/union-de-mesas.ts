@@ -15,6 +15,7 @@ import {
   unirMesas,
   type MesaEnSala,
 } from './sala-escrituras.ts';
+import { loQueSeQuedaEnLaPrincipal, type LoQueSeQueda } from './al-separar.ts';
 import { bloquearElGrupo } from './union-del-salon.ts';
 
 /**
@@ -72,7 +73,7 @@ export interface ResultadoUnion {
   readonly totalCentavos: string;
 }
 
-export interface ResultadoSeparacion {
+export interface ResultadoSeparacion extends LoQueSeQueda {
   readonly unionId: string;
   readonly ordenPrincipalId: string | null;
   readonly mesasLiberadas: number;
@@ -293,15 +294,25 @@ export const separarMesasComando = definirComando<
       );
     }
 
+    // DP-13.3: el pedido del portal y las notas del grupo se quedan en la principal; se dice.
+    const queda = await ctx.paso('lo_que_queda_en_la_principal', () =>
+      loQueSeQuedaEnLaPrincipal(ctx.tx, organizacionId, entrada.unionId),
+    );
+
     ctx.auditar({
       entidadId: ordenPrincipalId,
-      payload: { unionId: entrada.unionId, mesasLiberadas: escrito.mesasLiberadas },
+      payload: {
+        unionId: entrada.unionId,
+        mesasLiberadas: escrito.mesasLiberadas,
+        lineasDelPortalEnLaPrincipal: queda.lineasDelPortalEnLaPrincipal,
+      },
     });
 
     return {
       unionId: entrada.unionId,
       ordenPrincipalId,
       mesasLiberadas: escrito.mesasLiberadas,
+      ...queda,
     };
   },
 });
