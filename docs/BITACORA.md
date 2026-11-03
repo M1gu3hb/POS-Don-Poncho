@@ -630,7 +630,7 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
 | A · `agent-a7406910ce51d2c86` (base 5439, puerto 3204) | Sonnet | 13.4: 18, 19, 20, 22, 23 | Hecho. Spec nuevo `menores-dp13` 9/9 en los tres aparatos; 67 de 67 mutantes muertos. Integrado aquí (ver abajo). |
 | B · `agent-a32802749101128cd` (base 5440, sin navegador) | Sonnet | 13.3: 8 (plataforma), 9 (purgas) y 13.4.25 | Hecho. Candado único del documento de configuración, `mantenimiento.quitar_plataforma`, la purga de un día real (uniones, bitácora de cuentas, carritos, avisos, lista de espera). Integración completa 63/305; 53 de 53 mutantes destructivos muertos. Se cortó una vez por el límite de uso y se retomó con su archivo de progreso. Integrado aquí. |
 | Revisión · workflow `wf_7eb1b5de-d5e` (2 a la vez, cada hallazgo con su verificador) | Sonnet | Revisar 13.2 en servidor/SQL y en permisos/pantallas | 8 hallazgos confirmados de 12; los 8 arreglados con su prueba primero (ver abajo). Se cortó por el límite de uso y se retomó con `resumeFromRunId`. |
-| C · base 5441, puerto 3205 | Sonnet | 13.3: 11 (id del teléfono firmado), 12 (el comensal se entera), 13 (abrir y enviar en una transacción), 15 (cuenta pedida) | En curso. |
+| C · `agent-a2283480c75286caa` (base 5441, puerto 3205) | Sonnet | 13.3: 11 (id del teléfono firmado), 12 (el comensal se entera), 13 (abrir y enviar en una transacción), 15 (cuenta pedida) | Hecho. Pruebas primero; 63 de 63 mutantes; e2e nuevo `portal-dp13` 9/9. Sus 3 fallos de navegador en teléfono (`restaurante-menu-personalizado`, dos de `restaurante-portal-qr`) salen igual SIN su cambio: el ayudante busca el mapa de Configuración → Mesas y el teléfono enseña una lista (el CI corre en escritorio). Integrado aquí; un solo choque (`aspecto-permitido.json`, las dos declaraciones). |
 
 - **Ojo, integrar con `git apply -3`:** si un archivo del parche tiene cambios sin preparar aquí,
   `-3` se niega («does not match index») y no aplica NADA. Se aplicó el resto sin `-3`
@@ -701,6 +701,16 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
   pasaron al repetirlos.
 - e2e con el build final: `sonidos` 19/19 (1 omitida de antes), `cancelacion-del-mesero` 3/3 (ya
   con la merma), `menores-dp13` 9/9, `unir-mesas-al-tacto`.
+
+### Parte A a producción (03-11)
+
+- PR #4 (`dp-13` → `main`): CI completo en verde (10 de 10) tras regenerar la galería en CI
+  (`workflow_dispatch` con `actualizar_galeria`, corrida 41580477442; 45 retratos, sólo el pie de
+  la barra). Fusión con merge `2896f4c` (por la API de GitHub), a nombre de M1gu3hb.
+- Production de Vercel lista (la fila Production). Humo sin PIN: `/`, `/login-pos`, `/qr/…` 200,
+  404 con Morfi; cabeceras en vivo con la puerta (`camera=(self)` sólo en `/mesero` y `/pos`).
+- Huella de los otros 10 contra la de antes del QA: IDÉNTICA
+  (`_PRIVADO\mudanza\huellas-dp13\despues-despliegue-a.json`).
 
 ### Producción antes del QA (sólo lectura, 03-11)
 

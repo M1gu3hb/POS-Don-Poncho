@@ -1147,3 +1147,27 @@ puerta los denuncia todos.
   almacén); y descontar al enviar a cocina (cambiaría el cobro entero).
 - **Sin migración.** `restaurante/merma-por-cancelacion.ts`, `venta/cobrar.ts` (`soloLoHecho`),
   `caja/corte/consultas.ts`.
+
+## DP-D58 · El portal del comensal: el teléfono lo reconoce el servidor, y el comensal se entera · 03-11-2026
+
+- **Elección:**
+  - **El id del teléfono lo emite el servidor**, firmado con HMAC (`t1-<24 hex>-<32 hex>`, con un
+    prefijo propio y la pimienta): el sondeo emite uno cuando falta o no verifica, y agregar,
+    quitar, enviar y llamar rechazan un id sin firma (`QR_TELEFONO_NO_RECONOCIDO`); el navegador
+    pide otro y reintenta una vez. Emitir tiene límite (40 por mesa y 200 por IP cada 15 min: el
+    WiFi del local es una sola IP) y «conectados» no pasa de 20. Al desplegar, lo que un teléfono
+    armó con un id viejo queda como de otro teléfono una vez.
+  - **Las personas al abrir la mesa** ya no salen de «conectados»: las confirma el comensal en el
+    diálogo; sin ellas, la mesa se abre para 1 y el mesero corrige.
+  - **«Tu mesero vació el pedido»:** la marca vive en `carritos_mesa` (las columnas del último envío
+    con una huella centinela, sin subir la ronda), sin migración; cada teléfono la oye una vez, en
+    su siguiente sondeo, si estaba ahí antes del vaciado (vence a los 5 min). Sólo el vaciado del
+    mesero avisa.
+  - **«Abrir la mesa y enviar»** es una sola llamada y una sola transacción: si el envío falla, la
+    mesa queda libre y el carrito intacto.
+  - **Con la cuenta pedida**, el comensal ve «Tu cuenta ya se pidió: tu mesero lo revisa» (no un
+    error) y su pedido sigue a la vista; el mesero, en «Pedido del portal», puede «Reabrir la cuenta
+    y enviar» si no tiene pagos: la cuenta vuelve a `confirmada` (conserva su `codigo_caja`, sube su
+    versión), en la misma transacción que el envío.
+- **Sin migración.** `portal/telefono.ts`, `portal/limite.ts`, `restaurante/reabrir-la-cuenta.ts`,
+  `restaurante/carrito-del-mesero.ts`; cuatro códigos de error nuevos en `contracts/errores`.

@@ -20,6 +20,7 @@ import { leerElCarrito } from '../carrito-http.ts';
 import { ejecutarComandoPublico } from '../comando-publico.ts';
 import type { ComandoPublico } from '../definicion-publica.ts';
 import { abrirMesaDesdeQR } from '../mesa.ts';
+import { emitirTelefono } from '../telefono.ts';
 
 /**
  * LA MESA CON SU PORTAL, para las pruebas del carrito compartido (DP-9.5): un negocio con dos
@@ -27,8 +28,15 @@ import { abrirMesaDesdeQR } from '../mesa.ts';
  */
 
 export const PIMIENTA = 'pimienta-de-la-prueba-del-carrito-0123456789';
-export const TELEFONO_A = 'telefonoA_0123456789abcdef';
-export const TELEFONO_B = 'telefonoB_0123456789abcdef';
+/**
+ * DP-13.3 · Los teléfonos de las pruebas son ids FIRMADOS con la pimienta de la prueba, como los que
+ * emite el servidor: uno que el navegador se inventara ya no cuenta como teléfono.
+ */
+export const TELEFONO_A = emitirTelefono(PIMIENTA, 'a'.repeat(24));
+export const TELEFONO_B = emitirTelefono(PIMIENTA, 'b'.repeat(24));
+/** El teléfono número `i`, firmado: para las mesas con muchos. */
+export const telefonoNumero = (i: number) =>
+  emitirTelefono(PIMIENTA, i.toString(16).padStart(24, 'c'));
 
 /**
  * `envian`: quién manda a cocina (DP-12.2). Las pruebas del carrito de DP-9.5 hablan del envío del

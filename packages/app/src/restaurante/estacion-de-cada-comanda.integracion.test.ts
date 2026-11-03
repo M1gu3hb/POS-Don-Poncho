@@ -8,6 +8,7 @@ import { agregarAlCarrito, enviarElCarrito } from '../portal/carrito-comandos.ts
 import { ejecutarComandoPublico } from '../portal/comando-publico.ts';
 import { abrirMesaDesdeQR } from '../portal/mesa.ts';
 import { enviarPedidoDesdeQR } from '../portal/pedido.ts';
+import { emitirTelefono } from '../portal/telefono.ts';
 import { comando } from '../produccion.ts';
 import {
   ambitoDe,
@@ -254,7 +255,8 @@ describe.each([true, false])('estaciones encendidas: %s', (estacionesActivas) =>
       idempotencyKey: clave(),
       pimienta: PIMIENTA,
     });
-    const telefono = 'telefonoA_0123456789abcdef';
+    // DP-13.3: el id del teléfono lo firma el servidor; uno inventado no cuenta.
+    const telefono = emitirTelefono(PIMIENTA, 'e'.repeat(24));
     exigirOk(
       await ejecutarComandoPublico(abrirMesaDesdeQR, peticion({ personas: 1 })),
       'portal.abrir_mesa',

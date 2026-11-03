@@ -1,7 +1,6 @@
 'use client';
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams } from '@/enrutado';
-import { nuevaClave } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils/financialUtils';
 import { Bell, Sparkles, CheckCircle2, AlertTriangle, Receipt } from 'lucide-react';
@@ -13,12 +12,7 @@ import PedirCuentaQR from '@/components/portalqr/PedirCuentaQR';
 import AbrirMesaQRDialog from '@/components/portalqr/AbrirMesaQRDialog';
 import ProductoQRDialog from '@/components/portalqr/ProductoQRDialog';
 import ValoracionEmoji from '@/components/portalqr/ValoracionEmoji';
-import {
-  abrirMesaDesdeQR,
-  crearSolicitudQR,
-  itemParaComando,
-  leerPortalPublico,
-} from '@/utils/qrPedidoFlow';
+import { crearSolicitudQR, itemParaComando, leerPortalPublico } from '@/utils/qrPedidoFlow';
 import { getTiposSolicitudHabilitados, TIPO_SOLICITUD_VERBO } from '@/utils/qrUtils';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import ThemeToggle from '@/components/common/ThemeToggle';
@@ -36,7 +30,12 @@ import {
 } from '~/portal/atencion-del-comensal';
 import { AvisoDeLaMesa } from '~/portal/carrito-compartido/AvisoDeLaMesa';
 import { CarritoDeLaMesa } from '~/portal/carrito-compartido/CarritoDeLaMesa';
-import { PEDIDO_GUARDADO } from '~/portal/carrito-compartido/carrito-de-la-mesa';
+import {
+  aperturaDeLaMesa,
+  avisoDelEnvio,
+  CUENTA_PEDIDA,
+  PEDIDO_GUARDADO,
+} from '~/portal/carrito-compartido/carrito-de-la-mesa';
 import { useCarritoDeLaMesa } from '~/portal/carrito-compartido/use-carrito-de-la-mesa';
 
 /**
@@ -75,7 +74,8 @@ function PortalCliente() {
   // Claves de idempotencia por DIÁLOGO (F1-02 §8, trampa T5). Se generan al
   // abrir y se reusan mientras el diálogo siga abierto: un doble toque en
   // «Confirmar» con mala cobertura no abre dos mesas ni manda dos pedidos.
-  const [claveAbrirMesa, setClaveAbrirMesa] = useState(null);
+  // DP-13.3: la nota para cocina que el comensal escribió en el carrito antes de abrir la mesa.
+  const [notaAlAbrir, setNotaAlAbrir] = useState('');
 
   // Cliente de queries para refrescar el portal tras cada comando.
   const queryClient = useQueryClient();
@@ -234,7 +234,7 @@ function PortalCliente() {
     // se pinta hasta que la lectura pública responde, y esa respuesta ya trae
     // decidido si se puede abrir o pedir.
     if (cuentaYaSolicitada) {
-      toast.info('La cuenta ya fue solicitada. Llama al mesero si necesitas algo más.');
+      toast.info(CUENTA_PEDIDA);
       return;
     }
     // DP-12.2: con la mesa cerrada también se arma el pedido; abrirla (si el negocio deja que la
@@ -264,42 +264,40 @@ function PortalCliente() {
     }
   };
 
-  const abrirDialogoMesa = () => {
-    setClaveAbrirMesa(nuevaClave());
+  const abrirDialogoMesa = ({ notaGeneral } = {}) => {
+    setNotaAlAbrir(notaGeneral || '');
     setShowAbrirMesaQR(true);
   };
 
+  // DP-13.3: «Abrir la mesa y enviar» es UN comando. El diálogo captura las personas, el nombre, las
+  // alergias y la celebración; viajan con el envío del carrito y el servidor abre la mesa y manda el
+  // pedido en la misma transacción. Antes eran dos llamadas, y si la segunda fallaba la mesa se
+  // quedaba abierta sin pedido.
   const handleConfirmarAbrirMesa = async (datos) => {
     if (!mesa?.id) return;
     setAbriendoMesa(true);
     try {
-      // El diálogo captura alergia y celebración: viajan al comando para que
-      // queden en la mesa Y en la venta, que es lo que ven mesero y cocina.
-      await abrirMesaDesdeQR({
-        token,
-        personas: datos?.personas,
-        cliente_nombre: datos?.cliente_nombre,
-        notas: datos?.notas,
-        notas_alergias: datos?.notas_alergias,
-        celebracion_especial: datos?.celebracion_especial,
-        tipo_celebracion: datos?.tipo_celebracion,
-        clave: claveAbrirMesa,
+      const resultado = await carritoMesa.enviar({
+        // El diálogo y, si había dos o más teléfonos, el «¿Ya pidieron todos?» previo son la confirmación.
+        confirmado: true,
+        notaGeneral: notaAlAbrir,
+        apertura: aperturaDeLaMesa(datos),
       });
 
-      // Aquí había un parche optimista que reescribía la mesa en la caché con
-      // lo que el navegador SUPONÍA que había quedado en la base. Sobraba y
-      // mentía: la mesa y la venta se abren en una sola transacción, así que
-      // basta con volver a leer. Si el comando no responde OK, no se pinta nada.
+      // La mesa y la venta se abren en la misma transacción que el envío, así que basta con volver a
+      // leer. Si el comando no responde OK, no se pinta nada.
       queryClient.invalidateQueries({ queryKey: ['portal_publico', token] });
-      // DP-12.2: el carrito ya armado sigue ahí; con la mesa abierta, ya se puede enviar.
       queryClient.invalidateQueries({ queryKey: ['carrito_de_la_mesa', token] });
 
       setShowAbrirMesaQR(false);
-      toast.success(
-        carritoMesa.estado?.lineas?.length
-          ? `¡Mesa ${mesa.numero || ''} abierta! Ya pueden enviar su pedido.`
-          : `¡Mesa ${mesa.numero || ''} abierta! Ahora puedes agregar productos.`,
-      );
+      if (resultado.enviado) {
+        toast.success(`¡Pedido enviado a cocina! Mesa ${mesa.numero || ''} abierta.`);
+      } else {
+        // Otro teléfono lo mandó primero, o ya nada estaba disponible: la mesa no se abrió.
+        const aviso = avisoDelEnvio(resultado);
+        if (aviso.tono === 'exito') toast.success(aviso.texto);
+        else toast.warning(aviso.texto);
+      }
     } catch (err) {
       // El mensaje viene traducido por el dominio («Esta mesa acaba de
       // abrirse…», «Esta mesa todavía no tiene mesero asignado…»).
@@ -612,7 +610,6 @@ function PortalCliente() {
         mensajeBloqueado="Esta mesa aún no tiene un mesero asignado. Por favor, acércate a un mesero del salón."
         sobreElCarrito={hayBarraDelCarrito({
           pedidosActivos: pedidosQRActivos,
-          cuentaYaSolicitada,
           estado: carritoMesa.estado,
         })}
         pedidoGuardado={pedidoGuardadoEsperandoAlMesero(carritoMesa.estado)}
@@ -732,7 +729,9 @@ function PortalCliente() {
         )}
       </AnimatePresence>
 
-      {pedidosQRActivos && !cuentaYaSolicitada && (
+      {/* DP-13.3: con la cuenta ya pedida el pedido armado se sigue viendo —con su mensaje claro, no
+          un error— en vez de desaparecer; el carrito no se pinta si no hay nada armado. */}
+      {pedidosQRActivos && (
         <CarritoDeLaMesa carrito={carritoMesa} alAbrirLaMesa={abrirDialogoMesa} />
       )}
 

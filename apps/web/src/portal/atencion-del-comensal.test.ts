@@ -96,17 +96,20 @@ describe('«Quiero ordenar» con el pedido guardado es volver a llamar', () => {
 });
 
 describe('la barra del carrito', () => {
-  const base = { pedidosActivos: true, cuentaYaSolicitada: false, estado: estado() };
+  const base = { pedidosActivos: true, estado: estado() };
 
-  it('está puesta con pedidos desde el teléfono, la cuenta sin pedir y algo armado', () => {
+  it('está puesta con pedidos desde el teléfono y algo armado', () => {
     expect(hayBarraDelCarrito(base)).toBe(true);
   });
 
-  it('no hay barra sin platillos, sin pedidos desde el teléfono o con la cuenta ya pedida', () => {
+  it('DP-13.3 · con la cuenta ya pedida SIGUE puesta: el pedido armado no desaparece sin decir nada', () => {
+    expect(hayBarraDelCarrito({ ...base, estado: estado({ cuentaPedida: true }) })).toBe(true);
+  });
+
+  it('no hay barra sin platillos ni sin pedidos desde el teléfono', () => {
     expect(hayBarraDelCarrito({ ...base, estado: estado({ lineas: [] }) })).toBe(false);
     expect(hayBarraDelCarrito({ ...base, estado: null })).toBe(false);
     expect(hayBarraDelCarrito({ ...base, pedidosActivos: false })).toBe(false);
-    expect(hayBarraDelCarrito({ ...base, cuentaYaSolicitada: true })).toBe(false);
   });
 });
 

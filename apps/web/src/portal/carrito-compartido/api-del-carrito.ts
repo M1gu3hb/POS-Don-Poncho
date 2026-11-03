@@ -1,6 +1,11 @@
 import { invocarComando } from '~/cliente/api';
 
-import type { EstadoDelCarrito, ItemDelCarrito, ResultadoDelEnvio } from './carrito-de-la-mesa';
+import type {
+  AperturaDeLaMesa,
+  EstadoDelCarrito,
+  ItemDelCarrito,
+  ResultadoDelEnvio,
+} from './carrito-de-la-mesa';
 
 /** Lo que contesta «Llamar a mi mesero para confirmar» (DP-12.2). */
 export interface ResultadoDelLlamado {
@@ -17,12 +22,18 @@ export interface ResultadoDelLlamado {
 const ruta = (token: string, resto = '') =>
   `/api/publico/qr/${encodeURIComponent(token)}/carrito${resto}`;
 
-/** `null`: este negocio no acepta pedidos desde el teléfono. */
+/**
+ * `null`: este negocio no acepta pedidos desde el teléfono. Sin `dispositivo` (`''`) el servidor le
+ * emite uno al teléfono y lo trae en `dispositivoEmitido` (DP-13.3).
+ */
 export function leerElCarrito(
   token: string,
   dispositivo: string,
 ): Promise<EstadoDelCarrito | null> {
-  return invocarComando<EstadoDelCarrito | null>(ruta(token), { dispositivo });
+  return invocarComando<EstadoDelCarrito | null>(
+    ruta(token),
+    dispositivo === '' ? {} : { dispositivo },
+  );
 }
 
 export function agregarAlCarrito(
@@ -41,15 +52,28 @@ export function quitarDelCarrito(
   return invocarComando<EstadoDelCarrito>(ruta(token, '/quitar'), { dispositivo, lineaId });
 }
 
+/**
+ * Manda el carrito a cocina. DP-13.3 · Con la mesa cerrada, `apertura` lleva los datos de abrirla: el
+ * servidor la abre y manda el pedido en UNA transacción, no en dos llamadas.
+ */
 export function enviarElCarrito(
   token: string,
   dispositivo: string,
-  { confirmado, notaGeneral }: { readonly confirmado: boolean; readonly notaGeneral: string },
+  {
+    confirmado,
+    notaGeneral,
+    apertura,
+  }: {
+    readonly confirmado: boolean;
+    readonly notaGeneral: string;
+    readonly apertura?: AperturaDeLaMesa | undefined;
+  },
 ): Promise<ResultadoDelEnvio> {
   return invocarComando<ResultadoDelEnvio>(ruta(token, '/enviar'), {
     dispositivo,
     confirmado,
     notaGeneral,
+    ...(apertura === undefined ? {} : { apertura }),
   });
 }
 

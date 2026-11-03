@@ -68,6 +68,7 @@ export function CarritoDelPortalParaElMesero({
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [personas, setPersonas] = useState('2');
   const [borrando, setBorrando] = useState(false);
+  const [reabriendo, setReabriendo] = useState(false);
 
   if (cargando) return compacto ? null : <EsqueletoDeLista filas={3} />;
   if (datos === null) {
@@ -91,9 +92,9 @@ export function CarritoDelPortalParaElMesero({
     }
   };
 
-  const enviar = () =>
+  const enviar = (reabrirCuenta = false) =>
     hacer('enviar', async () => {
-      const r = await enviarACocina(mesa.id, '');
+      const r = await enviarACocina(mesa.id, '', reabrirCuenta);
       if (r.enviado) {
         sonar('enviarACocina');
         toast.success(`Pedido de la mesa ${String(mesa.numero)} enviado a cocina.`);
@@ -129,6 +130,12 @@ export function CarritoDelPortalParaElMesero({
         </span>
       </header>
       {sinConexion ? <Aviso tono="atencion" titulo="Sin conexión, reintentando…" /> : null}
+      {mesa.cuentaPedida ? (
+        <Aviso
+          tono="atencion"
+          titulo="La cuenta de esta mesa ya se pidió. Para mandarle este pedido hay que reabrirla (mientras no se haya cobrado)."
+        />
+      ) : null}
       {carrito.lineas.length === 0 ? (
         <Vacio tamano="compacto" titulo="Los comensales todavía no han armado nada." />
       ) : (
@@ -189,14 +196,43 @@ export function CarritoDelPortalParaElMesero({
             <Button
               className="gap-(--espacio-2)"
               disabled={ocupado !== null}
-              onClick={() => void enviar()}
+              onClick={() => {
+                if (mesa.cuentaPedida) setReabriendo(true);
+                else void enviar();
+              }}
             >
               <Send className="size-4" aria-hidden />
-              {ocupado === 'enviar' ? 'Enviando…' : 'Confirmar y enviar a cocina'}
+              {ocupado === 'enviar'
+                ? 'Enviando…'
+                : mesa.cuentaPedida
+                  ? 'Reabrir la cuenta y enviar'
+                  : 'Confirmar y enviar a cocina'}
             </Button>
           )}
         </footer>
       )}
+
+      <AlertDialog open={reabriendo} onOpenChange={setReabriendo}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Reabrir la cuenta de la mesa {mesa.numero}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La cuenta ya se pidió y todavía no se cobra. Si la reabres, este pedido sale a cocina
+              y la cuenta queda abierta otra vez; hay que volver a pedirla cuando terminen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void enviar(true);
+              }}
+            >
+              Reabrir y enviar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={borrando} onOpenChange={setBorrando}>
         <AlertDialogContent>

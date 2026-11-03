@@ -17,6 +17,8 @@ export interface MesaDelCarrito {
   readonly nombre: string | null;
   readonly estado: string;
   readonly ordenId: string | null;
+  /** DP-13.3 · Esa cuenta ya se pidió: para mandarle más platillos hay que reabrirla. */
+  readonly cuentaPedida: boolean;
 }
 
 export interface CarritoParaElMesero {
@@ -72,10 +74,14 @@ export function borrarElPedido(mesaId: string) {
   return invocarComando<EstadoDelCarrito>('/api/restaurante/carrito-vaciar', { mesaId });
 }
 
-export function enviarACocina(mesaId: string, notaGeneral: string) {
+/**
+ * `reabrirCuenta` (DP-13.3): la cuenta de la mesa ya se pidió y el mesero eligió reabrirla para
+ * mandar este pedido; el servidor reabre y envía en la misma transacción.
+ */
+export function enviarACocina(mesaId: string, notaGeneral: string, reabrirCuenta = false) {
   return invocarComando<{ readonly enviado: boolean; readonly ronda: number }>(
     '/api/restaurante/carrito-enviar',
-    { mesaId, notaGeneral },
+    { mesaId, notaGeneral, ...(reabrirCuenta ? { reabrirCuenta: true } : {}) },
   );
 }
 

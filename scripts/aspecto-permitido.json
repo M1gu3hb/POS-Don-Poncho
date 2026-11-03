@@ -559,8 +559,7 @@
       "porque": "DP-12.2 (DP-D45): el comensal arma el carrito con la mesa cerrada y el botón del carrito dice qué toca (llamar al mesero, abrir y enviar); los avisos viejos de «sin mesero» y «no se pueden agregar» ya no aplican, y al abrir la mesa se le dice que ya pueden enviar.",
       "testigos": [
         "- aviso:Esta mesa aún no tiene mesero asignado. Pide apoyo al personal.",
-        "- aviso:No se pueden agregar productos en este momento.",
-        "+ aviso:¡Mesa ${mesa.numero || ''} abierta! Ya pueden enviar su pedido."
+        "- aviso:No se pueden agregar productos en este momento."
       ]
     },
     {
@@ -600,6 +599,15 @@
         "+ label:Sonido de este aparato",
         "+ aria-label:Sonido de este aparato",
         "+ icono:Volume2"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
+      "porque": "DP-13.3 (puntos 13 y 15): «Abrir la mesa y enviar» es UN comando —el diálogo confirma las personas y el envío del carrito abre la mesa y manda el pedido en la misma transacción—, así que el aviso de éxito es «¡Pedido enviado a cocina! Mesa N abierta.» (el mismo «¡Pedido enviado a cocina!» de siempre, con la mesa abierta añadida) y el de «abierta, ahora puedes agregar» (que suponía abrir sin pedir) sale; y con la cuenta ya pedida el pedido armado se sigue viendo, con su mensaje claro («Tu cuenta ya se pidió: tu mesero lo revisa.»), en lugar de esconderse: el aviso viejo de «La cuenta ya fue solicitada» al tocar un platillo dice ahora ese mismo mensaje.",
+      "testigos": [
+        "- aviso:La cuenta ya fue solicitada. Llama al mesero si necesitas algo más.",
+        "- aviso:¡Mesa ${mesa.numero || ''} abierta! Ahora puedes agregar productos.",
+        "+ aviso:¡Pedido enviado a cocina! Mesa ${mesa.numero || ''} abierta."
       ]
     }
   ]

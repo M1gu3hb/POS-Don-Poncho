@@ -1,13 +1,13 @@
 import 'server-only';
 
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 
 import type { Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import type { AmbitoPortal } from './ambito.ts';
 import type { BanderasPortal } from './banderas.ts';
-import { itemDelCarrito } from './esquemas.ts';
+import { entradaAbrirMesa, itemDelCarrito } from './esquemas.ts';
 import { faltaMesero } from './negocio.ts';
 import { comoSeEnvia, type ComoSeEnvia } from './quien-envia.ts';
 
@@ -35,6 +35,23 @@ export const SEGUNDOS_CONECTADO = 60;
  * teléfono sigue contando como conectado (la ventana es de 60).
  */
 export const SEGUNDOS_ENTRE_LATIDOS = 30;
+/**
+ * DP-13.3 · Las «personas conectadas» que se cuentan no pasan de esto por mesa. Los ids ya los firma
+ * el servidor y emitirlos tiene límite (`telefono.ts`, `limite.ts`), pero el conteo manda en
+ * «¿Ya pidieron todos?» y en lo que ve el mesero: ninguna mesa real pasa de aquí.
+ */
+export const TOPE_DE_CONECTADOS = 20;
+/**
+ * DP-13.3 · La marca de «el mesero vació el pedido» vive en `carritos_mesa` sin migración: en las
+ * mismas columnas del último envío (`enviado_en`, `enviado_por_huella`), con esta huella que no es
+ * de ningún teléfono ni de ningún empleo. NO sube la ronda: vaciar no es enviar. Lo último que pasó
+ * gana: un envío posterior la reemplaza.
+ */
+export const HUELLA_DEL_VACIADO = createHash('sha256')
+  .update('portal:vaciado-del-mesero', 'utf8')
+  .digest('hex');
+/** El aviso de «tu mesero vació el pedido» vive este rato; pasado, ya es noticia vieja. */
+export const SEGUNDOS_VACIADO_VIGENTE = 300;
 /**
  * DP-13.2 · El carrito de una mesa SIN cuenta caduca solo a estas horas de que nadie le agregó
  * nada: el de una familia que nunca abrió la mesa (o que se fue y dejó el teléfono abierto) no le
@@ -68,7 +85,10 @@ export function ultimaDe(lineas: readonly { readonly created_at: Date }[]): Date
   );
 }
 
-/** El id que inventa el navegador del teléfono: sólo letras, números, «-» y «_». */
+/**
+ * El id del teléfono, sólo su FORMA: letras, números, «-» y «_». Lo emite y lo firma el servidor
+ * (DP-13.3, `telefono.ts`); los comandos comprueban la firma al sacar la huella.
+ */
 const DISPOSITIVO = z
   .string()
   .regex(/^[A-Za-z0-9_-]{16,64}$/, { error: 'No se pudo reconocer este teléfono.' });
@@ -81,6 +101,11 @@ export function huellaDelDispositivo(pimienta: string, dispositivo: string): str
 }
 
 export const entradaDelTelefono = z.object({ dispositivo: DISPOSITIVO }).strict();
+/**
+ * DP-13.3 · El sondeo es lo único que puede llegar SIN id (un teléfono nuevo) o con uno que ya no
+ * vale: el servidor lo reconoce o le emite uno (`resolverElTelefono`). Cualquier texto corto cabe aquí.
+ */
+export const entradaDelSondeo = z.object({ dispositivo: z.string().max(64).optional() }).strict();
 export const entradaAgregarAlCarrito = z
   .object({ dispositivo: DISPOSITIVO, item: itemDelCarrito })
   .strict();
@@ -93,6 +118,13 @@ export const entradaEnviarElCarrito = z
     confirmado: z.boolean(),
     /** La nota para cocina de quien lo manda («todo junto, sin picante…»). */
     notaGeneral: z.string().trim().max(300).default(''),
+    /**
+     * DP-13.3 · Con la mesa cerrada y el negocio dejando que los comensales la abran, «Abrir la mesa
+     * y enviar» es UN comando: los datos de la apertura (las personas que el comensal confirmó, su
+     * nombre, las alergias) viajan con el envío y todo ocurre en la misma transacción. Sin ellos se
+     * abre para una persona y el mesero corrige.
+     */
+    apertura: entradaAbrirMesa.optional(),
   })
   .strict();
 
@@ -135,6 +167,13 @@ export interface EstadoDelCarrito {
   readonly envio: ComoSeEnvia;
   /** DP-12.2 · Ya hay un «Pedido listo para confirmar» esperando al mesero. */
   readonly meseroAvisado: boolean;
+  /** DP-13.3 · La cuenta de la mesa ya se pidió (`cuenta_solicitada`): nadie envía desde el teléfono. */
+  readonly cuentaPedida: boolean;
+  /**
+   * DP-13.3 · El mesero vació el pedido de esta mesa mientras este teléfono estaba conectado. Se dice
+   * UNA vez (el sondeo que lo trae cuenta como visto, `vaciadoQueLeToca`); `null` el resto del tiempo.
+   */
+  readonly vaciadoPorElMesero: { readonly en: string } | null;
 }
 
 /** `2.5000` → `2.5`, `3.0000` → `3`: como la escribió el comensal. */
@@ -148,6 +187,8 @@ export async function latir(
   ambito: MesaDelCarrito,
   huella: string,
   ahora: Date,
+  /** DP-13.3 · Escribe aunque el último latido sea de hace nada: es el acuse de un aviso entregado. */
+  { sinEspera = false }: { readonly sinEspera?: boolean } = {},
 ): Promise<void> {
   await tx
     .insertInto('dispositivos_mesa')
@@ -157,17 +198,59 @@ export async function latir(
       dispositivo_huella: huella,
       visto_en: ahora,
     })
-    .onConflict((oc) =>
-      oc
+    .onConflict((oc) => {
+      const actualizar = oc
         .columns(['organizacion_id', 'mesa_id', 'dispositivo_huella'])
-        .doUpdateSet({ visto_en: ahora })
-        .where(
-          'dispositivos_mesa.visto_en',
-          '<',
-          new Date(ahora.getTime() - SEGUNDOS_ENTRE_LATIDOS * 1000),
-        ),
-    )
+        .doUpdateSet({ visto_en: ahora });
+      return sinEspera
+        ? actualizar
+        : actualizar.where(
+            'dispositivos_mesa.visto_en',
+            '<',
+            new Date(ahora.getTime() - SEGUNDOS_ENTRE_LATIDOS * 1000),
+          );
+    })
     .execute();
+}
+
+/** El último latido que se escribió de este teléfono en esta mesa, o `null` si nunca. */
+export async function ultimoLatido(
+  tx: Transaccion,
+  ambito: MesaDelCarrito,
+  huella: string,
+): Promise<Date | null> {
+  const fila = await tx
+    .selectFrom('dispositivos_mesa')
+    .select('visto_en')
+    .where('organizacion_id', '=', ambito.organizacionId)
+    .where('mesa_id', '=', ambito.mesaId)
+    .where('dispositivo_huella', '=', huella)
+    .executeTakeFirst();
+  return fila?.visto_en ?? null;
+}
+
+/**
+ * DP-13.3 (punto 12) · ¿Le toca a este teléfono la noticia de que el mesero vació el pedido? Puro.
+ *
+ * Le toca si la marca de `carritos_mesa` es de un vaciado, es reciente, y el teléfono estaba
+ * CONECTADO cuando pasó: su último latido es de antes del vaciado pero de menos de un minuto antes.
+ * Es "UNA vez" sin guardar nada más: entregar la noticia reescribe el latido (`leerElCarrito`), y con
+ * el latido ya posterior al vaciado no vuelve a tocarle. Quien llega después (sin latido previo) o
+ * llevaba rato sin sondear no oye nada.
+ */
+export function vaciadoQueLeToca(
+  marca:
+    { readonly enviado_en: Date | null; readonly enviado_por_huella: string | null } | undefined,
+  latidoAnterior: Date | null,
+  ahora: Date,
+): { readonly en: string } | null {
+  if (marca?.enviado_por_huella !== HUELLA_DEL_VACIADO || marca.enviado_en === null) return null;
+  if (latidoAnterior === null) return null;
+  const vaciado = marca.enviado_en.getTime();
+  const latido = latidoAnterior.getTime();
+  const estabaConectado = latido < vaciado && latido >= vaciado - SEGUNDOS_CONECTADO * 1000;
+  const vigente = ahora.getTime() - vaciado <= SEGUNDOS_VACIADO_VIGENTE * 1000;
+  return estabaConectado && vigente ? { en: marca.enviado_en.toISOString() } : null;
 }
 
 /** La cuenta abierta de la mesa, sin candado: sólo para saber desde cuándo cuenta el carrito. */
@@ -207,7 +290,18 @@ export async function estadoDelCarrito(
     desde,
     ahora,
     banderas,
-  }: { readonly desde: Date | null; readonly ahora: Date; readonly banderas: BanderasPortal },
+    latidoAnterior = null,
+  }: {
+    readonly desde: Date | null;
+    readonly ahora: Date;
+    readonly banderas: BanderasPortal;
+    /**
+     * DP-13.3 · El latido de este teléfono ANTES de que el sondeo escribiera el de ahora: con él se
+     * decide si le toca la noticia del vaciado (`vaciadoQueLeToca`). Sólo lo da el sondeo; los
+     * comandos y la lectura del mesero no entregan ese aviso.
+     */
+    readonly latidoAnterior?: Date | null;
+  },
 ): Promise<EstadoDelCarrito> {
   const todas = await tx
     .selectFrom('carrito_mesa_lineas as l')
@@ -263,6 +357,13 @@ export async function estadoDelCarrito(
     .where('tipo', '=', 'ordenar')
     .where('estado', '=', 'pendiente')
     .executeTakeFirst();
+  const pedida = await tx
+    .selectFrom('ordenes')
+    .select('id')
+    .where('organizacion_id', '=', ambito.organizacionId)
+    .where('mesa_id', '=', ambito.mesaId)
+    .where('estado', '=', 'cuenta_solicitada')
+    .executeTakeFirst();
 
   const telefonos = new Map<string, number>();
   for (const l of lineas) {
@@ -270,7 +371,8 @@ export async function estadoDelCarrito(
       telefonos.set(l.dispositivo_huella, telefonos.size + 1);
     }
   }
-  const nConectados = Number(conectados?.n ?? 0);
+  const nConectados = Math.min(Number(conectados?.n ?? 0), TOPE_DE_CONECTADOS);
+  const vaciado = vaciadoQueLeToca(carrito, latidoAnterior, ahora);
   const personas = desde === null ? 0 : (mesa?.personas_actuales ?? 0);
   return {
     lineas: lineas.map((l) => ({
@@ -288,8 +390,9 @@ export async function estadoDelCarrito(
     personas,
     esperarATodos: nConectados >= 2 || personas >= 2,
     ronda: carrito?.ronda ?? 0,
+    // La marca del vaciado ocupa las columnas del último envío: no es un envío (`vaciadoQueLeToca`).
     ultimoEnvio:
-      carrito?.enviado_en == null
+      carrito?.enviado_en == null || carrito.enviado_por_huella === HUELLA_DEL_VACIADO
         ? null
         : {
             en: carrito.enviado_en.toISOString(),
@@ -299,7 +402,10 @@ export async function estadoDelCarrito(
     envio: comoSeEnvia(banderas, {
       cuentaAbierta: desde !== null,
       faltaMesero: faltaMesero(banderas, ambito.empleadoAsignadoId),
+      cuentaPedida: pedida !== undefined,
     }),
     meseroAvisado: aviso !== undefined,
+    cuentaPedida: pedida !== undefined,
+    vaciadoPorElMesero: vaciado,
   };
 }

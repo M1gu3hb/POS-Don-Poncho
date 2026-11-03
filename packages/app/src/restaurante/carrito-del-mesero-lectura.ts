@@ -30,6 +30,8 @@ export interface MesaDelCarritoDelMesero {
   readonly estado: string;
   /** La cuenta viva de la mesa, si la hay: «Confirmar y enviar» la necesita. */
   readonly ordenId: string | null;
+  /** DP-13.3 · Esa cuenta ya se pidió (`cuenta_solicitada`): para enviar hay que reabrirla. */
+  readonly cuentaPedida: boolean;
   readonly sucursalId: string;
 }
 
@@ -94,7 +96,7 @@ export async function mesaDelCarritoParaElMesero(
   }
   const viva = await tx
     .selectFrom('ordenes')
-    .select('id')
+    .select(['id', 'estado'])
     .where('organizacion_id', '=', ambito.organizacionId)
     .where('mesa_id', '=', mesa.id)
     .where('estado', 'in', [...ESTADOS_DE_CUENTA_VIVA])
@@ -105,6 +107,7 @@ export async function mesaDelCarritoParaElMesero(
     nombre: mesa.nombre,
     estado: mesa.estado,
     ordenId: viva?.id ?? null,
+    cuentaPedida: viva?.estado === 'cuenta_solicitada',
     sucursalId: mesa.sucursal_id,
   };
 }

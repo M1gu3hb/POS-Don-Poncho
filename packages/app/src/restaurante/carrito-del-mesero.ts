@@ -5,7 +5,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
-import type { EstadoDelCarrito } from '../portal/carrito.ts';
+import { HUELLA_DEL_VACIADO, type EstadoDelCarrito } from '../portal/carrito.ts';
 import { cantidadPedida } from '../portal/esquemas.ts';
 import { cargarProductosDelMenu, valorarParaPedido } from '../portal/productos.ts';
 import { resolverElAvisoDelPedido, resolverElAvisoSiQuedoVacio } from './carrito-del-salon.ts';
@@ -16,6 +16,7 @@ import {
   type MesaDelCarritoDelMesero,
 } from './carrito-del-mesero-lectura.ts';
 import { comandarLasLineas, type ResultadoEnviarPedido } from './pedido.ts';
+import { reabrirLaCuentaPedida } from './reabrir-la-cuenta.ts';
 import { quedarseConLaMesa } from './responsable-de-la-mesa.ts';
 
 /**
@@ -47,6 +48,11 @@ const entradaEnviarElCarritoDeLaMesa = z.object({
   mesaId: mesa,
   /** La nota para cocina de la comanda entera («todo junto»). */
   notaGeneral: z.string().trim().max(300).default(''),
+  /**
+   * DP-13.3 · La cuenta de la mesa ya se pidió: el mesero que quiere mandarle este pedido la
+   * REABRE expresamente (si no se ha cobrado). Sin esto, una cuenta pedida no se toca.
+   */
+  reabrirCuenta: z.boolean().default(false),
 });
 
 type Ctx = ContextoComando<Transaccion>;
@@ -204,6 +210,19 @@ export const vaciarElCarrito = definirComando<
         .where('mesa_id', '=', delCarrito.id)
         .executeTakeFirst(),
     );
+    // DP-13.3 · Que los teléfonos se enteren (el siguiente sondeo de cada uno lo dice, una vez):
+    // la marca vive en `carritos_mesa` sin migración, en las columnas del último envío, y NO sube
+    // la ronda — vaciar no es enviar. Sin nada que borrar no hay nada que decir.
+    if (Number(borradas.numDeletedRows) > 0) {
+      await ctx.paso('marcar_el_vaciado', () =>
+        ctx.tx
+          .updateTable('carritos_mesa')
+          .set({ enviado_en: ctx.ahora, enviado_por_huella: HUELLA_DEL_VACIADO })
+          .where('organizacion_id', '=', ctx.ambito.organizacionId)
+          .where('mesa_id', '=', delCarrito.id)
+          .execute(),
+      );
+    }
     // Los comensales se fueron: su «Pedido listo para confirmar» tampoco espera a nadie.
     await ctx.paso('resolver_el_aviso', () =>
       resolverElAvisoDelPedido(
@@ -266,6 +285,27 @@ export const enviarElCarritoDeLaMesa = definirComando<
       return { enviado: false, ronda: antes, pedido: null };
     }
 
+    // DP-13.3 · Con la cuenta ya pedida, el pedido del portal no entra solo: o el mesero la reabre
+    // expresamente, o se le dice por qué no. Reabrir y enviar son una sola transacción.
+    const reabre = delCarrito.cuentaPedida;
+    if (reabre && !entrada.reabrirCuenta) {
+      throw new ErrorDominio(
+        'CARRITO_CUENTA_PEDIDA',
+        'La cuenta de esta mesa ya se pidió. Reábrela para mandar este pedido, o revísalo con los comensales.',
+      );
+    }
+    if (reabre) {
+      await ctx.paso('reabrir_la_cuenta', () =>
+        reabrirLaCuentaPedida(ctx.tx, {
+          organizacionId,
+          sucursalId: delCarrito.sucursalId,
+          ordenId,
+          mesaId: delCarrito.id,
+          empleoId,
+          ahora: ctx.ahora,
+        }),
+      );
+    }
     const pedido = await comandarLasLineas(ctx, {
       ordenId,
       lineas: lineas.map((l) => ({
@@ -324,6 +364,7 @@ export const enviarElCarritoDeLaMesa = definirComando<
         estaciones: pedido.comandas.map((c) => c.estacionNombre),
         totalCentavos: pedido.totalCentavos,
         tomoLaMesa: tomada?.mesa ?? false,
+        reabrioLaCuenta: reabre,
       },
     });
     return { enviado: true, ronda, pedido };

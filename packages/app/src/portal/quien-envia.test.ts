@@ -21,27 +21,51 @@ const COMENSALES_QUE_ABREN: ReglasDelEnvio = {
 describe('comoSeEnvia', () => {
   it('sólo el mesero envía: el comensal siempre lo llama, abierta o cerrada', () => {
     for (const cuentaAbierta of [true, false]) {
-      expect(comoSeEnvia(MESERO, { cuentaAbierta, faltaMesero: false })).toBe('llamar_mesero');
+      expect(comoSeEnvia(MESERO, { cuentaAbierta, faltaMesero: false, cuentaPedida: false })).toBe(
+        'llamar_mesero',
+      );
     }
   });
 
   it('los comensales envían con la mesa abierta', () => {
-    expect(comoSeEnvia(COMENSALES, { cuentaAbierta: true, faltaMesero: false })).toBe('enviar');
-    expect(comoSeEnvia(COMENSALES_QUE_ABREN, { cuentaAbierta: true, faltaMesero: true })).toBe(
-      'enviar',
-    );
+    expect(
+      comoSeEnvia(COMENSALES, { cuentaAbierta: true, faltaMesero: false, cuentaPedida: false }),
+    ).toBe('enviar');
+    expect(
+      comoSeEnvia(COMENSALES_QUE_ABREN, {
+        cuentaAbierta: true,
+        faltaMesero: true,
+        cuentaPedida: false,
+      }),
+    ).toBe('enviar');
   });
 
   it('con la mesa cerrada: la abren al enviar sólo si el negocio lo deja y la mesa tiene mesero', () => {
-    expect(comoSeEnvia(COMENSALES_QUE_ABREN, { cuentaAbierta: false, faltaMesero: false })).toBe(
-      'abrir_y_enviar',
-    );
-    expect(comoSeEnvia(COMENSALES_QUE_ABREN, { cuentaAbierta: false, faltaMesero: true })).toBe(
-      'pedir_que_atiendan',
-    );
-    expect(comoSeEnvia(COMENSALES, { cuentaAbierta: false, faltaMesero: false })).toBe(
-      'pedir_que_atiendan',
-    );
+    expect(
+      comoSeEnvia(COMENSALES_QUE_ABREN, {
+        cuentaAbierta: false,
+        faltaMesero: false,
+        cuentaPedida: false,
+      }),
+    ).toBe('abrir_y_enviar');
+    expect(
+      comoSeEnvia(COMENSALES_QUE_ABREN, {
+        cuentaAbierta: false,
+        faltaMesero: true,
+        cuentaPedida: false,
+      }),
+    ).toBe('pedir_que_atiendan');
+    expect(
+      comoSeEnvia(COMENSALES, { cuentaAbierta: false, faltaMesero: false, cuentaPedida: false }),
+    ).toBe('pedir_que_atiendan');
+  });
+
+  it('DP-13.3 · con la cuenta ya pedida nadie envía desde el teléfono, mande quien mande', () => {
+    for (const reglas of [MESERO, COMENSALES, COMENSALES_QUE_ABREN]) {
+      expect(
+        comoSeEnvia(reglas, { cuentaAbierta: true, faltaMesero: false, cuentaPedida: true }),
+      ).toBe('cuenta_pedida');
+    }
   });
 
   it('comensalEnvia sólo en los dos casos en que el comensal manda a cocina', () => {
@@ -49,6 +73,7 @@ describe('comoSeEnvia', () => {
     expect(comensalEnvia('abrir_y_enviar')).toBe(true);
     expect(comensalEnvia('llamar_mesero')).toBe(false);
     expect(comensalEnvia('pedir_que_atiendan')).toBe(false);
+    expect(comensalEnvia('cuenta_pedida')).toBe(false);
   });
 });
 
