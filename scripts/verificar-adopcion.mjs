@@ -994,17 +994,18 @@ export const SIN_ESTADO = [
       'No lee ni escribe nada: tocar una mesa la abre la pantalla del mesero, que avisa si falla.',
   },
   {
-    pantalla: 'configuracion/BotonDelSonido',
+    pantalla: 'configuracion/DialogoDelSonido',
     estado: 'vacio',
-    razon: 'Es el botón junto a «Salir» que abre el sonido del aparato (DP-13.3): no tiene lista.',
+    razon:
+      'Es el diálogo que abre el botón junto a «Salir» (DP-13.3): envuelve `SonidoDelAparato`, sin lista.',
   },
   {
-    pantalla: 'configuracion/BotonDelSonido',
+    pantalla: 'configuracion/DialogoDelSonido',
     estado: 'cargando',
     razon: 'No lee nada: el ajuste vive en el aparato y lo pinta `SonidoDelAparato`.',
   },
   {
-    pantalla: 'configuracion/BotonDelSonido',
+    pantalla: 'configuracion/DialogoDelSonido',
     estado: 'error',
     razon: 'Sin operación propia: si el aparato no deja guardar, lo dice `SonidoDelAparato`.',
   },

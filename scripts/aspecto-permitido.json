@@ -589,8 +589,18 @@
     },
     {
       "archivo": "apps/web/heredado/components/common/Sidebar.jsx",
-      "porque": "DP-13.3 (punto 14): junto a «Salir», el botón «Sonido de este aparato» abre el mismo ajuste de Configuración → Este aparato en un diálogo, para que el mesero, la cocina y la caja bajen o apaguen el sonido de SU aparato sin entrar a Configuración. Lleva el mismo tono tenue que «Salir».",
-      "testigos": ["+ clase:text-sidebar-foreground/50", "+ clase:hover:text-sidebar-foreground"]
+      "porque": "DP-13.3 (punto 14): junto a «Salir», el botón «Sonido de este aparato» (el mismo tamaño y tono tenue que «Salir», con el ícono del volumen) abre el ajuste de Configuración → Este aparato en un diálogo, para que el mesero, la cocina y la caja bajen o apaguen el sonido de SU aparato sin entrar a Configuración. En el teléfono cierra el cajón del menú antes de abrir el diálogo.",
+      "testigos": [
+        "+ clase:text-sidebar-foreground/50",
+        "+ clase:hover:text-sidebar-foreground",
+        "+ clase:p-1",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:transition-colors",
+        "+ label:Sonido de este aparato",
+        "+ aria-label:Sonido de este aparato",
+        "+ icono:Volume2"
+      ]
     }
   ]
 }

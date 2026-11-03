@@ -146,6 +146,14 @@ test.describe('los sonidos de la interfaz', () => {
   }, info) => {
     const mesera = await new Equipo(browser, SLUG).pagina(info, 'mesero');
     await mesera.goto('/mesero');
+    // `isVisible()` no espera: primero, que la pantalla tenga su menú (el cajón en el teléfono, la
+    // barra en la PC).
+    await expect(
+      mesera
+        .getByRole('button', { name: /^(Abrir menú|Salir)$/ })
+        .filter({ visible: true })
+        .first(),
+    ).toBeVisible();
     const hamburguesa = mesera.getByRole('button', { name: 'Abrir menú' });
     if (await hamburguesa.isVisible()) await hamburguesa.click();
     const expandir = mesera.getByRole('button', { name: 'Expandir' }).filter({ visible: true });
