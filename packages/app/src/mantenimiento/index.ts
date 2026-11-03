@@ -16,10 +16,22 @@ export {
   type Seccion,
 } from './purgas.ts';
 export {
+  claveDePlataforma,
+  listaResultante,
+  type AccionDePlataforma,
+  type PlanDePlataforma,
+} from './clave-de-plataforma.ts';
+export {
   CLAVE_DE_PLATAFORMA,
+  MAXIMO_DE_PLATAFORMA,
   empleosDePlataforma,
   exigirPlataforma,
   leerEsDePlataforma,
   marcarPlataforma,
   type ResultadoMarcarPlataforma,
 } from './plataforma.ts';
+export {
+  quitarMarcaDeEmpleo,
+  quitarPlataforma,
+  type ResultadoQuitarPlataforma,
+} from './plataforma-cambios.ts';

@@ -5,7 +5,11 @@ export {
   type ReglaImpuesto,
   type TotalesOrden,
 } from './totales.ts';
-export { costoDeLaVentaEsDesconocido } from './costo-de-la-venta.ts';
+export {
+  costoDeLaVentaEsDesconocido,
+  ESTADOS_DEL_COSTO,
+  type EstadoDelCosto,
+} from './costo-de-la-venta.ts';
 export {
   calcularDivision,
   type DivisionCalculada,

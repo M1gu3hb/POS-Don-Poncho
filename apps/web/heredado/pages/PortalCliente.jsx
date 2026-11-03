@@ -29,8 +29,14 @@ import { MorfiNoEncontrada } from '~/morfi/MorfiNoEncontrada';
 import { PaginaConBotones } from '~/restaurante/menu-qr/PaginaConBotones';
 import { atributosDelTema, temaDelPortal } from '~/restaurante/menu-qr/tema-del-portal';
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
+import {
+  hayBarraDelCarrito,
+  ordenarEsVolverALlamar,
+  pedidoGuardadoEsperandoAlMesero,
+} from '~/portal/atencion-del-comensal';
 import { AvisoDeLaMesa } from '~/portal/carrito-compartido/AvisoDeLaMesa';
 import { CarritoDeLaMesa } from '~/portal/carrito-compartido/CarritoDeLaMesa';
+import { PEDIDO_GUARDADO } from '~/portal/carrito-compartido/carrito-de-la-mesa';
 import { useCarritoDeLaMesa } from '~/portal/carrito-compartido/use-carrito-de-la-mesa';
 
 /**
@@ -368,6 +374,22 @@ function PortalCliente() {
       // (continúa abajo con el flujo estándar de SolicitudQR)
     }
 
+    // DP-13.4: con un pedido guardado esperando al mesero, «Quiero ordenar» es volver a llamarlo:
+    // por el carrito, que le pone al día la nota al MISMO aviso (no crea otro) y contesta con las
+    // mismas palabras. Antes contestaba «Ya avisamos al mesero» como un error.
+    if (ordenarEsVolverALlamar(tipo, carritoMesa.estado)) {
+      setEnviandoTipo(tipo);
+      try {
+        await carritoMesa.llamar();
+        toast.success(PEDIDO_GUARDADO);
+      } catch (err) {
+        toast.error(err?.message || 'No pudimos llamar a tu mesero. Intenta de nuevo.');
+      } finally {
+        setEnviandoTipo(null);
+      }
+      return;
+    }
+
     setEnviandoTipo(tipo);
     try {
       // El anti-duplicado dejó de vivir aquí. Consultar «¿hay una pendiente?» y
@@ -588,6 +610,12 @@ function PortalCliente() {
         disabled={!!enviandoTipo}
         bloqueado={faltaMesero}
         mensajeBloqueado="Esta mesa aún no tiene un mesero asignado. Por favor, acércate a un mesero del salón."
+        sobreElCarrito={hayBarraDelCarrito({
+          pedidosActivos: pedidosQRActivos,
+          cuentaYaSolicitada,
+          estado: carritoMesa.estado,
+        })}
+        pedidoGuardado={pedidoGuardadoEsperandoAlMesero(carritoMesa.estado)}
       />
 
       {/* Tarjeta persistente: cuando el mesero ya disparó la cuenta.

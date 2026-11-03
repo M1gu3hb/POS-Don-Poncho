@@ -394,7 +394,7 @@ export const cerrarCaja = definirComando<Transaccion, typeof entradaCerrarCaja, 
     // armado en el carrito del portal y nadie confirmó se olvida, para que mañana no aparezca.
     if (abiertas.every((id) => id === sesion.id)) {
       await ctx.paso('olvidar_los_carritos_del_dia', () =>
-        olvidarLosCarritosDeLaSucursal(ctx.tx, organizacionId, sesion.sucursalId),
+        olvidarLosCarritosDeLaSucursal(ctx.tx, organizacionId, sesion.sucursalId, ctx.ahora),
       );
     }
 

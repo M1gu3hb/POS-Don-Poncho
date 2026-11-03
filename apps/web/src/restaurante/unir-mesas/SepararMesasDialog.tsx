@@ -12,6 +12,7 @@ import {
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Aviso } from '@morphiqpos/ui/sistema';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
 
@@ -19,6 +20,9 @@ import { ErrorApi, invocarComando } from '~/cliente/api';
  * «¿SEPARAR LAS MESAS?» (D-2, DP-9.6): cada mesa vuelve a su lugar, a su zona y a su número; la
  * cuenta, si hay, se queda en la principal —lo pedido no se reparte—. Lo usan la mesa activa de
  * la principal y el mapa, donde se separa una unión que quedó libre.
+ *
+ * DP-13.3: el pedido del portal y las notas del grupo también se quedan en la principal; el
+ * servidor dice qué se quedó y aquí se avisa, para que nadie lo busque en la mesa que volvió.
  */
 export function SepararMesasDialog({
   unionId,
@@ -35,7 +39,11 @@ export function SepararMesasDialog({
     setEnviando(true);
     setFallo(null);
     try {
-      await invocarComando('/api/restaurante/separar-mesas', { unionId });
+      const { aviso } = await invocarComando<{ readonly aviso: string | null }>(
+        '/api/restaurante/separar-mesas',
+        { unionId },
+      );
+      if (aviso !== null) toast.info(aviso);
       alHecho();
     } catch (error: unknown) {
       setFallo(error instanceof ErrorApi ? error.message : 'No se pudieron separar las mesas.');

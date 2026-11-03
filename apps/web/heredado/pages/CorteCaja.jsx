@@ -22,6 +22,12 @@ import { DollarSign, Receipt, TrendingUp, Scissors, FileText } from 'lucide-reac
 import { safeFormatDate } from '@/lib/safeFormat';
 import CorteViewerDialog from '@/components/cortes/CorteViewerDialog';
 import { claves } from '~/cliente/claves-de-consulta';
+import {
+  SIN_RECETA,
+  economiaDelPeriodo,
+  seVeElMargen,
+  subtituloDelMargen,
+} from '~/restaurante/margen-de-las-ventas';
 
 /** La lista de «todavía no llegó nada»: una sola, para que los `useMemo` no se invaliden. */
 const SIN_FILAS = [];
@@ -69,22 +75,30 @@ export default function CorteCaja() {
       if (!corteAbierto) return g.fecha === today;
       return new Date(g.created_date) >= new Date(corteAbierto.fecha_inicio);
     });
+    // DP-13.2 · Costo, utilidad y margen SÓLO de las ventas con costo completo: la regla es del
+    // servidor (`estado_costo`, `caja/corte/costo-conocido.ts`) y la aplica `economiaDelPeriodo`.
+    // Sumar la foto del cobro contaba costo cero lo que no tiene receta e inflaba el margen.
+    const economia = economiaDelPeriodo(ventas);
     return {
       numVentas: ventas.length,
       totalEfectivo: ventas.reduce((s, v) => s + (v.monto_efectivo || 0), 0),
       totalTarjeta: ventas.reduce((s, v) => s + (v.monto_tarjeta || 0), 0),
       totalTransferencia: ventas.reduce((s, v) => s + (v.monto_transferencia || 0), 0),
       totalGeneral: ventas.reduce((s, v) => s + (v.total || 0), 0),
-      costoTotal: ventas.reduce((s, v) => s + (v.costo_total_snapshot || 0), 0),
-      utilidadBruta: ventas.reduce((s, v) => s + (v.utilidad_bruta_snapshot || 0), 0),
+      costoTotal: economia.costo,
+      utilidadBruta: economia.utilidad,
+      economia,
       totalGastos: gastosHoy.reduce((s, g) => s + (g.monto || 0), 0),
       ticketPromedio:
         ventas.length > 0 ? ventas.reduce((s, v) => s + (v.total || 0), 0) / ventas.length : 0,
     };
   }, [ventasHoy, gastos, corteAbierto, today]);
 
-  const margenProm =
-    resumen.totalGeneral > 0 ? (resumen.utilidadBruta / resumen.totalGeneral) * 100 : 0;
+  const margenProm = resumen.economia?.margen ?? null;
+  // Quien no ve márgenes no lee «sin receta»: no se le pinta ni la utilidad ni el margen.
+  const seVe = seVeElMargen(resumen.economia);
+  const utilidadEnTexto =
+    resumen.utilidadBruta === null ? SIN_RECETA : formatCurrency(resumen.utilidadBruta);
 
   const efectivoEsperado = resumen.totalEfectivo || 0;
   const efectivoContadoNum = (() => {
@@ -180,12 +194,14 @@ export default function CorteCaja() {
           icon={DollarSign}
           subtitle={`${resumen.numVentas} transacciones`}
         />
-        <StatCard
-          title="Utilidad bruta"
-          value={formatCurrency(resumen.utilidadBruta)}
-          icon={TrendingUp}
-          subtitle={`${margenProm.toFixed(1)}% margen`}
-        />
+        {seVe && (
+          <StatCard
+            title="Utilidad bruta"
+            value={utilidadEnTexto}
+            icon={TrendingUp}
+            subtitle={subtituloDelMargen(resumen.economia)}
+          />
+        )}
         <StatCard
           title="Ticket promedio"
           value={formatCurrency(resumen.ticketPromedio)}
@@ -261,20 +277,24 @@ export default function CorteCaja() {
                 <p className="text-xs text-muted-foreground">Total ventas</p>
                 <p className="font-bold">{formatCurrency(resumen.totalGeneral)}</p>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Utilidad bruta</p>
-                <p className="font-bold text-exito">
-                  {formatCurrency(resumen.utilidadBruta)}
-                </p>
-              </div>
+              {seVe && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Utilidad bruta</p>
+                  <p className="font-bold text-exito">{utilidadEnTexto}</p>
+                </div>
+              )}
               <div>
                 <p className="text-xs text-muted-foreground">Efectivo esperado</p>
                 <p className="font-bold">{formatCurrency(efectivoEsperado)}</p>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Margen prom.</p>
-                <p className="font-bold">{formatPercent(margenProm)}</p>
-              </div>
+              {seVe && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Margen prom.</p>
+                  <p className="font-bold">
+                    {margenProm === null ? SIN_RECETA : formatPercent(margenProm)}
+                  </p>
+                </div>
+              )}
             </div>
             <div>
               <Label className="text-xs">Efectivo contado en caja</Label>

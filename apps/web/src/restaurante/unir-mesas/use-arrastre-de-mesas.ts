@@ -1,7 +1,9 @@
 'use client';
 
 import type { MesaEnPlano } from '@morphiqpos/domain/sala';
-import { useRef, useState, type PointerEvent } from 'react';
+import { useState, type PointerEvent } from 'react';
+
+import { crearArrastreDeUnDedo, type Arrastre } from './arrastre-de-un-dedo';
 
 /**
  * ARRASTRAR UNA MESA EN «UNIR MESAS» (DP-12.3): la mesa sigue al dedo 1:1, sin saltos. El imán ya
@@ -11,40 +13,12 @@ import { useRef, useState, type PointerEvent } from 'react';
  * Eventos de puntero —dedo, ratón o lápiz— con el puntero capturado y `touch-action: none` en la
  * mesa: la página no se desplaza mientras se arrastra. Si el navegador cancela el gesto (una
  * llamada, otro dedo), la mesa se queda donde iba.
+ *
+ * DP-13.4 · Un SEGUNDO dedo no pisa al primero: mientras un puntero lleva una mesa, los demás se
+ * ignoran (la lógica, con sus pruebas, vive en `arrastre-de-un-dedo.ts`).
  */
 
-/** Menos que esto, en píxeles de la pantalla, es un toque y no un arrastre. */
-export const TOQUE_PX = 6;
-
-export interface Arrastre {
-  readonly id: string;
-  readonly x: number;
-  readonly y: number;
-}
-
-interface Inicio {
-  readonly id: string;
-  readonly puntero: number;
-  readonly px: number;
-  readonly py: number;
-  readonly x0: number;
-  readonly y0: number;
-  movida: boolean;
-  ultimo: { x: number; y: number };
-}
-
-/** A dónde va la mesa: donde la lleva el dedo, sin salirse del plano. Puro. */
-export function adondeVa(
-  inicio: { readonly px: number; readonly py: number; readonly x0: number; readonly y0: number },
-  puntero: { readonly x: number; readonly y: number },
-  escala: number,
-  limite: { readonly ancho: number; readonly alto: number },
-): { readonly x: number; readonly y: number } {
-  return {
-    x: Math.min(Math.max(0, inicio.x0 + (puntero.x - inicio.px) / escala), limite.ancho),
-    y: Math.min(Math.max(0, inicio.y0 + (puntero.y - inicio.py) / escala), limite.alto),
-  };
-}
+export { adondeVa, TOQUE_PX, type Arrastre } from './arrastre-de-un-dedo';
 
 export function useArrastreDeMesas({
   escala,
@@ -60,51 +34,26 @@ export function useArrastreDeMesas({
   readonly alTocar: (id: string) => void;
 }) {
   const [arrastre, setArrastre] = useState<Arrastre | null>(null);
-  const inicio = useRef<Inicio | null>(null);
-
-  const terminar = (tocar: boolean) => {
-    const vivo = inicio.current;
-    inicio.current = null;
-    setArrastre(null);
-    if (vivo === null) return;
-    if (vivo.movida) alSoltar(vivo.id, vivo.ultimo.x, vivo.ultimo.y);
-    else if (tocar) alTocar(vivo.id);
-  };
+  const [controlador] = useState(crearArrastreDeUnDedo);
+  const destinos = { alArrastrar: setArrastre, alSoltar, alTocar };
+  const medidas = { escala, anchoDelPlano, altoDelPlano };
 
   const manejadoresDe = (m: MesaEnPlano, quieta = false) => ({
     onPointerDown(e: PointerEvent<HTMLElement>) {
       if (e.button !== 0) return;
-      e.currentTarget.setPointerCapture(e.pointerId);
-      inicio.current = {
-        id: m.id,
-        puntero: e.pointerId,
-        px: e.clientX,
-        py: e.clientY,
-        x0: m.x,
-        y0: m.y,
-        movida: false,
-        ultimo: { x: m.x, y: m.y },
-      };
+      if (controlador.bajar(m, e, e.currentTarget)) e.currentTarget.setPointerCapture(e.pointerId);
     },
     onPointerMove(e: PointerEvent<HTMLElement>) {
-      const vivo = inicio.current;
-      if (vivo?.id !== m.id || vivo.puntero !== e.pointerId || quieta) return;
-      if (!vivo.movida && Math.hypot(e.clientX - vivo.px, e.clientY - vivo.py) < TOQUE_PX) return;
-      vivo.movida = true;
-      vivo.ultimo = adondeVa(vivo, { x: e.clientX, y: e.clientY }, escala, {
-        ancho: Math.max(0, anchoDelPlano - m.ancho),
-        alto: Math.max(0, altoDelPlano - m.alto),
-      });
-      setArrastre({ id: m.id, ...vivo.ultimo });
+      controlador.mover(m, e, medidas, quieta, destinos);
     },
-    onPointerUp() {
-      terminar(true);
+    onPointerUp(e: PointerEvent<HTMLElement>) {
+      controlador.subir(e, destinos);
     },
-    onPointerCancel() {
-      terminar(false);
+    onPointerCancel(e: PointerEvent<HTMLElement>) {
+      controlador.cancelar(e, destinos);
     },
-    onLostPointerCapture() {
-      if (inicio.current !== null) terminar(false);
+    onLostPointerCapture(e: PointerEvent<HTMLElement>) {
+      controlador.perderCaptura(e, destinos);
     },
   });
 

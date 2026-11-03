@@ -16,6 +16,8 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { CON_CAMARA, RUTAS_CON_CAMARA, SIN_CAMARA } from '../apps/web/permisos-del-navegador.mjs';
+
 const RAIZ = dirname(dirname(fileURLToPath(import.meta.url)));
 const WEB = join(RAIZ, 'apps', 'web');
 const PUERTO = 3199;
@@ -66,8 +68,8 @@ const EXIGIDAS = [
   },
   {
     nombre: 'permissions-policy',
-    valida: (v) => v.includes('camera=()') && v.includes('geolocation=()'),
-    porque: 'Un POS no necesita camara ni ubicacion por omision',
+    valida: (v) => v === SIN_CAMARA,
+    porque: 'Un POS no necesita camara ni ubicacion por omision (DP-13.2: exactamente esta)',
   },
   {
     nombre: 'x-frame-options',
@@ -219,6 +221,30 @@ if (!primero || !siguiente) {
   fallos.push('El nonce se repite entre peticiones: un nonce fijo equivale a no tener nonce.');
 }
 
+/**
+ * LA CÁMARA, RUTA POR RUTA (DP-13.2): `camera=(self)` exactamente en las pantallas que escanean
+ * y `camera=()` en el portal público del comensal. Se pide sin seguir la redirección: sin sesión
+ * el proxy manda a la entrada, y la cabecera ya viene en esa respuesta, la de la ruta pedida.
+ */
+const politicaDe = async (camino) =>
+  (await fetch(new URL(camino, url), { redirect: 'manual' })).headers.get('permissions-policy');
+for (const camino of RUTAS_CON_CAMARA) {
+  const politica = await politicaDe(camino);
+  if (politica !== CON_CAMARA) {
+    fallos.push(
+      `"permissions-policy" en ${camino} debe abrir la camara al origen.\n      valor: ${politica}`,
+    );
+  }
+}
+for (const camino of ['/qr/sonda-de-cabeceras', '/caja']) {
+  const politica = await politicaDe(camino);
+  if (politica !== SIN_CAMARA) {
+    fallos.push(
+      `"permissions-policy" en ${camino} no debe abrir la camara.\n      valor: ${politica}`,
+    );
+  }
+}
+
 if (fallos.length > 0) {
   console.error('\n✗ Cabeceras de seguridad incompletas:\n');
   for (const fallo of fallos) console.error(`  · ${fallo}`);
@@ -226,6 +252,7 @@ if (fallos.length > 0) {
 }
 
 console.log(
-  `✓ Cabeceras de seguridad: ${EXIGIDAS.length} presentes y correctas, nonce por peticion.`,
+  `✓ Cabeceras de seguridad: ${EXIGIDAS.length} presentes y correctas, nonce por peticion, ` +
+    `camara sólo en ${RUTAS_CON_CAMARA.join(' y ')}.`,
 );
 terminar(0);

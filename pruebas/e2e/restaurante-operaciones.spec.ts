@@ -101,7 +101,6 @@ import {
  *   D-2 · ninguna pantalla separa un grupo de mesas (`restaurante.separar_mesas` no cuelga de nada);
  *   D-3 · lo que cocina dejó listo para la mesa unida no se entrega desde la principal;
  *   D-4 · la pantalla de la mesa unida dice «está libre» y ofrece «Abrir la mesa»;
- *   D-5 · la autorización firmada del supervisor sirve para otra cuenta (no va atada a la cuenta);
  *   D-6 · una demo con una cuenta dividida no se puede resetear (500 al confirmar el reseteo);
  *   D-7 · cancelar la cuenta de un grupo deja viva en cocina la comanda de la mesa unida.
  *
@@ -1290,7 +1289,8 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         const firmada = await comando<{ readonly autorizacion: string }>(
           rosa,
           '/api/identidad/supervisor',
-          { empleoId: gerenteEmpleo, pin: gerente.pin },
+          // DP-13.2 (D-5): para ESTA cuenta y para un descuento, como la pide la pantalla.
+          { empleoId: gerenteEmpleo, pin: gerente.pin, ordenId, para: 'descuento' },
         );
         expect(firmada.ok, `identidad.supervisor: ${firmada.mensaje ?? ''}`).toBe(true);
         const aplicado = await comando<{
@@ -1315,7 +1315,9 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
       });
 
       await test.step('la cuenta de prueba se cancela: no es una venta y la mesa vuelve a libre', async () => {
-        const cancelada = await comando(rosa, '/api/restaurante/cancelar-orden', {
+        // DP-13.2 (DP-D51): la cuenta ya se pidió; la cajera necesitaría el PIN de un gerente para
+        // cancelarla. La cancela la dueña, que autoriza por su puesto.
+        const cancelada = await comando(duena, '/api/restaurante/cancelar-orden', {
           ordenId,
           motivo: 'prueba del PIN de la gerente',
         });
@@ -2746,8 +2748,8 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
   // ══ HALLAZGOS: lo que la aplicación hace hoy y no debe ═══════════════════════
   //
   // Cada una de estas pruebas exige el comportamiento CORRECTO. Las que siguen en `test.fixme` no
-  // se corren y dicen arriba qué falla (D-5, pendiente del reporte 021); D-4, D-6 y D-7 se
-  // arreglaron en el cierre del 21-10, y D-2 y D-3 con DP-9.6: todas ésas corren. El día que el defecto se arregle se quita el `fixme` y la
+  // se corren y dicen arriba qué falla; D-4, D-6 y D-7 se arreglaron en el cierre del 21-10, D-2 y
+  // D-3 con DP-9.6 y D-5 con DP-13.2: todas ésas corren. El día que el defecto se arregle se quita el `fixme` y la
   // prueba tiene que pasar sin tocar nada más. Cada una limpia lo que arma (separa el grupo y
   // cancela sus cuentas), así que con el `fixme` quitado deja el día como lo encontró.
 
@@ -2881,13 +2883,12 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
     }
   });
 
-  // D-5 · LA AUTORIZACIÓN DEL SUPERVISOR NO VA ATADA A LA CUENTA.
-  //   Qué falla: `identidad/supervisor.ts` firma una autorización de dos minutos atada sólo al
-  //   negocio y a quien la pidió (`CargaDeAutorizacion`: org, supervisor, rol, solicita, exp), no a
-  //   la cuenta ni al importe, y el descuento no la consume: la misma cajera la presenta en OTRA
-  //   cuenta y el servidor descuenta «autorizado» sin que el supervisor haya visto esa cuenta.
-  //   Se exige: que el servidor rechace una autorización ya usada, o presentada en otra cuenta.
-  test.fixme('D-5 · una autorización de supervisor sirve para UNA cuenta: presentada en otra, se rechaza', async ({
+  // D-5 · LA AUTORIZACIÓN DEL SUPERVISOR VA ATADA A LA CUENTA. Arreglado en DP-13.2:
+  //   `identidad/supervisor.ts` firma la autorización para la cuenta que el supervisor ve
+  //   (`cuenta`) y para lo que autoriza (`para`); el descuento sólo acepta la de SU cuenta. Lo que
+  //   fallaba: iba atada sólo al negocio y a quien la pidió, y la misma cajera la presentaba en
+  //   OTRA cuenta y el servidor descontaba «autorizado».
+  test('D-5 · una autorización de supervisor sirve para UNA cuenta: presentada en otra, se rechaza', async ({
     browser,
   }, info) => {
     test.setTimeout(6 * 60_000);
@@ -2911,7 +2912,8 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         const firmada = await comando<{ readonly autorizacion: string }>(
           rosa,
           '/api/identidad/supervisor',
-          { empleoId: gerenteEmpleo, pin: gerente.pin },
+          // Como la pide la pantalla del descuento: para la cuenta A y para un descuento.
+          { empleoId: gerenteEmpleo, pin: gerente.pin, ordenId: a.ordenId, para: 'descuento' },
         );
         expect(firmada.ok, `identidad.supervisor: ${firmada.mensaje ?? ''}`).toBe(true);
         const enLaPrimera = await comando(rosa, '/api/restaurante/descontar-cuenta', {

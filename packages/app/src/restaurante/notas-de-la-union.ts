@@ -14,7 +14,14 @@ import type { Transaccion } from '@morphiqpos/data';
 
 const SEPARADOR = ' · ';
 
-/** Las dos notas juntas, sin vacíos ni repetidas; `null` si no queda nada. */
+/**
+ * DP-13.3 · Lo más que miden las notas juntas. Unir cuatro mesas con alergias largas las sumaba
+ * sin tope; una nota que no cabe en la comanda ni en la pantalla del mesero no se lee. Si se
+ * pasan, se cortan con «…» al final: se nota que falta, y la mesa sigue diciendo lo primero.
+ */
+export const LARGO_DE_LAS_NOTAS = 300;
+
+/** Las dos notas juntas, sin vacíos ni repetidas, hasta `LARGO_DE_LAS_NOTAS`; `null` si no queda nada. */
 export function notasJuntas(...notas: readonly (string | null | undefined)[]): string | null {
   const vistas: string[] = [];
   for (const nota of notas) {
@@ -25,7 +32,11 @@ export function notasJuntas(...notas: readonly (string | null | undefined)[]): s
       }
     }
   }
-  return vistas.length === 0 ? null : vistas.join(SEPARADOR);
+  if (vistas.length === 0) return null;
+  const juntas = vistas.join(SEPARADOR);
+  return juntas.length <= LARGO_DE_LAS_NOTAS
+    ? juntas
+    : `${juntas.slice(0, LARGO_DE_LAS_NOTAS - 1).trimEnd()}…`;
 }
 
 interface NotasDeMesa {

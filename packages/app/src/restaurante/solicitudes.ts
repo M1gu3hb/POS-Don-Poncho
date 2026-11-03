@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
 import { SinNovedad } from '../fallos.ts';
+import { esAvisoDelPedido } from '../portal/quien-envia.ts';
 import { leTocaLimpiar } from './limpieza-de-solicitudes.ts';
 import { quedarseConLaMesa } from './responsable-de-la-mesa.ts';
 
@@ -169,6 +170,7 @@ interface SolicitudDelPersonal {
   readonly atendidaEn: Date | null;
   readonly resueltaEn: Date | null;
   readonly empleadoAtiendeId: string | null;
+  readonly notas: string | null;
 }
 
 /**
@@ -193,6 +195,7 @@ async function solicitudPorId(
       'atendida_en as atendidaEn',
       'resuelta_en as resueltaEn',
       'empleado_atiende_id as empleadoAtiendeId',
+      'notas',
     ])
     .where('organizacion_id', '=', organizacionId)
     .where('id', '=', solicitudId)
@@ -272,6 +275,37 @@ export const atenderSolicitud = definirComando<
     // Lanza TRANSICION_INVALIDA si el destino retrocede o si el aviso ya estaba
     // cerrado. Es la LECTURA QUE DECIDE, y va antes de escribir nada.
     const movimiento = evaluarSolicitud(solicitud.estado, entrada.estado);
+
+    // DP-13.2 · «Atender» el aviso del carrito NO lo consume: abre el pedido de la mesa, y el aviso
+    // sigue vivo hasta que el pedido sale a cocina o se borra (`carrito-del-salon.ts`). El mesero
+    // que lo atiende sí se queda con la mesa, como con cualquier aviso.
+    if (
+      entrada.estado === 'atendida' &&
+      solicitud.estado === 'pendiente' &&
+      esAvisoDelPedido(solicitud.notas)
+    ) {
+      const tomada =
+        ctx.ambito.rol === 'mesero'
+          ? await ctx.paso('quedarse_con_la_mesa', () =>
+              quedarseConLaMesa(ctx.tx, organizacionId, solicitud.mesaId, empleoId),
+            )
+          : null;
+      ctx.auditar({
+        entidadId: solicitud.id,
+        payload: {
+          estado: solicitud.estado,
+          tipo: solicitud.tipo,
+          avisoDelPedido: true,
+          tomoLaMesa: tomada?.mesa ?? false,
+        },
+      });
+      return {
+        solicitudId: solicitud.id,
+        estado: solicitud.estado,
+        estadoAnterior: solicitud.estado,
+        atendidaPorId: solicitud.empleadoAtiendeId,
+      };
+    }
 
     if (movimiento.tipo === 'sin_cambio') {
       ctx.auditar({

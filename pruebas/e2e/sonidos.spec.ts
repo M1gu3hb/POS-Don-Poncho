@@ -141,6 +141,39 @@ test.describe('los sonidos de la interfaz', () => {
     }
   });
 
+  test('DP-13.3 · la mesera apaga el sonido de SU aparato junto a «Salir», sin entrar a Configuración', async ({
+    browser,
+  }, info) => {
+    const mesera = await new Equipo(browser, SLUG).pagina(info, 'mesero');
+    await mesera.goto('/mesero');
+    // `isVisible()` no espera: primero, que la pantalla tenga su menú (el cajón en el teléfono, la
+    // barra en la PC).
+    await expect(
+      mesera
+        .getByRole('button', { name: /^(Abrir menú|Salir)$/ })
+        .filter({ visible: true })
+        .first(),
+    ).toBeVisible();
+    const hamburguesa = mesera.getByRole('button', { name: 'Abrir menú' });
+    if (await hamburguesa.isVisible()) await hamburguesa.click();
+    const expandir = mesera.getByRole('button', { name: 'Expandir' }).filter({ visible: true });
+    if ((await expandir.count()) > 0) await expandir.first().click();
+    await mesera
+      .getByRole('button', { name: 'Sonido de este aparato' })
+      .filter({ visible: true })
+      .first()
+      .click();
+    const dialogo = mesera.getByRole('dialog', { name: 'Sonido de este aparato' });
+    await dialogo.getByRole('radio', { name: 'Apagado' }).click();
+    await expect(dialogo.getByRole('radio', { name: 'Apagado' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    const guardado = await mesera.evaluate(() => window.localStorage.getItem('morphiqpos.sonidos'));
+    expect(guardado, 'El ajuste no se guardó en el aparato.').toContain('apagado');
+    await expect(mesera).toHaveURL(/\/mesero$/);
+  });
+
   test('el mesero: agregar un platillo suena a Pebble y enviarlo a cocina a Dispatch', async ({
     browser,
   }, info) => {

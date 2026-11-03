@@ -20,6 +20,7 @@ function esFila(valor: unknown): valor is CancelacionDelCorte {
   return (
     (fila['tipo'] === 'orden' || fila['tipo'] === 'linea') &&
     typeof fila['montoCentavos'] === 'string' &&
+    typeof fila['perdidaCentavos'] === 'string' &&
     typeof fila['perdida'] === 'boolean'
   );
 }
@@ -35,13 +36,25 @@ function filasDe(respuesta: unknown): readonly CancelacionDelCorte[] {
   return lista as readonly CancelacionDelCorte[];
 }
 
-/** Las cancelaciones de la ventana de UNA caja, en el orden en que pasaron. */
-export async function cancelacionesDeLaCaja(
-  sesionCajaId: string,
-): Promise<readonly CancelacionDelCorte[]> {
-  return filasDe(
-    await invocarComando<unknown>('/api/caja/cancelaciones-del-corte', { sesionCajaId }),
-  );
+/** DP-13.2 · Las del corte de UNA caja y de qué hablan: sus cuentas, o el Cierre del día. */
+export interface CancelacionesDeLaCaja {
+  readonly filas: readonly CancelacionDelCorte[];
+  readonly alcance: 'caja' | 'dia';
+}
+
+/** Las cancelaciones del corte de UNA caja, en el orden en que pasaron. */
+export async function cancelacionesDeLaCaja(sesionCajaId: string): Promise<CancelacionesDeLaCaja> {
+  const respuesta = await invocarComando<unknown>('/api/caja/cancelaciones-del-corte', {
+    sesionCajaId,
+  });
+  const alcance =
+    typeof respuesta === 'object' && respuesta !== null
+      ? (respuesta as Readonly<Record<string, unknown>>)['alcance']
+      : undefined;
+  if (alcance !== 'caja' && alcance !== 'dia') {
+    throw new Error('El servidor no mandó las cancelaciones con la forma esperada.');
+  }
+  return { filas: filasDe(respuesta), alcance };
 }
 
 /** Las de los últimos `dias`, lo más reciente primero (Registros). */

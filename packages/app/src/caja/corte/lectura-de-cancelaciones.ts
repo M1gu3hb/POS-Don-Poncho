@@ -5,8 +5,8 @@ import type { Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import { definirComando } from '../../definicion.ts';
-import { leerCancelaciones, type Cancelacion } from './cancelaciones.ts';
-import { leerSesion } from './consultas.ts';
+import { alcanceDelCorte } from './alcance-del-corte.ts';
+import { cancelacionesDelCorte, leerCancelaciones, type Cancelacion } from './cancelaciones.ts';
 
 /**
  * LAS DOS LECTURAS DE CANCELACIONES que el navegador pide sin armar la hoja entera (DP-12.4).
@@ -30,13 +30,18 @@ export interface CancelacionesLeidas {
   readonly cancelaciones: readonly Cancelacion[];
 }
 
+/** DP-13.2 · El corte de una caja dice de qué habla: sus cuentas, o el día (`alcance-del-corte.ts`). */
+export interface CancelacionesDelCorte extends CancelacionesLeidas {
+  readonly alcance: 'caja' | 'dia';
+}
+
 export const entradaCancelacionesDelCorte = z.object({ sesionCajaId: z.uuid() });
 
-/** Las cancelaciones de la ventana de UNA sesión de caja, en el orden en que pasaron. */
+/** Las cancelaciones del corte de UNA sesión de caja, en el orden en que pasaron. */
 export const cancelacionesDelCorteComando = definirComando<
   Transaccion,
   typeof entradaCancelacionesDelCorte,
-  CancelacionesLeidas
+  CancelacionesDelCorte
 >({
   nombre: 'caja.cancelaciones_del_corte',
   entidad: 'sesion_caja',
@@ -47,22 +52,17 @@ export const cancelacionesDelCorteComando = definirComando<
   entrada: entradaCancelacionesDelCorte,
   async ejecutar(ctx, entrada) {
     const { organizacionId } = ctx.ambito;
-    const sesion = await ctx.paso('leer_sesion', () =>
-      leerSesion(ctx.tx, organizacionId, entrada.sesionCajaId),
+    const alcance = await ctx.paso('leer_alcance', () =>
+      alcanceDelCorte(ctx.tx, organizacionId, entrada.sesionCajaId, ctx.ahora),
     );
     // Una sesión de otro negocio se ve igual que una que no existe.
-    if (sesion === null) {
+    if (alcance === null) {
       throw new ErrorDominio('PUENTE_NO_ENCONTRADO', 'Ese corte no existe en este negocio.');
     }
-    const filas = await ctx.paso('leer_cancelaciones', () =>
-      leerCancelaciones(ctx.tx, organizacionId, {
-        sucursalId: sesion.sucursalId,
-        desde: sesion.abiertaEn,
-        hasta: sesion.cerradaEn ?? ctx.ahora,
-      }),
+    const cancelaciones = await ctx.paso('leer_cancelaciones', () =>
+      cancelacionesDelCorte(ctx.tx, organizacionId, alcance),
     );
-    // La consulta trae lo más reciente primero; el corte lo cuenta en el orden del día.
-    return { cancelaciones: [...filas].reverse() };
+    return { cancelaciones, alcance: alcance.cierraElDia ? 'dia' : 'caja' };
   },
 });
 

@@ -4,6 +4,7 @@ import { ErrorDominio, plantillaDeOrganizacion } from '@morphiqpos/contracts';
 import { leyendoConReintento, obtenerDb, type Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
+import { leerDocumentoConCandado } from '../configuracion/documento-con-candado.ts';
 import { CLAVE_DE_EXPERIENCIA, EXPERIENCIA } from '../configuracion/experiencia.ts';
 import { BOTONES_DEL_MENU, CLAVE_DE_BOTONES } from '../portal/botones-del-menu.ts';
 import { CLAVE_DE_QR_DE_MESAS, QR_DE_MESAS } from '../portal/qr-de-mesas.ts';
@@ -467,15 +468,11 @@ export async function guardarConfiguracionParcial(
     nombreNormalizado = nombre;
   }
 
-  // `for update`: este guardado lee el documento y lo escribe ENTERO. Sin el cerrojo, una
-  // escritura del servidor entre las dos (DP-9.4: conectar el teléfono de una estación sube su
-  // versión) se perdería y el código revocado volvería a valer.
-  const actual = await tx
-    .selectFrom('configuracion')
-    .select(['id', 'valores', 'version'])
-    .where('organizacion_id', '=', organizacionId)
-    .forUpdate()
-    .executeTakeFirst();
+  // Con candado (`for update`): este guardado lee el documento y lo escribe ENTERO. Sin el
+  // cerrojo, una escritura del servidor entre las dos (DP-9.4: conectar el teléfono de una
+  // estación sube su versión; DP-12.1: la marca de plataforma) se perdería y el código revocado
+  // volvería a valer.
+  const actual = await leerDocumentoConCandado(tx, organizacionId);
 
   // `id` y `updated_date` los pone el servidor: si llegan en el parche, se
   // ignoran en vez de guardarse como campos del documento.

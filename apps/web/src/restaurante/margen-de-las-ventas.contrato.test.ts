@@ -23,7 +23,14 @@ describe('el historial de ventas', () => {
   });
 
   it('el detalle dice «—, sin receta» donde iría el costo, la utilidad y el margen', () => {
-    expect(ventas.match(/sinReceta \? SIN_RECETA/g)?.length).toBe(3);
+    expect(ventas.match(/sinReceta\s*\?\s*SIN_RECETA/g)?.length).toBe(3);
+  });
+
+  it('DP-13.2 · a quien no ve márgenes (el cajero), el detalle no le pinta costo, utilidad ni margen', () => {
+    expect(ventas).toMatch(/const seVe = seVeElMargen\(economia\);/);
+    expect(ventas).toMatch(
+      /\{seVe && \(\s*<>\s*<div>\s*<p className="text-xs text-muted-foreground">Costo<\/p>/,
+    );
   });
 
   it('no pinta pastillas vacías: ni el folio de una cuenta abierta ni un tipo que la venta no trae', () => {

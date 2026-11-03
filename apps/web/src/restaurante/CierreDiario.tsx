@@ -88,6 +88,7 @@ import {
   type MesaQueBloquea,
 } from './cuentas-que-bloquean.ts';
 import { IconoDelTono, TINTE_DEL_TONO, semaforoDe } from './semaforo-del-arqueo';
+import { SIN_RECETA } from './margen-de-las-ventas.ts';
 import { resumirDia, type Canal, type GastoDelDia, type VentaDelDia } from './resumen-del-dia.ts';
 
 export { semaforoDe, type Semaforo, type TonoDelArqueo } from './semaforo-del-arqueo';
@@ -98,6 +99,12 @@ export {
   type ResumenDelDia,
   type VentaDelDia,
 } from './resumen-del-dia.ts';
+
+/** DP-13.2 · Un importe que sin costo completo no se sabe: «—, sin receta», no un cero. */
+function DineroOSinReceta({ centavos }: { readonly centavos: number | null }) {
+  if (centavos === null) return <span className="text-texto-sutil">{SIN_RECETA}</span>;
+  return <Dinero centavos={centavos} tamano="lg" />;
+}
 
 const CANALES = ['efectivo', 'tarjeta', 'transferencia'] as const;
 
@@ -621,21 +628,38 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
             <Indicador rotulo="Ticket promedio">
               <Dinero centavos={resumen.promedio} tamano="lg" />
             </Indicador>
-            <Indicador rotulo="Costo de ventas">
-              <Dinero centavos={resumen.costo} tamano="lg" />
-            </Indicador>
-            <Indicador rotulo="Utilidad bruta">
-              <Dinero centavos={resumen.utilidad} tamano="lg" />
-            </Indicador>
-            <Indicador rotulo="Margen promedio">
-              <Cifra valor={resumen.margen / 100} decimales={2} unidad="%" tamano="lg" />
-            </Indicador>
+            {/* DP-13.2: costo, utilidad y margen, sólo de las ventas con costo completo; a quien
+                no ve márgenes, ninguno (no un «sin receta» que no es cierto). */}
+            {resumen.margenVisible ? (
+              <>
+                <Indicador rotulo="Costo de ventas">
+                  <DineroOSinReceta centavos={resumen.costo} />
+                </Indicador>
+                <Indicador rotulo="Utilidad bruta">
+                  <DineroOSinReceta centavos={resumen.utilidad} />
+                </Indicador>
+                <Indicador rotulo="Margen promedio">
+                  {resumen.margen === null ? (
+                    <span className="text-texto-sutil">{SIN_RECETA}</span>
+                  ) : (
+                    <Cifra valor={resumen.margen / 100} decimales={2} unidad="%" tamano="lg" />
+                  )}
+                </Indicador>
+                {resumen.fueraDelMargen === '' ? null : (
+                  <Indicador rotulo="Fuera del margen">
+                    <span className="text-texto-sutil">{resumen.fueraDelMargen}</span>
+                  </Indicador>
+                )}
+              </>
+            ) : null}
             <Indicador rotulo="Gastos operativos">
               <Dinero centavos={resumen.gastos} tamano="lg" />
             </Indicador>
-            <Indicador rotulo="Utilidad neta est.">
-              <Dinero centavos={resumen.neta} tamano="lg" />
-            </Indicador>
+            {resumen.margenVisible ? (
+              <Indicador rotulo="Utilidad neta est.">
+                <DineroOSinReceta centavos={resumen.neta} />
+              </Indicador>
+            ) : null}
           </dl>
         </SeccionDelCorte>
 

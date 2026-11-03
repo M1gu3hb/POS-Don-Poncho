@@ -18,12 +18,13 @@ const fila = (cambios: Partial<CancelacionDelCorte>): CancelacionDelCorte => ({
   producto: null,
   montoCentavos: '45000',
   mesa: 'Mesa 6',
+  perdidaCentavos: '0',
   perdida: false,
   ...cambios,
 });
 
 const FILAS = [
-  fila({ mesa: 'Mesa 6', perdida: true }),
+  fila({ mesa: 'Mesa 6', perdidaCentavos: '45000', perdida: true }),
   fila({ tipo: 'linea', mesa: 'Mesa 5', producto: 'Sopa de tortilla', usuario: 'Beatriz' }),
 ];
 
@@ -70,15 +71,26 @@ describe('la lectura del servidor', () => {
     );
   }
 
-  it('devuelve las filas tal como las manda el servidor', async () => {
+  it('devuelve las filas tal como las manda el servidor, con su alcance (DP-13.2)', async () => {
+    servidorResponde({ cancelaciones: FILAS, alcance: 'dia' });
+    expect(await cancelacionesDeLaCaja('s-1')).toEqual({ filas: FILAS, alcance: 'dia' });
+  });
+
+  it('sin el alcance (caja o día) tampoco se adivina', async () => {
     servidorResponde({ cancelaciones: FILAS });
-    expect(await cancelacionesDeLaCaja('s-1')).toEqual(FILAS);
+    await expect(cancelacionesDeLaCaja('s-1')).rejects.toThrow(/forma esperada/);
   });
 
   it('una respuesta sin la lista, o con filas que no son cancelaciones, NO se toma por «ninguna»', async () => {
     servidorResponde({});
     await expect(cancelacionesDeLaCaja('s-1')).rejects.toThrow(/forma esperada/);
     servidorResponde({ cancelaciones: [{ tipo: 'otra' }] });
+    await expect(cancelacionesDeLaCaja('s-1')).rejects.toThrow(/forma esperada/);
+    // DP-13.2 · sin el valor de la pérdida tampoco: el corte no adivina cuánto se perdió.
+    const sinPerdida = Object.fromEntries(
+      Object.entries(fila({})).filter(([clave]) => clave !== 'perdidaCentavos'),
+    );
+    servidorResponde({ cancelaciones: [sinPerdida] });
     await expect(cancelacionesDeLaCaja('s-1')).rejects.toThrow(/forma esperada/);
   });
 });

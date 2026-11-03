@@ -81,6 +81,14 @@ describe('el carrito del portal en modo mesero (DP-12.2)', () => {
     await expect(leerElCarritoParaElMesero(dueno, { mesaId: caso.mesaId })).resolves.toBeTruthy();
   });
 
+  it('DP-13.4 · un mesero SIN sucursal no lee ninguna mesa: falla cerrado, no ve todas', async () => {
+    const caso = await mesaConPortal({ envian: 'mesero' });
+    const mesero = await ambitoDeRol(caso, 'mesero');
+    await expect(
+      leerElCarritoParaElMesero({ ...mesero, sucursalId: null }, { mesaId: caso.mesaId }),
+    ).rejects.toMatchObject({ codigo: 'PUENTE_NO_ENCONTRADO' });
+  });
+
   it('cambia cantidades y quita cualquier línea; la cocina no puede', async () => {
     const caso = await mesaConPortal({ envian: 'mesero' });
     const estado = exigirOk(await caso.agregar(TELEFONO_A, caso.taco), 'agregar');

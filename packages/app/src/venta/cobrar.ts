@@ -423,17 +423,39 @@ export const cobrarOrden = definirComando<
  * que es venta sin cobro en caja y saca el material con ESTA misma traducción: dos
  * maneras de decidir qué sale del almacén por una venta serían dos inventarios.
  */
+type LineaDeLaCuenta = Awaited<ReturnType<typeof repoOrdenes.lineasDeOrden>>[number];
+
+/** La línea con OTRA cantidad (lo ya hecho de ella); su consumo en unidad base, en proporción. */
+function conCantidad(linea: LineaDeLaCuenta, cantidad: string): LineaDeLaCuenta {
+  if (linea.cantidadBaseConsumo === null) return { ...linea, cantidad };
+  const proporcion = Number(cantidad) / Number(linea.cantidad);
+  return {
+    ...linea,
+    cantidad,
+    cantidadBaseConsumo: (Number(linea.cantidadBaseConsumo) * proporcion).toFixed(4),
+  };
+}
+
 export async function planearConsumo(
   tx: Transaccion,
   organizacionId: string,
   sucursalId: string,
   ordenId: string,
   canal: string,
+  /**
+   * DP-13.3 · Sólo estas líneas, con esta cantidad (línea → cantidad): lo que ya estaba hecho de
+   * una cuenta que se cancela (`restaurante/merma-por-cancelacion.ts`). Sin él, todas enteras.
+   */
+  soloLoHecho?: ReadonlyMap<string, string>,
 ): Promise<ReturnType<typeof calcularConsumo>> {
   const almacenId = await repoVentaCatalogo.almacenPrincipal(tx, organizacionId, sucursalId);
   if (almacenId === null) return [];
 
-  const lineas = await repoOrdenes.lineasDeOrden(tx, organizacionId, ordenId);
+  const lineas = (await repoOrdenes.lineasDeOrden(tx, organizacionId, ordenId)).flatMap((l) => {
+    if (soloLoHecho === undefined) return [l];
+    const hecha = soloLoHecho.get(l.id);
+    return hecha === undefined ? [] : [conCantidad(l, hecha)];
+  });
   const paraConsumo: LineaParaConsumo[] = [];
 
   /**

@@ -362,6 +362,19 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 const voiceQueue = [];
 let isSpeaking = false;
 
+// DP-13.2 · La voz que el navegador negó (sin el primer gesto, error «not-allowed») no se pierde:
+// se guarda, se avisa al gestor de sonido (que pinta «Sonido apagado · toca para activar») y se
+// vuelve a decir cuando el gestor avisa que el audio se desbloqueó.
+const frasesNegadas = [];
+// (Sólo con un `window` de verdad: las pruebas de unidad pasan uno a medias, sin eventos.)
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('morphiqpos:audio-desbloqueado', () => {
+    if (frasesNegadas.length === 0) return;
+    voiceQueue.push(...frasesNegadas.splice(0));
+    processVoiceQueue();
+  });
+}
+
 function processVoiceQueue() {
   if (isSpeaking) return;
   const next = voiceQueue.shift();
@@ -385,7 +398,15 @@ function processVoiceQueue() {
       setTimeout(processVoiceQueue, 220);
     };
     utter.onend = advance;
-    utter.onerror = advance;
+    utter.onerror = (event) => {
+      if (event && event.error === 'not-allowed') {
+        frasesNegadas.push(next);
+        if (typeof window.dispatchEvent === 'function') {
+          window.dispatchEvent(new Event('morphiqpos:voz-bloqueada'));
+        }
+      }
+      advance();
+    };
     window.speechSynthesis.speak(utter);
   } catch (err) {
     console.warn('[voiceAlert] processVoiceQueue:', err);

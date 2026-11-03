@@ -11,7 +11,17 @@ import {
   nombreVisibleDelSistema,
 } from '~/marca/nombre-visible';
 import { seccionesDeCancelaciones } from '~/corte/cancelaciones';
+import {
+  SIN_RECETA,
+  economiaDelPeriodo,
+  seVeElMargen,
+  subtituloDelMargen,
+} from '~/restaurante/margen-de-las-ventas';
 import { SeccionPintada } from '~/corte/HojaDelCorte';
+import {
+  AVISO_SIN_CANCELACIONES,
+  EXPLICACION_SIN_CANCELACIONES,
+} from '~/corte-heredado/cancelaciones-sin-trabar';
 
 /**
  * Internal printable corte de caja PDF/document.
@@ -25,6 +35,9 @@ const CorteTicket = React.forwardRef(function CorteTicket(
     ingredientes = [],
     gastos = [],
     cancelaciones = [],
+    cancelacionesNoLeidas = false,
+    // DP-13.2 · 'caja' o 'dia' (Cierre del día): la sección dice de qué cancelaciones habla.
+    alcanceDeCancelaciones = null,
     alertas = [],
     config = {},
     sinCostos = false,
@@ -58,9 +71,15 @@ const CorteTicket = React.forwardRef(function CorteTicket(
   const fCierre = corte?.fecha_cierre
     ? format(new Date(corte.fecha_cierre), 'd MMM yyyy, HH:mm', { locale: es })
     : '—';
-  const margen =
-    corte?.total_general > 0 ? (corte.utilidad_bruta_total / corte.total_general) * 100 : 0;
-  const utilidadNeta = (corte?.utilidad_bruta_total || 0) - (corte?.total_gastos || 0);
+  // DP-13.2 · Costo, utilidad y margen de LAS VENTAS DEL CORTE con costo completo (la regla del
+  // servidor, `estado_costo`), no de los totales que se guardaban al cerrar: esos sumaban costo
+  // cero por lo que no tiene receta. Sin ninguna con costo completo, «—, sin receta».
+  const economia = economiaDelPeriodo(ventas);
+  const enPesos = (valor) => (valor === null ? SIN_RECETA : formatCurrency(valor));
+  // Quien no ve márgenes no lee «sin receta»: ni costo, ni utilidad, ni margen en su ticket.
+  const conMargen = !sinCostos && seVeElMargen(economia);
+  const utilidadNeta =
+    economia.utilidad === null ? null : economia.utilidad - (corte?.total_gastos || 0);
 
   // Detalle agrupado por venta
   const detallesPorVenta = detalles.reduce((acc, d) => {
@@ -226,20 +245,22 @@ const CorteTicket = React.forwardRef(function CorteTicket(
           <Cell label="Efectivo" value={formatCurrency(corte?.total_efectivo)} />
           <Cell label="Tarjeta" value={formatCurrency(corte?.total_tarjeta)} />
           <Cell label="Transferencia" value={formatCurrency(corte?.total_transferencia)} />
-          {!sinCostos && (
-            <Cell label="Costo de ventas" value={formatCurrency(corte?.costo_total_estimado)} />
+          {conMargen && (
+            <Cell label="Costo de ventas" value={enPesos(economia.costo)} />
           )}
-          {!sinCostos && (
-            <Cell label="Utilidad bruta" value={formatCurrency(corte?.utilidad_bruta_total)} />
+          {conMargen && (
+            <Cell label="Utilidad bruta" value={enPesos(economia.utilidad)} />
           )}
-          {!sinCostos && <Cell label="Margen promedio" value={formatPercent(margen)} />}
+          {conMargen && (
+            <Cell label="Margen promedio" value={subtituloDelMargen(economia) || SIN_RECETA} />
+          )}
           {!sinCostos && (
             <Cell label="Gastos operativos" value={formatCurrency(corte?.total_gastos)} />
           )}
-          {!sinCostos && (
+          {conMargen && (
             <Cell
               label="Utilidad neta est."
-              value={formatCurrency(corte?.utilidad_neta_estimada || utilidadNeta)}
+              value={enPesos(utilidadNeta)}
               bold
             />
           )}
@@ -563,10 +584,21 @@ const CorteTicket = React.forwardRef(function CorteTicket(
 
       {/* Cancelaciones · DP-12.4: las filas son las del servidor (quién canceló, motivo, importe
           y si ya estaba preparado) y las pinta el MISMO código que arma el corte de Cierre diario:
-          la pérdida aparte y resaltada, y lo cancelado antes de prepararse sin resaltar. */}
-      {seccionesDeCancelaciones(cancelaciones).map((seccion) => (
-        <SeccionPintada key={seccion.titulo} seccion={seccion} />
-      ))}
+          la pérdida aparte y resaltada, y lo cancelado antes de prepararse sin resaltar.
+          DP-13.4: si no se pudieron leer, la sección lo dice (una lista vacía parecería «sin
+          cancelaciones»). */}
+      {cancelacionesNoLeidas ? (
+        <Section title="Cancelaciones">
+          <p role="alert" className="text-xs font-bold text-peligro">
+            {AVISO_SIN_CANCELACIONES}
+          </p>
+          <p className="text-xs text-texto-sutil">{EXPLICACION_SIN_CANCELACIONES}</p>
+        </Section>
+      ) : (
+        seccionesDeCancelaciones(cancelaciones, alcanceDeCancelaciones ?? undefined).map((seccion) => (
+          <SeccionPintada key={seccion.titulo} seccion={seccion} />
+        ))
+      )}
 
       {/* Firmas */}
       <div className="grid grid-cols-2 gap-8 mt-10 text-xs">

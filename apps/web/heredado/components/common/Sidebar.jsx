@@ -31,6 +31,7 @@ import {
   LayoutGrid,
   ListChecks,
   LogOut,
+  Volume2,
   Menu,
   NotebookPen,
   Package,
@@ -60,6 +61,7 @@ import {
   X,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { DialogoDelSonido } from '~/configuracion/DialogoDelSonido';
 
 const ICON_MAP = {
   BellRing,
@@ -127,6 +129,8 @@ export default function Sidebar({ collapsed, onToggle }) {
   const { config, paquete_modo } = useConfig();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // DP-13.3: el diálogo del sonido vive aquí, fuera del cajón del teléfono (que lo taparía).
+  const [sonidoAbierto, setSonidoAbierto] = useState(false);
 
   // Cerrar al cambiar de ruta
   useEffect(() => {
@@ -297,6 +301,20 @@ export default function Sidebar({ collapsed, onToggle }) {
                 <p className="text-[10px] text-sidebar-foreground/50">{posUser.etiqueta ?? ROLE_LABELS[posUser.rol]}</p>
               </div>
             )}
+            {/* DP-13.3: el sonido de ESTE aparato, para cualquier puesto, sin entrar a Configuración. */}
+            {!collapsed && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  setSonidoAbierto(true);
+                }}
+                className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1"
+                aria-label="Sonido de este aparato"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+            )}
             {!collapsed && (
               <button
                 onClick={logout}
@@ -357,6 +375,8 @@ export default function Sidebar({ collapsed, onToggle }) {
       >
         <SidebarContent />
       </div>
+
+      <DialogoDelSonido abierto={sonidoAbierto} alCambiar={setSonidoAbierto} />
     </>
   );
 }

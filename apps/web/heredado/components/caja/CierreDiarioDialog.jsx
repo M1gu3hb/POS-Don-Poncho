@@ -27,6 +27,7 @@ import {
 import { formatCurrency, formatPercent } from '@/utils/financialUtils';
 import { api } from '@/api/cliente';
 import { aCentavos, aPesos } from '@/components/caja/dinero';
+import { SIN_RECETA, seVeElMargen, subtituloDelMargen } from '~/restaurante/margen-de-las-ventas';
 
 /**
  * Modal de Cierre de caja diario (premium).
@@ -66,12 +67,16 @@ export default function CierreDiarioDialog({
   const totalTarjeta = Number(safeResumen.totalTarjeta) || 0;
   const totalTransferencia = Number(safeResumen.totalTransferencia) || 0;
   const totalGastos = Number(safeResumen.totalGastos) || 0;
-  const utilidadBruta = Number(safeResumen.utilidadBruta) || 0;
-  const costoTotal = Number(safeResumen.costoTotal) || 0;
+  // DP-13.2 · Sólo de las ventas con costo completo; nulos si ninguna lo tiene.
+  const utilidadBruta = safeResumen.utilidadBruta ?? null;
+  const costoTotal = safeResumen.costoTotal ?? null;
   const numVentas = Number(safeResumen.numVentas) || 0;
   const ticketPromedio = Number(safeResumen.ticketPromedio) || 0;
-  const margen = totalGeneral > 0 ? (utilidadBruta / totalGeneral) * 100 : 0;
-  const utilidadNeta = utilidadBruta - totalGastos;
+  const margenDicho = safeResumen.economia ? subtituloDelMargen(safeResumen.economia) : '';
+  const utilidadNeta = utilidadBruta === null ? null : utilidadBruta - totalGastos;
+  const enPesos = (valor) => (valor === null ? SIN_RECETA : formatCurrency(valor));
+  // Quien no ve márgenes no lee «sin receta»: no se le pinta ni costo, ni utilidad, ni margen.
+  const seVe = seVeElMargen(safeResumen.economia);
 
   // === Propinas (NO suman a ventas/utilidad/margen) ===
   const totalPropinas = Number(safeResumen.totalPropinas) || 0;
@@ -177,32 +182,36 @@ export default function CierreDiarioDialog({
               />
               <KPI label="Tickets" value={String(numVentas)} icon={Receipt} />
               <KPI label="Ticket promedio" value={formatCurrency(ticketPromedio)} />
-              <KPI label="Costo de ventas" value={formatCurrency(costoTotal)} />
-              <KPI
-                label="Utilidad bruta"
-                value={formatCurrency(utilidadBruta)}
-                icon={TrendingUp}
-                color={tone ? 'text-exito' : 'text-foreground'}
-              />
-              <KPI label="Margen prom." value={formatPercent(margen)} />
+              {seVe && <KPI label="Costo de ventas" value={enPesos(costoTotal)} />}
+              {seVe && (
+                <KPI
+                  label="Utilidad bruta"
+                  value={enPesos(utilidadBruta)}
+                  icon={TrendingUp}
+                  color={tone ? 'text-exito' : 'text-foreground'}
+                />
+              )}
+              {seVe && <KPI label="Margen prom." value={margenDicho || SIN_RECETA} />}
               <KPI
                 label="Gastos op."
                 value={formatCurrency(totalGastos)}
                 icon={Scissors}
                 color={tone ? 'text-peligro' : 'text-foreground'}
               />
-              <KPI
-                label="Utilidad neta est."
-                value={formatCurrency(utilidadNeta)}
-                icon={Wallet}
-                color={
-                  tone
-                    ? utilidadNeta >= 0
-                      ? 'text-exito'
-                      : 'text-peligro'
-                    : 'text-foreground'
-                }
-              />
+              {seVe && (
+                <KPI
+                  label="Utilidad neta est."
+                  value={enPesos(utilidadNeta)}
+                  icon={Wallet}
+                  color={
+                    tone
+                      ? utilidadNeta >= 0
+                        ? 'text-exito'
+                        : 'text-peligro'
+                      : 'text-foreground'
+                  }
+                />
+              )}
             </div>
             <p className="text-[10px] text-muted-foreground mt-2">
               Utilidad y margen se calculan SOLO sobre ventas reales. Las propinas no son ingreso

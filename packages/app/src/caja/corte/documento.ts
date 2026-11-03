@@ -10,6 +10,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import { diasHastaLaVisita, sugerirPedido } from '@morphiqpos/domain/inventario';
 import { z } from 'zod';
 
+import { alcanceDelCorte } from './alcance-del-corte.ts';
 import { sinCostosSiNoLosVe } from './sin-costos.ts';
 import { definirComando } from '../../definicion.ts';
 import * as consultas from './consultas.ts';
@@ -69,11 +70,23 @@ export interface HojaDelCorte {
   readonly verCostos: boolean;
   readonly negocio: NegocioDelCorte;
   readonly sesion: consultas.SesionDelCorte;
+  /**
+   * DP-13.2 · Hasta cuándo cuenta: el cierre, o, con la caja abierta, la hora en que se leyó. Un
+   * corte parcial leído después cambia, y la hoja lo dice (`parcial`).
+   */
+  readonly corteHasta: Date;
+  readonly parcial: boolean;
+  /**
+   * De qué cancelaciones habla (`alcance-del-corte.ts`): sólo las de las cuentas de esta caja, o,
+   * en el Cierre del día, todas las de la sucursal desde el anterior.
+   */
+  readonly alcanceDeCancelaciones: 'caja' | 'dia';
   readonly movimientos: readonly consultas.MovimientoAgrupado[];
   readonly conteo: readonly consultas.PiezasContadas[];
   readonly metodos: readonly consultas.VentasPorMetodo[];
-  readonly resumen: Omit<consultas.ResumenDeVentas, 'costoCentavos'> & {
+  readonly resumen: Omit<consultas.ResumenDeVentas, 'costoCentavos' | 'costoConocidoCentavos'> & {
     readonly costoCentavos: string | null;
+    readonly costoConocidoCentavos: string | null;
   };
   readonly ventas: readonly consultas.VentaDelDetalle[];
   readonly productos: readonly (Omit<
@@ -130,6 +143,14 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
       VEN_COSTOS.includes(rol) || (rol === 'cajero' && valores['mostrar_costos_a_caja'] === true);
 
     const id = sesion.id;
+    // Todo lo que se lee por ventana se lee hasta el MISMO instante: el cierre, o este momento.
+    const alcance = await ctx.paso('leer_alcance', () =>
+      alcanceDelCorte(tx, organizacionId, id, ctx.ahora),
+    );
+    if (alcance === null) {
+      throw new ErrorDominio('PUENTE_NO_ENCONTRADO', 'Ese corte no existe en este negocio.');
+    }
+    const ventana = { ...sesion, cerradaEn: alcance.hasta };
     const [movimientos, conteo, metodos, resumen, ventas, productos, porPersona, gastos] =
       await ctx.paso('leer_tronco', () =>
         Promise.all([
@@ -146,16 +167,16 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
     const [cancelaciones, descuentosPorUsuario, alertas, insumos, salidas, devoluciones] =
       await ctx.paso('leer_control', () =>
         Promise.all([
-          consultas.cancelacionesDelCorte(tx, organizacionId, sesion),
+          consultas.cancelacionesDelCorte(tx, organizacionId, alcance),
           consultas.descuentosPorUsuario(tx, organizacionId, id),
-          consultas.alertasDeInventario(tx, organizacionId, sesion.cerradaEn ?? ctx.ahora),
+          consultas.alertasDeInventario(tx, organizacionId, alcance.hasta),
           consultas.insumosConsumidos(tx, organizacionId, id),
-          consultas.salidasSinVenta(tx, organizacionId, sesion),
+          consultas.salidasSinVenta(tx, organizacionId, ventana),
           devolucionesDelCorte(tx, organizacionId, id),
         ]),
       );
     const delGiro = await ctx.paso('leer_extras', () =>
-      extrasDe(tx, organizacionId, plantilla, sesion),
+      extrasDe(tx, organizacionId, plantilla, ventana),
     );
 
     // La última pasada: sin un solo costo para quien no los ve, por campo que se
@@ -165,10 +186,17 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
         verCostos,
         negocio: negocioDe(crudo.nombre, valores, sesion),
         sesion,
+        corteHasta: alcance.hasta,
+        parcial: sesion.cerradaEn === null,
+        alcanceDeCancelaciones: alcance.cierraElDia ? 'dia' : 'caja',
         movimientos,
         conteo,
         metodos,
-        resumen: { ...resumen, costoCentavos: verCostos ? resumen.costoCentavos : null },
+        resumen: {
+          ...resumen,
+          costoCentavos: verCostos ? resumen.costoCentavos : null,
+          costoConocidoCentavos: verCostos ? resumen.costoConocidoCentavos : null,
+        },
         ventas,
         productos: productos.map((p) => ({
           ...p,
@@ -184,10 +212,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
         })),
         descuentosPorUsuario,
         alertas: alertas.map((a) =>
-          alertaDelCorte(
-            verCostos ? a : { ...a, costoUnitarioCentavos: null },
-            sesion.cerradaEn ?? ctx.ahora,
-          ),
+          alertaDelCorte(verCostos ? a : { ...a, costoUnitarioCentavos: null }, alcance.hasta),
         ),
         insumos: verCostos ? insumos : null,
         salidasSinVenta: salidas.map((s) => ({

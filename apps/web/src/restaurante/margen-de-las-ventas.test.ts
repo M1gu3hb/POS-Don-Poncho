@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  RECETA_INCOMPLETA,
   SIN_RECETA,
   economiaDeLaVenta,
   economiaDelPeriodo,
@@ -103,6 +104,7 @@ describe('la economía de un periodo', () => {
       margen: (170 * 100) / 300,
       conCosto: 2,
       sinReceta: 0,
+      recetaIncompleta: 0,
     });
   });
 
@@ -183,6 +185,63 @@ describe('el subtítulo del margen de un periodo', () => {
   it('el margen se escribe con un decimal, o «—» si no existe', () => {
     expect(textoDelMargen(56.666)).toBe('56.7%');
     expect(textoDelMargen(null)).toBe('—');
+  });
+});
+
+describe('DP-13.2 · el estado del costo lo dice el SERVIDOR (una cuenta con y sin receta)', () => {
+  const conEstado = (
+    total: number,
+    costo: number,
+    estado_costo: 'conocido' | 'sin_receta' | 'receta_incompleta',
+  ) => ({ ...venta(total, costo), estado_costo });
+
+  it('receta incompleta: el costo de lo que sí tiene receta NO da un margen inflado', () => {
+    expect(economiaDeLaVenta(conEstado(300, 50, 'receta_incompleta'))).toEqual({
+      estado: 'receta_incompleta',
+      costo: null,
+      utilidad: null,
+      margen: null,
+    });
+    expect(RECETA_INCOMPLETA).toBe('—, receta incompleta');
+  });
+
+  it('si el servidor dice «sin receta», manda sobre la foto del cobro', () => {
+    expect(economiaDeLaVenta(conEstado(300, 50, 'sin_receta')).estado).toBe('sin_receta');
+  });
+
+  it('en un periodo, la incompleta queda fuera del margen y se cuenta aparte', () => {
+    const e = economiaDelPeriodo([
+      conEstado(200, 80, 'conocido'),
+      conEstado(300, 50, 'receta_incompleta'),
+    ]);
+    expect(e).toMatchObject({
+      estado: 'parcial',
+      ingresos: 500,
+      ingresosConCosto: 200,
+      margen: 60,
+      conCosto: 1,
+      sinReceta: 0,
+      recetaIncompleta: 1,
+    });
+    expect(subtituloDelMargen(e)).toBe('60.0% margen · 1 venta con receta incompleta');
+  });
+
+  it('sólo incompletas: no hay margen, y se dice «receta incompleta», no «sin receta»', () => {
+    const e = economiaDelPeriodo([conEstado(300, 50, 'receta_incompleta')]);
+    expect(e).toMatchObject({ estado: 'sin_receta', margen: null, recetaIncompleta: 1 });
+    expect(subtituloDelMargen(e)).toBe('receta incompleta');
+  });
+
+  it('de las dos: se dicen las dos', () => {
+    const e = economiaDelPeriodo([
+      conEstado(200, 80, 'conocido'),
+      conEstado(100, 0, 'sin_receta'),
+      conEstado(300, 50, 'receta_incompleta'),
+      conEstado(300, 50, 'receta_incompleta'),
+    ]);
+    expect(subtituloDelMargen(e)).toBe(
+      '60.0% margen · 1 venta sin receta · 2 ventas con receta incompleta',
+    );
   });
 });
 

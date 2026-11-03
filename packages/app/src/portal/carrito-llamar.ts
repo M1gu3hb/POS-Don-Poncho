@@ -2,6 +2,7 @@ import 'server-only';
 
 import { ErrorDominio, PAQUETES_PORTAL } from '@morphiqpos/contracts';
 
+import { candadoDelCarrito } from '../restaurante/carrito-del-salon.ts';
 import { entradaDelTelefono, huellaDelDispositivo, latir } from './carrito.ts';
 import { definirComandoPublico } from './definicion-publica.ts';
 import { exigirPedidosDesdeElTelefono } from './mesa.ts';
@@ -39,6 +40,9 @@ export const llamarAlMeseroParaConfirmar = definirComandoPublico<
   async ejecutar(ctx, entrada) {
     exigirPedidosDesdeElTelefono(ctx);
     const { organizacionId, mesaId } = ctx.ambito;
+    // DP-13.2: el candado del carrito, el mismo que el envío: llamar no se cruza con un envío ni con
+    // el mesero vaciándolo.
+    await ctx.paso('candado_del_carrito', () => candadoDelCarrito(ctx.tx, organizacionId, mesaId));
 
     const lineas = await ctx.tx
       .selectFrom('carrito_mesa_lineas')
@@ -65,27 +69,28 @@ export const llamarAlMeseroParaConfirmar = definirComandoPublico<
       .forUpdate()
       .executeTakeFirst();
 
-    let solicitudId: string;
-    if (pendiente === undefined) {
-      solicitudId = await ctx.paso('crear_solicitud', async () =>
-        insertarSolicitud(ctx, {
-          tipo: 'ordenar',
-          ordenId: await ordenActiva(ctx),
-          ruteo: ruteoDeLaMesa(ctx),
-          notas,
-        }),
-      );
-    } else {
-      solicitudId = pendiente.id;
-      await ctx.paso('poner_al_dia_la_nota', () =>
+    // DP-13.2 · «Volver a llamar» RENUEVA el aviso: el que esperaba se resuelve y llega uno nuevo,
+    // con su nota al día. Las pantallas anuncian (y dicen en voz) cada aviso nuevo una vez; poner
+    // al día la nota del viejo no volvía a sonar. Una sola pendiente por mesa y tipo, como manda
+    // `solicitudes_qr_una_pendiente`: primero se resuelve, luego se inserta.
+    if (pendiente !== undefined) {
+      await ctx.paso('renovar_el_aviso', () =>
         ctx.tx
           .updateTable('solicitudes_qr')
-          .set({ notas, updated_at: ctx.ahora })
+          .set({ estado: 'resuelta', resuelta_en: ctx.ahora, updated_at: ctx.ahora })
           .where('organizacion_id', '=', organizacionId)
           .where('id', '=', pendiente.id)
           .execute(),
       );
     }
+    const solicitudId = await ctx.paso('crear_solicitud', async () =>
+      insertarSolicitud(ctx, {
+        tipo: 'ordenar',
+        ordenId: await ordenActiva(ctx),
+        ruteo: ruteoDeLaMesa(ctx),
+        notas,
+      }),
+    );
     await latir(
       ctx.tx,
       ctx.ambito,

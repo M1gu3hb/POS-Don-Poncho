@@ -16,6 +16,7 @@ import { Download, Loader2 } from 'lucide-react';
 import CorteTicket from '@/components/tickets/CorteTicket';
 import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
 import { cancelacionesDeLaCaja } from '~/corte/cancelaciones-leidas';
+import { leerCancelacionesSinTrabar } from '~/corte-heredado/cancelaciones-sin-trabar';
 
 /**
  * Renderiza el CorteTicket fuera de pantalla, genera el PDF y lo descarga.
@@ -54,7 +55,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
         // negocio como si fuera el corte del día. Aquí un fallo NO produce
         // archivo: `data` se queda nulo, el auto-disparo no ocurre y queda el
         // botón de reintento que ya existía.
-        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelaciones] =
+        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas] =
           await Promise.all([
             api.entidades.Venta.list('-fecha_cierre', 2000),
             api.entidades.GastoOperativo.list('-created_date', 500),
@@ -65,9 +66,11 @@ export default function CorteAutoDownloader({ corte, onDone }) {
             veCostos ? api.entidades.DescuentoInventarioVenta.list('-created_date', 3000) : [],
             veCostos ? api.entidades.Ingrediente.list() : [],
             veCostos ? api.entidades.RecetaEscandallo.list('-created_date', 2000) : [],
-            // DP-12.4 · Del servidor, como el visor y como el corte de Cierre diario. Si falla, el
-            // archivo NO se descarga (arriba): un PDF sin sus cancelaciones se guardaría como bueno.
-            cancelacionesDeLaCaja(corteId),
+            // DP-12.4 · Del servidor, como el visor y como el corte de Cierre diario. DP-13.4: si
+            // SÓLO ellas fallan el PDF se genera igual, pero su sección dice «No se pudieron leer
+            // las cancelaciones» (no se guarda como bueno un corte que parezca no tenerlas) y el
+            // error se registra. Las demás lecturas siguen sin `.catch` (arriba).
+            leerCancelacionesSinTrabar(() => cancelacionesDeLaCaja(corteId)),
           ]);
 
         const matchVenta = (v) => {
@@ -151,7 +154,10 @@ export default function CorteAutoDownloader({ corte, onDone }) {
             detalles,
             gastos: gastosCorte,
             ingredientes: ingredientesConsumidos,
-            cancelaciones,
+            cancelaciones: cancelacionesLeidas.filas,
+            cancelacionesNoLeidas: cancelacionesLeidas.noSePudieronLeer,
+            // DP-13.2 · Las de las cuentas de esta caja, o (Cierre del día) todas las de la sucursal.
+            alcanceDeCancelaciones: cancelacionesLeidas.alcance,
             alertas,
           });
         }
@@ -248,6 +254,8 @@ export default function CorteAutoDownloader({ corte, onDone }) {
               gastos={data.gastos}
               ingredientes={data.ingredientes}
               cancelaciones={data.cancelaciones}
+              cancelacionesNoLeidas={data.cancelacionesNoLeidas}
+              alcanceDeCancelaciones={data.alcanceDeCancelaciones}
               alertas={data.alertas}
               config={config}
               sinCostos={sinCostos}

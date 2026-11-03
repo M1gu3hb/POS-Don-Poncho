@@ -4,6 +4,8 @@ import { ErrorDominio, PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 
 import { definirComando } from '../definicion.ts';
+import { exigirPermisoParaCancelar, exigirQueSeCancele } from './cancelar-con-permiso.ts';
+import { mermaDeLaCuentaCancelada } from './merma-por-cancelacion.ts';
 import { mesaOperable, ordenDeMesa } from './datos.ts';
 import { entradaCancelarOrden } from './esquemas.ts';
 import {
@@ -98,13 +100,22 @@ export const cancelarOrden = definirComando<
       };
     }
 
-    if (orden.estado === 'pagada') {
-      throw new ErrorDominio(
-        'ORDEN_NO_EDITABLE',
-        'Esa cuenta ya se cobró: un cobro se devuelve con un reembolso, no se cancela.',
-        { estado: orden.estado },
-      );
-    }
+    // DP-13.2 · Ni pagada, ni con pagos, ni dividida, ni reembolsada, ni absorbida
+    // (`cancelar-con-permiso.ts`); y el mesero sólo en sus mesas, con PIN si ya se pidió.
+    exigirQueSeCancele(orden.estado);
+    const autorizadoPor = await ctx.paso('permiso', () =>
+      exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion),
+    );
+
+    // DP-13.3 · Lo que la cocina ya había hecho sale del almacén como merma «Por cancelación».
+    // ANTES de cancelar las comandas: después ya no se distingue lo hecho de lo que no.
+    await ctx.paso('merma_por_cancelacion', () =>
+      mermaDeLaCuentaCancelada(
+        { tx: ctx.tx, organizacionId, empleoId: ctx.ambito.empleoId },
+        orden.id,
+        entrada.motivo,
+      ),
+    );
 
     const comandas = await ctx.paso('cancelar_comandas', () =>
       cancelarComandasVivas(ctx.tx, organizacionId, orden.id),
@@ -174,6 +185,7 @@ export const cancelarOrden = definirComando<
         estadoPrevio: orden.estado,
         comandasCanceladas: comandas.length,
         mesaId,
+        autorizadoPor,
       },
     });
 
@@ -242,5 +254,8 @@ async function cancelarLineas(
     .where('organizacion_id', '=', organizacionId)
     .where('orden_id', '=', ordenId)
     .where('estado_preparacion', '<>', 'cancelado')
+    // Revisión de DP-13: lo anulado ANTES es otro registro, con el estado que tenía al anularse
+    // (el corte decide con él si fue pérdida): cancelar la cuenta no lo pisa.
+    .where('anulada_en', 'is', null)
     .execute();
 }

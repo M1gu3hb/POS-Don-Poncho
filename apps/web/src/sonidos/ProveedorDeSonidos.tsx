@@ -3,6 +3,8 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 
+import { AvisoDeSonidoBloqueado } from './AvisoDeSonidoBloqueado';
+
 import { useTextoDelAparato } from '~/cliente/texto-del-aparato';
 import { useExperiencia } from '~/proveedores/Experiencia';
 
@@ -41,18 +43,29 @@ export function ProveedorDeSonidos({ children }: { readonly children: ReactNode 
       const sonido = eventoDelClic(cadenaDe(tocado));
       if (sonido !== null) sonar(sonido);
     };
-    const alTeclear = (): void => {
+    // DP-13.2: también al apoyar el dedo, no sólo al soltarlo en un clic: un toque que arrastra o
+    // que no termina en clic (una tableta de cocina) también desbloquea.
+    const alDesbloquear = (): void => {
       desbloquearSonidos();
     };
     document.addEventListener('click', alTocar, { capture: true });
-    document.addEventListener('keydown', alTeclear, { capture: true });
+    document.addEventListener('keydown', alDesbloquear, { capture: true });
+    document.addEventListener('pointerdown', alDesbloquear, { capture: true, passive: true });
+    document.addEventListener('touchstart', alDesbloquear, { capture: true, passive: true });
     const soltar = observarLoQueAparece(document.body, sonar);
     return () => {
       document.removeEventListener('click', alTocar, { capture: true });
-      document.removeEventListener('keydown', alTeclear, { capture: true });
+      document.removeEventListener('keydown', alDesbloquear, { capture: true });
+      document.removeEventListener('pointerdown', alDesbloquear, { capture: true });
+      document.removeEventListener('touchstart', alDesbloquear, { capture: true });
       soltar();
     };
   }, []);
 
-  return children;
+  return (
+    <>
+      {children}
+      <AvisoDeSonidoBloqueado />
+    </>
+  );
 }

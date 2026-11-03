@@ -562,6 +562,45 @@
         "- aviso:No se pueden agregar productos en este momento.",
         "+ aviso:¡Mesa ${mesa.numero || ''} abierta! Ya pueden enviar su pedido."
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/tickets/CorteTicket.jsx",
+      "porque": "DP-13.4: si las cancelaciones del servidor no se pudieron leer, el corte se pinta igual y su sección «Cancelaciones» dice «No se pudieron leer las cancelaciones» (un aviso en rojo y su explicación) en lugar de una lista vacía que parecería «sin cancelaciones»; antes, un fallo de esa lectura tumbaba el corte entero (el visor quedaba vacío y la descarga automática no generaba el PDF).",
+      "testigos": [
+        "+ clase:text-xs",
+        "+ clase:font-bold",
+        "+ clase:text-texto-sutil",
+        "+ clase:text-peligro"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
+      "porque": "DP-13.4: con un pedido guardado esperando al mesero, «Quiero ordenar» del botón «Atención» ya no contesta «Ya avisamos al mesero» como un error ni puede crear otro aviso: vuelve a llamar al mesero por el carrito (el mismo aviso, con su nota al día, y las mismas palabras: «Tu pedido está guardado…»); si esa llamada falla, este aviso. El botón también sube por encima de la barra del carrito (a 320 y 375 px la tapaba).",
+      "testigos": ["+ aviso:No pudimos llamar a tu mesero. Intenta de nuevo."]
+    },
+    {
+      "archivo": "apps/web/heredado/components/barcode/BarcodeScanner.jsx",
+      "porque": "DP-13.2 (DP-D54): sin cámara (o con el permiso negado) el respaldo del escáner ya no es un campo numérico de «Código de barras» —el token del QR es alfanumérico y no cabía— sino elegir la mesa de una lista, así que la frase que pedía teclear el código sale; y el botón de cerrar tiene nombre («Cerrar el escáner») para el lector de pantalla y para tocarlo con certeza.",
+      "testigos": [
+        "- texto:Tu navegador no permite escaneo por cámara. Ingresa el código manualmente.",
+        "+ label:Cerrar el escáner",
+        "+ aria-label:Cerrar el escáner"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/Sidebar.jsx",
+      "porque": "DP-13.3 (punto 14): junto a «Salir», el botón «Sonido de este aparato» (el mismo tamaño y tono tenue que «Salir», con el ícono del volumen) abre el ajuste de Configuración → Este aparato en un diálogo, para que el mesero, la cocina y la caja bajen o apaguen el sonido de SU aparato sin entrar a Configuración. En el teléfono cierra el cajón del menú antes de abrir el diálogo.",
+      "testigos": [
+        "+ clase:text-sidebar-foreground/50",
+        "+ clase:hover:text-sidebar-foreground",
+        "+ clase:p-1",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:transition-colors",
+        "+ label:Sonido de este aparato",
+        "+ aria-label:Sonido de este aparato",
+        "+ icono:Volume2"
+      ]
     }
   ]
 }

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Bell, Receipt, HelpCircle, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TIPO_SOLICITUD_LABEL } from '@/utils/qrUtils';
+import { etiquetaDeLaOpcion } from '~/portal/atencion-del-comensal';
 
 const ICONS = {
   ordenar: Bell,
@@ -17,6 +18,13 @@ const COLORS = {
 };
 
 /**
+ * DP-13.4 · Con la barra del carrito puesta (`bottom-4`, una altura de control), el botón flotante
+ * queda un espacio por encima de ella: su borde de abajo = el de la barra + su altura + el aire.
+ */
+const BORDE_DE_ABAJO_SOBRE_EL_CARRITO =
+  'calc(var(--espacio-4) + var(--altura-control) + var(--espacio-3))';
+
+/**
  * Botón flotante "Atención" para la vista del cliente (portal QR).
  *
  * Props:
@@ -25,6 +33,10 @@ const COLORS = {
  * - disabled: bloquea taps.
  * - bloqueado: si true, muestra el FAB pero al tocar abre un aviso (no permite enviar).
  * - mensajeBloqueado: texto a mostrar cuando bloqueado.
+ * - sobreElCarrito: DP-13.4 · hay barra del carrito abajo; el botón sube por encima de ella en
+ *   vez de tapar su mitad izquierda (a 320 y 375 px la barra llega hasta el borde).
+ * - pedidoGuardado: DP-13.4 · hay un pedido guardado esperando al mesero; «ordenar» dice (y hace)
+ *   lo mismo que «Volver a llamar a mi mesero» del carrito.
  */
 export default function AtencionFAB({
   tiposHabilitados = [],
@@ -32,6 +44,8 @@ export default function AtencionFAB({
   disabled = false,
   bloqueado = false,
   mensajeBloqueado = 'No es posible solicitar atención en este momento.',
+  sobreElCarrito = false,
+  pedidoGuardado = false,
 }) {
   const [open, setOpen] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -105,7 +119,10 @@ export default function AtencionFAB({
 
       {/* DP-12.6: a la IZQUIERDA. La columna derecha de la carta es donde están las marcas con el
           precio (las que se tocan) y el botón, a la derecha, las tapaba. */}
-      <div className="fixed bottom-5 left-5 z-50 flex flex-col items-start gap-3">
+      <div
+        className="fixed bottom-5 left-5 z-50 flex flex-col items-start gap-3"
+        style={sobreElCarrito ? { bottom: BORDE_DE_ABAJO_SOBRE_EL_CARRITO } : undefined}
+      >
         <AnimatePresence>
           {open &&
             !bloqueado &&
@@ -123,7 +140,9 @@ export default function AtencionFAB({
                   style={{ touchAction: 'manipulation' }}
                 >
                   <Icon className="w-6 h-6 shrink-0" />
-                  <span>{TIPO_SOLICITUD_LABEL[tipo] || tipo}</span>
+                  <span>
+                    {etiquetaDeLaOpcion(tipo, TIPO_SOLICITUD_LABEL[tipo] || tipo, pedidoGuardado)}
+                  </span>
                 </motion.button>
               );
             })}

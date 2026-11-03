@@ -7,6 +7,8 @@ import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
 import { cotizar } from '../venta/cotizar.ts';
+import { exigirPermisoParaCancelar } from './cancelar-con-permiso.ts';
+import { mermaDelPlatilloAnulado } from './merma-por-cancelacion.ts';
 
 /**
  * `restaurante.anular_linea` — F-324.
@@ -42,6 +44,8 @@ export const entradaAnularLinea = z.object({
   cantidad: z.string().regex(CANTIDAD, 'La cantidad va con hasta cuatro decimales.').optional(),
   motivo: z.enum(MOTIVOS_ANULACION),
   nota: z.string().trim().min(1).max(200).optional(),
+  /** DP-13.2 · Como al cancelar: con la cuenta pedida o impresa, el PIN de un gerente. */
+  autorizacion: z.string().min(20).max(2000).optional(),
 });
 
 export interface ResultadoAnulacion {
@@ -116,6 +120,11 @@ export const anularLineaComando = definirComando<
       );
     }
 
+    // DP-13.2 · El mesero, sólo en sus mesas; con la cuenta pedida o impresa, con PIN.
+    const autorizadoPor = await ctx.paso('permiso', () =>
+      exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion),
+    );
+
     const linea = await ctx.paso('cargar_linea', () =>
       ctx.tx
         .selectFrom('orden_lineas')
@@ -148,6 +157,19 @@ export const anularLineaComando = definirComando<
         totalCentavos: linea.total_centavos,
       },
       entrada.cantidad,
+    );
+
+    // DP-13.3 · Si el platillo ya estaba hecho, lo anulado sale del almacén como merma.
+    await ctx.paso('merma_por_cancelacion', () =>
+      mermaDelPlatilloAnulado(
+        { tx: ctx.tx, organizacionId, empleoId },
+        {
+          ordenId: orden.id,
+          lineaId: entrada.lineaId,
+          cantidad: partida.anulada.cantidad,
+          motivo: `platillo anulado (${entrada.motivo})`,
+        },
+      ),
     );
 
     const escrita = await ctx.paso('anular', () =>
@@ -203,6 +225,7 @@ export const anularLineaComando = definirComando<
         entera: partida.restante === null,
         itemsCancelados: escrita.itemsCancelados,
         itemsReducidos: escrita.itemsReducidos,
+        autorizadoPor,
       },
     });
 

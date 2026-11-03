@@ -6,6 +6,7 @@ import { ErrorDominio, PAQUETES } from '@morphiqpos/contracts';
 import { obtenerDb, type Transaccion } from '@morphiqpos/data';
 
 import { definirComando } from '../comando.ts';
+import { leerDocumentoConCandado } from './documento-con-candado.ts';
 
 /**
  * LA APARIENCIA DEL NEGOCIO · su estilo y sus cuatro perillas.
@@ -101,12 +102,11 @@ export const fijarApariencia = definirComando<
   paquetes: PAQUETES,
   entrada: entradaFijarApariencia,
   async ejecutar(ctx, entrada) {
+    // Con candado (DP-13.3b): se lee el documento y se escribe ENTERO; sin él, una escritura de
+    // otro módulo confirmada entre las dos (la marca de plataforma, «quién manda a cocina») se
+    // perdía sin error.
     const actual = await ctx.paso('leer_configuracion_actual', () =>
-      ctx.tx
-        .selectFrom('configuracion')
-        .select(['valores', 'version'])
-        .where('organizacion_id', '=', ctx.ambito.organizacionId)
-        .executeTakeFirst(),
+      leerDocumentoConCandado(ctx.tx, ctx.ambito.organizacionId),
     );
 
     const valoresPrevios = esDocumento(actual?.valores) ? actual.valores : {};

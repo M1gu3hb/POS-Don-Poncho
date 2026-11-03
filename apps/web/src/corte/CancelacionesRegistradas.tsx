@@ -68,7 +68,8 @@ const COLUMNAS: readonly ColumnaDeTabla<CancelacionDelCorte>[] = [
       c.perdida ? (
         <span className="inline-flex items-center gap-(--espacio-1) font-bold text-peligro">
           <TriangleAlert aria-hidden="true" className="size-4" />
-          Pérdida · ya preparado
+          {/* DP-13.2: lo que valía lo ya preparado, no la cuenta entera. */}
+          Pérdida <Dinero centavos={Number(c.perdidaCentavos)} /> · ya preparado
         </span>
       ) : (
         <span className="text-texto-sutil">Antes de prepararse</span>

@@ -76,6 +76,7 @@ import StatCard from '@/components/common/StatCard';
 import { claves } from '~/cliente/claves-de-consulta';
 import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
 import { sonar } from '~/sonidos/gestor';
+import { economiaDelPeriodo } from '~/restaurante/margen-de-las-ventas';
 
 const METODOS = [
   {
@@ -226,14 +227,17 @@ export default function Caja() {
     const safeVentas = Array.isArray(ventasHoy) ? ventasHoy : [];
     const safeGastos = Array.isArray(gastos) ? gastos : [];
     if (!cajaAbierta) {
+      // DP-13.2: también sin caja, la economía de la regla (vacía): quien la lea no se cae.
+      const economia = economiaDelPeriodo([]);
       return {
         numVentas: 0,
         totalEfectivo: 0,
         totalTarjeta: 0,
         totalTransferencia: 0,
         totalGeneral: 0,
-        costoTotal: 0,
-        utilidadBruta: 0,
+        costoTotal: economia.costo,
+        utilidadBruta: economia.utilidad,
+        economia,
         totalGastos: 0,
         ticketPromedio: 0,
       };
@@ -267,6 +271,10 @@ export default function Caja() {
     const metodosPagoExacto = desgloseMetodosPagoExacto(ventas);
     // Adaptador para componentes ya escritos: estructura idéntica.
     const metodosPagoConPropinas = metodosPagoExacto;
+  // DP-13.2 · Costo, utilidad y margen SÓLO de las ventas con costo completo: la regla es del
+  // servidor (`estado_costo`, `caja/corte/costo-conocido.ts`) y la aplica `economiaDelPeriodo`.
+  // Sumar la foto del cobro contaba costo cero lo que no tiene receta e inflaba el margen.
+    const economia = economiaDelPeriodo(ventas);
 
     return {
       numVentas: ventas.length,
@@ -274,8 +282,9 @@ export default function Caja() {
       totalTarjeta: metodosPagoExacto.tarjeta.ventas,
       totalTransferencia: metodosPagoExacto.transferencia.ventas,
       totalGeneral: ventas.reduce((s, v) => s + (v.total || 0), 0),
-      costoTotal: ventas.reduce((s, v) => s + (v.costo_total_snapshot || 0), 0),
-      utilidadBruta: ventas.reduce((s, v) => s + (v.utilidad_bruta_snapshot || 0), 0),
+      costoTotal: economia.costo,
+      utilidadBruta: economia.utilidad,
+      economia,
       totalGastos: gastosCaja.reduce((s, g) => s + (g.monto || 0), 0),
       ticketPromedio:
         ventas.length > 0 ? ventas.reduce((s, v) => s + (v.total || 0), 0) / ventas.length : 0,
@@ -285,8 +294,8 @@ export default function Caja() {
     };
   }, [ventasHoy, gastos, cajaAbierta]);
 
-  const margenProm =
-    resumen.totalGeneral > 0 ? (resumen.utilidadBruta / resumen.totalGeneral) * 100 : 0;
+  // DP-13.2 · El margen de las ventas con costo completo; nulo si ninguna lo tiene.
+  const margenProm = resumen.economia?.margen ?? null;
 
   // === FIX 6B-B: Búsqueda histórica completa por folio/código ===
   // Caso real: cliente regresa horas/días después diciendo "me cobraron mal".

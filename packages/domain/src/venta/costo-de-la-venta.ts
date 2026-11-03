@@ -14,6 +14,14 @@
 
 type Cantidad = number | bigint | string | null | undefined;
 
+/**
+ * DP-13.2 · Lo que el SERVIDOR dice del costo de una cuenta, por sus líneas
+ * (`packages/app/src/caja/corte/costo-conocido.ts`): todas con costo, ninguna (sin receta) o
+ * algunas (receta incompleta). Cuando el estado llega, manda sobre la foto del cobro.
+ */
+export const ESTADOS_DEL_COSTO = ['conocido', 'sin_receta', 'receta_incompleta'] as const;
+export type EstadoDelCosto = (typeof ESTADOS_DEL_COSTO)[number];
+
 function comoNumero(valor: Cantidad): number | null {
   if (valor === null || valor === undefined) return null;
   const numero = Number(valor);

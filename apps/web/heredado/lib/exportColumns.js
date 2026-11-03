@@ -1,4 +1,5 @@
 'use client';
+import { economiaDeLaVenta } from '~/restaurante/margen-de-las-ventas';
 /**
  * Definición de columnas estándar por sección para los exports.
  * Centralizado para mantener consistencia entre CSV/XLSX/Sheets.
@@ -6,6 +7,18 @@
 
 const fmtDate = (v) => (v ? new Date(v).toISOString().slice(0, 19).replace('T', ' ') : '');
 const fmtNum = (v) => (v === null || v === undefined || v === '' ? 0 : Number(v));
+
+/**
+ * DP-13.2 · El costo, la utilidad y el margen de una venta sin receta (o con receta incompleta) no
+ * se saben: el archivo lo dice, no exporta un costo cero ni un «100 %». La regla es la del
+ * servidor (`estado_costo`), aplicada por `economiaDeLaVenta`.
+ */
+const fmtDeLaVenta = (v, venta) => {
+  const economia = economiaDeLaVenta(venta ?? {});
+  if (economia.estado === 'sin_receta') return 'sin receta';
+  if (economia.estado === 'receta_incompleta') return 'receta incompleta';
+  return fmtNum(v);
+};
 
 export const COLUMNS_CORTES = [
   { key: 'folio', label: 'Folio' },
@@ -46,9 +59,9 @@ export const COLUMNS_VENTAS = [
   { key: 'monto_efectivo', label: 'Efectivo', format: fmtNum },
   { key: 'monto_tarjeta', label: 'Tarjeta', format: fmtNum },
   { key: 'monto_transferencia', label: 'Transferencia', format: fmtNum },
-  { key: 'costo_total_snapshot', label: 'Costo', format: fmtNum },
-  { key: 'utilidad_bruta_snapshot', label: 'Utilidad', format: fmtNum },
-  { key: 'margen_snapshot', label: 'Margen %', format: fmtNum },
+  { key: 'costo_total_snapshot', label: 'Costo', format: fmtDeLaVenta },
+  { key: 'utilidad_bruta_snapshot', label: 'Utilidad', format: fmtDeLaVenta },
+  { key: 'margen_snapshot', label: 'Margen %', format: fmtDeLaVenta },
   { key: 'estado', label: 'Estado' },
 ];
 

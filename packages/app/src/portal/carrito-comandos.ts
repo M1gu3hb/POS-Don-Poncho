@@ -5,14 +5,22 @@ import { ErrorDominio, PAQUETES_PORTAL } from '@morphiqpos/contracts';
 import {
   MAXIMO_EN_EL_CARRITO,
   aperturaDeLaCuenta,
+  carritoCaducado,
   entradaAgregarAlCarrito,
   entradaEnviarElCarrito,
   entradaQuitarDelCarrito,
   estadoDelCarrito,
   huellaDelDispositivo,
   latir,
+  ultimaDe,
   type EstadoDelCarrito,
 } from './carrito.ts';
+import {
+  candadoDelCarrito,
+  olvidarElCarritoDeLaMesa,
+  resolverElAvisoDelPedido,
+  resolverElAvisoSiQuedoVacio,
+} from '../restaurante/carrito-del-salon.ts';
 import { apartarLoQueYaNoSePide } from './carrito-disponibilidad.ts';
 import { definirComandoPublico, type ContextoPortal } from './definicion-publica.ts';
 import { abrirLaMesaDelPortal, exigirPedidosDesdeElTelefono } from './mesa.ts';
@@ -38,7 +46,7 @@ function huellaDe(ctx: ContextoPortal, dispositivo: string): string {
 async function lineasPendientes(ctx: ContextoPortal) {
   return ctx.tx
     .selectFrom('carrito_mesa_lineas')
-    .select(['id', 'producto_id', 'cantidad', 'notas'])
+    .select(['id', 'producto_id', 'cantidad', 'notas', 'created_at'])
     .where('organizacion_id', '=', ctx.ambito.organizacionId)
     .where('mesa_id', '=', ctx.ambito.mesaId)
     .orderBy('created_at')
@@ -81,7 +89,21 @@ export const agregarAlCarrito = definirComandoPublico<
     // entrara, trabaría el envío de toda la mesa). Lanza con el motivo exacto.
     valorarParaPedido(producto.paraVender, entrada.item.cantidad);
 
-    const hay = await lineasPendientes(ctx);
+    // Revisión de DP-13: el candado del carrito, como llamar y enviar: dos teléfonos que agregan a
+    // la vez no se cruzan con la caducidad ni con el aviso.
+    await ctx.paso('candado_del_carrito', () =>
+      candadoDelCarrito(ctx.tx, ctx.ambito.organizacionId, ctx.ambito.mesaId),
+    );
+    let hay = await lineasPendientes(ctx);
+    // DP-13.2: lo de una mesa sin cuenta que nadie tocó en horas caduca aquí, antes de lo nuevo (y
+    // su aviso con él).
+    const apertura = await aperturaDeLaCuenta(ctx.tx, ctx.ambito);
+    if (carritoCaducado(ultimaDe(hay), apertura, ctx.ahora)) {
+      await ctx.paso('caducar', () =>
+        olvidarElCarritoDeLaMesa(ctx.tx, ctx.ambito.organizacionId, ctx.ambito.mesaId, ctx.ahora),
+      );
+      hay = [];
+    }
     if (hay.length >= MAXIMO_EN_EL_CARRITO) {
       throw new ErrorDominio(
         'QR_CARRITO_LLENO',
@@ -126,6 +148,10 @@ export const quitarDelCarrito = definirComandoPublico<
   async ejecutar(ctx, entrada) {
     exigirPedidosDesdeElTelefono(ctx);
     const huella = huellaDe(ctx, entrada.dispositivo);
+    // Revisión de DP-13: con el candado del carrito, quitar no se cruza con «llamar».
+    await ctx.paso('candado_del_carrito', () =>
+      candadoDelCarrito(ctx.tx, ctx.ambito.organizacionId, ctx.ambito.mesaId),
+    );
 
     // Sólo la suya: la de otro teléfono responde igual que una que ya no está.
     const quitada = await ctx.paso('quitar', () =>
@@ -144,6 +170,16 @@ export const quitarDelCarrito = definirComandoPublico<
         'Eso lo agregó otro teléfono (o ya no está): sólo quien lo agregó lo quita.',
       );
     }
+    // DP-13.2: si era lo último del carrito, su «Pedido listo para confirmar» ya no espera a nadie.
+    await ctx.paso('resolver_el_aviso', () =>
+      resolverElAvisoSiQuedoVacio(
+        ctx.tx,
+        ctx.ambito.organizacionId,
+        ctx.ambito.mesaId,
+        null,
+        ctx.ahora,
+      ),
+    );
 
     ctx.auditar({ entidadId: ctx.ambito.mesaId, payload: { lineaId: entrada.lineaId } });
     return estadoPara(ctx, huella);
@@ -193,7 +229,16 @@ export const enviarElCarrito = definirComandoPublico<
       .forUpdate()
       .executeTakeFirstOrThrow();
 
-    const pendientes = await lineasPendientes(ctx);
+    let pendientes = await lineasPendientes(ctx);
+    // Revisión de DP-13: lo caducado no sale a cocina; se borra, con su aviso.
+    if (
+      carritoCaducado(ultimaDe(pendientes), await aperturaDeLaCuenta(ctx.tx, ctx.ambito), ctx.ahora)
+    ) {
+      await ctx.paso('caducar', () =>
+        olvidarElCarritoDeLaMesa(ctx.tx, organizacionId, mesaId, ctx.ahora),
+      );
+      pendientes = [];
+    }
     if (pendientes.length === 0) {
       ctx.auditar({ entidadId: mesaId, payload: { enviado: false, ronda: antes.ronda } });
       return { enviado: false, ronda: antes.ronda, pedido: null, noDisponibles: [] };
@@ -297,6 +342,10 @@ export const enviarElCarrito = definirComandoPublico<
         .where('organizacion_id', '=', organizacionId)
         .where('mesa_id', '=', mesaId)
         .execute(),
+    );
+    // DP-13.2: lo envió el comensal; el aviso que esperaba al mesero ya no espera a nadie.
+    await ctx.paso('resolver_el_aviso', () =>
+      resolverElAvisoDelPedido(ctx.tx, organizacionId, mesaId, null, ctx.ahora),
     );
 
     ctx.auditar({

@@ -91,10 +91,12 @@ import BarcodeScanner from '@/components/barcode/BarcodeScanner';
 import { esPedidoListo } from '~/restaurante/globos-de-solicitud';
 import { CarritoDelPortalParaElMesero } from '~/restaurante/portal-mesero/CarritoDelPortalParaElMesero';
 import { DialogoDelPortalModoMesero } from '~/restaurante/portal-mesero/DialogoDelPortalModoMesero';
+import { ElegirLaMesa } from '~/restaurante/portal-mesero/ElegirLaMesa';
 import { MenuDeLaMesa } from '~/restaurante/portal-mesero/MenuDeLaMesa';
 import { QrDeLaMesaEnPantalla } from '~/restaurante/portal-mesero/QrDeLaMesaEnPantalla';
 import { tokenDelQrEscaneado } from '~/restaurante/portal-mesero/qr-escaneado';
 import { usePulsacionLarga } from '~/restaurante/portal-mesero/use-pulsacion-larga';
+import { useEscanerDelDocumento } from '~/cliente/use-escaner-del-documento';
 import {
   almacenDelAparato,
   guardarVista,
@@ -219,7 +221,9 @@ function Mesero() {
   );
   // DP-12.2: el portal de una mesa en modo mesero (por el QR escaneado o por el aviso «Pedido
   // listo para confirmar»), el globo de la mesa mantenida presionada y su QR en la pantalla.
-  const [escaneandoQr, setEscaneandoQr] = useState(false);
+  // DP-13.2: la cámara es del documento; si se entró sin recargar, abrir recarga una vez.
+  const { abierto: escaneandoQr, abrir: abrirElEscaner, cerrar: cerrarElEscaner } =
+    useEscanerDelDocumento();
   const [portalDeMesa, setPortalDeMesa] = useState(null);
   const [menuDeMesa, setMenuDeMesa] = useState(null);
   const [qrEnPantalla, setQrEnPantalla] = useState(null);
@@ -1178,7 +1182,7 @@ function Mesero() {
               size="sm"
               variant="outline"
               className="gap-1.5"
-              onClick={() => setEscaneandoQr(true)}
+              onClick={abrirElEscaner}
             >
               <ScanLine className="w-4 h-4" /> Escanear QR
             </Button>
@@ -1202,14 +1206,24 @@ function Mesero() {
       <BarcodeScanner
         open={escaneandoQr}
         title="Escanear el QR de la mesa"
-        onClose={() => setEscaneandoQr(false)}
+        etiquetaDelRespaldo="Elegir la mesa"
+        respaldo={
+          <ElegirLaMesa
+            mesas={mesas}
+            alElegir={(mesaId) => {
+              cerrarElEscaner();
+              setPortalDeMesa({ mesaId });
+            }}
+          />
+        }
+        onClose={() => cerrarElEscaner()}
         onDetected={(codigo) => {
           const qr = tokenDelQrEscaneado(String(codigo || ''));
           if (qr === null) {
             toast.error('Ese código no es el QR de una mesa.');
             return;
           }
-          setEscaneandoQr(false);
+          cerrarElEscaner();
           setPortalDeMesa({ qr });
         }}
       />
@@ -1222,6 +1236,7 @@ function Mesero() {
           if (mesa) onMesaClick(mesa);
         }}
         alVerQr={(mesa) => setQrEnPantalla({ id: mesa.id, numero: mesa.numero })}
+        alVerPedido={portalActivo ? (mesaId) => setPortalDeMesa({ mesaId }) : undefined}
         alSeparar={
           menuDeMesa && mesasDeLaZona.some((m) => m.unida_a_mesa_id === menuDeMesa.id)
             ? (mesaId) => {

@@ -265,7 +265,14 @@ export default tseslint.config(
   // tsconfig de los paquetes a proposito (no forman parte del producto), y
   // meterlos solo para lintearlos ensuciaria el type-check de verdad.
   {
-    files: ['scripts/**/*.mjs', '**/bin/*.mjs', '**/*.config.{mjs,js}'],
+    // `permisos-del-navegador.mjs` (DP-13.2): la leen `next.config.mjs` y la puerta de cabeceras,
+    // fuera de todo tsconfig; su forma la da `permisos-del-navegador.d.mts`.
+    files: [
+      'scripts/**/*.mjs',
+      '**/bin/*.mjs',
+      '**/*.config.{mjs,js}',
+      'apps/web/permisos-del-navegador.mjs',
+    ],
     extends: [tseslint.configs.disableTypeChecked],
     languageOptions: { globals: { ...globals.node } },
     rules: {

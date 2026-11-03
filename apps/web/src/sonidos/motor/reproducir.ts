@@ -1,13 +1,15 @@
 /*
  * Motor de sonido de React Bits · Sound Lab (DavidHDev/react-bits, src/tools/sound-lab,
  * commit e12c22192ac7b4b452c5e2feb9b586d74765d696). Licencia MIT + Commons Clause:
- * `licencias/react-bits-sound-lab.md`. Partido en módulos sin cambiar lo que hace (DP-11.3).
+ * `licencias/react-bits-sound-lab.md`. Partido en módulos sin cambiar lo que hace (DP-11.3),
+ * salvo una cosa: encender el audio (`resume()`) tiene tiempo límite (DP-13.2, `tiempo-limite.ts`).
  */
 
 import { variantsOf } from './fuentes';
 import { clamp, db } from './formas';
 import { renderSound } from './render';
 import { type Recipe, type Tune } from './tipos';
+import { conTiempoLimite, MS_PARA_ENCENDER } from './tiempo-limite';
 
 let sharedContext: AudioContext | null = null;
 let masterVolume = 1;
@@ -90,8 +92,17 @@ export const bufferFor = (recipe: Recipe, tune: Tune, rate: number, variant = 0)
 export function prepararAudio(): Promise<void> {
   const context = audio();
   // Cualquier estado que no sea «running»: también el «interrupted» de iOS (bloqueo de pantalla,
-  // llamada, cambio de app), que el tipo de TypeScript no trae.
-  return context.state === 'running' ? Promise.resolve() : context.resume();
+  // llamada, cambio de app), que el tipo de TypeScript no trae. DP-13.2: con tiempo límite.
+  return context.state === 'running' ? Promise.resolve() : encender(context);
+}
+
+/** `resume()` sin gesto puede no resolverse nunca: se rinde a tiempo (`tiempo-limite.ts`). */
+function encender(context: AudioContext): Promise<void> {
+  return conTiempoLimite(
+    context.resume(),
+    MS_PARA_ENCENDER,
+    'El navegador no encendió el audio: toca la pantalla para activarlo.',
+  );
 }
 
 export function setSoundVolume(value: number) {
@@ -112,7 +123,7 @@ export function preloadSound(recipe: Recipe, tune: Tune = {}) {
 export async function playSound(recipe: Recipe, tune: Tune = {}) {
   if (typeof window === 'undefined' || muted || masterVolume <= 0) return;
   const context = audio();
-  if (context.state === 'suspended') await context.resume();
+  if (context.state === 'suspended') await encender(context);
   const buffer = await bufferFor(recipe, tune, context.sampleRate, pickVariant(recipe));
   const source = context.createBufferSource();
   source.buffer = buffer;

@@ -59,7 +59,18 @@ export function platillosDelCarrito(cantidades: readonly string[]): number {
   }, 0);
 }
 
+/**
+ * Cómo empieza la nota del aviso del carrito. DP-13.2: es lo que distingue ESTE aviso de los demás
+ * `ordenar` de la mesa (un «Quiero ordenar» del botón de atención), sin una columna nueva.
+ */
+export const PREFIJO_DEL_PEDIDO_LISTO = 'Pedido listo para confirmar';
+
 /** La nota de la solicitud `ordenar` que ve el mesero: «Pedido listo para confirmar (3 platillos)». */
 export function notaDelPedidoListo(platillos: number): string {
-  return `Pedido listo para confirmar (${String(platillos)} ${platillos === 1 ? 'platillo' : 'platillos'})`;
+  return `${PREFIJO_DEL_PEDIDO_LISTO} (${String(platillos)} ${platillos === 1 ? 'platillo' : 'platillos'})`;
+}
+
+/** ¿Es el aviso del carrito? */
+export function esAvisoDelPedido(notas: string | null | undefined): boolean {
+  return (notas ?? '').startsWith(PREFIJO_DEL_PEDIDO_LISTO);
 }

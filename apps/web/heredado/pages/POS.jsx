@@ -31,6 +31,7 @@ import { printDocument } from '@/lib/print';
 import { tipsEnabled, getPorcentajesSugeridos } from '@/utils/tipsUtils';
 import { TIPO_VENTA, esProductoVariable } from '@/utils/tipoVentaUtils';
 import { sonar } from '~/sonidos/gestor';
+import { useEscanerDelDocumento } from '~/cliente/use-escaner-del-documento';
 
 /** Centavos del servidor (llegan como cadena) a los pesos que la interfaz pinta. */
 const centavosAPesos = (valor) => (Number(valor) || 0) / 100;
@@ -124,7 +125,9 @@ function detallesDelTicket(ticket, carrito) {
 
 export default function POS() {
   const [search, setSearch] = useState('');
-  const [escanerAbierto, setEscanerAbierto] = useState(false);
+  // DP-13.2: la cámara es del documento; si se entró sin recargar, abrir recarga una vez.
+  const { abierto: escanerAbierto, abrir: abrirElEscaner, cerrar: cerrarElEscaner } =
+    useEscanerDelDocumento();
   const [activeCategory, setActiveCategory] = useState('all');
   const [showPayment, setShowPayment] = useState(false);
   const [showCartMobile, setShowCartMobile] = useState(false);
@@ -612,7 +615,7 @@ export default function POS() {
                 variant="outline"
                 size="icon"
                 className="h-10 w-10 shrink-0"
-                onClick={() => setEscanerAbierto(true)}
+                onClick={abrirElEscaner}
                 title="Escanear código de barras"
               >
                 <ScanLine className="w-4 h-4" />
@@ -715,15 +718,15 @@ export default function POS() {
       {canAccessModule('escaner_codigo_barras') && (
         <BarcodeScanner
           open={escanerAbierto}
-          onClose={() => setEscanerAbierto(false)}
+          onClose={cerrarElEscaner}
           onDetected={handleCodigoEscaneado}
           continuous
           miniCart={cart}
           onViewCart={() => {
-            setEscanerAbierto(false);
+            cerrarElEscaner();
             setShowCartMobile(true);
           }}
-          onFinish={() => setEscanerAbierto(false)}
+          onFinish={cerrarElEscaner}
         />
       )}
 

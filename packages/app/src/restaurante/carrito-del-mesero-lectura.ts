@@ -80,11 +80,12 @@ export async function mesaDelCarritoParaElMesero(
           .where('organizacion_id', '=', ambito.organizacionId)
           .where('id', '=', id)
           .executeTakeFirst();
+  // DP-13.4 · Sin sucursal en la sesión, sólo quien consolida (dueño, administrador) ve todas; a
+  // cualquier otro, falla cerrado: antes un mesero sin sucursal leía las mesas de todas.
   const deOtraSucursal =
     mesa !== undefined &&
     !veConsolidado(ambito.rol) &&
-    ambito.sucursalId !== null &&
-    mesa.sucursal_id !== ambito.sucursalId;
+    (ambito.sucursalId === null || mesa.sucursal_id !== ambito.sucursalId);
   if (mesa === undefined || deOtraSucursal) {
     throw new ErrorDominio(
       'PUENTE_NO_ENCONTRADO',

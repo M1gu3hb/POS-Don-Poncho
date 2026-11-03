@@ -25,6 +25,11 @@ import {
 import { loQueYaSalio, releerLaCuenta, type CuentaViva } from './cancelar-del-mesero-lecturas.ts';
 import { lineasQueSigueCobrando } from './lineas-vivas.ts';
 import { useRolDeLaSesion } from './rol-de-la-sesion.ts';
+import {
+  NO_PUDE_COMPROBAR_LA_COCINA,
+  SI_NO_PUDE_COMPROBARLA,
+  estadoDeLaCocina,
+} from './permiso-al-cancelar.ts';
 
 /**
  * CANCELAR DESDE LA MESA DEL MESERO (DP-12.4): quitar un platillo y cancelar la cuenta.
@@ -72,6 +77,8 @@ export function CancelarDelMesero({
   const [sinLeerLaCocina, setSinLeerLaCocina] = useState<string | null>(null);
   /** Ya hubo una lectura de la cocina, buena o mala: antes no se sabe qué «ya salió». */
   const [cocinaLeida, setCocinaLeida] = useState(false);
+  /** DP-13.2 · Se está releyendo la cocina para el diálogo de cancelar: no se cancela a ciegas. */
+  const [comprobando, setComprobando] = useState(false);
   /** Se quitó algo en esta apertura: la cuenta puede haber quedado sin renglones. */
   const [seQuitoAlgo, setSeQuitoAlgo] = useState(false);
   /** El servidor no confirmó cuáles renglones siguen en la cuenta. */
@@ -183,6 +190,13 @@ export function CancelarDelMesero({
       <CancelarLaCuenta
         ordenId={ventaId}
         aviso={avisoDePerdidaAlCancelar(detalles, yaSalieron)}
+        cocina={estadoDeLaCocina({ comprobando, leida: cocinaLeida, fallo: sinLeerLaCocina })}
+        alAbrir={() => {
+          setComprobando(true);
+          void leerLaCocina().finally(() => {
+            setComprobando(false);
+          });
+        }}
         alCancelar={() => {
           toast.success('Cuenta cancelada');
           alCancelarLaCuenta();
@@ -208,8 +222,8 @@ export function CancelarDelMesero({
             </Aviso>
           ) : null}
           {sinLeerLaCocina === null ? null : (
-            <Aviso tono="atencion" titulo="No se pudo leer lo que cocina ya preparó">
-              Puedes quitar el platillo igual; el aviso de «ya salió» no se mostrará.
+            <Aviso tono="atencion" titulo={NO_PUDE_COMPROBAR_LA_COCINA}>
+              Puedes quitar el platillo igual. {SI_NO_PUDE_COMPROBARLA}
             </Aviso>
           )}
           {!cocinaLeida ? (
