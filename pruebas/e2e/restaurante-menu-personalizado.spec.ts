@@ -3,6 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 import {
   abrirElQrDeLaMesa,
   abrirLaMesa,
+  armarElPedido,
+  botonDeLaMesa,
   CARTA,
   comandasDeLaCuenta,
   prepararElPortalDelComensal,
@@ -28,6 +30,9 @@ import {
  * pedido llega a la cuenta de la mesa con la opción en la nota. Se lee del SERVIDOR, no de la
  * pantalla. (Hasta DP-9.7 la página traía debajo una lista por las categorías de su título,
  * DP-D18; esa lista ya no existe.)
+ *
+ * QA1-4 (DP-13.5): la mesera, desde su pantalla, tampoco manda la cerveza sin su opción
+ * obligatoria. Antes el diálogo de opciones no se abría (el puente no trae las opciones).
  */
 
 const SLUG = 'prueba-restaurante';
@@ -141,8 +146,9 @@ test.describe('el menú personalizado del portal QR', () => {
       });
 
       let ordenId = '';
+      let lupita: Page | null = null;
       await test.step('Lupita abre la mesa 6 para dos', async () => {
-        const lupita = await equipo.pagina(info, 'mesero');
+        lupita = await equipo.pagina(info, 'mesero');
         fallos.push(vigilarFallos(lupita));
         await lupita.goto('/');
         await lupita.waitForURL(/\/mesero$/);
@@ -188,6 +194,51 @@ test.describe('el menú personalizado del portal QR', () => {
         expect(cerveza?.notas_producto ?? '', 'La opción elegida no viajó en la nota.').toContain(
           OPCION.nombre,
         );
+      });
+
+      await test.step('Lupita pide otra cerveza desde su pantalla: le pide la temperatura', async () => {
+        const mesera = lupita;
+        if (mesera === null) throw new Error('Lupita no abrió la mesa.');
+        await armarElPedido(mesera, MESA, [{ nombre: CARTA.cerveza.nombre, veces: 1 }]);
+        const personalizar = mesera.getByRole('dialog', { name: 'Personalizar producto' });
+        await expect(
+          personalizar,
+          'La mesera agregó la cerveza sin que le pidieran su opción obligatoria.',
+        ).toBeVisible();
+        await personalizar.getByRole('button', { name: 'Agregar al pedido' }).click();
+        await expect(
+          personalizar.getByText(`Selecciona una opción en: ${OPCION.grupo}`),
+          'Sin la opción obligatoria, el diálogo dejó agregar la cerveza.',
+        ).toBeVisible();
+        await personalizar.getByRole('button', { name: OPCION.nombre }).click();
+        await personalizar.getByRole('button', { name: 'Agregar al pedido' }).click();
+        await expect(personalizar).toHaveCount(0);
+
+        const enviar = await botonDeLaMesa(mesera, MESA, 'Enviar a Cocina');
+        const enviado = mesera.waitForResponse(
+          (r) =>
+            new URL(r.url()).pathname === '/api/restaurante/enviar-pedido' &&
+            r.request().method() === 'POST',
+        );
+        await enviar.click();
+        expect((await enviado).status(), 'El servidor rechazó el pedido de la mesera.').toBe(200);
+
+        await expect
+          .poll(async () => unidadesPorPlatillo(await comandasDeLaCuenta(duena, ordenId)), {
+            message: 'La cerveza de la mesera no llegó a la cuenta.',
+          })
+          .toEqual(unidadesEsperadas([{ nombre: CARTA.cerveza.nombre, veces: 2 }]));
+        const lineas = await consultarPuente<{
+          producto_nombre?: string;
+          notas_producto?: string | null;
+        }>(duena, 'DetalleVenta', { filtro: { venta_id: ordenId }, limite: 20 });
+        const notas = lineas
+          .filter((l) => l.producto_nombre === CARTA.cerveza.nombre)
+          .map((l) => l.notas_producto ?? '');
+        expect(notas.length, 'Faltan cervezas en la cuenta.').toBeGreaterThan(0);
+        for (const nota of notas) {
+          expect(nota, 'Una cerveza salió a cocina sin su opción.').toContain(OPCION.nombre);
+        }
       });
 
       for (const exigirSinFallos of fallos) exigirSinFallos();

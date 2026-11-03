@@ -74,19 +74,7 @@ const LECTURAS_PERMITIDAS = [
       'Es una proyección de presentación calculada sobre el movimiento y no una columna que se espere recibir del ledger.',
   },
   {
-    campo: 'costo_total_linea_snapshot',
-    cantidad: 1,
-    razon:
-      'El ticket acepta esta propiedad opcional dentro de su DTO de impresión; la venta real conserva costo unitario y cantidad.',
-  },
-  {
     campo: 'diferencia_apertura',
-    cantidad: 1,
-    razon:
-      'Pertenece al DTO calculado del reporte de corte y no a la fila persistida de CorteCaja.',
-  },
-  {
-    campo: 'diferencia_efectivo',
     cantidad: 1,
     razon:
       'Pertenece al DTO calculado del reporte de corte y no a la fila persistida de CorteCaja.',

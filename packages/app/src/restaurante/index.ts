@@ -183,3 +183,8 @@ export {
   type CarritoParaElMesero,
   type MesaDelCarritoDelMesero,
 } from './carrito-del-mesero-lectura.ts';
+export {
+  opcionesDeLosPlatillos,
+  type GrupoDelPlatillo,
+  type OpcionDelPlatillo,
+} from './opciones-de-los-platillos.ts';

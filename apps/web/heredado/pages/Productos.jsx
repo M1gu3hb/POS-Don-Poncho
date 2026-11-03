@@ -6,7 +6,10 @@ import { Link } from '@/enrutado';
 import { formatCurrency, formatPercent, getMarginLevel } from '@/utils/financialUtils';
 import { MARGIN_CONFIG } from '@/lib/constants';
 import { ErrorDePantalla } from '@morphiqpos/ui/sistema';
+import { toast } from 'sonner';
 import { economiaDelProducto } from '~/inventario/costo-del-platillo';
+import { conSusOpciones } from '~/restaurante/opciones-de-los-platillos';
+import { useOpcionesDeLosPlatillos } from '~/restaurante/use-opciones-de-los-platillos';
 import PageHeader from '@/components/common/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
 import { Card } from '@/components/ui/card';
@@ -97,7 +100,14 @@ export default function Productos() {
   });
 
   const safeRecetas = Array.isArray(recetas) ? recetas : [];
-  const safeProductos = Array.isArray(productos) ? productos : [];
+  // QA1-4 (DP-13.5): las opciones de cada producto, que el puente no trae. Sin ellas el editor
+  // abría vacío un juego que, al guardar, se reemplaza entero.
+  const { opciones: opcionesDeLosPlatillos, listas: opcionesListas } =
+    useOpcionesDeLosPlatillos();
+  const safeProductos = useMemo(
+    () => conSusOpciones(Array.isArray(productos) ? productos : [], opcionesDeLosPlatillos),
+    [productos, opcionesDeLosPlatillos],
+  );
   const safeIngredientes = Array.isArray(ingredientes) ? ingredientes : [];
   const ingredientesById = useMemo(() => {
     const m = new Map();
@@ -414,6 +424,10 @@ export default function Productos() {
                         title="Opciones de preparación / modificadores"
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (!opcionesListas) {
+                            toast.info('Cargando las opciones… intenta en un momento.');
+                            return;
+                          }
                           setModificadoresProducto(p);
                         }}
                       >

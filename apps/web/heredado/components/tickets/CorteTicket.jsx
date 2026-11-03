@@ -11,6 +11,7 @@ import {
   nombreVisibleDelSistema,
 } from '~/marca/nombre-visible';
 import { seccionesDeCancelaciones } from '~/corte/cancelaciones';
+import { diferenciaDelCorte } from '~/corte-heredado/diferencia-del-corte';
 import {
   SIN_RECETA,
   economiaDelPeriodo,
@@ -229,7 +230,7 @@ const CorteTicket = React.forwardRef(function CorteTicket(
             label="Efectivo contado al cierre"
             value={formatCurrency(corte?.efectivo_contado)}
           />
-          <Cell label="Diferencia efectivo" value={formatCurrency(corte?.diferencia_efectivo)} />
+          <Cell label="Diferencia efectivo" value={formatCurrency(diferenciaDelCorte(corte))} />
           <Cell
             label="Dinero dejado en caja"
             value={formatCurrency(corte?.dinero_dejado_en_caja)}

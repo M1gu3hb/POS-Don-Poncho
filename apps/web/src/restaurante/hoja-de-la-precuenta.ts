@@ -145,3 +145,12 @@ export function totalesDeLaHoja(
     codigo: null,
   };
 }
+
+/**
+ * QA1-7 (DP-13.5) · El folio que lleva la hoja. La cuenta recibe su folio al cobrarse: antes, el
+ * puente lo manda nulo, y la hoja decía «Folio null».
+ */
+export function folioDeLaHoja(folio: string | null | undefined): string | null {
+  const limpio = folio?.trim() ?? '';
+  return limpio === '' ? null : limpio;
+}

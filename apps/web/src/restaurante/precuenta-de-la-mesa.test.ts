@@ -8,7 +8,7 @@ import {
   type AlmacenMinimo,
   type PrecuentaDeLaMesa,
 } from './precuenta-de-la-mesa.ts';
-import { hojaDeLaRespuesta, totalesDeLaHoja } from './hoja-de-la-precuenta.ts';
+import { folioDeLaHoja, hojaDeLaRespuesta, totalesDeLaHoja } from './hoja-de-la-precuenta.ts';
 
 /**
  * Día completo del restaurante (2.4) · LA PRECUENTA QUE EL MESERO LLEVA A LA MESA.
@@ -140,6 +140,18 @@ describe('guardar la precuenta para la pantalla que sigue', () => {
     };
     expect(guardarPrecuenta(conLaPropinaDel10(), roto)).toBe(false);
     expect(leerPrecuentaGuardada(ORDEN, roto)).toBeNull();
+  });
+});
+
+describe('el folio de la hoja (QA1-7, DP-13.5)', () => {
+  it('una cuenta sin cobrar no tiene folio: la hoja no dice «Folio null»', () => {
+    expect(folioDeLaHoja(null)).toBeNull();
+    expect(folioDeLaHoja(undefined)).toBeNull();
+    expect(folioDeLaHoja('  ')).toBeNull();
+  });
+
+  it('la cobrada, el suyo', () => {
+    expect(folioDeLaHoja('A-12')).toBe('A-12');
   });
 });
 

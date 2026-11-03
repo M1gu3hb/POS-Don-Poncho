@@ -77,6 +77,8 @@ import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pre
 import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
 import { solicitudesPorMesa } from '~/restaurante/globos-de-solicitud';
 import { SelectorDeVista } from '~/restaurante/SelectorDeVista';
+import { conSusOpciones } from '~/restaurante/opciones-de-los-platillos';
+import { useOpcionesDeLosPlatillos } from '~/restaurante/use-opciones-de-los-platillos';
 import { CancelarDelMesero } from '~/restaurante/CancelarDelMesero';
 import { UnirMesasEnElMapa } from '~/restaurante/unir-mesas/UnirMesasEnElMapa';
 import {
@@ -337,7 +339,14 @@ function Mesero() {
     placeholderData: (prev) => prev,
     staleTime: 5000,
   });
-  const productosArr = Array.isArray(productos) ? productos : [];
+  // QA1-4 (DP-13.5): el puente no trae las opciones del platillo; sin ellas el diálogo de
+  // opciones no se abría y la quesadilla salía a cocina sin su relleno obligatorio.
+  const { opciones: opcionesDeLosPlatillos, listas: opcionesListas } =
+    useOpcionesDeLosPlatillos();
+  const productosArr = useMemo(
+    () => conSusOpciones(Array.isArray(productos) ? productos : [], opcionesDeLosPlatillos),
+    [productos, opcionesDeLosPlatillos],
+  );
   const cargandoProductos = !productosFetched && productosLoading;
 
   const { data: categorias = [] } = useQuery({
@@ -629,6 +638,10 @@ function Mesero() {
   };
 
   const agregarAlCarrito = (producto) => {
+    if (!opcionesListas) {
+      toast.info('Cargando las opciones de los platillos… intenta en un momento.');
+      return;
+    }
     // 6B / 1.D — Si es producto variable, abrir modal de cantidad/porción.
     // El flujo de modificadores y precio_fijo queda intacto.
     if (
