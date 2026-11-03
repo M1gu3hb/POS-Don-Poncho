@@ -1,5 +1,5 @@
 import { validarEntorno } from '@morphiqpos/contracts';
-import { permitir } from '@morphiqpos/app/http';
+import { devolver, permitir } from '@morphiqpos/app/http';
 import { autorizarConPin } from '@morphiqpos/app/identidad';
 import { z } from 'zod';
 
@@ -15,7 +15,9 @@ import { conSesion } from '~/servidor/http';
  *
  * Y el mismo LÍMITE POR ORIGEN que la entrada (`LIMITES.entrar`, sin tocarlo): probar el
  * PIN del gerente desde la caja es un barrido igual que probarlo en la pantalla de
- * acceso, y cuenta en el mismo cubo.
+ * acceso, y cuenta en el mismo cubo. Como en la entrada, el PIN CORRECTO devuelve su intento
+ * (QA2-001, DP-13.5): todo el local sale por la misma IP, y las autorizaciones buenas de una
+ * noche llena dejaban a todos sin poder entrar.
  *
  * DP-13.2 (D-5) · Con `ordenId`, la autorización va atada a ESA cuenta, y con `para` a lo que se
  * autoriza (un descuento o una cancelación): la que el gerente dio para la mesa 3 no sirve en la 6.
@@ -103,6 +105,7 @@ export async function POST(peticion: Request): Promise<Response> {
         { status: ESTADO_POR_MOTIVO[resultado.motivo], headers: { 'cache-control': 'no-store' } },
       );
     }
+    await devolver('entrar', peticion.headers, entorno.PIN_PEPPER);
     return { autorizacion: resultado.autorizacion, rol: resultado.rol, vence: resultado.vence };
   });
 }

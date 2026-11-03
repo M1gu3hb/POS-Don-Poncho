@@ -17,6 +17,8 @@ export const CODIGOS_ERROR = {
   PUENTE_ENTIDAD_DESCONOCIDA: 'PUENTE_ENTIDAD_DESCONOCIDA',
   /** Campo que no existe, o que lo calcula el servidor y no se acepta. */
   PUENTE_CAMPO_INVALIDO: 'PUENTE_CAMPO_INVALIDO',
+  /** DP-13.5 (QA2-002) · Un filtro que no es del tipo de su campo: un id que no es uuid, etc. */
+  PUENTE_FILTRO_INVALIDO: 'PUENTE_FILTRO_INVALIDO',
   /** El rol no puede leer o escribir esa entidad. */
   PUENTE_SIN_PERMISO: 'PUENTE_SIN_PERMISO',
   /** No existe — o es de otra organización, que se ve igual. */

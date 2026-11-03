@@ -249,6 +249,7 @@ function respuestaDeDominio(error: unknown, correlationId: string): Response | n
   const estados: Readonly<Record<string, number>> = {
     PUENTE_ENTIDAD_DESCONOCIDA: 400,
     PUENTE_CAMPO_INVALIDO: 400,
+    PUENTE_FILTRO_INVALIDO: 400,
     PUENTE_SIN_PERMISO: 403,
     PUENTE_NO_ENCONTRADO: 404,
   };

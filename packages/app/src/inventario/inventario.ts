@@ -11,6 +11,8 @@ import { exigirMotivoDeMerma } from './motivos.ts';
 const ROLES = ['dueno', 'administrador', 'gerente', 'almacen'] as const;
 const id = z.uuid();
 const unidad = z.enum(['pieza', 'kg', 'g', 'l', 'ml', 'm']);
+/** Las que la base deja en un restaurante o una cafetería (trigger `insumo_unidad_base_valida`). */
+const UNIDADES_DE_COCINA: readonly string[] = ['g', 'ml', 'pieza'];
 // `abort`: si no es un número, `noEsCero` no se pregunta —su `BigInt` lanzaría y la entrada
 // mal escrita saldría como error interno en vez de 400—.
 const cantidadPositiva = z
@@ -103,6 +105,22 @@ export const crearInsumo = definirComando<
   modulo: 'inventario',
   entrada: entradaCrearInsumo,
   async ejecutar(ctx, entrada) {
+    // QA1-3 (DP-13.5): la base sólo deja medir el insumo de un restaurante o una cafetería en g,
+    // ml o pieza (trigger `insumo_unidad_base_valida`); se dice aquí, antes de que reviente en 500.
+    const organizacion = await ctx.paso('leer_giro', () =>
+      ctx.tx
+        .selectFrom('organizaciones')
+        .select('giro')
+        .where('id', '=', ctx.ambito.organizacionId)
+        .executeTakeFirst(),
+    );
+    const deCocina = organizacion?.giro === 'restaurante' || organizacion?.giro === 'cafeteria';
+    if (deCocina && !UNIDADES_DE_COCINA.includes(entrada.unidad)) {
+      throw new ErrorDominio(
+        'INVENTARIO_INVALIDO',
+        `En un ${organizacion.giro} el insumo se mide en g, ml o pieza: «${entrada.unidad}» se captura en g o ml (1 kg = 1000 g, 1 l = 1000 ml).`,
+      );
+    }
     const fila = await ctx.paso('crear_insumo', () =>
       ctx.tx
         .insertInto('insumos')
