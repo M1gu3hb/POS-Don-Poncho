@@ -692,4 +692,22 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
   `lineasDeOrden` ya deja fuera lo anulado).
 - **Ojo, la base falsa de unidad no conoce `eb.fn.countAll`:** contar filas con `select('id')`.
 - **Ojo, `python -I` ignora `PYTHONIOENCODING`:** el banco imprimía «→» y se caía; `-X utf8`.
+- **Ojo, en el teléfono el menú es un cajón `z-[80]`:** un diálogo abierto desde él (`z-50`) queda
+  debajo. El de «Sonido de este aparato» vive fuera del cajón y tocar el botón lo cierra. El botón
+  mide lo que «Salir» (con la primitiva la barra crecía y la galería lo cazó).
+- `pnpm verify` local: la cadena sin las cuatro puertas que miran Postgres 17 o la base viva
+  (`entorno`, `esquema`, `rls`, `acople`), como en DP-2; la completa corre en el CI del PR. Verde;
+  dos archivos de integración se cortaron por «Connection terminated» con la máquina cargada y
+  pasaron al repetirlos.
+- e2e con el build final: `sonidos` 19/19 (1 omitida de antes), `cancelacion-del-mesero` 3/3 (ya
+  con la merma), `menores-dp13` 9/9, `unir-mesas-al-tacto`.
+
+### Producción antes del QA (sólo lectura, 03-11)
+
+- Huella de los otros 10: `_PRIVADO\mudanza\huellas-dp13ntes-qa.json` (122 tablas, 275 conteos).
+- Exportación de `don-poncho` (`_PRIVADO\mudanza\dp13-antes-qa`, 135 tablas, 1174 filas): 0 cuentas,
+  0 cajas abiertas, 10 mesas libres, 0 carritos, 0 avisos vivos, «sólo el mesero envía», y **sin
+  fila en `folios`**: el primer ticket real sale como el 1.
+- La copia del QA: clúster propio en el 5442 (`morphiqpos_qa`), importada idéntica (filas y md5), con
+  PIN de prueba propios (el mapa sólo en `_PRIVADO\qa-dp13`).
 
