@@ -1,19 +1,23 @@
 'use client';
 
 import { Superficie } from '@morphiqpos/ui/sistema';
-import { Eye, QrCode, Split } from 'lucide-react';
+import { Eye, QrCode, ShoppingBag, Split } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { lugarDelGlobo } from './pulsacion-larga';
 
 /**
  * EL GLOBO DE UNA MESA MANTENIDA (DP-12.2): «Ver mesa» (lo de siempre: pedir) y «Ver QR de la
- * mesa»; y si encabeza una unión, «Separar mesas» (DP-12.3: así se separa también una unión de
- * mesas libres). Junto al dedo, sin salirse de la pantalla; un toque fuera o Escape lo cierra.
+ * mesa»; con el portal encendido, «Pedido del portal» (DP-13.2: el carrito de la mesa sin
+ * escanear nada); y si encabeza una unión, «Separar mesas» (DP-12.3: así se separa también una
+ * unión de mesas libres). Junto al dedo, sin salirse de la pantalla; un toque fuera o Escape lo
+ * cierra.
  */
 
-const GLOBO = { ancho: 216, alto: 112 };
-const GLOBO_CON_SEPARAR = { ancho: 216, alto: 160 };
+/** Lo que mide el globo: 48 puntos por opción y su relleno. */
+const ANCHO_DEL_GLOBO = 216;
+const ALTO_POR_OPCION = 48;
+const RELLENO_DEL_GLOBO = 16;
 
 export interface MesaDelMenu {
   readonly id: string;
@@ -26,12 +30,15 @@ export function MenuDeLaMesa({
   mesa,
   alVerMesa,
   alVerQr,
+  alVerPedido,
   alSeparar,
   alCerrar,
 }: {
   readonly mesa: MesaDelMenu | null;
   readonly alVerMesa: (mesaId: string) => void;
   readonly alVerQr: (mesa: MesaDelMenu) => void;
+  /** Sólo con el portal encendido: abre el carrito de la mesa en modo mesero. */
+  readonly alVerPedido?: ((mesaId: string) => void) | undefined;
   /** Sólo si la mesa encabeza una unión. */
   readonly alSeparar?: ((mesaId: string) => void) | undefined;
   readonly alCerrar: () => void;
@@ -49,7 +56,8 @@ export function MenuDeLaMesa({
   if (mesa === null) return null;
   // Sólo se abre con un toque, ya en el navegador: aquí `window` existe.
   const pantalla = { ancho: window.innerWidth, alto: window.innerHeight };
-  const globo = alSeparar === undefined ? GLOBO : GLOBO_CON_SEPARAR;
+  const opciones = 2 + (alVerPedido === undefined ? 0 : 1) + (alSeparar === undefined ? 0 : 1);
+  const globo = { ancho: ANCHO_DEL_GLOBO, alto: RELLENO_DEL_GLOBO + opciones * ALTO_POR_OPCION };
   const { left, top } = lugarDelGlobo(mesa.x, mesa.y, pantalla, globo);
 
   const opcion =
@@ -90,6 +98,19 @@ export function MenuDeLaMesa({
         >
           <QrCode className="size-4" aria-hidden /> Ver QR de la mesa
         </button>
+        {alVerPedido === undefined ? null : (
+          <button
+            type="button"
+            role="menuitem"
+            className={opcion}
+            onClick={() => {
+              alCerrar();
+              alVerPedido(mesa.id);
+            }}
+          >
+            <ShoppingBag className="size-4" aria-hidden /> Pedido del portal
+          </button>
+        )}
         {alSeparar === undefined ? null : (
           <button
             type="button"

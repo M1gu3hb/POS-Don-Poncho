@@ -128,17 +128,17 @@ describe('quién manda a cocina (DP-12.2)', () => {
     expect(primero).toMatchObject({ platillos: 3, yaAvisado: false });
     exigirOk(await caso.agregar(TELEFONO_B, caso.agua), 'agregar otra');
     const segundo = exigirOk(await caso.llamar(TELEFONO_B), 'llamar otra vez');
-    expect(segundo).toMatchObject({
-      solicitudId: primero.solicitudId,
-      platillos: 4,
-      yaAvisado: true,
-    });
+    // DP-13.2: volver a llamar RENUEVA el aviso (otro id), para que se anuncie otra vez.
+    expect(segundo).toMatchObject({ platillos: 4, yaAvisado: true });
+    expect(segundo.solicitudId).not.toBe(primero.solicitudId);
     const avisos = await obtenerDb()
       .selectFrom('solicitudes_qr')
       .select(['tipo', 'estado', 'notas'])
       .where('mesa_id', '=', caso.mesaId)
+      .orderBy('created_at')
       .execute();
     expect(avisos).toEqual([
+      { tipo: 'ordenar', estado: 'resuelta', notas: 'Pedido listo para confirmar (3 platillos)' },
       { tipo: 'ordenar', estado: 'pendiente', notas: 'Pedido listo para confirmar (4 platillos)' },
     ]);
     expect((await caso.mirar(TELEFONO_A))?.meseroAvisado).toBe(true);

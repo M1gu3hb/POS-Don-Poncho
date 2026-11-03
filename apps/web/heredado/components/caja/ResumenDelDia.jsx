@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import StatCard from '@/components/common/StatCard';
 import { EsqueletoDeCifras } from '~/cliente/EstadosDeCarga';
+import { SIN_RECETA, subtituloDelMargen } from '~/restaurante/margen-de-las-ventas';
 
 /**
  * Resumen del día — vista unificada para la pestaña "Resumen" de Caja.
@@ -43,10 +44,15 @@ export default function ResumenDelDia({
   const totalGeneral = Number(safeResumen.totalGeneral) || 0;
   const totalPropinas = Number(safeResumen.totalPropinas) || 0;
   const totalCobrado = totalGeneral + totalPropinas;
-  const utilidad = Number(safeResumen.utilidadBruta) || 0;
-  const costoTotal = Number(safeResumen.costoTotal) || 0;
+  // DP-13.2 · Nulos sin ninguna venta de costo completo: «—, sin receta», no un cero.
+  const utilidad = safeResumen.utilidadBruta ?? null;
+  const costoTotal = safeResumen.costoTotal ?? null;
   const totalGastos = Number(safeResumen.totalGastos) || 0;
-  const utilidadNeta = utilidad - totalGastos;
+  const utilidadNeta = utilidad === null ? null : utilidad - totalGastos;
+  const enPesos = (valor) => (valor === null ? SIN_RECETA : formatCurrency(valor));
+  const margenDicho = safeResumen.economia
+    ? subtituloDelMargen(safeResumen.economia)
+    : `Margen ${formatPercent(margenProm ?? 0)}`;
   const numVentas = Number(safeResumen.numVentas) || 0;
   const ticketProm = Number(safeResumen.ticketPromedio) || 0;
 
@@ -134,13 +140,13 @@ export default function ResumenDelDia({
             <StatCard
               icon={TrendingUp}
               title="Utilidad bruta"
-              value={formatCurrency(utilidad)}
-              subtitle={`Margen ${formatPercent(margenProm)}`}
+              value={enPesos(utilidad)}
+              subtitle={margenDicho}
             />
             <StatCard
               icon={BarChart3}
               title="Costo de ventas"
-              value={formatCurrency(costoTotal)}
+              value={enPesos(costoTotal)}
               subtitle="Insumos consumidos"
             />
             <StatCard
@@ -152,7 +158,7 @@ export default function ResumenDelDia({
             <StatCard
               icon={PiggyBank}
               title="Utilidad neta"
-              value={formatCurrency(utilidadNeta)}
+              value={enPesos(utilidadNeta)}
               subtitle="Bruta − Gastos"
             />
           </>

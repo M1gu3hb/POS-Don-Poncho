@@ -70,6 +70,9 @@ function autorizacion(cambios: Partial<Parameters<typeof firmarAutorizacion>[0]>
       solicita: EMPLEO,
       exp: Math.floor(AHORA.getTime() / 1000) + 120,
       n: 'abcdef0123456789',
+      // DP-13.2 (D-5): firmada para ESTA cuenta y para un descuento, como la firma la ruta.
+      cuenta: CARRITO_MOSTRADOR,
+      para: 'descuento',
       ...cambios,
     },
     SECRETO,
@@ -182,7 +185,7 @@ describe('F-205 · el descuento que pasa del tope', () => {
     expect(cumpleLa180).toBe(true);
   });
 
-  it('una autorización de otra cajera, vencida, de otro negocio o alterada no vale', async () => {
+  it('una autorización de otra cajera, vencida, de otro negocio, de otra cuenta o alterada no vale', async () => {
     for (const mala of [
       autorizacion({ solicita: OTRA_CAJERA }),
       autorizacion({ exp: Math.floor(AHORA.getTime() / 1000) - 1 }),
@@ -190,6 +193,20 @@ describe('F-205 · el descuento que pasa del tope', () => {
       autorizacion({ rol: 'cajero' }),
       autorizacion({ rol: 'almacen' }),
       `${autorizacion().slice(0, -3)}AAA`,
+      // DP-13.2 · D-5: la de OTRA cuenta, la que no dice de cuál, y la que era para cancelar.
+      autorizacion({ cuenta: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' }),
+      firmarAutorizacion(
+        {
+          org: ORG,
+          supervisor: GERENTE,
+          rol: 'gerente',
+          solicita: EMPLEO,
+          exp: Math.floor(AHORA.getTime() / 1000) + 120,
+          n: 'sin-cuenta-0001',
+        },
+        SECRETO,
+      ),
+      autorizacion({ para: 'cancelacion' }),
     ]) {
       const base = baseDe();
       const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'), AHORA);

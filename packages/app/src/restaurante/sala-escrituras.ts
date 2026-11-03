@@ -226,7 +226,7 @@ export async function cambiarDeMesa(
     .execute();
 
   // DP-12.2: el carrito del portal sigue a la cuenta: lo armado en la vieja pasa a la nueva.
-  await moverElCarrito(tx, datos.organizacionId, origen.id, destino.id);
+  await moverElCarrito(tx, datos.organizacionId, origen.id, destino.id, datos.ahora);
 
   // LA MITAD QUE NADIE SE ACUERDA DE HACER. Sin esto la comanda viva sigue
   // diciendo «mesa 4» y el plato sale a una mesa vacía.
@@ -447,7 +447,7 @@ export async function unirMesas(tx: Transaccion, datos: DatosDeUnion): Promise<U
 
     // DP-12.2: el carrito del portal de la absorbida (y sus teléfonos) pasa a la principal: su QR
     // ya cae ahí, y lo que habían armado no se queda huérfano hasta separar.
-    await moverElCarrito(tx, datos.organizacionId, mesa.id, datos.principal.id);
+    await moverElCarrito(tx, datos.organizacionId, mesa.id, datos.principal.id, datos.ahora);
     // DP-12.3: y sus alergias y su celebración, que se quedaban ocultas en la absorbida.
     await llevarLasNotasALaPrincipal(
       tx,

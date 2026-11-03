@@ -4,6 +4,8 @@ import type { Transaccion } from '@morphiqpos/data';
 import { etiquetaDelMotivoDeAnulacion } from '@morphiqpos/domain/venta';
 import { sql } from 'kysely';
 
+import type { AlcanceDelCorte } from './alcance-del-corte.ts';
+
 /**
  * LAS CANCELACIONES, leídas del servidor para los DOS cortes y para Registros (DP-12.4).
  *
@@ -24,6 +26,15 @@ import { sql } from 'kysely';
  * El criterio es el que pidió el dueño: «listo» o «entregado». Un plato `en_preparacion` aún no
  * cuenta (el dominio, `elConsumoSePerdio`, es más estricto con el insumo; aquí se habla del plato
  * que ya existe y se tiró).
+ *
+ * ── Cuánto se perdió (DP-13.2) ───────────────────────────────────────────
+ * Antes, una cuenta con UN platillo listo marcaba pérdida la cuenta entera. La pérdida es sólo el
+ * valor de lo que ya estaba hecho y no se cobró (`perdidaCentavos`): de cada platillo de la cuenta
+ * que no se anuló aparte, la parte que la cocina dejó lista o se entregó, a su precio en la
+ * cuenta. Lo demás de la cuenta es cancelado sin costo. Un platillo anulado es pérdida entera si
+ * ya estaba hecho, cero si no.
+ *
+ * De QUÉ cancelaciones habla cada corte lo dice `alcance-del-corte.ts`.
  */
 
 /** Tope de filas: un día de restaurante lleno cabe, y Registros pide menos. */
@@ -38,9 +49,12 @@ export interface Cancelacion {
   /** Con palabras: el texto libre de la cuenta, o la etiqueta del motivo de la anulación. */
   readonly motivo: string | null;
   readonly producto: string | null;
+  /** Todo lo cancelado (la cuenta o el platillo). */
   readonly montoCentavos: string;
   readonly mesa: string | null;
-  /** `true` si ya estaba preparado o entregado: comida hecha que no se cobra. */
+  /** De eso, lo que ya estaba listo o entregado: comida hecha que no se cobra. */
+  readonly perdidaCentavos: string;
+  /** `true` si hay pérdida (`perdidaCentavos > 0`). */
   readonly perdida: boolean;
 }
 
@@ -51,14 +65,101 @@ export interface AlcanceDeCancelaciones {
   readonly hasta: Date;
 }
 
-interface FilaCruda extends Omit<Cancelacion, 'motivo'> {
-  readonly motivo: string | null;
-}
+/** El platillo de la comanda, `ci`, ya salió: listo o entregado, ÉL. */
+export const yaHechoElPlatillo = sql`(ci.listo_en is not null or ci.estado = 'entregado')`;
 
 /**
- * Una sola sentencia: la cuenta cancelada entera y el platillo anulado de una cuenta que sigue
- * (o que se canceló después: la cancelación de la cuenta no se lleva consigo un platillo que ya
- * se había anulado, que es otro importe).
+ * En una cuenta cancelada entera, también cuenta la comanda `c` lista o entregada: sus platillos
+ * vivos salieron con ella. NO vale para un platillo anulado: si se quitó antes y la cocina dejó
+ * lista la comanda con lo demás, ese platillo no se hizo (DP-13.2).
+ */
+export const yaHechoEnLaCuenta = sql`(${yaHechoElPlatillo}
+                               or c.lista_en is not null
+                               or c.entregada_en is not null)`;
+
+/**
+ * Lo que vale lo ya hecho de la cuenta `o`: de cada platillo que no se anuló aparte, la parte que
+ * la cocina dejó lista o se entregó (por cantidad, nunca más que el platillo), a su precio.
+ */
+const perdidaDeLaCuenta = sql`coalesce((
+    select sum(round(l.total_centavos
+                     * least(1, hecho.cantidad / nullif(l.cantidad::numeric, 0))))
+      from orden_lineas l
+      join lateral (
+        select sum(ci.cantidad::numeric) as cantidad
+          from comanda_items ci
+          join comandas c on c.id = ci.comanda_id and c.organizacion_id = ci.organizacion_id
+         where ci.organizacion_id = l.organizacion_id
+           and ci.orden_linea_id = l.id
+           and ${yaHechoEnLaCuenta}
+      ) hecho on hecho.cantidad is not null
+     where l.organizacion_id = o.organizacion_id
+       and l.orden_id = o.id
+       and l.anulada_en is null), 0)::bigint`;
+
+/** El platillo anulado `l`: si ya estaba hecho (él, no su comanda), se perdió entero. */
+const perdidaDeLaLinea = sql`case
+    when l.estado_preparacion in ('listo', 'entregado')
+      or exists (
+           select 1
+             from comanda_items ci
+            where ci.organizacion_id = l.organizacion_id
+              and ci.orden_linea_id = l.id
+              and ${yaHechoElPlatillo})
+    then l.total_centavos
+    else 0
+  end`;
+
+const folio = sql`case when o.folio is null then null else o.serie || '-' || o.folio::text end`;
+const mesa = sql`coalesce(m.nombre, 'Mesa ' || m.numero::text)`;
+
+type FilaCruda = Omit<Cancelacion, 'perdida'>;
+
+/** Las columnas de la cuenta cancelada entera, `o`. */
+const deLaCuenta = sql`
+    select 'orden'                       as "tipo",
+           ${folio}                      as "folio",
+           o.cancelada_en                as "hora",
+           ev.nombre                     as "usuario",
+           o.motivo_cancelacion          as "motivo",
+           null::text                    as "producto",
+           o.total_centavos::text        as "montoCentavos",
+           ${mesa}                       as "mesa",
+           ${perdidaDeLaCuenta}::text    as "perdidaCentavos"
+      from ordenes o
+      left join empleados_visibles ev on ev.id = o.cancelada_por
+      left join mesas m on m.id = o.mesa_id and m.organizacion_id = o.organizacion_id`;
+
+/**
+ * Las columnas del platillo anulado, `l`, de una cuenta que sigue (o que se canceló después: la
+ * cancelación de la cuenta no se lleva consigo un platillo que ya se había anulado, que es otro
+ * importe).
+ */
+const delPlatillo = sql`
+    select 'linea',
+           ${folio},
+           l.anulada_en,
+           ev.nombre,
+           l.motivo_anulacion,
+           l.producto_nombre,
+           l.total_centavos::text,
+           ${mesa},
+           (${perdidaDeLaLinea})::text
+      from orden_lineas l
+      join ordenes o on o.id = l.orden_id and o.organizacion_id = l.organizacion_id
+      left join empleados_visibles ev on ev.id = l.empleado_anula_id
+      left join mesas m on m.id = o.mesa_id and m.organizacion_id = o.organizacion_id`;
+
+const conPalabras = (filas: readonly FilaCruda[]): readonly Cancelacion[] =>
+  filas.map((fila) => ({
+    ...fila,
+    motivo: etiquetaDelMotivoDeAnulacion(fila.motivo),
+    perdida: BigInt(fila.perdidaCentavos) > 0n,
+  }));
+
+/**
+ * Las de una sucursal (o de todas) entre dos instantes, lo más reciente primero: Registros. Una
+ * sola sentencia.
  */
 export async function leerCancelaciones(
   tx: Transaccion,
@@ -67,112 +168,59 @@ export async function leerCancelaciones(
   tope: number = TOPE_DE_FILAS,
 ): Promise<readonly Cancelacion[]> {
   const { rows } = await sql<FilaCruda>`
-    select 'orden'                              as "tipo",
-           case when o.folio is null then null
-                else o.serie || '-' || o.folio::text end as "folio",
-           o.cancelada_en                       as "hora",
-           ev.nombre                            as "usuario",
-           o.motivo_cancelacion                 as "motivo",
-           null::text                           as "producto",
-           o.total_centavos::text               as "montoCentavos",
-           coalesce(m.nombre, 'Mesa ' || m.numero::text) as "mesa",
-           exists (
-             select 1
-               from comandas c
-              where c.organizacion_id = o.organizacion_id
-                and (c.orden_id = o.id
-                     or c.orden_id in (
-                          select mi.orden_absorbida_id
-                            from union_mesa_miembros mi
-                            join uniones_mesa u on u.id = mi.union_id
-                           where u.organizacion_id = o.organizacion_id
-                             and u.orden_id = o.id
-                             and mi.orden_absorbida_id is not null))
-                and (
-                     exists (
-                       select 1
-                         from comanda_items ci
-                        where ci.organizacion_id = c.organizacion_id
-                          and ci.comanda_id = c.id
-                          and (ci.listo_en is not null
-                               or ci.estado = 'entregado'
-                               or c.lista_en is not null
-                               or c.entregada_en is not null)
-                          and not exists (
-                                select 1
-                                  from orden_lineas ya
-                                 where ya.id = ci.orden_linea_id
-                                   and ya.anulada_en is not null))
-                     or (not exists (
-                           select 1
-                             from comanda_items sin
-                            where sin.organizacion_id = c.organizacion_id
-                              and sin.comanda_id = c.id)
-                         and (c.lista_en is not null or c.entregada_en is not null)))
-           )                                    as "perdida"
-      from ordenes o
-      left join empleados_visibles ev on ev.id = o.cancelada_por
-      left join mesas m on m.id = o.mesa_id and m.organizacion_id = o.organizacion_id
+    ${deLaCuenta}
      where o.organizacion_id = ${organizacionId}
        and (${alcance.sucursalId}::uuid is null or o.sucursal_id = ${alcance.sucursalId}::uuid)
        and o.estado = 'cancelada'
        and o.cancelada_en between ${alcance.desde} and ${alcance.hasta}
     union all
-    select 'linea',
-           case when o.folio is null then null
-                else o.serie || '-' || o.folio::text end,
-           l.anulada_en,
-           ev.nombre,
-           l.motivo_anulacion,
-           l.producto_nombre,
-           l.total_centavos::text,
-           coalesce(m.nombre, 'Mesa ' || m.numero::text),
-           (l.estado_preparacion in ('listo', 'entregado')
-            or exists (
-                 select 1
-                   from comanda_items ci
-                  where ci.organizacion_id = l.organizacion_id
-                    and ci.orden_linea_id = l.id
-                    and (ci.listo_en is not null or ci.estado = 'entregado')))
-      from orden_lineas l
-      join ordenes o on o.id = l.orden_id and o.organizacion_id = l.organizacion_id
-      left join empleados_visibles ev on ev.id = l.empleado_anula_id
-      left join mesas m on m.id = o.mesa_id and m.organizacion_id = o.organizacion_id
+    ${delPlatillo}
      where l.organizacion_id = ${organizacionId}
        and (${alcance.sucursalId}::uuid is null or o.sucursal_id = ${alcance.sucursalId}::uuid)
        and l.anulada_en between ${alcance.desde} and ${alcance.hasta}
      order by 3 desc
      limit ${tope}
   `.execute(tx);
-
-  return rows.map((fila) => ({
-    ...fila,
-    motivo: etiquetaDelMotivoDeAnulacion(fila.motivo),
-  }));
-}
-
-/** La ventana de una sesión de caja: desde que se abrió hasta que se cerró (o hasta ahora). */
-export interface VentanaDelCorte {
-  readonly sucursalId: string;
-  readonly abiertaEn: Date;
-  readonly cerradaEn: Date | null;
+  return conPalabras(rows);
 }
 
 /**
- * Las cancelaciones de la ventana de la sesión, en el orden en que pasaron. Una cuenta cancelada
- * que nunca se cobró no tiene sesión, así que se busca por su hora y su sucursal.
+ * Las de UN corte (`alcance-del-corte.ts`), en el orden en que pasaron. Una sola sentencia.
+ *
+ *   · Cierre del día: todas las de la sucursal en su ventana.
+ *   · Una caja: la cuenta cancelada por quien la abrió, con la caja abierta; el platillo anulado
+ *     de una cuenta que esta caja cobró (cuando sea que se anuló, hasta el cierre), o, de una
+ *     cuenta que nadie ha cobrado, el que anuló quien la abrió con la caja abierta.
  */
 export async function cancelacionesDelCorte(
   tx: Transaccion,
   organizacionId: string,
-  sesion: VentanaDelCorte,
+  alcance: AlcanceDelCorte,
 ): Promise<readonly Cancelacion[]> {
-  const filas = await leerCancelaciones(tx, organizacionId, {
-    sucursalId: sesion.sucursalId,
-    desde: sesion.abiertaEn,
-    hasta: sesion.cerradaEn ?? new Date(),
-  });
-  // La consulta trae lo más reciente primero (para que un tope corte lo viejo); el corte lo cuenta
-  // en el orden del día.
-  return [...filas].reverse();
+  const { sesionId, sucursalId, abreId, cierraElDia, desde, hasta } = alcance;
+  const { rows } = await sql<FilaCruda>`
+    ${deLaCuenta}
+     where o.organizacion_id = ${organizacionId}
+       and o.sucursal_id = ${sucursalId}
+       and o.estado = 'cancelada'
+       and o.cancelada_en > ${desde}
+       and o.cancelada_en <= ${hasta}
+       and (${cierraElDia}::boolean
+            or o.sesion_caja_id = ${sesionId}
+            or (o.sesion_caja_id is null and o.cancelada_por = ${abreId}))
+    union all
+    ${delPlatillo}
+     where l.organizacion_id = ${organizacionId}
+       and o.sucursal_id = ${sucursalId}
+       and l.anulada_en <= ${hasta}
+       and ((${cierraElDia}::boolean and l.anulada_en > ${desde})
+            or (not ${cierraElDia}::boolean
+                and (o.sesion_caja_id = ${sesionId}
+                     or (o.sesion_caja_id is null
+                         and l.empleado_anula_id = ${abreId}
+                         and l.anulada_en > ${desde}))))
+     order by 3
+     limit ${TOPE_DE_FILAS}
+  `.execute(tx);
+  return conPalabras(rows);
 }

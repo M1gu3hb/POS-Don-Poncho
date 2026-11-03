@@ -3,6 +3,8 @@ import 'server-only';
 import type { Transaccion } from '@morphiqpos/data';
 import { sql } from 'kysely';
 
+import { estadoDelCostoDe, lineaSinCosto } from './costo-conocido.ts';
+
 /**
  * LO QUE TODO CORTE LLEVA, leído de la base en la transacción del documento (C.6 de la 2.4).
  *
@@ -20,9 +22,11 @@ import { sql } from 'kysely';
 /** Tope de filas de las tablas largas del documento: un día de restaurante lleno cabe. */
 export const TOPE_DE_FILAS = 500;
 
-/** La ventana de una sesión: desde que se abrió hasta que se cerró (o hasta ahora). */
+/**
+ * La ventana de una sesión: desde que se abrió hasta que se cerró. Con la caja abierta, quien la
+ * lee pone el «hasta» (`ctx.ahora`, el `alcance` del corte): DP-13.2, nada lee su propio reloj.
+ */
 export type Ventana = Pick<SesionDelCorte, 'sucursalId' | 'abiertaEn' | 'cerradaEn'>;
-export const hastaDe = (sesion: Ventana): Date => sesion.cerradaEn ?? new Date();
 
 export interface SesionDelCorte {
   readonly id: string;
@@ -199,6 +203,14 @@ export interface ResumenDeVentas {
   readonly descuentoCentavos: string;
   readonly impuestosCentavos: string;
   readonly costoCentavos: string;
+  /**
+   * DP-13.2 · La base del margen (`costo-conocido.ts`): lo vendido y lo que costó en las cuentas
+   * con costo conocido, y cuántas quedaron fuera por no tener receta o tenerla incompleta.
+   */
+  readonly ventaConCostoCentavos: string;
+  readonly costoConocidoCentavos: string;
+  readonly ventasSinReceta: number;
+  readonly ventasRecetaIncompleta: number;
 }
 
 /**
@@ -229,8 +241,15 @@ export async function resumenDeVentas(
            coalesce(sum(o.total_centavos), 0)::text       as "totalCentavos",
            coalesce(sum(o.descuento_centavos), 0)::text   as "descuentoCentavos",
            coalesce(sum(o.impuestos_centavos), 0)::text   as "impuestosCentavos",
-           coalesce(sum(o.costo_total_centavos), 0)::text as "costoCentavos"
+           coalesce(sum(o.costo_total_centavos), 0)::text as "costoCentavos",
+           coalesce(sum(o.total_centavos) filter (where e.estado = 'conocido'), 0)::text
+                                                          as "ventaConCostoCentavos",
+           coalesce(sum(o.costo_total_centavos) filter (where e.estado = 'conocido'), 0)::text
+                                                          as "costoConocidoCentavos",
+           (count(*) filter (where e.estado = 'sin_receta'))::int        as "ventasSinReceta",
+           (count(*) filter (where e.estado = 'receta_incompleta'))::int as "ventasRecetaIncompleta"
       from ordenes o
+      cross join lateral (select ${estadoDelCostoDe('o')} as estado) e
      where o.organizacion_id = ${organizacionId}
        and o.sesion_caja_id = ${sesionCajaId}
        and ${ORDEN_VENDIDA}
@@ -242,6 +261,10 @@ export async function resumenDeVentas(
       descuentoCentavos: '0',
       impuestosCentavos: '0',
       costoCentavos: '0',
+      ventaConCostoCentavos: '0',
+      costoConocidoCentavos: '0',
+      ventasSinReceta: 0,
+      ventasRecetaIncompleta: 0,
     }
   );
 }
@@ -310,6 +333,8 @@ export interface ProductoVendido {
   readonly unidad: string;
   readonly totalCentavos: string;
   readonly costoCentavos: string;
+  /** DP-13.2 · Cuántas de sus líneas se vendieron sin costo (`costo-conocido.ts`). */
+  readonly lineasSinCosto: number;
   /** Es un SERVICIO del salón (tiene fila en `servicios`), no producto de anaquel. */
   readonly esServicio: boolean;
   /** `bebida`, `alimento`, `grano` u `otro`: lo que la cafetería cuenta como bebidas. */
@@ -336,6 +361,7 @@ export async function productosVendidos(
            max(l.unidad)                                       as "unidad",
            sum(l.total_centavos)::text                         as "totalCentavos",
            sum(l.total_centavos - l.utilidad_centavos)::text   as "costoCentavos",
+           (count(*) filter (where ${lineaSinCosto('l')}))::int as "lineasSinCosto",
            bool_or(sv.producto_id is not null)                 as "esServicio",
            max(pr.familia)                                     as "familia",
            max(li.nombre)                                      as "linea",
@@ -421,6 +447,7 @@ export async function gastosDelCorte(
 // Las cancelaciones salieron a su propio archivo (DP-12.4): las leen la hoja del corte, la lectura
 // del corte heredado y Registros, y el archivo ya pasaba de 600 líneas.
 export { cancelacionesDelCorte, type Cancelacion } from './cancelaciones.ts';
+export { alcanceDelCorte, type AlcanceDelCorte } from './alcance-del-corte.ts';
 
 export interface DescuentoDeUsuario {
   readonly usuario: string | null;
@@ -592,16 +619,23 @@ export interface SalidaSinVenta {
   readonly quien: string | null;
 }
 
+/**
+ * DP-13.3 · La merma de lo cancelado ya hecho (`restaurante/merma-por-cancelacion.ts`) se guarda
+ * con una clave del catálogo global y se reconoce por su referencia: el corte la dice así.
+ */
+const motivoDeLaSalida = sql`case when m.tipo = 'merma' and m.referencia_tipo in ('orden', 'anulacion')
+                                  then 'Por cancelación' else m.motivo end`;
+
 /** Merma y consumo de la casa en la ventana de la sesión: el dinero que salió sin venta. */
 export async function salidasSinVenta(
   tx: Transaccion,
   organizacionId: string,
-  sesion: Pick<SesionDelCorte, 'abiertaEn' | 'cerradaEn'>,
+  sesion: { readonly abiertaEn: Date; readonly cerradaEn: Date },
 ): Promise<readonly SalidaSinVenta[]> {
-  const hasta = sesion.cerradaEn ?? new Date();
+  const hasta = sesion.cerradaEn;
   const { rows } = await sql<SalidaSinVenta>`
     select m.tipo                                                            as "tipo",
-           m.motivo                                                          as "motivo",
+           ${motivoDeLaSalida}                                               as "motivo",
            i.nombre                                                          as "nombre",
            rtrim(to_char(sum(-m.cantidad::numeric), 'FM999999990.###'), '.')       as "cantidad",
            max(m.unidad)                                                     as "unidad",
@@ -613,7 +647,7 @@ export async function salidasSinVenta(
      where m.organizacion_id = ${organizacionId}
        and m.tipo in ('merma', 'salida_consumo_interno')
        and m.created_at between ${sesion.abiertaEn} and ${hasta}
-     group by m.tipo, m.motivo, i.id, i.nombre
+     group by m.tipo, ${motivoDeLaSalida}, i.id, i.nombre
      order by m.tipo, sum(-m.cantidad::numeric * m.costo_unitario_centavos) desc
      limit ${TOPE_DE_FILAS}
   `.execute(tx);

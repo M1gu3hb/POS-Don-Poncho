@@ -1,4 +1,5 @@
 import {
+  RECETA_INCOMPLETA,
   SIN_RECETA,
   economiaDeLaVenta,
   textoDelMargen,
@@ -19,10 +20,10 @@ export function MargenEnLaLista({
 }) {
   const economia = economiaDeLaVenta(venta);
   if (economia.estado === 'oculto') return null;
-  if (economia.estado === 'sin_receta') {
+  if (economia.estado === 'sin_receta' || economia.estado === 'receta_incompleta') {
     return (
-      <p className="text-xs text-texto-sutil" data-margen="sin_receta">
-        Margen {SIN_RECETA}
+      <p className="text-xs text-texto-sutil" data-margen={economia.estado}>
+        Margen {economia.estado === 'sin_receta' ? SIN_RECETA : RECETA_INCOMPLETA}
       </p>
     );
   }

@@ -18,6 +18,14 @@ import { useState } from 'react';
 import { ErrorApi, invocarComando } from '~/cliente/api';
 import { useVocabulario } from '~/cliente/vocabulario';
 import { DescuentoDeVenta, type DescuentoElegido } from '~/venta/DescuentoDeVenta';
+import { PinDeSupervisor, type Autorizada } from '~/venta/PinDeSupervisor';
+
+import {
+  NO_PUDE_COMPROBAR_LA_COCINA,
+  SI_NO_PUDE_COMPROBARLA,
+  pideElPinDelSupervisor,
+  type EstadoDeLaCocina,
+} from './permiso-al-cancelar.ts';
 
 /**
  * LO QUE CAMBIA UNA CUENTA ANTES DE COBRARLA: el descuento y la cancelación (día completo
@@ -99,6 +107,7 @@ export function DescuentoDeLaCuenta({
           </DialogHeader>
           <DescuentoDeVenta
             key={apertura}
+            ordenId={ordenId}
             base={base}
             onAplicar={(elegido) => {
               void aplicar(elegido);
@@ -119,6 +128,8 @@ export function CancelarLaCuenta({
   ordenId,
   alCancelar,
   aviso = null,
+  cocina,
+  alAbrir,
 }: {
   readonly ordenId: string;
   readonly alCancelar: (cancelada: boolean) => void;
@@ -128,13 +139,28 @@ export function CancelarLaCuenta({
    * es el de siempre.
    */
   readonly aviso?: string | null;
+  /**
+   * DP-13.2 · Lo que se sabe de la cocina en este momento (la pantalla del mesero lo pasa; sin él,
+   * no se dice nada de la cocina). Mientras se comprueba no se cancela a ciegas, y si no se pudo
+   * comprobar se dice.
+   */
+  readonly cocina?: EstadoDeLaCocina;
+  /** Al abrir el diálogo: la pantalla del mesero vuelve a leer la cocina. */
+  readonly alAbrir?: () => void;
 }) {
   const voc = useVocabulario();
   const [abierto, setAbierto] = useState(false);
   const [motivo, setMotivo] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
-  const listo = motivo.trim().length >= 3 && !enviando;
+  /** DP-13.2 · La cuenta ya se pidió (o se imprimió): el servidor pide el PIN de un gerente. */
+  const [pidePin, setPidePin] = useState(false);
+  const [autorizada, setAutorizada] = useState<Autorizada | null>(null);
+  const listo =
+    motivo.trim().length >= 3 &&
+    !enviando &&
+    cocina !== 'comprobando' &&
+    (!pidePin || autorizada !== null);
   // El ejemplo nombra la unidad como la llama el negocio («la mesa equivocada»), con su
   // concordancia: si un día se llama de otro modo, el ejemplo lo sigue.
   const dondeSeCapturo =
@@ -146,10 +172,19 @@ export function CancelarLaCuenta({
     setEnviando(true);
     setFallo(null);
     try {
-      await invocarComando('/api/restaurante/cancelar-orden', { ordenId, motivo: motivo.trim() });
+      await invocarComando('/api/restaurante/cancelar-orden', {
+        ordenId,
+        motivo: motivo.trim(),
+        ...(autorizada === null ? {} : { autorizacion: autorizada.token }),
+      });
       setAbierto(false);
       alCancelar(true);
     } catch (error: unknown) {
+      if (pideElPinDelSupervisor(error)) {
+        // La primera vez es «hace falta el PIN»; con una autorización, que venció o no sirve.
+        setPidePin(true);
+        setAutorizada(null);
+      }
       setFallo(mensajeDe(error, `No se pudo cancelar ${voc.enFrase('orden')}.`));
     } finally {
       setEnviando(false);
@@ -162,6 +197,7 @@ export function CancelarLaCuenta({
         variant="outline"
         onClick={() => {
           setAbierto(true);
+          alAbrir?.();
         }}
       >
         <Ban aria-hidden="true" />
@@ -176,7 +212,13 @@ export function CancelarLaCuenta({
               nombre.
             </DialogDescription>
           </DialogHeader>
-          {aviso === null ? null : (
+          {cocina === 'comprobando' ? (
+            <Aviso tono="info" titulo="Comprobando lo que ya preparó la cocina…" />
+          ) : cocina === 'sin_comprobar' ? (
+            <Aviso tono="atencion" titulo={NO_PUDE_COMPROBAR_LA_COCINA}>
+              {SI_NO_PUDE_COMPROBARLA}
+            </Aviso>
+          ) : aviso === null ? null : (
             <Aviso tono="atencion" titulo={aviso}>
               Queda en el corte con quién la canceló, cuándo, por qué y cuánto.
             </Aviso>
@@ -193,10 +235,31 @@ export function CancelarLaCuenta({
               }}
             />
           </div>
-          {fallo === null ? null : (
+          {fallo === null || (pidePin && autorizada === null) ? null : (
             <Aviso tono="peligro" titulo={fallo}>
               No se canceló nada: {voc.enFrase('orden')} sigue por cobrar.
             </Aviso>
+          )}
+          {!pidePin ? null : autorizada === null ? (
+            <div className="flex flex-col gap-(--espacio-2)">
+              <Aviso
+                tono="atencion"
+                titulo={fallo ?? 'Hace falta el PIN de un gerente o del dueño.'}
+              >
+                {voc.enFrase('orden')} ya se pidió o se imprimió: lo autoriza un gerente o el dueño.
+              </Aviso>
+              <PinDeSupervisor
+                ordenId={ordenId}
+                para="cancelacion"
+                idDelCampo="cancelar-cuenta-pin"
+                alAutorizar={(nueva) => {
+                  setAutorizada(nueva);
+                  setFallo(null);
+                }}
+              />
+            </div>
+          ) : (
+            <Aviso tono="exito" titulo={`Autorizó ${autorizada.nombre}.`} />
           )}
           <DialogFooter>
             <Button

@@ -75,3 +75,39 @@ describe('el resumen del día del restaurante', () => {
     expect(resumen.neta).toBe(30_000 - 42_000);
   });
 });
+
+describe('DP-13.2 · el margen del día sale sólo de lo que tiene costo completo', () => {
+  it('una venta sin receta y otra de receta incompleta quedan fuera, y se dice', () => {
+    const resumen = resumirDia(
+      [
+        venta({ id: 'a', total: 500, costo_total_snapshot: 200, estado_costo: 'conocido' }),
+        venta({ id: 'b', total: 300, costo_total_snapshot: 0, estado_costo: 'sin_receta' }),
+        venta({ id: 'c', total: 400, costo_total_snapshot: 50, estado_costo: 'receta_incompleta' }),
+      ],
+      [],
+    );
+    expect(resumen.ventas).toBe(120_000);
+    expect(resumen.costo).toBe(20_000);
+    expect(resumen.utilidad).toBe(30_000);
+    // Sobre los $500 con costo completo, no sobre los $1,200: 60 %, no un margen inflado.
+    expect(resumen.margen).toBe(6_000);
+    expect(resumen.fueraDelMargen).toBe('1 venta sin receta · 1 venta con receta incompleta');
+  });
+
+  it('sin ninguna venta de costo completo: ni costo, ni utilidad, ni margen (no «100 %»)', () => {
+    const resumen = resumirDia(
+      [venta({ total: 300, costo_total_snapshot: 0, estado_costo: 'sin_receta' })],
+      [],
+    );
+    expect(resumen).toMatchObject({ costo: null, utilidad: null, margen: null, neta: null });
+    expect(resumen.fueraDelMargen).toBe('1 venta sin receta');
+    expect(resumen.margenVisible).toBe(true);
+  });
+
+  it('a quien no ve márgenes (el puente no le manda el costo) no se le pinta el margen, ni «sin receta»', () => {
+    const resumen = resumirDia([venta({ total: 300, costo_total_snapshot: undefined })], []);
+    expect(resumen.margenVisible).toBe(false);
+    expect(resumen.fueraDelMargen).toBe('');
+    expect(resumirDia([venta({ total: 300 })], []).margenVisible).toBe(true);
+  });
+});

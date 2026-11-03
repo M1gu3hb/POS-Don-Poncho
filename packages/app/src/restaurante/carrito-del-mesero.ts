@@ -8,7 +8,7 @@ import { definirComando, type ContextoComando } from '../definicion.ts';
 import type { EstadoDelCarrito } from '../portal/carrito.ts';
 import { cantidadPedida } from '../portal/esquemas.ts';
 import { cargarProductosDelMenu, valorarParaPedido } from '../portal/productos.ts';
-import { resolverElAvisoDelPedido } from './carrito-del-salon.ts';
+import { resolverElAvisoDelPedido, resolverElAvisoSiQuedoVacio } from './carrito-del-salon.ts';
 import {
   estadoDelCarritoParaElMesero,
   huellaDelPersonal,
@@ -120,6 +120,15 @@ export const cambiarEnElCarrito = definirComando<
         .where('id', '=', entrada.lineaId)
         .execute(),
     );
+    await ctx.paso('resolver_el_aviso', () =>
+      resolverElAvisoSiQuedoVacio(
+        ctx.tx,
+        ctx.ambito.organizacionId,
+        delCarrito.id,
+        ctx.ambito.empleoId,
+        ctx.ahora,
+      ),
+    );
     ctx.auditar({
       entidadId: delCarrito.id,
       payload: { lineaId: entrada.lineaId, cantidad: entrada.cantidad },
@@ -156,6 +165,16 @@ export const quitarDelCarritoDeLaMesa = definirComando<
         .executeTakeFirst(),
     );
     if (quitada === undefined) throw lineaQueYaNoEsta();
+    // DP-13.2: si era lo último, el «Pedido listo para confirmar» ya no espera a nadie.
+    await ctx.paso('resolver_el_aviso', () =>
+      resolverElAvisoSiQuedoVacio(
+        ctx.tx,
+        ctx.ambito.organizacionId,
+        delCarrito.id,
+        ctx.ambito.empleoId,
+        ctx.ahora,
+      ),
+    );
     ctx.auditar({
       entidadId: delCarrito.id,
       payload: { lineaId: entrada.lineaId, productoId: quitada.producto_id },
@@ -187,7 +206,13 @@ export const vaciarElCarrito = definirComando<
     );
     // Los comensales se fueron: su «Pedido listo para confirmar» tampoco espera a nadie.
     await ctx.paso('resolver_el_aviso', () =>
-      resolverElAvisoDelPedido(ctx.tx, ctx.ambito, delCarrito.id, ctx.ahora),
+      resolverElAvisoDelPedido(
+        ctx.tx,
+        ctx.ambito.organizacionId,
+        delCarrito.id,
+        ctx.ambito.empleoId,
+        ctx.ahora,
+      ),
     );
     ctx.auditar({
       entidadId: delCarrito.id,
@@ -271,7 +296,13 @@ export const enviarElCarritoDeLaMesa = definirComando<
         .execute(),
     );
     await ctx.paso('resolver_el_aviso', () =>
-      resolverElAvisoDelPedido(ctx.tx, ctx.ambito, delCarrito.id, ctx.ahora),
+      resolverElAvisoDelPedido(
+        ctx.tx,
+        ctx.ambito.organizacionId,
+        delCarrito.id,
+        ctx.ambito.empleoId,
+        ctx.ahora,
+      ),
     );
     // Como al atender un aviso (DP-9.2): el MESERO que confirma el pedido de una mesa sin
     // responsable se queda con ella y con su cuenta.

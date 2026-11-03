@@ -80,12 +80,6 @@ const LECTURAS_PERMITIDAS = [
       'El ticket acepta esta propiedad opcional dentro de su DTO de impresión; la venta real conserva costo unitario y cantidad.',
   },
   {
-    campo: 'costo_total_estimado',
-    cantidad: 1,
-    razon:
-      'Pertenece al DTO calculado del reporte de corte y no a la fila persistida de CorteCaja.',
-  },
-  {
     campo: 'diferencia_apertura',
     cantidad: 1,
     razon:
@@ -129,7 +123,7 @@ const LECTURAS_PERMITIDAS = [
   },
   {
     campo: 'total_general',
-    cantidad: 9,
+    cantidad: 7,
     razon:
       'Pertenece a resúmenes y DTO de impresión derivados de ventas; no se guarda como segunda verdad en CorteCaja.',
   },
@@ -152,14 +146,8 @@ const LECTURAS_PERMITIDAS = [
       'Pertenece a resúmenes y DTO de impresión derivados de pagos; no se guarda como segunda verdad en CorteCaja.',
   },
   {
-    campo: 'utilidad_bruta_total',
-    cantidad: 3,
-    razon:
-      'Pertenece al DTO calculado del reporte de corte y se deriva de ventas, sin incluir propinas.',
-  },
-  {
     campo: 'utilidad_neta_estimada',
-    cantidad: 2,
+    cantidad: 1,
     razon:
       'Pertenece al DTO calculado del reporte de corte y se deriva de utilidad bruta menos gastos.',
   },

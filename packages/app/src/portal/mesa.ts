@@ -10,6 +10,7 @@ import { entradaAbrirMesa } from './esquemas.ts';
 import { faltaMesero, puedeOrdenarDesdeQR } from './negocio.ts';
 import { sellarTransicionDeMesa } from '../restaurante/sala-escrituras.ts';
 import { tomarLaUnionDeLaMesa } from '../restaurante/union-del-salon.ts';
+import { caducarElCarritoAlAbrir } from '../restaurante/carrito-del-salon.ts';
 
 /**
  * `portal.abrir_mesa` — el comensal abre su propia mesa (E7-3).
@@ -131,6 +132,11 @@ export async function abrirLaMesaDelPortal(
       .where('organizacion_id', '=', ambito.organizacionId)
       .where('id', '=', ambito.mesaId)
       .execute(),
+  );
+
+  // Revisión de DP-13: lo que una mesa sin cuenta dejó hace horas no es de quien la abre.
+  await ctx.paso('caducar_el_carrito', () =>
+    caducarElCarritoAlAbrir(ctx.tx, ambito.organizacionId, ambito.mesaId, ctx.ahora),
   );
 
   // F-305 · La abrió el COMENSAL desde su teléfono: sin empleado a quien

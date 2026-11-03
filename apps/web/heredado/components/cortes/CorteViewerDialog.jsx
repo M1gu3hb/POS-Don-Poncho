@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import CorteTicket from '@/components/tickets/CorteTicket';
 import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
 import { cancelacionesDeLaCaja } from '~/corte/cancelaciones-leidas';
+import { leerCancelacionesSinTrabar } from '~/corte-heredado/cancelaciones-sin-trabar';
 
 export default function CorteViewerDialog({ corte, open, onClose }) {
   const { config, paquete_modo } = useConfig();
@@ -37,6 +38,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
     gastos: [],
     ingredientes: [],
     cancelaciones: [],
+    cancelacionesNoLeidas: false,
     alertas: [],
   });
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
         // neta sale inflada, sin descuentos el costo sale en cero y el margen al
         // 100 %. Un corte a medias no es un corte: se enseña el error y se deja
         // el diálogo vacío, que es lo que hace que alguien reintente.
-        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelaciones] =
+        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas] =
           await Promise.all([
             api.entidades.Venta.list('-fecha_cierre', 2000),
             api.entidades.GastoOperativo.list('-created_date', 500),
@@ -75,8 +77,10 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
             // DP-12.4 · Las cancelaciones salen del SERVIDOR, las mismas del corte de Cierre diario:
             // con quién canceló (no quien cobraba), el motivo, el importe y, aparte, lo que ya
             // estaba preparado. Antes se armaban aquí desde las ventas y un platillo anulado no
-            // aparecía. Sin `.catch`: un corte sin sus cancelaciones parecería uno sin ninguna.
-            cancelacionesDeLaCaja(corteId),
+            // aparecía. DP-13.4: si SÓLO ellas fallan no se cae el corte: se pinta igual y su
+            // sección dice «No se pudieron leer las cancelaciones» (nunca una lista vacía que
+            // parezca «sin cancelaciones»), y el error se registra.
+            leerCancelacionesSinTrabar(() => cancelacionesDeLaCaja(corteId)),
           ]);
 
         const matchVenta = (v) => {
@@ -166,7 +170,10 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
             detalles,
             gastos: gastosCorte,
             ingredientes: ingredientesConsumidos,
-            cancelaciones,
+            cancelaciones: cancelacionesLeidas.filas,
+            cancelacionesNoLeidas: cancelacionesLeidas.noSePudieronLeer,
+            // DP-13.2 · Las de las cuentas de esta caja, o (Cierre del día) todas las de la sucursal.
+            alcanceDeCancelaciones: cancelacionesLeidas.alcance,
             alertas,
           });
           setLoading(false);
@@ -252,6 +259,8 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
               gastos={data.gastos}
               ingredientes={data.ingredientes}
               cancelaciones={data.cancelaciones}
+              cancelacionesNoLeidas={data.cancelacionesNoLeidas}
+              alcanceDeCancelaciones={data.alcanceDeCancelaciones}
               alertas={data.alertas}
               config={config}
               sinCostos={sinCostos}

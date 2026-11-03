@@ -3,12 +3,17 @@ import 'server-only';
 import type { Ambito, Rol } from '@morphiqpos/contracts';
 import { obtenerDb } from '@morphiqpos/data';
 
-import { cancelacionesDelCorteComando } from '../../caja/corte/lectura-de-cancelaciones.ts';
+import {
+  cancelacionesDelCorteComando,
+  cancelacionesRegistradasComando,
+} from '../../caja/corte/lectura-de-cancelaciones.ts';
+import { cerrarCaja } from '../../caja/sesion.ts';
 import { comando } from '../../produccion.ts';
 import {
   abrirCajaReal,
   ambitoDe,
   clave,
+  cobrarEnEfectivo,
   exigirOk,
   sembrarCompanero,
   sembrarNegocio,
@@ -25,8 +30,9 @@ import { entregarPedidos, transicionarPedido } from '../preparacion.ts';
 /**
  * EL SALÓN QUE CANCELA (DP-12.4), sembrado contra Postgres para las pruebas de cancelación.
  *
- * Rosa es la mesera (la persona del negocio sembrado); Beatriz, la cajera, abre la caja. Cocina
- * y almacén son otros dos empleos. Catorce mesas, una arrachera y una sopa. Lo siembra
+ * Rosa es la mesera (la persona del negocio sembrado); Beatriz, la cajera, abre la caja 1, y
+ * Carmen, la otra cajera, la 2 cuando una prueba la abre (DP-13.2). Cocina y almacén son otros
+ * dos empleos. Catorce mesas, una arrachera y una sopa. Lo siembra
  * `sembrarElSalonQueCancela` en el `beforeAll` de cada archivo; las variables exportadas se
  * leen ya sembradas (los enlaces de un módulo se ven al día).
  */
@@ -37,6 +43,7 @@ export let arrachera = '';
 export let sopa = '';
 export let mesas: readonly string[] = [];
 export let cajera = '';
+export let segundaCajera = '';
 export let cocinero = '';
 export let almacenista = '';
 export let sesionCajaId = '';
@@ -48,6 +55,12 @@ export const como = (empleoId: string, rol: Rol, enTerminal = false): Ambito => 
 });
 export const mesero = () => como(negocio.empleoId, 'mesero');
 export const deLaCajera = () => como(cajera, 'cajero', true);
+/** Carmen, en la caja 2. */
+export const deLaSegundaCajera = (): Ambito => ({
+  ...ambitoDe(negocio, sucursal.sucursalId, sucursal.terminales[1] ?? null),
+  empleoId: segundaCajera,
+  rol: 'cajero',
+});
 
 export async function sembrarElSalonQueCancela(): Promise<void> {
   negocio = await sembrarNegocio({
@@ -56,8 +69,12 @@ export async function sembrarElSalonQueCancela(): Promise<void> {
     giro: 'restaurante',
     paquete: 'restaurante',
   });
-  sucursal = await sembrarSucursal(negocio, { terminales: ['Caja 1'] });
+  sucursal = await sembrarSucursal(negocio, {
+    terminales: ['Caja 1', 'Caja 2'],
+    cajasSimultaneas: 2,
+  });
   cajera = await sembrarCompanero(negocio, { nombre: 'Beatriz', rol: 'cajero' });
+  segundaCajera = await sembrarCompanero(negocio, { nombre: 'Carmen', rol: 'cajero' });
   cocinero = await sembrarCompanero(negocio, { nombre: 'Cosme', rol: 'cocina' });
   almacenista = await sembrarCompanero(negocio, { nombre: 'Alma', rol: 'almacen' });
   const db = obtenerDb();
@@ -197,15 +214,48 @@ export const anular = (ordenId: string, lineaId: string, ambito: Ambito, cantida
     idempotencyKey: clave(),
   });
 
-/** Lo que el corte dice de una mesa. */
+/**
+ * Lo que el día dice de una mesa, en el orden en que pasó: la lectura de la sucursal (la de
+ * Registros), que tiene TODAS las cancelaciones. El corte de UNA caja sólo trae las de sus
+ * cuentas (DP-13.2): una cuenta que cancela la mesera no es de ninguna caja.
+ */
 export async function delCorte(mesa: string) {
   const salida = exigirOk(
+    await comando(cancelacionesRegistradasComando, {
+      entrada: { dias: 1 },
+      ambito: como(negocio.empleoId, 'gerente'),
+      idempotencyKey: clave(),
+    }),
+    'caja.cancelaciones_registradas',
+  );
+  return salida.cancelaciones.filter((c) => c.mesa === mesa).reverse();
+}
+
+/** Lo que dice el corte de UNA sesión de caja (el heredado de la Caja lee esto). */
+export async function delCorteDe(sesionId: string) {
+  return exigirOk(
     await comando(cancelacionesDelCorteComando, {
-      entrada: { sesionCajaId },
+      entrada: { sesionCajaId: sesionId },
       ambito: deLaCajera(),
       idempotencyKey: clave(),
     }),
     'caja.cancelaciones_del_corte',
   );
-  return salida.cancelaciones.filter((c) => c.mesa === mesa);
 }
+
+/** Cobra la cuenta en efectivo, exacto, en la caja del ámbito. */
+export async function cobrar(ordenId: string, ambito: Ambito): Promise<void> {
+  const { total_centavos } = await obtenerDb()
+    .selectFrom('ordenes')
+    .select('total_centavos')
+    .where('id', '=', ordenId)
+    .executeTakeFirstOrThrow();
+  exigirOk(await cobrarEnEfectivo(ambito, ordenId, Number(total_centavos)), 'venta.cobrar');
+}
+
+export const cerrarLaCaja = (ambito: Ambito) =>
+  comando(cerrarCaja, {
+    entrada: { efectivoContadoCentavos: 50_000 },
+    ambito,
+    idempotencyKey: clave(),
+  });

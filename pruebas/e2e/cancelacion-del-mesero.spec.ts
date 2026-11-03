@@ -2,10 +2,13 @@ import { expect, test } from '@playwright/test';
 
 import {
   cancelacionesDelCorte,
+  cancelacionesDelDia,
+  cancelarConElPinDelGerente,
   cancelarLaCuenta,
   empezarElDia,
   ERROR_DEL_MESERO,
   FONDO_CENTAVOS,
+  pedirLaCuenta,
   quitarUnPlatillo,
   SLUG,
   tocar,
@@ -39,6 +42,8 @@ import { abrirPantalla, exigirDemostracion } from './ayudantes/sesion.ts';
  *   · Mesa 4 (tacos al pastor): cancela la cuenta ANTES de que cocina la prepare (sin aviso).
  *   · Mesa 5 (guacamole y arrachera): cocina deja listo; quita la arrachera (el platillo dice «Ya
  *     salió de cocina») y cancela la cuenta.
+ *   · Mesa 6 (tacos al pastor), DP-13.2: con la cuenta ya pedida, cancelar pide el PIN de la
+ *     gerente, que lo teclea en el mismo diálogo; la autorización es de ESA cuenta.
  *
  * ── Qué se afirma ────────────────────────────────────────────────────────────
  *   · Cada cancelación queda con QUIÉN canceló (Lupita, no la cajera), el motivo y el importe;
@@ -116,13 +121,34 @@ test.describe('el mesero cancela desde su pantalla, y el corte lo dice', () => {
       await exigirEstadoDeLaMesa(duena, 5, 'libre', 'La mesa 5 cancelada no volvió al servicio.');
     });
 
+    // ── MESA 6: la cuenta pedida pide el PIN de la gerente (DP-13.2) ──────────────────────────
+    await test.step('mesa 6: con la cuenta PEDIDA, cancelar pide el PIN de la gerente', async () => {
+      await abrirLaMesa(lupita, duena, 6, 2);
+      await comandar(lupita, 6, [{ nombre: CARTA.pastor.nombre, veces: 1 }]);
+      const mesa = await mesaEnElServidor(duena, 6);
+      await pedirLaCuenta(lupita, mesa.ordenId ?? '');
+      await cancelarConElPinDelGerente(
+        lupita,
+        info,
+        6,
+        'Se arrepintieron',
+        personaDe(SLUG, 'gerente'),
+      );
+      await exigirEstadoDeLaMesa(duena, 6, 'libre', 'La mesa 6 cancelada no volvió al servicio.');
+    });
+
     // ── LO QUE EL SERVIDOR GUARDÓ ────────────────────────────────────────────────────────────
     const cancelaciones =
       await test.step('el servidor guardó cada cancelación con quién, motivo, importe y pérdida', async () => {
-        const filas = await cancelacionesDelCorte(rosa, sesion);
+        // DP-13.2 · El corte de la caja de Rosa (abierta) trae sólo las de SUS cuentas: lo que
+        // canceló Lupita es del Cierre del día, y se lee del día de la sucursal.
+        const deLaCaja = await cancelacionesDelCorte(rosa, sesion);
+        expect(deLaCaja.alcance).toBe('caja');
+        expect(deLaCaja.cancelaciones, 'Lo de Lupita no es de la caja de Rosa.').toHaveLength(0);
+        const filas = await cancelacionesDelDia(rosa);
         const de = (mesa: string, tipo: string) =>
           filas.find((f) => f.mesa === mesa && f.tipo === tipo);
-        expect(filas, 'El corte debe traer las cinco cancelaciones.').toHaveLength(5);
+        expect(filas, 'El día debe traer las seis cancelaciones.').toHaveLength(6);
         // Todas son de Lupita, no de Rosa, que cobra y abrió la caja.
         expect(filas.every((f) => f.usuario === nombreDeLupita)).toBe(true);
         expect(de('Mesa 3', 'linea')).toMatchObject({
@@ -134,6 +160,7 @@ test.describe('el mesero cancela desde su pantalla, y el corte lo dice', () => {
         expect(de('Mesa 3', 'orden')).toMatchObject({
           motivo: 'El cliente se fue sin pagar',
           montoCentavos: String(CARTA.sopa.centavos),
+          perdidaCentavos: String(CARTA.sopa.centavos),
           perdida: true,
         });
         expect(de('Mesa 4', 'orden')).toMatchObject({
@@ -149,17 +176,25 @@ test.describe('el mesero cancela desde su pantalla, y el corte lo dice', () => {
         expect(de('Mesa 5', 'orden')).toMatchObject({
           motivo: 'Se fueron sin pagar',
           montoCentavos: String(CARTA.guacamole.centavos),
+          perdidaCentavos: String(CARTA.guacamole.centavos),
           perdida: true,
+        });
+        expect(de('Mesa 6', 'orden')).toMatchObject({
+          motivo: 'Se arrepintieron',
+          perdidaCentavos: '0',
+          perdida: false,
         });
         return filas;
       });
     expect(cancelaciones.filter((f) => f.perdida)).toHaveLength(3);
 
     // ── REGISTROS: la pestaña «Cancelaciones» ───────────────────────────────────────────────
-    await test.step('Registros → Cancelaciones enseña las cinco, con la marca de pérdida', async () => {
+    await test.step('Registros → Cancelaciones enseña las seis, con la marca de pérdida y su importe', async () => {
       await duena.goto('/registros?tab=cancelaciones');
-      await expect(duena.getByText('Pérdida · ya preparado')).toHaveCount(3, { timeout: 30_000 });
-      await expect(duena.getByText('Antes de prepararse')).toHaveCount(2);
+      await expect(duena.getByText(/^Pérdida .+ · ya preparado$/)).toHaveCount(3, {
+        timeout: 30_000,
+      });
+      await expect(duena.getByText('Antes de prepararse')).toHaveCount(3);
       await expect(duena.getByText(nombreDeLupita).first()).toBeVisible();
       await expect(duena.getByText('El cliente se fue sin pagar').first()).toBeVisible();
       await expect(duena.getByText(ERROR_DEL_MESERO).first()).toBeVisible();

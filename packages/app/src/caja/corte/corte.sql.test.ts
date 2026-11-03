@@ -28,6 +28,15 @@ const VENTANA = {
   cerradaEn: new Date('2026-09-26T03:00:00Z'),
 };
 const AHORA = new Date('2026-09-26T03:00:00Z');
+/** DP-13.2 · El alcance que `alcanceDelCorte` calcula para una caja (no el Cierre del día). */
+const ALCANCE = {
+  sesionId: SESION,
+  sucursalId: VENTANA.sucursalId,
+  abreId: '44444444-4444-4444-8444-444444444444',
+  cierraElDia: false,
+  desde: VENTANA.abiertaEn,
+  hasta: VENTANA.cerradaEn,
+};
 
 const grabadora = () => transaccionGrabadora();
 
@@ -44,7 +53,8 @@ const CONSULTAS: readonly (readonly [string, Acotada, (tx: Transaccion) => Promi
   ['productosVendidos', 'sesion', (tx) => consultas.productosVendidos(tx, ORG, SESION)],
   ['ventasPorPersona', 'sesion', (tx) => consultas.ventasPorPersona(tx, ORG, SESION)],
   ['gastosDelCorte', 'sesion', (tx) => consultas.gastosDelCorte(tx, ORG, SESION)],
-  ['cancelacionesDelCorte', 'ventana', (tx) => consultas.cancelacionesDelCorte(tx, ORG, VENTANA)],
+  ['alcanceDelCorte', 'sesion', (tx) => consultas.alcanceDelCorte(tx, ORG, SESION, AHORA)],
+  ['cancelacionesDelCorte', 'ventana', (tx) => consultas.cancelacionesDelCorte(tx, ORG, ALCANCE)],
   [
     'leerCancelaciones (Registros)',
     'negocio',

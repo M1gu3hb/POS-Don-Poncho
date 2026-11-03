@@ -52,12 +52,20 @@ export default function BarcodeScanner({
   miniCart = null,
   onViewCart,
   onFinish,
+  // DP-13.2: sin cámara (o con el permiso negado), en lugar del campo numérico de «Código de
+  // barras» se pinta esto —el mesero elige la mesa de una lista; su token no es un número—.
+  respaldo = null,
+  etiquetaDelRespaldo = 'Ingresar manual',
 }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const detectorRef = useRef(null);
   const zxingControlsRef = useRef(null);
   const rafRef = useRef(null);
+  // DP-13.4 (17): cada arranque de la cámara es una SESIÓN. Al detener se cambia de sesión: lo que
+  // llegue tarde de una sesión vieja —un `getUserMedia` que resolvió después de cerrar, un cuadro
+  // del ciclo— se apaga o se descarta en vez de dejar la cámara prendida o el ciclo corriendo.
+  const sesionRef = useRef(0);
 
   // Estabilidad
   const stableRef = useRef({ code: '', count: 0 });
@@ -122,6 +130,7 @@ export default function BarcodeScanner({
 
   // Apagar cámara y loops
   const stopCamera = useCallback(() => {
+    sesionRef.current += 1;
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
     if (zxingControlsRef.current) {
       try { zxingControlsRef.current.stop(); } catch { /* noop */ }
@@ -195,25 +204,30 @@ export default function BarcodeScanner({
     }
   }, [continuous, onClose, onDetected, stopCamera]);
 
-  // Loop nativo
-  const scanLoopNative = useCallback(async () => {
+  // Loop nativo. Cada cuadro es de UNA sesión: detenida la cámara, no se vuelve a programar.
+  const scanLoopNative = useCallback(async (sesion) => {
+    if (sesion !== sesionRef.current) return;
     if (!detectorRef.current || !videoRef.current || videoRef.current.readyState < 2) {
-      rafRef.current = requestAnimationFrame(scanLoopNative);
+      rafRef.current = requestAnimationFrame(() => scanLoopNative(sesion));
       return;
     }
     try {
       const codes = await detectorRef.current.detect(videoRef.current);
+      if (sesion !== sesionRef.current) return;
       if (codes && codes.length > 0) {
         processRaw(codes[0].rawValue);
       }
-    } catch { /* puntual */ }
-    rafRef.current = requestAnimationFrame(scanLoopNative);
+    } catch { /* puntual: un cuadro que no se pudo leer */ }
+    if (sesion !== sesionRef.current) return;
+    rafRef.current = requestAnimationFrame(() => scanLoopNative(sesion));
   }, [processRaw]);
 
   // Iniciar cámara
   const startCamera = useCallback(async () => {
     if (manualMode) return;
     setError(null);
+    const sesion = sesionRef.current;
+    const vigente = () => sesion === sesionRef.current;
 
     if (engineRef.current === 'native') {
       try {
@@ -221,14 +235,17 @@ export default function BarcodeScanner({
           video: { facingMode: { ideal: facingMode }, width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false,
         });
+        // Se cerró mientras arrancaba: esta cámara ya no es de nadie.
+        if (!vigente()) { stream.getTracks().forEach(t => t.stop()); return; }
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
+          if (!vigente()) return;
           setScanning(true);
-          scanLoopNative();
+          scanLoopNative(sesion);
         }
-      } catch (err) { handleCameraError(err); }
+      } catch (err) { if (vigente()) handleCameraError(err); }
       return;
     }
 
@@ -243,15 +260,21 @@ export default function BarcodeScanner({
           constraints,
           videoRef.current,
           (result /* , err */) => {
-            if (result) processRaw(result.getText());
+            if (result && vigente()) processRaw(result.getText());
           }
         );
+        if (!vigente()) {
+          try { controls.stop(); } catch { /* ya detenido */ }
+          const tarde = videoRef.current?.srcObject;
+          if (tarde) tarde.getTracks().forEach(t => t.stop());
+          return;
+        }
         zxingControlsRef.current = controls;
         if (videoRef.current && videoRef.current.srcObject) {
           streamRef.current = videoRef.current.srcObject;
         }
         setScanning(true);
-      } catch (err) { handleCameraError(err); }
+      } catch (err) { if (vigente()) handleCameraError(err); }
     }
   }, [facingMode, manualMode, scanLoopNative, processRaw]);
 
@@ -342,6 +365,8 @@ export default function BarcodeScanner({
           <Camera className="h-5 w-5" /> {title}
         </h2>
         <button
+          type="button"
+          aria-label="Cerrar el escáner"
           onClick={() => { stopCamera(); onClose(); }}
           className="h-9 w-9 rounded-full bg-primario-texto/10 hover:bg-primario-texto/20 flex items-center justify-center"
         >
@@ -357,7 +382,9 @@ export default function BarcodeScanner({
               <div className="bg-advertencia/10 border border-advertencia/30 rounded-xl p-4 flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-advertencia flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-advertencia">
-                  Tu navegador no permite escaneo por cámara. Ingresa el código manualmente.
+                  {respaldo
+                    ? 'Tu navegador no permite escaneo por cámara.'
+                    : 'Tu navegador no permite escaneo por cámara. Ingresa el código manualmente.'}
                 </div>
               </div>
             )}
@@ -367,6 +394,7 @@ export default function BarcodeScanner({
                 <div className="text-sm text-peligro">{error}</div>
               </div>
             )}
+            {respaldo ? respaldo : (<>
             <div>
               <label className="text-sm font-semibold text-primario-texto block mb-2">Código de barras</label>
               <Input
@@ -387,6 +415,7 @@ export default function BarcodeScanner({
             <Button onClick={handleManualSubmit} className="w-full h-12 bg-primary text-base font-bold">
               <Check className="h-5 w-5 mr-1" /> Confirmar código
             </Button>
+            </>)}
             {canUseCamera && (
               <button
                 onClick={() => { setManualMode(false); setError(null); }}
@@ -500,7 +529,7 @@ export default function BarcodeScanner({
           className="flex-1 bg-primario border-borde-fuerte text-primario-texto hover:bg-primario h-11"
         >
           <Keyboard className="h-4 w-4 mr-1" />
-          {manualMode ? 'Usar cámara' : 'Ingresar manual'}
+          {manualMode ? 'Usar cámara' : etiquetaDelRespaldo}
         </Button>
         {!manualMode && canUseCamera && (
           <Button

@@ -18,6 +18,7 @@ import {
   type Calculo,
   type MapaEntidad,
 } from './tipos.ts';
+import { estadoDelCostoDe } from '../caja/corte/costo-conocido.ts';
 
 /**
  * Las lecturas del puente (F1-02 §3, E3-4).
@@ -454,7 +455,36 @@ async function consultarUnaVez(
     (mapa.campos['efectivo_inicial_contado']?.rolesLectura ?? []).includes(ambito.rol)
   )
     await adjuntarTotalesDeCaja(ambito.organizacionId, traducidas);
+
+  // 9 · DP-13.2 · El estado del costo de cada venta (`caja/corte/costo-conocido.ts`): la regla es
+  //     del servidor, y Caja, el Cierre del día, el corte heredado y el CSV de Registros la leen de
+  //     aquí en vez de decidir «100 % de margen» por su cuenta. Sólo para quien ve márgenes: a
+  //     quien no, ni el campo le llega.
+  if (
+    mapa.tabla === 'ordenes' &&
+    (mapa.campos['costo_total_snapshot']?.rolesLectura ?? []).includes(ambito.rol)
+  )
+    await adjuntarEstadoDelCosto(ambito.organizacionId, traducidas);
   return traducidas;
+}
+
+/** `estado_costo` de cada venta de la página: una consulta para todas. */
+async function adjuntarEstadoDelCosto(organizacionId: string, ventas: Fila[]): Promise<void> {
+  const ids = ventas
+    .map((v) => (typeof v['id'] === 'string' ? v['id'] : ''))
+    .filter((id) => id !== '');
+  if (ids.length === 0) return;
+  const filas = await obtenerDb()
+    .selectFrom('ordenes as o')
+    .select(['o.id as id', estadoDelCostoDe('o').as('estado')])
+    .where('o.organizacion_id', '=', organizacionId)
+    .where('o.id', 'in', ids)
+    .execute();
+  const porId = new Map(filas.map((f) => [f.id, f.estado]));
+  for (const venta of ventas) {
+    const estado = typeof venta['id'] === 'string' ? porId.get(venta['id']) : undefined;
+    if (estado !== undefined) venta['estado_costo'] = estado;
+  }
 }
 
 /** Suma por método, propinas y número de cuentas cobradas en cada sesión de caja. */

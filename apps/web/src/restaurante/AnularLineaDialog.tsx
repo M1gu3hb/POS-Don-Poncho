@@ -17,6 +17,9 @@ import { useState } from 'react';
 
 import { invocarComando } from '~/cliente/api';
 import { useVocabulario } from '~/cliente/vocabulario';
+import { PinDeSupervisor, type Autorizada } from '~/venta/PinDeSupervisor';
+
+import { pideElPinDelSupervisor } from './permiso-al-cancelar.ts';
 import type { Vocabulario } from '@morphiqpos/domain/vocabulario';
 
 /**
@@ -112,6 +115,9 @@ export function AnularLineaDialog({
   const [nota, setNota] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** DP-13.2 · La cuenta ya se pidió (o se imprimió): el servidor pide el PIN de un gerente. */
+  const [pidePin, setPidePin] = useState(false);
+  const [autorizada, setAutorizada] = useState<Autorizada | null>(null);
 
   async function anular(): Promise<void> {
     if (motivo === null) return;
@@ -123,10 +129,15 @@ export function AnularLineaDialog({
         lineaId,
         motivo,
         ...(nota.trim() === '' ? {} : { nota: nota.trim() }),
+        ...(autorizada === null ? {} : { autorizacion: autorizada.token }),
       });
       onAnulada();
       onCerrar();
     } catch (fallo) {
+      if (pideElPinDelSupervisor(fallo)) {
+        setPidePin(true);
+        setAutorizada(null);
+      }
       setError(
         fallo instanceof Error ? fallo.message : `No se pudo quitar ${voc.enFrase('linea_orden')}.`,
       );
@@ -220,10 +231,31 @@ export function AnularLineaDialog({
         </div>
 
         {/* Qué pasó y, sobre todo, qué NO pasó: el platillo sigue cobrándose. */}
-        {error !== null && (
+        {error !== null && !(pidePin && autorizada === null) && (
           <Aviso tono="peligro" titulo={error}>
             {estePlatillo} sigue en {voc.enFrase('orden')}: no se quitó nada.
           </Aviso>
+        )}
+
+        {/* DP-13.2 · Con la cuenta ya pedida o impresa, el PIN de un gerente, para ESTA cuenta. */}
+        {!pidePin ? null : autorizada === null ? (
+          <div className="flex flex-col gap-(--espacio-2)">
+            <Aviso tono="atencion" titulo={error ?? 'Hace falta el PIN de un gerente o del dueño.'}>
+              {voc.conArticulo('orden')} ya se pidió o se imprimió: lo autoriza un gerente o el
+              dueño.
+            </Aviso>
+            <PinDeSupervisor
+              ordenId={ordenId}
+              para="cancelacion"
+              idDelCampo="anular-linea-pin"
+              alAutorizar={(nueva) => {
+                setAutorizada(nueva);
+                setError(null);
+              }}
+            />
+          </div>
+        ) : (
+          <Aviso tono="exito" titulo={`Autorizó ${autorizada.nombre}.`} />
         )}
 
         {/* En tableta, Cancelar a su ancho y Quitar estirado hasta la esquina
@@ -240,7 +272,7 @@ export function AnularLineaDialog({
             variant="destructive"
             size="lg"
             cargando={enviando}
-            disabled={motivo === null || enviando}
+            disabled={motivo === null || enviando || (pidePin && autorizada === null)}
             onClick={() => {
               void anular();
             }}

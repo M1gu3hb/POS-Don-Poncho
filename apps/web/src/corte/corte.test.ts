@@ -68,6 +68,10 @@ function hoja(extras: ExtrasDelServidor, cambios: Partial<HojaDelServidor> = {})
       descuentoCentavos: '0',
       impuestosCentavos: '0',
       costoCentavos: '120000',
+      ventaConCostoCentavos: '325000',
+      costoConocidoCentavos: '120000',
+      ventasSinReceta: 0,
+      ventasRecetaIncompleta: 0,
     },
     ventas: [],
     productos: [
@@ -79,6 +83,7 @@ function hoja(extras: ExtrasDelServidor, cambios: Partial<HojaDelServidor> = {})
         unidad: 'pieza',
         totalCentavos: '225000',
         costoCentavos: '80000',
+        lineasSinCosto: 0,
         esServicio: false,
         familia: 'bebida',
         linea: null,
@@ -89,6 +94,9 @@ function hoja(extras: ExtrasDelServidor, cambios: Partial<HojaDelServidor> = {})
     porPersona: [],
     gastos: [],
     cancelaciones: [],
+    corteHasta: '2026-09-26T03:00:00.000Z',
+    parcial: false,
+    alcanceDeCancelaciones: 'caja',
     devoluciones: [],
     descuentosPorUsuario: [],
     alertas: [],
@@ -287,6 +295,7 @@ describe('las cancelaciones del corte', () => {
     producto: 'Sopa de fideo',
     montoCentavos: '8000',
     mesa: 'Mesa 5',
+    perdidaCentavos: '0',
     perdida: false,
   };
   const YA_PREPARADA: Fila = {
@@ -298,6 +307,7 @@ describe('las cancelaciones del corte', () => {
     producto: null,
     montoCentavos: '45000',
     mesa: 'Mesa 6',
+    perdidaCentavos: '45000',
     perdida: true,
   };
   const tabla = (doc: ReturnType<typeof documentoDelCorte>, titulo: string) => {
@@ -359,5 +369,120 @@ describe('las cancelaciones del corte', () => {
     const ninguna = documentoDelCorte(hoja(RESTAURANTE));
     expect(titulos(ninguna.secciones)).not.toContain(TITULO_DE_PERDIDAS);
     expect(titulos(ninguna.secciones)).not.toContain(TITULO_DE_CANCELACIONES);
+  });
+
+  it('DP-13.2 · una cuenta con un platillo listo y otro no: la pérdida es sólo el listo, y el resto va sin costo', () => {
+    const MIXTA: Fila = {
+      ...YA_PREPARADA,
+      montoCentavos: '65800',
+      perdidaCentavos: '32900',
+    };
+    const doc = documentoDelCorte(hoja(RESTAURANTE, { cancelaciones: [MIXTA] }));
+    const perdidas = tabla(doc, TITULO_DE_PERDIDAS);
+    const sinCosto = tabla(doc, TITULO_DE_CANCELACIONES);
+    const [, , queSePerdio, , , perdido] = perdidas?.filas[0] ?? [];
+    const [, , queNo, , , noCosto] = sinCosto?.filas[0] ?? [];
+    expect(perdido).toEqual({ tipo: 'dinero', centavos: 32_900 });
+    expect(queSePerdio).toEqual({ tipo: 'texto', texto: 'Cuenta completa · lo ya preparado' });
+    expect(noCosto).toEqual({ tipo: 'dinero', centavos: 32_900 });
+    expect(queNo).toEqual({ tipo: 'texto', texto: 'Cuenta completa · lo que no se preparó' });
+    expect(perdidas?.total?.at(-1)).toEqual({ tipo: 'dinero', centavos: 32_900 });
+  });
+
+  it('DP-13.2 · el corte dice de qué cancelaciones habla: las de esta caja, o todas las del día', () => {
+    const notas = (alcance: 'caja' | 'dia') =>
+      documentoDelCorte(
+        hoja(RESTAURANTE, {
+          cancelaciones: [ANTES_DE_PREPARAR, YA_PREPARADA],
+          alcanceDeCancelaciones: alcance,
+        }),
+      )
+        .secciones.filter((s) => s.tipo === 'tabla' && s.titulo.includes('ancelaci'))
+        .map((s) => (s.tipo === 'tabla' ? (s.nota ?? '') : ''));
+    for (const nota of notas('caja')) expect(nota).toMatch(/cuentas de esta caja/);
+    for (const nota of notas('dia')) expect(nota).toMatch(/todas las de la sucursal/);
+  });
+});
+
+describe('DP-13.2 · el margen del corte sale sólo de lo que tiene costo completo', () => {
+  const RESUMEN = 'Resumen financiero (sin propinas)';
+  const conFuera = (cambios: Partial<HojaDelServidor['resumen']>) =>
+    documentoDelCorte(hoja(RESTAURANTE, { resumen: { ...hoja(RESTAURANTE).resumen, ...cambios } }));
+
+  it('con ventas sin receta o de receta incompleta: el margen es el de las completas, y dice cuántas quedaron fuera', () => {
+    const doc = conFuera({
+      ventaConCostoCentavos: '200000',
+      costoConocidoCentavos: '80000',
+      ventasSinReceta: 1,
+      ventasRecetaIncompleta: 1,
+    });
+    expect(celda(doc.secciones, RESUMEN, 'Costo de ventas (con costo)')?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: 80_000,
+    });
+    expect(celda(doc.secciones, RESUMEN, 'Utilidad bruta (con costo)')?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: 120_000,
+    });
+    expect(celda(doc.secciones, RESUMEN, 'Margen (con costo)')?.valor).toEqual({
+      tipo: 'porcentaje',
+      puntosBase: 6_000,
+    });
+    expect(celda(doc.secciones, RESUMEN, 'Fuera del margen')?.valor).toEqual({
+      tipo: 'texto',
+      texto: '1 venta sin receta · 1 venta con receta incompleta',
+    });
+    // Ninguna cifra «de todo» que finja un margen sobre lo que no tiene costo.
+    expect(celda(doc.secciones, RESUMEN, 'Margen')).toBeUndefined();
+  });
+
+  it('sin ninguna venta de costo completo: ni utilidad ni margen, dice «sin receta»', () => {
+    const doc = conFuera({
+      ventaConCostoCentavos: '0',
+      costoConocidoCentavos: '0',
+      ventasSinReceta: 4,
+    });
+    expect(celda(doc.secciones, RESUMEN, 'Margen')?.valor).toEqual({
+      tipo: 'texto',
+      texto: '—, sin receta',
+    });
+    expect(celda(doc.secciones, RESUMEN, 'Utilidad bruta')?.valor).toEqual({
+      tipo: 'texto',
+      texto: '—, sin receta',
+    });
+  });
+
+  it('un producto vendido sin costo no tiene costo ni utilidad: «sin receta» o «receta incompleta»', () => {
+    const base = hoja(RESTAURANTE).productos[0];
+    if (base === undefined) throw new Error('falta el producto de la hoja de prueba');
+    const doc = documentoDelCorte(
+      hoja(RESTAURANTE, {
+        productos: [
+          { ...base, nombre: 'Agua', lineas: 2, lineasSinCosto: 2, costoCentavos: '0' },
+          { ...base, nombre: 'Combo', lineas: 3, lineasSinCosto: 1, costoCentavos: '10000' },
+        ],
+      }),
+    );
+    const tabla = doc.secciones.find((s) => s.titulo === 'Productos vendidos');
+    const filas = tabla?.tipo === 'tabla' ? tabla.filas : [];
+    expect(filas[0]?.slice(4)).toEqual([
+      { tipo: 'texto', texto: '—, sin receta' },
+      { tipo: 'texto', texto: '—, sin receta' },
+    ]);
+    expect(filas[1]?.slice(4)).toEqual([
+      { tipo: 'texto', texto: '—, receta incompleta' },
+      { tipo: 'texto', texto: '—, receta incompleta' },
+    ]);
+  });
+});
+
+describe('DP-13.2 · el corte de una caja abierta dice hasta qué hora cuenta', () => {
+  it('abierta: «Corte parcial» con la hora en que se leyó; cerrada, no', () => {
+    const parcial = documentoDelCorte(
+      hoja(RESTAURANTE, { parcial: true, corteHasta: '2026-09-25T22:15:00.000Z' }),
+    );
+    expect(celda(parcial.secciones, 'Datos del corte', 'Corte parcial · hasta')).toBeDefined();
+    const cerrada = documentoDelCorte(hoja(RESTAURANTE));
+    expect(celda(cerrada.secciones, 'Datos del corte', 'Corte parcial · hasta')).toBeUndefined();
   });
 });

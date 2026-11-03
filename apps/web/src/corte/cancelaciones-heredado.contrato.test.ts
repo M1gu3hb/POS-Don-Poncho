@@ -38,7 +38,9 @@ describe('el corte heredado lee las cancelaciones del servidor', () => {
 
   it('el ticket las pinta con el código del corte del servidor, no con su tabla propia', () => {
     const texto = leer(TICKET);
-    expect(texto).toMatch(/seccionesDeCancelaciones\(\s*cancelaciones\s*\)/);
+    expect(texto).toMatch(
+      /seccionesDeCancelaciones\(\s*cancelaciones\s*,\s*alcanceDeCancelaciones/,
+    );
     expect(texto).toMatch(/<SeccionPintada\b/);
   });
 

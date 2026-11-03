@@ -13,6 +13,12 @@
  */
 
 import { nombreVisibleDelNegocio } from '../marca/nombre-visible.ts';
+import {
+  RECETA_INCOMPLETA,
+  SIN_RECETA,
+  notaDeLasVentasConRecetaIncompleta,
+  notaDeLasVentasSinReceta,
+} from '../restaurante/margen-de-las-ventas.ts';
 
 // ── Lo que llega del servidor (importes en centavos, como texto de bigint) ──────────
 
@@ -76,6 +82,14 @@ export interface HojaDelServidor {
     readonly descuentoCentavos: string;
     readonly impuestosCentavos: string;
     readonly costoCentavos: string | null;
+    /**
+     * DP-13.2 · La base del margen, del servidor (`caja/corte/costo-conocido.ts`): lo vendido y lo
+     * que costó en las cuentas con costo completo, y cuántas quedaron fuera.
+     */
+    readonly ventaConCostoCentavos: string;
+    readonly costoConocidoCentavos: string | null;
+    readonly ventasSinReceta: number;
+    readonly ventasRecetaIncompleta: number;
   };
   readonly ventas: readonly {
     folio: string | null;
@@ -105,7 +119,8 @@ export interface HojaDelServidor {
   }[];
   /**
    * Las cuentas canceladas y los platillos anulados, con QUIÉN canceló (no quien cobraba) y
-   * `perdida` si ya estaban preparados o entregados (DP-12.4). Las pinta `cancelaciones.ts`.
+   * `perdida` si ya estaban preparados o entregados (DP-12.4). `perdidaCentavos` es lo que valía
+   * lo ya hecho, nada más (DP-13.2). Las pinta `cancelaciones.ts`.
    */
   readonly cancelaciones: readonly {
     tipo: 'orden' | 'linea';
@@ -116,8 +131,14 @@ export interface HojaDelServidor {
     producto: string | null;
     montoCentavos: string;
     mesa: string | null;
+    perdidaCentavos: string;
     perdida: boolean;
   }[];
+  /** DP-13.2 · Hasta cuándo cuenta: el cierre o, con la caja abierta, la hora de la lectura. */
+  readonly corteHasta: string;
+  readonly parcial: boolean;
+  /** DP-13.2 · Las cancelaciones de las cuentas de esta caja, o todas las del día (Cierre). */
+  readonly alcanceDeCancelaciones: 'caja' | 'dia';
   readonly descuentosPorUsuario: readonly {
     usuario: string | null;
     ventas: number;
@@ -181,6 +202,8 @@ export interface ProductoDeLaHoja {
   readonly unidad: string;
   readonly totalCentavos: string;
   readonly costoCentavos: string | null;
+  /** DP-13.2 · Cuántas de sus líneas se vendieron sin costo: sin receta, o receta incompleta. */
+  readonly lineasSinCosto: number;
   readonly esServicio: boolean;
   readonly familia: string | null;
   readonly linea: string | null;
@@ -331,6 +354,10 @@ export function datosDelCorte(hoja: HojaDelServidor, tipo: string): Seccion {
     { etiqueta: 'Estado', valor: texto(s.estado === 'cerrada' ? 'Cerrado' : 'Abierto') },
     { etiqueta: 'Tipo', valor: texto(tipo) },
   ];
+  // DP-13.2 · Con la caja abierta, el corte cuenta hasta que se leyó: leído después, cambia.
+  if (hoja.parcial) {
+    celdas.push({ etiqueta: 'Corte parcial · hasta', valor: fechaYHora(hoja.corteHasta) });
+  }
   if (s.turno !== null) celdas.push({ etiqueta: 'Turno', valor: texto(s.turno) });
   if (s.notasApertura !== null) {
     celdas.push({ etiqueta: 'Notas de apertura', valor: texto(s.notasApertura) });
@@ -483,23 +510,82 @@ export function resumenFinanciero(
   if (centavos(r.descuentoCentavos) > 0) {
     celdas.push({ etiqueta: 'Descuentos', valor: dinero(r.descuentoCentavos) });
   }
-  if (r.costoCentavos !== null) {
+  if (r.costoCentavos !== null) celdas.push(...margenDelCorte(hoja, total, estimados));
+  return { tipo: 'celdas', titulo, celdas };
+}
+
+/**
+ * DP-13.2 · El costo, la utilidad y el margen, SÓLO de las cuentas con costo completo. Una cuenta
+ * sin receta (o con receta incompleta) se cobró con costo cero en esa parte, y sumarla inflaba el
+ * margen: queda fuera y se dice cuántas. Si ninguna tiene costo completo, no hay margen que dar.
+ */
+function margenDelCorte(
+  hoja: HojaDelServidor,
+  total: number,
+  estimados: readonly { readonly etiqueta: string; readonly centavos: number }[],
+): readonly Celda[] {
+  const r = hoja.resumen;
+  const gastos = totalDeGastos(hoja);
+  const estimado = estimados.reduce((s, e) => s + e.centavos, 0);
+  const deLosGastos: Celda[] = [
+    { etiqueta: 'Gastos operativos', valor: dinero(gastos) },
+    ...estimados.map((e) => ({ etiqueta: e.etiqueta, valor: dinero(e.centavos) })),
+  ];
+  const sinReceta = r.ventasSinReceta;
+  const incompletas = r.ventasRecetaIncompleta;
+  if (sinReceta + incompletas === 0) {
     const costo = centavos(r.costoCentavos) - costoDevuelto(hoja);
-    const gastos = totalDeGastos(hoja);
-    celdas.push(
+    return [
       { etiqueta: 'Costo de ventas', valor: dinero(costo) },
       { etiqueta: 'Utilidad bruta', valor: dinero(total - costo) },
       { etiqueta: 'Margen', valor: porcentaje(total - costo, total) },
-      { etiqueta: 'Gastos operativos', valor: dinero(gastos) },
-      ...estimados.map((e) => ({ etiqueta: e.etiqueta, valor: dinero(e.centavos) })),
+      ...deLosGastos,
       {
         etiqueta: 'Utilidad neta estimada',
-        valor: dinero(total - costo - gastos - estimados.reduce((s, e) => s + e.centavos, 0)),
+        valor: dinero(total - costo - gastos - estimado),
         fuerte: true,
       },
-    );
+    ];
   }
-  return { tipo: 'celdas', titulo, celdas };
+  const base = centavos(r.ventaConCostoCentavos);
+  if (base === 0) {
+    const desconocido = texto(sinReceta > 0 ? SIN_RECETA : RECETA_INCOMPLETA);
+    return [
+      { etiqueta: 'Costo de ventas', valor: desconocido },
+      { etiqueta: 'Utilidad bruta', valor: desconocido },
+      { etiqueta: 'Margen', valor: desconocido },
+      ...deLosGastos,
+      { etiqueta: 'Utilidad neta estimada', valor: desconocido, fuerte: true },
+    ];
+  }
+  const costo = centavos(r.costoConocidoCentavos);
+  const fuera = [
+    sinReceta > 0 ? notaDeLasVentasSinReceta(sinReceta) : '',
+    incompletas > 0 ? notaDeLasVentasConRecetaIncompleta(incompletas) : '',
+  ]
+    .filter((parte) => parte !== '')
+    .join(' · ');
+  return [
+    { etiqueta: 'Costo de ventas (con costo)', valor: dinero(costo) },
+    { etiqueta: 'Utilidad bruta (con costo)', valor: dinero(base - costo) },
+    { etiqueta: 'Margen (con costo)', valor: porcentaje(base - costo, base) },
+    { etiqueta: 'Fuera del margen', valor: texto(fuera) },
+    ...deLosGastos,
+    {
+      etiqueta: 'Utilidad neta estimada (con costo)',
+      valor: dinero(base - costo - gastos - estimado),
+      fuerte: true,
+    },
+  ];
+}
+
+/** DP-13.2 · El costo de un producto se sabe sólo si TODAS sus líneas lo traían. */
+function costoDelProducto(p: ProductoDeLaHoja): readonly Valor[] {
+  if (p.lineasSinCosto > 0) {
+    const desconocido = texto(p.lineasSinCosto >= p.lineas ? SIN_RECETA : RECETA_INCOMPLETA);
+    return [desconocido, desconocido];
+  }
+  return [dinero(p.costoCentavos), dinero(centavos(p.totalCentavos) - centavos(p.costoCentavos))];
 }
 
 /** El IVA que la terminal cobra SOBRE su comisión, en puntos base. */
@@ -621,9 +707,7 @@ export function productosVendidos(
       texto(p.lineas),
       texto(`${p.cantidad} ${p.unidad}`),
       dinero(p.totalCentavos),
-      ...(conCostos
-        ? [dinero(p.costoCentavos), dinero(centavos(p.totalCentavos) - centavos(p.costoCentavos))]
-        : []),
+      ...(conCostos ? costoDelProducto(p) : []),
     ]),
   });
 }
@@ -751,15 +835,32 @@ export function ventaPorCategoria(
   titulo: string,
   rotulo: string,
 ): readonly Seccion[] {
-  const porCategoria = new Map<string, { venta: number; costo: number }>();
+  // DP-13.2: un producto vendido sin costo no suma costo cero; la categoría lo dice.
+  const porCategoria = new Map<
+    string,
+    { venta: number; costo: number; conCosto: number; sinCosto: number }
+  >();
   for (const p of hoja.productos) {
     const clave = p.categoria ?? 'Sin categoría';
-    const actual = porCategoria.get(clave) ?? { venta: 0, costo: 0 };
+    const actual = porCategoria.get(clave) ?? { venta: 0, costo: 0, conCosto: 0, sinCosto: 0 };
+    const conocido = p.lineasSinCosto === 0;
     porCategoria.set(clave, {
       venta: actual.venta + centavos(p.totalCentavos),
-      costo: actual.costo + centavos(p.costoCentavos),
+      costo: actual.costo + (conocido ? centavos(p.costoCentavos) : 0),
+      conCosto: actual.conCosto + (conocido ? 1 : 0),
+      sinCosto: actual.sinCosto + (conocido ? 0 : 1),
     });
   }
+  const costoYMargen = (c: {
+    venta: number;
+    costo: number;
+    conCosto: number;
+    sinCosto: number;
+  }) => {
+    if (c.sinCosto === 0) return [dinero(c.costo), porcentaje(c.venta - c.costo, c.venta)];
+    const desconocido = texto(c.conCosto === 0 ? SIN_RECETA : RECETA_INCOMPLETA);
+    return [desconocido, desconocido];
+  };
   const total = centavos(hoja.resumen.totalCentavos);
   const conCostos = hoja.verCostos;
   const columnas: Columna[] = [{ titulo: rotulo }, { titulo: 'Venta', numerica: true }];
@@ -772,11 +873,11 @@ export function ventaPorCategoria(
     columnas,
     filas: [...porCategoria.entries()]
       .sort((a, b) => b[1].venta - a[1].venta)
-      .map(([nombre, { venta, costo }]) => [
+      .map(([nombre, categoria]) => [
         texto(nombre),
-        dinero(venta),
-        ...(conCostos ? [dinero(costo), porcentaje(venta - costo, venta)] : []),
-        porcentaje(venta, total),
+        dinero(categoria.venta),
+        ...(conCostos ? costoYMargen(categoria) : []),
+        porcentaje(categoria.venta, total),
       ]),
   });
 }

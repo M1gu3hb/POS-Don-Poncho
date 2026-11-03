@@ -17,6 +17,9 @@ import { conSesion } from '~/servidor/http';
  * PIN del gerente desde la caja es un barrido igual que probarlo en la pantalla de
  * acceso, y cuenta en el mismo cubo.
  *
+ * DP-13.2 (D-5) · Con `ordenId`, la autorización va atada a ESA cuenta, y con `para` a lo que se
+ * autoriza (un descuento o una cancelación): la que el gerente dio para la mesa 3 no sirve en la 6.
+ *
  * Las respuestas no distinguen «no existe» de «PIN incorrecto»: las dos son el mismo 403.
  * NUNCA un 401: para el cliente un 401 es «tu sesión venció», y un PIN mal tecleado del
  * gerente cerraría la sesión de la cajera con la venta armada. El bloqueo es un 429, como
@@ -29,6 +32,8 @@ export const dynamic = 'force-dynamic';
 const Entrada = z.object({
   empleoId: z.uuid(),
   pin: z.string().min(1).max(16),
+  ordenId: z.uuid().optional(),
+  para: z.enum(['descuento', 'cancelacion']).optional(),
 });
 
 const ESTADO_POR_MOTIVO = {
@@ -41,8 +46,8 @@ const ESTADO_POR_MOTIVO = {
 const MENSAJE_POR_MOTIVO = {
   credenciales: 'El PIN no es correcto.',
   bloqueada: 'Ese PIN se bloqueó por intentos. Espera un momento.',
-  no_autoriza: 'Esa persona no puede autorizar descuentos.',
-  uno_mismo: 'Nadie se autoriza a sí mismo un descuento.',
+  no_autoriza: 'Esa persona no puede autorizarlo: hace falta un gerente o el dueño.',
+  uno_mismo: 'Nadie se autoriza a sí mismo.',
 } as const;
 
 export async function POST(peticion: Request): Promise<Response> {
@@ -78,6 +83,8 @@ export async function POST(peticion: Request): Promise<Response> {
       solicitaEmpleoId: sesion.empleoId,
       empleoId: validada.data.empleoId,
       pin: validada.data.pin,
+      ...(validada.data.ordenId === undefined ? {} : { cuenta: validada.data.ordenId }),
+      ...(validada.data.para === undefined ? {} : { para: validada.data.para }),
       pimienta: entorno.PIN_PEPPER,
       secreto: entorno.SESSION_SECRET,
     });

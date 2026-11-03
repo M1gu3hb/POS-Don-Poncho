@@ -41,15 +41,17 @@ async function agregar(telefono: Page, nombre: string) {
 }
 
 /**
- * «Escanear QR» con lo que leería la cámara: en el navegador de pruebas no hay cámara, así que se
- * teclea en la entrada manual del lector (la que queda abierta si ya se usó).
+ * «Escanear QR» sin cámara: en el navegador de pruebas no la hay, y el lector ofrece elegir la mesa
+ * de una lista (DP-13.2: antes era un campo numérico, que no aceptaba el código). La cámara de
+ * verdad, simulada, la prueba `escanear-qr-con-camara.spec.ts`.
  */
-async function escanear(mesero: Page, leido: string) {
+async function escanear(mesero: Page, mesa: number) {
   await mesero.getByRole('button', { name: 'Escanear QR' }).click();
-  const manual = mesero.getByRole('button', { name: 'Ingresar manual' });
-  if (await manual.isVisible()) await manual.click();
-  await mesero.getByPlaceholder('Escribe o escanea con lector USB...').fill(leido);
-  await mesero.getByRole('button', { name: 'Confirmar código' }).click();
+  const deLaLista = mesero.getByRole('button', { name: `Mesa ${String(mesa)}`, exact: true });
+  const elegir = mesero.getByRole('button', { name: 'Elegir la mesa' });
+  await expect(deLaLista.or(elegir)).toBeVisible();
+  if (await elegir.isVisible()) await elegir.click();
+  await deLaLista.click();
 }
 
 /** La tableta del encargo es de 1280 × 800; el proyecto `tablet` trae otra medida. */
@@ -133,7 +135,7 @@ test.describe('el portal en modo mesero (DP-12.2)', () => {
         await expect(
           mesero.getByRole('button', { name: new RegExp(`^Mesa ${String(MESA)}: `) }),
         ).toBeVisible();
-        await escanear(mesero, `${new URL(mesero.url()).origin}/qr/${token}`);
+        await escanear(mesero, MESA);
       });
 
       const portal = mesero.getByRole('dialog', { name: 'Portal de la mesa · modo mesero' });
@@ -172,7 +174,7 @@ test.describe('el portal en modo mesero (DP-12.2)', () => {
       await test.step('unos comensales se fueron: el mesero borra lo que dejaron', async () => {
         await agregar(a, CARTA.cerveza.nombre);
         await mesero.goto('/mesero');
-        await escanear(mesero, token);
+        await escanear(mesero, MESA);
         await portal.getByRole('button', { name: 'Borrar el pedido' }).click();
         await mesero
           .getByRole('alertdialog')

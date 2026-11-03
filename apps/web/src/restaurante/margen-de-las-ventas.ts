@@ -17,12 +17,20 @@
  *
  * Todo en pesos (como las sirve el puente) y sin pantalla, para probarlo: las heredadas no
  * tienen pruebas propias.
+ *
+ * ── DP-13.2 · La regla es del SERVIDOR ───────────────────────────────────────────────────
+ * Con costo cero sólo se cazaba la cuenta TODA sin receta: una con un platillo con receta y otro
+ * sin ella salía con margen inflado. El puente manda ahora `estado_costo` de cada venta
+ * (`caja/corte/costo-conocido.ts`): «conocido», «sin_receta» o «receta_incompleta», y cuando llega
+ * MANDA. La foto del cobro (costo cero) queda sólo como respaldo para una venta sin ese campo.
  */
 
-import { costoDeLaVentaEsDesconocido } from '@morphiqpos/domain/venta';
+import { costoDeLaVentaEsDesconocido, type EstadoDelCosto } from '@morphiqpos/domain/venta';
 
 /** Lo que se escribe donde iría el costo, la utilidad o el margen de una venta sin receta. */
 export const SIN_RECETA = '—, sin receta';
+/** Lo mismo para una cuenta con platillos con receta y sin ella. */
+export const RECETA_INCOMPLETA = '—, receta incompleta';
 
 /** Lo que se necesita de una venta, en pesos. El costo ausente es «no lo ve»; nulo, «no hay». */
 export interface VentaParaElMargen {
@@ -31,9 +39,11 @@ export interface VentaParaElMargen {
   readonly utilidad_bruta_snapshot?: number | null | undefined;
   /** Porcentaje (60 = 60 %). */
   readonly margen_snapshot?: number | null | undefined;
+  /** DP-13.2 · Lo que dice el servidor de su costo; manda sobre la foto. */
+  readonly estado_costo?: EstadoDelCosto | null | undefined;
 }
 
-export type EstadoDelMargen = 'conocido' | 'sin_receta' | 'oculto';
+export type EstadoDelMargen = 'conocido' | 'sin_receta' | 'receta_incompleta' | 'oculto';
 
 export interface EconomiaDeLaVenta {
   readonly estado: EstadoDelMargen;
@@ -64,8 +74,13 @@ export function economiaDeLaVenta(venta: VentaParaElMargen): EconomiaDeLaVenta {
 
   const total = esNumero(venta.total) ? venta.total : 0;
   const costoConocido = esNumero(costo) ? costo : 0;
-  // La regla es del dominio: el exporte del servidor usa la misma.
-  if (costoDeLaVentaEsDesconocido(total, costo)) return { estado: 'sin_receta', ...DESCONOCIDA };
+  // DP-13.2: lo que dice el servidor manda; sin el campo, la foto del cobro (la regla del dominio).
+  if (venta.estado_costo === 'sin_receta' || venta.estado_costo === 'receta_incompleta') {
+    return { estado: venta.estado_costo, ...DESCONOCIDA };
+  }
+  if (venta.estado_costo !== 'conocido' && costoDeLaVentaEsDesconocido(total, costo)) {
+    return { estado: 'sin_receta', ...DESCONOCIDA };
+  }
 
   const utilidad = esNumero(venta.utilidad_bruta_snapshot)
     ? venta.utilidad_bruta_snapshot
@@ -93,6 +108,8 @@ export interface EconomiaDelPeriodo {
   readonly margen: number | null;
   readonly conCosto: number;
   readonly sinReceta: number;
+  /** DP-13.2 · Las de platillos con receta y sin ella: tampoco entran al margen. */
+  readonly recetaIncompleta: number;
 }
 
 /**
@@ -106,6 +123,7 @@ export function economiaDelPeriodo(ventas: readonly VentaParaElMargen[]): Econom
   let utilidad = 0;
   let conCosto = 0;
   let sinReceta = 0;
+  let recetaIncompleta = 0;
   let ocultas = 0;
 
   for (const venta of ventas) {
@@ -120,6 +138,10 @@ export function economiaDelPeriodo(ventas: readonly VentaParaElMargen[]): Econom
       sinReceta += 1;
       continue;
     }
+    if (economia.estado === 'receta_incompleta') {
+      recetaIncompleta += 1;
+      continue;
+    }
     conCosto += 1;
     ingresosConCosto += total;
     costo += aCentavos(economia.costo ?? 0);
@@ -131,15 +153,17 @@ export function economiaDelPeriodo(ventas: readonly VentaParaElMargen[]): Econom
     ingresosConCosto: aPesos(ingresosConCosto),
     conCosto,
     sinReceta,
+    recetaIncompleta,
   };
+  const fuera = sinReceta + recetaIncompleta;
   if (ventas.length > 0 && ocultas === ventas.length) {
     return { estado: 'oculto', ...base, costo: null, utilidad: null, margen: null };
   }
-  if (conCosto === 0 && sinReceta > 0) {
+  if (conCosto === 0 && fuera > 0) {
     return { estado: 'sin_receta', ...base, costo: null, utilidad: null, margen: null };
   }
   return {
-    estado: sinReceta > 0 ? 'parcial' : 'conocido',
+    estado: fuera > 0 ? 'parcial' : 'conocido',
     ...base,
     costo: aPesos(costo),
     utilidad: aPesos(utilidad),
@@ -147,22 +171,56 @@ export function economiaDelPeriodo(ventas: readonly VentaParaElMargen[]): Econom
   };
 }
 
+/**
+ * DP-13.2 · ¿Este puesto ve el margen? El servidor no le manda el costo a quien no ve márgenes
+ * (el cajero): sus ventas llegan `oculto`. Ahí «—, sin receta» sería mentira —las recetas están—:
+ * no se pinta ni el costo, ni la utilidad, ni el margen.
+ */
+export function seVeElMargen(
+  economia: Pick<EconomiaDelPeriodo | EconomiaDeLaVenta, 'estado'> | null | undefined,
+): boolean {
+  return economia?.estado !== 'oculto';
+}
+
 /** «1 venta sin receta» / «3 ventas sin receta». */
 export function notaDeLasVentasSinReceta(cuantas: number): string {
   return `${String(cuantas)} ${cuantas === 1 ? 'venta' : 'ventas'} sin receta`;
 }
 
+/** DP-13.2 · «1 venta con receta incompleta» / «2 ventas con receta incompleta». */
+export function notaDeLasVentasConRecetaIncompleta(cuantas: number): string {
+  return `${String(cuantas)} ${cuantas === 1 ? 'venta' : 'ventas'} con receta incompleta`;
+}
+
+/** Las que quedaron fuera del margen, dichas: «1 venta sin receta · 2 con receta incompleta». */
+export function notaDeLasVentasFuera(economia: EconomiaDelPeriodo): string {
+  return [
+    economia.sinReceta > 0 ? notaDeLasVentasSinReceta(economia.sinReceta) : '',
+    economia.recetaIncompleta > 0
+      ? notaDeLasVentasConRecetaIncompleta(economia.recetaIncompleta)
+      : '',
+  ]
+    .filter((parte) => parte !== '')
+    .join(' · ');
+}
+
 /**
- * Lo que va debajo de la utilidad de un periodo: «sin receta» si ninguna venta tiene costo,
- * «60.0% margen» si todas, y «60.0% margen · 1 venta sin receta» si quedaron algunas fuera.
+ * Lo que va debajo de la utilidad de un periodo: «sin receta» (o «receta incompleta») si ninguna
+ * venta tiene costo completo, «60.0% margen» si todas, y «60.0% margen · 1 venta sin receta» si
+ * quedaron algunas fuera.
  */
 export function subtituloDelMargen(economia: EconomiaDelPeriodo): string {
   if (economia.estado === 'oculto') return '';
-  if (economia.estado === 'sin_receta') return 'sin receta';
+  if (economia.estado === 'sin_receta') {
+    return [
+      economia.sinReceta > 0 ? 'sin receta' : '',
+      economia.recetaIncompleta > 0 ? 'receta incompleta' : '',
+    ]
+      .filter((parte) => parte !== '')
+      .join(' · ');
+  }
   const margen = `${textoDelMargen(economia.margen ?? 0)} margen`;
-  return economia.estado === 'parcial'
-    ? `${margen} · ${notaDeLasVentasSinReceta(economia.sinReceta)}`
-    : margen;
+  return economia.estado === 'parcial' ? `${margen} · ${notaDeLasVentasFuera(economia)}` : margen;
 }
 
 /** Un margen (60 = 60 %) para escribir; «—» si no existe. */

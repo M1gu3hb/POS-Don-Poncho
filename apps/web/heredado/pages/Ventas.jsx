@@ -38,6 +38,7 @@ import {
   SIN_RECETA,
   economiaDeLaVenta,
   resumenDeLasVentas,
+  seVeElMargen,
   textoDelMargen,
   textoDelResumenDeVentas,
 } from '~/restaurante/margen-de-las-ventas';
@@ -117,6 +118,8 @@ export default function Ventas() {
   // El costo, la utilidad y el margen de la venta abierta: «—, sin receta» si no tiene receta.
   const economia = selectedVenta ? economiaDeLaVenta(selectedVenta) : null;
   const sinReceta = economia?.estado === 'sin_receta';
+  // DP-13.2 · Quien no ve márgenes (el cajero) no lee un costo de «$0.00» que no es el suyo.
+  const seVe = seVeElMargen(economia);
 
   const handleLimpiar = async () => {
     setLimpiando(true);
@@ -362,28 +365,30 @@ export default function Ventas() {
                   <p className="text-xs text-muted-foreground">Total</p>
                   <p className="font-bold">{formatCurrency(selectedVenta.total)}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Costo</p>
-                  <p
-                    className={`font-bold ${colorize ? 'text-advertencia' : ''}`}
-                  >
-                    {sinReceta ? SIN_RECETA : formatCurrency(selectedVenta.costo_total_snapshot)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Utilidad</p>
-                  <p
-                    className={`font-bold ${colorize ? 'text-exito' : ''}`}
-                  >
-                    {sinReceta ? SIN_RECETA : formatCurrency(selectedVenta.utilidad_bruta_snapshot)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Margen</p>
-                  <p className="font-bold">
-                    {sinReceta ? SIN_RECETA : textoDelMargen(economia?.margen ?? null)}
-                  </p>
-                </div>
+                {seVe && (
+                  <>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Costo</p>
+                      <p className={`font-bold ${colorize ? 'text-advertencia' : ''}`}>
+                        {sinReceta ? SIN_RECETA : formatCurrency(selectedVenta.costo_total_snapshot)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Utilidad</p>
+                      <p className={`font-bold ${colorize ? 'text-exito' : ''}`}>
+                        {sinReceta
+                          ? SIN_RECETA
+                          : formatCurrency(selectedVenta.utilidad_bruta_snapshot)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Margen</p>
+                      <p className="font-bold">
+                        {sinReceta ? SIN_RECETA : textoDelMargen(economia?.margen ?? null)}
+                      </p>
+                    </div>
+                  </>
+                )}
                 <div>
                   <p className="text-xs text-muted-foreground">Pago</p>
                   <p className="font-bold">{selectedVenta.metodo_pago}</p>

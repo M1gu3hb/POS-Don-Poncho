@@ -133,6 +133,10 @@ function escapar(texto: string): string {
  * vacía es lo que el contador entiende como «no hay dato»; un 100 es una cifra que va a creer.
  * Sólo toca las filas de ventas que traen el costo (quien no ve costos no las recibe) y no
  * inventa columnas.
+ *
+ * DP-13.2 · Lo decide el estado que el puente le pone a cada venta (`estado_costo`,
+ * `caja/corte/costo-conocido.ts`): también se vacía la cuenta con receta INCOMPLETA, que con
+ * costo cero en una parte daba un margen inflado. Sin el estado, la foto del cobro.
  */
 const CAMPOS_DEL_MARGEN = [
   'costo_total_snapshot',
@@ -146,13 +150,16 @@ export function sinMargenFalso(
 ): Record<string, unknown>[] {
   if (entidad !== 'Venta') return [...filas];
   return filas.map((fila) => {
-    if (
-      !costoDeLaVentaEsDesconocido(
-        comoCantidad(fila['total']),
-        comoCantidad(fila['costo_total_snapshot']),
-      )
-    )
-      return fila;
+    const estado = fila['estado_costo'];
+    const desconocido =
+      estado === 'sin_receta' ||
+      estado === 'receta_incompleta' ||
+      (estado !== 'conocido' &&
+        costoDeLaVentaEsDesconocido(
+          comoCantidad(fila['total']),
+          comoCantidad(fila['costo_total_snapshot']),
+        ));
+    if (!desconocido) return fila;
     const vacias = Object.fromEntries(
       CAMPOS_DEL_MARGEN.filter((campo) => campo in fila).map((campo) => [campo, null]),
     );

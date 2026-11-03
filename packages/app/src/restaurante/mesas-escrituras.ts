@@ -5,7 +5,11 @@ import type { Transaccion } from '@morphiqpos/data';
 import type { z } from 'zod';
 
 import { cerrarAvisosDeLaMesa } from './avisos-de-la-mesa.ts';
-import { olvidarElCarritoDeLaCuenta, olvidarElCarritoDeLaMesa } from './carrito-del-salon.ts';
+import {
+  caducarElCarritoAlAbrir,
+  olvidarElCarritoDeLaCuenta,
+  olvidarElCarritoDeLaMesa,
+} from './carrito-del-salon.ts';
 import { esViolacionDeUnicidad } from './datos.ts';
 import type { entradaAbrirMesa } from './esquemas.ts';
 import { sellarTransicionDeMesa } from './sala-escrituras.ts';
@@ -160,6 +164,8 @@ export async function atarMesaAOrden(tx: Transaccion, datos: DatosDeAtadura): Pr
     ordenId: datos.ordenId,
     ahora: datos.ahora,
   });
+  // Revisión de DP-13: lo que una mesa sin cuenta dejó hace horas no es de la gente nueva.
+  await caducarElCarritoAlAbrir(tx, datos.organizacionId, datos.mesaId, datos.ahora);
 }
 
 /** ¿Consumió algo esta cuenta? Una fila basta: no hace falta contarlas todas. */
@@ -226,7 +232,8 @@ export async function cerrarOrdenCancelada(
   const filas = Number(resultado.numUpdatedRows);
   // DP-12.2: la cuenta se cerró (cancelada, o vacía al liberar): lo que quedó sin enviar en el
   // carrito del portal de su mesa ya no es de nadie.
-  if (filas === 1) await olvidarElCarritoDeLaCuenta(tx, datos.organizacionId, datos.ordenId);
+  if (filas === 1)
+    await olvidarElCarritoDeLaCuenta(tx, datos.organizacionId, datos.ordenId, datos.ahora);
   return filas;
 }
 
@@ -298,6 +305,9 @@ export async function limpiarMesa(
 
   // Los avisos del comensal que se fue se van con él: ver `avisos-de-la-mesa.ts`.
   await cerrarAvisosDeLaMesa(tx, organizacionId, mesaId, sello.ahora);
+  // DP-13.2: y su carrito. Lo que el teléfono de la familia que se fue agregó con la mesa en
+  // limpieza le aparecía a la siguiente.
+  await olvidarElCarritoDeLaMesa(tx, organizacionId, mesaId, sello.ahora);
 
   await sellarTransicionDeMesa(tx, {
     organizacionId,
@@ -386,7 +396,7 @@ export async function pasarMesaCobradaALimpieza(
   });
 
   // DP-12.2: la cuenta se cobró; lo que quedó sin enviar en el carrito del portal se va con ella.
-  await olvidarElCarritoDeLaMesa(tx, organizacionId, mesa.id);
+  await olvidarElCarritoDeLaMesa(tx, organizacionId, mesa.id, quien.ahora);
 
   // Si era la principal de un grupo, el grupo entero se recoge con ella.
   await llevarElGrupoConLaPrincipal(tx, organizacionId, mesa.id, {

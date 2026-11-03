@@ -981,6 +981,64 @@ export const SIN_ESTADO = [
     estado: 'error',
     razon: 'Sin operación propia: arrastrar y tocar los resuelve UnirMesasEnElMapa.',
   },
+  {
+    pantalla: 'restaurante/portal-mesero/ElegirLaMesa',
+    estado: 'cargando',
+    razon:
+      'El respaldo del escáner sin cámara (DP-13.2): las mesas llegan por props del mapa, ya leídas.',
+  },
+  {
+    pantalla: 'restaurante/portal-mesero/ElegirLaMesa',
+    estado: 'error',
+    razon:
+      'No lee ni escribe nada: tocar una mesa la abre la pantalla del mesero, que avisa si falla.',
+  },
+  {
+    pantalla: 'configuracion/BotonDelSonido',
+    estado: 'vacio',
+    razon: 'Es el botón junto a «Salir» que abre el sonido del aparato (DP-13.3): no tiene lista.',
+  },
+  {
+    pantalla: 'configuracion/BotonDelSonido',
+    estado: 'cargando',
+    razon: 'No lee nada: el ajuste vive en el aparato y lo pinta `SonidoDelAparato`.',
+  },
+  {
+    pantalla: 'configuracion/BotonDelSonido',
+    estado: 'error',
+    razon: 'Sin operación propia: si el aparato no deja guardar, lo dice `SonidoDelAparato`.',
+  },
+  {
+    pantalla: 'sonidos/AvisoDeSonidoBloqueado',
+    estado: 'vacio',
+    razon:
+      'Es un botón que sólo aparece mientras el navegador no deja sonar (DP-13.2): no tiene lista.',
+  },
+  {
+    pantalla: 'sonidos/AvisoDeSonidoBloqueado',
+    estado: 'cargando',
+    razon: 'No lee nada: escucha al gestor de sonido, que vive en el navegador.',
+  },
+  {
+    pantalla: 'sonidos/AvisoDeSonidoBloqueado',
+    estado: 'error',
+    razon: 'Tocarlo desbloquea el audio; un fallo de reproducción lo dice Configuración → Sonidos.',
+  },
+  {
+    pantalla: 'sonidos/ProveedorDeSonidos',
+    estado: 'vacio',
+    razon: 'Es el proveedor de sonido de la pestaña: envuelve la aplicación y monta su aviso.',
+  },
+  {
+    pantalla: 'sonidos/ProveedorDeSonidos',
+    estado: 'cargando',
+    razon: 'No lee nada del servidor: la configuración llega por props del diseño.',
+  },
+  {
+    pantalla: 'sonidos/ProveedorDeSonidos',
+    estado: 'error',
+    razon: 'Sin operación propia: el aviso del sonido bloqueado es lo único que pinta.',
+  },
 ];
 
 const argumentos = process.argv.slice(2);

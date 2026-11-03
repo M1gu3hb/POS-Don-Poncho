@@ -39,10 +39,19 @@ export const ROLES_QUE_AUTORIZAN: readonly string[] = ['gerente', 'administrador
 /** Dos minutos: lo que tarda en cobrarse la venta que se está autorizando. */
 export const VIGENCIA_AUTORIZACION_SEGUNDOS = 120;
 
+/**
+ * DP-13.2 · Para qué se autoriza (D-5). Una autorización de descuento no sirve para cancelar ni al
+ * revés; sin `para` es la de descuento, como las firmadas antes.
+ */
+export type ParaQueSeAutoriza = 'descuento' | 'cancelacion';
+
 export interface PeticionDeSupervisor {
   readonly organizacionId: string;
   /** Quien pide: la persona de la sesión. */
   readonly solicitaEmpleoId: string;
+  /** DP-13.2 · La cuenta que el supervisor está viendo: la autorización sólo sirve para ella. */
+  readonly cuenta?: string;
+  readonly para?: ParaQueSeAutoriza;
   /** Quien autoriza: el que teclea su PIN. */
   readonly empleoId: string;
   readonly pin: string;
@@ -72,6 +81,9 @@ export interface CargaDeAutorizacion {
   /** Epoch en segundos. */
   readonly exp: number;
   readonly n: string;
+  /** DP-13.2 · La cuenta para la que se firmó (D-5: ya no sirve en otra). */
+  readonly cuenta?: string;
+  readonly para?: ParaQueSeAutoriza;
 }
 
 const PREFIJO = 'autorizacion:';
@@ -100,17 +112,28 @@ function esCarga(valor: unknown): valor is CargaDeAutorizacion {
     typeof v['rol'] === 'string' &&
     typeof v['solicita'] === 'string' &&
     typeof v['exp'] === 'number' &&
-    typeof v['n'] === 'string'
+    typeof v['n'] === 'string' &&
+    (v['cuenta'] === undefined || typeof v['cuenta'] === 'string') &&
+    (v['para'] === undefined || v['para'] === 'descuento' || v['para'] === 'cancelacion')
   );
 }
 
 /**
  * La autorización, si es auténtica, vigente, de ESTE negocio y para ESTA persona. Si
  * no, `null`: quien la presenta decide el error.
+ *
+ * DP-13.2 (D-5) · Con `cuenta`, además, firmada para ESA cuenta; con `para`, para eso (sin `para`
+ * en la firma, es de descuento). Así la autorización que el gerente dio para la mesa 3 no sirve
+ * para descontar —ni para cancelar— la mesa 6.
  */
 export function leerAutorizacion(
   token: string,
-  esperado: { readonly organizacionId: string; readonly solicitaEmpleoId: string },
+  esperado: {
+    readonly organizacionId: string;
+    readonly solicitaEmpleoId: string;
+    readonly cuenta?: string;
+    readonly para?: ParaQueSeAutoriza;
+  },
   secreto: string,
   ahora: Date = new Date(),
 ): CargaDeAutorizacion | null {
@@ -129,6 +152,8 @@ export function leerAutorizacion(
   if (carga.org !== esperado.organizacionId) return null;
   if (carga.solicita !== esperado.solicitaEmpleoId) return null;
   if (!ROLES_QUE_AUTORIZAN.includes(carga.rol)) return null;
+  if (esperado.cuenta !== undefined && carga.cuenta !== esperado.cuenta) return null;
+  if (esperado.para !== undefined && (carga.para ?? 'descuento') !== esperado.para) return null;
   return carga;
 }
 
@@ -202,6 +227,8 @@ export async function autorizarConPin(
         solicita: peticion.solicitaEmpleoId,
         exp,
         n: randomBytes(8).toString('hex'),
+        ...(peticion.cuenta === undefined ? {} : { cuenta: peticion.cuenta }),
+        ...(peticion.para === undefined ? {} : { para: peticion.para }),
       },
       peticion.secreto,
     ),

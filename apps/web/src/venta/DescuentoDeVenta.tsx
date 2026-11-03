@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { ErrorApi, invocarComando } from '~/cliente/api';
 
 import { porcentajeDeTope } from './devolucion.ts';
+import { PinDeSupervisor } from './PinDeSupervisor';
 
 /**
  * EL DESCUENTO, CON SU TOPE Y SU SUPERVISOR (F-205, D-28 de la 2.4).
@@ -57,9 +58,12 @@ function mensajeDe(fallo: unknown, porDefecto: string): string {
 }
 
 export function DescuentoDeVenta({
+  ordenId,
   base,
   onAplicar,
 }: {
+  /** DP-13.2 · La cuenta que se descuenta: la autorización del supervisor va atada a ella. */
+  readonly ordenId: string;
   /** Lo que vale la venta antes del descuento, en centavos. */
   readonly base: number;
   readonly onAplicar: (descuento: DescuentoElegido) => void;
@@ -70,10 +74,7 @@ export function DescuentoDeVenta({
   const [importe, setImporte] = useState<number | null>(null);
   const [porcentaje, setPorcentaje] = useState('');
   const [motivo, setMotivo] = useState('');
-  const [supervisor, setSupervisor] = useState<string | null>(null);
-  const [pin, setPin] = useState('');
   const [autorizacion, setAutorizacion] = useState<{ token: string; nombre: string } | null>(null);
-  const [ocupado, setOcupado] = useState(false);
 
   useEffect(() => {
     const control = new AbortController();
@@ -81,7 +82,6 @@ export function DescuentoDeVenta({
       .then((leido) => {
         if (control.signal.aborted) return;
         setTope(leido);
-        setSupervisor(leido.quienesAutorizan[0]?.empleoId ?? null);
       })
       .catch((error: unknown) => {
         if (!control.signal.aborted) setFallo(mensajeDe(error, 'No se pudo leer tu tope.'));
@@ -103,28 +103,6 @@ export function DescuentoDeVenta({
           tope: { topeCentavos: BigInt(tope.topeCentavos), topeBp: tope.topeBp },
         }).veredicto !== 'libre'
       : false;
-
-  async function autorizar(): Promise<void> {
-    if (supervisor === null || pin.length < 4) return;
-    setOcupado(true);
-    setFallo(null);
-    try {
-      const respuesta = await invocarComando<{ autorizacion: string }>(
-        '/api/identidad/supervisor',
-        {
-          empleoId: supervisor,
-          pin,
-        },
-      );
-      const nombre = tope?.quienesAutorizan.find((q) => q.empleoId === supervisor)?.nombre ?? '';
-      setAutorizacion({ token: respuesta.autorizacion, nombre });
-    } catch (error: unknown) {
-      setFallo(mensajeDe(error, 'No se pudo autorizar.'));
-    } finally {
-      setPin('');
-      setOcupado(false);
-    }
-  }
 
   if (tope === null) {
     return fallo === null ? (
@@ -236,55 +214,14 @@ export function DescuentoDeVenta({
               explicacion="Este negocio no tiene gerente ni dueño con PIN: el descuento tiene que caber en tu tope."
             />
           ) : autorizacion === null ? (
-            <>
-              <fieldset>
-                <legend className="mb-(--espacio-2) text-sm font-medium">Quién autoriza</legend>
-                <div className="flex flex-wrap gap-(--espacio-2)">
-                  {tope.quienesAutorizan.map((q) => (
-                    <Button
-                      key={q.empleoId}
-                      type="button"
-                      size="sm"
-                      variant={supervisor === q.empleoId ? 'default' : 'outline'}
-                      aria-pressed={supervisor === q.empleoId}
-                      onClick={() => {
-                        setSupervisor(q.empleoId);
-                      }}
-                    >
-                      {q.nombre}
-                    </Button>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="flex items-end gap-(--espacio-2)">
-                <div className="flex flex-1 flex-col gap-(--espacio-1)">
-                  <Label htmlFor="descuento-pin">PIN de quien autoriza</Label>
-                  <Input
-                    id="descuento-pin"
-                    type="password"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    maxLength={8}
-                    value={pin}
-                    onChange={(evento) => {
-                      setPin(evento.target.value.replace(/\D/g, ''));
-                    }}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={ocupado || supervisor === null || pin.length < 4}
-                  cargando={ocupado}
-                  onClick={() => {
-                    void autorizar();
-                  }}
-                >
-                  <KeyRound aria-hidden="true" />
-                  Autorizar
-                </Button>
-              </div>
-            </>
+            // DP-13.2 (D-5): firmada para ESTA cuenta y para un descuento.
+            <PinDeSupervisor
+              ordenId={ordenId}
+              para="descuento"
+              quienesAutorizan={tope.quienesAutorizan}
+              idDelCampo="descuento-pin"
+              alAutorizar={setAutorizacion}
+            />
           ) : (
             <Aviso tono="exito" titulo={`Autorizó ${autorizacion.nombre}.`} />
           )}

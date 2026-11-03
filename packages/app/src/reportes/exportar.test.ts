@@ -113,6 +113,15 @@ describe('el exporte de ventas SIN RECETA (DP-12.6)', () => {
     expect(fila).toEqual({ folio: 'A-3', total: 200 });
   });
 
+  it('DP-13.2 · una cuenta con receta INCOMPLETA (el servidor lo dice) también sale vacía', () => {
+    const [fila] = sinMargenFalso('Venta', [{ ...conReceta, estado_costo: 'receta_incompleta' }]);
+    expect(fila).toMatchObject({
+      costo_total_snapshot: null,
+      utilidad_bruta_snapshot: null,
+      margen_snapshot: null,
+    });
+  });
+
   it('otras entidades pasan tal cual, aunque tengan los mismos nombres', () => {
     expect(sinMargenFalso('CorteCaja', [sinReceta])).toEqual([sinReceta]);
   });

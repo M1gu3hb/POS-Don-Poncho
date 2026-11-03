@@ -155,7 +155,8 @@ export async function descontarLaOrden(
           ? null
           : leerAutorizacion(
               pedido.autorizacion,
-              { organizacionId, solicitaEmpleoId: empleoId },
+              // DP-13.2 (D-5): firmada para ESTA cuenta y para un descuento.
+              { organizacionId, solicitaEmpleoId: empleoId, cuenta: ordenId, para: 'descuento' },
               secreto(),
               ctx.ahora,
             );

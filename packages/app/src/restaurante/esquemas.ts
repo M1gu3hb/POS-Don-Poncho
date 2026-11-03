@@ -114,6 +114,11 @@ export const entradaCancelarOrden = z.object({
    * desaparecer dinero del corte, y el corte tiene que poder decir por qué.
    */
   motivo: z.string().trim().min(3).max(300),
+  /**
+   * DP-13.2 · Con la cuenta ya pedida o impresa, el PIN de un gerente o del dueño firmado para ESTA
+   * cuenta (`/api/identidad/supervisor` con `ordenId` y `para: 'cancelacion'`).
+   */
+  autorizacion: z.string().min(20).max(2000).optional(),
 });
 
 export const entradaSolicitarCuenta = z.object({

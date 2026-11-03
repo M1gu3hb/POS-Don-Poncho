@@ -38,6 +38,47 @@ let configuracion: ConfiguracionDeSonido = {
 };
 let desbloqueado = false;
 const ultimas = new Map<NombreDeReceta, number>();
+
+/**
+ * DP-13.2 · EL SONIDO BLOQUEADO. Antes del primer gesto el navegador no deja sonar ni hablar: lo
+ * que quiso sonar se guarda (el último) y suena con el toque que lo desbloquea, y la voz que el
+ * navegador negó (`voiceAlert.js`, error «not-allowed») se vuelve a decir. Mientras tanto la
+ * pantalla lo dice: «Sonido apagado · toca para activar» (`AvisoDeSonidoBloqueado.tsx`). La voz y
+ * el gestor hablan por dos eventos de la ventana, sin importarse.
+ */
+export const EVENTO_VOZ_BLOQUEADA = 'morphiqpos:voz-bloqueada';
+export const EVENTO_AUDIO_DESBLOQUEADO = 'morphiqpos:audio-desbloqueado';
+let pendienteDelBloqueo: EventoDeSonido | null = null;
+let vozBloqueada = false;
+const escuchasDelBloqueo = new Set<() => void>();
+
+function avisarDelBloqueo(): void {
+  for (const escucha of escuchasDelBloqueo) escucha();
+}
+
+/** Le dice a la voz (`voiceAlert.js`) que ya puede decir lo que el navegador le negó. */
+function avisarALaVoz(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(EVENTO_AUDIO_DESBLOQUEADO));
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener(EVENTO_VOZ_BLOQUEADA, () => {
+    vozBloqueada = true;
+    avisarDelBloqueo();
+  });
+}
+
+/** ¿Hay algo que quiso sonar (o hablar) y el navegador no dejó? */
+export function sonidoBloqueado(): boolean {
+  return pendienteDelBloqueo !== null || vozBloqueada;
+}
+
+export function suscribirAlBloqueo(escucha: () => void): () => void {
+  escuchasDelBloqueo.add(escucha);
+  return () => {
+    escuchasDelBloqueo.delete(escucha);
+  };
+}
 const escuchasDelFallo = new Set<() => void>();
 let fallo: string | null = null;
 
@@ -54,8 +95,20 @@ export function desbloquearSonidos(): void {
   } catch (error: unknown) {
     anotarFallo(error);
   }
-  if (desbloqueado) return;
+  const primeraVez = !desbloqueado;
   desbloqueado = true;
+  // DP-13.2: lo que quiso sonar antes de este toque suena ahora, y la voz negada se reintenta
+  // cuando ese timbre TERMINA, como en `sonarAntesDeHablar`: nunca se le encima.
+  const pendiente = pendienteDelBloqueo;
+  pendienteDelBloqueo = null;
+  const sonando = pendiente === null ? null : arrancar(pendiente);
+  if (vozBloqueada || primeraVez) {
+    vozBloqueada = false;
+    if (sonando === null) avisarALaVoz();
+    else void sonando.then(avisarALaVoz);
+  }
+  if (pendiente !== null || primeraVez) avisarDelBloqueo();
+  if (!primeraVez) return;
   // Lo que más suena y lo que va antes de recargar (entrar, salir), ya sintetizado. Si este
   // aparato no suena (Apagado, el portal callado), no se gasta en nada.
   if (configuracion.ganancia <= 0 || configuracion.silencioDelPortal) return;
@@ -123,6 +176,18 @@ function arrancar(evento: EventoDeSonido): Promise<void> | null {
   const receta = recetaDe(evento, configuracion.tecla);
   const ahora = performance.now();
   if (callaPorUnaAccion(evento, ahora, calladoHasta)) return null;
+  // DP-13.2: sin el primer gesto no suena; si este aparato SÍ suena, se recuerda para ese gesto
+  // (el toque genérico no: no es algo que la pantalla quería decir).
+  if (
+    !desbloqueado &&
+    evento !== 'toque' &&
+    configuracion.ganancia > 0 &&
+    !configuracion.silencioDelPortal
+  ) {
+    pendienteDelBloqueo = evento;
+    avisarDelBloqueo();
+    return null;
+  }
   const estado = {
     desbloqueado,
     ganancia: configuracion.ganancia,

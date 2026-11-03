@@ -35,6 +35,38 @@ export const SEGUNDOS_CONECTADO = 60;
  * teléfono sigue contando como conectado (la ventana es de 60).
  */
 export const SEGUNDOS_ENTRE_LATIDOS = 30;
+/**
+ * DP-13.2 · El carrito de una mesa SIN cuenta caduca solo a estas horas de que nadie le agregó
+ * nada: el de una familia que nunca abrió la mesa (o que se fue y dejó el teléfono abierto) no le
+ * aparece a la siguiente al otro día. Con la cuenta abierta no caduca: es el pedido de una mesa
+ * servida. «Actividad» es agregar: un teléfono que sigue latiendo no lo mantiene vivo.
+ *
+ * Revisión de DP-13: lo que se dejó horas ANTES de abrir la cuenta tampoco es de la mesa servida.
+ * La cuenta se abre a las 17:00 y el carrito es de las 13:00: caducó al abrirse, y no revive.
+ */
+export const HORAS_SIN_ACTIVIDAD = 3;
+
+/**
+ * ¿Ya caducó? Puro: sin líneas no hay nada que caducar. Se mide hasta la APERTURA de la cuenta si
+ * la hay (con la cuenta abierta lo agregado después no caduca), o hasta ahora si no.
+ */
+export function carritoCaducado(
+  ultimaLinea: Date | null,
+  aperturaDeLaCuenta: Date | null,
+  ahora: Date,
+): boolean {
+  if (ultimaLinea === null) return false;
+  const hasta = aperturaDeLaCuenta ?? ahora;
+  return hasta.getTime() - ultimaLinea.getTime() > HORAS_SIN_ACTIVIDAD * 3_600_000;
+}
+
+/** La más reciente de las líneas, o `null` sin líneas. */
+export function ultimaDe(lineas: readonly { readonly created_at: Date }[]): Date | null {
+  return lineas.reduce<Date | null>(
+    (ultima, l) => (ultima === null || l.created_at > ultima ? l.created_at : ultima),
+    null,
+  );
+}
 
 /** El id que inventa el navegador del teléfono: sólo letras, números, «-» y «_». */
 const DISPOSITIVO = z
@@ -177,7 +209,7 @@ export async function estadoDelCarrito(
     banderas,
   }: { readonly desde: Date | null; readonly ahora: Date; readonly banderas: BanderasPortal },
 ): Promise<EstadoDelCarrito> {
-  const lineas = await tx
+  const todas = await tx
     .selectFrom('carrito_mesa_lineas as l')
     .innerJoin('productos as p', (j) =>
       j.onRef('p.id', '=', 'l.producto_id').onRef('p.organizacion_id', '=', 'l.organizacion_id'),
@@ -188,6 +220,7 @@ export async function estadoDelCarrito(
       'l.cantidad',
       'l.notas',
       'l.dispositivo_huella',
+      'l.created_at',
       'p.nombre',
       'p.precio_venta_centavos',
       'p.activo',
@@ -198,6 +231,8 @@ export async function estadoDelCarrito(
     .orderBy('l.created_at')
     .orderBy('l.id')
     .execute();
+  // DP-13.2: lo caducado ya no se ve; se borra con lo siguiente que se agregue.
+  const lineas = carritoCaducado(ultimaDe(todas), desde, ahora) ? [] : todas;
 
   const umbral = new Date(ahora.getTime() - SEGUNDOS_CONECTADO * 1000);
   const desdeConectados = desde !== null && desde > umbral ? desde : umbral;

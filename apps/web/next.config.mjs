@@ -16,6 +16,8 @@ import { fileURLToPath } from 'node:url';
 
 import { config as cargarEnv } from 'dotenv';
 
+import { cabecerasDePermisos } from './permisos-del-navegador.mjs';
+
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 cargarEnv({ path: [join(RAIZ, '.env.local'), join(RAIZ, '.env')], override: false, quiet: true });
 
@@ -40,12 +42,8 @@ const cabecerasDeSeguridad = [
   // organizacion y de orden.
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
 
-  // Un POS no necesita camara, microfono ni ubicacion del navegador. El escaner
-  // por camara se habilita explicitamente en su ruta cuando llegue en F1.2.
-  {
-    key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
-  },
+  // La de permisos (camara, microfono, ubicacion) va aparte, por ruta: la camara sólo
+  // en las pantallas que escanean (DP-13.2, `permisos-del-navegador.mjs`).
 
   // Legado, pero sigue siendo la unica defensa en navegadores viejos que no
   // entienden frame-ancestors. La CSP lo repite.
@@ -94,7 +92,7 @@ const nextConfig = {
    */
 
   async headers() {
-    return [{ source: '/:path*', headers: cabecerasDeSeguridad }];
+    return cabecerasDePermisos(cabecerasDeSeguridad);
   },
 };
 

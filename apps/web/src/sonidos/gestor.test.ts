@@ -216,16 +216,17 @@ describe('el gestor de sonido', () => {
     expect(reproducir).not.toHaveBeenCalled();
   });
 
-  it('el primer toque desbloquea: antes no suena, y desde ahí sí (DP-12.6)', async () => {
+  it('el primer toque desbloquea: antes no suena, y ese toque toca lo pendiente (DP-12.6, DP-13.2)', async () => {
     vi.resetModules();
     const { sonar, configurarSonidos, desbloquearSonidos } = await import('./gestor');
     configurarSonidos({ ganancia: 1, tecla: 'nib', silencioDelPortal: false });
     sonar('comandaNueva');
     expect(reproducir).not.toHaveBeenCalled();
     desbloquearSonidos();
-    vi.advanceTimersByTime(100);
-    sonar('comandaNueva');
     expect(reproducir).toHaveBeenCalledExactlyOnceWith('ping', 1);
+    vi.advanceTimersByTime(5_000);
+    sonar('cobro');
+    expect(reproducir).toHaveBeenLastCalledWith('halo', 1);
   });
 
   it('la voz espera a que el sonido termine; si no suena, no espera (DP-12.6)', async () => {

@@ -75,7 +75,7 @@ beforeAll(async () => {
 });
 
 /** Lo que firma `/api/identidad/supervisor` cuando el gerente teclea su PIN en esta caja. */
-function autorizacionDelGerente(): string {
+function autorizacionDelGerente(ordenId: string): string {
   return firmarAutorizacion(
     {
       org: negocio.organizacionId,
@@ -84,6 +84,9 @@ function autorizacionDelGerente(): string {
       solicita: negocio.empleoId,
       exp: Math.floor(Date.now() / 1000) + 120,
       n: 'integracion-0001',
+      // DP-13.2 (D-5): para ESTA cuenta y para un descuento.
+      cuenta: ordenId,
+      para: 'descuento',
     },
     SECRETO,
   );
@@ -99,7 +102,7 @@ describe('F-205 · el descuento autorizado por porcentaje entra en la base', () 
           ordenId,
           descuentoCentavos: 2_000,
           motivo: 'Cliente frecuente',
-          autorizacion: autorizacionDelGerente(),
+          autorizacion: autorizacionDelGerente(ordenId),
         },
         ambito,
         idempotencyKey: clave(),
