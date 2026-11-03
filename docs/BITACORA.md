@@ -631,6 +631,8 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
 | B · `agent-a32802749101128cd` (base 5440, sin navegador) | Sonnet | 13.3: 8 (plataforma), 9 (purgas) y 13.4.25 | Hecho. Candado único del documento de configuración, `mantenimiento.quitar_plataforma`, la purga de un día real (uniones, bitácora de cuentas, carritos, avisos, lista de espera). Integración completa 63/305; 53 de 53 mutantes destructivos muertos. Se cortó una vez por el límite de uso y se retomó con su archivo de progreso. Integrado aquí. |
 | Revisión · workflow `wf_7eb1b5de-d5e` (2 a la vez, cada hallazgo con su verificador) | Sonnet | Revisar 13.2 en servidor/SQL y en permisos/pantallas | 8 hallazgos confirmados de 12; los 8 arreglados con su prueba primero (ver abajo). Se cortó por el límite de uso y se retomó con `resumeFromRunId`. |
 | C · `agent-a2283480c75286caa` (base 5441, puerto 3205) | Sonnet | 13.3: 11 (id del teléfono firmado), 12 (el comensal se entera), 13 (abrir y enviar en una transacción), 15 (cuenta pedida) | Hecho. Pruebas primero; 63 de 63 mutantes; e2e nuevo `portal-dp13` 9/9. Sus 3 fallos de navegador en teléfono (`restaurante-menu-personalizado`, dos de `restaurante-portal-qr`) salen igual SIN su cambio: el ayudante busca el mapa de Configuración → Mesas y el teléfono enseña una lista (el CI corre en escritorio). Integrado aquí; un solo choque (`aspecto-permitido.json`, las dos declaraciones). |
+| QA-1 · la jornada (copia en el 5442, app en el 3210) | Sonnet | 13.5: un día intenso en Playwright con tabletas, teléfonos y la PC a la vez | En curso. |
+| QA-2 · las cuentas y los datos (la misma copia, sólo lectura) | Sonnet | 13.5: que cuadre por la app y por la base; huérfanos, uniones, carritos y avisos; sondeos de seguridad | En curso. |
 
 - **Ojo, integrar con `git apply -3`:** si un archivo del parche tiene cambios sin preparar aquí,
   `-3` se niega («does not match index») y no aplica NADA. Se aplicó el resto sin `-3`
@@ -711,6 +713,16 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
   404 con Morfi; cabeceras en vivo con la puerta (`camera=(self)` sólo en `/mesero` y `/pos`).
 - Huella de los otros 10 contra la de antes del QA: IDÉNTICA
   (`_PRIVADO\mudanza\huellas-dp13\despues-despliegue-a.json`).
+
+### Parte B a producción (03-11)
+
+- PR #5: CI completo en verde (10 de 10). Fusión con merge `7b36dd0`, a nombre de M1gu3hb.
+- e2e antes de subir (build con la parte B): `portal-dp13` 9/9, `portal-modo-mesero` 6/6,
+  `pedido-compartido`, `restaurante-portal-qr`, `botones-del-menu-qr`, `restaurante-menu-personalizado`
+  y `portal-sin-asignacion` en escritorio. Integración completa 75/397 (una de carrera se cortó con
+  la máquina compilando y pasa sola); portal 17/112.
+- Production lista; humo sin PIN y cabeceras en vivo en verde; huella de los otros 10 IDÉNTICA
+  (`despues-despliegue-b.json`).
 
 ### Producción antes del QA (sólo lectura, 03-11)
 

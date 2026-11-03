@@ -1084,7 +1084,8 @@ export async function prepararElPortalDelComensal(
 
 /**
  * Configuración → Mesas: la dueña le pone su mesero a la mesa, desde el mapa. Los mosaicos no
- * tienen rol: se tocan por su número, dentro del mapa.
+ * tienen rol: se tocan por su número, dentro del mapa. En el teléfono no hay mapa sino una lista
+ * (`MesaListMobile`), y la mesa se abre con su botón «Editar mesa N».
  */
 async function asignarElMesero(
   duena: Page,
@@ -1094,7 +1095,10 @@ async function asignarElMesero(
 ): Promise<void> {
   await duena.getByRole('tab', { name: 'Mesas' }).click();
   await duena.getByRole('button', { name: new RegExp(`^${escapar(zona)}`) }).click();
-  await duena.locator('div.select-none').getByText(String(mesa), { exact: true }).first().click();
+  const enLaLista = duena.getByRole('button', { name: `Editar mesa ${String(mesa)}`, exact: true });
+  const delMapa = duena.locator('div.select-none').getByText(String(mesa), { exact: true }).first();
+  await expect(enLaLista.or(delMapa).first()).toBeVisible();
+  await ((await enLaLista.isVisible()) ? enLaLista : delMapa).click();
   const dialogo = duena.getByRole('dialog');
   await expect(dialogo).toBeVisible();
   await dialogo.getByRole('combobox').filter({ hasText: 'Sin asignar' }).click();
