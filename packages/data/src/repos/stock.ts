@@ -61,10 +61,15 @@ export async function aplicarMovimientos(
     ${movimiento.referenciaTipo},
     ${movimiento.referenciaId},
     ${movimiento.empleadoId ?? null},
-    ${movimiento.idempotencyKey}
+    ${movimiento.idempotencyKey},
+    (select i.costo_unitario_centavos
+       from insumos i
+      where i.organizacion_id = ${movimiento.organizacionId} and i.id = ${movimiento.insumoId})
   )`,
   );
 
+  // DP-13.5 (QA2-003): cada salida lleva el costo del insumo en ese momento. Sin él, la columna se
+  // quedaba en su cero de omisión y el corte decía «Insumos consumidos» con costo $0.
   await sql`
     insert into movimientos_stock (
       organizacion_id,
@@ -76,7 +81,8 @@ export async function aplicarMovimientos(
       referencia_tipo,
       referencia_id,
       empleado_id,
-      idempotency_key
+      idempotency_key,
+      costo_unitario_centavos
     ) values ${sql.join(filas)}
   `.execute(tx);
 }

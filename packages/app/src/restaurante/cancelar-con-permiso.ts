@@ -127,6 +127,7 @@ export async function exigirPermisoParaCancelar(
     .select([
       'o.estado as estado',
       'o.precuentas_impresas as impresas',
+      'o.codigo_caja as codigoCaja',
       'o.empleado_atiende_id as atiendeLaCuenta',
       'm.empleado_atiende_id as atiendeLaMesa',
       'm.empleado_asignado_id as asignadoALaMesa',
@@ -153,8 +154,11 @@ export async function exigirPermisoParaCancelar(
     });
   }
 
+  // «Pedida» es también la que se pidió y se REABRIÓ para un pedido del portal (QA2-007, DP-D58):
+  // vuelve a `confirmada`, pero conserva su `codigo_caja`, el papel que el comensal tiene en la mano.
   const pedidaOImpresa =
     cuenta.estado === 'cuenta_solicitada' ||
+    cuenta.codigoCaja !== null ||
     cuenta.impresas > 0 ||
     absorbidas.some((a) => a.pedida || a.impresas > 0);
   if (!pedidaOImpresa || ROLES_QUE_AUTORIZAN.includes(rol)) return null;

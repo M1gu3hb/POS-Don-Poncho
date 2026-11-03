@@ -134,9 +134,14 @@ describe('cancelar la cuenta', () => {
 
     // El corte la dice «Por cancelación», con su costo (el del insumo, no cero).
     const salidas = await conTransaccion((tx) =>
+      // Como el Cierre del día: todo lo de la sucursal en la última hora.
       salidasSinVenta(tx, salon.negocio.organizacionId, {
-        abiertaEn: new Date(Date.now() - 3_600_000),
-        cerradaEn: new Date(),
+        sesionId: '00000000-0000-4000-8000-000000000000',
+        sucursalId: salon.sucursal.sucursalId,
+        abreId: '00000000-0000-4000-8000-000000000000',
+        cierraElDia: true,
+        desde: new Date(Date.now() - 3_600_000),
+        hasta: new Date(),
       }),
     );
     expect(salidas.map((s) => [s.tipo, s.motivo])).toEqual(

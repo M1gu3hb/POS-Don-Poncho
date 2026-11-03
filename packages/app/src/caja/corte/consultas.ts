@@ -3,6 +3,7 @@ import 'server-only';
 import type { Transaccion } from '@morphiqpos/data';
 import { sql } from 'kysely';
 
+import type { AlcanceDelCorte } from './alcance-del-corte.ts';
 import { estadoDelCostoDe, lineaSinCosto } from './costo-conocido.ts';
 
 /**
@@ -626,13 +627,21 @@ export interface SalidaSinVenta {
 const motivoDeLaSalida = sql`case when m.tipo = 'merma' and m.referencia_tipo in ('orden', 'anulacion')
                                   then 'Por cancelación' else m.motivo end`;
 
-/** Merma y consumo de la casa en la ventana de la sesión: el dinero que salió sin venta. */
+/**
+ * Merma y consumo de la casa: el dinero que salió sin venta.
+ *
+ * Con el MISMO alcance que las cancelaciones (DP-D50; QA2-004 de DP-13.5): el corte de una caja
+ * trae lo que sacó del almacén quien la abrió mientras estaba abierta, y el Cierre del día todo lo
+ * de la sucursal desde el Cierre anterior. Antes se leía por la ventana de cada caja y de toda la
+ * organización: con dos cajas abiertas las dos hojas traían la misma merma, y el Cierre del día no
+ * veía lo de antes de que abriera la última.
+ */
 export async function salidasSinVenta(
   tx: Transaccion,
   organizacionId: string,
-  sesion: { readonly abiertaEn: Date; readonly cerradaEn: Date },
+  alcance: AlcanceDelCorte,
 ): Promise<readonly SalidaSinVenta[]> {
-  const hasta = sesion.cerradaEn;
+  const { sucursalId, abreId, cierraElDia, desde, hasta } = alcance;
   const { rows } = await sql<SalidaSinVenta>`
     select m.tipo                                                            as "tipo",
            ${motivoDeLaSalida}                                               as "motivo",
@@ -642,11 +651,15 @@ export async function salidasSinVenta(
            round(sum(-m.cantidad::numeric * m.costo_unitario_centavos))::bigint::text as "costoCentavos",
            max(ev.nombre)                                                    as "quien"
       from movimientos_stock m
+      join almacenes a on a.id = m.almacen_id and a.organizacion_id = m.organizacion_id
       join insumos i on i.id = m.insumo_id and i.organizacion_id = m.organizacion_id
       left join empleados_visibles ev on ev.id = m.empleado_id
      where m.organizacion_id = ${organizacionId}
+       and a.sucursal_id = ${sucursalId}
        and m.tipo in ('merma', 'salida_consumo_interno')
-       and m.created_at between ${sesion.abiertaEn} and ${hasta}
+       and m.created_at > ${desde}
+       and m.created_at <= ${hasta}
+       and (${cierraElDia}::boolean or m.empleado_id = ${abreId})
      group by m.tipo, ${motivoDeLaSalida}, i.id, i.nombre
      order by m.tipo, sum(-m.cantidad::numeric * m.costo_unitario_centavos) desc
      limit ${TOPE_DE_FILAS}

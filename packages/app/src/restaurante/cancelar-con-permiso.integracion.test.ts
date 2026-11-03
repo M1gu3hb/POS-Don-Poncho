@@ -160,6 +160,19 @@ describe('con la cuenta pedida o impresa, el PIN de un gerente atado a ESA cuent
     exigirCancelada(await cancelar(otra.ordenId, mesero()));
   });
 
+  it('QA2-007 · pedida y REABIERTA (vuelve a confirmada, conserva su código): sigue pidiendo el PIN', async () => {
+    const { ordenId } = await cuenta(13, ['1']);
+    await comando(solicitarCuenta, {
+      entrada: { ordenId },
+      ambito: mesero(),
+      idempotencyKey: clave(),
+    });
+    // Lo que deja `reabrir-la-cuenta.ts` (DP-D58): la cuenta otra vez `confirmada`, con su
+    // `codigo_caja` (el comensal tiene ese papel en la mano).
+    await marcar(ordenId, { estado: 'confirmada' });
+    expect(codigo(await cancelar(ordenId, mesero()))).toBe('PUESTO_NO_OTORGABLE');
+  });
+
   it('impresa (la precuenta salió): anular un platillo también pide el PIN', async () => {
     const { ordenId } = await cuenta(10, ['1', '1']);
     await marcar(ordenId, { precuentas_impresas: 1, precuenta_impresa_en: new Date() });
