@@ -1015,3 +1015,135 @@ puerta los denuncia todos.
   puede usar `economiaDelPeriodo`; el corte suma costos en el servidor y necesita contar las ventas
   sin costo. No se hizo en DP-12 para no retrasar la publicación.
 - **Sin migración.**
+
+## DP-D50 · El corte: la pérdida es lo que valía lo ya hecho, y cada caja cuenta sus cuentas · 02-11-2026
+
+- **Lo que había:** una cuenta cancelada con UN platillo listo salía como pérdida entera. El corte
+  contaba las cancelaciones por sucursal y por hora: con dos cajas abiertas las dos traían las
+  mismas, y lo cancelado sin caja abierta no salía en ninguna. El corte de una caja abierta leía
+  su propio reloj sin decirlo.
+- **Elección (Miguel la puede cambiar):**
+  - **Pérdida** = de cada platillo de la cuenta que no se anuló aparte, la parte que la cocina dejó
+    lista o se entregó, a su precio en la cuenta (`perdidaCentavos`). Lo demás de la cuenta es
+    cancelado sin costo: una cuenta mixta sale en las dos tablas, cada una con su parte.
+  - **El corte de UNA caja** trae sólo las cancelaciones de SUS cuentas: el platillo anulado de una
+    cuenta que esa caja cobró, y lo que canceló quien la abrió mientras estaba abierta.
+  - **El Cierre del día** es el corte de la última caja abierta de la sucursal al cerrar: trae TODAS
+    las cancelaciones de la sucursal desde el Cierre del día anterior (de las cajas, de la mesera,
+    de nadie), cada una una vez. Lo cancelado sin caja abierta cae en el Cierre del día que sigue.
+    Sin Cierre anterior, la ventana empieza a medianoche (hora del negocio) del día en que se abrió
+    la caja. Dos cajas que cierran en el mismo instante: cierra el día la de id mayor.
+  - **El corte de una caja abierta** cuenta hasta la hora en que se lee y lo dice («Corte parcial ·
+    hasta»); todas sus lecturas usan ese mismo instante.
+  - Cada sección de cancelaciones dice de cuáles habla (las de esta caja, o el día).
+- **Descartado:** guardar la caja en la cancelación (pediría migración) y atribuir lo de la mesera
+  a «la única caja abierta» (con dos cajas no es determinista).
+- **Sin migración.** `caja/corte/alcance-del-corte.ts`, `cancelaciones.ts`.
+
+## DP-D51 · Cancelar desde el mesero: sus mesas, nunca lo cobrado, y con PIN si ya se pidió · 02-11-2026
+
+- **Elección:**
+  - No se cancela una cuenta pagada, con pagos, dividida, reembolsada (o en parte) ni absorbida.
+  - El motivo es obligatorio en el servidor (cancelar: 3 a 300 letras; anular: un motivo cerrado).
+  - El **mesero** cancela o anula sólo en las mesas que atiende o que tiene asignadas; cajero,
+    gerente, administrador y dueño, en cualquiera de su sucursal.
+  - Con la cuenta **pedida** o la precuenta **impresa**, quien no autoriza por su puesto necesita el
+    PIN de un gerente, administrador o dueño, en el mismo diálogo. Es lo predeterminado; Miguel lo
+    apaga con `configuracion.valores.pin_al_cancelar_cuenta_pedida = false`.
+  - **D-5 arreglado:** la autorización firmada del supervisor lleva `cuenta` y `para`
+    (`descuento` o `cancelacion`): la de la mesa 3 no sirve en la 6, y la de un descuento no
+    sirve para cancelar. Sigue durando dos minutos.
+  - **Con mesas unidas**, la cuenta que queda carga con las que absorbió (con la unión viva o ya
+    separada: separar no devuelve el consumo): si alguna se pidió —su `codigo_caja` sobrevive a la
+    unión— o se imprimió, pide el PIN; si alguna la abrió otro mesero, el mesero no la cancela ni
+    anula. Unir no borra el «ya se pidió» ni le da a un mesero la mesa de otro.
+  - El aviso de pérdida no sale a ciegas: al abrir «Cancelar la cuenta» se vuelve a leer la cocina;
+    mientras, no se puede confirmar, y si falla se dice «No pude comprobar la cocina».
+- **Descartado:** autorización de un solo uso (pediría guardar el nonce: migración).
+- **Sin migración.** `restaurante/cancelar-con-permiso.ts`, `identidad/supervisor.ts`,
+  `venta/PinDeSupervisor.tsx`.
+
+## DP-D52 · El margen «sin receta» es una regla del servidor, y existe «receta incompleta» · 02-11-2026
+
+- **Lo que había:** DP-D49 cazaba sólo la cuenta TODA sin receta (costo cero); una cuenta con un
+  platillo con receta y otro sin ella daba un margen inflado. El Cierre del día, el corte, Caja,
+  su corte y el ticket del corte seguían en 100 %.
+- **Elección:** una sola regla en SQL (`caja/corte/costo-conocido.ts`): una línea viva con importe y
+  costo cero no tiene costo conocido; la cuenta con todas así es «sin receta», con algunas
+  «receta incompleta». La usan el corte del servidor (margen sólo de las cuentas con costo
+  completo, y cuántas quedaron fuera), sus productos y categorías, el puente (`estado_costo` de
+  cada venta, sólo para quien ve márgenes) y el exporte del servidor. Las pantallas obedecen ese
+  estado (`margen-de-las-ventas.ts`): Cierre del día, Caja y su Resumen, el diálogo del Cierre,
+  la página del corte, el ticket del corte y el CSV de Registros. Sin el campo (ventas viejas),
+  la foto del cobro.
+- **Sin migración.**
+
+## DP-D53 · El sonido no se queda mudo: pendiente, aviso y voz que reintenta · 02-11-2026
+
+- **Elección:** se desbloquea también con `pointerdown` y `touchstart`; `resume()` se rinde a
+  los 1.5 s. Lo que quiso sonar antes del primer gesto se guarda (el último) y suena con ese
+  gesto; la voz que el navegador negó (`not-allowed`) se vuelve a decir cuando ese timbre
+  termina. Mientras tanto, abajo, «Sonido apagado · toca para activar». No vuelve el botón viejo.
+- **Sin migración.**
+
+## DP-D54 · La cámara sólo donde se escanea, y sin cámara se elige la mesa · 02-11-2026
+
+- **Elección:** `Permissions-Policy` con `camera=(self)` sólo en `/mesero` y `/pos`, `camera=()` en todo
+  lo demás (el portal incluido); la puerta de cabeceras exige exactamente eso. Sin cámara (o con
+  el permiso negado) el respaldo es elegir la mesa de una lista, no un campo numérico. «Pedido del
+  portal» en el menú de pulsación larga de la mesa. La cámara se apaga siempre, también si se
+  cierra mientras arranca.
+- **La cabecera es del documento, no de la pantalla.** El navegador la fija al CARGAR, y Next
+  cambia de pantalla sin cargar: quien entra al mesero desde la caja, el tablero o la entrada por
+  PIN (la mesera que abre `/caja` cae en sus mesas así) seguía con `camera=()`. Antes de abrir el
+  escáner se mira en qué ruta cargó el documento; si fue en una sin cámara, se carga otra vez la
+  misma pantalla con `?escanear=1` y al llegar abre el escáner sola y borra la marca. No se abrió
+  la cámara a todo el interior: la regla sigue siendo «sólo donde se escanea».
+- **Sin migración.** `apps/web/permisos-del-navegador.mjs`, `apps/web/src/cliente/escaner-del-documento.ts`.
+
+## DP-D55 · El carrito de la mesa no pasa a la siguiente familia, y su aviso vive lo que vive el pedido · 02-11-2026
+
+- **Elección:** liberar la mesa borra su carrito; el carrito de una mesa sin cuenta caduca solo
+  tras 3 h sin actividad (perezoso, al leer o al agregar). El aviso «Pedido listo para
+  confirmar» se resuelve cuando el carrito queda vacío o se envía, por cualquier camino, y sólo
+  el de esa ronda; «Atender» no lo consume. «Volver a llamar» renueva el aviso (suena y habla otra
+  vez). Llamar al mesero toma el candado del carrito.
+- **Sin migración.**
+
+
+## DP-D56 · Unir y separar no pierden nada del portal · 02-11-2026
+
+- **Elección:**
+  - Al unir (y al mudar la cuenta de mesa), las solicitudes pendientes de la mesa que se va pasan
+    con su carrito a la que se queda: su QR ya cae ahí. Una sola pendiente por mesa y tipo: si la
+    principal ya tenía una del mismo tipo, la otra se da por resuelta.
+  - **El tope de un carrito (60) vale para los carritos juntos.** Si al unir pasarían, no se une
+    («que una de ellas envíe o vacíe el suyo primero») y no se mueve nada. Descartado: cortar lo
+    que sobra (se perderían pedidos de comensales) o dejar el carrito por encima del tope (el
+    comensal no podría enviarlo).
+  - Al separar, el pedido del portal y las notas se quedan en la principal —no hay manera honesta
+    de repartirlos—, pero ya no en silencio: el resultado cuenta las líneas
+    (`lineasDelPortalEnLaPrincipal`) y trae un aviso («El pedido del portal (3 cosas) se quedó en
+    la mesa 1»), que la pantalla enseña.
+  - Las notas juntas (alergias, celebración) miden 300 como máximo; si se pasan, se cortan con «…».
+- **Sin migración.** `restaurante/carrito-del-salon.ts`, `restaurante/al-separar.ts`,
+  `restaurante/notas-de-la-union.ts`.
+
+## DP-D57 · Lo cancelado que ya estaba hecho sale del almacén como merma «Por cancelación» · 02-11-2026
+
+- **Elección:** al cancelar la cuenta o anular un platillo, lo que la cocina ya había dejado listo
+  o entregado sale del almacén con la misma traducción del cobro (`planearConsumo`: la receta del
+  canal con sus opciones, o la pieza si se vende por pieza). «Ya hecho» es lo mismo que el corte
+  llama pérdida (DP-D50). Lo anulado aparte sale al anularse y no se repite al cancelar.
+- **Cancelar nunca se traba por el inventario:** si el almacén decía que no había, ya estaba mal
+  (la cocina lo preparó); la existencia puede quedar en negativo para que el conteo lo enseñe.
+- **La clave:** `motivos_merma` es un catálogo GLOBAL de la base compartida; una clave nueva
+  («por_cancelacion») sería escribir en lo de los otros negocios. Se guarda con
+  `platillo_rehecho` (lo más cercano que existe: un platillo hecho que se tira), la referencia
+  `orden` o `anulacion`, la nota «Por cancelación · …» y el costo del insumo; el corte la dice
+  «Por cancelación». **Pendiente para el maestro (ficha 27):** sembrar la clave propia y cambiar
+  la constante `MOTIVO_DE_LA_MERMA`.
+- **Descartado:** merma sólo de lo que tiene receta (una cerveza servida también salió del
+  almacén); y descontar al enviar a cocina (cambiaría el cobro entero).
+- **Sin migración.** `restaurante/merma-por-cancelacion.ts`, `venta/cobrar.ts` (`soloLoHecho`),
+  `caja/corte/consultas.ts`.

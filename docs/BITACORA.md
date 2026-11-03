@@ -607,3 +607,65 @@ toca). `pnpm install` en el worktree tarda ~11 min.
 - Lo que el subagente no verificó en el navegador: el margen en tablero, Registros, PDF, gráfica y
   CSV (unidad y contratos), la insignia «Vista general» de Cocina y Ventas después de quitar la
   pastilla.
+
+## 02-11-2026 · DP-13 · Que funcione, la auditoría de DP-12 y QA
+
+Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktrees/dp12`), rama
+`dp-13` sacada de `dp-12` @ `d1021fb`.
+
+### DP-13.1 · DP-12 a producción
+
+- CI manual del PR #3 sobre `d1021fb` en verde; fusión con merge (`bb06497`, por la API de GitHub:
+  `gh pr merge` falló con un error de GraphQL). Production de Vercel lista a las 15:28 (la fila
+  Production, no el preview).
+- Humo sin PIN: entrada 200, 404 con Morfi, cabeceras (CSP con nonce, HSTS, `X-Frame-Options`,
+  `Permissions-Policy` de DP-12).
+- Huella de los otros 10 negocios contra `antes-despliegue-dp12.json`: IDÉNTICA (122 tablas, 275
+  conteos), guardada en `_PRIVADO\mudanza\huellas-dp12\despues-despliegue-dp12.json`.
+
+### Los agentes de DP-13
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| A · `agent-a7406910ce51d2c86` (base 5439, puerto 3204) | Sonnet | 13.4: 18, 19, 20, 22, 23 | Hecho. Spec nuevo `menores-dp13` 9/9 en los tres aparatos; 67 de 67 mutantes muertos. Integrado aquí (ver abajo). |
+| B · `agent-a32802749101128cd` (base 5440, sin navegador) | Sonnet | 13.3: 8 (plataforma), 9 (purgas) y 13.4.25 | Hecho. Candado único del documento de configuración, `mantenimiento.quitar_plataforma`, la purga de un día real (uniones, bitácora de cuentas, carritos, avisos, lista de espera). Integración completa 63/305; 53 de 53 mutantes destructivos muertos. Se cortó una vez por el límite de uso y se retomó con su archivo de progreso. Integrado aquí. |
+| Revisión · workflow `wf_7eb1b5de-d5e` (2 a la vez, cada hallazgo con su verificador) | Sonnet | Revisar 13.2 en servidor/SQL y en permisos/pantallas | 8 hallazgos confirmados de 12; los 8 arreglados con su prueba primero (ver abajo). Se cortó por el límite de uso y se retomó con `resumeFromRunId`. |
+
+- **Ojo, integrar con `git apply -3`:** si un archivo del parche tiene cambios sin preparar aquí,
+  `-3` se niega («does not match index») y no aplica NADA. Se aplicó el resto sin `-3`
+  (`--exclude`) y el archivo compartido (`CorteTicket.jsx`) con `git add` + `-3 --include` +
+  `git reset -q`. Los nuevos del agente se exportan con `git add -N` antes de `git diff HEAD`.
+
+### DP-13.2 · Los bloqueantes (DP-D50 a DP-D55)
+
+- **Cámara (DP-D54):** `Permissions-Policy` por ruta (`apps/web/permisos-del-navegador.mjs`); la
+  puerta de cabeceras en vivo lo exige. Sin cámara, «Elegir la mesa» de una lista (antes un campo
+  numérico); «Pedido del portal» en la pulsación larga. e2e `escanear-qr-con-camara` con cámara
+  simulada y con el permiso negado: 3 de 3 aparatos. **Ojo:** en el mapa, `hasText: '4'` también
+  atrapa la capacidad de otra mesa: filtrar por el número al inicio.
+- **Carrito fantasma y avisos (DP-D55):** integración `carrito-fantasma` (4) y `aviso-del-pedido` (7).
+- **Sonido (DP-D53):** unidad y contrato del proveedor; e2e `sonido-bloqueado` en tableta. **Ojo:**
+  en Playwright `navigator.userActivation` ya viene activo (la sesión se hizo con clics): la voz
+  falsa cuenta el primer gesto de la página por su cuenta.
+- **Corte (DP-D50):** integración `cancelaciones-por-caja` (6) y la vieja; unidad del corte.
+- **Margen (DP-D52):** integración `margen-sin-receta` (3), contrato de las seis pantallas
+  heredadas. **Ojo:** el resumen de Caja sin caja abierta no traía `economia` y la página se caía
+  (lo cazó la e2e de cancelar, no la unidad).
+- **Cancelar (DP-D51, D-5):** integración `cancelar-con-permiso` (11); e2e de D-5 sin `fixme`.
+- **Lo que cazó la revisión (8, cada uno con su prueba primero):**
+  - El carrito caducado revivía al abrir la mesa (se mide hasta la apertura; abrir lo caduca).
+  - Vaciar el carrito por la caja, el cierre del día o la caducidad dejaba vivo «Pedido listo para
+    confirmar».
+  - Cancelar la cuenta volvía a anular las líneas ya anuladas.
+  - Agregar o quitar del carrito no tomaba el candado; enviar no caducaba.
+  - **Unir mesas borraba el «ya se pidió / ya se imprimió»** de la absorbida y el mesero cancelaba
+    sin PIN; y el mesero que unía a la suya la mesa de otro se volvía su dueño. Ahora la cuenta que
+    queda carga con sus absorbidas (también ya separadas): `codigo_caja` dice que se pidió.
+  - **La cámara sólo servía con carga completa:** `Permissions-Policy` es del documento y Next
+    navega sin cargar (la mesera que abre `/caja` cae en `/mesero` con `camera=()`). Abrir el
+    escáner en un documento sin cámara recarga una vez con `?escanear=1`
+    (`apps/web/src/cliente/escaner-del-documento.ts`). e2e: entrar por `/caja` y escanear.
+  - Al cajero (no ve márgenes) le salía «—, sin receta»: ahora no se le pinta ni costo, ni
+    utilidad, ni margen (`seVeElMargen`), tampoco en el detalle de Ventas.
+- Integración completa: 64 archivos, 319 pruebas. Mutaciones de la web: 20 de 20.
+
