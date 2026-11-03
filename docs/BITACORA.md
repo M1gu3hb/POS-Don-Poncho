@@ -630,6 +630,7 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
 | A · `agent-a7406910ce51d2c86` (base 5439, puerto 3204) | Sonnet | 13.4: 18, 19, 20, 22, 23 | Hecho. Spec nuevo `menores-dp13` 9/9 en los tres aparatos; 67 de 67 mutantes muertos. Integrado aquí (ver abajo). |
 | B · `agent-a32802749101128cd` (base 5440, sin navegador) | Sonnet | 13.3: 8 (plataforma), 9 (purgas) y 13.4.25 | Hecho. Candado único del documento de configuración, `mantenimiento.quitar_plataforma`, la purga de un día real (uniones, bitácora de cuentas, carritos, avisos, lista de espera). Integración completa 63/305; 53 de 53 mutantes destructivos muertos. Se cortó una vez por el límite de uso y se retomó con su archivo de progreso. Integrado aquí. |
 | Revisión · workflow `wf_7eb1b5de-d5e` (2 a la vez, cada hallazgo con su verificador) | Sonnet | Revisar 13.2 en servidor/SQL y en permisos/pantallas | 8 hallazgos confirmados de 12; los 8 arreglados con su prueba primero (ver abajo). Se cortó por el límite de uso y se retomó con `resumeFromRunId`. |
+| C · base 5441, puerto 3205 | Sonnet | 13.3: 11 (id del teléfono firmado), 12 (el comensal se entera), 13 (abrir y enviar en una transacción), 15 (cuenta pedida) | En curso. |
 
 - **Ojo, integrar con `git apply -3`:** si un archivo del parche tiene cambios sin preparar aquí,
   `-3` se niega («does not match index») y no aplica NADA. Se aplicó el resto sin `-3`
@@ -667,5 +668,28 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
     (`apps/web/src/cliente/escaner-del-documento.ts`). e2e: entrar por `/caja` y escanear.
   - Al cajero (no ve márgenes) le salía «—, sin receta»: ahora no se le pinta ni costo, ni
     utilidad, ni margen (`seVeElMargen`), tampoco en el detalle de Ventas.
-- Integración completa: 64 archivos, 319 pruebas. Mutaciones de la web: 20 de 20.
+- Integración completa: 70 archivos, 358 pruebas (con 13.3). Mutaciones: web 26 de 26; servidor
+  41 de 42 (el vivo es equivalente: ninguna línea queda hoy con menos piezas hechas que su
+  cantidad). Los mutantes que sobrevivieron al principio eran protecciones redundantes del
+  carrito (abrir la mesa lo borra y la lectura mide hasta la apertura): cada una tiene ya su
+  prueba sola.
+- Navegador contra `next start` (build 3): `escanear-qr-con-camara` 3/3 (con entrar por `/caja`),
+  `cancelacion-del-mesero` 3/3, D-5 de `restaurante-operaciones`, `unir-mesas-al-tacto` 3/3,
+  `pedido-compartido`, `portal-modo-mesero` 6/6, `restaurante-portal-qr` 2/2. **Ojo:** el 422 de
+  «sin PIN» es la respuesta esperada; el vigilante de fallos la perdona sólo mientras se espera
+  (`sondeando`). La limpieza del D-5 cancela con la dueña: la cajera ya necesitaría el PIN.
+
+### DP-13.3 · Plataforma, purgas, unir y separar, el sonido y la merma (DP-D56, DP-D57)
+
+- **8, 9 y 25 (agente B):** su diff se revisó entero y se aplicó sin conflictos (ningún archivo en
+  común). Se agregó `eventos_mesa` a la purga de ventas (prueba primero: quedaban 17 filas del día)
+  y el lector nuevo de configuración de 13.2.7 a su inventario.
+- **10 (DP-D56):** prueba escrita antes del código; integración 5/5; mutaciones 10 de 10.
+- **14:** «Sonido de este aparato» junto a «Salir»; e2e nuevo en `sonidos`.
+- **16 (DP-D57):** `motivos_merma` es global (de los 11 negocios): se guarda con `platillo_rehecho`
+  y se reconoce por la referencia; el corte dice «Por cancelación». Integración 5/5 (incluye la
+  pieza anulada y el costo del insumo); mutaciones 9 de 10 (el vivo es redundante:
+  `lineasDeOrden` ya deja fuera lo anulado).
+- **Ojo, la base falsa de unidad no conoce `eb.fn.countAll`:** contar filas con `select('id')`.
+- **Ojo, `python -I` ignora `PYTHONIOENCODING`:** el banco imprimía «→» y se caía; `-X utf8`.
 
