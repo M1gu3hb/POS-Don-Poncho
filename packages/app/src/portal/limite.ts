@@ -73,6 +73,15 @@ export const LIMITES_PORTAL = {
   carrito_estado: { intentos: 60, ventanaSegundos: MINUTO },
   carrito_mesa: { intentos: 2400, ventanaSegundos: MINUTO },
   carrito: { intentos: 150, ventanaSegundos: CINCO_MINUTOS },
+  /**
+   * DP-13.3 · Emitir un id de teléfono (`telefono.ts`) es lo que hace crecer la mesa. Por MESA: una
+   * mesa de diez personas gasta diez en un par de minutos, y 40 en un cuarto de hora deja aire
+   * para los que recargan en una pestaña privada. Por IP: el WiFi del local es UNA IP para todos
+   * los comensales de todas las mesas (25 mesas × 4 = 100 teléfonos), así que el techo es holgado
+   * y sólo frena a quien se pone a fabricar teléfonos desde un solo sitio.
+   */
+  telefono_nuevo_mesa: { intentos: 40, ventanaSegundos: 3 * CINCO_MINUTOS },
+  telefono_nuevo_ip: { intentos: 200, ventanaSegundos: 3 * CINCO_MINUTOS },
   /** Preparar y Listo: una cocina con prisa no pasa de unos cuantos por minuto. */
   cocina_transicion: { intentos: 60, ventanaSegundos: CINCO_MINUTOS },
 } as const satisfies Readonly<Record<string, Limite>>;

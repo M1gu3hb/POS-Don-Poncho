@@ -8,6 +8,7 @@ import { comando } from '../produccion.ts';
 import { abrirCajaReal, clave, exigirOk } from '../pruebas/negocio-real.ts';
 import { cancelarOrden } from '../restaurante/cancelacion.ts';
 import { pasarMesaCobradaALimpieza } from '../restaurante/mesas-escrituras.ts';
+import { enviarElCarrito } from './carrito-comandos.ts';
 import { abrirMesaDesdeQR } from './mesa.ts';
 import { enviarPedidoDesdeQR } from './pedido.ts';
 import {
@@ -163,7 +164,22 @@ describe('quién manda a cocina (DP-12.2)', () => {
     exigirOk(await caso.agregar(TELEFONO_B, caso.agua), 'agregar B');
     expect((await caso.mirar(TELEFONO_A))?.envio).toBe('abrir_y_enviar');
     expect(regla(await caso.enviar(TELEFONO_A, false))).toBe('QR_CARRITO_SIN_CONFIRMAR');
-    const enviado = exigirOk(await caso.enviar(TELEFONO_A, true), 'enviar');
+    // DP-13.3: las personas son las que el comensal confirma al abrir, no los teléfonos conectados.
+    const enviado = exigirOk(
+      await caso.publico(enviarElCarrito, {
+        dispositivo: TELEFONO_A,
+        confirmado: true,
+        apertura: {
+          personas: 2,
+          clienteNombre: '',
+          notas: '',
+          notasAlergias: '',
+          celebracionEspecial: false,
+          tipoCelebracion: '',
+        },
+      }),
+      'enviar',
+    );
     expect(enviado.enviado).toBe(true);
     const mesa = await obtenerDb()
       .selectFrom('mesas')

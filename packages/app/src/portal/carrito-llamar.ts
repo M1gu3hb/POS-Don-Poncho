@@ -3,11 +3,12 @@ import 'server-only';
 import { ErrorDominio, PAQUETES_PORTAL } from '@morphiqpos/contracts';
 
 import { candadoDelCarrito } from '../restaurante/carrito-del-salon.ts';
-import { entradaDelTelefono, huellaDelDispositivo, latir } from './carrito.ts';
+import { entradaDelTelefono, latir } from './carrito.ts';
 import { definirComandoPublico } from './definicion-publica.ts';
 import { exigirPedidosDesdeElTelefono } from './mesa.ts';
 import { notaDelPedidoListo, platillosDelCarrito } from './quien-envia.ts';
 import { insertarSolicitud, ordenActiva, ruteoDeLaMesa } from './solicitudes.ts';
+import { huellaDelTelefono } from './telefono.ts';
 
 /**
  * `portal.carrito_llamar_mesero` — «Llamar a mi mesero para confirmar» (DP-12.2).
@@ -39,6 +40,8 @@ export const llamarAlMeseroParaConfirmar = definirComandoPublico<
   entrada: entradaDelTelefono,
   async ejecutar(ctx, entrada) {
     exigirPedidosDesdeElTelefono(ctx);
+    // DP-13.3: antes de tocar nada, que el teléfono sea uno que el servidor firmó.
+    const huella = huellaDelTelefono(ctx.pimienta, entrada.dispositivo);
     const { organizacionId, mesaId } = ctx.ambito;
     // DP-13.2: el candado del carrito, el mismo que el envío: llamar no se cruza con un envío ni con
     // el mesero vaciándolo.
@@ -91,12 +94,7 @@ export const llamarAlMeseroParaConfirmar = definirComandoPublico<
         notas,
       }),
     );
-    await latir(
-      ctx.tx,
-      ctx.ambito,
-      huellaDelDispositivo(ctx.pimienta, entrada.dispositivo),
-      ctx.ahora,
-    );
+    await latir(ctx.tx, ctx.ambito, huella, ctx.ahora);
 
     ctx.auditar({
       entidadId: solicitudId,

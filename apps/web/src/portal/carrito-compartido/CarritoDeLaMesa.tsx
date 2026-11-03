@@ -26,14 +26,14 @@ import { BellRing, Send, ShoppingCart } from 'lucide-react';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
-import { ErrorApi } from '~/cliente/api';
-
 import {
   avisoDelEnvio,
   botonDelCarrito,
   conPrecios,
+  CUENTA_PEDIDA,
   PEDIDO_GUARDADO,
   personasConectadas,
+  reglaDelError,
   subtotalAproximadoCentavos,
 } from './carrito-de-la-mesa';
 import { RenglonDelCarrito as Renglon } from './RenglonDelCarrito';
@@ -48,18 +48,17 @@ import type { CarritoDeLaMesa as Carrito } from './use-carrito-de-la-mesa';
  * primero si el negocio lo deja o, si no, pedir que los atiendan. Ningún texto para el personal.
  */
 
-function reglaDe(error: unknown): string | null {
-  const regla = error instanceof ErrorApi ? error.error.datos?.['regla'] : undefined;
-  return typeof regla === 'string' ? regla : null;
-}
-
 export function CarritoDeLaMesa({
   carrito,
   alAbrirLaMesa,
 }: {
   readonly carrito: Carrito;
-  /** DP-12.2 · Con la mesa cerrada y el negocio dejando abrirla: su diálogo (personas, alergias). */
-  readonly alAbrirLaMesa?: () => void;
+  /**
+   * DP-12.2 · Con la mesa cerrada y el negocio dejando abrirla: su diálogo (personas, alergias).
+   * DP-13.3 · Lo que ese diálogo confirma sale con el envío, en UN comando: la nota para cocina que
+   * se escribió aquí viaja hasta allá.
+   */
+  readonly alAbrirLaMesa?: (datos: { readonly notaGeneral: string }) => void;
 }) {
   const idNota = useId();
   const [abierto, setAbierto] = useState(false);
@@ -101,8 +100,14 @@ export function CarritoDeLaMesa({
       setConfirmando(false);
       setAbierto(false);
     } catch (error: unknown) {
-      if (reglaDe(error) === 'QR_CARRITO_SIN_CONFIRMAR') {
+      const regla = reglaDelError(error);
+      if (regla === 'QR_CARRITO_SIN_CONFIRMAR') {
         setConfirmando(true);
+      } else if (regla === 'QR_CUENTA_PEDIDA') {
+        // DP-13.3: la cuenta se pidió mientras el comensal armaba el pedido. No es un fallo suyo.
+        toast.info(error instanceof Error ? error.message : CUENTA_PEDIDA);
+        setConfirmando(false);
+        setAbierto(false);
       } else {
         setConfirmando(false);
         setFallo(error instanceof Error ? error.message : 'No pudimos enviar el pedido.');
@@ -138,12 +143,18 @@ export function CarritoDeLaMesa({
     }
   };
 
+  // «Abrir la mesa y enviar»: el diálogo de la apertura pregunta cuántas personas son y, al
+  // confirmarlo, abre y envía en un solo comando (DP-13.3).
+  const abrirLaMesa = () => {
+    setConfirmando(false);
+    setAbierto(false);
+    alAbrirLaMesa?.({ notaGeneral: nota });
+  };
+
   const alTocar = () => {
     if (boton.accion === 'llamar') void llamar();
-    else if (boton.accion === 'abrir') {
-      setAbierto(false);
-      alAbrirLaMesa?.();
-    } else if (estado.esperarATodos) setConfirmando(true);
+    else if (estado.esperarATodos) setConfirmando(true);
+    else if (boton.accion === 'abrir') abrirLaMesa();
     else void mandar(false);
   };
 
@@ -254,10 +265,11 @@ export function CarritoDeLaMesa({
               disabled={enviando}
               onClick={(e) => {
                 e.preventDefault();
-                void mandar(true);
+                if (boton.accion === 'abrir') abrirLaMesa();
+                else void mandar(true);
               }}
             >
-              {enviando ? 'Enviando…' : 'Enviar'}
+              {enviando ? 'Enviando…' : boton.accion === 'abrir' ? 'Abrir la mesa' : 'Enviar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

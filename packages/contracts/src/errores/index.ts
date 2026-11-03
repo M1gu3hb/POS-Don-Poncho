@@ -167,6 +167,14 @@ export const CODIGOS_ERROR = {
   CARRITO_SIN_CUENTA: 'CARRITO_SIN_CUENTA',
   /** DP-12.2 · Esa línea ya no está en el carrito de la mesa (otro la quitó o ya salió). */
   CARRITO_LINEA_NO_ENCONTRADA: 'CARRITO_LINEA_NO_ENCONTRADA',
+  /** DP-13.3 · El id del teléfono no lo firmó el servidor: la pantalla pide uno y reintenta. */
+  QR_TELEFONO_NO_RECONOCIDO: 'QR_TELEFONO_NO_RECONOCIDO',
+  /** DP-13.3 · La cuenta ya se pidió: el comensal no envía, su mesero lo revisa (un estado, no un fallo). */
+  QR_CUENTA_PEDIDA: 'QR_CUENTA_PEDIDA',
+  /** DP-13.3 · El mesero quiere enviar a una cuenta ya pedida sin reabrirla expresamente. */
+  CARRITO_CUENTA_PEDIDA: 'CARRITO_CUENTA_PEDIDA',
+  /** DP-13.3 · La cuenta pedida ya tiene pagos: no se reabre para mandarle más platillos. */
+  CARRITO_CUENTA_CON_PAGOS: 'CARRITO_CUENTA_CON_PAGOS',
   /**
    * El aviso no existe, o es de otra organización, que se ve igual.
    *

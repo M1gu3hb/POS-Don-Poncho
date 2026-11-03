@@ -21,8 +21,11 @@ export type QuienEnvia = (typeof QUIEN_ENVIA)[number];
  *   · `abrir_y_enviar`: la mesa está cerrada y los comensales pueden abrirla al enviar;
  *   · `pedir_que_atiendan`: los comensales envían, pero la mesa está cerrada y no la pueden abrir:
  *     «Pide a tu mesero que te atienda para enviar tu pedido», con el mismo botón de llamarlo.
+ *   · `cuenta_pedida` (DP-13.3): la cuenta ya se pidió. Nadie manda a cocina desde el teléfono: es un
+ *     estado, no un error. «Tu cuenta ya se pidió: tu mesero lo revisa», con el botón de llamarlo.
  */
-export type ComoSeEnvia = 'llamar_mesero' | 'enviar' | 'abrir_y_enviar' | 'pedir_que_atiendan';
+export type ComoSeEnvia =
+  'llamar_mesero' | 'enviar' | 'abrir_y_enviar' | 'pedir_que_atiendan' | 'cuenta_pedida';
 
 export interface ReglasDelEnvio {
   readonly quienEnvia: QuienEnvia;
@@ -35,8 +38,11 @@ export function comoSeEnvia(
     readonly cuentaAbierta: boolean;
     /** Con la asignación encendida, una mesa sin mesero no se abre desde el QR (DP-9.2). */
     readonly faltaMesero: boolean;
+    /** DP-13.3 · La cuenta ya está en `cuenta_solicitada`: manda sobre cualquier otra regla. */
+    readonly cuentaPedida: boolean;
   },
 ): ComoSeEnvia {
+  if (mesa.cuentaPedida) return 'cuenta_pedida';
   if (reglas.quienEnvia === 'mesero') return 'llamar_mesero';
   if (mesa.cuentaAbierta) return 'enviar';
   return reglas.comensalesAbrenMesa && !mesa.faltaMesero ? 'abrir_y_enviar' : 'pedir_que_atiendan';

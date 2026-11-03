@@ -35,18 +35,13 @@ export function etiquetaDeLaOpcion(
 
 /**
  * ¿Hay barra del carrito abajo? Es la misma condición con la que el portal pinta
- * `CarritoDeLaMesa`: pedidos desde el teléfono, la cuenta aún sin pedir y algo armado. Con la barra
- * puesta, el botón flotante sube por encima de ella en lugar de tapar su mitad izquierda.
+ * `CarritoDeLaMesa`: pedidos desde el teléfono y algo armado. DP-13.3: con la cuenta ya pedida la
+ * barra TAMBIÉN está (con su mensaje «Tu cuenta ya se pidió»), así que ya no depende de ella. Con la
+ * barra puesta, el botón flotante sube por encima de ella en lugar de tapar su mitad izquierda.
  */
 export function hayBarraDelCarrito(datos: {
   readonly pedidosActivos: boolean;
-  readonly cuentaYaSolicitada: boolean;
   readonly estado: EstadoDelCarrito | null;
 }): boolean {
-  return (
-    datos.pedidosActivos &&
-    !datos.cuentaYaSolicitada &&
-    datos.estado !== null &&
-    datos.estado.lineas.length > 0
-  );
+  return datos.pedidosActivos && datos.estado !== null && datos.estado.lineas.length > 0;
 }

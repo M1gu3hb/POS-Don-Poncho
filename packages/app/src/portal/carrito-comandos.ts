@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { ErrorDominio, PAQUETES_PORTAL } from '@morphiqpos/contracts';
+import type { z } from 'zod';
 
 import {
   MAXIMO_EN_EL_CARRITO,
@@ -10,7 +11,6 @@ import {
   entradaEnviarElCarrito,
   entradaQuitarDelCarrito,
   estadoDelCarrito,
-  huellaDelDispositivo,
   latir,
   ultimaDe,
   type EstadoDelCarrito,
@@ -26,7 +26,9 @@ import { definirComandoPublico, type ContextoPortal } from './definicion-publica
 import { abrirLaMesaDelPortal, exigirPedidosDesdeElTelefono } from './mesa.ts';
 import { ordenAbiertaDeLaMesa, pedirEnLaMesa, type ResultadoPedido } from './pedido.ts';
 import { cargarProductosDelMenu, valorarParaPedido } from './productos.ts';
-import { comensalEnvia } from './quien-envia.ts';
+import type { entradaAbrirMesa } from './esquemas.ts';
+import { comensalEnvia, type ComoSeEnvia } from './quien-envia.ts';
+import { huellaDelTelefono } from './telefono.ts';
 
 /**
  * LOS TRES COMANDOS DEL CARRITO COMPARTIDO (DP-9.5): agregar, quitar lo propio y enviar.
@@ -39,8 +41,36 @@ import { comensalEnvia } from './quien-envia.ts';
  * lo confirma el mesero (`restaurante/carrito-del-mesero.ts`).
  */
 
+/** DP-13.3 · La huella del teléfono, o `QR_TELEFONO_NO_RECONOCIDO` si el id no lo firmó el servidor. */
 function huellaDe(ctx: ContextoPortal, dispositivo: string): string {
-  return huellaDelDispositivo(ctx.pimienta, dispositivo);
+  return huellaDelTelefono(ctx.pimienta, dispositivo);
+}
+
+/** Sin los datos de la apertura (un teléfono anterior), la mesa se abre para una persona. */
+const APERTURA_PARA_UNA_PERSONA: z.output<typeof entradaAbrirMesa> = {
+  personas: 1,
+  clienteNombre: '',
+  notas: '',
+  notasAlergias: '',
+  celebracionEspecial: false,
+  tipoCelebracion: '',
+};
+
+/** Por qué el comensal no manda a cocina desde su teléfono, con las palabras que ve. */
+function porQueNoEnvia(como: ComoSeEnvia): ErrorDominio {
+  if (como === 'cuenta_pedida') {
+    return new ErrorDominio('QR_CUENTA_PEDIDA', 'Tu cuenta ya se pidió: tu mesero lo revisa.');
+  }
+  if (como === 'llamar_mesero') {
+    return new ErrorDominio(
+      'QR_SOLO_EL_MESERO_ENVIA',
+      'Tu mesero confirma el pedido y lo manda a cocina: llámalo para confirmar.',
+    );
+  }
+  return new ErrorDominio(
+    'QR_PIDE_QUE_TE_ATIENDAN',
+    'Pide a tu mesero que te atienda para enviar tu pedido.',
+  );
 }
 
 async function lineasPendientes(ctx: ContextoPortal) {
@@ -246,17 +276,7 @@ export const enviarElCarrito = definirComandoPublico<
 
     const estado = await estadoPara(ctx, huella);
     // DP-12.2 · Quién manda a cocina, decidido aquí y no en la pantalla.
-    if (!comensalEnvia(estado.envio)) {
-      throw estado.envio === 'llamar_mesero'
-        ? new ErrorDominio(
-            'QR_SOLO_EL_MESERO_ENVIA',
-            'Tu mesero confirma el pedido y lo manda a cocina: llámalo para confirmar.',
-          )
-        : new ErrorDominio(
-            'QR_PIDE_QUE_TE_ATIENDAN',
-            'Pide a tu mesero que te atienda para enviar tu pedido.',
-          );
-    }
+    if (!comensalEnvia(estado.envio)) throw porQueNoEnvia(estado.envio);
     if (estado.esperarATodos && !entrada.confirmado) {
       throw new ErrorDominio(
         'QR_CARRITO_SIN_CONFIRMAR',
@@ -295,20 +315,16 @@ export const enviarElCarrito = definirComandoPublico<
       return { enviado: false, ronda: antes.ronda, pedido: null, noDisponibles: nombres };
     }
 
-    // Con la mesa cerrada y el negocio dejando abrirla al enviar, se abre aquí, para tantas personas
-    // como teléfonos hay conectados (el mesero lo corrige al llegar).
+    // Con la mesa cerrada y el negocio dejando abrirla al enviar, se abre aquí, EN ESTA MISMA
+    // transacción (DP-13.3): si el envío falla más abajo, la mesa no queda abierta. Las personas son
+    // las que el comensal confirmó en el diálogo (`apertura`); sin ellas, UNA y el mesero lo corrige:
+    // nunca los teléfonos conectados, que ya no son una cifra de fiar para esto.
     const abrio = estado.envio === 'abrir_y_enviar';
+    const apertura = entrada.apertura ?? APERTURA_PARA_UNA_PERSONA;
     if (abrio) {
       await abrirLaMesaDelPortal(
         ctx,
-        {
-          personas: Math.max(1, estado.conectados),
-          clienteNombre: '',
-          notas: '',
-          notasAlergias: '',
-          celebracionEspecial: false,
-          tipoCelebracion: '',
-        },
+        apertura,
         ctx.ambito.empleadoAsignadoId ?? ctx.ambito.empleadoAtiendeId,
       );
     }
@@ -354,6 +370,7 @@ export const enviarElCarrito = definirComandoPublico<
         enviado: true,
         ronda,
         abrioLaMesa: abrio,
+        ...(abrio ? { personasAlAbrir: apertura.personas } : {}),
         lineas: pedido.lineas,
         comandas: pedido.comandas,
         totalCentavos: pedido.totalCentavos,

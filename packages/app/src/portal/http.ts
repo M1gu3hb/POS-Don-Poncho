@@ -59,6 +59,10 @@ const ESTADO_POR_REGLA: Readonly<Record<string, number>> = {
   QR_SOLO_EL_MESERO_ENVIA: 409,
   QR_PIDE_QUE_TE_ATIENDAN: 409,
   QR_CARRITO_VACIO: 422,
+  // DP-13.3: la cuenta ya se pidió (un estado, no un fallo) y el teléfono no se reconoce (la pantalla
+  // se vuelve a conectar sola con el id que le emite el servidor).
+  QR_CUENTA_PEDIDA: 409,
+  QR_TELEFONO_NO_RECONOCIDO: 409,
   // El teléfono de una estación de cocina (DP-9.4): mismo trato que el QR de la mesa.
   TELEFONO_DE_COCINA_INVALIDO: 404,
   TELEFONO_DEMASIADAS_PETICIONES: 429,

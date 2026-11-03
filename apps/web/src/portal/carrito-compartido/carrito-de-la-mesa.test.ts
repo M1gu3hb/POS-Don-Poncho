@@ -1,14 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  aperturaDeLaMesa,
+  AVISO_DEL_VACIADO,
   avisoDelEnvio,
   botonDelCarrito,
   conPrecios,
+  CUENTA_PEDIDA,
   dispositivoDelTelefono,
   PEDIDO_GUARDADO,
   envioDeOtroTelefono,
+  olvidarDispositivo,
   personasConectadas,
+  recordarDispositivo,
   subtotalAproximadoCentavos,
+  vaciadoNuevo,
   type EstadoDelCarrito,
 } from './carrito-de-la-mesa';
 
@@ -22,23 +28,52 @@ const estado = (parte: Partial<EstadoDelCarrito> = {}): EstadoDelCarrito => ({
   ...parte,
 });
 
-describe('el id del teléfono', () => {
+const ID_DEL_SERVIDOR = `t1-${'a'.repeat(24)}-${'b'.repeat(32)}`;
+
+describe('el id del teléfono (lo emite el servidor, DP-13.3)', () => {
   afterEach(() => {
+    olvidarDispositivo();
     vi.unstubAllGlobals();
   });
 
-  it('se inventa una vez y se recuerda en el navegador', () => {
+  const almacenamiento = (guardado: Map<string, string>) => ({
+    getItem: (k: string) => guardado.get(k) ?? null,
+    setItem: (k: string, v: string) => guardado.set(k, v),
+    removeItem: (k: string) => guardado.delete(k),
+  });
+
+  it('el navegador ya no se lo inventa: sin id guardado es «» y el sondeo pide que se emita', () => {
+    vi.stubGlobal('window', { localStorage: almacenamiento(new Map()) });
+    expect(dispositivoDelTelefono()).toBe('');
+  });
+
+  it('guarda el que el servidor emitió y lo recuerda aunque se recargue la pestaña', () => {
     const guardado = new Map<string, string>();
-    vi.stubGlobal('window', {
-      localStorage: {
-        getItem: (k: string) => guardado.get(k) ?? null,
-        setItem: (k: string, v: string) => guardado.set(k, v),
-      },
-    });
-    const primero = dispositivoDelTelefono();
-    expect(primero).toMatch(/^[A-Za-z0-9_-]{16,64}$/);
-    expect(dispositivoDelTelefono()).toBe(primero);
-    expect([...guardado.values()]).toEqual([primero]);
+    vi.stubGlobal('window', { localStorage: almacenamiento(guardado) });
+    recordarDispositivo(ID_DEL_SERVIDOR);
+    expect(dispositivoDelTelefono()).toBe(ID_DEL_SERVIDOR);
+    expect([...guardado.values()]).toEqual([ID_DEL_SERVIDOR]);
+    // Pestaña nueva: la memoria se pierde, el almacenamiento no.
+    olvidarDispositivo();
+    guardado.set('morphiqpos_portal_dispositivo', ID_DEL_SERVIDOR);
+    expect(dispositivoDelTelefono()).toBe(ID_DEL_SERVIDOR);
+  });
+
+  it('descarta el que se inventó el navegador antes de las firmas: el servidor emite uno nuevo', () => {
+    const guardado = new Map([['morphiqpos_portal_dispositivo', 'a'.repeat(32)]]);
+    vi.stubGlobal('window', { localStorage: almacenamiento(guardado) });
+    expect(dispositivoDelTelefono()).toBe('');
+    recordarDispositivo('otro-id-inventado-0123456789');
+    expect(dispositivoDelTelefono()).toBe('');
+  });
+
+  it('olvidarlo lo borra de la memoria y del almacenamiento', () => {
+    const guardado = new Map<string, string>();
+    vi.stubGlobal('window', { localStorage: almacenamiento(guardado) });
+    recordarDispositivo(ID_DEL_SERVIDOR);
+    olvidarDispositivo();
+    expect(dispositivoDelTelefono()).toBe('');
+    expect(guardado.size).toBe(0);
   });
 
   it('sin almacenamiento (navegación privada estricta) sigue funcionando en la pestaña', () => {
@@ -50,11 +85,92 @@ describe('el id del teléfono', () => {
         setItem: () => {
           throw new Error('bloqueado');
         },
+        removeItem: () => {
+          throw new Error('bloqueado');
+        },
       },
     });
-    const uno = dispositivoDelTelefono();
-    expect(uno).toMatch(/^[A-Za-z0-9_-]{16,64}$/);
-    expect(dispositivoDelTelefono()).toBe(uno);
+    recordarDispositivo(ID_DEL_SERVIDOR);
+    expect(dispositivoDelTelefono()).toBe(ID_DEL_SERVIDOR);
+    olvidarDispositivo();
+    expect(dispositivoDelTelefono()).toBe('');
+  });
+});
+
+describe('el aviso de que el mesero vació el pedido (DP-13.3)', () => {
+  const vaciado = (en: string) => estado({ vaciadoPorElMesero: { en } });
+
+  it('es nuevo si el servidor trae un vaciado que esta pantalla aún no dijo', () => {
+    expect(vaciadoNuevo(null, vaciado('2026-11-02T20:00:00.000Z'))).toBe(
+      '2026-11-02T20:00:00.000Z',
+    );
+    expect(vaciadoNuevo('2026-11-02T19:00:00.000Z', vaciado('2026-11-02T20:00:00.000Z'))).toBe(
+      '2026-11-02T20:00:00.000Z',
+    );
+  });
+
+  it('no se repite: el mismo vaciado dos veces seguidas se dice una sola', () => {
+    expect(
+      vaciadoNuevo('2026-11-02T20:00:00.000Z', vaciado('2026-11-02T20:00:00.000Z')),
+    ).toBeNull();
+  });
+
+  it('sin vaciado (o de un servidor anterior) no hay nada que decir', () => {
+    expect(vaciadoNuevo(null, estado({ vaciadoPorElMesero: null }))).toBeNull();
+    expect(vaciadoNuevo(null, estado())).toBeNull();
+  });
+
+  it('dice lo que el comensal lee', () => {
+    expect(AVISO_DEL_VACIADO).toBe('Tu mesero vació el pedido');
+  });
+});
+
+describe('los datos de «Abrir la mesa y enviar» (DP-13.3)', () => {
+  it('traduce el diálogo a lo que el envío acepta, con las personas que el comensal confirmó', () => {
+    expect(
+      aperturaDeLaMesa({
+        personas: 4,
+        cliente_nombre: '  Familia Soto ',
+        notas: '',
+        notas_alergias: ' sin chile ',
+        celebracion_especial: true,
+        tipo_celebracion: ' Cumpleaños ',
+      }),
+    ).toEqual({
+      personas: 4,
+      clienteNombre: 'Familia Soto',
+      notas: '',
+      notasAlergias: 'sin chile',
+      celebracionEspecial: true,
+      tipoCelebracion: 'Cumpleaños',
+    });
+  });
+
+  it('son al menos una persona, y el tipo de celebración sólo cuenta si hay celebración', () => {
+    expect(aperturaDeLaMesa({ personas: 0 }).personas).toBe(1);
+    expect(aperturaDeLaMesa({ personas: 'x' }).personas).toBe(1);
+    expect(aperturaDeLaMesa(undefined).personas).toBe(1);
+    expect(aperturaDeLaMesa({ personas: '3', tipo_celebracion: 'Boda' })).toMatchObject({
+      personas: 3,
+      celebracionEspecial: false,
+      tipoCelebracion: '',
+    });
+  });
+});
+
+describe('la cuenta ya pedida (DP-13.3)', () => {
+  it('es un mensaje claro con el botón de llamar al mesero, no un error', () => {
+    expect(CUENTA_PEDIDA).toBe('Tu cuenta ya se pidió: tu mesero lo revisa.');
+    expect(botonDelCarrito(estado({ envio: 'cuenta_pedida' }))).toEqual({
+      accion: 'llamar',
+      texto: 'Llamar a mi mesero',
+      explicacion: CUENTA_PEDIDA,
+    });
+    expect(botonDelCarrito(estado({ envio: 'cuenta_pedida', meseroAvisado: true }))).toEqual({
+      accion: 'llamar',
+      texto: 'Volver a llamar a mi mesero',
+      explicacion: CUENTA_PEDIDA,
+    });
   });
 });
 

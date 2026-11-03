@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { permitirElSondeo } from './carrito-http.ts';
 import { SEGUNDOS_ENTRE_LATIDOS } from './carrito.ts';
 import { huellaDelDispositivo } from './carrito.ts';
-import { mesaConPortal, PIMIENTA, TELEFONO_A } from './pruebas/mesa-con-portal.ts';
+import { mesaConPortal, PIMIENTA, TELEFONO_A, telefonoNumero } from './pruebas/mesa-con-portal.ts';
 
 /**
  * DP-12.2 · UNA MESA CON DOCE TELÉFONOS, contra Postgres real. Con el límite por mesa (240 al
@@ -12,7 +12,7 @@ import { mesaConPortal, PIMIENTA, TELEFONO_A } from './pruebas/mesa-con-portal.t
  * Ahora el límite es por teléfono, y el latido se escribe a lo mucho cada 30 s.
  */
 
-const telefono = (i: number) => `telefono${String(i).padStart(2, '0')}_0123456789abcdef`;
+const telefono = telefonoNumero;
 
 describe('doce teléfonos en la misma mesa (DP-12.2)', () => {
   it('un minuto de sondeo de los doce (24 cada uno) pasa entero; el 61 de uno solo, no', async () => {
