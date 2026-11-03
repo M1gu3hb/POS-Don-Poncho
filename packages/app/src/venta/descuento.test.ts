@@ -191,8 +191,14 @@ describe('F-205 · autorizar', () => {
     expect(esErrorDominio(fallo)).toBe(true);
   });
 
-  it('sin fila de tope, el puesto no puede descontar nada: falla CERRADO', async () => {
-    const base = baseDe({ topes_descuento: [] });
+  it('con los topes del negocio escritos, el puesto SIN fila no descuenta nada: falla CERRADO', async () => {
+    // DP-D59: un negocio sin NINGÚN tope usa los del sistema (`topes-del-sistema.ts`); uno que
+    // escribió los suyos y a este puesto no le puso fila, no le da nada.
+    const base = baseDe({
+      topes_descuento: [
+        { organizacion_id: ORG, rol: 'cajero', tope_centavos: 5000n, tope_bp: 1000 },
+      ],
+    });
     const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'), AHORA);
 
     const fallo = await autorizarDescuento
@@ -204,9 +210,7 @@ describe('F-205 · autorizar', () => {
       })
       .catch((e: unknown) => e);
 
-    // Sin topes configurados, el gerente tampoco puede autorizar: una
-    // organización sin topes no es una sin límite, es una de la que no sabemos
-    // qué límite tiene.
+    // El gerente no tiene fila: no autoriza. Un puesto sin tope escrito no es uno sin límite.
     expect(esErrorDominio(fallo)).toBe(true);
     expect(base.filas('autorizaciones_descuento')).toHaveLength(0);
   });

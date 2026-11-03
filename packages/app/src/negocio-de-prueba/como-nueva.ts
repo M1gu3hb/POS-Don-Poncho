@@ -38,24 +38,8 @@ export const IMPUESTO_DE_PRUEBA = { puntosBase: 1600, incluidoEnPrecio: true } a
  */
 export const CAJAS_SIMULTANEAS_DE_PRUEBA = 1;
 
-/**
- * Los topes de descuento por rol, los mismos que la migración 078 siembra para todo
- * negocio. Hay que reponerlos porque un tope que no existe se lee como CERO: sin ellos,
- * tras un reseteo nadie podría descontar nada, ni el dueño.
- */
-export const TOPES_DE_DESCUENTO: readonly {
-  readonly rol: string;
-  readonly topeCentavos: bigint;
-  readonly topeBp: number;
-}[] = [
-  { rol: 'dueno', topeCentavos: 100_000_000n, topeBp: 10_000 },
-  { rol: 'administrador', topeCentavos: 500_000n, topeBp: 5_000 },
-  { rol: 'gerente', topeCentavos: 200_000n, topeBp: 3_000 },
-  { rol: 'cajero', topeCentavos: 5_000n, topeBp: 1_000 },
-  { rol: 'mesero', topeCentavos: 0n, topeBp: 0 },
-  { rol: 'cocina', topeCentavos: 0n, topeBp: 0 },
-  { rol: 'almacen', topeCentavos: 0n, topeBp: 0 },
-];
+/** Los topes de descuento por rol: los del sistema (`venta/topes-del-sistema.ts`). */
+export { TOPES_DE_DESCUENTO } from '../venta/topes-del-sistema.ts';
 
 /** El PIN del dueño de cada demo, el que pone `db:bootstrap` (ACCESOS-DEMO §2). */
 export const PIN_DEL_DUENO_DE_PRUEBA: string = DUENO_DE_PRUEBA.pin;

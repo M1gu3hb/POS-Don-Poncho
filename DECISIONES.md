@@ -1171,3 +1171,19 @@ puerta los denuncia todos.
     versión), en la misma transacción que el envío.
 - **Sin migración.** `portal/telefono.ts`, `portal/limite.ts`, `restaurante/reabrir-la-cuenta.ts`,
   `restaurante/carrito-del-mesero.ts`; cuatro códigos de error nuevos en `contracts/errores`.
+
+## DP-D59 · Un negocio sin topes de descuento usa los del sistema · 03-11-2026
+
+- **El hallazgo (QA2-009):** la migración 078 sembró los topes por puesto para cada negocio que ya
+  existía; Don Poncho se dio de alta después y quedó sin ninguno, y ninguna pantalla los escribe.
+  Con «sin fila es cero», nadie podía dar un descuento, ni el dueño (no hay nadie por encima que
+  lo autorice).
+- **Elección:** si el negocio no tiene **ninguna** fila en `topes_descuento`, cada puesto usa el
+  tope del sistema, los mismos valores de la 078 (`venta/topes-del-sistema.ts`: dueño 100 %,
+  administrador 50 %, gerente 30 %, cajero 10 % hasta $50, los demás 0). En cuanto el negocio
+  tiene una fila, mandan las suyas y el puesto que no escribió queda en cero (como antes).
+- **Descartado:** sembrar los topes en la base de producción (es escribir datos sin pantalla que
+  los mantenga, y la base es compartida) y abrir el descuento a todos sin tope.
+- **Sin migración.** `venta/descuento.ts` (`topeDe`), `venta/topes-del-sistema.ts`;
+  `negocio-de-prueba/como-nueva.ts` lo reexporta. **Para el maestro (ficha 29):** el mismo
+  respaldo vale para todo negocio dado de alta después de la 078.

@@ -25,6 +25,7 @@ export interface DevolucionDelCorte {
   readonly montoCentavos: string;
   readonly motivo: string;
   readonly quien: string | null;
+  /** Si algo volvió de verdad al almacén: hay un movimiento de stock de la devolución. */
   readonly regresoAlInventario: boolean;
   /**
    * El costo de lo que REGRESÓ al almacén, a lo que costaba al venderse: deja de ser costo
@@ -32,6 +33,19 @@ export interface DevolucionDelCorte {
    */
   readonly costoDevueltoCentavos: string;
 }
+
+/**
+ * QA2-011 (DP-13.5): lo que regresó se lee de lo que la devolución escribió en el almacén, no de
+ * su casilla «regresa al inventario». Lo de receta no vuelve aunque la casilla diga que sí (ya se
+ * preparó, `venta/devolucion-de-venta.ts`): con la casilla, el corte daba por regresado el costo
+ * de un platillo que nunca volvió y lo quitaba del costo de ventas.
+ */
+const REGRESO_DE_LA_DEVOLUCION = sql`
+  select 1 from movimientos_stock ms
+   where ms.organizacion_id = d.organizacion_id
+     and ms.referencia_tipo = 'devolucion'
+     and ms.referencia_id = d.id
+`;
 
 export async function devolucionesDelCorte(
   tx: Transaccion,
@@ -45,15 +59,18 @@ export async function devolucionesDelCorte(
            d.monto_centavos::text                          as "montoCentavos",
            d.motivo                                        as "motivo",
            ev.nombre                                       as "quien",
-           d.regresa_al_inventario                         as "regresoAlInventario",
-           case when d.regresa_al_inventario then coalesce((
+           exists (${REGRESO_DE_LA_DEVOLUCION})            as "regresoAlInventario",
+           coalesce((
              select sum(round(l.costo_unitario_centavos * dl.cantidad))
                from devoluciones_lineas dl
                join orden_lineas l on l.id = dl.orden_linea_id
                                   and l.organizacion_id = dl.organizacion_id
+               join insumos i on i.producto_id = l.producto_id
+                             and i.organizacion_id = l.organizacion_id
               where dl.organizacion_id = d.organizacion_id
                 and dl.devolucion_id = d.id
-           ), 0) else 0 end::text                          as "costoDevueltoCentavos"
+                and exists (${REGRESO_DE_LA_DEVOLUCION} and ms.insumo_id = i.id)
+           ), 0)::text                                     as "costoDevueltoCentavos"
       from devoluciones d
       join ordenes o on o.id = d.orden_id and o.organizacion_id = d.organizacion_id
       left join empleados_visibles ev on ev.id = d.empleado_id

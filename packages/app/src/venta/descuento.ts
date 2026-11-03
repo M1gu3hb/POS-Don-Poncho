@@ -6,6 +6,7 @@ import { evaluarDescuento, puedeAutorizar, type TopeDePuesto } from '@morphiqpos
 import { z } from 'zod';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
+import { TOPES_DE_DESCUENTO } from './topes-del-sistema.ts';
 
 /**
  * F-205 · Autorizar un descuento por encima del tope del puesto.
@@ -178,12 +179,12 @@ export const autorizarDescuento = definirComando<
 });
 
 /**
- * El tope de un puesto. **Cero cuando no hay fila**, y eso es a propósito.
+ * El tope de un puesto. **Cero cuando el negocio tiene sus topes y a este puesto no le puso
+ * fila**, y eso es a propósito: fallar cerrado.
  *
- * Una organización sin topes configurados no es una sin límite: es una de la que
- * no sabemos qué límite tiene. Fallar cerrado aquí significa que todo descuento
- * pasa por autorización hasta que alguien configure los topes, que es molesto un
- * día y es lo correcto siempre.
+ * Pero un negocio SIN NINGÚN tope escrito usa los del sistema (`topes-del-sistema.ts`, los de la
+ * 078; DP-D59): Don Poncho se dio de alta después de la 078 y ninguna pantalla los escribe, así que
+ * «sin fila es cero» lo dejaba sin descuentos para nadie, ni el dueño (QA2-009).
  */
 export async function topeDe(
   ctx: ContextoComando<Transaccion>,
@@ -200,8 +201,18 @@ export async function topeDe(
       .where('rol', '=', rol as Rol)
       .executeTakeFirst(),
   );
+  if (fila !== undefined) return { topeCentavos: fila.tope_centavos, topeBp: fila.tope_bp };
+  const alguno = await ctx.paso('mirar_topes_del_negocio', () =>
+    ctx.tx
+      .selectFrom('topes_descuento')
+      .select('rol')
+      .where('organizacion_id', '=', ctx.ambito.organizacionId)
+      .executeTakeFirst(),
+  );
+  const delSistema =
+    alguno === undefined ? TOPES_DE_DESCUENTO.find((t) => t.rol === rol) : undefined;
   return {
-    topeCentavos: fila?.tope_centavos ?? 0n,
-    topeBp: fila?.tope_bp ?? 0,
+    topeCentavos: delSistema?.topeCentavos ?? 0n,
+    topeBp: delSistema?.topeBp ?? 0,
   };
 }
