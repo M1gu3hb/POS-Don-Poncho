@@ -2,7 +2,7 @@
 
 import { useRef, type MouseEvent, type PointerEvent } from 'react';
 
-import { MS_PARA_MANTENER, seDeslizo, type Pulsacion } from './pulsacion-larga';
+import { MS_PARA_MANTENER, mesaDeLaPulsacion, seDeslizo, type Pulsacion } from './pulsacion-larga';
 
 /**
  * Mantener presionada una mesa del mapa (DP-12.2). Se pone en el CONTENEDOR del mapa: la mesa se
@@ -20,18 +20,19 @@ export function usePulsacionLarga(alMantener: (mesaId: string, x: number, y: num
     reloj.current = null;
     pulsacion.current = null;
   };
-  const mesaDe = (destino: EventTarget | null): string | null => {
-    const elemento = destino instanceof Element ? destino.closest('[data-mesa-id]') : null;
-    return elemento?.getAttribute('data-mesa-id') ?? null;
-  };
+  // DP-13.4: lo que está dentro de un globo de solicitud no es la mesa (`mesaDeLaPulsacion`).
+  const mesaDe = (destino: EventTarget | null): string | null =>
+    destino instanceof Element ? mesaDeLaPulsacion(destino) : null;
 
   return {
     onPointerDown(e: PointerEvent<HTMLElement>) {
       if (e.button !== 0) return;
+      // Un clic por tirar de la pulsación anterior (en el tacto a veces no llega) no puede comerse
+      // el siguiente toque, sea de una mesa o de un globo.
+      tirarElClic.current = false;
       const mesaId = mesaDe(e.target);
       if (mesaId === null) return;
       soltar();
-      tirarElClic.current = false;
       pulsacion.current = { mesaId, x: e.clientX, y: e.clientY, inicio: Date.now() };
       reloj.current = setTimeout(() => {
         const viva = pulsacion.current;

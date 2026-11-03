@@ -11,14 +11,21 @@ import {
 import { Aviso, Esqueleto, Vacio } from '@morphiqpos/ui/sistema';
 import { useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { qrDeLaMesa } from './api-del-carrito-del-mesero';
+import { programarCierre, tituloDelQr } from './qr-en-pantalla';
 
 /**
  * «VER QR DE LA MESA» (DP-12.2): la pantalla de la estación se vuelve el QR de la mesa, grande y
  * en blanco y negro, para escanearlo con el teléfono del mesero sin ir a la mesa física.
  * «Cancelar» la regresa a la normalidad. Se dibuja aquí mismo, sin servicios externos.
+ *
+ * DP-13.4 · Si nadie la cierra, se cierra sola a los 60 s (`qr-en-pantalla.ts`): el QR de una mesa
+ * no se queda en una pantalla que ya nadie mira. El plazo corre por la MESA abierta, no por la
+ * función `alCerrar` (la pantalla del mesero se vuelve a pintar cada pocos segundos y, con
+ * `alCerrar` en las dependencias, el minuto empezaría de nuevo cada vez). Y el título lleva el
+ * número de la mesa desde que abre y mientras se cierra: se recuerda la última mesa abierta.
  */
 
 /** La misma dirección que lleva el QR pegado en la mesa (`heredado/utils/qrUtils.js`). */
@@ -55,10 +62,29 @@ export function QrDeLaMesaEnPantalla({
   readonly mesa: { readonly id: string; readonly numero: number } | null;
   readonly alCerrar: () => void;
 }) {
+  // La mesa que se enseña: la abierta o, mientras el diálogo se cierra, la última. Sin esto el
+  // título perdía su número en cuanto `mesa` volvía a ser `null`. Se ajusta al pintar, no en un
+  // efecto (así no hay un cuadro con el título a medias).
+  const [recordada, setRecordada] = useState(mesa);
+  if (mesa !== null && mesa !== recordada) setRecordada(mesa);
+  const enPantalla = mesa ?? recordada;
+  const id = mesa?.id ?? null;
+
+  const alCerrarVigente = useRef(alCerrar);
+  useEffect(() => {
+    alCerrarVigente.current = alCerrar;
+  });
+  useEffect(() => {
+    if (id === null) return;
+    return programarCierre(() => {
+      alCerrarVigente.current();
+    });
+  }, [id]);
+
   const consulta = useQuery({
-    queryKey: ['qr_de_la_mesa', mesa?.id ?? null],
-    queryFn: () => qrDeLaMesa(mesa?.id ?? ''),
-    enabled: mesa !== null,
+    queryKey: ['qr_de_la_mesa', id],
+    queryFn: () => qrDeLaMesa(id ?? ''),
+    enabled: id !== null,
   });
   const token = consulta.data?.token ?? null;
   const imagen = useImagen(token === null ? null : direccionDelQr(token));
@@ -72,7 +98,7 @@ export function QrDeLaMesaEnPantalla({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>QR de la mesa {mesa?.numero}</DialogTitle>
+          <DialogTitle>{tituloDelQr(enPantalla)}</DialogTitle>
           <DialogDescription>
             Escanéalo con tu teléfono para abrir el pedido de la mesa.
           </DialogDescription>
@@ -91,11 +117,11 @@ export function QrDeLaMesaEnPantalla({
           // eslint-disable-next-line @next/next/no-img-element -- un QR dibujado aquí (data:), fuera de `next/image`
           <img
             src={imagen}
-            alt={`QR de la mesa ${String(mesa?.numero ?? '')}`}
+            alt={tituloDelQr(enPantalla)}
             width={480}
             height={480}
             className="mx-auto aspect-square w-full max-w-80 rounded-lg"
-            data-qr-de-la-mesa={mesa?.id}
+            data-qr-de-la-mesa={enPantalla?.id}
           />
         )}
         <Button variant="outline" onClick={alCerrar}>

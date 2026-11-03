@@ -2,7 +2,7 @@
 
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Aviso } from '@morphiqpos/ui/sistema';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { atenderLaSolicitud, motivoDelFallo } from './atender-solicitud';
 import {
@@ -11,6 +11,7 @@ import {
   TIPOS_DE_SOLICITUD,
   type SolicitudPendiente,
 } from './globos-de-solicitud';
+import { crearGloboSostenido } from './globo-sostenido';
 import { IconoDeSolicitud } from './IconoDeSolicitud';
 
 /**
@@ -32,6 +33,10 @@ const LUGARES: Readonly<Record<LugarDeLosGlobos, string>> = {
  * Los globos de las solicitudes pendientes de UNA mesa (DP-9.2). Van encima de la mesa; tocar
  * uno atiende la solicitud (`restaurante.atender_solicitud`) sin abrir la mesa, y el mapa relee.
  * Un mesero que atiende el aviso de una mesa sin responsable se queda con ella y con su cuenta.
+ *
+ * DP-13.4 · Mantenerlo presionado hace lo mismo que tocarlo (`globo-sostenido.ts`) y NO abre el
+ * menú de la mesa: la pila lleva `data-globo-de-solicitud` y la pulsación larga del mapa
+ * (`mesaDeLaPulsacion`) no cuenta nada de lo que cuelga de ella.
  */
 export function GlobosDeSolicitud({
   solicitudes,
@@ -47,6 +52,9 @@ export function GlobosDeSolicitud({
 }) {
   const [enCurso, setEnCurso] = useState<string | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
+  const [sostenido] = useState(crearGloboSostenido);
+  // Si el globo se va (otro la atendió) a media pulsación, el reloj no atiende lo que ya no está.
+  useEffect(() => sostenido.cancelar, [sostenido]);
   const { visibles, restantes } = globosDeLaMesa(solicitudes);
   if (visibles.length === 0) return null;
 
@@ -65,7 +73,7 @@ export function GlobosDeSolicitud({
   }
 
   return (
-    <div className={`${LUGARES[lugar]} gap-(--espacio-1)`}>
+    <div data-globo-de-solicitud className={`${LUGARES[lugar]} gap-(--espacio-1)`}>
       {visibles.map((solicitud) => {
         if (!esTipoDeSolicitud(solicitud.tipo)) return null;
         const tipo = TIPOS_DE_SOLICITUD[solicitud.tipo];
@@ -75,8 +83,23 @@ export function GlobosDeSolicitud({
             type="button"
             disabled={enCurso !== null}
             aria-label={`Mesa ${String(mesaNumero)}: ${tipo.completo}. Tocar para atender.`}
+            onPointerDown={(evento) => {
+              if (evento.button !== 0) return;
+              sostenido.bajar(evento.clientX, evento.clientY, () => void atender(solicitud));
+            }}
+            onPointerMove={(evento) => {
+              sostenido.mover(evento.clientX, evento.clientY);
+            }}
+            onPointerUp={sostenido.cancelar}
+            onPointerCancel={sostenido.cancelar}
+            onContextMenu={(evento) => {
+              // El menú del navegador (y el «copiar» del teléfono) no tienen nada que hacer aquí.
+              evento.preventDefault();
+            }}
             onClick={(evento) => {
               evento.stopPropagation();
+              // Si mantenerlo ya la atendió, este clic (el de soltar) no la atiende otra vez.
+              if (sostenido.tirarElClic()) return;
               void atender(solicitud);
             }}
             className="pointer-events-auto h-auto gap-(--espacio-1) rounded-full bg-texto py-1 pr-(--espacio-3) pl-1 text-sm font-bold text-fondo shadow-3 ring-2 ring-fondo hover:bg-texto/90"

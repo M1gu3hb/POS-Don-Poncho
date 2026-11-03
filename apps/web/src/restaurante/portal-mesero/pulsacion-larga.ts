@@ -18,9 +18,14 @@ export interface Pulsacion {
   readonly inicio: number;
 }
 
+/** El dedo se alejó demasiado del punto donde bajó (DP-13.4: también lo usa el globo). */
+export function seAlejo(desde: { readonly x: number; readonly y: number }, x: number, y: number) {
+  return Math.hypot(x - desde.x, y - desde.y) > TOLERANCIA_PX;
+}
+
 /** El dedo se movió demasiado: se cancela la pulsación. */
 export function seDeslizo(pulsacion: Pulsacion, x: number, y: number): boolean {
-  return Math.hypot(x - pulsacion.x, y - pulsacion.y) > TOLERANCIA_PX;
+  return seAlejo(pulsacion, x, y);
 }
 
 /** Ya pasó el tiempo para contar como mantener presionada. */
@@ -43,4 +48,26 @@ export function lugarDelGlobo(
   const arriba = y - globo.alto - 16;
   const top = arriba >= margen ? arriba : Math.min(y + 16, pantalla.alto - globo.alto - margen);
   return { left, top };
+}
+
+/**
+ * DP-13.4 · LO QUE ESTÁ DENTRO DE UN GLOBO DE SOLICITUD NO ES LA MESA.
+ *
+ * En el plano, los globos de una mesa cuelgan DENTRO de su caja (`data-mesa-id`), así que
+ * mantener presionado un globo contaba como mantener presionada la mesa y abría su menú en vez de
+ * atender la solicitud. Todo lo que cuelga de la pila de globos lleva esta marca y se excluye.
+ */
+export const SELECTOR_DE_GLOBO = '[data-globo-de-solicitud]';
+
+/** Lo que se pide de un elemento del documento (así se prueba sin navegador). */
+export interface ElementoDelMapa {
+  closest(selectores: string): ElementoDelMapa | null;
+  getAttribute(nombre: string): string | null;
+}
+
+/** La mesa de lo que se tocó: la de su caja, y ninguna si lo tocado es un globo (o no es mesa). */
+export function mesaDeLaPulsacion(destino: ElementoDelMapa | null): string | null {
+  if (destino === null) return null;
+  if (destino.closest(SELECTOR_DE_GLOBO) !== null) return null;
+  return destino.closest('[data-mesa-id]')?.getAttribute('data-mesa-id') ?? null;
 }
