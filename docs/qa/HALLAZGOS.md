@@ -23,7 +23,7 @@ Sólo escribo lo que vi. Cuando algo no lo reproduje o no guardé evidencia, lo 
 ## Ronda 2 (coordinación, 05-11-2026)
 
 La jornada completa otra vez, con todo arreglado y la app compilada de nuevo: **8 de 8 specs en verde**
-(1 a 6 otra vez tras el último arreglo, en verde), con las 48 comparaciones cuadrando, también el CSV y el
+con la compilación final, con las 48 comparaciones cuadrando, también el CSV y el
 «Ver PDF» de Registros. Los guiones se ajustaron a la app arreglada (la quesadilla pide su relleno) y a
 que una persona se llama como un puesto («Cocina»).
 
