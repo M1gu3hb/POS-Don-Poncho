@@ -50,6 +50,12 @@ describe('las pantallas que leen producto.modificadores los reciben', () => {
     },
   );
 
+  it('si el mesero toca antes de que lleguen, las espera: el toque no se pierde', () => {
+    expect(leer('pages/Mesero.jsx')).toMatch(
+      /if \(!opcionesListas\) \{\s*try \{\s*const opciones = await queryClient\.ensureQueryData\(consultaDeLasOpciones\(\)\);\s*producto = conSusOpciones\(\[productoTocado\], opciones\)\[0\];/,
+    );
+  });
+
   it('el mesero arma su lista con las opciones pegadas', () => {
     expect(leer('pages/Mesero.jsx')).toMatch(
       /const productosArr = useMemo\(\s*\(\) => conSusOpciones/,

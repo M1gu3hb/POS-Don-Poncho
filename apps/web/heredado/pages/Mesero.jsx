@@ -78,7 +78,10 @@ import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
 import { solicitudesPorMesa } from '~/restaurante/globos-de-solicitud';
 import { SelectorDeVista } from '~/restaurante/SelectorDeVista';
 import { conSusOpciones } from '~/restaurante/opciones-de-los-platillos';
-import { useOpcionesDeLosPlatillos } from '~/restaurante/use-opciones-de-los-platillos';
+import {
+  consultaDeLasOpciones,
+  useOpcionesDeLosPlatillos,
+} from '~/restaurante/use-opciones-de-los-platillos';
 import { CancelarDelMesero } from '~/restaurante/CancelarDelMesero';
 import { UnirMesasEnElMapa } from '~/restaurante/unir-mesas/UnirMesasEnElMapa';
 import {
@@ -637,10 +640,19 @@ function Mesero() {
     );
   };
 
-  const agregarAlCarrito = (producto) => {
+  const agregarAlCarrito = async (productoTocado) => {
+    // QA1-4 (DP-13.5): antes de agregar hay que saber si el platillo pide opciones. Si todavía no
+    // llegaron (la tableta recién abrió la mesa), se esperan: el toque no se pierde.
+    let producto = productoTocado;
     if (!opcionesListas) {
-      toast.info('Cargando las opciones de los platillos… intenta en un momento.');
-      return;
+      try {
+        const opciones = await queryClient.ensureQueryData(consultaDeLasOpciones());
+        producto = conSusOpciones([productoTocado], opciones)[0];
+      } catch (error) {
+        console.error('[Mesero] opciones de los platillos:', error);
+        toast.error('No se pudieron leer las opciones de los platillos. Toca otra vez.');
+        return;
+      }
     }
     // 6B / 1.D — Si es producto variable, abrir modal de cantidad/porción.
     // El flujo de modificadores y precio_fijo queda intacto.

@@ -617,8 +617,8 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Mesero.jsx",
-      "porque": "DP-13.5 (QA1-4): el mesero no agrega un platillo antes de saber si pide opciones (la quesadilla, su relleno); si todavía no llegan, lo dice.",
-      "testigos": ["+ aviso:Cargando las opciones de los platillos… intenta en un momento."]
+      "porque": "DP-13.5 (QA1-4): el mesero espera las opciones antes de agregar un platillo (la quesadilla, su relleno; los pulques, su sabor); si no se pueden leer, lo dice y no agrega.",
+      "testigos": ["+ aviso:No se pudieron leer las opciones de los platillos. Toca otra vez."]
     },
     {
       "archivo": "apps/web/heredado/pages/Productos.jsx",

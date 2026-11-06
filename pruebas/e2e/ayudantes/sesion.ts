@@ -576,9 +576,12 @@ export async function entrar(page: Page, quien?: QuienEntra): Promise<string> {
    * exactamente una, y si mañana hay dos personas con el mismo nombre en el mismo
    * negocio, esto falla en vez de entrar con una al azar.
    */
-  const conNombre = page
-    .getByRole('button')
-    .filter({ has: page.getByText(elegido.nombre, { exact: true }) });
+  const conNombre = page.getByRole('button').filter({
+    // El nombre es el PRIMER párrafo de la tarjeta; el segundo es el puesto. Con el texto exacto
+    // en cualquier párrafo, una persona que se llama como un puesto («Cocina») casaba también con
+    // las tarjetas de los demás cocineros (DP-13.5, la jornada de QA).
+    has: page.locator('p:first-child', { hasText: textoExacto(elegido.nombre) }),
+  });
 
   /**
    * Y CUÁNDO EL NEGOCIO NO SALE EN LA TARJETA.
@@ -1840,4 +1843,9 @@ export async function cerrarCajaYCuadrar(page: Page, esperadoCentavos: number): 
     Number(cuerpo.datos?.diferenciaCentavos ?? -1),
     'Se contó exactamente lo esperado y el corte dice que hay diferencia.',
   ).toBe(0);
+}
+
+/** El texto completo de un elemento, tal cual: para `hasText`, que por sí solo busca contenido. */
+function textoExacto(texto: string): RegExp {
+  return new RegExp(`^${texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
 }

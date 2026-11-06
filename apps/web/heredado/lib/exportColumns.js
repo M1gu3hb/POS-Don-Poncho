@@ -21,14 +21,20 @@ const fmtDeLaVenta = (v, venta) => {
 };
 
 // QA1-8 (DP-13.5): sólo lo que `CorteCaja` sirve. Pedía `efectivo_esperado`/`diferencia_efectivo`
-// (el puente sirve la foto del cierre: `esperado_al_cerrar`/`diferencia_al_cerrar`), `fecha_inicio`
-// y nueve totales que la entidad no tiene: el CSV decía «Diferencia 0.00» en un corte con faltante.
-// Lo vendido por método está en el CSV de Ventas.
+// (el puente sirve la foto del cierre: `esperado_al_cerrar`/`diferencia_al_cerrar`), `fecha_inicio`,
+// y costo, utilidad, margen y gastos, que el corte no trae: el CSV decía «Diferencia 0.00» en un
+// corte con faltante. Lo vendido por método y cuántas ventas sí: los agrega el puente.
 export const COLUMNS_CORTES = [
   { key: 'folio', label: 'Folio' },
   { key: 'fecha_apertura', label: 'Fecha apertura', format: fmtDate },
   { key: 'fecha_cierre', label: 'Fecha cierre', format: fmtDate },
   { key: 'usuario_cajero_nombre', label: 'Cajero' },
+  { key: 'numero_ventas', label: 'N° ventas', format: fmtNum },
+  { key: 'total_general', label: 'Total', format: fmtNum },
+  { key: 'total_efectivo', label: 'Efectivo', format: fmtNum },
+  { key: 'total_tarjeta', label: 'Tarjeta', format: fmtNum },
+  { key: 'total_transferencia', label: 'Transferencia', format: fmtNum },
+  { key: 'total_propinas', label: 'Propinas', format: fmtNum },
   { key: 'efectivo_inicial_contado', label: 'Fondo inicial', format: fmtNum },
   { key: 'esperado_al_cerrar', label: 'Efectivo esperado', format: fmtNum },
   { key: 'efectivo_contado', label: 'Efectivo contado', format: fmtNum },

@@ -1,0 +1,4 @@
+cortes-caja-2026-11-03.csv
+﻿Folio,Fecha apertura,Fecha cierre,Cajero,N° ventas,Total,Efectivo,Tarjeta,Transferencia,Costo estimado,Utilidad bruta,Margen %,Gastos,Efectivo esperado,Efectivo contado,Diferencia,Estado,Notas
+20,,2026-11-03 10:23:24,Gerente,5,1079,349,730,0,0,0,0,0,0,1163.9,0,cerrado,
+21,,2026-11-03 10:23:31,Caja,4,910,729,0,181,0,0,0,0,0,2298.4,0,cerrado,

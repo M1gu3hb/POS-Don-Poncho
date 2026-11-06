@@ -64,6 +64,11 @@ export const CARTA = {
 export interface PlatilloPedido {
   readonly nombre: string;
   readonly veces: number;
+  /**
+   * DP-13.5 (QA1-4) · La opción obligatoria del platillo («Pollo» para el relleno): el mesero ya
+   * no lo agrega sin elegirla. Sin ella, `armarElPedido` deja abierto el diálogo de opciones.
+   */
+  readonly opcion?: string;
 }
 
 /** Lo que cuestan varios platillos juntos, en centavos. */
@@ -220,9 +225,16 @@ export async function armarElPedido(
   platillos: readonly PlatilloPedido[],
 ): Promise<void> {
   const mesa = dialogoDeLaMesa(page, numero);
-  for (const { nombre, veces } of platillos) {
+  for (const { nombre, veces, opcion } of platillos) {
     const tesela = mesa.getByRole('button', { name: new RegExp(`^${escapar(nombre)} \\$`) });
-    for (let i = 0; i < veces; i += 1) await tesela.click();
+    for (let i = 0; i < veces; i += 1) {
+      await tesela.click();
+      if (opcion === undefined) continue;
+      const personalizar = page.getByRole('dialog', { name: 'Personalizar producto' });
+      await personalizar.getByRole('button', { name: opcion, exact: true }).click();
+      await personalizar.getByRole('button', { name: 'Agregar al pedido' }).click();
+      await expect(personalizar).toHaveCount(0);
+    }
   }
 }
 

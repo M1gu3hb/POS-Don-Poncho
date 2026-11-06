@@ -509,6 +509,20 @@ async function adjuntarEstadoDelCosto(organizacionId: string, ventas: Fila[]): P
   }
 }
 
+/**
+ * Los campos que `adjuntarTotalesDeCaja` agrega a cada `CorteCaja`: no están en el mapa, pero el
+ * puente los sirve (QA1-8, DP-13.5: el CSV de Registros los exporta).
+ */
+export const TOTALES_DE_CAJA = [
+  'total_efectivo',
+  'total_tarjeta',
+  'total_transferencia',
+  'total_general',
+  'total_propinas',
+  'numero_ventas',
+  'ticket_promedio',
+] as const;
+
 /** Suma por método, propinas y número de cuentas cobradas en cada sesión de caja. */
 async function adjuntarTotalesDeCaja(organizacionId: string, cajas: Fila[]): Promise<void> {
   const ids = cajas
