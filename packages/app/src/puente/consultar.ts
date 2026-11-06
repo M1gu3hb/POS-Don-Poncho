@@ -165,6 +165,21 @@ function aliasDerivado(n: number): string {
   return `d${String(n)}`;
 }
 
+/**
+ * QA2-002 (DP-13.5) · Postgres rechaza con la clase 22 («data exception») un valor que no es del
+ * tipo de su columna: un id que no es uuid, un número que no es número, una fecha imposible. Es la
+ * PETICIÓN la que no tiene sentido, no un fallo del servidor: se dice como entrada inválida.
+ */
+function esUnDatoQueNoEsDeSuTipo(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string' &&
+    error.code.startsWith('22')
+  );
+}
+
 export async function consultar(
   ambito: Ambito,
   peticion: PeticionConsulta,
@@ -438,7 +453,14 @@ async function consultarUnaVez(
   );
   consulta = consulta.limit(peticion.operacion === 'get' ? 1 : limite);
 
-  const filas = await consulta.execute();
+  const filas = await consulta.execute().catch((error: unknown) => {
+    throw esUnDatoQueNoEsDeSuTipo(error)
+      ? new ErrorDominio(
+          'PUENTE_FILTRO_INVALIDO',
+          'Un filtro no es del tipo de su campo (un id, un número o una fecha).',
+        )
+      : error;
+  });
   const traducidas = filas.map((fila) => traducirFila(fila, mapa, ambito.rol));
 
   // 7 · Los hijos. UNA consulta por relación para TODA la página, no una por
@@ -486,6 +508,20 @@ async function adjuntarEstadoDelCosto(organizacionId: string, ventas: Fila[]): P
     if (estado !== undefined) venta['estado_costo'] = estado;
   }
 }
+
+/**
+ * Los campos que `adjuntarTotalesDeCaja` agrega a cada `CorteCaja`: no están en el mapa, pero el
+ * puente los sirve (QA1-8, DP-13.5: el CSV de Registros los exporta).
+ */
+export const TOTALES_DE_CAJA = [
+  'total_efectivo',
+  'total_tarjeta',
+  'total_transferencia',
+  'total_general',
+  'total_propinas',
+  'numero_ventas',
+  'ticket_promedio',
+] as const;
 
 /** Suma por método, propinas y número de cuentas cobradas en cada sesión de caja. */
 async function adjuntarTotalesDeCaja(organizacionId: string, cajas: Fila[]): Promise<void> {

@@ -127,7 +127,6 @@ export const documentoDeCorte = definirComando<
     );
 
     const porTipo = new Map<string, { monto: bigint; cuantos: number; sinMotivo: number }>();
-    let neto = 0n;
     for (const movimiento of movimientos) {
       const acumulado = porTipo.get(movimiento.tipo) ?? { monto: 0n, cuantos: 0, sinMotivo: 0 };
       acumulado.monto += movimiento.monto_centavos;
@@ -138,10 +137,23 @@ export const documentoDeCorte = definirComando<
         acumulado.sinMotivo += 1;
       }
       porTipo.set(movimiento.tipo, acumulado);
-      neto += movimiento.monto_centavos;
     }
 
-    const esperado = corte.fondo + neto - corte.retirado;
+    // QA2-008 (DP-13.5): el esperado es la MISMA cuenta que hizo el corte al cortar
+    // (`repoCaja.arqueoDeSesion` en `turno.ts`): todo lo de la sesión hasta ese instante, la
+    // apertura (el fondo) incluida. Rehacerlo como fondo + tramo − retirado contaba el fondo dos
+    // veces en el primer turno (su tramo YA trae la apertura) y lo sumaba entero a un tramo
+    // parcial en los siguientes: la cajera cuadraba al centavo y el PDF decía «faltan $1,500».
+    const hastaElCorte = await ctx.paso('leer_el_cajon_al_cortar', () =>
+      ctx.tx
+        .selectFrom('movimientos_caja')
+        .select('monto_centavos')
+        .where('organizacion_id', '=', organizacionId)
+        .where('sesion_caja_id', '=', corte.sesion_caja_id)
+        .where('created_at', '<=', corte.cortado_en)
+        .execute(),
+    );
+    const esperado = hastaElCorte.reduce((suma, m) => suma + m.monto_centavos, 0n);
 
     return {
       corteId: corte.id,

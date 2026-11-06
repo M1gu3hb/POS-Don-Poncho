@@ -77,6 +77,8 @@ import { claves } from '~/cliente/claves-de-consulta';
 import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
 import { sonar } from '~/sonidos/gestor';
 import { economiaDelPeriodo } from '~/restaurante/margen-de-las-ventas';
+import { DividirLaCuenta } from '~/restaurante/DividirLaCuenta';
+import { rotuloDeLaCuenta } from '~/restaurante/cuenta-de-la-caja';
 
 const METODOS = [
   {
@@ -188,6 +190,14 @@ export default function Caja() {
 
   // BLOQUE 0: refetch cada 2s para que QR/Mesero → Caja sea casi en vivo.
   // Sin esto, una cuenta solicitada podía tardar hasta 6s en aparecer en Caja.
+  // QA1-6 (DP-13.5): la parte de una cuenta dividida no tiene mesa; se llama por su nombre
+  // («Mesa 5 · cuenta 1 de 2»), no «Mesa —».
+  const rotuloDeCaja = (v) =>
+    rotuloDeLaCuenta(
+      { mesa_numero: v?.mesa_numero ?? null, cliente_nombre: v?.cliente_nombre ?? null },
+      { mesa: 'Mesa', sinMesa: 'Sin mesa' },
+    );
+
   const { data: ventasPendientes = [] } = useQuery({
     queryKey: ['ventas_pendientes_caja'],
     queryFn: () => api.entidades.Venta.filter({ estado: 'cuenta_solicitada' }),
@@ -1286,9 +1296,7 @@ export default function Caja() {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="font-heading font-bold text-base">
-                            Mesa {v.mesa_numero || '—'}
-                          </p>
+                          <p className="font-heading font-bold text-base">{rotuloDeCaja(v)}</p>
                           <p className="text-xs text-muted-foreground">{v.folio}</p>
                         </div>
                         <span
@@ -1409,7 +1417,10 @@ export default function Caja() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-heading">
-              Cobrar — Mesa {ventaSeleccionada?.mesa_numero || ventaSeleccionada?.folio}
+              Cobrar —{' '}
+              {ventaSeleccionada?.mesa_numero || ventaSeleccionada?.cliente_nombre
+                ? rotuloDeCaja(ventaSeleccionada)
+                : ventaSeleccionada?.folio}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -1681,6 +1692,19 @@ export default function Caja() {
             <Button variant="outline" onClick={() => setVentaSeleccionada(null)}>
               Cancelar
             </Button>
+            {/* QA1-5 (DP-13.5): la cuenta de una mesa se divide aquí, donde se cobra. Antes el
+                botón vivía sólo en `/restaurante/cobro`, que ninguna pantalla enlaza. */}
+            {ventaSeleccionada?.mesa_id && ventaSeleccionada.total > 0 && (
+              <DividirLaCuenta
+                ordenId={ventaSeleccionada.id}
+                lineas={detallesSeleccionados}
+                onDividida={() => {
+                  setVentaSeleccionada(null);
+                  queryClient.invalidateQueries({ queryKey: ['ventas_pendientes_caja'] });
+                  toast.success('Cuenta dividida: cobra cada parte en Pendientes.');
+                }}
+              />
+            )}
             {!ventaSeleccionada?.total || ventaSeleccionada.total <= 0 ? (
               <Button
                 variant="destructive"

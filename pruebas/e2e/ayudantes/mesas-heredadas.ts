@@ -64,6 +64,11 @@ export const CARTA = {
 export interface PlatilloPedido {
   readonly nombre: string;
   readonly veces: number;
+  /**
+   * DP-13.5 (QA1-4) · La opción obligatoria del platillo («Pollo» para el relleno): el mesero ya
+   * no lo agrega sin elegirla. Sin ella, `armarElPedido` deja abierto el diálogo de opciones.
+   */
+  readonly opcion?: string;
 }
 
 /** Lo que cuestan varios platillos juntos, en centavos. */
@@ -220,9 +225,16 @@ export async function armarElPedido(
   platillos: readonly PlatilloPedido[],
 ): Promise<void> {
   const mesa = dialogoDeLaMesa(page, numero);
-  for (const { nombre, veces } of platillos) {
+  for (const { nombre, veces, opcion } of platillos) {
     const tesela = mesa.getByRole('button', { name: new RegExp(`^${escapar(nombre)} \\$`) });
-    for (let i = 0; i < veces; i += 1) await tesela.click();
+    for (let i = 0; i < veces; i += 1) {
+      await tesela.click();
+      if (opcion === undefined) continue;
+      const personalizar = page.getByRole('dialog', { name: 'Personalizar producto' });
+      await personalizar.getByRole('button', { name: opcion, exact: true }).click();
+      await personalizar.getByRole('button', { name: 'Agregar al pedido' }).click();
+      await expect(personalizar).toHaveCount(0);
+    }
   }
 }
 
@@ -1084,7 +1096,8 @@ export async function prepararElPortalDelComensal(
 
 /**
  * Configuración → Mesas: la dueña le pone su mesero a la mesa, desde el mapa. Los mosaicos no
- * tienen rol: se tocan por su número, dentro del mapa.
+ * tienen rol: se tocan por su número, dentro del mapa. En el teléfono no hay mapa sino una lista
+ * (`MesaListMobile`), y la mesa se abre con su botón «Editar mesa N».
  */
 async function asignarElMesero(
   duena: Page,
@@ -1094,7 +1107,10 @@ async function asignarElMesero(
 ): Promise<void> {
   await duena.getByRole('tab', { name: 'Mesas' }).click();
   await duena.getByRole('button', { name: new RegExp(`^${escapar(zona)}`) }).click();
-  await duena.locator('div.select-none').getByText(String(mesa), { exact: true }).first().click();
+  const enLaLista = duena.getByRole('button', { name: `Editar mesa ${String(mesa)}`, exact: true });
+  const delMapa = duena.locator('div.select-none').getByText(String(mesa), { exact: true }).first();
+  await expect(enLaLista.or(delMapa).first()).toBeVisible();
+  await ((await enLaLista.isVisible()) ? enLaLista : delMapa).click();
   const dialogo = duena.getByRole('dialog');
   await expect(dialogo).toBeVisible();
   await dialogo.getByRole('combobox').filter({ hasText: 'Sin asignar' }).click();

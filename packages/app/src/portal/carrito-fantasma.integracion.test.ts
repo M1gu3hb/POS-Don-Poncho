@@ -18,6 +18,15 @@ import { mesaConPortal, TELEFONO_A, TELEFONO_B } from './pruebas/mesa-con-portal
  * cuenta caduca solo a las tres horas sin que nadie agregue nada.
  */
 
+async function telefonosDeLaMesa(mesaId: string): Promise<number> {
+  const filas = await obtenerDb()
+    .selectFrom('dispositivos_mesa')
+    .select('dispositivo_huella')
+    .where('mesa_id', '=', mesaId)
+    .execute();
+  return filas.length;
+}
+
 async function lineasEnElCarrito(mesaId: string): Promise<number> {
   const fila = await obtenerDb()
     .selectFrom('carrito_mesa_lineas')
@@ -45,7 +54,9 @@ describe('el carrito fantasma (DP-13.2)', () => {
     );
     // La familia que se fue todavía tiene el portal abierto y agrega algo.
     exigirOk(await caso.agregar(TELEFONO_A, caso.taco), 'agregar después de cobrar');
+    await caso.mirar(TELEFONO_A);
     expect(await lineasEnElCarrito(caso.mesaId)).toBe(1);
+    expect(await telefonosDeLaMesa(caso.mesaId)).toBeGreaterThan(0);
 
     exigirOk(
       await comando(liberarMesa, {
@@ -56,6 +67,9 @@ describe('el carrito fantasma (DP-13.2)', () => {
       'liberar',
     );
     expect(await lineasEnElCarrito(caso.mesaId)).toBe(0);
+    // QA2-006 (DP-13.5): y sus teléfonos: no crecen sin fin ni cuentan como «conectados» de la
+    // siguiente familia.
+    expect(await telefonosDeLaMesa(caso.mesaId)).toBe(0);
 
     await caso.abrir(3);
     expect((await caso.mirar(TELEFONO_B))?.lineas).toEqual([]);

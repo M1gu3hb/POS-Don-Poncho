@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ListChecks } from 'lucide-react';
+import { CLAVE_DE_LAS_OPCIONES } from '~/restaurante/opciones-de-los-platillos';
 import ModificadoresEditor, {
   sanitizeModificadores,
   validateModificadores,
@@ -81,6 +82,7 @@ export default function ModificadoresDialog({ open, onClose, producto = null }) 
       });
       queryClient.invalidateQueries({ queryKey: ['productos_all'] });
       queryClient.invalidateQueries({ queryKey: ['productos_pos'] });
+      queryClient.invalidateQueries({ queryKey: CLAVE_DE_LAS_OPCIONES });
       toast.success(
         limpio.length > 0
           ? `Guardado · ${limpio.length} grupo(s) de opciones`

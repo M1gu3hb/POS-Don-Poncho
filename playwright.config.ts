@@ -104,6 +104,9 @@ const NAVEGADOR_INSTALADO =
 
 export default defineConfig({
   testDir: './pruebas/e2e',
+  // DP-13.5 · La jornada de QA (`qa/`) corre sobre una COPIA de producción con sus PIN de prueba
+  // (fuera del repositorio, en `QA1_PINES`): sin esa variable no hay copia y no se corre.
+  testIgnore: process.env['QA1_PINES'] === undefined ? ['**/qa/**'] : [],
   outputDir: './pruebas/e2e/.resultados',
 
   // Sin reintentos en local: un reintento esconde una prueba inestable, y una

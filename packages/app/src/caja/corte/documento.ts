@@ -171,7 +171,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
           consultas.descuentosPorUsuario(tx, organizacionId, id),
           consultas.alertasDeInventario(tx, organizacionId, alcance.hasta),
           consultas.insumosConsumidos(tx, organizacionId, id),
-          consultas.salidasSinVenta(tx, organizacionId, ventana),
+          consultas.salidasSinVenta(tx, organizacionId, alcance),
           devolucionesDelCorte(tx, organizacionId, id),
         ]),
       );

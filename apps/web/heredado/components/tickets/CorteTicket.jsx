@@ -11,6 +11,7 @@ import {
   nombreVisibleDelSistema,
 } from '~/marca/nombre-visible';
 import { seccionesDeCancelaciones } from '~/corte/cancelaciones';
+import { diferenciaDelCorte } from '~/corte-heredado/diferencia-del-corte';
 import {
   SIN_RECETA,
   economiaDelPeriodo,
@@ -110,7 +111,9 @@ const CorteTicket = React.forwardRef(function CorteTicket(
     }
     productosMap[key].cantidad += d.cantidad || 0;
     productosMap[key].total += d.subtotal || 0;
-    productosMap[key].costo += d.costo_total_linea_snapshot || 0;
+    // QA2-012 (DP-13.5): el puente entrega el costo UNITARIO de la línea, no el total; leer
+    // `costo_total_linea_snapshot` (que no llega) dejaba «Costo $0.00 · Utilidad = Total».
+    productosMap[key].costo += (Number(d.costo_unitario_snapshot) || 0) * (Number(d.cantidad) || 0);
     if (tipo === 'variable_medida') {
       productosMap[key].cantidad_variable_total += Number(d?.cantidad_variable_snapshot) || 0;
     } else if (tipo === 'porcion_contenedor') {
@@ -227,7 +230,7 @@ const CorteTicket = React.forwardRef(function CorteTicket(
             label="Efectivo contado al cierre"
             value={formatCurrency(corte?.efectivo_contado)}
           />
-          <Cell label="Diferencia efectivo" value={formatCurrency(corte?.diferencia_efectivo)} />
+          <Cell label="Diferencia efectivo" value={formatCurrency(diferenciaDelCorte(corte))} />
           <Cell
             label="Dinero dejado en caja"
             value={formatCurrency(corte?.dinero_dejado_en_caja)}
@@ -445,8 +448,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
               <th className="border px-2 py-1 text-right">Líneas</th>
               <th className="border px-2 py-1 text-right">Cantidad real</th>
               <th className="border px-2 py-1 text-right">Total</th>
-              {!sinCostos && <th className="border px-2 py-1 text-right">Costo</th>}
-              {!sinCostos && <th className="border px-2 py-1 text-right">Utilidad</th>}
+              {conMargen && <th className="border px-2 py-1 text-right">Costo</th>}
+              {conMargen && <th className="border px-2 py-1 text-right">Utilidad</th>}
             </tr>
           </thead>
           <tbody>
@@ -456,10 +459,10 @@ const CorteTicket = React.forwardRef(function CorteTicket(
                 <td className="border px-2 py-1 text-right">{p.cantidad}</td>
                 <td className="border px-2 py-1 text-right">{p.cantidadReal || '—'}</td>
                 <td className="border px-2 py-1 text-right">{formatCurrency(p.total)}</td>
-                {!sinCostos && (
+                {conMargen && (
                   <td className="border px-2 py-1 text-right">{formatCurrency(p.costo)}</td>
                 )}
-                {!sinCostos && (
+                {conMargen && (
                   <td className="border px-2 py-1 text-right font-bold">
                     {formatCurrency(p.total - p.costo)}
                   </td>

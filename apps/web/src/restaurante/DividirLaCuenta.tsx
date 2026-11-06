@@ -33,11 +33,14 @@ export function DividirLaCuenta({
   ordenId,
   lineas,
   className,
+  onDividida,
 }: {
   readonly ordenId: string;
   /** `null` mientras no se leen: sin lo que se consumió no hay qué repartir. */
   readonly lineas: readonly LineaDeLaCuentaPorDividir[] | null;
   readonly className?: string;
+  /** QA1-5 (DP-13.5) · La caja heredada se queda donde está y relee su lista. */
+  readonly onDividida?: () => void;
 }) {
   const voc = useVocabulario();
   const router = useRouter();
@@ -77,7 +80,8 @@ export function DividirLaCuenta({
           setAbierto(false);
         }}
         onDividida={() => {
-          router.push('/restaurante/caja');
+          if (onDividida === undefined) router.push('/restaurante/caja');
+          else onDividida();
         }}
       />
     </>

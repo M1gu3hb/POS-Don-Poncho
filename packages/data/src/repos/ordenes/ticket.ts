@@ -23,6 +23,7 @@ export interface OrdenParaTicket {
   readonly impuestosCentavos: bigint;
   readonly totalCentavos: bigint;
   readonly createdAt: Date;
+  readonly cerradaEn: Date | null;
   readonly organizacionNombre: string;
   readonly sucursalNombre: string;
 }
@@ -46,6 +47,7 @@ export async function ordenParaTicket(
       'ordenes.impuestos_centavos as impuestosCentavos',
       'ordenes.total_centavos as totalCentavos',
       'ordenes.created_at as createdAt',
+      'ordenes.cerrada_en as cerradaEn',
       'organizaciones.nombre as organizacionNombre',
       'sucursales.nombre as sucursalNombre',
     ])
@@ -59,6 +61,8 @@ export async function ordenParaTicket(
 export interface PagoDeTicket {
   readonly metodo: string;
   readonly montoCentavos: bigint;
+  /** DP-13.5 (QA2-005): la propina que vino con este pago; sin ella el cambio no cuadraba. */
+  readonly propinaCentavos: bigint;
   readonly recibidoCentavos: bigint | null;
   readonly cambioCentavos: bigint;
 }
@@ -73,6 +77,7 @@ export async function pagosDeOrden(
     .select([
       'metodo',
       'monto_centavos as montoCentavos',
+      'propina_centavos as propinaCentavos',
       'recibido_centavos as recibidoCentavos',
       'cambio_centavos as cambioCentavos',
     ])

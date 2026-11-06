@@ -26,6 +26,7 @@ import {
   type PrecuentaDeLaMesa,
 } from './precuenta-de-la-mesa.ts';
 import {
+  folioDeLaHoja,
   hojaDeLaRespuesta,
   totalesDeLaHoja,
   type HojaImpresa,
@@ -88,7 +89,8 @@ export interface LineaPrecuenta {
  */
 export interface CuentaPrecuenta {
   readonly id: string;
-  readonly folio: string;
+  /** Nulo hasta que la cuenta se cobra: el folio se lo pone el cobro. */
+  readonly folio: string | null;
   /** Derivado de `mesas.numero`, con `conversion: 'entero'`: NÚMERO. */
   readonly mesa_numero: number | null;
   readonly personas: number | null;
@@ -405,7 +407,7 @@ function Hoja({ cuenta, lineas, estilo, copia, totales }: HojaProps) {
   const voc = useVocabulario();
   const mesa = cuenta.mesa_numero === null ? '—' : String(cuenta.mesa_numero);
   const { propina } = totales;
-  const conFolio = cuenta.folio !== '';
+  const folio = folioDeLaHoja(cuenta.folio);
 
   const columnas: readonly ColumnaDeTabla<LineaPrecuenta>[] = [
     {
@@ -442,7 +444,7 @@ function Hoja({ cuenta, lineas, estilo, copia, totales }: HojaProps) {
       nivel={2}
       radio="sm"
       relleno={3}
-      aria-label={`Precuenta de la mesa ${mesa}${conFolio ? `, folio ${cuenta.folio}` : ''}`}
+      aria-label={`Precuenta de la mesa ${mesa}${folio === null ? '' : `, folio ${folio}`}`}
       className="mx-auto flex flex-col gap-(--espacio-2) font-mono text-xs leading-snug text-texto"
       style={estilo}
     >
@@ -456,7 +458,7 @@ function Hoja({ cuenta, lineas, estilo, copia, totales }: HojaProps) {
         )}
       </header>
       <p className="text-center">
-        {conFolio ? `Folio ${cuenta.folio} · ` : ''}Mesa {mesa} · {cuenta.personas ?? '—'} personas
+        {folio === null ? '' : `Folio ${folio} · `}Mesa {mesa} · {cuenta.personas ?? '—'} personas
       </p>
 
       <Tabla

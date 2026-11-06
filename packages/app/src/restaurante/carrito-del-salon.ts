@@ -37,6 +37,14 @@ export async function olvidarElCarritoDeLaMesa(
   // Revisión de DP-13: sin carrito, su «Pedido listo para confirmar» ya no espera a nadie (el
   // cobro, cancelar, liberar, caducar: cualquier borrado en masa, no sólo quitar y enviar).
   await resolverElAvisoDelPedido(tx, organizacionId, mesaId, null, ahora);
+  // QA2-006 (DP-13.5): y sus teléfonos. Sólo se mudaban con la cuenta: con el id firmado cada
+  // teléfono nuevo es una fila, y la mesa acumulaba los de todas las familias (y la siguiente
+  // contaba como «conectados» a los de la anterior). El que sigue en la mesa vuelve a latir.
+  await tx
+    .deleteFrom('dispositivos_mesa')
+    .where('organizacion_id', '=', organizacionId)
+    .where('mesa_id', '=', mesaId)
+    .execute();
   return Number(borradas.numDeletedRows);
 }
 

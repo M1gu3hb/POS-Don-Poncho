@@ -72,6 +72,26 @@ describe('a quien no ve márgenes, ni costo, ni utilidad, ni «sin receta»', ()
   );
 });
 
+describe('QA2-012 · el costo de cada producto en el PDF del corte', () => {
+  it('sale del costo que el puente SÍ entrega (unitario × cantidad), no de un campo que no llega', () => {
+    const codigo = leer(TICKET);
+    // El puente mapea `costo_unitario_snapshot` en las líneas; `costo_total_linea_snapshot` no
+    // existe, y leerlo solo dejaba «Costo $0.00 · Utilidad = Total» en cada producto.
+    expect(codigo).toMatch(/costo_unitario_snapshot/);
+    expect(codigo).not.toMatch(/\+= d\.costo_total_linea_snapshot \|\| 0;/);
+  });
+
+  it('las columnas de costo y utilidad de cada producto, sólo para quien ve márgenes', () => {
+    const codigo = leer(TICKET);
+    expect(codigo).not.toMatch(
+      /\{!sinCostos && <th className="border px-2 py-1 text-right">Costo<\/th>\}/,
+    );
+    expect(codigo).toMatch(
+      /\{conMargen && <th className="border px-2 py-1 text-right">Costo<\/th>\}/,
+    );
+  });
+});
+
 describe('el CSV de Registros', () => {
   it('el costo, la utilidad y el margen de cada venta pasan por la regla de la venta', () => {
     const codigo = leer(CSV);

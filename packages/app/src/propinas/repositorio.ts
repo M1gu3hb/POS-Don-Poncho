@@ -72,7 +72,9 @@ export function condicionPendiente(filtro: FiltroDePropinas) {
   return sql`
     o.organizacion_id = ${filtro.organizacionId}
     and o.sucursal_id = ${filtro.sucursalId}::uuid
-    and o.estado = 'pagada'
+    -- QA2-010 (DP-13.5): devolver no devuelve la propina (no es venta): la de una venta
+    -- reembolsada, del todo o en parte, sigue en el cajón y sigue siendo del mesero.
+    and o.estado in ('pagada', 'parcialmente_reembolsada', 'reembolsada')
     and o.propina_liquidacion_id is null
     and coalesce(o.cerrada_en, o.created_at) >= ${filtro.inicio}
     and coalesce(o.cerrada_en, o.created_at) <= ${filtro.fin}

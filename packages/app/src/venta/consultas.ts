@@ -116,9 +116,12 @@ export interface TicketImpreso {
   readonly descuentoCentavos: string;
   readonly impuestosCentavos: string;
   readonly totalCentavos: string;
+  /** DP-13.5 (QA2-005): la propina de la venta; no es parte del total, sí de lo que se cobró. */
+  readonly propinaCentavos: string;
   readonly pagos: readonly {
     readonly metodo: string;
     readonly montoCentavos: string;
+    readonly propinaCentavos: string;
     readonly recibidoCentavos: string | null;
     readonly cambioCentavos: string;
   }[];
@@ -155,7 +158,8 @@ export const ticketDeOrden = definirComando<Transaccion, typeof entradaTicket, T
     return {
       serie: orden.serie,
       folio: orden.folio === null ? null : orden.folio.toString(),
-      emitidoEn: orden.createdAt.toISOString(),
+      // La hora del COBRO (QA2-005): la de abrir la venta podía ser de horas antes.
+      emitidoEn: (orden.cerradaEn ?? orden.createdAt).toISOString(),
       organizacionNombre: orden.organizacionNombre,
       sucursalNombre: orden.sucursalNombre,
       lineas: lineas.map((l) => ({
@@ -169,9 +173,11 @@ export const ticketDeOrden = definirComando<Transaccion, typeof entradaTicket, T
       descuentoCentavos: orden.descuentoCentavos.toString(),
       impuestosCentavos: orden.impuestosCentavos.toString(),
       totalCentavos: orden.totalCentavos.toString(),
+      propinaCentavos: pagos.reduce((suma, p) => suma + p.propinaCentavos, 0n).toString(),
       pagos: pagos.map((p) => ({
         metodo: p.metodo,
         montoCentavos: p.montoCentavos.toString(),
+        propinaCentavos: p.propinaCentavos.toString(),
         recibidoCentavos: p.recibidoCentavos === null ? null : p.recibidoCentavos.toString(),
         cambioCentavos: p.cambioCentavos.toString(),
       })),

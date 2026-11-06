@@ -631,6 +631,8 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
 | B · `agent-a32802749101128cd` (base 5440, sin navegador) | Sonnet | 13.3: 8 (plataforma), 9 (purgas) y 13.4.25 | Hecho. Candado único del documento de configuración, `mantenimiento.quitar_plataforma`, la purga de un día real (uniones, bitácora de cuentas, carritos, avisos, lista de espera). Integración completa 63/305; 53 de 53 mutantes destructivos muertos. Se cortó una vez por el límite de uso y se retomó con su archivo de progreso. Integrado aquí. |
 | Revisión · workflow `wf_7eb1b5de-d5e` (2 a la vez, cada hallazgo con su verificador) | Sonnet | Revisar 13.2 en servidor/SQL y en permisos/pantallas | 8 hallazgos confirmados de 12; los 8 arreglados con su prueba primero (ver abajo). Se cortó por el límite de uso y se retomó con `resumeFromRunId`. |
 | C · `agent-a2283480c75286caa` (base 5441, puerto 3205) | Sonnet | 13.3: 11 (id del teléfono firmado), 12 (el comensal se entera), 13 (abrir y enviar en una transacción), 15 (cuenta pedida) | Hecho. Pruebas primero; 63 de 63 mutantes; e2e nuevo `portal-dp13` 9/9. Sus 3 fallos de navegador en teléfono (`restaurante-menu-personalizado`, dos de `restaurante-portal-qr`) salen igual SIN su cambio: el ayudante busca el mapa de Configuración → Mesas y el teléfono enseña una lista (el CI corre en escritorio). Integrado aquí; un solo choque (`aspecto-permitido.json`, las dos declaraciones). |
+| QA-1 · `agent-a2a8d854a29952e9f` (copia en el 5442, app en el 3210) | Sonnet | 13.5: un día intenso en Playwright con tabletas, teléfonos y la PC a la vez | Hecho (3 h 40 min, 512 herramientas). 8 specs en `pruebas/e2e/qa/`, 48 comparaciones esperado/real; ningún alto; medios QA1-4, 5, 8 y 9 (QA1-9 resultó del guion). `docs/qa/HALLAZGOS.md` y `JORNADA-2026-11-03.md`. |
+| QA-2 · `agent-aa4b8b81f5faa575c` (la misma copia, sólo lectura; su sandbox en el 5499) | Sonnet | 13.5: que cuadre por la app y por la base; huérfanos, uniones, carritos y avisos; sondeos de seguridad | Hecho. Ningún alto; 8 medios y 3 bajos, todos arreglados con su prueba. `docs/qa/HALLAZGOS-QA2.md` y `consultas-qa2.sql` (sólo lectura). |
 
 - **Ojo, integrar con `git apply -3`:** si un archivo del parche tiene cambios sin preparar aquí,
   `-3` se niega («does not match index») y no aplica NADA. Se aplicó el resto sin `-3`
@@ -712,12 +714,54 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
 - Huella de los otros 10 contra la de antes del QA: IDÉNTICA
   (`_PRIVADO\mudanza\huellas-dp13\despues-despliegue-a.json`).
 
+### Parte B a producción (03-11)
+
+- PR #5: CI completo en verde (10 de 10). Fusión con merge `7b36dd0`, a nombre de M1gu3hb.
+- e2e antes de subir (build con la parte B): `portal-dp13` 9/9, `portal-modo-mesero` 6/6,
+  `pedido-compartido`, `restaurante-portal-qr`, `botones-del-menu-qr`, `restaurante-menu-personalizado`
+  y `portal-sin-asignacion` en escritorio. Integración completa 75/397 (una de carrera se cortó con
+  la máquina compilando y pasa sola); portal 17/112.
+- Production lista; humo sin PIN y cabeceras en vivo en verde; huella de los otros 10 IDÉNTICA
+  (`despues-despliegue-b.json`).
+
 ### Producción antes del QA (sólo lectura, 03-11)
 
-- Huella de los otros 10: `_PRIVADO\mudanza\huellas-dp13ntes-qa.json` (122 tablas, 275 conteos).
+- Huella de los otros 10: `_PRIVADO\mudanza\huellas-dp13\antes-qa.json` (122 tablas, 275 conteos).
 - Exportación de `don-poncho` (`_PRIVADO\mudanza\dp13-antes-qa`, 135 tablas, 1174 filas): 0 cuentas,
   0 cajas abiertas, 10 mesas libres, 0 carritos, 0 avisos vivos, «sólo el mesero envía», y **sin
   fila en `folios`**: el primer ticket real sale como el 1.
 - La copia del QA: clúster propio en el 5442 (`morphiqpos_qa`), importada idéntica (filas y md5), con
   PIN de prueba propios (el mapa sólo en `_PRIVADO\qa-dp13`).
 
+
+### DP-13.5 · El QA intensivo (03 al 05-11)
+
+- **La copia:** clúster propio en el 5442 (`morphiqpos_qa`), importada idéntica a producción, con
+  PIN de prueba de 4 cifras (el teclado de acceso toma 4; los de 6 de la primera preparación no se
+  podían teclear: QA1-1, descartado). La app en el 3210, compilada de `dp12`.
+- **Ronda 1:** QA-1 (la jornada) y QA-2 (las cuentas), en paralelo; ningún alto. Se arreglaron
+  todos los medios y los bajos que se reprodujeron, cada uno con su prueba escrita antes y su
+  mutación, en cinco tandas (`b1af7d9`, `724550c`, `7e18f8e`, `74918b3`, `8faf28c`; ver
+  `docs/qa/` y `docs/reports/007-qa.md`). QA1-9 resultó del guion: comparaba en minúsculas un
+  título que el CSS pinta en mayúsculas (`innerText` devuelve lo que se ve).
+- **El hallazgo que más pesa (QA1-4):** el mesero mandaba a cocina los platillos con opción
+  obligatoria sin ella. En el menú real son la quesadilla, todos los pulques, los jugos y los
+  licuados. El puente no trae `modificadores` (son tres tablas); ahora los da
+  `restaurante.opciones_de_los_platillos`, y el editor de Productos ya no abre vacío un juego que
+  al guardar se reemplaza entero.
+- **Ronda 2 (05-11):** los mismos guiones con todo arreglado: la jornada 8 de 8 y las consultas de
+  QA-2, 34 de 34 sin filas sobre un día sin purgar. Cazó dos errores de mis arreglos: el CSV de
+  cortes perdió las ventas por método (el puente las agrega en `adjuntarTotalesDeCaja`, fuera del
+  mapa) y la guarda de QA1-4 perdía el toque si las opciones no habían llegado
+  (`restaurante-concurrencia`). Los dos con su prueba.
+- **Ojo, la máquina se reinició el 04-11:** los clústeres desechables no arrancan solos. `pg_ctl
+  start` desde Git Bash con la salida a un tubo se queda colgado: lanzarlo en segundo plano con la
+  salida a `/dev/null`.
+- **Ojo, `innerText` y `text-transform`:** un título con `uppercase` sale en mayúsculas en
+  `innerText`; comparar sin distinguir mayúsculas (o con `textContent`).
+- **Ojo, la tarjeta de acceso:** el nombre es el primer párrafo y el puesto el segundo; buscar el
+  texto exacto en cualquiera casaba a «Cocina» (persona) con todos los cocineros. El ayudante busca
+  ya en el primero (`pruebas/e2e/ayudantes/sesion.ts`).
+- **Observación de las purgas:** después de una purga de mantenimiento el kardex ya no explica el
+  saldo y quedan mermas que citan una anulación purgada. Es lo que hace la purga de datos de
+  prueba (sólo plataforma); un día real no lo produce.

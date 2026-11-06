@@ -68,7 +68,7 @@ const CONSULTAS: readonly (readonly [string, Acotada, (tx: Transaccion) => Promi
   ['descuentosPorUsuario', 'sesion', (tx) => consultas.descuentosPorUsuario(tx, ORG, SESION)],
   ['alertasDeInventario', 'negocio', (tx) => consultas.alertasDeInventario(tx, ORG, AHORA)],
   ['insumosConsumidos', 'sesion', (tx) => consultas.insumosConsumidos(tx, ORG, SESION)],
-  ['salidasSinVenta', 'ventana', (tx) => consultas.salidasSinVenta(tx, ORG, VENTANA)],
+  ['salidasSinVenta', 'ventana', (tx) => consultas.salidasSinVenta(tx, ORG, ALCANCE)],
   ['propinasPorMesero', 'sesion', (tx) => extras.propinasPorMesero(tx, ORG, SESION)],
 ];
 
