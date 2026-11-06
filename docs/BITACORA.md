@@ -765,3 +765,17 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
 - **Observación de las purgas:** después de una purga de mantenimiento el kardex ya no explica el
   saldo y quedan mermas que citan una anulación purgada. Es lo que hace la purga de datos de
   prueba (sólo plataforma); un día real no lo produce.
+
+### Parte C a producción (05-11)
+
+- PR #6 (`dp-13` → `main`): CI completo en verde (26 de 26, la galería sin cambios: no hubo que
+  regenerarla). Fusión con merge `187c172` (por la API de GitHub), a nombre de M1gu3hb.
+- Production de Vercel lista (`dpl_3Esss…`, `READY`). Humo sin PIN: `/`, `/login-pos`, `/mesero`,
+  `/caja`, `/registros` 200 y 404 en una ruta que no existe; cabeceras en vivo con la puerta (6 de 6,
+  `camera=(self)` sólo en `/mesero` y `/pos`); la ruta nueva contesta 403 sin sesión.
+- **Observación:** un POST a una ruta que no existe pinta «no encontrada» con 200 (el GET da 404).
+  Es de Next, de antes; no se tocó.
+- Huella de los otros 10: IDÉNTICA contra la de antes del QA (`despues-despliegue-c.json`).
+- Exportación de `don-poncho` antes de la parte C (`_PRIVADO\mudanza\dp13-antes-c`): idéntica, tabla
+  por tabla, a la de antes del QA (el QA corrió entero sobre la copia). Después del despliegue:
+  `dp13-despues-c`, también idéntica (y `--exigir-cerrado` pasó: 0 cuentas vivas y las cajas cerradas).
