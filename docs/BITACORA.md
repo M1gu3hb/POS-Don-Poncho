@@ -987,3 +987,16 @@ punto confirmado en el código antes de repartirlo.
   «el portal del comensal», Lupita, con su única mesa en «Barra», entraba a «Interior» (llena de mesas
   sin asignar tras reiniciar la demo) y no veía la suya. Arreglo: la mesera entra a la zona de SUS
   mesas (`zonaDeSusMesas`, DP-D77), con su prueba en rojo antes y 5 mutantes, 5 muertos.
+
+### PR #10 a producción y los menores (PR2)
+
+- PR #10 (`aaa6922` + `7b073eb`): CI 10 de 10 tras arreglar la zona de la mesera; fusión `7aa5389`.
+  Huella de los otros 10 negocios y exportación de `don-poncho` antes del despliegue (la caja
+  cerrada); en producción sólo el despliegue.
+- Menores (rama `dp-14-menores`, DP-D80): los descuentos del corte (la mesa de la madre, el folio con
+  serie, la cuenta y la suma en SQL sobre todos, y el aviso «Sólo se muestran X de N…» en el papel),
+  `saneado.ts` (tapa la autorización firmada y deja el nonce), fuera `venta.autorizar_descuento` y su
+  ruta (y de los documentos del modelo), `leerMargen` sin lo anulado, y Configuración → Descuentos con
+  los topes reales (`venta.topes_de_los_puestos`). Prueba en rojo antes de cada uno; mutantes 12 de 12;
+  `verify` completo y 20 de 20 en navegador (el portal, el día completo, el cierre, usuarios,
+  descuento, ticket y concurrencia).
