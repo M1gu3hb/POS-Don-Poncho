@@ -39,6 +39,15 @@ describe('leer las cancelaciones sin tumbar el corte', () => {
     expect(registrar).not.toHaveBeenCalled();
   });
 
+  it('DP-14.6 · pasa el TOTAL del servidor, para que el corte diga «se muestran X de N»', async () => {
+    const total = { cuantas: 600, montoCentavos: '9000000', perdidaCentavos: '120000' };
+    const leidas = await leerCancelacionesSinTrabar(
+      () => Promise.resolve({ filas: [fila()], alcance: 'dia' as const, total }),
+      vi.fn(),
+    );
+    expect(leidas.total).toEqual(total);
+  });
+
   it('un corte con cero cancelaciones SÍ se pudo leer (no es lo mismo que fallar)', async () => {
     const leidas = await leerCancelacionesSinTrabar(
       () => Promise.resolve({ filas: [], alcance: 'dia' as const }),

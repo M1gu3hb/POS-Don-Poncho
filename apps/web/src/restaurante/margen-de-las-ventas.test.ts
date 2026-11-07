@@ -3,9 +3,12 @@ import { describe, expect, it } from 'vitest';
 import {
   RECETA_INCOMPLETA,
   SIN_RECETA,
+  costoDelProductoConocido,
   economiaDeLaVenta,
   economiaDelPeriodo,
   notaDeLasVentasSinReceta,
+  rotuloDeLaUtilidadNeta,
+  sePintaElMargen,
   resumenDeLasVentas,
   subtituloDelMargen,
   textoDelMargen,
@@ -287,5 +290,23 @@ describe('lo que dice el encabezado del historial', () => {
     expect(
       textoDelResumenDeVentas({ transacciones: 3, pagadas: 1, cobradoPesos: 150.5 }, dinero),
     ).toBe('3 transacciones · 1 pagada · Cobrado: $150.50');
+  });
+});
+
+describe('DP-14.6-2 · el costo que no se conoce no se pinta', () => {
+  it('un producto con importe y costo cero no tiene costo conocido', () => {
+    expect(costoDelProductoConocido({ total: 150, costo: 0 })).toBe(false);
+    expect(costoDelProductoConocido({ total: 150, costo: 60 })).toBe(true);
+    expect(costoDelProductoConocido({ total: 0, costo: 0 })).toBe(true);
+  });
+
+  it('una venta cancelada no pinta margen', () => {
+    expect(sePintaElMargen({ estado: 'cancelada' })).toBe(false);
+    expect(sePintaElMargen({ estado: 'pagada' })).toBe(true);
+  });
+
+  it('la utilidad neta dice que es parcial cuando parte de las ventas quedó fuera', () => {
+    expect(rotuloDeLaUtilidadNeta(true)).toContain('sólo ventas con costo');
+    expect(rotuloDeLaUtilidadNeta(false)).toBe('Utilidad neta est.');
   });
 });

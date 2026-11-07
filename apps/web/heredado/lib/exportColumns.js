@@ -1,5 +1,5 @@
 'use client';
-import { economiaDeLaVenta } from '~/restaurante/margen-de-las-ventas';
+import { economiaDeLaVenta, sePintaElMargen } from '~/restaurante/margen-de-las-ventas';
 /**
  * Definición de columnas estándar por sección para los exports.
  * Centralizado para mantener consistencia entre CSV/XLSX/Sheets.
@@ -14,7 +14,11 @@ const fmtNum = (v) => (v === null || v === undefined || v === '' ? 0 : Number(v)
  * servidor (`estado_costo`), aplicada por `economiaDeLaVenta`.
  */
 const fmtDeLaVenta = (v, venta) => {
+  // DP-14.6 · A quien no ve márgenes el costo ni le llega (`undefined`): el CSV lo deja en BLANCO,
+  // no en 0 (que se lee como «costó cero, ganó todo»). Y una venta cancelada no vendió nada.
+  if (!sePintaElMargen(venta ?? {})) return '';
   const economia = economiaDeLaVenta(venta ?? {});
+  if (economia.estado === 'oculto') return '';
   if (economia.estado === 'sin_receta') return 'sin receta';
   if (economia.estado === 'receta_incompleta') return 'receta incompleta';
   return fmtNum(v);

@@ -52,12 +52,18 @@ export function ProveedorDeSonidos({ children }: { readonly children: ReactNode 
     document.addEventListener('keydown', alDesbloquear, { capture: true });
     document.addEventListener('pointerdown', alDesbloquear, { capture: true, passive: true });
     document.addEventListener('touchstart', alDesbloquear, { capture: true, passive: true });
+    // DP-14.6-8 · Y al SOLTAR: iOS sólo reanuda el audio dentro de un gesto que termina (el
+    // `pointerup` / `touchend` cuentan como activación del usuario, el apoyo a veces no).
+    document.addEventListener('pointerup', alDesbloquear, { capture: true, passive: true });
+    document.addEventListener('touchend', alDesbloquear, { capture: true, passive: true });
     const soltar = observarLoQueAparece(document.body, sonar);
     return () => {
       document.removeEventListener('click', alTocar, { capture: true });
       document.removeEventListener('keydown', alDesbloquear, { capture: true });
       document.removeEventListener('pointerdown', alDesbloquear, { capture: true });
       document.removeEventListener('touchstart', alDesbloquear, { capture: true });
+      document.removeEventListener('pointerup', alDesbloquear, { capture: true });
+      document.removeEventListener('touchend', alDesbloquear, { capture: true });
       soltar();
     };
   }, []);

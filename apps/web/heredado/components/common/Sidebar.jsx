@@ -291,7 +291,9 @@ export default function Sidebar({ collapsed, onToggle }) {
       {/* User footer */}
       {posUser && (
         <div className="border-t border-sidebar-border p-3">
-          <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
+          <div
+            className={`flex items-center gap-3 ${collapsed ? 'flex-col justify-center' : ''}`}
+          >
             <div className="w-8 h-8 bg-sidebar-accent rounded-full flex items-center justify-center text-xs font-bold shrink-0">
               {posUser.nombre?.charAt(0).toUpperCase()}
             </div>
@@ -302,19 +304,18 @@ export default function Sidebar({ collapsed, onToggle }) {
               </div>
             )}
             {/* DP-13.3: el sonido de ESTE aparato, para cualquier puesto, sin entrar a Configuración. */}
-            {!collapsed && (
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileOpen(false);
-                  setSonidoAbierto(true);
-                }}
-                className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1"
-                aria-label="Sonido de este aparato"
-              >
-                <Volume2 className="w-4 h-4" />
-              </button>
-            )}
+            {/* DP-14.6-8: también con el menú colapsado (antes desaparecía). */}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                setSonidoAbierto(true);
+              }}
+              className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1"
+              aria-label="Sonido de este aparato"
+            >
+              <Volume2 className="w-4 h-4" />
+            </button>
             {!collapsed && (
               <button
                 onClick={logout}

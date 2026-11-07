@@ -165,3 +165,26 @@ describe('el carrito fantasma (DP-13.2)', () => {
     expect((await caso.mirar(TELEFONO_B))?.lineas).toEqual([]);
   });
 });
+
+describe('el carrito caducado se dice y resuelve su aviso (DP-14.6, medio 5)', () => {
+  it('una lectura que lo encuentra caducado resuelve el aviso y avisa al comensal', async () => {
+    const caso = await mesaConPortal({ envian: 'mesero' });
+    exigirOk(await caso.agregar(TELEFONO_A, caso.taco), 'agregar');
+    exigirOk(await caso.llamar(TELEFONO_A), 'llamar al mesero');
+    const vivos = () =>
+      obtenerDb()
+        .selectFrom('solicitudes_qr')
+        .select('estado')
+        .where('mesa_id', '=', caso.mesaId)
+        .where('tipo', '=', 'ordenar')
+        .where('estado', 'in', ['pendiente', 'atendida'])
+        .execute();
+    expect(await vivos()).toHaveLength(1);
+    expect((await caso.mirar(TELEFONO_B))?.caducado).toBe(false);
+
+    const despues = new Date(Date.now() + (HORAS_SIN_ACTIVIDAD * 60 + 1) * 60_000);
+    const visto = await caso.mirar(TELEFONO_B, despues);
+    expect(visto).toMatchObject({ caducado: true, lineas: [], meseroAvisado: false });
+    expect(await vivos()).toHaveLength(0);
+  });
+});

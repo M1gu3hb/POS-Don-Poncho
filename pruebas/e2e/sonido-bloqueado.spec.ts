@@ -75,7 +75,10 @@ test.describe('el sonido bloqueado en la tableta (DP-13.2)', () => {
     try {
       await duena.goto('/cocina');
       await expect(duena.getByRole('heading', { level: 1, name: /^Cocina/ })).toBeVisible();
-      const aviso = duena.getByRole('button', { name: 'Sonido apagado · toca para activar' });
+      // DP-14.6-8 · Un aviso (`status`), no un botón: tocar la pantalla desbloquea.
+      const aviso = duena
+        .getByRole('status')
+        .filter({ hasText: 'Sonido apagado · toca para activar' });
       await expect(aviso).toHaveCount(0);
 
       await comandaNueva(duena);
@@ -89,7 +92,7 @@ test.describe('el sonido bloqueado en la tableta (DP-13.2)', () => {
       expect(await dichas(duena)).toEqual([]);
 
       // Un toque: suena lo pendiente, la voz dice la comanda y el aviso se va.
-      await aviso.tap();
+      await duena.getByRole('heading', { level: 1, name: /^Cocina/ }).tap();
       await expect(duena.locator('html')).toHaveAttribute('data-ultimo-sonido', 'ping');
       await expect.poll(() => dichas(duena), { timeout: 10_000 }).toHaveLength(1);
       expect((await dichas(duena))[0]).toMatch(/mesa/i);

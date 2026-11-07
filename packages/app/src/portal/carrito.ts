@@ -9,7 +9,7 @@ import type { AmbitoPortal } from './ambito.ts';
 import type { BanderasPortal } from './banderas.ts';
 import { entradaAbrirMesa, itemDelCarrito } from './esquemas.ts';
 import { faltaMesero } from './negocio.ts';
-import { comoSeEnvia, type ComoSeEnvia } from './quien-envia.ts';
+import { PREFIJO_DEL_PEDIDO_LISTO, comoSeEnvia, type ComoSeEnvia } from './quien-envia.ts';
 
 /**
  * EL CARRITO COMPARTIDO DE LA MESA (DP-9.5).
@@ -177,6 +177,38 @@ export interface EstadoDelCarrito {
    * UNA vez (el sondeo que lo trae cuenta como visto, `vaciadoQueLeToca`); `null` el resto del tiempo.
    */
   readonly vaciadoPorElMesero: { readonly en: string } | null;
+  /**
+   * DP-14.6 · El carrito de la mesa caducó (pasaron `HORAS_SIN_ACTIVIDAD` sin enviarse): ya no se ve
+   * y el comensal lo ve dicho («Tu pedido se borró…»), no un carrito vacío sin explicación. Dura
+   * hasta que alguien agrega algo (eso borra lo viejo).
+   */
+  readonly caducado: boolean;
+}
+
+/**
+ * DP-14.6 · El aviso «Pedido listo para confirmar» de un carrito que caducó se resuelve en cuanto
+ * una lectura lo encuentra caducado: antes se quedaba en el globo del mesero hasta que alguien
+ * agregara algo (su pedido ya no existe). Sólo ese aviso, no los demás `ordenar` de la mesa.
+ */
+async function resolverElAvisoCaducado(
+  tx: Transaccion,
+  ambito: MesaDelCarrito,
+  ahora: Date,
+): Promise<void> {
+  await tx
+    .updateTable('solicitudes_qr')
+    .set((eb) => ({
+      estado: 'resuelta',
+      atendida_en: eb.fn.coalesce('atendida_en', eb.val(ahora)),
+      resuelta_en: ahora,
+      updated_at: ahora,
+    }))
+    .where('organizacion_id', '=', ambito.organizacionId)
+    .where('mesa_id', '=', ambito.mesaId)
+    .where('tipo', '=', 'ordenar')
+    .where('estado', 'in', ['pendiente', 'atendida'])
+    .where('notas', 'like', `${PREFIJO_DEL_PEDIDO_LISTO}%`)
+    .execute();
 }
 
 /** `2.5000` → `2.5`, `3.0000` → `3`: como la escribió el comensal. */
@@ -331,7 +363,9 @@ export async function estadoDelCarrito(
     .orderBy('l.id')
     .execute();
   // DP-13.2: lo caducado ya no se ve; se borra con lo siguiente que se agregue.
-  const lineas = carritoCaducado(ultimaDe(todas), desde, ahora) ? [] : todas;
+  const caducado = carritoCaducado(ultimaDe(todas), desde, ahora);
+  const lineas = caducado ? [] : todas;
+  if (caducado) await resolverElAvisoCaducado(tx, ambito, ahora);
 
   const umbral = new Date(ahora.getTime() - SEGUNDOS_CONECTADO * 1000);
   const desdeConectados = desde !== null && desde > umbral ? desde : umbral;
@@ -414,5 +448,6 @@ export async function estadoDelCarrito(
     meseroAvisado: aviso !== undefined,
     cuentaPedida: pedida !== undefined,
     vaciadoPorElMesero: vaciado,
+    caducado,
   };
 }

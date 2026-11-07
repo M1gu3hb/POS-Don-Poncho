@@ -11,6 +11,7 @@ import { diasHastaLaVisita, sugerirPedido } from '@morphiqpos/domain/inventario'
 import { z } from 'zod';
 
 import { alcanceDelCorte } from './alcance-del-corte.ts';
+import { totalDeLasCancelacionesDelCorte, type TotalDeCancelaciones } from './cancelaciones.ts';
 import { sinCostosSiNoLosVe } from './sin-costos.ts';
 import { definirComando } from '../../definicion.ts';
 import * as consultas from './consultas.ts';
@@ -101,6 +102,11 @@ export interface HojaDelCorte {
   readonly gastos: readonly consultas.GastoDelCorte[];
   readonly cancelaciones: readonly consultas.Cancelacion[];
   /**
+   * DP-14.6 · TODAS las cancelaciones del corte, contadas y sumadas en SQL: la lista de arriba tiene
+   * tope de filas y, si no cupieron, el corte lo dice («se muestran X de N») en vez de cortar callado.
+   */
+  readonly cancelacionesTotal: TotalDeCancelaciones;
+  /**
    * Lo devuelto EN ESTA CAJA, de ventas de hoy o de otro día: resta de la venta del día en
    * que se hace. El costo de lo que regresó al almacén sólo para quien ve costos.
    */
@@ -164,17 +170,25 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
           consultas.gastosDelCorte(tx, organizacionId, id),
         ]),
       );
-    const [cancelaciones, descuentosPorUsuario, alertas, insumos, salidas, devoluciones] =
-      await ctx.paso('leer_control', () =>
-        Promise.all([
-          consultas.cancelacionesDelCorte(tx, organizacionId, alcance),
-          consultas.descuentosPorUsuario(tx, organizacionId, id),
-          consultas.alertasDeInventario(tx, organizacionId, alcance.hasta),
-          consultas.insumosConsumidos(tx, organizacionId, id),
-          consultas.salidasSinVenta(tx, organizacionId, alcance),
-          devolucionesDelCorte(tx, organizacionId, id),
-        ]),
-      );
+    const [
+      cancelaciones,
+      cancelacionesTotal,
+      descuentosPorUsuario,
+      alertas,
+      insumos,
+      salidas,
+      devoluciones,
+    ] = await ctx.paso('leer_control', () =>
+      Promise.all([
+        consultas.cancelacionesDelCorte(tx, organizacionId, alcance),
+        totalDeLasCancelacionesDelCorte(tx, organizacionId, alcance),
+        consultas.descuentosPorUsuario(tx, organizacionId, id),
+        consultas.alertasDeInventario(tx, organizacionId, alcance.hasta),
+        consultas.insumosConsumidos(tx, organizacionId, id),
+        consultas.salidasSinVenta(tx, organizacionId, alcance),
+        devolucionesDelCorte(tx, organizacionId, id),
+      ]),
+    );
     const delGiro = await ctx.paso('leer_extras', () =>
       extrasDe(tx, organizacionId, plantilla, ventana),
     );
@@ -206,6 +220,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
         porPersona,
         gastos,
         cancelaciones,
+        cancelacionesTotal,
         devoluciones: devoluciones.map((d) => ({
           ...d,
           costoDevueltoCentavos: verCostos ? d.costoDevueltoCentavos : null,

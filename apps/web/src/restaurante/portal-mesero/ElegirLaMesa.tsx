@@ -3,7 +3,7 @@
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Vacio } from '@morphiqpos/ui/sistema';
 
-import { mesasParaElegir, type MesaParaElegir } from './mesas-para-elegir';
+import { mesasParaElegir, zonaYEstado, type MesaParaElegir } from './mesas-para-elegir';
 
 /**
  * SIN CÁMARA, LA MESA DE UNA LISTA (DP-13.2). El respaldo del escáner era un campo numérico de
@@ -29,12 +29,22 @@ export function ElegirLaMesa({
           <Button
             key={m.id}
             variant="outline"
-            className="h-[calc(var(--altura-control)*1.25)] text-base font-bold"
+            className="h-auto min-h-[calc(var(--altura-control)*1.25)] flex-col gap-0 py-(--espacio-2) text-base font-bold"
+            data-mesa-para-elegir={m.id}
+            // El nombre accesible sigue siendo «Mesa N»; la zona y el estado se leen como descripción.
+            aria-label={`Mesa ${String(m.numero)}`}
+            aria-describedby={`detalle-de-la-mesa-${m.id}`}
             onClick={() => {
               alElegir(m.id);
             }}
           >
             Mesa {m.numero}
+            <span
+              id={`detalle-de-la-mesa-${m.id}`}
+              className="text-xs font-normal text-texto-sutil"
+            >
+              {zonaYEstado(m)}
+            </span>
           </Button>
         ))}
       </div>

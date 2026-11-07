@@ -62,6 +62,7 @@ export async function precargar(nombre: NombreDeReceta): Promise<void> {
 }
 
 /** Desbloquea el audio en el gesto mismo (ver `prepararAudio`). */
-export function desbloquearAudio(): Promise<void> {
+/** `true` si el contexto quedó en `running`: sólo entonces el sonido pendiente se puede gastar. */
+export function desbloquearAudio(): Promise<boolean> {
   return prepararAudio();
 }

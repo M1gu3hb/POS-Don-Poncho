@@ -94,6 +94,28 @@ function partir(filas: readonly Cancelacion[]): {
   return { perdidas, sinCosto };
 }
 
+const MXN = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+const aPesos = (centavosDeDinero: number): string => MXN.format(centavosDeDinero / 100);
+
+/** Lo que el servidor contó en SQL: todas las cancelaciones del corte, quepan o no en la lista. */
+export interface TotalDeLasCancelaciones {
+  readonly cuantas: number;
+  readonly montoCentavos: string;
+  readonly perdidaCentavos: string;
+}
+
+/**
+ * DP-14.6 · La lista del servidor tiene tope de filas. Si hay más cancelaciones que las que
+ * llegaron, las tablas lo dicen con el total completo (contado en SQL) en vez de cortar callado.
+ */
+export function avisoDeLoCortado(
+  filas: readonly Cancelacion[],
+  total: TotalDeLasCancelaciones | undefined,
+): string {
+  if (total === undefined || total.cuantas <= filas.length) return '';
+  return ` OJO: sólo se muestran ${String(filas.length)} de ${String(total.cuantas)} cancelaciones; el total del corte es ${aPesos(centavos(total.montoCentavos))} (${aPesos(centavos(total.perdidaCentavos))} de pérdida).`;
+}
+
 const ALCANCE: Readonly<Record<'caja' | 'dia', string>> = {
   caja: 'Sólo las de las cuentas de esta caja; las demás salen en el Cierre del día.',
   dia: 'Cierre del día: todas las de la sucursal desde el cierre anterior, de todas las cajas y de las mesas sin caja.',
@@ -111,9 +133,11 @@ export const TITULO_DE_PERDIDAS = 'Pérdidas por cancelación · ya preparado o 
 export function seccionesDeCancelaciones(
   filas: readonly Cancelacion[],
   alcance?: 'caja' | 'dia',
+  total?: TotalDeLasCancelaciones,
 ): readonly Seccion[] {
   const { perdidas, sinCosto } = partir(filas);
-  const deQue = alcance === undefined ? '' : ` ${ALCANCE[alcance]}`;
+  const deQue =
+    (alcance === undefined ? '' : ` ${ALCANCE[alcance]}`) + avisoDeLoCortado(filas, total);
   return [
     // La pérdida va primero: es lo que el dueño tiene que ver aunque no lea nada más.
     ...tablaSiHay({
@@ -137,4 +161,8 @@ export function seccionesDeCancelaciones(
 }
 
 export const cancelaciones = (hoja: HojaDelServidor): readonly Seccion[] =>
-  seccionesDeCancelaciones(hoja.cancelaciones, hoja.alcanceDeCancelaciones);
+  seccionesDeCancelaciones(
+    hoja.cancelaciones,
+    hoja.alcanceDeCancelaciones,
+    hoja.cancelacionesTotal,
+  );

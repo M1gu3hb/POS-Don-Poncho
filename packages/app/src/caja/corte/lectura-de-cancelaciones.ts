@@ -6,7 +6,13 @@ import { z } from 'zod';
 
 import { definirComando } from '../../definicion.ts';
 import { alcanceDelCorte } from './alcance-del-corte.ts';
-import { cancelacionesDelCorte, leerCancelaciones, type Cancelacion } from './cancelaciones.ts';
+import {
+  cancelacionesDelCorte,
+  leerCancelaciones,
+  totalDeLasCancelacionesDelCorte,
+  type Cancelacion,
+  type TotalDeCancelaciones,
+} from './cancelaciones.ts';
 
 /**
  * LAS DOS LECTURAS DE CANCELACIONES que el navegador pide sin armar la hoja entera (DP-12.4).
@@ -33,6 +39,8 @@ export interface CancelacionesLeidas {
 /** DP-13.2 · El corte de una caja dice de qué habla: sus cuentas, o el día (`alcance-del-corte.ts`). */
 export interface CancelacionesDelCorte extends CancelacionesLeidas {
   readonly alcance: 'caja' | 'dia';
+  /** DP-14.6 · TODAS las del corte, contadas en SQL: la lista tiene tope de filas. */
+  readonly total: TotalDeCancelaciones;
 }
 
 export const entradaCancelacionesDelCorte = z.object({ sesionCajaId: z.uuid() });
@@ -62,7 +70,10 @@ export const cancelacionesDelCorteComando = definirComando<
     const cancelaciones = await ctx.paso('leer_cancelaciones', () =>
       cancelacionesDelCorte(ctx.tx, organizacionId, alcance),
     );
-    return { cancelaciones, alcance: alcance.cierraElDia ? 'dia' : 'caja' };
+    const total = await ctx.paso('totalizar', () =>
+      totalDeLasCancelacionesDelCorte(ctx.tx, organizacionId, alcance),
+    );
+    return { cancelaciones, alcance: alcance.cierraElDia ? 'dia' : 'caja', total };
   },
 });
 

@@ -19,7 +19,7 @@ const PROVEEDOR = 'src/sonidos/ProveedorDeSonidos.tsx';
 const AVISO = 'src/sonidos/AvisoDeSonidoBloqueado.tsx';
 
 describe('el proveedor desbloquea con cualquier gesto', () => {
-  it.each(['pointerdown', 'touchstart', 'keydown', 'click'])(
+  it.each(['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'click'])(
     'escucha «%s» en la fase de captura, y lo suelta al desmontarse',
     (evento) => {
       const codigo = leer(PROVEEDOR);
@@ -36,11 +36,22 @@ describe('el proveedor desbloquea con cualquier gesto', () => {
 });
 
 describe('el aviso', () => {
-  it('dice «Sonido apagado · toca para activar» sólo mientras el gestor lo diga, y tocarlo desbloquea', () => {
+  it('dice «Sonido apagado · toca para activar» sólo mientras el gestor lo diga', () => {
     const codigo = leer(AVISO);
     expect(codigo).toMatch(/Sonido apagado · toca para activar/);
     expect(codigo).toMatch(/useSyncExternalStore\(suscribirAlBloqueo, sonidoBloqueado/);
-    expect(codigo).toMatch(/if \(!bloqueado\) return null;/);
-    expect(codigo).toMatch(/onClick=\{\(\) => \{\s*desbloquearSonidos\(\);/);
+    // La región viva siempre está; el texto entra sólo mientras el gestor diga que hay bloqueo.
+    expect(codigo).toMatch(/\{bloqueado \? \(/);
+  });
+
+  it('DP-14.6-8 · no se queda con el toque: lo de abajo sigue a la mano (el proveedor desbloquea con cualquier toque)', () => {
+    // Se queda hasta que algo suene, y arriba: si fuera un botón, taparía para siempre el botón del
+    // encabezado que le tocara debajo en un aparato donde el audio no llega a correr.
+    const codigo = leer(AVISO);
+    // En el ELEMENTO (el comentario del archivo también lo nombra).
+    expect(codigo).toMatch(/<div\s+role="status"\s+aria-live="polite"/);
+    expect(codigo).not.toMatch(/pointer-events-auto/);
+    expect(codigo).not.toMatch(/<Button\b/);
+    expect(codigo).not.toMatch(/onClick=/);
   });
 });

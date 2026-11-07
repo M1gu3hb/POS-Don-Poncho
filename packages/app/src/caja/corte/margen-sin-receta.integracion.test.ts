@@ -102,7 +102,7 @@ describe('el corte saca el margen sólo de lo que tiene costo completo', () => {
     });
     const agua = hoja.productos.find((p) => p.nombre === 'Agua de jamaica');
     const taco = hoja.productos.find((p) => p.nombre === 'Taco de pastor');
-    expect(agua).toMatchObject({ lineas: 2, lineasSinCosto: 2 });
+    expect(agua).toMatchObject({ lineas: 2, lineasSinCosto: 2, lineasSinReceta: 2 });
     expect(taco).toMatchObject({ lineasSinCosto: 0 });
   });
 });

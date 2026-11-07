@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const reproducir = vi.fn<(receta: string, ganancia: number) => Promise<void>>();
 const precargar = vi.fn<(receta: string) => Promise<void>>();
-const desbloquearAudio = vi.fn<() => Promise<void>>();
+const desbloquearAudio = vi.fn<() => Promise<boolean>>();
 
 vi.mock('./reproductor', () => ({
   reproducir: (receta: string, ganancia: number) => reproducir(receta, ganancia),
@@ -15,11 +15,17 @@ vi.mock('./reproductor', () => ({
   desbloquearAudio: () => desbloquearAudio(),
 }));
 
+/** Deja correr las promesas del desbloqueo (el audio corre cuando el contexto contesta). */
+const vaciar = async (): Promise<void> => {
+  for (let i = 0; i < 6; i += 1) await Promise.resolve();
+};
+
 async function gestorNuevo() {
   vi.resetModules();
   const gestor = await import('./gestor');
   gestor.configurarSonidos({ ganancia: 0.5, tecla: 'nib', silencioDelPortal: false });
   gestor.desbloquearSonidos();
+  await vaciar();
   return gestor;
 }
 
@@ -31,7 +37,7 @@ describe('el gestor de sonido', () => {
     precargar.mockReset();
     precargar.mockResolvedValue(undefined);
     desbloquearAudio.mockReset();
-    desbloquearAudio.mockResolvedValue(undefined);
+    desbloquearAudio.mockResolvedValue(true);
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -164,6 +170,7 @@ describe('el gestor de sonido', () => {
     const { desbloquearSonidos } = await gestorNuevo();
     desbloquearSonidos();
     desbloquearSonidos();
+    await vaciar();
     expect(desbloquearAudio).toHaveBeenCalledTimes(3);
     expect(precargar.mock.calls.map(([receta]) => receta).sort()).toEqual([
       'arrive',
@@ -182,6 +189,7 @@ describe('el gestor de sonido', () => {
     const otro = await import('./gestor');
     otro.configurarSonidos({ ganancia: 1, tecla: 'nib', silencioDelPortal: true });
     otro.desbloquearSonidos();
+    await vaciar();
     expect(precargar).not.toHaveBeenCalled();
     expect(desbloquearAudio).toHaveBeenCalledTimes(2);
   });
@@ -223,6 +231,7 @@ describe('el gestor de sonido', () => {
     sonar('comandaNueva');
     expect(reproducir).not.toHaveBeenCalled();
     desbloquearSonidos();
+    await vaciar();
     expect(reproducir).toHaveBeenCalledExactlyOnceWith('ping', 1);
     vi.advanceTimersByTime(5_000);
     sonar('cobro');

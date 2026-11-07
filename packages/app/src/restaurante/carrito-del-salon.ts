@@ -210,6 +210,21 @@ async function moverLasSolicitudes(
   hacia: string,
   ahora: Date,
 ): Promise<void> {
+  const delCarrito = `${PREFIJO_DEL_PEDIDO_LISTO}%`;
+  // DP-14.6 · Si la principal ya tenía una `ordenar` pendiente que NO es el aviso del carrito (un
+  // «Quiero ordenar» del botón) y la que llega SÍ lo es, el aviso del carrito no se da por
+  // resuelto: la fila de la principal pasa a ser el aviso del carrito (una sola por mesa y tipo).
+  await sql`
+    update solicitudes_qr p
+       set notas = s.notas, updated_at = ${ahora}
+      from solicitudes_qr s
+     where p.organizacion_id = ${organizacionId} and p.mesa_id = ${hacia}
+       and p.estado = 'pendiente' and p.tipo = 'ordenar'
+       and coalesce(p.notas, '') not like ${delCarrito}
+       and s.organizacion_id = ${organizacionId} and s.mesa_id = ${desde}
+       and s.estado = 'pendiente' and s.tipo = 'ordenar'
+       and coalesce(s.notas, '') like ${delCarrito}
+  `.execute(tx);
   await sql`
     update solicitudes_qr s
        set estado = 'resuelta', resuelta_en = ${ahora}
@@ -221,15 +236,17 @@ async function moverLasSolicitudes(
           where p.organizacion_id = s.organizacion_id
             and p.mesa_id = ${hacia}
             and p.estado = 'pendiente'
-            and p.tipo = s.tipo
-       )
+            and p.tipo = s.tipo)
   `.execute(tx);
+  // Las pendientes pasan a la principal, y también las ATENDIDAS: un «Pedido listo» que el mesero
+  // ya atendió sigue esperando el envío, y en la mesa absorbida nadie lo ve. El índice único sólo
+  // cubre las pendientes.
   await tx
     .updateTable('solicitudes_qr')
     .set({ mesa_id: hacia })
     .where('organizacion_id', '=', organizacionId)
     .where('mesa_id', '=', desde)
-    .where('estado', '=', 'pendiente')
+    .where('estado', 'in', ['pendiente', 'atendida'])
     .execute();
 }
 

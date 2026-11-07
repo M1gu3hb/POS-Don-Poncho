@@ -21,6 +21,7 @@ import {
   resolverElAvisoDelPedido,
   resolverElAvisoSiQuedoVacio,
 } from '../restaurante/carrito-del-salon.ts';
+import { elegirLasOpciones, gruposDeLosPlatillos } from '../restaurante/opciones-de-la-linea.ts';
 import { apartarLoQueYaNoSePide } from './carrito-disponibilidad.ts';
 import { definirComandoPublico, type ContextoPortal } from './definicion-publica.ts';
 import { abrirLaMesaDelPortal, exigirPedidosDesdeElTelefono } from './mesa.ts';
@@ -118,6 +119,17 @@ export const agregarAlCarrito = definirComandoPublico<
     // La cantidad se valora aquí con las reglas del envío: media pieza no entra al carrito (si
     // entrara, trabaría el envío de toda la mesa). Lanza con el motivo exacto.
     valorarParaPedido(producto.paraVender, entrada.item.cantidad);
+    // DP-14.6 · Y su opción obligatoria (en la nota, como la pliega el portal): sin ella no entra,
+    // porque al enviar el servidor la exige (DP-D67). Lanza con el grupo que falta.
+    const grupos = await ctx.paso('opciones_del_platillo', () =>
+      gruposDeLosPlatillos(ctx.tx, ctx.ambito.organizacionId, [entrada.item.productoId]),
+    );
+    elegirLasOpciones(
+      producto.nombre,
+      grupos.get(entrada.item.productoId) ?? [],
+      undefined,
+      entrada.item.notas,
+    );
 
     // Revisión de DP-13: el candado del carrito, como llamar y enviar: dos teléfonos que agregan a
     // la vez no se cruzan con la caducidad ni con el aviso.

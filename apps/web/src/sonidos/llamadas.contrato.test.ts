@@ -208,9 +208,9 @@ describe('las llamadas a `sonar` de cada pantalla', () => {
     expect(mesero.match(/sonar\('agregar'\);\n\s*setCarrito\(/g)?.length).toBe(3);
   });
 
-  it('agregar suena en los dos caminos del POS (el producto y el de cantidad variable)', () => {
+  it('agregar suena en los tres caminos del POS (el producto, el de cantidad variable y el de opciones)', () => {
     const pos = fuente('heredado/pages/POS.jsx');
-    expect(pos.match(/await refrescarCarrito\(\);\s*sonar\('agregar'\);/g)?.length).toBe(2);
+    expect(pos.match(/await refrescarCarrito\(\);\s*sonar\('agregar'\);/g)?.length).toBe(3);
   });
 
   it('UN SOLO SISTEMA DE SONIDO (DP-12.6): el viejo («Activar sonidos») ya no existe', () => {

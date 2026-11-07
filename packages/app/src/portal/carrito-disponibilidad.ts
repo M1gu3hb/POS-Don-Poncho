@@ -2,6 +2,11 @@ import 'server-only';
 
 import { ErrorDominio } from '@morphiqpos/contracts';
 
+import {
+  elegirLasOpciones,
+  gruposDeLosPlatillos,
+  type GrupoDeOpciones,
+} from '../restaurante/opciones-de-la-linea.ts';
 import type { EstadoDelCarrito } from './carrito.ts';
 import type { ContextoPortal } from './definicion-publica.ts';
 import { cargarProductosDelMenu, valorarParaPedido, type ProductoDelMenu } from './productos.ts';
@@ -13,6 +18,10 @@ import { cargarProductosDelMenu, valorarParaPedido, type ProductoDelMenu } from 
  * puede ocultarlo, desactivarlo o cambiarle la unidad o la cantidad mínima. Antes, esa línea hacía
  * que `pedirEnLaMesa` lanzara y el envío se trababa para TODA la mesa, con una sola salida: que el
  * teléfono que la agregó la quitara. Aquí se aparta: el pedido sale sin ella y se dice.
+ *
+ * DP-14.6 · También la que no trae su opción obligatoria (de un teléfono con la versión anterior, o
+ * de antes de que el platillo la pidiera): el servidor la exige al enviar (DP-D67) y, sin apartarla,
+ * trabaría a toda la mesa con `OPCION_OBLIGATORIA`. Al agregar ya no entra (`carrito-comandos.ts`).
  */
 
 export interface LineaPendiente {
@@ -29,6 +38,17 @@ export interface LoQueSePide {
   readonly nombres: readonly string[];
   /** El menú ya leído: el envío lo reutiliza en vez de leerlo otra vez (y de verlo cambiar). */
   readonly menu: ReadonlyMap<string, ProductoDelMenu>;
+}
+
+/** ¿La línea trae (en su nota, como la pliega el portal) lo que sus grupos piden? */
+export function cumpleSusOpciones(grupos: readonly GrupoDeOpciones[], notas: string): boolean {
+  try {
+    elegirLasOpciones('', grupos, undefined, notas);
+    return true;
+  } catch (error: unknown) {
+    if (error instanceof ErrorDominio) return false;
+    throw error;
+  }
 }
 
 /**
@@ -59,7 +79,15 @@ export async function apartarLoQueYaNoSePide(
       lineas.map((l) => l.producto_id),
     ),
   );
-  const quedan = lineas.filter((l) => sePuedePedir(menu.get(l.producto_id), l.cantidad));
+  const sePiden = lineas.filter((l) => sePuedePedir(menu.get(l.producto_id), l.cantidad));
+  const grupos = await ctx.paso('opciones_del_carrito', () =>
+    gruposDeLosPlatillos(
+      ctx.tx,
+      ctx.ambito.organizacionId,
+      sePiden.map((l) => l.producto_id),
+    ),
+  );
+  const quedan = sePiden.filter((l) => cumpleSusOpciones(grupos.get(l.producto_id) ?? [], l.notas));
   const fuera = lineas.filter((l) => !quedan.includes(l));
   // El nombre sale del estado del carrito, que lo lee aunque el producto ya esté oculto.
   const nombreDe = new Map(estado.lineas.map((l) => [l.id, l.nombre]));

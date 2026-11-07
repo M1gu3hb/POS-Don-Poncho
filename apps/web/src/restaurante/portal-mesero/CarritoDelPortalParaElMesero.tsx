@@ -18,6 +18,8 @@ import { Send, Smartphone, Trash2 } from 'lucide-react';
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
+import { pideElPinDelSupervisor } from '~/restaurante/permiso-al-cancelar';
+import { PinDeSupervisor, type Autorizada } from '~/venta/PinDeSupervisor';
 import type { LineaDelCarrito } from '~/portal/carrito-compartido/carrito-de-la-mesa';
 import { sonar } from '~/sonidos/gestor';
 
@@ -69,6 +71,9 @@ export function CarritoDelPortalParaElMesero({
   const [personas, setPersonas] = useState('2');
   const [borrando, setBorrando] = useState(false);
   const [reabriendo, setReabriendo] = useState(false);
+  // DP-14.6 · Otro mesero necesita el PIN de un gerente para reabrir: lo dice el servidor.
+  const [pidePin, setPidePin] = useState(false);
+  const [autorizada, setAutorizada] = useState<Autorizada | null>(null);
 
   if (cargando) return compacto ? null : <EsqueletoDeLista filas={3} />;
   if (datos === null) {
@@ -94,7 +99,7 @@ export function CarritoDelPortalParaElMesero({
 
   const enviar = (reabrirCuenta = false) =>
     hacer('enviar', async () => {
-      const r = await enviarACocina(mesa.id, '', reabrirCuenta);
+      const r = await enviarACocina(mesa.id, '', reabrirCuenta, autorizada?.token);
       if (r.enviado) {
         sonar('enviarACocina');
         toast.success(`Pedido de la mesa ${String(mesa.numero)} enviado a cocina.`);
@@ -103,6 +108,34 @@ export function CarritoDelPortalParaElMesero({
         toast.info('Ya no había nada que enviar: el pedido de la mesa está vacío.');
       }
     });
+
+  /** Reabrir y enviar; si el servidor pide el PIN de un gerente, el mismo diálogo lo pide. */
+  const reabrirYEnviar = async () => {
+    setOcupado('enviar');
+    try {
+      const r = await enviarACocina(mesa.id, '', true, autorizada?.token);
+      setReabriendo(false);
+      setPidePin(false);
+      setAutorizada(null);
+      if (r.enviado) {
+        sonar('enviarACocina');
+        toast.success(`Pedido de la mesa ${String(mesa.numero)} enviado a cocina.`);
+        alEnviar?.();
+      } else {
+        toast.info('Ya no había nada que enviar: el pedido de la mesa está vacío.');
+      }
+      await releer();
+    } catch (fallo: unknown) {
+      if (pideElPinDelSupervisor(fallo)) {
+        setPidePin(true);
+        setAutorizada(null);
+      } else {
+        toast.error(mensajeDe(fallo, 'No se pudo. Intenta de nuevo.'));
+      }
+    } finally {
+      setOcupado(null);
+    }
+  };
 
   const abrir = () => {
     const n = Number(personas);
@@ -212,7 +245,16 @@ export function CarritoDelPortalParaElMesero({
         </footer>
       )}
 
-      <AlertDialog open={reabriendo} onOpenChange={setReabriendo}>
+      <AlertDialog
+        open={reabriendo}
+        onOpenChange={(abierto) => {
+          setReabriendo(abierto);
+          if (!abierto) {
+            setPidePin(false);
+            setAutorizada(null);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Reabrir la cuenta de la mesa {mesa.numero}?</AlertDialogTitle>
@@ -221,15 +263,33 @@ export function CarritoDelPortalParaElMesero({
               y la cuenta queda abierta otra vez; hay que volver a pedirla cuando terminen.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {!pidePin ? null : autorizada === null ? (
+            <div className="flex flex-col gap-(--espacio-2)">
+              <Aviso tono="atencion" titulo="Esa mesa la atiende otro mesero.">
+                Reabrir su cuenta lo autoriza un gerente o el dueño con su PIN.
+              </Aviso>
+              {mesa.ordenId === null ? null : (
+                <PinDeSupervisor
+                  ordenId={mesa.ordenId}
+                  para="cancelacion"
+                  idDelCampo="reabrir-cuenta-pin"
+                  alAutorizar={setAutorizada}
+                />
+              )}
+            </div>
+          ) : (
+            <Aviso tono="exito" titulo={`Autorizó ${autorizada.nombre}.`} />
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
+            <Button
+              disabled={ocupado !== null || (pidePin && autorizada === null)}
               onClick={() => {
-                void enviar(true);
+                void reabrirYEnviar();
               }}
             >
               Reabrir y enviar
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

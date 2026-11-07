@@ -44,6 +44,8 @@ export interface EstadoDelCarrito {
   readonly cuentaPedida?: boolean;
   /** DP-13.3 · El mesero vació el pedido mientras este teléfono estaba conectado. Una vez. */
   readonly vaciadoPorElMesero?: { readonly en: string } | null;
+  /** DP-14.6 · El carrito caducó (3 h sin enviarse): ya no se ve y se le dice. */
+  readonly caducado?: boolean;
   /** DP-13.3 · El id que el servidor le emitió a este teléfono: se guarda y se manda de ahí en adelante. */
   readonly dispositivoEmitido?: string;
 }
@@ -56,6 +58,8 @@ export type ComoSeEnvia =
 export const CUENTA_PEDIDA = 'Tu cuenta ya se pidió: tu mesero lo revisa.';
 /** DP-13.3 · Lo que se le dice cuando el mesero vació el pedido de su mesa. */
 export const AVISO_DEL_VACIADO = 'Tu mesero vació el pedido';
+/** DP-14.6 · Lo que se le dice cuando su carrito caducó sin enviarse. */
+export const AVISO_DEL_CADUCADO = 'Tu pedido se borró porque pasaron 3 horas sin enviarse';
 
 /**
  * ¿Hay un vaciado nuevo que decir? `visto` es el último que ya se dijo en esta pantalla. El servidor

@@ -98,8 +98,10 @@ export async function resolverElTelefono(peticion: {
   const { token, ip, pimienta, dispositivo, contexto } = peticion;
   if (telefonoFirmado(pimienta, dispositivo)) return { ok: true, dispositivo, emitido: false };
   for (const [accion, clave] of [
-    ['telefono_nuevo_mesa', token],
     ['telefono_nuevo_ip', ip],
+    // DP-14.6 · Antes que el de la mesa: lo que él niega no gasta el cupo de los demás.
+    ['telefono_nuevo_mesa_ip', `${token}:${ip}`],
+    ['telefono_nuevo_mesa', token],
   ] as const) {
     const permiso = await permitirPortal(accion, clave, pimienta, contexto);
     if (!permiso.ok) return { ok: false, esperaSegundos: permiso.esperaSegundos };

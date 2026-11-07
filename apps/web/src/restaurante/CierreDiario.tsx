@@ -88,7 +88,7 @@ import {
   type MesaQueBloquea,
 } from './cuentas-que-bloquean.ts';
 import { IconoDelTono, TINTE_DEL_TONO, semaforoDe } from './semaforo-del-arqueo';
-import { SIN_RECETA } from './margen-de-las-ventas.ts';
+import { SIN_RECETA, rotuloDeLaUtilidadNeta } from './margen-de-las-ventas.ts';
 import { resumirDia, type Canal, type GastoDelDia, type VentaDelDia } from './resumen-del-dia.ts';
 
 export { semaforoDe, type Semaforo, type TonoDelArqueo } from './semaforo-del-arqueo';
@@ -656,7 +656,7 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
               <Dinero centavos={resumen.gastos} tamano="lg" />
             </Indicador>
             {resumen.margenVisible ? (
-              <Indicador rotulo="Utilidad neta est.">
+              <Indicador rotulo={rotuloDeLaUtilidadNeta(resumen.fueraDelMargen !== '')}>
                 <DineroOSinReceta centavos={resumen.neta} />
               </Indicador>
             ) : null}

@@ -162,6 +162,8 @@ export default function CorteAutoDownloader({ corte, onDone }) {
             cancelacionesNoLeidas: cancelacionesLeidas.noSePudieronLeer,
             // DP-13.2 · Las de las cuentas de esta caja, o (Cierre del día) todas las de la sucursal.
             alcanceDeCancelaciones: cancelacionesLeidas.alcance,
+            // DP-14.6 · Todas las del corte: si la lista viene cortada, el corte lo dice.
+            totalDeCancelaciones: cancelacionesLeidas.total ?? null,
             descuentos: descuentosLeidos,
             alertas,
           });
@@ -261,6 +263,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
               cancelaciones={data.cancelaciones}
               cancelacionesNoLeidas={data.cancelacionesNoLeidas}
               alcanceDeCancelaciones={data.alcanceDeCancelaciones}
+              totalDeCancelaciones={data.totalDeCancelaciones}
               descuentos={data.descuentos}
               alertas={data.alertas}
               config={config}

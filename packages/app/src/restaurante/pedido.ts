@@ -16,6 +16,7 @@ import { entradaEnviarPedido } from './esquemas.ts';
 import { insertarLineas, prepararLinea, type LineaPreparada } from './lineas.ts';
 import { mesaTrasComanda, type EstadoMesa } from './transiciones.ts';
 import { sellarTransicionDeMesa } from './sala-escrituras.ts';
+import { prepararLasOpciones } from './opciones-de-la-linea.ts';
 
 /**
  * `restaurante.enviar_pedido` — E6-4, el comando más importante del módulo.
@@ -115,9 +116,24 @@ export async function comandarLasLineas(
 
   // El precio sale del catálogo DENTRO de esta transacción. El endpoint no
   // recibe importes: si los recibiera, quien llama elegiría lo que paga.
-  const preparadas = await ctx.paso('valorar_lineas', () =>
+  const valoradas = await ctx.paso('valorar_lineas', () =>
     prepararTodas(ctx.tx, organizacionId, entrada),
   );
+  // DP-14.6-3 · El platillo con un grupo obligatorio sin su elección no se escribe, venga de donde
+  // venga el pedido (mesero, carrito del mesero o portal).
+  const elegidas = await ctx.paso('opciones', () =>
+    prepararLasOpciones(
+      ctx.tx,
+      organizacionId,
+      valoradas.map((l, i) => ({
+        productoId: l.producto.id,
+        productoNombre: l.producto.nombre,
+        notas: l.notas,
+        opciones: entrada.lineas[i]?.opciones,
+      })),
+    ),
+  );
+  const preparadas = valoradas.map((l, i) => ({ ...l, opciones: elegidas[i] ?? [] }));
 
   await ctx.paso('escribir_lineas', () =>
     insertarLineas(ctx.tx, organizacionId, entrada.ordenId, preparadas),

@@ -8,6 +8,11 @@ import { valorarLinea, type LineaValorada } from '../venta/valorar.ts';
 import type { ProductoDeComanda } from './catalogo-comanda.ts';
 import type { EstacionResuelta } from './estaciones.ts';
 import type { entradaEnviarPedido } from './esquemas.ts';
+import {
+  guardarLosModificadores,
+  instantaneaDeLasOpciones,
+  type OpcionElegida,
+} from './opciones-de-la-linea.ts';
 
 /**
  * De lo que el mesero capturó a la línea de venta con sus instantáneas.
@@ -49,6 +54,8 @@ export interface LineaPreparada {
   /** F-323 · `null` cuando el plato va inmediato y sin tiempo declarado. */
   readonly tiempoServicio: number | null;
   readonly marchaEstado: 'inmediata' | 'retenida';
+  /** DP-14.6-3 · Las opciones elegidas (ya validadas). Sin ellas, la línea no trae. */
+  readonly opciones?: readonly OpcionElegida[];
 }
 
 /**
@@ -116,6 +123,11 @@ export async function insertarLineas(
     .insertInto('orden_lineas')
     .values(lineas.map((linea) => filaDeLinea(organizacionId, ordenId, linea)))
     .execute();
+  // DP-14.6-3 · La forma consultable de lo elegido: la lee el cobro (sustitutos y factor).
+  await guardarLosModificadores(
+    tx,
+    lineas.map((l) => ({ lineaId: l.id, elegidas: l.opciones ?? [] })),
+  );
 }
 
 function filaDeLinea(organizacionId: string, ordenId: string, linea: LineaPreparada) {
@@ -152,6 +164,7 @@ function filaDeLinea(organizacionId: string, ordenId: string, linea: LineaPrepar
     ml_por_porcion: esPorcion ? producto.mlPorPorcion : null,
     precio_por_unidad_centavos: precioPorUnidad(producto),
     notas: linea.notas,
+    opciones: instantaneaDeLasOpciones(linea.opciones ?? []),
     orden_visual: linea.ordenVisual,
     // La cocina arranca con todo pendiente. `comanda_items.estado` lo refleja
     // y los dos se mantienen coherentes en la misma transacción (F1-04 §7.5).

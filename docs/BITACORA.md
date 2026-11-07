@@ -793,6 +793,9 @@ se trabajó con la lista del encargo. Rama `dp-14`, desde `ea47ed0`.
 | --- | --- | --- | --- |
 | A (worktree `dp14-a`, base 5446, web 3241) | Sonnet | 14.1-5 · la barbacoa por kilo de punta a punta | Entregado. Una línea por peso es una pieza indivisible al dividir; «½ kg» en comanda, teléfono, cobro, ticket y portal. Integración 14 casos, navegador 15 de 15 (3 aparatos × 5 specs), mutaciones 13 de 13. Revisión (Sonnet): «listo», 3 hallazgos bajos. |
 | B (worktree `dp14-b`, base 5447, web 3242) | Sonnet | 14.1-3 · la mesa limpia no borra a la familia nueva; 14.1-4 · el mesero agrega aunque falle la lectura de opciones | Entregado. Limpiar borra sólo lo anterior al cierre de la cuenta; opciones con 8 s, «Reintentar» y la última lectura guardada. Integración (rojo visto), navegador 6 de 6, mutaciones 19 de 19. Revisión (Sonnet): «listo», 4 hallazgos bajos. Queda el arranque en frío: lo cierra el puente (sesión principal). |
+| C (worktree `dp14-a`, base 5446, web 3241) | Sonnet | 14.6 · la sala, el portal y la mesa: cancelar una parte dividida, avisos al unir, carrito caducado, reabrir con PIN, «Marcar libre» en el cierre, y los menores de sala | Entregado. Integración 59 archivos / 350 (rojo visto en lo nuevo), navegador 3 specs nuevas × 3 aparatos y 57 de 57 contratos, mutaciones 22 de 22. Revisión (Sonnet): «listo», 5 hallazgos bajos. |
+| D (worktree `dp14-b`, base 5447, web 3242) | Sonnet | 14.6 · opciones obligatorias en el servidor, margen, «Comprobando la cocina…», sonido, y los menores del corte, el PIN, el CSV y el 404 | Entregado sin navegador. Integración 76 archivos / 378, mutaciones 22 de 22. Revisión (Sonnet): «con defectos», 3 medios (el sonido daba por desbloqueado antes de que el audio corriera; el texto prometía «todo como pérdida» sin que el servidor lo hiciera; la tabla por producto ignoraba el insumo en cero); su corrector (Sonnet) los arregló con su prueba en rojo. |
+| E (worktree `dp14-b`, base 5447, web 3242) | Sonnet | 14.6 · el navegador de lo integrado de C y D: `/pos` con opciones, la cocina detenida, el sonido, el 404, y los contratos | (ver abajo) |
 
 Cada uno con revisión adversarial (Sonnet, sólo lectura) y corrección. Ninguno hace commit, push
 ni toca producción: integro su diff, verifico y hago el commit.
@@ -837,3 +840,79 @@ ni toca producción: integro su diff, verifico y hago el commit.
   de `DetalleVenta` (ahora lo lee también de `RenglonQuitado`) y la galería de `/configuracion` (las
   pestañas nuevas): se regenera con el trabajo de CI a mano y viaja en el mismo PR.
 - `pnpm verify` local de todo junto: verde (unidad 396 archivos / 4859 pruebas; integración 92 / 453).
+
+### 14.1 y 14.2 a producción (06-11, noche)
+
+- PR #8 (`dp-14` → `main`): la CI del PR en `59a2e19` dio un solo rojo, la galería de
+  `/configuracion`. Se regeneró en CI (`actualizar_galeria`, corrida 42339111304) y se compararon los
+  81 retratos píxel a píxel: sólo `/configuracion` cambia de verdad (unos 6 000 píxeles por estilo,
+  las pestañas «Caja» y «Descuentos» en dos renglones); 14 más difieren sólo en suavizado (25 niveles
+  por canal como mucho) y no se suben. Con los 9 retratos (`0d46074`), la CI en verde, 10 de 10.
+- Fusión con merge `68f12a2` (por la API de GitHub), a nombre de M1gu3hb, sin coautoría.
+- Antes (sólo lectura): huella de los otros 10 IDÉNTICA a la de antes del QA de DP-13
+  (`_PRIVADO\mudanza\huellas-dp14\antes-despliegue-a.json`); exportación de `don-poncho`
+  (`_PRIVADO\mudanza\dp14-antes-a`): 135 tablas, 1,175 filas, `--exigir-cerrado` pasó. Contra el
+  ensayo de 14.3, un teléfono de mesa y un `restaurante.limpiar_solicitudes` del 06-11 a las 19:34
+  (del restaurante, no de esta sesión) y dos sesiones menos.
+- Production de Vercel `READY` (la fila Production, `cle1`, con los tres alias). Humo sin PIN y sin
+  escrituras, 10 de 10: `/`, `/login-pos` y el QR de una mesa 200, una ruta que no existe 404, las 6
+  cabeceras, sin cámara en la entrada (sólo en `/mesero` y `/pos`) y las cuatro rutas nuevas
+  (`caja/cajas-simultaneas`, `caja/fijar-cajas-simultaneas`, `caja/descuentos-del-corte`,
+  `configuracion/permitir-descuentos`) 403 sin origen ni sesión. Sin errores en tiempo de ejecución.
+- Después: huella de los otros 10 IDÉNTICA (`despues-despliegue-a.json`); `don-poncho` con las
+  mismas filas y el mismo md5 en las 135 tablas (`_PRIVADO\mudanza\dp14-despues-a`). Cero escrituras.
+- Desde este despliegue, todo descuento pide el PIN de un gerente, administrador o dueño. Las cajas
+  a la vez siguen en 1 en la compartida; en la base propia se ponen en 2 (14.5).
+- De paso: en `MUDANZA-FASE-B.md` y en el reporte 001, `..\_PRIVADO\fase-*.env` había salido con un
+  salto de página en lugar de la barra y la `f`: corregido.
+
+### 14.6 · los medios y menores, integrados (07-11)
+
+- Los parches de C y D sobre `dp-14` (`68f12a2`): sólo chocó `aspecto-permitido.json` (se quedaron
+  las entradas de los dos). `pnpm typecheck` verde con los dos juntos.
+- Lo que pedía el encargo y faltaba, de la sesión principal (prueba en rojo antes de cada cosa;
+  banco de 16 mutantes, 16 muertos):
+  - **«Tratando todo como ya hecho» (DP-D68):** `restaurante.cancelar_orden` con
+    `sinComprobarLaCocina` exige el PIN de un gerente para esa cuenta (aunque no se haya pedido) y
+    cuenta todo lo vivo como pérdida en el corte y como merma; la marca vive en la auditoría
+    (`todoComoHecho`), sin DDL. El diálogo del mesero la manda cuando la cocina no contestó en 8 s o
+    falló. `restaurante/cancelar-sin-comprobar-la-cocina.integracion.test.ts` (6).
+  - **La parte cancelada en el corte** sale con la mesa de su madre (aviso de C).
+  - **El mesero manda las opciones estructuradas** (pendiente de D), con el mismo traductor que `/pos`.
+  - **El corte heredado** pasa el total de las cancelaciones al ticket: «se muestran X de N» (pendiente
+    de D).
+  - La prueba del total de las cancelaciones suma también una pérdida distinta de cero (revisión de D).
+  - **El aviso «Sonido apagado» ya no se queda con el toque** (la CI del PR #9, `estaciones-de-cocina`
+    en tableta): arriba tapaba «Conectar teléfono» de Cocina y, como ahora se queda hasta que algo
+    suene, en un aparato donde el audio no corre lo habría tapado para siempre. Es un aviso
+    (`role="status"`, `pointer-events-none`) con el mismo aspecto; tocar la pantalla desbloquea y
+    el toque pasa a lo de abajo. Contrato y las dos specs del sonido al día; banco 3 de 3.
+- Revisado en los datos de Don Poncho (la exportación del 06-11): ninguna de sus 139 opciones lleva
+  coma ni efecto de inventario, y no hay recetas; los límites de leer la opción de la nota y de
+  guardar la elección (DP-D67) no le afectan hoy.
+- Se quedan como límites (bajos): la rama «ya estaba cancelada» contesta antes del permiso; el
+  diálogo de reabrir sin `ordenId` no ofrece salida (no ocurre: una cuenta pedida tiene orden); al
+  unir mesas, la nota de un «Quiero ordenar» de la principal se reemplaza por la del aviso del
+  carrito.
+- **Revisión adversarial del PR #9** (dos revisores Sonnet, sólo lectura: servidor y pantallas). Sin
+  altos. Arreglado, cada uno con su prueba en rojo y su mutante (banco 10 de 10):
+  - el carrito compartido del portal dejaba entrar una línea sin su opción obligatoria y entonces el
+    envío trababa a toda la mesa: ya no entra, y la que ya estuviera se aparta al enviar (media);
+  - el pedido directo del portal miraba las opciones antes que el menú y dejaba distinguir un
+    platillo oculto (baja);
+  - `/pos` con el mapa de opciones guardado y viejo no ofrecía el grupo nuevo de un platillo: relee
+    en vivo con la pista del producto, como el mesero (media);
+  - `/pos` ofrecía «Notas» en el diálogo de opciones y las perdía: ya no lo ofrece (media);
+  - el aviso del sonido se quedaba fijo si lo único bloqueado era la voz, y su región viva nacía con
+    el texto (un lector de pantalla no la anunciaba) (bajas).
+  Quedan como límites (DECISIONES): el platillo por peso con opciones en `/pos` (DP-D67), la
+  autorización compartida de cancelar y reabrir (DP-D69). Sin cambio: el escáner de `/pos` canta
+  «agregado» al abrir el diálogo (igual que con el peso); la voz espera a que el audio corra; la
+  spec de «Nueva mesa» no recrea la zona ausente (la cubre la unitaria); el diálogo de reabrir no
+  dice por qué vuelve a pedir el PIN.
+- La galería (corrida 42355052424, `actualizar_galeria`): cambian 36 retratos, `cocina`, `lista`,
+  `mesas` y `productos` en los nueve estilos, sólo el pie de la barra colapsada (el botón del
+  sonido, debajo del avatar). La lista del menú pierde esa altura: a 720 px el último ícono queda
+  bajo el pie (antes la luna ya lo tapaba a medias). Para el QA del 14.7.
+- Para la base propia (después de la mudanza, nunca en la compartida), el dato de DP-D71:
+  `insert into motivos_merma (clave, etiqueta, giro, imputable) values ('por_cancelacion', 'Por cancelación', 'restaurante', false) on conflict (clave) do nothing;`

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { conTransaccion, obtenerDb } from '@morphiqpos/data';
 import { describe, expect, it } from 'vitest';
 
@@ -245,6 +247,8 @@ describe('el mesero con la cuenta ya pedida', () => {
         mesaId: caso.mesaId,
         empleoId: caso.ambito.empleoId,
         ahora: new Date(),
+        ambito: caso.ambito,
+        correlationId: randomUUID(),
       }),
     );
     expect((await laCuenta(ventaId)).estado).toBe('confirmada');
@@ -268,6 +272,8 @@ describe('el mesero con la cuenta ya pedida', () => {
           mesaId: caso.mesaId,
           empleoId: caso.ambito.empleoId,
           ahora: new Date(),
+          ambito: caso.ambito,
+          correlationId: randomUUID(),
         }),
       ),
     ).rejects.toMatchObject({ codigo: 'ORDEN_NO_EDITABLE' });

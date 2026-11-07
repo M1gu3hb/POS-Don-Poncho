@@ -5,7 +5,7 @@ import { POST } from '../../app/api/identidad/supervisor/route';
 /**
  * QA2-001 (DP-13.5) · LA AUTORIZACIÓN DEL SUPERVISOR CUENTA SÓLO LOS PIN QUE FALLAN.
  *
- * `/api/identidad/supervisor` gasta el mismo cubo por origen que la entrada (`LIMITES.entrar`):
+ * `/api/identidad/supervisor` gasta su PROPIO cubo por origen (`LIMITES.supervisor`, DP-14.6):
  * probar el PIN del gerente desde la caja es un barrido igual que en la pantalla de acceso. Pero
  * contaba también los aciertos: en un restaurante todos los aparatos salen por la misma IP, y con
  * DP-13.2 cada cuenta pedida que se cancela pide el PIN; la autorización número veintiuno en cinco
@@ -85,7 +85,7 @@ describe('la cuota por origen de la autorización del supervisor', () => {
     const respuesta = await pedir();
     expect(respuesta.status).toBe(200);
     expect(dobles.devolver).toHaveBeenCalledTimes(1);
-    expect(dobles.devolver.mock.calls[0]?.[0]).toBe('entrar');
+    expect(dobles.devolver.mock.calls[0]?.[0]).toBe('supervisor');
   });
 
   it('con el PIN equivocado (o bloqueado), el intento se queda contado', async () => {

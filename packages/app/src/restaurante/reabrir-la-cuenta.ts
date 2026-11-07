@@ -1,9 +1,11 @@
 import 'server-only';
 
-import { ErrorDominio } from '@morphiqpos/contracts';
-import type { Transaccion } from '@morphiqpos/data';
+import { ErrorDominio, validarEntorno, type Ambito } from '@morphiqpos/contracts';
+import { repoComandos, type Transaccion } from '@morphiqpos/data';
 import { sql } from 'kysely';
 
+import { ROLES_QUE_AUTORIZAN, leerAutorizacion } from '../identidad/supervisor.ts';
+import { payloadDeAuditoria } from '../saneado.ts';
 import { sellarTransicionDeMesa } from './sala-escrituras.ts';
 
 /**
@@ -19,6 +21,14 @@ import { sellarTransicionDeMesa } from './sala-escrituras.ts';
  * Conserva el `codigo_caja` (el comensal ya tiene ese papel en la mano; al pedirla otra vez se
  * reutiliza, `restaurante/cuenta.ts`) y sube la versión de la cuenta, como cualquier cambio de sus
  * líneas, para que una caja que la tenía abierta sepa que cambió.
+ *
+ * ── Quién la reabre (DP-14.6, congruente con DP-D51) ───────────────────────
+ * Reabrir deshace «la cuenta ya se pidió»: es del mismo peso que cancelarla. Gerente, administrador
+ * y dueño la reabren; el MESERO, sólo en sus mesas (las que atiende o tiene asignadas, o las que
+ * nadie atiende: las toma al enviar). A otro mesero le hace falta el PIN de un gerente, en una
+ * autorización atada a ESA cuenta y `para: 'cancelacion'` (no hay un `para` propio: lo describe la
+ * entrega). Y deja su PROPIA entrada en la auditoría (`restaurante.reabrir_cuenta`), con quién la
+ * reabrió y quién la autorizó: la del envío sólo dice que se reabrió.
  */
 
 export interface CuentaPorReabrir {
@@ -28,6 +38,82 @@ export interface CuentaPorReabrir {
   readonly mesaId: string;
   readonly empleoId: string;
   readonly ahora: Date;
+  /** Quién reabre: su sesión (el rol decide, nunca el cuerpo). */
+  readonly ambito: Ambito;
+  readonly correlationId: string;
+  /** La autorización firmada de un gerente, si hace falta. */
+  readonly autorizacion?: string | undefined;
+}
+
+/** Lanza si quien reabre no puede; devuelve quién autorizó (`null` si no hizo falta). */
+async function exigirPermisoParaReabrir(
+  tx: Transaccion,
+  cuenta: CuentaPorReabrir,
+): Promise<string | null> {
+  const { organizacionId, ordenId, mesaId, empleoId, ambito } = cuenta;
+  if (ROLES_QUE_AUTORIZAN.includes(ambito.rol)) return null;
+  const fila = await tx
+    .selectFrom('ordenes as o')
+    .innerJoin('mesas as m', (j) =>
+      j.onRef('m.id', '=', 'o.mesa_id').onRef('m.organizacion_id', '=', 'o.organizacion_id'),
+    )
+    .select([
+      'o.empleado_atiende_id as deLaCuenta',
+      'm.empleado_atiende_id as atiende',
+      'm.empleado_asignado_id as asignado',
+    ])
+    .where('o.organizacion_id', '=', organizacionId)
+    .where('o.id', '=', ordenId)
+    .where('m.id', '=', mesaId)
+    .executeTakeFirst();
+  const responsables = [fila?.deLaCuenta, fila?.atiende, fila?.asignado].filter(
+    (id): id is string => id !== null && id !== undefined,
+  );
+  if (responsables.length === 0 || responsables.includes(empleoId)) return null;
+
+  const carga =
+    cuenta.autorizacion === undefined
+      ? null
+      : leerAutorizacion(
+          cuenta.autorizacion,
+          { organizacionId, solicitaEmpleoId: empleoId, cuenta: ordenId, para: 'cancelacion' },
+          validarEntorno(process.env).SESSION_SECRET,
+          cuenta.ahora,
+        );
+  if (carga === null) {
+    throw new ErrorDominio(
+      'PUESTO_NO_OTORGABLE',
+      cuenta.autorizacion === undefined
+        ? 'Esa mesa la atiende otro mesero: reabrir su cuenta pide el PIN de un gerente o del dueño.'
+        : 'Esa autorización venció o es de otra cuenta: que el gerente teclee su PIN otra vez.',
+      { pidePin: true },
+    );
+  }
+  return carga.supervisor;
+}
+
+/** Su propia entrada en la auditoría, en la misma transacción que la reapertura. */
+async function auditarLaReapertura(
+  tx: Transaccion,
+  cuenta: CuentaPorReabrir,
+  autorizadoPor: string | null,
+): Promise<void> {
+  await repoComandos.escribirAuditoria(tx, {
+    organizacionId: cuenta.organizacionId,
+    identidadId: cuenta.ambito.identidadId,
+    terminalId: cuenta.ambito.terminalId,
+    accion: 'restaurante.reabrir_cuenta',
+    entidad: 'orden',
+    entidadId: cuenta.ordenId,
+    correlationId: cuenta.correlationId,
+    payload: payloadDeAuditoria({
+      v: 1,
+      mesaId: cuenta.mesaId,
+      reabrioEmpleoId: cuenta.empleoId,
+      rol: cuenta.ambito.rol,
+      autorizadoPor,
+    }),
+  });
 }
 
 /** Lanza si la cuenta, justo ahora y con candado, ya no está pedida o ya tiene pagos. */
@@ -70,6 +156,8 @@ export async function reabrirLaCuentaPedida(
 ): Promise<void> {
   const { organizacionId, ordenId, mesaId } = cuenta;
   await exigirQueSeaReabrible(tx, organizacionId, ordenId);
+  const autorizadoPor = await exigirPermisoParaReabrir(tx, cuenta);
+  await auditarLaReapertura(tx, cuenta, autorizadoPor);
   await tx
     .updateTable('ordenes')
     .set({ estado: 'confirmada', version: sql`version + 1`, updated_at: cuenta.ahora })

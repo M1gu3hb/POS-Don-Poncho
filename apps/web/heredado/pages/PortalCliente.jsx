@@ -491,7 +491,12 @@ function PortalCliente() {
 
       <main className="relative z-10 max-w-2xl mx-auto px-4 pt-4 space-y-4">
         {pedidosQRActivos && !cuentaYaSolicitada && (
-          <AvisoDeLaMesa estado={carritoMesa.estado} sinConexion={carritoMesa.sinConexion} />
+          <AvisoDeLaMesa
+            estado={carritoMesa.estado}
+            sinConexion={carritoMesa.sinConexion}
+            vaciadoPorElMesero={carritoMesa.vaciadoPorElMesero}
+            alCerrarElVaciado={carritoMesa.cerrarElAvisoDelVaciado}
+          />
         )}
         {/* Bienvenida */}
         {config?.portal_qr_mensaje_bienvenida && (

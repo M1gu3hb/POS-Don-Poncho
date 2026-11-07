@@ -4,7 +4,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import { sql } from 'kysely';
 
 import type { AlcanceDelCorte } from './alcance-del-corte.ts';
-import { estadoDelCostoDe, lineaSinCosto } from './costo-conocido.ts';
+import { estadoDelCostoDe, lineaSinCosto, lineaSinCostoCompleto } from './costo-conocido.ts';
 
 /**
  * LO QUE TODO CORTE LLEVA, leído de la base en la transacción del documento (C.6 de la 2.4).
@@ -334,8 +334,13 @@ export interface ProductoVendido {
   readonly unidad: string;
   readonly totalCentavos: string;
   readonly costoCentavos: string;
-  /** DP-13.2 · Cuántas de sus líneas se vendieron sin costo (`costo-conocido.ts`). */
+  /**
+   * DP-13.2 / DP-14.6-2 · Cuántas de sus líneas NO tienen el costo completo (`costo-conocido.ts`):
+   * sin receta, o con un insumo en cero.
+   */
   readonly lineasSinCosto: number;
+  /** De ésas, las que no tienen receta del todo (el resto es «receta incompleta»). */
+  readonly lineasSinReceta: number;
   /** Es un SERVICIO del salón (tiene fila en `servicios`), no producto de anaquel. */
   readonly esServicio: boolean;
   /** `bebida`, `alimento`, `grano` u `otro`: lo que la cafetería cuenta como bebidas. */
@@ -362,7 +367,8 @@ export async function productosVendidos(
            max(l.unidad)                                       as "unidad",
            sum(l.total_centavos)::text                         as "totalCentavos",
            sum(l.total_centavos - l.utilidad_centavos)::text   as "costoCentavos",
-           (count(*) filter (where ${lineaSinCosto('l')}))::int as "lineasSinCosto",
+           (count(*) filter (where ${lineaSinCostoCompleto('l')}))::int as "lineasSinCosto",
+           (count(*) filter (where ${lineaSinCosto('l')}))::int as "lineasSinReceta",
            bool_or(sv.producto_id is not null)                 as "esServicio",
            max(pr.familia)                                     as "familia",
            max(li.nombre)                                      as "linea",

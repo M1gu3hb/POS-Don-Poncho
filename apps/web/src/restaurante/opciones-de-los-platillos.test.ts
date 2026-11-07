@@ -57,6 +57,14 @@ describe('las pantallas que leen producto.modificadores los reciben', () => {
     );
   });
 
+  it('DP-14.6-3 · el mesero manda la elección estructurada, no sólo en la nota', () => {
+    // La línea que viaja a `enviar_pedido` lleva `opciones` (grupo y opciones elegidas) de lo que
+    // el diálogo devolvió: el servidor la valida y la guarda sin leerla de la nota.
+    expect(leer('pages/Mesero.jsx')).toMatch(
+      /const opciones = opcionesParaElComando\(\{ modificadores: item\._modificadores \}\);\s*if \(opciones\.length > 0\) linea\.opciones = opciones;\s*if \(\s*variableSnap/,
+    );
+  });
+
   it('el mesero arma su lista con las opciones pegadas', () => {
     expect(leer('pages/Mesero.jsx')).toMatch(
       /const productosArr = useMemo\(\s*\(\) => conSusOpciones/,

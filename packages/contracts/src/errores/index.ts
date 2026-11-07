@@ -218,6 +218,11 @@ export const CODIGOS_ERROR = {
    */
   AUTORIZACION_USADA: 'AUTORIZACION_USADA',
 
+  /** DP-14.6 · Un platillo con un grupo de opciones obligatorio llegó sin su elección. */
+  OPCION_OBLIGATORIA: 'OPCION_OBLIGATORIA',
+  /** DP-14.6 · La elección trae una opción o un grupo que no es del platillo, o repetida. */
+  OPCION_NO_VALIDA: 'OPCION_NO_VALIDA',
+
   // --- andamiaje de pruebas ---
   /** Se pidio interrumpir despues de un paso que no existe (inyeccion de fallos). */
   PASO_INEXISTENTE: 'PASO_INEXISTENTE',

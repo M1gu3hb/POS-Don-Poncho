@@ -245,3 +245,28 @@ describe('anular el platillo', () => {
     expect(await loQueSalio(salon)).toMatchObject({ aguacate: 2, jitomate: 100 });
   });
 });
+
+describe('DP-14.6 · lo que canceló el cliente no se le carga al empleado', () => {
+  it('la merma por cancelación lleva un motivo NO imputable (el platillo rehecho sí lo es)', async () => {
+    const salon = await salonConAlmacen('Fonda sin culpas');
+    const { ordenId } = await sentarYPedir(salon, 0, [{ platillo: 'arrachera', cantidad: '1' }]);
+    await dejarListoElPlatillo(salon, await lineaDe(ordenId, 'Arrachera al carbón'));
+    exigirOk(
+      await comando(cancelarOrden, {
+        entrada: { ordenId, motivo: 'Se fueron sin pagar' },
+        ambito: ambitoDeCaja(salon),
+        idempotencyKey: clave(),
+      }),
+      'restaurante.cancelar_orden',
+    );
+    const motivos = await obtenerDb()
+      .selectFrom('movimientos_stock as m')
+      .innerJoin('motivos_merma as mm', 'mm.clave', 'm.motivo')
+      .select(['m.motivo', 'mm.imputable'])
+      .where('m.organizacion_id', '=', salon.negocio.organizacionId)
+      .where('m.tipo', '=', 'merma')
+      .execute();
+    expect(motivos.length).toBeGreaterThan(0);
+    expect(motivos.every((m) => !m.imputable)).toBe(true);
+  });
+});

@@ -1301,3 +1301,95 @@ puerta los denuncia todos.
   ella (un platillo pudo ganar su grupo después). En Productos, el botón «Opciones» dice si falló y
   reintenta.
 - **Sin migración.** Lo hizo el agente B (Sonnet); la existencia del puente, la sesión principal.
+
+## DP-D66 · Una parte de una cuenta dividida se cancela con las reglas de una cuenta · 07-11-2026
+
+- **El hallazgo:** las partes nacen sin mesa (`mesa_id = null`) y `restaurante.cancelar_orden` las
+  rechazaba: una parte que no se iba a pagar no tenía salida.
+- **Elección:** se cancela como cualquier cuenta: motivo obligatorio, sólo el mesero de esa mesa, y
+  con PIN de un gerente si la cuenta ya se pidió (toda parte nace pedida, así que el mesero siempre
+  lo necesita, DP-D51); lo ya hecho de SUS líneas es pérdida y merma (DP-D50, DP-D57); la cocina
+  cancela sólo lo de esa parte. La madre vale lo que suman sus partes vivas y se queda `dividida`;
+  la mesa sigue en servicio si queda alguna por cobrar, pasa a limpieza si alguna se cobró y no
+  queda viva ninguna, y queda libre si todas se cancelaron. En el corte, la parte cancelada sale con
+  la mesa de su madre.
+- **Sin migración.** Lo hizo el agente C (Sonnet); la mesa en el corte, la sesión principal.
+
+## DP-D67 · La opción obligatoria la exige el servidor, en los tres caminos · 07-11-2026
+
+- **El hallazgo:** sólo la pantalla del mesero pedía la opción obligatoria; el portal, `/pos` o una
+  llamada directa podían mandar el platillo sin su elección.
+- **Elección:** `restaurante.enviar_pedido` (mesero y su carrito), el envío del portal y
+  `venta.agregar_linea` (`/pos`) rechazan todo el pedido si a un platillo le falta su opción
+  obligatoria (`OPCION_OBLIGATORIA`) o trae una que no es suya o de más (`OPCION_NO_VALIDA`). La
+  elección queda ESTRUCTURADA (`orden_linea_modificadores` y la instantánea `orden_lineas.opciones`,
+  tablas que ya existían). El mesero y `/pos` la mandan estructurada; el portal todavía sólo la
+  manda en la nota («Grupo: opción», porque su carrito no tiene columna para más sin DDL) y el
+  servidor la lee de ahí; lo estructurado manda sobre la nota. `/pos` pide las opciones como el
+  mesero y el cajero las lee en la cuenta.
+- **Límites:** leer la nota falla con un nombre de opción que lleve coma o « · » (hoy ninguna de
+  las 139 de Don Poncho). Guardar la elección hace que el cobro aplique el sustituto y el factor de
+  inventario de cada opción: en Don Poncho ninguna opción los tiene (0 de 139) y no hay recetas.
+  En `/pos`, un platillo por peso que además tuviera opciones abre las opciones y no el peso (en
+  Don Poncho las dos barbacoas por kilo no tienen grupos). Revisión del PR #9: el carrito compartido
+  del portal ya no deja entrar la línea sin su opción, y la que ya estuviera se aparta al enviar
+  (como un producto oculto, PAR-1): una línea mala no traba a la mesa.
+- **Sin migración.** Lo hizo el agente D (Sonnet); el envío estructurado del mesero, la sesión
+  principal.
+
+## DP-D68 · Si no se pudo comprobar la cocina, se cancela con PIN y todo es pérdida · 07-11-2026
+
+- **El hallazgo:** al cancelar desde el mesero, «Comprobando la cocina…» se podía quedar esperando
+  para siempre, y sin respuesta no se sabe qué ya salió.
+- **Elección:** la lectura tiene **8 s** y «Reintentar». Si no contesta (o falla), se cancela con el
+  PIN de un gerente, administrador o dueño firmado para esa cuenta, y el servidor
+  (`sinComprobarLaCocina`) cuenta TODO lo vivo como ya hecho: pérdida entera en el corte y merma en
+  el almacén. Lo exige aunque la cuenta no se haya pedido y aunque el negocio haya apagado el PIN al
+  cancelar (DP-D51): es pérdida firmada. Quien autoriza por su puesto no teclea.
+- **Sin migración:** la marca vive en la entrada de la cancelación en la auditoría
+  (`todoComoHecho`), y el corte la lee de ahí.
+- Lo hizo el agente D (la pantalla) y la sesión principal (el servidor y el corte).
+
+## DP-D69 · Reabrir una cuenta pedida es del mesero de esa mesa, o con PIN · 07-11-2026
+
+- **Elección:** el mesero reabre en sus mesas o en las que nadie atiende; otro mesero necesita el
+  PIN de un gerente para esa cuenta (la misma autorización de cancelar, `para: 'cancelacion'`, sin
+  tocar `identidad/`). Gerente, administrador y dueño reabren sin PIN. La reapertura deja su propia
+  entrada en la auditoría. Congruente con DP-D51 y DP-D58.
+- **Límite:** la autorización de cancelar no es de un solo uso (cancelar ya es idempotente) y, por
+  compartir el `para`, la que un gerente dio para cancelar una cuenta sirve también para reabrirla
+  mientras no venza (dos minutos). Separarla pide un `para` propio en `identidad/`: para después.
+- Lo hizo el agente C (Sonnet).
+
+## DP-D70 · El margen sólo es «conocido» si todo su costo lo es · 07-11-2026
+
+- **El hallazgo:** un insumo con costo 0 dejaba la cuenta como «conocida» y el margen salía inflado;
+  la utilidad neta del Cierre del día sumaba como si todas las ventas tuvieran costo.
+- **Elección:** un insumo de la receta con costo 0 deja la línea en «receta incompleta» (DP-D52
+  manda): en el corte, Ventas, la gráfica, el Tablero y la tabla por producto, que distingue «sin
+  receta» de «receta incompleta». La utilidad neta dice «(sólo ventas con costo)» cuando parte de
+  las ventas quedó fuera. En el PDF, sin dato es «—», no «$0.00». Una venta cancelada no pinta margen.
+- **Límite:** el insumo en cero se lee de la receta y el costo VIVOS: si después se le pone costo, un
+  corte ya cerrado se relee como conocido con el costo congelado parcial. Cerrarlo pide una marca
+  congelada en `orden_lineas` (DDL): para después de la instalación, si Miguel lo pide.
+- Lo hizo el agente D (Sonnet).
+
+## DP-D71 · La merma de lo cancelado no se le carga al empleado · 07-11-2026
+
+- **Elección:** la merma por cancelación usa el motivo `por_cancelacion` (no imputable). Es un DATO
+  de `motivos_merma`, que se siembra en la base propia de Don Poncho después de la mudanza (nunca en
+  la compartida, donde ese catálogo es de todos). Mientras no exista, usa `prueba_cocina`, que existe
+  y tampoco es imputable: cancelar nunca se traba ni se imputa. `platillo_rehecho` (imputable) queda
+  para el platillo que se tuvo que rehacer.
+- Lo hizo el agente D (Sonnet).
+
+## DP-D72 · Cuotas propias: el PIN de supervisor y los teléfonos de una mesa · 07-11-2026
+
+- **El PIN de supervisor** cuenta en su propio cubo (`LIMITES.supervisor`, 30 cada 5 min por red), no
+  en el de «entrar»: los intentos de un gerente ya no le gastan la entrada a todo el restaurante,
+  que sale por la misma IP. La pantalla dice cuánto esperar.
+- **Los teléfonos nuevos de una mesa:** antes del tope de la mesa (DP-D58) se mira uno por mesa e IP
+  (12 cada 15 min); lo que ése niega no gasta el de la mesa, así que quien tiene el QR desde una red
+  ya no agota los teléfonos de la mesa. Un teléfono que ya tiene su id firmado nunca gasta cuota.
+  Quien rote de red todavía puede: es la mitigación mínima y coherente, sin DDL.
+- Lo hicieron los agentes D y C (Sonnet).

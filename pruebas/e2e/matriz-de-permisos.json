@@ -661,6 +661,10 @@
   ],
   "excluidas": [
     {
+      "ruta": "/api/[...ruta]",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
+    },
+    {
       "ruta": "/api/archivos/[...ruta]",
       "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     },

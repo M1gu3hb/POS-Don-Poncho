@@ -40,6 +40,8 @@ function filasDe(respuesta: unknown): readonly CancelacionDelCorte[] {
 export interface CancelacionesDeLaCaja {
   readonly filas: readonly CancelacionDelCorte[];
   readonly alcance: 'caja' | 'dia';
+  /** DP-14.6 · Todas las del corte (contadas en SQL); `undefined` con un servidor de antes. */
+  readonly total?: { cuantas: number; montoCentavos: string; perdidaCentavos: string };
 }
 
 /** Las cancelaciones del corte de UNA caja, en el orden en que pasaron. */
@@ -54,7 +56,14 @@ export async function cancelacionesDeLaCaja(sesionCajaId: string): Promise<Cance
   if (alcance !== 'caja' && alcance !== 'dia') {
     throw new Error('El servidor no mandó las cancelaciones con la forma esperada.');
   }
-  return { filas: filasDe(respuesta), alcance };
+  const total = (respuesta as Readonly<Record<string, unknown>>)['total'];
+  const esTotal = (v: unknown): v is NonNullable<CancelacionesDeLaCaja['total']> =>
+    typeof v === 'object' &&
+    v !== null &&
+    typeof (v as Record<string, unknown>)['cuantas'] === 'number' &&
+    typeof (v as Record<string, unknown>)['montoCentavos'] === 'string' &&
+    typeof (v as Record<string, unknown>)['perdidaCentavos'] === 'string';
+  return { filas: filasDe(respuesta), alcance, ...(esTotal(total) ? { total } : {}) };
 }
 
 /** Las de los últimos `dias`, lo más reciente primero (Registros). */

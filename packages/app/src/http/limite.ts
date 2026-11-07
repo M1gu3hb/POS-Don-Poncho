@@ -41,6 +41,12 @@ import { correlationIdDe, registrar } from '../observabilidad.ts';
 export const LIMITES = {
   entrar: { intentos: 20, ventanaSegundos: 300 },
   empleados: { intentos: 60, ventanaSegundos: 300 },
+  /**
+   * DP-14.6 · El PIN de un gerente tecleado en la caja (`/api/identidad/supervisor`). Cubo propio:
+   * antes contaba en el de `entrar` y los fallos de una noche llena dejaban a todo el local (una
+   * sola IP) sin poder entrar. Igual que ahí, el PIN bueno devuelve su intento.
+   */
+  supervisor: { intentos: 30, ventanaSegundos: 300 },
   enrolar: { intentos: 20, ventanaSegundos: 600 },
   archivos: { intentos: 20, ventanaSegundos: 3600 },
   /**
@@ -132,7 +138,7 @@ function claveDelOrigen(
  * lo justo —más estricto, nunca más abierto— y la persona ya entró.
  */
 export async function devolver(
-  accion: 'entrar',
+  accion: 'entrar' | 'supervisor',
   cabeceras: { get(nombre: string): string | null },
   pimienta: string,
 ): Promise<void> {

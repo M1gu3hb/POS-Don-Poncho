@@ -41,6 +41,26 @@ export interface VentaParaElMargen {
   readonly margen_snapshot?: number | null | undefined;
   /** DP-13.2 · Lo que dice el servidor de su costo; manda sobre la foto. */
   readonly estado_costo?: EstadoDelCosto | null | undefined;
+  /** DP-14.6 (QA1-11) · La venta cancelada no vendió nada: no tiene margen que pintar. */
+  readonly estado?: string | null | undefined;
+}
+
+/**
+ * DP-14.6-2 · ¿Se conoce el costo de un producto vendido en un periodo (tabla «Productos vendidos»
+ * del corte)? Con importe y costo cero NO: es un platillo sin receta, no una utilidad del 100 %.
+ */
+export function costoDelProductoConocido(producto: {
+  readonly total?: number | null | undefined;
+  readonly costo?: number | null | undefined;
+}): boolean {
+  const total = esNumero(producto.total) ? producto.total : 0;
+  const costo = esNumero(producto.costo) ? producto.costo : 0;
+  return !(total > 0 && costo <= 0);
+}
+
+/** ¿Se pinta el margen de esta venta? No si se canceló: lo que no se vendió no deja utilidad. */
+export function sePintaElMargen(venta: Pick<VentaParaElMargen, 'estado'>): boolean {
+  return venta.estado !== 'cancelada';
 }
 
 export type EstadoDelMargen = 'conocido' | 'sin_receta' | 'receta_incompleta' | 'oculto';
@@ -180,6 +200,14 @@ export function seVeElMargen(
   economia: Pick<EconomiaDelPeriodo | EconomiaDeLaVenta, 'estado'> | null | undefined,
 ): boolean {
   return economia?.estado !== 'oculto';
+}
+
+/**
+ * DP-14.6-2 · Cómo se llama la utilidad neta cuando parte de las ventas no tiene su costo
+ * completo: la neta sale sólo de las que sí (es una estimación PARCIAL y se dice).
+ */
+export function rotuloDeLaUtilidadNeta(parcial: boolean): string {
+  return parcial ? 'Utilidad neta est. (sólo ventas con costo)' : 'Utilidad neta est.';
 }
 
 /** «1 venta sin receta» / «3 ventas sin receta». */

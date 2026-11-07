@@ -23,11 +23,13 @@ describe('el historial de ventas', () => {
   });
 
   it('el detalle dice «—, sin receta» donde iría el costo, la utilidad y el margen', () => {
-    expect(ventas.match(/sinReceta\s*\?\s*SIN_RECETA/g)?.length).toBe(3);
+    // DP-14.6-2: el texto es «sin receta» o «receta incompleta» según el estado; tres lugares.
+    expect(ventas.match(/sinReceta\s*\?\s*textoSinCosto/g)?.length).toBe(3);
+    expect(ventas).toMatch(/RECETA_INCOMPLETA/);
   });
 
   it('DP-13.2 · a quien no ve márgenes (el cajero), el detalle no le pinta costo, utilidad ni margen', () => {
-    expect(ventas).toMatch(/const seVe = seVeElMargen\(economia\);/);
+    expect(ventas).toMatch(/const seVe = seVeElMargen\(economia\) && sePintaElMargen\(/);
     expect(ventas).toMatch(
       /\{seVe && \(\s*<>\s*<div>\s*<p className="text-xs text-muted-foreground">Costo<\/p>/,
     );
@@ -61,7 +63,8 @@ describe('el tablero y sus análisis', () => {
 
   it('el análisis financiero deja las ventas sin receta fuera del costo, la utilidad y el margen', () => {
     const grafica = fuente('heredado/components/dashboard/FinancialChart.jsx');
-    expect(grafica).toMatch(/economiaDeLaVenta\(v\)\.estado === 'sin_receta'/);
+    expect(grafica).toMatch(/estadoDelCosto === 'sin_receta'/);
+    expect(grafica).toMatch(/estadoDelCosto === 'receta_incompleta'/);
     expect(grafica).toMatch(/tot\.ventasConCosto > 0/);
   });
 });

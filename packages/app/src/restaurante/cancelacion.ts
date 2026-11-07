@@ -6,7 +6,8 @@ import type { Transaccion } from '@morphiqpos/data';
 import { definirComando } from '../definicion.ts';
 import { exigirPermisoParaCancelar, exigirQueSeCancele } from './cancelar-con-permiso.ts';
 import { mermaDeLaCuentaCancelada } from './merma-por-cancelacion.ts';
-import { mesaOperable, ordenDeMesa } from './datos.ts';
+import { mesaOperable, ordenParaCancelar } from './datos.ts';
+import { cancelarLoDeLaParte, cerrarLaParteCancelada } from './parte-cancelada.ts';
 import { entradaCancelarOrden } from './esquemas.ts';
 import {
   cerrarOrdenCancelada,
@@ -84,7 +85,7 @@ export const cancelarOrden = definirComando<
     const { organizacionId, empleoId } = ctx.ambito;
 
     const orden = await ctx.paso('cargar_orden', () =>
-      ordenDeMesa(ctx.tx, organizacionId, entrada.ordenId),
+      ordenParaCancelar(ctx.tx, organizacionId, entrada.ordenId),
     );
 
     // Dos toques al mismo botón describen el mismo hecho. Fallarle al segundo
@@ -103,8 +104,10 @@ export const cancelarOrden = definirComando<
     // DP-13.2 · Ni pagada, ni con pagos, ni dividida, ni reembolsada, ni absorbida
     // (`cancelar-con-permiso.ts`); y el mesero sólo en sus mesas, con PIN si ya se pidió.
     exigirQueSeCancele(orden.estado);
+    // DP-14.6-7 · Sin poder comprobar la cocina, todo cuenta como ya hecho: con el PIN de un gerente.
+    const todoComoHecho = entrada.sinComprobarLaCocina === true;
     const autorizadoPor = await ctx.paso('permiso', () =>
-      exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion),
+      exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion, todoComoHecho),
     );
 
     // DP-13.3 · Lo que la cocina ya había hecho sale del almacén como merma «Por cancelación».
@@ -114,11 +117,16 @@ export const cancelarOrden = definirComando<
         { tx: ctx.tx, organizacionId, empleoId: ctx.ambito.empleoId },
         orden.id,
         entrada.motivo,
+        todoComoHecho,
       ),
     );
 
+    // DP-14.6 · Una PARTE de una cuenta dividida: sus comandas cuelgan de la madre y llevan lo de
+    // las demás partes; sólo se cancela lo de sus líneas.
     const comandas = await ctx.paso('cancelar_comandas', () =>
-      cancelarComandasVivas(ctx.tx, organizacionId, orden.id),
+      orden.madreId === null
+        ? cancelarComandasVivas(ctx.tx, organizacionId, orden.id)
+        : cancelarLoDeLaParte(ctx.tx, organizacionId, orden.id).then(() => []),
     );
     if (comandas.length > 0) {
       await ctx.paso('cancelar_items', () =>
@@ -151,7 +159,7 @@ export const cancelarOrden = definirComando<
     // cierre de la orden: si se hicieran aparte y fallara la segunda, quedaría
     // la mesa apuntando con `orden_activa_id` a una orden cancelada — el estado
     // imposible que `detectarHuerfano` busca hoy con cuatro reglas heurísticas.
-    const mesaId = orden.mesaId;
+    const mesaId = orden.madreId === null ? orden.mesaId : null;
     if (mesaId !== null) {
       // El estado previo sale de la MESA, no de la orden: son dos máquinas de
       // estados distintas y el ledger de F-305 vigila la de la mesa.
@@ -178,21 +186,41 @@ export const cancelarOrden = definirComando<
       );
     }
 
+    // DP-14.6 · La madre vale lo que suman sus partes vivas, y la mesa no se queda ocupada si
+    // ya no queda ninguna por cobrar.
+    const deLaParte =
+      orden.madreId === null
+        ? null
+        : await ctx.paso('cerrar_la_parte', () =>
+            cerrarLaParteCancelada(ctx.tx, {
+              organizacionId,
+              madreId: orden.madreId ?? '',
+              parteId: orden.id,
+              empleoId,
+              ahora: ctx.ahora,
+            }),
+          );
+    const mesaDeLaCuenta = deLaParte === null ? mesaId : deLaParte.mesaId;
+    const mesaLiberada = deLaParte === null ? mesaId !== null : deLaParte.mesaLiberada;
+
     ctx.auditar({
       entidadId: orden.id,
       payload: {
         motivo: entrada.motivo,
         estadoPrevio: orden.estado,
         comandasCanceladas: comandas.length,
-        mesaId,
+        mesaId: mesaDeLaCuenta,
         autorizadoPor,
+        ...(orden.madreId === null ? {} : { parteDeLaCuenta: orden.madreId }),
+        // El corte lo lee de aquí (`caja/corte/cancelaciones.ts`): todo lo vivo es pérdida.
+        ...(todoComoHecho ? { todoComoHecho: true } : {}),
       },
     });
 
     return {
       ordenId: orden.id,
-      mesaId,
-      mesaLiberada: mesaId !== null,
+      mesaId: mesaDeLaCuenta,
+      mesaLiberada,
       comandasCanceladas: comandas.length,
       yaEstabaCancelada: false,
     };

@@ -8,6 +8,18 @@
   "base": "cf12dcd",
   "permitidos": [
     {
+      "archivo": "apps/web/heredado/components/caja/MesasPendientesCierreDialog.jsx",
+      "porque": "DP-14.6 (medio 9): el diálogo de «No puedes cerrar caja» trae «Marcar libre» para las mesas sin dinero pendiente (en limpieza, o sin cuenta), con un aviso de error y otro de «Listo: ya puedes intentar el cierre otra vez.». La mesa cobrada ya no dice «Con venta activa». Las demás filas y el aviso de arriba no cambian.",
+      "testigos": [
+        "+ clase:text-sm",
+        "+ clase:text-xs",
+        "+ clase:text-center",
+        "+ clase:text-peligro",
+        "+ clase:py-2",
+        "+ texto:Listo: ya puedes intentar el cierre otra vez."
+      ]
+    },
+    {
       "archivo": "apps/web/heredado/components/common/AppLayout.jsx",
       "porque": "DP-11.1 (DP-D38): la carga de pantalla completa (al entrar con el PIN o recargar) deja el círculo girando suelto y es la carga larga del sistema: una tarjeta que dice qué carga («Cargando tu caja», «Cargando las mesas») con su barra, y Morfi asomado detrás si el negocio lo tiene encendido. Nada se ve antes de 600 ms. Y el <main> lleva min-w-0: como hijo de flex medía lo que su contenido más ancho, y en el teléfono una fila que no se encoge estiraba la página entera a lo ancho (Configuración → Apariencia: 543 px en un teléfono de 412). No cambia nada en tableta ni PC.",
       "testigos": [
@@ -697,6 +709,34 @@
       "archivo": "apps/web/heredado/pages/Productos.jsx",
       "porque": "DP-14.1-4: si la lectura de las opciones falla o vence, el botón «Opciones» lo dice («Reintentar opciones») y reintenta al tocarlo, en lugar de quedarse en «Cargando…» para siempre.",
       "testigos": ["+ aviso:No se pudieron leer las opciones. Reintentando…"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/caja/CierreDiarioDialog.jsx",
+      "porque": "DP-14.6-2: el rótulo de la utilidad neta dice «(sólo ventas con costo)» cuando parte de las ventas quedó fuera del margen.",
+      "testigos": ["- label:Utilidad neta est."]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/Sidebar.jsx",
+      "porque": "DP-14.6-8: el botón de sonido de este aparato también aparece con el menú colapsado (el pie se apila en columna).",
+      "testigos": ["- clase:'justify-center'", "+ clase:'flex-col", "+ clase:justify-center'"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/tickets/CorteTicket.jsx",
+      "porque": "DP-14.6: el PDF del corte trae «Efectivo esperado» y el rótulo parcial de la utilidad neta; sin dato dice «—».",
+      "testigos": ["- label:Utilidad neta est.", "+ label:Efectivo esperado"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/POS.jsx",
+      "porque": "DP-14.6-3: /pos pide las opciones del platillo como el mesero (diálogo de opciones) y el cajero las lee en la cuenta.",
+      "testigos": [
+        "+ aviso:No se pudo agregar el producto.",
+        "+ aviso:No pude leer las opciones de este platillo. Intenta de nuevo."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-14.6 (agente C): el escáner ya no se cierra con un código que no es de una mesa; su aviso lleva un id para que varios códigos seguidos no apilen el mismo aviso.",
+      "testigos": ["+ aviso:codigo-que-no-es-mesa"]
     }
   ]
 }

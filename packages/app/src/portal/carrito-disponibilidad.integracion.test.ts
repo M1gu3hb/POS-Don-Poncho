@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { exigirOk } from '../pruebas/negocio-real.ts';
 import { enviarElCarrito } from './carrito-comandos.ts';
+import { enviarPedidoDesdeQR } from './pedido.ts';
 import { huellaDelDispositivo } from './carrito.ts';
 import {
   PIMIENTA,
@@ -133,5 +134,78 @@ describe('lo que ya no se puede pedir del carrito compartido', () => {
     expect(roto.ok).toBe(false);
     expect(nombres(await caso.mirar(TELEFONO_A))).toEqual(['Taco de barbacoa', 'Agua de jamaica']);
     expect(await lineasDeLaCuenta(caso.mesaId)).toEqual([]);
+  });
+});
+
+/** El taco pasa a pedir su salsa (grupo obligatorio con «Verde»). */
+async function tacoConSalsaObligatoria(caso: Awaited<ReturnType<typeof mesaConPortal>>) {
+  const db = obtenerDb();
+  const org = caso.negocio.organizacionId;
+  const grupo = await db
+    .insertInto('modificadores')
+    .values({ organizacion_id: org, nombre: 'Salsa', obligatorio: true, tipo: 'unica' })
+    .returning('id')
+    .executeTakeFirstOrThrow();
+  await db
+    .insertInto('modificador_opciones')
+    .values([{ modificador_id: grupo.id, nombre: 'Verde' }])
+    .execute();
+  await db
+    .insertInto('producto_modificadores')
+    .values({ organizacion_id: org, producto_id: caso.taco, modificador_id: grupo.id })
+    .execute();
+}
+
+describe('DP-14.6 · la opción obligatoria en el carrito compartido (revisión del PR #9)', () => {
+  it('no entra sin su opción; la que ya estaba sin ella se aparta al enviar y lo demás sale', async () => {
+    const caso = await mesaConPortal();
+    await tacoConSalsaObligatoria(caso);
+    await caso.abrir(1);
+
+    // Al agregar: sin su salsa no entra (si entrara, trabaría el envío de toda la mesa).
+    const sin = await caso.agregar(TELEFONO_A, caso.taco, '1', 'sin cebolla');
+    expect(sin.ok ? null : sin.error.datos?.['regla']).toBe('OPCION_OBLIGATORIA');
+    expect(nombres(await caso.mirar(TELEFONO_A))).toEqual([]);
+
+    // Una que ya estaba sin ella (de un teléfono con la versión anterior, o de antes del cambio).
+    await obtenerDb()
+      .insertInto('carrito_mesa_lineas')
+      .values({
+        organizacion_id: caso.negocio.organizacionId,
+        mesa_id: caso.mesaId,
+        dispositivo_huella: huellaDelDispositivo(PIMIENTA, TELEFONO_A),
+        producto_id: caso.taco,
+        cantidad: '1',
+        notas: 'sin cebolla',
+      })
+      .execute();
+    exigirOk(await caso.agregar(TELEFONO_B, caso.agua), 'agregar agua');
+
+    const enviado = exigirOk(await caso.enviar(TELEFONO_B, true), 'enviar');
+    expect(enviado).toMatchObject({ enviado: true, noDisponibles: ['Taco de barbacoa'] });
+    expect((await lineasDeLaCuenta(caso.mesaId)).map((l) => l.producto_nombre)).toEqual([
+      'Agua de jamaica',
+    ]);
+    expect(nombres(await caso.mirar(TELEFONO_A))).toEqual([]);
+
+    // Con su salsa (como la pliega el portal en la nota), entra y sale.
+    exigirOk(await caso.agregar(TELEFONO_A, caso.taco, '1', 'Salsa: Verde · sin cebolla'), 'con');
+    expect(exigirOk(await caso.enviar(TELEFONO_A, true), 'enviar con salsa')).toMatchObject({
+      enviado: true,
+      noDisponibles: [],
+    });
+  });
+});
+
+describe('DP-14.6 · el pedido directo no deja sondear el menú oculto (revisión del PR #9)', () => {
+  it('un platillo oculto con su grupo obligatorio contesta como uno que no existe', async () => {
+    const caso = await mesaConPortal({ envian: 'comensales' });
+    await tacoConSalsaObligatoria(caso);
+    await caso.abrir(1);
+    await cambiarProducto(caso.taco, { visible_en_menu_digital: false });
+    const r = await caso.publico(enviarPedidoDesdeQR, {
+      items: [{ productoId: caso.taco, cantidad: '1', notas: '' }],
+    });
+    expect(r.ok ? null : r.error.datos?.['regla']).toBe('PRODUCTO_NO_ENCONTRADO');
   });
 });

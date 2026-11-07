@@ -21,6 +21,8 @@ export interface CancelacionesLeidas {
   readonly alcance: CancelacionesDeLaCaja['alcance'] | null;
   /** `true`: el servidor no las dio. `filas` va vacío y NO significa «sin cancelaciones». */
   readonly noSePudieronLeer: boolean;
+  /** DP-14.6 · Todas las del corte, contadas en SQL: la lista puede venir cortada, esto no. */
+  readonly total?: CancelacionesDeLaCaja['total'];
 }
 
 /** Lo que dice el corte en el lugar de la sección. Empieza como lo pidió Miguel. */
@@ -42,8 +44,8 @@ export async function leerCancelacionesSinTrabar(
   registrar: (error: unknown) => void = registrarElFallo,
 ): Promise<CancelacionesLeidas> {
   try {
-    const { filas, alcance } = await leer();
-    return { filas, alcance, noSePudieronLeer: false };
+    const { filas, alcance, total } = await leer();
+    return { filas, alcance, noSePudieronLeer: false, ...(total === undefined ? {} : { total }) };
   } catch (error: unknown) {
     registrar(error);
     return { filas: [], alcance: null, noSePudieronLeer: true };

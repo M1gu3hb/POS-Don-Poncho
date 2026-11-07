@@ -105,6 +105,31 @@ export function zonasDelNegocio(
 }
 
 /**
+ * DP-14.6 (QA1-2) · La zona con la que abre el diálogo de una mesa: la suya si es una de las zonas
+ * del negocio; si no (en blanco, o «Interior» en un negocio que sólo tiene «Salón»), la primera.
+ * Antes el desplegable de «Nueva mesa» se quedaba en blanco —su valor no estaba entre las opciones—
+ * y la mesa no se podía guardar con una zona que el negocio no tiene.
+ */
+export function zonaElegible(
+  zona: string | null | undefined,
+  zonas: readonly string[],
+  porOmision: string = ZONA_POR_OMISION,
+): string {
+  const limpia = typeof zona === 'string' ? zona.trim() : '';
+  if (limpia !== '' && zonas.includes(limpia)) return limpia;
+  return zonas[0] ?? porOmision;
+}
+
+/** Las opciones del desplegable: las del negocio y, si ya la tiene, la zona de la mesa. */
+export function opcionesDeZona(
+  zonas: readonly string[],
+  zonaActual: string | null | undefined,
+): readonly string[] {
+  const actual = typeof zonaActual === 'string' ? zonaActual.trim() : '';
+  return actual === '' || zonas.includes(actual) ? zonas : [...zonas, actual];
+}
+
+/**
  * Las zonas que de verdad tienen mesas en servicio, en el orden de `zonasConocidas`.
  * Una pestaña de una zona vacía —o que sólo tiene bajas— es una trampa.
  */

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { CancelacionDelCorte } from './cancelaciones.ts';
+import { avisoDeLoCortado, type CancelacionDelCorte } from './cancelaciones.ts';
 import { cancelacionesDeLaCaja } from './cancelaciones-leidas.ts';
 import { filtrarCancelaciones } from './filtrar-cancelaciones.ts';
 
@@ -92,5 +92,37 @@ describe('la lectura del servidor', () => {
     );
     servidorResponde({ cancelaciones: [sinPerdida] });
     await expect(cancelacionesDeLaCaja('s-1')).rejects.toThrow(/forma esperada/);
+  });
+});
+
+describe('DP-14.6 · la lista cortada se dice, con el total completo', () => {
+  const fila = {
+    tipo: 'orden' as const,
+    folio: null,
+    hora: null,
+    usuario: 'Rosa',
+    motivo: 'x',
+    producto: null,
+    montoCentavos: '1000',
+    mesa: 'Mesa 1',
+    perdidaCentavos: '0',
+    perdida: false,
+  };
+
+  it('si llegaron menos filas que las del corte, las tablas avisan cuántas hay de verdad', () => {
+    const aviso = avisoDeLoCortado([fila], {
+      cuantas: 501,
+      montoCentavos: '501000',
+      perdidaCentavos: '0',
+    });
+    expect(aviso).toContain('sólo se muestran 1 de 501');
+    expect(aviso).toContain('5,010.00');
+  });
+
+  it('si cupieron todas, no dice nada', () => {
+    expect(
+      avisoDeLoCortado([fila], { cuantas: 1, montoCentavos: '1000', perdidaCentavos: '0' }),
+    ).toBe('');
+    expect(avisoDeLoCortado([fila], undefined)).toBe('');
   });
 });

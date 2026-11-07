@@ -84,6 +84,7 @@ function hoja(extras: ExtrasDelServidor, cambios: Partial<HojaDelServidor> = {})
         totalCentavos: '225000',
         costoCentavos: '80000',
         lineasSinCosto: 0,
+        lineasSinReceta: 0,
         esServicio: false,
         familia: 'bebida',
         linea: null,
@@ -458,8 +459,31 @@ describe('DP-13.2 · el margen del corte sale sólo de lo que tiene costo comple
     const doc = documentoDelCorte(
       hoja(RESTAURANTE, {
         productos: [
-          { ...base, nombre: 'Agua', lineas: 2, lineasSinCosto: 2, costoCentavos: '0' },
-          { ...base, nombre: 'Combo', lineas: 3, lineasSinCosto: 1, costoCentavos: '10000' },
+          {
+            ...base,
+            nombre: 'Agua',
+            lineas: 2,
+            lineasSinCosto: 2,
+            lineasSinReceta: 2,
+            costoCentavos: '0',
+          },
+          {
+            ...base,
+            nombre: 'Combo',
+            lineas: 3,
+            lineasSinCosto: 1,
+            lineasSinReceta: 1,
+            costoCentavos: '10000',
+          },
+          // Con receta pero un insumo en cero: receta incompleta, aunque TODAS sus líneas cuenten.
+          {
+            ...base,
+            nombre: 'Sopa',
+            lineas: 2,
+            lineasSinCosto: 2,
+            lineasSinReceta: 0,
+            costoCentavos: '4000',
+          },
         ],
       }),
     );
@@ -470,6 +494,10 @@ describe('DP-13.2 · el margen del corte sale sólo de lo que tiene costo comple
       { tipo: 'texto', texto: '—, sin receta' },
     ]);
     expect(filas[1]?.slice(4)).toEqual([
+      { tipo: 'texto', texto: '—, receta incompleta' },
+      { tipo: 'texto', texto: '—, receta incompleta' },
+    ]);
+    expect(filas[2]?.slice(4)).toEqual([
       { tipo: 'texto', texto: '—, receta incompleta' },
       { tipo: 'texto', texto: '—, receta incompleta' },
     ]);

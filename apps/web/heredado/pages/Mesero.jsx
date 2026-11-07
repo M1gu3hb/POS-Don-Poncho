@@ -75,6 +75,7 @@ import {
   zonasDelNegocio,
 } from '~/cliente/mesas-del-mapa';
 import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
+import { opcionesParaElComando } from '~/venta/opciones-en-pos';
 import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
 import { solicitudesPorMesa } from '~/restaurante/globos-de-solicitud';
 import { SelectorDeVista } from '~/restaurante/SelectorDeVista';
@@ -867,6 +868,10 @@ function Mesero() {
           // `confirmarPersonalizacion`), que es lo que cocina lee.
           notas: item.notas || '',
         };
+        // DP-14.6-3 · La elección viaja también ESTRUCTURADA: el servidor la valida (una opción
+        // obligatoria sin elegir no entra) y la guarda sin tener que leerla de la nota.
+        const opciones = opcionesParaElComando({ modificadores: item._modificadores });
+        if (opciones.length > 0) linea.opciones = opciones;
         if (
           variableSnap?.tipo_venta === TIPO_VENTA.VARIABLE_MEDIDA &&
           variableSnap.unidad_variable
@@ -1262,6 +1267,9 @@ function Mesero() {
       <BarcodeScanner
         open={escaneandoQr}
         title="Escanear el QR de la mesa"
+        // DP-14.6: un código que no es de una mesa no cierra el escáner (en modo continuo sólo se
+        // cierra cuando es una mesa; el mismo código no se repite por 1.5 s).
+        continuous
         etiquetaDelRespaldo="Elegir la mesa"
         respaldo={
           <ElegirLaMesa
@@ -1276,7 +1284,7 @@ function Mesero() {
         onDetected={(codigo) => {
           const qr = tokenDelQrEscaneado(String(codigo || ''));
           if (qr === null) {
-            toast.error('Ese código no es el QR de una mesa.');
+            toast.error('Ese código no es el QR de una mesa.', { id: 'codigo-que-no-es-mesa' });
             return;
           }
           cerrarElEscaner();
