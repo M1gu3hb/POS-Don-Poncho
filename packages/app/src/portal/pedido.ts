@@ -120,6 +120,16 @@ export async function pedirEnLaMesa(
       ),
     ));
 
+  // Un producto de otra organización, archivado, u oculto del menú digital responde igual que uno
+  // inexistente, y ANTES de mirar sus opciones: si no, un grupo obligatorio de un platillo oculto
+  // contestaría otra cosa y dejaría sondear el catálogo con identificadores (revisión del PR #9).
+  if (items.some((item) => !productos.has(item.productoId))) {
+    throw new ErrorDominio(
+      'PRODUCTO_NO_ENCONTRADO',
+      'Uno de los productos ya no está disponible. Actualiza el menú y vuelve a intentar.',
+    );
+  }
+
   // DP-14.6-3 · Un platillo con un grupo obligatorio sin su elección no sale a cocina: el portal lo
   // pliega en la nota («Grupo: opción») y el servidor la lee; sin eso, se rechaza.
   const elegidas = await ctx.paso('opciones', () =>

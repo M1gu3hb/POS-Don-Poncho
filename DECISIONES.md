@@ -1330,6 +1330,10 @@ puerta los denuncia todos.
 - **Límites:** leer la nota falla con un nombre de opción que lleve coma o « · » (hoy ninguna de
   las 139 de Don Poncho). Guardar la elección hace que el cobro aplique el sustituto y el factor de
   inventario de cada opción: en Don Poncho ninguna opción los tiene (0 de 139) y no hay recetas.
+  En `/pos`, un platillo por peso que además tuviera opciones abre las opciones y no el peso (en
+  Don Poncho las dos barbacoas por kilo no tienen grupos). Revisión del PR #9: el carrito compartido
+  del portal ya no deja entrar la línea sin su opción, y la que ya estuviera se aparta al enviar
+  (como un producto oculto, PAR-1): una línea mala no traba a la mesa.
 - **Sin migración.** Lo hizo el agente D (Sonnet); el envío estructurado del mesero, la sesión
   principal.
 
@@ -1352,6 +1356,9 @@ puerta los denuncia todos.
   PIN de un gerente para esa cuenta (la misma autorización de cancelar, `para: 'cancelacion'`, sin
   tocar `identidad/`). Gerente, administrador y dueño reabren sin PIN. La reapertura deja su propia
   entrada en la auditoría. Congruente con DP-D51 y DP-D58.
+- **Límite:** la autorización de cancelar no es de un solo uso (cancelar ya es idempotente) y, por
+  compartir el `para`, la que un gerente dio para cancelar una cuenta sirve también para reabrirla
+  mientras no venza (dos minutos). Separarla pide un `para` propio en `identidad/`: para después.
 - Lo hizo el agente C (Sonnet).
 
 ## DP-D70 · El margen sólo es «conocido» si todo su costo lo es · 07-11-2026

@@ -97,6 +97,30 @@ describe('el sonido bloqueado (DP-13.2)', () => {
     expect(gestor.sonidoBloqueado()).toBe(false);
   });
 
+  it('revisión del PR #9 · si lo único bloqueado era la voz, al liberarla el aviso se entera (no se queda fijo)', async () => {
+    const escuchas = new Map<string, () => void>();
+    vi.stubGlobal('window', {
+      addEventListener: (tipo: string, escucha: () => void) => {
+        escuchas.set(tipo, escucha);
+      },
+      dispatchEvent: () => true,
+    });
+    const gestor = await gestorSinTocar();
+    // Un primer desbloqueo ya pasó (la pestaña ya sonó alguna vez).
+    gestor.desbloquearSonidos();
+    await vaciar();
+    // Después el navegador niega la voz: el aviso sale.
+    escuchas.get(gestor.EVENTO_VOZ_BLOQUEADA)?.();
+    expect(gestor.sonidoBloqueado()).toBe(true);
+    const aviso = vi.fn();
+    gestor.suscribirAlBloqueo(aviso);
+    // El siguiente gesto la libera: la pantalla tiene que saberlo para quitar el aviso.
+    gestor.desbloquearSonidos();
+    await vaciar();
+    expect(gestor.sonidoBloqueado()).toBe(false);
+    expect(aviso).toHaveBeenCalled();
+  });
+
   it('con un timbre pendiente, la voz negada espera a que el timbre termine (no se le encima)', async () => {
     const lanzados: string[] = [];
     const escuchas = new Map<string, () => void>();

@@ -5,7 +5,6 @@ import { enviarPedido } from './pedido.ts';
 import { crearOrden, agregarLinea } from '../venta/carrito.ts';
 import { comando } from '../produccion.ts';
 import { clave, exigirOk } from '../pruebas/negocio-real.ts';
-import { quitarDelCarrito } from '../portal/carrito-comandos.ts';
 import { TELEFONO_A, mesaConPortal } from '../portal/pruebas/mesa-con-portal.ts';
 
 /**
@@ -180,27 +179,18 @@ describe('el portal (envío del carrito)', () => {
       .execute();
 
     await portal.abrir(2);
-    const sinSalsa = exigirOk(
-      await portal.agregar(TELEFONO_A, portal.taco, '1', 'sin cebolla'),
-      'agregar',
-    );
-    const sin = await portal.enviar(TELEFONO_A, true);
+    // Sin su salsa no entra al carrito (revisión del PR #9: si entrara, trabaría el envío de toda
+    // la mesa; la que ya estuviera sin ella se aparta al enviar, `carrito-disponibilidad`).
+    const sin = await portal.agregar(TELEFONO_A, portal.taco, '1', 'sin cebolla');
     expect(codigo(sin)).toBe('OPCION_OBLIGATORIA');
     const quedan = await db
       .selectFrom('carrito_mesa_lineas')
       .select('id')
       .where('mesa_id', '=', portal.mesaId)
       .execute();
-    expect(quedan, 'el carrito sigue intacto').toHaveLength(1);
+    expect(quedan, 'no entró al carrito').toHaveLength(0);
 
-    // Se quita la línea sin salsa y se pide otra CON ella (como la pliega el portal en la nota).
-    exigirOk(
-      await portal.publico(quitarDelCarrito, {
-        dispositivo: TELEFONO_A,
-        lineaId: sinSalsa.lineas[0]?.id ?? '',
-      }),
-      'quitar',
-    );
+    // Con ella (como la pliega el portal en la nota), entra y sale con su elección guardada.
     exigirOk(
       await portal.agregar(TELEFONO_A, portal.taco, '1', 'Salsa: Verde · sin cebolla'),
       'agregar con salsa',

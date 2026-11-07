@@ -276,8 +276,18 @@ export default function POS() {
     // el que tiene un grupo obligatorio sin su elección. Si la lectura de opciones falla, se dice.
     if (pideOpciones(product, undefined) !== 'no') {
       try {
-        const opciones = await queryClient.ensureQueryData(consultaDeLasOpciones());
-        const conOpciones = conSusOpciones([product], opciones)[0];
+        let conOpciones = conSusOpciones(
+          [product],
+          await queryClient.ensureQueryData(consultaDeLasOpciones()),
+        )[0];
+        // La pista del producto manda sobre la lectura guardada (DP-D65, como el mesero): si dice
+        // que tiene opciones y lo guardado no conoce sus grupos (se los pusieron después), relee.
+        if (product.tiene_opciones === true && !tieneGruposParaOfrecer(conOpciones)) {
+          conOpciones = conSusOpciones(
+            [product],
+            await queryClient.fetchQuery(consultaDeLasOpciones()),
+          )[0];
+        }
         if (tieneGruposParaOfrecer(conOpciones)) {
           setProductoConOpciones(conOpciones);
           return true;
@@ -753,6 +763,8 @@ export default function POS() {
         producto={productoConOpciones}
         onClose={() => setProductoConOpciones(null)}
         onConfirm={handleConfirmOpciones}
+        // /pos no guarda notas por línea: el campo no se ofrece (se perdían en silencio).
+        conNotas={false}
       />
 
       {/* 6B / 1.K — Modal para capturar cantidad de productos variables. */}

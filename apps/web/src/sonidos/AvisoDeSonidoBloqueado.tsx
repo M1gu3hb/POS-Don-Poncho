@@ -20,24 +20,30 @@ import { sonidoBloqueado, suscribirAlBloqueo } from './gestor';
  * encabezado («Conectar teléfono» en Cocina, por ejemplo), y en un aparato donde el audio no llega a
  * correr el aviso no se va; si fuera un botón, el que le tocara debajo quedaría tapado para siempre.
  * El toque pasa a lo de abajo y, de paso, desbloquea. Conserva el aspecto del botón de antes.
+ *
+ * La región viva (`role="status"`) está SIEMPRE montada y el texto entra en ella: un lector de
+ * pantalla no anuncia una región que nace ya con su texto (revisión del PR #9).
  */
 export function AvisoDeSonidoBloqueado() {
   const bloqueado = useSyncExternalStore(suscribirAlBloqueo, sonidoBloqueado, () => false);
-  if (!bloqueado) return null;
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-(--espacio-3) z-50 flex justify-center">
-      <p
-        role="status"
-        aria-live="polite"
-        className={buttonVariants({
-          variant: 'outline',
-          size: 'sm',
-          className: 'gap-(--espacio-2) shadow-2',
-        })}
-      >
-        <VolumeX className="size-4" aria-hidden />
-        Sonido apagado · toca para activar
-      </p>
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed inset-x-0 top-(--espacio-3) z-50 flex justify-center"
+    >
+      {bloqueado ? (
+        <p
+          className={buttonVariants({
+            variant: 'outline',
+            size: 'sm',
+            className: 'gap-(--espacio-2) shadow-2',
+          })}
+        >
+          <VolumeX className="size-4" aria-hidden />
+          Sonido apagado · toca para activar
+        </p>
+      ) : null}
     </div>
   );
 }

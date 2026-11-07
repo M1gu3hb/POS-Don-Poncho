@@ -894,6 +894,22 @@ ni toca producción: integro su diff, verifico y hago el commit.
   diálogo de reabrir sin `ordenId` no ofrece salida (no ocurre: una cuenta pedida tiene orden); al
   unir mesas, la nota de un «Quiero ordenar» de la principal se reemplaza por la del aviso del
   carrito.
+- **Revisión adversarial del PR #9** (dos revisores Sonnet, sólo lectura: servidor y pantallas). Sin
+  altos. Arreglado, cada uno con su prueba en rojo y su mutante (banco 10 de 10):
+  - el carrito compartido del portal dejaba entrar una línea sin su opción obligatoria y entonces el
+    envío trababa a toda la mesa: ya no entra, y la que ya estuviera se aparta al enviar (media);
+  - el pedido directo del portal miraba las opciones antes que el menú y dejaba distinguir un
+    platillo oculto (baja);
+  - `/pos` con el mapa de opciones guardado y viejo no ofrecía el grupo nuevo de un platillo: relee
+    en vivo con la pista del producto, como el mesero (media);
+  - `/pos` ofrecía «Notas» en el diálogo de opciones y las perdía: ya no lo ofrece (media);
+  - el aviso del sonido se quedaba fijo si lo único bloqueado era la voz, y su región viva nacía con
+    el texto (un lector de pantalla no la anunciaba) (bajas).
+  Quedan como límites (DECISIONES): el platillo por peso con opciones en `/pos` (DP-D67), la
+  autorización compartida de cancelar y reabrir (DP-D69). Sin cambio: el escáner de `/pos` canta
+  «agregado» al abrir el diálogo (igual que con el peso); la voz espera a que el audio corra; la
+  spec de «Nueva mesa» no recrea la zona ausente (la cubre la unitaria); el diálogo de reabrir no
+  dice por qué vuelve a pedir el PIN.
 - La galería (corrida 42355052424, `actualizar_galeria`): cambian 36 retratos, `cocina`, `lista`,
   `mesas` y `productos` en los nueve estilos, sólo el pie de la barra colapsada (el botón del
   sonido, debajo del avatar). La lista del menú pierde esa altura: a 720 px el último ícono queda

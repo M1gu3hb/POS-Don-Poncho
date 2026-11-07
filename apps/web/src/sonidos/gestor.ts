@@ -129,12 +129,15 @@ function alCorrerElAudio(): void {
   const sonando = pendiente === null ? null : arrancar(pendiente);
   const primeraVez = !precargado;
   precargado = true;
+  const eraLaVoz = vozBloqueada;
   if (vozBloqueada || primeraVez) {
     vozBloqueada = false;
     if (sonando === null) avisarALaVoz();
     else void sonando.then(avisarALaVoz);
   }
-  if (pendiente !== null || primeraVez) avisarDelBloqueo();
+  // También si lo único bloqueado era la voz: si no, el aviso «Sonido apagado» se quedaba fijo
+  // (revisión del PR #9).
+  if (pendiente !== null || primeraVez || eraLaVoz) avisarDelBloqueo();
   if (!primeraVez) return;
   // Lo que más suena y lo que va antes de recargar (entrar, salir), ya sintetizado. Si este
   // aparato no suena (Apagado, el portal callado), no se gasta en nada.

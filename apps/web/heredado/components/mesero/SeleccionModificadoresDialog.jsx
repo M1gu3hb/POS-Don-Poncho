@@ -24,8 +24,15 @@ import { formatCurrency } from '@/utils/financialUtils';
  *  - open: boolean
  *  - onClose(): cerrar sin agregar
  *  - onConfirm({ modificadores, notas }): callback al agregar
+ *  - conNotas: si ofrece el campo de notas libres (DP-14.6: /pos no las guarda y no lo ofrece)
  */
-export default function SeleccionModificadoresDialog({ producto, open, onClose, onConfirm }) {
+export default function SeleccionModificadoresDialog({
+  producto,
+  open,
+  onClose,
+  onConfirm,
+  conNotas = true,
+}) {
   // grupoId -> Set(opcionId) para múltiple, o opcionId string para única
   const [selecciones, setSelecciones] = useState({});
   const [notas, setNotas] = useState('');
@@ -208,18 +215,20 @@ export default function SeleccionModificadoresDialog({ producto, open, onClose, 
           ))}
 
           {/* Notas libres */}
-          <div>
-            <Label className="text-sm font-bold flex items-center gap-1">
-              Notas <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
-            </Label>
-            <Textarea
-              value={notas}
-              onChange={(e) => setNotas(e.target.value)}
-              placeholder="Ej. sin cebolla, sin aguacate, poca salsa…"
-              rows={2}
-              className="mt-1 text-sm"
-            />
-          </div>
+          {conNotas ? (
+            <div>
+              <Label className="text-sm font-bold flex items-center gap-1">
+                Notas <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
+              </Label>
+              <Textarea
+                value={notas}
+                onChange={(e) => setNotas(e.target.value)}
+                placeholder="Ej. sin cebolla, sin aguacate, poca salsa…"
+                rows={2}
+                className="mt-1 text-sm"
+              />
+            </div>
+          ) : null}
 
           {error && (
             <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-peligro/10 border border-peligro/30">

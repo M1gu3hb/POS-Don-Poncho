@@ -40,14 +40,16 @@ describe('el aviso', () => {
     const codigo = leer(AVISO);
     expect(codigo).toMatch(/Sonido apagado · toca para activar/);
     expect(codigo).toMatch(/useSyncExternalStore\(suscribirAlBloqueo, sonidoBloqueado/);
-    expect(codigo).toMatch(/if \(!bloqueado\) return null;/);
+    // La región viva siempre está; el texto entra sólo mientras el gestor diga que hay bloqueo.
+    expect(codigo).toMatch(/\{bloqueado \? \(/);
   });
 
   it('DP-14.6-8 · no se queda con el toque: lo de abajo sigue a la mano (el proveedor desbloquea con cualquier toque)', () => {
     // Se queda hasta que algo suene, y arriba: si fuera un botón, taparía para siempre el botón del
     // encabezado que le tocara debajo en un aparato donde el audio no llega a correr.
     const codigo = leer(AVISO);
-    expect(codigo).toMatch(/role="status"/);
+    // En el ELEMENTO (el comentario del archivo también lo nombra).
+    expect(codigo).toMatch(/<div\s+role="status"\s+aria-live="polite"/);
     expect(codigo).not.toMatch(/pointer-events-auto/);
     expect(codigo).not.toMatch(/<Button\b/);
     expect(codigo).not.toMatch(/onClick=/);
