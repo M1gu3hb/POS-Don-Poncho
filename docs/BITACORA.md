@@ -882,6 +882,11 @@ ni toca producción: integro su diff, verifico y hago el commit.
   - **El corte heredado** pasa el total de las cancelaciones al ticket: «se muestran X de N» (pendiente
     de D).
   - La prueba del total de las cancelaciones suma también una pérdida distinta de cero (revisión de D).
+  - **El aviso «Sonido apagado» ya no se queda con el toque** (la CI del PR #9, `estaciones-de-cocina`
+    en tableta): arriba tapaba «Conectar teléfono» de Cocina y, como ahora se queda hasta que algo
+    suene, en un aparato donde el audio no corre lo habría tapado para siempre. Es un aviso
+    (`role="status"`, `pointer-events-none`) con el mismo aspecto; tocar la pantalla desbloquea y
+    el toque pasa a lo de abajo. Contrato y las dos specs del sonido al día; banco 3 de 3.
 - Revisado en los datos de Don Poncho (la exportación del 06-11): ninguna de sus 139 opciones lleva
   coma ni efecto de inventario, y no hay recetas; los límites de leer la opción de la nota y de
   guardar la elección (DP-D67) no le afectan hoy.
@@ -889,5 +894,9 @@ ni toca producción: integro su diff, verifico y hago el commit.
   diálogo de reabrir sin `ordenId` no ofrece salida (no ocurre: una cuenta pedida tiene orden); al
   unir mesas, la nota de un «Quiero ordenar» de la principal se reemplaza por la del aviso del
   carrito.
+- La galería (corrida 42355052424, `actualizar_galeria`): cambian 36 retratos, `cocina`, `lista`,
+  `mesas` y `productos` en los nueve estilos, sólo el pie de la barra colapsada (el botón del
+  sonido, debajo del avatar). La lista del menú pierde esa altura: a 720 px el último ícono queda
+  bajo el pie (antes la luna ya lo tapaba a medias). Para el QA del 14.7.
 - Para la base propia (después de la mudanza, nunca en la compartida), el dato de DP-D71:
   `insert into motivos_merma (clave, etiqueta, giro, imputable) values ('por_cancelacion', 'Por cancelación', 'restaurante', false) on conflict (clave) do nothing;`

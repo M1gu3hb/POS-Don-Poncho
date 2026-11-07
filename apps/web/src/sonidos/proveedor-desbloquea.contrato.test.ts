@@ -36,11 +36,20 @@ describe('el proveedor desbloquea con cualquier gesto', () => {
 });
 
 describe('el aviso', () => {
-  it('dice «Sonido apagado · toca para activar» sólo mientras el gestor lo diga, y tocarlo desbloquea', () => {
+  it('dice «Sonido apagado · toca para activar» sólo mientras el gestor lo diga', () => {
     const codigo = leer(AVISO);
     expect(codigo).toMatch(/Sonido apagado · toca para activar/);
     expect(codigo).toMatch(/useSyncExternalStore\(suscribirAlBloqueo, sonidoBloqueado/);
     expect(codigo).toMatch(/if \(!bloqueado\) return null;/);
-    expect(codigo).toMatch(/onClick=\{\(\) => \{\s*desbloquearSonidos\(\);/);
+  });
+
+  it('DP-14.6-8 · no se queda con el toque: lo de abajo sigue a la mano (el proveedor desbloquea con cualquier toque)', () => {
+    // Se queda hasta que algo suene, y arriba: si fuera un botón, taparía para siempre el botón del
+    // encabezado que le tocara debajo en un aparato donde el audio no llega a correr.
+    const codigo = leer(AVISO);
+    expect(codigo).toMatch(/role="status"/);
+    expect(codigo).not.toMatch(/pointer-events-auto/);
+    expect(codigo).not.toMatch(/<Button\b/);
+    expect(codigo).not.toMatch(/onClick=/);
   });
 });

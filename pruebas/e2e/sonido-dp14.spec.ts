@@ -77,7 +77,8 @@ test.describe('el sonido (DP-14.6-8)', () => {
       .filter({ visible: true })
       .first();
     await expect(barra).toBeVisible();
-    const aviso = lupita.getByRole('button', { name: AVISO });
+    // DP-14.6-8 · Un aviso (`status`), no un botón: el toque pasa a lo de abajo.
+    const aviso = lupita.getByRole('status').filter({ hasText: AVISO });
 
     await test.step('cocina deja lista la comanda: el aviso sale ARRIBA y no tapa la barra del carrito', async () => {
       await cocinaDejaLista(tono, duena, ordenId, 1);
@@ -98,6 +99,14 @@ test.describe('el sonido (DP-14.6-8)', () => {
         return encima !== null && el.contains(encima);
       });
       expect(libre, 'Algo está encima de la barra del carrito.').toBe(true);
+      // Y el aviso no se queda con el toque: arriba hay botones del encabezado que, si no, quedarían
+      // tapados mientras el audio no corra.
+      const pasa = await aviso.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        const debajo = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return debajo !== null && !el.contains(debajo);
+      });
+      expect(pasa, 'El aviso se queda con el toque y tapa lo de abajo.').toBe(true);
     });
 
     await test.step('un gesto con el audio SIN correr no quita el aviso ni gasta el timbre', async () => {

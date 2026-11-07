@@ -35,8 +35,9 @@ principal lo revisó, lo integró y añadió lo que faltaba.
 - **Menores:** las cancelaciones del corte cuentan y suman en SQL y avisan «se muestran X de N»;
   el PDF del corte dice «—» sin dato y trae «Efectivo esperado»; el CSV de Registros deja Costo,
   Utilidad y Margen en blanco a quien no ve márgenes; un POST a una ruta de `/api` que no existe da
-  404 (`apps/web/app/api/[...ruta]/route.ts`); el sonido no gasta el timbre hasta que el audio corre
-  y su botón sale con el menú colapsado y en `/cocina-telefono`; el escáner no se cierra con un
+  404 (`apps/web/app/api/[...ruta]/route.ts`); el sonido no gasta el timbre hasta que el audio corre,
+  su aviso va arriba y no se queda con el toque (`AvisoDeSonidoBloqueado.tsx`: no tapa los botones
+  del encabezado), y su botón sale con el menú colapsado y en `/cocina-telefono`; el escáner no se cierra con un
   código que no es de mesa; la lista sin cámara dice zona y estado; «Nueva mesa» siempre trae una
   zona; «Marcar libre» en el Cierre del día; un carrito caducado avisa al comensal.
 
