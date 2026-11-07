@@ -36,3 +36,31 @@ export function estadoDeLaCocina(lectura: {
   if (lectura.comprobando || !lectura.leida) return 'comprobando';
   return lectura.fallo === null ? 'comprobada' : 'sin_comprobar';
 }
+
+/**
+ * DP-14.6-7 · «Comprobando la cocina…» tiene tiempo límite. Si la lectura no contesta en 8 s el
+ * diálogo deja de esperar: dice que no pudo comprobarla, ofrece «Reintentar» y, como no se sabe qué
+ * ya salió, la cancelación se hace con el PIN de un gerente, dueño o administrador, y el diálogo
+ * manda `sinComprobarLaCocina`: el servidor cuenta TODO lo vivo como ya hecho (pérdida en el corte
+ * y merma en el almacén) y exige esa autorización (`restaurante/cancelar-con-permiso.ts`).
+ */
+export const TIEMPO_LIMITE_DE_LA_COCINA_MS = 8_000;
+
+/** El estado de la cocina una vez pasado (o no) el tiempo límite de la comprobación. */
+export function cocinaTrasElTiempo(
+  cocina: EstadoDeLaCocina | undefined,
+  vencido: boolean,
+): EstadoDeLaCocina | undefined {
+  return vencido && cocina === 'comprobando' ? 'sin_comprobar' : cocina;
+}
+
+/**
+ * ¿Cancelar exige ya el PIN de un gerente porque la cocina no se pudo comprobar? Igual si la
+ * lectura falló de inmediato que si no contestó a tiempo.
+ */
+export function exigePinPorLaCocina(
+  cocina: EstadoDeLaCocina | undefined,
+  vencido: boolean,
+): boolean {
+  return cocina === 'sin_comprobar' || (vencido && cocina === 'comprobando');
+}

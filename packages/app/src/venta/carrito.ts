@@ -12,6 +12,13 @@ import {
   entradaQuitarLinea,
   entradaVaciarOrden,
 } from './esquemas.ts';
+import {
+  guardarLosModificadores,
+  instantaneaDeLasOpciones,
+  prepararLasOpciones,
+  textoDeLasOpciones,
+  type EleccionPedida,
+} from '../restaurante/opciones-de-la-linea.ts';
 import { valorarPresentacion } from './presentacion.ts';
 import { valorarLinea } from './valorar.ts';
 
@@ -130,6 +137,8 @@ export async function ejecutarAgregarLinea(
     // propiedad» de «la propiedad en undefined», y quien llama tiene la segunda.
     readonly unidad?: string | undefined;
     readonly presentacionId?: string | undefined;
+    /** DP-14.6-3 · La elección de opciones del platillo (estructurada). */
+    readonly opciones?: readonly EleccionPedida[] | undefined;
   },
 ): Promise<{ lineaId: string; subtotalCentavos: string; cantidad: string }> {
   const { organizacionId } = ctx.ambito;
@@ -148,6 +157,17 @@ export async function ejecutarAgregarLinea(
   }
 
   const valorada = valorarLinea(producto, entrada.cantidad, entrada.unidad);
+  // DP-14.6-3 · Un platillo con un grupo obligatorio sin su elección no entra a la cuenta.
+  const [elegidas = []] = await ctx.paso('opciones', () =>
+    prepararLasOpciones(ctx.tx, organizacionId, [
+      {
+        productoId: producto.id,
+        productoNombre: producto.nombre,
+        notas: '',
+        opciones: entrada.opciones ?? [],
+      },
+    ]),
+  );
   const visual = await repoOrdenes.siguienteOrdenVisual(ctx.tx, organizacionId, ordenId);
 
   const lineaId = await ctx.paso('insertar_linea', () =>
@@ -169,6 +189,20 @@ export async function ejecutarAgregarLinea(
       ordenVisual: visual,
     }),
   );
+
+  if (elegidas.length > 0) {
+    await ctx.paso('guardar_opciones', async () => {
+      await guardarLosModificadores(ctx.tx, [{ lineaId, elegidas }]);
+      // Además de la forma consultable, el texto en `notas`: lo que ya leen la cuenta, el ticket y
+      // la reimpresión sin saber de opciones.
+      await ctx.tx
+        .updateTable('orden_lineas')
+        .set({ opciones: instantaneaDeLasOpciones(elegidas), notas: textoDeLasOpciones(elegidas) })
+        .where('organizacion_id', '=', organizacionId)
+        .where('id', '=', lineaId)
+        .execute();
+    });
+  }
 
   return {
     lineaId,

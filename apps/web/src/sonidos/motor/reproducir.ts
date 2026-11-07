@@ -89,11 +89,14 @@ export const bufferFor = (recipe: Recipe, tune: Tune, rate: number, variant = 0)
  * Añadido en POS Don Poncho (DP-11.3): crea y reanuda el contexto de audio DENTRO del toque que
  * lo desbloquea. Safari sólo deja sonar si esto pasa en el mismo gesto, no después de un `await`.
  */
-export function prepararAudio(): Promise<void> {
+export function prepararAudio(): Promise<boolean> {
   const context = audio();
   // Cualquier estado que no sea «running»: también el «interrupted» de iOS (bloqueo de pantalla,
   // llamada, cambio de app), que el tipo de TypeScript no trae. DP-13.2: con tiempo límite.
-  return context.state === 'running' ? Promise.resolve() : encender(context);
+  // DP-14.6-8: `resume()` que resuelve no es audio corriendo: se pregunta el estado de verdad.
+  return context.state === 'running'
+    ? Promise.resolve(true)
+    : encender(context).then(() => context.state === 'running');
 }
 
 /** `resume()` sin gesto puede no resolverse nunca: se rinde a tiempo (`tiempo-limite.ts`). */

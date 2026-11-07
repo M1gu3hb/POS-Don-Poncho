@@ -16,7 +16,11 @@ import {
 } from 'lucide-react';
 import StatCard from '@/components/common/StatCard';
 import { EsqueletoDeCifras } from '~/cliente/EstadosDeCarga';
-import { SIN_RECETA, subtituloDelMargen } from '~/restaurante/margen-de-las-ventas';
+import {
+  SIN_RECETA,
+  rotuloDeLaUtilidadNeta,
+  subtituloDelMargen,
+} from '~/restaurante/margen-de-las-ventas';
 
 /**
  * Resumen del día — vista unificada para la pestaña "Resumen" de Caja.
@@ -159,7 +163,11 @@ export default function ResumenDelDia({
               icon={PiggyBank}
               title="Utilidad neta"
               value={enPesos(utilidadNeta)}
-              subtitle="Bruta − Gastos"
+              subtitle={
+                safeResumen.economia?.estado === 'parcial'
+                  ? rotuloDeLaUtilidadNeta(true).replace('Utilidad neta est. ', '')
+                  : 'Bruta − Gastos'
+              }
             />
           </>
         )}

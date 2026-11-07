@@ -164,6 +164,57 @@ export async function ordenDeMesa(
   return fila;
 }
 
+/** Una cuenta por cancelar: la de una mesa, o una PARTE de una cuenta dividida (DP-14.6). */
+export interface OrdenPorCancelar extends OrdenDeMesa {
+  /** La madre, si es una parte: las partes nacen sin mesa y su mesa es la de su madre. */
+  readonly madreId: string | null;
+}
+
+/**
+ * DP-14.6 · El cargador de `cancelar_orden`: como `ordenDeMesa`, pero acepta una PARTE de una
+ * cuenta dividida (`orden_padre_id`, sin `mesa_id`). Con el mismo candado. Para una parte,
+ * `mesaId` es la mesa de su madre; `madreId` dice que lo es.
+ */
+export async function ordenParaCancelar(
+  tx: Transaccion,
+  organizacionId: string,
+  ordenId: string,
+): Promise<OrdenPorCancelar> {
+  const parte = await tx
+    .selectFrom('ordenes')
+    .select('orden_padre_id as madreId')
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', ordenId)
+    .executeTakeFirst();
+  if (parte?.madreId == null)
+    return { ...(await ordenDeMesa(tx, organizacionId, ordenId)), madreId: null };
+
+  const fila = await tx
+    .selectFrom('ordenes as o')
+    .innerJoin('ordenes as m', (j) =>
+      j.onRef('m.id', '=', 'o.orden_padre_id').onRef('m.organizacion_id', '=', 'o.organizacion_id'),
+    )
+    .select([
+      'o.id as id',
+      'o.estado as estado',
+      'o.sucursal_id as sucursalId',
+      'm.mesa_id as mesaId',
+      'o.estrategia_captura as estrategiaCaptura',
+      'o.codigo_caja as codigoCaja',
+      'o.notas_alergias as notasAlergias',
+      'o.celebracion_especial as celebracionEspecial',
+      'o.tipo_celebracion as tipoCelebracion',
+    ])
+    .where('o.organizacion_id', '=', organizacionId)
+    .where('o.id', '=', ordenId)
+    .forUpdate('o')
+    .executeTakeFirst();
+  if (fila === undefined) {
+    throw new ErrorDominio('ORDEN_NO_ENCONTRADA', 'Esa cuenta ya no existe.');
+  }
+  return { ...fila, madreId: parte.madreId };
+}
+
 /**
  * La MISMA orden, pero sin exigir que sea de sala.
  *

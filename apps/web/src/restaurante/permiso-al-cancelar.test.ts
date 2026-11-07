@@ -4,7 +4,10 @@ import { ErrorApi } from '~/cliente/api';
 
 import {
   NO_PUDE_COMPROBAR_LA_COCINA,
+  TIEMPO_LIMITE_DE_LA_COCINA_MS,
+  cocinaTrasElTiempo,
   estadoDeLaCocina,
+  exigePinPorLaCocina,
   pideElPinDelSupervisor,
 } from './permiso-al-cancelar.ts';
 
@@ -49,5 +52,32 @@ describe('el aviso de la cocina, nunca a ciegas', () => {
 
   it('leída, el aviso es el de lo que ya salió (o ninguno)', () => {
     expect(estadoDeLaCocina({ comprobando: false, leida: true, fallo: null })).toBe('comprobada');
+  });
+});
+
+describe('DP-14.6-7 · «Comprobando la cocina…» no es eterno', () => {
+  it('el tiempo límite es de 8 segundos', () => {
+    expect(TIEMPO_LIMITE_DE_LA_COCINA_MS).toBe(8_000);
+  });
+
+  it('vencido el tiempo, lo que seguía comprobando pasa a «sin comprobar»', () => {
+    expect(cocinaTrasElTiempo('comprobando', true)).toBe('sin_comprobar');
+    expect(cocinaTrasElTiempo('comprobando', false)).toBe('comprobando');
+  });
+
+  it('el tiempo no toca una lectura que ya contestó', () => {
+    expect(cocinaTrasElTiempo('comprobada', true)).toBe('comprobada');
+    expect(cocinaTrasElTiempo('sin_comprobar', true)).toBe('sin_comprobar');
+    expect(cocinaTrasElTiempo(undefined, true)).toBeUndefined();
+  });
+
+  it('sin respuesta, cancelar pide el PIN de un gerente; con respuesta no lo adelanta', () => {
+    expect(exigePinPorLaCocina('comprobando', true)).toBe(true);
+    expect(exigePinPorLaCocina('comprobando', false)).toBe(false);
+    // Falle de inmediato o por tiempo, sin comprobar es lo mismo: PIN de un gerente.
+    expect(exigePinPorLaCocina('sin_comprobar', false)).toBe(true);
+    expect(exigePinPorLaCocina('sin_comprobar', true)).toBe(true);
+    expect(exigePinPorLaCocina('comprobada', true)).toBe(false);
+    expect(exigePinPorLaCocina('comprobada', false)).toBe(false);
   });
 });

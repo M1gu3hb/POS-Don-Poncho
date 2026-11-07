@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { entradaOpciones } from '../restaurante/esquemas.ts';
+
 /**
  * Las entradas de los comandos de venta.
  *
@@ -49,6 +51,11 @@ export const entradaAgregarLinea = z.object({
    * y descuenta `factor × cantidad` en unidad base. El precio lo pone el servidor.
    */
   presentacionId: z.uuid().optional(),
+  /**
+   * DP-14.6-3 · Lo que se eligió de cada grupo de opciones del platillo (/pos las pide como el
+   * mesero). Un platillo con un grupo obligatorio sin elegir se rechaza (`OPCION_OBLIGATORIA`).
+   */
+  opciones: entradaOpciones.optional(),
 });
 
 /** Quitar TODAS las líneas de un borrador: lo que dejó un cobro que no se completó. */

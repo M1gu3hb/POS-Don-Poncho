@@ -57,6 +57,11 @@ export const entradaLiberarMesa = z.object({
   grupo: z.enum(['separar', 'mantener']).optional(),
 });
 
+/** DP-14.6-3 · La elección de opciones de una línea: por grupo, los ids elegidos. */
+export const entradaOpciones = z
+  .array(z.object({ grupoId: z.uuid(), opcionIds: z.array(z.uuid()).max(30) }))
+  .max(20);
+
 export const entradaEnviarPedido = z.object({
   ordenId: z.uuid(),
   lineas: z
@@ -76,6 +81,12 @@ export const entradaEnviarPedido = z.object({
          * de la cocina.
          */
         tiempoServicio: z.number().int().min(1).max(6).optional(),
+        /**
+         * DP-14.6-3 · Lo que se eligió de cada grupo de opciones del platillo, ESTRUCTURADO. Sin
+         * esto el servidor lee la elección de la nota («Grupo: opción»), pero un grupo obligatorio
+         * sin elegir se rechaza de cualquier forma (`OPCION_OBLIGATORIA`).
+         */
+        opciones: entradaOpciones.optional(),
       }),
     )
     .min(1)
@@ -119,6 +130,12 @@ export const entradaCancelarOrden = z.object({
    * cuenta (`/api/identidad/supervisor` con `ordenId` y `para: 'cancelacion'`).
    */
   autorizacion: z.string().min(20).max(2000).optional(),
+  /**
+   * DP-14.6-7 · La Caja no pudo leer lo que la cocina ya preparó (la lectura venció o falló). Se
+   * cancela igual, con el PIN de un gerente o del dueño (`autorizacion`), y TODO lo vivo de la
+   * cuenta cuenta como ya hecho: pérdida en el corte y merma en el almacén.
+   */
+  sinComprobarLaCocina: z.literal(true).optional(),
 });
 
 export const entradaSolicitarCuenta = z.object({

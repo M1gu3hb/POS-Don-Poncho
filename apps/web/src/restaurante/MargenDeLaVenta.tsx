@@ -2,6 +2,7 @@ import {
   RECETA_INCOMPLETA,
   SIN_RECETA,
   economiaDeLaVenta,
+  sePintaElMargen,
   textoDelMargen,
   type VentaParaElMargen,
 } from './margen-de-las-ventas';
@@ -18,6 +19,7 @@ export function MargenEnLaLista({
   readonly venta: VentaParaElMargen;
   readonly colorear: boolean;
 }) {
+  if (!sePintaElMargen(venta)) return null;
   const economia = economiaDeLaVenta(venta);
   if (economia.estado === 'oculto') return null;
   if (economia.estado === 'sin_receta' || economia.estado === 'receta_incompleta') {

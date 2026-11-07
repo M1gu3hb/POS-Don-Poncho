@@ -86,22 +86,49 @@ export function configurarSonidos(nueva: ConfiguracionDeSonido): void {
   configuracion = nueva;
 }
 
-/** Lo llama el primer toque de la pestaña: desde ahí el navegador deja sonar. */
+/** Las cosas de una sola vez de cuando el audio por fin corre: lo que más suena, ya sintetizado. */
+let precargado = false;
+
+/**
+ * Lo llama CADA gesto de la pestaña (clic, tecla, `pointerdown`/`pointerup`, `touchstart`/`touchend`):
+ * desde ahí el navegador deja sonar.
+ *
+ * DP-14.6-8 · El timbre pendiente y la voz negada NO se gastan hasta que el `AudioContext` está de
+ * verdad en `running`: `resume()` puede resolverse sin que el audio corra (iOS lo deja
+ * «interrumpido»), y gastar el pendiente ahí lo perdía en silencio. Si no corre, el pendiente y el
+ * aviso «Sonido apagado» se quedan y el siguiente gesto lo vuelve a intentar.
+ */
 export function desbloquearSonidos(): void {
   // En CADA gesto, no sólo el primero: iOS deja el audio «interrumpido» al bloquear la pantalla
   // o cambiar de app, y sólo se reanuda dentro de un gesto.
+  let corriendo: Promise<boolean>;
   try {
-    desbloquearAudio().catch(anotarFallo);
+    corriendo = desbloquearAudio().catch((error: unknown) => {
+      anotarFallo(error);
+      return false;
+    });
   } catch (error: unknown) {
     anotarFallo(error);
+    corriendo = Promise.resolve(false);
   }
-  const primeraVez = !desbloqueado;
-  desbloqueado = true;
+  // Sólo cuenta como desbloqueado cuando el audio corre de verdad: si no, un `sonar()` posterior
+  // sigue guardando su pendiente y enseñando el aviso, en vez de reproducir sobre un contexto mudo.
+  void corriendo.then((corre) => {
+    if (!corre) return;
+    desbloqueado = true;
+    alCorrerElAudio();
+  });
+}
+
+/** El audio corre de verdad: ahora sí suena lo pendiente y habla la voz negada. */
+function alCorrerElAudio(): void {
   // DP-13.2: lo que quiso sonar antes de este toque suena ahora, y la voz negada se reintenta
   // cuando ese timbre TERMINA, como en `sonarAntesDeHablar`: nunca se le encima.
   const pendiente = pendienteDelBloqueo;
   pendienteDelBloqueo = null;
   const sonando = pendiente === null ? null : arrancar(pendiente);
+  const primeraVez = !precargado;
+  precargado = true;
   if (vozBloqueada || primeraVez) {
     vozBloqueada = false;
     if (sonando === null) avisarALaVoz();

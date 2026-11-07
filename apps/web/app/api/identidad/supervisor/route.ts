@@ -13,9 +13,9 @@ import { conSesion } from '~/servidor/http';
  * descuento presenta al aplicarse. La comprobación es la de `autorizarConPin`, con el
  * mismo bloqueo por intentos que la entrada.
  *
- * Y el mismo LÍMITE POR ORIGEN que la entrada (`LIMITES.entrar`, sin tocarlo): probar el
- * PIN del gerente desde la caja es un barrido igual que probarlo en la pantalla de
- * acceso, y cuenta en el mismo cubo. Como en la entrada, el PIN CORRECTO devuelve su intento
+ * Y su propio LÍMITE POR ORIGEN (`LIMITES.supervisor`, DP-14.6): probar el PIN del gerente desde
+ * la caja es un barrido igual que probarlo en la pantalla de acceso, pero cuenta en SU cubo: los
+ * fallos de aquí no gastan la cuota de entrar de toda la IP del restaurante. Como en la entrada, el PIN CORRECTO devuelve su intento
  * (QA2-001, DP-13.5): todo el local sale por la misma IP, y las autorizaciones buenas de una
  * noche llena dejaban a todos sin poder entrar.
  *
@@ -56,7 +56,7 @@ const MENSAJE_POR_MOTIVO = {
 
 export async function POST(peticion: Request): Promise<Response> {
   const entorno = validarEntorno(process.env);
-  const permiso = await permitir('entrar', peticion.headers, entorno.PIN_PEPPER);
+  const permiso = await permitir('supervisor', peticion.headers, entorno.PIN_PEPPER);
   if (!permiso.ok) {
     return Response.json(
       {
@@ -111,7 +111,7 @@ export async function POST(peticion: Request): Promise<Response> {
         { status: ESTADO_POR_MOTIVO[resultado.motivo], headers: { 'cache-control': 'no-store' } },
       );
     }
-    await devolver('entrar', peticion.headers, entorno.PIN_PEPPER);
+    await devolver('supervisor', peticion.headers, entorno.PIN_PEPPER);
     return { autorizacion: resultado.autorizacion, rol: resultado.rol, vence: resultado.vence };
   });
 }

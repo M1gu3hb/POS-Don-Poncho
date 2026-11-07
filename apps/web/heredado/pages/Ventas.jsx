@@ -35,9 +35,11 @@ import TicketViewerDialog from '@/components/tickets/TicketViewerDialog';
 import { useConfig } from '@/lib/ConfigContext';
 import { MargenEnLaLista } from '~/restaurante/MargenDeLaVenta';
 import {
+  RECETA_INCOMPLETA,
   SIN_RECETA,
   economiaDeLaVenta,
   resumenDeLasVentas,
+  sePintaElMargen,
   seVeElMargen,
   textoDelMargen,
   textoDelResumenDeVentas,
@@ -125,9 +127,17 @@ export default function Ventas() {
   const resumen = resumenDeLasVentas(filtered);
   // El costo, la utilidad y el margen de la venta abierta: «—, sin receta» si no tiene receta.
   const economia = selectedVenta ? economiaDeLaVenta(selectedVenta) : null;
-  const sinReceta = economia?.estado === 'sin_receta';
+  // DP-14.6-2 · Sin receta o con receta incompleta: el costo, la utilidad y el margen no se pintan
+  // como si se conocieran. QA1-11: una venta cancelada no vendió nada, no tiene margen que pintar.
+  const textoSinCosto =
+    economia?.estado === 'sin_receta'
+      ? SIN_RECETA
+      : economia?.estado === 'receta_incompleta'
+        ? RECETA_INCOMPLETA
+        : null;
+  const sinReceta = textoSinCosto !== null;
   // DP-13.2 · Quien no ve márgenes (el cajero) no lee un costo de «$0.00» que no es el suyo.
-  const seVe = seVeElMargen(economia);
+  const seVe = seVeElMargen(economia) && sePintaElMargen(selectedVenta ?? {});
 
   const handleLimpiar = async () => {
     setLimpiando(true);
@@ -378,21 +388,21 @@ export default function Ventas() {
                     <div>
                       <p className="text-xs text-muted-foreground">Costo</p>
                       <p className={`font-bold ${colorize ? 'text-advertencia' : ''}`}>
-                        {sinReceta ? SIN_RECETA : formatCurrency(selectedVenta.costo_total_snapshot)}
+                        {sinReceta ? textoSinCosto : formatCurrency(selectedVenta.costo_total_snapshot)}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Utilidad</p>
                       <p className={`font-bold ${colorize ? 'text-exito' : ''}`}>
                         {sinReceta
-                          ? SIN_RECETA
+                          ? textoSinCosto
                           : formatCurrency(selectedVenta.utilidad_bruta_snapshot)}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Margen</p>
                       <p className="font-bold">
-                        {sinReceta ? SIN_RECETA : textoDelMargen(economia?.margen ?? null)}
+                        {sinReceta ? textoSinCosto : textoDelMargen(economia?.margen ?? null)}
                       </p>
                     </div>
                   </>

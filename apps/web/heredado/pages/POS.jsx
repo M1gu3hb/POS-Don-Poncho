@@ -13,6 +13,7 @@ import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
 import PropinaDialog from '@/components/propinas/PropinaDialog';
 import SafeBoundary from '@/components/common/SafeBoundary';
 import CantidadVariableDialog from '@/components/mesero/CantidadVariableDialog';
+import SeleccionModificadoresDialog from '@/components/mesero/SeleccionModificadoresDialog';
 import BarcodeScanner from '@/components/barcode/BarcodeScanner';
 import {
   Dialog,
@@ -31,6 +32,9 @@ import { printDocument } from '@/lib/print';
 import { tipsEnabled, getPorcentajesSugeridos } from '@/utils/tipsUtils';
 import { TIPO_VENTA, esProductoVariable } from '@/utils/tipoVentaUtils';
 import { sonar } from '~/sonidos/gestor';
+import { consultaDeLasOpciones } from '~/restaurante/use-opciones-de-los-platillos';
+import { conSusOpciones, pideOpciones } from '~/restaurante/opciones-de-los-platillos';
+import { opcionesParaElComando, tieneGruposParaOfrecer } from '~/venta/opciones-en-pos';
 import { useEscanerDelDocumento } from '~/cliente/use-escaner-del-documento';
 
 /** Centavos del servidor (llegan como cadena) a los pesos que la interfaz pinta. */
@@ -136,6 +140,8 @@ export default function POS() {
   const [showTicket, setShowTicket] = useState(false);
   // 6B / 1.K — Modal de cantidad para productos variables.
   const [productoVariable, setProductoVariable] = useState(null);
+  // DP-14.6-3 · El platillo con opciones que el cajero está eligiendo.
+  const [productoConOpciones, setProductoConOpciones] = useState(null);
   // === Propina (Esencial/Operativo: flujo tradicional) ===
   const [showPropina, setShowPropina] = useState(false);
   const [propina, setPropina] = useState({
@@ -220,7 +226,8 @@ export default function POS() {
         nombre: l.productoNombre,
         precio_venta: centavosAPesos(l.precioUnitarioCentavos),
         cantidad,
-        notas: '',
+        // DP-14.6-3 · Lo elegido de las opciones, para que el cajero lo lea en la cuenta.
+        notas: estadoVenta?.opcionesPorLinea?.[l.id] ?? '',
         ...(esMedida || esPorcion
           ? {
               tipo_venta: tipo,
@@ -233,7 +240,7 @@ export default function POS() {
           : {}),
       };
     });
-  }, [cotizacion, productosPorId]);
+  }, [cotizacion, productosPorId, estadoVenta]);
 
   const refrescarCarrito = () => queryClient.invalidateQueries({ queryKey: ['venta_borrador'] });
 
@@ -265,6 +272,22 @@ export default function POS() {
    * rechazar nada, así que el aviso siempre era cierto.
    */
   const addToCart = async (product) => {
+    // DP-14.6-3 · Un platillo con opciones las pide primero (como el mesero): el servidor rechaza
+    // el que tiene un grupo obligatorio sin su elección. Si la lectura de opciones falla, se dice.
+    if (pideOpciones(product, undefined) !== 'no') {
+      try {
+        const opciones = await queryClient.ensureQueryData(consultaDeLasOpciones());
+        const conOpciones = conSusOpciones([product], opciones)[0];
+        if (tieneGruposParaOfrecer(conOpciones)) {
+          setProductoConOpciones(conOpciones);
+          return true;
+        }
+      } catch (e) {
+        console.error('[POS] opciones de los platillos:', e);
+        toast.error('No pude leer las opciones de este platillo. Intenta de nuevo.');
+        return false;
+      }
+    }
     // 6B / 1.K — Si es variable, abrir modal de captura. NO se agrupa con
     // líneas anteriores (cada línea variable es independiente).
     if (esProductoVariable(product)) {
@@ -276,7 +299,10 @@ export default function POS() {
       // Se sigue agrupando: repetir un producto sube la cantidad de SU línea en
       // vez de abrir otra, que es lo que el cajero ve hoy. Lo que cambia es
       // quién lo escribe y quién pone el precio.
-      const existente = cart.find((i) => i.producto_id === product.id && !i.tipo_venta);
+      const existente =
+        product.tiene_opciones === true
+          ? undefined
+          : cart.find((i) => i.producto_id === product.id && !i.tipo_venta);
       if (existente) {
         await api.comandos.ejecutar('/api/venta/cambiar-cantidad', {
           ordenId,
@@ -324,6 +350,25 @@ export default function POS() {
     // El aviso espera a que la línea esté escrita. Cantarlo antes dejaba al
     // cajero escaneando la compra entera con la certeza de que iba entrando.
     if (await addToCart(producto)) toast.success(`${producto.nombre} agregado`);
+  };
+
+  /** DP-14.6-3 · El cajero eligió las opciones del platillo: va a la cuenta con ellas. */
+  const handleConfirmOpciones = async (eleccion) => {
+    const producto = productoConOpciones;
+    setProductoConOpciones(null);
+    if (!producto) return;
+    try {
+      await api.comandos.ejecutar('/api/venta/agregar-linea', {
+        ordenId: await asegurarOrden(),
+        productoId: producto.id,
+        cantidad: aCantidad(1),
+        opciones: opcionesParaElComando(eleccion),
+      });
+      await refrescarCarrito();
+      sonar('agregar');
+    } catch (e) {
+      toast.error(e?.message || 'No se pudo agregar el producto.');
+    }
   };
 
   /**
@@ -702,6 +747,13 @@ export default function POS() {
           </div>
         </div>
       )}
+
+      <SeleccionModificadoresDialog
+        open={!!productoConOpciones}
+        producto={productoConOpciones}
+        onClose={() => setProductoConOpciones(null)}
+        onConfirm={handleConfirmOpciones}
+      />
 
       {/* 6B / 1.K — Modal para capturar cantidad de productos variables. */}
       <CantidadVariableDialog

@@ -44,6 +44,41 @@ export interface EstadoVenta {
   readonly cotizacion: CotizacionVisible | null;
   /** `null` = no hay caja abierta en esta terminal; la pantalla lo dice antes de cobrar. */
   readonly sesionCajaId: string | null;
+  /**
+   * DP-14.6-3 · Lo que se eligió de las opciones de cada línea («Salsa: Verde»), por id de línea:
+   * el cajero lo lee en la cuenta. Sin opciones, la línea no sale aquí.
+   */
+  readonly opcionesPorLinea: Readonly<Record<string, string>>;
+}
+
+/** El texto de las opciones elegidas de cada línea (la forma consultable, no la nota). */
+async function opcionesDeLasLineas(
+  tx: Transaccion,
+  lineaIds: readonly string[],
+): Promise<Readonly<Record<string, string>>> {
+  if (lineaIds.length === 0) return {};
+  const filas = await tx
+    .selectFrom('orden_linea_modificadores')
+    .select(['orden_linea_id', 'modificador_nombre', 'opcion_nombre'])
+    .where('orden_linea_id', 'in', [...lineaIds])
+    .orderBy('created_at')
+    .orderBy('id')
+    .execute();
+  const porLinea = new Map<string, Map<string, string[]>>();
+  for (const f of filas) {
+    const grupos = porLinea.get(f.orden_linea_id) ?? new Map<string, string[]>();
+    grupos.set(f.modificador_nombre, [
+      ...(grupos.get(f.modificador_nombre) ?? []),
+      f.opcion_nombre,
+    ]);
+    porLinea.set(f.orden_linea_id, grupos);
+  }
+  return Object.fromEntries(
+    [...porLinea].map(([id, grupos]) => [
+      id,
+      [...grupos].map(([g, o]) => `${g}: ${o.join(', ')}`).join(' · '),
+    ]),
+  );
 }
 
 /**
@@ -70,7 +105,7 @@ export const estadoDeVenta = definirComando<Transaccion, typeof entradaEstadoVen
 
     const ordenId = await resolverOrden(ctx.tx, organizacionId, terminalId, entrada.ordenId);
     if (ordenId === null) {
-      return { cotizacion: null, sesionCajaId: caja?.id ?? null };
+      return { cotizacion: null, sesionCajaId: caja?.id ?? null, opcionesPorLinea: {} };
     }
 
     const { cotizacion } = await ctx.paso('cotizar', () =>
@@ -79,6 +114,10 @@ export const estadoDeVenta = definirComando<Transaccion, typeof entradaEstadoVen
     return {
       cotizacion: cotizacionPara(ctx.ambito.rol, cotizacion),
       sesionCajaId: caja?.id ?? null,
+      opcionesPorLinea: await opcionesDeLasLineas(
+        ctx.tx,
+        cotizacion.lineas.map((l) => l.id),
+      ),
     };
   },
 });
@@ -111,6 +150,8 @@ export interface TicketImpreso {
     readonly unidad: string;
     readonly precioUnitarioCentavos: string;
     readonly importeCentavos: string;
+    /** DP-14.6-3 · Lo elegido de las opciones («Salsa: Verde»), o vacío. */
+    readonly opciones: string;
   }[];
   readonly subtotalCentavos: string;
   readonly descuentoCentavos: string;
@@ -155,6 +196,10 @@ export const ticketDeOrden = definirComando<Transaccion, typeof entradaTicket, T
       repoOrdenes.pagosDeOrden(ctx.tx, organizacionId, entrada.ordenId),
     ]);
 
+    const opciones = await opcionesDeLasLineas(
+      ctx.tx,
+      lineas.map((l) => l.id),
+    );
     return {
       serie: orden.serie,
       folio: orden.folio === null ? null : orden.folio.toString(),
@@ -168,6 +213,7 @@ export const ticketDeOrden = definirComando<Transaccion, typeof entradaTicket, T
         unidad: l.unidad,
         precioUnitarioCentavos: l.precioUnitarioCentavos.toString(),
         importeCentavos: l.subtotalCentavos.toString(),
+        opciones: opciones[l.id] ?? '',
       })),
       subtotalCentavos: orden.subtotalCentavos.toString(),
       descuentoCentavos: orden.descuentoCentavos.toString(),

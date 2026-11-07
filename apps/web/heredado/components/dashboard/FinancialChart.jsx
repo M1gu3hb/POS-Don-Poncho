@@ -17,7 +17,7 @@ import {
 import { format, subDays, startOfMonth, startOfYear, isAfter, isSameDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useIsDark } from '@/lib/ThemeContext';
-import { economiaDeLaVenta, notaDeLasVentasSinReceta } from '~/restaurante/margen-de-las-ventas';
+import { economiaDeLaVenta, notaDeLasVentasFuera } from '~/restaurante/margen-de-las-ventas';
 
 const PERIODOS = [
   { key: 'hoy', label: 'Hoy' },
@@ -174,6 +174,7 @@ export default function FinancialChart({ ventas = [], gastos = [] }) {
     // DP-12.6: las ventas SIN RECETA tienen el costo desconocido. Su importe entra en «Ventas»,
     // pero no en costo, utilidad ni margen (antes sumaban «utilidad = venta», un 100 % falso).
     let sinReceta = 0;
+    let recetaIncompleta = 0;
 
     // Pre-fill buckets so empty days show
     const cursor = new Date(start);
@@ -196,8 +197,14 @@ export default function FinancialChart({ ventas = [], gastos = [] }) {
       // SOLO ventas reales (sin propina). v.total ya excluye propina_monto.
       const ventaReal = N(v.total);
       buckets[k].ventas += ventaReal;
-      if (economiaDeLaVenta(v).estado === 'sin_receta') {
+      const estadoDelCosto = economiaDeLaVenta(v).estado;
+      if (estadoDelCosto === 'sin_receta') {
         sinReceta += 1;
+        return;
+      }
+      // DP-14.6-2 · La cuenta con receta incompleta tampoco entra al costo, la utilidad ni el margen.
+      if (estadoDelCosto === 'receta_incompleta') {
+        recetaIncompleta += 1;
         return;
       }
       const costo = N(v.costo_total_snapshot);
@@ -240,8 +247,9 @@ export default function FinancialChart({ ventas = [], gastos = [] }) {
     );
     tot.margen = tot.ventasConCosto > 0 ? (tot.utilidad / tot.ventasConCosto) * 100 : 0;
     tot.sinReceta = sinReceta;
+    tot.recetaIncompleta = recetaIncompleta;
     // Todas las ventas del periodo sin receta: costo, utilidad y margen no existen.
-    tot.sinCostoConocido = sinReceta > 0 && tot.ventasConCosto === 0;
+    tot.sinCostoConocido = sinReceta + recetaIncompleta > 0 && tot.ventasConCosto === 0;
 
     return { data: arr, totales: tot };
   }, [ventas, gastos, periodo]);
@@ -308,9 +316,13 @@ export default function FinancialChart({ ventas = [], gastos = [] }) {
             raw
           />
         </div>
-        {totales.sinReceta > 0 && (
+        {totales.sinReceta + totales.recetaIncompleta > 0 && (
           <p className="text-[11px] text-muted-foreground mb-3" data-ventas-sin-receta>
-            {notaDeLasVentasSinReceta(totales.sinReceta)}: su importe está en «Ventas», pero no
+            {notaDeLasVentasFuera({
+              sinReceta: totales.sinReceta,
+              recetaIncompleta: totales.recetaIncompleta,
+            })}
+            : su importe está en «Ventas», pero no
             entra en el costo, la utilidad ni el margen.
           </p>
         )}

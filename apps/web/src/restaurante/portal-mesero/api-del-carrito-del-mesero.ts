@@ -78,10 +78,21 @@ export function borrarElPedido(mesaId: string) {
  * `reabrirCuenta` (DP-13.3): la cuenta de la mesa ya se pidió y el mesero eligió reabrirla para
  * mandar este pedido; el servidor reabre y envía en la misma transacción.
  */
-export function enviarACocina(mesaId: string, notaGeneral: string, reabrirCuenta = false) {
+export function enviarACocina(
+  mesaId: string,
+  notaGeneral: string,
+  reabrirCuenta = false,
+  /** DP-14.6 · El PIN de un gerente, si la mesa la atiende otro mesero. */
+  autorizacion?: string,
+) {
   return invocarComando<{ readonly enviado: boolean; readonly ronda: number }>(
     '/api/restaurante/carrito-enviar',
-    { mesaId, notaGeneral, ...(reabrirCuenta ? { reabrirCuenta: true } : {}) },
+    {
+      mesaId,
+      notaGeneral,
+      ...(reabrirCuenta ? { reabrirCuenta: true } : {}),
+      ...(autorizacion === undefined ? {} : { autorizacion }),
+    },
   );
 }
 

@@ -4,6 +4,11 @@ import { ErrorDominio, PAQUETES_PORTAL } from '@morphiqpos/contracts';
 import type { repoVentaCatalogo } from '@morphiqpos/data';
 
 import { cotizar } from '../venta/cotizar.ts';
+import {
+  guardarLosModificadores,
+  instantaneaDeLasOpciones,
+  prepararLasOpciones,
+} from '../restaurante/opciones-de-la-linea.ts';
 import { definirComandoPublico, type ContextoPortal } from './definicion-publica.ts';
 import { enviarACocina, type ItemParaCocina } from './estaciones.ts';
 import { moverMesaDelPortal } from './escrituras.ts';
@@ -115,6 +120,20 @@ export async function pedirEnLaMesa(
       ),
     ));
 
+  // DP-14.6-3 · Un platillo con un grupo obligatorio sin su elección no sale a cocina: el portal lo
+  // pliega en la nota («Grupo: opción») y el servidor la lee; sin eso, se rechaza.
+  const elegidas = await ctx.paso('opciones', () =>
+    prepararLasOpciones(
+      ctx.tx,
+      ctx.ambito.organizacionId,
+      items.map((item) => ({
+        productoId: item.productoId,
+        productoNombre: productos.get(item.productoId)?.nombre ?? '',
+        notas: item.notas,
+      })),
+    ),
+  );
+
   const visual = await siguienteOrdenVisual(ctx, orden.id);
   const paraCocina: ItemParaCocina[] = [];
 
@@ -135,6 +154,19 @@ export async function pedirEnLaMesa(
     const lineaId = await ctx.paso(`insertar_linea_${indice.toString()}`, () =>
       insertarLinea(ctx, orden.id, producto, item, visual + indice),
     );
+
+    const suyas = elegidas[indice - 1] ?? [];
+    await ctx.paso(`guardar_opciones_${indice.toString()}`, async () => {
+      await guardarLosModificadores(ctx.tx, [{ lineaId, elegidas: suyas }]);
+      const instantanea = instantaneaDeLasOpciones(suyas);
+      if (instantanea === null) return;
+      await ctx.tx
+        .updateTable('orden_lineas')
+        .set({ opciones: instantanea })
+        .where('organizacion_id', '=', ctx.ambito.organizacionId)
+        .where('id', '=', lineaId)
+        .execute();
+    });
 
     paraCocina.push({
       ordenLineaId: lineaId,

@@ -27,7 +27,27 @@ import { planearConsumo } from '../venta/cobrar.ts';
  *     el corte lo dice «Por cancelación». La ficha 27 pide al maestro sembrar la clave propia.
  */
 
-export const MOTIVO_DE_LA_MERMA = 'platillo_rehecho';
+/**
+ * DP-14.6 · Lo que canceló el CLIENTE no es culpa del empleado: el motivo no puede ser
+ * imputable. `platillo_rehecho` SÍ lo es (un platillo que el cocinero tuvo que rehacer) y se queda
+ * para ese caso. La clave propia es `por_cancelacion` (restaurante, no imputable); es un DATO de
+ * `motivos_merma` que se siembra aparte (`insert` en la entrega). Mientras no exista, la merma usa
+ * `prueba_cocina` —existente, no imputable—, de modo que cancelar nunca se traba ni se imputa.
+ */
+export const MOTIVO_DE_LA_MERMA = 'por_cancelacion';
+export const MOTIVO_SI_FALTA_LA_CLAVE = 'prueba_cocina';
+
+/** La clave que se escribe: la propia si ya está sembrada y activa, y si no la existente. */
+async function motivoDeLaMerma(tx: Transaccion): Promise<string> {
+  const propia = await tx
+    .selectFrom('motivos_merma')
+    .select('clave')
+    .where('clave', '=', MOTIVO_DE_LA_MERMA)
+    .where('activo', '=', true)
+    .where('imputable', '=', false)
+    .executeTakeFirst();
+  return propia === undefined ? MOTIVO_SI_FALTA_LA_CLAVE : MOTIVO_DE_LA_MERMA;
+}
 export const NOTA_DE_LA_MERMA = 'Por cancelación';
 
 interface Contexto {
@@ -100,6 +120,7 @@ async function registrar(
     hecho,
   );
   const nota = `${NOTA_DE_LA_MERMA} · ${porque}`.slice(0, 300);
+  const motivo = await motivoDeLaMerma(ctx.tx);
   for (const m of plan) {
     await sql`
       insert into existencias (organizacion_id, almacen_id, insumo_id, cantidad)
@@ -120,7 +141,7 @@ async function registrar(
       )
       select ${m.organizacionId}, ${m.almacenId}, ${m.insumoId}, 'merma',
              -(${m.cantidad}::numeric), ${m.unidad}, i.costo_unitario_centavos,
-             ${referencia.tipo}, ${referencia.id}, ${MOTIVO_DE_LA_MERMA}, ${nota}, ${ctx.empleoId}
+             ${referencia.tipo}, ${referencia.id}, ${motivo}, ${nota}, ${ctx.empleoId}
         from insumos i
        where i.organizacion_id = ${m.organizacionId} and i.id = ${m.insumoId}
     `.execute(ctx.tx);
@@ -128,13 +149,31 @@ async function registrar(
   return plan.length;
 }
 
-/** Al cancelar la cuenta: lo hecho de cada platillo vivo (lo anulado aparte ya salió al anularse). */
+/** DP-14.6-7 · Sin poder comprobar la cocina: TODO platillo vivo de la cuenta, entero. */
+async function todoDeLaCuenta(ctx: Contexto, ordenId: string): Promise<Map<string, string>> {
+  const filas = await ctx.tx
+    .selectFrom('orden_lineas')
+    .select(['id', 'cantidad'])
+    .where('organizacion_id', '=', ctx.organizacionId)
+    .where('orden_id', '=', ordenId)
+    .where('anulada_en', 'is', null)
+    .execute();
+  return new Map(filas.map((f) => [f.id, f.cantidad]));
+}
+
+/**
+ * Al cancelar la cuenta: lo hecho de cada platillo vivo (lo anulado aparte ya salió al anularse).
+ * Con `todoComoHecho` (la cocina no se pudo comprobar y un gerente lo autorizó), todo lo vivo.
+ */
 export async function mermaDeLaCuentaCancelada(
   ctx: Contexto,
   ordenId: string,
   motivo: string,
+  todoComoHecho = false,
 ): Promise<number> {
-  const hecho = await hechoDeLaCuenta(ctx, ordenId);
+  const hecho = todoComoHecho
+    ? await todoDeLaCuenta(ctx, ordenId)
+    : await hechoDeLaCuenta(ctx, ordenId);
   return registrar(ctx, ordenId, hecho, { tipo: 'orden', id: ordenId }, motivo);
 }
 

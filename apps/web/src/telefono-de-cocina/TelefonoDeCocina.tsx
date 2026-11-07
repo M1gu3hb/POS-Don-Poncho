@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChefHat, Check, Flame, Volume2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { DialogoDelSonido } from '~/configuracion/DialogoDelSonido';
 import { fraseNuevoPedidoCocina, speak, speakSample } from '@/lib/voiceAlert';
 import { cantidadParaMostrar } from '~/restaurante/peso';
 import { haceCuanto } from '~/restaurante/vista-de-solicitudes';
@@ -58,6 +59,8 @@ function fraseDe(comanda: ComandaDelTelefono): string {
 export function TelefonoDeCocina({ token }: { readonly token: string }) {
   const clienteDeConsultas = useQueryClient();
   const [sonidoActivo, setSonidoActivo] = useState(false);
+  // DP-14.6-8 · El volumen de ESTE aparato, a la mano también aquí (no hay menú que lo traiga).
+  const [ajusteDelSonido, setAjusteDelSonido] = useState(false);
   const [enCurso, setEnCurso] = useState<AccionDelTelefono | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
   const anunciadas = useRef<ReadonlySet<string> | null>(null);
@@ -169,7 +172,21 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
   const posibles = accionesPosibles(comanda?.estado ?? null);
   return (
     <main className="flex min-h-dvh flex-col gap-(--espacio-3) p-(--espacio-3)">
-      <p className="text-lg font-semibold">{pantalla.data.estacion.nombre}</p>
+      <div className="flex items-center justify-between gap-(--espacio-2)">
+        <p className="text-lg font-semibold">{pantalla.data.estacion.nombre}</p>
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          aria-label="Sonido de este aparato"
+          onClick={() => {
+            setAjusteDelSonido(true);
+          }}
+        >
+          <Volume2 aria-hidden />
+        </Button>
+      </div>
+      <DialogoDelSonido abierto={ajusteDelSonido} alCambiar={setAjusteDelSonido} />
       {pantalla.error === null ? null : <Aviso tono="atencion" titulo={pantalla.error.message} />}
       {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
       {comanda === null ? (

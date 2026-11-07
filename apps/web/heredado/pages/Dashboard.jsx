@@ -41,7 +41,7 @@ import { RecetasPendientes } from '~/restaurante/RecetasPendientes';
 import { claves } from '~/cliente/claves-de-consulta';
 import {
   economiaDelPeriodo,
-  notaDeLasVentasSinReceta,
+  notaDeLasVentasFuera,
   subtituloDelMargen,
 } from '~/restaurante/margen-de-las-ventas';
 import { EsqueletoDeCifras, EsqueletoDeFilas } from '~/cliente/EstadosDeCarga';
@@ -432,7 +432,7 @@ export default function Dashboard() {
                 stats.utilidadNeta === null
                   ? 'sin receta'
                   : stats.economia.estado === 'parcial'
-                    ? `sin contar ${notaDeLasVentasSinReceta(stats.economia.sinReceta)}`
+                    ? `sin contar ${notaDeLasVentasFuera(stats.economia)}`
                     : undefined
               }
               color={stats.utilidadNeta === null ? 'slate' : stats.utilidadNeta >= 0 ? 'green' : 'rose'}

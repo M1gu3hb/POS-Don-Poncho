@@ -33,7 +33,8 @@ const NO_SE_CANCELA: Readonly<Record<string, string>> = {
   pagada: 'Esa cuenta ya se cobró: un cobro se devuelve con un reembolso, no se cancela.',
   parcialmente_pagada:
     'Esa cuenta ya tiene pagos: lo cobrado se devuelve con un reembolso, no se cancela.',
-  dividida: 'Esa cuenta se dividió: se cancela (o se cobra) cada una de sus partes.',
+  dividida:
+    'Esa cuenta se dividió: no se cancela entera. Cancela (o cobra) cada una de sus partes.',
   reembolsada: 'Esa cuenta ya se cobró y se devolvió: no hay nada que cancelar.',
   parcialmente_reembolsada: 'Esa cuenta se cobró y se devolvió en parte: no se cancela.',
   absorbida: 'Esa cuenta se unió a otra mesa: se cancela la cuenta de la mesa principal.',
@@ -117,12 +118,25 @@ export async function exigirPermisoParaCancelar(
   ctx: Contexto,
   ordenId: string,
   autorizacion: string | undefined,
+  /**
+   * DP-14.6-7 · La cocina no se pudo comprobar y todo cuenta como ya hecho: pide el PIN aunque la
+   * cuenta no se haya pedido y aunque el negocio apagara el PIN al cancelar (es pérdida firmada).
+   */
+  sinComprobarLaCocina = false,
 ): Promise<string | null> {
   const { organizacionId, empleoId, rol } = ctx.ambito;
+  // Una PARTE de una cuenta dividida no tiene mesa: la tiene su madre (DP-14.6).
   const cuenta = await ctx.tx
     .selectFrom('ordenes as o')
+    .leftJoin('ordenes as ma', (join) =>
+      join
+        .onRef('ma.id', '=', 'o.orden_padre_id')
+        .onRef('ma.organizacion_id', '=', 'o.organizacion_id'),
+    )
     .leftJoin('mesas as m', (join) =>
-      join.onRef('m.id', '=', 'o.mesa_id').onRef('m.organizacion_id', '=', 'o.organizacion_id'),
+      join
+        .on(sql<boolean>`m.id = coalesce(o.mesa_id, ma.mesa_id)`)
+        .onRef('m.organizacion_id', '=', 'o.organizacion_id'),
     )
     .select([
       'o.estado as estado',
@@ -131,6 +145,10 @@ export async function exigirPermisoParaCancelar(
       'o.empleado_atiende_id as atiendeLaCuenta',
       'm.empleado_atiende_id as atiendeLaMesa',
       'm.empleado_asignado_id as asignadoALaMesa',
+      'ma.id as madreId',
+      'ma.codigo_caja as codigoDeLaMadre',
+      'ma.precuentas_impresas as impresasDeLaMadre',
+      'ma.empleado_atiende_id as atiendeLaMadre',
     ])
     .where('o.organizacion_id', '=', organizacionId)
     .where('o.id', '=', ordenId)
@@ -138,9 +156,14 @@ export async function exigirPermisoParaCancelar(
   if (cuenta === undefined) {
     throw new ErrorDominio('ORDEN_NO_ENCONTRADA', 'Esa cuenta ya no existe.');
   }
-  const absorbidas = await absorbidasPor(ctx.tx, organizacionId, ordenId);
+  const absorbidas = await absorbidasPor(ctx.tx, organizacionId, cuenta.madreId ?? ordenId);
 
-  const suya = [cuenta.atiendeLaCuenta, cuenta.atiendeLaMesa, cuenta.asignadoALaMesa];
+  const suya = [
+    cuenta.atiendeLaCuenta,
+    cuenta.atiendeLaMadre,
+    cuenta.atiendeLaMesa,
+    cuenta.asignadoALaMesa,
+  ];
   if (rol === 'mesero' && !suya.includes(empleoId)) {
     throw new Rechazo('SIN_PERMISO', 'denegado', {
       codigo: 'SIN_PERMISO',
@@ -159,10 +182,12 @@ export async function exigirPermisoParaCancelar(
   const pedidaOImpresa =
     cuenta.estado === 'cuenta_solicitada' ||
     cuenta.codigoCaja !== null ||
+    cuenta.codigoDeLaMadre !== null ||
     cuenta.impresas > 0 ||
+    (cuenta.impresasDeLaMadre ?? 0) > 0 ||
     absorbidas.some((a) => a.pedida || a.impresas > 0);
-  if (!pedidaOImpresa || ROLES_QUE_AUTORIZAN.includes(rol)) return null;
-  if (!(await pinAlCancelar(ctx))) return null;
+  if (ROLES_QUE_AUTORIZAN.includes(rol)) return null;
+  if (!sinComprobarLaCocina && (!pedidaOImpresa || !(await pinAlCancelar(ctx)))) return null;
 
   const carga =
     autorizacion === undefined
@@ -176,9 +201,11 @@ export async function exigirPermisoParaCancelar(
   if (carga === null) {
     throw new ErrorDominio(
       'PUESTO_NO_OTORGABLE',
-      autorizacion === undefined
-        ? 'La cuenta ya se pidió (o se imprimió): cancelarla pide el PIN de un gerente o del dueño.'
-        : 'Esa autorización venció o es de otra cuenta: que el gerente teclee su PIN otra vez.',
+      autorizacion !== undefined
+        ? 'Esa autorización venció o es de otra cuenta: que el gerente teclee su PIN otra vez.'
+        : sinComprobarLaCocina
+          ? 'No se pudo comprobar la cocina: cancelar pide el PIN de un gerente o del dueño, y todo queda como pérdida.'
+          : 'La cuenta ya se pidió (o se imprimió): cancelarla pide el PIN de un gerente o del dueño.',
       { pidePin: true },
     );
   }

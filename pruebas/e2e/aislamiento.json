@@ -745,7 +745,9 @@
       "idRequerido": true,
       "cuerpo": {
         "ordenId": "⟨ordenes⟩",
-        "lineas": [{ "productoId": "⟨productos⟩", "cantidad": "prueba de aislamiento" }]
+        "lineas": [
+          { "productoId": "⟨productos⟩", "cantidad": "prueba de aislamiento", "opciones": [] }
+        ]
       },
       "ids": [
         { "camino": "ordenId", "tabla": "ordenes" },
@@ -899,7 +901,8 @@
         "ordenId": "⟨ordenes⟩",
         "productoId": "⟨productos⟩",
         "cantidad": "prueba de aislamiento",
-        "presentacionId": "⟨producto_presentaciones⟩"
+        "presentacionId": "⟨producto_presentaciones⟩",
+        "opciones": []
       },
       "ids": [
         { "camino": "ordenId", "tabla": "ordenes" },

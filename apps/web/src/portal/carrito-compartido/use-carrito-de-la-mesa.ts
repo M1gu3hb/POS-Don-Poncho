@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -13,7 +13,6 @@ import {
   type ResultadoDelLlamado,
 } from './api-del-carrito';
 import {
-  AVISO_DEL_VACIADO,
   dispositivoDelTelefono,
   envioDeOtroTelefono,
   olvidarDispositivo,
@@ -37,6 +36,12 @@ export interface CarritoDeLaMesa {
    * con lo último que vio (el sondeo vuelve a intentar solo).
    */
   readonly sinConexion: boolean;
+  /**
+   * DP-14.6 · «Tu mesero vació el pedido»: se queda fijo en el teléfono hasta que el comensal lo
+   * cierra (un toast de unos segundos se perdía si estaba mirando otra cosa).
+   */
+  readonly vaciadoPorElMesero: string | null;
+  cerrarElAvisoDelVaciado(): void;
   /** DP-12.2 · «Llamar a mi mesero para confirmar». */
   llamar(): Promise<ResultadoDelLlamado>;
   agregar(item: ItemDelCarrito): Promise<void>;
@@ -112,6 +117,7 @@ export function useCarritoDeLaMesa(token: string, activo: boolean): CarritoDeLaM
   });
   const rondaVista = useRef<number | null>(null);
   const vaciadoVisto = useRef<string | null>(null);
+  const [vaciadoSinCerrar, setVaciadoSinCerrar] = useState<string | null>(null);
   const estado = consulta.data ?? null;
 
   useEffect(() => {
@@ -123,7 +129,7 @@ export function useCarritoDeLaMesa(token: string, activo: boolean): CarritoDeLaM
     const vaciado = vaciadoNuevo(vaciadoVisto.current, estado);
     if (vaciado !== null) {
       vaciadoVisto.current = vaciado;
-      toast.info(AVISO_DEL_VACIADO);
+      setVaciadoSinCerrar(vaciado);
     }
   }, [estado]);
 
@@ -134,6 +140,10 @@ export function useCarritoDeLaMesa(token: string, activo: boolean): CarritoDeLaM
   return {
     estado,
     sinConexion: consulta.isError,
+    vaciadoPorElMesero: vaciadoSinCerrar,
+    cerrarElAvisoDelVaciado() {
+      setVaciadoSinCerrar(null);
+    },
     async llamar() {
       const resultado = await conTelefono(token, (d) => llamarAlMesero(token, d));
       await clienteDeConsultas.invalidateQueries({ queryKey: clave });

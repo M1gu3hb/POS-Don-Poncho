@@ -53,6 +53,8 @@ const entradaEnviarElCarritoDeLaMesa = z.object({
    * REABRE expresamente (si no se ha cobrado). Sin esto, una cuenta pedida no se toca.
    */
   reabrirCuenta: z.boolean().default(false),
+  /** DP-14.6 · El PIN de un gerente, si la mesa la atiende otro mesero (`reabrir-la-cuenta.ts`). */
+  autorizacion: z.string().min(20).max(2000).optional(),
 });
 
 type Ctx = ContextoComando<Transaccion>;
@@ -303,6 +305,9 @@ export const enviarElCarritoDeLaMesa = definirComando<
           mesaId: delCarrito.id,
           empleoId,
           ahora: ctx.ahora,
+          ambito: ctx.ambito,
+          correlationId: ctx.correlationId,
+          autorizacion: entrada.autorizacion,
         }),
       );
     }

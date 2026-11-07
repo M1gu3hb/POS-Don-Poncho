@@ -45,7 +45,7 @@ base. **Región:** `us-east-2` (Ohio), la más cercana a las funciones de Vercel
 ## Domingo 8 · el proyecto vacío (la sesión de desarrollo)
 
 1. El rol de la aplicación, `morphiqpos_app` (`login bypassrls`, contraseña propia generada aquí y
-   guardada en `..\_PRIVADOase-b.env`), por SQL como `postgres`. Es el proyecto nuevo: ahí sí
+   guardada en `..\_PRIVADO\fase-b.env`), por SQL como `postgres`. Es el proyecto nuevo: ahí sí
    hay DDL.
 2. `pnpm db:migrate` con la `DATABASE_URL` de `postgres` (sesión) del proyecto nuevo, hasta la
    188; luego `verify:esquema` estricto contra esa base.
@@ -87,7 +87,7 @@ nuevo con los `STORAGE_*` del proyecto nuevo.
 - **Antes del paso 6** no cambió nada de producción: la compartida sólo se leyó y Vercel sigue
   igual. Se cancela y todo sigue como estaba.
 - **Después del paso 6 o 7:** en Vercel, regresar las cinco variables a las de la Fase A (están en
-  `..\_PRIVADOase-a.env`) y redesplegar (o promover el despliegue anterior). 10 minutos. Lo que
+  `..\_PRIVADO\fase-a.env`) y redesplegar (o promover el despliegue anterior). 10 minutos. Lo que
   se haya escrito en la base nueva después de cambiar se pierde: por eso la ventana es con el
   restaurante cerrado. Ensayado el 07-11 (abajo).
 

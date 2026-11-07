@@ -81,7 +81,7 @@ export const yaHechoEnLaCuenta = sql`(${yaHechoElPlatillo}
  * Lo que vale lo ya hecho de la cuenta `o`: de cada platillo que no se anuló aparte, la parte que
  * la cocina dejó lista o se entregó (por cantidad, nunca más que el platillo), a su precio.
  */
-const perdidaDeLaCuenta = sql`coalesce((
+const perdidaPorLaCocina = sql`coalesce((
     select sum(round(l.total_centavos
                      * least(1, hecho.cantidad / nullif(l.cantidad::numeric, 0))))
       from orden_lineas l
@@ -97,6 +97,30 @@ const perdidaDeLaCuenta = sql`coalesce((
        and l.orden_id = o.id
        and l.anulada_en is null), 0)::bigint`;
 
+/**
+ * DP-14.6-7 · La cuenta que se canceló SIN poder comprobar la cocina, con el PIN de un gerente
+ * (`restaurante.cancelar_orden` con `sinComprobarLaCocina`): no se sabe qué salió, así que todo lo
+ * vivo es pérdida. La marca vive en su entrada de la auditoría (sin columna nueva: cero DDL).
+ */
+const todoComoHecho = sql`exists (
+    select 1
+      from auditoria au
+     where au.organizacion_id = o.organizacion_id
+       and au.entidad = 'orden'
+       and au.entidad_id = o.id
+       and au.accion = 'restaurante.cancelar_orden'
+       and au.payload ->> 'todoComoHecho' = 'true')`;
+
+const perdidaDeLaCuenta = sql`case
+    when ${todoComoHecho} then coalesce((
+      select sum(l.total_centavos)
+        from orden_lineas l
+       where l.organizacion_id = o.organizacion_id
+         and l.orden_id = o.id
+         and l.anulada_en is null), 0)::bigint
+    else ${perdidaPorLaCocina}
+  end`;
+
 /** El platillo anulado `l`: si ya estaba hecho (él, no su comanda), se perdió entero. */
 const perdidaDeLaLinea = sql`case
     when l.estado_preparacion in ('listo', 'entregado')
@@ -111,6 +135,7 @@ const perdidaDeLaLinea = sql`case
   end`;
 
 const folio = sql`case when o.folio is null then null else o.serie || '-' || o.folio::text end`;
+/** La mesa; la de una PARTE de una cuenta dividida es la de su madre (las partes nacen sin mesa). */
 const mesa = sql`coalesce(m.nombre, 'Mesa ' || m.numero::text)`;
 
 type FilaCruda = Omit<Cancelacion, 'perdida'>;
@@ -128,7 +153,10 @@ const deLaCuenta = sql`
            ${perdidaDeLaCuenta}::text    as "perdidaCentavos"
       from ordenes o
       left join empleados_visibles ev on ev.id = o.cancelada_por
-      left join mesas m on m.id = o.mesa_id and m.organizacion_id = o.organizacion_id`;
+      left join ordenes madre on madre.id = o.orden_padre_id
+                             and madre.organizacion_id = o.organizacion_id
+      left join mesas m on m.id = coalesce(o.mesa_id, madre.mesa_id)
+                       and m.organizacion_id = o.organizacion_id`;
 
 /**
  * Las columnas del platillo anulado, `l`, de una cuenta que sigue (o que se canceló después: la
@@ -148,7 +176,10 @@ const delPlatillo = sql`
       from orden_lineas l
       join ordenes o on o.id = l.orden_id and o.organizacion_id = l.organizacion_id
       left join empleados_visibles ev on ev.id = l.empleado_anula_id
-      left join mesas m on m.id = o.mesa_id and m.organizacion_id = o.organizacion_id`;
+      left join ordenes madre on madre.id = o.orden_padre_id
+                             and madre.organizacion_id = o.organizacion_id
+      left join mesas m on m.id = coalesce(o.mesa_id, madre.mesa_id)
+                       and m.organizacion_id = o.organizacion_id`;
 
 const conPalabras = (filas: readonly FilaCruda[]): readonly Cancelacion[] =>
   filas.map((fila) => ({
@@ -192,13 +223,10 @@ export async function leerCancelaciones(
  *     de una cuenta que esta caja cobró (cuando sea que se anuló, hasta el cierre), o, de una
  *     cuenta que nadie ha cobrado, el que anuló quien la abrió con la caja abierta.
  */
-export async function cancelacionesDelCorte(
-  tx: Transaccion,
-  organizacionId: string,
-  alcance: AlcanceDelCorte,
-): Promise<readonly Cancelacion[]> {
+/** Las filas que entran en un corte (sin orden ni tope): las lee la lista y las suma el total. */
+function delCorte(organizacionId: string, alcance: AlcanceDelCorte) {
   const { sesionId, sucursalId, abreId, cierraElDia, desde, hasta } = alcance;
-  const { rows } = await sql<FilaCruda>`
+  return sql`
     ${deLaCuenta}
      where o.organizacion_id = ${organizacionId}
        and o.sucursal_id = ${sucursalId}
@@ -218,9 +246,45 @@ export async function cancelacionesDelCorte(
                 and (o.sesion_caja_id = ${sesionId}
                      or (o.sesion_caja_id is null
                          and l.empleado_anula_id = ${abreId}
-                         and l.anulada_en > ${desde}))))
+                         and l.anulada_en > ${desde}))))`;
+}
+
+export async function cancelacionesDelCorte(
+  tx: Transaccion,
+  organizacionId: string,
+  alcance: AlcanceDelCorte,
+  tope: number = TOPE_DE_FILAS,
+): Promise<readonly Cancelacion[]> {
+  const { rows } = await sql<FilaCruda>`
+    ${delCorte(organizacionId, alcance)}
      order by 3
-     limit ${TOPE_DE_FILAS}
+     limit ${tope}
   `.execute(tx);
   return conPalabras(rows);
+}
+
+/** Cuántas son en TOTAL y cuánto suman, contado en SQL: la lista puede cortarse, esto no. */
+export interface TotalDeCancelaciones {
+  readonly cuantas: number;
+  readonly montoCentavos: string;
+  readonly perdidaCentavos: string;
+}
+
+export async function totalDeLasCancelacionesDelCorte(
+  tx: Transaccion,
+  organizacionId: string,
+  alcance: AlcanceDelCorte,
+): Promise<TotalDeCancelaciones> {
+  const { rows } = await sql<{ cuantas: number; monto: string; perdida: string }>`
+    select count(*)::int as cuantas,
+           coalesce(sum(t."montoCentavos"::numeric), 0)::text as monto,
+           coalesce(sum(t."perdidaCentavos"::numeric), 0)::text as perdida
+      from (${delCorte(organizacionId, alcance)}) t
+  `.execute(tx);
+  const fila = rows[0];
+  return {
+    cuantas: fila?.cuantas ?? 0,
+    montoCentavos: fila?.monto ?? '0',
+    perdidaCentavos: fila?.perdida ?? '0',
+  };
 }

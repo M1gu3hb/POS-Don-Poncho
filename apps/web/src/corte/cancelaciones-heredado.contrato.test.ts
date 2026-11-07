@@ -44,6 +44,21 @@ describe('el corte heredado lee las cancelaciones del servidor', () => {
     expect(texto).toMatch(/<SeccionPintada\b/);
   });
 
+  it.each([VISOR, DESCARGA])(
+    'DP-14.6 · %s le pasa al ticket el total de las cancelaciones del servidor',
+    (archivo) => {
+      const texto = leer(archivo);
+      expect(texto).toMatch(/totalDeCancelaciones: cancelacionesLeidas\.total \?\? null/);
+      expect(texto).toMatch(/totalDeCancelaciones=\{data\.totalDeCancelaciones\}/);
+    },
+  );
+
+  it('DP-14.6 · el ticket dice «se muestran X de N» con ese total', () => {
+    expect(leer(TICKET)).toMatch(
+      /seccionesDeCancelaciones\(\s*cancelaciones,\s*alcanceDeCancelaciones \?\? undefined,\s*totalDeCancelaciones \?\? undefined,?\s*\)/,
+    );
+  });
+
   it('el ticket NO vuelve a poner como «Usuario» al cajero o al mesero de la venta', () => {
     const texto = leer(TICKET);
     expect(texto).not.toMatch(/c\.usuario_cajero_nombre/);

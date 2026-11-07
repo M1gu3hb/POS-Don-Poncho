@@ -151,7 +151,7 @@ describe('emitir un teléfono nuevo tiene límite', () => {
    * gastado: el límite se prueba en su borde exacto sin repetir cientos de llamadas a la base.
    */
   async function dejarAFaltan(
-    accion: 'telefono_nuevo_mesa' | 'telefono_nuevo_ip',
+    accion: 'telefono_nuevo_mesa' | 'telefono_nuevo_ip' | 'telefono_nuevo_mesa_ip',
     quien: string,
     faltan: number,
   ): Promise<void> {
@@ -183,5 +183,24 @@ describe('emitir un teléfono nuevo tiene límite', () => {
     expect((await pedir(`mesa-${randomUUID()}`, ip)).ok).toBe(true);
     expect((await pedir(`mesa-${randomUUID()}`, ip)).ok).toBe(false);
     expect((await pedir(`mesa-${randomUUID()}`, randomUUID())).ok).toBe(true);
+  });
+
+  it('DP-14.6 · una sola IP no agota el tope de la mesa: el cubo de mesa + IP la frena antes', async () => {
+    const token = `mesa-${randomUUID()}`;
+    const quien = randomUUID();
+    const tope = LIMITES_PORTAL.telefono_nuevo_mesa_ip.intentos;
+    for (let i = 0; i < tope; i++) expect((await pedir(token, quien)).ok).toBe(true);
+    expect((await pedir(token, quien)).ok).toBe(false);
+    // Lo negado por el cubo de mesa + IP no gasta el de la mesa: otra IP todavía entra.
+    const clave = createHmac('sha256', PIMIENTA)
+      .update(`portal:telefono_nuevo_mesa:${token}`, 'utf8')
+      .digest('hex');
+    const { intentos } = await sql<{ intentos: number }>`
+      select intentos from limite_tasa where clave = ${clave}
+    `
+      .execute(obtenerDb())
+      .then((r) => r.rows[0] ?? { intentos: 0 });
+    expect(intentos).toBe(tope);
+    expect((await pedir(token, randomUUID())).ok).toBe(true);
   });
 });

@@ -11,7 +11,11 @@ import {
   nombreVisibleDelSistema,
 } from '~/marca/nombre-visible';
 import { seccionesDeCancelaciones } from '~/corte/cancelaciones';
-import { diferenciaDelCorte } from '~/corte-heredado/diferencia-del-corte';
+import {
+  dineroODato,
+  diferenciaDelCorte,
+  efectivoEsperadoDelCorte,
+} from '~/corte-heredado/diferencia-del-corte';
 import {
   AVISO_SIN_DESCUENTOS,
   EXPLICACION_SIN_DESCUENTOS,
@@ -20,7 +24,9 @@ import {
 } from '~/corte-heredado/descuentos-del-corte';
 import {
   SIN_RECETA,
+  costoDelProductoConocido,
   economiaDelPeriodo,
+  rotuloDeLaUtilidadNeta,
   seVeElMargen,
   subtituloDelMargen,
 } from '~/restaurante/margen-de-las-ventas';
@@ -45,6 +51,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
     cancelacionesNoLeidas = false,
     // DP-13.2 · 'caja' o 'dia' (Cierre del día): la sección dice de qué cancelaciones habla.
     alcanceDeCancelaciones = null,
+    // DP-14.6 · Todas las del corte (contadas en SQL): «se muestran X de N» si la lista se cortó.
+    totalDeCancelaciones = null,
     // DP-14.2 · Cada descuento con quién lo autorizó y por qué (`leerDescuentosDelCorte`).
     descuentos = null,
     alertas = [],
@@ -84,6 +92,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
   // servidor, `estado_costo`), no de los totales que se guardaban al cerrar: esos sumaban costo
   // cero por lo que no tiene receta. Sin ninguna con costo completo, «—, sin receta».
   const economia = economiaDelPeriodo(ventas);
+  // DP-14.6 · Sin dato, «—»: el papel no inventa «$0.00» donde no hay nada que decir.
+  const enPapel = (valor) => dineroODato(valor, formatCurrency);
   const enPesos = (valor) => (valor === null ? SIN_RECETA : formatCurrency(valor));
   // Quien no ve márgenes no lee «sin receta»: ni costo, ni utilidad, ni margen en su ticket.
   const conMargen = !sinCostos && seVeElMargen(economia);
@@ -225,25 +235,13 @@ const CorteTicket = React.forwardRef(function CorteTicket(
       {/* Apertura / fondo */}
       <Section title="Apertura y fondo">
         <Grid>
-          <Cell
-            label="Fondo esperado apertura"
-            value={formatCurrency(corte?.fondo_esperado_apertura)}
-          />
-          <Cell
-            label="Efectivo inicial contado"
-            value={formatCurrency(corte?.efectivo_inicial_contado)}
-          />
-          <Cell label="Diferencia apertura" value={formatCurrency(corte?.diferencia_apertura)} />
-          <Cell
-            label="Efectivo contado al cierre"
-            value={formatCurrency(corte?.efectivo_contado)}
-          />
-          <Cell label="Diferencia efectivo" value={formatCurrency(diferenciaDelCorte(corte))} />
-          <Cell
-            label="Dinero dejado en caja"
-            value={formatCurrency(corte?.dinero_dejado_en_caja)}
-            bold
-          />
+          <Cell label="Fondo esperado apertura" value={enPapel(corte?.fondo_esperado_apertura)} />
+          <Cell label="Efectivo inicial contado" value={enPapel(corte?.efectivo_inicial_contado)} />
+          <Cell label="Diferencia apertura" value={enPapel(corte?.diferencia_apertura)} />
+          <Cell label="Efectivo contado al cierre" value={enPapel(corte?.efectivo_contado)} />
+          <Cell label="Efectivo esperado" value={enPapel(efectivoEsperadoDelCorte(corte))} />
+          <Cell label="Diferencia efectivo" value={enPapel(diferenciaDelCorte(corte))} />
+          <Cell label="Dinero dejado en caja" value={enPapel(corte?.dinero_dejado_en_caja)} bold />
         </Grid>
       </Section>
 
@@ -256,12 +254,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
           <Cell label="Efectivo" value={formatCurrency(corte?.total_efectivo)} />
           <Cell label="Tarjeta" value={formatCurrency(corte?.total_tarjeta)} />
           <Cell label="Transferencia" value={formatCurrency(corte?.total_transferencia)} />
-          {conMargen && (
-            <Cell label="Costo de ventas" value={enPesos(economia.costo)} />
-          )}
-          {conMargen && (
-            <Cell label="Utilidad bruta" value={enPesos(economia.utilidad)} />
-          )}
+          {conMargen && <Cell label="Costo de ventas" value={enPesos(economia.costo)} />}
+          {conMargen && <Cell label="Utilidad bruta" value={enPesos(economia.utilidad)} />}
           {conMargen && (
             <Cell label="Margen promedio" value={subtituloDelMargen(economia) || SIN_RECETA} />
           )}
@@ -270,7 +264,7 @@ const CorteTicket = React.forwardRef(function CorteTicket(
           )}
           {conMargen && (
             <Cell
-              label="Utilidad neta est."
+              label={rotuloDeLaUtilidadNeta(economia.estado === 'parcial')}
               value={enPesos(utilidadNeta)}
               bold
             />
@@ -467,12 +461,16 @@ const CorteTicket = React.forwardRef(function CorteTicket(
                 <td className="border px-2 py-1 text-right">{p.cantidad}</td>
                 <td className="border px-2 py-1 text-right">{p.cantidadReal || '—'}</td>
                 <td className="border px-2 py-1 text-right">{formatCurrency(p.total)}</td>
+                {/* DP-14.6-2 · Un producto vendido con costo cero no tiene costo conocido: «—», no
+                    «$0.00» con la utilidad igual al total. */}
                 {conMargen && (
-                  <td className="border px-2 py-1 text-right">{formatCurrency(p.costo)}</td>
+                  <td className="border px-2 py-1 text-right">
+                    {costoDelProductoConocido(p) ? formatCurrency(p.costo) : '—'}
+                  </td>
                 )}
                 {conMargen && (
                   <td className="border px-2 py-1 text-right font-bold">
-                    {formatCurrency(p.total - p.costo)}
+                    {costoDelProductoConocido(p) ? formatCurrency(p.total - p.costo) : '—'}
                   </td>
                 )}
               </tr>
@@ -606,9 +604,11 @@ const CorteTicket = React.forwardRef(function CorteTicket(
           <p className="text-xs text-texto-sutil">{EXPLICACION_SIN_CANCELACIONES}</p>
         </Section>
       ) : (
-        seccionesDeCancelaciones(cancelaciones, alcanceDeCancelaciones ?? undefined).map((seccion) => (
-          <SeccionPintada key={seccion.titulo} seccion={seccion} />
-        ))
+        seccionesDeCancelaciones(
+          cancelaciones,
+          alcanceDeCancelaciones ?? undefined,
+          totalDeCancelaciones ?? undefined,
+        ).map((seccion) => <SeccionPintada key={seccion.titulo} seccion={seccion} />)
       )}
 
       {/* Descuentos · DP-14.2: cada uno con cuánto, quién lo autorizó con su PIN y por qué, y el

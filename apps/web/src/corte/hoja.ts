@@ -134,6 +134,15 @@ export interface HojaDelServidor {
     perdidaCentavos: string;
     perdida: boolean;
   }[];
+  /**
+   * DP-14.6 · TODAS las cancelaciones del corte, contadas y sumadas en SQL. La lista de arriba tiene
+   * tope de filas: si no cupieron, el corte lo dice. Opcional por las hojas de antes.
+   */
+  readonly cancelacionesTotal?: {
+    cuantas: number;
+    montoCentavos: string;
+    perdidaCentavos: string;
+  };
   /** DP-13.2 · Hasta cuándo cuenta: el cierre o, con la caja abierta, la hora de la lectura. */
   readonly corteHasta: string;
   readonly parcial: boolean;
@@ -204,6 +213,8 @@ export interface ProductoDeLaHoja {
   readonly costoCentavos: string | null;
   /** DP-13.2 · Cuántas de sus líneas se vendieron sin costo: sin receta, o receta incompleta. */
   readonly lineasSinCosto: number;
+  /** DP-14.6-2 · De ésas, las que no tienen receta del todo (el resto: un insumo en cero). */
+  readonly lineasSinReceta: number;
   readonly esServicio: boolean;
   readonly familia: string | null;
   readonly linea: string | null;
@@ -582,7 +593,7 @@ function margenDelCorte(
 /** DP-13.2 · El costo de un producto se sabe sólo si TODAS sus líneas lo traían. */
 function costoDelProducto(p: ProductoDeLaHoja): readonly Valor[] {
   if (p.lineasSinCosto > 0) {
-    const desconocido = texto(p.lineasSinCosto >= p.lineas ? SIN_RECETA : RECETA_INCOMPLETA);
+    const desconocido = texto(p.lineasSinReceta >= p.lineas ? SIN_RECETA : RECETA_INCOMPLETA);
     return [desconocido, desconocido];
   }
   return [dinero(p.costoCentavos), dinero(centavos(p.totalCentavos) - centavos(p.costoCentavos))];
@@ -838,17 +849,25 @@ export function ventaPorCategoria(
   // DP-13.2: un producto vendido sin costo no suma costo cero; la categoría lo dice.
   const porCategoria = new Map<
     string,
-    { venta: number; costo: number; conCosto: number; sinCosto: number }
+    { venta: number; costo: number; conCosto: number; sinCosto: number; conReceta: number }
   >();
   for (const p of hoja.productos) {
     const clave = p.categoria ?? 'Sin categoría';
-    const actual = porCategoria.get(clave) ?? { venta: 0, costo: 0, conCosto: 0, sinCosto: 0 };
+    const actual = porCategoria.get(clave) ?? {
+      venta: 0,
+      costo: 0,
+      conCosto: 0,
+      sinCosto: 0,
+      conReceta: 0,
+    };
     const conocido = p.lineasSinCosto === 0;
     porCategoria.set(clave, {
       venta: actual.venta + centavos(p.totalCentavos),
       costo: actual.costo + (conocido ? centavos(p.costoCentavos) : 0),
       conCosto: actual.conCosto + (conocido ? 1 : 0),
       sinCosto: actual.sinCosto + (conocido ? 0 : 1),
+      // Un producto desconocido que SÍ tiene receta (con un insumo en cero) no es «sin receta».
+      conReceta: actual.conReceta + (!conocido && p.lineasSinReceta < p.lineas ? 1 : 0),
     });
   }
   const costoYMargen = (c: {
@@ -856,9 +875,12 @@ export function ventaPorCategoria(
     costo: number;
     conCosto: number;
     sinCosto: number;
+    conReceta: number;
   }) => {
     if (c.sinCosto === 0) return [dinero(c.costo), porcentaje(c.venta - c.costo, c.venta)];
-    const desconocido = texto(c.conCosto === 0 ? SIN_RECETA : RECETA_INCOMPLETA);
+    const desconocido = texto(
+      c.conCosto === 0 && c.conReceta === 0 ? SIN_RECETA : RECETA_INCOMPLETA,
+    );
     return [desconocido, desconocido];
   };
   const total = centavos(hoja.resumen.totalCentavos);

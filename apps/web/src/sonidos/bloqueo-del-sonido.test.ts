@@ -10,13 +10,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const reproducir = vi.fn<(receta: string, ganancia: number) => Promise<void>>();
 const precargar = vi.fn<(receta: string) => Promise<void>>();
-const desbloquearAudio = vi.fn<() => Promise<void>>();
+const desbloquearAudio = vi.fn<() => Promise<boolean>>();
 
 vi.mock('./reproductor', () => ({
   reproducir: (receta: string, ganancia: number) => reproducir(receta, ganancia),
   precargar: (receta: string) => precargar(receta),
   desbloquearAudio: () => desbloquearAudio(),
 }));
+
+/** Deja correr las promesas del desbloqueo (el audio corre cuando el contexto contesta). */
+const vaciar = async (): Promise<void> => {
+  for (let i = 0; i < 6; i += 1) await Promise.resolve();
+};
 
 async function gestorSinTocar() {
   vi.resetModules();
@@ -32,7 +37,7 @@ describe('el sonido bloqueado (DP-13.2)', () => {
     precargar.mockReset();
     precargar.mockResolvedValue(undefined);
     desbloquearAudio.mockReset();
-    desbloquearAudio.mockResolvedValue(undefined);
+    desbloquearAudio.mockResolvedValue(true);
   });
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -53,6 +58,7 @@ describe('el sonido bloqueado (DP-13.2)', () => {
     const { sonar, desbloquearSonidos, sonidoBloqueado } = await gestorSinTocar();
     sonar('comandaNueva');
     desbloquearSonidos();
+    await vaciar();
     expect(reproducir).toHaveBeenCalledExactlyOnceWith('ping', 0.5);
     expect(sonidoBloqueado()).toBe(false);
   });
@@ -86,6 +92,7 @@ describe('el sonido bloqueado (DP-13.2)', () => {
     escuchas.get(gestor.EVENTO_VOZ_BLOQUEADA)?.();
     expect(gestor.sonidoBloqueado()).toBe(true);
     gestor.desbloquearSonidos();
+    await vaciar();
     expect(lanzados).toContain(gestor.EVENTO_AUDIO_DESBLOQUEADO);
     expect(gestor.sonidoBloqueado()).toBe(false);
   });
@@ -112,6 +119,7 @@ describe('el sonido bloqueado (DP-13.2)', () => {
     gestor.sonar('comandaNueva');
     escuchas.get(gestor.EVENTO_VOZ_BLOQUEADA)?.();
     gestor.desbloquearSonidos();
+    await vaciar();
     expect(reproducir).toHaveBeenCalledExactlyOnceWith('ping', 0.5);
     expect(lanzados).not.toContain(gestor.EVENTO_AUDIO_DESBLOQUEADO);
     terminarElTimbre();
@@ -136,5 +144,59 @@ describe('encender el audio no se queda colgado (DP-13.2)', () => {
   it('si contesta, pasa lo que contestó', async () => {
     const { conTiempoLimite } = await import('./motor/tiempo-limite');
     await expect(conTiempoLimite(Promise.resolve(7), 1000, 'x')).resolves.toBe(7);
+  });
+});
+
+describe('DP-14.6-8 · el timbre pendiente no se gasta con el audio sin correr', () => {
+  beforeEach(() => {
+    reproducir.mockReset();
+    reproducir.mockResolvedValue(undefined);
+    precargar.mockReset();
+    precargar.mockResolvedValue(undefined);
+    desbloquearAudio.mockReset();
+  });
+
+  it('si el contexto no quedó en running, el pendiente y el aviso se quedan', async () => {
+    desbloquearAudio.mockResolvedValue(false);
+    const { sonar, desbloquearSonidos, sonidoBloqueado } = await gestorSinTocar();
+    sonar('comandaNueva');
+    desbloquearSonidos();
+    await vaciar();
+    expect(reproducir).not.toHaveBeenCalled();
+    expect(sonidoBloqueado()).toBe(true);
+  });
+
+  it('el siguiente gesto, con el audio ya corriendo, toca el pendiente UNA vez', async () => {
+    desbloquearAudio.mockResolvedValueOnce(false).mockResolvedValue(true);
+    const { sonar, desbloquearSonidos, sonidoBloqueado } = await gestorSinTocar();
+    sonar('comandaNueva');
+    desbloquearSonidos();
+    await vaciar();
+    desbloquearSonidos();
+    await vaciar();
+    desbloquearSonidos();
+    await vaciar();
+    expect(reproducir).toHaveBeenCalledExactlyOnceWith('ping', 0.5);
+    expect(sonidoBloqueado()).toBe(false);
+  });
+
+  it('un sonar() DESPUÉS de un gesto que no dejó el audio corriendo se guarda y avisa', async () => {
+    desbloquearAudio.mockResolvedValue(false);
+    const { sonar, desbloquearSonidos, sonidoBloqueado } = await gestorSinTocar();
+    desbloquearSonidos();
+    await vaciar();
+    sonar('comandaNueva');
+    expect(reproducir).not.toHaveBeenCalled();
+    expect(sonidoBloqueado()).toBe(true);
+  });
+
+  it('si el navegador rechaza encender el audio, tampoco se gasta', async () => {
+    desbloquearAudio.mockRejectedValue(new Error('no encendió'));
+    const { sonar, desbloquearSonidos, sonidoBloqueado } = await gestorSinTocar();
+    sonar('comandaNueva');
+    desbloquearSonidos();
+    await vaciar();
+    expect(reproducir).not.toHaveBeenCalled();
+    expect(sonidoBloqueado()).toBe(true);
   });
 });

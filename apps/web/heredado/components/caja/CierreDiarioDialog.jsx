@@ -27,7 +27,12 @@ import {
 import { formatCurrency, formatPercent } from '@/utils/financialUtils';
 import { api } from '@/api/cliente';
 import { aCentavos, aPesos } from '@/components/caja/dinero';
-import { SIN_RECETA, seVeElMargen, subtituloDelMargen } from '~/restaurante/margen-de-las-ventas';
+import {
+  SIN_RECETA,
+  rotuloDeLaUtilidadNeta,
+  seVeElMargen,
+  subtituloDelMargen,
+} from '~/restaurante/margen-de-las-ventas';
 
 /**
  * Modal de Cierre de caja diario (premium).
@@ -200,7 +205,7 @@ export default function CierreDiarioDialog({
               />
               {seVe && (
                 <KPI
-                  label="Utilidad neta est."
+                  label={rotuloDeLaUtilidadNeta(safeResumen.economia?.estado === 'parcial')}
                   value={enPesos(utilidadNeta)}
                   icon={Wallet}
                   color={

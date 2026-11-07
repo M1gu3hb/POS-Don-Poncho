@@ -103,7 +103,7 @@ Cada uno con la prueba que lo atrapa, escrita antes del arreglo (en las dependen
 **La credencial.** El `.env` del maestro apunta a su base local y en Vercel la `DATABASE_URL` es
 *sensible* (ilegible). La conexión vigente de `morphiqpos_app` por el pooler de transacciones
 (6543) estaba en copias anteriores del repositorio del maestro; se probó con una sola lectura y se
-copió a `..\_PRIVADOase-a.env` sin imprimirse. No se cambió ninguna contraseña, rol ni permiso.
+copió a `..\_PRIVADO\fase-a.env` sin imprimirse. No se cambió ninguna contraseña, rol ni permiso.
 
 **DP-4, en este orden, todo por los guiones de la aplicación:**
 

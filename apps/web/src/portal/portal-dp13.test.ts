@@ -81,7 +81,9 @@ describe('el id del teléfono lo emite el servidor (punto 11)', () => {
 describe('el comensal se entera de lo que le pasó a su pedido (puntos 12 y 15)', () => {
   it('el aviso del vaciado se dice una vez y con las palabras de siempre', () => {
     expect(GANCHO).toMatch(/vaciadoNuevo\(vaciadoVisto\.current, estado\)/);
-    expect(GANCHO).toMatch(/vaciadoVisto\.current = vaciado;\s*toast\.info\(AVISO_DEL_VACIADO\)/);
+    // DP-14.6: ya no es un toast que se va solo; queda fijo hasta que el comensal lo cierra.
+    expect(GANCHO).toMatch(/vaciadoVisto\.current = vaciado;\s*setVaciadoSinCerrar\(vaciado\)/);
+    expect(GANCHO).not.toMatch(/toast\.info\(AVISO_DEL_VACIADO\)/);
   });
 
   it('la cuenta ya pedida es un mensaje, no un error', () => {
@@ -96,8 +98,9 @@ describe('el mesero con la cuenta ya pedida (punto 15)', () => {
     expect(PANEL).toMatch(
       /if \(mesa\.cuentaPedida\) setReabriendo\(true\);\s*else void enviar\(\)/,
     );
-    expect(PANEL).toMatch(/void enviar\(true\)/);
-    expect(PANEL).toMatch(/enviarACocina\(mesa\.id, '', reabrirCuenta\)/);
+    // DP-14.6: reabrir pasa por `reabrirYEnviar`, que pide el PIN de un gerente si el servidor lo pide.
+    expect(PANEL).toMatch(/void reabrirYEnviar\(\)/);
+    expect(PANEL).toMatch(/enviarACocina\(mesa\.id, '', true, autorizada\?\.token\)/);
     expect(API_DEL_MESERO).toMatch(/\.\.\.\(reabrirCuenta \? \{ reabrirCuenta: true \} : \{\}\)/);
   });
 

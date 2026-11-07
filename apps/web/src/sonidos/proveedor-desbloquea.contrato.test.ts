@@ -19,7 +19,7 @@ const PROVEEDOR = 'src/sonidos/ProveedorDeSonidos.tsx';
 const AVISO = 'src/sonidos/AvisoDeSonidoBloqueado.tsx';
 
 describe('el proveedor desbloquea con cualquier gesto', () => {
-  it.each(['pointerdown', 'touchstart', 'keydown', 'click'])(
+  it.each(['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'click'])(
     'escucha «%s» en la fase de captura, y lo suelta al desmontarse',
     (evento) => {
       const codigo = leer(PROVEEDOR);

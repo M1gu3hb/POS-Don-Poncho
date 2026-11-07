@@ -82,6 +82,13 @@ export const LIMITES_PORTAL = {
    */
   telefono_nuevo_mesa: { intentos: 40, ventanaSegundos: 3 * CINCO_MINUTOS },
   telefono_nuevo_ip: { intentos: 200, ventanaSegundos: 3 * CINCO_MINUTOS },
+  /**
+   * DP-14.6 · Por MESA e IP juntas: quien tiene el QR (una foto desde la acera) fabricaba 40
+   * teléfonos y dejaba sin cupo a los comensales de verdad por un cuarto de hora. Este cubo se mira
+   * primero y lo que niega no gasta el de la mesa, así que una sola IP no agota más de esto del
+   * tope de la mesa. Los comensales comparten la IP del WiFi, de ahí que no sea más bajo.
+   */
+  telefono_nuevo_mesa_ip: { intentos: 12, ventanaSegundos: 3 * CINCO_MINUTOS },
   /** Preparar y Listo: una cocina con prisa no pasa de unos cuantos por minuto. */
   cocina_transicion: { intentos: 60, ventanaSegundos: CINCO_MINUTOS },
 } as const satisfies Readonly<Record<string, Limite>>;

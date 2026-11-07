@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { colorParaUsuario } from '@/lib/asignacionMesas';
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
+import { opcionesDeZona, zonaElegible } from '~/cliente/mesas-del-mapa';
 
 const TAMANO_KEYS = Object.keys(TAMANOS_MESA);
 
@@ -91,7 +92,9 @@ export default function MesaEditDialog({
 
   useEffect(() => {
     // Una mesa nueva nace en la primera zona DEL NEGOCIO, no en «Interior» si no la tiene.
-    if (mesa) setForm({ ...empty, ...mesa });
+    // DP-14.6 (QA1-2): la zona siempre es una que el desplegable tiene; si la de la mesa (o la de
+    // la zona que se miraba al pulsar «Nueva mesa») no es del negocio, la primera.
+    if (mesa) setForm({ ...empty, ...mesa, zona: zonaElegible(mesa.zona, zonas, primeraZona) });
     else setForm({ ...empty, zona: primeraZona ?? empty.zona });
   }, [mesa, open, primeraZona]);
 
@@ -200,7 +203,7 @@ export default function MesaEditDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {zonas.map((z) => (
+                  {opcionesDeZona(zonas, form.zona).map((z) => (
                     <SelectItem key={z} value={z}>
                       {z}
                     </SelectItem>

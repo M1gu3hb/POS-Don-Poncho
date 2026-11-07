@@ -1,5 +1,7 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '@/api/cliente';
 import {
   Dialog,
   DialogContent,
@@ -11,17 +13,49 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, UtensilsCrossed } from 'lucide-react';
 import { MESA_STATUS_CONFIG, insigniaDeEstadoDeMesa } from '@/lib/constants';
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
+import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
+import { sePuedeMarcarLibre, tieneVentaPorCobrar } from '~/restaurante/mesas-pendientes-del-cierre';
 
 /**
  * 6A — Dialog que bloquea el cierre diario cuando hay mesas pendientes.
  *
- * Solo es informativo: lista las mesas que no están en "libre" y le pide al
- * cajero que las cierre/libere/cobre antes de intentar de nuevo.
- *
- * No hace escrituras. No toca lógica de cobro.
+ * Lista las mesas que no están en "libre" y le pide al cajero que las cierre/libere/cobre antes de
+ * intentar de nuevo. DP-14.6: las que NO tienen dinero pendiente (en limpieza, o sin cuenta) se
+ * sueltan desde aquí con «Marcar libre» (`restaurante.liberar_mesa`, que se niega si hubiera
+ * consumo sin cobrar). Lo demás no se toca: se cobra o se cancela en su pantalla.
  */
 export default function MesasPendientesCierreDialog({ open, onClose, mesas = [] }) {
   const arr = Array.isArray(mesas) ? mesas : [];
+  const queryClient = useQueryClient();
+  const [liberadas, setLiberadas] = useState(() => new Set());
+  const [liberando, setLiberando] = useState(null);
+  const [fallo, setFallo] = useState(null);
+
+  const marcarLibre = async (m) => {
+    setLiberando(m.id);
+    setFallo(null);
+    try {
+      const hecho = await liberarMesaConPregunta(m.id, (entrada) =>
+        api.comandos.ejecutar('/api/restaurante/liberar-mesa', entrada),
+      );
+      if (hecho) {
+        setLiberadas((previas) => new Set(previas).add(m.id));
+        queryClient.invalidateQueries({ queryKey: ['mesas'] });
+      }
+    } catch (err) {
+      setFallo(err?.message || 'No se pudo marcar libre la mesa.');
+    } finally {
+      setLiberando(null);
+    }
+  };
+  // Cada apertura parte de la lectura nueva del padre: lo liberado en la anterior ya no cuenta.
+  useEffect(() => {
+    if (!open) {
+      setLiberadas(new Set());
+      setFallo(null);
+    }
+  }, [open]);
+  const pendientes = arr.filter((m) => !liberadas.has(m.id));
 
   return (
     <Dialog
@@ -47,12 +81,22 @@ export default function MesasPendientesCierreDialog({ open, onClose, mesas = [] 
           </div>
 
           <div className="space-y-1.5 max-h-72 overflow-y-auto">
+            {fallo && (
+              <p role="alert" className="text-xs text-peligro">
+                {fallo}
+              </p>
+            )}
+            {arr.length > 0 && pendientes.length === 0 && (
+              <p role="status" className="text-sm text-center py-2">
+                Listo: ya puedes intentar el cierre otra vez.
+              </p>
+            )}
             {arr.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Sin mesas pendientes.
               </p>
             ) : (
-              arr.map((m) => {
+              pendientes.map((m) => {
                 const cfg = MESA_STATUS_CONFIG[m?.estado] || MESA_STATUS_CONFIG.libre;
                 return (
                   <div
@@ -75,10 +119,22 @@ export default function MesasPendientesCierreDialog({ open, onClose, mesas = [] 
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         Estado: {cfg.label}
-                        {m?.venta_activa_id ? ' · Con venta activa' : ''}
+                        {tieneVentaPorCobrar(m) ? ' · Con venta activa' : ''}
                       </p>
                     </div>
-                    <UtensilsCrossed className="w-4 h-4 text-muted-foreground shrink-0" />
+                    {sePuedeMarcarLibre(m) ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        data-marcar-libre={m.id}
+                        disabled={liberando !== null}
+                        onClick={() => marcarLibre(m)}
+                      >
+                        {liberando === m.id ? 'Liberando…' : 'Marcar libre'}
+                      </Button>
+                    ) : (
+                      <UtensilsCrossed className="w-4 h-4 text-muted-foreground shrink-0" />
+                    )}
                   </div>
                 );
               })

@@ -79,8 +79,6 @@ export function CancelarDelMesero({
   const [cocinaLeida, setCocinaLeida] = useState(false);
   /** DP-13.2 · Se está releyendo la cocina para el diálogo de cancelar: no se cancela a ciegas. */
   const [comprobando, setComprobando] = useState(false);
-  /** Se quitó algo en esta apertura: la cuenta puede haber quedado sin renglones. */
-  const [seQuitoAlgo, setSeQuitoAlgo] = useState(false);
   /** El servidor no confirmó cuáles renglones siguen en la cuenta. */
   const [listaSinConfirmar, setListaSinConfirmar] = useState(false);
 
@@ -150,11 +148,12 @@ export function CancelarDelMesero({
   }, [hayCuenta, leerLaCocina]);
 
   const hayRenglones = detalles.length > 0;
-  if (!puede || ventaId === null || (!hayRenglones && !seQuitoAlgo)) return null;
+  // DP-14.6 · Una mesa abierta SIN renglones también se cancela (se abrió por error, o se fueron
+  // antes de pedir): el botón de la cuenta no depende de que haya platillos.
+  if (!puede || ventaId === null) return null;
 
   async function alQuitar(): Promise<void> {
     if (ventaId === null) return;
-    setSeQuitoAlgo(true);
     try {
       alActualizar(await releerLaCuenta(ventaId));
       toast.success('Platillo quitado de la cuenta');

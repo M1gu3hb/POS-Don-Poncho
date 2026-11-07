@@ -12,12 +12,15 @@ import { desbloquearSonidos, sonidoBloqueado, suscribirAlBloqueo } from './gesto
  * botón pequeño lo dice. Tocarlo (o tocar cualquier cosa) desbloquea, suena lo pendiente y la
  * voz lo dice. No es el sistema viejo («Activar sonidos» siempre a la vista): sólo aparece cuando
  * de verdad se perdió algo.
+ *
+ * DP-14.6-8 · Va ARRIBA, no abajo: abajo tapaba la barra del carrito del mesero (el botón de enviar).
+ * Y se queda hasta que algo suene: lo quita el gestor al gastar el pendiente con el audio corriendo.
  */
 export function AvisoDeSonidoBloqueado() {
   const bloqueado = useSyncExternalStore(suscribirAlBloqueo, sonidoBloqueado, () => false);
   if (!bloqueado) return null;
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-(--espacio-4) z-50 flex justify-center">
+    <div className="pointer-events-none fixed inset-x-0 top-(--espacio-3) z-50 flex justify-center">
       <Button
         type="button"
         size="sm"

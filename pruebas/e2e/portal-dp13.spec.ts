@@ -122,9 +122,18 @@ test.describe('el portal del comensal (DP-13.3)', () => {
         await expect(telefono.getByText('Tu mesero vació el pedido')).toBeVisible();
         await expect(telefono.getByRole('button', { name: /^Pedido de la mesa/ })).toBeHidden();
       }
-      // Una sola vez: pasa el aviso y, por más sondeos que haya, no vuelve.
+      // DP-14.6: el aviso se queda fijo hasta que el comensal lo cierra, y cerrado no vuelve por
+      // más sondeos que haya.
       const aviso = a.page.getByText('Tu mesero vació el pedido');
-      await expect(aviso).toBeHidden({ timeout: 15_000 });
+      for (let i = 0; i < 2; i++) {
+        await a.page.waitForResponse(
+          (r) =>
+            r.url().endsWith(`/api/publico/qr/${token}/carrito`) && r.request().method() === 'POST',
+        );
+      }
+      await expect(aviso).toBeVisible();
+      await a.page.locator('[data-cerrar-aviso-vaciado]').click();
+      await expect(aviso).toBeHidden();
       for (let i = 0; i < 2; i++) {
         await a.page.waitForResponse(
           (r) =>

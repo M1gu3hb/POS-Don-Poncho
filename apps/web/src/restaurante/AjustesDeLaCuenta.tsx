@@ -13,7 +13,7 @@ import { Label } from '@morphiqpos/ui/primitivas/label';
 import { Textarea } from '@morphiqpos/ui/primitivas/textarea';
 import { Aviso } from '@morphiqpos/ui/sistema';
 import { BadgePercent, Ban } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
 import { useVocabulario } from '~/cliente/vocabulario';
@@ -24,6 +24,9 @@ import { useDescuentosPermitidos } from '~/venta/use-descuentos-permitidos';
 import {
   NO_PUDE_COMPROBAR_LA_COCINA,
   SI_NO_PUDE_COMPROBARLA,
+  TIEMPO_LIMITE_DE_LA_COCINA_MS,
+  cocinaTrasElTiempo,
+  exigePinPorLaCocina,
   pideElPinDelSupervisor,
   type EstadoDeLaCocina,
 } from './permiso-al-cancelar.ts';
@@ -133,7 +136,7 @@ export function CancelarLaCuenta({
   ordenId,
   alCancelar,
   aviso = null,
-  cocina,
+  cocina: cocinaLeida,
   alAbrir,
 }: {
   readonly ordenId: string;
@@ -161,11 +164,26 @@ export function CancelarLaCuenta({
   /** DP-13.2 · La cuenta ya se pidió (o se imprimió): el servidor pide el PIN de un gerente. */
   const [pidePin, setPidePin] = useState(false);
   const [autorizada, setAutorizada] = useState<Autorizada | null>(null);
+  // DP-14.6-7 · Si «Comprobando la cocina…» no contesta en 8 s, deja de esperar.
+  const [vencida, setVencida] = useState(false);
+  const [intento, setIntento] = useState(0);
+  useEffect(() => {
+    if (!abierto || cocinaLeida !== 'comprobando') return undefined;
+    const reloj = setTimeout(() => {
+      setVencida(true);
+    }, TIEMPO_LIMITE_DE_LA_COCINA_MS);
+    return () => {
+      clearTimeout(reloj);
+    };
+  }, [abierto, cocinaLeida, intento]);
+  const cocina = cocinaTrasElTiempo(cocinaLeida, vencida && abierto);
+  const sinRespuesta = exigePinPorLaCocina(cocina, vencida && abierto);
+  const necesitaPin = pidePin || sinRespuesta;
   const listo =
     motivo.trim().length >= 3 &&
     !enviando &&
     cocina !== 'comprobando' &&
-    (!pidePin || autorizada !== null);
+    (!necesitaPin || autorizada !== null);
   // El ejemplo nombra la unidad como la llama el negocio («la mesa equivocada»), con su
   // concordancia: si un día se llama de otro modo, el ejemplo lo sigue.
   const dondeSeCapturo =
@@ -181,6 +199,8 @@ export function CancelarLaCuenta({
         ordenId,
         motivo: motivo.trim(),
         ...(autorizada === null ? {} : { autorizacion: autorizada.token }),
+        // DP-14.6-7 · Sin poder comprobar la cocina, el servidor cuenta todo como ya hecho.
+        ...(sinRespuesta ? { sinComprobarLaCocina: true } : {}),
       });
       setAbierto(false);
       alCancelar(true);
@@ -201,6 +221,7 @@ export function CancelarLaCuenta({
       <Button
         variant="outline"
         onClick={() => {
+          setVencida(false);
           setAbierto(true);
           alAbrir?.();
         }}
@@ -221,7 +242,22 @@ export function CancelarLaCuenta({
             <Aviso tono="info" titulo="Comprobando lo que ya preparó la cocina…" />
           ) : cocina === 'sin_comprobar' ? (
             <Aviso tono="atencion" titulo={NO_PUDE_COMPROBAR_LA_COCINA}>
-              {SI_NO_PUDE_COMPROBARLA}
+              {sinRespuesta
+                ? 'No pude leer la cocina. Reintenta, o cancela con el PIN de un gerente: como no se sabe qué ya preparó, todo queda como pérdida.'
+                : SI_NO_PUDE_COMPROBARLA}
+              {alAbrir === undefined ? null : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setVencida(false);
+                    setIntento((n) => n + 1);
+                    alAbrir();
+                  }}
+                >
+                  Reintentar
+                </Button>
+              )}
             </Aviso>
           ) : aviso === null ? null : (
             <Aviso tono="atencion" titulo={aviso}>
@@ -240,18 +276,20 @@ export function CancelarLaCuenta({
               }}
             />
           </div>
-          {fallo === null || (pidePin && autorizada === null) ? null : (
+          {fallo === null || (necesitaPin && autorizada === null) ? null : (
             <Aviso tono="peligro" titulo={fallo}>
               No se canceló nada: {voc.enFrase('orden')} sigue por cobrar.
             </Aviso>
           )}
-          {!pidePin ? null : autorizada === null ? (
+          {!necesitaPin ? null : autorizada === null ? (
             <div className="flex flex-col gap-(--espacio-2)">
               <Aviso
                 tono="atencion"
                 titulo={fallo ?? 'Hace falta el PIN de un gerente o del dueño.'}
               >
-                {voc.enFrase('orden')} ya se pidió o se imprimió: lo autoriza un gerente o el dueño.
+                {sinRespuesta
+                  ? 'No se pudo comprobar la cocina: lo autoriza un gerente o el dueño.'
+                  : `${voc.enFrase('orden')} ya se pidió o se imprimió: lo autoriza un gerente o el dueño.`}
               </Aviso>
               <PinDeSupervisor
                 ordenId={ordenId}
