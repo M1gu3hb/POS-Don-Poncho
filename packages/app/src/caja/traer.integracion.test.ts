@@ -70,6 +70,8 @@ describe('la caja abierta en otra terminal', () => {
     );
     expect(estado.abierta).toBe(false);
     expect(estado.puedoAbrir).toBe(false);
+    // DP-14 · ronda 2, medio 3: la pantalla dice «Ya hay N cajas abiertas: cierra una» con el cupo.
+    expect(estado.cupoDeCajas).toBe(1);
     expect(estado.enOtraTerminal).toMatchObject({
       sesionCajaId,
       terminalNombre: 'Caja 20',

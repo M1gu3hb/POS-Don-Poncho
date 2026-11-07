@@ -66,6 +66,8 @@ export interface EstadoCaja {
    */
   readonly enOtraTerminal?: CajaEnOtraTerminal | null;
   readonly puedoAbrir?: boolean;
+  /** DP-14 · ronda 2: cuántas cajas caben a la vez (sólo sin caja en esta terminal). */
+  readonly cupoDeCajas?: number;
 }
 
 export type DesgloseDelFondo = {

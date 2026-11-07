@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import TicketViewerDialog from '@/components/tickets/TicketViewerDialog';
 import { useConfig } from '@/lib/ConfigContext';
 import { MargenEnLaLista } from '~/restaurante/MargenDeLaVenta';
+import { cantidadEnLaLista } from '~/restaurante/peso';
 import {
   RECETA_INCOMPLETA,
   SIN_RECETA,
@@ -432,7 +433,7 @@ export default function Ventas() {
                       className="flex justify-between text-sm py-1 border-b last:border-0"
                     >
                       <span>
-                        {d.producto_nombre} x{d.cantidad}
+                        {d.producto_nombre} {cantidadEnLaLista(d)}
                       </span>
                       <span className="font-medium">{formatCurrency(d.subtotal)}</span>
                     </div>
@@ -443,7 +444,7 @@ export default function Ventas() {
                       className="flex justify-between text-sm py-1 border-b last:border-0 text-muted-foreground"
                     >
                       <span className="line-through">
-                        {q.producto_nombre} x{q.cantidad}
+                        {q.producto_nombre} {cantidadEnLaLista(q)}
                       </span>
                       <span className="text-xs font-medium uppercase">Quitado</span>
                     </div>

@@ -64,7 +64,12 @@ export interface CajaEnOtraTerminal {
 export async function cajasDeLaSucursal(
   tx: Transaccion,
   ambito: { organizacionId: string; sucursalId: string; empleoId: string; rol: string },
-): Promise<{ readonly enOtraTerminal: CajaEnOtraTerminal | null; readonly puedoAbrir: boolean }> {
+): Promise<{
+  readonly enOtraTerminal: CajaEnOtraTerminal | null;
+  readonly puedoAbrir: boolean;
+  /** DP-14 · ronda 2: cuántas cajas caben a la vez, para decir «Ya hay N cajas abiertas». */
+  readonly cupoDeCajas: number;
+}> {
   const { cupo, abiertas } = await repoCaja.cupoDeCajas(
     tx,
     ambito.organizacionId,
@@ -101,6 +106,7 @@ export async function cajasDeLaSucursal(
             puedoTraerla: puedeTraerLaCaja(ambito.rol, ambito.empleoId, ajena.abiertaPorId),
           },
     puedoAbrir: abiertas.length < cupo,
+    cupoDeCajas: cupo,
   };
 }
 

@@ -1,8 +1,9 @@
 # La mudanza · lo que hace Miguel
 
-Don Poncho pasa de la base compartida de MorphiqPOS a **su propio proyecto de Supabase el lunes 9
-de noviembre de 2026**. Tú creas el proyecto el **domingo 8**; yo corro las migraciones en el
-proyecto vacío ese mismo domingo, y el lunes, contigo presente, se muda. El guion completo, con
+Don Poncho pasa de la base compartida de MorphiqPOS a **su propio proyecto de Supabase el día que
+tú digas**. **En pausa desde el 07-11-2026:** primero se corrige y se prueba todo; no crees nada
+todavía. Cuando toque: tú creas el proyecto; yo corro las migraciones en el proyecto vacío ese
+mismo día, y otro día, contigo presente y con el restaurante cerrado, se muda. El guion completo, con
 tiempos y regreso atrás, está en [`MUDANZA-FASE-B.md`](MUDANZA-FASE-B.md).
 
 **Costo:** unos **10 USD al mes** más, por el cómputo Micro del proyecto nuevo en la organización
@@ -12,7 +13,7 @@ Pro.
 archivo `D:\MIS PROYECTOS\MORPHIQ POS\_PRIVADO\fase-b.env` (créalo con el Bloc de notas). Cuando
 termines, en el chat sólo escribe «listo».
 
-## Domingo 8 · crear el proyecto (unos 15 minutos)
+## Primer día · crear el proyecto (unos 15 minutos)
 
 1. Entra a <https://supabase.com/dashboard> y elige la organización **M1gu3l97** (la Pro).
 2. **New project**.
@@ -61,16 +62,16 @@ STORAGE_SECRET_KEY=…
 STORAGE_BUCKET=pos-don-poncho
 ```
 
-**En Vercel no tienes que hacer nada:** las variables las cambio yo el lunes, por la entrada
+**En Vercel no tienes que hacer nada:** las variables las cambio yo el día de la mudanza, por la entrada
 estándar del CLI, y sólo esas cinco (`DATABASE_URL` y las cuatro `STORAGE_*`).
 
-## Domingo 8 · lo que hago yo después
+## Ese mismo día · lo que hago yo después
 
 - Doy de alta el rol de la aplicación (`morphiqpos_app`) con su propia contraseña (va a
   `fase-b.env`, nunca al chat) y corro las migraciones hasta la 188 con `pnpm db:migrate`, más
-  `verify:esquema` estricto. El proyecto está vacío: no hay riesgo, y el lunes sólo se importa.
+  `verify:esquema` estricto. El proyecto está vacío: no hay riesgo, y el día de la mudanza sólo se importa.
 
-## Lunes 9 · contigo (unos 45 minutos, con el restaurante cerrado)
+## El día de la mudanza · contigo (unos 45 minutos, con el restaurante cerrado)
 
 1. Confirmas que nadie usa el POS (cajas cerradas, tabletas apagadas).
 2. Yo: huella de los otros 10 negocios, exportación con `--exigir-cerrado`, importación, conteos y
@@ -83,7 +84,7 @@ estándar del CLI, y sólo esas cinco (`DATABASE_URL` y las cuatro `STORAGE_*`).
 Si algo falla después de cambiar las variables, se regresan las de la compartida y se redespliega
 (10 minutos). La compartida conserva los datos de Don Poncho intactos como respaldo.
 
-## Martes 10 · tus PIN
+## Después · la configuración y tus PIN
 
 Desde Configuración → Usuarios POS cambias el PIN de cada persona, tecleándolo tú, empezando por
 el tuyo. Nadie más los ve: ni el chat, ni el repositorio.

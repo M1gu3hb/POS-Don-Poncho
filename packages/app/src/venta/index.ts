@@ -41,3 +41,8 @@ export {
   type ResultadoDevolucionDeVenta,
   type VentaParaDevolver,
 } from './devolucion-de-venta.ts';
+export {
+  descuentoAutorizadoComando,
+  entradaDescuentoAutorizado,
+  type DescuentoAutorizado,
+} from './descuento-autorizado.ts';

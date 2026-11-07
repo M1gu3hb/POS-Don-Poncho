@@ -175,17 +175,47 @@ describe('el PIN del supervisor en la terminal de la cajera', () => {
     expect(estado.fallidos).toEqual([]);
   });
 
-  it('nadie se autoriza a sí mismo una cancelación (ni lo que no dice para qué es)', async () => {
+  it('nadie se autoriza a sí mismo lo que no dice para qué es, ni otra cosa que un descuento o una cancelación', async () => {
     await credencialCon('2345');
     expect(
       await autorizarConPin({ ...peticion('2345'), solicitaEmpleoId: GERENTE }, AHORA),
     ).toEqual({ ok: false, motivo: 'uno_mismo' });
+  });
+
+  it('ronda 2 (medio 6) · para CANCELAR, el gerente con la sesión abierta teclea SU PIN y sirve', async () => {
+    await credencialCon('2345');
+    const resultado = await autorizarConPin(
+      { ...peticion('2345'), solicitaEmpleoId: GERENTE, para: 'cancelacion', cuenta: 'cuenta-1' },
+      AHORA,
+    );
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
     expect(
-      await autorizarConPin(
-        { ...peticion('2345'), solicitaEmpleoId: GERENTE, para: 'cancelacion' },
+      leerAutorizacion(
+        resultado.autorizacion,
+        { organizacionId: ORG, solicitaEmpleoId: GERENTE, cuenta: 'cuenta-1', para: 'cancelacion' },
+        SECRETO,
         AHORA,
       ),
-    ).toEqual({ ok: false, motivo: 'uno_mismo' });
+    ).toMatchObject({ supervisor: GERENTE, solicita: GERENTE, para: 'cancelacion' });
+  });
+
+  it('ronda 2 (medio 6) · teclear su PIN no abre otra puerta: un PIN malo propio sigue contando y un puesto que no autoriza no firma', async () => {
+    await credencialCon('2345');
+    expect(
+      await autorizarConPin(
+        { ...peticion('9999'), solicitaEmpleoId: GERENTE, para: 'cancelacion', cuenta: 'c' },
+        AHORA,
+      ),
+    ).toEqual({ ok: false, motivo: 'credenciales' });
+    expect(estado.fallidos).toHaveLength(1);
+    estado.rol = 'cajero';
+    expect(
+      await autorizarConPin(
+        { ...peticion('2345'), solicitaEmpleoId: GERENTE, para: 'cancelacion', cuenta: 'c' },
+        AHORA,
+      ),
+    ).toEqual({ ok: false, motivo: 'no_autoriza' });
   });
 
   it('DP-14.2 · para un descuento, el gerente con la sesión abierta vuelve a teclear SU PIN', async () => {

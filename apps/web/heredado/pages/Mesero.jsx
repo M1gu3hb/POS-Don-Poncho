@@ -74,6 +74,7 @@ import {
   zonasConMesas,
   zonasDelNegocio,
 } from '~/cliente/mesas-del-mapa';
+import { ColaDeUnoEnUno } from '~/restaurante/cola-de-uno-en-uno';
 import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
 import { opcionesParaElComando } from '~/venta/opciones-en-pos';
 import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
@@ -200,10 +201,17 @@ function Mesero() {
   const [showAlertasMesero, setShowAlertasMesero] = useState(false);
   // Modal de selección de modificadores al agregar producto
   const [productoParaPersonalizar, setProductoParaPersonalizar] = useState(null);
+  // Cada turno de la cola abre un diálogo nuevo (`key`): si el siguiente es el MISMO platillo, sin
+  // esto salía con las opciones y la nota del anterior.
+  const [turnoDePersonalizar, setTurnoDePersonalizar] = useState(0);
   // DP-14.1-4: la lectura de opciones de un platillo que las pide ({ producto, estado }).
   const [lecturaDeOpciones, setLecturaDeOpciones] = useState(null);
-  // DP-14.1-4 · Cada toque que espera las opciones lleva su número: cerrar el diálogo lo cancela.
+  // DP-14.1-4 · Cerrar el diálogo de «no se leyeron» cancela los toques que esperaban. DP-14
+  // ronda 2: el número cambia SÓLO al cerrar, no con cada toque (antes el segundo toque rápido
+  // cancelaba al primero y el platillo se perdía).
   const toqueDeOpcionesRef = useRef(0);
+  // Dos toques rápidos en platillos con opciones: el segundo espera su turno, no pisa al primero.
+  const colaDePersonalizarRef = useRef(new ColaDeUnoEnUno());
   // 6B / 1.D — Modal de cantidad/porción para productos variables
   const [productoVariable, setProductoVariable] = useState(null);
   const { data: solicitudesPendRaw = [], isFetched: solicitudesLeidas } = useQuery({
@@ -646,6 +654,19 @@ function Mesero() {
     );
   };
 
+  // El platillo con opciones que se está personalizando es uno a la vez: el que llega mientras
+  // tanto se encola y se abre al confirmar o cerrar el anterior.
+  const abrirPersonalizacion = (producto) => {
+    if (colaDePersonalizarRef.current.llegar(producto)) {
+      setTurnoDePersonalizar((n) => n + 1);
+      setProductoParaPersonalizar(producto);
+    }
+  };
+  const cerrarPersonalizacion = () => {
+    setTurnoDePersonalizar((n) => n + 1);
+    setProductoParaPersonalizar(colaDePersonalizarRef.current.terminar());
+  };
+
   const agregarAlCarrito = async (productoTocado) => {
     // QA1-4 (DP-13.5): antes de agregar hay que saber si el platillo pide opciones. Si todavía no
     // llegaron (la tableta recién abrió la mesa), se esperan: el toque no se pierde.
@@ -662,7 +683,6 @@ function Mesero() {
       ? sinSusGrupos
       : pideOpciones(productoTocado, undefined) !== 'no';
     if (esperaLaLectura) {
-      toqueDeOpcionesRef.current += 1;
       const toque = toqueDeOpcionesRef.current;
       const aviso = setTimeout(
         () => setLecturaDeOpciones({ producto: productoTocado, estado: 'leyendo' }),
@@ -697,7 +717,7 @@ function Mesero() {
     }
     if (productoTieneModificadores(producto)) {
       // Abrir modal — la confirmación se procesa en confirmarPersonalizacion
-      setProductoParaPersonalizar(producto);
+      abrirPersonalizacion(producto);
       return;
     }
     sonar('agregar');
@@ -780,7 +800,7 @@ function Mesero() {
         _modificadores: Array.isArray(modificadores) ? modificadores : [],
       },
     ]);
-    setProductoParaPersonalizar(null);
+    cerrarPersonalizacion();
   };
 
   // Actualiza la nota final que viajará a cocina para un item del carrito.
@@ -1226,9 +1246,7 @@ function Mesero() {
           <UtensilsCrossed className="w-5 h-5 shrink-0 mt-0.5 text-advertencia" />
           <div className="flex-1">
             <p className="font-bold">No tienes mesas asignadas</p>
-            <p className="text-xs opacity-90">
-              Pide al administrador que te asigne mesas desde Configuración → Mesas.
-            </p>
+            <p className="text-xs opacity-90">Pide al dueño o al gerente que te asigne mesas.</p>
           </div>
         </div>
       )}
@@ -1782,9 +1800,10 @@ function Mesero() {
 
       {/* === MODAL DE PERSONALIZACIÓN / MODIFICADORES === */}
       <SeleccionModificadoresDialog
+        key={turnoDePersonalizar}
         producto={productoParaPersonalizar}
         open={!!productoParaPersonalizar}
-        onClose={() => setProductoParaPersonalizar(null)}
+        onClose={cerrarPersonalizacion}
         onConfirm={confirmarPersonalizacion}
       />
 

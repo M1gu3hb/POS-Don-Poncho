@@ -6,6 +6,7 @@ export {
   verificarPin,
 } from './pin.ts';
 
+export { topeDelAutorizador, type TopeDelAutorizador } from './tope-del-autorizador.ts';
 export { hashearDispositivo, VIGENCIA_DISPOSITIVO_SEGUNDOS } from './dispositivo.ts';
 
 export {

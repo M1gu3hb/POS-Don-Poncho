@@ -32,7 +32,8 @@ import {
   Layers,
   AlertTriangle,
 } from 'lucide-react';
-import { ROLE_LABELS_SELECTABLE, ROLES } from '@/lib/constants';
+import { ROLES } from '@/lib/constants';
+import { etiquetaDelPuesto, puestosQueOtorga } from './puestos';
 import { useConfig } from '@/lib/ConfigContext';
 import { toast } from 'sonner';
 import { COCINA_GENERAL_COLOR } from '@/utils/estacionUtils';
@@ -74,7 +75,7 @@ const TODAS = '__todas__';
  *    "Todas las estaciones". Si no hay estaciones creadas, lo advierte y
  *    bloquea el guardado.
  */
-export default function UsuarioPOSDialog({ open, onClose, user, onSave }) {
+export default function UsuarioPOSDialog({ open, onClose, user, onSave, miPuesto, esPropio }) {
   const isEdit = !!user?.id;
   const { config } = useConfig();
   const estacionesActivas = config?.estaciones_preparacion_activas === true;
@@ -117,14 +118,15 @@ export default function UsuarioPOSDialog({ open, onClose, user, onSave }) {
     if (open) {
       setForm({
         nombre: user?.nombre || '',
-        // Si el rol del usuario no está en los seleccionables (ej. legacy 'barra'),
-        // pre-rellenamos con el valor real para no perder dato; solo el selector
-        // mostrará la lista corta.
+        // DP-14 · El PUESTO REAL (`dueno`, `gerente`, `cajero`…), tal como lo sirve el puente:
+        // editar a alguien no le cambia el puesto si no lo toca.
         rol: user?.rol || 'mesero',
         pin: user?.pin || '',
         telefono: user?.telefono || '',
         correo: user?.correo || '',
-        color: user?.color || '',
+        // El color que la persona TIENE, no el que se calcula para pintarla: si se cargara el
+        // calculado, un simple renombre lo guardaría como si lo hubieran elegido.
+        color: user?.color_guardado || '',
         activo: user?.activo !== false,
         estacion_preparacion_id: user?.estacion_preparacion_id || '',
         puede_ver_todas_estaciones: user?.puede_ver_todas_estaciones === true,
@@ -159,9 +161,11 @@ export default function UsuarioPOSDialog({ open, onClose, user, onSave }) {
   const colorDuplicado = useMemo(() => {
     if (!mostrarColor || !form.color) return null;
     const otros = (Array.isArray(usuariosAll) ? usuariosAll : []).filter(
-      (u) => u && u.id !== user?.id && u.rol === form.rol && u.color,
+      (u) => u && u.id !== user?.id && u.rol === form.rol && u.color_guardado,
     );
-    const dup = otros.find((u) => (u.color || '').toLowerCase() === form.color.toLowerCase());
+    const dup = otros.find(
+      (u) => (u.color_guardado || '').toLowerCase() === form.color.toLowerCase(),
+    );
     return dup || null;
   }, [mostrarColor, form.color, form.rol, usuariosAll, user?.id]);
 
@@ -228,7 +232,9 @@ export default function UsuarioPOSDialog({ open, onClose, user, onSave }) {
 
     setSaving(true);
     try {
-      const colorFinal = mostrarColor ? form.color || '' : '';
+      // Si el control de color no se ve (otro puesto), se manda lo que ya tenía: renombrar no
+      // cambia el color. Al cambiar a un puesto sin color, el selector de puesto ya lo vació.
+      const colorFinal = form.color || '';
 
       // Snapshot de estación (solo si aplica).
       let estacionId = '';
@@ -304,33 +310,42 @@ export default function UsuarioPOSDialog({ open, onClose, user, onSave }) {
             />
           </div>
 
-          {/* Rol */}
+          {/* Puesto: los reales, y sólo los que quien edita puede dar */}
           <div>
-            <Label className="text-xs">Rol</Label>
-            <Select
-              value={form.rol}
-              onValueChange={(v) =>
-                setForm({
-                  ...form,
-                  rol: v,
-                  ...(v !== ROLES.KITCHEN
-                    ? { estacion_preparacion_id: '', puede_ver_todas_estaciones: false }
-                    : {}),
-                  ...(v !== ROLES.WAITER && v !== ROLES.KITCHEN ? { color: '' } : {}),
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona rol…" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(ROLE_LABELS_SELECTABLE).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>
-                    {v}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-xs">Puesto</Label>
+            {esPropio ? (
+              <p className="text-sm font-medium py-2" data-testid="puesto-propio">
+                {etiquetaDelPuesto(form.rol)}{' '}
+                <span className="text-xs font-normal text-muted-foreground">
+                  (tu puesto no lo cambias tú)
+                </span>
+              </p>
+            ) : (
+              <Select
+                value={form.rol}
+                onValueChange={(v) =>
+                  setForm({
+                    ...form,
+                    rol: v,
+                    ...(v !== ROLES.KITCHEN
+                      ? { estacion_preparacion_id: '', puede_ver_todas_estaciones: false }
+                      : {}),
+                    ...(v !== ROLES.WAITER && v !== ROLES.KITCHEN ? { color: '' } : {}),
+                  })
+                }
+              >
+                <SelectTrigger aria-label="Puesto">
+                  <SelectValue placeholder="Selecciona puesto…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {puestosQueOtorga(miPuesto).map((p) => (
+                    <SelectItem key={p.valor} value={p.valor}>
+                      {p.etiqueta}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             {esRolLegacyBarra && (
               <div className="mt-2 text-[11px] flex items-start gap-1.5 px-2 py-1.5 rounded-md bg-advertencia/10 border border-advertencia/30 text-advertencia">
                 <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
@@ -549,7 +564,7 @@ export default function UsuarioPOSDialog({ open, onClose, user, onSave }) {
           </div>
 
           {/* Activo */}
-          {isEdit && (
+          {isEdit && !esPropio && (
             <div className="flex items-center justify-between p-3 rounded-lg border">
               <div>
                 <Label className="text-sm font-medium">Activo</Label>

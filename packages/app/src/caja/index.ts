@@ -82,3 +82,10 @@ export {
   type HojaDelCorte,
   type NegocioDelCorte,
 } from './corte/documento.ts';
+export {
+  entradaNombrarTerminal,
+  entradaTerminales,
+  nombrarTerminal,
+  terminalesDeLaSucursal,
+  type TerminalDeLaSucursal,
+} from './terminales.ts';

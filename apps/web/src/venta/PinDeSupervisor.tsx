@@ -9,6 +9,8 @@ import { useEffect, useState } from 'react';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
 
+import type { TopeDelPin } from './tope-de-quien-autoriza';
+
 /**
  * EL PIN DE QUIEN AUTORIZA, en la misma pantalla (F-205; DP-13.2).
  *
@@ -28,6 +30,8 @@ export interface QuienAutoriza {
 export interface Autorizada {
   readonly token: string;
   readonly nombre: string;
+  /** Ronda 2 · Hasta cuánto llega ese PIN, como lo dice el servidor (puede faltar). */
+  readonly tope?: TopeDelPin;
 }
 
 function mensajeDe(fallo: unknown, porDefecto: string): string {
@@ -111,18 +115,25 @@ export function PinDeSupervisor({
     setOcupado(true);
     setFallo(null);
     try {
-      const respuesta = await invocarComando<{ autorizacion: string }>(
-        '/api/identidad/supervisor',
-        {
-          empleoId: supervisor,
-          pin,
-          ordenId,
-          para,
-          ...(montoCentavos === undefined ? {} : { montoCentavos }),
-        },
-      );
+      const respuesta = await invocarComando<{
+        autorizacion: string;
+        topeCentavos?: string;
+        topeBp?: number;
+      }>('/api/identidad/supervisor', {
+        empleoId: supervisor,
+        pin,
+        ordenId,
+        para,
+        ...(montoCentavos === undefined ? {} : { montoCentavos }),
+      });
       const nombre = lista?.find((q) => q.empleoId === supervisor)?.nombre ?? '';
-      alAutorizar({ token: respuesta.autorizacion, nombre });
+      alAutorizar({
+        token: respuesta.autorizacion,
+        nombre,
+        ...(respuesta.topeCentavos === undefined || respuesta.topeBp === undefined
+          ? {}
+          : { tope: { topeCentavos: respuesta.topeCentavos, topeBp: respuesta.topeBp } }),
+      });
     } catch (error: unknown) {
       const espera = esperaDelBloqueo(error);
       if (espera !== null) setRestan(espera);

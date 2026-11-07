@@ -116,6 +116,8 @@ export const claves = {
     raiz: (): ClaveDeConsulta => ['usuarios_pos'],
     /** La plantilla activa: `UsuarioPOS.filter({ activo: true })`. */
     activos: (): ClaveDeConsulta => ['usuarios_pos', { activo: true }],
+    /** DP-14 · Los dados de baja (`activo: false`): «Ver desactivados» en Usuarios POS. */
+    inactivos: (): ClaveDeConsulta => ['usuarios_pos', { activo: false }],
     /**
      * Sólo los meseros activos. Se llamaba `usuarios_pos_meseros` en tres sitios y dos de
      * ellos pedían TODOS los activos: el editor de mesas ofrecía de mesero a la cajera.

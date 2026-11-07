@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { cantidadParaMostrar, esPorPeso, etiquetaDePeso } from './peso.ts';
+import { cantidadParaMostrar, esPorPeso, etiquetaDePeso, cantidadEnLaLista } from './peso.ts';
 
 describe('DP-14 · el peso como lo dice la cocina', () => {
   it.each([
@@ -49,5 +49,24 @@ describe('DP-14 · el peso como lo dice la cocina', () => {
     expect(esPorPeso({ tipo_venta_snapshot: 'variable_medida' })).toBe(true);
     expect(esPorPeso({ tipo_venta: 'precio_fijo' })).toBe(false);
     expect(esPorPeso({})).toBe(false);
+  });
+});
+
+describe('cantidadEnLaLista (DP-14 · ronda 2, medio 4: Ventas y su «Quitado»)', () => {
+  it('por peso, el peso con su fracción; por pieza, «x» y la cantidad', () => {
+    expect(
+      cantidadEnLaLista({
+        tipo_venta_snapshot: 'variable_medida',
+        cantidad_variable_snapshot: 0.5,
+      }),
+    ).toBe('½ kg');
+    expect(
+      cantidadEnLaLista({
+        tipo_venta_snapshot: 'variable_medida',
+        cantidad_variable_snapshot: 1.5,
+      }),
+    ).toBe('1.5 kg');
+    expect(cantidadEnLaLista({ tipo_venta_snapshot: 'precio_fijo', cantidad: 2 })).toBe('x2');
+    expect(cantidadEnLaLista({ cantidad: '3' })).toBe('x3');
   });
 });

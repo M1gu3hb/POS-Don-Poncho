@@ -103,3 +103,12 @@ export function cantidadParaMostrar(linea: LineaConPeso): string {
   const n = aNumero(linea.cantidad);
   return Number.isInteger(n) ? String(n) : sinCerosDeMas(n);
 }
+
+/**
+ * DP-14 · ronda 2, medio 4 · La cantidad en una lista de renglones (Ventas, y su «Quitado»): el peso
+ * con su fracción («½ kg») si se vende por peso; si no, «x» y la cantidad («x2»), como siempre.
+ */
+export function cantidadEnLaLista(linea: LineaConPeso): string {
+  const cantidad = cantidadParaMostrar(linea);
+  return esPorPeso(linea) ? cantidad : `x${cantidad}`;
+}

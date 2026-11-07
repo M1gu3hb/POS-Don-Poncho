@@ -222,6 +222,10 @@ export const CODIGOS_ERROR = {
   OPCION_OBLIGATORIA: 'OPCION_OBLIGATORIA',
   /** DP-14.6 · La elección trae una opción o un grupo que no es del platillo, o repetida. */
   OPCION_NO_VALIDA: 'OPCION_NO_VALIDA',
+  /** DP-14 · ronda 2 · Otra terminal de la sucursal ya se llama así (Configuración → Caja). */
+  TERMINAL_NOMBRE_REPETIDO: 'TERMINAL_NOMBRE_REPETIDO',
+  /** DP-14 · ronda 2 · Esa terminal no es de esta sucursal (o no existe). */
+  TERMINAL_NO_ENCONTRADA: 'TERMINAL_NO_ENCONTRADA',
 
   // --- andamiaje de pruebas ---
   /** Se pidio interrumpir despues de un paso que no existe (inyeccion de fallos). */

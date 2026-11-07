@@ -77,7 +77,8 @@ export function debeEscucharAudio(posUser, config) {
  * Filtra el array de mesas según el rol y la configuración.
  *
  * - Admin: ve TODO.
- * - Mesero con asignación activa: solo sus mesas asignadas.
+ * - Mesero con asignación activa: sus mesas asignadas Y las que no tienen mesero (DP-14: una mesa
+ *   sin asignar —la de un mesero que se fue— la ven todos, nunca queda invisible).
  * - Mesero sin asignación: ve todas.
  * - Otros roles: array vacío (los demás no usan esta función).
  */
@@ -88,7 +89,7 @@ export function filtrarMesasParaUsuario(mesas, posUser, config) {
   if (posUser.rol !== ROLES.WAITER) return arr;
   if (!asignacionActiva(config)) return arr;
   const myId = posUser.id;
-  return arr.filter((m) => m?.mesero_asignado_id && m.mesero_asignado_id === myId);
+  return arr.filter((m) => !m?.mesero_asignado_id || m.mesero_asignado_id === myId);
 }
 
 /**

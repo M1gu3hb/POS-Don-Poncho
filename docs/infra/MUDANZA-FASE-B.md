@@ -1,8 +1,9 @@
 # Mudanza a la Fase B · el guion del día
 
 Don Poncho pasa de la base compartida de MorphiqPOS (`wyqmzhliurwyxuyxznpb`, la Fase A) a su
-propio proyecto de Supabase el **lunes 9 de noviembre de 2026**, con el restaurante cerrado (abre
-con el POS el sábado 14). Lo que hace Miguel, clic por clic, está en
+propio proyecto de Supabase **el día que Miguel diga**, con el restaurante cerrado. Está **en pausa**
+desde el 07-11-2026: primero se corrige todo lo de la auditoría y se prueba; nadie crea el proyecto
+nuevo hasta entonces. Lo que hace Miguel, clic por clic, está en
 [`MUDANZA-LO-QUE-HACE-MIGUEL.md`](MUDANZA-LO-QUE-HACE-MIGUEL.md).
 
 ## Qué cambia y qué no
@@ -42,7 +43,7 @@ con el POS el sábado 14). Lo que hace Miguel, clic por clic, está en
 Nada más apunta a la compartida: sin integraciones, sin dominios propios, sin tareas fuera de la
 base. **Región:** `us-east-2` (Ohio), la más cercana a las funciones de Vercel (`cle1`).
 
-## Domingo 8 · el proyecto vacío (la sesión de desarrollo)
+## Día 1 · el proyecto vacío (la sesión de desarrollo)
 
 1. El rol de la aplicación, `morphiqpos_app` (`login bypassrls`, contraseña propia generada aquí y
    guardada en `..\_PRIVADO\fase-b.env`), por SQL como `postgres`. Es el proyecto nuevo: ahí sí
@@ -50,7 +51,7 @@ base. **Región:** `us-east-2` (Ohio), la más cercana a las funciones de Vercel
 2. `pnpm db:migrate` con la `DATABASE_URL` de `postgres` (sesión) del proyecto nuevo, hasta la
    188; luego `verify:esquema` estricto contra esa base.
 
-## El lunes · en orden
+## Día 2 · la mudanza, en orden
 
 Todo desde la raíz del repositorio en `main`, con los secretos en archivos de `..\_PRIVADO\`
 (nunca en la línea de comandos que queda en el historial). Cada paso con su hora en la bitácora.
@@ -91,10 +92,53 @@ nuevo con los `STORAGE_*` del proyecto nuevo.
   se haya escrito en la base nueva después de cambiar se pierde: por eso la ventana es con el
   restaurante cerrado. Ensayado el 07-11 (abajo).
 
+## Después de importar (antes de cambiar Vercel)
+
+1. **El motivo de merma «Por cancelación»** (DP-D71), un dato de la base propia (nunca en la
+   compartida, donde el catálogo es de todos):
+
+   ```sql
+   insert into motivos_merma (clave, etiqueta, giro, imputable)
+   values ('por_cancelacion', 'Por cancelación', 'restaurante', false)
+   on conflict (clave) do nothing;
+   ```
+
+2. **RLS y permisos, igual que en la compartida.** En la compartida (medido el 07-11, sólo lectura):
+   las 139 tablas de `public` con RLS encendido y **cero** permisos para `anon` y `authenticated`
+   (tablas, rutinas y secuencias). Un proyecto nuevo de Supabase trae permisos por omisión para esos
+   roles: se comprueba con
+
+   ```sql
+   select
+     (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace
+       where n.nspname = 'public' and c.relkind in ('r','p')) as tablas,
+     (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace
+       where n.nspname = 'public' and c.relkind in ('r','p') and c.relrowsecurity) as con_rls,
+     (select count(*) from information_schema.role_table_grants
+       where table_schema = 'public' and grantee in ('anon','authenticated')) as permisos_tablas,
+     (select count(*) from information_schema.role_routine_grants
+       where routine_schema = 'public' and grantee in ('anon','authenticated')) as permisos_rutinas,
+     (select count(*) from information_schema.role_usage_grants
+       where object_schema = 'public' and grantee in ('anon','authenticated')) as permisos_secuencias;
+   ```
+
+   y tiene que dar `tablas = con_rls` y los tres permisos en 0. Si aparecen, se quitan con una
+   migración DE LA BASE PROPIA (`pnpm db:migrate`, nunca en la compartida), con su ficha para el
+   maestro.
+
+## La configuración de la base propia (después, con Miguel)
+
+- **Cajas abiertas a la vez = 2** (Configuración → Caja), dueño o administrador.
+- **«Caja 2»:** dar de alta a la segunda cajera desde Configuración → Usuarios POS.
+- **El nombre de cada caja** (Configuración → Caja → «El nombre de cada caja»): las dos terminales,
+  con los nombres que ellos digan.
+- Los nombres reales de las personas los ponen ellos; **Miguel cambia todos los PIN**, tecleándolos
+  él (nunca en el repositorio ni en el chat).
+
 ## La compartida después de la mudanza
 
 - Los datos de Don Poncho se quedan **intactos** como respaldo: nada de borrar ni archivar. Eso va
-  en otro guion, que Miguel aprueba, dos semanas después del sábado 14.
+  en otro guion, que Miguel aprueba, dos semanas después de la instalación.
 - Desde ese momento, la compartida sigue con **cero DDL y cero escrituras de Don Poncho**.
 - En la base propia, las migraciones van sólo con `pnpm db:migrate` y sólo si de verdad hacen
   falta, cada una con su ficha para el maestro.
@@ -130,7 +174,7 @@ agentes compilando y probando a la vez):
 compartida) y se reinició: la misma compilación sirvió esa base (11 personas en la lista, contra 9
 de la copia del ensayo). En Vercel es lo mismo: regresar las cinco variables y redesplegar.
 
-El lunes, sin la carga, la mudanza debería tardar lo del ensayo de DP-10.5: unos minutos.
+Sin la carga, la mudanza debería tardar lo del ensayo de DP-10.5: unos minutos.
 
 ## El ensayo (DP-10.5, 27-10-2026)
 

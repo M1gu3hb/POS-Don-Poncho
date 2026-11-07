@@ -165,17 +165,13 @@ export const guardarEmpleado = definirComando<
     }
 
     const puede = PUEDE_OTORGAR[rolDeQuienManda] ?? [];
-    if (!puede.includes(rolPedido)) {
-      throw new ErrorDominio(
-        'PUESTO_NO_OTORGABLE',
-        `Tu puesto no puede dar de alta a un ${rolPedido}. Pídeselo al dueño.`,
-        { rolPedido },
-      );
-    }
 
     const creado = entrada.empleado === undefined;
     let empleoId: string;
     let personaId: string;
+    let mesasLiberadas = 0;
+    // Lo que tenía antes de esta edición, para la auditoría (`null` al crear).
+    let antes: { readonly rol: string; readonly activo: boolean } | null = null;
 
     if (entrada.empleado !== undefined) {
       // El filtro por organización va SIEMPRE: sin él, conocer un uuid ajeno
@@ -192,28 +188,40 @@ export const guardarEmpleado = definirComando<
         throw new ErrorDominio('ACCESO_NO_ENCONTRADO', 'Ese usuario no existe en este negocio.');
       }
 
-      // Quitarse a uno mismo el puesto, o darse de baja, deja el negocio sin
-      // quien administre si era el único. Se rehúsa en vez de dejarlo pasar y
-      // que el siguiente inicio de sesión no lleve a ninguna parte.
-      if (actual.id === yo && (!entrada.activo || rolPedido !== actual.rol)) {
-        throw new ErrorDominio(
-          'PUESTO_NO_OTORGABLE',
-          'No puedes cambiarte el puesto ni darte de baja a ti mismo. Que lo haga otro.',
-        );
-      }
-
-      // Y el rol que TENÍA también tiene que estar a su alcance: un
-      // administrador no puede editar —ni desactivar— a un dueño.
-      if (!puede.includes(actual.rol)) {
-        throw new ErrorDominio(
-          'PUESTO_NO_OTORGABLE',
-          `Tu puesto no puede modificar a un ${actual.rol}.`,
-          { rolActual: actual.rol },
-        );
+      // Uno mismo cambia su nombre y su PIN, nunca su puesto ni su alta: quitarse el mando deja
+      // el negocio sin quien administre si era el único. Y como el puesto de uno no está en su
+      // propio `PUEDE_OTORGAR` (el administrador no otorga «administrador»), editarse es lo
+      // ÚNICO que se permite sin ese permiso.
+      if (actual.id === yo) {
+        if (!entrada.activo || rolPedido !== actual.rol) {
+          throw new ErrorDominio(
+            'PUESTO_NO_OTORGABLE',
+            'No puedes cambiarte el puesto ni darte de baja a ti mismo. Que lo haga otro.',
+          );
+        }
+      } else {
+        // A los demás: el puesto que TENÍAN tiene que estar a mi alcance (un administrador no
+        // edita ni desactiva a un dueño), y si lo cambio, el nuevo también. Si no cambió, no se
+        // pide nada más: renombrar a la gerente no es repartir un puesto.
+        if (!puede.includes(actual.rol)) {
+          throw new ErrorDominio(
+            'PUESTO_NO_OTORGABLE',
+            `Tu puesto no puede modificar a un ${actual.rol}.`,
+            { rolActual: actual.rol },
+          );
+        }
+        if (rolPedido !== actual.rol && !puede.includes(rolPedido)) {
+          throw new ErrorDominio(
+            'PUESTO_NO_OTORGABLE',
+            `Tu puesto no puede dar el puesto de ${rolPedido}. Pídeselo al dueño.`,
+            { rolPedido },
+          );
+        }
       }
 
       empleoId = actual.id;
       personaId = actual.personaId;
+      antes = { rol: actual.rol, activo: actual.activo };
 
       await ctx.paso('actualizar_persona', () =>
         ctx.tx
@@ -248,12 +256,35 @@ export const guardarEmpleado = definirComando<
         );
       }
 
+      // DP-14 · Un mesero que se va (o deja de serlo) no se lleva sus mesas: quedan SIN ASIGNAR
+      // —las ve todo el salón— en la misma transacción. Con la asignación activa, una mesa
+      // atada a alguien que ya no atiende sería invisible para todos los meseros.
+      if (actual.rol === 'mesero' && (!entrada.activo || rolPedido !== 'mesero')) {
+        const liberadas = await ctx.paso('liberar_mesas', () =>
+          ctx.tx
+            .updateTable('mesas')
+            .set({ empleado_asignado_id: null, updated_at: ctx.ahora })
+            .where('empleado_asignado_id', '=', empleoId)
+            .where('organizacion_id', '=', organizacionId)
+            .returning('id')
+            .execute(),
+        );
+        mesasLiberadas = liberadas.length;
+      }
+
       if (rolPedido !== actual.rol || (actual.activo && !entrada.activo)) {
         await ctx.paso('revocar_sesiones', () =>
           repoSesion.revocarSesionesDeEmpleo(ctx.tx, organizacionId, empleoId, ctx.ahora),
         );
       }
     } else {
+      if (!puede.includes(rolPedido)) {
+        throw new ErrorDominio(
+          'PUESTO_NO_OTORGABLE',
+          `Tu puesto no puede dar de alta a un ${rolPedido}. Pídeselo al dueño.`,
+          { rolPedido },
+        );
+      }
       const persona = await ctx.paso('crear_persona', () =>
         ctx.tx
           .insertInto('personas')
@@ -343,7 +374,15 @@ export const guardarEmpleado = definirComando<
     // una pista sobre las credenciales de nadie.
     ctx.auditar({
       entidadId: empleoId,
-      payload: { creado, rol: rolPedido, activo: entrada.activo, pinEstablecido },
+      payload: {
+        creado,
+        rol: rolPedido,
+        activo: entrada.activo,
+        rolAntes: antes?.rol ?? null,
+        activoAntes: antes?.activo ?? null,
+        pinEstablecido,
+        mesasLiberadas,
+      },
     });
 
     return { empleoId, nombre: entrada.nombre, rol: rolPedido, creado, pinEstablecido };

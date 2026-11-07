@@ -1393,3 +1393,100 @@ puerta los denuncia todos.
   ya no agota los teléfonos de la mesa. Un teléfono que ya tiene su id firmado nunca gasta cuota.
   Quien rote de red todavía puede: es la mitigación mínima y coherente, sin DDL.
 - Lo hicieron los agentes D y C (Sonnet).
+
+## DP-D73 · El papel suma: renglones − descuento (+ IVA) + propina = TOTAL = lo cobrado · 07-11-2026
+
+- **El hallazgo (auditoría del 7-11, bloqueante):** el ticket calculaba TOTAL = la suma de los
+  renglones + propina, sobre el subtotal bruto. $500 con $50 de descuento imprimía 500 y se cobraban
+  450. El cobro de la Caja decía «Subtotal» con el total ya descontado y no enseñaba el descuento.
+- **Elección:** un solo cálculo (`apps/web/src/venta/totales-del-papel.ts`) para todo papel —la
+  precuenta, el ticket final, la reimpresión de Ventas y Registros, el de `/pos` y el de cada parte de
+  una cuenta dividida, que son todos `PreCuentaTicket`— y para el cobro de la Caja: los renglones en
+  bruto, «Descuento −$X», el IVA («IVA» si se suma, «IVA incluido» si va en el precio) y el TOTAL
+  **del servidor** (`venta.total`, la venta sin propina); + propina = lo cobrado. Si el total del
+  servidor no llegó (el respaldo de HOTFIX 6A), se calcula igual, restando el descuento. El cobro de
+  la Caja dice además quién autorizó el descuento con su PIN y el motivo
+  (`venta.descuento_autorizado`, de la misma entrada de la auditoría que lee el corte).
+- **El peso** se dice con un solo formateador también en el cobro de la Caja y en Ventas (y su
+  «Quitado»): «½ kg», «1.5 kg».
+- **Sin migración.**
+
+## DP-D74 · Dos cajas en pantalla: la segunda se abre, la que no cabe se trae · 07-11-2026
+
+- **Elección:** si cabe otra caja, el aparato sin caja ve «No hay caja abierta en este aparato ·
+  Abrir caja», aunque otra terminal tenga la suya: con el cupo en 2, la segunda caja se ABRE. «Traer
+  esta caja aquí» sólo aparece si ya no cabe otra, y pide confirmación («… se queda sin caja»). En la
+  tercera, «Abrir caja» dice en pantalla «Ya hay 2 cajas abiertas: cierra una» (el estado de la caja
+  trae el cupo). Si otra caja ya cobró la cuenta, el cobro se cierra y la lista se relee.
+- **El nombre de cada caja:** Configuración → Caja lista las terminales de la sucursal (cuál tiene la
+  caja abierta) y el dueño o el administrador las nombra (`caja.nombrar_terminal`, con el antes y el
+  después en la auditoría; el nombre es único en la sucursal).
+- **Sin migración.**
+
+## DP-D75 · `/pos` sigue sin descuento · 07-11-2026
+
+- `/pos` (el mostrador sin mesas) no tiene botón de descuento, y no se agrega ahora: Don Poncho cobra
+  sus cuentas en la Caja, que sí lo tiene (DP-D61). Si un día se agrega, va con la misma clave, el
+  monto firmado y el uso único.
+
+## DP-D76 · Usuarios con el puesto real; uno mismo cambia su nombre y su PIN, nunca su puesto · 07-11-2026
+
+- **El hallazgo (auditoría del 7-11, bloqueante):** el puente servía el puesto en el vocabulario de
+  la sesión (dueño, administrador y gerente salían como «administrador»), la pantalla lo devolvía
+  así y el servidor le cambiaba el puesto a quien editaba; el dueño no podía editarse.
+- **Elección:** el puente de usuarios sirve el puesto REAL de la base (`dueno`, `administrador`,
+  `gerente`, `cajero`, `mesero`, `cocina`, `almacen`) con su nombre, y el color guardado
+  (`empleos.color`); la sesión y `/api/auth/*` siguen con su vocabulario. El diálogo ofrece sólo los
+  puestos que quien edita puede otorgar. Uno mismo cambia nombre, PIN, teléfono y color, nunca su
+  puesto ni su baja. A otro se le edita si se puede otorgar su puesto actual (y el nuevo, si cambia).
+  Las sesiones se cierran sólo si cambió el puesto o se dio de baja: renombrar no saca a nadie. El PIN
+  se cambia desde la pantalla con `identidad.guardar_empleado`, que lo hashea en el servidor (probado:
+  entra con el nuevo, el viejo ya no sirve). Las pestañas Caja y Descuentos son sólo del dueño y del
+  administrador, con el puesto real.
+- **Sin migración.** Lo hizo el agente RA (Sonnet).
+
+## DP-D77 · Desactivar suelta las mesas; una mesa sin mesero la ven todos; «Repartir mesas» · 07-11-2026
+
+- **Elección:** desactivar pide confirmación, con «Ver desactivados» y «Reactivar». Al desactivar a
+  un mesero (o cambiarle el puesto), sus mesas quedan sin asignar en la misma transacción. Con la
+  asignación activa, una mesa sin mesero asignado la ven todos los meseros: nunca queda invisible.
+  «Repartir mesas» (`restaurante.repartir_mesas`, dueño, administrador y gerente) asigna varias mesas a
+  un mesero de una vez, entero o nada, con su auditoría. El mesero sin mesas lee «Pide al dueño o al
+  gerente que te asigne mesas».
+- **Límite:** una mesa asignada a un mesero que se desactivó ANTES de este cambio seguiría oculta. En
+  producción hoy no hay ninguna (10 mesas, todas con un mesero activo, medido el 07-11).
+- **Sin migración.** Lo hizo el agente RA (Sonnet).
+
+## DP-D78 · El PIN dice hasta cuánto autoriza; quien autoriza cancela con su propio PIN · 07-11-2026
+
+- **El descuento:** `/api/identidad/supervisor` devuelve además el tope de quien tecleó su PIN (por
+  porcentaje y por monto, con la misma regla que `topeDe`). El diálogo dice «Autoriza hasta 30 %» y no
+  deja aplicar más; si el servidor rechaza por tope, por autorización vencida o ya usada, la borra y
+  pide el PIN otra vez; un solo envío en vuelo (contra el doble toque); y si la cuenta ya tenía un
+  descuento, dice «Reemplaza el descuento de $X».
+- **Cancelar con la cocina sin respuesta, siendo gerente o dueño:** teclea SU PIN (como en los
+  descuentos, DP-D61) y cancela; no necesita a otro. La autorización «para uno mismo» vale ahora
+  también para `cancelacion`, con el mismo puesto exigido, el PIN real y el mismo bloqueo por intentos.
+- **Dónde se exige ese PIN:** en la PANTALLA (el diálogo no deja confirmar sin él), no en el servidor.
+  La sesión de un gerente o del dueño ya autoriza cancelar, también sin poder comprobar la cocina
+  (`cancelar-sin-comprobar-la-cocina.integracion.test.ts`, «la gerente con su sesión no teclea PIN»),
+  y así queda: es el mismo criterio de reabrir una cuenta. El PIN en la pantalla es el freno contra la
+  tableta que alguien dejó con la sesión abierta; quien llame a la ruta a mano necesita esa sesión de
+  todos modos. Lo señaló la revisión del PR; si Miguel quiere que el servidor también lo exija, es un
+  cambio de una línea en `cancelar-con-permiso.ts` y la prueba de arriba cambia de sentido.
+- **Sin migración.** Lo hizo el agente RB (Sonnet).
+
+## DP-D79 · El carrito caducado se resuelve también en el mapa, y su aviso es de quien lo tenía · 07-11-2026
+
+- **Elección:** el globo «Pedido listo para confirmar» de un carrito caducado se resuelve también al
+  leer el mapa del mesero (los avisos por el puente), con la misma regla (`carritoCaducado`), cada mesa
+  en su transacción y con el candado del carrito; un fallo ahí se registra y no tumba la lectura. «Tu
+  pedido se borró porque pasaron 3 horas sin enviarse» lo ven sólo los teléfonos que tenían algo en
+  ese carrito, nunca la familia nueva que se sienta después.
+- **Lo que cuesta el sondeo:** cada mesero lee el mapa cada pocos segundos. Sólo entran a la
+  transacción con candado las mesas cuyo carrito PUDO caducar (con líneas y la última de hace más de
+  3 horas: una consulta con el índice `carrito_mesa_lineas_por_mesa`); las demás no abren transacción
+  ni esperan el candado de un comensal que está agregando. Sin esto, una corrida de navegador con
+  tres aparatos sondeando dio lecturas abandonadas y tiempos agotados.
+- **Sin migración.** Lo hizo el agente RB (Sonnet); el candado, el aislamiento del fallo y el
+  prefiltro, la sesión principal.

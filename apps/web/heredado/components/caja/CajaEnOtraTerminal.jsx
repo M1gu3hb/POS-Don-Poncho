@@ -16,9 +16,11 @@ import { Button } from '@/components/ui/button';
  * dispositivo (`/api/caja/traer`) para cobrar y hacer su corte aquí. Si la abrió otra
  * persona y quien mira no es de la gerencia, sólo lo explica.
  */
-export default function CajaEnOtraTerminal({ caja }) {
+export default function CajaEnOtraTerminal({ caja, cupo = null }) {
   const queryClient = useQueryClient();
   const [trayendo, setTrayendo] = useState(false);
+  // DP-14 (ronda 2, medio 3): traerla deja SIN caja a la otra terminal: se confirma antes.
+  const [confirmando, setConfirmando] = useState(false);
 
   const desde = new Date(caja.abiertaEn).toLocaleString('es-MX', {
     day: 'numeric',
@@ -58,12 +60,30 @@ export default function CajaEnOtraTerminal({ caja }) {
             ? 'Úsala aquí para cobrar y hacer su corte desde este dispositivo.'
             : 'Pide a quien la abrió o a la gerencia que la traiga a este dispositivo, o que haga su corte.'}
         </p>
+        <p className="text-xs opacity-90">
+          Ya hay {cupo ?? 2} cajas abiertas: cierra una para abrir otra aquí, o trae esta.
+        </p>
+        {confirmando && (
+          <p className="text-xs font-bold">
+            {donde} se queda sin caja: quien cobra ahí tendrá que abrir otra o traerla de vuelta.
+          </p>
+        )}
       </div>
-      {caja.puedoTraerla && (
-        <Button size="sm" onClick={traer} disabled={trayendo} className="shrink-0">
+      {caja.puedoTraerla && !confirmando && (
+        <Button size="sm" onClick={() => setConfirmando(true)} className="shrink-0">
           <MonitorSmartphone className="w-4 h-4 mr-1" />
-          {trayendo ? 'Trayendo…' : 'Usar esta caja aquí'}
+          Traer esta caja aquí
         </Button>
+      )}
+      {caja.puedoTraerla && confirmando && (
+        <div className="flex shrink-0 flex-col gap-1">
+          <Button size="sm" onClick={traer} disabled={trayendo}>
+            {trayendo ? 'Trayendo…' : 'Sí, traerla'}
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setConfirmando(false)}>
+            No
+          </Button>
+        </div>
       )}
     </div>
   );

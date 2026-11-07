@@ -113,6 +113,20 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/nombrar-terminal",
+      "comando": "caja.nombrar_terminal",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/caja/terminales",
+      "comando": "caja.terminales",
+      "escribe": false,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/traer",
       "comando": "caja.traer",
       "escribe": true,
@@ -526,6 +540,13 @@
       "paquetes": ["restaurante"]
     },
     {
+      "ruta": "/api/restaurante/repartir-mesas",
+      "comando": "restaurante.repartir_mesas",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["restaurante"]
+    },
+    {
       "ruta": "/api/restaurante/rotacion",
       "comando": "restaurante.rotacion_de_mesas",
       "escribe": false,
@@ -614,6 +635,13 @@
       "comando": "venta.crear_orden",
       "escribe": true,
       "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/venta/descuento-autorizado",
+      "comando": "venta.descuento_autorizado",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {

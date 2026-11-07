@@ -5,11 +5,18 @@ import { Input } from '@morphiqpos/ui/primitivas/input';
 import { Label } from '@morphiqpos/ui/primitivas/label';
 import { Aviso, CampoDeDinero, Dinero, Esqueleto, Vacio } from '@morphiqpos/ui/sistema';
 import { BadgePercent, KeyRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
 
-import { PinDeSupervisor } from './PinDeSupervisor';
+import { PinDeSupervisor, type Autorizada } from './PinDeSupervisor';
+import {
+  autorizacionInservible,
+  descuentoQueSeReemplaza,
+  elTopeCubre,
+  hastaCuantoAutoriza,
+  porcentajeEnTexto,
+} from './tope-de-quien-autoriza';
 
 /**
  * EL DESCUENTO, CON LA CLAVE DE QUIEN LO AUTORIZA (F-205; DP-14.2, decisión DP-D61).
@@ -64,15 +71,47 @@ export function DescuentoDeVenta({
   readonly ordenId: string;
   /** Lo que vale la venta antes del descuento, en centavos. */
   readonly base: number;
-  readonly onAplicar: (descuento: DescuentoElegido) => void;
+  /**
+   * Aplica el descuento. Si lanza, el formulario dice por qué y, si lo que falló fue la
+   * autorización (tope, vencida o ya usada), la borra y pide el PIN otra vez.
+   */
+  readonly onAplicar: (descuento: DescuentoElegido) => Promise<void>;
 }) {
   const [tope, setTope] = useState<Tope | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
+  // Lo que falló al APLICAR va aparte de lo que falló al leer el tope.
+  const [falloAlAplicar, setFalloAlAplicar] = useState<string | null>(null);
+  // Un solo envío en vuelo: la bandera es síncrona (el estado llega un render tarde, y dos toques
+  // seguidos pasarían los dos).
+  const enviandoRef = useRef(false);
+  const [enviando, setEnviando] = useState(false);
+  // El descuento que la cuenta ya tiene, en centavos: éste lo reemplaza.
+  const [previo, setPrevio] = useState<number | null>(null);
   const [modo, setModo] = useState<'importe' | 'porcentaje'>('importe');
   const [importe, setImporte] = useState<number | null>(null);
   const [porcentaje, setPorcentaje] = useState('');
   const [motivo, setMotivo] = useState('');
-  const [autorizacion, setAutorizacion] = useState<{ token: string; nombre: string } | null>(null);
+  const [autorizacion, setAutorizacion] = useState<Autorizada | null>(null);
+
+  useEffect(() => {
+    const control = new AbortController();
+    invocarComando<{ cotizacion: { descuentoCentavos: string } | null }>(
+      '/api/venta/estado',
+      { ordenId },
+      { signal: control.signal },
+    )
+      .then((leido) => {
+        if (control.signal.aborted) return;
+        setPrevio(descuentoQueSeReemplaza(Number(leido.cotizacion?.descuentoCentavos ?? '0')));
+      })
+      .catch(() => {
+        // Es sólo un aviso: sin leerlo se descuenta igual (el servidor reemplaza el anterior).
+        if (!control.signal.aborted) setPrevio(null);
+      });
+    return () => {
+      control.abort();
+    };
+  }, [ordenId]);
 
   useEffect(() => {
     const control = new AbortController();
@@ -102,21 +141,39 @@ export function DescuentoDeVenta({
     );
   }
 
-  const listo = valido && motivo.trim().length >= 4 && autorizacion !== null;
+  // El tope de ese PIN, si el servidor lo dijo: no se deja aplicar lo que no cubre.
+  const cubre = autorizacion?.tope === undefined || elTopeCubre(centavos, base, autorizacion.tope);
+  const listo = valido && motivo.trim().length >= 4 && autorizacion !== null && cubre && !enviando;
+
+  async function aplicar(): Promise<void> {
+    // `listo` ya exige la autorización: TypeScript la sabe no nula aquí.
+    if (!listo || enviandoRef.current) return;
+    enviandoRef.current = true;
+    setEnviando(true);
+    setFalloAlAplicar(null);
+    try {
+      await onAplicar({
+        centavos,
+        motivo: motivo.trim(),
+        autorizacion: autorizacion.token,
+        autorizo: autorizacion.nombre,
+      });
+    } catch (error: unknown) {
+      // Tope, vencida o ya usada: esa autorización no sirve más; se pide el PIN otra vez.
+      if (autorizacionInservible(error)) setAutorizacion(null);
+      setFalloAlAplicar(mensajeDe(error, 'No se pudo aplicar el descuento.'));
+    } finally {
+      enviandoRef.current = false;
+      setEnviando(false);
+    }
+  }
 
   return (
     <form
       className="flex flex-col gap-(--espacio-3)"
       onSubmit={(evento) => {
         evento.preventDefault();
-        // `listo` ya exige la autorización: TypeScript la sabe no nula aquí.
-        if (!listo) return;
-        onAplicar({
-          centavos,
-          motivo: motivo.trim(),
-          autorizacion: autorizacion.token,
-          autorizo: autorizacion.nombre,
-        });
+        void aplicar();
       }}
     >
       <div
@@ -212,16 +269,90 @@ export function DescuentoDeVenta({
             alAutorizar={setAutorizacion}
           />
         ) : (
-          <Aviso tono="exito" titulo={`Autorizó ${autorizacion.nombre}.`} />
+          <AutorizacionDelDescuento
+            autorizada={autorizacion}
+            base={base}
+            cubre={cubre}
+            alCambiarDePersona={() => {
+              setAutorizacion(null);
+            }}
+          />
         )}
       </div>
 
+      {previo === null ? null : (
+        <Aviso tono="info" titulo="Esta cuenta ya tiene un descuento.">
+          Reemplaza el descuento de <Dinero centavos={previo} />
+        </Aviso>
+      )}
       {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
+      {falloAlAplicar === null ? null : (
+        <Aviso tono="peligro" titulo={falloAlAplicar}>
+          {autorizacion === null ? 'Pide el PIN otra vez.' : null}
+        </Aviso>
+      )}
 
-      <Button type="submit" disabled={!listo}>
+      <Button type="submit" disabled={!listo} cargando={enviando}>
         <BadgePercent aria-hidden="true" />
         Aplicar el descuento
       </Button>
     </form>
+  );
+}
+
+/**
+ * LO QUE DICE LA PANTALLA CUANDO UN PIN YA AUTORIZÓ EL DESCUENTO (DP-14 ronda 2, medio 5).
+ *
+ * «Autorizó Ana. Autoriza hasta 30 %»: hasta dónde llega ese PIN lo dice el servidor
+ * (`/api/identidad/supervisor`). Si el descuento tecleado pasa de ahí no se deja aplicar y se ofrece
+ * pedir el PIN de otra persona; el servidor lo vuelve a comprobar al aplicar.
+ */
+function AlcanceDelPin({
+  base,
+  tope,
+}: {
+  readonly base: number;
+  readonly tope: Autorizada['tope'];
+}) {
+  if (tope === undefined) return null;
+  const alcance = hastaCuantoAutoriza(base, tope);
+  if (alcance.tipo === 'ninguno') return <> No autoriza descuentos.</>;
+  return alcance.tipo === 'porcentaje' ? (
+    <> Autoriza hasta {porcentajeEnTexto(alcance.bp)} %.</>
+  ) : (
+    <>
+      {' '}
+      Autoriza hasta <Dinero centavos={alcance.centavos} />.
+    </>
+  );
+}
+
+export function AutorizacionDelDescuento({
+  autorizada,
+  base,
+  cubre,
+  alCambiarDePersona,
+}: {
+  readonly autorizada: Autorizada;
+  /** Lo que vale la venta antes del descuento, en centavos. */
+  readonly base: number;
+  /** El tope de ese PIN cubre el descuento tecleado. */
+  readonly cubre: boolean;
+  readonly alCambiarDePersona: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-(--espacio-2)">
+      <Aviso tono={cubre ? 'exito' : 'peligro'} titulo={`Autorizó ${autorizada.nombre}.`}>
+        <AlcanceDelPin base={base} tope={autorizada.tope} />
+        {cubre
+          ? null
+          : ' Este descuento pasa de ahí: baja el descuento o que autorice otra persona.'}
+      </Aviso>
+      {cubre ? null : (
+        <Button type="button" variant="outline" size="sm" onClick={alCambiarDePersona}>
+          Que autorice otra persona
+        </Button>
+      )}
+    </div>
   );
 }

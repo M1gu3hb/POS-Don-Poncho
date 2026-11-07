@@ -56,14 +56,17 @@ import EstacionesPreparacionSection from '@/components/configuracion/EstacionesP
 import EstacionesAyuda from '@/components/configuracion/EstacionesAyuda';
 import UnidadesMedidaSection from '@/components/configuracion/UnidadesMedidaSection';
 import ProveedoresSection from '@/components/configuracion/ProveedoresSection';
-import { ROLE_LABELS, ZONAS_MESA } from '@/lib/constants';
+import { ZONAS_MESA } from '@/lib/constants';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { esUsuarioDePlataforma, hasPermission } from '@/lib/permissions';
 import MesaMapEditor from '@/components/mesas/MesaMapEditor';
 import MesaListMobile from '@/components/mesas/MesaListMobile';
 import MesaEditDialog from '@/components/mesas/MesaEditDialog';
 import IdentidadNegocio from '@/components/configuracion/IdentidadNegocio';
-import UsuarioPOSDialog from '@/components/configuracion/UsuarioPOSDialog';
+import UsuariosPOSSection from '@/components/configuracion/UsuariosPOSSection';
+import RepartirMesasDialog from '@/components/mesas/RepartirMesasDialog';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { esDeMando, puedeRepartirMesas } from '@/components/configuracion/puestos';
 import { useConfig } from '@/lib/ConfigContext';
 import { soloCamposEditablesMesa } from '@/utils/mesaConfigUtils';
 import { claves } from '~/cliente/claves-de-consulta';
@@ -74,7 +77,7 @@ import {
   soloMesasEnServicio,
   zonasDelNegocio,
 } from '~/cliente/mesas-del-mapa';
-import { Pencil, Phone, Mail, Calculator, BadgePercent } from 'lucide-react';
+import { Calculator, BadgePercent } from 'lucide-react';
 import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos';
 
 const useIsMobile = () => {
@@ -98,8 +101,10 @@ export default function Configuracion() {
   const puedeEliminarMesas =
     esUsuarioDePlataforma(posUser) && hasPermission(posUser?.rol, 'eliminar_mesas');
   const isMobile = useIsMobile();
-  const [showUserForm, setShowUserForm] = useState(false);
-  const [editingUser, setEditingUser] = useState(null); // usuario en edición (null = crear nuevo)
+  // DP-14 · El puesto REAL de quien tiene la sesión (`posUser.rol` junta dueño, administrador y
+  // gerente en «administrador»): decide quién ve Caja y Descuentos y quién reparte mesas.
+  const miPuesto = usePuesto();
+  const [showRepartir, setShowRepartir] = useState(false);
   const [showEliminarMesas, setShowEliminarMesas] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [zonaFiltro, setZonaFiltro] = useState('Interior');
@@ -114,12 +119,6 @@ export default function Configuracion() {
     queryFn: () => api.entidades.ConfiguracionNegocio.list(),
     placeholderData: (prev) => prev,
     staleTime: 3000,
-  });
-
-  const { data: usuarios = [] } = useQuery({
-    queryKey: claves.usuarios.activos(),
-    queryFn: () => api.entidades.UsuarioPOS.filter({ activo: true }),
-    initialData: [],
   });
 
   // TODAS las mesas, también las dadas de baja (el editor ofrece «Reactivar»). Su clave lo dice:
@@ -230,102 +229,6 @@ export default function Configuracion() {
       toast.success('Configuración guardada');
     } catch (e) {
       toast.error('No se pudo guardar: ' + (e?.message || ''));
-    }
-  };
-
-  // Crea o actualiza un UsuarioPOS desde el diálogo unificado.
-  // Si cambia el color de un mesero, sincroniza los snapshots de color
-  // en las mesas que tiene asignadas o que está atendiendo, para que la
-  // estética se refleje inmediatamente en el mapa de mesas.
-  const handleSaveUser = async (payload, prevUser) => {
-    try {
-      // F3 — Segunda barrera de validación (server-side defensiva).
-      // Aunque el Dialog ya valida, aquí prevenimos guardados inválidos
-      // por bugs futuros o por flujos alternos que llamen a handleSaveUser.
-      const estacionesActivasNow = cfg?.estaciones_preparacion_activas === true;
-      if (estacionesActivasNow && payload?.rol === 'cocina') {
-        const tieneEstacion = !!payload?.estacion_preparacion_id;
-        const tieneTodas = payload?.puede_ver_todas_estaciones === true;
-        if (!tieneEstacion && !tieneTodas) {
-          toast.error(
-            'No se puede guardar: este usuario de cocina necesita una estación o "Todas las estaciones".',
-          );
-          return;
-        }
-      }
-
-      // `UsuarioPOS` es una entidad que el puente sólo sabe LEER: lo que su
-      // sistema guardaba en una fila aquí son CUATRO tablas —persona, empleo,
-      // identidad y credencial—, y no había ningún camino de escritura. Crear o
-      // editar un usuario no funcionaba, ni siquiera mal: moría en el puente.
-      //
-      // `identidad.guardar_empleado` escribe las cuatro en la MISMA transacción
-      // —un empleado a medias es uno que sale en la lista y no puede entrar— y
-      // el PIN se hashea en el servidor con Argon2id: viaja hacia allá y no
-      // vuelve nunca.
-      //
-      // Y comprueba lo que esta pantalla no puede: que nadie reparta un puesto
-      // por encima del suyo. Ocultar el rol en el desplegable no es
-      // autorización.
-      const guardado = await api.comandos.ejecutar('/api/identidad/empleados', {
-        ...(prevUser?.id ? { empleado: prevUser.id } : {}),
-        nombre: payload.nombre,
-        puesto: payload.rol,
-        telefono: payload.telefono || null,
-        color: payload.color || null,
-        estacionPreparacionId: payload.estacion_preparacion_id || null,
-        veTodasLasEstaciones: payload.puede_ver_todas_estaciones === true,
-        activo: prevUser?.id ? payload.activo !== false : true,
-        ...(payload.pin ? { pin: String(payload.pin) } : {}),
-      });
-      const saved = { ...(prevUser || {}), ...payload, id: guardado.empleoId };
-
-      // Aquí se copiaba el color del usuario a CADA mesa que atendía, una
-      // escritura por mesa y todas con `.catch(() => {})` encima. Sobra entero,
-      // y por partida doble:
-      //
-      // · `mesero_asignado_color` y `atendido_por_color` son DERIVADOS: el
-      //   puente los saca de `empleos.color` al leer (`mapa.ts`), así que
-      //   cambiar el color del usuario ya cambia lo que pintan todas sus mesas,
-      //   sin tocar ninguna. Copiarlo creaba una segunda verdad que envejecía
-      //   sola: la mesa que se abriera después del cambio mostraba el color
-      //   nuevo y las de antes el viejo.
-      // · Al ser derivados, el puente los RECHAZA al escribir. Con el `.catch`
-      //   vacío eso no se veía: las escrituras fallaban todas, en silencio, y
-      //   el color «se sincronizaba» sin que nada se sincronizara.
-
-      // La raíz alcanza a todas las variantes (activos, meseros): `claves-de-consulta.ts`.
-      queryClient.invalidateQueries({ queryKey: ['usuarios_pos'] });
-      queryClient.invalidateQueries({ queryKey: ['mesas'] });
-      setShowUserForm(false);
-      setEditingUser(null);
-      toast.success(prevUser?.id ? 'Usuario actualizado' : 'Usuario creado');
-    } catch (e) {
-      toast.error('No se pudo guardar el usuario: ' + (e?.message || ''));
-    }
-  };
-
-  const deleteUser = async (id) => {
-    // Dar de baja es una edición del empleo, no un borrado: sus ventas, sus
-    // cortes y sus propinas lo siguen referenciando.
-    const usuario = (Array.isArray(usuarios) ? usuarios : []).find((u) => u?.id === id);
-    try {
-      await api.comandos.ejecutar('/api/identidad/empleados', {
-        empleado: id,
-        nombre: usuario?.nombre || 'Usuario',
-        puesto: usuario?.rol || 'mesero',
-        telefono: usuario?.telefono || null,
-        color: usuario?.color || null,
-        estacionPreparacionId: usuario?.estacion_preparacion_id || null,
-        veTodasLasEstaciones: usuario?.puede_ver_todas_estaciones === true,
-        activo: false,
-      });
-      queryClient.invalidateQueries({ queryKey: ['usuarios_pos'] });
-      toast.success('Usuario desactivado');
-    } catch (e) {
-      // «Tu puesto no puede modificar a un dueno», «No puedes darte de baja a
-      // ti mismo»: el dominio ya lo dice en español.
-      toast.error(e?.message || 'No se pudo desactivar el usuario');
     }
   };
 
@@ -530,13 +433,13 @@ export default function Configuracion() {
             Usuarios POS
           </TabsTrigger>
           {/* DP-14.2 · Lo que decidió Miguel: sólo el dueño o el administrador lo cambian. */}
-          {(posUser?.rol === 'dueno' || posUser?.rol === 'administrador') && (
+          {esDeMando(miPuesto) && (
             <TabsTrigger value="caja">
               <Calculator className="w-3 h-3 mr-1" />
               Caja
             </TabsTrigger>
           )}
-          {(posUser?.rol === 'dueno' || posUser?.rol === 'administrador') && (
+          {esDeMando(miPuesto) && (
             <TabsTrigger value="descuentos">
               <BadgePercent className="w-3 h-3 mr-1" />
               Descuentos
@@ -850,138 +753,19 @@ export default function Configuracion() {
           </div>
         </TabsContent>
 
-        {(posUser?.rol === 'dueno' || posUser?.rol === 'administrador') && (
+        {esDeMando(miPuesto) && (
           <TabsContent value="caja">
             <CajasALaVez />
           </TabsContent>
         )}
-        {(posUser?.rol === 'dueno' || posUser?.rol === 'administrador') && (
+        {esDeMando(miPuesto) && (
           <TabsContent value="descuentos">
             <PermitirDescuentos />
           </TabsContent>
         )}
 
         <TabsContent value="usuarios">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-heading">Usuarios POS</CardTitle>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setEditingUser(null);
-                  setShowUserForm(true);
-                }}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Nuevo usuario
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {usuarios.map((u) => {
-                // F2: badge de estación para usuarios de cocina cuando estaciones están activas.
-                const mostrarEstacionInfo =
-                  cfg?.estaciones_preparacion_activas === true && u.rol === 'cocina';
-                // Dot de color visible para mesero siempre; para cocina solo si estaciones activas.
-                const mostrarColorDot =
-                  u.rol === 'mesero' ||
-                  (u.rol === 'cocina' && cfg?.estaciones_preparacion_activas === true);
-                return (
-                  <div
-                    key={u.id}
-                    className="flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/50"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      {mostrarColorDot && (
-                        <span
-                          aria-hidden
-                          className="w-3 h-3 rounded-full shrink-0"
-                          style={{
-                            background: u.color || '#94a3b8',
-                            boxShadow: u.color ? `0 0 6px ${u.color}88` : 'none',
-                          }}
-                          title={u.color || 'Sin color'}
-                        />
-                      )}
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{u.nombre}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {ROLE_LABELS[u.rol]} · PIN: ••••
-                        </p>
-                        {/* F2: badge de estación para cocina */}
-                        {mostrarEstacionInfo && (
-                          <div className="mt-1">
-                            {u.puede_ver_todas_estaciones ? (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border bg-primary/10 text-primary border-primary/30">
-                                Todas las estaciones
-                              </span>
-                            ) : u.estacion_preparacion_id ? (
-                              <span
-                                className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border"
-                                style={{
-                                  borderColor: (u.estacion_preparacion_color || '#94a3b8') + '66',
-                                  color: u.estacion_preparacion_color || '#475569',
-                                  background: (u.estacion_preparacion_color || '#94a3b8') + '15',
-                                }}
-                              >
-                                {u.estacion_preparacion_nombre || 'Estación'}
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border bg-advertencia/10 text-advertencia border-advertencia/30">
-                                Sin estación
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {(u.telefono || u.correo) && (
-                          <p className="text-[10px] text-muted-foreground flex items-center gap-2 mt-0.5 flex-wrap">
-                            {u.telefono && (
-                              <span className="inline-flex items-center gap-0.5">
-                                <Phone className="w-2.5 h-2.5" />
-                                {u.telefono}
-                              </span>
-                            )}
-                            {u.correo && (
-                              <span className="inline-flex items-center gap-0.5 truncate">
-                                <Mail className="w-2.5 h-2.5" />
-                                {u.correo}
-                              </span>
-                            )}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setEditingUser(u);
-                          setShowUserForm(true);
-                        }}
-                        title="Editar usuario / cambiar NIP"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteUser(u.id)}
-                        className="text-muted-foreground hover:text-destructive"
-                        title="Desactivar usuario"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-              {usuarios.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Sin usuarios registrados
-                </p>
-              )}
-            </CardContent>
-          </Card>
+          <UsuariosPOSSection cfg={cfg} />
         </TabsContent>
 
         {posUser?.rol === 'administrador' && (
@@ -1022,6 +806,12 @@ export default function Configuracion() {
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
                         Eliminar todas
+                      </Button>
+                    )}
+                    {puedeRepartirMesas(miPuesto) && mesasActivas.length > 0 && (
+                      <Button size="sm" variant="outline" onClick={() => setShowRepartir(true)}>
+                        <Users className="w-4 h-4 mr-1" />
+                        Repartir mesas
                       </Button>
                     )}
                     <Button size="sm" onClick={openNew}>
@@ -1110,15 +900,11 @@ export default function Configuracion() {
         )}
       </Tabs>
 
-      {/* User Form Dialog — crear/editar usuario POS (con NIP, contacto, color) */}
-      <UsuarioPOSDialog
-        open={showUserForm}
-        user={editingUser}
-        onClose={() => {
-          setShowUserForm(false);
-          setEditingUser(null);
-        }}
-        onSave={handleSaveUser}
+      <RepartirMesasDialog
+        open={showRepartir}
+        mesas={mesasActivas}
+        asignacionActiva={cfg?.asignacion_mesas_activa === true}
+        onClose={() => setShowRepartir(false)}
       />
 
       {/* Eliminar mesas demo Dialog */}
