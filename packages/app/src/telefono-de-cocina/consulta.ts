@@ -18,6 +18,10 @@ export interface ComandaDelTelefono {
   readonly platillos: readonly {
     readonly nombre: string;
     readonly cantidad: string;
+    /** DP-14 · Lo que se vende por peso se dice «½ kg», no «0.5» (sólo si es por peso: ningún tipo de venta sale al teléfono). */
+    readonly porPeso: boolean;
+    readonly unidadVariable: string | null;
+    readonly cantidadVariable: string | null;
     readonly notas: string | null;
   }[];
 }
@@ -95,7 +99,14 @@ async function comandaMasReciente(
 
   const platillos = await tx
     .selectFrom('comanda_items')
-    .select(['producto_nombre', 'cantidad', 'notas'])
+    .select([
+      'producto_nombre',
+      'cantidad',
+      'notas',
+      'tipo_venta',
+      'unidad_variable',
+      'cantidad_variable',
+    ])
     .where('organizacion_id', '=', ambito.organizacionId)
     .where('comanda_id', '=', cabecera.id)
     .where('estado', '!=', 'cancelado')
@@ -117,6 +128,9 @@ async function comandaMasReciente(
     platillos: platillos.map((p) => ({
       nombre: p.producto_nombre,
       cantidad: p.cantidad,
+      porPeso: p.tipo_venta === 'variable_medida',
+      unidadVariable: p.unidad_variable,
+      cantidadVariable: p.cantidad_variable,
       notas: p.notas,
     })),
   };

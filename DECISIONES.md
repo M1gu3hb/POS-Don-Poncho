@@ -1262,3 +1262,42 @@ puerta los denuncia todos.
   «Quitado». El ticket es un papel que suma su total y no lo trae. El corte ya lo contaba aparte
   (cancelaciones).
 - **Sin migración.** `puente/mapa.ts`, `puente/consultar.ts`, `puente/tipos.ts`.
+
+## DP-D63 · Una línea por peso es una pieza que no se parte · 06-11-2026
+
+- **El hallazgo:** `division.ts` truncaba la cantidad (`Math.trunc(0.5)` = 0): la barbacoa por kilo
+  no cabía en ninguna parte y la división se rechazaba («quedaron unidades sin repartir»).
+- **Elección:** una línea por peso (`variable_medida`) es **una pieza indivisible** al dividir, sea
+  de ¼, ½, 1 o 1.5 kg: va completa, con su importe exacto, a una sola parte (el servidor la cuenta
+  como 1 unidad y rechaza otra cantidad con `DIVISION_NO_CUADRA`). La división es por renglón o por
+  partes; no hay «partes iguales».
+- **El peso se dice como se pide:** «¼ kg», «½ kg», «¾ kg», «1 kg», «1.5 kg» (otros pesos con hasta
+  tres decimales) en la comanda, el teléfono de cocina (también la voz), el cobro, la precuenta, el
+  ticket, el portal y el carrito del mesero (`apps/web/src/restaurante/peso.ts`).
+- **Sin migración.** Lo hizo el agente A (Sonnet), revisado e integrado en la sesión principal.
+
+## DP-D64 · «Mesa limpia» borra sólo lo de antes del cierre de la cuenta · 06-11-2026
+
+- **El hallazgo:** al marcar la mesa limpia se borraban el carrito, los teléfonos y el aviso de la
+  familia que ya se había sentado mientras la mesa estaba en limpieza.
+- **Elección:** el cierre de la cuenta es el último sello `limpieza` de la mesa
+  (`eventos_mesa`); al limpiar se borran sólo las líneas, los teléfonos y los avisos de hasta ese
+  momento. Lo posterior se queda, con su aviso. Sin cierre que leer (la mesa sin cuenta), como
+  antes. Los demás que olvidan el carrito (cobrar, cancelar, liberar, caducar) no cambian.
+- **Cambia un contrato de DP-13.2** (`carrito-fantasma`): lo que un teléfono agrega con la mesa en
+  limpieza ya no se borra al limpiar, porque no se puede saber si es de la familia que se fue o de
+  la que llegó (y perder el pedido de la nueva es peor). Límite conocido: un aviso viejo reutilizado
+  por el índice único conserva su fecha y se cierra.
+- **Sin migración.** Lo hizo el agente B (Sonnet).
+
+## DP-D65 · El mesero agrega lo que no tiene opciones aunque falle esa lectura · 06-11-2026
+
+- **El hallazgo:** si fallaba la lectura de opciones, el mesero no podía agregar nada.
+- **Elección:** el producto trae `tiene_opciones` en la MISMA lectura de la carta (una «existencia»
+  nueva del puente: `exists` sobre `producto_modificadores`, sin `join`). Lo que no tiene opciones
+  se agrega al instante. Lo que tiene, espera la lectura con un tiempo límite de **8 s**; si falla,
+  el diálogo dice que no pudo y ofrece «Reintentar», sin bloquear lo demás; cerrarlo cancela ese
+  toque. La última lectura buena se guarda en el aparato, pero la pista del producto manda sobre
+  ella (un platillo pudo ganar su grupo después). En Productos, el botón «Opciones» dice si falló y
+  reintenta.
+- **Sin migración.** Lo hizo el agente B (Sonnet); la existencia del puente, la sesión principal.

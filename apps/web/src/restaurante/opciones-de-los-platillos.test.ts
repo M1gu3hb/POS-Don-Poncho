@@ -46,13 +46,14 @@ describe('las pantallas que leen producto.modificadores los reciben', () => {
     (ruta) => {
       const fuente = leer(ruta);
       expect(fuente).toMatch(/conSusOpciones\(\s*Array\.isArray\(productos\)/);
-      expect(fuente).toMatch(/if \(!opcionesListas\) \{/);
+      // Mesero decide con `esperaLaLectura`; Productos, con su propio `if (!opcionesListas`.
+      expect(fuente).toMatch(/if \(!opcionesListas|esperaLaLectura = opcionesListas/);
     },
   );
 
   it('si el mesero toca antes de que lleguen, las espera: el toque no se pierde', () => {
     expect(leer('pages/Mesero.jsx')).toMatch(
-      /if \(!opcionesListas\) \{\s*try \{\s*const opciones = await queryClient\.ensureQueryData\(consultaDeLasOpciones\(\)\);\s*producto = conSusOpciones\(\[productoTocado\], opciones\)\[0\];/,
+      /const esperaLaLectura = opcionesListas\s*\? sinSusGrupos\s*: pideOpciones\(productoTocado, undefined\) !== 'no';\s*if \(esperaLaLectura\) \{[\s\S]*?try \{\s*const opciones = opcionesListas\s*\? await queryClient\.fetchQuery\(consultaDeLasOpciones\(\)\)\s*: await queryClient\.ensureQueryData\(consultaDeLasOpciones\(\)\);[\s\S]*?producto = conSusOpciones\(\[productoTocado\], opciones\)\[0\];/,
     );
   });
 

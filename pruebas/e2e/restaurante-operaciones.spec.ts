@@ -285,14 +285,26 @@ interface Linea {
   readonly totalCentavos: number;
 }
 
+/**
+ * Todas las líneas de la cuenta, también las quitadas. Desde DP-14.1 (DP-D62) `DetalleVenta` sólo
+ * sirve lo que se sigue cobrando: lo quitado se lee en `RenglonQuitado`, sin importes (cero aquí).
+ */
 async function todasLasLineas(page: Page, ordenId: string): Promise<readonly Linea[]> {
-  const filas = await consultarPuente<{
-    id?: string;
-    producto_nombre?: string | null;
-    cantidad?: number | string | null;
-    descuento?: number | null;
-    total?: number | null;
-  }>(page, 'DetalleVenta', { filtro: { venta_id: ordenId }, limite: 120 });
+  const [vivas, quitadas] = await Promise.all([
+    consultarPuente<{
+      id?: string;
+      producto_nombre?: string | null;
+      cantidad?: number | string | null;
+      descuento?: number | null;
+      total?: number | null;
+    }>(page, 'DetalleVenta', { filtro: { venta_id: ordenId }, limite: 120 }),
+    consultarPuente<{
+      id?: string;
+      producto_nombre?: string | null;
+      cantidad?: number | string | null;
+    }>(page, 'RenglonQuitado', { filtro: { venta_id: ordenId }, limite: 120 }),
+  ]);
+  const filas = [...vivas, ...quitadas.map((q) => ({ ...q, descuento: null, total: null }))];
   return filas
     .map((f) => ({
       id: f.id ?? '',

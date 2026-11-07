@@ -692,6 +692,11 @@
         "+ clase:uppercase",
         "+ texto:Quitado"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Productos.jsx",
+      "porque": "DP-14.1-4: si la lectura de las opciones falla o vence, el botón «Opciones» lo dice («Reintentar opciones») y reintenta al tocarlo, en lugar de quedarse en «Cargando…» para siempre.",
+      "testigos": ["+ aviso:No se pudieron leer las opciones. Reintentando…"]
     }
   ]
 }

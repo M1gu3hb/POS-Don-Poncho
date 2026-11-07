@@ -106,6 +106,20 @@ function propinaDeLasPartes(madre: {
   return { tipo: 'decidir_en_caja', puntosBase: 0, origen: 'caja' };
 }
 
+/**
+ * Cuántas UNIDADES reparte la división de una línea (DP-14.5).
+ *
+ * Una línea por peso —media barbacoa: 0.5 kg— o con una cantidad que no es entera es UNA pieza
+ * indivisible: se mueve COMPLETA a una parte. Truncar su `cantidad` la dejaba en 0 unidades, fuera
+ * de todas las partes y en la madre, y las partes sumaban menos que ella. `cantidad` llega en
+ * texto (numeric de Postgres) para no perder precisión.
+ */
+export function unidadesRepartibles(tipoVenta: string, cantidad: string): number {
+  const valor = Number(cantidad);
+  if (tipoVenta === 'variable_medida' || !Number.isInteger(valor)) return 1;
+  return valor;
+}
+
 export const dividirCuentaComando = definirComando<
   Transaccion,
   typeof entradaDividirCuenta,
@@ -182,7 +196,7 @@ export const dividirCuentaComando = definirComando<
     const filas = await ctx.paso('cargar_lineas', () =>
       ctx.tx
         .selectFrom('orden_lineas')
-        .select(['id', 'cantidad', 'total_centavos'])
+        .select(['id', 'cantidad', 'tipo_venta', 'total_centavos'])
         .where('orden_id', '=', orden.id)
         // Una línea anulada no se cobra, así que tampoco se reparte. Incluirla
         // haría que las partes sumaran más que la madre.
@@ -196,9 +210,7 @@ export const dividirCuentaComando = definirComando<
 
     const lineas: LineaDivisible[] = filas.map((f) => ({
       lineaId: f.id,
-      // `cantidad` viene como numeric de Postgres: llega en texto para no perder
-      // precisión. Las líneas de mesa son unidades enteras.
-      cantidad: Math.trunc(Number(f.cantidad)),
+      cantidad: unidadesRepartibles(f.tipo_venta, f.cantidad),
       importeCentavos: f.total_centavos,
     }));
 

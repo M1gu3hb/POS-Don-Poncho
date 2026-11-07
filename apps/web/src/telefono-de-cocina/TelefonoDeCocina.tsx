@@ -7,6 +7,7 @@ import { ChefHat, Check, Flame, Volume2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { fraseNuevoPedidoCocina, speak, speakSample } from '@/lib/voiceAlert';
+import { cantidadParaMostrar } from '~/restaurante/peso';
 import { haceCuanto } from '~/restaurante/vista-de-solicitudes';
 
 import { ComandaEnElTelefono } from './ComandaEnElTelefono';
@@ -32,8 +33,11 @@ function fraseDe(comanda: ComandaDelTelefono): string {
     // Sin mesa la voz dice «mostrador», como en la pantalla grande.
     comanda.mesaNumero ?? '',
     comanda.platillos.map((p) => ({
-      producto_nombre: p.nombre,
-      cantidad: p.cantidad,
+      // La voz no lee «0.5000»: lo que va por peso dice su peso junto al nombre.
+      producto_nombre: p.porPeso
+        ? `${p.nombre}, ${cantidadParaMostrar({ cantidad: p.cantidad, tipo_venta: 'variable_medida', unidad_variable: p.unidadVariable, cantidad_variable: p.cantidadVariable })}`
+        : p.nombre,
+      cantidad: p.porPeso ? 1 : p.cantidad,
       notas: p.notas,
     })),
     comanda.notas ?? '',

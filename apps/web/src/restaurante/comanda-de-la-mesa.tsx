@@ -6,6 +6,7 @@ import { consultarPuente } from '~/cliente/api';
 import { centavosDe } from '~/cliente/dinero-del-puente';
 import type { useVocabulario } from '~/cliente/vocabulario';
 
+import { cantidadParaMostrar } from './peso.ts';
 import { lineasQueSigueCobrando, soloLasVivas } from './lineas-vivas.ts';
 
 /**
@@ -30,6 +31,10 @@ export interface LineaEnviada {
   readonly producto_nombre: string;
   readonly cantidad: number;
   readonly total: number;
+  /** DP-14 · Para decir «½ kg» y repartir la pieza entera: el puente ya los sirve. */
+  readonly tipo_venta_snapshot?: string | null;
+  readonly cantidad_variable_snapshot?: number | null;
+  readonly unidad_variable_snapshot?: string | null;
 }
 export interface MesaAbierta {
   /** Lo que el mapa pasa en la dirección, y lo que el comando pide para ABRIRLA. */
@@ -137,7 +142,9 @@ export function columnasDeLoEnviado(
       titulo: voc.titulo('linea_orden'),
       celda: (l) => (
         <span className="line-clamp-2">
-          <span className="font-numeros font-semibold tabular-nums">{l.cantidad} ×</span>{' '}
+          <span className="font-numeros font-semibold tabular-nums">
+            {cantidadParaMostrar(l)} ×
+          </span>{' '}
           {l.producto_nombre}
         </span>
       ),

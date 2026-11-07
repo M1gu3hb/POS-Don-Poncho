@@ -44,6 +44,7 @@ import ProductoFichaExpandible from '@/components/mesero/ProductoFichaExpandible
 import SolicitudesQRCardList from '@/components/mesero/SolicitudesQRCardList';
 import AlertasMeseroDialog from '@/components/mesero/AlertasMeseroDialog';
 import SeleccionModificadoresDialog from '@/components/mesero/SeleccionModificadoresDialog';
+import OpcionesNoLeidasDialog from '@/components/mesero/OpcionesNoLeidasDialog';
 import ListosParaRecogerCard from '@/components/mesero/ListosParaRecogerCard';
 import AbrirMesaDialog from '@/components/mesero/AbrirMesaDialog';
 import CantidadVariableDialog from '@/components/mesero/CantidadVariableDialog';
@@ -77,7 +78,7 @@ import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pre
 import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
 import { solicitudesPorMesa } from '~/restaurante/globos-de-solicitud';
 import { SelectorDeVista } from '~/restaurante/SelectorDeVista';
-import { conSusOpciones } from '~/restaurante/opciones-de-los-platillos';
+import { conSusOpciones, pideOpciones } from '~/restaurante/opciones-de-los-platillos';
 import {
   consultaDeLasOpciones,
   useOpcionesDeLosPlatillos,
@@ -198,6 +199,10 @@ function Mesero() {
   const [showAlertasMesero, setShowAlertasMesero] = useState(false);
   // Modal de selección de modificadores al agregar producto
   const [productoParaPersonalizar, setProductoParaPersonalizar] = useState(null);
+  // DP-14.1-4: la lectura de opciones de un platillo que las pide ({ producto, estado }).
+  const [lecturaDeOpciones, setLecturaDeOpciones] = useState(null);
+  // DP-14.1-4 · Cada toque que espera las opciones lleva su número: cerrar el diálogo lo cancela.
+  const toqueDeOpcionesRef = useRef(0);
   // 6B / 1.D — Modal de cantidad/porción para productos variables
   const [productoVariable, setProductoVariable] = useState(null);
   const { data: solicitudesPendRaw = [], isFetched: solicitudesLeidas } = useQuery({
@@ -643,15 +648,41 @@ function Mesero() {
   const agregarAlCarrito = async (productoTocado) => {
     // QA1-4 (DP-13.5): antes de agregar hay que saber si el platillo pide opciones. Si todavía no
     // llegaron (la tableta recién abrió la mesa), se esperan: el toque no se pierde.
+    // DP-14.1-4: lo que NO pide opciones (lo dice la lectura guardada o la pista del producto) se
+    // agrega al instante, aunque la lectura falle o tarde. Lo que sí las pide, o no se sabe, espera
+    // la lectura con su tiempo límite; si falla, el diálogo ofrece «Reintentar» y no bloquea lo demás.
     let producto = productoTocado;
-    if (!opcionesListas) {
+    // DP-14.1 · La pista del puente (`tiene_opciones`) es de ahora; la lectura de opciones que ya
+    // se tiene puede ser la guardada de antes. Si el platillo dice que tiene grupos y la lectura no
+    // se los conoce, se relee en vivo antes de agregarlo sin su opción.
+    const sinSusGrupos =
+      productoTocado?.tiene_opciones === true && !productoTieneModificadores(productoTocado);
+    const esperaLaLectura = opcionesListas
+      ? sinSusGrupos
+      : pideOpciones(productoTocado, undefined) !== 'no';
+    if (esperaLaLectura) {
+      toqueDeOpcionesRef.current += 1;
+      const toque = toqueDeOpcionesRef.current;
+      const aviso = setTimeout(
+        () => setLecturaDeOpciones({ producto: productoTocado, estado: 'leyendo' }),
+        600,
+      );
       try {
-        const opciones = await queryClient.ensureQueryData(consultaDeLasOpciones());
+        const opciones = opcionesListas
+          ? await queryClient.fetchQuery(consultaDeLasOpciones())
+          : await queryClient.ensureQueryData(consultaDeLasOpciones());
+        // Cerró el diálogo mientras se leía: el toque ya no vale.
+        if (toque !== toqueDeOpcionesRef.current) return;
         producto = conSusOpciones([productoTocado], opciones)[0];
+        setLecturaDeOpciones(null);
       } catch (error) {
         console.error('[Mesero] opciones de los platillos:', error);
-        toast.error('No se pudieron leer las opciones de los platillos. Toca otra vez.');
+        if (toque === toqueDeOpcionesRef.current) {
+          setLecturaDeOpciones({ producto: productoTocado, estado: 'fallo' });
+        }
         return;
+      } finally {
+        clearTimeout(aviso);
       }
     }
     // 6B / 1.D — Si es producto variable, abrir modal de cantidad/porción.
@@ -1726,6 +1757,20 @@ function Mesero() {
 
       {/* === ALERTAS PERSONALES DEL MESERO === */}
       <AlertasMeseroDialog open={showAlertasMesero} onClose={() => setShowAlertasMesero(false)} />
+
+      {/* DP-14.1-4 — la lectura de opciones falló o venció: reintentar, sin bloquear lo demás */}
+      <OpcionesNoLeidasDialog
+        lectura={lecturaDeOpciones}
+        onCerrar={() => {
+          toqueDeOpcionesRef.current += 1;
+          setLecturaDeOpciones(null);
+        }}
+        onReintentar={() => {
+          const producto = lecturaDeOpciones?.producto;
+          setLecturaDeOpciones({ producto, estado: 'leyendo' });
+          void agregarAlCarrito(producto);
+        }}
+      />
 
       {/* === MODAL DE PERSONALIZACIÓN / MODIFICADORES === */}
       <SeleccionModificadoresDialog

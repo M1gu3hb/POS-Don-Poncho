@@ -1,7 +1,20 @@
 import { Aviso, Superficie } from '@morphiqpos/ui/sistema';
 import { PartyPopper } from 'lucide-react';
 
+import { cantidadParaMostrar } from '~/restaurante/peso';
+
 import type { ComandaDelTelefono } from './pantalla-del-telefono';
+
+/** «2×» para piezas; «½ kg ×» para lo que se vende por peso. */
+export function cantidadDelPlatillo(p: ComandaDelTelefono['platillos'][number]): string {
+  const dicha = cantidadParaMostrar({
+    cantidad: p.cantidad,
+    tipo_venta: p.porPeso ? 'variable_medida' : null,
+    unidad_variable: p.unidadVariable,
+    cantidad_variable: p.cantidadVariable,
+  });
+  return p.porPeso ? `${dicha} ×` : `${dicha}×`;
+}
 
 /**
  * La comanda en vista rápida (DP-9.4): de quién es, qué lleva y lo que no se puede pasar por
@@ -45,7 +58,7 @@ export function ComandaEnElTelefono({
       <ul className="flex flex-col gap-(--espacio-2)">
         {comanda.platillos.map((p, i) => (
           <li key={`${p.nombre}-${String(i)}`} className="text-2xl leading-tight">
-            <span className="font-bold">{Number(p.cantidad)}×</span> {p.nombre}
+            <span className="font-bold">{cantidadDelPlatillo(p)}</span> {p.nombre}
             {p.notas === null || p.notas.trim() === '' ? null : (
               <span className="block text-lg text-texto-sutil">{p.notas}</span>
             )}

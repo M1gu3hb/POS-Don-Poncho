@@ -73,7 +73,15 @@ describe('lo que lee el teléfono', () => {
     expect(pantalla.pendientes).toBe(2);
     expect(pantalla.comanda?.mesaNumero).toBe(2);
     expect(pantalla.comanda?.platillos).toEqual([
-      { nombre: 'Taco de barbacoa', cantidad: '1.0000', notas: null },
+      {
+        nombre: 'Taco de barbacoa',
+        cantidad: '1.0000',
+        // DP-14 · Lo que se vende por peso se dice «½ kg»: el teléfono sabe si es por peso y su unidad.
+        porPeso: false,
+        unidadVariable: null,
+        cantidadVariable: null,
+        notas: null,
+      },
     ]);
     const crudo = JSON.stringify(pantalla);
     expect(crudo, 'El teléfono recibe importes.').not.toMatch(/precio|total|costo|centavos/i);

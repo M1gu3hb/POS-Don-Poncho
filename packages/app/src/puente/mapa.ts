@@ -152,6 +152,10 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
     rolesLectura: [...TODOS_LOS_ROLES],
     escritura: 'directa',
     ordenPorOmision: 'nombre',
+    // DP-14.1 (punto 4) · Si el platillo tiene grupos de opciones. Con esto el mesero agrega al
+    // instante lo que no tiene, aunque la lectura de las opciones falle o tarde; lo que tiene,
+    // espera esa lectura (con su tiempo límite y «Reintentar»).
+    existencias: { tiene_opciones: { tabla: 'producto_modificadores', porColumna: 'producto_id' } },
     campos: {
       ...AUTO,
       nombre: { columna: 'nombre', conversion: 'texto', publico: true },

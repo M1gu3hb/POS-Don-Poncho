@@ -14,6 +14,9 @@ export interface LineaDelCarrito {
   readonly productoId: string;
   readonly nombre: string;
   readonly cantidad: string;
+  /** DP-14 · Por peso, la cantidad se dice «½ kg». Faltan en un servidor anterior. */
+  readonly tipoVenta?: string;
+  readonly unidad?: string | null;
   readonly notas: string;
   /** `null`: el negocio no enseña precios en el portal (DP-12.2). */
   readonly precioCentavos: string | null;

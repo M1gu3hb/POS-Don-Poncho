@@ -822,3 +822,18 @@ ni toca producción: integro su diff, verifico y hago el commit.
 - Exportación de hoy para el ensayo (`_PRIVADO\mudanza\ensayo-dp14`): 135 tablas, 1,174 filas,
   0 archivos, 20 s, con `--exigir-cerrado`.
 - Guías: `docs/infra/MUDANZA-FASE-B.md` al día y `docs/infra/MUDANZA-LO-QUE-HACE-MIGUEL.md`.
+
+### La parte B, integrada (los agentes, revisados)
+
+- Los parches de los dos agentes se aplicaron sobre `dp-14` (sólo chocó `aspecto-permitido.json`:
+  se quedaron las dos entradas). Revisados por mí además de su revisor:
+  - **B, hueco del arranque en frío:** la «existencia» del puente (`ProductoTerminado.tiene_opciones`,
+    un `exists` sobre `producto_modificadores`) y `pideOpciones` con la pista primero; si la pista
+    dice «tiene» y la lectura guardada no se los conoce, se relee en vivo; cerrar el diálogo cancela
+    el toque (hallazgos bajos de su revisor). Prueba de integración en rojo antes; banco 3 de 3.
+  - **A:** tres declaraciones de `cantidad_variable_snapshot` como `number | string` (el puente sirve
+    `number`): corregidas, `verify:tipos-de-pantalla` verde.
+- La CI del PR #8 (parte A sola) dio dos rojos esperables: `restaurante-operaciones` leía lo anulado
+  de `DetalleVenta` (ahora lo lee también de `RenglonQuitado`) y la galería de `/configuracion` (las
+  pestañas nuevas): se regenera con el trabajo de CI a mano y viaja en el mismo PR.
+- `pnpm verify` local de todo junto: verde (unidad 396 archivos / 4859 pruebas; integración 92 / 453).

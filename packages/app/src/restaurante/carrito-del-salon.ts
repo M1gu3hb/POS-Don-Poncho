@@ -22,29 +22,40 @@ import { PREFIJO_DEL_PEDIDO_LISTO } from '../portal/quien-envia.ts';
  * teléfonos sólo miran si sube.
  */
 
-/** Olvida lo que quedó sin enviar en el carrito de una mesa. Devuelve cuántas líneas. */
+/**
+ * Olvida lo que quedó sin enviar en el carrito de una mesa. Devuelve cuántas líneas.
+ *
+ * DP-14.1-3 · `hasta` (opcional): sólo lo anterior a ese momento —líneas creadas, teléfonos vistos—.
+ * «Mesa limpia» lo pasa con el cierre de la cuenta para no borrar lo que la familia NUEVA armó con
+ * la mesa en limpieza; su aviso «Pedido listo» sólo se resuelve si ya no queda nada en el carrito.
+ * Sin `hasta`, todo (cobrar, cancelar, liberar sin cuenta, caducar, portal).
+ */
 export async function olvidarElCarritoDeLaMesa(
   tx: Transaccion,
   organizacionId: string,
   mesaId: string,
   ahora: Date,
+  hasta?: Date,
 ): Promise<number> {
-  const borradas = await tx
+  const lineas = tx
     .deleteFrom('carrito_mesa_lineas')
     .where('organizacion_id', '=', organizacionId)
-    .where('mesa_id', '=', mesaId)
-    .executeTakeFirst();
+    .where('mesa_id', '=', mesaId);
+  const borradas = await (
+    hasta === undefined ? lineas : lineas.where('created_at', '<=', hasta)
+  ).executeTakeFirst();
   // Revisión de DP-13: sin carrito, su «Pedido listo para confirmar» ya no espera a nadie (el
   // cobro, cancelar, liberar, caducar: cualquier borrado en masa, no sólo quitar y enviar).
-  await resolverElAvisoDelPedido(tx, organizacionId, mesaId, null, ahora);
+  if (hasta === undefined) await resolverElAvisoDelPedido(tx, organizacionId, mesaId, null, ahora);
+  else await resolverElAvisoSiQuedoVacio(tx, organizacionId, mesaId, null, ahora);
   // QA2-006 (DP-13.5): y sus teléfonos. Sólo se mudaban con la cuenta: con el id firmado cada
   // teléfono nuevo es una fila, y la mesa acumulaba los de todas las familias (y la siguiente
   // contaba como «conectados» a los de la anterior). El que sigue en la mesa vuelve a latir.
-  await tx
+  const telefonos = tx
     .deleteFrom('dispositivos_mesa')
     .where('organizacion_id', '=', organizacionId)
-    .where('mesa_id', '=', mesaId)
-    .execute();
+    .where('mesa_id', '=', mesaId);
+  await (hasta === undefined ? telefonos : telefonos.where('visto_en', '<=', hasta)).execute();
   return Number(borradas.numDeletedRows);
 }
 

@@ -3,6 +3,8 @@
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Trash2 } from 'lucide-react';
 
+import { cantidadParaMostrar } from '~/restaurante/peso';
+
 import type { LineaDelCarrito } from './carrito-de-la-mesa';
 
 /** Un renglón del pedido de la mesa en el teléfono: «Quitar» sólo en lo propio (DP-9.5). */
@@ -19,7 +21,12 @@ export function RenglonDelCarrito({
     <li className="flex items-start gap-(--espacio-3) border-b border-borde py-(--espacio-2)">
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold">
-          {linea.cantidad} × {linea.nombre}
+          {cantidadParaMostrar({
+            cantidad: linea.cantidad,
+            tipo_venta: linea.tipoVenta,
+            unidad_variable: linea.unidad,
+          })}{' '}
+          × {linea.nombre}
         </span>
         {linea.notas === '' ? null : (
           <span className="block text-xs text-texto-sutil">«{linea.notas}»</span>

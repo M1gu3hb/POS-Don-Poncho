@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCheck, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { entregarPedidosListosDeMesa } from '@/utils/entregaPedidos';
+import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 
 /**
  * F3.2: Card "Listo para recoger" dentro del dialog de Mesa activa.
@@ -131,6 +132,7 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
         g.items.push({
           producto_nombre: it.producto_nombre || '—',
           cantidad: Number(it.cantidad) || 0,
+          texto: formatearCantidadVariable(it),
         });
       });
     });
@@ -324,7 +326,7 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
               </p>
               {g.items.length > 0 && (
                 <p className="text-[10px] text-muted-foreground leading-snug">
-                  {g.items.map((it) => `${it.cantidad}× ${it.producto_nombre}`).join(' · ')}
+                  {g.items.map((it) => `${it.texto ? `${it.texto} ×` : `${it.cantidad}×`} ${it.producto_nombre}`).join(' · ')}
                 </p>
               )}
             </div>

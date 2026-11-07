@@ -133,6 +133,9 @@ export interface LineaDelCarrito {
   readonly productoId: string;
   readonly nombre: string;
   readonly cantidad: string;
+  /** DP-14 · `variable_medida`: la cantidad es un PESO («½ kg»), no piezas. */
+  readonly tipoVenta: string;
+  readonly unidad: string | null;
   readonly notas: string;
   /**
    * El precio vigente del catálogo, sólo para enseñarlo: lo que se cobra lo pone el envío. `null`
@@ -316,6 +319,8 @@ export async function estadoDelCarrito(
       'l.dispositivo_huella',
       'l.created_at',
       'p.nombre',
+      'p.tipo_venta',
+      'p.unidad_variable',
       'p.precio_venta_centavos',
       'p.activo',
       'p.visible_en_menu_digital',
@@ -380,6 +385,8 @@ export async function estadoDelCarrito(
       productoId: l.producto_id,
       nombre: l.nombre,
       cantidad: cantidadLegible(l.cantidad),
+      tipoVenta: l.tipo_venta,
+      unidad: l.tipo_venta === 'variable_medida' ? l.unidad_variable : null,
       notas: l.notas,
       precioCentavos: banderas.mostrarPrecios ? l.precio_venta_centavos.toString() : null,
       esMia: l.dispositivo_huella === huella,
