@@ -80,6 +80,9 @@ import { economiaDelPeriodo } from '~/restaurante/margen-de-las-ventas';
 import { DividirLaCuenta } from '~/restaurante/DividirLaCuenta';
 import { CancelarLaCuenta, DescuentoDeLaCuenta } from '~/restaurante/AjustesDeLaCuenta';
 import { rotuloDeLaCuenta } from '~/restaurante/cuenta-de-la-caja';
+import { DescuentoAutorizado } from '~/restaurante/DescuentoAutorizado';
+import { cantidadParaMostrar } from '~/restaurante/peso';
+import { totalesDelPapel } from '~/venta/totales-del-papel';
 
 const METODOS = [
   {
@@ -174,6 +177,7 @@ export default function Caja() {
     hayCaja,
     cajaEnOtraTerminal,
     puedoAbrir,
+    cupoDeCajas,
     fondoEsperado,
     isLoading: cargandoCaja,
   } = useCajaAbierta({ deEstaTerminal: true });
@@ -473,17 +477,25 @@ export default function Caja() {
       setMontoTarjeta('');
       setMontoTransferencia('');
       queryClient.invalidateQueries({ queryKey: ['ventas_pendientes_caja'] });
+      // Al reemplazar el descuento, «Autorizó X · motivo» es el del nuevo, no el de antes.
+      queryClient.invalidateQueries({ queryKey: ['descuento_autorizado', ordenId] });
     } catch (err) {
       toast.error(err?.message || 'Se aplicó, pero no se pudo releer la cuenta. Ábrela otra vez.');
     }
   };
 
   // Total a cobrar = venta real + propina (la venta real `total` NUNCA se modifica).
+  // DP-14 (ronda 2, bloqueante 1 y medio 4): lo que dice el cobro sale del mismo cálculo que el
+  // papel: los renglones en bruto, el descuento, el IVA y el total del SERVIDOR. Suma.
+  const papelDelCobro = useMemo(
+    () => totalesDelPapel(ventaSeleccionada, detallesSeleccionados),
+    [ventaSeleccionada, detallesSeleccionados],
+  );
   const totalACobrarVenta = useMemo(() => {
-    const t = Number(ventaSeleccionada?.total) || 0;
+    const t = papelDelCobro.total;
     const p = Number(ventaSeleccionada?.propina_monto) || 0;
     return t + p;
-  }, [ventaSeleccionada]);
+  }, [ventaSeleccionada, papelDelCobro]);
 
   const calcularCambio = () => {
     const recibido = parseFloat(montoEfectivo) || 0;
@@ -871,6 +883,14 @@ export default function Caja() {
         );
       } else {
         toast.error(err?.message || 'No se pudo cobrar la venta. Intenta de nuevo.');
+        // DP-14 (ronda 2, medio 3): otra caja ya la cobró (o se canceló o se dividió): aquí ya no se
+        // cobra. El cobro se cierra y la lista se relee, en vez de dejar al cajero frente a una
+        // cuenta que ya no está pendiente.
+        if (err?.datos?.regla === 'ORDEN_NO_EDITABLE') {
+          setVentaSeleccionada(null);
+          setDetallesSeleccionados([]);
+          queryClient.invalidateQueries({ queryKey: ['ventas_pendientes_caja'] });
+        }
       }
     } finally {
       setProcesando(false);
@@ -1149,11 +1169,22 @@ export default function Caja() {
         <div className="grid grid-cols-3 sm:flex gap-2 w-full sm:w-auto">
           <Button
             size="sm"
-            onClick={() => setShowAbrirCaja(true)}
-            disabled={hayCaja || cargandoCaja || !puedoAbrir}
+            onClick={() => {
+              // DP-14 (ronda 2, medio 3): en la tercera caja lo dice en pantalla, no en un tooltip.
+              if (!puedoAbrir) {
+                toast.error(`Ya hay ${cupoDeCajas ?? 2} cajas abiertas: cierra una.`);
+                return;
+              }
+              setShowAbrirCaja(true);
+            }}
+            disabled={hayCaja || cargandoCaja}
             variant={hayCaja || !puedoAbrir ? 'outline' : 'default'}
             title={
-              hayCaja || !puedoAbrir ? 'Ya hay una caja abierta' : 'Abrir caja para comenzar operación'
+              hayCaja
+                ? 'Ya hay una caja abierta'
+                : !puedoAbrir
+                  ? `Ya hay ${cupoDeCajas ?? 2} cajas abiertas: cierra una.`
+                  : 'Abrir caja para comenzar operación'
             }
             className="px-2"
           >
@@ -1194,17 +1225,18 @@ export default function Caja() {
         </div>
       </div>
 
-      {/* La caja de la sucursal está abierta en OTRA terminal: traerla, no abrir otra. */}
-      {!hayCaja && !cargandoCaja && cajaEnOtraTerminal && (
-        <CajaEnOtraTerminal caja={cajaEnOtraTerminal} />
+      {/* DP-14 (ronda 2, medio 3): la caja de la sucursal está abierta en OTRA terminal y ya no cabe
+          otra: traerla (con confirmación), no abrir otra. Si cabe, la segunda caja se ABRE aquí. */}
+      {!hayCaja && !cargandoCaja && !puedoAbrir && cajaEnOtraTerminal && (
+        <CajaEnOtraTerminal caja={cajaEnOtraTerminal} cupo={cupoDeCajas} />
       )}
 
-      {/* Aviso si NO hay caja abierta */}
-      {!hayCaja && !cargandoCaja && !cajaEnOtraTerminal && (
+      {/* Aviso si NO hay caja abierta en este aparato y cabe abrir una */}
+      {!hayCaja && !cargandoCaja && puedoAbrir && (
         <div className="px-4 py-3 rounded-xl bg-advertencia/10 border-2 border-advertencia/30 text-sm text-advertencia flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-advertencia" />
           <div className="flex-1">
-            <p className="font-bold">No hay caja abierta</p>
+            <p className="font-bold">No hay caja abierta en este aparato</p>
             <p className="text-xs opacity-90">
               Abre caja para comenzar operación. No se puede cobrar ni generar tickets finales sin
               caja abierta.
@@ -1496,7 +1528,7 @@ export default function Caja() {
                       {esVariable ? (
                         <span className="ml-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[11px] font-bold">
                           {tipoSnap === TIPO_VENTA.VARIABLE_MEDIDA
-                            ? `${Number(d?.cantidad_variable_snapshot) || 0} ${d?.unidad_variable_snapshot || ''}`
+                            ? cantidadParaMostrar(d)
                             : `${Number(d?.cantidad_porciones_snapshot) || 0} ${d?.nombre_porcion_snapshot || ''}`}
                         </span>
                       ) : (
@@ -1512,8 +1544,23 @@ export default function Caja() {
             <div className="border-t pt-2 space-y-1">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>
-                <span>{formatCurrency(ventaSeleccionada?.total || 0)}</span>
+                <span>{formatCurrency(papelDelCobro.renglones)}</span>
               </div>
+              {papelDelCobro.descuento > 0 && (
+                <div className="text-sm">
+                  <div className="flex justify-between">
+                    <span>Descuento</span>
+                    <span>−{formatCurrency(papelDelCobro.descuento)}</span>
+                  </div>
+                  <DescuentoAutorizado ordenId={ventaSeleccionada.id} />
+                </div>
+              )}
+              {papelDelCobro.iva > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>{papelDelCobro.ivaSeSuma ? 'IVA' : 'IVA incluido'}</span>
+                  <span>{formatCurrency(papelDelCobro.iva)}</span>
+                </div>
+              )}
               {(Number(ventaSeleccionada?.propina_monto) || 0) > 0 && (
                 <div className="flex justify-between text-sm text-peligro">
                   <span>

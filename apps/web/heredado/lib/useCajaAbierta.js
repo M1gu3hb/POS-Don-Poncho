@@ -86,12 +86,15 @@ export function useCajaAbierta({ deEstaTerminal = false } = {}) {
   const cajaEnOtraTerminal =
     deEstaTerminal && deLaTerminal?.abierta === false ? deLaTerminal.enOtraTerminal || null : null;
   const puedoAbrir = !(deEstaTerminal && deLaTerminal?.puedoAbrir === false);
+  // DP-14 · ronda 2: el cupo, para que la tercera caja lea «Ya hay 2 cajas abiertas: cierra una».
+  const cupoDeCajas = Number(deLaTerminal?.cupoDeCajas) || null;
 
   return {
     cajaAbierta,
     hayCaja: !!cajaAbierta,
     cajaEnOtraTerminal,
     puedoAbrir,
+    cupoDeCajas,
     isLoading: cargando,
     isFetching,
     fondoEsperado: fondoEsperadoSeguro,

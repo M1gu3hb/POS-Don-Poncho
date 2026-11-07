@@ -101,6 +101,8 @@ export default function MesaEditDialog({
   const meserosOrdenados = useMemo(
     () =>
       (Array.isArray(meseros) ? meseros : [])
+        // La lectura no filtra por puesto: sólo meseros (DP-14, el puente sirve el puesto real).
+        .filter((u) => u?.rol === ROLES.WAITER)
         .slice()
         .sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''))),
     [meseros],

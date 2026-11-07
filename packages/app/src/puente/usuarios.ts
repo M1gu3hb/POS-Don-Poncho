@@ -3,7 +3,7 @@ import 'server-only';
 import { leyendoConReintento, obtenerDb } from '@morphiqpos/data';
 
 import { terminosDeLaOrganizacion } from '../configuracion/vocabulario.ts';
-import { colorDePersona, etiquetaDeRol, etiquetaDeRolEnElGiro, rolMH } from './roles.ts';
+import { colorDePersona, etiquetaDeRol, etiquetaDeRolEnElGiro } from './roles.ts';
 
 /**
  * `UsuarioPOS` — la entidad que son tres tablas.
@@ -41,6 +41,9 @@ export async function listarUsuariosPOS(organizacionId: string): Promise<Registr
         'personas.nombre as nombre',
         'personas.telefono as telefono',
         'empleos.rol as rolBase',
+        'empleos.color as colorGuardado',
+        'empleos.estacion_preparacion_id as estacionId',
+        'empleos.ve_todas_las_estaciones as veTodasLasEstaciones',
         'empleos.activo as activo',
         'empleos.created_at as createdAt',
         'empleos.updated_at as updatedAt',
@@ -66,11 +69,21 @@ export async function listarUsuariosPOS(organizacionId: string): Promise<Registr
     id: f.id,
     nombre: f.nombre,
     telefono: f.telefono,
-    // El rol viaja en SU vocabulario, que es el que entienden su
-    // `permissions.js` y su `ROLE_HOME_ROUTES`.
-    rol: rolMH(f.rolBase) ?? f.rolBase,
+    // DP-14 · El PUESTO REAL de la base (`dueno`, `administrador`, `gerente`, `cajero`, `mesero`,
+    // `cocina`, `almacen`), no el de su vocabulario: con `rolMH` el dueño, el administrador y el
+    // gerente salían los tres como «administrador», y el diálogo de Usuarios, al guardar, les
+    // cambiaba el puesto. Lo que se traduce es lo que se DIBUJA (la sesión y la entrada siguen
+    // con `rolMH`); lo que se muestra y se edita aquí es lo que la persona ES.
+    rol: f.rolBase,
     etiqueta: etiquetaDe(f.rolBase),
-    color: colorDePersona(f.id),
+    // El color que se PINTA: el guardado en el empleo y, si no tiene, uno estable derivado del id.
+    color: f.colorGuardado ?? colorDePersona(f.id),
+    // El color que la persona TIENE (o `null`): lo que el diálogo carga y compara. Si cargara el
+    // calculado, cualquier edición —un renombre— lo guardaría como si lo hubieran elegido.
+    color_guardado: f.colorGuardado,
+    // La estación de la cocina: sin ella, desactivar o reactivar a un cocinero la borraba.
+    estacion_preparacion_id: f.estacionId,
+    puede_ver_todas_estaciones: f.veTodasLasEstaciones,
     activo: f.activo,
     tiene_pin: f.credencialId !== null,
     created_date: f.createdAt.toISOString(),

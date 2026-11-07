@@ -40,6 +40,7 @@ function todasLasVariantes(): readonly {
     { raiz: 'registros_ventas', clave: claves.registrosVentas.porOrden('-fecha_cierre', 2000) },
     { raiz: 'usuarios_pos', clave: claves.usuarios.activos() },
     { raiz: 'usuarios_pos', clave: claves.usuarios.meseros() },
+    { raiz: 'usuarios_pos', clave: claves.usuarios.inactivos() },
   ];
 }
 

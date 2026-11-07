@@ -89,6 +89,12 @@ export {
 } from './solicitudes.ts';
 
 export {
+  entradaRepartirMesas,
+  repartirMesas,
+  type ResultadoRepartirMesas,
+} from './repartir-mesas.ts';
+
+export {
   crearEstacion,
   entradaCrearEstacion,
   type ResultadoCrearEstacion,

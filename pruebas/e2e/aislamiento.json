@@ -131,6 +131,16 @@
       "ids": [{ "camino": "sesionCajaId", "tabla": "sesiones_caja" }]
     },
     {
+      "ruta": "/api/caja/nombrar-terminal",
+      "comando": "caja.nombrar_terminal",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "terminal": "⟨?⟩", "nombre": "prueba de aislamiento" },
+      "ids": [{ "camino": "terminal", "tabla": null }]
+    },
+    {
       "ruta": "/api/caja/traer",
       "comando": "caja.traer",
       "escribe": true,
@@ -831,6 +841,19 @@
       ]
     },
     {
+      "ruta": "/api/restaurante/repartir-mesas",
+      "comando": "restaurante.repartir_mesas",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "mesero": "⟨empleos⟩", "mesaIds": ["⟨mesas⟩"] },
+      "ids": [
+        { "camino": "mesero", "tabla": "empleos" },
+        { "camino": "mesaIds[0]", "tabla": "mesas" }
+      ]
+    },
+    {
       "ruta": "/api/restaurante/rotar-qr",
       "comando": "restaurante.rotar_qr",
       "escribe": true,
@@ -961,6 +984,16 @@
         { "camino": "ordenId", "tabla": "ordenes" },
         { "camino": "clienteId", "tabla": "clientes" }
       ]
+    },
+    {
+      "ruta": "/api/venta/descuento-autorizado",
+      "comando": "venta.descuento_autorizado",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "ordenId": "⟨ordenes⟩" },
+      "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
     },
     {
       "ruta": "/api/venta/devolver-venta",

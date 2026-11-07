@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { formatCurrency } from '@/utils/financialUtils';
-import { getVentaTotal } from '@/utils/ventaTotales';
+import { totalesDelPapel } from '~/venta/totales-del-papel';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import { propinaDerivada } from '@/utils/tipsUtils';
 import { format } from 'date-fns';
@@ -115,17 +115,23 @@ export default function PreCuentaTicket({
         })}
       </div>
 
-      {/* Totales — HOTFIX 6A: getVentaTotal calcula desde detalles si la venta
-          tiene total/subtotal en 0 (caso de fallo 429 en envío de pedido). */}
+      {/* Totales — DP-14 (ronda 2, bloqueante 1): el papel SUMA. Renglones − descuento (+ IVA si
+          no va incluido) = el total del servidor; + propina = lo cobrado (`totalesDelPapel`, que
+          conserva el respaldo de HOTFIX 6A para la venta leída con total 0). */}
       {(() => {
-        const subtotalEfectivo = getVentaTotal(venta, detalles);
+        const papel = totalesDelPapel(venta, detalles);
         return (
           <div style={{ borderTop: '1px dashed #000', paddingTop: '4px', marginBottom: '4px' }}>
-            <Row label="Subtotal" value={formatCurrency(subtotalEfectivo)} />
-            {venta.descuentos > 0 && (
-              <Row label="Descuento" value={`-${formatCurrency(venta.descuentos)}`} />
+            <Row label="Subtotal" value={formatCurrency(papel.renglones)} />
+            {papel.descuento > 0 && (
+              <Row label="Descuento" value={`-${formatCurrency(papel.descuento)}`} />
             )}
-            {venta.impuestos > 0 && <Row label="IVA" value={formatCurrency(venta.impuestos)} />}
+            {papel.iva > 0 && (
+              <Row
+                label={papel.ivaSeSuma ? 'IVA' : 'IVA incluido'}
+                value={formatCurrency(papel.iva)}
+              />
+            )}
             {montoPropina > 0 && (
               <Row
                 label={`Propina${venta.propina_porcentaje > 0 ? ` (${venta.propina_porcentaje}%)` : ''}`}
@@ -147,7 +153,7 @@ export default function PreCuentaTicket({
               }}
             >
               <span>TOTAL</span>
-              <span>{formatCurrency(subtotalEfectivo + montoPropina)}</span>
+              <span>{formatCurrency(papel.total + montoPropina)}</span>
             </div>
             {esFinal && venta.metodo_pago && (
               <div style={{ marginTop: '4px', fontSize: '10px' }}>

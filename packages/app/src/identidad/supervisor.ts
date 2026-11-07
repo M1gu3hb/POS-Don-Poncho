@@ -198,8 +198,12 @@ export async function autorizarConPin(
 ): Promise<ResultadoDeSupervisor> {
   // DP-14.2 · Para un DESCUENTO sí: todo descuento pide el PIN de un gerente, administrador o
   // dueño, y si es quien tiene la sesión lo vuelve a teclear. Así una tableta olvidada con su
-  // sesión abierta no sirve para regalar. Para lo demás, nadie se autoriza a sí mismo.
-  if (peticion.empleoId === peticion.solicitaEmpleoId && peticion.para !== 'descuento') {
+  // sesión abierta no sirve para regalar. Ronda 2 (medio 6): lo mismo para CANCELAR —el gerente
+  // con la cocina sin respuesta teclea el suyo y no necesita a otro—. No abre otra puerta: la
+  // persona sigue pasando por el puesto que autoriza y por su PIN con el mismo bloqueo. Para lo
+  // demás (sin decir para qué), nadie se autoriza a sí mismo.
+  const seTecleaElSuyo = peticion.para === 'descuento' || peticion.para === 'cancelacion';
+  if (peticion.empleoId === peticion.solicitaEmpleoId && !seTecleaElSuyo) {
     return { ok: false, motivo: 'uno_mismo' };
   }
   if (!FORMA_PIN.test(peticion.pin)) return { ok: false, motivo: 'credenciales' };

@@ -2,7 +2,8 @@ import 'server-only';
 
 import { createHash, createHmac } from 'node:crypto';
 
-import type { Transaccion } from '@morphiqpos/data';
+import type { Esquema, Transaccion } from '@morphiqpos/data';
+import type { Kysely } from 'kysely';
 import { z } from 'zod';
 
 import type { AmbitoPortal } from './ambito.ts';
@@ -190,8 +191,8 @@ export interface EstadoDelCarrito {
  * una lectura lo encuentra caducado: antes se quedaba en el globo del mesero hasta que alguien
  * agregara algo (su pedido ya no existe). Sólo ese aviso, no los demás `ordenar` de la mesa.
  */
-async function resolverElAvisoCaducado(
-  tx: Transaccion,
+export async function resolverElAvisoCaducado(
+  tx: Kysely<Esquema>,
   ambito: MesaDelCarrito,
   ahora: Date,
 ): Promise<void> {
@@ -290,7 +291,7 @@ export function vaciadoQueLeToca(
 
 /** La cuenta abierta de la mesa, sin candado: sólo para saber desde cuándo cuenta el carrito. */
 export async function aperturaDeLaCuenta(
-  tx: Transaccion,
+  tx: Kysely<Esquema>,
   ambito: MesaDelCarrito,
 ): Promise<Date | null> {
   const orden = await tx
@@ -363,9 +364,12 @@ export async function estadoDelCarrito(
     .orderBy('l.id')
     .execute();
   // DP-13.2: lo caducado ya no se ve; se borra con lo siguiente que se agregue.
-  const caducado = carritoCaducado(ultimaDe(todas), desde, ahora);
-  const lineas = caducado ? [] : todas;
-  if (caducado) await resolverElAvisoCaducado(tx, ambito, ahora);
+  const caducoElCarrito = carritoCaducado(ultimaDe(todas), desde, ahora);
+  const lineas = caducoElCarrito ? [] : todas;
+  if (caducoElCarrito) await resolverElAvisoCaducado(tx, ambito, ahora);
+  // Ronda 2 (medio 9) · «Tu pedido se borró…» es de los teléfonos que ESTABAN en ese carrito: la
+  // familia nueva que se sienta después (otro teléfono) no lo lee, aunque lo viejo siga ahí.
+  const caducado = caducoElCarrito && todas.some((l) => l.dispositivo_huella === huella);
 
   const umbral = new Date(ahora.getTime() - SEGUNDOS_CONECTADO * 1000);
   const desdeConectados = desde !== null && desde > umbral ? desde : umbral;

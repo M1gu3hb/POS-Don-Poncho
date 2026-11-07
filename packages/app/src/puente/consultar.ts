@@ -19,6 +19,7 @@ import {
   type MapaEntidad,
 } from './tipos.ts';
 import { estadoDelCostoDe } from '../caja/corte/costo-conocido.ts';
+import { resolverLosAvisosCaducados } from '../portal/avisos-caducados.ts';
 
 /**
  * Las lecturas del puente (F1-02 §3, E3-4).
@@ -223,6 +224,11 @@ async function consultarUnaVez(
   }
   if (!mapa.rolesLectura.includes(ambito.rol)) {
     throw new ErrorDominio('PUENTE_SIN_PERMISO', 'Tu rol no puede leer esa información.');
+  }
+  // Ronda 2 (medio 9) · El globo de un carrito que ya caducó se resuelve al leer el mapa del
+  // mesero, no sólo cuando un teléfono sondea el carrito (misma regla: `carritoCaducado`).
+  if (peticion.entidad === 'SolicitudQR') {
+    await resolverLosAvisosCaducados(ambito.organizacionId);
   }
 
   /** Si este rol puede ver el campo. Sin `rolesLectura`, cualquiera con sesión. */

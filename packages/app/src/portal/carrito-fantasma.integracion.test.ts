@@ -180,10 +180,11 @@ describe('el carrito caducado se dice y resuelve su aviso (DP-14.6, medio 5)', (
         .where('estado', 'in', ['pendiente', 'atendida'])
         .execute();
     expect(await vivos()).toHaveLength(1);
-    expect((await caso.mirar(TELEFONO_B))?.caducado).toBe(false);
+    expect((await caso.mirar(TELEFONO_A))?.caducado).toBe(false);
 
     const despues = new Date(Date.now() + (HORAS_SIN_ACTIVIDAD * 60 + 1) * 60_000);
-    const visto = await caso.mirar(TELEFONO_B, despues);
+    // Ronda 2: el aviso lo lee el teléfono que estaba en el carrito (A), no uno que llega después.
+    const visto = await caso.mirar(TELEFONO_A, despues);
     expect(visto).toMatchObject({ caducado: true, lineas: [], meseroAvisado: false });
     expect(await vivos()).toHaveLength(0);
   });

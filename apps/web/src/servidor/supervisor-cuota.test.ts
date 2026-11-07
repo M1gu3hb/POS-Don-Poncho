@@ -20,6 +20,7 @@ const dobles = vi.hoisted(() => ({
   permitir: vi.fn(),
   devolver: vi.fn(),
   autorizarConPin: vi.fn(),
+  topeDelAutorizador: vi.fn(),
 }));
 
 vi.mock('@morphiqpos/contracts', async () => {
@@ -46,7 +47,11 @@ vi.mock('@morphiqpos/app/identidad', async () => {
   const original = await vi.importActual<typeof import('@morphiqpos/app/identidad')>(
     '@morphiqpos/app/identidad',
   );
-  return { ...original, autorizarConPin: dobles.autorizarConPin };
+  return {
+    ...original,
+    autorizarConPin: dobles.autorizarConPin,
+    topeDelAutorizador: dobles.topeDelAutorizador,
+  };
 });
 
 // La sesión de la cajera: aquí no se mide cómo se lee, sólo lo que hace la ruta con ella.
@@ -72,6 +77,7 @@ const pedir = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   dobles.permitir.mockResolvedValue({ ok: true, esperaSegundos: 0 });
+  dobles.topeDelAutorizador.mockResolvedValue({ topeCentavos: '200000', topeBp: 3000 });
 });
 
 describe('la cuota por origen de la autorización del supervisor', () => {
@@ -86,6 +92,21 @@ describe('la cuota por origen de la autorización del supervisor', () => {
     expect(respuesta.status).toBe(200);
     expect(dobles.devolver).toHaveBeenCalledTimes(1);
     expect(dobles.devolver.mock.calls[0]?.[0]).toBe('supervisor');
+  });
+
+  it('ronda 2 · devuelve hasta cuánto llega ese PIN, sin quitar lo de antes', async () => {
+    dobles.autorizarConPin.mockResolvedValue({
+      ok: true,
+      autorizacion: 'firmada',
+      rol: 'gerente',
+      vence: new Date(),
+    });
+    const cuerpo: unknown = await (await pedir()).json();
+    expect(cuerpo).toMatchObject({
+      ok: true,
+      datos: { autorizacion: 'firmada', rol: 'gerente', topeCentavos: '200000', topeBp: 3000 },
+    });
+    expect(dobles.topeDelAutorizador).toHaveBeenCalledWith('org-de-prueba', 'gerente');
   });
 
   it('con el PIN equivocado (o bloqueado), el intento se queda contado', async () => {

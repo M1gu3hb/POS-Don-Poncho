@@ -916,3 +916,74 @@ ni toca producción: integro su diff, verifico y hago el commit.
   bajo el pie (antes la luna ya lo tapaba a medias). Para el QA del 14.7.
 - Para la base propia (después de la mudanza, nunca en la compartida), el dato de DP-D71:
   `insert into motivos_merma (clave, etiqueta, giro, imputable) values ('por_cancelacion', 'Por cancelación', 'restaurante', false) on conflict (clave) do nothing;`
+
+### 14.6 a producción (07-11)
+
+- PR #9 (`dp-14` → `main`): la primera CI dio un rojo real (el aviso del sonido tapaba «Conectar
+  teléfono») y el de la galería; arreglados, más la revisión adversarial. CI final 10 de 10 en
+  `1064062`; regresión de navegador local sobre la misma compilación, 57 de 57.
+- Antes (sólo lectura): huella de los otros 10 IDÉNTICA (`huellas-dp14\antes-despliegue-b.json`);
+  `don-poncho` idéntico al de después del despliegue de 14.1/14.2 (`_PRIVADO\mudanza\dp14-antes-b`).
+- Fusión con merge `c5709f6` (por la API de GitHub), a nombre de M1gu3hb, sin coautoría.
+- Production de Vercel `READY` (`dpl_4uqf…`, `cle1`, los tres alias). Humo sin PIN y sin escrituras,
+  11 de 11 (ahora con el POST a una ruta de `/api` que no existe: 404); la cámara sólo en `/mesero`
+  y `/pos`. Sin errores en tiempo de ejecución.
+- Después: huella de los otros 10 IDÉNTICA (`despues-despliegue-b.json`); `don-poncho` con las mismas
+  filas y md5 en las 135 tablas (`dp14-despues-b`). Cero escrituras.
+- Desde este despliegue el servidor rechaza un platillo sin su opción obligatoria en el mesero, el
+  portal y `/pos`; el motivo de merma «Por cancelación» espera a la base propia (DP-D71).
+
+## 07-11-2026 · DP-14 · ronda de la auditoría final del 7-11 (la mudanza, en pausa)
+
+Encargo: corregir todo lo de la auditoría del 7-11 sobre `main@c5709f6` antes de mudar; la mudanza
+(14.4) y la configuración de la base propia (14.5) quedan en pausa hasta que Miguel diga. El
+documento `AUDITORIA-2026-11-07.md` no está en el proyecto: se trabajó con la lista del encargo, cada
+punto confirmado en el código antes de repartirlo.
+
+### Agentes
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| RA (worktree `dp14-a`, base 5446, web 3241) | Sonnet | Bloqueante 2 (el puesto real, editarse, el PIN), medios 7 y 8 (desactivar y repartir mesas; las pestañas del gerente), menores de usuarios (los dos toques, el color) | Entregado. Integración 10 (rojo visto en 3), unidad 17, navegador 12 de 12 (teléfono 360 px, tableta, escritorio), mutaciones 19 de 19. Revisión (Sonnet): «listo»; dos archivos nuevos de más de 300 líneas, que partió la sesión principal. |
+| RB (worktree `dp14-b`, base 5457, web 3242) | Sonnet | Medios 5, 6 y 9 (el diálogo del descuento, cancelar siendo gerente, el carrito caducado) y menores del corte, la auditoría, `autorizar_descuento` y `leerMargen` | Entregado. Integración y unidad verdes en su zona (rojo visto), navegador 12 de 12, mutaciones 33 de 33. Revisión (Sonnet): «listo», 3 bajos; la escritura en la lectura del mapa la rehízo la sesión principal (candado y fallo aislado). |
+| Revisión del PR1 (4 agentes, de dos en dos, sólo lectura sobre `dp12`, sin editar ni correr nada) | Sonnet | Dos lentes (servidor; pantallas contra el encargo, punto por punto) y un verificador por lente que intenta refutar cada hallazgo | 10 hallazgos, 7 reales tras verificar (2 medios, 5 bajos) y 3 refutados; los 7 arreglados con su prueba en rojo antes (ver abajo). |
+
+### Integración (sesión principal)
+
+- Bloqueante 1 (DP-D73), medios 3 y 4 (DP-D74): el papel que suma (`totalesDelPapel`), el cobro de la
+  Caja con el descuento y quién lo autorizó (`venta.descuento_autorizado`), el peso único en el cobro y
+  en Ventas, dos cajas en pantalla y el nombre de cada terminal (`caja.terminales`,
+  `caja.nombrar_terminal`). Prueba en rojo antes de cada cosa; banco de 16 mutantes, 16 muertos; navegador
+  `ticket-con-descuento.spec.ts` (descuento con PIN → cobro → ticket → reimpresión desde Ventas).
+- Los parches de RA (entero: sus menores viven en los mismos archivos) y los medios de RB; los menores de
+  RB, aparte para el segundo PR. Sin choques.
+- `UsuariosPOSSection.jsx` (332) partido en `FilaDeUsuario.jsx`; la prueba de integración de usuarios
+  (330) partida en `mesas-de-un-mesero.integracion.test.ts`.
+- `portal/avisos-caducados.ts`: cada mesa en su transacción con el candado del carrito (un comensal que
+  agrega en ese instante no pierde su aviso) y el fallo registrado sin tumbar la lectura del mapa, con
+  su prueba.
+- La spec del carrito caducado se omite (con su motivo) sin `psql` o sin la base local, y sólo envejece
+  la mesa de la demo.
+- Documentos: la mudanza sin fechas y en pausa, los pasos de después de importar (RLS y permisos: en la
+  compartida, 139 de 139 tablas con RLS y 0 permisos para `anon` y `authenticated`, medido el 07-11) y
+  la configuración de la base propia; DECISIONES DP-D73 a DP-D79.
+- Lo que encontró la revisión, arreglado: «Autorizó X · motivo» se relee al reemplazar el descuento; la
+  cola de opciones del mesero abre un diálogo nuevo por turno (el mismo platillo dos veces salía con
+  las opciones del primero); el tooltip de «Abrir caja» con el cupo lleno; `repartir_mesas` bloquea la
+  fila del mesero contra una baja a la vez; dos renombres de terminal al mismo nombre dan
+  `TERMINAL_NOMBRE_REPETIDO`, no un error interno; la auditoría de `guardar_empleado` lleva el puesto y
+  el estado de antes. Lo del PIN propio al cancelar en el servidor queda como está y anotado (DP-D78).
+  Refutados: la doble cancelación (el botón ya se deshabilita y el servidor rechaza la autorización
+  reusada), el aviso sin «Abrir caja» (sí lo tiene) y la escritura de la lectura del mapa sin auditoría
+  (es la expiración de un aviso, igual que en el teléfono).
+- El lote de navegador sobre lo integrado dio tiempos agotados que cambiaban de spec entre corridas, y
+  el servidor registró lecturas de `/api/datos/consultar` abandonadas. Una causa demostrable: la
+  lectura del mapa abría una transacción con el candado del carrito por CADA globo pendiente, en cada
+  sondeo de cada mesero. Prueba en rojo (con el candado tomado por un comensal, la lectura se trababa
+  3 s), prefiltro en SQL (sólo las mesas cuyo carrito pudo caducar) y 5 mutantes, 5 muertos (DP-D79).
+- Al detener una verificación con `TaskStop`, sus procesos hijos siguieron vivos y corrieron encima de
+  la siguiente (dos `verify` sobre la misma base): esa corrida no vale, y se repitió limpia.
+- La CI del PR #10 encontró una regresión de la regla nueva (las mesas sin mesero las ven todos): en
+  «el portal del comensal», Lupita, con su única mesa en «Barra», entraba a «Interior» (llena de mesas
+  sin asignar tras reiniciar la demo) y no veía la suya. Arreglo: la mesera entra a la zona de SUS
+  mesas (`zonaDeSusMesas`, DP-D77), con su prueba en rojo antes y 5 mutantes, 5 muertos.

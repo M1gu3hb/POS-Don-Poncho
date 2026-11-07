@@ -143,6 +143,23 @@ export function zonasConMesas(
 }
 
 /**
+ * DP-14 ronda 2 · La zona donde la mesera tiene SUS mesas (asignadas a ella), en el orden de las
+ * pestañas; `null` si no tiene ninguna. Con la asignación encendida también ve las mesas sin mesero
+ * (las de alguien que se fue, DP-D77): entra a la zona de las suyas y las otras quedan en sus
+ * pestañas. Sin esto, con las sin mesero en «Interior» y las suyas en «Barra», la suya no se veía.
+ */
+export function zonaDeSusMesas(
+  mesas: readonly (Pick<MesaDelPlano, 'id' | 'activo' | 'zona'> & {
+    readonly mesero_asignado_id?: string | null | undefined;
+  })[],
+  zonas: readonly { readonly zona: string }[],
+  empleadoId: string,
+): string | null {
+  const suyas = soloMesasEnServicio(mesas).filter((m) => m.mesero_asignado_id === empleadoId);
+  return zonas.find((z) => suyas.some((m) => zonaDeLaMesa(m) === z.zona))?.zona ?? null;
+}
+
+/**
  * El lienzo del editor: sus dimensiones y la rejilla en la que nace una mesa nueva.
  *
  * `ALTO_DEL_LIENZO` es el `MAP_HEIGHT` de `MesaMapEditor` y de `Mesero`. Una mesa existente

@@ -1,6 +1,6 @@
 import { validarEntorno } from '@morphiqpos/contracts';
 import { devolver, permitir } from '@morphiqpos/app/http';
-import { autorizarConPin } from '@morphiqpos/app/identidad';
+import { autorizarConPin, topeDelAutorizador } from '@morphiqpos/app/identidad';
 import { z } from 'zod';
 
 import { conSesion } from '~/servidor/http';
@@ -51,7 +51,7 @@ const MENSAJE_POR_MOTIVO = {
   credenciales: 'El PIN no es correcto.',
   bloqueada: 'Ese PIN se bloqueó por intentos. Espera un momento.',
   no_autoriza: 'Esa persona no puede autorizarlo: hace falta un gerente o el dueño.',
-  uno_mismo: 'Nadie se autoriza a sí mismo una cancelación.',
+  uno_mismo: 'Nadie se autoriza a sí mismo.',
 } as const;
 
 export async function POST(peticion: Request): Promise<Response> {
@@ -112,6 +112,15 @@ export async function POST(peticion: Request): Promise<Response> {
       );
     }
     await devolver('supervisor', peticion.headers, entorno.PIN_PEPPER);
-    return { autorizacion: resultado.autorizacion, rol: resultado.rol, vence: resultado.vence };
+    // Ronda 2 (medio 5) · Hasta cuánto llega ese PIN: la pantalla lo dice y no deja pasar de ahí.
+    // Sólo se AGREGAN campos: el contrato de antes (autorizacion, rol, vence) no cambia.
+    const tope = await topeDelAutorizador(sesion.organizacionId, resultado.rol);
+    return {
+      autorizacion: resultado.autorizacion,
+      rol: resultado.rol,
+      vence: resultado.vence,
+      topeCentavos: tope.topeCentavos,
+      topeBp: tope.topeBp,
+    };
   });
 }

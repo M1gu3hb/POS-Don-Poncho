@@ -66,27 +66,22 @@ export function DescuentoDeLaCuenta({
   readonly base: number;
   readonly alAplicar: () => void;
 }) {
-  const voc = useVocabulario();
   const permitidos = useDescuentosPermitidos();
   const [abierto, setAbierto] = useState(false);
-  const [fallo, setFallo] = useState<string | null>(null);
   // Cada apertura, un formulario nuevo: la autorización de la vez anterior ya venció.
   const [apertura, setApertura] = useState(0);
 
+  // Ronda 2 (medio 5) · Si el servidor rechaza, el error SUBE al formulario: él dice por qué, borra
+  // la autorización que no sirvió y pide el PIN otra vez.
   async function aplicar(elegido: DescuentoElegido): Promise<void> {
-    setFallo(null);
-    try {
-      await invocarComando('/api/restaurante/descontar-cuenta', {
-        ordenId,
-        descuentoCentavos: elegido.centavos,
-        motivo: elegido.motivo,
-        ...(elegido.autorizacion === undefined ? {} : { autorizacion: elegido.autorizacion }),
-      });
-      setAbierto(false);
-      alAplicar();
-    } catch (error: unknown) {
-      setFallo(mensajeDe(error, 'No se pudo aplicar el descuento.'));
-    }
+    await invocarComando('/api/restaurante/descontar-cuenta', {
+      ordenId,
+      descuentoCentavos: elegido.centavos,
+      motivo: elegido.motivo,
+      ...(elegido.autorizacion === undefined ? {} : { autorizacion: elegido.autorizacion }),
+    });
+    setAbierto(false);
+    alAplicar();
   }
 
   // DP-14.2 · Apagados (o mientras no se sabe), el botón no aparece.
@@ -97,7 +92,6 @@ export function DescuentoDeLaCuenta({
       <Button
         variant="outline"
         onClick={() => {
-          setFallo(null);
           setApertura((n) => n + 1);
           setAbierto(true);
         }}
@@ -113,19 +107,7 @@ export function DescuentoDeLaCuenta({
               Lo autoriza un gerente, administrador o dueño con su PIN, por el monto exacto.
             </DialogDescription>
           </DialogHeader>
-          <DescuentoDeVenta
-            key={apertura}
-            ordenId={ordenId}
-            base={base}
-            onAplicar={(elegido) => {
-              void aplicar(elegido);
-            }}
-          />
-          {fallo === null ? null : (
-            <Aviso tono="peligro" titulo={fallo}>
-              No se descontó nada: {voc.enFrase('orden')} sigue igual.
-            </Aviso>
-          )}
+          <DescuentoDeVenta key={apertura} ordenId={ordenId} base={base} onAplicar={aplicar} />
         </DialogContent>
       </Dialog>
     </>
