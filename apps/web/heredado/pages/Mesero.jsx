@@ -71,6 +71,7 @@ import { claves } from '~/cliente/claves-de-consulta';
 import {
   mesasDelPlano,
   zonaDeLaMesa,
+  zonaDeSusMesas,
   zonasConMesas,
   zonasDelNegocio,
 } from '~/cliente/mesas-del-mapa';
@@ -457,6 +458,20 @@ function Mesero() {
   useEffect(() => {
     if (primeraZonaConMesas && zonaSinMesas) setZonaActiva(primeraZonaConMesas);
   }, [primeraZonaConMesas, zonaSinMesas]);
+
+  // DP-14 ronda 2 · Con la asignación encendida la mesera ve también las mesas sin mesero: entra,
+  // UNA vez, a la zona de las SUYAS (las demás quedan en sus pestañas). Si llegó a unir desde una
+  // mesa, manda la zona de esa mesa.
+  const zonaPropia =
+    asignActiva && posUser?.rol === ROLES.WAITER
+      ? zonaDeSusMesas(mesas, zonasConCount, posUser.id)
+      : null;
+  const zonaPropiaElegida = useRef(false);
+  useEffect(() => {
+    if (zonaPropiaElegida.current || zonaPropia === null || unirDesde) return;
+    zonaPropiaElegida.current = true;
+    setZonaActiva(zonaPropia);
+  }, [zonaPropia, unirDesde]);
 
   // — Click on mesa
   const onMesaClick = async (mesa) => {

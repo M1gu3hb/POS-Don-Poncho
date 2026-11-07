@@ -983,3 +983,7 @@ punto confirmado en el código antes de repartirlo.
   3 s), prefiltro en SQL (sólo las mesas cuyo carrito pudo caducar) y 5 mutantes, 5 muertos (DP-D79).
 - Al detener una verificación con `TaskStop`, sus procesos hijos siguieron vivos y corrieron encima de
   la siguiente (dos `verify` sobre la misma base): esa corrida no vale, y se repitió limpia.
+- La CI del PR #10 encontró una regresión de la regla nueva (las mesas sin mesero las ven todos): en
+  «el portal del comensal», Lupita, con su única mesa en «Barra», entraba a «Interior» (llena de mesas
+  sin asignar tras reiniciar la demo) y no veía la suya. Arreglo: la mesera entra a la zona de SUS
+  mesas (`zonaDeSusMesas`, DP-D77), con su prueba en rojo antes y 5 mutantes, 5 muertos.

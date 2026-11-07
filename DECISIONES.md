@@ -1455,6 +1455,11 @@ puerta los denuncia todos.
   gerente que te asigne mesas».
 - **Límite:** una mesa asignada a un mesero que se desactivó ANTES de este cambio seguiría oculta. En
   producción hoy no hay ninguna (10 mesas, todas con un mesero activo, medido el 07-11).
+- **La mesera entra a la zona de SUS mesas:** con la asignación encendida ve también las mesas sin
+  mesero, así que si éstas estaban en «Interior» y las suyas en «Barra», entraba a «Interior» y la suya
+  no se veía (lo encontró la jornada completa de la CI). Ahora entra, una vez, a la zona de las suyas
+  (`zonaDeSusMesas`); las demás quedan en sus pestañas. Si llegó a unir desde una mesa, manda la zona
+  de esa mesa.
 - **Sin migración.** Lo hizo el agente RA (Sonnet).
 
 ## DP-D78 · El PIN dice hasta cuánto autoriza; quien autoriza cancela con su propio PIN · 07-11-2026
