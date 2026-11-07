@@ -934,24 +934,6 @@
       ]
     },
     {
-      "ruta": "/api/venta/autorizar-descuento",
-      "comando": "venta.autorizar_descuento",
-      "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
-      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
-      "idRequerido": true,
-      "cuerpo": {
-        "ordenId": "⟨ordenes⟩",
-        "solicitaEmpleoId": "⟨empleos⟩",
-        "descuentoCentavos": 1,
-        "motivo": "prueba de aislamiento"
-      },
-      "ids": [
-        { "camino": "ordenId", "tabla": "ordenes" },
-        { "camino": "solicitaEmpleoId", "tabla": "empleos" }
-      ]
-    },
-    {
       "ruta": "/api/venta/cambiar-cantidad",
       "comando": "venta.cambiar_cantidad",
       "escribe": true,

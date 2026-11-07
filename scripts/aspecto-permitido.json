@@ -916,6 +916,11 @@
         "+ texto:Descuento",
         "+ aviso:Ya hay ${cupoDeCajas ?? 2} cajas abiertas: cierra una."
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/tickets/CorteTicket.jsx",
+      "porque": "DP-14 (ronda 2, menor del corte): si el servidor cortó la lista de descuentos, bajo la tabla una línea sutil dice «Sólo se muestran X de N descuentos; el total del corte los incluye a todos.». La tabla y el total no cambian.",
+      "testigos": ["+ clase:text-xs", "+ clase:text-texto-sutil", "+ clase:mt-1"]
     }
   ]
 }

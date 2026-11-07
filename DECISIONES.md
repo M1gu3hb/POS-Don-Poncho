@@ -1495,3 +1495,28 @@ puerta los denuncia todos.
   tres aparatos sondeando dio lecturas abandonadas y tiempos agotados.
 - **Sin migración.** Lo hizo el agente RB (Sonnet); el candado, el aislamiento del fallo y el
   prefiltro, la sesión principal.
+
+## DP-D80 · Los menores de la auditoría del 7-11: el corte, la auditoría, `autorizar_descuento`, el margen y los topes · 07-11-2026
+
+- **Los descuentos del corte:** la parte de una cuenta dividida sale con la mesa de su madre (no «sin
+  mesa»); el folio con su serie («A-12»); y la cuenta y la suma salen de SQL sobre TODOS los descuentos
+  del corte, no de la lista. La lista sigue con su tope (es el freno de una lectura sin página), y si
+  se cortó, el papel lo dice: «Sólo se muestran X de N descuentos; el total del corte los incluye a
+  todos.».
+- **La auditoría sin la autorización firmada:** `saneado.ts` tapa la clave `autorizacion` cuando es la
+  autorización firmada del supervisor (forma `cuerpo.firma`, con punto y de más de 64 caracteres): es
+  una credencial de dos minutos. NO tapa el nonce de un solo uso que la misma clave guarda en la
+  auditoría de los comandos que la gastan (corto y sin punto): es el registro de que se gastó, y
+  `gastarLaAutorizacion` lo busca ahí; taparlo reabriría el segundo uso. Un valor que no es texto se
+  tapa.
+- **`venta.autorizar_descuento` retirado, y su ruta:** escribía autorizaciones que nadie aplicaba
+  (DP-D61); la autorización es el PIN firmado para ESA cuenta (`/api/identidad/supervisor`), que gasta
+  el comando que aplica el descuento.
+- **El margen sin lo anulado:** `leerMargen` ya no suma los platillos anulados aparte (`anulada_en`):
+  conservan su importe en la línea, pero la cuenta no los cobra.
+- **Configuración → Descuentos con los topes reales:** `venta.topes_de_los_puestos` (dueño y
+  administrador) dice lo que el servidor aplica a cada puesto que autoriza (la fila del negocio o la
+  del sistema), en porcentaje y en pesos, lo que llegue primero; ya no «gerente 30 %, administrador
+  50 %, dueño 100 %» escrito a mano.
+- **Sin migración.** El corte, el saneado, el margen y el retiro los hizo el agente RB (Sonnet); los
+  topes en la pantalla, el aviso en el papel y los documentos, la sesión principal.

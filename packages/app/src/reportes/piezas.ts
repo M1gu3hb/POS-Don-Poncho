@@ -74,6 +74,9 @@ export async function leerVentaDelDia(
  * El costo sale de `orden_lineas.costo_unitario_centavos`, que es el costo CONGELADO
  * al cobrar: recalcularlo con el costo de hoy haría que el margen de la semana pasada
  * cambiara cada vez que entra una compra.
+ *
+ * Ronda 2 de DP-14 · Un platillo ANULADO aparte (`anulada_en`) ya no es venta ni costo: conserva su
+ * importe en la línea, pero la cuenta ya no lo cobra, y sumarlo inflaba la venta y el margen.
  */
 export async function leerMargen(
   tx: Transaccion,
@@ -88,6 +91,7 @@ export async function leerMargen(
       join ordenes o on o.id = l.orden_id
      where o.organizacion_id = ${organizacionId}
        and o.estado = 'pagada'
+       and l.anulada_en is null
        and o.created_at >= ${desde}
        and o.created_at < ${hasta}
   `.execute(tx);
