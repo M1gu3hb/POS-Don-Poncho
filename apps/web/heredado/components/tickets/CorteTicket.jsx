@@ -13,6 +13,12 @@ import {
 import { seccionesDeCancelaciones } from '~/corte/cancelaciones';
 import { diferenciaDelCorte } from '~/corte-heredado/diferencia-del-corte';
 import {
+  AVISO_SIN_DESCUENTOS,
+  EXPLICACION_SIN_DESCUENTOS,
+  cuentaDelDescuento,
+  tituloDeLosDescuentos,
+} from '~/corte-heredado/descuentos-del-corte';
+import {
   SIN_RECETA,
   economiaDelPeriodo,
   seVeElMargen,
@@ -39,6 +45,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
     cancelacionesNoLeidas = false,
     // DP-13.2 · 'caja' o 'dia' (Cierre del día): la sección dice de qué cancelaciones habla.
     alcanceDeCancelaciones = null,
+    // DP-14.2 · Cada descuento con quién lo autorizó y por qué (`leerDescuentosDelCorte`).
+    descuentos = null,
     alertas = [],
     config = {},
     sinCostos = false,
@@ -601,6 +609,53 @@ const CorteTicket = React.forwardRef(function CorteTicket(
         seccionesDeCancelaciones(cancelaciones, alcanceDeCancelaciones ?? undefined).map((seccion) => (
           <SeccionPintada key={seccion.titulo} seccion={seccion} />
         ))
+      )}
+
+      {/* Descuentos · DP-14.2: cada uno con cuánto, quién lo autorizó con su PIN y por qué, y el
+          total. En el Cierre del día, los de todas las cajas, cada uno una vez. Si no se pudieron
+          leer, la sección lo dice. */}
+      {descuentos?.noSePudieronLeer === true && (
+        <Section title="Descuentos">
+          <p role="alert" className="text-xs font-bold text-peligro">
+            {AVISO_SIN_DESCUENTOS}
+          </p>
+          <p className="text-xs text-texto-sutil">{EXPLICACION_SIN_DESCUENTOS}</p>
+        </Section>
+      )}
+      {descuentos !== null && !descuentos.noSePudieronLeer && descuentos.filas.length > 0 && (
+        <Section title={tituloDeLosDescuentos(descuentos.alcance)}>
+          <table className="w-full text-xs border">
+            <thead className="bg-fondo-sutil">
+              <tr>
+                <th className="border px-2 py-1 text-left">Cuenta</th>
+                <th className="border px-2 py-1 text-right">Descuento</th>
+                <th className="border px-2 py-1 text-left">Autorizó</th>
+                <th className="border px-2 py-1 text-left">Por qué</th>
+              </tr>
+            </thead>
+            <tbody>
+              {descuentos.filas.map((d) => (
+                <tr key={d.ordenId}>
+                  <td className="border px-2 py-1">{cuentaDelDescuento(d)}</td>
+                  <td className="border px-2 py-1 text-right">
+                    {formatCurrency(Number(d.montoCentavos) / 100)}
+                  </td>
+                  <td className="border px-2 py-1">{d.autorizo || '—'}</td>
+                  <td className="border px-2 py-1">{d.motivo || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="font-bold">
+                <td className="border px-2 py-1">Total</td>
+                <td className="border px-2 py-1 text-right">
+                  {formatCurrency(descuentos.totalCentavos / 100)}
+                </td>
+                <td className="border px-2 py-1" colSpan={2} />
+              </tr>
+            </tfoot>
+          </table>
+        </Section>
       )}
 
       {/* Firmas */}

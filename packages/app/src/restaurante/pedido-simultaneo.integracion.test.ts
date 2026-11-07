@@ -1,8 +1,9 @@
 import type { Resultado } from '@morphiqpos/contracts';
 import { obtenerDb } from '@morphiqpos/data';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { comando } from '../produccion.ts';
+import { autorizacionDeDescuento } from '../pruebas/autorizacion-de-prueba.ts';
 import { enCarrera } from '../pruebas/carrera.ts';
 import {
   ambitoDe,
@@ -18,6 +19,12 @@ import { solicitarCuenta } from './cuenta.ts';
 import { descontarCuenta } from './descuento-de-cuenta.ts';
 import { abrirMesa } from './mesas.ts';
 import { enviarPedido } from './pedido.ts';
+
+// DP-14.2 · Todo descuento pide la clave: se firma con este secreto (`pruebas/autorizacion-de-prueba.ts`).
+vi.mock('@morphiqpos/contracts', async (original) => ({
+  ...(await original<typeof import('@morphiqpos/contracts')>()),
+  validarEntorno: () => ({ SESSION_SECRET: 'secreto_de_integracion_de_las_autorizaciones_2026' }),
+}));
 
 /**
  * DOS COSAS A LA MISMA CUENTA A LA VEZ, contra Postgres (día completo del restaurante, 2.4).
@@ -271,6 +278,15 @@ describe('dos comandos simultáneos sobre la misma cuenta', () => {
             ordenId,
             descuentoCentavos: Number(descuento),
             motivo: 'cortesía de la casa',
+            // DP-14.2 · La gerente con la sesión vuelve a teclear SU PIN.
+            autorizacion: autorizacionDeDescuento({
+              organizacionId: negocio.organizacionId,
+              supervisor: negocio.empleoId,
+              rol: 'gerente',
+              solicita: negocio.empleoId,
+              ordenId,
+              montoCentavos: descuento,
+            }),
           },
           ambito: ambitoDeLaGerente(),
           idempotencyKey: clave(),

@@ -254,8 +254,17 @@ export interface MapaEntidad {
    * Filtro que SIEMPRE se aplica, además del ámbito. Sirve para las tablas que
    * el backend comparte entre varios conceptos —`categorias` guarda las de
    * producto y las de insumo en la misma tabla, distinguidas por `tipo`—.
+   *
+   * `null` es «la columna vacía» (`is null`): `DetalleVenta` sólo sirve las líneas que siguen
+   * cobrándose, `anulada_en` nula (DP-14.1). Lo quitado es otra entidad, con `soloConValorEn`.
    */
-  readonly filtroFijo?: Readonly<Record<string, string | boolean>>;
+  readonly filtroFijo?: Readonly<Record<string, string | boolean | null>>;
+  /**
+   * DP-14.1 · Columnas que SIEMPRE tienen que tener valor (`is not null`). Es la otra mitad de un
+   * `filtroFijo` en `null`: `RenglonQuitado` es la misma tabla que `DetalleVenta`, pero sólo lo
+   * que el mesero quitó.
+   */
+  readonly soloConValorEn?: readonly string[];
   /**
    * LO QUE UN ROL SÓLO VE SI ES SUYO (C.7 de la 2.4).
    *

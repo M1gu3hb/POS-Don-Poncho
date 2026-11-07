@@ -659,6 +659,9 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
     campos: {
       ...AUTO,
       folio: { columna: 'folio', conversion: 'texto', escribible: false },
+      // DP-14.1 · La cuenta de la que es parte, si se dividió. Una parte nace sin mesa
+      // (`division.ts`), y la Caja la reconoce por aquí para ofrecerle el descuento.
+      orden_padre_id: { columna: 'orden_padre_id', conversion: 'texto', escribible: false },
       /**
        * La tabla de `F1-04` §6.6. Su vocabulario y el de la base coinciden en
        * cinco de siete estados y difieren en los dos que MÁS se escriben:
@@ -935,6 +938,11 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
     sucursal: { porPadre: { columna: 'orden_id', tabla: 'ordenes' } },
     rolesLectura: [...OPERACION_RESTAURANTE],
     escritura: 'comando',
+    // DP-14.1 · Sólo lo que se SIGUE cobrando. Anular no borra la línea: la deja con
+    // `anulada_en` (y una anulación parcial deja una hermana con la porción quitada). Servirla
+    // aquí hacía que la Caja la enseñara en el cobro, la ofreciera al dividir y la imprimiera en
+    // el ticket mientras el total ya no la contaba. Lo quitado se lee en `RenglonQuitado`.
+    filtroFijo: { anulada_en: null },
     campos: {
       ...AUTO,
       venta_id: { columna: 'orden_id', conversion: 'texto', escribible: false },
@@ -1049,6 +1057,59 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         columna: 'ml_por_porcion',
         conversion: 'decimal',
         escribible: false,
+      },
+    },
+  },
+
+  /**
+   * DP-14.1 · LO QUE EL MESERO QUITÓ DE UNA CUENTA, para el historial (Ventas).
+   *
+   * La misma tabla que `DetalleVenta`, sólo con las líneas anuladas, y SIN NINGÚN IMPORTE: lo
+   * quitado no se cobró, y donde se enseña sale marcado «Quitado» y sin dinero. El ticket y el
+   * cobro no lo leen.
+   */
+  RenglonQuitado: {
+    tabla: 'orden_lineas',
+    sucursal: { porPadre: { columna: 'orden_id', tabla: 'ordenes' } },
+    rolesLectura: [...OPERACION_RESTAURANTE],
+    escritura: 'comando',
+    soloConValorEn: ['anulada_en'],
+    ordenPorOmision: 'anulada_en',
+    campos: {
+      id: { columna: 'id', conversion: 'texto', escribible: false },
+      venta_id: { columna: 'orden_id', conversion: 'texto', escribible: false },
+      producto_id: { columna: 'producto_id', conversion: 'texto', escribible: false },
+      producto_nombre: { columna: 'producto_nombre', conversion: 'texto', escribible: false },
+      cantidad: { columna: 'cantidad', conversion: 'decimal', escribible: false },
+      unidad: { columna: 'unidad', conversion: 'texto', escribible: false },
+      tipo_venta_snapshot: { columna: 'tipo_venta', conversion: 'texto', escribible: false },
+      cantidad_variable_snapshot: {
+        columna: 'cantidad_variable',
+        conversion: 'decimal',
+        escribible: false,
+      },
+      unidad_variable_snapshot: {
+        columna: 'unidad_variable',
+        conversion: 'texto',
+        escribible: false,
+      },
+      nombre_porcion_snapshot: {
+        columna: 'nombre_porcion',
+        conversion: 'texto',
+        escribible: false,
+      },
+      notas_producto: { columna: 'notas', conversion: 'texto', escribible: false },
+      orden_visual: { columna: 'orden_visual', conversion: 'entero', escribible: false },
+      anulada_en: { columna: 'anulada_en', conversion: 'fecha', escribible: false },
+      motivo_anulacion: { columna: 'motivo_anulacion', conversion: 'texto', escribible: false },
+      quitado_por_id: { columna: 'empleado_anula_id', conversion: 'texto', escribible: false },
+    },
+    derivados: {
+      quitado_por_nombre: {
+        tabla: 'empleados_visibles',
+        porColumna: 'empleado_anula_id',
+        columna: 'nombre',
+        conversion: 'texto',
       },
     },
   },

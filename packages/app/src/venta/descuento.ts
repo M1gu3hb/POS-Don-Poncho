@@ -6,6 +6,7 @@ import { evaluarDescuento, puedeAutorizar, type TopeDePuesto } from '@morphiqpos
 import { z } from 'zod';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
+import { exigirDescuentosPermitidos } from './descuentos-permitidos.ts';
 import { TOPES_DE_DESCUENTO } from './topes-del-sistema.ts';
 
 /**
@@ -61,6 +62,10 @@ export const autorizarDescuento = definirComando<
   entrada: entradaAutorizarDescuento,
   async ejecutar(ctx, entrada) {
     const { organizacionId, empleoId, sucursalId, rol } = ctx.ambito;
+    // DP-14.2 · Apagados, tampoco se autorizan.
+    await ctx.paso('descuentos_permitidos', () =>
+      exigirDescuentosPermitidos(ctx.tx, organizacionId),
+    );
 
     if (entrada.solicitaEmpleoId === empleoId) {
       throw new ErrorDominio(
@@ -179,12 +184,11 @@ export const autorizarDescuento = definirComando<
 });
 
 /**
- * El tope de un puesto. **Cero cuando el negocio tiene sus topes y a este puesto no le puso
- * fila**, y eso es a propósito: fallar cerrado.
- *
- * Pero un negocio SIN NINGÚN tope escrito usa los del sistema (`topes-del-sistema.ts`, los de la
- * 078; DP-D59): Don Poncho se dio de alta después de la 078 y ninguna pantalla los escribe, así que
- * «sin fila es cero» lo dejaba sin descuentos para nadie, ni el dueño (QA2-009).
+ * El tope de un puesto: la fila del negocio para ese puesto o, si no la escribió, la del sistema
+ * (`topes-del-sistema.ts`, los de la 078; DP-D59). El respaldo es POR PUESTO desde DP-14.2: antes
+ * sólo valía si el negocio no tenía NINGUNA fila, y la primera que alguien escribiera dejaba a los
+ * demás puestos en cero —el dueño sin poder autorizar, otra vez QA2-009—. Un puesto que no existe
+ * en el sistema se rechaza; uno sin tope en el sistema (mesero, cocina, almacén) vale cero.
  */
 export async function topeDe(
   ctx: ContextoComando<Transaccion>,
@@ -202,15 +206,10 @@ export async function topeDe(
       .executeTakeFirst(),
   );
   if (fila !== undefined) return { topeCentavos: fila.tope_centavos, topeBp: fila.tope_bp };
-  const alguno = await ctx.paso('mirar_topes_del_negocio', () =>
-    ctx.tx
-      .selectFrom('topes_descuento')
-      .select('rol')
-      .where('organizacion_id', '=', ctx.ambito.organizacionId)
-      .executeTakeFirst(),
-  );
-  const delSistema =
-    alguno === undefined ? TOPES_DE_DESCUENTO.find((t) => t.rol === rol) : undefined;
+  // DP-14.2 · El respaldo va POR PUESTO: el puesto que el negocio no escribió usa el del sistema.
+  // Con «sólo si no hay ninguna fila», la gerente caía a cero el día que alguien escribiera la
+  // fila de la cajera, y volvía QA2-009 (nadie podía autorizar).
+  const delSistema = TOPES_DE_DESCUENTO.find((t) => t.rol === rol);
   return {
     topeCentavos: delSistema?.topeCentavos ?? 0n,
     topeBp: delSistema?.topeBp ?? 0,

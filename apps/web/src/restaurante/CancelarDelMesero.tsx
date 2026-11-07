@@ -45,9 +45,9 @@ import {
  * `alActualizar` (la cuenta releída, sin los renglones anulados) y `alCancelarLaCuenta`.
  *
  * ── Los renglones anulados ───────────────────────────────────────────────
- * El puente sigue sirviendo el platillo anulado en `DetalleVenta`. Al abrir la mesa, la página lo
- * lista igual; por eso, al montarse, este componente le pregunta al servidor cuáles renglones
- * siguen en la cuenta y, si la página trae de más, le devuelve la lista limpia.
+ * Desde DP-14.1 el puente ya no sirve el platillo anulado en `DetalleVenta`. Igual, al montarse,
+ * este componente le pregunta al servidor cuáles renglones siguen en la cuenta y, si la página
+ * trae de más (una lectura de antes de anular), le devuelve la lista limpia.
  */
 
 export interface CancelarDelMeseroProps {

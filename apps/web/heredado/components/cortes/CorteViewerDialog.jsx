@@ -18,6 +18,7 @@ import CorteTicket from '@/components/tickets/CorteTicket';
 import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
 import { cancelacionesDeLaCaja } from '~/corte/cancelaciones-leidas';
 import { leerCancelacionesSinTrabar } from '~/corte-heredado/cancelaciones-sin-trabar';
+import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
 
 export default function CorteViewerDialog({ corte, open, onClose }) {
   const { config, paquete_modo } = useConfig();
@@ -63,7 +64,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
         // neta sale inflada, sin descuentos el costo sale en cero y el margen al
         // 100 %. Un corte a medias no es un corte: se enseña el error y se deja
         // el diálogo vacío, que es lo que hace que alguien reintente.
-        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas] =
+        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas, descuentosLeidos] =
           await Promise.all([
             api.entidades.Venta.list('-fecha_cierre', 2000),
             api.entidades.GastoOperativo.list('-created_date', 500),
@@ -81,6 +82,9 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
             // sección dice «No se pudieron leer las cancelaciones» (nunca una lista vacía que
             // parezca «sin cancelaciones»), y el error se registra.
             leerCancelacionesSinTrabar(() => cancelacionesDeLaCaja(corteId)),
+            // DP-14.2 · Cada descuento con quién lo autorizó y por qué. Como las cancelaciones: si
+            // sólo esto falla, el PDF sale igual y su sección lo dice.
+            leerDescuentosDelCorte(corteId),
           ]);
 
         const matchVenta = (v) => {
@@ -174,6 +178,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
             cancelacionesNoLeidas: cancelacionesLeidas.noSePudieronLeer,
             // DP-13.2 · Las de las cuentas de esta caja, o (Cierre del día) todas las de la sucursal.
             alcanceDeCancelaciones: cancelacionesLeidas.alcance,
+            descuentos: descuentosLeidos,
             alertas,
           });
           setLoading(false);
@@ -261,6 +266,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
               cancelaciones={data.cancelaciones}
               cancelacionesNoLeidas={data.cancelacionesNoLeidas}
               alcanceDeCancelaciones={data.alcanceDeCancelaciones}
+              descuentos={data.descuentos}
               alertas={data.alertas}
               config={config}
               sinCostos={sinCostos}

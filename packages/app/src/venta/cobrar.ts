@@ -18,6 +18,7 @@ import { marcarPropinaDeOrden, registrarPagoConPropina } from '../propinas/cobro
 import { entradaCobrarOrdenConPropina } from '../propinas/esquemas.ts';
 import { cotizar, exigirTotalVigente } from './cotizar.ts';
 import { repartirPagos } from './pagos.ts';
+import { porQueYaNoSeCobra } from './ya-cobrada.ts';
 import { efectosDeOpcionesPorLinea } from './opciones-en-consumo.ts';
 import { cantidadAConsumir } from './presentacion.ts';
 
@@ -90,9 +91,11 @@ export const cobrarOrden = definirComando<
     // La lista es una sola y vive en el repositorio, junto al `where` del
     // `update` que la impone: dos listas separadas se desincronizan.
     if (!(repoOrdenes.ESTADOS_COBRABLES as readonly string[]).includes(orden.estado)) {
-      throw new ErrorDominio('ORDEN_NO_EDITABLE', 'Esa venta ya se cobró o se canceló.', {
-        estado: orden.estado,
-      });
+      throw new ErrorDominio(
+        'ORDEN_NO_EDITABLE',
+        await porQueYaNoSeCobra(ctx.tx, organizacionId, entrada.ordenId, orden.estado),
+        { estado: orden.estado },
+      );
     }
 
     // 1.2 · Una nota que ya salió FIRMADA a crédito no se cobra otra vez (auditoría de
@@ -117,9 +120,12 @@ export const cobrarOrden = definirComando<
       bloqueada !== undefined &&
       !(repoOrdenes.ESTADOS_COBRABLES as readonly string[]).includes(bloqueada.estado)
     ) {
-      throw new ErrorDominio('ORDEN_NO_EDITABLE', 'Esa venta ya se cobró o se canceló.', {
-        estado: bloqueada.estado,
-      });
+      // DP-14.2 · Con dos cajas, la que perdió la carrera lee en cuál se cobró.
+      throw new ErrorDominio(
+        'ORDEN_NO_EDITABLE',
+        await porQueYaNoSeCobra(ctx.tx, organizacionId, entrada.ordenId, bloqueada.estado),
+        { estado: bloqueada.estado },
+      );
     }
     const remitida = await ctx.paso('mirar_remision', () =>
       ctx.tx

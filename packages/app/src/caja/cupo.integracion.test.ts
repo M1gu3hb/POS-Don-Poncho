@@ -124,7 +124,8 @@ describe('F-235 · cuántas cajas abre una sucursal, contra Postgres', () => {
     expect(tercera.ok).toBe(false);
     if (tercera.ok) return;
     expect(tercera.error.datos?.['regla']).toBe('CAJA_YA_ABIERTA');
-    expect(tercera.error.mensaje).toContain('sus 2 cajas abiertas');
+    // DP-14.2 · Con las palabras de Miguel.
+    expect(tercera.error.mensaje).toBe('Ya hay 2 cajas abiertas: cierra una.');
 
     await expect(
       conTransaccion((tx) =>

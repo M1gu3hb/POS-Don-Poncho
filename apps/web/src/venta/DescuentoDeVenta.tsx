@@ -1,6 +1,5 @@
 'use client';
 
-import { evaluarDescuento } from '@morphiqpos/domain/venta';
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Input } from '@morphiqpos/ui/primitivas/input';
 import { Label } from '@morphiqpos/ui/primitivas/label';
@@ -10,24 +9,23 @@ import { useEffect, useState } from 'react';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
 
-import { porcentajeDeTope } from './devolucion.ts';
 import { PinDeSupervisor } from './PinDeSupervisor';
 
 /**
- * EL DESCUENTO, CON SU TOPE Y SU SUPERVISOR (F-205, D-28 de la 2.4).
+ * EL DESCUENTO, CON LA CLAVE DE QUIEN LO AUTORIZA (F-205; DP-14.2, decisión DP-D61).
  *
- * La cajera escribe cuánto —en pesos o en porcentaje— y por qué. Si cabe en el tope de su
- * puesto, se aplica. Si no, la pantalla lo DICE con el tope a la vista —«tu tope son $50
- * o el 10 %»— y el supervisor teclea SU PIN aquí mismo, sin cerrar la sesión de nadie: el
- * servidor lo comprueba como al entrar y devuelve una autorización de dos minutos que
- * viaja con el cobro. La cuenta del tope es la del dominio (`evaluarDescuento`), la misma
- * que el servidor vuelve a hacer al aplicar.
+ * La cajera escribe cuánto —en pesos o en porcentaje— y por qué, y un gerente, administrador o
+ * dueño teclea SU PIN aquí mismo, sin cerrar la sesión de nadie: TODO descuento lo pide, aunque
+ * sea de $1, y si quien tiene la sesión es gerente o dueño vuelve a teclear el suyo. El servidor
+ * lo comprueba como al entrar y devuelve una autorización de dos minutos firmada para ESTA cuenta
+ * y por ESTE monto: si la cajera cambia el monto, hay que autorizar otra vez. El límite es el
+ * tope del puesto de quien autoriza, y el servidor lo vuelve a comprobar al aplicar.
  */
 
 export interface DescuentoElegido {
   readonly centavos: number;
   readonly motivo: string;
-  /** La autorización firmada, cuando el descuento pasa del tope de quien cobra. */
+  /** La autorización firmada (desde DP-14.2 la lleva todo descuento). */
   readonly autorizacion?: string;
   /** Quién la dio, para decirlo en la pantalla. */
   readonly autorizo?: string;
@@ -95,14 +93,6 @@ export function DescuentoDeVenta({
   const centavos =
     modo === 'importe' ? (importe ?? 0) : bp === null ? 0 : centavosDePorcentaje(base, bp);
   const valido = centavos > 0 && centavos < base;
-  const requiere =
-    tope !== null && valido
-      ? evaluarDescuento({
-          baseCentavos: BigInt(base),
-          descuentoCentavos: BigInt(centavos),
-          tope: { topeCentavos: BigInt(tope.topeCentavos), topeBp: tope.topeBp },
-        }).veredicto !== 'libre'
-      : false;
 
   if (tope === null) {
     return fallo === null ? (
@@ -112,20 +102,20 @@ export function DescuentoDeVenta({
     );
   }
 
-  const listo = valido && motivo.trim().length >= 4 && (!requiere || autorizacion !== null);
+  const listo = valido && motivo.trim().length >= 4 && autorizacion !== null;
 
   return (
     <form
       className="flex flex-col gap-(--espacio-3)"
       onSubmit={(evento) => {
         evento.preventDefault();
+        // `listo` ya exige la autorización: TypeScript la sabe no nula aquí.
         if (!listo) return;
         onAplicar({
           centavos,
           motivo: motivo.trim(),
-          ...(requiere && autorizacion !== null
-            ? { autorizacion: autorizacion.token, autorizo: autorizacion.nombre }
-            : {}),
+          autorizacion: autorizacion.token,
+          autorizo: autorizacion.nombre,
         });
       }}
     >
@@ -199,34 +189,32 @@ export function DescuentoDeVenta({
         />
       </div>
 
-      {requiere ? (
-        <div className="flex flex-col gap-(--espacio-2)">
-          <Aviso tono="atencion" titulo="Pasa de tu tope: lo autoriza un supervisor con su PIN.">
-            <span className="inline-flex flex-wrap items-baseline gap-(--espacio-1)">
-              Tu tope: <Dinero centavos={Number(tope.topeCentavos)} tamano="sm" /> o el{' '}
-              {porcentajeDeTope(tope.topeBp)} %.
-            </span>
-          </Aviso>
-          {tope.quienesAutorizan.length === 0 ? (
-            <Vacio
-              icono={<KeyRound />}
-              titulo="No hay quién autorice."
-              explicacion="Este negocio no tiene gerente ni dueño con PIN: el descuento tiene que caber en tu tope."
-            />
-          ) : autorizacion === null ? (
-            // DP-13.2 (D-5): firmada para ESTA cuenta y para un descuento.
-            <PinDeSupervisor
-              ordenId={ordenId}
-              para="descuento"
-              quienesAutorizan={tope.quienesAutorizan}
-              idDelCampo="descuento-pin"
-              alAutorizar={setAutorizacion}
-            />
-          ) : (
-            <Aviso tono="exito" titulo={`Autorizó ${autorizacion.nombre}.`} />
-          )}
-        </div>
-      ) : null}
+      <div className="flex flex-col gap-(--espacio-2)">
+        <Aviso
+          tono="atencion"
+          titulo="Todo descuento lo autoriza un gerente, administrador o dueño con su PIN."
+        />
+        {tope.quienesAutorizan.length === 0 ? (
+          <Vacio
+            icono={<KeyRound />}
+            titulo="No hay quién autorice."
+            explicacion="Este negocio no tiene gerente, administrador ni dueño con PIN: no se puede descontar."
+          />
+        ) : !valido ? null : autorizacion === null ? (
+          // DP-13.2 (D-5) y DP-14.2: firmada para ESTA cuenta, para un descuento y por ESTE monto.
+          <PinDeSupervisor
+            key={centavos}
+            ordenId={ordenId}
+            para="descuento"
+            montoCentavos={centavos}
+            quienesAutorizan={tope.quienesAutorizan}
+            idDelCampo="descuento-pin"
+            alAutorizar={setAutorizacion}
+          />
+        ) : (
+          <Aviso tono="exito" titulo={`Autorizó ${autorizacion.nombre}.`} />
+        )}
+      </div>
 
       {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
 

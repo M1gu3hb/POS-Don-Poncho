@@ -191,9 +191,10 @@ describe('F-205 · autorizar', () => {
     expect(esErrorDominio(fallo)).toBe(true);
   });
 
-  it('con los topes del negocio escritos, el puesto SIN fila no descuenta nada: falla CERRADO', async () => {
-    // DP-D59: un negocio sin NINGÚN tope usa los del sistema (`topes-del-sistema.ts`); uno que
-    // escribió los suyos y a este puesto no le puso fila, no le da nada.
+  it('DP-14.2 · con los topes del negocio escritos, el puesto SIN fila usa el del sistema', async () => {
+    // DP-D59 decía «un negocio sin NINGÚN tope usa los del sistema», y el primero que escribiera
+    // una fila dejaba a los demás puestos en cero: la gerente sin poder autorizar (QA2-009 otra
+    // vez). Desde DP-14.2 el respaldo va por puesto: la gerente sin fila autoriza hasta su 30 %.
     const base = baseDe({
       topes_descuento: [
         { organizacion_id: ORG, rol: 'cajero', tope_centavos: 5000n, tope_bp: 1000 },
@@ -201,18 +202,15 @@ describe('F-205 · autorizar', () => {
     });
     const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'), AHORA);
 
-    const fallo = await autorizarDescuento
-      .ejecutar(ctx, {
-        ordenId: ORDEN,
-        solicitaEmpleoId: CAJERO,
-        descuentoCentavos: 10_000,
-        motivo: 'sin topes configurados',
-      })
-      .catch((e: unknown) => e);
+    const hecho = await autorizarDescuento.ejecutar(ctx, {
+      ordenId: ORDEN,
+      solicitaEmpleoId: CAJERO,
+      descuentoCentavos: 10_000,
+      motivo: 'el puesto sin fila',
+    });
 
-    // El gerente no tiene fila: no autoriza. Un puesto sin tope escrito no es uno sin límite.
-    expect(esErrorDominio(fallo)).toBe(true);
-    expect(base.filas('autorizaciones_descuento')).toHaveLength(0);
+    expect(hecho.descuentoCentavos).toBe('10000');
+    expect(base.filas('autorizaciones_descuento')).toHaveLength(1);
   });
 
   it('el cajero no autoriza descuentos: para eso existe el tope', () => {

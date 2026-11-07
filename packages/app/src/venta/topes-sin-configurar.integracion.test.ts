@@ -47,7 +47,7 @@ describe('el tope de descuento de cada puesto', () => {
     expect(await de('cajero')).toMatchObject({ topeBp: 1_000, topeCentavos: '5000' });
   });
 
-  it('con un tope escrito, manda el suyo; el puesto que no escribió, cero', async () => {
+  it('con un tope escrito, manda el suyo; el puesto que no escribió, el del sistema (DP-14.2)', async () => {
     const negocio = await sembrarNegocio({
       nombre: 'Fonda con su tope',
       rol: 'cajero',
@@ -86,6 +86,7 @@ describe('el tope de descuento de cada puesto', () => {
       }),
       'venta.tope_de_descuento',
     );
-    expect(delGerente).toMatchObject({ topeBp: 0 });
+    // DP-14.2 · El respaldo va por puesto: la gerente sin fila sigue con su 30 %, no en cero.
+    expect(delGerente).toMatchObject({ topeBp: 3_000, topeCentavos: '200000' });
   });
 });

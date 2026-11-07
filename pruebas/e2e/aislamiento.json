@@ -91,6 +91,16 @@
       "ids": [{ "camino": "sesionCajaId", "tabla": "sesiones_caja" }]
     },
     {
+      "ruta": "/api/caja/descuentos-del-corte",
+      "comando": "caja.descuentos_del_corte",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "sesionCajaId": "⟨sesiones_caja⟩" },
+      "ids": [{ "camino": "sesionCajaId", "tabla": "sesiones_caja" }]
+    },
+    {
       "ruta": "/api/caja/eliminar-corte",
       "comando": "caja.eliminar_corte",
       "escribe": true,

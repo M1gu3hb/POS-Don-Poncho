@@ -779,3 +779,46 @@ Encargo en el chat de Miguel (el orquestador). Mismo worktree (`.claude/worktree
 - Exportación de `don-poncho` antes de la parte C (`_PRIVADO\mudanza\dp13-antes-c`): idéntica, tabla
   por tabla, a la de antes del QA (el QA corrió entero sobre la copia). Después del despliegue:
   `dp13-despues-c`, también idéntica (y `--exigir-cerrado` pasó: 0 cuentas vivas y las cajas cerradas).
+
+## 06-11-2026 · DP-14 · Correcciones del 6-11, descuentos con clave, dos cajas y la mudanza del lunes 9
+
+Encargo: corregir todo lo de la auditoría del 6-11 sobre `main@ea47ed0`, lo que decidió Miguel
+(dos cajas, descuentos con clave) y mudar a Don Poncho a su propio proyecto de Supabase el lunes
+9-nov (instalación el sábado 14). El documento `AUDITORIA-2026-11-06.md` no está en el proyecto:
+se trabajó con la lista del encargo. Rama `dp-14`, desde `ea47ed0`.
+
+### Agentes
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| A (worktree `dp14-a`, base 5446, web 3241) | Sonnet | 14.1-5 · la barbacoa por kilo de punta a punta | Entregado. Una línea por peso es una pieza indivisible al dividir; «½ kg» en comanda, teléfono, cobro, ticket y portal. Integración 14 casos, navegador 15 de 15 (3 aparatos × 5 specs), mutaciones 13 de 13. Revisión (Sonnet): «listo», 3 hallazgos bajos. |
+| B (worktree `dp14-b`, base 5447, web 3242) | Sonnet | 14.1-3 · la mesa limpia no borra a la familia nueva; 14.1-4 · el mesero agrega aunque falle la lectura de opciones | Entregado. Limpiar borra sólo lo anterior al cierre de la cuenta; opciones con 8 s, «Reintentar» y la última lectura guardada. Integración (rojo visto), navegador 6 de 6, mutaciones 19 de 19. Revisión (Sonnet): «listo», 4 hallazgos bajos. Queda el arranque en frío: lo cierra el puente (sesión principal). |
+
+Cada uno con revisión adversarial (Sonnet, sólo lectura) y corrección. Ninguno hace commit, push
+ni toca producción: integro su diff, verifico y hago el commit.
+
+### 14.1 y 14.2 (sesión principal)
+
+- **Lo quitado (14.1-1, DP-D62):** `DetalleVenta` sólo sirve lo que se sigue cobrando; lo quitado,
+  en `RenglonQuitado` (sin importes), tachado en Ventas. Prueba de integración antes del código
+  (`puente/renglones-quitados`, 3 casos: el ticket, el cobro y cada parte de la división suman su
+  total) y de navegador (`quitado-en-la-caja.spec.ts`).
+- **La Caja descuenta y cancela (14.1-2):** `DescuentoDeLaCuenta` y `CancelarLaCuenta` en el
+  cobro de `Caja.jsx` (también en las partes, por `Venta.orden_padre_id`).
+- **Descuentos con clave (14.2, DP-D61):** «Permitir descuentos»; todo descuento con PIN (la
+  gerente vuelve a teclear el suyo); la firma lleva el monto; uso único con el nonce en la
+  auditoría y un candado consultivo; tope de quien autoriza; respaldo por puesto; el corte y el
+  Cierre del día los listan con quién y por qué. 9 casos de integración
+  (`restaurante/descuento-con-clave`), 1 del corte (`caja/corte/descuentos-del-corte`), 4 de
+  unidad de la firma; las pruebas que descontaban sin clave, al día.
+- **Dos cajas (14.2, DP-D60):** «Cajas abiertas a la vez» 1 o 2; «Ya se cobró en Caja 1»; «Ya hay
+  2 cajas abiertas: cierra una». 6 casos de integración (`caja/dos-cajas`), con dos cobros a la vez.
+
+### 14.3 · preparar la mudanza
+
+- Inventario (sólo lectura, 06-11): sin funciones Edge ni webhooks; `pg_cron` con la tarea de la
+  053; el bucket `pos-don-poncho` con 0 archivos; 9 variables en Vercel Production (cambian 5).
+  Región: `us-east-2`.
+- Exportación de hoy para el ensayo (`_PRIVADO\mudanza\ensayo-dp14`): 135 tablas, 1,174 filas,
+  0 archivos, 20 s, con `--exigir-cerrado`.
+- Guías: `docs/infra/MUDANZA-FASE-B.md` al día y `docs/infra/MUDANZA-LO-QUE-HACE-MIGUEL.md`.

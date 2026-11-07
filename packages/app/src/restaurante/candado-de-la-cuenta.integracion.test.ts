@@ -1,9 +1,10 @@
 import type { Resultado } from '@morphiqpos/contracts';
 import { conTransaccion, obtenerDb } from '@morphiqpos/data';
 import { sql } from 'kysely';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { comando } from '../produccion.ts';
+import { autorizacionDeDescuento } from '../pruebas/autorizacion-de-prueba.ts';
 import {
   ambitoDe,
   clave,
@@ -19,6 +20,12 @@ import { descontarCuenta } from './descuento-de-cuenta.ts';
 import { dividirCuentaComando } from './division.ts';
 import { abrirMesa } from './mesas.ts';
 import { enviarPedido } from './pedido.ts';
+
+// DP-14.2 · Todo descuento pide la clave: se firma con este secreto (`pruebas/autorizacion-de-prueba.ts`).
+vi.mock('@morphiqpos/contracts', async (original) => ({
+  ...(await original<typeof import('@morphiqpos/contracts')>()),
+  validarEntorno: () => ({ SESSION_SECRET: 'secreto_de_integracion_de_las_autorizaciones_2026' }),
+}));
 
 /**
  * CADA COMANDO QUE RECALCULA LA CUENTA LA TOMA AL CARGARLA, contra Postgres (día completo del
@@ -217,7 +224,20 @@ describe('cada comando que recalcula la cuenta la toma al cargarla', () => {
     const { ordenId } = await cuentaConDosArracheras(3);
     const { sentencia, resultado } = await loQueEsperaAlComando(ordenId, () =>
       comando(descontarCuenta, {
-        entrada: { ordenId, descuentoCentavos: 1_000, motivo: 'cortesía de la casa' },
+        entrada: {
+          ordenId,
+          descuentoCentavos: 1_000,
+          motivo: 'cortesía de la casa',
+          // DP-14.2 · La gerente con la sesión vuelve a teclear SU PIN.
+          autorizacion: autorizacionDeDescuento({
+            organizacionId: negocio.organizacionId,
+            supervisor: negocio.empleoId,
+            rol: 'gerente',
+            solicita: negocio.empleoId,
+            ordenId,
+            montoCentavos: 1_000,
+          }),
+        },
         ambito: ambitoDeLaGerente(),
         idempotencyKey: clave(),
       }),

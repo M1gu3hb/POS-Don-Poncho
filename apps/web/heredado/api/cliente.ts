@@ -207,6 +207,9 @@ function entidad(nombre: string): EntidadApi {
 const NOMBRES = [
   'Venta',
   'DetalleVenta',
+  // DP-14.1 · Lo que el mesero quitó de una cuenta: `DetalleVenta` ya no lo sirve. Sólo para
+  // el historial (Ventas), donde sale «Quitado» y sin importe.
+  'RenglonQuitado',
   'Mesa',
   // `Zona` no era una entidad suya: era un arreglo literal en
   // `lib/constants.js:118`. Ahora es una tabla, porque una mesa con una zona

@@ -331,9 +331,16 @@ async function consultarUnaVez(
   //      otra. De la sesión, nunca del cliente; sin sucursal en la sesión, nada.
   consulta = conFronteraDeSucursal(consulta, mapa, ambito);
 
-  // 2 · El filtro fijo de la entidad (p. ej. categorias.tipo = 'producto').
+  // 2 · El filtro fijo de la entidad (p. ej. categorias.tipo = 'producto'). Un `null` es la
+  //     columna vacía: `DetalleVenta` sólo sirve lo que se sigue cobrando (DP-14.1).
   for (const [columna, valor] of Object.entries(mapa.filtroFijo ?? {})) {
-    consulta = consulta.where(`${BASE}.${columna}`, '=', valor);
+    consulta =
+      valor === null
+        ? consulta.where(`${BASE}.${columna}`, 'is', null)
+        : consulta.where(`${BASE}.${columna}`, '=', valor);
+  }
+  for (const columna of mapa.soloConValorEn ?? []) {
+    consulta = consulta.where(`${BASE}.${columna}`, 'is not', null);
   }
 
   // 3 · `get(id)` es un filtro por id, ni más ni menos.

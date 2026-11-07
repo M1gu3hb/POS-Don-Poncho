@@ -1,7 +1,8 @@
 import { obtenerDb, repoCaja } from '@morphiqpos/data';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { comando } from '../produccion.ts';
+import { autorizacionDeDescuento } from '../pruebas/autorizacion-de-prueba.ts';
 import { ambitoDe, clave, exigirOk } from '../pruebas/negocio-real.ts';
 import { cotizar } from '../venta/cotizar.ts';
 import { descontarCuenta } from './descuento-de-cuenta.ts';
@@ -29,6 +30,12 @@ import {
   type NombreDeInsumo,
   type Salon,
 } from './pruebas/salon-real.ts';
+
+// DP-14.2 · Todo descuento pide la clave: se firma con este secreto (`pruebas/autorizacion-de-prueba.ts`).
+vi.mock('@morphiqpos/contracts', async (original) => ({
+  ...(await original<typeof import('@morphiqpos/contracts')>()),
+  validarEntorno: () => ({ SESSION_SECRET: 'secreto_de_integracion_de_las_autorizaciones_2026' }),
+}));
 
 /**
  * C01 · DIVIDIR LA CUENTA DE UNA MESA EN DOS PARTES Y COBRAR CADA UNA, contra Postgres (cierre
@@ -464,7 +471,20 @@ async function mesaConCuentaPedida(cervezas: string, nombre: string) {
 
 function descontar(salon: Salon, ordenId: string, descuentoCentavos: number) {
   return comando(descontarCuenta, {
-    entrada: { ordenId, descuentoCentavos, motivo: 'cortesía de la gerente' },
+    entrada: {
+      ordenId,
+      descuentoCentavos,
+      motivo: 'cortesía de la gerente',
+      // DP-14.2 · Todo descuento pide la clave; aquí la firma la misma sesión, como gerente.
+      autorizacion: autorizacionDeDescuento({
+        organizacionId: salon.negocio.organizacionId,
+        supervisor: salon.negocio.empleoId,
+        rol: 'gerente',
+        solicita: salon.negocio.empleoId,
+        ordenId,
+        montoCentavos: descuentoCentavos,
+      }),
+    },
     ambito: ambitoDe(salon.negocio, salon.sucursal.sucursalId, null),
     idempotencyKey: clave(),
   });

@@ -210,6 +210,13 @@ export const CODIGOS_ERROR = {
   PUESTO_NO_OTORGABLE: 'PUESTO_NO_OTORGABLE',
   /** El puesto que llegó no es ninguno de los siete del sistema. */
   PUESTO_INVALIDO: 'PUESTO_INVALIDO',
+  /** DP-14.2 · El negocio apagó los descuentos (Configuración → Descuentos). */
+  DESCUENTOS_APAGADOS: 'DESCUENTOS_APAGADOS',
+  /**
+   * DP-14.2 · La autorización con PIN ya se usó: sirve para UN descuento, y otro necesita que
+   * el supervisor teclee su PIN otra vez.
+   */
+  AUTORIZACION_USADA: 'AUTORIZACION_USADA',
 
   // --- andamiaje de pruebas ---
   /** Se pidio interrumpir despues de un paso que no existe (inyeccion de fallos). */

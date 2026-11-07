@@ -27,6 +27,9 @@ import { aplicarDescuento } from './descuento-de-mostrador.ts';
  * descuento no se podía autorizar NUNCA. La 180 guarda la base y el tope en puntos base y
  * el `check` acepta las dos ramas; esto comprueba que la fila entra de verdad.
  *
+ * Desde DP-14.2 todo descuento pide la clave y el tope propio de quien pide se anota en cero:
+ * la fila sigue entrando por el `check` de la 180, ahora con cualquier monto.
+ *
  * El secreto con que se firma la autorización sale de `validarEntorno`, que en esta suite
  * no tiene el entorno entero del servidor: se sustituye sólo esa función, como en la
  * prueba unitaria. Todo lo demás —el comando, la transacción, la base— es el real.
@@ -83,10 +86,13 @@ function autorizacionDelGerente(ordenId: string): string {
       rol: 'gerente',
       solicita: negocio.empleoId,
       exp: Math.floor(Date.now() / 1000) + 120,
-      n: 'integracion-0001',
+      // Un nonce por firma: desde DP-14.2 la autorización se gasta al usarla.
+      n: clave(),
       // DP-13.2 (D-5): para ESTA cuenta y para un descuento.
       cuenta: ordenId,
       para: 'descuento',
+      // DP-14.2: y por ESTE monto.
+      monto: '2000',
     },
     SECRETO,
   );
@@ -134,10 +140,11 @@ describe('F-205 · el descuento autorizado por porcentaje entra en la base', () 
         autoriza_empleo_id: gerenteId,
         autoriza_rol: 'gerente',
         descuento_centavos: 2_000n,
-        // Por importe NO pasa (2 000 < 5 000): la fila sólo cabe por la rama del porcentaje.
-        tope_centavos: 5_000n,
+        // DP-14.2 · El tope propio de quien pide es cero (nadie descuenta solo): la fila cabe en
+        // el `check` de la 180 por las dos ramas.
+        tope_centavos: 0n,
         base_centavos: 8_400n,
-        tope_bp: 1_000,
+        tope_bp: 0,
       },
     ]);
 
@@ -147,5 +154,32 @@ describe('F-205 · el descuento autorizado por porcentaje entra en la base', () 
       .where('orden_id', '=', ordenId)
       .execute();
     expect(orden).toEqual([{ descuento_centavos: 2_000n, total_centavos: 6_400n }]);
+  });
+});
+
+describe('DP-14.2 · la autorización se gasta también en el mostrador', () => {
+  it('dos usos a la vez de la misma autorización sobre el mismo carrito: entra uno solo', async () => {
+    // El carrito del mostrador no se bloquea al leerlo (la cuenta de una mesa sí): aquí el que pone
+    // en fila a los dos usos es el candado consultivo del nonce (`autorizacion-de-un-uso.ts`).
+    const { ordenId } = await armarVenta(ambito, [{ productoId, cantidad: '1' }]);
+    const token = autorizacionDelGerente(ordenId);
+    const aplicar = () =>
+      comando(aplicarDescuento, {
+        entrada: {
+          ordenId,
+          descuentoCentavos: 2_000,
+          motivo: 'Cliente frecuente',
+          autorizacion: token,
+        },
+        ambito,
+        idempotencyKey: clave(),
+      });
+    const resultados = await Promise.all([aplicar(), aplicar()]);
+    const reglas = resultados.map((r) =>
+      r.ok
+        ? null
+        : ((r.error.datos as { readonly regla?: string } | undefined)?.regla ?? r.error.codigo),
+    );
+    expect(reglas.sort()).toEqual(['AUTORIZACION_USADA', null].sort());
   });
 });

@@ -36,6 +36,8 @@ const Entrada = z.object({
   pin: z.string().min(1).max(16),
   ordenId: z.uuid().optional(),
   para: z.enum(['descuento', 'cancelacion']).optional(),
+  /** DP-14.2 · El descuento exacto que se autoriza, en centavos: la firma lo lleva. */
+  montoCentavos: z.number().int().min(1).max(100_000_000).optional(),
 });
 
 const ESTADO_POR_MOTIVO = {
@@ -49,7 +51,7 @@ const MENSAJE_POR_MOTIVO = {
   credenciales: 'El PIN no es correcto.',
   bloqueada: 'Ese PIN se bloqueó por intentos. Espera un momento.',
   no_autoriza: 'Esa persona no puede autorizarlo: hace falta un gerente o el dueño.',
-  uno_mismo: 'Nadie se autoriza a sí mismo.',
+  uno_mismo: 'Nadie se autoriza a sí mismo una cancelación.',
 } as const;
 
 export async function POST(peticion: Request): Promise<Response> {
@@ -87,6 +89,9 @@ export async function POST(peticion: Request): Promise<Response> {
       pin: validada.data.pin,
       ...(validada.data.ordenId === undefined ? {} : { cuenta: validada.data.ordenId }),
       ...(validada.data.para === undefined ? {} : { para: validada.data.para }),
+      ...(validada.data.montoCentavos === undefined
+        ? {}
+        : { montoCentavos: validada.data.montoCentavos }),
       pimienta: entorno.PIN_PEPPER,
       secreto: entorno.SESSION_SECRET,
     });
@@ -99,7 +104,8 @@ export async function POST(peticion: Request): Promise<Response> {
             mensaje: MENSAJE_POR_MOTIVO[resultado.motivo],
             ...(resultado.esperaSegundos === undefined
               ? {}
-              : { detalles: { esperaSegundos: resultado.esperaSegundos } }),
+              : // DP-14.6 · En `datos`, que es donde la pantalla lee la carga del fallo.
+                { datos: { esperaSegundos: resultado.esperaSegundos } }),
           },
         },
         { status: ESTADO_POR_MOTIVO[resultado.motivo], headers: { 'cache-control': 'no-store' } },

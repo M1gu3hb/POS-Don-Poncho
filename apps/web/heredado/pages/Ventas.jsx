@@ -99,6 +99,14 @@ export default function Ventas() {
     enabled: !!selectedVenta,
   });
   const detalles = Array.isArray(detallesLeidos) ? detallesLeidos : SIN_FILAS;
+  // DP-14.1 · Lo que el mesero quitó: `DetalleVenta` ya sólo trae lo cobrado. En el historial sale
+  // marcado «Quitado» y sin importe; si no se pudo leer, el detalle de lo cobrado sigue igual.
+  const { data: quitadosLeidos } = useQuery({
+    queryKey: ['renglones_quitados', selectedVenta?.id],
+    queryFn: () => api.entidades.RenglonQuitado.filter({ venta_id: selectedVenta.id }),
+    enabled: !!selectedVenta,
+  });
+  const quitados = Array.isArray(quitadosLeidos) ? quitadosLeidos : SIN_FILAS;
   const cargandoDetalles = !!selectedVenta && detallesLeidos === undefined && !detallesFallaron;
 
   const filtered = useMemo(() => {
@@ -417,6 +425,17 @@ export default function Ventas() {
                         {d.producto_nombre} x{d.cantidad}
                       </span>
                       <span className="font-medium">{formatCurrency(d.subtotal)}</span>
+                    </div>
+                  ))}
+                  {quitados.map((q) => (
+                    <div
+                      key={q.id}
+                      className="flex justify-between text-sm py-1 border-b last:border-0 text-muted-foreground"
+                    >
+                      <span className="line-through">
+                        {q.producto_nombre} x{q.cantidad}
+                      </span>
+                      <span className="text-xs font-medium uppercase">Quitado</span>
                     </div>
                   ))}
                 </div>

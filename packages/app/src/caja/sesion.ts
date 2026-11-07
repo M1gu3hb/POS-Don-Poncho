@@ -50,7 +50,8 @@ function traducirAperturaQuePerdio(error: unknown, cupo: number): never {
       'CAJA_YA_ABIERTA',
       cupo === 1
         ? 'Otra terminal de esta sucursal acaba de abrir su caja, y sólo puede haber una a la vez: haz el corte desde ESA terminal antes de abrir aquí.'
-        : `Otra terminal acaba de abrir la última de las ${String(cupo)} cajas de esta sucursal. Cierra una antes de abrir otra.`,
+        : // DP-14.2 · Las palabras de Miguel, también cuando se pierde la carrera.
+          `Ya hay ${String(cupo)} cajas abiertas: cierra una.`,
       { cupo },
     );
   }
@@ -109,7 +110,8 @@ export const abrirCaja = definirComando<
         cupo === 1
           ? `Esta sucursal ya tiene una caja abierta, en la terminal «${ajena?.terminalNombre ?? 'sin nombre'}». ` +
               'Sólo puede haber una a la vez: haz el corte desde ESA terminal antes de abrir aquí.'
-          : `Esta sucursal ya tiene sus ${String(cupo)} cajas abiertas. Cierra una antes de abrir otra.`,
+          : // DP-14.2 · «Ya hay 2 cajas abiertas: cierra una», con las palabras de Miguel.
+            `Ya hay ${String(cupo)} cajas abiertas: cierra una.`,
         { sesionCajaId: ajena?.id ?? null, terminalId: ajena?.terminalId ?? null, cupo },
       );
     }
