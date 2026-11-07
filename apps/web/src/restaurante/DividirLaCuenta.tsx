@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useVocabulario } from '~/cliente/vocabulario';
 
 import { DividirCuentaDialog } from './DividirCuentaDialog';
+import { paraDividir, piezasDe } from './peso.ts';
 
 /**
  * DIVIDIR LA CUENTA DESDE LA CAJA (día completo del restaurante, 2.4).
@@ -27,6 +28,9 @@ export interface LineaDeLaCuentaPorDividir {
   readonly id: string;
   readonly producto_nombre: string | null;
   readonly cantidad: number | null;
+  readonly tipo_venta_snapshot?: string | null;
+  readonly cantidad_variable_snapshot?: number | string | null;
+  readonly unidad_variable_snapshot?: string | null;
 }
 
 export function DividirLaCuenta({
@@ -49,13 +53,15 @@ export function DividirLaCuenta({
   // que ya no existen cuando se divide.
   const [apertura, setApertura] = useState(0);
 
-  const repartibles = (lineas ?? []).map((linea) => ({
-    id: linea.id,
-    nombre: linea.producto_nombre ?? 'Producto sin nombre',
-    cantidad: linea.cantidad ?? 0,
-  }));
-  // Dividir en dos cuentas pide al menos dos unidades que repartir.
-  const unidades = repartibles.reduce((suma, linea) => suma + linea.cantidad, 0);
+  const repartibles = (lineas ?? []).map((linea) =>
+    paraDividir({
+      ...linea,
+      nombre: linea.producto_nombre ?? 'Producto sin nombre',
+      cantidad: linea.cantidad ?? 0,
+    }),
+  );
+  // Dividir en dos cuentas pide al menos dos piezas que repartir (la barbacoa por peso es UNA).
+  const unidades = repartibles.reduce((suma, linea) => suma + piezasDe(linea), 0);
 
   return (
     <>

@@ -1,4 +1,5 @@
 'use client';
+import { etiquetaDePeso } from '~/restaurante/peso';
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus, Minus, Scale, Beaker } from 'lucide-react';
@@ -332,10 +333,9 @@ export default function ProductoQRDialog({
                             : 'bg-card border-border hover:bg-muted/40'
                         }`}
                       >
-                        {valor}{' '}
                         {esVariableMedida
-                          ? producto?.unidad_variable || ''
-                          : producto?.nombre_porcion || ''}
+                          ? etiquetaDePeso(valor, producto?.unidad_variable || 'kg')
+                          : `${valor} ${producto?.nombre_porcion || ''}`}
                       </button>
                     );
                   })}

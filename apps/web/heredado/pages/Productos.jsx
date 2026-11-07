@@ -102,8 +102,14 @@ export default function Productos() {
   const safeRecetas = Array.isArray(recetas) ? recetas : [];
   // QA1-4 (DP-13.5): las opciones de cada producto, que el puente no trae. Sin ellas el editor
   // abría vacío un juego que, al guardar, se reemplaza entero.
-  const { opciones: opcionesDeLosPlatillos, listas: opcionesListas } =
-    useOpcionesDeLosPlatillos();
+  // DP-14.1-4: el editor parte de la lectura VIVA (`frescas`), no de la guardada; si falla, el
+  // botón «Opciones» lo dice y ofrece reintentar en lugar de quedarse en «Cargando…».
+  const {
+    opciones: opcionesDeLosPlatillos,
+    frescas: opcionesListas,
+    fallo: opcionesFallaron,
+    reintentar: reintentarLasOpciones,
+  } = useOpcionesDeLosPlatillos();
   const safeProductos = useMemo(
     () => conSusOpciones(Array.isArray(productos) ? productos : [], opcionesDeLosPlatillos),
     [productos, opcionesDeLosPlatillos],
@@ -422,17 +428,25 @@ export default function Productos() {
                         size="sm"
                         className="h-7 gap-1 px-2 text-xs"
                         title="Opciones de preparación / modificadores"
+                        data-estado-opciones={
+                          opcionesListas ? 'listas' : opcionesFallaron ? 'error' : 'cargando'
+                        }
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!opcionesListas) {
-                            toast.info('Cargando las opciones… intenta en un momento.');
+                            if (opcionesFallaron) {
+                              toast.error('No se pudieron leer las opciones. Reintentando…');
+                              reintentarLasOpciones();
+                            } else {
+                              toast.info('Cargando las opciones… intenta en un momento.');
+                            }
                             return;
                           }
                           setModificadoresProducto(p);
                         }}
                       >
                         <ListChecks className="w-3 h-3" />
-                        Opciones
+                        {opcionesFallaron && !opcionesListas ? 'Reintentar opciones' : 'Opciones'}
                         {Array.isArray(p.modificadores) && p.modificadores.length > 0 && (
                           <span className="ml-0.5 rounded-full bg-primary/15 px-1 text-[9px] font-bold text-primary">
                             {p.modificadores.length}

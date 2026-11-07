@@ -175,11 +175,96 @@ describe('el PIN del supervisor en la terminal de la cajera', () => {
     expect(estado.fallidos).toEqual([]);
   });
 
-  it('nadie se autoriza a sí mismo', async () => {
+  it('nadie se autoriza a sí mismo una cancelación (ni lo que no dice para qué es)', async () => {
     await credencialCon('2345');
     expect(
       await autorizarConPin({ ...peticion('2345'), solicitaEmpleoId: GERENTE }, AHORA),
     ).toEqual({ ok: false, motivo: 'uno_mismo' });
+    expect(
+      await autorizarConPin(
+        { ...peticion('2345'), solicitaEmpleoId: GERENTE, para: 'cancelacion' },
+        AHORA,
+      ),
+    ).toEqual({ ok: false, motivo: 'uno_mismo' });
+  });
+
+  it('DP-14.2 · para un descuento, el gerente con la sesión abierta vuelve a teclear SU PIN', async () => {
+    // Así una tableta olvidada con la sesión del gerente no sirve para regalar: el PIN se pide
+    // igual, aunque quien autoriza sea quien tiene la sesión.
+    await credencialCon('2345');
+    const resultado = await autorizarConPin(
+      {
+        ...peticion('2345'),
+        solicitaEmpleoId: GERENTE,
+        para: 'descuento',
+        cuenta: 'cuenta-1',
+        montoCentavos: 2_000,
+      },
+      AHORA,
+    );
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(
+      leerAutorizacion(
+        resultado.autorizacion,
+        {
+          organizacionId: ORG,
+          solicitaEmpleoId: GERENTE,
+          cuenta: 'cuenta-1',
+          para: 'descuento',
+          montoCentavos: 2_000n,
+        },
+        SECRETO,
+        AHORA,
+      ),
+    ).toMatchObject({ supervisor: GERENTE, solicita: GERENTE, monto: '2000' });
+  });
+
+  it('DP-14.2 · la autorización de un descuento va atada a su monto exacto', async () => {
+    await credencialCon('2345');
+    const resultado = await autorizarConPin(
+      { ...peticion('2345'), para: 'descuento', cuenta: 'cuenta-1', montoCentavos: 2_000 },
+      AHORA,
+    );
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    const esperado = (montoCentavos: bigint) => ({
+      organizacionId: ORG,
+      solicitaEmpleoId: CAJERA,
+      cuenta: 'cuenta-1',
+      para: 'descuento' as const,
+      montoCentavos,
+    });
+    expect(
+      leerAutorizacion(resultado.autorizacion, esperado(2_000n), SECRETO, AHORA),
+    ).not.toBeNull();
+    // Con un PIN para $20 no se aplican $2,000, ni $19.99.
+    expect(leerAutorizacion(resultado.autorizacion, esperado(200_000n), SECRETO, AHORA)).toBeNull();
+    expect(leerAutorizacion(resultado.autorizacion, esperado(1_999n), SECRETO, AHORA)).toBeNull();
+  });
+
+  it('DP-14.2 · una autorización firmada sin monto no sirve para un descuento con monto', async () => {
+    await credencialCon('2345');
+    const resultado = await autorizarConPin(
+      { ...peticion('2345'), para: 'descuento', cuenta: 'cuenta-1' },
+      AHORA,
+    );
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(
+      leerAutorizacion(
+        resultado.autorizacion,
+        {
+          organizacionId: ORG,
+          solicitaEmpleoId: CAJERA,
+          cuenta: 'cuenta-1',
+          para: 'descuento',
+          montoCentavos: 2_000n,
+        },
+        SECRETO,
+        AHORA,
+      ),
+    ).toBeNull();
   });
 
   it('un empleo que no es del negocio o está inactivo contesta igual que un PIN malo', async () => {

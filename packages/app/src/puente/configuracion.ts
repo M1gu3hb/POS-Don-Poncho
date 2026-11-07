@@ -76,6 +76,9 @@ export const CONFIG_POR_OMISION = {
   // La tasa de la terminal bancaria, en puntos base SIN IVA (360 = 3.6 %). Nula = no se
   // declaró, y la comisión estimada del corte se dice «sin tasa» en vez de inventarse.
   comision_terminal_bp: null,
+  // DP-14.2 · «Permitir descuentos». Sin escribir, SÍ: es lo que decidió Miguel para Don Poncho
+  // (y lo que hacía todo negocio antes). Se escribe sólo con `configuracion.permitir_descuentos`.
+  descuentos_permitidos: true,
 } as const;
 
 /**
@@ -135,12 +138,18 @@ const NUNCA_SALEN = new Set([
  * `presentacion_ultimo_acceso` lo pone el servidor al desbloquear: aceptarlo
  * del cliente permitiría falsificar el registro de quién entró.
  */
-const SOLO_POR_COMANDO = new Set(['paquete_modo', 'presentacion_ultimo_acceso']);
+const SOLO_POR_COMANDO = new Set([
+  'paquete_modo',
+  'presentacion_ultimo_acceso',
+  // DP-14.2 · Lo cambian sólo el dueño o el administrador, con su comando y su auditoría.
+  'descuentos_permitidos',
+]);
 
 const MAX_BYTES_CONFIGURACION = 64 * 1024;
 
 /** Campos que las pantallas existentes administran en este documento. */
 const CLAVES_EDITABLES = new Set([
+  'descuentos_permitidos',
   'nombre_negocio',
   'nombre_sistema',
   'platform_brand',
@@ -443,6 +452,9 @@ export async function guardarConfiguracionParcial(
       parche['portal_qr_envia_a_cocina'],
       'Quién manda a cocina: el mesero o también los comensales.',
     );
+  }
+  if ('descuentos_permitidos' in parche) {
+    exigirForma(z.boolean(), parche['descuentos_permitidos'], '«Permitir descuentos» es sí o no.');
   }
   if ('portal_qr_comensales_abren_mesa' in parche) {
     exigirForma(

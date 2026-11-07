@@ -18,6 +18,10 @@ export interface ComandaDelTelefono {
   readonly platillos: readonly {
     readonly nombre: string;
     readonly cantidad: string;
+    /** DP-14 · Lo que se vende por peso se dice «½ kg», no «0.5». */
+    readonly porPeso: boolean;
+    readonly unidadVariable: string | null;
+    readonly cantidadVariable: string | null;
     readonly notas: string | null;
   }[];
 }

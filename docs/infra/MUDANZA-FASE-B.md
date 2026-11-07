@@ -1,51 +1,71 @@
 # Mudanza a la Fase B · el guion del día
 
 Don Poncho pasa de la base compartida de MorphiqPOS (`wyqmzhliurwyxuyxznpb`, la Fase A) a su
-propio proyecto de Supabase. Planeado para el **7 al 10 de noviembre de 2026**. El 7 y el 8 caen
-en **sábado y domingo**: si son días fuertes del restaurante, la ventana va el lunes 9 o el
-martes 10, de madrugada o con el local cerrado.
+propio proyecto de Supabase el **lunes 9 de noviembre de 2026**, con el restaurante cerrado (abre
+con el POS el sábado 14). Lo que hace Miguel, clic por clic, está en
+[`MUDANZA-LO-QUE-HACE-MIGUEL.md`](MUDANZA-LO-QUE-HACE-MIGUEL.md).
 
-Lo que no cambia: el código (la rama `fase-b`), el dominio, `PIN_PEPPER` y `SESSION_SECRET` (los
-PIN y las sesiones siguen sirviendo), los ID de todo (los QR impresos siguen sirviendo).
+## Qué cambia y qué no
 
-Lo que cambia: cuatro variables de Vercel (`DATABASE_URL` y `STORAGE_*`) y la rama que se
-despliega (`fase-b` se fusiona en `main`).
+- **El código ya está en `main`:** la rama `fase-b` se fusionó; no hay rama que desplegar.
+- **La 188** (`demostraciones_archivadas`) está en `main` pero **sólo corre en la base propia**:
+  la compartida se queda en la 187 y con cero DDL (la 188 apagaría las demostraciones de los otros
+  negocios).
+- **No cambian:** el dominio, `PIN_PEPPER` y `SESSION_SECRET` (los PIN, las sesiones, los
+  teléfonos de cocina firmados y las autorizaciones siguen sirviendo), `ORGANIZACION` y `APP_URL`.
+- **Los id de todo y los `qr_token` de las mesas se conservan** (la importación copia las filas
+  tal cual): los QR impresos de las mesas siguen sirviendo.
+- **Cambian sólo cinco variables de Vercel** (Production): `DATABASE_URL` y `STORAGE_ENDPOINT`,
+  `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET`. Después, redesplegar.
 
-## Antes del día (Miguel)
+### Lo que cambió desde el ensayo de DP-10.5
 
-1. Crear el proyecto de Supabase **en `us-east-2`** (Postgres 17), con una contraseña larga para
-   `postgres`, y pasármela por el archivo privado (`..\_PRIVADO\`), nunca por chat ni por correo.
-2. En ese proyecto, Almacenamiento → crear el bucket **privado** `pos-don-poncho`, y copiar la
-   llave secreta (`sb_secret_…`) al mismo archivo privado.
-3. Elegir la ventana, con el restaurante **cerrado**: unas **dos horas** de margen para un trabajo
-   de unos 45 minutos.
+- `configuracion.valores` lleva más documentos (experiencia, botones del menú, QR de las mesas,
+  `descuentos_permitidos`): viajan dentro de la misma fila.
+- Los **teléfonos de cocina van firmados** (con el secreto de sesión, que no cambia) y su versión
+  vive en `configuracion.valores.telefonos_de_cocina`: el teléfono conectado sigue conectado.
+- `plataforma` (los empleos de plataforma, DP-12.1) va por **id de empleo**: se conservan.
+- **Cajas a la vez** (`sucursales.cajas_simultaneas`, DP-D60): en la base propia queda en **2**
+  (14.5, por la pantalla).
+- Las migraciones siguen hasta la **188** (ninguna nueva desde el ensayo).
 
-## Antes del día (la sesión de desarrollo)
+## Inventario de lo que no es tabla (06-11-2026, sólo lectura)
 
-1. El rol de la aplicación en el proyecto nuevo (`morphiqpos_app`, con `bypassrls` y su propia
-   contraseña, la que irá en `DATABASE_URL`), por SQL como `postgres`. Es el proyecto nuevo: ahí
-   sí hay DDL.
-2. Un ensayo final con una exportación fresca contra una base desechable con las migraciones de
-   `fase-b` (como el de DP-10.5, abajo).
+| Qué                 | En la compartida                                                                                                                                                         | En la propia                             |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| Bucket              | `pos-don-poncho` privado, **0 archivos** de Don Poncho (y 0 en `morphiqpos`)                                                                                             | `pos-don-poncho` privado, nuevo (Miguel) |
+| Funciones Edge      | ninguna                                                                                                                                                                  | ninguna                                  |
+| Tareas programadas  | `pg_cron`: `morphiqpos_retencion_comandos` (03:17 diario, borra `comandos_ejecutados` de más de 90 días), de la migración 053                                            | la crea la 053 al migrar                 |
+| Webhooks            | ninguno (sin `pg_net`, sin disparadores HTTP)                                                                                                                            | ninguno                                  |
+| Vercel (Production) | 9 variables: `DATABASE_URL`, `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET`, `PIN_PEPPER`, `SESSION_SECRET`, `ORGANIZACION`, `APP_URL` | cambian las 5 primeras                   |
 
-## El día · en orden
+Nada más apunta a la compartida: sin integraciones, sin dominios propios, sin tareas fuera de la
+base. **Región:** `us-east-2` (Ohio), la más cercana a las funciones de Vercel (`cle1`).
 
-Todo se corre desde la raíz del repositorio en la rama `fase-b`, con los secretos en archivos de
-`..\_PRIVADO\` (nunca en la línea de comandos que queda en el historial).
+## Domingo 8 · el proyecto vacío (la sesión de desarrollo)
 
-| #   | Paso                                                                                             | Tiempo   |
-| --- | ------------------------------------------------------------------------------------------------ | -------- |
-| 1   | Confirmar con el restaurante que nadie usa el sistema (cajas cerradas, tabletas apagadas)        | 5 min    |
-| 2   | **Huella** de las otras 10 organizaciones de la compartida (sólo lectura)                        | 1 min    |
-| 3   | **Migraciones** desde cero en la base nueva: `pnpm db:migrate` con su `DATABASE_URL`             | 2-5 min  |
-| 4   | **Exportar** con `--exigir-cerrado` (se niega si hay caja abierta, cuenta viva, comanda o unión) | 1-2 min  |
-| 5   | **Importar** a la base nueva (una transacción; compara filas y md5 antes de guardar)             | 2-5 min  |
-| 6   | `importar-negocio.mjs --solo-verificar` otra vez, ya guardado                                    | 1 min    |
-| 7   | **Vercel**: las cuatro variables de Production, por la entrada estándar del CLI                  | 5 min    |
-| 8   | **Fusionar** el PR de `fase-b` en `main` (CI verde antes) y esperar el despliegue de Production  | 5-10 min |
-| 9   | `preparar-negocio.mjs` contra la base nueva con el `APP_URL` de producción (no duplica nada)     | 2 min    |
-| 10  | **Humo** sin dinero y del almacén; **huella** de las otras 10 organizaciones otra vez: idéntica  | 5 min    |
-| 11  | Miguel entra con el PIN de cada puesto (lista de abajo)                                          | 10 min   |
+1. El rol de la aplicación, `morphiqpos_app` (`login bypassrls`, contraseña propia generada aquí y
+   guardada en `..\_PRIVADOase-b.env`), por SQL como `postgres`. Es el proyecto nuevo: ahí sí
+   hay DDL.
+2. `pnpm db:migrate` con la `DATABASE_URL` de `postgres` (sesión) del proyecto nuevo, hasta la
+   188; luego `verify:esquema` estricto contra esa base.
+
+## El lunes · en orden
+
+Todo desde la raíz del repositorio en `main`, con los secretos en archivos de `..\_PRIVADO\`
+(nunca en la línea de comandos que queda en el historial). Cada paso con su hora en la bitácora.
+
+| #   | Paso                                                                                                                                                            | Tiempo |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1   | Confirmar con el restaurante que nadie usa el sistema (cajas cerradas, tabletas apagadas)                                                                       | 5 min  |
+| 2   | **Huella** de las otras 10 organizaciones de la compartida (sólo lectura)                                                                                       | 1 min  |
+| 3   | **Exportar** con `--exigir-cerrado` (se niega si hay caja abierta, cuenta viva o comanda)                                                                       | 1 min  |
+| 4   | **Importar** a la base nueva (una transacción; compara filas y md5 antes de guardar)                                                                            | 1 min  |
+| 5   | `importar-negocio.mjs --solo-verificar` otra vez, ya guardado; `verify:esquema` estricto                                                                        | 2 min  |
+| 6   | **Vercel**: las cinco variables de Production, por la entrada estándar del CLI                                                                                  | 5 min  |
+| 7   | **Redesplegar** Production y esperar `READY`                                                                                                                    | 5 min  |
+| 8   | **Humo** sin cobrar: entrada 200, Miguel entra con su PIN, el QR de una mesa con su token, el teléfono de cocina, el portal; cada pantalla una vez; folios en 0 | 10 min |
+| 9   | **Huella** de las otras 10 otra vez: idéntica                                                                                                                   | 1 min  |
 
 Las órdenes:
 
@@ -64,12 +84,20 @@ nuevo con los `STORAGE_*` del proyecto nuevo.
 
 ## Cómo se regresa atrás
 
-- **Antes del paso 7** no cambió nada de producción: la compartida sólo se leyó y Vercel sigue
-  igual. Se cancela y el restaurante abre como siempre.
-- **Después del paso 7 u 8:** en Vercel, regresar las cuatro variables a las de la Fase A (están
-  en el archivo privado) y promover el despliegue de Production anterior a la fusión (Instant
-  Rollback). 10 minutos. Lo que se haya escrito en la base nueva después de cambiar se pierde:
-  por eso la ventana es con el restaurante cerrado y la decisión se toma antes de abrir.
+- **Antes del paso 6** no cambió nada de producción: la compartida sólo se leyó y Vercel sigue
+  igual. Se cancela y todo sigue como estaba.
+- **Después del paso 6 o 7:** en Vercel, regresar las cinco variables a las de la Fase A (están en
+  `..\_PRIVADOase-a.env`) y redesplegar (o promover el despliegue anterior). 10 minutos. Lo que
+  se haya escrito en la base nueva después de cambiar se pierde: por eso la ventana es con el
+  restaurante cerrado. Ensayado el 07-11 (abajo).
+
+## La compartida después de la mudanza
+
+- Los datos de Don Poncho se quedan **intactos** como respaldo: nada de borrar ni archivar. Eso va
+  en otro guion, que Miguel aprueba, dos semanas después del sábado 14.
+- Desde ese momento, la compartida sigue con **cero DDL y cero escrituras de Don Poncho**.
+- En la base propia, las migraciones van sólo con `pnpm db:migrate` y sólo si de verdad hacen
+  falta, cada una con su ficha para el maestro.
 
 ## Lo que entra con su PIN (Miguel, al final)
 
@@ -82,6 +110,27 @@ nuevo con los `STORAGE_*` del proyecto nuevo.
 | Cocina           | Cocina             | Sólo la estación Cocina                                      |
 | Bebidas          | Cocina             | Sólo la estación Bebidas                                     |
 | Almacén          | Su menú de almacén | Existencias, entradas, conteo, compras y recetas; no la caja |
+
+## El ensayo de DP-14.3 (06-11-2026, con la exportación de ese día)
+
+En una base desechable de esta PC (Postgres 18, clúster nuevo en el 5450), con la PC cargada (dos
+agentes compilando y probando a la vez):
+
+| Paso                                                                                 | Resultado                                                                                                                                                                                                                                                                                                                                                              | Tiempo                                |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Exportar de producción con `--exigir-cerrado` (sólo lectura)                         | 135 tablas, 1,174 filas, 0 archivos                                                                                                                                                                                                                                                                                                                                    | 20 s                                  |
+| Migrar desde cero hasta la 188 (`pnpm db:migrate`)                                   | 188 aplicadas                                                                                                                                                                                                                                                                                                                                                          | 229 s (8 s sin carga en DP-10.5)      |
+| Importar                                                                             | idénticas al origen (filas y md5), sin llaves rotas                                                                                                                                                                                                                                                                                                                    | 71 s de reloj (50,6 s de importación) |
+| `--solo-verificar`                                                                   | 135 tablas idénticas                                                                                                                                                                                                                                                                                                                                                   | 19 s                                  |
+| El esquema contra el contrato (la consulta y la comparación de `verify:esquema`)     | 1,749 columnas, 1,382 restricciones y 445 índices: cumple                                                                                                                                                                                                                                                                                                              | 5 s                                   |
+| La app compilada de `dp-14`, con la `PIN_PEPPER` y el `SESSION_SECRET` de producción | la entrada 200; entra la gerente con un PIN de ensayo (sólo en la copia); `/`, `/caja`, `/mesero`, `/cocina`, `/registros`, `/ventas`, `/configuracion`, `/productos` 200; el QR de la mesa 1 con su token de siempre sirve el portal con el menú (la barbacoa incluida); el teléfono de cocina con un token firmado hoy con la misma pimienta, 200; 0 ventas cobradas | unos 4 s en total                     |
+
+**El regreso atrás, ensayado:** con la app ya arrancada contra la copia, sólo se cambió
+`DATABASE_URL` (a otra copia con los datos de Don Poncho, la del QA de DP-13, como si fuera la
+compartida) y se reinició: la misma compilación sirvió esa base (11 personas en la lista, contra 9
+de la copia del ensayo). En Vercel es lo mismo: regresar las cinco variables y redesplegar.
+
+El lunes, sin la carga, la mudanza debería tardar lo del ensayo de DP-10.5: unos minutos.
 
 ## El ensayo (DP-10.5, 27-10-2026)
 
@@ -97,7 +146,3 @@ desechables de esta PC:
 - En las dos: la aplicación compilada, con la `PIN_PEPPER` de producción, lista al personal y
   entra con PIN (un gerente de ensayo dado de alta sólo en la copia; ningún PIN real), y la
   jornada completa del restaurante pasa en el navegador. Detalle en el reporte 003.
-
-## Después
-
-Retirar `don-poncho` de la compartida sólo con Miguel presente y con respaldo: otro encargo.

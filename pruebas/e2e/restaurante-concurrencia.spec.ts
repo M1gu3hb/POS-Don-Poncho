@@ -715,7 +715,8 @@ test.describe('el restaurante cuando todo se repite, se duplica o se pierde', ()
         expect(
           [otraClave.status() >= 400, rechazo.ok === true, rechazo.error?.mensaje],
           'Una orden de cobro NUEVA sobre una cuenta ya pagada tiene que rechazarse diciendo que ya se cobró.',
-        ).toEqual([true, false, expect.stringMatching(/ya se cobr/)]);
+          // DP-14.2 · «Ya se cobró en Caja 1»: dice además en cuál.
+        ).toEqual([true, false, expect.stringMatching(/[Yy]a se cobr/)]);
 
         // Y nada cambió: sigue siendo UN cobro.
         await exigirUnSoloCobroEnEfectivo(dia, ordenId, esperado);

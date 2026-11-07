@@ -4,6 +4,23 @@ import 'server-only';
 
 export { abrirCaja, cerrarCaja, registrarMovimientoCaja, type ResultadoCorte } from './sesion.ts';
 
+export {
+  descuentosDelCorte,
+  descuentosDelCorteComando,
+  entradaDescuentosDelCorte,
+  type DescuentoDelCorte,
+  type DescuentosDelCorte,
+} from './corte/descuentos-del-corte.ts';
+
+export {
+  MAXIMO_DE_CAJAS,
+  cajasSimultaneas,
+  entradaCajasSimultaneas,
+  entradaFijarCajasSimultaneas,
+  fijarCajasSimultaneas,
+  type CajasALaVez,
+} from './cajas-a-la-vez.ts';
+
 export { eliminarCorte, entradaEliminarCorte, type ResultadoEliminarCorte } from './eliminacion.ts';
 
 export {

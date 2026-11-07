@@ -129,6 +129,9 @@ export const descontarCuenta = definirComando<
         baseCentavos: hecho.baseCentavos.toString(),
         motivo: entrada.motivo,
         autorizadoPor: hecho.autorizadoPor,
+        autorizadoRol: hecho.autorizadoRol,
+        // DP-14.2 · El nonce gastado: `gastarLaAutorizacion` lo busca aquí.
+        autorizacion: hecho.autorizacion,
       },
     });
     return {

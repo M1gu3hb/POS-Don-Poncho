@@ -4,6 +4,7 @@ import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Cifra, Dinero } from '@morphiqpos/ui/sistema';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 
+import { cantidadParaMostrar } from '~/restaurante/peso';
 import type { LineaDelCarrito } from '~/portal/carrito-compartido/carrito-de-la-mesa';
 
 /**
@@ -26,6 +27,8 @@ export function RenglonDelCarritoDelMesero({
   readonly alQuitar: () => void;
 }) {
   const cantidad = Number(linea.cantidad);
+  // DP-14 · 1 kg de barbacoa también es «1» en el carrito: se dice «1 kg» y no se cuenta con ±.
+  const porPeso = linea.tipoVenta === 'variable_medida';
   return (
     <li className="flex items-center gap-(--espacio-2) border-b border-borde py-(--espacio-2)">
       <span className="min-w-0 flex-1">
@@ -39,7 +42,7 @@ export function RenglonDelCarritoDelMesero({
           </span>
         ) : null}
       </span>
-      {ENTERO.test(linea.cantidad) ? (
+      {ENTERO.test(linea.cantidad) && !porPeso ? (
         <span className="flex items-center gap-1">
           <Button
             size="icon"
@@ -68,7 +71,13 @@ export function RenglonDelCarritoDelMesero({
           </Button>
         </span>
       ) : (
-        <span className="text-sm font-semibold tabular-nums">{linea.cantidad}</span>
+        <span className="text-sm font-semibold tabular-nums">
+          {cantidadParaMostrar({
+            cantidad: linea.cantidad,
+            tipo_venta: linea.tipoVenta,
+            unidad_variable: linea.unidad,
+          })}
+        </span>
       )}
       {linea.precioCentavos === null ? null : (
         <Dinero centavos={Math.round(cantidad * Number(linea.precioCentavos))} />

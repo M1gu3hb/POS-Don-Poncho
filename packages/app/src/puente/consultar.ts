@@ -273,10 +273,17 @@ async function consultarUnaVez(
     columnas.push(`${alias}.${derivado.columna} as ${suyo}`);
   });
 
+  // DP-14.1 · Las existencias (`tiene_opciones`): una subconsulta por campo, nunca un `join`.
+  const existencias = Object.entries(mapa.existencias ?? {}).map(([suyo, { tabla, porColumna }]) =>
+    sql<boolean>`exists (select 1 from ${sql.table(tabla)} x where x.${sql.ref(porColumna)} = ${sql.ref(`${BASE}.id`)} and x.organizacion_id = ${sql.ref(`${BASE}.organizacion_id`)})`.as(
+      suyo,
+    ),
+  );
+
   // La tabla y las columnas salen del MAPA, nunca del cliente. Ver `db-dinamica.ts`.
   let consulta = baseLibre(obtenerDb())
     .selectFrom(`${mapa.tabla} as ${BASE}`)
-    .select(columnas as never) as unknown as ConsultaLibre;
+    .select([...columnas, ...existencias] as never) as unknown as ConsultaLibre;
 
   // 0 · Los derivados. El emparejamiento es por clave primaria —`id` es un
   //     uuid global, no por organización—, así que un solo lado basta y el
@@ -331,9 +338,16 @@ async function consultarUnaVez(
   //      otra. De la sesión, nunca del cliente; sin sucursal en la sesión, nada.
   consulta = conFronteraDeSucursal(consulta, mapa, ambito);
 
-  // 2 · El filtro fijo de la entidad (p. ej. categorias.tipo = 'producto').
+  // 2 · El filtro fijo de la entidad (p. ej. categorias.tipo = 'producto'). Un `null` es la
+  //     columna vacía: `DetalleVenta` sólo sirve lo que se sigue cobrando (DP-14.1).
   for (const [columna, valor] of Object.entries(mapa.filtroFijo ?? {})) {
-    consulta = consulta.where(`${BASE}.${columna}`, '=', valor);
+    consulta =
+      valor === null
+        ? consulta.where(`${BASE}.${columna}`, 'is', null)
+        : consulta.where(`${BASE}.${columna}`, '=', valor);
+  }
+  for (const columna of mapa.soloConValorEn ?? []) {
+    consulta = consulta.where(`${BASE}.${columna}`, 'is not', null);
   }
 
   // 3 · `get(id)` es un filtro por id, ni más ni menos.
@@ -630,6 +644,10 @@ function traducirFila(fila: Fila, mapa: MapaEntidad, rol: string): Fila {
   for (const [suyo, calculado] of Object.entries(mapa.calculados ?? {})) {
     if (calculado.rolesLectura !== undefined && !calculado.rolesLectura.includes(rol)) continue;
     salida[suyo] = calcular(calculado.formula, fila);
+  }
+  // Sólo si se leyó: una fila que vuelve de una escritura no la trae, y no se inventa un «no».
+  for (const suyo of Object.keys(mapa.existencias ?? {})) {
+    if (suyo in fila) salida[suyo] = fila[suyo] === true;
   }
   return salida;
 }

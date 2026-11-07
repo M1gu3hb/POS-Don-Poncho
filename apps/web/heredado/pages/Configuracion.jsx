@@ -74,7 +74,8 @@ import {
   soloMesasEnServicio,
   zonasDelNegocio,
 } from '~/cliente/mesas-del-mapa';
-import { Pencil, Phone, Mail } from 'lucide-react';
+import { Pencil, Phone, Mail, Calculator, BadgePercent } from 'lucide-react';
+import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos';
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
@@ -528,6 +529,19 @@ export default function Configuracion() {
             <Users className="w-3 h-3 mr-1" />
             Usuarios POS
           </TabsTrigger>
+          {/* DP-14.2 · Lo que decidió Miguel: sólo el dueño o el administrador lo cambian. */}
+          {(posUser?.rol === 'dueno' || posUser?.rol === 'administrador') && (
+            <TabsTrigger value="caja">
+              <Calculator className="w-3 h-3 mr-1" />
+              Caja
+            </TabsTrigger>
+          )}
+          {(posUser?.rol === 'dueno' || posUser?.rol === 'administrador') && (
+            <TabsTrigger value="descuentos">
+              <BadgePercent className="w-3 h-3 mr-1" />
+              Descuentos
+            </TabsTrigger>
+          )}
           {showMesasTab && (
             <TabsTrigger value="mesas">
               <UtensilsCrossed className="w-3 h-3 mr-1" />
@@ -835,6 +849,17 @@ export default function Configuracion() {
             <ProveedoresSection />
           </div>
         </TabsContent>
+
+        {(posUser?.rol === 'dueno' || posUser?.rol === 'administrador') && (
+          <TabsContent value="caja">
+            <CajasALaVez />
+          </TabsContent>
+        )}
+        {(posUser?.rol === 'dueno' || posUser?.rol === 'administrador') && (
+          <TabsContent value="descuentos">
+            <PermitirDescuentos />
+          </TabsContent>
+        )}
 
         <TabsContent value="usuarios">
           <Card>

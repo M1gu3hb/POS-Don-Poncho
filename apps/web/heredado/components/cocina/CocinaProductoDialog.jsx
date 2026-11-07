@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChefHat, FileText } from 'lucide-react';
+import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 
 /**
  * Ficha del producto para Cocina — SIN costos, márgenes, gramajes.
@@ -57,7 +58,7 @@ export default function CocinaProductoDialog({ open, onClose, item }) {
           {(item?.cantidad || 0) > 0 && (
             <div className="rounded-xl bg-advertencia/10 border border-advertencia/30 px-3 py-2">
               <p className="text-xs font-bold text-advertencia">
-                Cantidad solicitada: {item.cantidad}
+                Cantidad solicitada: {formatearCantidadVariable(item) || item.cantidad}
               </p>
             </div>
           )}

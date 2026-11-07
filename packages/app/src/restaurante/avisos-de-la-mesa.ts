@@ -33,19 +33,28 @@ import type { Transaccion } from '@morphiqpos/data';
 /** Los dos estados en los que un aviso sigue siendo trabajo vivo para la sala. */
 const AVISOS_VIVOS = ['pendiente', 'atendida'] as const;
 
-/** Cierra los avisos vivos de la mesa. Devuelve cuántos cerró. */
+/**
+ * Cierra los avisos vivos de la mesa. Devuelve cuántos cerró.
+ *
+ * DP-14.1-3 · `hasta`: sólo los creados hasta ese momento. «Mesa limpia» lo pasa cuando la mesa
+ * estaba en limpieza: lo que pidió la familia que ya se sentó (después del cierre de la cuenta) se
+ * queda vivo. Sin `hasta`, todos.
+ */
 export async function cerrarAvisosDeLaMesa(
   tx: Transaccion,
   organizacionId: string,
   mesaId: string,
   ahora: Date,
+  hasta?: Date,
 ): Promise<number> {
-  const resultado = await tx
+  const vivos = tx
     .updateTable('solicitudes_qr')
     .set({ estado: 'resuelta', resuelta_en: ahora })
     .where('organizacion_id', '=', organizacionId)
     .where('mesa_id', '=', mesaId)
-    .where('estado', 'in', [...AVISOS_VIVOS])
-    .executeTakeFirst();
+    .where('estado', 'in', [...AVISOS_VIVOS]);
+  const resultado = await (
+    hasta === undefined ? vivos : vivos.where('created_at', '<=', hasta)
+  ).executeTakeFirst();
   return Number(resultado.numUpdatedRows);
 }

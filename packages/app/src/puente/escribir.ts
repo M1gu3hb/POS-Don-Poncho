@@ -220,7 +220,8 @@ async function actualizar(
     // ajeno baste para editar el catálogo de otro negocio.
     .where('organizacion_id', '=', ambito.organizacionId);
   for (const [columna, valor] of Object.entries(mapa.filtroFijo ?? {})) {
-    consulta = consulta.where(columna, '=', valor);
+    consulta =
+      valor === null ? consulta.where(columna, 'is', null) : consulta.where(columna, '=', valor);
   }
 
   // Si este `update` APAGA el registro —también el borrado suave pasa por aquí—, sólo cuando no

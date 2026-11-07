@@ -236,6 +236,16 @@ export interface MapaEntidad {
   /** Campos que no existen en ninguna tabla: se calculan al leer. */
   readonly calculados?: Readonly<Record<string, CampoCalculado>>;
   /**
+   * DP-14.1 · «¿Hay al menos una fila en `tabla` que apunte a ésta?», como booleano y de sólo
+   * lectura: `exists (select 1 from tabla x where x.porColumna = base.id and x.organizacion_id =
+   * base.organizacion_id)`. Es una subconsulta y no un `left join`, que multiplicaría la fila por
+   * cada hija. `ProductoTerminado.tiene_opciones` dice así si el platillo tiene grupos de
+   * opciones, en la misma lectura con la que el mesero pinta la carta.
+   */
+  readonly existencias?: Readonly<
+    Record<string, { readonly tabla: string; readonly porColumna: string }>
+  >;
+  /**
    * Un arreglo de filas HIJAS que viaja dentro del padre.
    *
    * Su `PedidoPreparacion` lleva `items` como arreglo embebido y su pantalla de
@@ -254,8 +264,17 @@ export interface MapaEntidad {
    * Filtro que SIEMPRE se aplica, además del ámbito. Sirve para las tablas que
    * el backend comparte entre varios conceptos —`categorias` guarda las de
    * producto y las de insumo en la misma tabla, distinguidas por `tipo`—.
+   *
+   * `null` es «la columna vacía» (`is null`): `DetalleVenta` sólo sirve las líneas que siguen
+   * cobrándose, `anulada_en` nula (DP-14.1). Lo quitado es otra entidad, con `soloConValorEn`.
    */
-  readonly filtroFijo?: Readonly<Record<string, string | boolean>>;
+  readonly filtroFijo?: Readonly<Record<string, string | boolean | null>>;
+  /**
+   * DP-14.1 · Columnas que SIEMPRE tienen que tener valor (`is not null`). Es la otra mitad de un
+   * `filtroFijo` en `null`: `RenglonQuitado` es la misma tabla que `DetalleVenta`, pero sólo lo
+   * que el mesero quitó.
+   */
+  readonly soloConValorEn?: readonly string[];
   /**
    * LO QUE UN ROL SÓLO VE SI ES SUYO (C.7 de la 2.4).
    *

@@ -1,6 +1,7 @@
 import {
   expect,
   type Browser,
+  type Locator,
   type Page,
   type Response,
   test,
@@ -160,6 +161,21 @@ const PRECIO: Readonly<Record<string, number>> = Object.fromEntries(
 );
 
 /** Lo que valen unos platillos, en centavos. */
+/**
+ * DP-14.2 (DP-D61) · Todo descuento pide la clave de quien lo autoriza, aunque quepa en el tope de
+ * quien cobra: la gerente que cobra vuelve a teclear la suya (va primera en «Quién autoriza»).
+ */
+async function laGerenteVuelveATeclearSuPin(dialogo: Locator): Promise<void> {
+  const gerente = personaDe(SLUG, 'gerente');
+  await dialogo
+    .getByRole('group', { name: 'Quién autoriza' })
+    .getByRole('button', { name: gerente.nombre })
+    .click();
+  await dialogo.locator('#descuento-pin').fill(gerente.pin);
+  await dialogo.getByRole('button', { name: 'Autorizar' }).click();
+  await expect(dialogo.getByText(`Autorizó ${gerente.nombre}.`)).toBeVisible();
+}
+
 function importeDe(platillos: readonly Platillo[]): number {
   return platillos.reduce((suma, p) => suma + p.veces * (PRECIO[p.nombre] ?? Number.NaN), 0);
 }
@@ -269,14 +285,26 @@ interface Linea {
   readonly totalCentavos: number;
 }
 
+/**
+ * Todas las líneas de la cuenta, también las quitadas. Desde DP-14.1 (DP-D62) `DetalleVenta` sólo
+ * sirve lo que se sigue cobrando: lo quitado se lee en `RenglonQuitado`, sin importes (cero aquí).
+ */
 async function todasLasLineas(page: Page, ordenId: string): Promise<readonly Linea[]> {
-  const filas = await consultarPuente<{
-    id?: string;
-    producto_nombre?: string | null;
-    cantidad?: number | string | null;
-    descuento?: number | null;
-    total?: number | null;
-  }>(page, 'DetalleVenta', { filtro: { venta_id: ordenId }, limite: 120 });
+  const [vivas, quitadas] = await Promise.all([
+    consultarPuente<{
+      id?: string;
+      producto_nombre?: string | null;
+      cantidad?: number | string | null;
+      descuento?: number | null;
+      total?: number | null;
+    }>(page, 'DetalleVenta', { filtro: { venta_id: ordenId }, limite: 120 }),
+    consultarPuente<{
+      id?: string;
+      producto_nombre?: string | null;
+      cantidad?: number | string | null;
+    }>(page, 'RenglonQuitado', { filtro: { venta_id: ordenId }, limite: 120 }),
+  ]);
+  const filas = [...vivas, ...quitadas.map((q) => ({ ...q, descuento: null, total: null }))];
   return filas
     .map((f) => ({
       id: f.id ?? '',
@@ -1062,7 +1090,8 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         );
         // Es una regla de negocio, no un permiso del rol: 422 y el mensaje dice qué falta.
         expect(sinPin.estado).toBe(422);
-        expect(sinPin.mensaje ?? '').toMatch(/supervisor/);
+        // DP-14.2 · Todo descuento lo autoriza alguien con su PIN, y el mensaje lo dice.
+        expect(sinPin.mensaje ?? '').toMatch(/gerente, administrador o dueño/);
         expect(await leerCuenta(duena, ordenId)).toMatchObject({
           totalCentavos: bruta,
           descuentoCentavos: 0,
@@ -1090,8 +1119,9 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         // El tope de la gerente es el de la siembra: $2,000 o el 30 %.
         expect(Number(quienes.datos.topeCentavos)).toBe(200_000);
         expect(quienes.datos.topeBp).toBe(3_000);
-        // Nadie se autoriza a sí mismo: Beatriz no está entre quienes pueden autorizarla.
-        expect(quienes.datos.quienesAutorizan.map((q) => q.nombre)).not.toContain('Beatriz');
+        // DP-14.2 · Beatriz, gerente, va primera: puede volver a teclear su propio PIN (hasta su
+        // tope); para el 40 % hace falta alguien por encima.
+        expect(quienes.datos.quienesAutorizan[0]?.nombre).toBe('Beatriz');
         supervisorEmpleo =
           quienes.datos.quienesAutorizan.find((q) => q.nombre === supervisor.nombre)?.empleoId ??
           '';
@@ -1104,8 +1134,8 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         await dialogo.getByRole('button', { name: 'En porcentaje' }).click();
         await dialogo.locator('#descuento-porcentaje').fill('40');
         await dialogo.locator('#descuento-motivo').fill('mesa de la casa');
-        // Pasa del tope de quien cobra: la pantalla lo dice y pide a quien autoriza.
-        await expect(dialogo.getByText(/Pasa de tu tope/)).toBeVisible();
+        // DP-14.2 · Todo descuento pide a quien autoriza: la pantalla lo dice.
+        await expect(dialogo.getByText(/Todo descuento lo autoriza/)).toBeVisible();
         await expect(dialogo.getByRole('button', { name: 'Aplicar el descuento' })).toBeDisabled();
         await dialogo
           .getByRole('group', { name: 'Quién autoriza' })
@@ -1251,7 +1281,8 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         });
         expect(sinPin.ok, 'La cajera descontó sobre su tope sin autorización.').toBe(false);
         expect(sinPin.estado).toBe(422);
-        expect(sinPin.mensaje ?? '').toMatch(/supervisor/);
+        // DP-14.2 · Todo descuento lo autoriza alguien con su PIN, y el mensaje lo dice.
+        expect(sinPin.mensaje ?? '').toMatch(/gerente, administrador o dueño/);
         expect(await leerCuenta(duena, ordenId)).toMatchObject({
           totalCentavos: bruta,
           descuentoCentavos: 0,
@@ -1290,7 +1321,14 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
           rosa,
           '/api/identidad/supervisor',
           // DP-13.2 (D-5): para ESTA cuenta y para un descuento, como la pide la pantalla.
-          { empleoId: gerenteEmpleo, pin: gerente.pin, ordenId, para: 'descuento' },
+          // DP-14.2: y por ESTE monto.
+          {
+            empleoId: gerenteEmpleo,
+            pin: gerente.pin,
+            ordenId,
+            para: 'descuento',
+            montoCentavos: descuento,
+          },
         );
         expect(firmada.ok, `identidad.supervisor: ${firmada.mensaje ?? ''}`).toBe(true);
         const aplicado = await comando<{
@@ -2411,7 +2449,8 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         { nombre: CARTA.cerveza.nombre, veces: 1 },
       ] as const;
       const bruta = importeDe(pedido10);
-      // Dentro del tope de Beatriz ($2,000 y 30 %): no pide supervisor, y el importe no es redondo.
+      // Dentro del tope de Beatriz ($2,000 y 30 %), y el importe no es redondo. Desde DP-14.2 ella
+      // vuelve a teclear su PIN.
       const descuento = 3_333;
       const venta10 = bruta - descuento;
       const antes10 = await existencias(duena);
@@ -2427,7 +2466,7 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
       const dialogoDescuento = beatriz.getByRole('dialog', { name: 'Descuento' });
       await dialogoDescuento.locator('#descuento-importe').fill(pesos(descuento));
       await dialogoDescuento.locator('#descuento-motivo').fill('cliente frecuente');
-      await expect(dialogoDescuento.getByText(/Pasa de tu tope/)).toHaveCount(0);
+      await laGerenteVuelveATeclearSuPin(dialogoDescuento);
       await dialogoDescuento.getByRole('button', { name: 'Aplicar el descuento' }).click();
       await expect(dialogoDescuento).toBeHidden();
 
@@ -2647,7 +2686,7 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         const dialogo = beatriz.getByRole('dialog', { name: 'Descuento' });
         await dialogo.locator('#descuento-importe').fill(pesos(descuento));
         await dialogo.locator('#descuento-motivo').fill('cortesía a una de las dos');
-        await expect(dialogo.getByText(/Pasa de tu tope/)).toHaveCount(0);
+        await laGerenteVuelveATeclearSuPin(dialogo);
         const [aplicado] = await Promise.all([
           beatriz.waitForResponse(
             (r) =>
@@ -2913,7 +2952,14 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
           rosa,
           '/api/identidad/supervisor',
           // Como la pide la pantalla del descuento: para la cuenta A y para un descuento.
-          { empleoId: gerenteEmpleo, pin: gerente.pin, ordenId: a.ordenId, para: 'descuento' },
+          // DP-14.2: y por ESTE monto.
+          {
+            empleoId: gerenteEmpleo,
+            pin: gerente.pin,
+            ordenId: a.ordenId,
+            para: 'descuento',
+            montoCentavos: descuento,
+          },
         );
         expect(firmada.ok, `identidad.supervisor: ${firmada.mensaje ?? ''}`).toBe(true);
         const enLaPrimera = await comando(rosa, '/api/restaurante/descontar-cuenta', {

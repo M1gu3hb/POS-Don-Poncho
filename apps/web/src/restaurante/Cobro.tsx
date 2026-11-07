@@ -155,6 +155,10 @@ export interface LineaDeCuenta {
   readonly producto_nombre: string | null;
   readonly cantidad: number | null;
   readonly total: number | null;
+  /** DP-14 · Para decir «½ kg» y repartir la pieza entera: el puente ya los sirve. */
+  readonly tipo_venta_snapshot?: string | null;
+  readonly cantidad_variable_snapshot?: number | null;
+  readonly unidad_variable_snapshot?: string | null;
 }
 
 export interface CobroProps {

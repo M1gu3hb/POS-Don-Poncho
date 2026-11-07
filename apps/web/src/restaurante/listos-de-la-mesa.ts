@@ -15,6 +15,7 @@
  * tal como las sirve el puente; leerlas, refrescarlas y entregarlas es de la pantalla.
  */
 
+import { etiquetaDePeso, esPorPeso } from './peso.ts';
 import { platillosPorPreparar } from './platillos-de-cocina.ts';
 
 /** Una línea de una comanda, con los nombres del puente (`PedidoPreparacionItem`). */
@@ -22,6 +23,9 @@ export interface ItemDeComandaLeido {
   readonly producto_nombre: string | null;
   /** `decimal`: puede llegar como número o como texto (`'2.0000'`) según el conductor. */
   readonly cantidad: number | string | null;
+  /** DP-14 · Lo que se vende por peso se dice «½ kg», no «0.50». */
+  readonly tipo_venta?: string | null;
+  readonly unidad_variable?: string | null;
   /** `cancelado`: se anuló en la mesa. No es un plato que recoger ni que ya se preparó. */
   readonly estado?: string | null;
 }
@@ -37,6 +41,8 @@ export interface ComandaLeida {
 export interface PlatilloListo {
   readonly nombre: string;
   readonly cantidad: number;
+  /** Por peso: «½ kg» (la suma de las líneas de ese platillo). */
+  readonly peso?: string;
 }
 
 /** Cuántas unidades dice una línea. Lo que no es un número positivo no cuenta. */
@@ -48,15 +54,22 @@ function unidadesDe(item: ItemDeComandaLeido): number {
 /** Suma por nombre, en el orden en que aparecen: «2 × Arrachera» en dos comandas son 2. */
 function sumarPorNombre(comandas: readonly ComandaLeida[]): readonly PlatilloListo[] {
   const porNombre = new Map<string, number>();
+  const unidadDelPeso = new Map<string, string>();
   for (const comanda of comandas) {
     for (const item of platillosPorPreparar(comanda.items)) {
       const nombre = (item.producto_nombre ?? '').trim();
       const unidades = unidadesDe(item);
       if (nombre === '' || unidades === 0) continue;
       porNombre.set(nombre, (porNombre.get(nombre) ?? 0) + unidades);
+      if (esPorPeso(item)) unidadDelPeso.set(nombre, item.unidad_variable ?? 'kg');
     }
   }
-  return [...porNombre.entries()].map(([nombre, cantidad]) => ({ nombre, cantidad }));
+  return [...porNombre.entries()].map(([nombre, cantidad]) => {
+    const unidad = unidadDelPeso.get(nombre);
+    return unidad === undefined
+      ? { nombre, cantidad }
+      : { nombre, cantidad, peso: etiquetaDePeso(cantidad, unidad) };
+  });
 }
 
 /**
@@ -85,7 +98,7 @@ export function descripcionDeLosListos(listos: readonly PlatilloListo[]): string
   return listos
     .map(
       (platillo) =>
-        `${Number.isInteger(platillo.cantidad) ? String(platillo.cantidad) : platillo.cantidad.toFixed(2)} × ${platillo.nombre}`,
+        `${platillo.peso ?? (Number.isInteger(platillo.cantidad) ? String(platillo.cantidad) : platillo.cantidad.toFixed(2))} × ${platillo.nombre}`,
     )
     .join(' · ');
 }

@@ -15,6 +15,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/cajas-simultaneas",
+      "comando": "caja.cajas_simultaneas",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/cajon",
       "comando": "caja.abrir_cajon",
       "escribe": true,
@@ -50,6 +57,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/descuentos-del-corte",
+      "comando": "caja.descuentos_del_corte",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/eliminar-corte",
       "comando": "caja.eliminar_corte",
       "escribe": true,
@@ -75,6 +89,13 @@
       "comando": "caja.estado",
       "escribe": false,
       "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/caja/fijar-cajas-simultaneas",
+      "comando": "caja.fijar_cajas_simultaneas",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
@@ -178,6 +199,13 @@
     {
       "ruta": "/api/configuracion/modulo",
       "comando": "configuracion.fijar_modulo",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/configuracion/permitir-descuentos",
+      "comando": "configuracion.permitir_descuentos",
       "escribe": true,
       "roles": ["administrador", "dueno"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]

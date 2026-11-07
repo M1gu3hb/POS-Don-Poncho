@@ -3,15 +3,17 @@ import 'server-only';
 import { ErrorDominio, PAQUETES_MOSTRADOR, validarEntorno } from '@morphiqpos/contracts';
 import { repoOrdenes, type Transaccion } from '@morphiqpos/data';
 import { centavos, repartirPorPesos } from '@morphiqpos/domain/dinero';
-import { evaluarDescuento, puedeAutorizar } from '@morphiqpos/domain/venta';
+import { puedeAutorizar } from '@morphiqpos/domain/venta';
 import { z } from 'zod';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
 import { leerAutorizacion } from '../identidad/supervisor.ts';
 
+import { gastarLaAutorizacion } from './autorizacion-de-un-uso.ts';
 import { exigirBorrador } from './carrito.ts';
 import { cotizar } from './cotizar.ts';
 import { topeDe } from './descuento.ts';
+import { exigirDescuentosPermitidos } from './descuentos-permitidos.ts';
 
 /**
  * EL DESCUENTO DEL MOSTRADOR, con su tope y su supervisor (F-205, D-28 de la 2.4).
@@ -29,12 +31,18 @@ import { topeDe } from './descuento.ts';
  * calcula sobre lo ya descontado y el costo no baja (un descuento baja la venta, no lo
  * que costó, y el margen lo enseña). Volver a aplicar REEMPLAZA el anterior.
  *
- * ── El tope y la autorización ────────────────────────────────────────────────
- * Si cabe en el tope del puesto de quien cobra (`topes_descuento`), se aplica. Si no,
- * hace falta la autorización firmada que emite `/api/identidad/supervisor` cuando el
- * supervisor teclea SU PIN en esta terminal: vigente, de este negocio, pedida por esta
- * persona, y de alguien cuyo tope cubra el descuento ENTERO. Entonces se escribe la fila
- * de `autorizaciones_descuento` con quién la dio: ésa es la bitácora del §3.
+ * ── La clave (DP-14.2, decisión DP-D61) ──────────────────────────────────────
+ * TODO descuento pide la autorización firmada que emite `/api/identidad/supervisor` cuando
+ * un gerente, administrador o dueño teclea SU PIN en esta terminal, aunque sea de $1 y aunque
+ * quien tiene la sesión sea gerente (vuelve a teclear el suyo): el cajero y el mesero nunca
+ * descuentan solos, y una tableta olvidada con sesión no sirve para regalar. La autorización
+ * tiene que ser vigente, de este negocio, pedida por esta persona, para ESTA cuenta y por ESTE
+ * monto, y se gasta al usarla (`autorizacion-de-un-uso.ts`). El límite es el tope del puesto de
+ * quien autoriza (`topeDe`): tiene que cubrir el descuento ENTERO. Si el negocio apagó los
+ * descuentos, nada de esto llega a mirarse (`DESCUENTOS_APAGADOS`).
+ *
+ * La bitácora: la fila de `autorizaciones_descuento` cuando autoriza otro (la base prohíbe ahí
+ * que sea uno mismo), y siempre la auditoría del comando, con quién autorizó y el nonce gastado.
  */
 
 const ROLES_DE_VENTA = ['cajero', 'mesero', 'gerente', 'administrador', 'dueno'] as const;
@@ -43,14 +51,14 @@ export const entradaAplicarDescuento = z.object({
   ordenId: z.uuid(),
   descuentoCentavos: z.number().int().min(1).max(100_000_000),
   motivo: z.string().trim().min(4).max(200),
-  /** La autorización firmada del supervisor, cuando el descuento pasa del tope propio. */
+  /** La autorización firmada del supervisor: desde DP-14.2 la pide TODO descuento. */
   autorizacion: z.string().min(20).max(2_000).optional(),
 });
 
 export interface ResultadoDescuentoDeMostrador {
   readonly descuentoCentavos: string;
   readonly totalCentavos: string;
-  /** El empleo de quien autorizó, o `null` si cupo en el tope propio. */
+  /** El empleo de quien autorizó (desde DP-14.2, siempre alguien). */
   readonly autorizadoPor: string | null;
 }
 
@@ -84,6 +92,9 @@ export const aplicarDescuento = definirComando<
         baseCentavos: hecho.baseCentavos.toString(),
         motivo: entrada.motivo,
         autorizadoPor: hecho.autorizadoPor,
+        autorizadoRol: hecho.autorizadoRol,
+        // DP-14.2 · El nonce gastado: `gastarLaAutorizacion` lo busca aquí.
+        autorizacion: hecho.autorizacion,
       },
     });
     return {
@@ -106,8 +117,11 @@ export interface DescuentoAplicado {
   /** Lo que valía la orden antes del descuento: la base del porcentaje del tope. */
   readonly baseCentavos: bigint;
   readonly totalCentavos: bigint;
-  /** El empleo de quien autorizó, o `null` si cupo en el tope propio. */
+  /** El empleo de quien autorizó (desde DP-14.2, siempre alguien). */
   readonly autorizadoPor: string | null;
+  readonly autorizadoRol: string | null;
+  /** DP-14.2 · El nonce de la autorización gastada: va a la auditoría del comando. */
+  readonly autorizacion: string | null;
 }
 
 /**
@@ -128,7 +142,7 @@ export async function descontarLaOrden(
   ordenId: string,
   pedido: PedidoDeDescuento,
 ): Promise<DescuentoAplicado> {
-  const { organizacionId, sucursalId, empleoId, rol } = ctx.ambito;
+  const { organizacionId, sucursalId, empleoId } = ctx.ambito;
   const lineas = await ctx.paso('leer_lineas', () =>
     repoOrdenes.lineasDeOrden(ctx.tx, organizacionId, ordenId),
   );
@@ -145,42 +159,47 @@ export async function descontarLaOrden(
     );
   }
 
-  const tope = await topeDe(ctx, rol);
-  const veredicto = evaluarDescuento({ baseCentavos: base, descuentoCentavos: descuento, tope });
-  let autorizadoPor: string | null = null;
-  if (veredicto.veredicto !== 'libre') {
-    autorizadoPor = await ctx.paso('autorizar', async () => {
-      const carga =
+  await ctx.paso('descuentos_permitidos', () => exigirDescuentosPermitidos(ctx.tx, organizacionId));
+  const carga = await ctx.paso('autorizar', async () => {
+    const leida =
+      pedido.autorizacion === undefined
+        ? null
+        : leerAutorizacion(
+            pedido.autorizacion,
+            // DP-13.2 (D-5) y DP-14.2: firmada para ESTA cuenta, para un descuento y por ESTE monto.
+            {
+              organizacionId,
+              solicitaEmpleoId: empleoId,
+              cuenta: ordenId,
+              para: 'descuento',
+              montoCentavos: descuento,
+            },
+            secreto(),
+            ctx.ahora,
+          );
+    if (leida === null) {
+      throw new ErrorDominio(
+        'PUESTO_NO_OTORGABLE',
         pedido.autorizacion === undefined
-          ? null
-          : leerAutorizacion(
-              pedido.autorizacion,
-              // DP-13.2 (D-5): firmada para ESTA cuenta y para un descuento.
-              { organizacionId, solicitaEmpleoId: empleoId, cuenta: ordenId, para: 'descuento' },
-              secreto(),
-              ctx.ahora,
-            );
-      if (carga === null) {
-        throw new ErrorDominio(
-          'PUESTO_NO_OTORGABLE',
-          pedido.autorizacion === undefined
-            ? 'Ese descuento pasa de tu tope: que lo autorice un supervisor con su PIN.'
-            : 'La autorización venció o no es de esta venta: que el supervisor teclee su PIN otra vez.',
-          {
-            porque: veredicto.porque,
-            topeCentavos: veredicto.topeCentavos.toString(),
-            topeBp: veredicto.topeBp,
-          },
-        );
-      }
-      const topeDeQuienAutoriza = await topeDe(ctx, carga.rol);
-      if (!puedeAutorizar(descuento, base, topeDeQuienAutoriza)) {
-        throw new ErrorDominio(
-          'PUESTO_NO_OTORGABLE',
-          'Ese descuento pasa también del tope de quien lo autoriza: tiene que ser alguien por encima.',
-          { topeCentavos: topeDeQuienAutoriza.topeCentavos.toString() },
-        );
-      }
+          ? 'Todo descuento lo autoriza un gerente, administrador o dueño con su PIN.'
+          : 'La autorización venció o es de otra cuenta u otro monto: que quien autoriza teclee su PIN otra vez.',
+      );
+    }
+    const topeDeQuienAutoriza = await topeDe(ctx, leida.rol);
+    if (!puedeAutorizar(descuento, base, topeDeQuienAutoriza)) {
+      throw new ErrorDominio(
+        'PUESTO_NO_OTORGABLE',
+        'Ese descuento pasa del tope de quien lo autoriza: tiene que ser alguien por encima.',
+        {
+          topeCentavos: topeDeQuienAutoriza.topeCentavos.toString(),
+          topeBp: topeDeQuienAutoriza.topeBp,
+        },
+      );
+    }
+    await gastarLaAutorizacion(ctx.tx, organizacionId, leida);
+    // La base prohíbe aquí que quien autoriza sea quien pide (078): la gerente que vuelve a
+    // teclear su propio PIN queda sólo en la auditoría del comando, que sí lo dice.
+    if (leida.supervisor !== empleoId) {
       await ctx.tx
         .insertInto('autorizaciones_descuento')
         .values({
@@ -188,21 +207,22 @@ export async function descontarLaOrden(
           sucursal_id: sucursalId,
           orden_id: ordenId,
           solicita_empleo_id: empleoId,
-          autoriza_empleo_id: carga.supervisor,
-          autoriza_rol: carga.rol,
+          autoriza_empleo_id: leida.supervisor,
+          autoriza_rol: leida.rol,
           descuento_centavos: descuento,
-          tope_centavos: tope.topeCentavos,
-          // Las dos ramas del tope (180): un descuento que pasa por PORCENTAJE y no por
-          // importe se rechazaba en la base con 23514 y no se podía autorizar nunca.
+          // DP-14.2 · El tope propio de quien pide es CERO: nadie descuenta solo. Con las dos
+          // ramas en cero, el `check` de la 180 (supera el tope) se cumple con cualquier monto.
+          tope_centavos: 0n,
           base_centavos: base,
-          tope_bp: tope.topeBp,
+          tope_bp: 0,
           motivo: pedido.motivo,
           created_at: ctx.ahora,
         })
         .execute();
-      return carga.supervisor;
-    });
-  }
+    }
+    return leida;
+  });
+  const autorizadoPor = carga.supervisor;
 
   // El reparto EXACTO entre líneas, en proporción a lo que cada una vale.
   const partes = repartirPorPesos(
@@ -236,6 +256,8 @@ export async function descontarLaOrden(
     baseCentavos: base,
     totalCentavos: totales.totalCentavos,
     autorizadoPor,
+    autorizadoRol: carga.rol,
+    autorizacion: carga.n,
   };
 }
 
@@ -250,7 +272,10 @@ export interface QuienAutoriza {
 export interface ResultadoTopeDeDescuento {
   readonly topeCentavos: string;
   readonly topeBp: number;
-  /** Los supervisores del negocio que pueden teclear su PIN aquí. Sin la persona que pregunta. */
+  /**
+   * Los supervisores del negocio que pueden teclear su PIN aquí. Desde DP-14.2 incluye a la
+   * persona que pregunta, si autoriza, y va primero: vuelve a teclear el suyo.
+   */
   readonly quienesAutorizan: readonly QuienAutoriza[];
 }
 
@@ -281,14 +306,16 @@ export const topeDeDescuento = definirComando<
         .where('empleos.organizacion_id', '=', organizacionId)
         .where('empleos.activo', '=', true)
         .where('empleos.rol', 'in', ['gerente', 'administrador', 'dueno'])
-        .where('empleos.id', '<>', empleoId)
         .orderBy('personas.nombre')
         .execute(),
     );
+    // DP-14.2 · Quien tiene la sesión, si autoriza, va PRIMERO: vuelve a teclear su propio PIN.
+    const propio = supervisores.filter((s) => s.empleoId === empleoId);
+    const otros = supervisores.filter((s) => s.empleoId !== empleoId);
     return {
       topeCentavos: tope.topeCentavos.toString(),
       topeBp: tope.topeBp,
-      quienesAutorizan: supervisores,
+      quienesAutorizan: [...propio, ...otros],
     };
   },
 });

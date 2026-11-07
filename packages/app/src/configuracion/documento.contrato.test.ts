@@ -130,6 +130,9 @@ const LECTORES: Readonly<Record<string, 'documento-filtrado' | 'proyeccion' | 'i
   // DP-13.2: lee la bandera `pin_al_cancelar_cuenta_pedida`; no devuelve el documento.
   'packages/app/src/restaurante/cancelar-con-permiso.ts': 'interno',
   'packages/app/src/telefono-de-cocina/ambito.ts': 'interno',
+  // DP-14.2: lee la bandera `descuentos_permitidos`; no devuelve el documento (escribe por el
+  // guardado parcial del puente, con su candado).
+  'packages/app/src/venta/descuentos-permitidos.ts': 'interno',
   'packages/data/src/repos/archivos.ts': 'interno',
 };
 

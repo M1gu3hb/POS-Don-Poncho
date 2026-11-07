@@ -52,6 +52,11 @@ export interface PeticionDeSupervisor {
   /** DP-13.2 · La cuenta que el supervisor está viendo: la autorización sólo sirve para ella. */
   readonly cuenta?: string;
   readonly para?: ParaQueSeAutoriza;
+  /**
+   * DP-14.2 · El descuento EXACTO que se autoriza, en centavos. La firma lo lleva: con un PIN
+   * para $20 no se aplican $2,000.
+   */
+  readonly montoCentavos?: number;
   /** Quien autoriza: el que teclea su PIN. */
   readonly empleoId: string;
   readonly pin: string;
@@ -84,6 +89,8 @@ export interface CargaDeAutorizacion {
   /** DP-13.2 · La cuenta para la que se firmó (D-5: ya no sirve en otra). */
   readonly cuenta?: string;
   readonly para?: ParaQueSeAutoriza;
+  /** DP-14.2 · El descuento exacto, en centavos y en texto (un `bigint` no viaja en JSON). */
+  readonly monto?: string;
 }
 
 const PREFIJO = 'autorizacion:';
@@ -114,7 +121,8 @@ function esCarga(valor: unknown): valor is CargaDeAutorizacion {
     typeof v['exp'] === 'number' &&
     typeof v['n'] === 'string' &&
     (v['cuenta'] === undefined || typeof v['cuenta'] === 'string') &&
-    (v['para'] === undefined || v['para'] === 'descuento' || v['para'] === 'cancelacion')
+    (v['para'] === undefined || v['para'] === 'descuento' || v['para'] === 'cancelacion') &&
+    (v['monto'] === undefined || typeof v['monto'] === 'string')
   );
 }
 
@@ -133,6 +141,8 @@ export function leerAutorizacion(
     readonly solicitaEmpleoId: string;
     readonly cuenta?: string;
     readonly para?: ParaQueSeAutoriza;
+    /** DP-14.2 · El descuento que se va a aplicar: la autorización tiene que ser de ESE monto. */
+    readonly montoCentavos?: bigint;
   },
   secreto: string,
   ahora: Date = new Date(),
@@ -154,6 +164,11 @@ export function leerAutorizacion(
   if (!ROLES_QUE_AUTORIZAN.includes(carga.rol)) return null;
   if (esperado.cuenta !== undefined && carga.cuenta !== esperado.cuenta) return null;
   if (esperado.para !== undefined && (carga.para ?? 'descuento') !== esperado.para) return null;
+  // Sin monto firmado no sirve para uno con monto: una autorización vieja, o una pedida para
+  // otra cosa, no se estira a cualquier cantidad.
+  if (esperado.montoCentavos !== undefined && carga.monto !== esperado.montoCentavos.toString()) {
+    return null;
+  }
   return carga;
 }
 
@@ -181,7 +196,12 @@ export async function autorizarConPin(
   peticion: PeticionDeSupervisor,
   ahora: Date = new Date(),
 ): Promise<ResultadoDeSupervisor> {
-  if (peticion.empleoId === peticion.solicitaEmpleoId) return { ok: false, motivo: 'uno_mismo' };
+  // DP-14.2 · Para un DESCUENTO sí: todo descuento pide el PIN de un gerente, administrador o
+  // dueño, y si es quien tiene la sesión lo vuelve a teclear. Así una tableta olvidada con su
+  // sesión abierta no sirve para regalar. Para lo demás, nadie se autoriza a sí mismo.
+  if (peticion.empleoId === peticion.solicitaEmpleoId && peticion.para !== 'descuento') {
+    return { ok: false, motivo: 'uno_mismo' };
+  }
   if (!FORMA_PIN.test(peticion.pin)) return { ok: false, motivo: 'credenciales' };
 
   const rol = await rolDe(peticion.organizacionId, peticion.empleoId);
@@ -229,6 +249,7 @@ export async function autorizarConPin(
         n: randomBytes(8).toString('hex'),
         ...(peticion.cuenta === undefined ? {} : { cuenta: peticion.cuenta }),
         ...(peticion.para === undefined ? {} : { para: peticion.para }),
+        ...(peticion.montoCentavos === undefined ? {} : { monto: String(peticion.montoCentavos) }),
       },
       peticion.secreto,
     ),

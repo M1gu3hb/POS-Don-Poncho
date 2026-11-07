@@ -19,6 +19,7 @@ import { ErrorApi, invocarComando } from '~/cliente/api';
 import { useVocabulario } from '~/cliente/vocabulario';
 import { DescuentoDeVenta, type DescuentoElegido } from '~/venta/DescuentoDeVenta';
 import { PinDeSupervisor, type Autorizada } from '~/venta/PinDeSupervisor';
+import { useDescuentosPermitidos } from '~/venta/use-descuentos-permitidos';
 
 import {
   NO_PUDE_COMPROBAR_LA_COCINA,
@@ -63,6 +64,7 @@ export function DescuentoDeLaCuenta({
   readonly alAplicar: () => void;
 }) {
   const voc = useVocabulario();
+  const permitidos = useDescuentosPermitidos();
   const [abierto, setAbierto] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
   // Cada apertura, un formulario nuevo: la autorización de la vez anterior ya venció.
@@ -84,6 +86,9 @@ export function DescuentoDeLaCuenta({
     }
   }
 
+  // DP-14.2 · Apagados (o mientras no se sabe), el botón no aparece.
+  if (permitidos !== true) return null;
+
   return (
     <>
       <Button
@@ -102,7 +107,7 @@ export function DescuentoDeLaCuenta({
           <DialogHeader>
             <DialogTitle>Descuento</DialogTitle>
             <DialogDescription>
-              Hasta tu tope se aplica solo; arriba, lo autoriza un supervisor con su PIN.
+              Lo autoriza un gerente, administrador o dueño con su PIN, por el monto exacto.
             </DialogDescription>
           </DialogHeader>
           <DescuentoDeVenta

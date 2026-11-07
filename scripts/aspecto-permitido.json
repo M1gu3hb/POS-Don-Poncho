@@ -624,6 +624,79 @@
       "archivo": "apps/web/heredado/pages/Productos.jsx",
       "porque": "DP-13.5 (QA1-4): el editor de opciones no abre vacío un juego que al guardar se reemplaza entero; si todavía no llegan, lo dice.",
       "testigos": ["+ aviso:Cargando las opciones… intenta en un momento."]
+    },
+    {
+      "archivo": "apps/web/heredado/components/tickets/CorteTicket.jsx",
+      "porque": "DP-14.2 (DP-D61): el corte (y el Cierre del día) trae la sección «Descuentos» con cada uno: la cuenta, cuánto, quién lo autorizó con su PIN y por qué, y el total; si no se pudieron leer, lo dice.",
+      "testigos": [
+        "+ clase:text-xs",
+        "+ clase:text-xs",
+        "+ clase:text-xs",
+        "+ clase:text-right",
+        "+ clase:font-bold",
+        "+ clase:font-bold",
+        "+ clase:text-texto-sutil",
+        "+ clase:border",
+        "+ clase:border",
+        "+ clase:border",
+        "+ clase:px-2",
+        "+ clase:px-2",
+        "+ clase:px-2",
+        "+ clase:py-1",
+        "+ clase:py-1",
+        "+ clase:py-1",
+        "+ clase:text-peligro",
+        "+ texto:Total",
+        "+ texto:Cuenta",
+        "+ texto:Descuento",
+        "+ texto:Autorizó",
+        "+ texto:Por qué",
+        "+ title:Descuentos"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-14.1 (punto 2, DP-D61): «Descuento» —con la clave de quien lo autoriza— y «Cancelar la cuenta» en el cobro de la Caja, con sus avisos al aplicar y al cancelar.",
+      "testigos": [
+        "+ aviso:Se aplicó, pero no se pudo releer la cuenta. Ábrela otra vez.",
+        "+ aviso:Cuenta cancelada: queda en el corte con su motivo."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "porque": "DP-14.2 (DP-D60, DP-D61): las pestañas «Caja» («Cajas abiertas a la vez») y «Descuentos» («Permitir descuentos»), sólo para el dueño y el administrador.",
+      "testigos": [
+        "+ clase:w-3",
+        "+ clase:w-3",
+        "+ clase:h-3",
+        "+ clase:h-3",
+        "+ clase:mr-1",
+        "+ clase:mr-1",
+        "+ icono:Calculator",
+        "+ icono:BadgePercent"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Ventas.jsx",
+      "porque": "DP-14.1 (punto 1, DP-D62): el detalle de una venta enseña lo que el mesero quitó, tachado y marcado «Quitado», sin importe.",
+      "testigos": [
+        "+ clase:flex",
+        "+ clase:text-muted-foreground",
+        "+ clase:text-sm",
+        "+ clase:font-medium",
+        "+ clase:justify-between",
+        "+ clase:py-1",
+        "+ clase:border-b",
+        "+ clase:last:border-0",
+        "+ clase:line-through",
+        "+ clase:uppercase",
+        "+ texto:Quitado"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Productos.jsx",
+      "porque": "DP-14.1-4: si la lectura de las opciones falla o vence, el botón «Opciones» lo dice («Reintentar opciones») y reintenta al tocarlo, en lugar de quedarse en «Cargando…» para siempre.",
+      "testigos": ["+ aviso:No se pudieron leer las opciones. Reintentando…"]
     }
   ]
 }

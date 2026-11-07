@@ -49,7 +49,7 @@ import {
   type MesaActivaProps,
   type ProductoDeComanda,
 } from './comanda-de-la-mesa';
-import { DividirCuentaDialog } from './DividirCuentaDialog';
+import { DividirCuentaDialog, paraDividir } from './DividirCuentaDialog';
 import { lineasDelEnvio } from './envio-a-cocina';
 import { ListosParaRecoger, useListosDeLaCuenta } from './ListosParaRecoger';
 import { useRolDeLaSesion } from './rol-de-la-sesion';
@@ -924,11 +924,7 @@ export function MesaActiva(props: MesaActivaProps) {
           key={aperturaDeDividir}
           abierto={dividiendo}
           ordenId={mesa.venta_activa_id}
-          lineas={enviadas.map((l) => ({
-            id: l.id,
-            nombre: l.producto_nombre,
-            cantidad: l.cantidad,
-          }))}
+          lineas={enviadas.map((l) => paraDividir({ ...l, nombre: l.producto_nombre }))}
           onCerrar={cerrarDividir}
           onDividida={traslaDivision}
         />

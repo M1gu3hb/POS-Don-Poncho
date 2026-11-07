@@ -19,6 +19,7 @@ import { consultarPuente, invocarComando } from '~/cliente/api';
 import { centavosDe } from '~/cliente/dinero-del-puente';
 import { useVocabulario } from '~/cliente/vocabulario';
 
+import { cantidadParaMostrar } from './peso.ts';
 import { lineasQueSigueCobrando, soloLasVivas } from './lineas-vivas.ts';
 import {
   almacenDeLaPestana,
@@ -80,6 +81,9 @@ export interface LineaPrecuenta {
   readonly precio_unitario_snapshot: number;
   readonly total: number;
   readonly notas_producto: string | null;
+  readonly tipo_venta_snapshot?: string | null;
+  readonly cantidad_variable_snapshot?: number | null;
+  readonly unidad_variable_snapshot?: string | null;
 }
 
 /**
@@ -415,7 +419,7 @@ function Hoja({ cuenta, lineas, estilo, copia, totales }: HojaProps) {
       titulo: voc.titulo('linea_orden'),
       celda: (linea) => (
         <span className="block min-w-0">
-          <span className="font-bold">{linea.cantidad}×</span> {linea.producto_nombre}
+          <span className="font-bold">{cantidadParaMostrar(linea)}×</span> {linea.producto_nombre}
           <span className="block text-texto-sutil">
             <Importe
               centavos={centavosDe(

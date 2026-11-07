@@ -11,8 +11,10 @@ import { invocarComando } from '~/cliente/api';
  * entrega al comensal— mientras el total ya no la incluía: un papel cuyos renglones no suman
  * su total, y una caja que ofrece repartir unidades que ya no existen.
  *
- * El arreglo de raíz es del puente (exponer `anulada_en` en `DetalleVenta`); aquí se resuelve
- * sin tocarlo, porque la respuesta ya existe en el servidor.
+ * DP-14.1 · El arreglo de raíz ya está en el puente: `DetalleVenta` sólo sirve lo que se sigue
+ * cobrando (`anulada_en` nula) y lo quitado vive en `RenglonQuitado`. Esto se queda como la
+ * segunda red de las pantallas del cobro: si el puente y la cotización discreparan, manda la
+ * cotización, que es lo que cobra `venta.cobrar`.
  *
  * ── Qué se hace ──────────────────────────────────────────────────────────────
  * Se le pregunta al SERVIDOR cuáles líneas siguen cobrándose. `venta.estado` cotiza la cuenta

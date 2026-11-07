@@ -1187,3 +1187,117 @@ puerta los denuncia todos.
 - **Sin migración.** `venta/descuento.ts` (`topeDe`), `venta/topes-del-sistema.ts`;
   `negocio-de-prueba/como-nueva.ts` lo reexporta. **Para el maestro (ficha 29):** el mismo
   respaldo vale para todo negocio dado de alta después de la 078.
+
+## DP-D60 · Dos cajas como máximo, y la cuenta la cobra quien la tome primero · 06-11-2026
+
+- **Lo que decidió Miguel:** Don Poncho puede tener **dos** cajas abiertas a la vez, nunca más.
+  En Configuración → Caja, «Cajas abiertas a la vez»: 1 o 2. Lo cambian sólo el dueño o el
+  administrador (`caja.fijar_cajas_simultaneas`, con su auditoría); escribe
+  `sucursales.cajas_simultaneas`, que ya existía (la 179 y su disparador), así que es un dato y no
+  DDL. Con dos abiertas no se deja bajar a una: primero se cierra una.
+- **Las dos cajas cobran lo mismo:** las dos ven todas las cuentas pendientes de la sucursal y la
+  cobra quien la tome primero. `venta.cobrar` ya bloqueaba la orden (`for update`) y volvía a
+  mirar su estado: jamás un cobro doble. Lo nuevo es el mensaje: la que llega después (o pierde la
+  carrera) lee **«Ya se cobró en Caja 1»**, con el nombre de la terminal de la sesión que la cobró.
+  La tercera que intente abrir lee **«Ya hay 2 cajas abiertas: cierra una»**.
+- **«Esta cuenta la está cobrando Caja 1» no se dice antes de cobrar:** no hay dónde saber que otra
+  caja tiene la cuenta abierta en su pantalla sin una marca nueva (DDL o una escritura por cada
+  vistazo). Lo que sí está: la lista de pendientes se relee cada 2 s, y el cobro de la segunda se
+  rechaza con su nombre.
+- **¿Un mismo usuario puede tener dos cajas abiertas en dos aparatos?** Sí: la caja es de la
+  terminal, y cada navegador que entra se da de alta como su terminal («Caja N»). **Elección:**
+  igual se crea **«Caja 2»** en la base propia (Miguel teclea su PIN): una persona por cajón,
+  porque el corte nombra a quien lo abrió y lo contó, y un faltante tiene que tener dueño. Los dos
+  aparatos de caja se renombran «Caja 1» y «Caja 2» para que el mensaje los nombre bien.
+- **El corte de cada caja trae sólo lo suyo y el Cierre del día suma las dos una vez:** ya era así
+  (DP-D50); queda probado con dos cajas (`caja/dos-cajas.integracion.test.ts`).
+- **Sin migración.** `caja/cajas-a-la-vez.ts`, `venta/ya-cobrada.ts`, `caja/sesion.ts` (mensaje),
+  `apps/web/src/configuracion/CajaYDescuentos.tsx`.
+
+## DP-D61 · Todo descuento lleva la clave de quien lo autoriza, atada al monto y de un solo uso · 06-11-2026
+
+- **Lo que decidió Miguel:** en Configuración → Descuentos, «Permitir descuentos»: sí o no (sólo
+  el dueño o el administrador; `configuracion.permitir_descuentos`, en `configuracion.valores`
+  bajo el candado del documento, con su auditoría). **Apagados**, el botón no aparece en ninguna
+  pantalla y el servidor rechaza todo descuento con `DESCUENTOS_APAGADOS`. **Encendidos** (lo de
+  Don Poncho, y lo que vale sin escribir nada), **todo** descuento pide el PIN de un gerente,
+  administrador o dueño, aunque sea de $1. El cajero y el mesero nunca descuentan solos, y si
+  quien tiene la sesión es gerente o dueño vuelve a teclear el suyo (una tableta olvidada con
+  sesión no sirve para regalar).
+- **La autorización** (`identidad/supervisor.ts`) firmaba negocio, quién pide, cuenta, para qué y
+  vencimiento; ahora firma también el **monto exacto** en centavos: con un PIN para $20 no se
+  aplican $2,000 ni $19.99, y una sin monto no sirve. **Se gasta al usarla:** el nonce queda en la
+  auditoría del comando que la usó (en la misma transacción), y un candado consultivo con el nonce
+  por llave pone en fila a dos usos simultáneos: entra uno, el otro lee `AUTORIZACION_USADA`.
+  **Por qué la auditoría y no `autorizaciones_descuento`:** esa tabla prohíbe en la base que quien
+  autoriza sea quien pide (078) y la gerente que vuelve a teclear su PIN es justo eso. La fila de
+  `autorizaciones_descuento` se sigue escribiendo cuando autoriza otro, con el tope propio de quien
+  pide en **cero** (nadie descuenta solo), que cumple el `check` de la 180 con cualquier monto.
+- **El límite es el tope del puesto de quien autoriza:** gerente 30 %, administrador 50 %, dueño
+  100 % (los del sistema, o los que el negocio escriba). `topeDe` usa el respaldo del sistema **por
+  puesto**: antes sólo valía si el negocio no tenía ninguna fila, y la primera que alguien
+  escribiera dejaba al resto en cero (QA2-009 otra vez). Corrige DP-D59.
+- **El motivo** sigue obligatorio y lo valida el servidor (4 a 200 caracteres).
+- **El corte y el Cierre del día** traen cada descuento con cuánto, quién lo autorizó y por qué, y
+  el total (`caja.descuentos_del_corte`, con el alcance de las cancelaciones de DP-D50); el monto
+  es el de la venta y quién y por qué salen de la auditoría del comando.
+- **En Caja:** «Descuento» y «Cancelar la cuenta» viven ahora en el cobro de `Caja.jsx` (también
+  para las partes de una cuenta dividida); antes sólo en `/restaurante/cobro`, que nadie enlaza.
+- **Para el maestro:** que todo descuento pida PIN es una regla de Don Poncho; la firma con monto,
+  el uso único y el respaldo por puesto son genéricos.
+- **Sin migración.** `venta/descuentos-permitidos.ts`, `venta/autorizacion-de-un-uso.ts`,
+  `venta/descuento-de-mostrador.ts`, `venta/descuento.ts`, `identidad/supervisor.ts`,
+  `caja/corte/descuentos-del-corte.ts`; dos códigos nuevos en `contracts/errores`.
+
+## DP-D62 · Lo que el mesero quitó no se enseña como cobrado · 06-11-2026
+
+- **El hallazgo (auditoría del 6-11):** la Caja leía `DetalleVenta` sin filtrar y el puente servía
+  las líneas anuladas: el cobro, «Dividir» y el ticket las enseñaban mientras el total ya no las
+  contaba.
+- **Elección, de raíz:** `DetalleVenta` sólo sirve lo que se sigue cobrando (`anulada_en` nula,
+  un `filtroFijo` del puente). Con eso dejan de verlo el cobro, «Dividir», el ticket final, su
+  reimpresión y el ticket histórico, el CSV del desglose por producto y todo lo demás que lee
+  `DetalleVenta`. Lo quitado vive en una entidad aparte, `RenglonQuitado` (la misma tabla, sólo las
+  anuladas, **sin ningún importe**), para el historial: en Ventas sale tachado y marcado
+  «Quitado». El ticket es un papel que suma su total y no lo trae. El corte ya lo contaba aparte
+  (cancelaciones).
+- **Sin migración.** `puente/mapa.ts`, `puente/consultar.ts`, `puente/tipos.ts`.
+
+## DP-D63 · Una línea por peso es una pieza que no se parte · 06-11-2026
+
+- **El hallazgo:** `division.ts` truncaba la cantidad (`Math.trunc(0.5)` = 0): la barbacoa por kilo
+  no cabía en ninguna parte y la división se rechazaba («quedaron unidades sin repartir»).
+- **Elección:** una línea por peso (`variable_medida`) es **una pieza indivisible** al dividir, sea
+  de ¼, ½, 1 o 1.5 kg: va completa, con su importe exacto, a una sola parte (el servidor la cuenta
+  como 1 unidad y rechaza otra cantidad con `DIVISION_NO_CUADRA`). La división es por renglón o por
+  partes; no hay «partes iguales».
+- **El peso se dice como se pide:** «¼ kg», «½ kg», «¾ kg», «1 kg», «1.5 kg» (otros pesos con hasta
+  tres decimales) en la comanda, el teléfono de cocina (también la voz), el cobro, la precuenta, el
+  ticket, el portal y el carrito del mesero (`apps/web/src/restaurante/peso.ts`).
+- **Sin migración.** Lo hizo el agente A (Sonnet), revisado e integrado en la sesión principal.
+
+## DP-D64 · «Mesa limpia» borra sólo lo de antes del cierre de la cuenta · 06-11-2026
+
+- **El hallazgo:** al marcar la mesa limpia se borraban el carrito, los teléfonos y el aviso de la
+  familia que ya se había sentado mientras la mesa estaba en limpieza.
+- **Elección:** el cierre de la cuenta es el último sello `limpieza` de la mesa
+  (`eventos_mesa`); al limpiar se borran sólo las líneas, los teléfonos y los avisos de hasta ese
+  momento. Lo posterior se queda, con su aviso. Sin cierre que leer (la mesa sin cuenta), como
+  antes. Los demás que olvidan el carrito (cobrar, cancelar, liberar, caducar) no cambian.
+- **Cambia un contrato de DP-13.2** (`carrito-fantasma`): lo que un teléfono agrega con la mesa en
+  limpieza ya no se borra al limpiar, porque no se puede saber si es de la familia que se fue o de
+  la que llegó (y perder el pedido de la nueva es peor). Límite conocido: un aviso viejo reutilizado
+  por el índice único conserva su fecha y se cierra.
+- **Sin migración.** Lo hizo el agente B (Sonnet).
+
+## DP-D65 · El mesero agrega lo que no tiene opciones aunque falle esa lectura · 06-11-2026
+
+- **El hallazgo:** si fallaba la lectura de opciones, el mesero no podía agregar nada.
+- **Elección:** el producto trae `tiene_opciones` en la MISMA lectura de la carta (una «existencia»
+  nueva del puente: `exists` sobre `producto_modificadores`, sin `join`). Lo que no tiene opciones
+  se agrega al instante. Lo que tiene, espera la lectura con un tiempo límite de **8 s**; si falla,
+  el diálogo dice que no pudo y ofrece «Reintentar», sin bloquear lo demás; cerrarlo cancela ese
+  toque. La última lectura buena se guarda en el aparato, pero la pista del producto manda sobre
+  ella (un platillo pudo ganar su grupo después). En Productos, el botón «Opciones» dice si falló y
+  reintenta.
+- **Sin migración.** Lo hizo el agente B (Sonnet); la existencia del puente, la sesión principal.

@@ -78,6 +78,7 @@ import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pre
 import { sonar } from '~/sonidos/gestor';
 import { economiaDelPeriodo } from '~/restaurante/margen-de-las-ventas';
 import { DividirLaCuenta } from '~/restaurante/DividirLaCuenta';
+import { CancelarLaCuenta, DescuentoDeLaCuenta } from '~/restaurante/AjustesDeLaCuenta';
 import { rotuloDeLaCuenta } from '~/restaurante/cuenta-de-la-caja';
 
 const METODOS = [
@@ -454,6 +455,26 @@ export default function Caja() {
         setShowPropinaCaja(true);
       }
       // Si no tiene tipo (ventas antiguas) NO forzamos modal; quedan en 0 propina.
+    }
+  };
+
+  // DP-14.1 (punto 2) · Después de descontar, la cuenta se relee del servidor: el total, las
+  // líneas con su descuento repartido y la propina que se deriva de él. Lo tecleado de pagos se
+  // limpia, porque era para el total de antes.
+  const releerLaCuentaDelCobro = async (ordenId) => {
+    try {
+      const [venta, detalles] = await Promise.all([
+        api.entidades.Venta.get(ordenId),
+        api.entidades.DetalleVenta.filter({ venta_id: ordenId }),
+      ]);
+      setVentaSeleccionada({ ...venta, propina_monto: propinaDerivada(venta) });
+      setDetallesSeleccionados(Array.isArray(detalles) ? detalles : []);
+      setMontoEfectivo('');
+      setMontoTarjeta('');
+      setMontoTransferencia('');
+      queryClient.invalidateQueries({ queryKey: ['ventas_pendientes_caja'] });
+    } catch (err) {
+      toast.error(err?.message || 'Se aplicó, pero no se pudo releer la cuenta. Ábrela otra vez.');
     }
   };
 
@@ -1692,6 +1713,35 @@ export default function Caja() {
             <Button variant="outline" onClick={() => setVentaSeleccionada(null)}>
               Cancelar
             </Button>
+            {/* DP-14.1 (punto 2): el descuento —con la clave de quien lo autoriza— y la
+                cancelación de la cuenta, aquí donde se cobra. Vivían sólo en `/restaurante/cobro`,
+                que ninguna pantalla enlaza. Con los descuentos apagados, el botón no aparece. */}
+            {(ventaSeleccionada?.mesa_id || ventaSeleccionada?.orden_padre_id) &&
+              ventaSeleccionada.total > 0 && (
+                <DescuentoDeLaCuenta
+                  ordenId={ventaSeleccionada.id}
+                  base={Math.round(
+                    (Number(ventaSeleccionada.subtotal) || Number(ventaSeleccionada.total) || 0) *
+                      100,
+                  )}
+                  alAplicar={() => {
+                    void releerLaCuentaDelCobro(ventaSeleccionada.id);
+                  }}
+                />
+              )}
+            {ventaSeleccionada?.id && ventaSeleccionada.total > 0 && (
+              <CancelarLaCuenta
+                ordenId={ventaSeleccionada.id}
+                alCancelar={(cancelada) => {
+                  if (!cancelada) return;
+                  setVentaSeleccionada(null);
+                  setDetallesSeleccionados([]);
+                  queryClient.invalidateQueries({ queryKey: ['ventas_pendientes_caja'] });
+                  queryClient.invalidateQueries({ queryKey: ['mesas'] });
+                  toast.success('Cuenta cancelada: queda en el corte con su motivo.');
+                }}
+              />
+            )}
             {/* QA1-5 (DP-13.5): la cuenta de una mesa se divide aquí, donde se cobra. Antes el
                 botón vivía sólo en `/restaurante/cobro`, que ninguna pantalla enlaza. */}
             {ventaSeleccionada?.mesa_id && ventaSeleccionada.total > 0 && (

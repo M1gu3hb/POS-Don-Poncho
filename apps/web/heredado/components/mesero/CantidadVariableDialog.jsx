@@ -36,6 +36,7 @@ import {
   mlPorPorcionEfectivo,
 } from '@/utils/tipoVentaUtils';
 import { formatCurrency } from '@/utils/financialUtils';
+import { etiquetaDePeso } from '~/restaurante/peso';
 
 export default function CantidadVariableDialog({ open, producto, onClose, onConfirm }) {
   const tipo = producto?.tipo_venta;
@@ -233,8 +234,9 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
                           : 'bg-card hover:bg-muted/50 border-border'
                       }`}
                     >
-                      {valor}{' '}
-                      {esMedida ? producto?.unidad_variable || '' : producto?.nombre_porcion || ''}
+                      {esMedida
+                        ? etiquetaDePeso(valor, producto?.unidad_variable || 'kg')
+                        : `${valor} ${producto?.nombre_porcion || ''}`}
                     </button>
                   );
                 })}

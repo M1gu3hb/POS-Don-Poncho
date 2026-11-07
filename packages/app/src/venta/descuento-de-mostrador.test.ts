@@ -18,10 +18,10 @@ import { aplicarDescuento } from './descuento-de-mostrador.ts';
 /**
  * F-205 · EL DESCUENTO DEL MOSTRADOR, con su tope y su supervisor (D-28 de la 2.4).
  *
- * Lo que se defiende: que lo que cabe en el tope de la cajera se aplica sin preguntar;
- * que lo que no cabe NO se aplica sin la autorización firmada de un supervisor cuyo tope
- * lo cubra; que la autorización es de ESTE negocio, para ESTA cajera y vigente; que
- * queda la fila de quién autorizó; y que el reparto entre líneas es exacto.
+ * Lo que se defiende: que NINGÚN descuento se aplica sin la autorización firmada de un
+ * supervisor cuyo tope lo cubra, aunque quepa en el tope de la cajera (DP-14.2); que la
+ * autorización es de ESTE negocio, para ESTA cajera, de ESTA cuenta, por ESTE monto y vigente;
+ * que queda la fila de quién autorizó; y que el reparto entre líneas es exacto.
  */
 
 const SECRETO = 'secreto_de_prueba_para_firmar_autorizaciones_2026';
@@ -73,6 +73,8 @@ function autorizacion(cambios: Partial<Parameters<typeof firmarAutorizacion>[0]>
       // DP-13.2 (D-5): firmada para ESTA cuenta y para un descuento, como la firma la ruta.
       cuenta: CARRITO_MOSTRADOR,
       para: 'descuento',
+      // DP-14.2: y por ESTE monto, el de casi todas las pruebas de aquí.
+      monto: '2000',
       ...cambios,
     },
     SECRETO,
@@ -84,25 +86,21 @@ async function fallo(promesa: Promise<unknown>): Promise<string> {
   return esErrorDominio(error) ? error.codigo : String(error);
 }
 
-describe('F-205 · el descuento que cabe en el tope de quien cobra', () => {
-  it('se aplica sin preguntar, baja el total y no deja autorización', async () => {
+describe('DP-14.2 · aun lo que cabe en el tope de quien cobra pide la clave', () => {
+  it('sin autorización no se aplica ni $5: el cajero nunca descuenta solo', async () => {
     const base = baseDe();
     const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'), AHORA);
 
-    const salida = await aplicarDescuento.ejecutar(ctx, {
-      ordenId: CARRITO_MOSTRADOR,
-      descuentoCentavos: 500,
-      motivo: 'cliente frecuente',
-    });
+    const codigo = await fallo(
+      aplicarDescuento.ejecutar(ctx, {
+        ordenId: CARRITO_MOSTRADOR,
+        descuentoCentavos: 500,
+        motivo: 'cliente frecuente',
+      }),
+    );
 
-    expect(salida).toEqual({
-      descuentoCentavos: '500',
-      totalCentavos: '9500',
-      autorizadoPor: null,
-    });
-    expect(base.campo('orden_lineas', 'descuento_centavos')).toBe(500n);
-    expect(base.campo('orden_lineas', 'total_centavos')).toBe(9_500n);
-    expect(base.campo('ordenes', 'total_centavos')).toBe(9_500n);
+    expect(codigo).toBe('PUESTO_NO_OTORGABLE');
+    expect(base.campo('orden_lineas', 'descuento_centavos')).toBe(0n);
     expect(base.filas('autorizaciones_descuento')).toHaveLength(0);
   });
 
@@ -123,6 +121,7 @@ describe('F-205 · el descuento que cabe en el tope de quien cobra', () => {
       ordenId: CARRITO_MOSTRADOR,
       descuentoCentavos: 1_000,
       motivo: 'cliente frecuente',
+      autorizacion: autorizacion({ monto: '1000' }),
     });
 
     const descuentos = base.filas('orden_lineas').map((f) => f['descuento_centavos'] as bigint);
@@ -167,16 +166,15 @@ describe('F-205 · el descuento que pasa del tope', () => {
       autoriza_empleo_id: GERENTE,
       autoriza_rol: 'gerente',
       descuento_centavos: 2_000n,
-      tope_centavos: 5_000n,
+      // DP-14.2 · El tope propio de quien pide es cero: nadie descuenta solo.
+      tope_centavos: 0n,
       base_centavos: 10_000n,
-      tope_bp: 1_000,
+      tope_bp: 0,
       motivo: 'producto golpeado',
       orden_id: CARRITO_MOSTRADOR,
     });
-    // $20 sobre $100 pasa el tope de la cajera por PORCENTAJE (20 % > 10 %) y NO por
-    // importe ($20 < $50). La 078 sólo aceptaba la rama del importe y Postgres rechazaba
-    // esta misma fila con 23514; la base falsa no hace cumplir `check`, así que aquí se
-    // afirma la regla de la 180 tal cual está escrita en SQL.
+    // La base falsa no hace cumplir `check`: aquí se afirma la regla de la 180 tal cual está
+    // escrita en SQL, para que la fila que se escribe entre en Postgres.
     const descuento = fila?.['descuento_centavos'] as bigint;
     const cumpleLa180 =
       descuento > (fila?.['tope_centavos'] as bigint) ||
@@ -207,6 +205,22 @@ describe('F-205 · el descuento que pasa del tope', () => {
         SECRETO,
       ),
       autorizacion({ para: 'cancelacion' }),
+      // DP-14.2 · la de OTRO monto, y la que no dice de cuánto.
+      autorizacion({ monto: '1999' }),
+      autorizacion({ monto: '200000' }),
+      firmarAutorizacion(
+        {
+          org: ORG,
+          supervisor: GERENTE,
+          rol: 'gerente',
+          solicita: EMPLEO,
+          exp: Math.floor(AHORA.getTime() / 1000) + 120,
+          n: 'sin-monto-0001',
+          cuenta: CARRITO_MOSTRADOR,
+          para: 'descuento',
+        },
+        SECRETO,
+      ),
     ]) {
       const base = baseDe();
       const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'), AHORA);
@@ -234,7 +248,7 @@ describe('F-205 · el descuento que pasa del tope', () => {
           ordenId: CARRITO_MOSTRADOR,
           descuentoCentavos: 4_000,
           motivo: 'producto golpeado',
-          autorizacion: autorizacion(),
+          autorizacion: autorizacion({ monto: '4000' }),
         }),
       ),
     ).toBe('PUESTO_NO_OTORGABLE');

@@ -17,6 +17,7 @@ import { consultarPuente, invocarComando } from '~/cliente/api';
 import { useVocabulario } from '~/cliente/vocabulario';
 import { sonar } from '~/sonidos/gestor';
 
+import { cantidadParaMostrar } from './peso.ts';
 import { platillosPorPreparar, tieneQuePreparar } from './platillos-de-cocina.ts';
 
 /**
@@ -142,6 +143,10 @@ export interface ItemDeComanda {
   readonly id: string;
   readonly producto_nombre: string | null;
   readonly cantidad: number | null;
+  /** DP-14 · Lo que dice «½ kg» en vez de «0.5»: lo trae el item de la comanda. */
+  readonly tipo_venta?: string | null;
+  readonly unidad_variable?: string | null;
+  readonly cantidad_variable?: number | string | null;
   readonly notas: string | null;
   /** `cancelado`: se anuló en la mesa y no se prepara (`platillos-de-cocina.ts`). */
   readonly estado?: string | null;
@@ -472,9 +477,12 @@ function Tarjeta({ col, comanda, ahora, ocupada, onAvanzar }: TarjetaProps) {
       </div>
       <ul className="flex flex-col gap-(--espacio-1) text-base xl:text-lg">
         {platillosPorPreparar(comanda.items).map((item) => (
-          <li key={item.id} className="grid grid-cols-[3ch_minmax(0,1fr)] gap-x-(--espacio-2)">
+          <li
+            key={item.id}
+            className="grid grid-cols-[minmax(3ch,auto)_minmax(0,1fr)] gap-x-(--espacio-2)"
+          >
             <span className="text-right font-numeros font-bold tabular-nums">
-              {item.cantidad ?? 1}
+              {cantidadParaMostrar({ ...item, cantidad: item.cantidad ?? 1 })}
             </span>
             <span>{item.producto_nombre ?? 'Producto sin nombre'}</span>
             {item.notas !== null && item.notas !== '' && (

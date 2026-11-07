@@ -15,6 +15,13 @@ export {
 } from './descuento.ts';
 
 export {
+  CLAVE_DESCUENTOS_PERMITIDOS,
+  descuentosPermitidosEn,
+  entradaPermitirDescuentos,
+  permitirDescuentos,
+} from './descuentos-permitidos.ts';
+
+export {
   aplicarDescuento,
   entradaAplicarDescuento,
   entradaTopeDeDescuento,

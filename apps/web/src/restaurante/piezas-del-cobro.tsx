@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { centavosDe } from '~/cliente/dinero-del-puente';
 import type { Vocabulario } from '@morphiqpos/domain/vocabulario';
 
+import { cantidadParaMostrar, esPorPeso } from './peso.ts';
 import { BASES, type Metodo } from './pagos-del-cobro.ts';
 import type { Ilegibles, LineaDeCuenta } from './Cobro';
 
@@ -70,6 +71,10 @@ export function columnasDeLaCuenta(platillo: string): readonly ColumnaDeTabla<Li
       // está alineada se relee, y aquí se relee con gente esperando.
       celda: (linea) => {
         const cantidad = linea.cantidad ?? 1;
+        // DP-14 · Lo que se vende por peso dice su peso: «½ kg», no «0.50».
+        if (esPorPeso(linea)) {
+          return <span className="tabular-nums">{cantidadParaMostrar(linea)}</span>;
+        }
         return (
           <Cifra valor={cantidad} decimales={Number.isInteger(cantidad) ? 0 : 2} tamano="sm" />
         );

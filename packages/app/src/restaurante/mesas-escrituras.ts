@@ -260,6 +260,25 @@ export async function cancelarOrdenVacia(
   }
 }
 
+/**
+ * DP-14.1-3 · El momento en que la mesa pasó a limpieza por última vez (el sello de su ledger,
+ * `eventos_mesa`), o `undefined` si no hay.
+ */
+async function cierreDeLaCuenta(
+  tx: Transaccion,
+  organizacionId: string,
+  mesaId: string,
+): Promise<Date | undefined> {
+  const fila = await tx
+    .selectFrom('eventos_mesa')
+    .select((eb) => eb.fn.max('ocurrido_en').as('cuando'))
+    .where('organizacion_id', '=', organizacionId)
+    .where('mesa_id', '=', mesaId)
+    .where('estado_nuevo', '=', 'limpieza')
+    .executeTakeFirst();
+  return fila?.cuando == null ? undefined : new Date(fila.cuando);
+}
+
 export interface SelloDeLiberacion {
   readonly sucursalId: string;
   readonly estadoAnterior: string;
@@ -303,11 +322,17 @@ export async function limpiarMesa(
     .where('id', '=', mesaId)
     .execute();
 
+  // DP-14.1-3 · Con la mesa en limpieza, lo que se arma DESPUÉS del cierre de la cuenta es de la
+  // familia nueva: se borra sólo lo anterior. Sin cierre que leer, todo (como siempre).
+  const cierre =
+    sello.estadoAnterior === 'limpieza'
+      ? await cierreDeLaCuenta(tx, organizacionId, mesaId)
+      : undefined;
   // Los avisos del comensal que se fue se van con él: ver `avisos-de-la-mesa.ts`.
-  await cerrarAvisosDeLaMesa(tx, organizacionId, mesaId, sello.ahora);
+  await cerrarAvisosDeLaMesa(tx, organizacionId, mesaId, sello.ahora, cierre);
   // DP-13.2: y su carrito. Lo que el teléfono de la familia que se fue agregó con la mesa en
   // limpieza le aparecía a la siguiente.
-  await olvidarElCarritoDeLaMesa(tx, organizacionId, mesaId, sello.ahora);
+  await olvidarElCarritoDeLaMesa(tx, organizacionId, mesaId, sello.ahora, cierre);
 
   await sellarTransicionDeMesa(tx, {
     organizacionId,

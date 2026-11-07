@@ -17,6 +17,11 @@ import { invocarComando } from '~/cliente/api';
 import { useVocabulario } from '~/cliente/vocabulario';
 import type { Vocabulario } from '@morphiqpos/domain/vocabulario';
 
+import { etiquetaDePeso, piezasDe } from './peso.ts';
+
+/** Cómo pasa una línea del puente al diálogo: quien lo abre la arma con esto (DP-14). */
+export { paraDividir } from './peso.ts';
+
 /**
  * F-321 · Dividir la cuenta.
  *
@@ -76,6 +81,18 @@ export interface LineaParaDividir {
   readonly nombre: string;
   /** Unidades enteras. Una línea de 2.5 kg no se divide por unidades. */
   readonly cantidad: number;
+  /**
+   * DP-14 · Se vende por peso (la barbacoa): es UNA pieza indivisible. Va COMPLETA a una cuenta,
+   * con su «½ kg» a la vista; el servidor la reparte igual, como una sola unidad.
+   */
+  readonly porPeso?: boolean;
+  readonly unidad?: string;
+}
+
+/** Lo que la fila dice de su cantidad: «½ kg» por peso; el número de piezas si no. */
+function CantidadDeLaLinea({ linea }: { readonly linea: LineaParaDividir }) {
+  if (linea.porPeso === true) return <span>{etiquetaDePeso(linea.cantidad, linea.unidad)}</span>;
+  return <Cifra valor={linea.cantidad} decimales={decimalesDe(linea.cantidad)} />;
 }
 
 export interface DividirCuentaDialogProps {
@@ -229,8 +246,7 @@ function columnasDe({
       titulo: voc.titulo('linea_orden'),
       celda: (linea) => (
         <span className="line-clamp-2 min-w-40">
-          <Cifra valor={linea.cantidad} decimales={decimalesDe(linea.cantidad)} /> ×{' '}
-          <span className="font-medium">{linea.nombre}</span>
+          <CantidadDeLaLinea linea={linea} /> × <span className="font-medium">{linea.nombre}</span>
         </span>
       ),
     },
@@ -500,7 +516,7 @@ export function contarPendientes(
   const pendientes: Record<string, number> = {};
   for (const linea of lineas) {
     const repartidas = partes.reduce((a, parte) => a + (parte.tomas[linea.id] ?? 0), 0);
-    pendientes[linea.id] = linea.cantidad - repartidas;
+    pendientes[linea.id] = piezasDe(linea) - repartidas;
   }
   return pendientes;
 }

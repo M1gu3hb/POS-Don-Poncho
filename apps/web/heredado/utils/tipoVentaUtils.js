@@ -16,6 +16,8 @@
 // - NO se usa todavía en UI: este archivo es base para 1.B en adelante.
 // =====================================================
 
+import { etiquetaDePeso } from '~/restaurante/peso';
+
 export const TIPO_VENTA = Object.freeze({
   PRECIO_FIJO: 'precio_fijo',
   VARIABLE_MEDIDA: 'variable_medida',
@@ -214,9 +216,8 @@ export function formatearCantidadVariable(item = {}) {
     const cant = toPos(item?.cantidad_variable ?? item?.cantidad_variable_snapshot);
     const u = item?.unidad_variable || item?.unidad_variable_snapshot || '';
     if (cant === 0 || !u) return '';
-    // Mostrar enteros sin decimales, decimales con hasta 2.
-    const txt = Number.isInteger(cant) ? String(cant) : String(Math.round(cant * 100) / 100);
-    return `${txt} ${u}`;
+    // DP-14 · «½ kg», «¼ kg», «¾ kg», «1.5 kg»: como se dice en la cocina y en el ticket.
+    return etiquetaDePeso(cant, u);
   }
   if (tipo === TIPO_VENTA.PORCION_CONTENEDOR) {
     const c = toPos(item?.cantidad_porciones ?? item?.cantidad_porciones_snapshot);

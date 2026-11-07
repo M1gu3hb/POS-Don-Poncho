@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useIsDark } from '@/lib/ThemeContext';
 import CocinaProductoDialog from './CocinaProductoDialog';
+import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 
 /**
  * F3.1: Subtarjeta COMPACTA por estación para vista "Todas las estaciones".
@@ -168,7 +169,7 @@ export default function CocinaStationMiniCard({ pedido, onIniciar, onListo, onQu
                     title="Ver ficha de cocina"
                   >
                     <span className="font-heading font-black text-sm text-primary tabular-nums shrink-0 leading-tight">
-                      {item?.cantidad || 0}×
+                      {formatearCantidadVariable(item || {}) || `${item?.cantidad || 0}×`}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p

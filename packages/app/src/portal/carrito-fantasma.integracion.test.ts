@@ -37,7 +37,7 @@ async function lineasEnElCarrito(mesaId: string): Promise<number> {
 }
 
 describe('el carrito fantasma (DP-13.2)', () => {
-  it('cobrar → el teléfono viejo agrega → liberar → la siguiente familia encuentra el carrito vacío', async () => {
+  it('cobrar → un teléfono agrega con la mesa en limpieza → liberar: lo posterior al cierre se queda (DP-14.1-3)', async () => {
     const caso = await mesaConPortal();
     const { ventaId } = await caso.abrir(2);
     // El cobro: la cuenta queda pagada y la mesa pasa a limpieza (su carrito se olvida ahí).
@@ -49,10 +49,12 @@ describe('el carrito fantasma (DP-13.2)', () => {
     await conTransaccion((tx) =>
       pasarMesaCobradaALimpieza(tx, caso.negocio.organizacionId, ventaId, {
         empleoId: caso.ambito.empleoId,
-        ahora: new Date(),
+        ahora: new Date(Date.now() - 5_000),
       }),
     );
-    // La familia que se fue todavía tiene el portal abierto y agrega algo.
+    // DP-14.1-3: con la mesa en limpieza los comensales ya arman su carrito, y no se puede saber si
+    // el teléfono es el de la familia que se fue o el de la nueva: lo posterior al cierre de la
+    // cuenta es de la familia nueva y «mesa limpia» NO lo borra (antes sí: DP-13.2).
     exigirOk(await caso.agregar(TELEFONO_A, caso.taco), 'agregar después de cobrar');
     await caso.mirar(TELEFONO_A);
     expect(await lineasEnElCarrito(caso.mesaId)).toBe(1);
@@ -66,13 +68,11 @@ describe('el carrito fantasma (DP-13.2)', () => {
       }),
       'liberar',
     );
-    expect(await lineasEnElCarrito(caso.mesaId)).toBe(0);
-    // QA2-006 (DP-13.5): y sus teléfonos: no crecen sin fin ni cuentan como «conectados» de la
-    // siguiente familia.
-    expect(await telefonosDeLaMesa(caso.mesaId)).toBe(0);
+    expect(await lineasEnElCarrito(caso.mesaId)).toBe(1);
+    expect(await telefonosDeLaMesa(caso.mesaId)).toBe(1);
 
     await caso.abrir(3);
-    expect((await caso.mirar(TELEFONO_B))?.lineas).toEqual([]);
+    expect((await caso.mirar(TELEFONO_B))?.lineas).toHaveLength(1);
   });
 
   it(`sin cuenta, a las ${String(HORAS_SIN_ACTIVIDAD)} h sin agregar nada caduca: no se ve y al agregar se borra`, async () => {

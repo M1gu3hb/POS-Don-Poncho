@@ -34,11 +34,22 @@ function mensajeDe(fallo: unknown, porDefecto: string): string {
   return fallo instanceof ErrorApi ? fallo.message : porDefecto;
 }
 
+/**
+ * DP-14.6 · Cuántos segundos dice el servidor que hay que esperar: el PIN se bloqueó por intentos
+ * (429). `null` si el fallo es otro.
+ */
+export function esperaDelBloqueo(fallo: unknown): number | null {
+  if (!(fallo instanceof ErrorApi) || fallo.estado !== 429) return null;
+  const segundos = fallo.error.datos?.['esperaSegundos'];
+  return typeof segundos === 'number' && segundos > 0 ? Math.ceil(segundos) : null;
+}
+
 export function PinDeSupervisor({
   ordenId,
   para,
   quienesAutorizan,
   idDelCampo,
+  montoCentavos,
   alAutorizar,
 }: {
   readonly ordenId: string;
@@ -46,6 +57,11 @@ export function PinDeSupervisor({
   readonly quienesAutorizan?: readonly QuienAutoriza[];
   /** El `id` del campo del PIN: dos formularios en una pantalla no lo comparten. */
   readonly idDelCampo: string;
+  /**
+   * DP-14.2 · El descuento exacto que se autoriza, en centavos: la firma lo lleva y el servidor
+   * no la acepta para otro monto.
+   */
+  readonly montoCentavos?: number;
   readonly alAutorizar: (autorizada: Autorizada) => void;
 }) {
   const [leidos, setLeidos] = useState<readonly QuienAutoriza[] | null>(null);
@@ -54,7 +70,19 @@ export function PinDeSupervisor({
   const [pin, setPin] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
+  // DP-14.6 · Con el PIN bloqueado, cuánto falta: el botón no se puede tocar hasta entonces.
+  const [restan, setRestan] = useState(0);
   const supervisor = elegido ?? lista?.[0]?.empleoId ?? null;
+
+  useEffect(() => {
+    if (restan <= 0) return undefined;
+    const reloj = window.setTimeout(() => {
+      setRestan((n) => n - 1);
+    }, 1_000);
+    return () => {
+      window.clearTimeout(reloj);
+    };
+  }, [restan]);
 
   useEffect(() => {
     if (quienesAutorizan !== undefined) return;
@@ -79,17 +107,25 @@ export function PinDeSupervisor({
   }, [quienesAutorizan]);
 
   async function autorizar(): Promise<void> {
-    if (supervisor === null || pin.length < 4) return;
+    if (supervisor === null || pin.length < 4 || restan > 0 || ocupado) return;
     setOcupado(true);
     setFallo(null);
     try {
       const respuesta = await invocarComando<{ autorizacion: string }>(
         '/api/identidad/supervisor',
-        { empleoId: supervisor, pin, ordenId, para },
+        {
+          empleoId: supervisor,
+          pin,
+          ordenId,
+          para,
+          ...(montoCentavos === undefined ? {} : { montoCentavos }),
+        },
       );
       const nombre = lista?.find((q) => q.empleoId === supervisor)?.nombre ?? '';
       alAutorizar({ token: respuesta.autorizacion, nombre });
     } catch (error: unknown) {
+      const espera = esperaDelBloqueo(error);
+      if (espera !== null) setRestan(espera);
       setFallo(mensajeDe(error, 'No se pudo autorizar.'));
     } finally {
       setPin('');
@@ -141,12 +177,19 @@ export function PinDeSupervisor({
             onChange={(evento) => {
               setPin(evento.target.value.replace(/\D/g, ''));
             }}
+            onKeyDown={(evento) => {
+              // DP-14.6 · Enter envía, como en la pantalla de entrar. No es un `form`: este campo
+              // vive dentro del formulario del descuento, y Enter lo aplicaría sin autorización.
+              if (evento.key !== 'Enter') return;
+              evento.preventDefault();
+              void autorizar();
+            }}
           />
         </div>
         <Button
           type="button"
           variant="outline"
-          disabled={ocupado || supervisor === null || pin.length < 4}
+          disabled={ocupado || supervisor === null || pin.length < 4 || restan > 0}
           cargando={ocupado}
           onClick={() => {
             void autorizar();
@@ -156,7 +199,11 @@ export function PinDeSupervisor({
           Autorizar
         </Button>
       </div>
-      {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
+      {fallo === null ? null : (
+        <Aviso tono="peligro" titulo={fallo}>
+          {restan > 0 ? `Se puede intentar otra vez en ${String(restan)} s.` : null}
+        </Aviso>
+      )}
     </div>
   );
 }

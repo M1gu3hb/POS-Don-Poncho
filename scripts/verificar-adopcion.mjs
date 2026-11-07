@@ -52,6 +52,12 @@ function lectorDesde(ruta) {
  */
 export const SIN_ESTADO = [
   {
+    pantalla: 'configuracion/CajaYDescuentos',
+    estado: 'vacio',
+    razon:
+      'Dos ajustes del negocio (DP-14.2): cuántas cajas a la vez y si se permiten descuentos. No tiene lista que pueda llegar vacía.',
+  },
+  {
     pantalla: 'configuracion/ExperienciaDelNegocio',
     estado: 'vacio',
     razon:
