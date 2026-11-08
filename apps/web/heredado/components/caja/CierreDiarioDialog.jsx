@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/utils/financialUtils';
 import { api } from '@/api/cliente';
+import { textoDelCierre } from '~/restaurante/otras-cajas-al-cerrar';
 import { aCentavos, aPesos } from '@/components/caja/dinero';
 import {
   SIN_RECETA,
@@ -56,6 +57,24 @@ export default function CierreDiarioDialog({
   const [dineroDejado, setDineroDejado] = useState('');
   const [notas, setNotas] = useState('');
   const [arqueoServidor, setArqueoServidor] = useState(null);
+  // DP-15 · Cuántas cajas siguen abiertas: si hay otra, este cierre cierra sólo la de este aparato.
+  const [cajasAbiertas, setCajasAbiertas] = useState(1);
+  const textoDeCierre = textoDelCierre(cajasAbiertas);
+  useEffect(() => {
+    if (!open) return undefined;
+    let vigente = true;
+    api.comandos
+      .ejecutar('/api/caja/cajas-simultaneas', {})
+      .then((cupo) => {
+        if (vigente) setCajasAbiertas(Number(cupo?.abiertas) || 1);
+      })
+      .catch(() => {
+        if (vigente) setCajasAbiertas(null);
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -167,6 +186,12 @@ export default function CierreDiarioDialog({
         </DialogHeader>
 
         <div className="space-y-5">
+          {textoDeCierre.aviso && (
+            <div className="p-3 rounded-xl bg-advertencia/15 border border-advertencia/40 text-sm text-advertencia flex items-start gap-2 font-semibold">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <p>{textoDeCierre.aviso}</p>
+            </div>
+          )}
           <div className="p-3 rounded-xl bg-gradient-to-r from-peligro/10 to-advertencia/10 border border-peligro/30 text-xs text-peligro flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             <p>
@@ -394,7 +419,11 @@ export default function CierreDiarioDialog({
               background: 'linear-gradient(135deg, hsl(0,72%,46%) 0%, hsl(0,72%,36%) 100%)',
             }}
           >
-            {loading ? 'Cerrando…' : 'Cerrar caja del día'}
+            {loading
+              ? 'Cerrando…'
+              : textoDeCierre.aviso
+                ? 'Cerrar esta caja'
+                : 'Cerrar caja del día'}
           </Button>
         </DialogFooter>
       </DialogContent>
