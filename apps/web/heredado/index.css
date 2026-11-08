@@ -636,7 +636,9 @@ html.dark .printable-doc [class*='dark:text-gray-'] {
     position: static !important;
     inset: auto !important;
     transform: none !important;
-    translate: none !important;
+    /* Con `var()`: el minificador del build fundía `translate: none` dentro de `transform` y la
+       propiedad desaparecía; el diálogo imprimía corrido a la izquierda (QA de aparatos, H-01). */
+    translate: var(--sin-traslado, none) !important;
     display: block !important;
     width: auto !important;
     max-width: none !important;
