@@ -67,6 +67,10 @@ import UsuariosPOSSection from '@/components/configuracion/UsuariosPOSSection';
 import RepartirMesasDialog from '@/components/mesas/RepartirMesasDialog';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 import { siguienteNumeroLibre } from '~/cliente/numero-de-mesa';
+import ZonasDelSalonDialog from '@/components/mesas/ZonasDelSalonDialog';
+
+/** DP-15 · Quien escribe zonas por el puente (la escritura genérica). */
+const PUEDEN_EDITAR_ZONAS = ['dueno', 'administrador', 'gerente'];
 import { esDeMando, puedeRepartirMesas } from '@/components/configuracion/puestos';
 import { useConfig } from '@/lib/ConfigContext';
 import { soloCamposEditablesMesa } from '@/utils/mesaConfigUtils';
@@ -111,6 +115,7 @@ export default function Configuracion() {
   const [zonaFiltro, setZonaFiltro] = useState('Interior');
   const [editingMesa, setEditingMesa] = useState(null);
   const [showMesaDialog, setShowMesaDialog] = useState(false);
+  const [showZonas, setShowZonas] = useState(false);
 
   // HOTFIX persistencia: sin initialData:[] para distinguir "primer fetch"
   // de "vacío real". placeholderData mantiene el valor previo durante el
@@ -823,6 +828,12 @@ export default function Configuracion() {
                         Repartir mesas
                       </Button>
                     )}
+                    {/* DP-15 · Dar de alta y renombrar zonas (antes no había pantalla). */}
+                    {PUEDEN_EDITAR_ZONAS.includes(miPuesto) && (
+                      <Button size="sm" variant="outline" onClick={() => setShowZonas(true)}>
+                        Zonas
+                      </Button>
+                    )}
                     <Button size="sm" onClick={openNew}>
                       <Plus className="w-4 h-4 mr-1" />
                       Nueva mesa
@@ -946,6 +957,14 @@ export default function Configuracion() {
       </Dialog>
 
       {/* Mesa Edit Dialog (crear/editar) */}
+      <ZonasDelSalonDialog
+        open={showZonas}
+        onOpenChange={setShowZonas}
+        zonas={zonasLeidas}
+        alRenombrar={(antes, despues) => {
+          if (zonaFiltro === antes) setZonaFiltro(despues);
+        }}
+      />
       <MesaEditDialog
         open={showMesaDialog}
         mesa={editingMesa}
