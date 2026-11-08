@@ -161,6 +161,50 @@ describe('las reglas del corte', () => {
     });
   });
 
+  it('el Cierre del día dice las ventas de TODAS las cajas, y el resumen dice que es de esta caja (QA, J-H6)', () => {
+    const doc = documentoDelCorte(
+      hoja(RESTAURANTE, {
+        ventasDelDia: {
+          cajas: 2,
+          tickets: 14,
+          totalCentavos: '407715',
+          propinasCentavos: '32751',
+          metodos: [
+            { metodo: 'efectivo', ventasCentavos: '300000', propinasCentavos: '20000', pagos: 10 },
+            { metodo: 'tarjeta', ventasCentavos: '107715', propinasCentavos: '12751', pagos: 4 },
+          ],
+        },
+      }),
+    );
+    const delDia = 'Ventas del día · todas las cajas';
+    expect(celda(doc.secciones, delDia, 'Total ventas')?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: 407_715,
+    });
+    expect(celda(doc.secciones, delDia, 'Cajas')?.valor).toEqual({ tipo: 'texto', texto: '2' });
+    expect(celda(doc.secciones, delDia, 'Nº de tickets')?.valor).toEqual({
+      tipo: 'texto',
+      texto: '14',
+    });
+    expect(celda(doc.secciones, delDia, 'Tarjeta')?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: 107_715,
+    });
+    expect(celda(doc.secciones, delDia, 'Propinas')?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: 32_751,
+    });
+    expect(doc.secciones.some((s) => s.titulo === 'Resumen de esta caja (sin propinas)')).toBe(
+      true,
+    );
+  });
+
+  it('el corte de una caja que no cierra el día no trae «Ventas del día»', () => {
+    const doc = documentoDelCorte(hoja(RESTAURANTE, { ventasDelDia: null }));
+    expect(doc.secciones.some((s) => s.titulo === 'Ventas del día · todas las cajas')).toBe(false);
+    expect(doc.secciones.some((s) => s.titulo === 'Resumen financiero (sin propinas)')).toBe(true);
+  });
+
   it('sin permiso de costos: ni utilidad, ni insumos, ni columna de costo', () => {
     const doc = documentoDelCorte(
       hoja(RESTAURANTE, {

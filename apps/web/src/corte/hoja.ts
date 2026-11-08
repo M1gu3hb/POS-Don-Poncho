@@ -77,6 +77,19 @@ export interface HojaDelServidor {
     propinasCentavos: string;
     pagos: number;
   }[];
+  /** DP-15 (QA, J-H6) · Sólo en el corte que cierra el día: las ventas de todas sus cajas. */
+  readonly ventasDelDia?: {
+    readonly cajas: number;
+    readonly tickets: number;
+    readonly totalCentavos: string;
+    readonly propinasCentavos: string;
+    readonly metodos: readonly {
+      metodo: string;
+      ventasCentavos: string;
+      propinasCentavos: string;
+      pagos: number;
+    }[];
+  } | null;
   readonly resumen: {
     readonly tickets: number;
     readonly totalCentavos: string;
@@ -553,6 +566,39 @@ export function resumenFinanciero(
   }
   if (r.costoCentavos !== null) celdas.push(...margenDelCorte(hoja, total, estimados));
   return { tipo: 'celdas', titulo, celdas };
+}
+
+/**
+ * DP-15 (QA, J-H6) · El Cierre del día con dos cajas: cada corte cuenta SUS cuentas (DP-D50) y el
+ * del día, además, las de todas las cajas de su ventana. Sin esto la dueña que leía el Cierre creía
+ * que el día vendió lo de la última caja.
+ */
+export function ventasDelDia(hoja: HojaDelServidor): readonly Seccion[] {
+  const d = hoja.ventasDelDia;
+  if (d === undefined || d === null) return [];
+  return [
+    {
+      tipo: 'celdas',
+      titulo: 'Ventas del día · todas las cajas',
+      celdas: [
+        { etiqueta: 'Total ventas', valor: dinero(d.totalCentavos), fuerte: true },
+        { etiqueta: 'Nº de tickets', valor: texto(d.tickets) },
+        { etiqueta: 'Cajas', valor: texto(d.cajas) },
+        ...d.metodos.map((m) => ({
+          etiqueta: nombreDelMetodo(m.metodo),
+          valor: dinero(m.ventasCentavos),
+        })),
+        { etiqueta: 'Propinas', valor: dinero(d.propinasCentavos) },
+      ],
+    },
+  ];
+}
+
+/** El título del resumen: en el Cierre del día con varias cajas, dice que es el de ESTA caja. */
+export function tituloDelResumen(hoja: HojaDelServidor): string {
+  return hoja.ventasDelDia === undefined || hoja.ventasDelDia === null
+    ? 'Resumen financiero (sin propinas)'
+    : 'Resumen de esta caja (sin propinas)';
 }
 
 /**

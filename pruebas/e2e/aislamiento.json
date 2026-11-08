@@ -151,6 +151,16 @@
       "ids": [{ "camino": "sesionCajaId", "tabla": "sesiones_caja" }]
     },
     {
+      "ruta": "/api/caja/ventas-del-dia",
+      "comando": "caja.ventas_del_dia",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "sesionCajaId": "⟨sesiones_caja⟩" },
+      "ids": [{ "camino": "sesionCajaId", "tabla": "sesiones_caja" }]
+    },
+    {
       "ruta": "/api/catalogo/archivar",
       "comando": "catalogo.archivar_producto",
       "escribe": true,

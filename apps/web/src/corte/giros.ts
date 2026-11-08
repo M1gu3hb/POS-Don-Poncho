@@ -12,6 +12,8 @@ import {
   nombreDeArchivo,
   productosVendidos,
   resumenFinanciero,
+  tituloDelResumen,
+  ventasDelDia,
   tablaSiHay,
   texto,
   totalDePropinas,
@@ -94,7 +96,8 @@ export function corteDeRestaurante(
   return documento(hoja, 'CORTE DE CAJA', [
     datosDelCorte(hoja, 'Cierre diario'),
     ...arqueo(hoja, 'Apertura y fondo'),
-    resumenFinanciero(hoja, 'Resumen financiero (sin propinas)'),
+    ...ventasDelDia(hoja),
+    resumenFinanciero(hoja, tituloDelResumen(hoja)),
     ...metodosConPropina(hoja),
     ...seccionesDePropina,
     ...detalleDeVentas(hoja, {

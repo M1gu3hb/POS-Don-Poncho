@@ -22,6 +22,7 @@ import {
   cuentaDelDescuento,
   tituloDeLosDescuentos,
 } from '~/corte-heredado/descuentos-del-corte';
+import { TITULO_DEL_DIA, celdasDelDia } from '~/corte-heredado/ventas-del-dia';
 import {
   SIN_RECETA,
   costoDelProductoConocido,
@@ -56,6 +57,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
     totalDeCancelaciones = null,
     // DP-14.2 · Cada descuento con quién lo autorizó y por qué (`leerDescuentosDelCorte`).
     descuentos = null,
+    // DP-15 (QA, J-H6) · Sólo en el Cierre del día: las ventas de todas las cajas (`leerVentasDelDia`).
+    ventasDelDia = null,
     alertas = [],
     config = {},
     sinCostos = false,
@@ -246,8 +249,28 @@ const CorteTicket = React.forwardRef(function CorteTicket(
         </Grid>
       </Section>
 
+      {/* DP-15 (QA, J-H6) · El Cierre del día con varias cajas: las ventas de todas */}
+      {ventasDelDia && (
+        <Section title={TITULO_DEL_DIA}>
+          <Grid>
+            {celdasDelDia(ventasDelDia).map((c) => (
+              <Cell
+                key={c.etiqueta}
+                label={c.etiqueta}
+                value={c.pesos === undefined ? c.texto : formatCurrency(c.pesos)}
+                bold={c.fuerte}
+              />
+            ))}
+          </Grid>
+        </Section>
+      )}
+
       {/* Resumen financiero — sin el módulo `costos_basicos` sólo se muestran ventas y métodos de pago */}
-      <Section title={sinCostos ? 'Resumen de ventas' : 'Resumen financiero'}>
+      <Section
+        title={
+          ventasDelDia ? 'Resumen de esta caja' : sinCostos ? 'Resumen de ventas' : 'Resumen financiero'
+        }
+      >
         <Grid>
           <Cell label="Total ventas" value={formatCurrency(corte?.total_general)} bold />
           <Cell label="N° tickets" value={corte?.numero_ventas || 0} />
