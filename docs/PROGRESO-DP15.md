@@ -19,22 +19,25 @@
 | 2 | 2.2 gerente sin Datos/Integraciones (hecho, rama `dp-15-codigo`) · 2.3 informativos (pendiente) · 2.4 capacidad (hecha, `docs/infra/CAPACIDAD.md`) | en curso |
 | 3 | La mudanza | hecha (11:07): huella IDÉNTICA, humo 38/38, regreso atrás escrito |
 | 4 | Base propia lista: 2 cajas, «Caja 2», descuentos, PIN, respaldo | hecho (11:10) |
-| 5 | Auditoría por función | en curso: auditoría 2 lista (1 bloqueante, 8 medios); auditoría 1 corriendo |
-| 6 | Arreglos | en curso: agotado del día (servidor + pantallas) en `dp-15-codigo` |
+| 5 | Auditoría por función | hecha: `docs/qa/AUDITORIA-POR-FUNCION.md` (2 bloqueantes, 15 medios) |
+| 6 | Arreglos | en curso: los 2 bloqueantes y 11 medios hechos en `dp-15-codigo`; F1 (mesa/comandas) y F2 (cierre, CSV, 58 mm) en agentes; la 189 ya en la propia |
 | 7 | QA de jornada | pendiente |
 | 8 | Prueba del puro link | pendiente |
 | 9 | Entrega y reporte 009 | pendiente |
 
 ## Lo que sigue
 
-1. Esperar la auditoría 1 (módulos 1-8) y escribir `docs/qa/AUDITORIA-POR-FUNCION.md` con las dos.
-2. Medios de la auditoría 2 por decidir/arreglar: M1 Tablero suma una caja; M3 sin «Agregar producto»
-   en restaurante; M4 almacén con botones que el servidor niega; M5 compra en efectivo con 2 cajas;
-   M6 pedido del mesero se pierde al recargar; M7 ticket de 58 mm; M8 gerente con pestañas que fallan.
-   (M2 queda cubierto por el agotado del día.)
-3. Antes de desplegar: `pnpm db:migrate` de la 189 en la propia (aditiva), `verify:esquema` estricto
-   contra la propia, `pnpm verify` completo en el worktree, PR a `main`, CI, despliegue y humo.
-4. Informativos de HALLAZGOS (2.3) y el ajuste del portal (capacidad) si da el tiempo.
+1. Integrar los parches de F1 (`D:\mpos-tmp\dp15-arreglos1.patch`) y F2 (`f2.patch`), revisar sus
+   informes (`f1.md`, `f2.md`), correr sus pruebas y mutantes, y actualizar la tabla de estado de la
+   auditoría.
+2. `pnpm verify` completo en el worktree (con la propia para `verify:esquema`/`rls`/`acople`), PR de
+   `dp-15-codigo` a `main`, CI, despliegue y humo sin cobrar (el guion `humo-mudanza.mjs`).
+3. Fase 7: copia nueva de la propia (exportar → `copia-dp15.sh j`), app compilada, dos agentes de QA
+   (jornada completa con cuadre al centavo; aparatos/WebKit/portal/red lenta). WebKit de Playwright
+   instalándose.
+4. Fase 8 (el puro link en producción) y Fase 9 (entrega y reporte 009).
+5. Si da el tiempo: pantalla de auditoría en Registros y zonas (crear/renombrar), y el ajuste del
+   sondeo del portal (capacidad).
 
 ## Dónde quedó cada cosa
 
