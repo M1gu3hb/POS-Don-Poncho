@@ -92,6 +92,16 @@ describe('DP-15 · el platillo agotado del día', () => {
     const faltan = hasta.getTime() - Date.now();
     expect(faltan).toBeGreaterThan(0);
     expect(faltan).toBeLessThanOrEqual(24 * 3600 * 1000);
+    // Y es la MEDIANOCHE DE MÉXICO (la zona del negocio), no la de UTC: con un cálculo en UTC el
+    // platillo volvería a las 18:00 (la revisión de código). Con lo de arriba, es la siguiente.
+    const enMexico = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Mexico_City',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    }).format(hasta);
+    expect(enMexico).toBe('00:00:00');
 
     const fila = await obtenerDb()
       .selectFrom('productos')
