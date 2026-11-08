@@ -28,6 +28,8 @@ import {
   FileText,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { startOfDay } from 'date-fns';
+import { delDia } from '~/tablero/del-dia';
 import CorteHistorialList from '@/components/cortes/CorteHistorialList';
 import ColoredStatCard, { PAYMENT_COLORS } from '@/components/dashboard/ColoredStatCard';
 import FinancialChart from '@/components/dashboard/FinancialChart';
@@ -64,16 +66,25 @@ export default function Dashboard() {
   const showInventario = canAccessModule('inventario', paquete_modo);
   const showFinancialChart = canAccessModule('reportes_financieros_avanzados', paquete_modo);
   const showCompras = canAccessModule('compras', paquete_modo);
-  const { cajaAbierta, hayCaja, isLoading: cajaLoading } = useCajaAbierta();
+  const { hayCaja, isLoading: cajaLoading } = useCajaAbierta();
   // Nota: la neutralización del color del MONTO la hace cada card internamente
   // (ColoredStatCard / PaymentCard leen `colorear_importes_monetarios` y solo
   // cambian el color del número, conservando fondo/borde/icono).
 
   // No usar initialData:[] — queremos distinguir "primer fetch" de "vacío real"
   // para no mostrar ceros falsos mientras carga la primera vez.
+  // DP-15 · Las ventas del DÍA (todas las cajas), acotadas en la base: con cien tickets el tope por
+  // omisión de 200 ya no se queda corto, y una caja cerrada sigue contando.
+  const inicioDeHoy = startOfDay(new Date()).getTime();
   const { data: ventas, isPending: ventasLoading } = useQuery({
-    queryKey: ['ventas_hoy'],
-    queryFn: () => api.entidades.Venta.filter({ estado: 'pagada' }),
+    queryKey: ['ventas_hoy', inicioDeHoy],
+    queryFn: () =>
+      api.entidades.Venta.enRango(
+        { campo: 'fecha_cierre', desde: new Date(inicioDeHoy).toISOString() },
+        { estado: 'pagada' },
+        '-fecha_cierre',
+        1000,
+      ),
     placeholderData: (prev) => prev,
     staleTime: 5000,
   });
@@ -148,43 +159,12 @@ export default function Dashboard() {
   // aún no han hecho su primer fetch. Evita ceros y "caja cerrada" falsos.
   const dashboardCargando = cajaLoading || (ventasLoading && !ventas) || (gastosLoading && !gastos);
 
-  // KPIs operativos basados en la caja abierta actual.
+  // KPIs del día del restaurante (DP-15: antes, de la caja abierta que el aparato veía primero).
   const stats = useMemo(() => {
     const safeVentas = Array.isArray(ventas) ? ventas : [];
     const safeGastos = Array.isArray(gastos) ? gastos : [];
-    if (!cajaAbierta) {
-      return {
-        totalVentas: 0,
-        totalCosto: 0,
-        utilidadBruta: 0,
-        margen: 0,
-        totalEfectivo: 0,
-        totalTarjeta: 0,
-        totalTransferencia: 0,
-        totalGastos: 0,
-        ticketPromedio: 0,
-        numTickets: 0,
-        utilidadNeta: 0,
-        economia: economiaDelPeriodo([]),
-      };
-    }
-    const aperturaIso =
-      cajaAbierta.fecha_apertura || cajaAbierta.fecha_inicio || cajaAbierta.created_date;
-    const apertura = aperturaIso ? new Date(aperturaIso).getTime() : 0;
-    const ventasCaja = safeVentas.filter((v) => {
-      if (!v) return false;
-      if (v.corte_caja_id && v.corte_caja_id === cajaAbierta.id) return true;
-      if (!v.corte_caja_id && v.fecha_cierre) {
-        const t = new Date(v.fecha_cierre).getTime();
-        return Number.isFinite(t) && t >= apertura;
-      }
-      return false;
-    });
-    const gastosCaja = safeGastos.filter((g) => {
-      if (!g) return false;
-      const tCreated = g.created_date ? new Date(g.created_date).getTime() : 0;
-      return tCreated >= apertura;
-    });
+    // DP-15 · Del día, de todas las cajas (abiertas o ya cerradas): `del-dia.ts`.
+    const { ventas: ventasCaja, gastos: gastosCaja } = delDia(safeVentas, safeGastos, inicioDeHoy);
 
     const totalVentas = ventasCaja.reduce((s, v) => s + (v.total || 0), 0);
     // DP-12.6: una venta SIN RECETA tiene el costo desconocido, no cero: no entra en el costo, la
@@ -214,7 +194,7 @@ export default function Dashboard() {
       utilidadNeta: utilidadBruta === null ? null : utilidadBruta - totalGastos,
       economia,
     };
-  }, [ventas, gastos, cajaAbierta]);
+  }, [ventas, gastos, inicioDeHoy]);
 
   const alertIngredients = useMemo(() => {
     return safeIngredientes
@@ -324,7 +304,7 @@ export default function Dashboard() {
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <p className="flex-1">
             <span className="font-semibold">No hay caja abierta.</span> Abre caja para comenzar
-            operación. Los indicadores operativos están en cero hasta que se abra una caja.
+            operación. Las cifras de abajo son las del día, de todas las cajas.
           </p>
           <Link to="/caja">
             <Button size="sm" variant="outline">
