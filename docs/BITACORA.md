@@ -1163,3 +1163,31 @@ Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PR
 - 12:15 Las pantallas: «Agotados» en la cocina y en Productos; el mesero y el portal lo enseñan y no
   lo agregan. 4 mutantes muertos (`2a9893b`). Falta: aplicar la 189 a la propia (antes del
   despliegue) y la verificación completa.
+
+### Fase 5 · las dos auditorías, completas
+
+- 12:25 Auditoría 2 (Sonnet, copia B): ~95 funciones; 1 bloqueante (agotado del día) y 8 medios.
+- 12:40 Auditoría 1 (Sonnet, copia A): 78 funciones (56 en la app); el cierre de su mini jornada cuadró
+  al centavo; 1 bloqueante (la cajera sin movimientos de efectivo en `/caja`) y 7 medios.
+- 12:50 `docs/qa/AUDITORIA-POR-FUNCION.md`: el estado de cada hallazgo arriba y las tablas de los
+  auditores por módulo. Las copias de auditoría se apagaron (sus servidores).
+
+### Fase 6 · más arreglos (rama `dp-15-codigo`)
+
+- 12:20 Tablero: «Ventas hoy» de todas las cajas del día (`b224889`); apariencia sólo para el dueño
+  (`f76710c`); «Agregar producto» en el restaurante (`a5964d7`); el almacén sin botones de Compras que
+  el servidor le niega (`2d9f53a`); el pedido a medias del mesero sobrevive a una recarga (`b728ded`).
+- 12:35 La cajera registra retiros, entradas de cambio y su corte de turno en `/caja` (`189c602`); el
+  diálogo «Cobrar» ya no se sale de su tarjeta (`142fb47`); el cierre avisa si queda otra caja abierta
+  (`6ea266d`); «Cambiar de mesa, unir o dividir» desde el panel de la mesa (`df8f151`); «Nueva mesa»
+  propone el número libre (`cb46434`); los conteos de Registros dicen qué cuentan (`596fad6`); en el
+  iPhone, «Agregar a pantalla de inicio» abre como app (`1a8a351`). Cada uno con su prueba en rojo
+  antes y sus mutantes (todos muertos).
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| F1 (worktree propio, base 5437) | Sonnet | «Esperando entrega» con varias estaciones; las comandas que siguen en la cocina tras cobrar o quitar | en curso |
+| F2 (worktree propio, base 5438) | Sonnet | El documento del cierre igual a Registros; el CSV en hora de CDMX; el ticket en 58 y 80 mm | en curso |
+
+- 12:54 **La 189, aplicada a la propia** con `pnpm db:migrate` (lo aditivo antes del despliegue):
+  `verify:esquema` estricto cumple con 1750 columnas; RLS 139/139 y 0 permisos.
