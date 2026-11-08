@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -100,9 +103,7 @@ describe('DP-15 · el pedido a medias del mesero', () => {
 });
 
 describe('DP-15 · el mesero usa el borrador', () => {
-  it('lo recupera al abrir la cuenta, lo guarda mientras arma y lo borra al enviar', async () => {
-    const { readFileSync } = await import('node:fs');
-    const { join } = await import('node:path');
+  it('lo recupera al abrir la cuenta, lo guarda mientras arma y lo borra al enviar', () => {
     const raiz = process.cwd().endsWith('web') ? process.cwd() : join(process.cwd(), 'apps', 'web');
     const c = readFileSync(join(raiz, 'heredado', 'pages', 'Mesero.jsx'), 'utf8')
       .replace(/^\s*\/\/.*$/gm, '')

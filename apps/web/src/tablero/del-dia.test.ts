@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { delDia } from './del-dia.ts';
@@ -33,9 +36,7 @@ describe('DP-15 · el Tablero cuenta el día, no una caja', () => {
 });
 
 describe('DP-15 · el Tablero usa la regla del día', () => {
-  it('lee las ventas del día en la base y las cuenta con `delDia`, sin depender de una caja', async () => {
-    const { readFileSync } = await import('node:fs');
-    const { join } = await import('node:path');
+  it('lee las ventas del día en la base y las cuenta con `delDia`, sin depender de una caja', () => {
     const raiz = process.cwd().endsWith('web') ? process.cwd() : join(process.cwd(), 'apps', 'web');
     const c = readFileSync(join(raiz, 'heredado', 'pages', 'Dashboard.jsx'), 'utf8').replace(
       /\s+/g,
