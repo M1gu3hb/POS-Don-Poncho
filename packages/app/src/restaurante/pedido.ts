@@ -9,6 +9,7 @@ import type { z } from 'zod';
 import { definirComando, type ContextoComando } from '../definicion.ts';
 import { cotizar } from '../venta/cotizar.ts';
 import { estacionesActivas, mesaOperable, ordenDeMesa } from './datos.ts';
+import { exigirNoAgotados } from '../catalogo/agotado.ts';
 import { productosDeComanda } from './catalogo-comanda.ts';
 import { insertarComandas, insertarItems } from './comandas.ts';
 import { agruparEnComandas, resolverEstacion } from './estaciones.ts';
@@ -117,7 +118,7 @@ export async function comandarLasLineas(
   // El precio sale del catálogo DENTRO de esta transacción. El endpoint no
   // recibe importes: si los recibiera, quien llama elegiría lo que paga.
   const valoradas = await ctx.paso('valorar_lineas', () =>
-    prepararTodas(ctx.tx, organizacionId, entrada),
+    prepararTodas(ctx.tx, organizacionId, entrada, ctx.ahora),
   );
   // DP-14.6-3 · El platillo con un grupo obligatorio sin su elección no se escribe, venga de donde
   // venga el pedido (mesero, carrito del mesero o portal).
@@ -207,6 +208,7 @@ async function prepararTodas(
   tx: Transaccion,
   organizacionId: string,
   entrada: EntradaPedido,
+  ahora: Date,
 ): Promise<readonly LineaPreparada[]> {
   const [productos, estaciones, visualInicial] = await Promise.all([
     productosDeComanda(
@@ -217,6 +219,15 @@ async function prepararTodas(
     estacionesActivas(tx, organizacionId),
     repoOrdenes.siguienteOrdenVisual(tx, organizacionId, entrada.ordenId),
   ]);
+
+  // DP-15 · Un platillo agotado del día no entra a la cuenta: se dice cuál, antes de escribir nada.
+  exigirNoAgotados(
+    entrada.lineas.flatMap((l) => {
+      const producto = productos.get(l.productoId);
+      return producto === undefined ? [] : [producto];
+    }),
+    ahora,
+  );
 
   return entrada.lineas.map((capturada, indice) => {
     const producto = productos.get(capturada.productoId);

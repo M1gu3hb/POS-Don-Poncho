@@ -245,6 +245,9 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       permite_venta_sin_stock: { columna: 'permite_venta_sin_stock', conversion: 'booleano' },
       stock_minimo: { columna: 'stock_minimo', conversion: 'decimal' },
       visible_en_pos: { columna: 'visible_en_pos', conversion: 'booleano', publico: true },
+      // DP-15 · El agotado del día: sólo lo escribe `catalogo.marcar_agotado` (con su candado, su
+      // auditoría y el fin del día del negocio), nunca la escritura genérica.
+      agotado_hasta: { columna: 'agotado_hasta', conversion: 'fecha', escribible: false },
       // Borrado suave: los registros históricos guardan el nombre en instantánea,
       // así que un producto nunca desaparece de verdad (F1-01 §3, regla 8).
       activo: { columna: 'activo', conversion: 'booleano' },
@@ -377,6 +380,12 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         rolesLectura: [...TODOS_LOS_ROLES],
         formula: 'existenciaDelProducto',
         conversion: 'decimal',
+      },
+      /** DP-15 · ¿Agotado a la hora del SERVIDOR? (el reloj de una tableta no decide). */
+      agotado_hoy: {
+        rolesLectura: [...TODOS_LOS_ROLES],
+        formula: 'agotadoHoy',
+        conversion: 'booleano',
       },
     },
   },

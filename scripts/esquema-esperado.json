@@ -14301,6 +14301,17 @@
       "generada": null
     },
     {
+      "clave": "public.productos.agotado_hasta",
+      "esquema": "public",
+      "tabla": "productos",
+      "columna": "agotado_hasta",
+      "tipo": "timestamp with time zone",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.productos.area_preparacion",
       "esquema": "public",
       "tabla": "productos",

@@ -14,6 +14,7 @@ import { enviarACocina, type ItemParaCocina } from './estaciones.ts';
 import { moverMesaDelPortal } from './escrituras.ts';
 import { entradaEnviarPedido } from './esquemas.ts';
 import { exigirPedidosDesdeElTelefono } from './mesa.ts';
+import { exigirNoAgotados } from '../catalogo/agotado.ts';
 import { cargarProductosDelMenu, valorarParaPedido, type ProductoDelMenu } from './productos.ts';
 
 /**
@@ -129,6 +130,14 @@ export async function pedirEnLaMesa(
       'Uno de los productos ya no está disponible. Actualiza el menú y vuelve a intentar.',
     );
   }
+  // DP-15 · Y ninguno agotado del día (el envío del carrito ya los apartó; esto cubre lo demás).
+  exigirNoAgotados(
+    items.flatMap((item) => {
+      const producto = productos.get(item.productoId);
+      return producto === undefined ? [] : [producto];
+    }),
+    ctx.ahora,
+  );
 
   // DP-14.6-3 · Un platillo con un grupo obligatorio sin su elección no sale a cocina: el portal lo
   // pliega en la nota («Grupo: opción») y el servidor la lee; sin eso, se rechaza.

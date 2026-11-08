@@ -155,6 +155,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/catalogo/marcar-agotado",
+      "comando": "catalogo.marcar_agotado",
+      "escribe": true,
+      "roles": ["administrador", "cocina", "dueno", "gerente"],
+      "paquetes": ["restaurante"]
+    },
+    {
       "ruta": "/api/catalogo/modificador",
       "comando": "catalogo.crear_modificador",
       "escribe": true,

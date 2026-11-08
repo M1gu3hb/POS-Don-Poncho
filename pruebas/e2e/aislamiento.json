@@ -196,6 +196,16 @@
       "ids": [{ "camino": "categoriaId", "tabla": "categorias" }]
     },
     {
+      "ruta": "/api/catalogo/marcar-agotado",
+      "comando": "catalogo.marcar_agotado",
+      "escribe": true,
+      "roles": ["administrador", "cocina", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "productoId": "⟨productos⟩", "agotado": false },
+      "ids": [{ "camino": "productoId", "tabla": "productos" }]
+    },
+    {
       "ruta": "/api/catalogo/modificador",
       "comando": "catalogo.crear_modificador",
       "escribe": true,

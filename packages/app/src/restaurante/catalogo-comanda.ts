@@ -34,6 +34,8 @@ export interface ProductoDeComanda extends repoVentaCatalogo.ProductoParaVender 
   readonly tiempoServicioDefault: number | null;
   /** F-315 · Lo que el menú dice que tarda. Se congela en el item al comandar. */
   readonly minutosPreparacion: number | null;
+  /** DP-15 · Fin del día en que se marcó agotado, o nulo (ver `catalogo/agotado.ts`). */
+  readonly agotadoHasta: Date | null;
 }
 
 export async function productosDeComanda(
@@ -87,6 +89,7 @@ export async function productosDeComanda(
       'c.estacion_preparacion_id as estacionDeCategoriaId',
       'p.tiempo_servicio_default as tiempoServicioDefault',
       'p.minutos_preparacion as minutosPreparacion',
+      'p.agotado_hasta as agotadoHasta',
       'p.insumo_base_id as insumoBaseId',
       'ib.nombre as insumoBaseNombre',
       'i.id as insumoId',

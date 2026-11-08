@@ -26,6 +26,7 @@ import { apartarLoQueYaNoSePide } from './carrito-disponibilidad.ts';
 import { definirComandoPublico, type ContextoPortal } from './definicion-publica.ts';
 import { abrirLaMesaDelPortal, exigirPedidosDesdeElTelefono } from './mesa.ts';
 import { ordenAbiertaDeLaMesa, pedirEnLaMesa, type ResultadoPedido } from './pedido.ts';
+import { exigirNoAgotados } from '../catalogo/agotado.ts';
 import { cargarProductosDelMenu, valorarParaPedido } from './productos.ts';
 import type { entradaAbrirMesa } from './esquemas.ts';
 import { comensalEnvia, type ComoSeEnvia } from './quien-envia.ts';
@@ -116,6 +117,8 @@ export const agregarAlCarrito = definirComandoPublico<
         'Ese producto ya no está disponible. Actualiza el menú y vuelve a intentar.',
       );
     }
+    // DP-15 · Agotado del día: sigue en el menú, pero no entra al carrito.
+    exigirNoAgotados([producto], ctx.ahora);
     // La cantidad se valora aquí con las reglas del envío: media pieza no entra al carrito (si
     // entrara, trabaría el envío de toda la mesa). Lanza con el motivo exacto.
     valorarParaPedido(producto.paraVender, entrada.item.cantidad);

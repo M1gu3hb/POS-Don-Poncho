@@ -4,6 +4,7 @@ import { ErrorDominio, PAQUETES_MOSTRADOR } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 import { repoOrdenes, repoVentaCatalogo } from '@morphiqpos/data';
 
+import { exigirNoAgotados } from '../catalogo/agotado.ts';
 import { definirComando, type ContextoComando } from '../definicion.ts';
 import {
   entradaAgregarLinea,
@@ -151,6 +152,19 @@ export async function ejecutarAgregarLinea(
   if (producto === null) {
     throw new ErrorDominio('PRODUCTO_NO_ENCONTRADO', 'Ese producto no está disponible.');
   }
+  // DP-15 · El agotado del día tampoco se vende en el mostrador.
+  const marca = await ctx.paso('agotado_del_dia', () =>
+    ctx.tx
+      .selectFrom('productos')
+      .select('agotado_hasta')
+      .where('organizacion_id', '=', organizacionId)
+      .where('id', '=', producto.id)
+      .executeTakeFirst(),
+  );
+  exigirNoAgotados(
+    [{ nombre: producto.nombre, agotadoHasta: marca?.agotado_hasta ?? null }],
+    ctx.ahora,
+  );
 
   if (entrada.presentacionId !== undefined) {
     return agregarPresentacion(ctx, ordenId, producto, entrada.presentacionId, entrada.cantidad);

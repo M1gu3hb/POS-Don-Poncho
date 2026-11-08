@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { repoVentaCatalogo, Transaccion } from '@morphiqpos/data';
+import { estaAgotado } from '@morphiqpos/domain/catalogo';
 
 import { valorarLinea, type LineaValorada } from '../venta/valorar.ts';
 
@@ -28,6 +29,10 @@ export interface ProductoDelMenu {
   readonly tipoVenta: string;
   readonly categoriaId: string | null;
   readonly areaPreparacion: string;
+  /** DP-15 · Fin del día en que se marcó agotado, o nulo. */
+  readonly agotadoHasta: Date | null;
+  /** DP-15 · Agotado a la hora de esta lectura: está en el menú, pero hoy no se puede pedir. */
+  readonly agotado: boolean;
   /** El contrato que `valorarLinea` sabe leer, sin inventarle campos. */
   readonly paraVender: repoVentaCatalogo.ProductoParaVender;
 }
@@ -39,6 +44,7 @@ export async function cargarProductosDelMenu(
 ): Promise<Map<string, ProductoDelMenu>> {
   const unicos = [...new Set(ids)];
   if (unicos.length === 0) return new Map();
+  const ahora = new Date();
 
   const filas = await tx
     .selectFrom('productos')
@@ -66,6 +72,7 @@ export async function cargarProductosDelMenu(
       'permite_venta_sin_stock',
       'categoria_id',
       'area_preparacion',
+      'agotado_hasta',
     ])
     .where('organizacion_id', '=', organizacionId)
     .where('id', 'in', unicos)
@@ -81,6 +88,8 @@ export async function cargarProductosDelMenu(
       tipoVenta: fila.tipo_venta,
       categoriaId: fila.categoria_id,
       areaPreparacion: fila.area_preparacion,
+      agotadoHasta: fila.agotado_hasta,
+      agotado: estaAgotado(fila.agotado_hasta, ahora),
       paraVender: {
         id: fila.id,
         nombre: fila.nombre,
