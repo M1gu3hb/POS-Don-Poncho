@@ -49,6 +49,9 @@ import { tipsEnabled } from '@/utils/tipsUtils';
 import { useLocation } from '@/enrutado';
 import { claves } from '~/cliente/claves-de-consulta';
 import { CancelacionesRegistradas } from '~/corte/CancelacionesRegistradas';
+import { AuditoriaReciente } from '~/registros/AuditoriaReciente';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { esDeMando } from '@/components/configuracion/puestos';
 
 export default function Registros() {
   const { config, paquete_modo } = useConfig();
@@ -56,6 +59,7 @@ export default function Registros() {
   const showOperativos = canAccessModule('compras', paquete_modo); // compras, movimientos, gastos
   const showPropinas = tipsEnabled(config);
   const { posUser } = usePOSAuth();
+  const miPuesto = usePuesto();
   const isAdmin = posUser?.rol === 'administrador';
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -324,6 +328,12 @@ export default function Registros() {
               Gastos ({gastosFiltrados.length})
             </TabsTrigger>
           )}
+          {/* DP-15 · Lo que se cambió, quién y cuándo (la caja renombrada, un PIN, un agotado…). */}
+          {esDeMando(miPuesto) && (
+            <TabsTrigger value="auditoria" className="gap-1">
+              Auditoría
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* CANCELACIONES (DP-12.4) */}
@@ -548,6 +558,11 @@ export default function Registros() {
               ))}
           </div>
         </TabsContent>
+        {esDeMando(miPuesto) && (
+          <TabsContent value="auditoria" className="mt-4">
+            <AuditoriaReciente />
+          </TabsContent>
+        )}
       </Tabs>
 
       <CorteViewerDialog corte={verCorte} open={!!verCorte} onClose={() => setVerCorte(null)} />

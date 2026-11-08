@@ -379,6 +379,13 @@
       "paquetes": ["restaurante"]
     },
     {
+      "ruta": "/api/reportes/auditoria-reciente",
+      "comando": "reportes.auditoria_reciente",
+      "escribe": false,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/restaurante/abrir-mesa",
       "comando": "restaurante.abrir_mesa",
       "escribe": true,

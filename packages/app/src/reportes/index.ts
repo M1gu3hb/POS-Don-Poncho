@@ -19,3 +19,8 @@ export {
   type PorPedirDeProveedor,
   type VentaDelDia,
 } from './piezas.ts';
+export {
+  auditoriaReciente,
+  entradaAuditoriaReciente,
+  type RenglonDeAuditoria,
+} from './auditoria-reciente.ts';
