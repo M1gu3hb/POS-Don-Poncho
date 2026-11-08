@@ -1525,3 +1525,38 @@ puerta los denuncia todos.
   cierre pide libre es el diseño (DP-D66, «Marcar libre» de DP-14.6).
 - **Sin migración.** El corte, el saneado, el margen y el retiro los hizo el agente RB (Sonnet); los
   topes en la pantalla, el aviso en el papel, los arreglos del QA y los documentos, la sesión principal.
+
+## DP-D81 · La base propia, igual que la compartida: almacén por la API de Supabase y sin migración de permisos · 08-11-2026
+
+- **El almacén:** en la base propia, `STORAGE_ENDPOINT` termina en `/storage/v1` (el conductor de la
+  API de Supabase de `archivos.ts`), `STORAGE_ACCESS_KEY` es la referencia del proyecto y
+  `STORAGE_SECRET_KEY` su llave secreta nueva (`sb_secret_…`), como en la Fase A. **Alternativa
+  descartada:** el endpoint S3 con llaves de acceso S3, que sólo se crean en el panel (un clic más de
+  Miguel) y cambiarían de conductor el día de la mudanza. El bucket `pos-don-poncho` es privado; se
+  comprobó guardar, leer y borrar, y que la lectura pública falla.
+- **RLS y permisos:** no hizo falta la migración de la base propia que preveía la guía. Las
+  migraciones de siempre, aplicadas desde cero en un proyecto nuevo, ya dejan las 139 tablas con RLS
+  y quitan a `anon` y `authenticated` todo permiso en tablas, rutinas y secuencias, y también los
+  privilegios por omisión de `postgres`. Medido con la consulta de la guía: 139 de 139 y 0, 0, 0.
+- **El rol de la app** (`morphiqpos_app`) se crea antes de migrar, con su verificador SCRAM, porque
+  las migraciones sólo le dan permisos si ya existe. Queda igual que en la compartida (176 permisos de
+  tabla, 1 secuencia, 2 de 16 rutinas).
+- **Sin migración.** La mudanza y su regreso atrás están en `docs/infra/MUDANZA-FASE-B.md`.
+
+## DP-D82 · Los PIN nuevos se generan al azar y se aplican por el comando, antes de cambiar Vercel · 08-11-2026
+
+- **Elección:** en la base propia, recién importada y antes de cambiar Vercel, todos los PIN se
+  cambian por `identidad.establecer_pin` (y «Caja 2» se da de alta con `identidad.guardar_empleado`),
+  con «Miguel · Morphiq» como quien manda: transacción, idempotencia, roles y auditoría, como desde la
+  pantalla. Nunca un hash escrito a mano. Los PIN viven sólo en `..\_PRIVADO\PINES-DON-PONCHO.md`.
+- **Cuatro cifras:** el servidor acepta de 4 a 8, pero el teclado de la entrada envía al cuarto
+  dígito; un PIN más largo no se podría teclear.
+- **Al azar y lejos de lo conocido:** ninguno coincide con un número de 4 cifras de otro archivo de
+  `_PRIVADO` (los PIN viejos, los de las copias de QA y los de la demo) ni es fácil de adivinar
+  (repetidos, escaleras, años).
+- **Por qué antes de cambiar Vercel:** así el humo de producción entra con los PIN nuevos y el PIN
+  público del maestro nunca sirve contra la base propia. El regreso atrás devuelve la compartida con
+  sus PIN viejos.
+- **Cambia una regla de antes:** «los PIN reales los teclea Miguel». Este encargo pidió generarlos y
+  aplicarlos; Miguel los recibe en `_PRIVADO` y cada persona puede cambiar el suyo desde Usuarios.
+- **Sin migración.**

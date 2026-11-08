@@ -1,9 +1,9 @@
 # Mudanza a la Fase B · el guion del día
 
-Don Poncho pasa de la base compartida de MorphiqPOS (`wyqmzhliurwyxuyxznpb`, la Fase A) a su
-propio proyecto de Supabase **el día que Miguel diga**, con el restaurante cerrado. Está **en pausa**
-desde el 07-11-2026: primero se corrige todo lo de la auditoría y se prueba; nadie crea el proyecto
-nuevo hasta entonces. Lo que hace Miguel, clic por clic, está en
+Don Poncho pasó de la base compartida de MorphiqPOS (`wyqmzhliurwyxuyxznpb`, la Fase A) a su
+propio proyecto de Supabase, «POS Don Poncho» (`mqlcusxwqrefpfttjjks`, us-east-2), **el 08-11-2026
+(DP-15)**. Cómo fue, con sus horas, y cómo se regresa atrás: [la mudanza, hecha](#la-mudanza-hecha-08-11-2026-dp-15).
+Lo que hizo Miguel (sólo crear el proyecto) está en
 [`MUDANZA-LO-QUE-HACE-MIGUEL.md`](MUDANZA-LO-QUE-HACE-MIGUEL.md).
 
 ## Qué cambia y qué no
@@ -190,3 +190,39 @@ desechables de esta PC:
 - En las dos: la aplicación compilada, con la `PIN_PEPPER` de producción, lista al personal y
   entra con PIN (un gerente de ensayo dado de alta sólo en la copia; ningún PIN real), y la
   jornada completa del restaurante pasa en el navegador. Detalle en el reporte 003.
+
+## La mudanza, hecha (08-11-2026, DP-15)
+
+Hora de CDMX. Sin el restaurante operando (0 cuentas, 0 folios, cajas cerradas). Miguel sólo creó
+el proyecto; lo demás, con la Supabase CLI y la Management API de esta PC, y los secretos en
+`..\_PRIVADOase-b.env` (nunca en la línea de comandos).
+
+| Hora  | Paso                                                        | Resultado                                                                                                                                                                         |
+| ----- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10:43 | Proyecto «POS Don Poncho»                                   | `ACTIVE_HEALTHY`, us-east-2, Postgres 17.11, organización Pro                                                                                                                     |
+| 10:46 | Almacén                                                     | bucket `pos-don-poncho` **privado**; el conductor de la API de Supabase (`…/storage/v1`) con la llave secreta, igual que en la Fase A (DP-D81)                                    |
+| 10:48 | `morphiqpos_app`                                            | `login bypassrls`, uso de `public` y privilegios por omisión, igual que en la compartida                                                                                          |
+| 10:49 | `pnpm db:migrate`                                           | 120 migraciones, de la 001 a la 188, en 48 s                                                                                                                                      |
+| 10:50 | `verify:esquema` estricto                                   | cumple (1749 columnas, 1382 restricciones, 445 índices)                                                                                                                           |
+| 10:51 | RLS y permisos                                              | 139 de 139 tablas con RLS; 0 permisos de `anon` y `authenticated` (las migraciones ya los retiran: sin migración nueva)                                                           |
+| 10:52 | Huella de los otros 10 y exportación con `--exigir-cerrado` | 122 tablas, 275 conteos; 135 tablas y 1175 filas, 0 archivos                                                                                                                      |
+| 10:53 | Importar                                                    | idénticas al origen (filas y md5), sin llaves rotas, 143 s; `--solo-verificar` y `verify:esquema` otra vez: bien                                                                  |
+| 10:56 | `por_cancelacion`                                           | sembrado                                                                                                                                                                          |
+| 10:59 | La base propia lista                                        | PIN nuevos para todos, «Caja 2», 2 cajas a la vez y descuentos, por los comandos del sistema (DP-D82)                                                                             |
+| 11:01 | Vercel                                                      | sólo las cinco variables de Production, por la entrada estándar (`vercel env add … --force`)                                                                                      |
+| 11:03 | Redespliegue                                                | `READY`, con los tres alias, sin errores en tiempo de ejecución                                                                                                                   |
+| 11:05 | Humo sin cobrar                                             | 38 de 38: los 8 puestos entran con su PIN y caen en su pantalla, 27 pantallas, el QR de la mesa 1 con su token de siempre (el menú con la barbacoa) y los dos teléfonos de cocina |
+| 11:07 | Huella de los otros 10                                      | **IDÉNTICA**; Don Poncho en la compartida, intacto (135 tablas, 0 diferencias)                                                                                                    |
+
+### El regreso atrás, listo
+
+1. Las cinco variables de Production de vuelta a las de `..\_PRIVADOase-a.env`, por la entrada
+   estándar: el guion y sus instrucciones están en `..\_PRIVADO\mudanza
+egreso-atras\`
+   (`LEEME.md`). Es el mismo guion que hizo la mudanza, con el otro archivo.
+2. Redesplegar Production (`vercel redeploy <el despliegue vigente> --target production`) y esperar
+   `READY`.
+3. Humo: la entrada lista 9 personas (sin «Caja 2», que sólo existe en la propia).
+
+Lo escrito en la propia después de la mudanza no está en la compartida, y allá siguen los PIN
+viejos. Desde aquí, la compartida sigue con cero DDL y cero escrituras de Don Poncho.

@@ -1031,3 +1031,97 @@ punto confirmado en el código antes de repartirlo.
   0 pagos, 0 folios y 0 cajas.
 - El reporte `docs/reports/008-correcciones-y-qa.md`, en un PR sólo de documentos.
 
+
+## 08-11-2026 · DP-15 · mudanza a la base propia, auditoría por función y entrega con el puro link
+
+Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PROGRESO-DP15.md`.
+
+### Fase 0 · arranque
+
+- 10:42 Skills cargadas: `morphiq-prs`, `vercel-cli-with-tokens`, `engineering:deploy-checklist`,
+  `engineering:testing-strategy`, `engineering:code-review` y `engineering:debug` (las 6, con su
+  nombre exacto).
+- 10:42 Leídos `CONTEXTO.md`, `DECISIONES.md` (DP-D50 a DP-D80), el final de esta bitácora, los
+  reportes 007 y 008, las dos guías de la mudanza y `docs/qa/HALLAZGOS.md`.
+
+### Fase 1 · el proyecto nuevo, con la Supabase CLI de la PC
+
+- 10:43 CLI en `D:\herramientas\supabase-cli` (v2.115.0), con sesión: `projects list` ve
+  «POS Don Poncho» (`mqlcusxwqrefpfttjjks`, us-east-2, `ACTIVE_HEALTHY`, Postgres 17.11), en la
+  organización «M1gu3l97» (Pro). Esa carpeta de la CLI está ligada a la compartida: todo lo de
+  aquí va con la referencia explícita.
+- 10:44 Por la Management API, con el token de la CLI (leído del administrador de credenciales de
+  Windows, sin imprimirlo): el pooler de transacción es `aws-0-us-east-2.pooler.supabase.com:6543`,
+  el mismo tipo y puerto que la `DATABASE_URL` de producción; protocolo S3 encendido; respaldos
+  diarios físicos, sin PITR; 0 buckets.
+- 10:45 `_PRIVADO\fase-b.env` escrito por guion (llaves de la API, cadenas de sesión, transacción y
+  directa, la contraseña de `postgres` de `don-poncho-db.txt`, una contraseña nueva para
+  `morphiqpos_app` y su `DATABASE_URL`). Conecta con `postgres` por el pooler de sesión: `select 1`,
+  PostgreSQL 17.11, 0 tablas en `public`, sin `_migraciones`, `pg_cron` disponible.
+- 10:46 El almacén, igual que en la Fase A: el conductor de la API de Supabase (`…/storage/v1`), con
+  la referencia en `STORAGE_ACCESS_KEY` y la llave secreta en `STORAGE_SECRET_KEY`. No hace falta
+  llave S3 ni ningún clic de Miguel. Bucket `pos-don-poncho` creado **privado**; guardar, leer y
+  borrar un objeto de prueba funcionan, la lectura pública falla, y el bucket quedó vacío.
+
+### Fase 3 · día 1 (el proyecto vacío)
+
+- 10:47 Catálogo de la compartida (sólo lectura): `morphiqpos_app` con `bypassrls`, uso de `public`
+  sin `create`, y privilegios por omisión de `postgres` en `public` (tablas `arwd`, secuencias
+  `rU`).
+- 10:48 En la propia, `morphiqpos_app` creado igual (verificador SCRAM; la contraseña no viaja).
+  El proyecto nuevo trae privilegios por omisión para `anon` y `authenticated` en tablas,
+  secuencias y funciones: los quitará una migración de la base propia.
+- 10:49 `pnpm db:migrate` con la cadena de sesión de `postgres`: 120 aplicadas, de la 001 a la
+  188, en 48 s.
+- 10:50 `verify:esquema` estricto contra la propia (`MORPHIQPOS_PROYECTO_VERIFICADO` y
+  `MORPHIQPOS_DB_VERIFICACION`): cumple, 1749 columnas, 1382 restricciones y 445 índices.
+- 10:51 RLS y permisos con la consulta de la guía: **139 de 139 tablas con RLS y 0 permisos** para
+  `anon` y `authenticated` en tablas, rutinas y secuencias. Las migraciones mismas los retiran
+  (también los privilegios por omisión de `postgres`), así que **no hizo falta migración nueva**.
+  `morphiqpos_app` queda igual que en la compartida (176 permisos de tabla, 1 secuencia, 2 de 16
+  rutinas). Extensiones: `pg_cron` 1.6.4, `btree_gist`, `pg_trgm`, `unaccent`, `pgcrypto`,
+  `uuid-ossp`; tarea `morphiqpos_retencion_comandos` a las 03:17. Las 3 demostraciones de la 042,
+  apagadas por la 188.
+
+### Fase 3 · la mudanza (día 2)
+
+- 10:52 Huella de las otras 10 organizaciones de la compartida (sólo lectura): 122 tablas, 275
+  conteos y md5 → `_PRIVADO\mudanza\huellas-dp15\antes-mudanza.json`.
+- 10:52 Exportación con `--exigir-cerrado` → `_PRIVADO\mudanza\2026-11-08-dp15`: 135 tablas, 1175
+  filas en 17,3 s; 0 archivos.
+- 10:53 Importación a la propia con `postgres` (sesión): 135 tablas, 1175 filas, idénticas al origen
+  (filas y md5) y sin llaves rotas, en 143 s; 0 archivos.
+- 10:55 `--solo-verificar`: 135 tablas idénticas. `verify:esquema` estricto otra vez: cumple.
+- 10:56 Sembrado `por_cancelacion` (DP-D71) en la propia. Don Poncho: activo, 9 empleos, 107
+  productos. `morphiqpos_app` entra por el pooler de transacción (6543).
+
+### Fase 2.1 y 4 · la base propia, lista para operar (antes de cambiar Vercel)
+
+- 10:59 Por los comandos del sistema, con «Miguel · Morphiq» como quien manda (guion fuera del
+  repositorio): `identidad.establecer_pin` a las 9 personas (PIN nuevos de 4 cifras al azar, que no
+  coinciden con ningún número de 4 cifras de `_PRIVADO` ni son fáciles de adivinar), «Caja 2» dada de
+  alta con `identidad.guardar_empleado` (puesto caja), `caja.fijar_cajas_simultaneas` en 2 y
+  `configuracion.permitir_descuentos` encendido (el PIN de quien autoriza ya lo exige DP-D61).
+  Comprobados contra el hash guardado con la pimienta de producción: **10 de 10**. Los PIN, en
+  `_PRIVADO\PINES-DON-PONCHO.md`; con esto, el aviso de `AVISO-PIN-DP14.md` queda resuelto en la
+  base propia.
+
+### Fase 3 · Vercel, humo y después
+
+- 11:01 Las cinco variables de Production (`DATABASE_URL`, `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`,
+  `STORAGE_SECRET_KEY`, `STORAGE_BUCKET`) con `vercel env add … production --force`, el valor por la
+  entrada estándar (el guion comprueba que base, endpoint y llave sean del mismo proyecto).
+  `PIN_PEPPER`, `SESSION_SECRET`, `ORGANIZACION` y `APP_URL` no se tocaron.
+- 11:02 `vercel redeploy` del despliegue vigente (`f02d4ca`) → `dpl_J8sH…`, `READY` a las 11:03, con
+  los tres alias. Sin registros de error.
+- 11:05 Humo sin cobrar con Playwright (Chromium), 38 de 38: la entrada lista 10 personas (con
+  «Caja 2», sólo de la propia); Gerente, Dueño, Caja, Caja 2, Mesero 1, Cocina, Bebidas y Almacén
+  entran con su PIN nuevo y caen en su pantalla (Almacén en `/recetas`); la gerente abre 23 pantallas
+  y el dueño 4, sin pantalla de error ni 5xx; el QR de la mesa 1 con su token de siempre abre el
+  portal con la barbacoa; el teléfono de cocina de Cocina y de Bebidas, con un enlace firmado hoy
+  localmente (misma pimienta, versión vigente: sin escribir), 200. Lo único escrito por el humo: las
+  sesiones de esas 8 entradas.
+- 11:07 Huella de los otros 10: **IDÉNTICA**. Exportación de Don Poncho de la compartida otra vez:
+  135 tablas, 0 diferencias contra la de las 10:52 (intacto, como respaldo).
+- 11:10 El regreso atrás, escrito en `MUDANZA-FASE-B.md` y, con su guion, en
+  `_PRIVADO\mudanza\regreso-atras\`.
