@@ -19,8 +19,9 @@ export interface ResultadoDelLlamado {
  * carrito; agregar, quitar y enviar son comandos del portal, con su idempotencia.
  */
 
-const ruta = (token: string, resto = '') =>
-  `/api/publico/qr/${encodeURIComponent(token)}/carrito${resto}`;
+// Cada llamada escribe su ruta entera (DP-15): con el sufijo armado (`carrito${resto}`) la
+// puerta del acople no podía cotejarla con las carpetas de `app/api/publico/qr/[token]/carrito`.
+const qr = (token: string): string => encodeURIComponent(token);
 
 /**
  * `null`: este negocio no acepta pedidos desde el teléfono. Sin `dispositivo` (`''`) el servidor le
@@ -31,7 +32,7 @@ export function leerElCarrito(
   dispositivo: string,
 ): Promise<EstadoDelCarrito | null> {
   return invocarComando<EstadoDelCarrito | null>(
-    ruta(token),
+    `/api/publico/qr/${qr(token)}/carrito`,
     dispositivo === '' ? {} : { dispositivo },
   );
 }
@@ -41,7 +42,10 @@ export function agregarAlCarrito(
   dispositivo: string,
   item: ItemDelCarrito,
 ): Promise<EstadoDelCarrito> {
-  return invocarComando<EstadoDelCarrito>(ruta(token, '/agregar'), { dispositivo, item });
+  return invocarComando<EstadoDelCarrito>(`/api/publico/qr/${qr(token)}/carrito/agregar`, {
+    dispositivo,
+    item,
+  });
 }
 
 export function quitarDelCarrito(
@@ -49,7 +53,10 @@ export function quitarDelCarrito(
   dispositivo: string,
   lineaId: string,
 ): Promise<EstadoDelCarrito> {
-  return invocarComando<EstadoDelCarrito>(ruta(token, '/quitar'), { dispositivo, lineaId });
+  return invocarComando<EstadoDelCarrito>(`/api/publico/qr/${qr(token)}/carrito/quitar`, {
+    dispositivo,
+    lineaId,
+  });
 }
 
 /**
@@ -69,7 +76,7 @@ export function enviarElCarrito(
     readonly apertura?: AperturaDeLaMesa | undefined;
   },
 ): Promise<ResultadoDelEnvio> {
-  return invocarComando<ResultadoDelEnvio>(ruta(token, '/enviar'), {
+  return invocarComando<ResultadoDelEnvio>(`/api/publico/qr/${qr(token)}/carrito/enviar`, {
     dispositivo,
     confirmado,
     notaGeneral,
@@ -79,5 +86,7 @@ export function enviarElCarrito(
 
 /** DP-12.2 · «Llamar a mi mesero para confirmar»: una solicitud con «Pedido listo para confirmar». */
 export function llamarAlMesero(token: string, dispositivo: string): Promise<ResultadoDelLlamado> {
-  return invocarComando<ResultadoDelLlamado>(ruta(token, '/llamar'), { dispositivo });
+  return invocarComando<ResultadoDelLlamado>(`/api/publico/qr/${qr(token)}/carrito/llamar`, {
+    dispositivo,
+  });
 }
