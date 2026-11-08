@@ -28,3 +28,19 @@ export function correlationIdDe(candidato: string | null | undefined): string {
 export function registrar(evento: EventoRegistro): void {
   console.error(JSON.stringify(evento));
 }
+
+/**
+ * Cómo se llama el fallo, sin llevarse nada de dentro.
+ *
+ * Devuelve la clase del error y su código cuando lo hay: un SQLSTATE (`23503`, `23514`, `40001`) o el
+ * de un socket (`ECONNRESET`). Ninguno contiene valores de entrada ni nombres del esquema. Es lo justo
+ * para saber si lo que falló fue una clave foránea, un `check`, un interbloqueo o la conexión.
+ */
+export function claseDelFallo(error: unknown): string {
+  const clase = error instanceof Error ? error.constructor.name : typeof error;
+  const codigo =
+    typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string'
+      ? error.code
+      : null;
+  return codigo === null ? `causa=${clase}` : `causa=${clase} sqlstate=${codigo}`;
+}

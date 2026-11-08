@@ -20,7 +20,7 @@ import {
 import type { RepositorioComandos } from './repositorio.ts';
 import { huella } from './saneado.ts';
 import { dentroDeLaSucursal, fronteraDelAmbito } from './sucursal/frontera.ts';
-import { registrar } from './observabilidad.ts';
+import { claseDelFallo, registrar } from './observabilidad.ts';
 
 export { definirComando } from './definicion.ts';
 export type { ContextoComando, DefinicionComando } from './definicion.ts';
@@ -335,21 +335,4 @@ export function crearComando<TX>(deps: Dependencias<TX>) {
       return { ok: false, error: fallo('ERROR_INTERNO'), correlationId };
     }
   };
-}
-
-/**
- * Cómo se llama el fallo, sin llevarse nada de dentro.
- *
- * Devuelve la clase del error y su SQLSTATE cuando lo hay. Un SQLSTATE es un
- * código del estándar de cinco caracteres —`23503`, `23514`, `40001`— y no
- * contiene valores de entrada ni nombres del esquema. Es lo justo para saber si
- * lo que falló fue una clave foránea, un `check` o un interbloqueo.
- */
-function claseDelFallo(error: unknown): string {
-  const clase = error instanceof Error ? error.constructor.name : typeof error;
-  const codigo =
-    typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string'
-      ? error.code
-      : null;
-  return codigo === null ? `causa=${clase}` : `causa=${clase} sqlstate=${codigo}`;
 }

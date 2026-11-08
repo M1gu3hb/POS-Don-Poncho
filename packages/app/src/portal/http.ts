@@ -5,7 +5,7 @@ import type { ZodType } from 'zod';
 
 import { negocioDelTokenDeMesa } from '../negocio/despliegue.ts';
 import { cuerpoDentroDelLimite } from '../http/limite-cuerpo.ts';
-import { correlationIdDe, registrar } from '../observabilidad.ts';
+import { claseDelFallo, correlationIdDe, registrar } from '../observabilidad.ts';
 import { ejecutarComandoPublico } from './comando-publico.ts';
 import type { ComandoPublico } from './definicion-publica.ts';
 import { payloadDelPortal, type PayloadPortal } from './consulta.ts';
@@ -262,7 +262,7 @@ export function respuestaDeError(
     modulo: 'portal_http',
     correlationId,
     organizacionId: contexto.organizacionId ?? null,
-    mensaje: `${donde} fallo.`,
+    mensaje: `${donde} fallo. ${claseDelFallo(error)}`,
   });
   return respuesta(
     ESTADO_HTTP.ERROR_INTERNO,
