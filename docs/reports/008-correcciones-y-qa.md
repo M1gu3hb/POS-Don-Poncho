@@ -11,7 +11,7 @@
 
 ## 0 · Lo urgente para Miguel
 
-**Tu PIN de dueño en producción es todavía el temporal, y es el mismo que el de la demo.** Ese PIN aparece en el repositorio, que es público, en el equipo de prueba y en la CI. Cámbialo hoy, desde Configuración → Usuarios → tu fila → PIN; ahora sí te deja editarte a ti mismo. No lo cambié yo: los PIN reales los tecleas tú.
+**Hay cambios de PIN pendientes en producción.** Los detalles están en `..\_PRIVADO\AVISO-PIN-DP14.md`, no aquí. Los PIN reales los tecleas tú, desde Configuración → Usuarios (ahora sí te deja editarte a ti mismo).
 
 ## 1 · Lo hecho
 
@@ -129,7 +129,7 @@ El detalle está en `docs/qa/JORNADA-2026-11-07.md` (con las bitácoras de QA-A 
 
 En producción y en sus aparatos. Al final tiene que quedar todo como estaba.
 
-1. **Tu PIN (urgente):** Configuración → Usuarios → tu fila → cambia tu PIN y entra con el nuevo. Fíjate que no te deja cambiarte el puesto.
+1. **Los PIN pendientes (urgente):** los de `_PRIVADO\AVISO-PIN-DP14.md`, desde Configuración → Usuarios. Entra con el nuevo. Fíjate que en tu propia fila no te deja cambiarte el puesto.
 2. **La gerente sigue siendo gerente:** ábrela en Usuarios, cámbiale el nombre a «Gerente» (el mismo) y guarda. Sigue «Gerente» y su sesión no se cierra. Entra como ella: no ve las pestañas «Caja» ni «Descuentos».
 3. **Configuración → Caja:** las terminales con su nombre. **Descuentos:** los topes reales (gerente 30 % o $2,000).
 4. **El descuento en el cobro:** en una mesa de prueba, pide la cuenta.
