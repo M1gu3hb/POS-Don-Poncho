@@ -76,9 +76,23 @@ export async function ventasDelDia(
   return { ...fila, propinasCentavos: propinas.toString(), metodos: metodos.rows };
 }
 
+/**
+ * Las ventas del día, sólo si el corte cierra el día Y el día tuvo más de una caja: con una sola,
+ * el resumen de su corte ya es el día y repetirlo sólo estorba.
+ */
+export async function ventasDelDiaConVariasCajas(
+  tx: Transaccion,
+  organizacionId: string,
+  alcance: AlcanceDelCorte,
+): Promise<VentasDelDia | null> {
+  if (!alcance.cierraElDia) return null;
+  const delDia = await ventasDelDia(tx, organizacionId, alcance);
+  return delDia.cajas > 1 ? delDia : null;
+}
+
 export const entradaVentasDelDia = z.object({ sesionCajaId: z.uuid() });
 
-/** `null` si el corte no cierra el día: entonces su resumen ya es todo lo que le toca. */
+/** `null` si el corte no cierra el día o si el día tuvo una sola caja: su resumen ya basta. */
 export const ventasDelDiaDelCorte = definirComando<
   Transaccion,
   typeof entradaVentasDelDia,
@@ -99,7 +113,8 @@ export const ventasDelDiaDelCorte = definirComando<
     if (alcance === null) {
       throw new ErrorDominio('PUENTE_NO_ENCONTRADO', 'Ese corte no existe en este negocio.');
     }
-    if (!alcance.cierraElDia) return null;
-    return ctx.paso('leer_ventas_del_dia', () => ventasDelDia(ctx.tx, organizacionId, alcance));
+    return ctx.paso('leer_ventas_del_dia', () =>
+      ventasDelDiaConVariasCajas(ctx.tx, organizacionId, alcance),
+    );
   },
 });

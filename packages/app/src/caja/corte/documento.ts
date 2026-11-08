@@ -16,7 +16,7 @@ import { sinCostosSiNoLosVe } from './sin-costos.ts';
 import { definirComando } from '../../definicion.ts';
 import * as consultas from './consultas.ts';
 import { devolucionesDelCorte, type DevolucionDelCorte } from './devoluciones.ts';
-import { ventasDelDia, type VentasDelDia } from './ventas-del-dia.ts';
+import { ventasDelDiaConVariasCajas, type VentasDelDia } from './ventas-del-dia.ts';
 import * as extras from './extras.ts';
 
 /**
@@ -87,8 +87,8 @@ export interface HojaDelCorte {
   readonly conteo: readonly consultas.PiezasContadas[];
   readonly metodos: readonly consultas.VentasPorMetodo[];
   /**
-   * DP-15 (QA, J-H6) · Sólo en el corte que cierra el día: las ventas de TODAS las cajas de su
-   * ventana. `resumen` sigue siendo el de esta caja (DP-D50).
+   * DP-15 (QA, J-H6) · Sólo en el corte que cierra un día de VARIAS cajas: las ventas de todas las
+   * de su ventana. `resumen` sigue siendo el de esta caja (DP-D50).
    */
   readonly ventasDelDia: VentasDelDia | null;
   readonly resumen: Omit<consultas.ResumenDeVentas, 'costoCentavos' | 'costoConocidoCentavos'> & {
@@ -198,9 +198,9 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
     const delGiro = await ctx.paso('leer_extras', () =>
       extrasDe(tx, organizacionId, plantilla, ventana),
     );
-    const delDia = alcance.cierraElDia
-      ? await ctx.paso('leer_ventas_del_dia', () => ventasDelDia(tx, organizacionId, alcance))
-      : null;
+    const delDia = await ctx.paso('leer_ventas_del_dia', () =>
+      ventasDelDiaConVariasCajas(tx, organizacionId, alcance),
+    );
 
     // La última pasada: sin un solo costo para quien no los ve, por campo que se
     // olvidara arriba (`sin-costos.ts`).

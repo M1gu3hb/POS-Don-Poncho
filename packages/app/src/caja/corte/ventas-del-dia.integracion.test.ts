@@ -91,4 +91,76 @@ describe('caja.ventas_del_dia', () => {
     },
     POR_COMANDOS,
   );
+
+  it(
+    'con una sola caja en el día no hay «Ventas del día»: su resumen ya es el día',
+    async () => {
+      const salon = await sembrarSalon({ nombre: 'Fonda de una caja', mesas: 1, terminales: 1 });
+      const caja = ambitoDeCaja(salon, 0);
+      const sesion = await abrirCajaReal(caja);
+      const mesa = await sentarYPedir(salon, 0, [{ platillo: 'cerveza', cantidad: '1' }]);
+      await pedirLaCuenta(salon, mesa.ordenId);
+      exigirOk(await cobrarExacto(caja, mesa.ordenId, CERVEZA_CENTAVOS), 'cobrar');
+      exigirOk(
+        await comando(cerrarCaja, {
+          entrada: { efectivoContadoCentavos: 50_000 },
+          ambito: caja,
+          idempotencyKey: clave(),
+        }),
+        'caja.cerrar',
+      );
+      const hoja = exigirOk(
+        await comando(hojaDelCorte, {
+          entrada: { sesionCajaId: sesion },
+          ambito: caja,
+          idempotencyKey: clave(),
+        }),
+        'caja.hoja_del_corte',
+      );
+      expect(hoja.alcanceDeCancelaciones).toBe('dia');
+      expect(hoja.ventasDelDia).toBeNull();
+      const leidas = exigirOk(
+        await comando(ventasDelDiaDelCorte, {
+          entrada: { sesionCajaId: sesion },
+          ambito: caja,
+          idempotencyKey: clave(),
+        }),
+        'caja.ventas_del_dia',
+      );
+      expect(leidas).toBeNull();
+    },
+    POR_COMANDOS,
+  );
+
+  it(
+    'tres cajas: la segunda en cerrar, con la tercera abierta, no cierra el día y no trae el día',
+    async () => {
+      const salon = await sembrarSalon({ nombre: 'Fonda de tres cajas', mesas: 1, terminales: 3 });
+      const cajas = [0, 1, 2].map((i) => ambitoDeCaja(salon, i));
+      const sesiones: string[] = [];
+      for (const caja of cajas) sesiones.push(await abrirCajaReal(caja));
+      for (const caja of cajas.slice(0, 2)) {
+        exigirOk(
+          await comando(cerrarCaja, {
+            entrada: { efectivoContadoCentavos: 50_000 },
+            ambito: caja,
+            idempotencyKey: clave(),
+          }),
+          'caja.cerrar',
+        );
+      }
+      const segunda = sesiones[1] ?? '';
+      const hoja = exigirOk(
+        await comando(hojaDelCorte, {
+          entrada: { sesionCajaId: segunda },
+          ambito: cajas[0] ?? ambitoDeCaja(salon, 0),
+          idempotencyKey: clave(),
+        }),
+        'caja.hoja_del_corte',
+      );
+      expect(hoja.alcanceDeCancelaciones).toBe('caja');
+      expect(hoja.ventasDelDia).toBeNull();
+    },
+    POR_COMANDOS,
+  );
 });
