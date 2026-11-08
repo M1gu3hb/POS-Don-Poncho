@@ -117,4 +117,48 @@ describe('caja.terminales y caja.nombrar_terminal', () => {
     const ajena = otro.sucursal.terminales[0] ?? '';
     expect(regla(await nombrar(ajena, 'Mía'))).toBe('TERMINAL_NO_ENCONTRADA');
   });
+  it(
+    'el nombre de un aparato que nunca abrió caja queda libre: el aparato se renombra solo',
+    { timeout: POR_COMANDOS },
+    async () => {
+      // DP-15 · QA de la jornada, J-H1: en producción hay 25 aparatos dormidos que se llaman
+      // «Caja 1» a «Caja 25» (los teléfonos y tabletas que entraron alguna vez). La PC de la caja
+      // tiene que poder llamarse «Caja 1».
+      const caja = salon.sucursal.terminales[0] ?? '';
+      const dormida = salon.sucursal.terminales[2] ?? '';
+      exigirOk(await nombrar(caja, 'Caja 3'), 'nombrar');
+
+      const filas = await obtenerDb()
+        .selectFrom('terminales')
+        .select(['id', 'nombre'])
+        .where('id', 'in', [caja, dormida])
+        .execute();
+      const nombreDe = (id: string) => filas.find((f) => f.id === id)?.nombre;
+      expect(nombreDe(caja)).toBe('Caja 3');
+      expect(nombreDe(dormida)).toMatch(/^Aparato /);
+
+      const auditoria = await obtenerDb()
+        .selectFrom('auditoria')
+        .select('payload')
+        .where('accion', '=', 'caja.nombrar_terminal')
+        .where('entidad_id', '=', caja)
+        .orderBy('id', 'desc')
+        .executeTakeFirstOrThrow();
+      expect(auditoria.payload).toMatchObject({
+        despues: 'Caja 3',
+        liberado: { terminal: dormida, antes: 'Caja 3' },
+      });
+    },
+  );
+
+  it(
+    'el nombre de una caja que ya abrió no se le quita: se rechaza',
+    { timeout: POR_COMANDOS },
+    async () => {
+      // «Barra» (la terminal 1) abrió y cerró caja: es una caja de verdad.
+      expect(regla(await nombrar(salon.sucursal.terminales[0] ?? '', 'barra'))).toBe(
+        'TERMINAL_NOMBRE_REPETIDO',
+      );
+    },
+  );
 });
