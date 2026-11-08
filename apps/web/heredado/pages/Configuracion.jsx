@@ -477,7 +477,15 @@ export default function Configuracion() {
 
         <TabsContent value="apariencia">
           <div className="space-y-6">
-            <SelectorDeApariencia />
+            {/* DP-15 · La marca del negocio la guarda sólo el dueño (`configuracion.apariencia`):
+                a los demás no se les ofrece un botón que el servidor niega. */}
+            {miPuesto === 'dueno' ? (
+              <SelectorDeApariencia />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                La apariencia del negocio (colores y estilo) la cambia el dueño.
+              </p>
+            )}
             {/* DP-11.1 y 11.2: «Mascota Morfi» y «Pedir PIN al despertar», por negocio. */}
             <ExperienciaDelNegocio />
             {/* La voz de los avisos es de ESTE dispositivo: la cocina o la tableta de la sala

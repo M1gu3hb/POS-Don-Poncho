@@ -39,4 +39,8 @@ describe('DP-15 · las pestañas de mando de Configuración', () => {
       }
     },
   );
+
+  it('el selector de apariencia sólo lo ve el dueño (el servidor sólo a él le deja guardar)', () => {
+    expect(codigo()).toContain("{miPuesto==='dueno'?(<SelectorDeApariencia/>):(");
+  });
 });
