@@ -432,9 +432,9 @@ export function arqueo(
 ): readonly Seccion[] {
   const s = hoja.sesion;
   const cambio = entradasDeCambio(hoja);
-  // El fondo esperado SUBE con cada entrada de cambio; la diferencia de apertura se mide
-  // contra lo que se esperaba AL ABRIR.
-  const esperadoAlAbrir = centavos(s.fondoEsperadoCentavos) - cambio;
+  // El fondo esperado es el de la APERTURA (lo que se dejó anoche): las entradas de cambio no lo
+  // tocan (DP-15, QA J-H7); entran al efectivo esperado por su movimiento.
+  const esperadoAlAbrir = centavos(s.fondoEsperadoCentavos);
   const celdas: Celda[] = [
     { etiqueta: 'Fondo esperado', valor: dinero(esperadoAlAbrir) },
     { etiqueta: 'Fondo contado', valor: dinero(s.fondoInicialCentavos) },

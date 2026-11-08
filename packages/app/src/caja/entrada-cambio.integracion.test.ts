@@ -15,7 +15,9 @@ import { registrarEntradaDeCambio } from './entrada-cambio.ts';
  * el fondo inicial. Las pruebas con la base falsa no lo veían.
  *
  * Además (la revisión de código): leía el fondo esperado y escribía el nuevo sin candado; con dos
- * entradas a la vez en el mismo cajón la segunda pisaba a la primera. Ahora suma la base.
+ * entradas a la vez en el mismo cajón la segunda pisaba a la primera. Y el papel del corte enseñaba
+ * ese fondo como «Fondo esperado apertura», con las entradas dentro (QA, J-H7). Ahora la entrada
+ * sólo deja su movimiento: el efectivo esperado sale de los movimientos del cajón.
  */
 
 const POR_COMANDOS = 120_000;
@@ -65,16 +67,18 @@ beforeAll(async () => {
 
 describe('caja.entrada_cambio', () => {
   it(
-    'se guarda: el fondo esperado sube, el movimiento es suyo y dice de dónde salió el dinero',
+    'se guarda: el efectivo esperado sube, el fondo de apertura no, y dice de dónde salió el dinero',
     async () => {
       const sesionId = await abrirCajaReal(ambitoDeCaja(salon), FONDO);
       const alAbrir = await sesionDe(sesionId);
       const salida = exigirOk(await entrar(salon, 40_000, 20_000, 'caja_chica'), 'entrada');
 
       expect(salida.montoCentavos).toBe('60000');
-      expect(salida.fondoEsperadoCentavos).toBe(String(FONDO + 60_000));
+      expect(salida.efectivoEsperadoCentavos).toBe(String(FONDO + 60_000));
       const sesion = await sesionDe(sesionId);
-      expect(sesion.fondo_esperado_centavos).toBe(BigInt(FONDO + 60_000));
+      // El fondo esperado de APERTURA (lo que se dejó anoche) no cambia: el papel del corte lo
+      // compara con lo contado al abrir (QA, J-H7).
+      expect(sesion.fondo_esperado_centavos).toBe(alAbrir.fondo_esperado_centavos);
       // El desglose de la APERTURA no se toca: sigue cuadrando con el fondo inicial.
       expect([
         sesion.fondo_monedas_centavos,
@@ -108,10 +112,10 @@ describe('caja.entrada_cambio', () => {
       );
       for (const r of resultados) exigirOk(r, 'entrada');
 
-      expect((await sesionDe(sesionId)).fondo_esperado_centavos).toBe(
-        BigInt(FONDO + VECES * 1_000),
-      );
       expect(await entradasDe(sesionId)).toHaveLength(VECES);
+      const sesion = await sesionDe(sesionId);
+      const arqueo = await repoCaja.arqueoDeSesion(obtenerDb(), sesion.organizacion_id, sesionId);
+      expect(arqueo.efectivoEsperadoCentavos).toBe(BigInt(FONDO + VECES * 1_000));
     },
     POR_COMANDOS,
   );

@@ -22,10 +22,12 @@ import { definirComando } from '../definicion.ts';
  * que el fondo desglosado de la apertura (F-984): un solo número esconde
  * exactamente el problema que el cambio viene a resolver.
  *
- * ── El fondo esperado SUBE con esto ──────────────────────────────────────
+ * ── El efectivo esperado SUBE con esto ───────────────────────────────────
  * Si no subiera, el corte de la noche diría que sobran $600 todos los días que
  * alguien metió cambio. Un corte que sobra por diseño deja de servir para
- * detectar el faltante, que es para lo que existe.
+ * detectar el faltante, que es para lo que existe. Sube por el movimiento: el
+ * arqueo suma los movimientos del cajón. El fondo esperado de la APERTURA no
+ * se toca (DP-15).
  *
  * ── Y NO se compensa solo al cerrar ──────────────────────────────────────
  * El cambio que entró se queda: es fondo hasta que alguien lo retire. Devolverlo
@@ -50,8 +52,8 @@ export interface ResultadoEntradaCambio {
   readonly montoCentavos: string;
   readonly monedasCentavos: string;
   readonly chicosCentavos: string;
-  /** El fondo esperado DESPUÉS. Es contra éste que se cuadra en la noche. */
-  readonly fondoEsperadoCentavos: string;
+  /** El efectivo esperado del cajón DESPUÉS de la entrada. Es contra éste que se cuadra en la noche. */
+  readonly efectivoEsperadoCentavos: string;
 }
 
 export const registrarEntradaDeCambio = definirComando<
@@ -106,22 +108,13 @@ export const registrarEntradaDeCambio = definirComando<
       }),
     );
 
-    // El fondo esperado SUBE (la hoja del corte resta las entradas para enseñar el de apertura).
-    // DP-15: la suma la hace la base, en una sola escritura: leer, sumar y escribir desde aquí
-    // perdía una entrada cuando llegaban dos a la vez. El desglose del fondo NO se toca: es el de
-    // la apertura y la base exige que cuadre con el fondo inicial (`sesion_fondo_desglosado_cuadra`);
-    // el de la entrada queda en su movimiento y en la auditoría.
-    const { fondo_esperado_centavos: fondoEsperado } = await ctx.paso('subir_fondo', () =>
-      ctx.tx
-        .updateTable('sesiones_caja')
-        .set((eb) => ({
-          fondo_esperado_centavos: eb('fondo_esperado_centavos', '+', BigInt(monto)),
-          updated_at: ctx.ahora,
-        }))
-        .where('organizacion_id', '=', organizacionId)
-        .where('id', '=', sesion.id)
-        .returning('fondo_esperado_centavos')
-        .executeTakeFirstOrThrow(),
+    // El EFECTIVO esperado sube solo: sale de los movimientos del cajón (`arqueoDeSesion`), y el de
+    // la entrada acaba de escribirse. DP-15: la sesión ya no se toca. Su fondo esperado es el de la
+    // APERTURA (lo que se dejó anoche), que el papel del corte compara con lo contado al abrir; con
+    // las entradas sumadas decía «esperado $1,700» contra «contado $1,500» (QA, J-H7). Y su desglose
+    // es el de la apertura, que la base exige que cuadre con el fondo inicial.
+    const arqueo = await ctx.paso('efectivo_esperado', () =>
+      repoCaja.arqueoDeSesion(ctx.tx, organizacionId, sesion.id),
     );
 
     ctx.auditar({
@@ -137,7 +130,7 @@ export const registrarEntradaDeCambio = definirComando<
       montoCentavos: monto.toString(),
       monedasCentavos: entrada.monedasCentavos.toString(),
       chicosCentavos: entrada.chicosCentavos.toString(),
-      fondoEsperadoCentavos: fondoEsperado.toString(),
+      efectivoEsperadoCentavos: arqueo.efectivoEsperadoCentavos.toString(),
     };
   },
 });

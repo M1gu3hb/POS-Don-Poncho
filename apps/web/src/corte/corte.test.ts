@@ -41,7 +41,7 @@ function hoja(extras: ExtrasDelServidor, cambios: Partial<HojaDelServidor> = {})
       notasApertura: null,
       notasCierre: null,
       fondoInicialCentavos: '95000',
-      fondoEsperadoCentavos: '160000',
+      fondoEsperadoCentavos: '100000',
       fondoMonedasCentavos: '95000',
       fondoChicosCentavos: '0',
       fondoGrandesCentavos: '0',
@@ -147,8 +147,9 @@ describe('las reglas del corte', () => {
     });
   });
 
-  it('la diferencia de apertura se mide contra lo esperado AL ABRIR, sin las entradas de cambio', () => {
-    // fondo esperado 1,600 = 1,000 que dejó anoche + 600 de cambio a media mañana.
+  it('la diferencia de apertura se mide contra lo que se dejó anoche; las entradas de cambio no lo tocan', () => {
+    // DP-15 (QA, J-H7): el fondo esperado de apertura es lo que se dejó anoche (1,000); los 600 de
+    // cambio a media mañana entran al efectivo esperado por su movimiento, no a este número.
     const doc = documentoDelCorte(hoja(RESTAURANTE));
     expect(celda(doc.secciones, 'Apertura y fondo', 'Fondo esperado')?.valor).toEqual({
       tipo: 'dinero',
