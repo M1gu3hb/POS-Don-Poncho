@@ -1073,6 +1073,11 @@
         "+ clase:font-medium",
         "+ texto:Cuenta cobrada"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-15 (QA de la jornada, J-H4): la precuenta del mesero se cuenta en el servidor antes de imprimirse; si no se pudo contar, un aviso lo dice y no se imprime a escondidas.",
+      "testigos": ["+ aviso:No se pudo registrar la precuenta. Intenta de nuevo."]
     }
   ]
 }

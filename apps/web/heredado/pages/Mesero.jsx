@@ -15,6 +15,7 @@ import {
   guardarBorrador,
   leerBorrador,
 } from '~/restaurante/borrador-del-pedido';
+import { anchoDelPapel } from '~/impresion/papel';
 import {
   UtensilsCrossed,
   Send,
@@ -1197,7 +1198,20 @@ function Mesero() {
     }
   };
 
-  const imprimirPreCuenta = () => {
+  // DP-15 (QA, J-H4): la hoja se cuenta en el servidor ANTES de imprimirse. De ese rastro dependen
+  // el PIN para quitar o cancelar con la precuenta impresa (DP-13.2) y la marca de copia; una
+  // impresión que no deja rastro es justo la que permite cobrar la hoja vieja.
+  const imprimirPreCuenta = async () => {
+    if (!preCuentaData?.venta?.id) return;
+    try {
+      await api.comandos.ejecutar('/api/restaurante/imprimir-precuenta', {
+        ordenId: preCuentaData.venta.id,
+        anchoMm: anchoDelPapel(config?.ancho_papel_ticket),
+      });
+    } catch (err) {
+      toast.error(err?.message || 'No se pudo registrar la precuenta. Intenta de nuevo.');
+      return;
+    }
     sonar('ticket');
     printDocument({ mode: 'thermal', title: `PreCuenta-${preCuentaData?.venta?.folio || ''}` });
   };
