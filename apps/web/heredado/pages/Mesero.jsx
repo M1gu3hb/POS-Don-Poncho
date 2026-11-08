@@ -9,6 +9,13 @@ import { useConfig } from '@/lib/ConfigContext';
 import { formatCurrency } from '@/utils/financialUtils';
 import { toast } from 'sonner';
 import {
+  almacenDelAparato,
+  borrarBorrador,
+  claveDelBorrador,
+  guardarBorrador,
+  leerBorrador,
+} from '~/restaurante/borrador-del-pedido';
+import {
   UtensilsCrossed,
   Send,
   Receipt,
@@ -175,6 +182,16 @@ function Mesero() {
   const [categoriaFiltro, setCategoriaFiltro] = useState('todas');
   const [loading, setLoading] = useState(false);
   const [notaMesa, setNotaMesa] = useState('');
+  // DP-15 · El pedido a medias se guarda en este aparato mientras se arma (`borrador-del-pedido`).
+  useEffect(() => {
+    if (!posUser?.id || !mesaActiva?.id || !mesaActiva?.venta_activa_id) return;
+    guardarBorrador(
+      almacenDelAparato(),
+      claveDelBorrador(posUser.id, mesaActiva.id),
+      { ordenId: mesaActiva.venta_activa_id, carrito, nota: notaMesa },
+      Date.now(),
+    );
+  }, [carrito, notaMesa, mesaActiva?.id, mesaActiva?.venta_activa_id, posUser?.id]);
 
   // Open table modal (6A: ahora con alergias + celebración)
   const [showAbrirMesa, setShowAbrirMesa] = useState(false);
@@ -525,7 +542,20 @@ function Mesero() {
       }
       // Open existing sale
       setLoading(true);
-      setCarrito([]);
+      // DP-15 · Si el mesero ya llevaba algo en esta cuenta (y el teléfono recargó), se recupera.
+      const borrador = posUser?.id
+        ? leerBorrador(
+            almacenDelAparato(),
+            claveDelBorrador(posUser.id, mesa.id),
+            mesa.venta_activa_id,
+            Date.now(),
+          )
+        : null;
+      setCarrito(borrador ? [...borrador.carrito] : []);
+      if (borrador) {
+        setNotaMesa(borrador.nota);
+        toast.info('Recuperamos lo que llevabas en esta mesa');
+      }
       setBusquedaProducto('');
       setCategoriaFiltro('todas');
       setMesaActiva(mesa);
@@ -950,6 +980,9 @@ function Mesero() {
       queryClient.refetchQueries({ queryKey: ['pedidos_cocina'], type: 'active' }).catch(() => {});
       toast.success('¡Pedido enviado a cocina!');
       sonar('enviarACocina');
+      if (posUser?.id && mesaActiva?.id) {
+        borrarBorrador(almacenDelAparato(), claveDelBorrador(posUser.id, mesaActiva.id));
+      }
       setCarrito([]);
       setNotaMesa('');
       setVentaActiva(ventaFresca);
