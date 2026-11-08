@@ -83,6 +83,8 @@ export const metadata: Metadata = {
     ],
     apple: { url: '/iconos/apple-touch-icon.png', sizes: '180x180' },
   },
+  // DP-15 · En el iPhone, «Agregar a pantalla de inicio» abre como app y se llama «Don Poncho».
+  appleWebApp: { capable: true, title: 'Don Poncho', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {
