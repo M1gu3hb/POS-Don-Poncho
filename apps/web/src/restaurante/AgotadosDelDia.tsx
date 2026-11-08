@@ -102,7 +102,7 @@ export function AgotadosDelDia() {
           ) : lista.length === 0 ? (
             <Vacio
               tamano="compacto"
-              icono={<Ban aria-hidden className="size-8" />}
+              icono={<Ban />}
               titulo="Ningún platillo coincide con la búsqueda."
             />
           ) : (

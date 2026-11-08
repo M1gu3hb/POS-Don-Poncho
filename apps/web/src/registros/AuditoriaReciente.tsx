@@ -73,11 +73,7 @@ export function AuditoriaReciente() {
         }}
       />
       {renglones.length === 0 ? (
-        <Vacio
-          tamano="compacto"
-          icono={<History aria-hidden className="size-8" />}
-          titulo="Nada que mostrar con esa búsqueda."
-        />
+        <Vacio tamano="compacto" icono={<History />} titulo="Nada que mostrar con esa búsqueda." />
       ) : (
         <ul className="flex flex-col divide-y divide-borde">
           {renglones.map((r) => (
