@@ -1,6 +1,6 @@
 # 35 · El agotado del día, los movimientos de la cajera, dos cajas en el cierre y lo que ve cada puesto (DP-15)
 
-Decisiones DP-D83 a DP-D89. **Una migración: la 189** (aditiva). Todo es genérico: salió de la
+Decisiones DP-D83 a DP-D90. **Una migración: la 189** (aditiva). Todo es genérico: salió de la
 auditoría por función de DP-15 (`docs/qa/AUDITORIA-POR-FUNCION.md`) y el maestro tiene los mismos
 huecos.
 
@@ -21,8 +21,13 @@ timestamptz`, nula = disponible; precondición (la columna no existe) y poscondi
   nueva (`venta/EntradaDeCambio.tsx`, `venta/importe-tecleado.ts`).
 - **La entrada de cambio se puede guardar** (DP-D89, `packages/app/src/caja/entrada-cambio.ts`): en
   el maestro tampoco se guarda contra el esquema real (`referencia_tipo` y el desglose de apertura);
-  aquí va con referencia `manual`, el fondo esperado lo suma la base y el desglose no se toca. Sus
+  aquí va con referencia `manual` y sólo deja su movimiento (el efectivo esperado sale de los movimientos; la sesión no se toca). Sus
   pruebas pasan a Postgres real (`entrada-cambio.integracion.test.ts`, `movimientos-de-la-cajera`).
+- **Lo que encontró el QA** (DP-D90): el nombre de un aparato dormido queda libre al nombrar una caja
+  (`caja/terminales.ts`); lo listo de una cuenta pagada se entrega solo (`entregarLoListoYaCobrado`);
+  la precuenta del mesero se cuenta antes de imprimirse; `caja.ventas_del_dia` y la sección «Ventas del
+  día · todas las cajas» del Cierre; el aislado de impresión con `translate: var(...)` (el minificador
+  fundía `translate: none`).
 - **Dos cajas** (DP-D85): el Cierre del día avisa si queda otra abierta y cierra sólo la de ese aparato
   (`restaurante/otras-cajas-al-cerrar.ts`, `CierreDiarioDialog.jsx`); «Ventas hoy» del Tablero suma el
   día de todas las cajas (`tablero/del-dia.ts`); `caja.terminales` lista sólo las que abrieron alguna

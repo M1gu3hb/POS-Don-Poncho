@@ -1650,7 +1650,7 @@ puerta los denuncia todos.
   PIN real; queda para Miguel si hiciera falta.
 - **Sin migración.**
 
-## DP-D89 · La entrada de cambio: suma la base, referencia «manual» y el desglose de apertura intacto · 08-11-2026
+## DP-D89 · La entrada de cambio: sólo su movimiento, referencia «manual», la sesión intacta · 08-11-2026
 
 - **Lo que se encontró:** la entrada de cambio (heredada de MorphiqPOS, F-984-bis) nunca se pudo
   guardar contra el esquema real: su movimiento llevaba `referencia_tipo = 'entrada_cambio'`, que
@@ -1658,14 +1658,41 @@ puerta los denuncia todos.
   apertura, que `sesion_fondo_desglosado_cuadra` exige que cuadre con el fondo inicial. Sus pruebas eran
   con una base falsa. Salió al probarla contra Postgres real por un hallazgo de la revisión de código
   (leer, sumar y escribir sin candado).
-- **Elección:** el movimiento va con `referencia_tipo = 'manual'`, como el retiro; el fondo esperado lo
-  suma la base en una sola escritura (`fondo_esperado_centavos + monto`, con `returning`), porque la hoja
-  del corte resta las entradas para enseñar el fondo esperado al abrir; el desglose de la apertura no se
-  toca (el de la entrada queda en su movimiento y en la auditoría). El efectivo que el corte espera ya
-  sale de los movimientos del cajón.
+- **Elección:** el movimiento va con `referencia_tipo = 'manual'`, como el retiro, y es lo ÚNICO que
+  escribe: el efectivo que el corte espera sale de los movimientos del cajón (`arqueoDeSesion`), así
+  que la entrada ya lo sube. La sesión no se toca: su fondo esperado es el de la APERTURA (lo que se
+  dejó anoche), que el papel del corte compara con lo contado al abrir, y su desglose es el de la
+  apertura. Primero se intentó sumarle la entrada al fondo esperado en una sola escritura; el QA de
+  la jornada (J-H7) vio que el papel enseñaba entonces «Fondo esperado apertura $1,700» contra $1,500
+  contados, y la hoja del corte dejó de restar las entradas. Sin escritura en la sesión desaparece
+  también la carrera de dos entradas a la vez.
 - **Alternativa descartada:** una migración que agregue `entrada_cambio` a los tipos de referencia, o
   que relaje el desglose: cambiaría el esquema por algo que el código resuelve sin perder nada.
 - **Lo que se ganó:** lo que toca la base en la caja de la cajera (retiro y entrada) se prueba ahora
   contra Postgres real.
+- **Sin migración.**
+
+## DP-D90 · Lo que encontró el QA de DP-15, arreglado antes de desplegar · 08-11-2026
+
+- **El nombre de un aparato dormido queda libre** (J-H1): cada navegador que entra se da de alta
+  como «Caja N» y producción tiene 25 con esos nombres. `caja.nombrar_terminal` le pone «Aparato …» al
+  aparato que nunca abrió caja y tiene el nombre pedido, y lo deja en la auditoría (`liberado`); el
+  nombre de una caja de verdad se sigue rechazando. **Alternativa descartada:** desactivar o borrar
+  los aparatos dormidos en producción (una escritura de datos el día de la entrega, y un aparato que
+  vuelve a entrar se daría de alta otra vez).
+- **Lo que se termina de una cuenta ya cobrada se entrega solo** (J-H3): al marcar «listo», los
+  renglones de una cuenta pagada pasan a entregado. Antes de cobrar, «listo» sigue esperando al
+  mesero.
+- **La precuenta del mesero se cuenta antes de imprimirse** (J-H4), con el rollo del negocio; si el
+  servidor no la cuenta, no se imprime.
+- **El Cierre del día dice el día** (J-H6): `caja.ventas_del_dia` (lectura) suma las cajas que
+  cerraron en la ventana del Cierre (la misma de sus cancelaciones), con la regla de venta y los pagos
+  de cada corte; el Cierre la pinta aparte y su resumen dice «de esta caja». DP-D50 no cambia: cada
+  corte sigue contando sus cuentas.
+- **El ticket ya no sale cortado** (H-01, bloqueante): `translate: var(--sin-traslado, none)` en el
+  aislado de impresión, porque el minificador del build fundía `translate: none` dentro de
+  `transform`; una prueba pasa el `index.css` real por el mismo minificador.
+- **Menores:** «Agotado hoy» en el menú del portal en lista; la etiqueta
+  `apple-mobile-web-app-capable`.
 - **Sin migración.**
 
