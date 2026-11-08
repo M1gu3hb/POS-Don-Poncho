@@ -23,6 +23,10 @@ import { registrarEntradaDeCambio } from './entrada-cambio.ts';
  *
  * Y que el desglose se conserve. «Entraron $600» no dice si se puede dar cambio;
  * «$600 en monedas de diez» sí, y ésa es la pregunta de las once.
+ *
+ * DP-15: lo que toca la base (el fondo que sube, el tipo, el origen y el desglose de la apertura
+ * intacto) se prueba contra Postgres real en `entrada-cambio.integracion.test.ts`: esta base falsa
+ * no aplicaba las restricciones de la real y escondió que la entrada nunca se podía guardar.
  */
 
 const AHORA = new Date('2026-09-16T11:00:00.000Z');
@@ -63,70 +67,6 @@ async function codigoDe(fn: () => Promise<unknown>): Promise<string> {
 }
 
 describe('la entrada de cambio', () => {
-  it('EL FONDO ESPERADO SUBE', async () => {
-    // Si no subiera, el corte sobraría por diseño todos los días.
-    const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'), AHORA);
-
-    const salida = await registrarEntradaDeCambio.ejecutar(ctx, {
-      monedasCentavos: 40_000,
-      chicosCentavos: 20_000,
-      origen: 'banco',
-      motivo: null,
-    });
-
-    expect(salida.montoCentavos).toBe('60000');
-    expect(salida.fondoEsperadoCentavos).toBe('210000');
-    expect(base.campo('sesiones_caja', 'fondo_esperado_centavos')).toBe(210_000n);
-  });
-
-  it('EL DESGLOSE SE CONSERVA', async () => {
-    // «Entraron $600» no dice si se puede dar cambio.
-    const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'), AHORA);
-
-    await registrarEntradaDeCambio.ejecutar(ctx, {
-      monedasCentavos: 40_000,
-      chicosCentavos: 20_000,
-      origen: 'banco',
-      motivo: null,
-    });
-
-    expect(base.campo('sesiones_caja', 'fondo_monedas_centavos')).toBe(60_000n);
-    expect(base.campo('sesiones_caja', 'fondo_chicos_centavos')).toBe(50_000n);
-  });
-
-  it('NO ES UN DEPÓSITO DE VENTA: lleva su propio tipo', async () => {
-    // El corte los suma distinto: el depósito entró POR una venta y esto es
-    // fondo que alguien puso.
-    const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'), AHORA);
-
-    await registrarEntradaDeCambio.ejecutar(ctx, {
-      monedasCentavos: 10_000,
-      chicosCentavos: 0,
-      origen: 'dueno',
-      motivo: null,
-    });
-
-    expect(base.campo('movimientos_caja', 'tipo')).toBe('entrada_cambio');
-    expect(base.campo('movimientos_caja', 'monto_centavos')).toBe(10_000n);
-  });
-
-  it('el ORIGEN queda escrito, porque casi siempre es la bolsa de alguien', async () => {
-    const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'), AHORA);
-
-    await registrarEntradaDeCambio.ejecutar(ctx, {
-      monedasCentavos: 10_000,
-      chicosCentavos: 0,
-      origen: 'caja_chica',
-      motivo: null,
-    });
-
-    expect(String(base.campo('movimientos_caja', 'motivo'))).toContain('caja_chica');
-  });
-
   it('un movimiento de CERO se rechaza', async () => {
     // Es una línea en el corte que hay que leer y que no dice nada.
     const base = baseDe();

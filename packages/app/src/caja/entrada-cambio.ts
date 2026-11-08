@@ -88,15 +88,6 @@ export const registrarEntradaDeCambio = definirComando<
       throw new ErrorDominio('CAJA_CERRADA', 'Abre la caja antes de meterle cambio.');
     }
 
-    const actual = await ctx.paso('leer_sesion', () =>
-      ctx.tx
-        .selectFrom('sesiones_caja')
-        .select(['fondo_esperado_centavos', 'fondo_monedas_centavos', 'fondo_chicos_centavos'])
-        .where('organizacion_id', '=', organizacionId)
-        .where('id', '=', sesion.id)
-        .executeTakeFirstOrThrow(),
-    );
-
     // Tipo propio, no `deposito`. El corte los suma distinto: el depósito es
     // dinero que entró POR una venta y el cambio es fondo que alguien puso.
     const movimiento = await ctx.paso('anotar_movimiento', () =>
@@ -108,27 +99,29 @@ export const registrarEntradaDeCambio = definirComando<
         motivo:
           entrada.motivo ?? `cambio desde ${entrada.origen}: ${entrada.monedasCentavos} en monedas`,
         empleadoId: empleoId,
-        referenciaTipo: 'entrada_cambio',
+        // DP-15: `entrada_cambio` no está entre los tipos de referencia que la base admite
+        // (`movimientos_caja_referencia_tipo_check`): la entrada nunca se pudo guardar.
+        referenciaTipo: 'manual',
         referenciaId: null,
       }),
     );
 
-    // El fondo esperado SUBE, y el desglose con él. Si no subiera, el corte
-    // diría que sobran $600 todos los días que alguien metió cambio, y un corte
-    // que sobra por diseño deja de detectar el faltante.
-    const fondoEsperado = actual.fondo_esperado_centavos + BigInt(monto);
-    await ctx.paso('subir_fondo', () =>
+    // El fondo esperado SUBE (la hoja del corte resta las entradas para enseñar el de apertura).
+    // DP-15: la suma la hace la base, en una sola escritura: leer, sumar y escribir desde aquí
+    // perdía una entrada cuando llegaban dos a la vez. El desglose del fondo NO se toca: es el de
+    // la apertura y la base exige que cuadre con el fondo inicial (`sesion_fondo_desglosado_cuadra`);
+    // el de la entrada queda en su movimiento y en la auditoría.
+    const { fondo_esperado_centavos: fondoEsperado } = await ctx.paso('subir_fondo', () =>
       ctx.tx
         .updateTable('sesiones_caja')
-        .set({
-          fondo_esperado_centavos: fondoEsperado,
-          fondo_monedas_centavos: actual.fondo_monedas_centavos + BigInt(entrada.monedasCentavos),
-          fondo_chicos_centavos: actual.fondo_chicos_centavos + BigInt(entrada.chicosCentavos),
+        .set((eb) => ({
+          fondo_esperado_centavos: eb('fondo_esperado_centavos', '+', BigInt(monto)),
           updated_at: ctx.ahora,
-        })
+        }))
         .where('organizacion_id', '=', organizacionId)
         .where('id', '=', sesion.id)
-        .execute(),
+        .returning('fondo_esperado_centavos')
+        .executeTakeFirstOrThrow(),
     );
 
     ctx.auditar({
