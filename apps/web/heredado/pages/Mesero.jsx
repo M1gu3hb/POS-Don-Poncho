@@ -356,6 +356,9 @@ function Mesero() {
     queryFn: () => api.entidades.ProductoTerminado.filter({ activo: true, visible_en_pos: true }),
     placeholderData: (prev) => prev,
     staleTime: 5000,
+    // DP-15 · Lo que la cocina marca «agotado del día» se ve aquí en menos de medio minuto (y el
+    // servidor lo niega de todos modos al enviar).
+    refetchInterval: 30_000,
   });
   // QA1-4 (DP-13.5): el puente no trae las opciones del platillo; sin ellas el diálogo de
   // opciones no se abría y la quesadilla salía a cocina sin su relleno obligatorio.
@@ -683,6 +686,11 @@ function Mesero() {
   };
 
   const agregarAlCarrito = async (productoTocado) => {
+    // DP-15 · El agotado del día no entra al pedido: se dice, y el mesero ofrece otra cosa.
+    if (productoTocado?.agotado_hoy === true) {
+      toast.error(`${productoTocado.nombre} se agotó por hoy`);
+      return;
+    }
     // QA1-4 (DP-13.5): antes de agregar hay que saber si el platillo pide opciones. Si todavía no
     // llegaron (la tableta recién abrió la mesa), se esperan: el toque no se pierde.
     // DP-14.1-4: lo que NO pide opciones (lo dice la lectura guardada o la pista del producto) se
@@ -1636,11 +1644,13 @@ function Mesero() {
                     {productosFiltrados.map((p) => {
                       const tieneOpc = productoTieneModificadores(p);
                       const colorize = config?.colorear_importes_monetarios !== false;
+                      const agotado = p?.agotado_hoy === true;
                       return (
                         <button
                           key={p.id}
                           onClick={() => agregarAlCarrito(p)}
-                          className="p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:scale-95 transition-all relative"
+                          aria-disabled={agotado}
+                          className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:scale-95 transition-all relative ${agotado ? 'opacity-50' : ''}`}
                           style={{
                             boxShadow:
                               '0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 4px rgba(0,0,0,0.06)',
@@ -1657,6 +1667,11 @@ function Mesero() {
                             {tieneOpc && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
                                 Opciones
+                              </span>
+                            )}
+                            {agotado && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-peligro/15 text-peligro">
+                                Agotado hoy
                               </span>
                             )}
                           </div>

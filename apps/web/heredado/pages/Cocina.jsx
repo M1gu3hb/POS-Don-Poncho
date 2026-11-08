@@ -9,6 +9,7 @@ import CocinaPedidoCardPremium from '@/components/cocina/CocinaPedidoCardPremium
 import CocinaMesaGroupCard from '@/components/cocina/CocinaMesaGroupCard';
 import CocinaVozControl from '@/components/cocina/CocinaVozControl';
 import { ConectarTelefono } from '~/telefono-de-cocina/ConectarTelefono';
+import { AgotadosDelDia } from '~/restaurante/AgotadosDelDia';
 import CocinaNuevoPedidoWatcher from '@/components/cocina/CocinaNuevoPedidoWatcher';
 import { useIsDark } from '@/lib/ThemeContext';
 import { COCINA_COLS } from '@/lib/darkPalettes';
@@ -371,6 +372,8 @@ export default function Cocina() {
             userScope.mode === 'station' ? (posUser?.estacion_preparacion_id ?? null) : null
           }
         />
+        {/* DP-15 · Lo que se acabó hoy: ni el mesero ni el QR lo pueden pedir hasta mañana. */}
+        <AgotadosDelDia />
         <CocinaVozControl />
       </div>
 

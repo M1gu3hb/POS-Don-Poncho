@@ -230,6 +230,11 @@ function PortalCliente() {
   // === HANDLERS PEDIDO QR ===
   const handleClickProducto = (producto) => {
     if (!pedidosQRActivos) return;
+    // DP-15 · Lo que se acabó hoy se ve en el menú, pero no se pide: se dice amable.
+    if (producto?.agotado === true) {
+      toast.info(`${producto.nombre || 'Ese platillo'} se agotó por hoy. Pregúntale a tu mesero qué más hay.`);
+      return;
+    }
     // El «espera, aún no sé si la mesa está abierta» desaparece: la pantalla no
     // se pinta hasta que la lectura pública responde, y esa respuesta ya trae
     // decidido si se puede abrir o pedir.
@@ -806,9 +811,10 @@ function ProductoCardCliente({ producto, mostrarPrecios, clickable, onClick }) {
     <Comp
       type={clickable ? 'button' : undefined}
       onClick={clickable ? onClick : undefined}
+      aria-disabled={producto?.agotado === true ? true : undefined}
       className={`rounded-2xl bg-card text-card-foreground border overflow-hidden shadow-sm flex flex-col text-left w-full ${
         clickable ? 'active:scale-[0.98] transition-transform hover:shadow-md cursor-pointer' : ''
-      }`}
+      } ${producto?.agotado === true ? 'opacity-60' : ''}`}
     >
       {producto?.imagen_url ? (
         <img
@@ -833,6 +839,11 @@ function ProductoCardCliente({ producto, mostrarPrecios, clickable, onClick }) {
           {tienePersonalizar && (
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
               Personalizable
+            </span>
+          )}
+          {producto?.agotado === true && (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-peligro/15 text-peligro">
+              Agotado hoy
             </span>
           )}
         </div>
