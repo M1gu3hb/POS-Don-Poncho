@@ -112,7 +112,7 @@ describe('DP-15 · el mesero usa el borrador', () => {
       'mesa.venta_activa_id,Date.now(),):null;setCarrito(borrador?[...borrador.carrito]:[]);',
     );
     expect(c).toContain(
-      'guardarBorrador(almacenDelAparato(),claveDelBorrador(posUser.id,mesaActiva.id),{ordenId:mesaActiva.venta_activa_id,carrito,nota:notaMesa},',
+      'guardarBorrador(almacenDelBorrador(),claveDelBorrador(posUser.id,mesaActiva.id),{ordenId:mesaActiva.venta_activa_id,carrito,nota:notaMesa},',
     );
     expect(c).toContain("sonar('enviarACocina');if(posUser?.id&&mesaActiva?.id){borrarBorrador(");
   });

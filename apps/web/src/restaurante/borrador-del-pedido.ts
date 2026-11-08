@@ -110,7 +110,7 @@ export function borrarBorrador(almacen: Almacen, clave: string): void {
 }
 
 /** `localStorage` si existe y se deja usar; si no, un almacén vacío que no guarda nada. */
-export function almacenDelAparato(): Almacen {
+export function almacenDelBorrador(): Almacen {
   const nulo: Almacen = {
     getItem: () => null,
     setItem: () => undefined,

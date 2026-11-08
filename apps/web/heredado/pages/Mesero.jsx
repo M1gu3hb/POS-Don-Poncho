@@ -9,7 +9,7 @@ import { useConfig } from '@/lib/ConfigContext';
 import { formatCurrency } from '@/utils/financialUtils';
 import { toast } from 'sonner';
 import {
-  almacenDelAparato,
+  almacenDelBorrador,
   borrarBorrador,
   claveDelBorrador,
   guardarBorrador,
@@ -194,7 +194,7 @@ function Mesero() {
   useEffect(() => {
     if (!posUser?.id || !mesaActiva?.id || !mesaActiva?.venta_activa_id) return;
     guardarBorrador(
-      almacenDelAparato(),
+      almacenDelBorrador(),
       claveDelBorrador(posUser.id, mesaActiva.id),
       { ordenId: mesaActiva.venta_activa_id, carrito, nota: notaMesa },
       Date.now(),
@@ -553,7 +553,7 @@ function Mesero() {
       // DP-15 · Si el mesero ya llevaba algo en esta cuenta (y el teléfono recargó), se recupera.
       const borrador = posUser?.id
         ? leerBorrador(
-            almacenDelAparato(),
+            almacenDelBorrador(),
             claveDelBorrador(posUser.id, mesa.id),
             mesa.venta_activa_id,
             Date.now(),
@@ -989,7 +989,7 @@ function Mesero() {
       toast.success('¡Pedido enviado a cocina!');
       sonar('enviarACocina');
       if (posUser?.id && mesaActiva?.id) {
-        borrarBorrador(almacenDelAparato(), claveDelBorrador(posUser.id, mesaActiva.id));
+        borrarBorrador(almacenDelBorrador(), claveDelBorrador(posUser.id, mesaActiva.id));
       }
       setCarrito([]);
       setNotaMesa('');
