@@ -1518,5 +1518,10 @@ puerta los denuncia todos.
   administrador) dice lo que el servidor aplica a cada puesto que autoriza (la fila del negocio o la
   del sistema), en porcentaje y en pesos, lo que llegue primero; ya no «gerente 30 %, administrador
   50 %, dueño 100 %» escrito a mano.
+- **Lo que encontró el QA final (QA-2), arreglado:** «Quitar un platillo» dice el peso con el
+  formateador único («Barbacoa de horno · ¼ kg», no «0.25 ×»), y al releer la cuenta tras un
+  descuento se conserva la propina que el cajero ya eligió en la caja (el porcentaje, sobre el total
+  nuevo), en vez de volver a pedirla. La mesa que queda en limpieza tras cobrar las partes y que el
+  cierre pide libre es el diseño (DP-D66, «Marcar libre» de DP-14.6).
 - **Sin migración.** El corte, el saneado, el margen y el retiro los hizo el agente RB (Sonnet); los
-  topes en la pantalla, el aviso en el papel y los documentos, la sesión principal.
+  topes en la pantalla, el aviso en el papel, los arreglos del QA y los documentos, la sesión principal.

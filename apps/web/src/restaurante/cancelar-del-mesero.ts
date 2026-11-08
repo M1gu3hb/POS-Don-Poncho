@@ -1,3 +1,5 @@
+import { cantidadParaMostrar, esPorPeso, type LineaConPeso } from './peso';
+
 /**
  * LO QUE EL MESERO VE AL CANCELAR, sin pantalla (DP-12.4).
  *
@@ -8,7 +10,7 @@
  */
 
 /** Un renglón de la cuenta tal como lo sirve el puente (`DetalleVenta`). */
-export interface DetalleDeLaCuenta {
+export interface DetalleDeLaCuenta extends LineaConPeso {
   readonly id: string;
   readonly producto_nombre: string;
   /** `decimal`: puede llegar como número o como texto (`'2.0000'`). */
@@ -36,8 +38,12 @@ export function platillosQuitables(
   }));
 }
 
-/** «2 × Arrachera» o «Arrachera»: la cantidad sin ceros de relleno. */
+/**
+ * «2 × Arrachera» o «Arrachera»: la cantidad sin ceros de relleno. Lo que se vende por peso, con su
+ * peso y el formateador único («Barbacoa de horno · ¼ kg», QA2-A1), no «0.25 × Barbacoa».
+ */
 export function descripcionDelRenglon(detalle: DetalleDeLaCuenta): string {
+  if (esPorPeso(detalle)) return `${detalle.producto_nombre} · ${cantidadParaMostrar(detalle)}`;
   const cantidad = Number(detalle.cantidad);
   return Number.isFinite(cantidad) && cantidad !== 1
     ? `${String(cantidad)} × ${detalle.producto_nombre}`

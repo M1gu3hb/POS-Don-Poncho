@@ -57,6 +57,30 @@ export function propinaDerivada(venta) {
   return aPesos(Math.round((aCentavos(venta?.total) * porcentaje) / 100));
 }
 
+/**
+ * DP-14 ronda 2 (QA2-A3) · Al releer la cuenta del cobro (tras aplicar o reemplazar un descuento), la
+ * propina que el cajero ya ELIGIÓ en la caja se conserva: el porcentaje, sobre el total nuevo; un
+ * monto a mano o «sin propina», tal cual. El servidor no la guarda hasta cobrar, así que la cuenta
+ * releída la trae otra vez «pendiente» y el cobro la volvía a pedir. Sin elegirla en la caja (o si es
+ * otra cuenta), manda lo que diga la cuenta releída.
+ */
+export function propinaAlReleer(anterior, releida) {
+  if (anterior?.id !== releida?.id || anterior?.propina_origen !== 'caja') {
+    return { propina_monto: propinaDerivada(releida) };
+  }
+  const porcentaje = Number(anterior.propina_porcentaje) || 0;
+  const propina_monto =
+    anterior.propina_tipo === 'porcentaje' && porcentaje > 0
+      ? aPesos(Math.round((aCentavos(releida?.total) * porcentaje) / 100))
+      : Number(anterior.propina_monto) || 0;
+  return {
+    propina_monto,
+    propina_porcentaje: porcentaje,
+    propina_tipo: anterior.propina_tipo,
+    propina_origen: 'caja',
+  };
+}
+
 /** Devuelve solo ventas pagadas con propina > 0. */
 export function filtrarVentasConPropina(ventas) {
   const safe = Array.isArray(ventas) ? ventas : [];

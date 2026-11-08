@@ -58,4 +58,16 @@ describe('cómo se nombra el renglón', () => {
     expect(descripcionDelRenglon(SOPA)).toBe('Sopa de fideo');
     expect(descripcionDelRenglon(ARRACHERA)).toBe('2 × Arrachera');
   });
+
+  it('QA2-A1 · lo que se vende por peso dice su peso, no «0.25 ×»', () => {
+    const barbacoa: DetalleDeLaCuenta = {
+      id: 'l-3',
+      producto_nombre: 'Barbacoa de horno',
+      cantidad: '0.2500',
+      tipo_venta_snapshot: 'variable_medida',
+      cantidad_variable_snapshot: '0.25',
+      unidad_variable_snapshot: 'kg',
+    };
+    expect(descripcionDelRenglon(barbacoa)).toBe('Barbacoa de horno · ¼ kg');
+  });
 });

@@ -40,6 +40,7 @@ import {
   agruparPropinasPorMesero,
   desgloseMetodosPagoExacto,
   getPorcentajesSugeridos,
+  propinaAlReleer,
   propinaDerivada,
   requiereConfirmarPropinaAntesDeCobrar,
   sumarPropinas,
@@ -471,7 +472,8 @@ export default function Caja() {
         api.entidades.Venta.get(ordenId),
         api.entidades.DetalleVenta.filter({ venta_id: ordenId }),
       ]);
-      setVentaSeleccionada({ ...venta, propina_monto: propinaDerivada(venta) });
+      // QA2-A3 · La propina que el cajero ya eligió se conserva (el porcentaje, sobre el total nuevo).
+      setVentaSeleccionada((previa) => ({ ...venta, ...propinaAlReleer(previa, venta) }));
       setDetallesSeleccionados(Array.isArray(detalles) ? detalles : []);
       setMontoEfectivo('');
       setMontoTarjeta('');

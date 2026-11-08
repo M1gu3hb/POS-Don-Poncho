@@ -1000,3 +1000,21 @@ punto confirmado en el código antes de repartirlo.
   los topes reales (`venta.topes_de_los_puestos`). Prueba en rojo antes de cada uno; mutantes 12 de 12;
   `verify` completo y 20 de 20 en navegador (el portal, el día completo, el cierre, usuarios,
   descuento, ticket y concurrencia).
+
+### QA final (QA-2) sobre dos copias de producción
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| QA-A (worktree `dp14-a`, copia `qa_dp14`, app 3261) | Sonnet | Caja, dinero y cocina: dos cajas, terminales, barbacoa por kilo, descuentos (apagados, gerente, sobre el tope, otro monto, reusado, reemplazo), quitar, dividir y cancelar una parte, cocina sin respuesta, otra caja ya cobró, red caída a medias, Cierre del día | 10 escenas; cortes y Cierre del día cuadrados (21 de 21); consultas de violación 0 de 34. 3 bajos y 2 informativos. |
+| QA-B (worktree `dp14-b`, copia `qa_dp14_b`, app 3262) | Sonnet | Usuarios en 360 px y tableta, mesas y repartir, la zona de la mesera, dos toques rápidos, el portal (familia nueva en limpieza, carrito caducado) | 36 escenas; consultas de violación 0 de 34. 4 informativos (uno descartado). |
+
+- Las copias se hicieron con la exportación de producción posterior al PR #10. Cada una tiene sus PIN
+  de prueba en `_PRIVADO\qa-dp14-a` y `\qa-dp14-b`, y los secretos locales de la base desechable:
+  nada de producción.
+- Los worktrees `dp14-a` y `dp14-b` se limpiaron antes del QA. Sus cambios de RA y RB ya estaban
+  integrados y quedaron respaldados en el scratchpad de la sesión.
+- Ronda 1 → arreglado QA2-A1 (el peso en «Quitar un platillo») y QA2-A3 (la propina elegida
+  sobrevive al descuento): prueba en rojo antes, 6 mutantes, 6 muertos. QA2-A2 es el diseño; los
+  informativos quedan anotados en `docs/qa/HALLAZGOS.md`.
+- Las specs `qa2-*` quedaron fuera del repositorio, porque tres pasan de 300 líneas:
+  `D:\mpos-tmp\qa-dp14-specs`.
