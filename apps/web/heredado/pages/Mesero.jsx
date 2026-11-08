@@ -57,7 +57,7 @@ import AbrirMesaDialog from '@/components/mesero/AbrirMesaDialog';
 import CantidadVariableDialog from '@/components/mesero/CantidadVariableDialog';
 import { TIPO_VENTA, formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import PrecioProductoMesero, { VariableBadge } from '@/components/mesero/PrecioProductoMesero';
-import { Combine, ScanLine, Volume2 } from 'lucide-react';
+import { ArrowLeftRight, Combine, ScanLine, Volume2 } from 'lucide-react';
 import { useCajaAbierta } from '@/lib/useCajaAbierta';
 import { useIsDark } from '@/lib/ThemeContext';
 import { FLOOR_BG } from '@/lib/darkPalettes';
@@ -100,7 +100,14 @@ import {
   nombreConUnidas,
   sinAbsorbidas,
 } from '~/restaurante/unir-mesas/plano-de-union';
-import { useLocation } from '@/enrutado';
+import { Link, useLocation } from '@/enrutado';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+
+/**
+ * DP-15 · Quien cambia una cuenta de mesa, une mesas o divide la cuenta desde «Mesa activa»
+ * (`/restaurante/mesa-activa`). Al mesero y a la cajera esa ruta los regresa a su pantalla.
+ */
+const PUEDEN_MOVER_LA_CUENTA = ['dueno', 'administrador', 'gerente'];
 import { VistaDeSolicitudes } from '~/restaurante/VistaDeSolicitudes';
 // DP-12.2: el portal en modo mesero (escanear el QR, mantener presionada una mesa, el carrito).
 import BarcodeScanner from '@/components/barcode/BarcodeScanner';
@@ -166,6 +173,7 @@ export default function MeseroWithBoundary() {
 
 function Mesero() {
   const { posUser } = usePOSAuth();
+  const miPuesto = usePuesto();
   const { config } = useConfig();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -1817,6 +1825,15 @@ function Mesero() {
                       Solicitar cuenta
                     </Button>
                   )}
+                {/* DP-15 · Cambiar de mesa, unir o dividir vivían sólo tecleando la dirección. */}
+                {ventaActiva && mesaActiva?.id && PUEDEN_MOVER_LA_CUENTA.includes(miPuesto) && (
+                  <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`} className="w-full">
+                    <Button variant="outline" className="w-full">
+                      <ArrowLeftRight className="w-4 h-4 mr-1" />
+                      Cambiar de mesa, unir o dividir
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
