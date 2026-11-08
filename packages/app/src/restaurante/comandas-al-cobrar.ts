@@ -153,3 +153,54 @@ export async function moverLaMesaTrasCancelar(
     });
   }
 }
+
+/**
+ * DP-15 · QA de la jornada, J-H3 · Lo que una estación termina DESPUÉS de que se cobró la cuenta.
+ *
+ * Al cobrar, lo que seguía por preparar se queda en la estación con la marca «Cuenta cobrada»
+ * (`entregarLoListoDeLaCuenta`). Cuando la estación lo termina, ya no hay mesero que lo «entregue»
+ * en el sistema —la mesa está en limpieza o libre—: la comanda se quedaba en «Listos» para siempre,
+ * incluso después del Cierre del día. Los renglones listos de una cuenta PAGADA se dan por
+ * entregados en el mismo movimiento, renglón por renglón (en una cuenta dividida, sólo los de las
+ * partes pagadas).
+ */
+export async function entregarLoListoYaCobrado(
+  tx: Transaccion,
+  organizacionId: string,
+  comandaId: string,
+  ahora: Date,
+): Promise<boolean> {
+  const { rows } = await sql<{ id: string }>`
+    update comanda_items ci
+       set estado = 'entregado'
+     where ci.organizacion_id = ${organizacionId}
+       and ci.comanda_id = ${comandaId}
+       and ci.estado = 'listo'
+       and exists (
+         select 1
+           from orden_lineas ol
+           join ordenes o on o.organizacion_id = ol.organizacion_id and o.id = ol.orden_id
+          where ol.organizacion_id = ci.organizacion_id
+            and ol.id = ci.orden_linea_id
+            and o.estado = 'pagada')
+    returning ci.id::text as "id"
+  `.execute(tx);
+  if (rows.length === 0) return false;
+
+  const comanda = await tx
+    .selectFrom('comandas')
+    .select('estado')
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', comandaId)
+    .executeTakeFirst();
+  if (comanda !== undefined) {
+    await ajustarComandaAlMinimo(
+      tx,
+      organizacionId,
+      comandaId,
+      comanda.estado as EstadoComanda,
+      ahora,
+    );
+  }
+  return true;
+}

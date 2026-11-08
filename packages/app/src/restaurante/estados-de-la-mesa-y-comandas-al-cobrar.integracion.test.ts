@@ -38,7 +38,7 @@ let salon: Salon;
 const POR_COMANDOS = 120_000;
 
 beforeAll(async () => {
-  salon = await sembrarSalon({ nombre: 'Fonda de las dos estaciones', mesas: 8, terminales: 2 });
+  salon = await sembrarSalon({ nombre: 'Fonda de las dos estaciones', mesas: 10, terminales: 2 });
   // La cerveza sale por la barra: su comanda es otra, con su propia pantalla.
   await obtenerDb()
     .updateTable('productos')
@@ -297,6 +297,47 @@ describe('DP-15 · la revisión · la mesa, cuando se quita lo último que falta
 
       await quitarDe(ordenId, 'Arrachera al carbón');
       expect(await estadoDeLaMesa(mesaId)).toBe('en_espera_entrega');
+    },
+    POR_COMANDOS,
+  );
+});
+
+describe('DP-15 · QA de la jornada (J-H3) · lo que la estación termina después de cobrar', () => {
+  it(
+    'la barra marca «listo» lo de una cuenta ya cobrada: sale de su pantalla (entregado)',
+    async () => {
+      const { ordenId } = await sentarYPedir(salon, 8, [
+        { platillo: 'arrachera', cantidad: '1' },
+        { platillo: 'cerveza', cantidad: '1' },
+      ]);
+      const cocina = (await comandasDe(ordenId)).find((c) => c.area !== 'barra');
+      await marcarListo(cocina?.id ?? '');
+      await pedirLaCuenta(salon, ordenId);
+      exigirOk(
+        await cobrarExacto(ambitoDeCaja(salon), ordenId, ARRACHERA_CENTAVOS + CERVEZA_CENTAVOS),
+        'cobrar',
+      );
+      // Lo de la barra seguía por preparar: se queda («Cuenta cobrada»).
+      const barra = (await comandasDe(ordenId)).find((c) => c.area === 'barra');
+      expect(barra?.estado).toBe('nuevo');
+
+      // La barra lo termina: ya no hay mesero que lo «entregue» en el sistema; no se queda en
+      // «Listos» para siempre.
+      await marcarListo(barra?.id ?? '');
+      const despues = (await comandasDe(ordenId)).find((c) => c.area === 'barra');
+      expect(despues?.estado).toBe('entregado');
+      expect(despues?.items.map((i) => i.estado)).toEqual(['entregado']);
+    },
+    POR_COMANDOS,
+  );
+
+  it(
+    'antes de cobrar, «listo» sigue esperando al mesero',
+    async () => {
+      const { ordenId } = await sentarYPedir(salon, 9, [{ platillo: 'cerveza', cantidad: '1' }]);
+      const [barra] = await comandasDe(ordenId);
+      await marcarListo(barra?.id ?? '');
+      expect((await comandasDe(ordenId))[0]?.estado).toBe('listo');
     },
     POR_COMANDOS,
   );
