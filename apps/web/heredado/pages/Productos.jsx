@@ -16,6 +16,8 @@ import { AgotadosDelDia } from '~/restaurante/AgotadosDelDia';
 
 /** DP-15 · Los puestos que marcan «agotado del día» (espejo de `QUIEN_MARCA_AGOTADO`). */
 const PUEDEN_AGOTAR = ['dueno', 'administrador', 'gerente', 'cocina'];
+/** DP-15 · Los que dan de alta un platillo (los `rolesEscritura` de `ProductoTerminado`). */
+const PUEDEN_CREAR = ['dueno', 'administrador', 'gerente'];
 import EmptyState from '@/components/common/EmptyState';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -174,24 +176,27 @@ export default function Productos() {
           <>
             {/* DP-15 · Lo que se acabó hoy, al alcance de quien lo decide. */}
             {PUEDEN_AGOTAR.includes(miPuesto) && <AgotadosDelDia />}
-            {sinRecetas ? (
-            <Button
-              size="sm"
-              className="gap-2"
-              onClick={() => {
-                setEditandoProducto(null);
-                setShowSimple(true);
-              }}
-            >
-              <Plus className="w-4 h-4" /> Agregar producto
-            </Button>
-          ) : (
-            <Link to="/recetas">
-              <Button variant="outline" size="sm" className="gap-2">
-                <BookOpen className="w-4 h-4" /> Ir a Recetas
+            {/* DP-15 · En el restaurante también se da de alta un platillo sin receta (el del día):
+                antes la única puerta era «Nueva receta», que exige un insumo registrado. */}
+            {(sinRecetas || PUEDEN_CREAR.includes(miPuesto)) && (
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  setEditandoProducto(null);
+                  setShowSimple(true);
+                }}
+              >
+                <Plus className="w-4 h-4" /> Agregar producto
               </Button>
-            </Link>
-          )}
+            )}
+            {!sinRecetas && (
+              <Link to="/recetas">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <BookOpen className="w-4 h-4" /> Ir a Recetas
+                </Button>
+              </Link>
+            )}
           </>
         }
       />
