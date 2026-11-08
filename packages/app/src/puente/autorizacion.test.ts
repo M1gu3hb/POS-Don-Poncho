@@ -87,6 +87,9 @@ describe('B-4 · autorización explícita del puente de lectura', () => {
     ['LiquidacionPropina', 'mesero'],
     ['Proveedor', 'cocina'],
     ['Proveedor', 'mesero'],
+    // DP-15 · «Integraciones» es sólo del dueño y del administrador: el gerente tampoco la lee.
+    ['IntegrationSyncLog', 'gerente'],
+    ['IntegrationSyncLog', 'cajero'],
   ])('rechaza %s para el rol %s antes de consultar la base', async (entidad, rol) => {
     const promesa = consultar(
       { organizacionId: '11111111-1111-4111-8111-111111111111', rol },
@@ -96,6 +99,10 @@ describe('B-4 · autorización explícita del puente de lectura', () => {
     await expect(promesa).rejects.toMatchObject<Partial<ErrorDominio>>({
       codigo: 'PUENTE_SIN_PERMISO',
     });
+  });
+
+  it('DP-15 · la bitácora de integraciones la leen sólo el dueño y el administrador', () => {
+    expect([...rolesDe('IntegrationSyncLog')].sort()).toEqual(['administrador', 'dueno']);
   });
 
   it('CorteCaja le dice al mesero si hay caja, y ni un importe, nota ni persona', () => {

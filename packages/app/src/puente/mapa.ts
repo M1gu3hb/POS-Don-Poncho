@@ -84,6 +84,8 @@ const TODOS_LOS_ROLES = [
   'almacen',
 ] as const;
 const DIRECCION = ['dueno', 'administrador', 'gerente'] as const;
+/** DP-15 · Lo que decide quién manda de verdad (datos e integraciones): sin el gerente. */
+const MANDO = ['dueno', 'administrador'] as const;
 const CAJA = [...DIRECCION, 'cajero'] as const;
 const COMPRAS = [...DIRECCION, 'almacen'] as const;
 const RECETAS_E_INVENTARIO = [...DIRECCION, 'cocina', 'almacen'] as const;
@@ -3643,7 +3645,7 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
   IntegrationSyncLog: {
     tabla: 'bitacora_sincronizacion',
     sucursal: DEL_NEGOCIO.reglas,
-    rolesLectura: [...DIRECCION],
+    rolesLectura: [...MANDO],
     escritura: 'lectura',
     ordenPorOmision: '-created_date',
     campos: {

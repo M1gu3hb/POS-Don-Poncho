@@ -451,13 +451,13 @@ export default function Configuracion() {
               Mesas
             </TabsTrigger>
           )}
-          {posUser?.rol === 'administrador' && (
+          {esDeMando(miPuesto) && (
             <TabsTrigger value="datos">
               <Database className="w-3 h-3 mr-1" />
               Datos
             </TabsTrigger>
           )}
-          {posUser?.rol === 'administrador' && (
+          {esDeMando(miPuesto) && (
             <TabsTrigger value="integraciones">
               <Cloud className="w-3 h-3 mr-1" />
               Integraciones
@@ -768,13 +768,13 @@ export default function Configuracion() {
           <UsuariosPOSSection cfg={cfg} />
         </TabsContent>
 
-        {posUser?.rol === 'administrador' && (
+        {esDeMando(miPuesto) && (
           <TabsContent value="datos">
             <DatosSection />
           </TabsContent>
         )}
 
-        {posUser?.rol === 'administrador' && (
+        {esDeMando(miPuesto) && (
           <TabsContent value="integraciones">
             <IntegracionesRespaldos />
           </TabsContent>
