@@ -1489,7 +1489,11 @@ export default function Caja() {
 
       {/* COBRO DIALOG */}
       <Dialog open={!!ventaSeleccionada} onOpenChange={() => setVentaSeleccionada(null)}>
-        <DialogContent className="sm:max-w-md">
+        {/* DP-15 · El pie del cobro (Cancelar, Descuento, Cancelar la cuenta, Dividir, Cobrar) no se
+            envolvía: a 768 px o más estiraba la columna del diálogo 300 px fuera de la tarjeta y los
+            importes quedaban sobre el velo, ilegibles. Ahora se envuelve, y el diálogo es un poco
+            más ancho y se desplaza si no cabe de alto. */}
+        <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading">
               Cobrar —{' '}
@@ -1778,7 +1782,7 @@ export default function Caja() {
               </>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-wrap gap-2 sm:space-x-0">
             <Button variant="outline" onClick={() => setVentaSeleccionada(null)}>
               Cancelar
             </Button>
