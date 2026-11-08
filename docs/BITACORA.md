@@ -1191,3 +1191,10 @@ Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PR
 
 - 12:54 **La 189, aplicada a la propia** con `pnpm db:migrate` (lo aditivo antes del despliegue):
   `verify:esquema` estricto cumple con 1750 columnas; RLS 139/139 y 0 permisos.
+- 13:21 Configuración → Caja lista sólo las terminales que alguna vez abrieron caja: cada teléfono o
+  tableta que entra se da de alta como terminal y la lista se llenaba (`a35c9c3`, 2 mutantes muertos).
+- 13:30 El portal del comensal sondea su estado completo cada 12 s y al volver a la pantalla (antes
+  4 s con el menú completo): el ajuste más barato de `docs/infra/CAPACIDAD.md` (`8f5a422`, 3 mutantes).
+- 13:32 Las puertas estáticas: 30 de 33 en verde a la primera; aspecto (los cambios visuales de DP-15,
+  registrados con su motivo), lecturas (la excepción de `fecha_inicio` baja a 6) y adopción (vacíos
+  con el sistema) arregladas (`f29440c`).

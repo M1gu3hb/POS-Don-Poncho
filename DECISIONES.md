@@ -1560,3 +1560,58 @@ puerta los denuncia todos.
 - **Cambia una regla de antes:** «los PIN reales los teclea Miguel». Este encargo pidió generarlos y
   aplicarlos; Miguel los recibe en `_PRIVADO` y cada persona puede cambiar el suyo desde Usuarios.
 - **Sin migración.**
+
+## DP-D83 · El platillo agotado del día: una fecha de vencimiento en el producto (migración 189) · 08-11-2026
+
+- **Elección:** `productos.agotado_hasta` (`timestamptz`, migración 189, aditiva). El comando
+  `catalogo.marcar_agotado` lo pone al fin del día del negocio (`diaDelNegocio`) o lo quita; al día
+  siguiente el platillo vuelve solo. El servidor lo niega (`PRODUCTO_AGOTADO`) en el pedido del mesero,
+  el carrito y el envío del portal, el pedido directo del portal y el mostrador; el menú público
+  declara el campo `agotado` y el mesero y el portal lo enseñan apagado («Agotado hoy»).
+- **Quién:** dueño, administrador, gerente y **cocina**, que es quien sabe que se acabó la carne. Desde
+  Cocina → «Agotados» y desde Productos.
+- **Alternativas descartadas:** reusar `activo` o `visible_en_pos`, que son decisiones de catálogo, no
+  vuelven solas y el portal no respetaba; un booleano «agotado», que alguien tendría que apagar al día
+  siguiente.
+- **Migración:** la 189, aplicada a la base propia con `pnpm db:migrate` antes de desplegar (lo aditivo
+  primero). Ficha 35.
+
+## DP-D84 · El efectivo de la cajera, en Caja → Movimientos; la compra en efectivo con dos cajas, como retiro · 08-11-2026
+
+- **Elección:** la cajera registra desde `/caja` → «Movimientos» el retiro, la entrada de cambio y el
+  corte de turno, cada uno con su motivo; el gasto y la devolución quedan para la gerencia. La entrada
+  de cambio estrena formulario (`EntradaDeCambio.tsx`).
+- **La compra en efectivo con dos cajas abiertas** (A2-M5): el gerente no puede registrarla (no se sabe
+  de qué cajón sale) y la cajera no tiene permiso de compras. El día 1, el pago a un proveedor en
+  efectivo lo registra la cajera como **Retiro** con su motivo (y el corte lo resta); la compra como
+  inventario va con tarjeta, transferencia o con una sola caja abierta.
+- **Alternativas descartadas:** darle compras a la cajera (le abre inventario y proveedores) o elegir el
+  cajón dentro de la compra (comando y pantalla nuevos a seis días de instalar). Queda como mejora.
+- **Sin migración.**
+
+## DP-D85 · Con dos cajas, cada cajón se cuenta en su aparato; el Tablero suma el día de todas · 08-11-2026
+
+- **El Cierre del día** con otra caja abierta lo dice y cierra sólo la de ese aparato: cada cajón se
+  cuenta donde está. El Cierre se hace con la última.
+- **«Ventas hoy» del Tablero:** las ventas del día del negocio de todas las cajas, leídas por rango en la
+  base. Antes contaba una caja y daba $0 con las cajas cerradas.
+- **Configuración → Caja** lista sólo las terminales que alguna vez abrieron una sesión de caja: cada
+  navegador que entra se da de alta como terminal (el teléfono del mesero, la tableta de cocina) y la
+  lista para nombrarlas se llenaba.
+- **Sin migración.**
+
+## DP-D86 · Cada puesto ve lo que el servidor le deja; lo que se perdía al recargar se guarda en el aparato · 08-11-2026
+
+- **La gerente** no ve Datos ni Integraciones (ni en la pantalla ni por el puente) ni la apariencia del
+  negocio; el almacén no ve en Compras botones que el servidor le niega; Registros → «Auditoría»
+  (`reportes.auditoria_reciente`) es sólo para dueño y administrador.
+- **El pedido a medias del mesero** se guarda en el aparato (`localStorage`), por cuenta y persona, 3
+  horas, y se recupera al volver a abrir la mesa. Son platillos y notas, no datos sensibles; lo enviado
+  ya vive en el servidor. **Alternativa descartada:** borradores en el servidor (tabla y comandos
+  nuevos).
+- **El ticket por el navegador** en 58 u 80 mm: «Ancho del papel del ticket» en
+  `configuracion.valores`, para el ticket, la reimpresión y la precuenta; el corte y el cierre siguen en
+  A4 (sus tablas no caben en 58 mm). Las exportaciones van en la hora del negocio.
+- **La capacidad:** el portal del comensal sondea su estado completo cada 12 s y al volver a la pantalla
+  (antes 4 s con el menú entero), el ajuste más barato de `docs/infra/CAPACIDAD.md`.
+- **Sin migración.**

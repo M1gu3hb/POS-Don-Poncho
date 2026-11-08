@@ -76,5 +76,11 @@ directas; el pooler admite 200 clientes con 15 conexiones a la base):
   de origen y ~40 % en invocaciones, y el peor caso cae a ≈ 22 USD en Vercel y ≈ 25 GB en Supabase.
   Los meseros (61 peticiones/min: el mapa cada 5–6 s) son lo siguiente, si hiciera falta.
 - **Pausar con la pantalla oculta ya ocurre**: no hace falta hacer nada para eso.
+- **El ajuste, aplicado (DP-15, `8f5a422`):** el estado completo del portal se sondea cada **12 s**
+  (y al volver a la pantalla), no cada 4 s; el carrito compartido sigue con su sondeo ligero. Por
+  teléfono, las lecturas completas bajan de 15 a 5 por minuto: unos 400 KB/min sin comprimir en vez
+  de 1.231 (−67 %) y unas 26 peticiones por minuto en vez de 36 (−28 %). Es una estimación con los
+  tamaños medidos, no una medición nueva; el peor caso queda por debajo del crédito o muy cerca, y lo
+  realista con holgura.
 - Lo que hay que vigilar la primera semana: en Vercel, Usage del proyecto (invocaciones, CPU
   activa, transferencia de origen); en Supabase, Reports → Egress.
