@@ -15,6 +15,8 @@ export interface PlatilloPublico {
   readonly tipo_venta?: string | null;
   readonly unidad_variable?: string | null;
   readonly modificadores?: readonly unknown[] | null;
+  /** DP-15 · Se acabó por hoy (`productos.agotado_hasta`): se enseña y no se deja pedir. */
+  readonly agotado?: boolean | null;
 }
 
 export interface PlatilloParaPedirProps {
@@ -40,10 +42,13 @@ export function PlatilloParaPedir({
     typeof platillo.precio_venta_centavos === 'string' ? Number(platillo.precio_venta_centavos) : 0;
   const porMedida = platillo.tipo_venta === 'variable_medida';
   const conOpciones = (platillo.modificadores?.length ?? 0) > 0;
+  // DP-15 (QA, J-H2): el servidor ya lo niega; aquí se ve antes de tocarlo.
+  const agotado = platillo.agotado === true;
   return (
     <li className="flex items-center gap-(--espacio-3) py-(--espacio-2)">
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="font-semibold">{platillo.nombre}</span>
+        {agotado ? <span className="text-xs font-semibold text-peligro">Agotado hoy</span> : null}
         {typeof platillo.descripcion === 'string' && platillo.descripcion !== '' ? (
           <span className="text-xs text-texto-sutil">{platillo.descripcion}</span>
         ) : null}
@@ -59,7 +64,13 @@ export function PlatilloParaPedir({
           ) : null}
         </span>
       ) : null}
-      <Button type="button" size="sm" onClick={alPedir} aria-label={`Agregar ${platillo.nombre}`}>
+      <Button
+        type="button"
+        size="sm"
+        onClick={alPedir}
+        disabled={agotado}
+        aria-label={agotado ? `${platillo.nombre}: agotado hoy` : `Agregar ${platillo.nombre}`}
+      >
         <Plus aria-hidden="true" />
         Agregar
       </Button>

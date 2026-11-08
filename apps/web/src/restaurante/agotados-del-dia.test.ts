@@ -54,6 +54,17 @@ describe('DP-15 · las pantallas respetan lo agotado', () => {
     expect(c).toContain('Agotadohoy');
   });
 
+  it('el menú del portal en lista también lo enseña «Agotado hoy» y apaga «Agregar» (QA, J-H2)', () => {
+    // El menú por páginas (`PaginaConBotones`) pinta cada platillo con este renglón; sólo la tarjeta
+    // con imagen lo marcaba, y el comensal se enteraba hasta tocarlo.
+    const c = sinEspacios('src/restaurante/PlatilloParaPedir.tsx');
+    expect(c).toContain('constagotado=platillo.agotado===true;');
+    expect(c).toContain(
+      '{agotado?<spanclassName="text-xsfont-semiboldtext-peligro">Agotadohoy</span>:null}',
+    );
+    expect(c).toContain('disabled={agotado}');
+  });
+
   it('la cocina y Productos tienen el botón', () => {
     expect(sinEspacios('heredado/pages/Cocina.jsx')).toContain('<AgotadosDelDia/>');
     expect(sinEspacios('heredado/pages/Productos.jsx')).toContain(
