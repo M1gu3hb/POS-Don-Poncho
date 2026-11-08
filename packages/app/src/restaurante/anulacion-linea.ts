@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { definirComando } from '../definicion.ts';
 import { cotizar } from '../venta/cotizar.ts';
 import { exigirPermisoParaCancelar } from './cancelar-con-permiso.ts';
-import { cancelarComandasSinPlatillos } from './comandas-al-cobrar.ts';
+import { cancelarComandasSinPlatillos, moverLaMesaTrasCancelar } from './comandas-al-cobrar.ts';
 import { mermaDelPlatilloAnulado } from './merma-por-cancelacion.ts';
 
 /**
@@ -189,10 +189,21 @@ export const anularLineaComando = definirComando<
       }),
     );
 
-    // DP-15 · F1 · Si era el único platillo vivo de su comanda, la comanda sale de la estación.
-    await ctx.paso('cerrar_comandas_vacias', () =>
+    // DP-15 · F1 · Si era el único platillo vivo de su comanda, la comanda sale de la estación,
+    // y la mesa se mueve según lo que quede (la revisión de código).
+    const canceladas = await ctx.paso('cerrar_comandas_vacias', () =>
       cancelarComandasSinPlatillos(ctx.tx, organizacionId, entrada.lineaId),
     );
+    if (canceladas.length > 0) {
+      await ctx.paso('mover_la_mesa', () =>
+        moverLaMesaTrasCancelar(ctx.tx, {
+          organizacionId,
+          canceladas,
+          empleoId,
+          ahora: ctx.ahora,
+        }),
+      );
+    }
 
     // Los totales se recalculan desde las líneas VIVAS, con la misma `cotizar`
     // del cobro. Restarle el importe anulado al total guardado sería un segundo

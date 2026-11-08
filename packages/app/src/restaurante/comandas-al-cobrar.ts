@@ -3,7 +3,9 @@ import 'server-only';
 import type { Transaccion } from '@morphiqpos/data';
 import { sql } from 'kysely';
 
+import { quedanComandasActivas } from './datos.ts';
 import { ajustarComandaAlMinimo } from './items.ts';
+import { sincronizarMesa } from './preparacion-escrituras.ts';
 import { recalcularEstadoDeLineas } from './propagacion.ts';
 import { type EstadoComanda } from './transiciones.ts';
 
@@ -75,8 +77,8 @@ export async function cancelarComandasSinPlatillos(
   tx: Transaccion,
   organizacionId: string,
   lineaId: string,
-): Promise<void> {
-  await sql`
+): Promise<readonly ComandaCancelada[]> {
+  const { rows } = await sql<ComandaCancelada>`
     update comandas c
        set estado = 'cancelado'
      where c.organizacion_id = ${organizacionId}
@@ -90,5 +92,64 @@ export async function cancelarComandasSinPlatillos(
           where ci.organizacion_id = c.organizacion_id
             and ci.comanda_id = c.id
             and ci.estado <> 'cancelado')
+    returning c.id::text as "id", c.orden_id::text as "ordenId"
   `.execute(tx);
+  return rows;
+}
+
+/** Una comanda que se quedó sin platillos vivos, con la cuenta de la que cuelga. */
+export interface ComandaCancelada {
+  readonly id: string;
+  /** La cuenta dueña de la comanda: en una cuenta dividida, la madre (no la parte). */
+  readonly ordenId: string;
+}
+
+/**
+ * DP-15 · La revisión de código · La mesa, después de quitar lo último que faltaba.
+ *
+ * Cancelar la comanda vacía no movía la mesa: se quedaba en «pedido enviado» aunque ya no hubiera
+ * nada en la cocina, o sin pasar a «Esperando entrega» aunque lo demás ya estuviera listo. Con lo
+ * que queda de la cuenta dueña de las comandas:
+ *   · todavía falta algo por preparar → la mesa no se mueve;
+ *   · sólo quedan comandas listas → como si la última hubiera quedado lista: esperando entrega;
+ *   · no queda nada vivo → ocupada, sin nada en cocina.
+ */
+export async function moverLaMesaTrasCancelar(
+  tx: Transaccion,
+  datos: {
+    readonly organizacionId: string;
+    readonly canceladas: readonly ComandaCancelada[];
+    readonly empleoId: string | null;
+    readonly ahora: Date;
+  },
+): Promise<void> {
+  const porCuenta = new Map<string, string[]>();
+  for (const c of datos.canceladas)
+    porCuenta.set(c.ordenId, [...(porCuenta.get(c.ordenId) ?? []), c.id]);
+
+  for (const [ordenId, comandas] of porCuenta) {
+    const orden = await tx
+      .selectFrom('ordenes')
+      .select('mesa_id')
+      .where('organizacion_id', '=', datos.organizacionId)
+      .where('id', '=', ordenId)
+      .executeTakeFirst();
+    const mesaId = orden?.mesa_id ?? null;
+    if (mesaId === null) continue;
+
+    // Si quedan comandas listas, la mesa se mueve como si la última hubiera quedado lista
+    // (`sincronizarMesa` comprueba entonces que nada falte por preparar); si no, como cancelada.
+    const quedanListas = await quedanComandasActivas(tx, datos.organizacionId, ordenId, comandas, [
+      'listo',
+    ]);
+    await sincronizarMesa(tx, {
+      organizacionId: datos.organizacionId,
+      ordenId,
+      mesaId,
+      comandasMovidas: comandas,
+      estadoComanda: quedanListas ? 'listo' : 'cancelado',
+      empleoId: datos.empleoId,
+      ahora: datos.ahora,
+    });
+  }
 }

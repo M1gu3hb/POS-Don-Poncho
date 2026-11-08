@@ -251,3 +251,53 @@ describe('M2 · al cobrar, las comandas ya no se quedan en la pantalla de la est
     POR_COMANDOS,
   );
 });
+
+/** Quita (anula) el primer renglón del platillo en la cuenta. */
+async function quitarDe(ordenId: string, platillo: string): Promise<void> {
+  exigirOk(
+    await comando(anularLineaComando, {
+      entrada: {
+        ordenId,
+        lineaId: (await lineasDe(ordenId)).get(platillo)?.[0] ?? '',
+        motivo: 'error_mesero',
+      },
+      ambito: ambitoDeCaja(salon),
+      idempotencyKey: clave(),
+    }),
+    'restaurante.anular_linea',
+  );
+}
+
+describe('DP-15 · la revisión · la mesa, cuando se quita lo último que faltaba', () => {
+  it(
+    'se quita el único platillo de la mesa: la comanda se cancela y la mesa queda ocupada, sin nada en cocina',
+    async () => {
+      const { mesaId, ordenId } = await sentarYPedir(salon, 6, [
+        { platillo: 'arrachera', cantidad: '1' },
+      ]);
+      expect(await estadoDeLaMesa(mesaId)).toBe('pedido_enviado');
+
+      await quitarDe(ordenId, 'Arrachera al carbón');
+      expect((await comandasDe(ordenId))[0]?.estado).toBe('cancelado');
+      expect(await estadoDeLaMesa(mesaId)).toBe('ocupada');
+    },
+    POR_COMANDOS,
+  );
+
+  it(
+    'la barra ya terminó y se quita lo único pendiente de la cocina: la mesa pasa a esperando entrega',
+    async () => {
+      const { mesaId, ordenId } = await sentarYPedir(salon, 7, [
+        { platillo: 'arrachera', cantidad: '1' },
+        { platillo: 'cerveza', cantidad: '1' },
+      ]);
+      const barra = (await comandasDe(ordenId)).find((c) => c.area === 'barra');
+      await marcarListo(barra?.id ?? '');
+      expect(await estadoDeLaMesa(mesaId)).not.toBe('en_espera_entrega');
+
+      await quitarDe(ordenId, 'Arrachera al carbón');
+      expect(await estadoDeLaMesa(mesaId)).toBe('en_espera_entrega');
+    },
+    POR_COMANDOS,
+  );
+});
