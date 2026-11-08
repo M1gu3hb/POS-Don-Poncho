@@ -1186,8 +1186,8 @@ Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PR
 
 | Agente | Modelo | Encargo | Resultado |
 | --- | --- | --- | --- |
-| F1 (worktree propio, base 5437) | Sonnet | «Esperando entrega» con varias estaciones; las comandas que siguen en la cocina tras cobrar o quitar | en curso |
-| F2 (worktree propio, base 5438) | Sonnet | El documento del cierre igual a Registros; el CSV en hora de CDMX; el ticket en 58 y 80 mm | en curso |
+| F1 (worktree propio, base 5437) | Sonnet | «Esperando entrega» con varias estaciones; las comandas que siguen en la cocina tras cobrar o quitar | hecho: integrado en `d8c1207` (6 + 4 pruebas, 9 mutantes muertos, rehechos aquí) |
+| F2 (worktree propio, base 5438) | Sonnet | El documento del cierre igual a Registros; el CSV en hora de CDMX; el ticket en 58 y 80 mm | hecho: integrado en `132f254` (19 pruebas, 14 mutantes) |
 
 - 12:54 **La 189, aplicada a la propia** con `pnpm db:migrate` (lo aditivo antes del despliegue):
   `verify:esquema` estricto cumple con 1750 columnas; RLS 139/139 y 0 permisos.
@@ -1198,3 +1198,7 @@ Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PR
 - 13:32 Las puertas estáticas: 30 de 33 en verde a la primera; aspecto (los cambios visuales de DP-15,
   registrados con su motivo), lecturas (la excepción de `fecha_inicio` baja a 6) y adopción (vacíos
   con el sistema) arregladas (`f29440c`).
+- 13:42 F1 integrado (`d8c1207`): la mesa llega a «Esperando entrega» con varias estaciones; al cobrar,
+  lo listo sale de la estación y lo pendiente se marca «Cuenta cobrada»; quitar el único platillo
+  cancela su comanda (DP-D87). Decisiones DP-D83 a DP-D87 y la ficha 35. Producción leída: 0 cajas,
+  0 órdenes, 0 folios, 10 mesas libres.

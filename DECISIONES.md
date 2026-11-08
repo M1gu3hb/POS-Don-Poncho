@@ -1615,3 +1615,20 @@ puerta los denuncia todos.
 - **La capacidad:** el portal del comensal sondea su estado completo cada 12 s y al volver a la pantalla
   (antes 4 s con el menú entero), el ajuste más barato de `docs/infra/CAPACIDAD.md`.
 - **Sin migración.**
+
+## DP-D87 · Al cobrar, lo listo se entrega y lo pendiente se queda marcado; la mesa espera sólo lo que falta · 08-11-2026
+
+- **La mesa con varias estaciones:** al pasar una comanda a «listo», la mesa sólo cuenta las comandas
+  que faltan por terminar (`nuevo`, `en_preparacion`); las otras `listo` ya esperan al mesero. Antes la
+  última estación en terminar veía a las demás como activas y la mesa nunca llegaba a «Esperando
+  entrega».
+- **Al cobrar:** lo que la cocina ya tenía «listo» de esa cuenta pasa a entregado, renglón por renglón
+  (en una cuenta dividida, cada parte entrega lo suyo), y sale de la pantalla de su estación.
+- **Lo que sigue por preparar no se cierra:** puede ser comida que sí se sirve (una cuenta pagada por
+  adelantado, el postre). La tarjeta de la estación dice «Cuenta cobrada» y la cocina decide.
+  **Alternativa descartada:** cancelarlo al cobrar, que escondería platillos por servir.
+- **Lo quitado:** quitar el único platillo de una comanda la cancela; si le quedan otros, la pantalla ya
+  no pinta el quitado.
+- **Queda como mejora:** cancelar el último pendiente cuando las demás comandas ya están listas no mueve
+  la mesa a «Esperando entrega» (el mesero la ve igual en el mapa).
+- **Sin migración.**

@@ -1,6 +1,6 @@
 # 35 · El agotado del día, los movimientos de la cajera, dos cajas en el cierre y lo que ve cada puesto (DP-15)
 
-Decisiones DP-D83 a DP-D86. **Una migración: la 189** (aditiva). Todo es genérico: salió de la
+Decisiones DP-D83 a DP-D87. **Una migración: la 189** (aditiva). Todo es genérico: salió de la
 auditoría por función de DP-15 (`docs/qa/AUDITORIA-POR-FUNCION.md`) y el maestro tiene los mismos
 huecos.
 
@@ -23,6 +23,10 @@ timestamptz`, nula = disponible; precondición (la columna no existe) y poscondi
   (`restaurante/otras-cajas-al-cerrar.ts`, `CierreDiarioDialog.jsx`); «Ventas hoy» del Tablero suma el
   día de todas las cajas (`tablero/del-dia.ts`); `caja.terminales` lista sólo las que abrieron alguna
   sesión de caja (`packages/app/src/caja/terminales.ts`).
+- **La mesa y la cocina al cobrar** (DP-D87): `sincronizarMesa` cuenta sólo las comandas pendientes
+  al pasar una a «listo» (`ESTADOS_COMANDA_PENDIENTES`); `cobrarOrden` entrega lo listo de la cuenta
+  por renglón (`restaurante/comandas-al-cobrar.ts`); quitar el único platillo cancela su comanda; la
+  estación no pinta lo quitado y marca «Cuenta cobrada» (`apps/web/src/restaurante/platos-de-la-estacion.ts`).
 - **Lo que ve cada puesto** (DP-D86): Datos e Integraciones sólo para dueño y administrador
   (`configuracion/pestanas-de-mando.contrato.test.ts` y el puente); la apariencia sólo para el dueño;
   Compras sin botones para el almacén; Registros → «Auditoría» con `reportes.auditoria_reciente`
