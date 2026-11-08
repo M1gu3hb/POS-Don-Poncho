@@ -16,28 +16,27 @@
 | 0 | Arranque: lectura, plan, este archivo | hecho (08-11 10:45) |
 | 1 | Datos del proyecto nuevo con la CLI → `_PRIVADO\fase-b.env` | hecho (10:46) |
 | 2 | 2.1 PIN nuevos | hecho (10:59) |
-| 2 | 2.2 gerente sin Datos/Integraciones (hecho, rama `dp-15-codigo`) · 2.3 informativos (pendiente) · 2.4 capacidad (hecha, `docs/infra/CAPACIDAD.md`) | en curso |
+| 2 | 2.2 gerente sin Datos/Integraciones · 2.3 informativos · 2.4 capacidad (`docs/infra/CAPACIDAD.md`; el portal ya sondea cada 12 s) | hecho |
 | 3 | La mudanza | hecha (11:07): huella IDÉNTICA, humo 38/38, regreso atrás escrito |
 | 4 | Base propia lista: 2 cajas, «Caja 2», descuentos, PIN, respaldo | hecho (11:10) |
 | 5 | Auditoría por función | hecha: `docs/qa/AUDITORIA-POR-FUNCION.md` (2 bloqueantes, 15 medios) |
-| 6 | Arreglos | en curso: los 2 bloqueantes y 11 medios hechos en `dp-15-codigo`; F1 (mesa/comandas) y F2 (cierre, CSV, 58 mm) en agentes; la 189 ya en la propia |
-| 7 | QA de jornada | pendiente |
-| 8 | Prueba del puro link | pendiente |
-| 9 | Entrega y reporte 009 | pendiente |
+| 6 | Arreglos | hechos en `dp-15-codigo` (F1 y F2 integrados; DP-D83 a DP-D88; ficha 35); falta `pnpm verify` completo, PR, CI, despliegue y humo |
+| 7 | QA de jornada | listo para lanzar: copias `qa_dp15_j` y `qa_dp15_d` (5460) y encargos en `D:\mpos-tmp\dp15-qa\` |
+| 8 | Prueba del puro link | guion listo y probado contra producción (`D:\mpos-tmp\dp15-link\link.mjs`, sin PIN, DP-D88); se repite tras desplegar |
+| 9 | Entrega y reporte 009 | `docs/ENTREGA-DON-PONCHO.md` casi lista; falta el reporte |
 
 ## Lo que sigue
 
-1. Integrar los parches de F1 (`D:\mpos-tmp\dp15-arreglos1.patch`) y F2 (`f2.patch`), revisar sus
-   informes (`f1.md`, `f2.md`), correr sus pruebas y mutantes, y actualizar la tabla de estado de la
-   auditoría.
-2. `pnpm verify` completo en el worktree (con la propia para `verify:esquema`/`rls`/`acople`), PR de
-   `dp-15-codigo` a `main`, CI, despliegue y humo sin cobrar (el guion `humo-mudanza.mjs`).
-3. Fase 7: copia nueva de la propia (exportar → `copia-dp15.sh j`), app compilada, dos agentes de QA
-   (jornada completa con cuadre al centavo; aparatos/WebKit/portal/red lenta). WebKit de Playwright
-   instalándose.
-4. Fase 8 (el puro link en producción) y Fase 9 (entrega y reporte 009).
-5. Si da el tiempo: pantalla de auditoría en Registros y zonas (crear/renombrar), y el ajuste del
-   sondeo del portal (capacidad).
+1. `pnpm verify` del worktree (guion `verify-completo.sh [desde-la-puerta]` del scratchpad, sin
+   `verify:entorno` que pide Postgres 17): si pasa, push de `dp-15-codigo`, PR a `main`
+   (cuerpo en `scratchpad\pr-dp15.md`), CI (si la galería cambia, `workflow_dispatch` con
+   `actualizar_galeria`), merge, esperar Production `READY` y humo sin cobrar (`humo-mudanza.mjs`).
+2. Fase 7: servir las copias con el build del worktree (`servir-copia.sh j 32741 <worktree>` y
+   `d 32742`) y lanzar los dos agentes de QA (`ENCARGO-QA-J.md`, `ENCARGO-QA-D.md`); integrar
+   `JORNADA-2026-11-08.md` y `APARATOS-2026-11-08.md` en `docs/qa/`. Máximo 3 rondas.
+3. Fase 8: repetir `link.mjs` contra producción ya desplegada (las etiquetas del iPhone deben salir);
+   comprobar producción limpia con `estado-propia.mjs` (sólo lectura).
+4. Fase 9: el reporte 009, PROGRESO, bitácora y el mensaje final.
 
 ## Dónde quedó cada cosa
 

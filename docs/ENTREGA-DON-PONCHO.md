@@ -57,11 +57,13 @@ público).
 1. **Nombrar las dos cajas.** En la PC de la caja, entra «Caja» y toca «Abrir caja» con el fondo. Luego
    el dueño (en ese mismo aparato o en otro) entra a Configuración → Caja → «El nombre de cada caja»: la
    que dice «con la caja abierta» es la PC; ponle «Caja 1». Repite en la tableta con «Caja 2» → «Caja 2».
-   (Desde ahí, los avisos dicen «Ya se cobró en Caja 1» y no un número.)
+   Ahí sólo aparecen los aparatos que alguna vez abrieron caja (los teléfonos de los meseros y la
+   tableta de cocina no). Desde ahí, los avisos dicen «Ya se cobró en Caja 1» y no un número.
 2. **Abrir caja** en cada aparato de caja, con el fondo contado.
 3. **La primera venta:** el mesero toca una mesa libre → «Abrir mesa» con las personas → agrega los
    platillos (la barbacoa por kilo: ¼, ½ o 1 kg) → «Enviar a Cocina». La Cocina (y Bebidas) lo ven,
-   tocan «Preparar» y «Listo»; el mesero recibe el aviso, entrega y toca «Solicitar cuenta». En Caja,
+   tocan «Preparar» y «Listo»; cuando todas las estaciones terminan, la mesa pasa a «Esperando
+   entrega»; el mesero entrega y toca «Solicitar cuenta». En Caja,
    la cuenta aparece en «Pendientes»: se elige la propina, el método (efectivo con su cambio, tarjeta,
    transferencia o mixto) y «Cobrar»; sale el ticket.
 4. **Durante el día:** lo que se acabó se marca en Cocina → «Agotados» (el mesero y el QR dejan de
@@ -73,6 +75,20 @@ público).
    cierre lo dice y lleva al mapa). Sale el documento del día; se guarda en PDF y queda en Registros →
    Cortes.
 
+## La revisión de Miguel antes del sábado (10 minutos, con sus PIN)
+
+Lo que necesita un PIN real en producción no lo prueba nadie más que Miguel: los PIN están en
+`..\_PRIVADO\PINES-DON-PONCHO.md`. Sin abrir caja ni cobrar:
+
+1. En el teléfono, abrir el link del personal y entrar como «Mesero 1». Debe caer en el mapa de mesas.
+2. En la PC, entrar como «Cocina»; en una tableta (u otro teléfono), como «Dueño Don Poncho».
+3. En el teléfono, «Salir» y entrar como «Bebidas»: el otro aparato no se sale.
+4. Escanear el QR de una mesa con otro teléfono: abre el menú de esa mesa.
+5. En el teléfono y en el iPhone: «Agregar a la pantalla principal» / «Agregar a inicio»; el ícono
+   abre «Don Poncho» a pantalla completa.
+6. Salir de todos los aparatos. Si se abrió una mesa por error, avisar: hay un guion probado que la
+   cancela y la purga (`scripts/limpiar-ventas-de-prueba.mjs`).
+
 ## Si algo falla
 
 - **«Demasiados intentos»** al entrar: el PIN se bloquea unos minutos tras varios errores (hasta 5
@@ -80,6 +96,9 @@ público).
 - **Sin internet:** la app necesita internet. Lo que el mesero llevaba a medias se guarda en el aparato
   y se recupera al volver a abrir la mesa; lo enviado ya está en el servidor.
 - **Una pantalla se queda «cargando»:** recargar la página (no se pierde nada de lo ya enviado).
+- **En Cocina, una comanda con la marca «Cuenta cobrada»:** la cuenta ya se pagó y ese platillo
+  seguía por preparar; la cocina decide si lo prepara (no se borra solo, por si sí se sirve). Lo que
+  ya estaba listo sale solo de la pantalla al cobrar.
 - **Lo que hay que mirar la primera semana:** en Vercel, el uso del proyecto (invocaciones, CPU activa,
   transferencia); en Supabase, Reports → Egress (ver `docs/infra/CAPACIDAD.md`).
 - **Regreso a la base anterior** (sólo Miguel o quien desarrolla, con el restaurante sin usar el

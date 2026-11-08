@@ -1632,3 +1632,19 @@ puerta los denuncia todos.
 - **Queda como mejora:** cancelar el último pendiente cuando las demás comandas ya están listas no mueve
   la mesa a «Esperando entrega» (el mesero la ve igual en el mapa).
 - **Sin migración.**
+
+## DP-D88 · La prueba del puro link en producción, sin PIN reales y sin cuentas · 08-11-2026
+
+- **Elección:** en producción se prueba todo lo que no pide un PIN: la entrada del personal (200, la
+  lista de personas, sin desbordes) en Android 360 y 412, iPhone, tableta 768 y 1024 y PC; ocho
+  aparatos a la vez detrás de la misma IP; el portal QR de una mesa con su token de siempre; la red
+  lenta (3G simulada); el manifiesto, sus íconos y las etiquetas del iPhone. Sólo lectura: abrir el
+  portal deja el «latido» del teléfono (presencia), no cuentas ni folios.
+- **Lo que pide un PIN** (entrar a cada puesto, sesiones independientes, cambiar de persona) se probó
+  en las copias de la base propia con PIN de prueba, con el mismo código; en producción lo comprueba
+  Miguel con sus PIN en 10 minutos (`docs/ENTREGA-DON-PONCHO.md`). Los PIN reales no los teclea un
+  agente.
+- **Por qué no una cuenta de prueba en producción:** existe el guion probado de DP-12.1
+  (`limpiar-ventas-de-prueba.mjs`, una cuenta sin cobrar y sin caja), pero abrirla exige entrar con un
+  PIN real; queda para Miguel si hiciera falta.
+- **Sin migración.**
