@@ -15,10 +15,18 @@ import RegistrarGastoDialog from '@/components/compras/RegistrarGastoDialog';
 import PlantillasGastoSection from '@/components/compras/PlantillasGastoSection';
 import LoadingState from '@/components/common/LoadingState';
 import { claves } from '~/cliente/claves-de-consulta';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+
+/**
+ * DP-15 · Quien registra compras y gastos (los `roles` de `compras.registrar` y `gastos.registrar`).
+ * El almacén ve el historial de compras, pero no se le ofrecen botones que el servidor le niega.
+ */
+const PUEDEN_REGISTRAR = ['dueno', 'administrador', 'gerente'];
 
 export default function Compras() {
   const [openCompra, setOpenCompra] = useState(false);
   const [openGasto, setOpenGasto] = useState(false);
+  const registra = PUEDEN_REGISTRAR.includes(usePuesto());
 
   // Sin initialData:[] — distinguir "primer fetch" de "vacío real".
   const { data: ingredientes } = useQuery({
@@ -40,6 +48,8 @@ export default function Compras() {
     queryFn: () => api.entidades.GastoOperativo.list('-created_date', 30),
     placeholderData: (prev) => prev,
     staleTime: 5000,
+    // Los gastos son de la caja y de la dirección: el almacén no los lee (403).
+    enabled: registra,
   });
 
   const safeIngredientes = Array.isArray(ingredientes) ? ingredientes : [];
@@ -55,7 +65,14 @@ export default function Compras() {
         description="Compras de insumos suman al inventario. Gastos operativos NO afectan el inventario."
       />
 
+      {!registra && (
+        <p className="text-sm text-muted-foreground">
+          Las compras y los gastos los registra la gerencia. Aquí ves las compras recientes.
+        </p>
+      )}
+
       {/* Acciones grandes */}
+      {registra && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <button
           onClick={() => setOpenCompra(true)}
@@ -96,9 +113,10 @@ export default function Compras() {
           </p>
         </button>
       </div>
+      )}
 
       {/* Plantillas de gasto recurrentes */}
-      <PlantillasGastoSection />
+      {registra && <PlantillasGastoSection />}
 
       {/* Compras recientes */}
       <div>
@@ -137,6 +155,7 @@ export default function Compras() {
       </div>
 
       {/* Gastos recientes */}
+      {registra && (
       <div>
         <h3 className="font-heading font-bold text-lg mb-3 flex items-center gap-2">
           <Receipt className="w-5 h-5" /> Gastos operativos recientes
@@ -181,6 +200,7 @@ export default function Compras() {
           </div>
         )}
       </div>
+      )}
 
       <RegistrarCompraDialog
         open={openCompra}
