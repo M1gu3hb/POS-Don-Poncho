@@ -168,6 +168,9 @@ describe('el menú no lleva costos, márgenes ni receta', () => {
         'presets_variable_qr',
         // Los grupos de opciones (DP-5): el sabor del pulque se elige desde el QR. Sólo nombres.
         'modificadores',
+        // DP-15 · Agotado del día: el comensal lo ve apagado y no lo puede pedir (un sí o un no; la
+        // hora exacta de `agotado_hasta` no sale).
+        'agotado',
         'tipo_venta',
         'unidad_venta',
         'unidad_variable',
