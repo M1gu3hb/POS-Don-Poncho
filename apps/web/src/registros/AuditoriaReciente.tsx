@@ -1,8 +1,9 @@
 'use client';
 
 import { Input } from '@morphiqpos/ui/primitivas/input';
-import { Aviso, EsqueletoDeLista } from '@morphiqpos/ui/sistema';
+import { Aviso, EsqueletoDeLista, Vacio } from '@morphiqpos/ui/sistema';
 import { useQuery } from '@tanstack/react-query';
+import { History } from 'lucide-react';
 import { useState } from 'react';
 
 import { invocarComando } from '~/cliente/api';
@@ -72,7 +73,11 @@ export function AuditoriaReciente() {
         }}
       />
       {renglones.length === 0 ? (
-        <Aviso tono="atencion" titulo="Nada que mostrar con esa búsqueda." />
+        <Vacio
+          tamano="compacto"
+          icono={<History aria-hidden className="size-8" />}
+          titulo="Nada que mostrar con esa búsqueda."
+        />
       ) : (
         <ul className="flex flex-col divide-y divide-borde">
           {renglones.map((r) => (

@@ -921,6 +921,132 @@
       "archivo": "apps/web/heredado/components/tickets/CorteTicket.jsx",
       "porque": "DP-14 (ronda 2, menor del corte): si el servidor cortó la lista de descuentos, bajo la tabla una línea sutil dice «Sólo se muestran X de N descuentos; el total del corte los incluye a todos.». La tabla y el total no cambian.",
       "testigos": ["+ clase:text-xs", "+ clase:text-texto-sutil", "+ clase:mt-1"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/caja/CierreDiarioDialog.jsx",
+      "porque": "DP-15 (auditoría por función, A1-M4): con otra caja abierta, el Cierre del día lo avisa en un recuadro de advertencia y el botón promete cerrar sólo la caja de este aparato.",
+      "testigos": [
+        "+ clase:flex",
+        "+ clase:gap-2",
+        "+ clase:p-3",
+        "+ clase:rounded-xl",
+        "+ clase:border",
+        "+ clase:items-start",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:shrink-0",
+        "+ clase:mt-0.5",
+        "+ clase:text-sm",
+        "+ clase:font-semibold",
+        "+ clase:bg-advertencia/15",
+        "+ clase:border-advertencia/40",
+        "+ clase:text-advertencia"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/tickets/PreCuentaTicket.jsx",
+      "porque": "DP-15 (auditoría por función, A2-M7): la precuenta imprime en el ancho de papel elegido en Configuración (58 u 80 mm), no siempre en 80 mm.",
+      "testigos": ["- clase:thermal-80", "+ clase:thermal-${String(ancho)}"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-15 (auditoría por función, A1-B1 y A1-M3): la caja tiene «Movimientos» (retiro, entrada de cambio, corte de turno) y el diálogo «Cobrar» es más ancho, con scroll y el pie que se envuelve para no salirse de su tarjeta en tableta y PC.",
+      "testigos": [
+        "- clase:sm:max-w-md",
+        "+ clase:shrink-0",
+        "+ clase:gap-2",
+        "+ clase:flex-wrap",
+        "+ clase:overflow-y-auto",
+        "+ clase:sm:max-w-lg",
+        "+ clase:max-h-[92vh]",
+        "+ clase:sm:space-x-0",
+        "+ texto:Movimientos"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Compras.jsx",
+      "porque": "DP-15 (auditoría por función, A2-M4): el almacén ya no ve botones que el servidor le niega; en su lugar, una línea dice que las compras y gastos los registra la gerencia.",
+      "testigos": [
+        "+ clase:text-muted-foreground",
+        "+ clase:text-sm",
+        "+ texto:Las compras y los gastos los registra la gerencia. Aquí ves las compras recientes."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "porque": "DP-15 (A2-M7, A2-M8 y las zonas de HALLAZGOS): el ancho del papel del ticket (58/80 mm), la apariencia sólo para el dueño (los demás leen quién la cambia) y el botón «Zonas» para crearlas y renombrarlas.",
+      "testigos": [
+        "+ clase:sm:col-span-2",
+        "+ clase:mt-1",
+        "+ clase:h-9",
+        "+ clase:w-full",
+        "+ clase:rounded-md",
+        "+ clase:bg-superficie",
+        "+ texto:La apariencia del negocio (colores y estilo) la cambia el dueño.",
+        "+ texto:Ancho del papel del ticket",
+        "+ texto:58 mm",
+        "+ texto:80 mm",
+        "+ texto:El rollo de tu impresora térmica. En 58 mm el texto va más chico para que quepa.",
+        "+ texto:Zonas"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Dashboard.jsx",
+      "porque": "DP-15 (auditoría por función, A2-M1): «Ventas hoy» cuenta las ventas del día de todas las cajas aunque estén cerradas, y el aviso de abrir caja lo dice.",
+      "testigos": [
+        "- texto:Abre caja para comenzar operación. Los indicadores operativos están en cero hasta que se abra una caja.",
+        "+ texto:Abre caja para comenzar operación. Las cifras de abajo son las del día, de todas las cajas."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-15 (A2-B1, A2-M6 y A1-M6): el platillo agotado del día sale con la etiqueta «Agotado hoy» y apagado y no se agrega; el pedido a medias se recupera tras recargar; el panel de la mesa enlaza a cambiar de mesa, unir o dividir.",
+      "testigos": [
+        "+ clase:w-full",
+        "+ clase:w-full",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:py-0.5",
+        "+ clase:text-[9px]",
+        "+ clase:px-1.5",
+        "+ clase:mr-1",
+        "+ clase:?",
+        "+ clase::",
+        "+ clase:bg-peligro/15",
+        "+ clase:text-peligro",
+        "+ clase:${agotado",
+        "+ clase:'opacity-50'",
+        "+ clase:''}",
+        "+ texto:Agotado hoy",
+        "+ aviso:Recuperamos lo que llevabas en esta mesa",
+        "+ aviso:${productoTocado.nombre} se agotó por hoy",
+        "+ icono:ArrowLeftRight"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
+      "porque": "DP-15 (auditoría por función, A2-B1): en el menú del comensal el platillo agotado del día sale con la etiqueta «Agotado hoy», apagado, y no se puede pedir.",
+      "testigos": [
+        "+ clase:text-[9px]",
+        "+ clase:px-1.5",
+        "+ clase:py-0.5",
+        "+ clase:?",
+        "+ clase::",
+        "+ clase:bg-peligro/15",
+        "+ clase:text-peligro",
+        "+ clase:${producto?.agotado",
+        "+ clase:===",
+        "+ clase:true",
+        "+ clase:'opacity-60'",
+        "+ clase:''}",
+        "+ texto:Agotado hoy",
+        "+ aviso:${producto.nombre || 'Ese platillo'} se agotó por hoy. Pregúntale a tu mesero qué más hay."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Registros.jsx",
+      "porque": "DP-15 (los informativos de HALLAZGOS): la pestaña «Auditoría» en Registros, para el dueño y el administrador, con lo que se cambió (como el renombre de una caja), quién y cuándo.",
+      "testigos": ["+ clase:gap-1", "+ clase:mt-4", "+ texto:Auditoría"]
     }
   ]
 }

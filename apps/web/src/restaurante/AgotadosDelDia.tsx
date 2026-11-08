@@ -10,7 +10,7 @@ import {
 } from '@morphiqpos/ui/primitivas/dialog';
 import { Input } from '@morphiqpos/ui/primitivas/input';
 import { Switch } from '@morphiqpos/ui/primitivas/switch';
-import { Aviso, EsqueletoDeLista } from '@morphiqpos/ui/sistema';
+import { Aviso, EsqueletoDeLista, Vacio } from '@morphiqpos/ui/sistema';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ban } from 'lucide-react';
 import { useState } from 'react';
@@ -100,7 +100,11 @@ export function AgotadosDelDia() {
           ) : platillos.isError ? (
             <Aviso tono="peligro" titulo="No se pudo leer el menú. Cierra y vuelve a abrir." />
           ) : lista.length === 0 ? (
-            <Aviso tono="atencion" titulo="Ningún platillo coincide con la búsqueda." />
+            <Vacio
+              tamano="compacto"
+              icono={<Ban aria-hidden className="size-8" />}
+              titulo="Ningún platillo coincide con la búsqueda."
+            />
           ) : (
             <ul className="flex max-h-[60vh] flex-col gap-(--espacio-1) overflow-y-auto">
               {lista.map((platillo) => {
