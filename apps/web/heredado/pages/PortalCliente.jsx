@@ -37,6 +37,7 @@ import {
   PEDIDO_GUARDADO,
 } from '~/portal/carrito-compartido/carrito-de-la-mesa';
 import { useCarritoDeLaMesa } from '~/portal/carrito-compartido/use-carrito-de-la-mesa';
+import { SONDEO_DEL_PORTAL_MS } from '~/portal/sondeo-del-portal';
 
 /**
  * Vista pública del comensal (sin sidebar, sin POS).
@@ -87,8 +88,9 @@ function PortalCliente() {
   // el código de una mesa. El endpoint público devuelve sólo la lista blanca y
   // resuelve negocio, mesa, menú, secciones y cuenta en una sola petición.
   //
-  // El sondeo se queda en 4 s por lo mismo de antes: si el mesero abre la mesa
-  // desde el salón, el teléfono tiene que verla abierta sin refrescar.
+  // El sondeo: si el mesero abre la mesa desde el salón, el teléfono tiene que
+  // verla abierta sin refrescar. DP-15: cada 12 s y no 4 (el menú completo viaja
+  // en cada lectura; ver `sondeo-del-portal.ts`), y al volver a la pantalla.
   const {
     data: portal,
     isLoading: cargandoPortal,
@@ -98,7 +100,8 @@ function PortalCliente() {
     queryKey: ['portal_publico', token],
     queryFn: () => leerPortalPublico(token),
     enabled: !!token,
-    refetchInterval: 4000,
+    refetchInterval: SONDEO_DEL_PORTAL_MS,
+    refetchOnWindowFocus: true,
     staleTime: 2000,
   });
 
