@@ -179,7 +179,7 @@ Está en la sección 6 de la bitácora: leer un QR real con la cámara, impresor
 Dos copias desechables de `don-poncho`, hechas con la exportación de producción del 7-11 (posterior al PR #10). Cada una tiene el cupo de cajas en 2, el motivo «Por cancelación» y PIN de prueba que sólo valen ahí (en `_PRIVADO\qa-dp14-a` y `\qa-dp14-b`). La app compilada es de `2c0f5ad`:
 
 - QA-A, caja, dinero y cocina: `qa_dp14` en el 3261.
-- QA-B, usuarios, mesas y portal: `qa_dp14_b` en el 3262.
+- QA-B, usuarios, mesas y portal: `qa_dp14_b`, con su propia app local.
 
 Los hicieron dos agentes Sonnet en sus worktrees, sin tocar el código. El detalle está en [`HALLAZGOS-QA2-a.md`](HALLAZGOS-QA2-a.md) y [`HALLAZGOS-QA2-b.md`](HALLAZGOS-QA2-b.md); las bitácoras, en [`JORNADA-2026-11-07.md`](JORNADA-2026-11-07.md).
 
@@ -200,3 +200,14 @@ Los hicieron dos agentes Sonnet en sus worktrees, sin tocar el código. El detal
 | QA2-B2 | info                | «Nueva mesa» no reusa el número de una mesa quitada                                           | Anotado (es de antes).                                                                                                                                                                |
 | QA2-B3 | info                | No hay pantalla para crear una zona, y el puente deja repetir el nombre                       | Anotado (es de antes).                                                                                                                                                                |
 | QA2-B4 | info                | «La copia traía una caja abierta»                                                             | **Descartado:** es de la demo `demo-ferreteria-la-broca` que siembran las migraciones, no de Don Poncho.                                                                              |
+
+## QA-2 · ronda 2 (07-11-2026, con lo arreglado)
+
+Las specs de QA-A del 01 al 06 se corrieron sobre una tercera copia nueva, `qa_dp14_c` (3263), con la app que trae los arreglos de QA2-A1 y QA2-A3: **57 de 58 chequeos en SÍ.**
+
+- **Arreglos comprobados:**
+  - «la lista dice el peso como ¼ kg» (QA2-A1);
+  - «tras aplicar el descuento, el cobro NO vuelve a pedir la propina ya elegida» (QA2-A3);
+  - el ticket de la mesa 2 dice TOTAL $320.76, con la propina del 10 % sobre el total con descuento.
+- **El único NO es de la spec:** leyó la reimpresión desde Ventas mientras todavía decía «Cargando ticket…». La reimpresión la cubre `ticket-con-descuento`, que pasó.
+- **Fallas en cascada:** después de esa parada, el cobro de la mesa 5 no ocurrió. Por eso tres pasos de la jornada (otra caja ya cobró, los totales del cierre y sus cancelaciones) no encontraron el estado que esperaban. No son defectos confirmados: lo quitado y su cobro los cubren `quitado-en-la-caja` y `barbacoa-por-kilo`, que pasaron con este código.

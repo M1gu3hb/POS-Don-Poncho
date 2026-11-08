@@ -1006,7 +1006,7 @@ punto confirmado en el código antes de repartirlo.
 | Agente | Modelo | Encargo | Resultado |
 | --- | --- | --- | --- |
 | QA-A (worktree `dp14-a`, copia `qa_dp14`, app 3261) | Sonnet | Caja, dinero y cocina: dos cajas, terminales, barbacoa por kilo, descuentos (apagados, gerente, sobre el tope, otro monto, reusado, reemplazo), quitar, dividir y cancelar una parte, cocina sin respuesta, otra caja ya cobró, red caída a medias, Cierre del día | 10 escenas; cortes y Cierre del día cuadrados (21 de 21); consultas de violación 0 de 34. 3 bajos y 2 informativos. |
-| QA-B (worktree `dp14-b`, copia `qa_dp14_b`, app 3262) | Sonnet | Usuarios en 360 px y tableta, mesas y repartir, la zona de la mesera, dos toques rápidos, el portal (familia nueva en limpieza, carrito caducado) | 36 escenas; consultas de violación 0 de 34. 4 informativos (uno descartado). |
+| QA-B (worktree `dp14-b`, copia `qa_dp14_b`, su propia app local) | Sonnet | Usuarios en 360 px y tableta, mesas y repartir, la zona de la mesera, dos toques rápidos, el portal (familia nueva en limpieza, carrito caducado) | 36 escenas; consultas de violación 0 de 34. 4 informativos (uno descartado). |
 
 - Las copias se hicieron con la exportación de producción posterior al PR #10. Cada una tiene sus PIN
   de prueba en `_PRIVADO\qa-dp14-a` y `\qa-dp14-b`, y los secretos locales de la base desechable:
@@ -1018,3 +1018,16 @@ punto confirmado en el código antes de repartirlo.
   informativos quedan anotados en `docs/qa/HALLAZGOS.md`.
 - Las specs `qa2-*` quedaron fuera del repositorio, porque tres pasan de 300 líneas:
   `D:\mpos-tmp\qa-dp14-specs`.
+- Ronda 2 del QA, sobre una tercera copia nueva (`qa_dp14_c`, 3263): las specs de QA-A del 01 al 06,
+  con 57 de 58 chequeos en SÍ y QA2-A1 y QA2-A3 comprobados. El NO fue la spec leyendo una
+  reimpresión que aún cargaba (ver `docs/qa/HALLAZGOS.md`).
+
+### PR #11 a producción y el reporte
+
+- PR #11 (`f6cc018`, `2c0f5ad` y `0fd9cf1`): CI 10 de 10. Se fusionó como `7bdd524` y Production quedó
+  READY.
+- Humo 11 de 11; la ruta nueva contesta 403 sin sesión y `autorizar-descuento` contesta 404.
+- Huella de los otros 10 negocios IDÉNTICA y exportación de `don-poncho` igual antes y después: 0 cuentas,
+  0 pagos, 0 folios y 0 cajas.
+- El reporte `docs/reports/008-correcciones-y-qa.md`, en un PR sólo de documentos.
+
