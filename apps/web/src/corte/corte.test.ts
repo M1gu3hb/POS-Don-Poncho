@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { TITULO_DE_CANCELACIONES, TITULO_DE_PERDIDAS } from './cancelaciones.ts';
+import type { DescuentosLeidos } from '~/corte-heredado/descuentos-del-corte';
+
 import { documentoDelCorte } from './giros.ts';
 import type { Celda, ExtrasDelServidor, HojaDelServidor, Seccion } from './hoja.ts';
 
@@ -512,5 +514,137 @@ describe('DP-13.2 · el corte de una caja abierta dice hasta qué hora cuenta', 
     expect(celda(parcial.secciones, 'Datos del corte', 'Corte parcial · hasta')).toBeDefined();
     const cerrada = documentoDelCorte(hoja(RESTAURANTE));
     expect(celda(cerrada.secciones, 'Datos del corte', 'Corte parcial · hasta')).toBeUndefined();
+  });
+});
+
+/**
+ * DP-15 · F2 (auditoría 1, M5) · EL DOCUMENTO DEL CIERRE DICE LO MISMO QUE EL VISOR DE REGISTROS.
+ *
+ * Al cerrar, el detalle decía «1 kg × Barbacoa de horno» para una venta de ½ kg ($397.50), no
+ * traía las pérdidas por cancelación y los descuentos eran sólo «$20.00», sin quién ni por qué.
+ * El visor (Registros → Ver PDF) decía «½ kg», las pérdidas y «Mesa 4 · $20.00 · Gerente · Cliente
+ * frecuente». Ahora el peso sale con el formateador único y los descuentos con su detalle.
+ */
+describe('DP-15 · el documento del cierre dice lo que el visor', () => {
+  const VENTA_DE_MEDIO_KILO: HojaDelServidor['ventas'][number] = {
+    folio: 'A-1',
+    cobradaEn: '2026-11-08T18:06:13.000Z',
+    mesa: 'Mesa 1',
+    nombrePedido: null,
+    cliente: null,
+    canal: 'aqui',
+    // Lo que armaba el servidor con la cantidad de la línea y su unidad.
+    productos: '1 kg × Barbacoa de horno',
+    lineas: [
+      {
+        nombre: 'Barbacoa de horno',
+        cantidad: '1',
+        unidad: 'kg',
+        tipoVenta: 'variable_medida',
+        cantidadVariable: '0.5',
+        unidadVariable: 'kg',
+      },
+      {
+        nombre: 'Arrachera',
+        cantidad: '2',
+        unidad: 'pieza',
+        tipoVenta: 'precio_fijo',
+        cantidadVariable: null,
+        unidadVariable: null,
+      },
+    ],
+    totalCentavos: '39750',
+    pago: 'efectivo',
+    atendio: 'Mesero 1',
+  };
+
+  const detalle = (doc: ReturnType<typeof documentoDelCorte>): string => {
+    const seccion = doc.secciones.find((s) => s.titulo.startsWith('Detalle de ventas'));
+    if (seccion?.tipo !== 'tabla') throw new Error('falta el detalle de ventas');
+    const celdaDeProductos = seccion.filas[0]?.[3];
+    return celdaDeProductos?.tipo === 'texto' ? celdaDeProductos.texto : '';
+  };
+
+  it('el peso se dice «½ kg» con el formateador único, no «1 kg ×»', () => {
+    const doc = documentoDelCorte(hoja(RESTAURANTE, { ventas: [VENTA_DE_MEDIO_KILO] }));
+    expect(detalle(doc)).toBe('Barbacoa de horno — ½ kg, Arrachera ×2');
+  });
+
+  it('sin líneas estructuradas (servidor viejo) cae al texto que mandó', () => {
+    const sinLineas = { ...VENTA_DE_MEDIO_KILO, lineas: null };
+    const doc = documentoDelCorte(hoja(RESTAURANTE, { ventas: [sinLineas] }));
+    expect(detalle(doc)).toBe('1 kg × Barbacoa de horno');
+  });
+
+  it('trae las pérdidas por cancelación', () => {
+    const doc = documentoDelCorte(
+      hoja(RESTAURANTE, {
+        cancelaciones: [
+          {
+            tipo: 'linea',
+            folio: null,
+            hora: '2026-11-08T18:30:00.000Z',
+            usuario: 'Mesero 1',
+            motivo: 'Cliente se fue',
+            producto: 'Jugo',
+            montoCentavos: '3800',
+            mesa: 'Mesa 5',
+            perdidaCentavos: '3800',
+            perdida: true,
+          },
+        ],
+      }),
+    );
+    expect(titulos(doc.secciones)).toContain(TITULO_DE_PERDIDAS);
+  });
+
+  const DESCUENTOS: DescuentosLeidos = {
+    filas: [
+      {
+        ordenId: 'o-4',
+        folio: 'A-4',
+        mesa: 4,
+        montoCentavos: '2000',
+        autorizo: 'Gerente',
+        motivo: 'Cliente frecuente',
+        cuando: '2026-11-08T18:20:00.000Z',
+      },
+    ],
+    cuantos: 1,
+    totalCentavos: 2000,
+    alcance: 'dia',
+    noSePudieronLeer: false,
+  };
+
+  it('los descuentos traen cuenta, monto, quién autorizó y por qué', () => {
+    const doc = documentoDelCorte(hoja(RESTAURANTE), DESCUENTOS);
+    const seccion = doc.secciones.find((s) => s.titulo === 'Descuentos del día');
+    if (seccion?.tipo !== 'tabla') throw new Error('falta la sección de descuentos');
+    expect(seccion.filas).toEqual([
+      [
+        { tipo: 'texto', texto: 'Mesa 4 · folio A-4' },
+        { tipo: 'dinero', centavos: 2000 },
+        { tipo: 'texto', texto: 'Gerente' },
+        { tipo: 'texto', texto: 'Cliente frecuente' },
+      ],
+    ]);
+  });
+
+  it('si no se pudieron leer, la sección lo dice (no parece «sin descuentos»)', () => {
+    const doc = documentoDelCorte(hoja(RESTAURANTE), {
+      filas: [],
+      cuantos: 0,
+      totalCentavos: 0,
+      alcance: null,
+      noSePudieronLeer: true,
+    });
+    expect(titulos(doc.secciones)).toContain('Descuentos');
+  });
+
+  it('sin descuentos leídos o sin ninguno, la sección no aparece', () => {
+    expect(titulos(documentoDelCorte(hoja(RESTAURANTE)).secciones)).not.toContain('Descuentos');
+    const vacios: DescuentosLeidos = { ...DESCUENTOS, filas: [], cuantos: 0, totalCentavos: 0 };
+    const doc = documentoDelCorte(hoja(RESTAURANTE), vacios);
+    expect(titulos(doc.secciones)).not.toContain('Descuentos del día');
   });
 });

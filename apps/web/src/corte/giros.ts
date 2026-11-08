@@ -22,6 +22,8 @@ import {
 } from './hoja.ts';
 import { cancelaciones } from './cancelaciones.ts';
 import { devolucionesDelDia } from './devoluciones.ts';
+import { seccionesDeDescuentos } from './descuentos.ts';
+import type { DescuentosLeidos } from '~/corte-heredado/descuentos-del-corte';
 
 /**
  * EL CORTE DEL RESTAURANTE (C.6 de la 2.4): ¿cuadró la caja, y cuánto le toca a cada mesero?
@@ -53,6 +55,7 @@ function documento(
 export function corteDeRestaurante(
   hoja: HojaDelServidor,
   extras: ExtrasDelServidor,
+  descuentos: DescuentosLeidos | null = null,
 ): DocumentoDelCorte {
   const propinas = totalDePropinas(hoja);
   const ventas = centavos(hoja.resumen.totalCentavos);
@@ -103,12 +106,17 @@ export function corteDeRestaurante(
     ...gastos(hoja),
     ...inventarioBajo(hoja),
     ...cancelaciones(hoja),
+    // DP-15 · Cada descuento con quién lo autorizó y por qué: el mismo armado que el visor.
+    ...seccionesDeDescuentos(descuentos),
     ...devolucionesDelDia(hoja),
   ]);
 }
 
 // ── Cuál ────────────────────────────────────────────────────────────────────
 
-export function documentoDelCorte(hoja: HojaDelServidor): DocumentoDelCorte {
-  return corteDeRestaurante(hoja, hoja.extras);
+export function documentoDelCorte(
+  hoja: HojaDelServidor,
+  descuentos: DescuentosLeidos | null = null,
+): DocumentoDelCorte {
+  return corteDeRestaurante(hoja, hoja.extras, descuentos);
 }

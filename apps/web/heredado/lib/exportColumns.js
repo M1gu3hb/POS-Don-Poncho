@@ -1,11 +1,13 @@
 'use client';
+import { fechaYHoraDelNegocio } from '@morphiqpos/domain/tiempo';
 import { economiaDeLaVenta, sePintaElMargen } from '~/restaurante/margen-de-las-ventas';
 /**
  * Definición de columnas estándar por sección para los exports.
  * Centralizado para mantener consistencia entre CSV/XLSX/Sheets.
  */
 
-const fmtDate = (v) => (v ? new Date(v).toISOString().slice(0, 19).replace('T', ' ') : '');
+// DP-15 · La hora del restaurante (America/Mexico_City), no la del ISO en UTC (M7).
+const fmtDate = (v) => fechaYHoraDelNegocio(v);
 const fmtNum = (v) => (v === null || v === undefined || v === '' ? 0 : Number(v));
 
 /**

@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatCurrency, formatPercent } from '@/utils/financialUtils';
 import { desgloseMetodosPagoConPropinas } from '@/utils/tipsUtils';
-import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import {
   NOMBRE_DEL_NEGOCIO,
   marcaVisibleDePlataforma,
@@ -32,6 +31,7 @@ import {
   subtituloDelMargen,
 } from '~/restaurante/margen-de-las-ventas';
 import { SeccionPintada } from '~/corte/HojaDelCorte';
+import { textoDeLaLinea } from '~/corte/linea-de-venta';
 import {
   AVISO_SIN_CANCELACIONES,
   EXPLICACION_SIN_CANCELACIONES,
@@ -411,16 +411,19 @@ const CorteTicket = React.forwardRef(function CorteTicket(
                     {v.cliente_nombre ? ` · ${v.cliente_nombre}` : ''}
                   </td>
                   <td className="border px-2 py-1">
-                    {dets.map((d, i) => {
-                      // 6B / 1.I — Mostrar "500 g × Producto" / "4 shots × Producto"
-                      // en lugar de "Producto ×1" cuando es venta variable.
-                      const txtVar = formatearCantidadVariable(d || {});
-                      return (
-                        <div key={i}>
-                          {d.producto_nombre} {txtVar ? `— ${txtVar}` : `×${d.cantidad}`}
-                        </div>
-                      );
-                    })}
+                    {dets.map((d, i) => (
+                      // DP-15 · El mismo texto que el documento del cierre (`textoDeLaLinea`):
+                      // «Barbacoa de horno — ½ kg», «Arrachera ×2».
+                      <div key={i}>
+                        {textoDeLaLinea({
+                          nombre: d.producto_nombre,
+                          cantidad: d.cantidad,
+                          tipo_venta_snapshot: d.tipo_venta_snapshot,
+                          cantidad_variable_snapshot: d.cantidad_variable_snapshot,
+                          unidad_variable_snapshot: d.unidad_variable_snapshot,
+                        })}
+                      </div>
+                    ))}
                     {dets.length === 0 && <span className="text-texto-tenue">—</span>}
                   </td>
                   <td className="border px-2 py-1 text-right font-bold">

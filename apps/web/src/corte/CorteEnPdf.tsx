@@ -8,6 +8,8 @@ import { createPortal } from 'react-dom';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
 
+import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
+
 import { documentoDelCorte } from './giros.ts';
 import { HojaDelCorte } from './HojaDelCorte.tsx';
 import type { DocumentoDelCorte, HojaDelServidor } from './hoja.ts';
@@ -70,16 +72,21 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
 
   useEffect(() => {
     const control = new AbortController();
-    invocarComando<HojaDelServidor>(
-      '/api/caja/hoja-del-corte',
-      { sesionCajaId },
-      { signal: control.signal },
-    )
-      .then((hoja) => {
+    // DP-15 · Los descuentos (quién y por qué) se leen aparte, como en el visor de Registros: si
+    // sólo ellos fallan el PDF sale igual y su sección lo dice (`leerDescuentosDelCorte` no lanza).
+    Promise.all([
+      invocarComando<HojaDelServidor>(
+        '/api/caja/hoja-del-corte',
+        { sesionCajaId },
+        { signal: control.signal },
+      ),
+      leerDescuentosDelCorte(sesionCajaId),
+    ])
+      .then(([hoja, descuentos]) => {
         if (control.signal.aborted) return;
         setEstado({
           paso: 'listo',
-          documento: documentoDelCorte(hoja),
+          documento: documentoDelCorte(hoja, descuentos),
           descargarSolo: hoja.negocio.descargarAlCerrar,
         });
       })

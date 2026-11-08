@@ -7,11 +7,12 @@ import { propinaDerivada } from '@/utils/tipsUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
+import { anchoDelPapel, medidasDelTicket } from '~/impresion/papel';
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 
 /**
  * Ticket / pre-cuenta optimizado para impresora térmica de 80mm.
- * Ancho: 80mm = ~302px. Imprime con @media print (.ticket-printable).
+ * Ancho: el rollo del negocio, 58 u 80 mm (`ancho_papel_ticket`). Imprime con @media print (.ticket-printable).
  */
 export default function PreCuentaTicket({
   venta,
@@ -22,6 +23,11 @@ export default function PreCuentaTicket({
   esFinal = false,
 }) {
   if (!venta) return null;
+  // DP-15 · El rollo del negocio (58 u 80 mm): ancho de la caja, relleno y letra a su medida.
+  const ancho = anchoDelPapel(config?.ancho_papel_ticket);
+  const medidas = medidasDelTicket(ancho);
+  const escala = medidas.letraPx / medidasDelTicket(80).letraPx;
+  const px = (n) => `${Math.round(n * escala * 10) / 10}px`;
   const montoPropina = propinaDerivada(venta);
   const fecha =
     venta.fecha_cierre || venta.fecha_apertura
@@ -32,13 +38,14 @@ export default function PreCuentaTicket({
 
   return (
     <div
-      className="ticket-printable thermal-80 bg-superficie text-texto mx-auto"
+      className={`ticket-printable thermal-${String(ancho)} bg-superficie text-texto mx-auto`}
       style={{
-        width: '80mm',
-        maxWidth: '80mm',
-        padding: '4mm',
+        width: `${String(ancho)}mm`,
+        maxWidth: `${String(ancho)}mm`,
+        padding: ancho === 58 ? '3mm' : '4mm',
+        overflowWrap: 'anywhere',
         fontFamily: 'monospace',
-        fontSize: '11px',
+        fontSize: px(11),
         lineHeight: '1.35',
         color: '#000',
       }}
@@ -51,7 +58,7 @@ export default function PreCuentaTicket({
             alt=""
             crossOrigin="anonymous"
             style={{
-              maxWidth: '140px',
+              maxWidth: ancho === 58 ? '100px' : '140px',
               maxHeight: '60px',
               width: 'auto',
               height: 'auto',
@@ -61,20 +68,20 @@ export default function PreCuentaTicket({
             }}
           />
         )}
-        <h1 style={{ fontWeight: 900, fontSize: '15px', letterSpacing: '2px', margin: 0 }}>
+        <h1 style={{ fontWeight: 900, fontSize: px(15), letterSpacing: '2px', margin: 0 }}>
           {config?.nombre_negocio || NOMBRE_DEL_NEGOCIO}
         </h1>
         {config?.direccion && (
-          <p style={{ fontSize: '9px', margin: '2px 0 0' }}>{config.direccion}</p>
+          <p style={{ fontSize: px(9), margin: '2px 0 0' }}>{config.direccion}</p>
         )}
-        {config?.telefono && <p style={{ fontSize: '9px', margin: 0 }}>Tel: {config.telefono}</p>}
-        <p style={{ fontWeight: 'bold', marginTop: '4px', fontSize: '12px' }}>
+        {config?.telefono && <p style={{ fontSize: px(9), margin: 0 }}>Tel: {config.telefono}</p>}
+        <p style={{ fontWeight: 'bold', marginTop: '4px', fontSize: px(12) }}>
           {esFinal ? 'TICKET DE PAGO' : 'PRE-CUENTA'}
         </p>
       </div>
 
       {/* Datos */}
-      <div style={{ fontSize: '10px', marginBottom: '6px' }}>
+      <div style={{ fontSize: px(10), marginBottom: '6px' }}>
         <Row label="Folio" value={venta.folio} bold />
         {mesa && <Row label="Mesa" value={`#${mesa.numero}${sufijoDelNombreDeLaMesa(mesa)}`} />}
         {venta.personas > 0 && <Row label="Personas" value={venta.personas} />}
@@ -101,7 +108,7 @@ export default function PreCuentaTicket({
               {d?.notas_producto && (
                 <p
                   style={{
-                    fontSize: '9px',
+                    fontSize: px(9),
                     fontStyle: 'italic',
                     paddingLeft: '8px',
                     margin: '1px 0 0',
@@ -146,7 +153,7 @@ export default function PreCuentaTicket({
                 display: 'flex',
                 justifyContent: 'space-between',
                 fontWeight: 'bold',
-                fontSize: '14px',
+                fontSize: px(14),
                 borderTop: '1px solid #000',
                 marginTop: '3px',
                 paddingTop: '3px',
@@ -156,7 +163,7 @@ export default function PreCuentaTicket({
               <span>{formatCurrency(papel.total + montoPropina)}</span>
             </div>
             {esFinal && venta.metodo_pago && (
-              <div style={{ marginTop: '4px', fontSize: '10px' }}>
+              <div style={{ marginTop: '4px', fontSize: px(10) }}>
                 <Row label="Pago" value={venta.metodo_pago} capitalize />
                 {venta.monto_efectivo > 0 && (
                   <Row label="Efectivo" value={formatCurrency(venta.monto_efectivo)} />
@@ -187,13 +194,13 @@ export default function PreCuentaTicket({
             borderRadius: '4px',
           }}
         >
-          <p style={{ fontSize: '9px', margin: 0 }}>CÓDIGO PARA CAJA</p>
+          <p style={{ fontSize: px(9), margin: 0 }}>CÓDIGO PARA CAJA</p>
           <p
-            style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '4px', margin: '2px 0' }}
+            style={{ fontSize: px(20), fontWeight: 'bold', letterSpacing: ancho === 58 ? '2px' : '4px', margin: '2px 0' }}
           >
             {codigo}
           </p>
-          <p style={{ fontSize: '9px', margin: 0 }}>Presenta este código en caja</p>
+          <p style={{ fontSize: px(9), margin: 0 }}>Presenta este código en caja</p>
         </div>
       )}
 
@@ -203,14 +210,14 @@ export default function PreCuentaTicket({
           textAlign: 'center',
           borderTop: '1px dashed #000',
           paddingTop: '4px',
-          fontSize: '10px',
+          fontSize: px(10),
         }}
       >
         <p style={{ margin: 0 }}>{config?.mensaje_ticket || '¡Gracias por tu visita!'}</p>
         {config?.ticket_footer && (
-          <p style={{ fontSize: '9px', margin: '2px 0 0' }}>{config.ticket_footer}</p>
+          <p style={{ fontSize: px(9), margin: '2px 0 0' }}>{config.ticket_footer}</p>
         )}
-        {esFinal && <p style={{ fontSize: '9px', margin: '2px 0 0' }}>Conserva este ticket</p>}
+        {esFinal && <p style={{ fontSize: px(9), margin: '2px 0 0' }}>Conserva este ticket</p>}
       </div>
     </div>
   );

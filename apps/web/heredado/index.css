@@ -579,18 +579,32 @@ html.dark .printable-doc [class*='dark:text-gray-'] {
   }
 }
 
-/* ----- Térmico 80 mm ----- */
+/* ----- Térmico 80 mm y 58 mm (DP-15 · `ancho_papel_ticket`) -----
+   80: página de 80, margen 4 → caja de 72 mm, 68 útiles.
+   58: página de 58, margen 3 → caja de 52 mm, 48 útiles, letra más chica.
+   Las medidas viven también en `~/impresion/papel` (`medidasDelTicket`). */
 @media print {
+  html[data-print-mode='thermal'] .ticket-printable.thermal-80,
+  html[data-print-mode='thermal'] .ticket-printable.thermal-58 {
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+    padding: 2mm !important;
+    color: #000 !important;
+    page-break-inside: auto !important;
+    overflow-wrap: anywhere !important;
+  }
   html[data-print-mode='thermal'] .ticket-printable.thermal-80 {
     width: 72mm !important;
     max-width: 72mm !important;
-    margin: 0 auto !important;
-    padding: 2mm !important;
     font-size: 11px !important;
-    color: #000 !important;
-    page-break-inside: auto !important;
   }
-  html[data-print-mode='thermal'] .ticket-printable.thermal-80 img {
+  html[data-print-mode='thermal'] .ticket-printable.thermal-58 {
+    width: 52mm !important;
+    max-width: 52mm !important;
+    font-size: 9.5px !important;
+  }
+  html[data-print-mode='thermal'] .ticket-printable.thermal-80 img,
+  html[data-print-mode='thermal'] .ticket-printable.thermal-58 img {
     max-width: 38mm !important;
     max-height: 18mm !important;
     width: auto !important;
@@ -599,9 +613,54 @@ html.dark .printable-doc [class*='dark:text-gray-'] {
     display: block !important;
     margin: 0 auto 1.5mm !important;
   }
+  html[data-print-mode='thermal'] .ticket-printable.thermal-58 img {
+    max-width: 28mm !important;
+    max-height: 14mm !important;
+  }
   /* Evitar saltos de página dentro del ticket */
-  html[data-print-mode='thermal'] .ticket-printable.thermal-80 > div {
+  html[data-print-mode='thermal'] .ticket-printable.thermal-80 > div,
+  html[data-print-mode='thermal'] .ticket-printable.thermal-58 > div {
     page-break-inside: avoid !important;
+  }
+}
+
+/* ----- Sólo el documento, desde arriba de la hoja (DP-15) -----
+   `print.js` marca (`~/impresion/aislar`) lo que sobra: se quita del flujo —no sólo se esconde,
+   que dejaba hojas en blanco antes del ticket— y los contenedores del documento pierden
+   posición, transformación y recortes (el diálogo lo dejaba a 434 px del borde). */
+@media print {
+  html[data-print-mode] [data-sin-imprimir] {
+    display: none !important;
+  }
+  html[data-print-mode] [data-ruta-impresion] {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    translate: none !important;
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    opacity: 1 !important;
+  }
+  html[data-print-mode] .ticket-printable[data-objetivo-impresion],
+  html[data-print-mode] .cash-cut-pdf[data-objetivo-impresion] {
+    position: static !important;
+    transform: none !important;
+  }
+  html[data-print-mode],
+  html[data-print-mode] body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 }
 @media print {

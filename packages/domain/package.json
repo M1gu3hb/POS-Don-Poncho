@@ -12,6 +12,7 @@
     "./inventario": "./src/inventario/index.ts",
     "./qr": "./src/qr/index.ts",
     "./sala": "./src/sala/index.ts",
+    "./tiempo": "./src/tiempo/index.ts",
     "./venta": "./src/venta/index.ts",
     "./vocabulario": "./src/vocabulario/index.ts"
   },

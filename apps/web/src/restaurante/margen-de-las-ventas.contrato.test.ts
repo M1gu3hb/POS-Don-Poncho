@@ -88,6 +88,6 @@ describe('el exporte de los registros', () => {
       join(WEB, '..', '..', 'packages', 'app', 'src', 'reportes', 'exportar.ts'),
       'utf8',
     );
-    expect(exporte).toMatch(/aCsv\(sinMargenFalso\(peticion\.entidad, filas\)\)/);
+    expect(exporte).toMatch(/aCsv\(sinMargenFalso\(peticion\.entidad, filas\)(, zona)?\)/);
   });
 });

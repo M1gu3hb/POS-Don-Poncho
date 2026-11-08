@@ -48,6 +48,7 @@ const DEFAULT_CONFIG = {
   mostrar_costos_a_caja: false,
   mostrar_logo_ticket: true,
   mensaje_ticket: '¡Gracias por tu visita!',
+  ancho_papel_ticket: 80,
   ticket_footer: '',
   pdf_footer: '',
   footer_text: '',

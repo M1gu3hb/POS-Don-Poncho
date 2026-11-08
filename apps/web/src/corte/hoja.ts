@@ -13,6 +13,7 @@
  */
 
 import { nombreVisibleDelNegocio } from '../marca/nombre-visible.ts';
+import { textoDeLaLinea } from './linea-de-venta.ts';
 import {
   RECETA_INCOMPLETA,
   SIN_RECETA,
@@ -99,6 +100,8 @@ export interface HojaDelServidor {
     cliente: string | null;
     canal: string;
     productos: string | null;
+    /** DP-15 · Las líneas con su peso vendido: el detalle las dice igual que el visor. */
+    lineas?: readonly LineaDeLaVenta[] | null;
     totalCentavos: string;
     pago: string | null;
     atendio: string | null;
@@ -272,6 +275,33 @@ export type Seccion =
       readonly pasos: readonly { readonly etiqueta: string; readonly centavos: number }[];
       readonly resultado: { readonly etiqueta: string; readonly centavos: number | null };
     };
+
+/** Una línea de una venta, como la sirve `caja.hoja_del_corte` (`consultas.detalleDeVentas`). */
+export interface LineaDeLaVenta {
+  readonly nombre: string;
+  readonly cantidad: string | number;
+  readonly unidad: string | null;
+  readonly tipoVenta: string | null;
+  readonly cantidadVariable: string | number | null;
+  readonly unidadVariable: string | null;
+}
+
+/** Los productos de una venta en una celda: con el formato del visor; sin líneas, el texto del servidor. */
+export function productosDeLaVenta(venta: HojaDelServidor['ventas'][number]): string | null {
+  const lineas = venta.lineas;
+  if (lineas === undefined || lineas === null || lineas.length === 0) return venta.productos;
+  return lineas
+    .map((l) =>
+      textoDeLaLinea({
+        nombre: l.nombre,
+        cantidad: l.cantidad,
+        tipo_venta_snapshot: l.tipoVenta,
+        cantidad_variable_snapshot: l.cantidadVariable,
+        unidad_variable_snapshot: l.unidadVariable,
+      }),
+    )
+    .join(', ');
+}
 
 export interface DocumentoDelCorte {
   /** «CORTE DE CAJA», «CORTE DE TURNO», «CORTE DEL DÍA»: lo que dice arriba a la derecha. */
@@ -680,7 +710,7 @@ export function detalleDeVentas(
       hora(v.cobradaEn),
       texto(referencia.de(v)),
       ...(conCanal ? [texto(CANAL[v.canal] ?? v.canal)] : []),
-      texto(v.productos),
+      texto(productosDeLaVenta(v)),
       dinero(v.totalCentavos),
       texto(v.pago === null ? null : v.pago.split(' + ').map(nombreDelMetodo).join(' + ')),
     ]),

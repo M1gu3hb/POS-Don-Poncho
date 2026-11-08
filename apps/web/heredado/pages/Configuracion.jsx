@@ -162,6 +162,7 @@ export default function Configuracion() {
     usa_mesas: true,
     permitir_venta_sin_stock: false,
     mensaje_ticket: '¡Gracias por tu visita!',
+    ancho_papel_ticket: 80,
     descargar_pdf_corte_auto: true,
     propinas_activas: true,
     propina_porcentajes_sugeridos: '5,10,15,20',
@@ -186,6 +187,7 @@ export default function Configuracion() {
       usa_mesas: cfg.usa_mesas ?? true,
       permitir_venta_sin_stock: cfg.permitir_venta_sin_stock ?? false,
       mensaje_ticket: cfg.mensaje_ticket ?? '¡Gracias por tu visita!',
+      ancho_papel_ticket: Number(cfg.ancho_papel_ticket) === 58 ? 58 : 80,
       descargar_pdf_corte_auto: cfg.descargar_pdf_corte_auto ?? true,
       propinas_activas: cfg.propinas_activas ?? true,
       propina_porcentajes_sugeridos: cfg.propina_porcentajes_sugeridos ?? '5,10,15,20',
@@ -569,6 +571,26 @@ export default function Configuracion() {
                     value={bizForm.mensaje_ticket}
                     onChange={(e) => setBizForm({ ...bizForm, mensaje_ticket: e.target.value })}
                   />
+                </div>
+                {/* DP-15 · El rollo de la impresora térmica: lo usan el ticket, la reimpresión y la precuenta. */}
+                <div className="sm:col-span-2">
+                  <Label className="text-xs" htmlFor="ancho-papel-ticket">
+                    Ancho del papel del ticket
+                  </Label>
+                  <select
+                    id="ancho-papel-ticket"
+                    className="mt-1 h-9 w-full rounded-md border bg-superficie px-3 text-sm"
+                    value={bizForm.ancho_papel_ticket}
+                    onChange={(e) =>
+                      setBizForm({ ...bizForm, ancho_papel_ticket: Number(e.target.value) })
+                    }
+                  >
+                    <option value={58}>58 mm</option>
+                    <option value={80}>80 mm</option>
+                  </select>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    El rollo de tu impresora térmica. En 58 mm el texto va más chico para que quepa.
+                  </p>
                 </div>
               </div>
               <div className="flex items-center justify-between">

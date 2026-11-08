@@ -278,14 +278,29 @@ export interface VentaDelDetalle {
   readonly cliente: string | null;
   readonly canal: string;
   readonly productos: string | null;
+  /** DP-15 · Las líneas con su peso vendido, para que el documento las diga como el visor. */
+  readonly lineas: readonly LineaDelDetalle[] | null;
   readonly totalCentavos: string;
   readonly pago: string | null;
   readonly atendio: string | null;
 }
 
+export interface LineaDelDetalle {
+  readonly nombre: string;
+  readonly cantidad: string;
+  readonly unidad: string | null;
+  readonly tipoVenta: string | null;
+  readonly cantidadVariable: string | null;
+  readonly unidadVariable: string | null;
+}
+
 /**
  * El detalle de ventas. La referencia que se RECUERDA —la mesa, el nombre del pedido, la
  * clienta— va con el folio, y los productos con su cantidad real («0.5 kg × Arrachera»).
+ *
+ * DP-15 · Las cantidades salen con trim_scale, no con to_char('FM999999990.###'): en to_char el «#»
+ * no es un dígito, así que ese patrón REDONDEABA a entero (½ kg salía «1 kg», ¼ kg «0») en el detalle,
+ * en «Productos vendidos» y en las existencias del inventario bajo.
  */
 export async function detalleDeVentas(
   tx: Transaccion,
@@ -301,11 +316,21 @@ export async function detalleDeVentas(
            coalesce(c.nombre, o.cliente_nombre)               as "cliente",
            o.canal                                            as "canal",
            (select string_agg(
-                     rtrim(to_char(l.cantidad::numeric, 'FM999999990.###'), '.') || ' ' || l.unidad
+                     trim_scale(l.cantidad::numeric)::text || ' ' || l.unidad
                        || ' × ' || l.producto_nombre, ', ' order by l.orden_visual)
               from orden_lineas l
              where l.orden_id = o.id and l.organizacion_id = o.organizacion_id
                and l.anulada_en is null)                      as "productos",
+           (select json_agg(json_build_object(
+                     'nombre', l.producto_nombre,
+                     'cantidad', trim_scale(l.cantidad::numeric)::text,
+                     'unidad', l.unidad,
+                     'tipoVenta', l.tipo_venta,
+                     'cantidadVariable', trim_scale(l.cantidad_variable::numeric)::text,
+                     'unidadVariable', l.unidad_variable) order by l.orden_visual)
+              from orden_lineas l
+             where l.orden_id = o.id and l.organizacion_id = o.organizacion_id
+               and l.anulada_en is null)                      as "lineas",
            o.total_centavos::text                             as "totalCentavos",
            (select string_agg(distinct p.metodo, ' + ')
               from pagos p
@@ -363,8 +388,13 @@ export async function productosVendidos(
     select l.producto_nombre                                   as "nombre",
            max(cat.nombre)                                     as "categoria",
            count(*)::int                                       as "lineas",
-           rtrim(to_char(sum(l.cantidad::numeric), 'FM999999990.###'), '.') as "cantidad",
-           max(l.unidad)                                       as "unidad",
+           -- DP-15 · Lo que se vende por peso cuenta su PESO (cantidad_variable), no la pieza de la línea.
+           trim_scale((sum(case when l.tipo_venta = 'variable_medida'
+                                  then coalesce(l.cantidad_variable, l.cantidad)
+                                  else l.cantidad end::numeric))::numeric)::text as "cantidad",
+           max(case when l.tipo_venta = 'variable_medida'
+                    then coalesce(l.unidad_variable, l.unidad)
+                    else l.unidad end)                         as "unidad",
            sum(l.total_centavos)::text                         as "totalCentavos",
            sum(l.total_centavos - l.utilidad_centavos)::text   as "costoCentavos",
            (count(*) filter (where ${lineaSinCostoCompleto('l')}))::int as "lineasSinCosto",
@@ -546,16 +576,16 @@ export async function alertasDeInventario(
        group by m.insumo_id
     )
     select i.nombre                                                             as "nombre",
-           rtrim(to_char(coalesce(s.cantidad, 0), 'FM999999990.###'), '.')      as "existencia",
-           rtrim(to_char(i.stock_minimo::numeric, 'FM999999990.###'), '.')      as "minimo",
-           rtrim(to_char(i.stock_critico::numeric, 'FM999999990.###'), '.')     as "critico",
+           trim_scale(coalesce(s.cantidad, 0)::numeric)::text      as "existencia",
+           trim_scale(i.stock_minimo::numeric)::text      as "minimo",
+           trim_scale(i.stock_critico::numeric)::text     as "critico",
            i.unidad_base                                                        as "unidad",
            p.nombre                                                             as "proveedor",
            p.dia_visita                                                         as "diaVisita",
-           rtrim(to_char(coalesce(v.catorce, 0), 'FM999999990.###'), '.')       as "ventaDeCatorceDias",
-           rtrim(to_char(coalesce(v.noventa, 0), 'FM999999990.###'), '.')       as "ventaDeNoventaDias",
+           trim_scale(coalesce(v.catorce, 0)::numeric)::text       as "ventaDeCatorceDias",
+           trim_scale(coalesce(v.noventa, 0)::numeric)::text       as "ventaDeNoventaDias",
            i.costo_unitario_centavos::text                                      as "costoUnitarioCentavos",
-           rtrim(to_char(coalesce(d.diario, 0), 'FM999999990.###'), '.')        as "consumoDelMismoDia",
+           trim_scale(coalesce(d.diario, 0)::numeric)::text        as "consumoDelMismoDia",
            i.unidad_compra_default                                              as "unidadCompra",
            i.cantidad_por_compra_default::text                                  as "factorCompra"
       from insumos i
@@ -596,7 +626,7 @@ export async function insumosConsumidos(
 ): Promise<readonly InsumoConsumido[]> {
   const { rows } = await sql<InsumoConsumido>`
     select i.nombre                                                             as "nombre",
-           rtrim(to_char(sum(-m.cantidad::numeric), 'FM999999990.###'), '.')          as "cantidad",
+           trim_scale(sum(-m.cantidad::numeric))::text          as "cantidad",
            max(m.unidad)                                                        as "unidad",
            round(sum(-m.cantidad::numeric * m.costo_unitario_centavos)
                  / nullif(sum(-m.cantidad::numeric), 0))::bigint::text         as "costoUnitarioCentavos",
@@ -652,7 +682,7 @@ export async function salidasSinVenta(
     select m.tipo                                                            as "tipo",
            ${motivoDeLaSalida}                                               as "motivo",
            i.nombre                                                          as "nombre",
-           rtrim(to_char(sum(-m.cantidad::numeric), 'FM999999990.###'), '.')       as "cantidad",
+           trim_scale(sum(-m.cantidad::numeric))::text       as "cantidad",
            max(m.unidad)                                                     as "unidad",
            round(sum(-m.cantidad::numeric * m.costo_unitario_centavos))::bigint::text as "costoCentavos",
            max(ev.nombre)                                                    as "quien"

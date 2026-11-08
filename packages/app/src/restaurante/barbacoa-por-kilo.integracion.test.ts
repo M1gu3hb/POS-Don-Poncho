@@ -223,6 +223,29 @@ describe('DP-14.4 · el corte y el puente (Cierre del día, CSV) cuentan lo mism
     expect(hoja.resumen.totalCentavos).toBe(String(ESPERADO));
   });
 
+  it('DP-15 · el detalle de ventas trae el peso vendido de cada línea, para decirlo como el visor', async () => {
+    const hoja = exigirOk(
+      await comando(hojaDelCorte, {
+        entrada: { sesionCajaId: sesion },
+        ambito: ambito(),
+        idempotencyKey: clave(),
+      }),
+      'caja.hoja_del_corte',
+    );
+    const lineas = hoja.ventas.flatMap((v) => v.lineas ?? []);
+    const barbacoas = lineas.filter((l) => l.nombre === 'Barbacoa de horno');
+    expect(barbacoas).toHaveLength(PESOS.length * 2);
+    expect(barbacoas.every((l) => l.tipoVenta === 'variable_medida')).toBe(true);
+    expect(barbacoas.map((l) => l.cantidadVariable).sort()).toEqual(
+      [...PESOS, ...PESOS].map(([peso]) => peso).sort(),
+    );
+    expect(barbacoas.every((l) => l.unidadVariable === 'kg')).toBe(true);
+    // El texto del servidor ya no redondea (to_char con «#» daba «0 kg» por ¼ y «1 kg» por ½).
+    const textos = hoja.ventas.map((v) => v.productos ?? '');
+    expect(textos.some((t) => t.includes('0.25 kg × Barbacoa de horno'))).toBe(true);
+    expect(textos.some((t) => t.includes('0.5 kg × Barbacoa de horno'))).toBe(true);
+  });
+
   it('el puente sirve cada línea con su cantidad fraccionaria y su importe en pesos exactos', async () => {
     const filas = await consultar(ambito(), { entidad: 'DetalleVenta', operacion: 'list' });
     const barbacoas = filas.filter((f) => f['producto_nombre'] === 'Barbacoa de horno');
