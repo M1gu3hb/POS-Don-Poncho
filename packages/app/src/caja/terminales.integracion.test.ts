@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { comando } from '../produccion.ts';
 import { abrirCajaReal, clave, exigirOk, sembrarCompanero } from '../pruebas/negocio-real.ts';
 import { ambitoDeCaja, sembrarSalon, type Salon } from '../restaurante/pruebas/salon-real.ts';
+import { cerrarCaja } from './sesion.ts';
 import { nombrarTerminal, terminalesDeLaSucursal } from './terminales.ts';
 
 /**
@@ -47,16 +48,26 @@ const listar = (ambito: Ambito = dueno()) =>
   comando(terminalesDeLaSucursal, { entrada: {}, ambito, idempotencyKey: clave() });
 
 beforeAll(async () => {
-  salon = await sembrarSalon({ nombre: 'Restaurante de las terminales', mesas: 1, terminales: 2 });
+  salon = await sembrarSalon({ nombre: 'Restaurante de las terminales', mesas: 1, terminales: 3 });
   otro = await sembrarSalon({ nombre: 'Otro de las terminales', mesas: 1, terminales: 1 });
   duenoId = await sembrarCompanero(salon.negocio, { nombre: 'El Dueño', rol: 'dueno' });
   gerenteId = await sembrarCompanero(salon.negocio, { nombre: 'La Gerente', rol: 'gerente' });
   await abrirCajaReal(ambitoDeCaja(salon, 0));
+  // «Caja 2» abrió y cerró: también es caja. «Caja 3» nunca abrió (el teléfono de un mesero).
+  await abrirCajaReal(ambitoDeCaja(salon, 1));
+  exigirOk(
+    await comando(cerrarCaja, {
+      entrada: { efectivoContadoCentavos: 50_000 },
+      ambito: ambitoDeCaja(salon, 1),
+      idempotencyKey: clave(),
+    }),
+    'caja.cerrar',
+  );
 }, POR_COMANDOS);
 
 describe('caja.terminales y caja.nombrar_terminal', () => {
   it(
-    'el dueño las ve con su nombre y cuál tiene caja abierta',
+    'el dueño ve sólo las que han abierto caja, con su nombre y cuál está abierta',
     { timeout: POR_COMANDOS },
     async () => {
       const { terminales } = exigirOk(await listar(), 'listar');

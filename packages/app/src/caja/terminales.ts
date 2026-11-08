@@ -66,6 +66,12 @@ async function leerTerminales(
      where t.organizacion_id = ${organizacionId}
        and t.sucursal_id = ${sucursalId}
        and t.activa
+       -- Cada navegador que entra se da de alta como terminal (el teléfono del mesero, la tableta
+       -- de cocina): sólo son cajas las que alguna vez abrieron una sesión de caja.
+       and exists (select 1
+                     from sesiones_caja s
+                    where s.organizacion_id = t.organizacion_id
+                      and s.terminal_id = t.id)
      order by lower(t.nombre), t.id
   `.execute(tx);
   return rows;
