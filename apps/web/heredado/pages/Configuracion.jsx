@@ -66,6 +66,7 @@ import IdentidadNegocio from '@/components/configuracion/IdentidadNegocio';
 import UsuariosPOSSection from '@/components/configuracion/UsuariosPOSSection';
 import RepartirMesasDialog from '@/components/mesas/RepartirMesasDialog';
 import { usePuesto } from '@/components/configuracion/usePuesto';
+import { siguienteNumeroLibre } from '~/cliente/numero-de-mesa';
 import { esDeMando, puedeRepartirMesas } from '@/components/configuracion/puestos';
 import { useConfig } from '@/lib/ConfigContext';
 import { soloCamposEditablesMesa } from '@/utils/mesaConfigUtils';
@@ -323,12 +324,12 @@ export default function Configuracion() {
   };
 
   const openNew = () => {
-    const maxNum = mesas.reduce((m, x) => Math.max(m, x.numero || 0), 0);
     // Crear mesa en la zona activa (no mezclar zonas), en el primer hueco libre del lienzo: la
     // posición ya no sale de CUÁNTAS mesas hay, sino de DÓNDE están (`siguientePosicionLibre`).
     const posicion = siguientePosicionLibre(mesasDelPlano(mesas, zonaFiltro));
     setEditingMesa({
-      numero: maxNum + 1,
+      // DP-15 · El menor número que ninguna mesa ACTIVA usa (reusa el de una mesa quitada).
+      numero: siguienteNumeroLibre(mesas),
       nombre: '',
       zona: zonaFiltro,
       capacidad: 4,
