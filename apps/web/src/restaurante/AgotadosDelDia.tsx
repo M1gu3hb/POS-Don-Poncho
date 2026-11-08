@@ -16,6 +16,7 @@ import { Ban } from 'lucide-react';
 import { useState } from 'react';
 
 import { consultarPuente, invocarComando } from '~/cliente/api';
+import { useTermino } from '~/cliente/vocabulario';
 
 import { ordenarParaAgotar, type Platillo } from './agotados-orden.ts';
 
@@ -31,6 +32,8 @@ import { ordenarParaAgotar, type Platillo } from './agotados-orden.ts';
 const CLAVE = ['agotados-del-dia'] as const;
 
 export function AgotadosDelDia() {
+  // «platillo» en el restaurante; el diccionario del giro lo dice (F-017).
+  const platillo = useTermino('producto');
   const [abierto, setAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [enCurso, setEnCurso] = useState<string | null>(null);
@@ -88,8 +91,8 @@ export function AgotadosDelDia() {
           {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
           <Input
             type="search"
-            placeholder="Buscar platillo…"
-            aria-label="Buscar platillo"
+            placeholder={`Buscar ${platillo}…`}
+            aria-label={`Buscar ${platillo}`}
             value={busqueda}
             onChange={(evento) => {
               setBusqueda(evento.target.value);
