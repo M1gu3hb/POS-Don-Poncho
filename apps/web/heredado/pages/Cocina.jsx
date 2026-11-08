@@ -20,6 +20,7 @@ import { claves } from '~/cliente/claves-de-consulta';
 import { mantenerDespierta } from '~/espera/despertador';
 import { sonar } from '~/sonidos/gestor';
 import { alcanceDeLaCocina, comandasDelAlcance } from '~/restaurante/alcance-de-la-cocina';
+import { conLaCuentaCobrada, sinPlatillosQuitados } from '~/restaurante/platos-de-la-estacion';
 import {
   conLosToques,
   crearFilaPorClave,
@@ -169,9 +170,17 @@ export default function Cocina() {
 
   // === F3: Filtrado por estación del usuario ===
   // Lo que nació sin estación (el portal, antes de DP-10.1) lo ve sólo la general.
+  // DP-15 · F1: el platillo quitado no se pinta, y la comanda de una cuenta ya cobrada con comida
+  // por preparar se marca «cuenta cobrada» (no se cierra sola: podría ser comida que se va a servir).
   const pedidosFiltrados = useMemo(
-    () => (verificada ? comandasDelAlcance(pedidosVistos, userScope, userEsCocinaGeneral) : []),
-    [verificada, pedidosVistos, userScope, userEsCocinaGeneral],
+    () =>
+      verificada
+        ? conLaCuentaCobrada(
+            sinPlatillosQuitados(comandasDelAlcance(pedidosVistos, userScope, userEsCocinaGeneral)),
+            ventasMap,
+          )
+        : [],
+    [verificada, pedidosVistos, userScope, userEsCocinaGeneral, ventasMap],
   );
 
   const activos = useMemo(

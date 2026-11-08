@@ -46,6 +46,15 @@ export type EstadoItem = (typeof ESTADOS_ITEM)[number];
 /** Comanda que todavía es trabajo vivo en cocina (`entregaPedidos.js:167`). */
 export const ESTADOS_COMANDA_ACTIVOS = ['nuevo', 'en_preparacion', 'listo'] as const;
 
+/**
+ * Comanda que TODAVÍA falta por terminar en la estación (DP-15 · F1).
+ *
+ * Una comanda `listo` ya terminó: espera al mesero, no a la cocina. Para decidir si la mesa pasa
+ * a «Esperando entrega» sólo estas cuentan; con las tres, la última estación en terminar veía a
+ * las otras (`listo`) como «activas» y la mesa nunca llegaba.
+ */
+export const ESTADOS_COMANDA_PENDIENTES = ['nuevo', 'en_preparacion'] as const;
+
 export const ESTADOS_MESA = [
   'libre',
   'esperando_orden',

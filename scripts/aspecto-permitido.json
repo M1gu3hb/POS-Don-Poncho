@@ -1047,6 +1047,32 @@
       "archivo": "apps/web/heredado/pages/Registros.jsx",
       "porque": "DP-15 (los informativos de HALLAZGOS): la pestaña «Auditoría» en Registros, para el dueño y el administrador, con lo que se cambió (como el renombre de una caja), quién y cuándo.",
       "testigos": ["+ clase:gap-1", "+ clase:mt-4", "+ texto:Auditoría"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/cocina/CocinaPedidoCardPremium.jsx",
+      "porque": "DP-15 (auditoría por función, A1-M2): la comanda de una cuenta ya cobrada que sigue por preparar lleva un aviso «Cuenta cobrada» en la tarjeta; no se cierra sola porque puede ser comida que sí se sirve.",
+      "testigos": [
+        "+ clase:border",
+        "+ clase:pl-3",
+        "+ clase:pr-2",
+        "+ clase:pt-2",
+        "+ clase:flex",
+        "+ clase:items-center",
+        "+ clase:gap-1.5",
+        "+ clase:px-2",
+        "+ clase:py-1",
+        "+ clase:rounded-md",
+        "+ clase:bg-advertencia/10",
+        "+ clase:border-advertencia/30",
+        "+ clase:w-3.5",
+        "+ clase:h-3.5",
+        "+ clase:text-advertencia",
+        "+ clase:text-advertencia",
+        "+ clase:shrink-0",
+        "+ clase:text-[11px]",
+        "+ clase:font-medium",
+        "+ texto:Cuenta cobrada"
+      ]
     }
   ]
 }

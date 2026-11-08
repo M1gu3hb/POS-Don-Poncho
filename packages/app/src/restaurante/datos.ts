@@ -290,13 +290,14 @@ export async function quedanComandasActivas(
   organizacionId: string,
   ordenId: string,
   excluir: readonly string[],
+  estados: readonly EstadoComanda[] = ESTADOS_COMANDA_ACTIVOS,
 ): Promise<boolean> {
   let consulta = tx
     .selectFrom('comandas')
     .select('id')
     .where('organizacion_id', '=', organizacionId)
     .where('orden_id', '=', ordenId)
-    .where('estado', 'in', [...ESTADOS_COMANDA_ACTIVOS]);
+    .where('estado', 'in', [...estados]);
 
   if (excluir.length > 0) consulta = consulta.where('id', 'not in', [...excluir]);
 

@@ -13,6 +13,7 @@ import { repoCaja, repoFolios, repoOrdenes, repoStock, repoVentaCatalogo } from 
 import { emitirDocumento } from '../cartera/documento.ts';
 import { definirComando } from '../definicion.ts';
 import { comandarLineasPendientes } from '../restaurante/comandar-pendientes.ts';
+import { entregarLoListoDeLaCuenta } from '../restaurante/comandas-al-cobrar.ts';
 import { pasarMesaCobradaALimpieza } from '../restaurante/mesas-escrituras.ts';
 import { marcarPropinaDeOrden, registrarPagoConPropina } from '../propinas/cobro.ts';
 import { entradaCobrarOrdenConPropina } from '../propinas/esquemas.ts';
@@ -348,6 +349,12 @@ export const cobrarOrden = definirComando<
     //      venta y comanda o no hay ninguna de las dos.
     const comandas = await ctx.paso('comandar_pendientes', () =>
       comandarLineasPendientes(ctx.tx, organizacionId, entrada.ordenId, ctx.ahora),
+    );
+
+    // 10.5 · DP-15 · F1: lo que la cocina ya tenía «listo» se da por entregado y sale de la
+    //        pantalla de su estación. Lo que sigue por preparar NO se cierra (ver el módulo).
+    await ctx.paso('entregar_lo_listo', () =>
+      entregarLoListoDeLaCuenta(ctx.tx, organizacionId, entrada.ordenId, ctx.ahora),
     );
 
     /**
