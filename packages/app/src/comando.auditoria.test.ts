@@ -217,3 +217,35 @@ describe('sanear · el id crudo del teléfono del comensal (DP-12.2)', () => {
     expect(texto).toContain('"cantidad":"2"');
   });
 });
+
+describe('sanear · la autorización firmada del supervisor (DP-14 ronda 2)', () => {
+  const FIRMADA = `${'eyJvcmciOiJ4In0'.repeat(8)}.${'c2lnbmF0dXJh'.repeat(4)}`;
+
+  it('redacta `autorizacion` cuando es la autorización firmada, a cualquier profundidad', () => {
+    const texto = JSON.stringify(
+      sanear({ autorizacion: FIRMADA, anidado: { autorizacion: FIRMADA } }),
+    );
+    expect(texto).not.toContain(FIRMADA);
+    expect(texto).not.toContain('eyJvcmciOiJ4In0');
+  });
+
+  it('deja el NONCE de un solo uso: es el registro de que se gastó, no una credencial', () => {
+    expect(sanear({ autorizacion: '0123456789abcdef' })).toEqual({
+      autorizacion: '0123456789abcdef',
+    });
+    // Los nonces de las pruebas son UUID: tampoco son la firmada.
+    const uuid = '5b0d2a3e-7c1f-4a55-9d3e-0a1b2c3d4e5f';
+    expect(sanear({ autorizacion: uuid })).toEqual({ autorizacion: uuid });
+    expect(sanear({ autorizacion: 12345 })).toEqual({ autorizacion: '[redactado]' });
+    // Con punto (cuerpo.firma) o larga, ya no es un nonce.
+    expect(sanear({ autorizacion: 'abc.def' })).toEqual({ autorizacion: '[redactado]' });
+    expect(sanear({ autorizacion: 'a'.repeat(100) })).toEqual({ autorizacion: '[redactado]' });
+  });
+
+  it('no se come las claves que sólo se le parecen', () => {
+    expect(sanear({ autorizadoPor: 'empleo-1', autorizo: 'La Gerente' })).toEqual({
+      autorizadoPor: 'empleo-1',
+      autorizo: 'La Gerente',
+    });
+  });
+});

@@ -282,7 +282,7 @@ petición.
 | `guardarEsquemaPropina` | `{nombre, vigenteDesde, puntos:[{puesto,puntos}]}` | dueño, administrador | restaurante | `esquemas_propina` + puntos, cierra la vigencia del anterior | No |
 | `liquidarPropinas` *(se extiende)* | `{rango, esquemaId?, clave}` | dueño, administrador | restaurante | `liquidaciones_propina` + **beneficiarios**, marca las ventas | **Sí** (ya lo es) |
 | `registrarConsumoInterno` | `{tipo, productoId, cantidad, motivo, ordenId?, clave}` | administrador, gerente | restaurante | `consumos_internos` + movimientos de stock | **Sí** |
-| `autorizarDescuento` | `{ordenId, montoBp, pinSupervisor}` | caja (solicita), administrador (autoriza) | todos | Registra la autorización en la bitácora y libera el descuento | **Sí** |
+| ~~`autorizarDescuento`~~ | — | — | — | **Retirado en DP-14 (ronda 2).** La autorización es el PIN del supervisor firmado para ESA cuenta (`/api/identidad/supervisor`), que gasta el comando que aplica el descuento (`venta.aplicar_descuento`, `restaurante.descontar_cuenta`). | — |
 
 **Nota sobre el modo "partes iguales" de F-321.** No necesita comando nuevo ni tabla nueva.
 `cobrarVenta` ya recibe un arreglo de `pagos`, y una cuenta dividida en partes iguales es **una
@@ -339,7 +339,6 @@ apps/web/app/api/restaurante/imprimir-comanda/route.ts
 apps/web/app/api/restaurante/impresion/resultado/route.ts
 apps/web/app/api/propinas/esquema/route.ts
 apps/web/app/api/inventario/consumo-interno/route.ts
-apps/web/app/api/venta/autorizar-descuento/route.ts
 ```
 
 Lecturas, por el puente ya existente (`/api/datos/consultar`), sin rutas nuevas.

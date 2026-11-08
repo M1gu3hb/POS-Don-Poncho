@@ -94,7 +94,6 @@ apps/web/app/api/restaurante/imprimir-comanda/route.ts
 apps/web/app/api/restaurante/impresion/resultado/route.ts
 apps/web/app/api/propinas/esquema/route.ts
 apps/web/app/api/inventario/consumo-interno/route.ts
-apps/web/app/api/venta/autorizar-descuento/route.ts
 ```
 
 ### 2.4 · Migraciones

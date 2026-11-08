@@ -9,12 +9,6 @@ export { repartirPagos, type PagoEntrante, type PagoValidado } from './pagos.ts'
 export { cotizar, IMPUESTO_POR_OMISION, type Cotizacion, type LineaCotizada } from './cotizar.ts';
 
 export {
-  autorizarDescuento,
-  entradaAutorizarDescuento,
-  type ResultadoAutorizacion,
-} from './descuento.ts';
-
-export {
   CLAVE_DESCUENTOS_PERMITIDOS,
   descuentosPermitidosEn,
   entradaPermitirDescuentos,
@@ -46,3 +40,8 @@ export {
   entradaDescuentoAutorizado,
   type DescuentoAutorizado,
 } from './descuento-autorizado.ts';
+export {
+  entradaTopesDeLosPuestos,
+  topesDeLosPuestos,
+  type TopeDelPuesto,
+} from './topes-de-los-puestos.ts';

@@ -1,0 +1,412 @@
+Despliegue de nulos es �∅�.
+El paginador no se usar�.
+BEGIN
+== 0.1 Foto: conteos de la jornada
+ ordenes | pagadas | canceladas | pagos | cajas | comandas | mov_stock | auditoria_del_dia 
+---------+---------+------------+-------+-------+----------+-----------+-------------------
+      13 |       1 |         12 |     1 |     2 |        2 |         0 |               117
+(1 fila)
+
+== 0.2 Foto: órdenes por estado y canal
+  estado   | canal | n  | total_centavos 
+-----------+-------+----+----------------
+ cancelada | aqui  | 12 |           4700
+ pagada    | aqui  |  1 |           4700
+(2 filas)
+
+== C01 VIOLACIÓN · cuenta cobrada sin pago confirmado, o pagos que no suman el total
+ id | folio | estado | total_centavos | pagado 
+----+-------+--------+----------------+--------
+(0 filas)
+
+== C02 VIOLACIÓN · total ≠ subtotal − descuento; impuestos ≠ IVA incluido 16 %; utilidad ≠ total − costo
+ id | folio | subtotal_centavos | descuento_centavos | impuestos_centavos | total_centavos | costo_total_centavos | utilidad_centavos | margen_bp | tasa | incluido 
+----+-------+-------------------+--------------------+--------------------+----------------+----------------------+-------------------+-----------+------+----------
+(0 filas)
+
+== C03 VIOLACIÓN · el encabezado no es la suma de sus platillos vivos (cuentas cobradas)
+ id | folio | subtotal_centavos | suma_lineas | descuento_centavos | desc_lineas | costo_total_centavos | costo_lineas 
+----+-------+-------------------+-------------+--------------------+-------------+----------------------+--------------
+(0 filas)
+
+== C04 VIOLACIÓN · cada platillo: total = subtotal − descuento; utilidad = total − costo
+ id | folio | producto_nombre | cantidad | precio_unitario_centavos | subtotal_centavos | descuento_centavos | total_centavos | costo_unitario_centavos | utilidad_centavos 
+----+-------+-----------------+----------+--------------------------+-------------------+--------------------+----------------+-------------------------+-------------------
+(0 filas)
+
+== C05 VIOLACIÓN · folio de ticket repetido, cobrada sin folio, o hueco en la numeración (por serie)
+ caso | serie | folio | n 
+------+-------+-------+---
+(0 filas)
+
+== C06 CUADRE · contador de folios (folios.siguiente − 1) contra el último folio emitido
+ serie | contador | max_ticket | max_corte 
+-------+----------+------------+-----------
+ CC    |        2 |          ∅ |         2
+ A     |        1 |          1 |         ∅
+(2 filas)
+
+== C07 VIOLACIÓN · cobrada sin caja, o con una caja de otra sucursal / ya cerrada antes de cobrarse
+ id | folio | sesion_caja_id | suc_caja | suc_orden | cobrada_en | cerrada_en | abierta_en | caja_cerro 
+----+-------+----------------+----------+-----------+------------+------------+------------+------------
+(0 filas)
+
+== C08 VIOLACIÓN · pagos: sin orden, de otra caja que la de su orden, con cambio/recibido que no cuadra, cobrados tras el cierre
+ id | folio | metodo | monto_centavos | propina_centavos | recibido_centavos | cambio_centavos | sesion_caja_id | caja_orden | nota 
+----+-------+--------+----------------+------------------+-------------------+-----------------+----------------+------------+------
+(0 filas)
+
+== C09 VIOLACIÓN · efectivo: movimiento de caja «venta» ≠ pagos en efectivo; «propina» ≠ propina en efectivo (por cuenta)
+ id | folio | pagos_efectivo | mov_venta | propina_efectivo | mov_propina 
+----+-------+----------------+-----------+------------------+-------------
+(0 filas)
+
+== C10 VIOLACIÓN · movimientos de caja sin cuenta (referencia a orden que no existe / de otra org) o de una caja inexistente
+ id | tipo | monto_centavos | referencia_tipo | referencia_id | sesion_caja_id 
+----+------+----------------+-----------------+---------------+----------------
+(0 filas)
+
+== C11 VIOLACIÓN · cuenta dividida: la madre no suma sus hijas, o una hija sin madre
+ madre | estado | total_madre | suma_hijas_vivas | hijas | hijas_canceladas 
+-------+--------+-------------+------------------+-------+------------------
+(0 filas)
+
+ hija | orden_padre_id | estado_madre | mesa_id | mesa_madre 
+------+----------------+--------------+---------+------------
+(0 filas)
+
+== C12 VIOLACIÓN · cuenta cancelada: con pagos, sin quién/motivo, o todavía con mesa que la apunta
+ id | folio | estado | cancelada_por | motivo_cancelacion | cancelada_en | pagos | mesas_que_la_apuntan 
+----+-------+--------+---------------+--------------------+--------------+-------+----------------------
+(0 filas)
+
+== K01 CUADRE · efectivo de cada caja: Σ movimientos_caja contra lo que guardó el cierre
+ corte | estado  |          abierta_en           |         cerrada_en         | fondo | suma_movimientos | esperado_guardado | contado | diferencia_guardada | diferencia_recalculada | veredicto 
+-------+---------+-------------------------------+----------------------------+-------+------------------+-------------------+---------+---------------------+------------------------+-----------
+ CC-1  | cerrada | 2026-11-07 17:07:31.53672-06  | 2026-11-07 17:07:54.889-06 | 50000 |            50000 |             50000 |   54700 |                4700 |                   4700 | ok
+ CC-2  | cerrada | 2026-11-07 17:08:53.855057-06 | 2026-11-07 17:09:11.047-06 | 50000 |            54700 |             54700 |   54700 |                   0 |                      0 | ok
+(2 filas)
+
+== K02 CUADRE · el esperado desglosado por tipo de movimiento (qué lo forma)
+ corte |   tipo   | n | monto 
+-------+----------+---+-------
+ CC-1  | apertura | 1 | 50000
+ CC-2  | apertura | 1 | 50000
+ CC-2  | venta    | 1 |  4700
+(3 filas)
+
+== K03 VIOLACIÓN · más cajas abiertas a la vez que las que permite la sucursal, o apertura sin movimiento de fondo
+ nombre | cajas_simultaneas | abiertas 
+--------+-------------------+----------
+(0 filas)
+
+ id | fondo_inicial_centavos | mov_apertura 
+----+------------------------+--------------
+(0 filas)
+
+== K04 VIOLACIÓN · caja cerrada con folio de corte repetido o con hueco; caja cerrada con cuentas vivas atadas
+ serie | folio | n 
+-------+-------+---
+(0 filas)
+
+ id | corte | orden | estado | mesa_id 
+----+-------+-------+--------+---------
+(0 filas)
+
+== K05 CUADRE · RESUMEN DE VENTAS DE CADA CAJA (lo que dice el corte: tickets, venta, descuento, IVA, costo)
+ corte | estado  | tickets | venta | descuento | iva | costo | utilidad 
+-------+---------+---------+-------+-----------+-----+-------+----------
+ CC-1  | cerrada |       0 |     0 |         0 |   0 |     0 |        0
+ CC-2  | cerrada |       1 |  4700 |         0 | 648 |     0 |     4700
+(2 filas)
+
+== K06 CUADRE · VENTAS POR MÉTODO de cada caja (pagos confirmados) y PROPINA por método
+ corte |  metodo  | pagos | ventas | propinas 
+-------+----------+-------+--------+----------
+ CC-2  | efectivo |     1 |   4700 |        0
+(1 fila)
+
+== K07 VIOLACIÓN · Σ por método ≠ venta del corte (sin reembolsos)
+ id | corte | pagos_confirmados | venta_tickets 
+----+-------+-------------------+---------------
+(0 filas)
+
+== P01 CUADRE · propina por mesero de cada caja (lo que dice «propinas por mesero» del corte)
+ corte | mesero | propina | cuentas 
+-------+--------+---------+---------
+(0 filas)
+
+== P02 VIOLACIÓN · propina sin cuenta pagada, propina de una orden cancelada, o liquidación que no suma lo que dice
+ id | orden_id | estado | propina_centavos 
+----+----------+--------+------------------
+(0 filas)
+
+ id | liq | total_centavos | suma_beneficiarios 
+----+-----+----------------+--------------------
+(0 filas)
+
+== P03 VIOLACIÓN · propina cobrada que el panel de «propinas pendientes» ya no ve (venta devuelta en parte o entera)
+ id | folio | estado | propina_sin_liquidar 
+----+-------+--------+----------------------
+(0 filas)
+
+== X01 CUADRE · cuentas canceladas y platillos anulados del día
+  tipo  | folio |                  id                  |           cuando           | monto |  quien   |           motivo           | sesion_caja_id 
+--------+-------+--------------------------------------+----------------------------+-------+----------+----------------------------+----------------
+ cuenta | A-∅   | 5b2068b9-d40d-4e6a-b980-003f83b3f39b | 2026-11-07 16:38:04.57-06  |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | c59cbc8f-a21e-40fa-9cbe-f4d8104e11c5 | 2026-11-07 16:49:19.335-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | a383fdcd-7418-4e39-8d9d-a56d71821c2a | 2026-11-07 16:52:21.729-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | 2f3fb684-9c84-4fd4-9cee-b074830109dd | 2026-11-07 16:54:35.974-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | 7ac8aa83-1a7d-4863-97c6-1bdca6f619f4 | 2026-11-07 16:56:22.437-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | 974f6c0f-440a-4501-829b-5421f867e22b | 2026-11-07 16:58:17.643-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | 0a2fb2a2-47c1-44b4-93bf-6a8da3983704 | 2026-11-07 16:59:47.706-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | b7795851-87e2-447c-833f-ad2dabcedc44 | 2026-11-07 17:01:43.942-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | e4a3eac2-e7e5-46b2-9ce0-2bd0f526d799 | 2026-11-07 17:03:30.352-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | 97fbc57c-aa06-4a44-86c8-c431ae81a808 | 2026-11-07 17:05:00.982-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | 67e98383-577b-4489-b781-e55ce08b030a | 2026-11-07 17:05:17.755-06 |     0 | Mesero 1 | Capturé la mesa equivocada | ∅
+ cuenta | A-∅   | f64eb77e-0f99-4f8c-8c8f-fdb7750afaa9 | 2026-11-07 17:09:10.778-06 |  4700 | Mesero 1 | Capturé la mesa equivocada | ∅
+(12 filas)
+
+== X02 VIOLACIÓN · comanda viva, platillo vivo o solicitud pendiente de una cuenta cancelada o cobrada
+ caso | id | estado | orden_estado | orden 
+------+----+--------+--------------+-------
+(0 filas)
+
+== X03 CUADRE · PÉRDIDA por cuenta cancelada: lo hecho (listo/entregado) a precio de cuenta, platillo por platillo
+ folio |                orden                 | cancelado | perdida_recalculada 
+-------+--------------------------------------+-----------+---------------------
+ A-∅   | 5b2068b9-d40d-4e6a-b980-003f83b3f39b |         0 |                   0
+ A-∅   | c59cbc8f-a21e-40fa-9cbe-f4d8104e11c5 |         0 |                   0
+ A-∅   | a383fdcd-7418-4e39-8d9d-a56d71821c2a |         0 |                   0
+ A-∅   | 2f3fb684-9c84-4fd4-9cee-b074830109dd |         0 |                   0
+ A-∅   | 7ac8aa83-1a7d-4863-97c6-1bdca6f619f4 |         0 |                   0
+ A-∅   | 974f6c0f-440a-4501-829b-5421f867e22b |         0 |                   0
+ A-∅   | 0a2fb2a2-47c1-44b4-93bf-6a8da3983704 |         0 |                   0
+ A-∅   | b7795851-87e2-447c-833f-ad2dabcedc44 |         0 |                   0
+ A-∅   | e4a3eac2-e7e5-46b2-9ce0-2bd0f526d799 |         0 |                   0
+ A-∅   | 97fbc57c-aa06-4a44-86c8-c431ae81a808 |         0 |                   0
+ A-∅   | 67e98383-577b-4489-b781-e55ce08b030a |         0 |                   0
+ A-∅   | f64eb77e-0f99-4f8c-8c8f-fdb7750afaa9 |      4700 |                   0
+(12 filas)
+
+== X04 VIOLACIÓN · platillo anulado: sin quién/motivo, con comanda viva, o aún sumado en una cuenta ya cobrada
+ id | folio | producto_nombre | anulada_en | motivo_anulacion | empleado_anula_id | estado | items_vivos 
+----+-------+-----------------+------------+------------------+-------------------+--------+-------------
+(0 filas)
+
+== M01 VIOLACIÓN · estado de la mesa incoherente con su cuenta
+ numero | estado | orden_activa_id | orden_estado | unida_a_mesa_id | caso 
+--------+--------+-----------------+--------------+-----------------+------
+(0 filas)
+
+== M02 VIOLACIÓN · cuenta viva con mesa que no la tiene (la mesa libre o apuntando a otra cuenta)
+ id | serie | estado | numero | mesa_estado | orden_activa_id 
+----+-------+--------+--------+-------------+-----------------
+(0 filas)
+
+== M03 VIOLACIÓN · UNIÓN VARADA: viva sin mesas, mesa absorbida de unión cerrada o inexistente, principal que no es la que dice
+ caso | id | mesa_principal_id | text 
+------+----+-------------------+------
+(0 filas)
+
+== M04 VIOLACIÓN · cuenta de unión: orden `absorbida` sin unión, o unión cuya cuenta no la apunta
+ id | estado | union_id | mesa_id 
+----+--------+----------+---------
+(0 filas)
+
+ id | mesa_principal_id | orden_id | union_de_la_orden | estado 
+----+-------------------+----------+-------------------+--------
+(0 filas)
+
+== M05 VIOLACIÓN · CARRITO COLGADO: mesa libre con líneas sin actividad hace más de 3 h; líneas de mesa inexistente/inactiva
+ numero | estado | lineas | ultima_actividad | antiguedad 
+--------+--------+--------+------------------+------------
+(0 filas)
+
+ id | mesa_id 
+----+---------
+(0 filas)
+
+== M06 VIOLACIÓN · AVISO COLGADO: «Pedido listo para confirmar» vivo sin carrito; solicitud pendiente de cuenta ya cerrada; dos pendientes del mismo tipo en una mesa
+ id | numero | tipo | estado | notas | created_at | lineas_en_carrito 
+----+--------+------+--------+-------+------------+-------------------
+(0 filas)
+
+ mesa_id | tipo | pendientes 
+---------+------+------------
+(0 filas)
+
+ id | numero | tipo | estado | orden_estado | created_at 
+----+--------+------+--------+--------------+------------
+(0 filas)
+
+== M07 VIOLACIÓN · comandas: estado vs sellos de tiempo, items vs comanda, items huérfanos, comandas de mesa distinta a la de su cuenta
+ id | estado | iniciada_en | lista_en | entregada_en | nota 
+----+--------+-------------+----------+--------------+------
+(0 filas)
+
+ id | item | comanda | nota 
+----+------+---------+------
+(0 filas)
+
+ id | mesa_id | mesa_de_la_cuenta | orden_id 
+----+---------+-------------------+----------
+(0 filas)
+
+== M08 CUADRE · cada mesa: estado, cuenta y qué dice la cuenta
+ numero | estado | absorbida | cuenta | cuenta_estado | carrito | personas_actuales 
+--------+--------+-----------+--------+---------------+---------+-------------------
+      1 | libre  | f         | ∅      | ∅             |       0 |                 0
+      2 | libre  | f         | ∅      | ∅             |       0 |                 0
+      3 | libre  | f         | ∅      | ∅             |       0 |                 0
+      4 | libre  | f         | ∅      | ∅             |       0 |                 0
+      5 | libre  | f         | ∅      | ∅             |       0 |                 0
+      6 | libre  | f         | ∅      | ∅             |       0 |                 0
+      7 | libre  | f         | ∅      | ∅             |       0 |                 0
+      8 | libre  | f         | ∅      | ∅             |       0 |                 0
+      9 | libre  | f         | ∅      | ∅             |       0 |                 0
+     10 | libre  | f         | ∅      | ∅             |       0 |                 0
+(10 filas)
+
+== M09 CUADRE (informativa) · el libro de transiciones de la mesa (eventos_mesa): su último estado ≠ el de la mesa
+ numero | estado_mesa | ultimo_en_el_libro | ocurrido_en | updated_at 
+--------+-------------+--------------------+-------------+------------
+(0 filas)
+
+== I01 VIOLACIÓN · existencia ≠ Σ movimientos (el kardex no cuadra con el saldo)
+ nombre | almacen_id | existencia | suma_movimientos 
+--------+------------+------------+------------------
+(0 filas)
+
+== I02 CUADRE · lo vendido y la merma, por insumo (venta, merma «Por cancelación», otras mermas, ajustes) contra la existencia
+ nombre | unidad_base | venta | merma_por_cancelacion | otras_mermas | entradas_y_otros | existencia 
+--------+-------------+-------+-----------------------+--------------+------------------+------------
+(0 filas)
+
+== I03 VIOLACIÓN · venta: lo descontado ≠ cantidad vendida × receta (cuentas cobradas con receta activa)
+ orden | nombre | esperado | descontado 
+-------+--------+----------+------------
+(0 filas)
+
+== I04 VIOLACIÓN · merma «Por cancelación» sin cancelación/anulación detrás, o doble (misma referencia e insumo repetidos)
+ id | referencia_tipo | referencia_id | cantidad | nota 
+----+-----------------+---------------+----------+------
+(0 filas)
+
+ referencia_tipo | referencia_id | insumo_id | veces 
+-----------------+---------------+-----------+-------
+(0 filas)
+
+== I05 CUADRE · cancelaciones con platillo ya hecho y con receta: ¿hay su merma? (lo hecho × receta contra la merma registrada)
+ orden | nombre | esperado | merma_registrada 
+-------+--------+----------+------------------
+(0 filas)
+
+== I06 VIOLACIÓN · existencia negativa (informativa: tras una cancelación puede ser legítima, DP-D57)
+ nombre | cantidad 
+--------+----------
+(0 filas)
+
+== A01 VIOLACIÓN · comando que escribió sin fila de auditoría, o fila de auditoría de éxito sin comando
+ caso | comando | correlation_id | created_at 
+------+---------+----------------+------------
+(0 filas)
+
+== A02 VIOLACIÓN · hechos del día SIN su fila de auditoría (cobro, cancelación, anulación, caja abierta/cerrada, unión)
+ hecho | id 
+-------+----
+(0 filas)
+
+== A03 CUADRE · auditoría de la jornada por acción y resultado (los rechazos quedan como «denegado/conflicto/error»)
+             accion              | resultado |   codigo    | n  
+---------------------------------+-----------+-------------+----
+ caja.abrir                      | ok        |             |  2
+ caja.cerrar                     | ok        |             |  2
+ identidad.guardar_empleado      | denegado  | SIN_PERMISO |  4
+ identidad.guardar_empleado      | ok        |             | 34
+ portal.carrito_agregar          | ok        |             |  5
+ portal.carrito_enviar           | ok        |             |  1
+ portal.carrito_llamar_mesero    | ok        |             |  3
+ portal.carrito_quitar           | ok        |             |  1
+ puente.escribir                 | ok        |             | 25
+ restaurante.abrir_mesa          | ok        |             | 12
+ restaurante.cancelar_orden      | ok        |             | 12
+ restaurante.entregar_pedidos    | ok        |             |  1
+ restaurante.enviar_pedido       | ok        |             |  1
+ restaurante.limpiar_solicitudes | ok        |             |  2
+ restaurante.repartir_mesas      | ok        |             |  8
+ restaurante.solicitar_cuenta    | ok        |             |  1
+ restaurante.transicionar_pedido | ok        |             |  2
+ venta.cobrar                    | ok        |             |  1
+(18 filas)
+
+== A04 VIOLACIÓN · secretos en la auditoría: PIN, token de mesa, id crudo de teléfono, cookies
+ id | accion | created_at 
+----+--------+------------
+(0 filas)
+
+== A05 CUADRE · huella del actor: auditoría sin identidad (comandos públicos) y con identidad
+ sin_identidad |             accion              | count 
+---------------+---------------------------------+-------
+ f             | caja.abrir                      |     2
+ f             | caja.cerrar                     |     2
+ f             | identidad.guardar_empleado      |    38
+ f             | puente.escribir                 |    25
+ f             | restaurante.abrir_mesa          |    12
+ f             | restaurante.cancelar_orden      |    12
+ f             | restaurante.entregar_pedidos    |     1
+ f             | restaurante.enviar_pedido       |     1
+ f             | restaurante.limpiar_solicitudes |     2
+ f             | restaurante.repartir_mesas      |     8
+ f             | restaurante.solicitar_cuenta    |     1
+ f             | restaurante.transicionar_pedido |     2
+ f             | venta.cobrar                    |     1
+ t             | portal.carrito_agregar          |     5
+ t             | portal.carrito_enviar           |     1
+ t             | portal.carrito_llamar_mesero    |     3
+ t             | portal.carrito_quitar           |     1
+(17 filas)
+
+== G01 VIOLACIÓN · hijas con organización distinta a la del padre (fuga entre negocios)
+ tabla | id 
+-------+----
+(0 filas)
+
+== G02 VIOLACIÓN · sucursal incoherente: cuenta de una sucursal en la mesa/caja de otra
+ id | suc_orden | suc_mesa | suc_caja 
+----+-----------+----------+----------
+(0 filas)
+
+== G03 CUADRE · jornadas de caja por persona (quién abrió/cerró)
+ corte | abre | cierra |          abierta_en           |         cerrada_en         
+-------+------+--------+-------------------------------+----------------------------
+ CC-1  | Caja | Caja   | 2026-11-07 17:07:31.53672-06  | 2026-11-07 17:07:54.889-06
+ CC-2  | Caja | Caja   | 2026-11-07 17:08:53.855057-06 | 2026-11-07 17:09:11.047-06
+(2 filas)
+
+== L01 CUADRE · cubos de límite de tasa vivos (para no gastar la cuota de QA-1)
+    cubo    |          ventana_en           | intentos 
+------------+-------------------------------+----------
+ 09ae8c4f6c | 2026-11-07 17:09:58.477223-06 |        1
+ 3cc3123992 | 2026-11-07 17:09:50.115252-06 |        3
+ d4ed72e6e3 | 2026-11-07 17:09:38.859138-06 |        5
+ 45bf4a5cf1 | 2026-11-07 17:09:38.290819-06 |        9
+ 7cf5cb37a7 | 2026-11-07 17:09:08.053643-06 |        1
+ 826491bcf6 | 2026-11-07 17:09:06.531297-06 |        1
+ f68ac6f315 | 2026-11-07 17:09:02.751431-06 |        6
+ 3a47e89c46 | 2026-11-07 17:09:02.750254-06 |        6
+ 7b906e5f5b | 2026-11-07 17:09:02.749023-06 |        1
+ f6cb32d747 | 2026-11-07 17:09:02.747955-06 |        1
+ 3e1605b96a | 2026-11-07 17:09:02.703259-06 |        1
+ c3ce7f6426 | 2026-11-07 17:09:02.251324-06 |        5
+ 4a5442dba3 | 2026-11-07 17:08:36.1215-06   |       15
+ fbf7770b48 | 2026-11-07 17:08:24.241151-06 |        3
+ a862ed46b0 | 2026-11-07 17:07:04.011559-06 |       21
+ 2cfe2f9b4f | 2026-11-07 17:06:55.002946-06 |        5
+ a4d79d6d8c | 2026-11-07 17:06:54.093646-06 |        2
+ d072a39295 | 2026-11-07 17:06:54.092439-06 |        6
+ e1a4166798 | 2026-11-07 17:06:54.091286-06 |        6
+ 7d8a5c1e06 | 2026-11-07 17:06:54.087664-06 |        7
+(20 filas)
+
+ROLLBACK

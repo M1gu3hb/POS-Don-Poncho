@@ -5,11 +5,12 @@ import { useId, useState } from 'react';
 
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Switch } from '@morphiqpos/ui/primitivas/switch';
-import { Aviso, Esqueleto, Superficie } from '@morphiqpos/ui/sistema';
+import { Aviso, Dinero, Esqueleto, Superficie } from '@morphiqpos/ui/sistema';
 import { BadgePercent, Calculator } from 'lucide-react';
 
 import { invocarComando } from '~/cliente/api';
 import { TerminalesDeLaSucursal } from './TerminalesDeLaSucursal';
+import { topesEnPantalla, type TopeDelPuestoLeido } from './topes-de-los-puestos';
 import {
   CLAVE_DE_DESCUENTOS_PERMITIDOS,
   useDescuentosPermitidos,
@@ -157,10 +158,10 @@ export function PermitirDescuentos() {
           </h3>
           <p className="max-w-prose text-sm text-texto-sutil">
             Encendidos, todo descuento pide la clave (PIN) de un gerente, administrador o dueño,
-            aunque sea de $1, y la autorización sirve una sola vez y por ese monto. Lo más que
-            autoriza cada uno: gerente 30 %, administrador 50 %, dueño 100 %. Apagados, el botón no
-            aparece en ninguna pantalla.
+            aunque sea de $1, y la autorización sirve una sola vez y por ese monto. Apagados, el
+            botón no aparece en ninguna pantalla.
           </p>
+          <TopesDeLosPuestos />
         </div>
         {permitidos === null ? (
           <Esqueleto className="h-(--altura-control) w-11 rounded-full" />
@@ -181,5 +182,38 @@ export function PermitirDescuentos() {
         </Aviso>
       )}
     </Superficie>
+  );
+}
+
+/** Lo más que autoriza cada puesto, como lo aplica el servidor: el porcentaje o el monto. */
+function TopesDeLosPuestos() {
+  const lectura = useQuery({
+    queryKey: ['topes_de_los_puestos'],
+    queryFn: () =>
+      invocarComando<{ readonly topes: readonly TopeDelPuestoLeido[] }>(
+        '/api/venta/topes-de-los-puestos',
+        {},
+      ),
+  });
+  if (lectura.isError) {
+    return (
+      <Aviso tono="atencion" titulo="No se pudieron leer los topes de cada puesto.">
+        El servidor los sigue aplicando igual al autorizar.
+      </Aviso>
+    );
+  }
+  if (lectura.data === undefined) return <Esqueleto className="h-5 w-72 max-w-full" />;
+  return (
+    <p className="max-w-prose text-sm text-texto-sutil">
+      Lo más que autoriza cada uno, lo que llegue primero:{' '}
+      {topesEnPantalla(lectura.data.topes).map((t, i) => (
+        <span key={t.rol}>
+          {i === 0 ? '' : ' · '}
+          <span className="font-medium text-texto">{t.puesto}</span> {t.porcentaje} % o{' '}
+          <Dinero centavos={t.centavos} />
+        </span>
+      ))}
+      .
+    </p>
   );
 }

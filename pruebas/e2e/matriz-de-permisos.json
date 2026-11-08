@@ -610,13 +610,6 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
-      "ruta": "/api/venta/autorizar-descuento",
-      "comando": "venta.autorizar_descuento",
-      "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
-      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
-    },
-    {
       "ruta": "/api/venta/cambiar-cantidad",
       "comando": "venta.cambiar_cantidad",
       "escribe": true,
@@ -684,6 +677,13 @@
       "comando": "venta.tope_de_descuento",
       "escribe": false,
       "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/venta/topes-de-los-puestos",
+      "comando": "venta.topes_de_los_puestos",
+      "escribe": false,
+      "roles": ["administrador", "dueno"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     }
   ],

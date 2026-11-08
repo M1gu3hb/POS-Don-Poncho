@@ -21,6 +21,30 @@ import { createHash } from 'node:crypto';
 const CLAVES_SENSIBLES =
   /(pin|hash|password|contrase|token|secret|authorization|cookie|pepper|^dispositivo$)/i;
 
+/**
+ * DP-14 ronda 2 · `autorizacion` es la autorización FIRMADA del supervisor (dos minutos de vida,
+ * atada a una cuenta y a un monto): una credencial, no un dato. Pero en la auditoría de los
+ * comandos que la gastan esa MISMA clave guarda su NONCE de un solo uso (un id corto y opaco): es
+ * el registro de que se gastó, y `gastarLaAutorizacion` lo busca ahí; redactarlo reabriría el
+ * segundo uso. La firmada se reconoce por su forma `cuerpo.firma` (lleva un punto y pasa de 64
+ * caracteres); un nonce no tiene punto y es corto. Un valor que no es texto se redacta.
+ */
+const CLAVE_DE_AUTORIZACION = /^autorizacion$/i;
+const LARGO_DE_UN_NONCE = 64;
+
+function esUnNonce(contenido: unknown): boolean {
+  return (
+    typeof contenido === 'string' &&
+    !contenido.includes('.') &&
+    contenido.length <= LARGO_DE_UN_NONCE
+  );
+}
+
+function esSensible(clave: string, contenido: unknown): boolean {
+  if (CLAVES_SENSIBLES.test(clave)) return true;
+  return CLAVE_DE_AUTORIZACION.test(clave) && !esUnNonce(contenido);
+}
+
 const REDACTADO = '[redactado]';
 
 /** Tamaño máximo del payload serializado. Más allá, se guarda sólo su huella. */
@@ -53,7 +77,7 @@ export function sanear(valor: Saneable, profundidad = 0): unknown {
   if (typeof valor === 'object') {
     const salida: Record<string, unknown> = {};
     for (const [clave, contenido] of Object.entries(valor as Record<string, unknown>)) {
-      salida[clave] = CLAVES_SENSIBLES.test(clave) ? REDACTADO : sanear(contenido, profundidad + 1);
+      salida[clave] = esSensible(clave, contenido) ? REDACTADO : sanear(contenido, profundidad + 1);
     }
     return salida;
   }

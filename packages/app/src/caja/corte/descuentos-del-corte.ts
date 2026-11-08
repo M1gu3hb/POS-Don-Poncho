@@ -36,30 +36,54 @@ export interface DescuentoDelCorte {
 }
 
 export interface DescuentosDelCorte {
+  /** Hasta el tope de filas: si `cuantos` es mayor, la lista se cortó («se muestran X de N»). */
   readonly descuentos: readonly DescuentoDelCorte[];
+  /** Cuántos son en TOTAL, contados en SQL (la lista puede cortarse, esto no). */
+  readonly cuantos: number;
+  /** La suma de TODOS, en SQL: no sólo de lo que cupo en la lista. */
   readonly totalCentavos: string;
   readonly alcance: 'caja' | 'dia';
 }
 
-/** Un corte de un restaurante no tiene tantos: el tope es el freno de una consulta sin página. */
+/** Un corte de un restaurante no tiene tantos: el tope es el freno de la LISTA (la suma no se corta). */
 const TOPE_DE_DESCUENTOS = 1_000;
+
+/** Las ventas con descuento que entran en este corte (sin orden ni tope): la lista y la suma. */
+function cobradasConDescuento(organizacionId: string, alcance: AlcanceDelCorte) {
+  const { sesionId, sucursalId, cierraElDia, desde, hasta } = alcance;
+  return sql`
+      from ordenes o
+     where o.organizacion_id = ${organizacionId}
+       and o.sucursal_id = ${sucursalId}
+       and ${ORDEN_VENDIDA}
+       and o.descuento_centavos > 0
+       and (case when ${cierraElDia}::boolean
+                 then o.cerrada_en > ${desde} and o.cerrada_en <= ${hasta}
+                 else o.sesion_caja_id = ${sesionId}::uuid end)`;
+}
 
 export async function descuentosDelCorte(
   tx: Transaccion,
   organizacionId: string,
   alcance: AlcanceDelCorte,
+  tope: number = TOPE_DE_DESCUENTOS,
 ): Promise<DescuentosDelCorte> {
-  const { sesionId, sucursalId, cierraElDia, desde, hasta } = alcance;
   const { rows } = await sql<DescuentoDelCorte>`
     select o.id::text                                  as "ordenId",
-           o.folio::text                               as "folio",
+           case when o.folio is null then null
+                else o.serie || '-' || o.folio::text end as "folio",
            m.numero                                    as "mesa",
            o.descuento_centavos::text                  as "montoCentavos",
            ev.nombre                                   as "autorizo",
            a.payload ->> 'motivo'                      as "motivo",
            to_char(a.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as "cuando"
-      from ordenes o
-      left join mesas m on m.id = o.mesa_id
+      from (select o.* ${cobradasConDescuento(organizacionId, alcance)}
+             order by o.cerrada_en, o.id
+             limit ${tope}) o
+      left join ordenes madre on madre.id = o.orden_padre_id
+                             and madre.organizacion_id = o.organizacion_id
+      left join mesas m on m.id = coalesce(o.mesa_id, madre.mesa_id)
+                       and m.organizacion_id = o.organizacion_id
       left join lateral (
              select au.payload, au.created_at
                from auditoria au
@@ -70,21 +94,19 @@ export async function descuentosDelCorte(
               limit 1
            ) a on true
       left join empleados_visibles ev on ev.id::text = a.payload ->> 'autorizadoPor'
-     where o.organizacion_id = ${organizacionId}
-       and o.sucursal_id = ${sucursalId}
-       and ${ORDEN_VENDIDA}
-       and o.descuento_centavos > 0
-       and (case when ${cierraElDia}::boolean
-                 then o.cerrada_en > ${desde} and o.cerrada_en <= ${hasta}
-                 else o.sesion_caja_id = ${sesionId}::uuid end)
      order by o.cerrada_en, o.id
-     limit ${TOPE_DE_DESCUENTOS}
   `.execute(tx);
-  const total = rows.reduce((suma, fila) => suma + BigInt(fila.montoCentavos), 0n);
+  // La cuenta y la suma salen de SQL sobre TODAS, no de la lista: si se cortó, no se queda corta.
+  const { rows: totales } = await sql<{ cuantos: number; total: string }>`
+    select count(*)::int as cuantos,
+           coalesce(sum(o.descuento_centavos), 0)::text as total
+      ${cobradasConDescuento(organizacionId, alcance)}
+  `.execute(tx);
   return {
     descuentos: rows,
-    totalCentavos: total.toString(),
-    alcance: cierraElDia ? 'dia' : 'caja',
+    cuantos: totales[0]?.cuantos ?? 0,
+    totalCentavos: totales[0]?.total ?? '0',
+    alcance: alcance.cierraElDia ? 'dia' : 'caja',
   };
 }
 

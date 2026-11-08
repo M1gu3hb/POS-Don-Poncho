@@ -173,3 +173,30 @@ Como lo pidió la coordinación: dividir vive en la **mesa activa** («Acciones 
 ## Lo que no pude probar
 
 Está en la sección 6 de la bitácora: leer un QR real con la cámara, impresoras, sonido real, XLSX, texto interno del PDF de «Cierre diario» de Caja, teléfono de cocina por enlace, dos tabletas pulsando a la vez, platillos por kilo, descuentos y esquemas de propina, «Eliminar todas las mesas» y «Reiniciar sistema» de verdad, y la cuarta purga.
+
+# Hallazgos de QA-2 · jornada del 7 de noviembre de 2026 (DP-14, ronda 2)
+
+Dos copias desechables de `don-poncho`, hechas con la exportación de producción del 7-11 (posterior al PR #10). Cada una tiene el cupo de cajas en 2, el motivo «Por cancelación» y PIN de prueba que sólo valen ahí (en `_PRIVADO\qa-dp14-a` y `\qa-dp14-b`). La app compilada es de `2c0f5ad`:
+
+- QA-A, caja, dinero y cocina: `qa_dp14` en el 3261.
+- QA-B, usuarios, mesas y portal: `qa_dp14_b` en el 3262.
+
+Los hicieron dos agentes Sonnet en sus worktrees, sin tocar el código. El detalle está en [`HALLAZGOS-QA2-a.md`](HALLAZGOS-QA2-a.md) y [`HALLAZGOS-QA2-b.md`](HALLAZGOS-QA2-b.md); las bitácoras, en [`JORNADA-2026-11-07.md`](JORNADA-2026-11-07.md).
+
+**Resultado:**
+
+- Cero bloqueantes y cero medios.
+- QA-A cuadró los cortes de las dos cajas y el Cierre del día al centavo: 21 comparaciones, 0 diferencias.
+- En las dos copias, las 34 consultas de violación de `consultas-qa2.sql` dieron 0 filas.
+
+| Id     | Gravedad            | Qué                                                                                           | Estado                                                                                                                                                                                |
+| ------ | ------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| QA2-A1 | baja                | «Quitar un platillo» dice «0.25 × Barbacoa de horno», no «¼ kg»                               | **Arreglado.** `descripcionDelRenglon` usa el formateador único del peso: «Barbacoa de horno · ¼ kg». Prueba en rojo antes y 2 mutantes.                                              |
+| QA2-A2 | baja                | Cobrar las partes de una cuenta dividida deja la mesa en «Limpieza» y el cierre la pide libre | **Por diseño.** La mesa cobrada pasa a limpieza (DP-D66) y el diálogo del cierre trae «Marcar libre» (DP-14.6).                                                                       |
+| QA2-A3 | baja                | Tras aplicar un descuento, el cobro vuelve a pedir la propina que ya se había elegido         | **Arreglado.** Al releer la cuenta se conserva la propina elegida en la caja; el porcentaje se recalcula sobre el total nuevo (`propinaAlReleer`). Prueba en rojo antes y 4 mutantes. |
+| QA2-A4 | info                | El renombrado de una caja está en la auditoría pero no en Registros                           | Anotado: Registros no tiene pestaña de cambios de configuración.                                                                                                                      |
+| QA2-A5 | info, sin confirmar | Registros dice «9 ventas» arriba y «Ventas (13)» en la pestaña                                | Anotado: la pestaña cuenta también las canceladas y la dividida.                                                                                                                      |
+| QA2-B1 | info                | Dos clics forzados casi a la vez: sólo se abre un diálogo                                     | Es un límite del gesto: con un dedo real, el velo del primero tapa el segundo; en la misma pasada se encolan y no se pierde ninguno.                                                  |
+| QA2-B2 | info                | «Nueva mesa» no reusa el número de una mesa quitada                                           | Anotado (es de antes).                                                                                                                                                                |
+| QA2-B3 | info                | No hay pantalla para crear una zona, y el puente deja repetir el nombre                       | Anotado (es de antes).                                                                                                                                                                |
+| QA2-B4 | info                | «La copia traía una caja abierta»                                                             | **Descartado:** es de la demo `demo-ferreteria-la-broca` que siembran las migraciones, no de Don Poncho.                                                                              |

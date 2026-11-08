@@ -21,12 +21,16 @@ export interface DescuentoDelCorte {
 
 interface DescuentosDelServidor {
   readonly descuentos: readonly DescuentoDelCorte[];
+  /** Cuántos son en total (SQL): mayor que `descuentos.length` si la lista se cortó. */
+  readonly cuantos: number;
   readonly totalCentavos: string;
   readonly alcance: 'caja' | 'dia';
 }
 
 export interface DescuentosLeidos {
   readonly filas: readonly DescuentoDelCorte[];
+  /** Cuántos descuentos tuvo el corte en total (no sólo los de `filas`). */
+  readonly cuantos: number;
   readonly totalCentavos: number;
   /** De qué hablan: los de esta caja, o los del día; nulo si no se leyeron. */
   readonly alcance: 'caja' | 'dia' | null;
@@ -52,13 +56,14 @@ export async function leerDescuentosDelCorte(
     const leidos = await leer(sesionCajaId);
     return {
       filas: leidos.descuentos,
+      cuantos: leidos.cuantos,
       totalCentavos: Number(leidos.totalCentavos),
       alcance: leidos.alcance,
       noSePudieronLeer: false,
     };
   } catch (error: unknown) {
     registrar(error);
-    return { filas: [], totalCentavos: 0, alcance: null, noSePudieronLeer: true };
+    return { filas: [], cuantos: 0, totalCentavos: 0, alcance: null, noSePudieronLeer: true };
   }
 }
 
@@ -71,4 +76,13 @@ export function cuentaDelDescuento(fila: DescuentoDelCorte): string {
 
 export function tituloDeLosDescuentos(alcance: DescuentosLeidos['alcance']): string {
   return alcance === 'dia' ? 'Descuentos del día' : 'Descuentos de esta caja';
+}
+
+/**
+ * Ronda 2 · Si el servidor cortó la lista (el tope es el freno de la lectura, no de la suma), el
+ * papel lo dice con las cuentas completas; `null` si se vio todo o no se leyó.
+ */
+export function avisoDeLosDescuentosCortados(leidos: DescuentosLeidos): string | null {
+  if (leidos.noSePudieronLeer || leidos.cuantos <= leidos.filas.length) return null;
+  return `Sólo se muestran ${String(leidos.filas.length)} de ${String(leidos.cuantos)} descuentos; el total del corte los incluye a todos.`;
 }

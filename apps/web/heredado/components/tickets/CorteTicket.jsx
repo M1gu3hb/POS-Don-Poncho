@@ -19,6 +19,7 @@ import {
 import {
   AVISO_SIN_DESCUENTOS,
   EXPLICACION_SIN_DESCUENTOS,
+  avisoDeLosDescuentosCortados,
   cuentaDelDescuento,
   tituloDeLosDescuentos,
 } from '~/corte-heredado/descuentos-del-corte';
@@ -655,6 +656,12 @@ const CorteTicket = React.forwardRef(function CorteTicket(
               </tr>
             </tfoot>
           </table>
+          {/* DP-14 ronda 2 · Si el servidor cortó la lista, el total sigue siendo el completo. */}
+          {avisoDeLosDescuentosCortados(descuentos) !== null && (
+            <p className="mt-1 text-xs text-texto-sutil">
+              {avisoDeLosDescuentosCortados(descuentos)}
+            </p>
+          )}
         </Section>
       )}
 
