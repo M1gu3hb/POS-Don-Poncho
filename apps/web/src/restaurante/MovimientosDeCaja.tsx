@@ -2,6 +2,7 @@
 
 import { CorteDeTurno } from '~/venta/CorteDeTurno';
 import { DevolucionDeVenta } from '~/venta/DevolucionDeVenta';
+import { EntradaDeCambio } from '~/venta/EntradaDeCambio';
 import { GastoDeCaja } from '~/venta/GastoDeCaja';
 import { RetiroDeCaja } from '~/venta/RetiroDeCaja';
 
@@ -35,6 +36,8 @@ export function MovimientosDeCaja({
       {/* El corte de turno es de quien tiene la caja: entrega lo suyo y no cierra. */}
       <CorteDeTurno />
       <RetiroDeCaja alRetirar={alMover} />
+      {/* DP-15 · El cambio que entra al cajón (antes no había pantalla para `caja.entrada_cambio`). */}
+      <EntradaDeCambio alRegistrar={alMover} />
       {puedeAdministrar ? (
         <>
           <GastoDeCaja alRegistrar={alMover} />

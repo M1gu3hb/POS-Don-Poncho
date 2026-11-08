@@ -76,6 +76,11 @@ import { safeFormatDate } from '@/lib/safeFormat';
 import StatCard from '@/components/common/StatCard';
 import { claves } from '~/cliente/claves-de-consulta';
 import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
+import { MovimientosDeCaja } from '~/restaurante/MovimientosDeCaja';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+
+/** DP-15 · Quien registra un gasto o una devolución desde la caja (los roles de esos comandos). */
+const PUEDEN_ADMINISTRAR_LA_CAJA = ['dueno', 'administrador', 'gerente'];
 import { sonar } from '~/sonidos/gestor';
 import { economiaDelPeriodo } from '~/restaurante/margen-de-las-ventas';
 import { DividirLaCuenta } from '~/restaurante/DividirLaCuenta';
@@ -182,6 +187,7 @@ export default function Caja() {
     fondoEsperado,
     isLoading: cargandoCaja,
   } = useCajaAbierta({ deEstaTerminal: true });
+  const miPuesto = usePuesto();
 
   // Clave de idempotencia del cobro: se genera al ABRIR el diálogo de cobro y
   // se reusa mientras siga abierto (F1-02 §8, trampa T5). Es lo que impide que
@@ -1323,6 +1329,11 @@ export default function Caja() {
           <TabsTrigger value="historial" className="shrink-0">
             Historial
           </TabsTrigger>
+          {/* DP-15 · Retiros, entradas de cambio y corte de turno: antes sólo existían en
+              `/restaurante/caja`, adonde la cajera no llega (se la regresa a `/caja`). */}
+          <TabsTrigger value="movimientos" className="shrink-0">
+            Movimientos
+          </TabsTrigger>
         </TabsList>
 
         {/* COBROS PENDIENTES (solo con sala: el módulo `mesas`) */}
@@ -1464,6 +1475,15 @@ export default function Caja() {
         {/* HISTORIAL */}
         <TabsContent value="historial">
           <CorteHistorialList limit={100} />
+        </TabsContent>
+        <TabsContent value="movimientos">
+          <MovimientosDeCaja
+            puedeAdministrar={PUEDEN_ADMINISTRAR_LA_CAJA.includes(miPuesto)}
+            alMover={() => {
+              // El estado de la caja (y su resumen) se releen: el corte ya cuenta lo que se movió.
+              queryClient.invalidateQueries({ queryKey: ['cortes_caja_estado'] });
+            }}
+          />
         </TabsContent>
       </Tabs>
 

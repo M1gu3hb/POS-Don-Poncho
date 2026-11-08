@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { aCentavos, retiroParaEnviar } from './importe-tecleado.ts';
+import { aCentavos, entradaParaEnviar, retiroParaEnviar } from './importe-tecleado.ts';
 
 /**
  * El importe tecleado en la caja y el retiro que sale de él: la tienda y el salón usan la
@@ -29,5 +29,28 @@ describe('el retiro', () => {
     expect(retiroParaEnviar('', 'al banco')).toEqual({ tropiezo: 'Pon cuánto se retira.' });
     expect(retiroParaEnviar('abc', 'al banco')).toEqual({ tropiezo: 'Pon cuánto se retira.' });
     expect(retiroParaEnviar('500', 'ok')).toEqual({ tropiezo: 'Escribe a dónde va ese dinero.' });
+  });
+});
+
+describe('DP-15 · la entrada de cambio al cajón', () => {
+  it('manda el importe en centavos, con su origen, y el motivo sólo si lo hay', () => {
+    expect(entradaParaEnviar('500', 'banco', '')).toEqual({
+      cuerpo: { chicosCentavos: 50_000, monedasCentavos: 0, origen: 'banco', motivo: null },
+    });
+    expect(entradaParaEnviar('250.50', 'dueno', ' cambio para el fin de semana ')).toEqual({
+      cuerpo: {
+        chicosCentavos: 25_050,
+        monedasCentavos: 0,
+        origen: 'dueno',
+        motivo: 'cambio para el fin de semana',
+      },
+    });
+  });
+
+  it('sin importe, o con uno ilegible, no se manda nada', () => {
+    expect(entradaParaEnviar('', 'banco', 'x')).toEqual({ tropiezo: 'Pon cuánto entra al cajón.' });
+    expect(entradaParaEnviar('12.345', 'banco', 'x')).toEqual({
+      tropiezo: 'Pon cuánto entra al cajón.',
+    });
   });
 });
