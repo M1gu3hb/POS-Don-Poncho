@@ -1125,3 +1125,41 @@ Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PR
   135 tablas, 0 diferencias contra la de las 10:52 (intacto, como respaldo).
 - 11:10 El regreso atrás, escrito en `MUDANZA-FASE-B.md` y, con su guion, en
   `_PRIVADO\mudanza\regreso-atras\`.
+- 11:10 Respaldos de la propia ya lista: exportación (`_PRIVADO\mudanza\2026-11-08-dp15-propia-lista`,
+  135 tablas, 1218 filas) y `pg_dump -Fc` de `public` (1 MB, 139 tablas con datos). El plan Pro da
+  respaldos diarios físicos de 7 días, sin PITR; se restauran desde el panel (Database → Backups).
+
+### Fase 2.4 · capacidad
+
+- 11:19 y 11:23 Medido en producción, sólo leyendo, con los puestos entrando con su PIN y la
+  pantalla abierta (Playwright): Mesero 61–62 peticiones/min, Caja 42–44, Cocina 36, Comensal en el
+  portal 36 (y ~1,2 MB/min sin comprimir: el menú completo cada 4 s), Dueño 28–29, teléfono de
+  cocina 23; con la pantalla oculta, 0 a 3. Equipo de Vercel en Pro (crédito de 20 USD). El cálculo
+  del día lleno, en `docs/infra/CAPACIDAD.md`: el personal cabe holgado; el portal abierto todo el
+  día pasaría el crédito de Vercel (≈ 19 USD) y llegaría al 72 % del egress de Supabase. Ajuste más
+  barato: que el portal baje el menú una vez y sondee sólo lo ligero.
+
+### Fase 5 · auditoría por función (agentes)
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| Inventario 1 (worktree propio) | Haiku | Pantallas, botones, rutas, comandos y sondeos de los módulos 1-8 | `D:\mpos-tmp\dp15-auditoria\inventario-1.md`, ~90 acciones, 37 sondeos |
+| Inventario 2 (worktree propio) | Haiku | Lo mismo, módulos 9-17, con las 157 rutas `/api` | `inventario-2.md`; «agotado del día» no existe; impresión sólo 80 mm/A4 |
+| Precios | Haiku (lectura web) | Lo incluido de Vercel Pro y Supabase Pro/Micro | en `docs/infra/CAPACIDAD.md` |
+| Auditoría 1 (copia A, `qa_dp15_a`, 32701) | Sonnet | Módulos 1-8 | en curso |
+| Auditoría 2 (copia B, `qa_dp15_b`, 32702) | Sonnet | Módulos 9-17 | 1 bloqueante (agotado del día) y 8 medios; `auditoria-2.md` |
+
+- Las copias: clúster local Postgres 18 en el 5460 (`D:\mpos-tmp\desechable-dp15`), migradas desde
+  cero e importadas idénticas de la exportación de la propia ya lista, con PIN de prueba de la
+  pimienta local (`D:\mpos-tmp\qa-dp15-a|b\pines.json`), servidas con la compilación de `dp-15`.
+
+### Fase 6 · arreglos (worktree `dp15-codigo`, rama `dp-15-codigo`)
+
+- 11:45 Datos e Integraciones sólo para el dueño y el administrador (pantalla y puente). Prueba en
+  rojo antes; 3 mutantes muertos (`17cf0b4`).
+- 12:05 El platillo agotado del día, servidor: migración 189 (`productos.agotado_hasta`, aditiva),
+  `catalogo.marcar_agotado` y la negativa en el pedido del mesero, el carrito y el envío del portal,
+  el pedido directo del portal y el mostrador. Integración 6 de 6; 10 mutantes muertos (`07f3efa`).
+- 12:15 Las pantallas: «Agotados» en la cocina y en Productos; el mesero y el portal lo enseñan y no
+  lo agregan. 4 mutantes muertos (`2a9893b`). Falta: aplicar la 189 a la propia (antes del
+  despliegue) y la verificación completa.

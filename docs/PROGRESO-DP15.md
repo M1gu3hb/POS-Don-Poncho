@@ -16,21 +16,25 @@
 | 0 | Arranque: lectura, plan, este archivo | hecho (08-11 10:45) |
 | 1 | Datos del proyecto nuevo con la CLI → `_PRIVADO\fase-b.env` | hecho (10:46) |
 | 2 | 2.1 PIN nuevos | hecho (10:59) |
-| 2 | 2.2 gerente sin Datos/Integraciones · 2.3 informativos · 2.4 capacidad | pendiente |
+| 2 | 2.2 gerente sin Datos/Integraciones (hecho, rama `dp-15-codigo`) · 2.3 informativos (pendiente) · 2.4 capacidad (hecha, `docs/infra/CAPACIDAD.md`) | en curso |
 | 3 | La mudanza | hecha (11:07): huella IDÉNTICA, humo 38/38, regreso atrás escrito |
 | 4 | Base propia lista: 2 cajas, «Caja 2», descuentos, PIN, respaldo | hecho (11:10) |
-| 5 | Auditoría por función | pendiente |
-| 6 | Arreglos | pendiente |
+| 5 | Auditoría por función | en curso: auditoría 2 lista (1 bloqueante, 8 medios); auditoría 1 corriendo |
+| 6 | Arreglos | en curso: agotado del día (servidor + pantallas) en `dp-15-codigo` |
 | 7 | QA de jornada | pendiente |
 | 8 | Prueba del puro link | pendiente |
 | 9 | Entrega y reporte 009 | pendiente |
 
 ## Lo que sigue
 
-1. Fase 2.2 y 2.3 (código, con prueba en rojo y mutante) y 2.4 (capacidad: medir el sondeo).
-2. Fase 5: copia desechable de la propia (`_PRIVADO\mudanza\2026-11-08-dp15-propia-lista`) y la
-   auditoría por módulos con agentes (máx. 2 a la vez; Sonnet para criterio, Haiku para inventarios).
-3. WebKit de Playwright no está instalado (`D:\_cache-dev\playwright`): hace falta para las Fases 7 y 8.
+1. Esperar la auditoría 1 (módulos 1-8) y escribir `docs/qa/AUDITORIA-POR-FUNCION.md` con las dos.
+2. Medios de la auditoría 2 por decidir/arreglar: M1 Tablero suma una caja; M3 sin «Agregar producto»
+   en restaurante; M4 almacén con botones que el servidor niega; M5 compra en efectivo con 2 cajas;
+   M6 pedido del mesero se pierde al recargar; M7 ticket de 58 mm; M8 gerente con pestañas que fallan.
+   (M2 queda cubierto por el agotado del día.)
+3. Antes de desplegar: `pnpm db:migrate` de la 189 en la propia (aditiva), `verify:esquema` estricto
+   contra la propia, `pnpm verify` completo en el worktree, PR a `main`, CI, despliegue y humo.
+4. Informativos de HALLAZGOS (2.3) y el ajuste del portal (capacidad) si da el tiempo.
 
 ## Dónde quedó cada cosa
 
@@ -48,6 +52,8 @@
   `regreso-atras\` (guion y `LEEME.md`).
 - Respaldos del plan (Pro): diarios físicos, 7 días; sin PITR. Se restauran desde el panel
   (Database → Backups), todo el proyecto a ese día.
+- Worktree de arreglos: `.claude/worktrees/dp15-codigo` (rama `dp-15-codigo`), base de pruebas
+  local en el 5436 (`integ.sh` corre la integración). Copias de auditoría en el 5460 (A 32701, B 32702).
 - Guiones de esta sesión (fuera del repo, en el scratchpad): `con-env.mjs` (pone valores de
   `_PRIVADO` en el entorno del hijo), `preparar-base-propia.mjs`, `humo-mudanza.mjs`,
   `vercel-cinco.mjs`, `revisar-pines.mjs` (guardián de PIN antes de cada commit).
