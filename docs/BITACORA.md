@@ -1202,3 +1202,16 @@ Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PR
   lo listo sale de la estación y lo pendiente se marca «Cuenta cobrada»; quitar el único platillo
   cancela su comanda (DP-D87). Decisiones DP-D83 a DP-D87 y la ficha 35. Producción leída: 0 cajas,
   0 órdenes, 0 folios, 10 mesas libres.
+- 14:00 Revisión de código del servidor (agente Sonnet, sólo lectura): sin bloqueantes; 4 medios y 6
+  menores. Arreglados con prueba en rojo y mutantes: la entrada de cambio (que además **nunca se había
+  podido guardar**, DP-D89, `47e0744`), la mesa al quitar lo último pendiente (`183739b`) y la prueba
+  del agotado en la medianoche de México (`edeb0e3`).
+- 14:05 `pnpm verify` local (sin `verify:entorno`, que pide Postgres 17; aquí hay 18): el build cazó
+  un nombre importado dos veces en `Mesero.jsx` (`32f41fd`). Antes, `verify:primitivas` (un tamaño
+  literal en los íconos de los vacíos) y una prueba ajena que se pasó de 5 s con la máquina cargada.
+- 14:22 La cadena del verify, otra vez desde las puertas estáticas.
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| Revisión del servidor | Sonnet | Revisión adversarial, sólo lectura, del lado servidor de DP-15 | 0 bloqueantes; 3 medios arreglados, 2 descartados con razón |
+

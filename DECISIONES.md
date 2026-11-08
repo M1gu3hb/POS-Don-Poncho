@@ -1629,8 +1629,9 @@ puerta los denuncia todos.
   **Alternativa descartada:** cancelarlo al cobrar, que escondería platillos por servir.
 - **Lo quitado:** quitar el único platillo de una comanda la cancela; si le quedan otros, la pantalla ya
   no pinta el quitado.
-- **Queda como mejora:** cancelar el último pendiente cuando las demás comandas ya están listas no mueve
-  la mesa a «Esperando entrega» (el mesero la ve igual en el mapa).
+- **Al quitar lo último que faltaba** (la revisión de código): la comanda vacía se cancela y la mesa
+  se mueve con lo que quede de la cuenta dueña de las comandas (en una cuenta dividida, la madre): si
+  sólo quedan comandas listas, a «Esperando entrega»; si no queda nada, a «Ocupada».
 - **Sin migración.**
 
 ## DP-D88 · La prueba del puro link en producción, sin PIN reales y sin cuentas · 08-11-2026
@@ -1648,3 +1649,23 @@ puerta los denuncia todos.
   (`limpiar-ventas-de-prueba.mjs`, una cuenta sin cobrar y sin caja), pero abrirla exige entrar con un
   PIN real; queda para Miguel si hiciera falta.
 - **Sin migración.**
+
+## DP-D89 · La entrada de cambio: suma la base, referencia «manual» y el desglose de apertura intacto · 08-11-2026
+
+- **Lo que se encontró:** la entrada de cambio (heredada de MorphiqPOS, F-984-bis) nunca se pudo
+  guardar contra el esquema real: su movimiento llevaba `referencia_tipo = 'entrada_cambio'`, que
+  `movimientos_caja_referencia_tipo_check` no admite, y sumaba la entrada al desglose del fondo de
+  apertura, que `sesion_fondo_desglosado_cuadra` exige que cuadre con el fondo inicial. Sus pruebas eran
+  con una base falsa. Salió al probarla contra Postgres real por un hallazgo de la revisión de código
+  (leer, sumar y escribir sin candado).
+- **Elección:** el movimiento va con `referencia_tipo = 'manual'`, como el retiro; el fondo esperado lo
+  suma la base en una sola escritura (`fondo_esperado_centavos + monto`, con `returning`), porque la hoja
+  del corte resta las entradas para enseñar el fondo esperado al abrir; el desglose de la apertura no se
+  toca (el de la entrada queda en su movimiento y en la auditoría). El efectivo que el corte espera ya
+  sale de los movimientos del cajón.
+- **Alternativa descartada:** una migración que agregue `entrada_cambio` a los tipos de referencia, o
+  que relaje el desglose: cambiaría el esquema por algo que el código resuelve sin perder nada.
+- **Lo que se ganó:** lo que toca la base en la caja de la cajera (retiro y entrada) se prueba ahora
+  contra Postgres real.
+- **Sin migración.**
+
