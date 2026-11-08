@@ -27,5 +27,8 @@ describe('DP-15 · la app en la pantalla de inicio', () => {
     const l = leer('app/layout.tsx');
     expect(l).toContain("apple:{url:'/iconos/apple-touch-icon.png',sizes:'180x180'}");
     expect(l).toContain("appleWebApp:{capable:true,title:'DonPoncho',statusBarStyle:'default'}");
+    // Next emite `mobile-web-app-capable`; el iPhone de antes de iOS 16.4 sólo lee la de Apple
+    // (QA de aparatos, H-03).
+    expect(l).toContain("other:{'apple-mobile-web-app-capable':'yes'}");
   });
 });
