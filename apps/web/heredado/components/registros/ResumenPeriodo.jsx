@@ -164,7 +164,7 @@ export default function ResumenPeriodo({
             icon={DollarSign}
             label="Ingresos"
             value={formatCurrency(totals.ingresos)}
-            sub={`${totals.nVentas} ventas`}
+            sub={`${totals.nVentas} ${totals.nVentas === 1 ? 'venta cobrada' : 'ventas cobradas'}`}
             color={colorize ? 'text-primary' : 'text-foreground'}
           />
           <Stat

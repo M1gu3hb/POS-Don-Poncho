@@ -286,7 +286,13 @@ export default function Registros() {
           </TabsTrigger>
           <TabsTrigger value="ventas" className="gap-1">
             <Receipt className="w-3 h-3" />
-            Ventas ({ventasFiltradas.length})
+            {/* DP-15 · La lista trae TODAS (también canceladas y divididas); arriba se cuentan las
+                cobradas. Cada número dice qué cuenta. */}
+            Ventas ({ventasFiltradas.length}
+            {ventasFiltradas.some((v) => v?.estado !== 'pagada')
+              ? ` · ${ventasFiltradas.filter((v) => v?.estado === 'pagada').length} cobradas`
+              : ''}
+            )
           </TabsTrigger>
           {/* DP-12.4 · Las cuentas canceladas y los platillos anulados, con quién, cuándo, por qué,
               cuánto y si ya estaban preparados (pérdida). Del servidor, como el corte. */}
