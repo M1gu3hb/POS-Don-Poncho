@@ -1277,3 +1277,46 @@ Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PR
   las conexiones contaminadas). Los cuatro guiones, con `begin read only … commit`.
 - 04:31 La misma prueba del link: todo 200 y **cero alertas**. Producción limpia (lectura): 0 sesiones
   de caja, 0 cuentas, 0 folios, 0 comandas y las 10 mesas libres.
+
+## DP-15.1 · La ronda final antes del sábado (auditoría del orquestador, 09-11)
+
+El orquestador auditó `main@cd76829` y la base propia: sin bloqueantes de dinero ni de datos. Su
+documento (`AUDITORIA-2026-11-09.md`) no está en disco: se trabaja con el resumen del encargo. Un solo
+PR, rama `dp-15-1` (sale de `dp-15-docs`, con el reporte 009; el PR #14 queda absorbido).
+
+### El 25006 en producción (DP-D92)
+
+- 08:05 La causa, contra el registro de esta sesión: las tres horas del encargo (08-11 13:50 y 17:24,
+  09-11 04:25) coinciden al minuto con corridas de `link.mjs` (13:48–13:50 y 04:24–04:25),
+  `permisos-de-tablas.mjs` (17:23) y `sonda-reposo.mjs` (17:24), todas por la `DATABASE_URL` de
+  producción (6543) y con `set default_transaction_read_only = on` de sesión. No un `begin … read
+  only` sin `rollback`: los del repo que abren transacción la cerraban y corrieron por la de sesión.
+- 08:16 Prueba en rojo (`solo-lectura-heredada.integracion.test.ts`): el pool de la app con todas sus
+  conexiones en `default_transaction_read_only = on`; la precondición pasa (una escritura suelta falla
+  con `25006`) y fallan la transacción y el limitador.
+- 08:17 `conTransaccion` con `setAccessMode('read write')`; el limitador (contar, devolver, purgar),
+  cerrar sesión y la cuota de archivos, dentro de `conTransaccion`. Verde (7/7 con las del limitador).
+  Contrato `escrituras-en-transaccion.contrato.test.ts`: ninguna escritura suelta sobre `obtenerDb()`.
+- 08:30 `scripts/lib/lectura-segura.mjs` (`exigirConexionDirecta` rechaza el 6543;
+  `leerEnSoloLectura` cierra con `rollback` en un `finally`) en `exportar-negocio`, `huella-ajena` e
+  `importar-negocio`; probados contra la base local y con una cadena del 6543 (se niegan con mensaje
+  claro). Los guiones de revisión de la sesión (`link.mjs`, `estado-propia.mjs`, que ahora cuenta
+  también los carritos) leen por la de sesión con `leerEnSoloLectura`; las dos sondas y el modo que
+  leía por el pooler, retirados.
+- 08:40 La regla en `docs/RUNBOOK.md` §3 (y la fila del `25006` en «Cuando algo falla») y en la
+  entrega; en la entrega también la sesión propia del iPhone al «Agregar a inicio».
+- 08:43 Mutantes 8 de 8 muertos. Commit `a77d1a0`.
+
+### Lo demás
+
+- 08:20 y 08:35 Dos agentes Sonnet, cada uno en su worktree y su base desechable (sin commit): A
+  (`dp151-a`, 5437) los movimientos de la cajera, el cambio de mesa del mesero y el borrador; B
+  (`dp151-b`, 5438) la auditoría con filtro en el servidor, las zonas desactivables y el «hoy» del
+  Tablero.
+- 08:44 El linter de Supabase de la propia: una sola función con `search_path` mudable,
+  `lealtad_movimientos_inmutables`. Prueba en rojo (ninguna función de `public` sin `search_path`
+  fijo) y la **190** (`alter function … set search_path = pg_catalog, public`, con pre y
+  poscondición). Verde en la base local. Commit `5102d31`. A la propia, con la CI en verde.
+- 08:48 Vercel sin errores de ejecución desde las 04:32 (después de corregir los guiones).
+- **Lo listo de una cuenta cobrada antes de servir** (medio 4 del encargo): Miguel no lo ha
+  confirmado; se queda como está y se le pregunta al final.

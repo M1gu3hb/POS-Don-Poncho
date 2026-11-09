@@ -26,13 +26,31 @@
 | 8 | Prueba del puro link | hecha (09-11 04:31): 6 aparatos, el portal en 5, 8 a la vez, 3G, «Agregar a inicio»; producción limpia; las alertas eran mis guiones (DP-D91), cero tras corregirlos |
 | 9 | Entrega y reporte 009 | `docs/ENTREGA-DON-PONCHO.md` en `main`; el reporte 009 completo, en el PR de documentos (rama `dp-15-docs`) |
 
+## DP-15.1 · La ronda final antes del sábado (auditoría del orquestador, 09-11)
+
+Rama `dp-15-1` (sale de `dp-15-docs`, que lleva el reporte 009; el PR #14 queda absorbido aquí: un
+solo PR). Worktree `dp15-codigo`. El documento `AUDITORIA-2026-11-09.md` no está en disco: se trabaja
+con el resumen del encargo.
+
+| Parte | Qué | Estado |
+| --- | --- | --- |
+| 1 | El 25006: causa confirmada (DP-D92), `conTransaccion` en `read write`, escrituras sueltas a transacción, guiones fuera del 6543, regla en RUNBOOK y entrega | hecho (`a77d1a0`, 8/8 mutantes) |
+| 2.1 | `caja.movimiento`: la cajera sólo retiro y entrada de cambio; ajuste con rastro; motivo mínimo; «1,500» | agente A (Sonnet, worktree `dp151-a`, base 5437) |
+| 2.2 | Registros → Auditoría: filtro en el servidor, fecha, páginas, nombres legibles | agente B (Sonnet, worktree `dp151-b`, base 5438) |
+| 2.3 | El mesero cambia de mesa desde su pantalla | agente A |
+| 2.4 | Lo listo de una cuenta cobrada antes de servir | **sin confirmar por Miguel: se queda como está** (se pregunta al final) |
+| 3 | Zonas desactivables y tablero «hoy» en CDMX (agente B); borrador del mesero (agente A); la 190 `search_path` (hecho, `5102d31`); el iPhone en la entrega (hecho) | en curso |
+| 4 | 009, este archivo y la bitácora | en curso |
+| 5 | PR, CI, la 190 en la propia con `pnpm db:migrate` (sesión), merge, `READY`, humo con `link.mjs` (por la de sesión), Vercel 1 h sin errores, Don Poncho en ceros | pendiente |
+
 ## Lo que sigue
 
-1. El PR de documentos (`dp-15-docs` → `main`): el reporte 009, DP-D91 reescrita, la ficha 35, la
-   bitácora, este archivo y el comentario de `cliente.contrato.test.ts`. CI en verde y merge.
-2. El mensaje final a Miguel: el link, el commit, lo que falta y lo que necesita de él.
-3. **Regla nueva (DP-D91):** cualquier guion que lea producción va con `begin read only … commit`,
-   nunca con un `SET` de sesión por el pooler de transacción.
+1. Integrar los parches de los agentes (`scratchpad\dp151-a.patch`, `dp151-b.patch`), revisarlos,
+   correr sus pruebas y mutantes, y commitear a nombre de M1gu3hb.
+2. `pnpm verify` local, el acople y el PR único a `main`.
+3. Con la CI en verde: la 190 a la propia, merge, `READY`, humo sin cobrar, una hora de Vercel y el
+   estado en ceros (`estado-propia.mjs` por la de sesión).
+4. El reporte 009 cerrado, la bitácora y el mensaje corto a Miguel.
 
 - Mutantes: todos los vigentes mueren (102; `D:\mpos-tmp\dp15-mutantes-final.log` y los tres rehechos).
 - `pnpm verify` local completo en verde sobre el código final (sin `verify:entorno`; acople aparte).
