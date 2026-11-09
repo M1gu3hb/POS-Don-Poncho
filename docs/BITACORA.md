@@ -1337,3 +1337,27 @@ PR, rama `dp-15-1` (sale de `dp-15-docs`, con el reporte 009; el PR #14 queda ab
 - 09:29 DECISIONES DP-D93 a DP-D97, el reporte 009 con la ronda, la ficha 36. Commit `b5f2981`.
 - 09:30 PR [#15](https://github.com/M1gu3hb/POS-Don-Poncho/pull/15) (`dp-15-1` → `main`); el #14 se
   cerró como absorbido. `pnpm verify` local en curso.
+
+### El cierre: CI, la 190, el merge y producción
+
+- 09:31 `verify:adopcion` cazó el aviso nuevo del Tablero sin vacío ni carga: declarado en
+  `SIN_ESTADO` con su razón (`0fc0933`). 09:38 `cerrar.test.ts` (unitaria) seguía con el doble viejo
+  de `@morphiqpos/data`, sin `conTransaccion`: ahora comprueba que la revocación va en la transacción
+  (`9f3cfab`).
+- 09:59 `pnpm verify` local en verde sin `verify:entorno` (Postgres 17): unidad 456 / 5234,
+  integración 119 / 580, build. CI del #15: 9 de 9.
+- 10:00 **La 190, aplicada a la propia** con `pnpm db:migrate` por la de sesión. `verify:esquema`
+  estricto cumple (1750 columnas, 1382 restricciones, 445 índices), RLS y permisos cerrados, y el
+  linter de Supabase ya no marca `function_search_path_mutable` (sólo el informativo de RLS sin
+  políticas, que es el diseño: cero acceso para `anon` y `authenticated`).
+- 10:01 `verify:acople` con la app servida en 32743: completo, CI verde en `9f3cfab`.
+- 10:02 Merge del [#15](https://github.com/M1gu3hb/POS-Don-Poncho/pull/15) (`8e06826`, squash, a nombre
+  de M1gu3hb). 10:03 Production `READY` (`dpl_9MDS…`, con `pos-don-poncho.vercel.app`).
+- 10:05 Humo sin cobrar con `link.mjs`, que ya lee por la de sesión: la entrada 200 y sin desborde en
+  6 aparatos (de 1.2 a 1.8 s; 7.8 s la primera, el arranque en frío), el portal del QR en 5, 8 a la vez
+  todos 200 en 2.7 s, la red lenta (3G: 10 s la primera vez, 1.6 s con caché) y el manifiesto.
+- 10:06 Don Poncho en ceros (por la de sesión, `leerEnSoloLectura`): 0 sesiones de caja, 0 cuentas, 0
+  folios, 0 comandas, 0 carritos y las 10 mesas libres. Vercel sin errores desde las 04:32.
+- 10:10 Los worktrees y las bases de los agentes, recogidos.
+
+- 11:06 Una hora después del despliegue (10:03 → 11:06): Vercel **sin errores de ejecución**.

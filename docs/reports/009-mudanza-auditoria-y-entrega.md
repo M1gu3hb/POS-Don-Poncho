@@ -197,6 +197,15 @@ Sin bloqueantes de dinero ni de datos. Lo que pidió, hecho con prueba en rojo a
 
 ## 8 · Los commits
 
-El PR [#13](https://github.com/M1gu3hb/POS-Don-Poncho/pull/13) (`dp-15-codigo` → `main`), con la mudanza
-(`df2c1e0`) y los arreglos, todos a nombre de M1gu3hb. El merge a `main` es `cd76829` (09-11, 04:22), desplegado en producción (`dpl_8d4e…`). Este reporte, la
-bitácora y DP-D91 van en el PR de documentos que le sigue.
+- El PR [#13](https://github.com/M1gu3hb/POS-Don-Poncho/pull/13) (`dp-15-codigo` → `main`), con la
+  mudanza (`df2c1e0`) y los arreglos: merge `cd76829` (09-11, 04:22), en producción (`dpl_8d4e…`).
+- El PR [#15](https://github.com/M1gu3hb/POS-Don-Poncho/pull/15) (`dp-15-1` → `main`), la ronda DP-15.1
+  con este reporte, DP-D91 a DP-D97 y la ficha 36 (absorbió el #14): CI 9/9, el acople completo y
+  `pnpm verify` local en verde. Merge `8e06826` (09-11, 10:02), en producción a las 10:03
+  (`dpl_9MDS…`, `READY`, con `pos-don-poncho.vercel.app`). La 190 se aplicó a la propia a las 10:00.
+- **Después del despliegue, sin cobrar:** el humo con el link (la entrada 200 y sin desborde en 6
+  aparatos, el portal del QR en 5, 8 a la vez todos 200, la red lenta y el manifiesto), Don Poncho en
+  ceros (0 cajas abiertas, 0 cuentas, 0 folios, 0 comandas, 0 carritos y las 10 mesas libres) y Vercel
+  sin errores de ejecución desde las 04:32, incluida la hora siguiente al despliegue (hasta las 11:06).
+- Todos los commits a nombre de M1gu3hb. Este cierre (la bitácora, el progreso y esta sección) va en un
+  PR corto de documentos.
