@@ -44,3 +44,43 @@ export function retiroParaEnviar(
   if (motivo.trim().length < 3) return { tropiezo: 'Escribe a dónde va ese dinero.' };
   return { cuerpo: { tipo: 'retiro', montoCentavos: -centavos, motivo: motivo.trim() } };
 }
+
+/** DP-15 · De dónde llega el cambio que entra al cajón (los de `caja.entrada_cambio`). */
+export const ORIGENES_DEL_CAMBIO = [
+  { valor: 'banco', etiqueta: 'Del banco' },
+  { valor: 'caja_chica', etiqueta: 'De la caja chica' },
+  { valor: 'dueno', etiqueta: 'Del dueño' },
+  { valor: 'otra_caja', etiqueta: 'De la otra caja' },
+] as const;
+
+export type OrigenDelCambio = (typeof ORIGENES_DEL_CAMBIO)[number]['valor'];
+
+/** Lo que viaja a `caja.entrada_cambio`: el importe completo como billetes chicos. */
+export interface EntradaAEnviar {
+  readonly chicosCentavos: number;
+  readonly monedasCentavos: 0;
+  readonly origen: OrigenDelCambio;
+  readonly motivo: string | null;
+}
+
+/**
+ * DP-15 · Una entrada de efectivo al cajón (cambio para empezar, o el que trae el dueño), con su
+ * origen. Sin importe no se manda nada; el motivo es opcional (el servidor pone uno con el origen).
+ */
+export function entradaParaEnviar(
+  importe: string,
+  origen: OrigenDelCambio,
+  motivo: string,
+): { readonly cuerpo: EntradaAEnviar } | { readonly tropiezo: string } {
+  const centavos = aCentavos(importe);
+  if (centavos === null || centavos === 0) return { tropiezo: 'Pon cuánto entra al cajón.' };
+  const nota = motivo.trim();
+  return {
+    cuerpo: {
+      chicosCentavos: centavos,
+      monedasCentavos: 0,
+      origen,
+      motivo: nota === '' ? null : nota,
+    },
+  };
+}

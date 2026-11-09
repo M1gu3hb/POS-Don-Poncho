@@ -293,6 +293,19 @@ function comandosDeEscrituraSinRuta() {
   return { comandos, importados };
 }
 
+/**
+ * DP-15 · Comandos que escriben y NO deben tener ruta: se corren sólo desde un guion, en la máquina
+ * de quien despliega, firmados y auditados (DP-12.1). Una ruta los abriría a cualquier sesión de
+ * dueño. Como la otra lista, falla si una fila sobra: si el comando ya no existe o si una ruta lo
+ * importa.
+ */
+const COMANDOS_SOLO_POR_GUION = {
+  marcarPlataforma:
+    'DP-12.1 · `scripts/marcar-plataforma.mjs`: la marca de plataforma (DP-D44) sólo la pone quien despliega.',
+  quitarPlataforma:
+    'DP-12.1 · `scripts/marcar-plataforma.mjs --quitar`: la quita, por el mismo camino que la pone.',
+};
+
 /** Los huérfanos que cuentan, y las filas de la declaración que sobran. */
 function comandosHuerfanos() {
   const { comandos, importados } = comandosDeEscrituraSinRuta();
@@ -308,8 +321,13 @@ function comandosHuerfanos() {
       );
     }
   }
+  for (const nombre of Object.keys(COMANDOS_SOLO_POR_GUION)) {
+    if (!comandos.has(nombre)) sobran.push(`${nombre} ya no existe o ya no escribe`);
+    else if (importados.has(nombre)) sobran.push(`${nombre} ya tiene ruta: no debía`);
+  }
   const huerfanos = [...comandos.keys()]
     .filter((nombre) => !importados.has(nombre))
+    .filter((nombre) => COMANDOS_SOLO_POR_GUION[nombre] === undefined)
     .filter((nombre) => {
       const modelos = COMANDOS_DE_GIROS_QUE_ESTE_PRODUCTO_NO_TIENE[nombre];
       return modelos === undefined || modelos.some((modelo) => modelosDelProducto.has(modelo));

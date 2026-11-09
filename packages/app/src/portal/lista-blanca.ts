@@ -1,3 +1,5 @@
+import { estaAgotado } from '@morphiqpos/domain/catalogo';
+
 import type { BanderasPortal } from './banderas.ts';
 import { aCentavos, aPesos } from './conversion.ts';
 import type { GrupoPublico } from './opciones-publicas.ts';
@@ -126,6 +128,8 @@ export interface FilaProductoMenu {
   readonly precio_por_porcion_centavos: bigint | null;
   readonly presets_variable: unknown;
   readonly presets_porcion: unknown;
+  /** DP-15 · Fin del día en que se marcó agotado, o nulo. */
+  readonly agotado_hasta?: Date | null;
 }
 
 /**
@@ -174,6 +178,8 @@ export interface ProductoDeMenu {
    * sin ellos, desde el QR no se podía elegir el sabor. Sin precio: una opción no cobra.
    */
   readonly modificadores: readonly GrupoPublico[];
+  /** DP-15 · Agotado del día: se ve en el menú, marcado, y no se puede pedir. */
+  readonly agotado: boolean;
 }
 
 /**
@@ -191,6 +197,7 @@ export function productoDeMenu(
   fila: FilaProductoMenu,
   conPrecios: boolean,
   modificadores: readonly GrupoPublico[] = [],
+  ahora: Date = new Date(),
 ): ProductoDeMenu {
   const importe = (centavos: bigint | null): bigint | null => (conPrecios ? centavos : null);
 
@@ -216,6 +223,7 @@ export function productoDeMenu(
     presets_variable_qr: comoLista(fila.presets_variable),
     presets_porcion_qr: comoLista(fila.presets_porcion),
     modificadores,
+    agotado: estaAgotado(fila.agotado_hasta, ahora),
   };
 }
 

@@ -18,6 +18,7 @@ import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
 import { cancelacionesDeLaCaja } from '~/corte/cancelaciones-leidas';
 import { leerCancelacionesSinTrabar } from '~/corte-heredado/cancelaciones-sin-trabar';
 import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
+import { leerVentasDelDia } from '~/corte-heredado/ventas-del-dia';
 
 /**
  * Renderiza el CorteTicket fuera de pantalla, genera el PDF y lo descarga.
@@ -56,7 +57,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
         // negocio como si fuera el corte del día. Aquí un fallo NO produce
         // archivo: `data` se queda nulo, el auto-disparo no ocurre y queda el
         // botón de reintento que ya existía.
-        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas, descuentosLeidos] =
+        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas, descuentosLeidos, ventasDelDia] =
           await Promise.all([
             api.entidades.Venta.list('-fecha_cierre', 2000),
             api.entidades.GastoOperativo.list('-created_date', 500),
@@ -75,6 +76,8 @@ export default function CorteAutoDownloader({ corte, onDone }) {
             // DP-14.2 · Cada descuento con quién lo autorizó y por qué. Como las cancelaciones: si
             // sólo esto falla, el PDF sale igual y su sección lo dice.
             leerDescuentosDelCorte(corteId),
+            // DP-15 (QA, J-H6) · En el Cierre del día, las ventas de todas las cajas; `null` si no.
+            leerVentasDelDia(corteId),
           ]);
 
         const matchVenta = (v) => {
@@ -165,6 +168,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
             // DP-14.6 · Todas las del corte: si la lista viene cortada, el corte lo dice.
             totalDeCancelaciones: cancelacionesLeidas.total ?? null,
             descuentos: descuentosLeidos,
+            ventasDelDia,
             alertas,
           });
         }
@@ -265,6 +269,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
               alcanceDeCancelaciones={data.alcanceDeCancelaciones}
               totalDeCancelaciones={data.totalDeCancelaciones}
               descuentos={data.descuentos}
+              ventasDelDia={data.ventasDelDia}
               alertas={data.alertas}
               config={config}
               sinCostos={sinCostos}

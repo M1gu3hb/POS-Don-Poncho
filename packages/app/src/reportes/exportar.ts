@@ -1,6 +1,8 @@
 import 'server-only';
 
 import { ErrorDominio } from '@morphiqpos/contracts';
+import { obtenerDb } from '@morphiqpos/data';
+import { ZONA_DEL_NEGOCIO, esInstanteIso, fechaYHoraDelNegocio } from '@morphiqpos/domain/tiempo';
 import { costoDeLaVentaEsDesconocido } from '@morphiqpos/domain/venta';
 
 import { consultar, entidadMapeada, type Ambito } from '../puente/index.ts';
@@ -175,13 +177,36 @@ function comoCantidad(valor: unknown): number | bigint | string | null | undefin
     : null;
 }
 
+/**
+ * DP-15 · Un instante ISO (UTC) sale en la hora del negocio; un día sin hora y cualquier otro
+ * texto, tal cual. Sin zona, como llegó.
+ */
+function enLaHoraDelNegocio(valor: unknown, zona: string | undefined): unknown {
+  if (zona === undefined) return valor;
+  if (valor instanceof Date) return fechaYHoraDelNegocio(valor, zona);
+  if (typeof valor === 'string' && esInstanteIso(valor)) return fechaYHoraDelNegocio(valor, zona);
+  return valor;
+}
+
 /** Las filas del puente como CSV, con la cabecera de sus columnas. */
-export function aCsv(filas: readonly Record<string, unknown>[]): string {
+export function aCsv(filas: readonly Record<string, unknown>[], zona?: string): string {
   const columnas = [...new Set(filas.flatMap((fila) => Object.keys(fila)))];
   const cabecera = columnas.map(celdaCsv).join(',');
-  const cuerpo = filas.map((fila) => columnas.map((c) => celdaCsv(fila[c])).join(','));
+  const cuerpo = filas.map((fila) =>
+    columnas.map((c) => celdaCsv(enLaHoraDelNegocio(fila[c], zona))).join(','),
+  );
   // `\r\n` y BOM los pone quien escribe el archivo: aquí se arma el contenido.
   return [cabecera, ...cuerpo].join('\n');
+}
+
+/** La zona del negocio (`organizaciones.zona_horaria`); la de Don Poncho si no hay fila. */
+async function zonaDelNegocio(organizacionId: string): Promise<string> {
+  const fila = await obtenerDb()
+    .selectFrom('organizaciones')
+    .select('zona_horaria')
+    .where('id', '=', organizacionId)
+    .executeTakeFirst();
+  return fila?.zona_horaria ?? ZONA_DEL_NEGOCIO;
 }
 
 /** Arma el exporte. NO guarda nada: eso es de quien tiene el almacén. */
@@ -215,7 +240,8 @@ export async function armarExporte(
     ...rango,
   });
 
-  const texto = aCsv(sinMargenFalso(peticion.entidad, filas));
+  const zona = await zonaDelNegocio(ambito.organizacionId);
+  const texto = aCsv(sinMargenFalso(peticion.entidad, filas), zona);
   // Con BOM: sin él, Excel en Windows abre los acentos como «Ã±» y el contador
   // devuelve el archivo diciendo que está roto.
   // El BOM por su código y no como carácter invisible en el fuente: un byte que

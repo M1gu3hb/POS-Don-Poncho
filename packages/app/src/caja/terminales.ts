@@ -66,6 +66,12 @@ async function leerTerminales(
      where t.organizacion_id = ${organizacionId}
        and t.sucursal_id = ${sucursalId}
        and t.activa
+       -- Cada navegador que entra se da de alta como terminal (el teléfono del mesero, la tableta
+       -- de cocina): sólo son cajas las que alguna vez abrieron una sesión de caja.
+       and exists (select 1
+                     from sesiones_caja s
+                    where s.organizacion_id = t.organizacion_id
+                      and s.terminal_id = t.id)
      order by lower(t.nombre), t.id
   `.execute(tx);
   return rows;
@@ -120,14 +126,44 @@ export const nombrarTerminal = definirComando<
     }
     const repetida = await ctx.paso('nombre_libre', () =>
       ctx.tx
-        .selectFrom('terminales')
-        .select('id')
-        .where('sucursal_id', '=', sucursalId)
-        .where('id', '<>', entrada.terminal)
-        .where(sql<boolean>`lower(nombre) = lower(${entrada.nombre})`)
+        .selectFrom('terminales as t')
+        .select((eb) => [
+          't.id',
+          't.nombre',
+          eb
+            .exists(
+              eb
+                .selectFrom('sesiones_caja as s')
+                .select('s.id')
+                .whereRef('s.organizacion_id', '=', 't.organizacion_id')
+                .whereRef('s.terminal_id', '=', 't.id'),
+            )
+            .as('esCaja'),
+        ])
+        .where('t.organizacion_id', '=', organizacionId)
+        .where('t.sucursal_id', '=', sucursalId)
+        .where('t.id', '<>', entrada.terminal)
+        .where(sql<boolean>`lower(t.nombre) = lower(${entrada.nombre})`)
+        .forUpdate()
         .executeTakeFirst(),
     );
-    if (repetida !== undefined) throw nombreRepetido(entrada.nombre);
+    if (repetida?.esCaja === true) throw nombreRepetido(entrada.nombre);
+    // DP-15 · QA de la jornada, J-H1: el nombre lo tiene un aparato que nunca abrió caja (el
+    // teléfono de un mesero: cada navegador que entra se da de alta como «Caja N»). No es una caja
+    // ni sale en la lista; se le pone un nombre neutro y el nombre queda libre.
+    const liberado =
+      repetida === undefined
+        ? null
+        : await ctx.paso('liberar_nombre', async () => {
+            const nuevo = `Aparato ${repetida.id.slice(0, 8)}`;
+            await ctx.tx
+              .updateTable('terminales')
+              .set({ nombre: nuevo })
+              .where('organizacion_id', '=', organizacionId)
+              .where('id', '=', repetida.id)
+              .execute();
+            return { terminal: repetida.id, antes: repetida.nombre, despues: nuevo };
+          });
     await ctx.paso('nombrar', async () => {
       try {
         await ctx.tx
@@ -145,7 +181,11 @@ export const nombrarTerminal = definirComando<
     });
     ctx.auditar({
       entidadId: entrada.terminal,
-      payload: { antes: antes.nombre, despues: entrada.nombre },
+      payload: {
+        antes: antes.nombre,
+        despues: entrada.nombre,
+        ...(liberado === null ? {} : { liberado }),
+      },
     });
     const todas = await leerTerminales(ctx.tx, organizacionId, sucursalId);
     const nombrada = todas.find((t) => t.id === entrada.terminal);

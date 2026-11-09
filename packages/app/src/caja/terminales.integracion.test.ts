@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { comando } from '../produccion.ts';
 import { abrirCajaReal, clave, exigirOk, sembrarCompanero } from '../pruebas/negocio-real.ts';
 import { ambitoDeCaja, sembrarSalon, type Salon } from '../restaurante/pruebas/salon-real.ts';
+import { cerrarCaja } from './sesion.ts';
 import { nombrarTerminal, terminalesDeLaSucursal } from './terminales.ts';
 
 /**
@@ -47,16 +48,26 @@ const listar = (ambito: Ambito = dueno()) =>
   comando(terminalesDeLaSucursal, { entrada: {}, ambito, idempotencyKey: clave() });
 
 beforeAll(async () => {
-  salon = await sembrarSalon({ nombre: 'Restaurante de las terminales', mesas: 1, terminales: 2 });
+  salon = await sembrarSalon({ nombre: 'Restaurante de las terminales', mesas: 1, terminales: 3 });
   otro = await sembrarSalon({ nombre: 'Otro de las terminales', mesas: 1, terminales: 1 });
   duenoId = await sembrarCompanero(salon.negocio, { nombre: 'El Dueño', rol: 'dueno' });
   gerenteId = await sembrarCompanero(salon.negocio, { nombre: 'La Gerente', rol: 'gerente' });
   await abrirCajaReal(ambitoDeCaja(salon, 0));
+  // «Caja 2» abrió y cerró: también es caja. «Caja 3» nunca abrió (el teléfono de un mesero).
+  await abrirCajaReal(ambitoDeCaja(salon, 1));
+  exigirOk(
+    await comando(cerrarCaja, {
+      entrada: { efectivoContadoCentavos: 50_000 },
+      ambito: ambitoDeCaja(salon, 1),
+      idempotencyKey: clave(),
+    }),
+    'caja.cerrar',
+  );
 }, POR_COMANDOS);
 
 describe('caja.terminales y caja.nombrar_terminal', () => {
   it(
-    'el dueño las ve con su nombre y cuál tiene caja abierta',
+    'el dueño ve sólo las que han abierto caja, con su nombre y cuál está abierta',
     { timeout: POR_COMANDOS },
     async () => {
       const { terminales } = exigirOk(await listar(), 'listar');
@@ -106,4 +117,48 @@ describe('caja.terminales y caja.nombrar_terminal', () => {
     const ajena = otro.sucursal.terminales[0] ?? '';
     expect(regla(await nombrar(ajena, 'Mía'))).toBe('TERMINAL_NO_ENCONTRADA');
   });
+  it(
+    'el nombre de un aparato que nunca abrió caja queda libre: el aparato se renombra solo',
+    { timeout: POR_COMANDOS },
+    async () => {
+      // DP-15 · QA de la jornada, J-H1: en producción hay 25 aparatos dormidos que se llaman
+      // «Caja 1» a «Caja 25» (los teléfonos y tabletas que entraron alguna vez). La PC de la caja
+      // tiene que poder llamarse «Caja 1».
+      const caja = salon.sucursal.terminales[0] ?? '';
+      const dormida = salon.sucursal.terminales[2] ?? '';
+      exigirOk(await nombrar(caja, 'Caja 3'), 'nombrar');
+
+      const filas = await obtenerDb()
+        .selectFrom('terminales')
+        .select(['id', 'nombre'])
+        .where('id', 'in', [caja, dormida])
+        .execute();
+      const nombreDe = (id: string) => filas.find((f) => f.id === id)?.nombre;
+      expect(nombreDe(caja)).toBe('Caja 3');
+      expect(nombreDe(dormida)).toMatch(/^Aparato /);
+
+      const auditoria = await obtenerDb()
+        .selectFrom('auditoria')
+        .select('payload')
+        .where('accion', '=', 'caja.nombrar_terminal')
+        .where('entidad_id', '=', caja)
+        .orderBy('id', 'desc')
+        .executeTakeFirstOrThrow();
+      expect(auditoria.payload).toMatchObject({
+        despues: 'Caja 3',
+        liberado: { terminal: dormida, antes: 'Caja 3' },
+      });
+    },
+  );
+
+  it(
+    'el nombre de una caja que ya abrió no se le quita: se rechaza',
+    { timeout: POR_COMANDOS },
+    async () => {
+      // «Barra» (la terminal 1) abrió y cerró caja: es una caja de verdad.
+      expect(regla(await nombrar(salon.sucursal.terminales[0] ?? '', 'barra'))).toBe(
+        'TERMINAL_NOMBRE_REPETIDO',
+      );
+    },
+  );
 });

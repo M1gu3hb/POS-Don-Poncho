@@ -58,6 +58,8 @@ export const CONFIG_POR_OMISION = {
   mostrar_costos_a_caja: false,
   mostrar_logo_ticket: true,
   mensaje_ticket: '¡Gracias por tu visita!',
+  // DP-15 · El rollo de la impresora térmica: 58 u 80 mm. Sin escribir, 80 (el de siempre).
+  ancho_papel_ticket: 80,
   ticket_footer: '',
   pdf_footer: '',
   footer_text: '',
@@ -173,6 +175,7 @@ const CLAVES_EDITABLES = new Set([
   'mostrar_costos_a_caja',
   'mostrar_logo_ticket',
   'mensaje_ticket',
+  'ancho_papel_ticket',
   'ticket_footer',
   'pdf_footer',
   'footer_text',
@@ -446,6 +449,13 @@ export async function guardarConfiguracionParcial(
     );
   }
   if ('comision_terminal_bp' in parche) exigirTasaDeTerminal(parche['comision_terminal_bp']);
+  if ('ancho_papel_ticket' in parche) {
+    exigirForma(
+      z.union([z.literal(58), z.literal(80)]),
+      parche['ancho_papel_ticket'],
+      'El papel del ticket es de 58 o de 80 mm.',
+    );
+  }
   if ('portal_qr_envia_a_cocina' in parche) {
     exigirForma(
       z.enum(QUIEN_ENVIA),

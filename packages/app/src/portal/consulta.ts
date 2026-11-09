@@ -256,6 +256,7 @@ async function productosVisibles(
       'p.precio_por_porcion_centavos as precio_por_porcion_centavos',
       'p.presets_variable as presets_variable',
       'p.presets_porcion as presets_porcion',
+      'p.agotado_hasta as agotado_hasta',
     ])
     .where('p.organizacion_id', '=', organizacionId)
     .where('p.activo', '=', true)

@@ -9,6 +9,14 @@ import { useConfig } from '@/lib/ConfigContext';
 import { formatCurrency } from '@/utils/financialUtils';
 import { toast } from 'sonner';
 import {
+  almacenDelBorrador,
+  borrarBorrador,
+  claveDelBorrador,
+  guardarBorrador,
+  leerBorrador,
+} from '~/restaurante/borrador-del-pedido';
+import { anchoDelPapel } from '~/impresion/papel';
+import {
   UtensilsCrossed,
   Send,
   Receipt,
@@ -50,7 +58,7 @@ import AbrirMesaDialog from '@/components/mesero/AbrirMesaDialog';
 import CantidadVariableDialog from '@/components/mesero/CantidadVariableDialog';
 import { TIPO_VENTA, formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import PrecioProductoMesero, { VariableBadge } from '@/components/mesero/PrecioProductoMesero';
-import { Combine, ScanLine, Volume2 } from 'lucide-react';
+import { ArrowLeftRight, Combine, ScanLine, Volume2 } from 'lucide-react';
 import { useCajaAbierta } from '@/lib/useCajaAbierta';
 import { useIsDark } from '@/lib/ThemeContext';
 import { FLOOR_BG } from '@/lib/darkPalettes';
@@ -93,7 +101,14 @@ import {
   nombreConUnidas,
   sinAbsorbidas,
 } from '~/restaurante/unir-mesas/plano-de-union';
-import { useLocation } from '@/enrutado';
+import { Link, useLocation } from '@/enrutado';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+
+/**
+ * DP-15 · Quien cambia una cuenta de mesa, une mesas o divide la cuenta desde «Mesa activa»
+ * (`/restaurante/mesa-activa`). Al mesero y a la cajera esa ruta los regresa a su pantalla.
+ */
+const PUEDEN_MOVER_LA_CUENTA = ['dueno', 'administrador', 'gerente'];
 import { VistaDeSolicitudes } from '~/restaurante/VistaDeSolicitudes';
 // DP-12.2: el portal en modo mesero (escanear el QR, mantener presionada una mesa, el carrito).
 import BarcodeScanner from '@/components/barcode/BarcodeScanner';
@@ -159,6 +174,7 @@ export default function MeseroWithBoundary() {
 
 function Mesero() {
   const { posUser } = usePOSAuth();
+  const miPuesto = usePuesto();
   const { config } = useConfig();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -175,6 +191,16 @@ function Mesero() {
   const [categoriaFiltro, setCategoriaFiltro] = useState('todas');
   const [loading, setLoading] = useState(false);
   const [notaMesa, setNotaMesa] = useState('');
+  // DP-15 · El pedido a medias se guarda en este aparato mientras se arma (`borrador-del-pedido`).
+  useEffect(() => {
+    if (!posUser?.id || !mesaActiva?.id || !mesaActiva?.venta_activa_id) return;
+    guardarBorrador(
+      almacenDelBorrador(),
+      claveDelBorrador(posUser.id, mesaActiva.id),
+      { ordenId: mesaActiva.venta_activa_id, carrito, nota: notaMesa },
+      Date.now(),
+    );
+  }, [carrito, notaMesa, mesaActiva?.id, mesaActiva?.venta_activa_id, posUser?.id]);
 
   // Open table modal (6A: ahora con alergias + celebración)
   const [showAbrirMesa, setShowAbrirMesa] = useState(false);
@@ -356,6 +382,9 @@ function Mesero() {
     queryFn: () => api.entidades.ProductoTerminado.filter({ activo: true, visible_en_pos: true }),
     placeholderData: (prev) => prev,
     staleTime: 5000,
+    // DP-15 · Lo que la cocina marca «agotado del día» se ve aquí en menos de medio minuto (y el
+    // servidor lo niega de todos modos al enviar).
+    refetchInterval: 30_000,
   });
   // QA1-4 (DP-13.5): el puente no trae las opciones del platillo; sin ellas el diálogo de
   // opciones no se abría y la quesadilla salía a cocina sin su relleno obligatorio.
@@ -522,7 +551,20 @@ function Mesero() {
       }
       // Open existing sale
       setLoading(true);
-      setCarrito([]);
+      // DP-15 · Si el mesero ya llevaba algo en esta cuenta (y el teléfono recargó), se recupera.
+      const borrador = posUser?.id
+        ? leerBorrador(
+            almacenDelBorrador(),
+            claveDelBorrador(posUser.id, mesa.id),
+            mesa.venta_activa_id,
+            Date.now(),
+          )
+        : null;
+      setCarrito(borrador ? [...borrador.carrito] : []);
+      if (borrador) {
+        setNotaMesa(borrador.nota);
+        toast.info('Recuperamos lo que llevabas en esta mesa');
+      }
       setBusquedaProducto('');
       setCategoriaFiltro('todas');
       setMesaActiva(mesa);
@@ -683,6 +725,11 @@ function Mesero() {
   };
 
   const agregarAlCarrito = async (productoTocado) => {
+    // DP-15 · El agotado del día no entra al pedido: se dice, y el mesero ofrece otra cosa.
+    if (productoTocado?.agotado_hoy === true) {
+      toast.error(`${productoTocado.nombre} se agotó por hoy`);
+      return;
+    }
     // QA1-4 (DP-13.5): antes de agregar hay que saber si el platillo pide opciones. Si todavía no
     // llegaron (la tableta recién abrió la mesa), se esperan: el toque no se pierde.
     // DP-14.1-4: lo que NO pide opciones (lo dice la lectura guardada o la pista del producto) se
@@ -942,6 +989,9 @@ function Mesero() {
       queryClient.refetchQueries({ queryKey: ['pedidos_cocina'], type: 'active' }).catch(() => {});
       toast.success('¡Pedido enviado a cocina!');
       sonar('enviarACocina');
+      if (posUser?.id && mesaActiva?.id) {
+        borrarBorrador(almacenDelBorrador(), claveDelBorrador(posUser.id, mesaActiva.id));
+      }
       setCarrito([]);
       setNotaMesa('');
       setVentaActiva(ventaFresca);
@@ -1148,7 +1198,20 @@ function Mesero() {
     }
   };
 
-  const imprimirPreCuenta = () => {
+  // DP-15 (QA, J-H4): la hoja se cuenta en el servidor ANTES de imprimirse. De ese rastro dependen
+  // el PIN para quitar o cancelar con la precuenta impresa (DP-13.2) y la marca de copia; una
+  // impresión que no deja rastro es justo la que permite cobrar la hoja vieja.
+  const imprimirPreCuenta = async () => {
+    if (!preCuentaData?.venta?.id) return;
+    try {
+      await api.comandos.ejecutar('/api/restaurante/imprimir-precuenta', {
+        ordenId: preCuentaData.venta.id,
+        anchoMm: anchoDelPapel(config?.ancho_papel_ticket),
+      });
+    } catch (err) {
+      toast.error(err?.message || 'No se pudo registrar la precuenta. Intenta de nuevo.');
+      return;
+    }
     sonar('ticket');
     printDocument({ mode: 'thermal', title: `PreCuenta-${preCuentaData?.venta?.folio || ''}` });
   };
@@ -1636,11 +1699,13 @@ function Mesero() {
                     {productosFiltrados.map((p) => {
                       const tieneOpc = productoTieneModificadores(p);
                       const colorize = config?.colorear_importes_monetarios !== false;
+                      const agotado = p?.agotado_hoy === true;
                       return (
                         <button
                           key={p.id}
                           onClick={() => agregarAlCarrito(p)}
-                          className="p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:scale-95 transition-all relative"
+                          aria-disabled={agotado}
+                          className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:scale-95 transition-all relative ${agotado ? 'opacity-50' : ''}`}
                           style={{
                             boxShadow:
                               '0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 4px rgba(0,0,0,0.06)',
@@ -1657,6 +1722,11 @@ function Mesero() {
                             {tieneOpc && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
                                 Opciones
+                              </span>
+                            )}
+                            {agotado && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-peligro/15 text-peligro">
+                                Agotado hoy
                               </span>
                             )}
                           </div>
@@ -1769,6 +1839,15 @@ function Mesero() {
                       Solicitar cuenta
                     </Button>
                   )}
+                {/* DP-15 · Cambiar de mesa, unir o dividir vivían sólo tecleando la dirección. */}
+                {ventaActiva && mesaActiva?.id && PUEDEN_MOVER_LA_CUENTA.includes(miPuesto) && (
+                  <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`} className="w-full">
+                    <Button variant="outline" className="w-full">
+                      <ArrowLeftRight className="w-4 h-4 mr-1" />
+                      Cambiar de mesa, unir o dividir
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>

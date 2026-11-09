@@ -124,3 +124,25 @@ describe('la tasa de la terminal se valida al guardar (C.10 de la 2.4)', () => {
     ).toBe('INESPERADO');
   });
 });
+
+describe('DP-15 · el ancho del papel del ticket (58 u 80 mm) se valida al guardar', () => {
+  it('58 y 80 pasan la validación y llegan a la base', async () => {
+    for (const bueno of [58, 80]) {
+      expect(
+        await codigoDe(
+          guardarConfiguracionParcial({} as Transaccion, ORG, { ancho_papel_ticket: bueno }),
+        ),
+      ).toBe('INESPERADO');
+    }
+  });
+
+  it('cualquier otro ancho no se guarda', async () => {
+    for (const malo of [0, 57, 70, 100, '58', '80mm', true]) {
+      expect(
+        await codigoDe(
+          guardarConfiguracionParcial({} as Transaccion, ORG, { ancho_papel_ticket: malo }),
+        ),
+      ).toBe('PUENTE_CAMPO_INVALIDO');
+    }
+  });
+});

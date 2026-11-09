@@ -75,6 +75,11 @@ export {
 } from './corte/lectura-de-cancelaciones.ts';
 
 export {
+  entradaVentasDelDia,
+  ventasDelDiaDelCorte,
+  type VentasDelDia,
+} from './corte/ventas-del-dia.ts';
+export {
   entradaHojaDelCorte,
   hojaDelCorte,
   negocioDe,

@@ -5,6 +5,7 @@ import type { Transaccion } from '@morphiqpos/data';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
 import { comandaPorId, ordenDeMesa, type ComandaViva } from './datos.ts';
+import { entregarLoListoYaCobrado } from './comandas-al-cobrar.ts';
 import { entradaEntregarPedidos, entradaTransicionarPedido } from './esquemas.ts';
 import { ajustarComandaAlMinimo, itemDeComanda, moverItem, type ItemDeComanda } from './items.ts';
 import { marcarEntregadas, moverComanda, sincronizarMesa } from './preparacion-escrituras.ts';
@@ -169,6 +170,12 @@ async function cerrarElMovimiento(
   datos: DatosDeLaComanda & { readonly estadoComanda: EstadoComanda },
 ): Promise<string | null> {
   const { organizacionId, comanda } = datos;
+  // DP-15 (QA, J-H3): lo que se termina de una cuenta ya cobrada no espera a ningún mesero.
+  if (datos.estadoComanda === 'listo') {
+    await paso('entregar_lo_ya_cobrado', () =>
+      entregarLoListoYaCobrado(tx, organizacionId, comanda.id, datos.ahora),
+    );
+  }
   await paso('recalcular_lineas', () => recalcularEstadoDeLineas(tx, organizacionId, [comanda.id]));
   return paso('avanzar_mesa', () =>
     sincronizarMesa(tx, {

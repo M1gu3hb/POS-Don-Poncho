@@ -13,6 +13,7 @@
  */
 
 import { nombreVisibleDelNegocio } from '../marca/nombre-visible.ts';
+import { textoDeLaLinea } from './linea-de-venta.ts';
 import {
   RECETA_INCOMPLETA,
   SIN_RECETA,
@@ -76,6 +77,19 @@ export interface HojaDelServidor {
     propinasCentavos: string;
     pagos: number;
   }[];
+  /** DP-15 (QA, J-H6) · Sólo en el corte que cierra el día: las ventas de todas sus cajas. */
+  readonly ventasDelDia?: {
+    readonly cajas: number;
+    readonly tickets: number;
+    readonly totalCentavos: string;
+    readonly propinasCentavos: string;
+    readonly metodos: readonly {
+      metodo: string;
+      ventasCentavos: string;
+      propinasCentavos: string;
+      pagos: number;
+    }[];
+  } | null;
   readonly resumen: {
     readonly tickets: number;
     readonly totalCentavos: string;
@@ -99,6 +113,8 @@ export interface HojaDelServidor {
     cliente: string | null;
     canal: string;
     productos: string | null;
+    /** DP-15 · Las líneas con su peso vendido: el detalle las dice igual que el visor. */
+    lineas?: readonly LineaDeLaVenta[] | null;
     totalCentavos: string;
     pago: string | null;
     atendio: string | null;
@@ -273,6 +289,33 @@ export type Seccion =
       readonly resultado: { readonly etiqueta: string; readonly centavos: number | null };
     };
 
+/** Una línea de una venta, como la sirve `caja.hoja_del_corte` (`consultas.detalleDeVentas`). */
+export interface LineaDeLaVenta {
+  readonly nombre: string;
+  readonly cantidad: string | number;
+  readonly unidad: string | null;
+  readonly tipoVenta: string | null;
+  readonly cantidadVariable: string | number | null;
+  readonly unidadVariable: string | null;
+}
+
+/** Los productos de una venta en una celda: con el formato del visor; sin líneas, el texto del servidor. */
+export function productosDeLaVenta(venta: HojaDelServidor['ventas'][number]): string | null {
+  const lineas = venta.lineas;
+  if (lineas === undefined || lineas === null || lineas.length === 0) return venta.productos;
+  return lineas
+    .map((l) =>
+      textoDeLaLinea({
+        nombre: l.nombre,
+        cantidad: l.cantidad,
+        tipo_venta_snapshot: l.tipoVenta,
+        cantidad_variable_snapshot: l.cantidadVariable,
+        unidad_variable_snapshot: l.unidadVariable,
+      }),
+    )
+    .join(', ');
+}
+
 export interface DocumentoDelCorte {
   /** «CORTE DE CAJA», «CORTE DE TURNO», «CORTE DEL DÍA»: lo que dice arriba a la derecha. */
   readonly titulo: string;
@@ -402,9 +445,9 @@ export function arqueo(
 ): readonly Seccion[] {
   const s = hoja.sesion;
   const cambio = entradasDeCambio(hoja);
-  // El fondo esperado SUBE con cada entrada de cambio; la diferencia de apertura se mide
-  // contra lo que se esperaba AL ABRIR.
-  const esperadoAlAbrir = centavos(s.fondoEsperadoCentavos) - cambio;
+  // El fondo esperado es el de la APERTURA (lo que se dejó anoche): las entradas de cambio no lo
+  // tocan (DP-15, QA J-H7); entran al efectivo esperado por su movimiento.
+  const esperadoAlAbrir = centavos(s.fondoEsperadoCentavos);
   const celdas: Celda[] = [
     { etiqueta: 'Fondo esperado', valor: dinero(esperadoAlAbrir) },
     { etiqueta: 'Fondo contado', valor: dinero(s.fondoInicialCentavos) },
@@ -523,6 +566,39 @@ export function resumenFinanciero(
   }
   if (r.costoCentavos !== null) celdas.push(...margenDelCorte(hoja, total, estimados));
   return { tipo: 'celdas', titulo, celdas };
+}
+
+/**
+ * DP-15 (QA, J-H6) · El Cierre del día con dos cajas: cada corte cuenta SUS cuentas (DP-D50) y el
+ * del día, además, las de todas las cajas de su ventana. Sin esto la dueña que leía el Cierre creía
+ * que el día vendió lo de la última caja.
+ */
+export function ventasDelDia(hoja: HojaDelServidor): readonly Seccion[] {
+  const d = hoja.ventasDelDia;
+  if (d === undefined || d === null) return [];
+  return [
+    {
+      tipo: 'celdas',
+      titulo: 'Ventas del día · todas las cajas',
+      celdas: [
+        { etiqueta: 'Total ventas', valor: dinero(d.totalCentavos), fuerte: true },
+        { etiqueta: 'Nº de tickets', valor: texto(d.tickets) },
+        { etiqueta: 'Cajas', valor: texto(d.cajas) },
+        ...d.metodos.map((m) => ({
+          etiqueta: nombreDelMetodo(m.metodo),
+          valor: dinero(m.ventasCentavos),
+        })),
+        { etiqueta: 'Propinas', valor: dinero(d.propinasCentavos) },
+      ],
+    },
+  ];
+}
+
+/** El título del resumen: en el Cierre del día con varias cajas, dice que es el de ESTA caja. */
+export function tituloDelResumen(hoja: HojaDelServidor): string {
+  return hoja.ventasDelDia === undefined || hoja.ventasDelDia === null
+    ? 'Resumen financiero (sin propinas)'
+    : 'Resumen de esta caja (sin propinas)';
 }
 
 /**
@@ -680,7 +756,7 @@ export function detalleDeVentas(
       hora(v.cobradaEn),
       texto(referencia.de(v)),
       ...(conCanal ? [texto(CANAL[v.canal] ?? v.canal)] : []),
-      texto(v.productos),
+      texto(productosDeLaVenta(v)),
       dinero(v.totalCentavos),
       texto(v.pago === null ? null : v.pago.split(' + ').map(nombreDelMetodo).join(' + ')),
     ]),

@@ -1031,3 +1031,187 @@ punto confirmado en el código antes de repartirlo.
   0 pagos, 0 folios y 0 cajas.
 - El reporte `docs/reports/008-correcciones-y-qa.md`, en un PR sólo de documentos.
 
+
+## 08-11-2026 · DP-15 · mudanza a la base propia, auditoría por función y entrega con el puro link
+
+Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PROGRESO-DP15.md`.
+
+### Fase 0 · arranque
+
+- 10:42 Skills cargadas: `morphiq-prs`, `vercel-cli-with-tokens`, `engineering:deploy-checklist`,
+  `engineering:testing-strategy`, `engineering:code-review` y `engineering:debug` (las 6, con su
+  nombre exacto).
+- 10:42 Leídos `CONTEXTO.md`, `DECISIONES.md` (DP-D50 a DP-D80), el final de esta bitácora, los
+  reportes 007 y 008, las dos guías de la mudanza y `docs/qa/HALLAZGOS.md`.
+
+### Fase 1 · el proyecto nuevo, con la Supabase CLI de la PC
+
+- 10:43 CLI en `D:\herramientas\supabase-cli` (v2.115.0), con sesión: `projects list` ve
+  «POS Don Poncho» (`mqlcusxwqrefpfttjjks`, us-east-2, `ACTIVE_HEALTHY`, Postgres 17.11), en la
+  organización «M1gu3l97» (Pro). Esa carpeta de la CLI está ligada a la compartida: todo lo de
+  aquí va con la referencia explícita.
+- 10:44 Por la Management API, con el token de la CLI (leído del administrador de credenciales de
+  Windows, sin imprimirlo): el pooler de transacción es `aws-0-us-east-2.pooler.supabase.com:6543`,
+  el mismo tipo y puerto que la `DATABASE_URL` de producción; protocolo S3 encendido; respaldos
+  diarios físicos, sin PITR; 0 buckets.
+- 10:45 `_PRIVADO\fase-b.env` escrito por guion (llaves de la API, cadenas de sesión, transacción y
+  directa, la contraseña de `postgres` de `don-poncho-db.txt`, una contraseña nueva para
+  `morphiqpos_app` y su `DATABASE_URL`). Conecta con `postgres` por el pooler de sesión: `select 1`,
+  PostgreSQL 17.11, 0 tablas en `public`, sin `_migraciones`, `pg_cron` disponible.
+- 10:46 El almacén, igual que en la Fase A: el conductor de la API de Supabase (`…/storage/v1`), con
+  la referencia en `STORAGE_ACCESS_KEY` y la llave secreta en `STORAGE_SECRET_KEY`. No hace falta
+  llave S3 ni ningún clic de Miguel. Bucket `pos-don-poncho` creado **privado**; guardar, leer y
+  borrar un objeto de prueba funcionan, la lectura pública falla, y el bucket quedó vacío.
+
+### Fase 3 · día 1 (el proyecto vacío)
+
+- 10:47 Catálogo de la compartida (sólo lectura): `morphiqpos_app` con `bypassrls`, uso de `public`
+  sin `create`, y privilegios por omisión de `postgres` en `public` (tablas `arwd`, secuencias
+  `rU`).
+- 10:48 En la propia, `morphiqpos_app` creado igual (verificador SCRAM; la contraseña no viaja).
+  El proyecto nuevo trae privilegios por omisión para `anon` y `authenticated` en tablas,
+  secuencias y funciones: los quitará una migración de la base propia.
+- 10:49 `pnpm db:migrate` con la cadena de sesión de `postgres`: 120 aplicadas, de la 001 a la
+  188, en 48 s.
+- 10:50 `verify:esquema` estricto contra la propia (`MORPHIQPOS_PROYECTO_VERIFICADO` y
+  `MORPHIQPOS_DB_VERIFICACION`): cumple, 1749 columnas, 1382 restricciones y 445 índices.
+- 10:51 RLS y permisos con la consulta de la guía: **139 de 139 tablas con RLS y 0 permisos** para
+  `anon` y `authenticated` en tablas, rutinas y secuencias. Las migraciones mismas los retiran
+  (también los privilegios por omisión de `postgres`), así que **no hizo falta migración nueva**.
+  `morphiqpos_app` queda igual que en la compartida (176 permisos de tabla, 1 secuencia, 2 de 16
+  rutinas). Extensiones: `pg_cron` 1.6.4, `btree_gist`, `pg_trgm`, `unaccent`, `pgcrypto`,
+  `uuid-ossp`; tarea `morphiqpos_retencion_comandos` a las 03:17. Las 3 demostraciones de la 042,
+  apagadas por la 188.
+
+### Fase 3 · la mudanza (día 2)
+
+- 10:52 Huella de las otras 10 organizaciones de la compartida (sólo lectura): 122 tablas, 275
+  conteos y md5 → `_PRIVADO\mudanza\huellas-dp15\antes-mudanza.json`.
+- 10:52 Exportación con `--exigir-cerrado` → `_PRIVADO\mudanza\2026-11-08-dp15`: 135 tablas, 1175
+  filas en 17,3 s; 0 archivos.
+- 10:53 Importación a la propia con `postgres` (sesión): 135 tablas, 1175 filas, idénticas al origen
+  (filas y md5) y sin llaves rotas, en 143 s; 0 archivos.
+- 10:55 `--solo-verificar`: 135 tablas idénticas. `verify:esquema` estricto otra vez: cumple.
+- 10:56 Sembrado `por_cancelacion` (DP-D71) en la propia. Don Poncho: activo, 9 empleos, 107
+  productos. `morphiqpos_app` entra por el pooler de transacción (6543).
+
+### Fase 2.1 y 4 · la base propia, lista para operar (antes de cambiar Vercel)
+
+- 10:59 Por los comandos del sistema, con «Miguel · Morphiq» como quien manda (guion fuera del
+  repositorio): `identidad.establecer_pin` a las 9 personas (PIN nuevos de 4 cifras al azar, que no
+  coinciden con ningún número de 4 cifras de `_PRIVADO` ni son fáciles de adivinar), «Caja 2» dada de
+  alta con `identidad.guardar_empleado` (puesto caja), `caja.fijar_cajas_simultaneas` en 2 y
+  `configuracion.permitir_descuentos` encendido (el PIN de quien autoriza ya lo exige DP-D61).
+  Comprobados contra el hash guardado con la pimienta de producción: **10 de 10**. Los PIN, en
+  `_PRIVADO\PINES-DON-PONCHO.md`; con esto, el aviso de `AVISO-PIN-DP14.md` queda resuelto en la
+  base propia.
+
+### Fase 3 · Vercel, humo y después
+
+- 11:01 Las cinco variables de Production (`DATABASE_URL`, `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`,
+  `STORAGE_SECRET_KEY`, `STORAGE_BUCKET`) con `vercel env add … production --force`, el valor por la
+  entrada estándar (el guion comprueba que base, endpoint y llave sean del mismo proyecto).
+  `PIN_PEPPER`, `SESSION_SECRET`, `ORGANIZACION` y `APP_URL` no se tocaron.
+- 11:02 `vercel redeploy` del despliegue vigente (`f02d4ca`) → `dpl_J8sH…`, `READY` a las 11:03, con
+  los tres alias. Sin registros de error.
+- 11:05 Humo sin cobrar con Playwright (Chromium), 38 de 38: la entrada lista 10 personas (con
+  «Caja 2», sólo de la propia); Gerente, Dueño, Caja, Caja 2, Mesero 1, Cocina, Bebidas y Almacén
+  entran con su PIN nuevo y caen en su pantalla (Almacén en `/recetas`); la gerente abre 23 pantallas
+  y el dueño 4, sin pantalla de error ni 5xx; el QR de la mesa 1 con su token de siempre abre el
+  portal con la barbacoa; el teléfono de cocina de Cocina y de Bebidas, con un enlace firmado hoy
+  localmente (misma pimienta, versión vigente: sin escribir), 200. Lo único escrito por el humo: las
+  sesiones de esas 8 entradas.
+- 11:07 Huella de los otros 10: **IDÉNTICA**. Exportación de Don Poncho de la compartida otra vez:
+  135 tablas, 0 diferencias contra la de las 10:52 (intacto, como respaldo).
+- 11:10 El regreso atrás, escrito en `MUDANZA-FASE-B.md` y, con su guion, en
+  `_PRIVADO\mudanza\regreso-atras\`.
+- 11:10 Respaldos de la propia ya lista: exportación (`_PRIVADO\mudanza\2026-11-08-dp15-propia-lista`,
+  135 tablas, 1218 filas) y `pg_dump -Fc` de `public` (1 MB, 139 tablas con datos). El plan Pro da
+  respaldos diarios físicos de 7 días, sin PITR; se restauran desde el panel (Database → Backups).
+
+### Fase 2.4 · capacidad
+
+- 11:19 y 11:23 Medido en producción, sólo leyendo, con los puestos entrando con su PIN y la
+  pantalla abierta (Playwright): Mesero 61–62 peticiones/min, Caja 42–44, Cocina 36, Comensal en el
+  portal 36 (y ~1,2 MB/min sin comprimir: el menú completo cada 4 s), Dueño 28–29, teléfono de
+  cocina 23; con la pantalla oculta, 0 a 3. Equipo de Vercel en Pro (crédito de 20 USD). El cálculo
+  del día lleno, en `docs/infra/CAPACIDAD.md`: el personal cabe holgado; el portal abierto todo el
+  día pasaría el crédito de Vercel (≈ 19 USD) y llegaría al 72 % del egress de Supabase. Ajuste más
+  barato: que el portal baje el menú una vez y sondee sólo lo ligero.
+
+### Fase 5 · auditoría por función (agentes)
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| Inventario 1 (worktree propio) | Haiku | Pantallas, botones, rutas, comandos y sondeos de los módulos 1-8 | `D:\mpos-tmp\dp15-auditoria\inventario-1.md`, ~90 acciones, 37 sondeos |
+| Inventario 2 (worktree propio) | Haiku | Lo mismo, módulos 9-17, con las 157 rutas `/api` | `inventario-2.md`; «agotado del día» no existe; impresión sólo 80 mm/A4 |
+| Precios | Haiku (lectura web) | Lo incluido de Vercel Pro y Supabase Pro/Micro | en `docs/infra/CAPACIDAD.md` |
+| Auditoría 1 (copia A, `qa_dp15_a`, 32701) | Sonnet | Módulos 1-8 | en curso |
+| Auditoría 2 (copia B, `qa_dp15_b`, 32702) | Sonnet | Módulos 9-17 | 1 bloqueante (agotado del día) y 8 medios; `auditoria-2.md` |
+
+- Las copias: clúster local Postgres 18 en el 5460 (`D:\mpos-tmp\desechable-dp15`), migradas desde
+  cero e importadas idénticas de la exportación de la propia ya lista, con PIN de prueba de la
+  pimienta local (`D:\mpos-tmp\qa-dp15-a|b\pines.json`), servidas con la compilación de `dp-15`.
+
+### Fase 6 · arreglos (worktree `dp15-codigo`, rama `dp-15-codigo`)
+
+- 11:45 Datos e Integraciones sólo para el dueño y el administrador (pantalla y puente). Prueba en
+  rojo antes; 3 mutantes muertos (`17cf0b4`).
+- 12:05 El platillo agotado del día, servidor: migración 189 (`productos.agotado_hasta`, aditiva),
+  `catalogo.marcar_agotado` y la negativa en el pedido del mesero, el carrito y el envío del portal,
+  el pedido directo del portal y el mostrador. Integración 6 de 6; 10 mutantes muertos (`07f3efa`).
+- 12:15 Las pantallas: «Agotados» en la cocina y en Productos; el mesero y el portal lo enseñan y no
+  lo agregan. 4 mutantes muertos (`2a9893b`). Falta: aplicar la 189 a la propia (antes del
+  despliegue) y la verificación completa.
+
+### Fase 5 · las dos auditorías, completas
+
+- 12:25 Auditoría 2 (Sonnet, copia B): ~95 funciones; 1 bloqueante (agotado del día) y 8 medios.
+- 12:40 Auditoría 1 (Sonnet, copia A): 78 funciones (56 en la app); el cierre de su mini jornada cuadró
+  al centavo; 1 bloqueante (la cajera sin movimientos de efectivo en `/caja`) y 7 medios.
+- 12:50 `docs/qa/AUDITORIA-POR-FUNCION.md`: el estado de cada hallazgo arriba y las tablas de los
+  auditores por módulo. Las copias de auditoría se apagaron (sus servidores).
+
+### Fase 6 · más arreglos (rama `dp-15-codigo`)
+
+- 12:20 Tablero: «Ventas hoy» de todas las cajas del día (`b224889`); apariencia sólo para el dueño
+  (`f76710c`); «Agregar producto» en el restaurante (`a5964d7`); el almacén sin botones de Compras que
+  el servidor le niega (`2d9f53a`); el pedido a medias del mesero sobrevive a una recarga (`b728ded`).
+- 12:35 La cajera registra retiros, entradas de cambio y su corte de turno en `/caja` (`189c602`); el
+  diálogo «Cobrar» ya no se sale de su tarjeta (`142fb47`); el cierre avisa si queda otra caja abierta
+  (`6ea266d`); «Cambiar de mesa, unir o dividir» desde el panel de la mesa (`df8f151`); «Nueva mesa»
+  propone el número libre (`cb46434`); los conteos de Registros dicen qué cuentan (`596fad6`); en el
+  iPhone, «Agregar a pantalla de inicio» abre como app (`1a8a351`). Cada uno con su prueba en rojo
+  antes y sus mutantes (todos muertos).
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| F1 (worktree propio, base 5437) | Sonnet | «Esperando entrega» con varias estaciones; las comandas que siguen en la cocina tras cobrar o quitar | hecho: integrado en `d8c1207` (6 + 4 pruebas, 9 mutantes muertos, rehechos aquí) |
+| F2 (worktree propio, base 5438) | Sonnet | El documento del cierre igual a Registros; el CSV en hora de CDMX; el ticket en 58 y 80 mm | hecho: integrado en `132f254` (19 pruebas, 14 mutantes) |
+
+- 12:54 **La 189, aplicada a la propia** con `pnpm db:migrate` (lo aditivo antes del despliegue):
+  `verify:esquema` estricto cumple con 1750 columnas; RLS 139/139 y 0 permisos.
+- 13:21 Configuración → Caja lista sólo las terminales que alguna vez abrieron caja: cada teléfono o
+  tableta que entra se da de alta como terminal y la lista se llenaba (`a35c9c3`, 2 mutantes muertos).
+- 13:30 El portal del comensal sondea su estado completo cada 12 s y al volver a la pantalla (antes
+  4 s con el menú completo): el ajuste más barato de `docs/infra/CAPACIDAD.md` (`8f5a422`, 3 mutantes).
+- 13:32 Las puertas estáticas: 30 de 33 en verde a la primera; aspecto (los cambios visuales de DP-15,
+  registrados con su motivo), lecturas (la excepción de `fecha_inicio` baja a 6) y adopción (vacíos
+  con el sistema) arregladas (`f29440c`).
+- 13:42 F1 integrado (`d8c1207`): la mesa llega a «Esperando entrega» con varias estaciones; al cobrar,
+  lo listo sale de la estación y lo pendiente se marca «Cuenta cobrada»; quitar el único platillo
+  cancela su comanda (DP-D87). Decisiones DP-D83 a DP-D87 y la ficha 35. Producción leída: 0 cajas,
+  0 órdenes, 0 folios, 10 mesas libres.
+- 14:00 Revisión de código del servidor (agente Sonnet, sólo lectura): sin bloqueantes; 4 medios y 6
+  menores. Arreglados con prueba en rojo y mutantes: la entrada de cambio (que además **nunca se había
+  podido guardar**, DP-D89, `47e0744`), la mesa al quitar lo último pendiente (`183739b`) y la prueba
+  del agotado en la medianoche de México (`edeb0e3`).
+- 14:05 `pnpm verify` local (sin `verify:entorno`, que pide Postgres 17; aquí hay 18): el build cazó
+  un nombre importado dos veces en `Mesero.jsx` (`32f41fd`). Antes, `verify:primitivas` (un tamaño
+  literal en los íconos de los vacíos) y una prueba ajena que se pasó de 5 s con la máquina cargada.
+- 14:22 La cadena del verify, otra vez desde las puertas estáticas.
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| Revisión del servidor | Sonnet | Revisión adversarial, sólo lectura, del lado servidor de DP-15 | 0 bloqueantes; 3 medios arreglados, 2 descartados con razón |
+

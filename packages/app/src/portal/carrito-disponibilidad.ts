@@ -58,6 +58,8 @@ export function cumpleSusOpciones(grupos: readonly GrupoDeOpciones[], notas: str
  */
 export function sePuedePedir(producto: ProductoDelMenu | undefined, cantidad: string): boolean {
   if (producto === undefined) return false;
+  // DP-15 · Lo agotado del día sale del carrito al enviar, como lo que ya no está en el menú.
+  if (producto.agotado) return false;
   try {
     valorarParaPedido(producto.paraVender, cantidad);
     return true;

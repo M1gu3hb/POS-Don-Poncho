@@ -36,3 +36,10 @@ export {
   type ProductoSinLitros,
   type ResultadoFiscalMasivo,
 } from './fiscal-masivo.ts';
+
+export {
+  entradaMarcarAgotado,
+  marcarAgotado,
+  QUIEN_MARCA_AGOTADO,
+  type ResultadoMarcarAgotado,
+} from './agotado.ts';

@@ -51,6 +51,8 @@ export const CODIGOS_ERROR = {
   VENTA_SIN_TERMINAL: 'VENTA_SIN_TERMINAL',
   /** El producto no existe, esta archivado, o es de otra organizacion. */
   PRODUCTO_NO_ENCONTRADO: 'PRODUCTO_NO_ENCONTRADO',
+  /** DP-15 · El platillo está marcado agotado del día: hoy no entra a ninguna cuenta. */
+  PRODUCTO_AGOTADO: 'PRODUCTO_AGOTADO',
   ORDEN_NO_ENCONTRADA: 'ORDEN_NO_ENCONTRADA',
   /** La orden ya se cobro o se cancelo. R14: no hay `update` libre de estado. */
   ORDEN_NO_EDITABLE: 'ORDEN_NO_EDITABLE',

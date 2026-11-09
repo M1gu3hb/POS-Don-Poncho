@@ -11,6 +11,13 @@ import { economiaDelProducto } from '~/inventario/costo-del-platillo';
 import { conSusOpciones } from '~/restaurante/opciones-de-los-platillos';
 import { useOpcionesDeLosPlatillos } from '~/restaurante/use-opciones-de-los-platillos';
 import PageHeader from '@/components/common/PageHeader';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { AgotadosDelDia } from '~/restaurante/AgotadosDelDia';
+
+/** DP-15 · Los puestos que marcan «agotado del día» (espejo de `QUIEN_MARCA_AGOTADO`). */
+const PUEDEN_AGOTAR = ['dueno', 'administrador', 'gerente', 'cocina'];
+/** DP-15 · Los que dan de alta un platillo (los `rolesEscritura` de `ProductoTerminado`). */
+const PUEDEN_CREAR = ['dueno', 'administrador', 'gerente'];
 import EmptyState from '@/components/common/EmptyState';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,6 +61,7 @@ export default function Productos() {
   // paquete. Bajo D-01 lo traen las tres plantillas: *una tienda sin inventario
   // no es una tienda, es una calculadora*.
   const sinRecetas = !canAccessModule('recetas', paquete_modo);
+  const miPuesto = usePuesto();
   const showCostos = canAccessModule('costos_basicos', paquete_modo);
   const [search, setSearch] = useState('');
   const [showFicha, setShowFicha] = useState(false);
@@ -165,24 +173,31 @@ export default function Productos() {
           sinRecetas ? 'Catálogo del negocio' : 'Catálogo generado a partir de las recetas'
         }
         actions={
-          sinRecetas ? (
-            <Button
-              size="sm"
-              className="gap-2"
-              onClick={() => {
-                setEditandoProducto(null);
-                setShowSimple(true);
-              }}
-            >
-              <Plus className="w-4 h-4" /> Agregar producto
-            </Button>
-          ) : (
-            <Link to="/recetas">
-              <Button variant="outline" size="sm" className="gap-2">
-                <BookOpen className="w-4 h-4" /> Ir a Recetas
+          <>
+            {/* DP-15 · Lo que se acabó hoy, al alcance de quien lo decide. */}
+            {PUEDEN_AGOTAR.includes(miPuesto) && <AgotadosDelDia />}
+            {/* DP-15 · En el restaurante también se da de alta un platillo sin receta (el del día):
+                antes la única puerta era «Nueva receta», que exige un insumo registrado. */}
+            {(sinRecetas || PUEDEN_CREAR.includes(miPuesto)) && (
+              <Button
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  setEditandoProducto(null);
+                  setShowSimple(true);
+                }}
+              >
+                <Plus className="w-4 h-4" /> Agregar producto
               </Button>
-            </Link>
-          )
+            )}
+            {!sinRecetas && (
+              <Link to="/recetas">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <BookOpen className="w-4 h-4" /> Ir a Recetas
+                </Button>
+              </Link>
+            )}
+          </>
         }
       />
 

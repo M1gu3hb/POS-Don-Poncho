@@ -66,6 +66,11 @@ import IdentidadNegocio from '@/components/configuracion/IdentidadNegocio';
 import UsuariosPOSSection from '@/components/configuracion/UsuariosPOSSection';
 import RepartirMesasDialog from '@/components/mesas/RepartirMesasDialog';
 import { usePuesto } from '@/components/configuracion/usePuesto';
+import { siguienteNumeroLibre } from '~/cliente/numero-de-mesa';
+import ZonasDelSalonDialog from '@/components/mesas/ZonasDelSalonDialog';
+
+/** DP-15 · Quien escribe zonas por el puente (la escritura genérica). */
+const PUEDEN_EDITAR_ZONAS = ['dueno', 'administrador', 'gerente'];
 import { esDeMando, puedeRepartirMesas } from '@/components/configuracion/puestos';
 import { useConfig } from '@/lib/ConfigContext';
 import { soloCamposEditablesMesa } from '@/utils/mesaConfigUtils';
@@ -110,6 +115,7 @@ export default function Configuracion() {
   const [zonaFiltro, setZonaFiltro] = useState('Interior');
   const [editingMesa, setEditingMesa] = useState(null);
   const [showMesaDialog, setShowMesaDialog] = useState(false);
+  const [showZonas, setShowZonas] = useState(false);
 
   // HOTFIX persistencia: sin initialData:[] para distinguir "primer fetch"
   // de "vacío real". placeholderData mantiene el valor previo durante el
@@ -156,6 +162,7 @@ export default function Configuracion() {
     usa_mesas: true,
     permitir_venta_sin_stock: false,
     mensaje_ticket: '¡Gracias por tu visita!',
+    ancho_papel_ticket: 80,
     descargar_pdf_corte_auto: true,
     propinas_activas: true,
     propina_porcentajes_sugeridos: '5,10,15,20',
@@ -180,6 +187,7 @@ export default function Configuracion() {
       usa_mesas: cfg.usa_mesas ?? true,
       permitir_venta_sin_stock: cfg.permitir_venta_sin_stock ?? false,
       mensaje_ticket: cfg.mensaje_ticket ?? '¡Gracias por tu visita!',
+      ancho_papel_ticket: Number(cfg.ancho_papel_ticket) === 58 ? 58 : 80,
       descargar_pdf_corte_auto: cfg.descargar_pdf_corte_auto ?? true,
       propinas_activas: cfg.propinas_activas ?? true,
       propina_porcentajes_sugeridos: cfg.propina_porcentajes_sugeridos ?? '5,10,15,20',
@@ -323,12 +331,12 @@ export default function Configuracion() {
   };
 
   const openNew = () => {
-    const maxNum = mesas.reduce((m, x) => Math.max(m, x.numero || 0), 0);
     // Crear mesa en la zona activa (no mezclar zonas), en el primer hueco libre del lienzo: la
     // posición ya no sale de CUÁNTAS mesas hay, sino de DÓNDE están (`siguientePosicionLibre`).
     const posicion = siguientePosicionLibre(mesasDelPlano(mesas, zonaFiltro));
     setEditingMesa({
-      numero: maxNum + 1,
+      // DP-15 · El menor número que ninguna mesa ACTIVA usa (reusa el de una mesa quitada).
+      numero: siguienteNumeroLibre(mesas),
       nombre: '',
       zona: zonaFiltro,
       capacidad: 4,
@@ -451,13 +459,13 @@ export default function Configuracion() {
               Mesas
             </TabsTrigger>
           )}
-          {posUser?.rol === 'administrador' && (
+          {esDeMando(miPuesto) && (
             <TabsTrigger value="datos">
               <Database className="w-3 h-3 mr-1" />
               Datos
             </TabsTrigger>
           )}
-          {posUser?.rol === 'administrador' && (
+          {esDeMando(miPuesto) && (
             <TabsTrigger value="integraciones">
               <Cloud className="w-3 h-3 mr-1" />
               Integraciones
@@ -477,7 +485,15 @@ export default function Configuracion() {
 
         <TabsContent value="apariencia">
           <div className="space-y-6">
-            <SelectorDeApariencia />
+            {/* DP-15 · La marca del negocio la guarda sólo el dueño (`configuracion.apariencia`):
+                a los demás no se les ofrece un botón que el servidor niega. */}
+            {miPuesto === 'dueno' ? (
+              <SelectorDeApariencia />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                La apariencia del negocio (colores y estilo) la cambia el dueño.
+              </p>
+            )}
             {/* DP-11.1 y 11.2: «Mascota Morfi» y «Pedir PIN al despertar», por negocio. */}
             <ExperienciaDelNegocio />
             {/* La voz de los avisos es de ESTE dispositivo: la cocina o la tableta de la sala
@@ -555,6 +571,26 @@ export default function Configuracion() {
                     value={bizForm.mensaje_ticket}
                     onChange={(e) => setBizForm({ ...bizForm, mensaje_ticket: e.target.value })}
                   />
+                </div>
+                {/* DP-15 · El rollo de la impresora térmica: lo usan el ticket, la reimpresión y la precuenta. */}
+                <div className="sm:col-span-2">
+                  <Label className="text-xs" htmlFor="ancho-papel-ticket">
+                    Ancho del papel del ticket
+                  </Label>
+                  <select
+                    id="ancho-papel-ticket"
+                    className="mt-1 h-9 w-full rounded-md border bg-superficie px-3 text-sm"
+                    value={bizForm.ancho_papel_ticket}
+                    onChange={(e) =>
+                      setBizForm({ ...bizForm, ancho_papel_ticket: Number(e.target.value) })
+                    }
+                  >
+                    <option value={58}>58 mm</option>
+                    <option value={80}>80 mm</option>
+                  </select>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    El rollo de tu impresora térmica. En 58 mm el texto va más chico para que quepa.
+                  </p>
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -768,13 +804,13 @@ export default function Configuracion() {
           <UsuariosPOSSection cfg={cfg} />
         </TabsContent>
 
-        {posUser?.rol === 'administrador' && (
+        {esDeMando(miPuesto) && (
           <TabsContent value="datos">
             <DatosSection />
           </TabsContent>
         )}
 
-        {posUser?.rol === 'administrador' && (
+        {esDeMando(miPuesto) && (
           <TabsContent value="integraciones">
             <IntegracionesRespaldos />
           </TabsContent>
@@ -812,6 +848,12 @@ export default function Configuracion() {
                       <Button size="sm" variant="outline" onClick={() => setShowRepartir(true)}>
                         <Users className="w-4 h-4 mr-1" />
                         Repartir mesas
+                      </Button>
+                    )}
+                    {/* DP-15 · Dar de alta y renombrar zonas (antes no había pantalla). */}
+                    {PUEDEN_EDITAR_ZONAS.includes(miPuesto) && (
+                      <Button size="sm" variant="outline" onClick={() => setShowZonas(true)}>
+                        Zonas
                       </Button>
                     )}
                     <Button size="sm" onClick={openNew}>
@@ -937,6 +979,14 @@ export default function Configuracion() {
       </Dialog>
 
       {/* Mesa Edit Dialog (crear/editar) */}
+      <ZonasDelSalonDialog
+        open={showZonas}
+        onOpenChange={setShowZonas}
+        zonas={zonasLeidas}
+        alRenombrar={(antes, despues) => {
+          if (zonaFiltro === antes) setZonaFiltro(despues);
+        }}
+      />
       <MesaEditDialog
         open={showMesaDialog}
         mesa={editingMesa}

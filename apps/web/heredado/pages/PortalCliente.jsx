@@ -37,6 +37,7 @@ import {
   PEDIDO_GUARDADO,
 } from '~/portal/carrito-compartido/carrito-de-la-mesa';
 import { useCarritoDeLaMesa } from '~/portal/carrito-compartido/use-carrito-de-la-mesa';
+import { SONDEO_DEL_PORTAL_MS } from '~/portal/sondeo-del-portal';
 
 /**
  * Vista pública del comensal (sin sidebar, sin POS).
@@ -87,8 +88,9 @@ function PortalCliente() {
   // el código de una mesa. El endpoint público devuelve sólo la lista blanca y
   // resuelve negocio, mesa, menú, secciones y cuenta en una sola petición.
   //
-  // El sondeo se queda en 4 s por lo mismo de antes: si el mesero abre la mesa
-  // desde el salón, el teléfono tiene que verla abierta sin refrescar.
+  // El sondeo: si el mesero abre la mesa desde el salón, el teléfono tiene que
+  // verla abierta sin refrescar. DP-15: cada 12 s y no 4 (el menú completo viaja
+  // en cada lectura; ver `sondeo-del-portal.ts`), y al volver a la pantalla.
   const {
     data: portal,
     isLoading: cargandoPortal,
@@ -98,7 +100,8 @@ function PortalCliente() {
     queryKey: ['portal_publico', token],
     queryFn: () => leerPortalPublico(token),
     enabled: !!token,
-    refetchInterval: 4000,
+    refetchInterval: SONDEO_DEL_PORTAL_MS,
+    refetchOnWindowFocus: true,
     staleTime: 2000,
   });
 
@@ -230,6 +233,11 @@ function PortalCliente() {
   // === HANDLERS PEDIDO QR ===
   const handleClickProducto = (producto) => {
     if (!pedidosQRActivos) return;
+    // DP-15 · Lo que se acabó hoy se ve en el menú, pero no se pide: se dice amable.
+    if (producto?.agotado === true) {
+      toast.info(`${producto.nombre || 'Ese platillo'} se agotó por hoy. Pregúntale a tu mesero qué más hay.`);
+      return;
+    }
     // El «espera, aún no sé si la mesa está abierta» desaparece: la pantalla no
     // se pinta hasta que la lectura pública responde, y esa respuesta ya trae
     // decidido si se puede abrir o pedir.
@@ -806,9 +814,10 @@ function ProductoCardCliente({ producto, mostrarPrecios, clickable, onClick }) {
     <Comp
       type={clickable ? 'button' : undefined}
       onClick={clickable ? onClick : undefined}
+      aria-disabled={producto?.agotado === true ? true : undefined}
       className={`rounded-2xl bg-card text-card-foreground border overflow-hidden shadow-sm flex flex-col text-left w-full ${
         clickable ? 'active:scale-[0.98] transition-transform hover:shadow-md cursor-pointer' : ''
-      }`}
+      } ${producto?.agotado === true ? 'opacity-60' : ''}`}
     >
       {producto?.imagen_url ? (
         <img
@@ -833,6 +842,11 @@ function ProductoCardCliente({ producto, mostrarPrecios, clickable, onClick }) {
           {tienePersonalizar && (
             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
               Personalizable
+            </span>
+          )}
+          {producto?.agotado === true && (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-peligro/15 text-peligro">
+              Agotado hoy
             </span>
           )}
         </div>

@@ -862,6 +862,8 @@ export interface Productos {
   /** Faltaba en estos tipos: la base la tiene (contrato esquema-tipos, 2.4). */
   envase_producto_id: string | null;
   envases_por_unidad: number | null;
+  /** DP-15 · La 189: fin del día del negocio en que se marcó agotado; nula = disponible. */
+  agotado_hasta: Date | null;
 }
 
 export interface Proveedores {

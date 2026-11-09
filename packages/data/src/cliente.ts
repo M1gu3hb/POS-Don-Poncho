@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { attachDatabasePool } from '@vercel/functions';
 import { Kysely, PostgresDialect, sql, type Transaction } from 'kysely';
 import pg from 'pg';
 
@@ -145,6 +146,11 @@ export function obtenerDb(): Kysely<Esquema> {
   }
 
   pool = new pg.Pool(configuracion(cadena));
+  // DP-15 · Con Fluid compute la función se suspende entre peticiones y sus temporizadores no corren:
+  // las conexiones ociosas no se cerraban a los 10 s y, al despertar, el pooler ya las había tirado
+  // (el limitador y el carrito del portal fallaban de vez en cuando). Esto mantiene viva la función
+  // hasta que el pool las cierra. Fuera de Vercel no hace nada.
+  attachDatabasePool(pool);
 
   // Un error del pool sin manejador tumba el proceso de Node entero (R12: el
   // error se maneja o se propaga, pero nunca se ignora en silencio).

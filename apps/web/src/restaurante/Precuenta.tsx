@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 
 import { consultarPuente, invocarComando } from '~/cliente/api';
 import { centavosDe } from '~/cliente/dinero-del-puente';
+import { useAnchoDelPapel } from '~/impresion/use-ancho-del-papel';
 import { useVocabulario } from '~/cliente/vocabulario';
 
 import { cantidadParaMostrar } from './peso.ts';
@@ -70,8 +71,8 @@ import {
  * ── Lo que no hace ───────────────────────────────────────────────────────
  * No cobra ni fija propina: el mesero no cobra, y eso es control interno. Sin ningún total
  * a la vista —otra tableta, otra pestaña— «Imprimir» sigue encendido: la hoja que sale la
- * calcula el servidor, y se completa con lo que él contesta. Fuera de alcance: el rollo de
- * 58 mm comparte maqueta con el de 80.
+ * calcula el servidor, y se completa con lo que él contesta. El rollo (58 u 80 mm) es el que el
+ * negocio eligió en Configuración (`ancho_papel_ticket`).
  */
 
 export interface LineaPrecuenta {
@@ -153,7 +154,9 @@ function idDeLaUrl(): string | null {
 
 export function Precuenta({ ordenId, cuentaInicial, filasIniciales, ancho }: PrecuentaProps) {
   const voc = useVocabulario();
-  const anchoMm = ancho ?? 80;
+  // DP-15 · Sin `ancho` explícito manda el rollo que el negocio eligió en Configuración.
+  const delNegocio = useAnchoDelPapel();
+  const anchoMm = ancho ?? delNegocio;
   const [cuenta, setCuenta] = useState<CuentaPrecuenta | null | undefined>(cuentaInicial);
   const [lineas, setLineas] = useState<readonly LineaPrecuenta[]>(filasIniciales ?? []);
   const [error, setError] = useState<string | null>(null);

@@ -4,7 +4,12 @@ import { ErrorDominio } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 
 import { mesaOperable, quedanComandasActivas } from './datos.ts';
-import { mesaTrasComanda, type EstadoComanda } from './transiciones.ts';
+import {
+  ESTADOS_COMANDA_ACTIVOS,
+  ESTADOS_COMANDA_PENDIENTES,
+  mesaTrasComanda,
+  type EstadoComanda,
+} from './transiciones.ts';
 import { sellarTransicionDeMesa } from './sala-escrituras.ts';
 
 /**
@@ -101,11 +106,14 @@ export async function sincronizarMesa(
   const mesa = await mesaOperable(tx, datos.organizacionId, mesaId);
   // Las comandas que se acaban de mover se excluyen: dentro de la transacción
   // ya no están activas, pero preguntarlo así deja explícito el porqué.
+  // Al pasar a «listo» sólo importan las que faltan por terminar: las demás `listo` ya esperan al
+  // mesero (DP-15 · F1, M1). Al entregar o cancelar sí cuenta todo lo vivo.
   const quedan = await quedanComandasActivas(
     tx,
     datos.organizacionId,
     datos.ordenId,
     datos.comandasMovidas,
+    datos.estadoComanda === 'listo' ? ESTADOS_COMANDA_PENDIENTES : ESTADOS_COMANDA_ACTIVOS,
   );
 
   const destino = mesaTrasComanda(mesa.estado, datos.estadoComanda, quedan);

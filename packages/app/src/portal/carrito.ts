@@ -3,6 +3,7 @@ import 'server-only';
 import { createHash, createHmac } from 'node:crypto';
 
 import type { Esquema, Transaccion } from '@morphiqpos/data';
+import { estaAgotado } from '@morphiqpos/domain/catalogo';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
 
@@ -357,6 +358,7 @@ export async function estadoDelCarrito(
       'p.precio_venta_centavos',
       'p.activo',
       'p.visible_en_menu_digital',
+      'p.agotado_hasta',
     ])
     .where('l.organizacion_id', '=', ambito.organizacionId)
     .where('l.mesa_id', '=', ambito.mesaId)
@@ -429,7 +431,9 @@ export async function estadoDelCarrito(
       precioCentavos: banderas.mostrarPrecios ? l.precio_venta_centavos.toString() : null,
       esMia: l.dispositivo_huella === huella,
       telefono: telefonos.get(l.dispositivo_huella) ?? 0,
-      disponible: l.activo && l.visible_en_menu_digital,
+      // DP-15 · Una línea de algo que se agotó hoy se queda en la lista, marcada: al enviar sale.
+      disponible:
+        l.activo && l.visible_en_menu_digital && !estaAgotado(l.agotado_hasta, new Date()),
     })),
     conectados: nConectados,
     personas,

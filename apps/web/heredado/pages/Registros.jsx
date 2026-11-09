@@ -49,6 +49,9 @@ import { tipsEnabled } from '@/utils/tipsUtils';
 import { useLocation } from '@/enrutado';
 import { claves } from '~/cliente/claves-de-consulta';
 import { CancelacionesRegistradas } from '~/corte/CancelacionesRegistradas';
+import { AuditoriaReciente } from '~/registros/AuditoriaReciente';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { esDeMando } from '@/components/configuracion/puestos';
 
 export default function Registros() {
   const { config, paquete_modo } = useConfig();
@@ -56,6 +59,7 @@ export default function Registros() {
   const showOperativos = canAccessModule('compras', paquete_modo); // compras, movimientos, gastos
   const showPropinas = tipsEnabled(config);
   const { posUser } = usePOSAuth();
+  const miPuesto = usePuesto();
   const isAdmin = posUser?.rol === 'administrador';
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -286,7 +290,13 @@ export default function Registros() {
           </TabsTrigger>
           <TabsTrigger value="ventas" className="gap-1">
             <Receipt className="w-3 h-3" />
-            Ventas ({ventasFiltradas.length})
+            {/* DP-15 · La lista trae TODAS (también canceladas y divididas); arriba se cuentan las
+                cobradas. Cada número dice qué cuenta. */}
+            Ventas ({ventasFiltradas.length}
+            {ventasFiltradas.some((v) => v?.estado !== 'pagada')
+              ? ` · ${ventasFiltradas.filter((v) => v?.estado === 'pagada').length} cobradas`
+              : ''}
+            )
           </TabsTrigger>
           {/* DP-12.4 · Las cuentas canceladas y los platillos anulados, con quién, cuándo, por qué,
               cuánto y si ya estaban preparados (pérdida). Del servidor, como el corte. */}
@@ -316,6 +326,12 @@ export default function Registros() {
             <TabsTrigger value="gastos" className="gap-1">
               <Scissors className="w-3 h-3" />
               Gastos ({gastosFiltrados.length})
+            </TabsTrigger>
+          )}
+          {/* DP-15 · Lo que se cambió, quién y cuándo (la caja renombrada, un PIN, un agotado…). */}
+          {esDeMando(miPuesto) && (
+            <TabsTrigger value="auditoria" className="gap-1">
+              Auditoría
             </TabsTrigger>
           )}
         </TabsList>
@@ -542,6 +558,11 @@ export default function Registros() {
               ))}
           </div>
         </TabsContent>
+        {esDeMando(miPuesto) && (
+          <TabsContent value="auditoria" className="mt-4">
+            <AuditoriaReciente />
+          </TabsContent>
+        )}
       </Tabs>
 
       <CorteViewerDialog corte={verCorte} open={!!verCorte} onClose={() => setVerCorte(null)} />

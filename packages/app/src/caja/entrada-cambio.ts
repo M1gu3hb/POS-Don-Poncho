@@ -22,10 +22,12 @@ import { definirComando } from '../definicion.ts';
  * que el fondo desglosado de la apertura (F-984): un solo número esconde
  * exactamente el problema que el cambio viene a resolver.
  *
- * ── El fondo esperado SUBE con esto ──────────────────────────────────────
+ * ── El efectivo esperado SUBE con esto ───────────────────────────────────
  * Si no subiera, el corte de la noche diría que sobran $600 todos los días que
  * alguien metió cambio. Un corte que sobra por diseño deja de servir para
- * detectar el faltante, que es para lo que existe.
+ * detectar el faltante, que es para lo que existe. Sube por el movimiento: el
+ * arqueo suma los movimientos del cajón. El fondo esperado de la APERTURA no
+ * se toca (DP-15).
  *
  * ── Y NO se compensa solo al cerrar ──────────────────────────────────────
  * El cambio que entró se queda: es fondo hasta que alguien lo retire. Devolverlo
@@ -50,8 +52,8 @@ export interface ResultadoEntradaCambio {
   readonly montoCentavos: string;
   readonly monedasCentavos: string;
   readonly chicosCentavos: string;
-  /** El fondo esperado DESPUÉS. Es contra éste que se cuadra en la noche. */
-  readonly fondoEsperadoCentavos: string;
+  /** El efectivo esperado del cajón DESPUÉS de la entrada. Es contra éste que se cuadra en la noche. */
+  readonly efectivoEsperadoCentavos: string;
 }
 
 export const registrarEntradaDeCambio = definirComando<
@@ -88,15 +90,6 @@ export const registrarEntradaDeCambio = definirComando<
       throw new ErrorDominio('CAJA_CERRADA', 'Abre la caja antes de meterle cambio.');
     }
 
-    const actual = await ctx.paso('leer_sesion', () =>
-      ctx.tx
-        .selectFrom('sesiones_caja')
-        .select(['fondo_esperado_centavos', 'fondo_monedas_centavos', 'fondo_chicos_centavos'])
-        .where('organizacion_id', '=', organizacionId)
-        .where('id', '=', sesion.id)
-        .executeTakeFirstOrThrow(),
-    );
-
     // Tipo propio, no `deposito`. El corte los suma distinto: el depósito es
     // dinero que entró POR una venta y el cambio es fondo que alguien puso.
     const movimiento = await ctx.paso('anotar_movimiento', () =>
@@ -108,27 +101,20 @@ export const registrarEntradaDeCambio = definirComando<
         motivo:
           entrada.motivo ?? `cambio desde ${entrada.origen}: ${entrada.monedasCentavos} en monedas`,
         empleadoId: empleoId,
-        referenciaTipo: 'entrada_cambio',
+        // DP-15: `entrada_cambio` no está entre los tipos de referencia que la base admite
+        // (`movimientos_caja_referencia_tipo_check`): la entrada nunca se pudo guardar.
+        referenciaTipo: 'manual',
         referenciaId: null,
       }),
     );
 
-    // El fondo esperado SUBE, y el desglose con él. Si no subiera, el corte
-    // diría que sobran $600 todos los días que alguien metió cambio, y un corte
-    // que sobra por diseño deja de detectar el faltante.
-    const fondoEsperado = actual.fondo_esperado_centavos + BigInt(monto);
-    await ctx.paso('subir_fondo', () =>
-      ctx.tx
-        .updateTable('sesiones_caja')
-        .set({
-          fondo_esperado_centavos: fondoEsperado,
-          fondo_monedas_centavos: actual.fondo_monedas_centavos + BigInt(entrada.monedasCentavos),
-          fondo_chicos_centavos: actual.fondo_chicos_centavos + BigInt(entrada.chicosCentavos),
-          updated_at: ctx.ahora,
-        })
-        .where('organizacion_id', '=', organizacionId)
-        .where('id', '=', sesion.id)
-        .execute(),
+    // El EFECTIVO esperado sube solo: sale de los movimientos del cajón (`arqueoDeSesion`), y el de
+    // la entrada acaba de escribirse. DP-15: la sesión ya no se toca. Su fondo esperado es el de la
+    // APERTURA (lo que se dejó anoche), que el papel del corte compara con lo contado al abrir; con
+    // las entradas sumadas decía «esperado $1,700» contra «contado $1,500» (QA, J-H7). Y su desglose
+    // es el de la apertura, que la base exige que cuadre con el fondo inicial.
+    const arqueo = await ctx.paso('efectivo_esperado', () =>
+      repoCaja.arqueoDeSesion(ctx.tx, organizacionId, sesion.id),
     );
 
     ctx.auditar({
@@ -144,7 +130,7 @@ export const registrarEntradaDeCambio = definirComando<
       montoCentavos: monto.toString(),
       monedasCentavos: entrada.monedasCentavos.toString(),
       chicosCentavos: entrada.chicosCentavos.toString(),
-      fondoEsperadoCentavos: fondoEsperado.toString(),
+      efectivoEsperadoCentavos: arqueo.efectivoEsperadoCentavos.toString(),
     };
   },
 });

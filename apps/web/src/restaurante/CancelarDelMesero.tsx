@@ -25,6 +25,7 @@ import {
 import { loQueYaSalio, releerLaCuenta, type CuentaViva } from './cancelar-del-mesero-lecturas.ts';
 import { lineasQueSigueCobrando } from './lineas-vivas.ts';
 import { useRolDeLaSesion } from './rol-de-la-sesion.ts';
+import { useTermino } from '~/cliente/vocabulario';
 import {
   NO_PUDE_COMPROBAR_LA_COCINA,
   SI_NO_PUDE_COMPROBARLA,
@@ -70,6 +71,8 @@ export function CancelarDelMesero({
   alCancelarLaCuenta,
 }: CancelarDelMeseroProps) {
   const rol = useRolDeLaSesion();
+  // «cocina» en el restaurante: el diccionario del giro lo dice (F-017).
+  const cocina = useTermino('preparacion');
   const puede = puedeCancelarPedidos(rol);
   const [cuadro, setCuadro] = useState<Cuadro>(null);
   const [quitando, setQuitando] = useState<DetalleDeLaCuenta | null>(null);
@@ -251,7 +254,7 @@ export function CancelarDelMesero({
                   >
                     <span>{descripcionDelRenglon(detalle)}</span>
                     {yaSePreparo ? (
-                      <span className="text-xs font-bold text-peligro">Ya salió de cocina</span>
+                      <span className="text-xs font-bold text-peligro">Ya salió de {cocina}</span>
                     ) : null}
                   </Button>
                 </li>

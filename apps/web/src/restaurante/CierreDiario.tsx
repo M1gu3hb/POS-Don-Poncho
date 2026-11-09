@@ -89,6 +89,7 @@ import {
 } from './cuentas-que-bloquean.ts';
 import { IconoDelTono, TINTE_DEL_TONO, semaforoDe } from './semaforo-del-arqueo';
 import { SIN_RECETA, rotuloDeLaUtilidadNeta } from './margen-de-las-ventas.ts';
+import { textoDelCierre } from './otras-cajas-al-cerrar.ts';
 import { resumirDia, type Canal, type GastoDelDia, type VentaDelDia } from './resumen-del-dia.ts';
 
 export { semaforoDe, type Semaforo, type TonoDelArqueo } from './semaforo-del-arqueo';
@@ -262,6 +263,9 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
   const [fondoIlegible, setFondoIlegible] = useState(false);
   const [alImprimir, setAlImprimir] = useState(true);
   const [dialogo, setDialogo] = useState<Dialogo | null>(null);
+  // DP-15 · Cuántas cajas siguen abiertas al pedir el cierre (nulo: no se pudo saber).
+  const [cajasAbiertas, setCajasAbiertas] = useState<number | null>(1);
+  const textoDeCierre = textoDelCierre(cajasAbiertas);
   const [releyendo, setReleyendo] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [corte, setCorte] = useState<ResultadoDelCierre | null>(null);
@@ -454,6 +458,15 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
     try {
       const frescos = await leerElDia(new AbortController().signal);
       setDatos(frescos);
+      try {
+        const cupo = await invocarComando<{ readonly abiertas: number }>(
+          '/api/caja/cajas-simultaneas',
+          {},
+        );
+        setCajasAbiertas(cupo.abiertas);
+      } catch {
+        setCajasAbiertas(null);
+      }
       const abiertas = mesasQueBloquean(frescos.ventas, frescos.mesas, Date.now());
       const paso = abiertas.length === 0 ? 'confirmar' : 'bloqueo';
       setDialogo(
@@ -710,7 +723,7 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {dialogo?.tipo === 'bloqueo' ? `Hay ${conCuentaViva}` : '¿Cerrar la caja?'}
+              {dialogo?.tipo === 'bloqueo' ? `Hay ${conCuentaViva}` : textoDeCierre.titulo}
             </DialogTitle>
             <DialogDescription>
               {dialogo?.tipo === 'bloqueo'
@@ -726,6 +739,9 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
               claveDe={(mesa) => mesa.id}
               alto="max-h-[50vh]"
             />
+          )}
+          {dialogo?.tipo === 'confirmar' && textoDeCierre.aviso !== null && (
+            <Aviso tono="atencion" titulo={textoDeCierre.aviso} />
           )}
           {/* Lo que se va a sellar, tal como se tecleó: un cero de más en el
               conteo se ve aquí, no en el corte impreso. */}
@@ -754,7 +770,7 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
                   if (cuenta !== null) void cerrar(cuenta);
                 }}
               >
-                {enviando ? 'Cerrando…' : 'Sí, cerrar el día'}
+                {enviando ? 'Cerrando…' : textoDeCierre.boton}
               </Button>
             )}
           </DialogFooter>

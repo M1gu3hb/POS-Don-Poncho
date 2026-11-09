@@ -144,6 +144,16 @@ export default function CocinaPedidoCardPremium({
         aria-hidden
       />
 
+      {/* DP-15 · F1: la cuenta ya se cobró y esto sigue por preparar */}
+      {pedido?.cuenta_cobrada && (
+        <div className="pl-3 pr-2 pt-2">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-advertencia/10 border border-advertencia/30">
+            <AlertTriangle className="w-3.5 h-3.5 text-advertencia shrink-0" />
+            <span className="text-[11px] font-medium text-advertencia">Cuenta cobrada</span>
+          </div>
+        </div>
+      )}
+
       {/* Badge huérfano informativo */}
       {isHuerfano && (
         <div className="pl-3 pr-2 pt-2">

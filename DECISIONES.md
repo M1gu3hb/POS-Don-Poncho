@@ -1525,3 +1525,174 @@ puerta los denuncia todos.
   cierre pide libre es el diseño (DP-D66, «Marcar libre» de DP-14.6).
 - **Sin migración.** El corte, el saneado, el margen y el retiro los hizo el agente RB (Sonnet); los
   topes en la pantalla, el aviso en el papel, los arreglos del QA y los documentos, la sesión principal.
+
+## DP-D81 · La base propia, igual que la compartida: almacén por la API de Supabase y sin migración de permisos · 08-11-2026
+
+- **El almacén:** en la base propia, `STORAGE_ENDPOINT` termina en `/storage/v1` (el conductor de la
+  API de Supabase de `archivos.ts`), `STORAGE_ACCESS_KEY` es la referencia del proyecto y
+  `STORAGE_SECRET_KEY` su llave secreta nueva (`sb_secret_…`), como en la Fase A. **Alternativa
+  descartada:** el endpoint S3 con llaves de acceso S3, que sólo se crean en el panel (un clic más de
+  Miguel) y cambiarían de conductor el día de la mudanza. El bucket `pos-don-poncho` es privado; se
+  comprobó guardar, leer y borrar, y que la lectura pública falla.
+- **RLS y permisos:** no hizo falta la migración de la base propia que preveía la guía. Las
+  migraciones de siempre, aplicadas desde cero en un proyecto nuevo, ya dejan las 139 tablas con RLS
+  y quitan a `anon` y `authenticated` todo permiso en tablas, rutinas y secuencias, y también los
+  privilegios por omisión de `postgres`. Medido con la consulta de la guía: 139 de 139 y 0, 0, 0.
+- **El rol de la app** (`morphiqpos_app`) se crea antes de migrar, con su verificador SCRAM, porque
+  las migraciones sólo le dan permisos si ya existe. Queda igual que en la compartida (176 permisos de
+  tabla, 1 secuencia, 2 de 16 rutinas).
+- **Sin migración.** La mudanza y su regreso atrás están en `docs/infra/MUDANZA-FASE-B.md`.
+
+## DP-D82 · Los PIN nuevos se generan al azar y se aplican por el comando, antes de cambiar Vercel · 08-11-2026
+
+- **Elección:** en la base propia, recién importada y antes de cambiar Vercel, todos los PIN se
+  cambian por `identidad.establecer_pin` (y «Caja 2» se da de alta con `identidad.guardar_empleado`),
+  con «Miguel · Morphiq» como quien manda: transacción, idempotencia, roles y auditoría, como desde la
+  pantalla. Nunca un hash escrito a mano. Los PIN viven sólo en `..\_PRIVADO\PINES-DON-PONCHO.md`.
+- **Cuatro cifras:** el servidor acepta de 4 a 8, pero el teclado de la entrada envía al cuarto
+  dígito; un PIN más largo no se podría teclear.
+- **Al azar y lejos de lo conocido:** ninguno coincide con un número de 4 cifras de otro archivo de
+  `_PRIVADO` (los PIN viejos, los de las copias de QA y los de la demo) ni es fácil de adivinar
+  (repetidos, escaleras, años).
+- **Por qué antes de cambiar Vercel:** así el humo de producción entra con los PIN nuevos y el PIN
+  público del maestro nunca sirve contra la base propia. El regreso atrás devuelve la compartida con
+  sus PIN viejos.
+- **Cambia una regla de antes:** «los PIN reales los teclea Miguel». Este encargo pidió generarlos y
+  aplicarlos; Miguel los recibe en `_PRIVADO` y cada persona puede cambiar el suyo desde Usuarios.
+- **Sin migración.**
+
+## DP-D83 · El platillo agotado del día: una fecha de vencimiento en el producto (migración 189) · 08-11-2026
+
+- **Elección:** `productos.agotado_hasta` (`timestamptz`, migración 189, aditiva). El comando
+  `catalogo.marcar_agotado` lo pone al fin del día del negocio (`diaDelNegocio`) o lo quita; al día
+  siguiente el platillo vuelve solo. El servidor lo niega (`PRODUCTO_AGOTADO`) en el pedido del mesero,
+  el carrito y el envío del portal, el pedido directo del portal y el mostrador; el menú público
+  declara el campo `agotado` y el mesero y el portal lo enseñan apagado («Agotado hoy»).
+- **Quién:** dueño, administrador, gerente y **cocina**, que es quien sabe que se acabó la carne. Desde
+  Cocina → «Agotados» y desde Productos.
+- **Alternativas descartadas:** reusar `activo` o `visible_en_pos`, que son decisiones de catálogo, no
+  vuelven solas y el portal no respetaba; un booleano «agotado», que alguien tendría que apagar al día
+  siguiente.
+- **Migración:** la 189, aplicada a la base propia con `pnpm db:migrate` antes de desplegar (lo aditivo
+  primero). Ficha 35.
+
+## DP-D84 · El efectivo de la cajera, en Caja → Movimientos; la compra en efectivo con dos cajas, como retiro · 08-11-2026
+
+- **Elección:** la cajera registra desde `/caja` → «Movimientos» el retiro, la entrada de cambio y el
+  corte de turno, cada uno con su motivo; el gasto y la devolución quedan para la gerencia. La entrada
+  de cambio estrena formulario (`EntradaDeCambio.tsx`).
+- **La compra en efectivo con dos cajas abiertas** (A2-M5): el gerente no puede registrarla (no se sabe
+  de qué cajón sale) y la cajera no tiene permiso de compras. El día 1, el pago a un proveedor en
+  efectivo lo registra la cajera como **Retiro** con su motivo (y el corte lo resta); la compra como
+  inventario va con tarjeta, transferencia o con una sola caja abierta.
+- **Alternativas descartadas:** darle compras a la cajera (le abre inventario y proveedores) o elegir el
+  cajón dentro de la compra (comando y pantalla nuevos a seis días de instalar). Queda como mejora.
+- **Sin migración.**
+
+## DP-D85 · Con dos cajas, cada cajón se cuenta en su aparato; el Tablero suma el día de todas · 08-11-2026
+
+- **El Cierre del día** con otra caja abierta lo dice y cierra sólo la de ese aparato: cada cajón se
+  cuenta donde está. El Cierre se hace con la última.
+- **«Ventas hoy» del Tablero:** las ventas del día del negocio de todas las cajas, leídas por rango en la
+  base. Antes contaba una caja y daba $0 con las cajas cerradas.
+- **Configuración → Caja** lista sólo las terminales que alguna vez abrieron una sesión de caja: cada
+  navegador que entra se da de alta como terminal (el teléfono del mesero, la tableta de cocina) y la
+  lista para nombrarlas se llenaba.
+- **Sin migración.**
+
+## DP-D86 · Cada puesto ve lo que el servidor le deja; lo que se perdía al recargar se guarda en el aparato · 08-11-2026
+
+- **La gerente** no ve Datos ni Integraciones (ni en la pantalla ni por el puente) ni la apariencia del
+  negocio; el almacén no ve en Compras botones que el servidor le niega; Registros → «Auditoría»
+  (`reportes.auditoria_reciente`) es sólo para dueño y administrador.
+- **El pedido a medias del mesero** se guarda en el aparato (`localStorage`), por cuenta y persona, 3
+  horas, y se recupera al volver a abrir la mesa. Son platillos y notas, no datos sensibles; lo enviado
+  ya vive en el servidor. **Alternativa descartada:** borradores en el servidor (tabla y comandos
+  nuevos).
+- **El ticket por el navegador** en 58 u 80 mm: «Ancho del papel del ticket» en
+  `configuracion.valores`, para el ticket, la reimpresión y la precuenta; el corte y el cierre siguen en
+  A4 (sus tablas no caben en 58 mm). Las exportaciones van en la hora del negocio.
+- **La capacidad:** el portal del comensal sondea su estado completo cada 12 s y al volver a la pantalla
+  (antes 4 s con el menú entero), el ajuste más barato de `docs/infra/CAPACIDAD.md`.
+- **Sin migración.**
+
+## DP-D87 · Al cobrar, lo listo se entrega y lo pendiente se queda marcado; la mesa espera sólo lo que falta · 08-11-2026
+
+- **La mesa con varias estaciones:** al pasar una comanda a «listo», la mesa sólo cuenta las comandas
+  que faltan por terminar (`nuevo`, `en_preparacion`); las otras `listo` ya esperan al mesero. Antes la
+  última estación en terminar veía a las demás como activas y la mesa nunca llegaba a «Esperando
+  entrega».
+- **Al cobrar:** lo que la cocina ya tenía «listo» de esa cuenta pasa a entregado, renglón por renglón
+  (en una cuenta dividida, cada parte entrega lo suyo), y sale de la pantalla de su estación.
+- **Lo que sigue por preparar no se cierra:** puede ser comida que sí se sirve (una cuenta pagada por
+  adelantado, el postre). La tarjeta de la estación dice «Cuenta cobrada» y la cocina decide.
+  **Alternativa descartada:** cancelarlo al cobrar, que escondería platillos por servir.
+- **Lo quitado:** quitar el único platillo de una comanda la cancela; si le quedan otros, la pantalla ya
+  no pinta el quitado.
+- **Al quitar lo último que faltaba** (la revisión de código): la comanda vacía se cancela y la mesa
+  se mueve con lo que quede de la cuenta dueña de las comandas (en una cuenta dividida, la madre): si
+  sólo quedan comandas listas, a «Esperando entrega»; si no queda nada, a «Ocupada».
+- **Sin migración.**
+
+## DP-D88 · La prueba del puro link en producción, sin PIN reales y sin cuentas · 08-11-2026
+
+- **Elección:** en producción se prueba todo lo que no pide un PIN: la entrada del personal (200, la
+  lista de personas, sin desbordes) en Android 360 y 412, iPhone, tableta 768 y 1024 y PC; ocho
+  aparatos a la vez detrás de la misma IP; el portal QR de una mesa con su token de siempre; la red
+  lenta (3G simulada); el manifiesto, sus íconos y las etiquetas del iPhone. Sólo lectura: abrir el
+  portal deja el «latido» del teléfono (presencia), no cuentas ni folios.
+- **Lo que pide un PIN** (entrar a cada puesto, sesiones independientes, cambiar de persona) se probó
+  en las copias de la base propia con PIN de prueba, con el mismo código; en producción lo comprueba
+  Miguel con sus PIN en 10 minutos (`docs/ENTREGA-DON-PONCHO.md`). Los PIN reales no los teclea un
+  agente.
+- **Por qué no una cuenta de prueba en producción:** existe el guion probado de DP-12.1
+  (`limpiar-ventas-de-prueba.mjs`, una cuenta sin cobrar y sin caja), pero abrirla exige entrar con un
+  PIN real; queda para Miguel si hiciera falta.
+- **Sin migración.**
+
+## DP-D89 · La entrada de cambio: sólo su movimiento, referencia «manual», la sesión intacta · 08-11-2026
+
+- **Lo que se encontró:** la entrada de cambio (heredada de MorphiqPOS, F-984-bis) nunca se pudo
+  guardar contra el esquema real: su movimiento llevaba `referencia_tipo = 'entrada_cambio'`, que
+  `movimientos_caja_referencia_tipo_check` no admite, y sumaba la entrada al desglose del fondo de
+  apertura, que `sesion_fondo_desglosado_cuadra` exige que cuadre con el fondo inicial. Sus pruebas eran
+  con una base falsa. Salió al probarla contra Postgres real por un hallazgo de la revisión de código
+  (leer, sumar y escribir sin candado).
+- **Elección:** el movimiento va con `referencia_tipo = 'manual'`, como el retiro, y es lo ÚNICO que
+  escribe: el efectivo que el corte espera sale de los movimientos del cajón (`arqueoDeSesion`), así
+  que la entrada ya lo sube. La sesión no se toca: su fondo esperado es el de la APERTURA (lo que se
+  dejó anoche), que el papel del corte compara con lo contado al abrir, y su desglose es el de la
+  apertura. Primero se intentó sumarle la entrada al fondo esperado en una sola escritura; el QA de
+  la jornada (J-H7) vio que el papel enseñaba entonces «Fondo esperado apertura $1,700» contra $1,500
+  contados, y la hoja del corte dejó de restar las entradas. Sin escritura en la sesión desaparece
+  también la carrera de dos entradas a la vez.
+- **Alternativa descartada:** una migración que agregue `entrada_cambio` a los tipos de referencia, o
+  que relaje el desglose: cambiaría el esquema por algo que el código resuelve sin perder nada.
+- **Lo que se ganó:** lo que toca la base en la caja de la cajera (retiro y entrada) se prueba ahora
+  contra Postgres real.
+- **Sin migración.**
+
+## DP-D90 · Lo que encontró el QA de DP-15, arreglado antes de desplegar · 08-11-2026
+
+- **El nombre de un aparato dormido queda libre** (J-H1): cada navegador que entra se da de alta
+  como «Caja N» y producción tiene 25 con esos nombres. `caja.nombrar_terminal` le pone «Aparato …» al
+  aparato que nunca abrió caja y tiene el nombre pedido, y lo deja en la auditoría (`liberado`); el
+  nombre de una caja de verdad se sigue rechazando. **Alternativa descartada:** desactivar o borrar
+  los aparatos dormidos en producción (una escritura de datos el día de la entrega, y un aparato que
+  vuelve a entrar se daría de alta otra vez).
+- **Lo que se termina de una cuenta ya cobrada se entrega solo** (J-H3): al marcar «listo», los
+  renglones de una cuenta pagada pasan a entregado. Antes de cobrar, «listo» sigue esperando al
+  mesero.
+- **La precuenta del mesero se cuenta antes de imprimirse** (J-H4), con el rollo del negocio; si el
+  servidor no la cuenta, no se imprime.
+- **El Cierre del día dice el día** (J-H6): `caja.ventas_del_dia` (lectura) suma las cajas que
+  cerraron en la ventana del Cierre (la misma de sus cancelaciones), con la regla de venta y los pagos
+  de cada corte; el Cierre la pinta aparte y su resumen dice «de esta caja». DP-D50 no cambia: cada
+  corte sigue contando sus cuentas.
+- **El ticket ya no sale cortado** (H-01, bloqueante): `translate: var(--sin-traslado, none)` en el
+  aislado de impresión, porque el minificador del build fundía `translate: none` dentro de
+  `transform`; una prueba pasa el `index.css` real por el mismo minificador.
+- **Menores:** «Agotado hoy» en el menú del portal en lista; la etiqueta
+  `apple-mobile-web-app-capable`.
+- **Sin migración.**
+

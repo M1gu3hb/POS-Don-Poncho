@@ -4,7 +4,7 @@ import { createHmac } from 'node:crypto';
 
 import { repoLimite } from '@morphiqpos/data';
 
-import { correlationIdDe, registrar } from '../observabilidad.ts';
+import { claseDelFallo, correlationIdDe, registrar } from '../observabilidad.ts';
 
 /**
  * Límite de peticiones por TOKEN DE MESA (E7-3).
@@ -131,13 +131,13 @@ export async function permitirPortal(
   try {
     const { intentos, esperaSegundos } = await repoLimite.contarIntento(clave, ventanaSegundos);
     return { ok: intentos <= maximo, esperaSegundos };
-  } catch {
+  } catch (error: unknown) {
     registrar({
       nivel: 'alerta',
       modulo: 'portal_limite_tasa',
       correlationId: correlationIdDe(contexto.correlationId),
       organizacionId: contexto.organizacionId ?? null,
-      mensaje: `No se pudo contar el intento de ${accion}.`,
+      mensaje: `No se pudo contar el intento de ${accion}. ${claseDelFallo(error)}`,
     });
     return { ok: true, esperaSegundos: 0 };
   }

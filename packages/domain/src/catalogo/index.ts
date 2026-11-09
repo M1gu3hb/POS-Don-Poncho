@@ -42,3 +42,4 @@ export {
   type AreaDePreparacion,
   type ProductoConArea,
 } from './area-por-omision.ts';
+export { estaAgotado } from './agotado.ts';

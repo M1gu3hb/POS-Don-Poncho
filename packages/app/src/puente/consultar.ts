@@ -2,6 +2,7 @@ import 'server-only';
 
 import { ErrorDominio, veConsolidado } from '@morphiqpos/contracts';
 import { leyendoConReintento, obtenerDb } from '@morphiqpos/data';
+import { estaAgotado } from '@morphiqpos/domain/catalogo';
 import { sql, type RawBuilder } from 'kysely';
 
 import { baseLibre } from './db-dinamica.ts';
@@ -735,6 +736,14 @@ const FORMULAS: Readonly<Record<Calculo, (fila: Fila) => unknown>> = {
     if (typeof propio !== 'string' || propio === '') return null;
     const enMostrador = textoDeNumero(fila['existencia_en_mostrador']);
     return enMostrador === null ? null : Number(enMostrador);
+  },
+  /** DP-15 · Agotado del día, con la hora del servidor (ver `@morphiqpos/domain/catalogo`). */
+  agotadoHoy(fila) {
+    const hasta = fila['agotado_hasta'];
+    return estaAgotado(
+      hasta instanceof Date || typeof hasta === 'string' ? hasta : null,
+      new Date(),
+    );
   },
 };
 

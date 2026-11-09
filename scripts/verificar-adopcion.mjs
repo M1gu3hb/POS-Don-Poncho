@@ -682,6 +682,18 @@ export const SIN_ESTADO = [
       'No lee nada antes de pintarse: lo único asíncrono es registrar el retiro, y mientras corre el botón pasa a `cargando`.',
   },
   {
+    pantalla: 'venta/EntradaDeCambio',
+    estado: 'vacio',
+    razon:
+      'Formulario de la entrada de cambio (DP-15, A1-B1): un importe, de dónde viene y el motivo. No hay ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'venta/EntradaDeCambio',
+    estado: 'cargando',
+    razon:
+      'No lee nada antes de pintarse: lo único asíncrono es registrar la entrada, y mientras corre el botón pasa a `cargando`.',
+  },
+  {
     pantalla: 'venta/CampoDePesos',
     estado: 'vacio',
     razon:

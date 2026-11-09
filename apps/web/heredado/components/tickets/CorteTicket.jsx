@@ -4,7 +4,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatCurrency, formatPercent } from '@/utils/financialUtils';
 import { desgloseMetodosPagoConPropinas } from '@/utils/tipsUtils';
-import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import {
   NOMBRE_DEL_NEGOCIO,
   marcaVisibleDePlataforma,
@@ -23,6 +22,7 @@ import {
   cuentaDelDescuento,
   tituloDeLosDescuentos,
 } from '~/corte-heredado/descuentos-del-corte';
+import { TITULO_DEL_DIA, celdasDelDia } from '~/corte-heredado/ventas-del-dia';
 import {
   SIN_RECETA,
   costoDelProductoConocido,
@@ -32,6 +32,7 @@ import {
   subtituloDelMargen,
 } from '~/restaurante/margen-de-las-ventas';
 import { SeccionPintada } from '~/corte/HojaDelCorte';
+import { textoDeLaLinea } from '~/corte/linea-de-venta';
 import {
   AVISO_SIN_CANCELACIONES,
   EXPLICACION_SIN_CANCELACIONES,
@@ -56,6 +57,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
     totalDeCancelaciones = null,
     // DP-14.2 · Cada descuento con quién lo autorizó y por qué (`leerDescuentosDelCorte`).
     descuentos = null,
+    // DP-15 (QA, J-H6) · Sólo en el Cierre del día: las ventas de todas las cajas (`leerVentasDelDia`).
+    ventasDelDia = null,
     alertas = [],
     config = {},
     sinCostos = false,
@@ -246,8 +249,28 @@ const CorteTicket = React.forwardRef(function CorteTicket(
         </Grid>
       </Section>
 
+      {/* DP-15 (QA, J-H6) · El Cierre del día con varias cajas: las ventas de todas */}
+      {ventasDelDia && (
+        <Section title={TITULO_DEL_DIA}>
+          <Grid>
+            {celdasDelDia(ventasDelDia).map((c) => (
+              <Cell
+                key={c.etiqueta}
+                label={c.etiqueta}
+                value={c.pesos === undefined ? c.texto : formatCurrency(c.pesos)}
+                bold={c.fuerte}
+              />
+            ))}
+          </Grid>
+        </Section>
+      )}
+
       {/* Resumen financiero — sin el módulo `costos_basicos` sólo se muestran ventas y métodos de pago */}
-      <Section title={sinCostos ? 'Resumen de ventas' : 'Resumen financiero'}>
+      <Section
+        title={
+          ventasDelDia ? 'Resumen de esta caja' : sinCostos ? 'Resumen de ventas' : 'Resumen financiero'
+        }
+      >
         <Grid>
           <Cell label="Total ventas" value={formatCurrency(corte?.total_general)} bold />
           <Cell label="N° tickets" value={corte?.numero_ventas || 0} />
@@ -411,16 +434,19 @@ const CorteTicket = React.forwardRef(function CorteTicket(
                     {v.cliente_nombre ? ` · ${v.cliente_nombre}` : ''}
                   </td>
                   <td className="border px-2 py-1">
-                    {dets.map((d, i) => {
-                      // 6B / 1.I — Mostrar "500 g × Producto" / "4 shots × Producto"
-                      // en lugar de "Producto ×1" cuando es venta variable.
-                      const txtVar = formatearCantidadVariable(d || {});
-                      return (
-                        <div key={i}>
-                          {d.producto_nombre} {txtVar ? `— ${txtVar}` : `×${d.cantidad}`}
-                        </div>
-                      );
-                    })}
+                    {dets.map((d, i) => (
+                      // DP-15 · El mismo texto que el documento del cierre (`textoDeLaLinea`):
+                      // «Barbacoa de horno — ½ kg», «Arrachera ×2».
+                      <div key={i}>
+                        {textoDeLaLinea({
+                          nombre: d.producto_nombre,
+                          cantidad: d.cantidad,
+                          tipo_venta_snapshot: d.tipo_venta_snapshot,
+                          cantidad_variable_snapshot: d.cantidad_variable_snapshot,
+                          unidad_variable_snapshot: d.unidad_variable_snapshot,
+                        })}
+                      </div>
+                    ))}
                     {dets.length === 0 && <span className="text-texto-tenue">—</span>}
                   </td>
                   <td className="border px-2 py-1 text-right font-bold">
