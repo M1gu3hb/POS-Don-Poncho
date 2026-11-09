@@ -1320,3 +1320,20 @@ PR, rama `dp-15-1` (sale de `dp-15-docs`, con el reporte 009; el PR #14 queda ab
 - 08:48 Vercel sin errores de ejecución desde las 04:32 (después de corregir los guiones).
 - **Lo listo de una cuenta cobrada antes de servir** (medio 4 del encargo): Miguel no lo ha
   confirmado; se queda como está y se le pregunta al final.
+
+### La integración de los agentes y el PR
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| A (`dp151-a`, 5437) | Sonnet | `caja.movimiento` por rol, ajustes en el corte, motivo, «1,500»; el mesero cambia de mesa; el borrador y lo agotado | 23 archivos; 31 mutantes muertos (2 rehechos aquí porque el código cambió después de escribirlos); integrado en `047dcf1` |
+| B (`dp151-b`, 5438) | Sonnet | La auditoría con filtro en el servidor; zonas desactivables; el «hoy» del Tablero | 29 archivos; 51 de 52 mutantes muertos (el vivo, equivalente: un `.strict()` que el envoltorio ya impone); integrado en `b5f2981` |
+
+- 08:55 El parche A, revisado: el servidor deja a cualquier mesero mover una cuenta viva (decisión de
+  sala ya escrita en el comando); se queda así y lo dice DP-D94. «Mesa activa» ya no le ofrece
+  dividir. Sus pruebas aquí: 954 unitarias, 71 de integración (caja y venta).
+- 09:15 El parche B, revisado. La auditoría también guarda los intentos negados y se leían como
+  hechos: ahora dicen «Intento rechazado (…)» (prueba en rojo antes; 3 mutantes muertos). Sus pruebas
+  aquí: 698 unitarias, 15 de integración.
+- 09:29 DECISIONES DP-D93 a DP-D97, el reporte 009 con la ronda, la ficha 36. Commit `b5f2981`.
+- 09:30 PR [#15](https://github.com/M1gu3hb/POS-Don-Poncho/pull/15) (`dp-15-1` → `main`); el #14 se
+  cerró como absorbido. `pnpm verify` local en curso.

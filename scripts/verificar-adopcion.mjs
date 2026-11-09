@@ -1058,6 +1058,18 @@ export const SIN_ESTADO = [
     estado: 'error',
     razon: 'Sin operación propia: el aviso del sonido bloqueado es lo único que pinta.',
   },
+  {
+    pantalla: 'tablero/AvisoDelTopeDeVentas',
+    estado: 'vacio',
+    razon:
+      'DP-15.1 · Un aviso de una línea que el Tablero monta con un número ya leído: no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'tablero/AvisoDelTopeDeVentas',
+    estado: 'cargando',
+    razon:
+      'DP-15.1 · No lee nada del servidor: recibe por props cuántas ventas llegaron; la carga la pinta el Tablero.',
+  },
 ];
 
 const argumentos = process.argv.slice(2);
