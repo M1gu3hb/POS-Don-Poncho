@@ -1,4 +1,5 @@
 import {
+  ajustesDeCaja,
   arqueo,
   centavos,
   datosDelCorte,
@@ -96,6 +97,7 @@ export function corteDeRestaurante(
   return documento(hoja, 'CORTE DE CAJA', [
     datosDelCorte(hoja, 'Cierre diario'),
     ...arqueo(hoja, 'Apertura y fondo'),
+    ...ajustesDeCaja(hoja),
     ...ventasDelDia(hoja),
     resumenFinanciero(hoja, tituloDelResumen(hoja)),
     ...metodosConPropina(hoja),

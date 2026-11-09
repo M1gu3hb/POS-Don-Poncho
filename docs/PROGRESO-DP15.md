@@ -7,7 +7,8 @@
 - **Fecha límite:** jueves 12-11-2026 en la noche. Instalación: sábado 14-11.
 - **Proyecto nuevo de Supabase:** «POS Don Poncho», ref `mqlcusxwqrefpfttjjks`, us-east-2,
   Postgres 17, creado por Miguel el 08-11.
-- **Producción, desde el 08-11 a las 11:03:** en la base propia (`dpl_J8sH…`, `READY`).
+- **Producción, desde el 08-11 a las 11:03:** en la base propia. Desde el 09-11 a las 04:24, con
+  `main` en `cd76829` (el PR #13; `dpl_8d4e…`, `READY`).
 
 ## Estado por fase
 
@@ -20,23 +21,39 @@
 | 3 | La mudanza | hecha (11:07): huella IDÉNTICA, humo 38/38, regreso atrás escrito |
 | 4 | Base propia lista: 2 cajas, «Caja 2», descuentos, PIN, respaldo | hecho (11:10) |
 | 5 | Auditoría por función | hecha: `docs/qa/AUDITORIA-POR-FUNCION.md` (2 bloqueantes, 15 medios) |
-| 6 | Arreglos | hechos en `dp-15-codigo` (F1 y F2 integrados; DP-D83 a DP-D88; ficha 35); falta `pnpm verify` completo, PR, CI, despliegue y humo |
-| 7 | QA de jornada | listo para lanzar: copias `qa_dp15_j` y `qa_dp15_d` (5460) y encargos en `D:\mpos-tmp\dp15-qa\` |
-| 8 | Prueba del puro link | guion listo y probado contra producción (`D:\mpos-tmp\dp15-link\link.mjs`, sin PIN, DP-D88); se repite tras desplegar |
-| 9 | Entrega y reporte 009 | `docs/ENTREGA-DON-PONCHO.md` casi lista; falta el reporte |
+| 6 | Arreglos | hechos; PR #13 en `main` (`cd76829`, 09-11 04:22) con la CI 10/10 y el acople; DP-D83 a DP-D91, ficha 35 |
+| 7 | QA de jornada | hecho: QA-J cuadró al centavo y 0/34; QA-D 54/54; 1 bloqueante y 5 medios arreglados; ronda 2 9/9 (`docs/qa/`) |
+| 8 | Prueba del puro link | hecha (09-11 04:31): 6 aparatos, el portal en 5, 8 a la vez, 3G, «Agregar a inicio»; producción limpia; las alertas eran mis guiones (DP-D91), cero tras corregirlos |
+| 9 | Entrega y reporte 009 | `docs/ENTREGA-DON-PONCHO.md` en `main`; el reporte 009 completo, en el PR de documentos (rama `dp-15-docs`) |
+
+## DP-15.1 · La ronda final antes del sábado (auditoría del orquestador, 09-11)
+
+Rama `dp-15-1` (sale de `dp-15-docs`, que lleva el reporte 009; el PR #14 queda absorbido aquí: un
+solo PR). Worktree `dp15-codigo`. El documento `AUDITORIA-2026-11-09.md` no está en disco: se trabaja
+con el resumen del encargo.
+
+| Parte | Qué | Estado |
+| --- | --- | --- |
+| 1 | El 25006: causa confirmada (DP-D92), `conTransaccion` en `read write`, escrituras sueltas a transacción, guiones fuera del 6543, regla en RUNBOOK y entrega | hecho (`a77d1a0`, 8/8 mutantes) |
+| 2.1 | `caja.movimiento`: la cajera sólo retiro y entrada de cambio; ajuste con rastro; motivo mínimo; «1,500» | agente A (Sonnet, worktree `dp151-a`, base 5437) |
+| 2.2 | Registros → Auditoría: filtro en el servidor, fecha, páginas, nombres legibles | agente B (Sonnet, worktree `dp151-b`, base 5438) |
+| 2.3 | El mesero cambia de mesa desde su pantalla | agente A |
+| 2.4 | Lo listo de una cuenta cobrada antes de servir | **sin confirmar por Miguel: se queda como está** (se pregunta al final) |
+| 3 | Zonas desactivables y tablero «hoy» en CDMX (agente B); borrador del mesero (agente A); la 190 `search_path` (hecho, `5102d31`); el iPhone en la entrega (hecho) | en curso |
+| 4 | 009, este archivo y la bitácora | en curso |
+| 5 | PR, CI, la 190 en la propia con `pnpm db:migrate` (sesión), merge, `READY`, humo con `link.mjs` (por la de sesión), Vercel 1 h sin errores, Don Poncho en ceros | pendiente |
 
 ## Lo que sigue
 
-1. `pnpm verify` del worktree (guion `verify-completo.sh [desde-la-puerta]` del scratchpad, sin
-   `verify:entorno` que pide Postgres 17): si pasa, push de `dp-15-codigo`, PR a `main`
-   (cuerpo en `scratchpad\pr-dp15.md`), CI (si la galería cambia, `workflow_dispatch` con
-   `actualizar_galeria`), merge, esperar Production `READY` y humo sin cobrar (`humo-mudanza.mjs`).
-2. Fase 7: servir las copias con el build del worktree (`servir-copia.sh j 32741 <worktree>` y
-   `d 32742`) y lanzar los dos agentes de QA (`ENCARGO-QA-J.md`, `ENCARGO-QA-D.md`); integrar
-   `JORNADA-2026-11-08.md` y `APARATOS-2026-11-08.md` en `docs/qa/`. Máximo 3 rondas.
-3. Fase 8: repetir `link.mjs` contra producción ya desplegada (las etiquetas del iPhone deben salir);
-   comprobar producción limpia con `estado-propia.mjs` (sólo lectura).
-4. Fase 9: el reporte 009, PROGRESO, bitácora y el mensaje final.
+1. Integrar los parches de los agentes (`scratchpad\dp151-a.patch`, `dp151-b.patch`), revisarlos,
+   correr sus pruebas y mutantes, y commitear a nombre de M1gu3hb.
+2. `pnpm verify` local, el acople y el PR único a `main`.
+3. Con la CI en verde: la 190 a la propia, merge, `READY`, humo sin cobrar, una hora de Vercel y el
+   estado en ceros (`estado-propia.mjs` por la de sesión).
+4. El reporte 009 cerrado, la bitácora y el mensaje corto a Miguel.
+
+- Mutantes: todos los vigentes mueren (102; `D:\mpos-tmp\dp15-mutantes-final.log` y los tres rehechos).
+- `pnpm verify` local completo en verde sobre el código final (sin `verify:entorno`; acople aparte).
 
 ## Dónde quedó cada cosa
 

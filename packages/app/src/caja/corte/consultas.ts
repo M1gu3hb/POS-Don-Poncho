@@ -149,6 +149,46 @@ export async function movimientosPorTipo(
   return rows;
 }
 
+/**
+ * DP-15.1 · Un AJUSTE del cajón, con su motivo y quién lo hizo.
+ *
+ * El agrupado de arriba sólo dice «Ajustes: +$55». Un ajuste cambia lo que el corte espera sin que
+ * haya pasado dinero, así que es el único movimiento capaz de tapar un faltante: el corte lo enseña
+ * uno por uno para que la diferencia de la noche no salga limpia sin que nadie sepa por qué.
+ */
+export interface AjusteDelCorte {
+  readonly movimientoId: string;
+  /** Con signo: a la baja es negativo. */
+  readonly montoCentavos: string;
+  readonly motivo: string | null;
+  /** Quién lo registró (no necesariamente quien tiene la caja). */
+  readonly quien: string | null;
+  readonly registradoEn: string;
+}
+
+export async function ajustesDelCorte(
+  tx: Transaccion,
+  organizacionId: string,
+  sesionCajaId: string,
+): Promise<readonly AjusteDelCorte[]> {
+  const { rows } = await sql<AjusteDelCorte>`
+    select m.id::text                          as "movimientoId",
+           m.monto_centavos::text              as "montoCentavos",
+           m.motivo                            as "motivo",
+           ev.nombre                           as "quien",
+           to_char(m.created_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+                                               as "registradoEn"
+      from movimientos_caja m
+      left join empleados_visibles ev on ev.id = m.empleado_id
+     where m.organizacion_id = ${organizacionId}
+       and m.sesion_caja_id = ${sesionCajaId}
+       and m.tipo = 'ajuste'
+     order by m.created_at, m.id
+     limit ${TOPE_DE_FILAS}
+  `.execute(tx);
+  return rows;
+}
+
 export interface PiezasContadas {
   readonly denominacionCentavos: string;
   readonly piezas: number;

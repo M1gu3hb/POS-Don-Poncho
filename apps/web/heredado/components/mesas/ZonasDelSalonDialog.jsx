@@ -6,12 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { claves } from '~/cliente/claves-de-consulta';
-import { ordenDeLaZonaNueva, problemaDelNombreDeZona } from '~/cliente/zonas-del-salon';
+import {
+  fijarZonaActiva,
+  ordenDeLaZonaNueva,
+  problemaDelNombreDeZona,
+  zonasApagadas,
+} from '~/cliente/zonas-del-salon';
 
 /**
  * DP-15 · Las zonas del salón: dar de alta una («Terraza») y renombrar las que hay, desde
  * Configuración → Mesas. La regla del nombre (vacío, largo, repetido) vive en `zonas-del-salon.ts`;
- * se escribe por el puente (`Zona`, la escritura genérica de dueño, administrador y gerente).
+ * se escribe por el puente (`Zona`, la escritura genérica de dueño, administrador y gerente). DP-15.1: desactivar y
+ * reactivar una zona va por su comando (`restaurante.fijar_zona_activa`), que cuida las mesas.
  * Las mesas guardan la zona por su id: renombrarla cambia el nombre en todas a la vez.
  */
 export default function ZonasDelSalonDialog({ open, onOpenChange, zonas, alRenombrar }) {
@@ -21,9 +27,32 @@ export default function ZonasDelSalonDialog({ open, onOpenChange, zonas, alRenom
   const [nueva, setNueva] = useState('');
   const [guardando, setGuardando] = useState(null);
 
+  const apagadas = zonasApagadas(Array.isArray(zonas) ? zonas : []);
+
   const releer = () => {
     queryClient.invalidateQueries({ queryKey: ['zonas'] });
-    queryClient.invalidateQueries({ queryKey: claves.mesas.todas() });
+    // Apagar o encender una zona apaga o enciende sus mesas: se relee el salón entero.
+    queryClient.invalidateQueries({ queryKey: claves.mesas.raiz() });
+  };
+
+  // DP-15.1 · El servidor decide si se puede (mesas ocupadas, con cuenta o unidas no) y dice por qué.
+  const cambiarActiva = async (zona, activa) => {
+    setGuardando(zona.id);
+    try {
+      const r = await fijarZonaActiva(zona.id, activa);
+      toast.success(
+        activa
+          ? `Zona «${zona.nombre}» reactivada (${r.mesasAfectadas} mesas vuelven)`
+          : `Zona «${zona.nombre}» desactivada (${r.mesasAfectadas} mesas dejan de mostrarse)`,
+      );
+      releer();
+    } catch (error) {
+      toast.error(
+        error?.message || `No se pudo ${activa ? 'reactivar' : 'desactivar'} la zona.`,
+      );
+    } finally {
+      setGuardando(null);
+    }
   };
 
   const renombrar = async (zona) => {
@@ -90,6 +119,14 @@ export default function ZonasDelSalonDialog({ open, onOpenChange, zonas, alRenom
               >
                 Guardar
               </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={guardando !== null}
+                onClick={() => cambiarActiva(zona, false)}
+              >
+                Desactivar
+              </Button>
             </div>
           ))}
           {activas.length === 0 && (
@@ -98,6 +135,26 @@ export default function ZonasDelSalonDialog({ open, onOpenChange, zonas, alRenom
             </p>
           )}
         </div>
+        {apagadas.length > 0 && (
+          <div className="space-y-2 border-t pt-3">
+            <p className="text-sm text-muted-foreground">
+              Desactivadas (sus mesas no se muestran):
+            </p>
+            {apagadas.map((zona) => (
+              <div key={zona.id} className="flex items-center justify-between gap-2 text-sm">
+                <span>{zona.nombre}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={guardando !== null}
+                  onClick={() => cambiarActiva(zona, true)}
+                >
+                  Reactivar
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex items-center gap-2 border-t pt-3">
           <Input
             aria-label="Nombre de la zona nueva"

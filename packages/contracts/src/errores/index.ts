@@ -75,6 +75,11 @@ export const CODIGOS_ERROR = {
   TOTAL_DESACTUALIZADO: 'TOTAL_DESACTUALIZADO',
   CAJA_CERRADA: 'CAJA_CERRADA',
   CAJA_YA_ABIERTA: 'CAJA_YA_ABIERTA',
+  /**
+   * DP-15.1 · Ese tipo de movimiento del cajón no es de este rol (la cajera sólo saca retiros;
+   * el gasto, el depósito y el ajuste son de gerencia, administración y dueño).
+   */
+  MOVIMIENTO_NO_PERMITIDO: 'MOVIMIENTO_NO_PERMITIDO',
   /** El corte no existe, o es de otra organización, que se ve igual. */
   CORTE_NO_ENCONTRADO: 'CORTE_NO_ENCONTRADO',
   /**
@@ -105,6 +110,12 @@ export const CODIGOS_ERROR = {
   UNION_DE_MESAS_INVALIDA: 'UNION_DE_MESAS_INVALIDA',
   /** DP-9.6 · Liberar la principal de una unión pide decidir: ¿separar o dejarlas unidas? */
   MESA_UNIDA_SIN_DECISION: 'MESA_UNIDA_SIN_DECISION',
+  /** DP-15.1 · La zona no existe o es de otro negocio (se ven igual). */
+  ZONA_NO_ENCONTRADA: 'ZONA_NO_ENCONTRADA',
+  /** DP-15.1 · No se desactiva una zona con mesas ocupadas, con cuenta abierta o unidas. */
+  ZONA_CON_MESAS_OCUPADAS: 'ZONA_CON_MESAS_OCUPADAS',
+  /** DP-15.1 · Reactivar la zona chocaría con otra zona activa o con el número de una mesa. */
+  ZONA_NO_REACTIVABLE: 'ZONA_NO_REACTIVABLE',
   COMANDA_NO_ENCONTRADA: 'COMANDA_NO_ENCONTRADA',
   /** El estado pedido no sigue a la tabla de transiciones, o retrocede. */
   TRANSICION_INVALIDA: 'TRANSICION_INVALIDA',

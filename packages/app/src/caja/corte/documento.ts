@@ -84,6 +84,11 @@ export interface HojaDelCorte {
    */
   readonly alcanceDeCancelaciones: 'caja' | 'dia';
   readonly movimientos: readonly consultas.MovimientoAgrupado[];
+  /**
+   * DP-15.1 · Cada ajuste del cajón con su motivo y quién lo hizo: lo que el corte «espera» por un
+   * ajuste no es dinero que pasó, y no debe esconderse dentro del renglón agrupado.
+   */
+  readonly ajustes: readonly consultas.AjusteDelCorte[];
   readonly conteo: readonly consultas.PiezasContadas[];
   readonly metodos: readonly consultas.VentasPorMetodo[];
   /**
@@ -163,10 +168,11 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
       throw new ErrorDominio('PUENTE_NO_ENCONTRADO', 'Ese corte no existe en este negocio.');
     }
     const ventana = { ...sesion, cerradaEn: alcance.hasta };
-    const [movimientos, conteo, metodos, resumen, ventas, productos, porPersona, gastos] =
+    const [movimientos, ajustes, conteo, metodos, resumen, ventas, productos, porPersona, gastos] =
       await ctx.paso('leer_tronco', () =>
         Promise.all([
           consultas.movimientosPorTipo(tx, organizacionId, id),
+          consultas.ajustesDelCorte(tx, organizacionId, id),
           consultas.conteoDelCierre(tx, organizacionId, id),
           consultas.ventasPorMetodo(tx, organizacionId, id),
           consultas.resumenDeVentas(tx, organizacionId, id),
@@ -213,6 +219,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
         parcial: sesion.cerradaEn === null,
         alcanceDeCancelaciones: alcance.cierraElDia ? 'dia' : 'caja',
         movimientos,
+        ajustes,
         conteo,
         metodos,
         ventasDelDia: delDia,

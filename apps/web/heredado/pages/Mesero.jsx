@@ -14,7 +14,13 @@ import {
   claveDelBorrador,
   guardarBorrador,
   leerBorrador,
+  limpiarBorradoresDeCuentasCerradas,
 } from '~/restaurante/borrador-del-pedido';
+import {
+  apartarAgotados,
+  avisoDeAgotados,
+  esRechazoPorAgotado,
+} from '~/restaurante/apartar-agotados';
 import { anchoDelPapel } from '~/impresion/papel';
 import {
   UtensilsCrossed,
@@ -70,6 +76,7 @@ import {
   filtrarMesasParaUsuario,
   responsableTexto,
   responsableColor,
+  resolverMeseroResponsable,
   // `colorParaUsuario` ya no se importa: el color de quien atiende lo DERIVA el
   // puente de `empleos.color` al leer la mesa. Mandarlo desde aquí creaba una
   // tercera copia del mismo dato que envejecía sola.
@@ -104,12 +111,12 @@ import {
 import { Link, useLocation } from '@/enrutado';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 
-/**
- * DP-15 · Quien cambia una cuenta de mesa, une mesas o divide la cuenta desde «Mesa activa»
- * (`/restaurante/mesa-activa`). Al mesero y a la cajera esa ruta los regresa a su pantalla.
- */
-const PUEDEN_MOVER_LA_CUENTA = ['dueno', 'administrador', 'gerente'];
 import { VistaDeSolicitudes } from '~/restaurante/VistaDeSolicitudes';
+// DP-15.1 · Quién ve «Cambiar de mesa» en el panel de la mesa: dirección siempre; el mesero, en sus mesas.
+import {
+  puedeMoverLaCuenta,
+  textoDelEnlaceParaMoverLaCuenta,
+} from '~/restaurante/puede-mover-la-cuenta';
 // DP-12.2: el portal en modo mesero (escanear el QR, mantener presionada una mesa, el carrito).
 import BarcodeScanner from '@/components/barcode/BarcodeScanner';
 import { esPedidoListo } from '~/restaurante/globos-de-solicitud';
@@ -348,6 +355,13 @@ function Mesero() {
     staleTime: 3000,
   });
   const mesasRawSafe = Array.isArray(mesasRaw) ? mesasRaw : [];
+  // DP-15.1 · Los pedidos a medias de cuentas que ya se cobraron o cerraron (en caja, otro aparato)
+  // se barren de este aparato: no se ofrecen ni estorban. Sin mesas leídas no se barre nada.
+  useEffect(() => {
+    if (!Array.isArray(mesasRaw) || mesasRaw.length === 0) return;
+    const vivas = new Set(mesasRaw.map((m) => m?.venta_activa_id).filter(Boolean));
+    limpiarBorradoresDeCuentasCerradas(almacenDelBorrador(), vivas, Date.now());
+  }, [mesasRaw]);
   const cargandoMesas = mesasLoading && !mesasRaw;
 
   // Filtro por asignación: admin ve todas, mesero ve sus asignadas si está activo.
@@ -894,8 +908,34 @@ function Mesero() {
     );
   };
 
-  const enviarPedido = async () => {
-    if (!Array.isArray(carrito) || carrito.length === 0) {
+  const enviarPedido = () => enviarRenglones(carrito, false);
+
+  /**
+   * DP-15.1 · Si el servidor rechaza el envío porque un platillo se agotó, se relee el menú, se
+   * apartan los renglones agotados con su aviso y se envía el resto UNA vez. Devuelve los renglones
+   * que quedan, o `null` si no se pudo saber qué se agotó (entonces se muestra el error del servidor).
+   */
+  const apartarLoAgotado = async (renglones) => {
+    let menu;
+    try {
+      menu = await queryClient.fetchQuery({
+        queryKey: ['productos_pos'],
+        queryFn: () =>
+          api.entidades.ProductoTerminado.filter({ activo: true, visible_en_pos: true }),
+        staleTime: 0,
+      });
+    } catch {
+      return null;
+    }
+    const { quedan, apartados } = apartarAgotados(renglones, Array.isArray(menu) ? menu : []);
+    if (apartados.length === 0) return null;
+    setCarrito([...quedan]);
+    toast.warning(avisoDeAgotados(apartados));
+    return quedan;
+  };
+
+  const enviarRenglones = async (renglones, yaReintentado) => {
+    if (!Array.isArray(renglones) || renglones.length === 0) {
       toast.error('El carrito está vacío');
       return;
     }
@@ -927,7 +967,7 @@ function Mesero() {
       //
       // NINGÚN precio viaja: el catálogo lo pone dentro de la transacción.
       const lineas = [];
-      for (const item of carrito) {
+      for (const item of renglones) {
         const variableSnap = item?._variable || null;
         // Para un producto variable la cantidad REAL es la del snapshot (peso o
         // porciones), no el 1 lógico con el que el carrito lo agrupa. Mandar 1
@@ -998,6 +1038,15 @@ function Mesero() {
       setDetallesVenta(Array.isArray(detallesFrescos) ? detallesFrescos : []);
     } catch (err) {
       console.error('[Mesero] enviarPedido error:', err);
+      if (!yaReintentado && esRechazoPorAgotado(err)) {
+        const quedan = await apartarLoAgotado(renglones);
+        if (quedan !== null) {
+          // Es OTRO pedido (menos renglones): su propia clave, no la del que se rechazó.
+          claveEnvioRef.current = null;
+          if (quedan.length > 0) return await enviarRenglones(quedan, true);
+          return;
+        }
+      }
       // El mensaje llega traducido por el dominio («no hay inventario
       // suficiente», «esa cuenta ya se cerró»). Se muestra tal cual.
       toast.error(err?.message || 'No se pudo enviar el pedido. Intenta de nuevo.');
@@ -1839,15 +1888,22 @@ function Mesero() {
                       Solicitar cuenta
                     </Button>
                   )}
-                {/* DP-15 · Cambiar de mesa, unir o dividir vivían sólo tecleando la dirección. */}
-                {ventaActiva && mesaActiva?.id && PUEDEN_MOVER_LA_CUENTA.includes(miPuesto) && (
-                  <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`} className="w-full">
-                    <Button variant="outline" className="w-full">
-                      <ArrowLeftRight className="w-4 h-4 mr-1" />
-                      Cambiar de mesa, unir o dividir
-                    </Button>
-                  </Link>
-                )}
+                {/* DP-15 · Cambiar de mesa, unir o dividir vivían sólo tecleando la dirección.
+                    DP-15.1 · Y el mesero, que es quien dice «nos pasamos a la terraza», lo tiene en SUS mesas. */}
+                {ventaActiva &&
+                  mesaActiva?.id &&
+                  puedeMoverLaCuenta({
+                    puesto: miPuesto,
+                    yoId: posUser?.id,
+                    atiendeId: resolverMeseroResponsable(mesaActiva, config)?.id,
+                  }) && (
+                    <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`} className="w-full">
+                      <Button variant="outline" className="w-full">
+                        <ArrowLeftRight className="w-4 h-4 mr-1" />
+                        {textoDelEnlaceParaMoverLaCuenta(miPuesto)}
+                      </Button>
+                    </Link>
+                  )}
               </div>
             </div>
           </div>

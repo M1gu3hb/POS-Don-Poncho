@@ -14,13 +14,16 @@ import { describe, expect, it } from 'vitest';
 const RAIZ_WEB = process.cwd().endsWith('web') ? process.cwd() : join(process.cwd(), 'apps', 'web');
 
 describe('DP-15 · mover la cuenta desde el mapa', () => {
-  it('el panel de la mesa enlaza a «Mesa activa» para dueño, administrador y gerente', () => {
+  it('el panel de la mesa enlaza a «Mesa activa» para quien la regla de puede-mover-la-cuenta deja', () => {
     const c = readFileSync(join(RAIZ_WEB, 'heredado', 'pages', 'Mesero.jsx'), 'utf8')
       .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
       .replace(/\s+/g, '');
-    expect(c).toContain("constPUEDEN_MOVER_LA_CUENTA=['dueno','administrador','gerente'];");
+    // DP-15.1: la lista fija de tres puestos se fue; ahora decide la función pura, que además
+    // abre el enlace al mesero en las mesas que él atiende.
+    expect(c).not.toContain('PUEDEN_MOVER_LA_CUENTA');
     expect(c).toContain(
-      '{ventaActiva&&mesaActiva?.id&&PUEDEN_MOVER_LA_CUENTA.includes(miPuesto)&&(<Linkto={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`}',
+      '{ventaActiva&&mesaActiva?.id&&puedeMoverLaCuenta({puesto:miPuesto,yoId:posUser?.id,atiendeId:resolverMeseroResponsable(mesaActiva,config)?.id,})&&(<Linkto={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`}',
     );
+    expect(c).toContain('{textoDelEnlaceParaMoverLaCuenta(miPuesto)}');
   });
 });

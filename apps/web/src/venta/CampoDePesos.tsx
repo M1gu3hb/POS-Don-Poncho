@@ -9,9 +9,10 @@ import type { ComponentProps } from 'react';
  * Vivía en la caja de la tienda; ahora lo usan también el retiro y el salón (D.1 de la
  * 2.4). Tiene la forma de `CampoDeDinero` y no es `CampoDeDinero` porque aquí lo tecleado
  * se guarda como TEXTO y lo lee `aCentavos` (`importe-tecleado.ts`), que es lo que llega
- * al servidor: la coma es siempre el decimal, cada importe admite hasta siete cifras de
- * pesos, uno vacío es cero y uno mal escrito detiene el envío. `CampoDeDinero` lee además
- * «1,250» como mil doscientos cincuenta, que aquí no es un importe.
+ * al servidor: la coma es de miles
+ * («1,500» es mil quinientos), el punto es el decimal, cada importe admite hasta siete cifras de
+ * pesos, uno vacío es cero y uno mal escrito o ambiguo («1,5») detiene el envío con su explicación.
+ * `CampoDeDinero` tiene sus propias reglas de la coma; las de aquí son las de `aCentavos`.
  */
 
 export interface CampoDePesosProps extends Omit<

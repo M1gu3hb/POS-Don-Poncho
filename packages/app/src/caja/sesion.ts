@@ -3,6 +3,7 @@ import 'server-only';
 import { ErrorDominio, PAQUETES_MOSTRADOR } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 import { repoCaja, repoOrdenes } from '@morphiqpos/data';
+import type { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
 import { olvidarLosCarritosDeLaSucursal } from '../restaurante/carrito-del-salon.ts';
@@ -163,6 +164,27 @@ export const abrirCaja = definirComando<
   },
 });
 
+/** Quien responde por la caja: ellos sí hacen gasto, depósito y ajuste. */
+const ROLES_DE_GERENCIA = ['gerente', 'administrador', 'dueno'] as const;
+type TipoDeMovimiento = z.infer<typeof entradaMovimientoCaja>['tipo'];
+
+const ETIQUETA_DE_MOVIMIENTO: Readonly<Record<TipoDeMovimiento, string>> = {
+  gasto: 'gasto',
+  retiro: 'retiro',
+  deposito: 'depósito',
+  ajuste: 'ajuste',
+};
+
+/**
+ * DP-15.1 · La cajera sólo saca retiros (la entrada de cambio es otro comando). El ajuste es lo
+ * que más importa negarle: cambia lo que el corte espera sin mover dinero, y en manos de quien
+ * cuenta el cajón es la forma de tapar su propio faltante.
+ */
+export function puedeRegistrarMovimiento(rol: string, tipo: TipoDeMovimiento): boolean {
+  if (tipo === 'retiro') return true;
+  return (ROLES_DE_GERENCIA as readonly string[]).includes(rol);
+}
+
 export const registrarMovimientoCaja = definirComando<
   Transaccion,
   typeof entradaMovimientoCaja,
@@ -175,7 +197,14 @@ export const registrarMovimientoCaja = definirComando<
   paquetes: PAQUETES_MOSTRADOR,
   entrada: entradaMovimientoCaja,
   async ejecutar(ctx, entrada) {
-    const { organizacionId, terminalId, empleoId } = ctx.ambito;
+    const { organizacionId, terminalId, empleoId, rol } = ctx.ambito;
+    // Primero el permiso: a quien no le toca no se le dice si hay caja abierta.
+    if (!puedeRegistrarMovimiento(rol, entrada.tipo)) {
+      throw new ErrorDominio(
+        'MOVIMIENTO_NO_PERMITIDO',
+        `Un ${ETIQUETA_DE_MOVIMIENTO[entrada.tipo]} lo registra gerencia: pídeselo, o haz un retiro con su motivo.`,
+      );
+    }
     if (terminalId === null) {
       throw new ErrorDominio('VENTA_SIN_TERMINAL', 'Registra el movimiento desde la terminal.');
     }

@@ -70,6 +70,14 @@ export interface HojaDelServidor {
   readonly negocio: NegocioDeLaHoja;
   readonly sesion: SesionDeLaHoja;
   readonly movimientos: readonly { tipo: string; montoCentavos: string; cuantos: number }[];
+  /** DP-15.1 · Cada ajuste del cajón, con su motivo y quién lo hizo (`consultas.ajustesDelCorte`). */
+  readonly ajustes: readonly {
+    movimientoId: string;
+    montoCentavos: string;
+    motivo: string | null;
+    quien: string | null;
+    registradoEn: string;
+  }[];
   readonly conteo: readonly { denominacionCentavos: string; piezas: number }[];
   readonly metodos: readonly {
     metodo: string;
@@ -434,6 +442,37 @@ export function entradasDeCambio(hoja: HojaDelServidor): number {
     .reduce((suma, m) => suma + centavos(m.montoCentavos), 0);
 }
 
+/** Lo que los ajustes sumaron (o restaron) al efectivo que el corte espera. */
+export function totalDeAjustes(hoja: HojaDelServidor): number {
+  return hoja.ajustes.reduce((suma, a) => suma + centavos(a.montoCentavos), 0);
+}
+
+/**
+ * DP-15.1 · Los ajustes, uno por uno. Cambian lo que el corte espera sin que haya pasado dinero;
+ * si sólo estuvieran dentro del «efectivo esperado», la diferencia de la noche saldría limpia sin
+ * que nadie supiera por qué. Un ajuste sin motivo (no debería existir) se dice con todas sus letras.
+ */
+export function ajustesDeCaja(hoja: HojaDelServidor): readonly Seccion[] {
+  return tablaSiHay({
+    tipo: 'tabla',
+    titulo: 'Ajustes de caja · quién y por qué',
+    columnas: [
+      { titulo: 'Hora' },
+      { titulo: 'Quién' },
+      { titulo: 'Motivo' },
+      { titulo: 'Monto', numerica: true },
+    ],
+    filas: hoja.ajustes.map((a) => [
+      hora(a.registradoEn),
+      texto(a.quien ?? 'Sin registrar'),
+      texto(a.motivo === null || a.motivo.trim() === '' ? 'SIN MOTIVO' : a.motivo),
+      dinero(a.montoCentavos),
+    ]),
+    total: [texto('TOTAL'), texto(''), texto(''), dinero(totalDeAjustes(hoja))],
+    nota: 'Suman al efectivo esperado aunque no hayan movido dinero: revísalos junto con la diferencia.',
+  });
+}
+
 /**
  * El arqueo: primero el fondo —el faltante que ya venía de anoche no es el de hoy—, luego
  * el efectivo, y en negritas lo que se deja, que es el fondo de mañana.
@@ -466,6 +505,12 @@ export function arqueo(
     );
   }
   if (cambio > 0) celdas.push({ etiqueta: 'Entradas de cambio', valor: dinero(cambio) });
+  // DP-15.1 · A la vista, antes del esperado: lo que un ajuste mueve no es dinero que pasó.
+  // (El «cajón abierto sin venta» también se anota como ajuste, pero de CERO: no mueve el esperado,
+  // y un renglón en ceros en el arqueo sólo estorba. En la sección de abajo sí sale.)
+  if (hoja.ajustes.some((a) => centavos(a.montoCentavos) !== 0)) {
+    celdas.push({ etiqueta: 'Ajustes de caja', valor: dinero(totalDeAjustes(hoja)) });
+  }
   celdas.push(
     { etiqueta: 'Efectivo esperado', valor: dinero(s.esperadoCentavos) },
     { etiqueta: 'Efectivo contado', valor: dinero(s.contadoCentavos) },

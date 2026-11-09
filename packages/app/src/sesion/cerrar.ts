@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { obtenerDb, repoSesion } from '@morphiqpos/data';
+import { conTransaccion, repoSesion } from '@morphiqpos/data';
 
 import { verificarSesion } from './token.ts';
 
@@ -13,5 +13,6 @@ export async function cerrarSesion(
   const verificada = verificarSesion(token, secreto);
   if (!verificada.ok) return;
 
-  await repoSesion.revocarSesion(obtenerDb(), verificada.carga.sid, ahora);
+  // En `read write` explícito, como toda escritura de la app (DP-D92).
+  await conTransaccion((tx) => repoSesion.revocarSesion(tx, verificada.carga.sid, ahora));
 }

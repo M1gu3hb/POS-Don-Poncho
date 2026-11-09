@@ -2,13 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { firmarSesion } from './token.ts';
 
-const dobles = vi.hoisted(() => ({
-  obtenerDb: vi.fn(() => ({ nombre: 'db-falsa' })),
-  revocarSesion: vi.fn(),
-}));
+const dobles = vi.hoisted(() => {
+  const tx = { nombre: 'transaccion-falsa' };
+  return {
+    tx,
+    // DP-D92 · La revocación va dentro de `conTransaccion` (que pide `read write`), no suelta.
+    conTransaccion: vi.fn((fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
+    revocarSesion: vi.fn(),
+  };
+});
 
 vi.mock('@morphiqpos/data', () => ({
-  obtenerDb: dobles.obtenerDb,
+  conTransaccion: dobles.conTransaccion,
   repoSesion: { revocarSesion: dobles.revocarSesion },
 }));
 
@@ -36,8 +41,9 @@ describe('cerrarSesion', () => {
   it('revoca el sid firmado antes de que la ruta borre la cookie', async () => {
     await cerrarSesion(token(), SECRETO, new Date('2026-03-04T10:00:00.000Z'));
 
+    expect(dobles.conTransaccion).toHaveBeenCalledTimes(1);
     expect(dobles.revocarSesion).toHaveBeenCalledWith(
-      expect.anything(),
+      dobles.tx,
       SID,
       new Date('2026-03-04T10:00:00.000Z'),
     );

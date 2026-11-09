@@ -1215,3 +1215,125 @@ Rama `dp-15` desde `main` (`f02d4ca`). El progreso para retomar vive en `docs/PR
 | --- | --- | --- | --- |
 | Revisión del servidor | Sonnet | Revisión adversarial, sólo lectura, del lado servidor de DP-15 | 0 bloqueantes; 3 medios arreglados, 2 descartados con razón |
 
+
+### Fase 6 · el PR y la puerta del acople
+
+- 14:55 `verify:acople` en local con la app servida y la CI leída: sus pendientes heredados (dos
+  comandos de plataforma sin ruta, «cocina» tecleado, la ruta del carrito armada con sufijo) se
+  arreglaron (`18093e8`). PR [#13](https://github.com/M1gu3hb/POS-Don-Poncho/pull/13) abierto; su CI,
+  10 de 10 en verde.
+
+### Fase 7 · el QA de la jornada y de los aparatos
+
+- 14:58 Copias `qa_dp15_j` y `qa_dp15_d` (5460) con el build de la rama; dos agentes Sonnet.
+- 15:45 QA-J: la jornada con dos cajas, tres meseros, cocina, bebidas, el dueño y comensales en 4 mesas
+  (uno en iPhone WebKit): **cuadró al centavo** (dos cortes y el día), 0 de 34 violaciones; 5 medios.
+- 16:00 QA-D: 54 de 54 entradas sin desborde (Android 360/412, iPhone, tabletas, PC), 8 a la vez sin
+  429, el portal, la red lenta (3G: 25 s a la pantalla del puesto, 1.7 s abrir mesa, 1.0 s la comanda
+  en Cocina), la red caída; **un bloqueante:** el ticket salía cortado.
+- 16:05–16:55 Arreglos con prueba en rojo y mutantes (DP-D89 corregida, DP-D90): el ticket (`e3f85f9`),
+  el fondo de apertura (`cede312`), «Caja 1» libre (`7d3db34`), lo listo de una cuenta cobrada
+  (`fc45004`), la precuenta del mesero (`9910ef1`), el agotado en lista (`fefb5b3`), la etiqueta del
+  iPhone (`9dacce9`) y las ventas del día en el Cierre (`58d516f`).
+- 17:05 Ronda 2 (copia nueva `qa_dp15_r2`, build nuevo): **9 de 9 en SÍ**, cuadre al centavo, 0 de 34.
+- 17:15 La CI cazó que con una sola caja el Cierre repetía su resumen como «Ventas del día»: ahora sólo
+  con varias cajas (`163a762`). Integración local 115 archivos / 559 pruebas; unidad 5112.
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| QA-J | Sonnet | La jornada completa con dos cajas y el cuadre al centavo | 85 chequeos; cuadró; 0/34; 5 medios (arreglados) |
+| QA-D | Sonnet | Los aparatos emulados, el portal, la red lenta, el ticket, la pantalla de inicio | 1 bloqueante y 2 medios (arreglados) |
+| QA-R2 | Sonnet | La ronda 2 sobre una copia nueva | 9/9 en SÍ, sin hallazgos |
+
+### Producción · las alertas intermitentes del limitador
+
+- 17:20 En los errores de Vercel: el limitador «No se pudo contar el intento de …» y 3 fallos del
+  carrito del portal, a las 13:50, durante la prueba del link (base propia). Permisos del rol de la app
+  bien; antes de la mudanza, ninguna; en local, ninguna en todo el QA.
+- 17:35 Una sonda en producción (lecturas del portal tras 1.5, 3 y 5 min sin uso): 2 alertas en 16
+  lecturas, con peticiones simultáneas. La causa no se registraba.
+- 17:50 La causa en las alertas (`895e590`) y `attachDatabasePool` de `@vercel/functions` 3.10.0
+  (`deb7c31`), DP-D91. La auditoría de dependencias de la CI cazó un `zod` viejo que traía:
+  `override` a 4.6.7 (`d0aeac8`).
+- 18:19 `pnpm verify` local completo (sin `verify:entorno` ni acople): unidad 448 / 5115, integración
+  115 / 559, build. La CI del PR corre otra vez.
+
+
+### 09-11 · el merge, la Fase 8 y la causa de las alertas
+
+- 04:20 `verify:acople` con la app servida y la CI leída (9 verdes en `d0aeac8`): completo; integración
+  115 / 559.
+- 04:22 Merge del PR [#13](https://github.com/M1gu3hb/POS-Don-Poncho/pull/13) a `main` (`cd76829`, squash,
+  a nombre de M1gu3hb). 04:24 Production `READY` (`dpl_8d4e…`, con `pos-don-poncho.vercel.app`).
+- 04:24 Fase 8, el puro link en producción sin PIN (DP-D88): la entrada 200 y sin desborde en 6
+  aparatos, el portal del QR en 5, 8 a la vez todos 200, la red lenta (3G: 10 s la primera vez, 1.5 s
+  con caché) y la etiqueta `apple-mobile-web-app-capable`.
+- 04:25 En Vercel, 12 alertas con la causa nueva: `DatabaseError sqlstate=25006` (transacción de sólo
+  lectura), al minuto de la prueba. **Las causaban mis guiones de lectura**: entraban por el pooler de
+  transacción con `set default_transaction_read_only = on`, y ese `SET` se quedaba en la conexión que
+  luego usaba la app. Ninguna corrida tocó la compartida (todas con `fase-b.env`; los guiones del
+  repo ya usaban `begin … read only`). DP-D91 reescrita; la regla, en la ficha 35.
+- 04:30 El pooler, sin ningún `SET`: 0 de 120 lecturas en sólo lectura (Supavisor ya había cerrado
+  las conexiones contaminadas). Los cuatro guiones, con `begin read only … commit`.
+- 04:31 La misma prueba del link: todo 200 y **cero alertas**. Producción limpia (lectura): 0 sesiones
+  de caja, 0 cuentas, 0 folios, 0 comandas y las 10 mesas libres.
+
+## DP-15.1 · La ronda final antes del sábado (auditoría del orquestador, 09-11)
+
+El orquestador auditó `main@cd76829` y la base propia: sin bloqueantes de dinero ni de datos. Su
+documento (`AUDITORIA-2026-11-09.md`) no está en disco: se trabaja con el resumen del encargo. Un solo
+PR, rama `dp-15-1` (sale de `dp-15-docs`, con el reporte 009; el PR #14 queda absorbido).
+
+### El 25006 en producción (DP-D92)
+
+- 08:05 La causa, contra el registro de esta sesión: las tres horas del encargo (08-11 13:50 y 17:24,
+  09-11 04:25) coinciden al minuto con corridas de `link.mjs` (13:48–13:50 y 04:24–04:25),
+  `permisos-de-tablas.mjs` (17:23) y `sonda-reposo.mjs` (17:24), todas por la `DATABASE_URL` de
+  producción (6543) y con `set default_transaction_read_only = on` de sesión. No un `begin … read
+  only` sin `rollback`: los del repo que abren transacción la cerraban y corrieron por la de sesión.
+- 08:16 Prueba en rojo (`solo-lectura-heredada.integracion.test.ts`): el pool de la app con todas sus
+  conexiones en `default_transaction_read_only = on`; la precondición pasa (una escritura suelta falla
+  con `25006`) y fallan la transacción y el limitador.
+- 08:17 `conTransaccion` con `setAccessMode('read write')`; el limitador (contar, devolver, purgar),
+  cerrar sesión y la cuota de archivos, dentro de `conTransaccion`. Verde (7/7 con las del limitador).
+  Contrato `escrituras-en-transaccion.contrato.test.ts`: ninguna escritura suelta sobre `obtenerDb()`.
+- 08:30 `scripts/lib/lectura-segura.mjs` (`exigirConexionDirecta` rechaza el 6543;
+  `leerEnSoloLectura` cierra con `rollback` en un `finally`) en `exportar-negocio`, `huella-ajena` e
+  `importar-negocio`; probados contra la base local y con una cadena del 6543 (se niegan con mensaje
+  claro). Los guiones de revisión de la sesión (`link.mjs`, `estado-propia.mjs`, que ahora cuenta
+  también los carritos) leen por la de sesión con `leerEnSoloLectura`; las dos sondas y el modo que
+  leía por el pooler, retirados.
+- 08:40 La regla en `docs/RUNBOOK.md` §3 (y la fila del `25006` en «Cuando algo falla») y en la
+  entrega; en la entrega también la sesión propia del iPhone al «Agregar a inicio».
+- 08:43 Mutantes 8 de 8 muertos. Commit `a77d1a0`.
+
+### Lo demás
+
+- 08:20 y 08:35 Dos agentes Sonnet, cada uno en su worktree y su base desechable (sin commit): A
+  (`dp151-a`, 5437) los movimientos de la cajera, el cambio de mesa del mesero y el borrador; B
+  (`dp151-b`, 5438) la auditoría con filtro en el servidor, las zonas desactivables y el «hoy» del
+  Tablero.
+- 08:44 El linter de Supabase de la propia: una sola función con `search_path` mudable,
+  `lealtad_movimientos_inmutables`. Prueba en rojo (ninguna función de `public` sin `search_path`
+  fijo) y la **190** (`alter function … set search_path = pg_catalog, public`, con pre y
+  poscondición). Verde en la base local. Commit `5102d31`. A la propia, con la CI en verde.
+- 08:48 Vercel sin errores de ejecución desde las 04:32 (después de corregir los guiones).
+- **Lo listo de una cuenta cobrada antes de servir** (medio 4 del encargo): Miguel no lo ha
+  confirmado; se queda como está y se le pregunta al final.
+
+### La integración de los agentes y el PR
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| A (`dp151-a`, 5437) | Sonnet | `caja.movimiento` por rol, ajustes en el corte, motivo, «1,500»; el mesero cambia de mesa; el borrador y lo agotado | 23 archivos; 31 mutantes muertos (2 rehechos aquí porque el código cambió después de escribirlos); integrado en `047dcf1` |
+| B (`dp151-b`, 5438) | Sonnet | La auditoría con filtro en el servidor; zonas desactivables; el «hoy» del Tablero | 29 archivos; 51 de 52 mutantes muertos (el vivo, equivalente: un `.strict()` que el envoltorio ya impone); integrado en `b5f2981` |
+
+- 08:55 El parche A, revisado: el servidor deja a cualquier mesero mover una cuenta viva (decisión de
+  sala ya escrita en el comando); se queda así y lo dice DP-D94. «Mesa activa» ya no le ofrece
+  dividir. Sus pruebas aquí: 954 unitarias, 71 de integración (caja y venta).
+- 09:15 El parche B, revisado. La auditoría también guarda los intentos negados y se leían como
+  hechos: ahora dicen «Intento rechazado (…)» (prueba en rojo antes; 3 mutantes muertos). Sus pruebas
+  aquí: 698 unitarias, 15 de integración.
+- 09:29 DECISIONES DP-D93 a DP-D97, el reporte 009 con la ronda, la ficha 36. Commit `b5f2981`.
+- 09:30 PR [#15](https://github.com/M1gu3hb/POS-Don-Poncho/pull/15) (`dp-15-1` → `main`); el #14 se
+  cerró como absorbido. `pnpm verify` local en curso.

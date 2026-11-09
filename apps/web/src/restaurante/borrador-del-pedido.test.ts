@@ -4,18 +4,25 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
+  GRACIA_DEL_BARRIDO_MS,
   VIGENCIA_DEL_BORRADOR_MS,
   borrarBorrador,
   claveDelBorrador,
   guardarBorrador,
   leerBorrador,
+  limpiarBorradoresDeCuentasCerradas,
   type Almacen,
+  type AlmacenRecorrible,
 } from './borrador-del-pedido.ts';
 
-function almacen(): Almacen & { readonly datos: Map<string, string> } {
+function almacen(): AlmacenRecorrible & { readonly datos: Map<string, string> } {
   const datos = new Map<string, string>();
   return {
     datos,
+    get length() {
+      return datos.size;
+    },
+    key: (i) => [...datos.keys()][i] ?? null,
     getItem: (c) => datos.get(c) ?? null,
     setItem: (c, v) => {
       datos.set(c, v);
@@ -43,10 +50,11 @@ describe('DP-15 · el pedido a medias del mesero', () => {
     expect(leerBorrador(a, clave, 'orden-a', 2_000)).toEqual(borrador);
   });
 
-  it('no revive en otra cuenta de la misma mesa (otra familia)', () => {
+  it('no revive en otra cuenta de la misma mesa (otra familia), y se borra: esa cuenta ya se cerró', () => {
     const a = almacen();
     guardarBorrador(a, clave, borrador, 1_000);
     expect(leerBorrador(a, clave, 'orden-b', 2_000)).toBeNull();
+    expect(a.datos.size).toBe(0);
   });
 
   it('a las 3 horas caduca, y se borra', () => {
@@ -99,6 +107,63 @@ describe('DP-15 · el pedido a medias del mesero', () => {
       guardarBorrador(roto, clave, borrador, 1);
     }).not.toThrow();
     expect(leerBorrador(roto, clave, 'orden-a', 1)).toBeNull();
+  });
+});
+
+describe('DP-15.1 · el borrador de una cuenta que ya se cobró se barre', () => {
+  const OTRA = claveDelBorrador('mesero-1', 'mesa-7');
+  const AHORA = 10 * 60 * 60 * 1000;
+  const VIEJO = AHORA - GRACIA_DEL_BARRIDO_MS - 1;
+
+  it('lo de una cuenta que ya no está sobre ninguna mesa se borra; lo de las vivas se queda', () => {
+    const a = almacen();
+    guardarBorrador(a, clave, borrador, VIEJO); // orden-a: sigue viva
+    guardarBorrador(a, OTRA, { ...borrador, ordenId: 'orden-cobrada' }, VIEJO);
+    limpiarBorradoresDeCuentasCerradas(a, new Set(['orden-a']), AHORA);
+    expect([...a.datos.keys()]).toEqual([clave]);
+  });
+
+  it('no toca el que se acaba de guardar: la lista de mesas puede venir de antes de abrir la cuenta', () => {
+    const a = almacen();
+    guardarBorrador(a, OTRA, { ...borrador, ordenId: 'orden-recien-abierta' }, AHORA - 1_000);
+    limpiarBorradoresDeCuentasCerradas(a, new Set(), AHORA);
+    expect(a.datos.size).toBe(1);
+  });
+
+  it('lo vencido se borra aunque su cuenta siga viva', () => {
+    const a = almacen();
+    guardarBorrador(a, clave, borrador, AHORA - VIGENCIA_DEL_BORRADOR_MS - 1);
+    limpiarBorradoresDeCuentasCerradas(a, new Set(['orden-a']), AHORA);
+    expect(a.datos.size).toBe(0);
+  });
+
+  it('lo mal formado se borra, y lo que no es de este módulo no se toca', () => {
+    const a = almacen();
+    a.datos.set(`${clave}.roto`, '{no es json');
+    a.datos.set(OTRA, JSON.stringify([1, 2]));
+    a.datos.set('otra-cosa', 'intacta');
+    limpiarBorradoresDeCuentasCerradas(a, new Set(['orden-a']), AHORA);
+    // Sólo lo que lleva el prefijo del borrador se mira; el JSON roto y el que no es objeto, fuera.
+    expect([...a.datos.keys()]).toEqual(['otra-cosa']);
+  });
+
+  it('un almacén que falla no tumba la pantalla', () => {
+    const roto: AlmacenRecorrible = {
+      length: 1,
+      key: () => {
+        throw new Error('bloqueado');
+      },
+      getItem: () => {
+        throw new Error('bloqueado');
+      },
+      setItem: () => undefined,
+      removeItem: () => {
+        throw new Error('bloqueado');
+      },
+    };
+    expect(() => {
+      limpiarBorradoresDeCuentasCerradas(roto, new Set(), AHORA);
+    }).not.toThrow();
   });
 });
 

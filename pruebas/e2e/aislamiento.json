@@ -808,6 +808,16 @@
       ]
     },
     {
+      "ruta": "/api/restaurante/fijar-zona-activa",
+      "comando": "restaurante.fijar_zona_activa",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "zonaId": "⟨zonas⟩", "activa": false },
+      "ids": [{ "camino": "zonaId", "tabla": "zonas" }]
+    },
+    {
       "ruta": "/api/restaurante/imprimir-precuenta",
       "comando": "restaurante.imprimir_precuenta",
       "escribe": true,

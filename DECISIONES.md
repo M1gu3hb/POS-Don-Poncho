@@ -1696,3 +1696,175 @@ puerta los denuncia todos.
   `apple-mobile-web-app-capable`.
 - **Sin migración.**
 
+
+## DP-D91 · Las alertas del limitador eran un `SET` de sesión por el pooler de transacción · 08/09-11-2026
+
+- **Lo que se vio:** tras la mudanza, en producción, el limitador avisó «No se pudo contar el intento
+  de …» y el carrito del portal devolvió 500 de vez en cuando (13:50 del 08-11, durante la prueba del
+  link, y en una sonda posterior: 2 de 16 lecturas). Nunca en local ni antes de la mudanza. La causa
+  no quedaba en el log: el `catch` del limitador la tragaba.
+- **Primero, la causa en el log:** las alertas del limitador y los fallos del portal llevan la clase
+  del error y su código (`claseDelFallo`, sin datos de entrada). Con eso desplegado, la prueba del
+  link del 09-11 (04:24) dio `DatabaseError sqlstate=25006`: **transacción de sólo lectura**.
+- **La causa:** mis propios guiones de verificación (el link, la sonda, el estado de producción),
+  que leían la base propia por la `DATABASE_URL` de producción, el **pooler de transacción**
+  (Supavisor, 6543), y empezaban con `set default_transaction_read_only = on`. En el pooler de
+  transacción un `SET` de sesión se queda en la conexión del servidor, y la siguiente petición de la
+  app que caía en ella heredaba el sólo lectura: el `insert` del limitador y del carrito fallaban.
+  Las horas cuadran al minuto, y se quitaba solo porque Supavisor cierra las conexiones ociosas.
+  No era la app.
+- **Elección:**
+  1. Los guiones de lectura van con `begin read only … commit` (la transacción, no la sesión), como
+     ya hacían los del repo (`huella-ajena`, `exportar-negocio`, `importar-negocio`). Nunca un `SET`
+     de sesión por el pooler de transacción. Con los guiones corregidos, la misma prueba del link
+     (04:30) dio **cero alertas**.
+  2. **La base compartida no se tocó:** todas esas corridas fueron contra la base propia, y los
+     guiones del repo que leen la compartida ya usaban la transacción.
+  3. Se queda `attachDatabasePool(pool)` de `@vercel/functions` (3.10.0, fija), la recomendación de
+     Vercel para `pg` en Fluid compute (cierra las conexiones ociosas antes de que la función se
+     suspenda). No era la causa, pero es lo correcto y fuera de Vercel no hace nada.
+- **La dependencia nueva** trae, por `@vercel/oidc` > `@vercel/cli-config`, un `zod` < 4.6.6
+  (GHSA-mrhx-c7xc-m3w5): un `override` de pnpm lo sube a 4.6.7, la del resto del repo, y
+  `pnpm audit --audit-level high --prod` queda limpio.
+- **Alternativas descartadas:** cambiar al pooler de sesión (5432), porque el de Micro admite pocos
+  clientes (ya tumbó pruebas con `EMAXCONNSESSION`); y que la app abra cada transacción con
+  `read write` explícito, porque el riesgo está en los guiones del operador, no en la app, y las
+  sentencias sueltas seguirían fallando. La regla queda en la ficha 35. *(Revisado en DP-D92: la app sí
+  pide `read write` explícito, y sus escrituras sueltas pasan a una transacción.)*
+- **Sin migración.**
+
+## DP-D92 · El `25006` en producción: la causa confirmada, la app blindada y los guiones fuera del pooler · 09-11-2026
+
+- **Lo que pidió la auditoría del 09-11** (`main@cd76829`): Vercel registró 30 errores
+  `sqlstate=25006` (`read_only_sql_transaction`) el 08-11 a las 13:50 y 17:24 y el 09-11 a las 04:25
+  (CDMX): el limitador en `/api/auth/empleados` y en el portal, y `publico.qr.carrito` (un comensal
+  habría visto un error). La base, sana: sin recuperación, sin `default_transaction_read_only`, sin
+  «idle in transaction» y sin configuración en el rol de la app.
+- **La causa, confirmada contra el registro de la sesión:** cada hora tiene una corrida de un guion
+  de revisión por la `DATABASE_URL` de producción (el pooler de transacción, 6543) que empezaba con
+  `set default_transaction_read_only = on`, un `SET` **de sesión**, sin transacción:
+  13:48–13:50 `link.mjs`; 17:23 `permisos-de-tablas.mjs` y 17:24 `sonda-reposo.mjs`; 04:24–04:25
+  `link.mjs`. No fue un `begin … read only` sin `rollback` (la sospecha de la auditoría): esos
+  guiones no abrían transacción, y los del repo que sí la abren (`exportar-negocio`, `huella-ajena`)
+  la cerraban y, contra la propia, corrieron por la conexión de sesión (5432; 11:10 y 13:10). El
+  `SET` se quedaba en la conexión del servidor y la siguiente escritura de la app que caía en ella
+  moría, hasta que Supavisor la cerraba por ociosa. Ninguna de esas corridas tocó la compartida.
+- **Elección (las tres capas):**
+  1. **La app.** `conTransaccion` abre `read write` explícito (`setAccessMode('read write')`), así
+     que lo que traiga la conexión ya no decide. Las escrituras que iban sueltas sobre `obtenerDb()`
+     pasan a `conTransaccion`: el limitador (contar, devolver y purgar), cerrar sesión y la cuota de
+     archivos. Pruebas: `solo-lectura-heredada.integracion.test.ts` abre el pool con
+     `default_transaction_read_only = on` en todas sus conexiones (el peor caso): una escritura
+     suelta falla con `25006` (la precondición), y `conTransaccion` y el limitador escriben; estaba en
+     rojo antes del arreglo. `escrituras-en-transaccion.contrato.test.ts` impide volver a escribir
+     suelto. El carrito del portal ya iba por `conTransaccion` (`comando-publico.ts`).
+  2. **Los guiones.** `scripts/lib/lectura-segura.mjs`: `exigirConexionDirecta` rechaza una cadena
+     del 6543 y `leerEnSoloLectura` abre `read only` y cierra con `rollback` en un `finally`, pase lo
+     que pase. Los usan `exportar-negocio` y `huella-ajena`; `importar-negocio` exige la conexión
+     directa o de sesión. Los guiones de revisión de la sesión (el link, el estado de producción)
+     van igual; las dos sondas y el modo que leía por el pooler, retirados.
+  3. **La regla**, en `docs/RUNBOOK.md` y en la entrega: ninguna revisión contra producción por el
+     pooler de transacción mientras el restaurante opera.
+- **Revisa DP-D91:** allá se descartó el `read write` en la app «porque el riesgo está en los
+  guiones». Sigue estando ahí, pero cuesta poco cerrarlo también del lado de la app: el limitador
+  pasa de una ida y vuelta a tres (`begin`, la sentencia, `commit`), unos milisegundos en la misma
+  región, y el modo de fallo desaparece venga de donde venga.
+- **Sin migración.**
+
+## DP-D93 · Lo que el servidor le acepta a la cajera en `caja.movimiento`, y el ajuste con rastro · 09-11-2026
+
+- **Lo que vio la auditoría:** `caja.movimiento` dejaba a cualquier rol de caja registrar `gasto`,
+  `deposito` y `ajuste`. El ajuste cambia lo que el corte espera sin que pase dinero: en manos de quien
+  cuenta el cajón, es la forma de tapar su propio faltante.
+- **Elección:**
+  1. **El servidor** (`packages/app/src/caja/sesion.ts`, `puedeRegistrarMovimiento`): la cajera sólo
+     registra `retiro`; `gasto`, `deposito` y `ajuste` son de gerente, administrador y dueño
+     (`MOVIMIENTO_NO_PERMITIDO`, antes de mirar si hay caja abierta). La entrada de cambio es otro
+     comando y sigue siendo suya. La pantalla ya no le ofrecía nada de eso.
+  2. **El ajuste deja rastro en el corte:** `caja.hoja_del_corte` trae cada ajuste (monto, motivo,
+     quién y hora); el documento del corte tiene «Ajustes de caja · quién y por qué» con su total, y el
+     arqueo muestra la celda «Ajustes de caja» antes del efectivo esperado. Un ajuste sin motivo (uno
+     viejo) sale como «SIN MOTIVO».
+  3. **El motivo se recorta antes de medirlo** («   » no es motivo): 3 letras para todos, **5 para el
+     retiro** (`LARGO_MINIMO_DEL_MOTIVO_DE_RETIRO` en `packages/contracts`, que leen servidor y
+     pantalla). «gas» o «.» no dicen a dónde fue el dinero; cinco piden «hielo» o «al banco».
+  4. **El importe con coma de miles:** «1,500» es 1500 y «1,500.50» es 1500.50
+     (`apps/web/src/venta/importe-tecleado.ts`). La coma deja de ser decimal: «1,5» o «12,50» se
+     rechazan con un mensaje que dice cómo escribirlo (antes «12,50» se leía 12.50; en México la coma
+     es de miles y el cruce era el peligro: «1,500» se leía 1.5).
+- **Pruebas:** `movimiento.test.ts`, `importe-tecleado.test.ts`, `corte.test.ts` y la integración
+  `ajustes-del-corte.integracion.test.ts`, en rojo antes del arreglo; mutantes muertos (DP-15.1).
+- **Sin migración.**
+
+## DP-D94 · El mesero cambia de mesa desde su pantalla, y su pedido sobrevive a un agotado · 09-11-2026
+
+- **Cambiar de mesa:** el servidor ya dejaba al mesero (`restaurante.cambiar_mesa`: «es una decisión
+  de sala», no mueve dinero); el enlace del panel de la mesa era sólo para dirección. Ahora
+  (`apps/web/src/restaurante/puede-mover-la-cuenta.ts`) dirección lo ve siempre, y el mesero **en la
+  mesa que él atiende**, con el texto «Cambiar de mesa». Dividir sigue en Caja y dirección (el
+  servidor se lo niega al mesero y «Mesa activa» no se lo ofrece); unir, arrastrando.
+  - **Lo que no se cambió:** el servidor deja al mesero mover cualquier cuenta viva, no sólo las
+    suyas. Se queda así a propósito: en un salón chico los meseros se cubren, y el movimiento queda
+    en la auditoría. «Sus mesas» es regla de la pantalla.
+- **El pedido a medias y el agotado** (`apartar-agotados.ts`, `Mesero.jsx`): si el servidor rechaza el
+  envío con `PRODUCTO_AGOTADO`, la pantalla relee el menú, aparta los renglones que ahora salen
+  agotados, avisa («X se agotó, lo quitamos del pedido») y manda el resto **una vez**, con su propia
+  clave de idempotencia (es otro pedido). En el cliente porque el error del servidor no nombra los
+  platillos y cambiarlo tocaría a todos los clientes; si el menú releído no muestra nada agotado, se
+  muestra el error tal cual.
+- **Los borradores viejos** (`borrador-del-pedido.ts`): al leer, el de otra cuenta, el vencido y el mal
+  formado se borran; y al cargar las mesas se barren los de cuentas que ya no están sobre ninguna mesa
+  (cobradas o cerradas en otro aparato), respetando lo guardado hace menos de 2 minutos y sin barrer
+  nunca si no se leyeron mesas.
+- **Sin migración.**
+
+## DP-D95 · Registros → «Auditoría»: el filtro en el servidor, por día y con páginas · 09-11-2026
+
+- **Lo que vio la auditoría:** la consulta traía las últimas N y la pantalla filtraba en el navegador:
+  un cambio de PIN de la mañana no se encontraba en la noche porque ya no estaba entre las N.
+- **Elección:**
+  1. `reportes.auditoria_reciente` recibe `{ grupo?, fecha?, pagina }` (zod; el día tiene que existir)
+     y filtra en la consulta: por **grupo de acción** (siete, con los nombres reales del catálogo en
+     `packages/domain/src/auditoria/grupos.ts`: PIN y usuarios, agotado, cajas, descuentos,
+     cancelaciones, movimientos de efectivo, configuración; un contrato comprueba que cada acción
+     existe y escribe), por **día del negocio** (`limitesDeLaFecha` con la zona del negocio, como
+     `diaDelNegocio`) y con **páginas de 50** (más reciente primero, desempate por id; un renglón de más
+     dice si hay siguiente). Quién la ve no cambia.
+  2. La pantalla manda los filtros y pagina (grupo, día con «Hoy», Anterior/Siguiente); no filtra
+     nada en el navegador. Cada acción con su frase (`describir-accion.ts`); lo desconocido, por su
+     familia o «Otro cambio registrado», nunca el nombre del comando.
+  3. **Lo negado se marca:** la auditoría también guarda los intentos que el servidor rechazó
+     (`resultado` denegado, conflicto o error) y se leían como hechos («Cambió el PIN…»). Ahora dicen
+     «Intento rechazado (sin permiso): …».
+- **Pruebas:** la integración encuentra el PIN de la mañana entre 320 renglones más nuevos, cuenta el
+  día en CDMX (23:30 local es ese día aunque en UTC ya sea el siguiente) y pagina 50/50/20 sin repetir
+  ni saltar. Mutantes muertos, salvo uno equivalente (quitar `.strict()`: el envoltorio de comandos ya
+  valida en estricto).
+- **Sin migración.**
+
+## DP-D96 · Las zonas se desactivan, y el «hoy» del Tablero es el día del negocio · 09-11-2026
+
+- **Zonas** (`restaurante.fijar_zona_activa`, `packages/app/src/restaurante/zona-activa.ts`; dueño,
+  administrador y gerente): **desactivar** se niega si una mesa activa de la zona está ocupada, en
+  limpieza, con cuenta o unida (el error dice cuáles); si todas están libres, se apagan con la zona
+  (salen del plano y el portal las rechaza). **Reactivar** devuelve exactamente las que se apagaron con
+  ella (las lee del rastro de esa desactivación: una mesa dada de baja antes no resucita) y no
+  reactiva a medias si el nombre o un número de mesa ya los usa otra activa. Sin migración:
+  `zonas.activa` y `mesas.activa` ya existían. En la pantalla, «Desactivar» por zona y la sección
+  «Desactivadas» con «Reactivar».
+- **El Tablero** (`apps/web/src/tablero/dia-del-negocio.ts`, `use-inicio-del-dia.ts`): «hoy» es el día
+  del negocio en CDMX (no la fecha UTC ni la del aparato a ciegas), se recalcula a la medianoche y al
+  volver a la pantalla, sin recargar. Si la lista del día llega al tope de 1000 ventas, la pantalla lo
+  dice («los totales pueden estar incompletos»). Supone días de 24 h, cierto para CDMX desde 2022.
+- **Sin migración.**
+
+## DP-D97 · Lo listo de una cuenta cobrada antes de servir: se queda como está, sin confirmar · 09-11-2026
+
+- **La propuesta de la auditoría:** si el restaurante **cobra antes de servir** (p. ej. barbacoa para
+  llevar), lo listo de una cuenta cobrada no se da por entregado solo
+  (`restaurante/comandas-al-cobrar.ts`, `cobrar.ts`): se quedaría en «Listos» con «Cuenta cobrada» y
+  un botón «Entregado» para la estación y el mesero.
+- **Elección:** depende de cómo opera Don Poncho y Miguel no lo ha confirmado. **Se queda como está**
+  (DP-D87/DP-D90: al cobrar, lo listo sale solo de «Listos»; lo que seguía por preparar se queda con la
+  marca «Cuenta cobrada»), y se le pregunta. Si lo confirma, es un cambio acotado de la pantalla de la
+  estación y del mesero, cuidando no volver a atorar comandas como en J-H3.

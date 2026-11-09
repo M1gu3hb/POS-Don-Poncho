@@ -2,7 +2,7 @@ import 'server-only';
 
 import { sql } from 'kysely';
 
-import { obtenerDb } from '../cliente.ts';
+import { conTransaccion } from '../cliente.ts';
 import { registrar } from '../observabilidad.ts';
 
 /**
@@ -63,7 +63,10 @@ export async function contarIntento(
 ): Promise<ResultadoLimite> {
   const intervalo = sql<string>`make_interval(secs => ${ventanaSegundos})`;
 
-  const fila = await sql<{ intentos: number; espera: number }>`
+  // En una transacción `read write` explícita y no como sentencia suelta (DP-D92): una conexión
+  // del pooler heredada en sólo lectura dejaba al limitador sin contar (`25006`).
+  const fila = await conTransaccion((tx) =>
+    sql<{ intentos: number; espera: number }>`
     insert into limite_tasa (clave, ventana_en, intentos)
     values (${clave}, now(), 1)
     on conflict (clave) do update set
@@ -81,7 +84,8 @@ export async function contarIntento(
         0,
         ceil(extract(epoch from (ventana_en + ${intervalo}) - now()))
       )::int as espera
-  `.execute(obtenerDb());
+  `.execute(tx),
+  );
 
   await limpiarSiCorresponde();
 
@@ -109,11 +113,13 @@ export async function contarIntento(
  * nueva: un intento de menos en un contador que acaba de empezar.
  */
 export async function devolverIntento(clave: string): Promise<void> {
-  await obtenerDb()
-    .updateTable('limite_tasa')
-    .set({ intentos: sql<number>`greatest(intentos - 1, 0)` })
-    .where('clave', '=', clave)
-    .execute();
+  await conTransaccion((tx) =>
+    tx
+      .updateTable('limite_tasa')
+      .set({ intentos: sql<number>`greatest(intentos - 1, 0)` })
+      .where('clave', '=', clave)
+      .execute(),
+  );
 }
 
 /**
@@ -124,9 +130,11 @@ export async function devolverIntento(clave: string): Promise<void> {
  * distintos que han fallado — no con tráfico normal.
  */
 export async function limpiarVencidos(ventanaSegundos: number): Promise<number> {
-  const resultado = await obtenerDb()
-    .deleteFrom('limite_tasa')
-    .where('ventana_en', '<', sql<Date>`now() - make_interval(secs => ${ventanaSegundos} * 4)`)
-    .executeTakeFirst();
+  const resultado = await conTransaccion((tx) =>
+    tx
+      .deleteFrom('limite_tasa')
+      .where('ventana_en', '<', sql<Date>`now() - make_interval(secs => ${ventanaSegundos} * 4)`)
+      .executeTakeFirst(),
+  );
   return Number(resultado.numDeletedRows);
 }
