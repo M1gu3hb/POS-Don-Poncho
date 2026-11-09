@@ -28,7 +28,9 @@ import {
   FileText,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { startOfDay } from 'date-fns';
+import { TOPE_DE_VENTAS_DEL_DIA } from '~/tablero/dia-del-negocio';
+import { useInicioDelDia } from '~/tablero/use-inicio-del-dia';
+import { AvisoDelTopeDeVentas } from '~/tablero/AvisoDelTopeDeVentas';
 import { delDia } from '~/tablero/del-dia';
 import CorteHistorialList from '@/components/cortes/CorteHistorialList';
 import ColoredStatCard, { PAYMENT_COLORS } from '@/components/dashboard/ColoredStatCard';
@@ -75,7 +77,8 @@ export default function Dashboard() {
   // para no mostrar ceros falsos mientras carga la primera vez.
   // DP-15 · Las ventas del DÍA (todas las cajas), acotadas en la base: con cien tickets el tope por
   // omisión de 200 ya no se queda corto, y una caja cerrada sigue contando.
-  const inicioDeHoy = startOfDay(new Date()).getTime();
+  // DP-15.1: el día del NEGOCIO (CDMX), vivo: cambia solo a la medianoche y al volver a la pantalla.
+  const inicioDeHoy = useInicioDelDia();
   const { data: ventas, isPending: ventasLoading } = useQuery({
     queryKey: ['ventas_hoy', inicioDeHoy],
     queryFn: () =>
@@ -83,7 +86,7 @@ export default function Dashboard() {
         { campo: 'fecha_cierre', desde: new Date(inicioDeHoy).toISOString() },
         { estado: 'pagada' },
         '-fecha_cierre',
-        1000,
+        TOPE_DE_VENTAS_DEL_DIA,
       ),
     placeholderData: (prev) => prev,
     staleTime: 5000,
@@ -284,6 +287,7 @@ export default function Dashboard() {
       />
 
       <AccesosDelDueno />
+      <AvisoDelTopeDeVentas recibidas={Array.isArray(ventas) ? ventas.length : 0} />
       <RecetasPendientes />
 
       {/* Card informativa de Primeros pasos — solo aparece si quedan pasos

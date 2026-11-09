@@ -23,6 +23,11 @@ export {
 export type { ResultadoCancelacion } from './cancelacion.ts';
 
 export { abrirMesa, liberarMesa } from './mesas.ts';
+export {
+  entradaFijarZonaActiva,
+  fijarZonaActiva,
+  type ResultadoZonaActiva,
+} from './zona-activa.ts';
 export type { ResultadoAbrirMesa, ResultadoLiberarMesa } from './mesas.ts';
 
 export { enviarPedido } from './pedido.ts';

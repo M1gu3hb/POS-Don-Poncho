@@ -9,7 +9,7 @@ export {
   type FormatoDeExporte,
   type PeticionDeExporte,
 } from './exportar.ts';
-export { diaDelNegocio, type LimitesDelDia } from './dia.ts';
+export { diaDelNegocio, limitesDeLaFecha, type LimitesDelDia } from './dia.ts';
 export {
   centavosDe,
   leerMargen,
@@ -22,5 +22,6 @@ export {
 export {
   auditoriaReciente,
   entradaAuditoriaReciente,
+  TAMANO_DE_PAGINA_DE_AUDITORIA,
   type RenglonDeAuditoria,
 } from './auditoria-reciente.ts';

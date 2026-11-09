@@ -2,7 +2,8 @@
 
 - **Fecha:** 08 y 09-11-2026, hora de CDMX.
 - **Dónde:** sesión local de Claude Code en la laptop de Miguel; rama `dp-15` (la mudanza) y
-  `dp-15-codigo` (los arreglos), en el PR [#13](https://github.com/M1gu3hb/POS-Don-Poncho/pull/13).
+  `dp-15-codigo` (los arreglos), en el PR [#13](https://github.com/M1gu3hb/POS-Don-Poncho/pull/13); y la
+  ronda final DP-15.1 (la auditoría del orquestador del 09-11), rama `dp-15-1`, en un solo PR (§5c, §8).
 - **Sin secretos ni PIN en este documento:** los accesos viven en `..\_PRIVADO\`.
 - **Producción, desde el 08-11 a las 11:03, en la base propia** (proyecto de Supabase «POS Don Poncho»,
   us-east-2, Postgres 17). La base compartida conserva intactos los datos de Don Poncho como respaldo,
@@ -17,8 +18,20 @@
    «Caja 2» la tableta) y probar el ticket en la impresora térmica real (58 u 80 mm).
 3. **La primera semana:** mirar el uso en Vercel (invocaciones, CPU activa, transferencia) y el egress
    de Supabase (`docs/infra/CAPACIDAD.md`).
+4. **Una respuesta:** ¿Don Poncho **cobra antes de servir** (p. ej. la barbacoa para llevar)? Si sí, lo
+   listo de una cuenta cobrada se quedaría en «Listos» con un botón «Entregado» (DP-D97); si no, se
+   queda como está.
+5. **En el iPhone:** la app de «Agregar a inicio» tiene su propia sesión, distinta de Safari: la
+   primera vez que se abre desde el ícono se entra otra vez con el PIN. Es del iPhone, no un error.
 
 ## 1 · La mudanza (fases 1, 3 y 4)
+
+**Con sus horas (08-11, CDMX):** 10:43 la CLI con sesión · 10:45 `_PRIVADOase-b.env` · 10:49
+`pnpm db:migrate` hasta la 188 (48 s) · 10:50 `verify:esquema` estricto · 10:51 RLS 139/139 y 0
+permisos · 10:52 la huella de los otros 10 y la exportación con `--exigir-cerrado` · 10:53 la
+importación (135 tablas, 1175 filas, idénticas) · 10:56 `por_cancelacion` · 10:59 los PIN nuevos ·
+11:01 las cinco variables de Vercel · 11:03 `READY` · 11:05 el humo, 38 de 38 · 11:07 la huella de los
+otros 10, **idéntica** · 11:10 el regreso atrás escrito y los respaldos de la propia.
 
 - **El proyecto nuevo** (lo creó Miguel): sus datos con la CLI de Supabase, el bucket privado
   `pos-don-poncho` y las llaves en `_PRIVADO\fase-b.env`. El almacén va por la API de Supabase, sin
@@ -112,21 +125,52 @@ negocio (DP-D88), con Playwright desde la laptop contra https://pos-don-poncho.v
 - **Lo que un agente no hace:** entrar con los PIN reales y probar en los teléfonos de verdad. Es la
   revisión de 10 minutos de Miguel (§0).
 
-## 5b · Las alertas intermitentes de producción (DP-D91)
+## 5b · El `25006` de producción: la causa y el arreglo (DP-D91, DP-D92)
 
-Tras la mudanza, Vercel registró que el limitador de intentos no pudo contar algunas veces y que el
-carrito del portal devolvió 500 (13:50 del 08-11, durante la prueba del link, y 2 de 16 lecturas en una
-sonda posterior). Nunca en local. La causa no se registraba, así que primero se desplegó la causa (la
-clase y el código) en esas alertas. Con eso, la prueba del link del 09-11 dijo `sqlstate 25006`:
-transacción de sólo lectura.
+Tras la mudanza, Vercel registró 30 errores `sqlstate=25006` (transacción de sólo lectura): el 08-11 a
+las 13:50 y 17:24 y el 09-11 a las 04:25. El limitador no pudo contar algunas entradas (en
+`/api/auth/empleados` y en el portal) y `publico.qr.carrito` falló: un comensal habría visto un error.
 
-**Las causaban mis propios guiones de verificación.** Leían producción por el pooler de transacción y
-empezaban con `set default_transaction_read_only = on`. En ese pooler, el `SET` se queda en la conexión
-del servidor y la app lo heredaba hasta que Supavisor cerraba la conexión. Los guiones ahora usan
-`begin read only … commit`, y la misma prueba dio **cero alertas**. La base compartida no se tocó:
-todas esas corridas fueron contra la propia, y los guiones del repo que leen la compartida ya usaban la
-transacción. La regla quedó en la ficha 35. También se desplegó `attachDatabasePool`, la recomendación
-de Vercel para `pg`: no era la causa, pero se queda.
+**Las causaban mis propios guiones de revisión.** Las tres horas coinciden al minuto con corridas de
+`link.mjs`, `permisos-de-tablas.mjs` y `sonda-reposo.mjs` por la `DATABASE_URL` de producción, que es el
+pooler de transacción (6543), con `set default_transaction_read_only = on` **de sesión**. En ese pooler
+una conexión del servidor la usan muchos clientes: el `SET` se quedaba en ella y la siguiente escritura
+de la app que caía ahí moría, hasta que Supavisor la cerraba. No fue la app ni la base: la base está
+sana, y ninguna de esas corridas tocó la compartida. Desde que se corrigieron los guiones (04:31 del
+09-11), Vercel no registra errores.
+
+El arreglo, en tres capas (DP-D92):
+
+1. **La app** pide `read write` en cada transacción (`conTransaccion`), y lo que escribía suelto (el
+   limitador, cerrar sesión, la cuota de archivos) va dentro de una. Una prueba abre el pool con todas
+   sus conexiones en sólo lectura —el peor caso— y comprueba que la app escribe igual; estaba en rojo
+   antes del arreglo. Un contrato impide volver a escribir suelto.
+2. **Los guiones** que leen una base real entran por la conexión de sesión (5432), rechazan una cadena
+   del 6543 y cierran su transacción de sólo lectura con `rollback` en un `finally`
+   (`scripts/lib/lectura-segura.mjs`).
+3. **La regla**, en `docs/RUNBOOK.md` y en la entrega: ninguna revisión contra producción por el pooler
+   de transacción mientras el restaurante opera.
+
+## 5c · DP-15.1 · La ronda final (la auditoría del orquestador del 09-11)
+
+Sin bloqueantes de dinero ni de datos. Lo que pidió, hecho con prueba en rojo antes y sus mutantes:
+
+- **La cajera y los movimientos** (DP-D93): el servidor sólo le acepta el retiro (y la entrada de
+  cambio, que es otro comando); gasto, depósito y ajuste son de gerencia. Cada ajuste sale en el corte
+  con su motivo, quién y la hora, y el arqueo muestra la celda «Ajustes de caja». El motivo del retiro
+  pide 5 letras. «1,500» se entiende como mil quinientos.
+- **Registros → «Auditoría»** (DP-D95): el filtro va en el servidor (siete grupos de acción, el día
+  del negocio en CDMX y páginas de 50) y cada acción se dice en palabras. Un cambio de PIN de la mañana
+  se encuentra en la noche. Lo que el servidor negó se marca «Intento rechazado».
+- **El mesero cambia de mesa** desde el panel de sus mesas (DP-D94). Dividir sigue en Caja y gerencia.
+- **El pedido a medias del mesero** aparta lo que se agotó, avisa y manda el resto; los borradores de
+  cuentas ya cobradas o cerradas se barren (DP-D94).
+- **Zonas** que se desactivan y reactivan, con la regla de sus mesas (DP-D96).
+- **El Tablero:** «hoy» es el día del negocio en CDMX y cambia solo a la medianoche; si la lista llega
+  al tope de 1000 ventas, lo avisa (DP-D96).
+- **Supabase:** la **190** fija el `search_path` de `lealtad_movimientos_inmutables`, la única función
+  que marcaba el linter, aplicada a la propia con `pnpm db:migrate`.
+- **Sin confirmar:** lo listo de una cuenta cobrada antes de servir (DP-D97), se queda como está (§0).
 
 ## 6 · Lo no hecho, y por qué
 
@@ -138,14 +182,18 @@ de Vercel para `pg`: no era la causa, pero se queda.
   también «Oculto en el POS»; detalles de la pantalla del celular (el menú tapa «Mesa N», «Historial» a
   360 px); `@page size: 58mm auto` (Chromium usa la hoja de la impresora: se confirma el sábado).
 - **Las recetas:** los 107 platillos siguen sin receta; el margen dice «sin receta» hasta cargarlas.
+- **DP-15.1, a propósito:** el servidor deja a cualquier mesero mover una cuenta viva, no sólo las
+  suyas (en un salón chico se cubren; queda en la auditoría); «sus mesas» es regla de la pantalla. Lo
+  listo de una cuenta cobrada antes de servir espera la respuesta de Miguel (DP-D97).
 - **Local:** `verify:entorno` pide Postgres 17 y la laptop tiene 18; corrió todo lo demás, y la CI
   corre su parte.
 
 ## 7 · Las decisiones y la ficha
 
-- DECISIONES DP-D81 a DP-D91.
-- La ficha 35 para el maestro (`docs/para-el-maestro/35-agotado-movimientos-dos-cajas-y-puestos.md`),
-  con la migración 189.
+- DECISIONES DP-D81 a DP-D97.
+- Las fichas para el maestro: la 35 (`docs/para-el-maestro/35-agotado-movimientos-dos-cajas-y-puestos.md`),
+  con la migración 189, y la 36 (`docs/para-el-maestro/36-read-write-guiones-y-ronda-final.md`), con la
+  190.
 
 ## 8 · Los commits
 

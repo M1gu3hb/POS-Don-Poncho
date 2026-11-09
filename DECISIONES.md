@@ -1817,3 +1817,54 @@ puerta los denuncia todos.
   (cobradas o cerradas en otro aparato), respetando lo guardado hace menos de 2 minutos y sin barrer
   nunca si no se leyeron mesas.
 - **Sin migración.**
+
+## DP-D95 · Registros → «Auditoría»: el filtro en el servidor, por día y con páginas · 09-11-2026
+
+- **Lo que vio la auditoría:** la consulta traía las últimas N y la pantalla filtraba en el navegador:
+  un cambio de PIN de la mañana no se encontraba en la noche porque ya no estaba entre las N.
+- **Elección:**
+  1. `reportes.auditoria_reciente` recibe `{ grupo?, fecha?, pagina }` (zod; el día tiene que existir)
+     y filtra en la consulta: por **grupo de acción** (siete, con los nombres reales del catálogo en
+     `packages/domain/src/auditoria/grupos.ts`: PIN y usuarios, agotado, cajas, descuentos,
+     cancelaciones, movimientos de efectivo, configuración; un contrato comprueba que cada acción
+     existe y escribe), por **día del negocio** (`limitesDeLaFecha` con la zona del negocio, como
+     `diaDelNegocio`) y con **páginas de 50** (más reciente primero, desempate por id; un renglón de más
+     dice si hay siguiente). Quién la ve no cambia.
+  2. La pantalla manda los filtros y pagina (grupo, día con «Hoy», Anterior/Siguiente); no filtra
+     nada en el navegador. Cada acción con su frase (`describir-accion.ts`); lo desconocido, por su
+     familia o «Otro cambio registrado», nunca el nombre del comando.
+  3. **Lo negado se marca:** la auditoría también guarda los intentos que el servidor rechazó
+     (`resultado` denegado, conflicto o error) y se leían como hechos («Cambió el PIN…»). Ahora dicen
+     «Intento rechazado (sin permiso): …».
+- **Pruebas:** la integración encuentra el PIN de la mañana entre 320 renglones más nuevos, cuenta el
+  día en CDMX (23:30 local es ese día aunque en UTC ya sea el siguiente) y pagina 50/50/20 sin repetir
+  ni saltar. Mutantes muertos, salvo uno equivalente (quitar `.strict()`: el envoltorio de comandos ya
+  valida en estricto).
+- **Sin migración.**
+
+## DP-D96 · Las zonas se desactivan, y el «hoy» del Tablero es el día del negocio · 09-11-2026
+
+- **Zonas** (`restaurante.fijar_zona_activa`, `packages/app/src/restaurante/zona-activa.ts`; dueño,
+  administrador y gerente): **desactivar** se niega si una mesa activa de la zona está ocupada, en
+  limpieza, con cuenta o unida (el error dice cuáles); si todas están libres, se apagan con la zona
+  (salen del plano y el portal las rechaza). **Reactivar** devuelve exactamente las que se apagaron con
+  ella (las lee del rastro de esa desactivación: una mesa dada de baja antes no resucita) y no
+  reactiva a medias si el nombre o un número de mesa ya los usa otra activa. Sin migración:
+  `zonas.activa` y `mesas.activa` ya existían. En la pantalla, «Desactivar» por zona y la sección
+  «Desactivadas» con «Reactivar».
+- **El Tablero** (`apps/web/src/tablero/dia-del-negocio.ts`, `use-inicio-del-dia.ts`): «hoy» es el día
+  del negocio en CDMX (no la fecha UTC ni la del aparato a ciegas), se recalcula a la medianoche y al
+  volver a la pantalla, sin recargar. Si la lista del día llega al tope de 1000 ventas, la pantalla lo
+  dice («los totales pueden estar incompletos»). Supone días de 24 h, cierto para CDMX desde 2022.
+- **Sin migración.**
+
+## DP-D97 · Lo listo de una cuenta cobrada antes de servir: se queda como está, sin confirmar · 09-11-2026
+
+- **La propuesta de la auditoría:** si el restaurante **cobra antes de servir** (p. ej. barbacoa para
+  llevar), lo listo de una cuenta cobrada no se da por entregado solo
+  (`restaurante/comandas-al-cobrar.ts`, `cobrar.ts`): se quedaría en «Listos» con «Cuenta cobrada» y
+  un botón «Entregado» para la estación y el mesero.
+- **Elección:** depende de cómo opera Don Poncho y Miguel no lo ha confirmado. **Se queda como está**
+  (DP-D87/DP-D90: al cobrar, lo listo sale solo de «Listos»; lo que seguía por preparar se queda con la
+  marca «Cuenta cobrada»), y se le pregunta. Si lo confirma, es un cambio acotado de la pantalla de la
+  estación y del mesero, cuidando no volver a atorar comandas como en J-H3.

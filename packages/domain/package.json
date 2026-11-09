@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./agenda": "./src/agenda/index.ts",
+    "./auditoria": "./src/auditoria/index.ts",
     "./dinero": "./src/dinero/index.ts",
     "./catalogo": "./src/catalogo/index.ts",
     "./inventario": "./src/inventario/index.ts",

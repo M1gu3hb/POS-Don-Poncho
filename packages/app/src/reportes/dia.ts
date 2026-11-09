@@ -105,3 +105,29 @@ export async function diaDelNegocio(
     diaDeLaSemanaDeManana: dow === 7 ? 1 : dow + 1,
   };
 }
+
+/**
+ * Los límites de UN día cualquiera del negocio (`YYYY-MM-DD`), medio abierto `[desde, hasta)`, en
+ * la zona que el negocio declaró. Es la misma conversión de `diaDelNegocio` (la hace Postgres con
+ * `organizaciones.zona_horaria`), pero para el día que se pide y no para hoy: la auditoría de
+ * Registros busca «el 10 de noviembre», no «hoy».
+ */
+export async function limitesDeLaFecha(
+  tx: Transaccion,
+  organizacionId: string,
+  fecha: string,
+): Promise<{ readonly desde: Date; readonly hasta: Date }> {
+  const filas = await sql<{ desde: Date; hasta: Date }>`
+    select (${fecha}::date::timestamp       at time zone o.zona_horaria) as desde,
+           ((${fecha}::date + 1)::timestamp at time zone o.zona_horaria) as hasta
+      from organizaciones o
+     where o.id = ${organizacionId}
+  `.execute(tx);
+  const fila = filas.rows[0];
+  if (fila === undefined) {
+    // Igual que en `diaDelNegocio`: no puede pasar, y el día en UTC es mejor que ningún día.
+    const desde = new Date(`${fecha}T00:00:00.000Z`);
+    return { desde, hasta: new Date(desde.getTime() + MS_POR_DIA) };
+  }
+  return { desde: new Date(fila.desde), hasta: new Date(fila.hasta) };
+}
