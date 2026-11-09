@@ -96,6 +96,7 @@ function hoja(extras: ExtrasDelServidor, cambios: Partial<HojaDelServidor> = {})
     ],
     porPersona: [],
     gastos: [],
+    ajustes: [],
     cancelaciones: [],
     corteHasta: '2026-09-26T03:00:00.000Z',
     parcial: false,
@@ -691,5 +692,83 @@ describe('DP-15 · el documento del cierre dice lo que el visor', () => {
     const vacios: DescuentosLeidos = { ...DESCUENTOS, filas: [], cuantos: 0, totalCentavos: 0 };
     const doc = documentoDelCorte(hoja(RESTAURANTE), vacios);
     expect(titulos(doc.secciones)).not.toContain('Descuentos del día');
+  });
+});
+
+describe('DP-15.1 · los ajustes de caja no se esconden en el esperado', () => {
+  const AJUSTES: HojaDelServidor['ajustes'] = [
+    {
+      movimientoId: 'a1',
+      montoCentavos: '7500',
+      motivo: 'sobró de ayer, ya contado',
+      quien: 'Rosa Gerente',
+      registradoEn: '2026-09-25T20:00:00.000Z',
+    },
+    {
+      movimientoId: 'a2',
+      montoCentavos: '-2000',
+      motivo: null,
+      quien: null,
+      registradoEn: '2026-09-25T21:00:00.000Z',
+    },
+  ];
+
+  it('sin ajustes, ni renglón en el arqueo ni sección', () => {
+    const doc = documentoDelCorte(hoja(RESTAURANTE));
+    expect(celda(doc.secciones, 'Apertura y fondo', 'Ajustes de caja')).toBeUndefined();
+    expect(titulos(doc.secciones)).not.toContain('Ajustes de caja · quién y por qué');
+  });
+
+  it('con ajustes, el arqueo dice cuánto pesan en el esperado y la sección los lista uno por uno', () => {
+    const doc = documentoDelCorte(hoja(RESTAURANTE, { ajustes: AJUSTES }));
+    expect(celda(doc.secciones, 'Apertura y fondo', 'Ajustes de caja')?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: 5_500,
+    });
+    const seccion = doc.secciones.find((s) => s.titulo === 'Ajustes de caja · quién y por qué');
+    if (seccion?.tipo !== 'tabla') throw new Error('falta la sección de ajustes');
+    expect(seccion.filas.map((f) => f.slice(1))).toEqual([
+      [
+        { tipo: 'texto', texto: 'Rosa Gerente' },
+        { tipo: 'texto', texto: 'sobró de ayer, ya contado' },
+        { tipo: 'dinero', centavos: 7_500 },
+      ],
+      // Un ajuste viejo sin motivo no se maquilla: se dice.
+      [
+        { tipo: 'texto', texto: 'Sin registrar' },
+        { tipo: 'texto', texto: 'SIN MOTIVO' },
+        { tipo: 'dinero', centavos: -2_000 },
+      ],
+    ]);
+    expect(seccion.total?.at(-1)).toEqual({ tipo: 'dinero', centavos: 5_500 });
+  });
+
+  it('el «cajón abierto sin venta» (un ajuste de cero) sale en la lista, pero no ensucia el arqueo', () => {
+    const doc = documentoDelCorte(
+      hoja(RESTAURANTE, {
+        ajustes: [
+          {
+            movimientoId: 'c1',
+            montoCentavos: '0',
+            motivo: 'cajón abierto sin venta: dar_cambio',
+            quien: 'Lupe Cajera',
+            registradoEn: '2026-09-25T20:00:00.000Z',
+          },
+        ],
+      }),
+    );
+    expect(celda(doc.secciones, 'Apertura y fondo', 'Ajustes de caja')).toBeUndefined();
+    expect(titulos(doc.secciones)).toContain('Ajustes de caja · quién y por qué');
+  });
+
+  it('el arqueo trae el ajuste ANTES del efectivo esperado, para leerlo de corrido', () => {
+    const doc = documentoDelCorte(hoja(RESTAURANTE, { ajustes: AJUSTES }));
+    const arqueo = doc.secciones.find((s) => s.titulo === 'Apertura y fondo');
+    if (arqueo?.tipo !== 'celdas') throw new Error('falta el arqueo');
+    const etiquetas = arqueo.celdas.map((c) => c.etiqueta);
+    expect(etiquetas.indexOf('Ajustes de caja')).toBeGreaterThan(-1);
+    expect(etiquetas.indexOf('Ajustes de caja')).toBeLessThan(
+      etiquetas.indexOf('Efectivo esperado'),
+    );
   });
 });

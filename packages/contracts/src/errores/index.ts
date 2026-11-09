@@ -75,6 +75,11 @@ export const CODIGOS_ERROR = {
   TOTAL_DESACTUALIZADO: 'TOTAL_DESACTUALIZADO',
   CAJA_CERRADA: 'CAJA_CERRADA',
   CAJA_YA_ABIERTA: 'CAJA_YA_ABIERTA',
+  /**
+   * DP-15.1 · Ese tipo de movimiento del cajón no es de este rol (la cajera sólo saca retiros;
+   * el gasto, el depósito y el ajuste son de gerencia, administración y dueño).
+   */
+  MOVIMIENTO_NO_PERMITIDO: 'MOVIMIENTO_NO_PERMITIDO',
   /** El corte no existe, o es de otra organización, que se ve igual. */
   CORTE_NO_ENCONTRADO: 'CORTE_NO_ENCONTRADO',
   /**

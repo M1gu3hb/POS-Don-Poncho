@@ -1,3 +1,4 @@
+import { LARGO_MINIMO_DEL_MOTIVO_DE_RETIRO } from '@morphiqpos/contracts';
 import { z } from 'zod';
 
 import { entradaOpciones } from '../restaurante/esquemas.ts';
@@ -186,16 +187,33 @@ export const entradaAbrirCaja = z
     };
   });
 
-export const entradaMovimientoCaja = z.object({
-  tipo: z.enum(['gasto', 'retiro', 'deposito', 'ajuste']),
-  /**
-   * Puede ser NEGATIVO: un ajuste a la baja lo es. Lo que se acota es su valor
-   * absoluto, en los dos sentidos — un retiro de mil millones y un ajuste de
-   * menos mil millones son el mismo error de tecleo.
-   */
-  montoCentavos: z.number().int().min(-TOPE_DE_IMPORTE_CENTAVOS).max(TOPE_DE_IMPORTE_CENTAVOS),
-  motivo: z.string().min(3).max(200),
-});
+export const entradaMovimientoCaja = z
+  .object({
+    tipo: z.enum(['gasto', 'retiro', 'deposito', 'ajuste']),
+    /**
+     * Puede ser NEGATIVO: un ajuste a la baja lo es. Lo que se acota es su valor
+     * absoluto, en los dos sentidos — un retiro de mil millones y un ajuste de
+     * menos mil millones son el mismo error de tecleo.
+     */
+    montoCentavos: z.number().int().min(-TOPE_DE_IMPORTE_CENTAVOS).max(TOPE_DE_IMPORTE_CENTAVOS),
+    /**
+     * Recortado ANTES de medirlo: «   » no es un motivo, y un ajuste sin motivo es justo lo que no
+     * debe existir (cambia lo que el corte espera sin que haya pasado dinero).
+     */
+    motivo: z.string().trim().min(3).max(200),
+  })
+  .superRefine((v, ctx) => {
+    // El retiro es la salida de dinero que más fácil esconde un faltante: «gas» o «.» no dicen a dónde
+    // fue. Cinco letras ya piden «hielo» o «al banco»: no es un ensayo, es lo mínimo para que el corte
+    // tenga una frase que leer.
+    if (v.tipo === 'retiro' && v.motivo.length < LARGO_MINIMO_DEL_MOTIVO_DE_RETIRO) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['motivo'],
+        message: `Escribe a dónde va ese dinero: al menos ${String(LARGO_MINIMO_DEL_MOTIVO_DE_RETIRO)} letras.`,
+      });
+    }
+  });
 
 export const entradaCerrarCaja = z.object({
   efectivoContadoCentavos: centavosNoNegativos,

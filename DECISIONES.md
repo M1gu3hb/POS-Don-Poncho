@@ -1770,3 +1770,50 @@ puerta los denuncia todos.
   pasa de una ida y vuelta a tres (`begin`, la sentencia, `commit`), unos milisegundos en la misma
   región, y el modo de fallo desaparece venga de donde venga.
 - **Sin migración.**
+
+## DP-D93 · Lo que el servidor le acepta a la cajera en `caja.movimiento`, y el ajuste con rastro · 09-11-2026
+
+- **Lo que vio la auditoría:** `caja.movimiento` dejaba a cualquier rol de caja registrar `gasto`,
+  `deposito` y `ajuste`. El ajuste cambia lo que el corte espera sin que pase dinero: en manos de quien
+  cuenta el cajón, es la forma de tapar su propio faltante.
+- **Elección:**
+  1. **El servidor** (`packages/app/src/caja/sesion.ts`, `puedeRegistrarMovimiento`): la cajera sólo
+     registra `retiro`; `gasto`, `deposito` y `ajuste` son de gerente, administrador y dueño
+     (`MOVIMIENTO_NO_PERMITIDO`, antes de mirar si hay caja abierta). La entrada de cambio es otro
+     comando y sigue siendo suya. La pantalla ya no le ofrecía nada de eso.
+  2. **El ajuste deja rastro en el corte:** `caja.hoja_del_corte` trae cada ajuste (monto, motivo,
+     quién y hora); el documento del corte tiene «Ajustes de caja · quién y por qué» con su total, y el
+     arqueo muestra la celda «Ajustes de caja» antes del efectivo esperado. Un ajuste sin motivo (uno
+     viejo) sale como «SIN MOTIVO».
+  3. **El motivo se recorta antes de medirlo** («   » no es motivo): 3 letras para todos, **5 para el
+     retiro** (`LARGO_MINIMO_DEL_MOTIVO_DE_RETIRO` en `packages/contracts`, que leen servidor y
+     pantalla). «gas» o «.» no dicen a dónde fue el dinero; cinco piden «hielo» o «al banco».
+  4. **El importe con coma de miles:** «1,500» es 1500 y «1,500.50» es 1500.50
+     (`apps/web/src/venta/importe-tecleado.ts`). La coma deja de ser decimal: «1,5» o «12,50» se
+     rechazan con un mensaje que dice cómo escribirlo (antes «12,50» se leía 12.50; en México la coma
+     es de miles y el cruce era el peligro: «1,500» se leía 1.5).
+- **Pruebas:** `movimiento.test.ts`, `importe-tecleado.test.ts`, `corte.test.ts` y la integración
+  `ajustes-del-corte.integracion.test.ts`, en rojo antes del arreglo; mutantes muertos (DP-15.1).
+- **Sin migración.**
+
+## DP-D94 · El mesero cambia de mesa desde su pantalla, y su pedido sobrevive a un agotado · 09-11-2026
+
+- **Cambiar de mesa:** el servidor ya dejaba al mesero (`restaurante.cambiar_mesa`: «es una decisión
+  de sala», no mueve dinero); el enlace del panel de la mesa era sólo para dirección. Ahora
+  (`apps/web/src/restaurante/puede-mover-la-cuenta.ts`) dirección lo ve siempre, y el mesero **en la
+  mesa que él atiende**, con el texto «Cambiar de mesa». Dividir sigue en Caja y dirección (el
+  servidor se lo niega al mesero y «Mesa activa» no se lo ofrece); unir, arrastrando.
+  - **Lo que no se cambió:** el servidor deja al mesero mover cualquier cuenta viva, no sólo las
+    suyas. Se queda así a propósito: en un salón chico los meseros se cubren, y el movimiento queda
+    en la auditoría. «Sus mesas» es regla de la pantalla.
+- **El pedido a medias y el agotado** (`apartar-agotados.ts`, `Mesero.jsx`): si el servidor rechaza el
+  envío con `PRODUCTO_AGOTADO`, la pantalla relee el menú, aparta los renglones que ahora salen
+  agotados, avisa («X se agotó, lo quitamos del pedido») y manda el resto **una vez**, con su propia
+  clave de idempotencia (es otro pedido). En el cliente porque el error del servidor no nombra los
+  platillos y cambiarlo tocaría a todos los clientes; si el menú releído no muestra nada agotado, se
+  muestra el error tal cual.
+- **Los borradores viejos** (`borrador-del-pedido.ts`): al leer, el de otra cuenta, el vencido y el mal
+  formado se borran; y al cargar las mesas se barren los de cuentas que ya no están sobre ninguna mesa
+  (cobradas o cerradas en otro aparato), respetando lo guardado hace menos de 2 minutos y sin barrer
+  nunca si no se leyeron mesas.
+- **Sin migración.**
