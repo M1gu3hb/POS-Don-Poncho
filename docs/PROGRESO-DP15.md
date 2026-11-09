@@ -7,7 +7,8 @@
 - **Fecha límite:** jueves 12-11-2026 en la noche. Instalación: sábado 14-11.
 - **Proyecto nuevo de Supabase:** «POS Don Poncho», ref `mqlcusxwqrefpfttjjks`, us-east-2,
   Postgres 17, creado por Miguel el 08-11.
-- **Producción, desde el 08-11 a las 11:03:** en la base propia (`dpl_J8sH…`, `READY`).
+- **Producción, desde el 08-11 a las 11:03:** en la base propia. Desde el 09-11 a las 04:24, con
+  `main` en `cd76829` (el PR #13; `dpl_8d4e…`, `READY`).
 
 ## Estado por fase
 
@@ -20,23 +21,21 @@
 | 3 | La mudanza | hecha (11:07): huella IDÉNTICA, humo 38/38, regreso atrás escrito |
 | 4 | Base propia lista: 2 cajas, «Caja 2», descuentos, PIN, respaldo | hecho (11:10) |
 | 5 | Auditoría por función | hecha: `docs/qa/AUDITORIA-POR-FUNCION.md` (2 bloqueantes, 15 medios) |
-| 6 | Arreglos | hechos en `dp-15-codigo` (F1 y F2 integrados; DP-D83 a DP-D88; ficha 35); falta `pnpm verify` completo, PR, CI, despliegue y humo |
-| 7 | QA de jornada | listo para lanzar: copias `qa_dp15_j` y `qa_dp15_d` (5460) y encargos en `D:\mpos-tmp\dp15-qa\` |
-| 8 | Prueba del puro link | guion listo y probado contra producción (`D:\mpos-tmp\dp15-link\link.mjs`, sin PIN, DP-D88); se repite tras desplegar |
-| 9 | Entrega y reporte 009 | `docs/ENTREGA-DON-PONCHO.md` casi lista; falta el reporte |
+| 6 | Arreglos | hechos; PR #13 en `main` (`cd76829`, 09-11 04:22) con la CI 10/10 y el acople; DP-D83 a DP-D91, ficha 35 |
+| 7 | QA de jornada | hecho: QA-J cuadró al centavo y 0/34; QA-D 54/54; 1 bloqueante y 5 medios arreglados; ronda 2 9/9 (`docs/qa/`) |
+| 8 | Prueba del puro link | hecha (09-11 04:31): 6 aparatos, el portal en 5, 8 a la vez, 3G, «Agregar a inicio»; producción limpia; las alertas eran mis guiones (DP-D91), cero tras corregirlos |
+| 9 | Entrega y reporte 009 | `docs/ENTREGA-DON-PONCHO.md` en `main`; el reporte 009 completo, en el PR de documentos (rama `dp-15-docs`) |
 
 ## Lo que sigue
 
-1. `pnpm verify` del worktree (guion `verify-completo.sh [desde-la-puerta]` del scratchpad, sin
-   `verify:entorno` que pide Postgres 17): si pasa, push de `dp-15-codigo`, PR a `main`
-   (cuerpo en `scratchpad\pr-dp15.md`), CI (si la galería cambia, `workflow_dispatch` con
-   `actualizar_galeria`), merge, esperar Production `READY` y humo sin cobrar (`humo-mudanza.mjs`).
-2. Fase 7: servir las copias con el build del worktree (`servir-copia.sh j 32741 <worktree>` y
-   `d 32742`) y lanzar los dos agentes de QA (`ENCARGO-QA-J.md`, `ENCARGO-QA-D.md`); integrar
-   `JORNADA-2026-11-08.md` y `APARATOS-2026-11-08.md` en `docs/qa/`. Máximo 3 rondas.
-3. Fase 8: repetir `link.mjs` contra producción ya desplegada (las etiquetas del iPhone deben salir);
-   comprobar producción limpia con `estado-propia.mjs` (sólo lectura).
-4. Fase 9: el reporte 009, PROGRESO, bitácora y el mensaje final.
+1. El PR de documentos (`dp-15-docs` → `main`): el reporte 009, DP-D91 reescrita, la ficha 35, la
+   bitácora, este archivo y el comentario de `cliente.contrato.test.ts`. CI en verde y merge.
+2. El mensaje final a Miguel: el link, el commit, lo que falta y lo que necesita de él.
+3. **Regla nueva (DP-D91):** cualquier guion que lea producción va con `begin read only … commit`,
+   nunca con un `SET` de sesión por el pooler de transacción.
+
+- Mutantes: todos los vigentes mueren (102; `D:\mpos-tmp\dp15-mutantes-final.log` y los tres rehechos).
+- `pnpm verify` local completo en verde sobre el código final (sin `verify:entorno`; acople aparte).
 
 ## Dónde quedó cada cosa
 

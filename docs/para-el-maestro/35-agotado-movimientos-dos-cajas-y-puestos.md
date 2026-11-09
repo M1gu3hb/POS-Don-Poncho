@@ -1,6 +1,6 @@
 # 35 · El agotado del día, los movimientos de la cajera, dos cajas en el cierre y lo que ve cada puesto (DP-15)
 
-Decisiones DP-D83 a DP-D90. **Una migración: la 189** (aditiva). Todo es genérico: salió de la
+Decisiones DP-D83 a DP-D91. **Una migración: la 189** (aditiva). Todo es genérico: salió de la
 auditoría por función de DP-15 (`docs/qa/AUDITORIA-POR-FUNCION.md`) y el maestro tiene los mismos
 huecos.
 
@@ -28,6 +28,15 @@ timestamptz`, nula = disponible; precondición (la columna no existe) y poscondi
   la precuenta del mesero se cuenta antes de imprimirse; `caja.ventas_del_dia` y la sección «Ventas del
   día · todas las cajas» del Cierre; el aislado de impresión con `translate: var(...)` (el minificador
   fundía `translate: none`).
+- **La causa en las alertas y el pool en Vercel** (DP-D91): `claseDelFallo` compartida en
+  `packages/app/src/observabilidad.ts`, usada por el limitador y el portal (clase y SQLSTATE, sin
+  datos de entrada); `attachDatabasePool(pool)` de `@vercel/functions` en
+  `packages/data/src/cliente.ts`; el `override` de `zod` para `@vercel/cli-config`.
+- **Regla para cualquier guion que lea producción por el pooler de transacción** (DP-D91): sólo
+  lectura con `begin read only … commit`, **nunca** `set default_transaction_read_only = on` ni otro
+  `SET` de sesión. En el pooler de transacción el `SET` se queda en la conexión del servidor y la app
+  lo hereda: aquí tumbó escrituras del limitador y del carrito (`sqlstate 25006`) hasta que Supavisor
+  cerró esas conexiones.
 - **Dos cajas** (DP-D85): el Cierre del día avisa si queda otra abierta y cierra sólo la de ese aparato
   (`restaurante/otras-cajas-al-cerrar.ts`, `CierreDiarioDialog.jsx`); «Ventas hoy» del Tablero suma el
   día de todas las cajas (`tablero/del-dia.ts`); `caja.terminales` lista sólo las que abrieron alguna

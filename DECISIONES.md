@@ -1696,3 +1696,38 @@ puerta los denuncia todos.
   `apple-mobile-web-app-capable`.
 - **Sin migración.**
 
+
+## DP-D91 · Las alertas del limitador eran un `SET` de sesión por el pooler de transacción · 08/09-11-2026
+
+- **Lo que se vio:** tras la mudanza, en producción, el limitador avisó «No se pudo contar el intento
+  de …» y el carrito del portal devolvió 500 de vez en cuando (13:50 del 08-11, durante la prueba del
+  link, y en una sonda posterior: 2 de 16 lecturas). Nunca en local ni antes de la mudanza. La causa
+  no quedaba en el log: el `catch` del limitador la tragaba.
+- **Primero, la causa en el log:** las alertas del limitador y los fallos del portal llevan la clase
+  del error y su código (`claseDelFallo`, sin datos de entrada). Con eso desplegado, la prueba del
+  link del 09-11 (04:24) dio `DatabaseError sqlstate=25006`: **transacción de sólo lectura**.
+- **La causa:** mis propios guiones de verificación (el link, la sonda, el estado de producción),
+  que leían la base propia por la `DATABASE_URL` de producción, el **pooler de transacción**
+  (Supavisor, 6543), y empezaban con `set default_transaction_read_only = on`. En el pooler de
+  transacción un `SET` de sesión se queda en la conexión del servidor, y la siguiente petición de la
+  app que caía en ella heredaba el sólo lectura: el `insert` del limitador y del carrito fallaban.
+  Las horas cuadran al minuto, y se quitaba solo porque Supavisor cierra las conexiones ociosas.
+  No era la app.
+- **Elección:**
+  1. Los guiones de lectura van con `begin read only … commit` (la transacción, no la sesión), como
+     ya hacían los del repo (`huella-ajena`, `exportar-negocio`, `importar-negocio`). Nunca un `SET`
+     de sesión por el pooler de transacción. Con los guiones corregidos, la misma prueba del link
+     (04:30) dio **cero alertas**.
+  2. **La base compartida no se tocó:** todas esas corridas fueron contra la base propia, y los
+     guiones del repo que leen la compartida ya usaban la transacción.
+  3. Se queda `attachDatabasePool(pool)` de `@vercel/functions` (3.10.0, fija), la recomendación de
+     Vercel para `pg` en Fluid compute (cierra las conexiones ociosas antes de que la función se
+     suspenda). No era la causa, pero es lo correcto y fuera de Vercel no hace nada.
+- **La dependencia nueva** trae, por `@vercel/oidc` > `@vercel/cli-config`, un `zod` < 4.6.6
+  (GHSA-mrhx-c7xc-m3w5): un `override` de pnpm lo sube a 4.6.7, la del resto del repo, y
+  `pnpm audit --audit-level high --prod` queda limpio.
+- **Alternativas descartadas:** cambiar al pooler de sesión (5432), porque el de Micro admite pocos
+  clientes (ya tumbó pruebas con `EMAXCONNSESSION`); y que la app abra cada transacción con
+  `read write` explícito, porque el riesgo está en los guiones del operador, no en la app, y las
+  sentencias sueltas seguirían fallando. La regla queda en la ficha 35.
+- **Sin migración.**
