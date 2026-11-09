@@ -32,6 +32,10 @@ overrides:
   # POS Don Poncho (25-10-2026): llega por jspdf y las de <= 3.4.16 dejan pasar plantillas en
   # SAFE_FOR_TEMPLATES y manejadores vivos con IN_PLACE (GHSA de octubre). jspdf aún no la sube.
   dompurify: 3.4.17
+  # POS Don Poncho (08-11-2026, DP-15): llega por @vercel/functions > @vercel/oidc >
+  # @vercel/cli-config, que fija una < 4.6.6 (GHSA-mrhx-c7xc-m3w5, memoria con colecciones
+  # enormes). La misma que usa todo el repo.
+  '@vercel/cli-config>zod': 4.6.7
 
 catalog:
   typescript: 6.0.3
