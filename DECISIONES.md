@@ -1729,5 +1729,44 @@ puerta los denuncia todos.
 - **Alternativas descartadas:** cambiar al pooler de sesión (5432), porque el de Micro admite pocos
   clientes (ya tumbó pruebas con `EMAXCONNSESSION`); y que la app abra cada transacción con
   `read write` explícito, porque el riesgo está en los guiones del operador, no en la app, y las
-  sentencias sueltas seguirían fallando. La regla queda en la ficha 35.
+  sentencias sueltas seguirían fallando. La regla queda en la ficha 35. *(Revisado en DP-D92: la app sí
+  pide `read write` explícito, y sus escrituras sueltas pasan a una transacción.)*
+- **Sin migración.**
+
+## DP-D92 · El `25006` en producción: la causa confirmada, la app blindada y los guiones fuera del pooler · 09-11-2026
+
+- **Lo que pidió la auditoría del 09-11** (`main@cd76829`): Vercel registró 30 errores
+  `sqlstate=25006` (`read_only_sql_transaction`) el 08-11 a las 13:50 y 17:24 y el 09-11 a las 04:25
+  (CDMX): el limitador en `/api/auth/empleados` y en el portal, y `publico.qr.carrito` (un comensal
+  habría visto un error). La base, sana: sin recuperación, sin `default_transaction_read_only`, sin
+  «idle in transaction» y sin configuración en el rol de la app.
+- **La causa, confirmada contra el registro de la sesión:** cada hora tiene una corrida de un guion
+  de revisión por la `DATABASE_URL` de producción (el pooler de transacción, 6543) que empezaba con
+  `set default_transaction_read_only = on`, un `SET` **de sesión**, sin transacción:
+  13:48–13:50 `link.mjs`; 17:23 `permisos-de-tablas.mjs` y 17:24 `sonda-reposo.mjs`; 04:24–04:25
+  `link.mjs`. No fue un `begin … read only` sin `rollback` (la sospecha de la auditoría): esos
+  guiones no abrían transacción, y los del repo que sí la abren (`exportar-negocio`, `huella-ajena`)
+  la cerraban y, contra la propia, corrieron por la conexión de sesión (5432; 11:10 y 13:10). El
+  `SET` se quedaba en la conexión del servidor y la siguiente escritura de la app que caía en ella
+  moría, hasta que Supavisor la cerraba por ociosa. Ninguna de esas corridas tocó la compartida.
+- **Elección (las tres capas):**
+  1. **La app.** `conTransaccion` abre `read write` explícito (`setAccessMode('read write')`), así
+     que lo que traiga la conexión ya no decide. Las escrituras que iban sueltas sobre `obtenerDb()`
+     pasan a `conTransaccion`: el limitador (contar, devolver y purgar), cerrar sesión y la cuota de
+     archivos. Pruebas: `solo-lectura-heredada.integracion.test.ts` abre el pool con
+     `default_transaction_read_only = on` en todas sus conexiones (el peor caso): una escritura
+     suelta falla con `25006` (la precondición), y `conTransaccion` y el limitador escriben; estaba en
+     rojo antes del arreglo. `escrituras-en-transaccion.contrato.test.ts` impide volver a escribir
+     suelto. El carrito del portal ya iba por `conTransaccion` (`comando-publico.ts`).
+  2. **Los guiones.** `scripts/lib/lectura-segura.mjs`: `exigirConexionDirecta` rechaza una cadena
+     del 6543 y `leerEnSoloLectura` abre `read only` y cierra con `rollback` en un `finally`, pase lo
+     que pase. Los usan `exportar-negocio` y `huella-ajena`; `importar-negocio` exige la conexión
+     directa o de sesión. Los guiones de revisión de la sesión (el link, el estado de producción)
+     van igual; las dos sondas y el modo que leía por el pooler, retirados.
+  3. **La regla**, en `docs/RUNBOOK.md` y en la entrega: ninguna revisión contra producción por el
+     pooler de transacción mientras el restaurante opera.
+- **Revisa DP-D91:** allá se descartó el `read write` en la app «porque el riesgo está en los
+  guiones». Sigue estando ahí, pero cuesta poco cerrarlo también del lado de la app: el limitador
+  pasa de una ida y vuelta a tres (`begin`, la sentencia, `commit`), unos milisegundos en la misma
+  región, y el modo de fallo desaparece venga de donde venga.
 - **Sin migración.**

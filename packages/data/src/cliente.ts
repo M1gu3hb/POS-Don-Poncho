@@ -214,9 +214,14 @@ export type Transaccion = Transaction<Esquema>;
  * el cobro necesita lo dan las restricciones únicas y el decremento atómico,
  * que funcionan en `READ COMMITTED`. Un comando que de verdad necesite
  * serializable lo pide explícitamente.
+ *
+ * **`read write` explícito** (DP-D92). Por el pooler de transacción una conexión del servidor la
+ * usan muchos clientes: si alguien dejó en ella `default_transaction_read_only = on` (un guion de
+ * revisión con un `SET` de sesión, DP-D91), un `begin` a secas la heredaba y la escritura moría con
+ * `25006`. Pedir el modo en el propio `begin` no depende de lo que traiga la conexión.
  */
 export async function conTransaccion<T>(fn: (tx: Transaccion) => Promise<T>): Promise<T> {
-  return obtenerDb().transaction().execute(fn);
+  return obtenerDb().transaction().setAccessMode('read write').execute(fn);
 }
 
 /**

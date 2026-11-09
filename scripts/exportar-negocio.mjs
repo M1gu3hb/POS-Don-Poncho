@@ -27,6 +27,7 @@ import { createRequire } from 'node:module';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import { argumento, cargarEntorno } from './lib/guion.mjs';
+import { exigirConexionDirecta, leerEnSoloLectura } from './lib/lectura-segura.mjs';
 import {
   fijarTexto,
   huellaDeTabla,
@@ -64,7 +65,14 @@ if (existsSync(salida) && readdirSync(salida).length > 0) {
 }
 
 const { Client } = createRequire(join(RAIZ, 'packages', 'data', 'package.json'))('pg');
-const url = new URL(process.env['DATABASE_URL'] ?? 'x://');
+// Por la conexión directa o la de sesión, nunca por el pooler de la app (DP-D92).
+let url;
+try {
+  url = exigirConexionDirecta(process.env['DATABASE_URL']);
+} catch (error) {
+  console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(2);
+}
 const local = ['localhost', '127.0.0.1'].includes(url.hostname);
 const cliente = new Client({
   connectionString: url.toString(),
@@ -75,52 +83,51 @@ const inicio = Date.now();
 await cliente.connect();
 const manifiesto = { version: 1, negocio, exportadoEn: new Date().toISOString(), tablas: [] };
 try {
-  await cliente.query('begin transaction isolation level repeatable read read only');
-  await fijarTexto(cliente);
-  const { rows: org } = await cliente.query('select slug from organizaciones where id = $1', [
-    negocio.id,
-  ]);
-  if (org[0]?.slug !== negocio.slug)
-    throw new Error(`La base no tiene a «${negocio.slug}» con su id.`);
+  await leerEnSoloLectura(cliente, async () => {
+    await fijarTexto(cliente);
+    const { rows: org } = await cliente.query('select slug from organizaciones where id = $1', [
+      negocio.id,
+    ]);
+    if (org[0]?.slug !== negocio.slug)
+      throw new Error(`La base no tiene a «${negocio.slug}» con su id.`);
 
-  manifiesto.avisos = await enMarcha(negocio.id);
-  for (const [que, cuantas] of Object.entries(manifiesto.avisos)) {
-    if (cuantas > 0) console.log(`  ⚠ ${que}: ${String(cuantas)}`);
-  }
-  if (exigirCerrado && Object.values(manifiesto.avisos).some((n) => n > 0)) {
-    throw new Error(
-      'El restaurante no está cerrado (ver arriba): la mudanza se hace sin nada en marcha.',
-    );
-  }
+    manifiesto.avisos = await enMarcha(negocio.id);
+    for (const [que, cuantas] of Object.entries(manifiesto.avisos)) {
+      if (cuantas > 0) console.log(`  ⚠ ${que}: ${String(cuantas)}`);
+    }
+    if (exigirCerrado && Object.values(manifiesto.avisos).some((n) => n > 0)) {
+      throw new Error(
+        'El restaurante no está cerrado (ver arriba): la mudanza se hace sin nada en marcha.',
+      );
+    }
 
-  const { rows: migraciones } = await cliente.query(
-    'select version, nombre, hash from _migraciones order by version',
-  );
-  manifiesto.migraciones = migraciones;
-  const catalogo = await leerCatalogo(cliente);
-  const plan = planDelNegocio(catalogo);
-  manifiesto.excluidas = plan.excluidas;
-  mkdirSync(join(salida, 'tablas'), { recursive: true });
+    const { rows: migraciones } = await cliente.query(
+      'select version, nombre, hash from _migraciones order by version',
+    );
+    manifiesto.migraciones = migraciones;
+    const catalogo = await leerCatalogo(cliente);
+    const plan = planDelNegocio(catalogo);
+    manifiesto.excluidas = plan.excluidas;
+    mkdirSync(join(salida, 'tablas'), { recursive: true });
 
-  for (const [nombre, filtro] of plan.incluidas) {
-    const tabla = catalogo.tablas.get(nombre);
-    const { rows } = await cliente.query(
-      `select to_jsonb(t)::text as fila from ${ident(nombre)} t where ${filtro} order by ${ordenDe(tabla)}`,
-      [negocio.id],
-    );
-    const huella = await huellaDeTabla(cliente, nombre, tabla.columnas, filtro, negocio.id);
-    if (huella.filas !== rows.length) throw new Error(`${nombre}: se leyeron filas distintas.`);
-    writeFileSync(
-      join(salida, 'tablas', `${nombre}.ndjson`),
-      rows.map((r) => `${r.fila}\n`).join(''),
-    );
-    manifiesto.tablas.push({ tabla: nombre, columnas: tabla.columnas, ...huella });
-  }
-  await cliente.query('commit');
+    for (const [nombre, filtro] of plan.incluidas) {
+      const tabla = catalogo.tablas.get(nombre);
+      const { rows } = await cliente.query(
+        `select to_jsonb(t)::text as fila from ${ident(nombre)} t where ${filtro} order by ${ordenDe(tabla)}`,
+        [negocio.id],
+      );
+      const huella = await huellaDeTabla(cliente, nombre, tabla.columnas, filtro, negocio.id);
+      if (huella.filas !== rows.length) throw new Error(`${nombre}: se leyeron filas distintas.`);
+      writeFileSync(
+        join(salida, 'tablas', `${nombre}.ndjson`),
+        rows.map((r) => `${r.fila}\n`).join(''),
+      );
+      manifiesto.tablas.push({ tabla: nombre, columnas: tabla.columnas, ...huella });
+    }
+  });
 } catch (error) {
+  // `leerEnSoloLectura` ya cerró la transacción con `rollback`.
   console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
-  // Es una transacción de sólo lectura: si ni el `rollback` contesta, se dice y se cierra igual.
-  await cliente.query('rollback').catch((otro) => console.error(`  (rollback: ${String(otro)})`));
   await cliente.end();
   process.exit(1);
 }

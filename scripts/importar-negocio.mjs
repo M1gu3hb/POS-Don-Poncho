@@ -27,6 +27,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 
 import { argumento, cargarEntorno } from './lib/guion.mjs';
+import { exigirConexionDirecta } from './lib/lectura-segura.mjs';
 import {
   diferenciasConElManifiesto,
   fijarTexto,
@@ -66,7 +67,15 @@ if (!NEGOCIOS_REALES.some((n) => n.id === manifiesto.negocio.id)) {
 }
 
 const { Client } = createRequire(join(RAIZ, 'packages', 'data', 'package.json'))('pg');
-const url = new URL(base);
+// La importación escribe a granel y verifica: por la conexión directa o la de sesión, nunca por el
+// pooler de transacción de la app (DP-D92).
+let url;
+try {
+  url = exigirConexionDirecta(base);
+} catch (error) {
+  console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(2);
+}
 const cliente = new Client({
   connectionString: base,
   ...(['localhost', '127.0.0.1'].includes(url.hostname)

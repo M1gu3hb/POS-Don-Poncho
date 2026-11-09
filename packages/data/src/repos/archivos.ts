@@ -2,7 +2,7 @@ import 'server-only';
 
 import { sql, type Kysely, type Transaction } from 'kysely';
 
-import { obtenerDb } from '../cliente.ts';
+import { conTransaccion, obtenerDb } from '../cliente.ts';
 import type { Esquema } from '../esquema.ts';
 
 type Conexion = Kysely<Esquema> | Transaction<Esquema>;
@@ -51,7 +51,10 @@ export function construirReservaCuotaArchivo(db: Conexion, reserva: ReservaCuota
 }
 
 export async function reservarCuotaArchivo(reserva: ReservaCuotaArchivo): Promise<bigint | null> {
-  const fila = await construirReservaCuotaArchivo(obtenerDb(), reserva).executeTakeFirst();
+  // En `read write` explícito, como toda escritura de la app (DP-D92).
+  const fila = await conTransaccion((tx) =>
+    construirReservaCuotaArchivo(tx, reserva).executeTakeFirst(),
+  );
   return fila?.bytes_usados ?? null;
 }
 
@@ -60,14 +63,16 @@ export async function liberarCuotaArchivo(
   organizacionId: string,
   bytesReservados: number,
 ): Promise<void> {
-  await obtenerDb()
-    .updateTable('cuotas_archivos')
-    .set({
-      bytes_usados: sql<bigint>`greatest(0, bytes_usados - ${BigInt(bytesReservados)})`,
-      updated_at: sql<Date>`now()`,
-    })
-    .where('organizacion_id', '=', organizacionId)
-    .executeTakeFirst();
+  await conTransaccion((tx) =>
+    tx
+      .updateTable('cuotas_archivos')
+      .set({
+        bytes_usados: sql<bigint>`greatest(0, bytes_usados - ${BigInt(bytesReservados)})`,
+        updated_at: sql<Date>`now()`,
+      })
+      .where('organizacion_id', '=', organizacionId)
+      .executeTakeFirst(),
+  );
 }
 
 function contieneUrl(valor: unknown, url: string): boolean {

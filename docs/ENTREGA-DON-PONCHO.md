@@ -23,7 +23,9 @@ público).
   pantalla principal» (o «Instalar app»). Queda con el ícono y el nombre «Don Poncho» y abre a
   pantalla completa.
 - **iPhone (Safari):** abrir el link en Safari → botón Compartir → «Agregar a inicio». Queda con el
-  ícono de Don Poncho y el nombre «Don Poncho».
+  ícono de Don Poncho y el nombre «Don Poncho». **Ojo:** la app de «Agregar a inicio» tiene su propia
+  sesión, distinta de la de Safari: la primera vez que se abre desde el ícono hay que entrar otra vez
+  con el PIN (es del iPhone, no un error).
 - **La PC de la caja:** abrir el link en Chrome o Edge y guardarlo en favoritos (o «Instalar» desde la
   barra de direcciones). Para imprimir el ticket: el botón «Imprimir» abre el diálogo del navegador;
   elegir la impresora térmica y, la primera vez, quitar márgenes y encabezados del navegador.
@@ -99,6 +101,9 @@ Lo que necesita un PIN real en producción no lo prueba nadie más que Miguel: l
 - **En Cocina, una comanda con la marca «Cuenta cobrada»:** la cuenta ya se pagó y ese platillo
   seguía por preparar; la cocina decide si lo prepara (no se borra solo, por si sí se sirve). Lo que
   ya estaba listo sale solo de la pantalla al cobrar.
+- **Revisiones contra la base de producción** (sólo quien desarrolla): mientras el restaurante opera,
+  **ninguna por el pooler de transacción (6543)**, el puerto de la app; por la conexión de sesión
+  (5432) y en una transacción de sólo lectura que se cierra siempre (`docs/RUNBOOK.md` §3, DP-D92).
 - **Lo que hay que mirar la primera semana:** en Vercel, el uso del proyecto (invocaciones, CPU activa,
   transferencia); en Supabase, Reports → Egress (ver `docs/infra/CAPACIDAD.md`).
 - **Regreso a la base anterior** (sólo Miguel o quien desarrolla, con el restaurante sin usar el

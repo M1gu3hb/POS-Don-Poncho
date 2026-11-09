@@ -170,6 +170,20 @@ Las URL `*.vercel.app` de un Preview están detrás de la Protección de Desplie
 pasarla —el secreto de bypass, que se genera con el CLI, y el enlace compartido— están escritas en
 UN solo sitio: `docs/fase-2/VERCEL-ENTORNO.md` §3. **El secreto se revoca al terminar.**
 
+### Revisar producción mientras el restaurante opera (DP-D92)
+
+**Ninguna revisión contra producción entra por el pooler de transacción (6543) mientras el
+restaurante opera.** Ése es el puerto de la app: una conexión del servidor la usan muchos clientes, y
+lo que un guion deje pegado en ella —un `SET` de sesión, una transacción abierta— lo hereda la
+siguiente petición de la app. Así cayeron el limitador y el carrito del portal con `25006` el 08 y el
+09-11.
+
+- Los guiones leen por la conexión **de sesión o directa (5432)**: `POSTGRES_URL_SESION`, nunca la
+  `DATABASE_URL` de la app. `scripts/lib/lectura-segura.mjs` rechaza una cadena del 6543.
+- Leen dentro de **una** transacción `read only` que se cierra con `rollback` en un `finally`
+  (`leerEnSoloLectura`). Nunca `set default_transaction_read_only = on` ni otro `SET` de sesión.
+- Una revisión que no cabe en eso se hace con el restaurante cerrado.
+
 ---
 
 ## 4 · Volver atrás
@@ -202,6 +216,7 @@ vuelta atrás ANTES de aplicarla.
 | Entra desde un navegador nuevo y aparece una caja de más | Es correcto: un dispositivo sin cookie es una caja nueva. La cookie dura un año; borrarla crea otra. Se ven todas en `/accesos`. |
 | Un PIN correcto no entra | Antes de tocar nada, `pnpm vitest run packages/app/src/identidad`. La prueba del viaje redondo es la que caza el fallo que costó tres sesiones. |
 | «No Next.js version detected» en Vercel | El Root Directory del proyecto no es `apps/web`. |
+| `sqlstate=25006` (transacción de sólo lectura) en los registros de Vercel | Alguien dejó una conexión del pooler en sólo lectura: casi siempre un guion de revisión por el 6543 con un `SET` de sesión. La app ya pide `read write` en sus transacciones; buscar qué guion corrió a esa hora y pasarlo a la conexión de sesión (§3, DP-D92). |
 
 ---
 
