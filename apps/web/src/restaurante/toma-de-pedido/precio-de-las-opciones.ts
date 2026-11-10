@@ -21,7 +21,9 @@ function centavosDe(valor: string | number | null | undefined): number {
 }
 
 /** Cuánto suman (o restan) las opciones elegidas, en centavos. */
-export function centavosDeLasOpciones(modificadores: readonly GrupoElegido[] | null | undefined): number {
+export function centavosDeLasOpciones(
+  modificadores: readonly GrupoElegido[] | null | undefined,
+): number {
   return (modificadores ?? []).reduce(
     (suma, g) => suma + (g.opciones ?? []).reduce((s, o) => s + centavosDe(o.precioCentavos), 0),
     0,
