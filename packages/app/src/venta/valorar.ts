@@ -9,7 +9,7 @@ import {
 } from '@morphiqpos/domain/catalogo';
 import type { repoVentaCatalogo } from '@morphiqpos/data';
 
-import { porCantidad } from './escala.ts';
+import { aDiezmilesimas, porCantidad } from './escala.ts';
 
 /**
  * De una fila de `productos` al contrato de precio del dominio.
@@ -46,6 +46,7 @@ export function valorarLinea(
     cantidad,
     unidad: unidad ?? unidadPorOmision(producto),
   };
+  exigirPresentacion(producto, cantidad);
 
   const precio = precioDeLinea(aContratoDePrecio(producto), captura);
 
@@ -116,4 +117,30 @@ function aContratoDePrecio(p: FilaProducto): ProductoParaPrecio {
     unidadVenta: p.unidadVenta as Unidad,
     ...(mayoreo === undefined ? {} : { mayoreo }),
   };
+}
+
+/** Las presentaciones del producto por peso en diezmilésimas, para compararlas sin flotantes. */
+function presentacionesDe(presets: unknown): readonly bigint[] {
+  if (!Array.isArray(presets)) return [];
+  return presets.flatMap((p: unknown) => {
+    const n = typeof p === 'number' ? p : typeof p === 'string' ? Number(p) : Number.NaN;
+    return Number.isFinite(n) && n > 0 ? [aDiezmilesimas(n.toFixed(4))] : [];
+  });
+}
+
+/**
+ * DP-16 · El producto por peso que sólo se vende en sus presentaciones (¼, ½, 1 kg) no admite otra
+ * cantidad, venga de donde venga (mesero, portal, para llevar o mostrador). Sin presentaciones
+ * declaradas la marca no estorba: se vende libre, como siempre.
+ */
+export function exigirPresentacion(producto: FilaProducto, cantidad: string): void {
+  if (producto.tipoVenta !== 'variable_medida' || producto.soloPresetsVariable !== true) return;
+  const presentaciones = presentacionesDe(producto.presetsVariable);
+  if (presentaciones.length === 0) return;
+  if (presentaciones.includes(aDiezmilesimas(cantidad))) return;
+  throw new ErrorDominio(
+    'CANTIDAD_INVALIDA',
+    `«${producto.nombre}» se vende sólo en sus presentaciones; elige una.`,
+    { productoId: producto.id },
+  );
 }

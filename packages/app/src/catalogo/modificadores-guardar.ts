@@ -125,11 +125,6 @@ export const guardarModificadores = definirComando<
           .where('producto_id', '=', entrada.productoId)
           .execute(),
       );
-      // `modificador_opciones` NO tiene `organizacion_id` —cuelga de su
-      // modificador— así que se acota por el padre, igual que en las purgas.
-      await ctx.paso('borrar_opciones_previas', () =>
-        ctx.tx.deleteFrom('modificador_opciones').where('modificador_id', 'in', ids).execute(),
-      );
       // Sólo se borran los que NO usa ningún otro producto: un grupo compartido
       // —«Término de la carne» en tres platos— no puede irse porque uno lo
       // quite. La consulta lo pregunta dentro de la misma transacción.
@@ -144,6 +139,16 @@ export const guardarModificadores = definirComando<
       const enUso = new Set(compartidos.map((c) => c.id));
       const huerfanos = ids.filter((id) => !enUso.has(id));
       if (huerfanos.length > 0) {
+        // DP-16 · Las opciones también, sólo de los que nadie más usa: un grupo de la biblioteca
+        // (`grupos-de-opciones.ts`) puede estar en varios productos, y borrarle las opciones dejaba
+        // a los demás con el grupo vacío. `modificador_opciones` NO tiene `organizacion_id`
+        // —cuelga de su modificador—, así que se acota por el padre, igual que en las purgas.
+        await ctx.paso('borrar_opciones_previas', () =>
+          ctx.tx
+            .deleteFrom('modificador_opciones')
+            .where('modificador_id', 'in', huerfanos)
+            .execute(),
+        );
         await ctx.paso('borrar_modificadores_previos', () =>
           ctx.tx
             .deleteFrom('modificadores')

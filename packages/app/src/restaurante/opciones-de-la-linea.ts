@@ -26,6 +26,8 @@ import type { Transaccion } from '@morphiqpos/data';
 export interface OpcionDeGrupo {
   readonly id: string;
   readonly nombre: string;
+  /** DP-16 · Lo que suma (o resta) al renglón, en centavos. Cero = no cambia el precio. */
+  readonly deltaCentavos: bigint;
 }
 
 export interface GrupoDeOpciones {
@@ -33,6 +35,9 @@ export interface GrupoDeOpciones {
   readonly nombre: string;
   readonly obligatorio: boolean;
   readonly tipo: 'unica' | 'multiple';
+  /** DP-16 · Cuántas elegir como mínimo y como máximo en un grupo de varias. Nulos = sin límite. */
+  readonly minimo: number | null;
+  readonly maximo: number | null;
   readonly opciones: readonly OpcionDeGrupo[];
 }
 
@@ -46,6 +51,8 @@ export interface OpcionElegida {
   readonly grupo: string;
   readonly opcionId: string;
   readonly opcion: string;
+  /** DP-16 · Lo que esta opción le suma al renglón (lo pone el catálogo, nunca la pantalla). */
+  readonly deltaCentavos: bigint;
 }
 
 /** Lo que una línea trae para que se le decidan las opciones. */
@@ -120,25 +127,46 @@ export function elegirLasOpciones(
     if (grupo.tipo === 'unica' && ids.size > 1) {
       throw noValida(producto, `«${grupo.nombre}» admite una sola opción`);
     }
+    if (grupo.maximo !== null && ids.size > grupo.maximo) {
+      throw noValida(producto, `«${grupo.nombre}» admite hasta ${String(grupo.maximo)}`);
+    }
     for (const opcionId of eleccion.opcionIds) {
       const opcion = grupo.opciones.find((o) => o.id === opcionId);
       if (opcion === undefined) {
         throw noValida(producto, `una opción que no es de «${grupo.nombre}»`);
       }
-      salida.push({ grupoId: grupo.id, grupo: grupo.nombre, opcionId, opcion: opcion.nombre });
+      salida.push({
+        grupoId: grupo.id,
+        grupo: grupo.nombre,
+        opcionId,
+        opcion: opcion.nombre,
+        deltaCentavos: opcion.deltaCentavos,
+      });
     }
   }
 
   for (const grupo of grupos) {
-    if (grupo.obligatorio && grupo.opciones.length > 0) {
-      const eligio = salida.some((o) => o.grupoId === grupo.id);
-      if (!eligio) {
-        throw new ErrorDominio(
-          'OPCION_OBLIGATORIA',
-          `Falta elegir «${grupo.nombre}» de «${producto}».`,
-          { producto, grupo: grupo.nombre },
-        );
-      }
+    const eligio = salida.filter((o) => o.grupoId === grupo.id).length;
+    if (grupo.obligatorio && grupo.opciones.length > 0 && eligio === 0) {
+      throw new ErrorDominio(
+        'OPCION_OBLIGATORIA',
+        `Falta elegir «${grupo.nombre}» de «${producto}».`,
+        { producto, grupo: grupo.nombre },
+      );
+    }
+    // DP-16 · El mínimo de un grupo de varias, sin pedir más de las opciones que hay activas.
+    const minimo = Math.min(grupo.minimo ?? 0, grupo.opciones.length);
+    if (
+      grupo.tipo === 'multiple' &&
+      minimo > 0 &&
+      eligio < minimo &&
+      (grupo.obligatorio || eligio > 0)
+    ) {
+      throw new ErrorDominio(
+        'OPCION_OBLIGATORIA',
+        `Elige al menos ${String(minimo)} de «${grupo.nombre}» en «${producto}».`,
+        { producto, grupo: grupo.nombre },
+      );
     }
   }
   return salida;
@@ -175,19 +203,29 @@ export async function gruposDeLosPlatillos(
       'm.tipo as tipo',
       'mo.id as opcion_id',
       'mo.nombre as opcion',
+      'mo.delta_precio_centavos as delta',
+      'mo.precio_extra_centavos as extra',
+      'm.minimo_elecciones as minimo',
+      'm.maximo_elecciones as maximo',
     ])
     .where('pm.organizacion_id', '=', organizacionId)
     .where('pm.producto_id', 'in', [...new Set(productoIds)])
     .where('m.activo', '=', true)
     .where('mo.activa', '=', true)
     .orderBy('pm.producto_id')
+    .orderBy('pm.orden')
     .orderBy('m.nombre')
     .orderBy('mo.orden')
     .execute();
   for (const f of filas) {
     const grupos = salida.get(f.producto_id) ?? [];
     const i = grupos.findIndex((g) => g.id === f.grupo_id);
-    const opcion = { id: f.opcion_id, nombre: f.opcion };
+    // El firmado manda (084); si es cero, el viejo `precio_extra` (>= 0) de la 002.
+    const opcion = {
+      id: f.opcion_id,
+      nombre: f.opcion,
+      deltaCentavos: f.delta !== 0n ? f.delta : f.extra,
+    };
     if (i >= 0) {
       const previo = grupos[i];
       if (previo !== undefined) grupos[i] = { ...previo, opciones: [...previo.opciones, opcion] };
@@ -197,6 +235,8 @@ export async function gruposDeLosPlatillos(
         nombre: f.grupo,
         obligatorio: f.obligatorio,
         tipo: f.tipo === 'multiple' ? 'multiple' : 'unica',
+        minimo: f.minimo,
+        maximo: f.maximo,
         opciones: [opcion],
       });
     }
@@ -229,11 +269,20 @@ export function instantaneaDeLasOpciones(elegidas: readonly OpcionElegida[]): st
   if (elegidas.length === 0) return null;
   const porGrupo = new Map<
     string,
-    { grupoId: string; grupo: string; opciones: { id: string; nombre: string }[] }
+    {
+      grupoId: string;
+      grupo: string;
+      opciones: { id: string; nombre: string; precioCentavos: string }[];
+    }
   >();
   for (const o of elegidas) {
     const g = porGrupo.get(o.grupoId) ?? { grupoId: o.grupoId, grupo: o.grupo, opciones: [] };
-    g.opciones.push({ id: o.opcionId, nombre: o.opcion });
+    // DP-16 · Con su precio: el ticket y la precuenta dicen cuánto sumó cada opción.
+    g.opciones.push({
+      id: o.opcionId,
+      nombre: o.opcion,
+      precioCentavos: o.deltaCentavos.toString(),
+    });
     porGrupo.set(o.grupoId, g);
   }
   return JSON.stringify([...porGrupo.values()]);
@@ -251,6 +300,9 @@ export async function guardarLosModificadores(
       modificador_nombre: o.grupo,
       opcion_id: o.opcionId,
       opcion_nombre: o.opcion,
+      // `precio_extra_centavos` es `>= 0` (003): guarda lo positivo; la cuenta usa el firmado.
+      precio_extra_centavos: o.deltaCentavos > 0n ? o.deltaCentavos : 0n,
+      delta_precio_centavos: o.deltaCentavos,
     })),
   );
   if (filas.length === 0) return;

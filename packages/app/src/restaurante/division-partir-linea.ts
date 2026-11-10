@@ -140,10 +140,19 @@ export async function partirLinea(
 
     const hermana = await tx
       .insertInto('orden_lineas')
-      .values({ ...sinLoGenerado(original), ...cuotaDe(i), orden_id: orden })
+      .values({
+        ...sinLoGenerado(original),
+        ...cuotaDe(i),
+        orden_id: orden,
+        // DP-16 · La instantánea de opciones es un ARREGLO json: el controlador manda un arreglo de
+        // JS como arreglo de Postgres (`{…}`), no como json, y la división fallaba con 22P02.
+        opciones: original.opciones === null ? null : JSON.stringify(original.opciones),
+      })
       .returning('id')
       .executeTakeFirstOrThrow();
     filaDeCadaParte.set(i, hermana.id);
+    // Y la hermana lleva sus opciones consultables (el ticket y el corte de esa parte las leen).
+    await copiarLasOpciones(tx, datos.lineaId, hermana.id);
   }
 
   for (const item of items) {
@@ -182,4 +191,25 @@ export async function partirLinea(
 
   // Lo que se llevó cada parte, tal como quedó escrito: lo registra el movimiento de la división.
   return unidades.map((u, i) => (u > 0 ? (total[i] ?? 0n) : 0n));
+}
+
+/** Copia las opciones elegidas de una línea a su hermana de otra parte de la cuenta. */
+async function copiarLasOpciones(tx: Transaccion, desde: string, hacia: string): Promise<void> {
+  const filas = await tx
+    .selectFrom('orden_linea_modificadores')
+    .select([
+      'modificador_id',
+      'modificador_nombre',
+      'opcion_id',
+      'opcion_nombre',
+      'precio_extra_centavos',
+      'delta_precio_centavos',
+    ])
+    .where('orden_linea_id', '=', desde)
+    .execute();
+  if (filas.length === 0) return;
+  await tx
+    .insertInto('orden_linea_modificadores')
+    .values(filas.map((f) => ({ ...f, orden_linea_id: hacia })))
+    .execute();
 }

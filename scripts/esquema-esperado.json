@@ -9813,6 +9813,28 @@
       "generada": null
     },
     {
+      "clave": "public.modificadores.maximo_elecciones",
+      "esquema": "public",
+      "tabla": "modificadores",
+      "columna": "maximo_elecciones",
+      "tipo": "smallint",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
+      "clave": "public.modificadores.minimo_elecciones",
+      "esquema": "public",
+      "tabla": "modificadores",
+      "columna": "minimo_elecciones",
+      "tipo": "smallint",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.modificadores.nombre",
       "esquema": "public",
       "tabla": "modificadores",
@@ -11118,6 +11140,17 @@
       "tipo": "timestamp with time zone",
       "noNula": true,
       "defaultSql": "now()",
+      "identidad": null,
+      "generada": null
+    },
+    {
+      "clave": "public.orden_linea_modificadores.delta_precio_centavos",
+      "esquema": "public",
+      "tabla": "orden_linea_modificadores",
+      "columna": "delta_precio_centavos",
+      "tipo": "bigint",
+      "noNula": true,
+      "defaultSql": "0",
       "identidad": null,
       "generada": null
     },
@@ -14554,6 +14587,17 @@
       "generada": null
     },
     {
+      "clave": "public.productos.fondo_tarjeta",
+      "esquema": "public",
+      "tabla": "productos",
+      "columna": "fondo_tarjeta",
+      "tipo": "text",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.productos.foto_mostrador_url",
       "esquema": "public",
       "tabla": "productos",
@@ -14913,6 +14957,17 @@
       "tipo": "text",
       "noNula": false,
       "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
+      "clave": "public.productos.solo_presets_variable",
+      "esquema": "public",
+      "tabla": "productos",
+      "columna": "solo_presets_variable",
+      "tipo": "boolean",
+      "noNula": true,
+      "defaultSql": "false",
       "identidad": null,
       "generada": null
     },
@@ -26942,6 +26997,39 @@
       "diferidaInicialmente": false
     },
     {
+      "clave": "public.modificadores.modificadores_maximo_valido",
+      "esquema": "public",
+      "tabla": "modificadores",
+      "nombre": "modificadores_maximo_valido",
+      "tipo": "check",
+      "definicion": "CHECK (maximo_elecciones IS NULL OR maximo_elecciones >= 1)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.modificadores.modificadores_minimo_hasta_maximo",
+      "esquema": "public",
+      "tabla": "modificadores",
+      "nombre": "modificadores_minimo_hasta_maximo",
+      "tipo": "check",
+      "definicion": "CHECK (minimo_elecciones IS NULL OR maximo_elecciones IS NULL OR minimo_elecciones <= maximo_elecciones)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.modificadores.modificadores_minimo_valido",
+      "esquema": "public",
+      "tabla": "modificadores",
+      "nombre": "modificadores_minimo_valido",
+      "tipo": "check",
+      "definicion": "CHECK (minimo_elecciones IS NULL OR minimo_elecciones >= 0)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
       "clave": "public.modificadores.modificadores_nombre_check",
       "esquema": "public",
       "tabla": "modificadores",
@@ -30820,6 +30908,17 @@
       "nombre": "productos_familia_valida",
       "tipo": "check",
       "definicion": "CHECK (familia = ANY (ARRAY['bebida'::text, 'alimento'::text, 'grano'::text, 'otro'::text]))",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.productos.productos_fondo_tarjeta_corto",
+      "esquema": "public",
+      "tabla": "productos",
+      "nombre": "productos_fondo_tarjeta_corto",
+      "tipo": "check",
+      "definicion": "CHECK (fondo_tarjeta IS NULL OR length(fondo_tarjeta) <= 200)",
       "validada": true,
       "diferible": false,
       "diferidaInicialmente": false

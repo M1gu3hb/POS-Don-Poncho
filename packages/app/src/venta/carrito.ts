@@ -20,6 +20,7 @@ import {
   textoDeLasOpciones,
   type EleccionPedida,
 } from '../restaurante/opciones-de-la-linea.ts';
+import { precioConLasOpciones } from '../restaurante/precio-de-las-opciones.ts';
 import { valorarPresentacion } from './presentacion.ts';
 import { valorarLinea } from './valorar.ts';
 
@@ -170,7 +171,7 @@ export async function ejecutarAgregarLinea(
     return agregarPresentacion(ctx, ordenId, producto, entrada.presentacionId, entrada.cantidad);
   }
 
-  const valorada = valorarLinea(producto, entrada.cantidad, entrada.unidad);
+  const sinOpciones = valorarLinea(producto, entrada.cantidad, entrada.unidad);
   // DP-14.6-3 · Un platillo con un grupo obligatorio sin su elección no entra a la cuenta.
   const [elegidas = []] = await ctx.paso('opciones', () =>
     prepararLasOpciones(ctx.tx, organizacionId, [
@@ -182,6 +183,16 @@ export async function ejecutarAgregarLinea(
       },
     ]),
   );
+  // DP-16 · Y lo que cuestan las opciones, del catálogo, como en el mesero.
+  const valorada = {
+    ...sinOpciones,
+    precio: precioConLasOpciones(
+      producto.tipoVenta,
+      sinOpciones.cantidad,
+      sinOpciones.precio,
+      elegidas,
+    ),
+  };
   const visual = await repoOrdenes.siguienteOrdenVisual(ctx.tx, organizacionId, ordenId);
 
   const lineaId = await ctx.paso('insertar_linea', () =>
@@ -402,7 +413,24 @@ export const cambiarCantidad = definirComando<
       throw new ErrorDominio('PRODUCTO_NO_ENCONTRADO', 'Ese producto ya no está disponible.');
     }
 
-    const valorada = valorarLinea(producto, entrada.cantidad, linea.unidad);
+    // DP-16 · Con lo que cuestan las opciones que ya trae la línea (firmado, de su instantánea).
+    const opciones = await ctx.paso('cargar_opciones', () =>
+      ctx.tx
+        .selectFrom('orden_linea_modificadores')
+        .select('delta_precio_centavos as deltaCentavos')
+        .where('orden_linea_id', '=', entrada.lineaId)
+        .execute(),
+    );
+    const sinOpciones = valorarLinea(producto, entrada.cantidad, linea.unidad);
+    const valorada = {
+      ...sinOpciones,
+      precio: precioConLasOpciones(
+        producto.tipoVenta,
+        sinOpciones.cantidad,
+        sinOpciones.precio,
+        opciones,
+      ),
+    };
 
     await ctx.paso('actualizar_linea', () =>
       repoOrdenes.actualizarImportesDeLinea(ctx.tx, organizacionId, entrada.lineaId, {

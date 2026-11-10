@@ -18,6 +18,7 @@ import { insertarLineas, prepararLinea, type LineaPreparada } from './lineas.ts'
 import { mesaTrasComanda, type EstadoMesa } from './transiciones.ts';
 import { sellarTransicionDeMesa } from './sala-escrituras.ts';
 import { prepararLasOpciones } from './opciones-de-la-linea.ts';
+import { lineaConLasOpciones } from './precio-de-las-opciones.ts';
 
 /**
  * `restaurante.enviar_pedido` — E6-4, el comando más importante del módulo.
@@ -134,7 +135,8 @@ export async function comandarLasLineas(
       })),
     ),
   );
-  const preparadas = valoradas.map((l, i) => ({ ...l, opciones: elegidas[i] ?? [] }));
+  // DP-16 · El precio de las opciones se suma aquí, del catálogo, antes de escribir la línea.
+  const preparadas = valoradas.map((l, i) => lineaConLasOpciones(l, elegidas[i] ?? []));
 
   await ctx.paso('escribir_lineas', () =>
     insertarLineas(ctx.tx, organizacionId, entrada.ordenId, preparadas),

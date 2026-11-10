@@ -171,6 +171,16 @@
       "ids": [{ "camino": "productoId", "tabla": "productos" }]
     },
     {
+      "ruta": "/api/catalogo/asignar-grupos-de-opciones",
+      "comando": "catalogo.asignar_grupos_de_opciones",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "productoId": "⟨productos⟩", "grupoIds": [] },
+      "ids": [{ "camino": "productoId", "tabla": "productos" }]
+    },
+    {
       "ruta": "/api/catalogo/crear-producto",
       "comando": "catalogo.crear_producto",
       "escribe": true,
@@ -204,6 +214,25 @@
       "idRequerido": false,
       "cuerpo": { "categoriaId": "⟨categorias⟩", "productoIds": [] },
       "ids": [{ "camino": "categoriaId", "tabla": "categorias" }]
+    },
+    {
+      "ruta": "/api/catalogo/guardar-grupo-de-opciones",
+      "comando": "catalogo.guardar_grupo_de_opciones",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": {
+        "grupoId": "⟨?⟩",
+        "nombre": "prueba de aislamiento",
+        "tipo": "unica",
+        "obligatorio": false,
+        "opciones": [{ "id": "⟨?⟩", "nombre": "prueba de aislamiento" }]
+      },
+      "ids": [
+        { "camino": "grupoId", "tabla": null },
+        { "camino": "opciones[0].id", "tabla": null }
+      ]
     },
     {
       "ruta": "/api/catalogo/marcar-agotado",

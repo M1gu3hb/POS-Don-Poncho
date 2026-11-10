@@ -78,6 +78,8 @@ export async function productosDeComanda(
       'p.cantidad_minima_variable as cantidadMinimaVariable',
       'p.cantidad_maxima_variable as cantidadMaximaVariable',
       'p.incremento_variable as incrementoVariable',
+      'p.solo_presets_variable as soloPresetsVariable',
+      'p.presets_variable as presetsVariable',
       'p.capacidad_contenedor_ml as capacidadContenedorMl',
       'p.ml_por_porcion as mlPorPorcion',
       'p.porciones_por_contenedor as porcionesPorContenedor',
