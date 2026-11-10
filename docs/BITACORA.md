@@ -1384,7 +1384,8 @@ Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PRO
 | Agente | Modelo | Encargo | Resultado |
 | --- | --- | --- | --- |
 | A (worktree propio) | Sonnet | 1.2 «Marcar entregado» del mesero · 1.3 animaciones de las ventanas | en curso |
-| B (worktree propio, base 5438) | Sonnet | 1.4 retiros con PIN arriba de un monto · 1.5 menores de la auditoría del 9-11 | entregado: 49 archivos, 28 mutantes muertos, sin migración; integración de lo suyo 118 pruebas en verde |
+| B (worktree propio, base 5438) | Sonnet | 1.4 retiros con PIN arriba de un monto · 1.5 menores de la auditoría del 9-11 | entregado: 49 archivos, 28 mutantes muertos, sin migración. Integrado aquí (un conflicto de imports en `giros.ts`; dos archivos venían en CRLF y se pasaron a LF): tipos, lint, formato, 10 verificaciones, integración 32/32 y unidad 5275 en verde; en el navegador, el umbral en Configuración → Caja y el retiro de $600 pidiendo el PIN. DP-D101 y DP-D102 |
+| C (worktree propio, base 5439) | Sonnet | 2.2 la cocina con volumen | en curso |
 
 ### 1.1 · Para llevar (la sesión principal)
 

@@ -14,13 +14,13 @@
 
 | Parte | Qué | Estado |
 | --- | --- | --- |
-| 1.1 | Para llevar desde caja (migración 191, armar/descartar/entregar, número del día, cocina por canal, ticket, corte por canal, Registros y CSV) | en curso: servidor e integración 5/5; pantalla de Caja escrita; falta navegador |
+| 1.1 | Para llevar desde caja (migración 191, armar/descartar/entregar, número del día, cocina por canal, ticket, corte por canal, Registros y CSV) | hecho (`6c02c94`): integración 8/8, 7 mutantes, probado de punta a punta en el navegador |
 | 1.2 | «Marcar entregado» del mesero | agente A (Sonnet) |
 | 1.3 | Animaciones de las ventanas | agente A (Sonnet) |
-| 1.4 | Retiros con PIN arriba de un monto | agente B (Sonnet) |
-| 1.5 | Menores de la auditoría del 9-11 | agente B (Sonnet) |
+| 1.4 | Retiros con PIN arriba de un monto | hecho (agente B, integrado; DP-D101) |
+| 1.5 | Menores de la auditoría del 9-11 | hecho (agente B, integrado; DP-D102) |
 | 2.1 | Opciones con precio y productos por peso | pendiente |
-| 2.2 | Cocina con volumen | pendiente |
+| 2.2 | Cocina con volumen | agente C (Sonnet) |
 | 2.3 | Teléfono de cocina nuevo | pendiente |
 | 3 | Menú del comensal: digital y a la carta | pendiente |
 | 4 | QA final, producción y reporte 010 | pendiente |

@@ -34,7 +34,7 @@ describe('DP-15 · «Movimientos» en la caja de la cajera', () => {
   it('entre los movimientos está la entrada de cambio, para todos los de la caja', () => {
     const c = sinEspacios('src/restaurante/MovimientosDeCaja.tsx');
     expect(c).toContain(
-      '<RetiroDeCajaalRetirar={alMover}/><EntradaDeCambioalRegistrar={alMover}/>',
+      '<RetiroDeCajaalRetirar={alMover}esDeGerencia={puedeAdministrar}/><EntradaDeCambioalRegistrar={alMover}/>',
     );
     expect(sinEspacios('src/venta/EntradaDeCambio.tsx')).toContain(
       "constRUTA='/api/caja/entrada-cambio';",

@@ -43,7 +43,7 @@ export const VIGENCIA_AUTORIZACION_SEGUNDOS = 120;
  * DP-13.2 · Para qué se autoriza (D-5). Una autorización de descuento no sirve para cancelar ni al
  * revés; sin `para` es la de descuento, como las firmadas antes.
  */
-export type ParaQueSeAutoriza = 'descuento' | 'cancelacion';
+export type ParaQueSeAutoriza = 'descuento' | 'cancelacion' | 'retiro';
 
 export interface PeticionDeSupervisor {
   readonly organizacionId: string;
@@ -121,7 +121,10 @@ function esCarga(valor: unknown): valor is CargaDeAutorizacion {
     typeof v['exp'] === 'number' &&
     typeof v['n'] === 'string' &&
     (v['cuenta'] === undefined || typeof v['cuenta'] === 'string') &&
-    (v['para'] === undefined || v['para'] === 'descuento' || v['para'] === 'cancelacion') &&
+    (v['para'] === undefined ||
+      v['para'] === 'descuento' ||
+      v['para'] === 'cancelacion' ||
+      v['para'] === 'retiro') &&
     (v['monto'] === undefined || typeof v['monto'] === 'string')
   );
 }

@@ -1398,7 +1398,7 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       ...AUTO,
       nombre: { columna: 'nombre', conversion: 'texto', publico: true },
       orden: { columna: 'orden', conversion: 'entero', publico: true },
-      activo: { columna: 'activa', conversion: 'booleano' },
+      activo: { columna: 'activa', conversion: 'booleano', escribible: false },
     },
   },
 

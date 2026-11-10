@@ -24,6 +24,7 @@ import {
 } from './hoja.ts';
 import { cancelaciones } from './cancelaciones.ts';
 import { ventasPorCanal } from './por-canal.ts';
+import { retirosConPin } from './retiros-con-pin.ts';
 import { devolucionesDelDia } from './devoluciones.ts';
 import { seccionesDeDescuentos } from './descuentos.ts';
 import type { DescuentosLeidos } from '~/corte-heredado/descuentos-del-corte';
@@ -98,6 +99,7 @@ export function corteDeRestaurante(
     datosDelCorte(hoja, 'Cierre diario'),
     ...arqueo(hoja, 'Apertura y fondo'),
     ...ajustesDeCaja(hoja),
+    ...retirosConPin(hoja),
     ...ventasDelDia(hoja),
     resumenFinanciero(hoja, tituloDelResumen(hoja)),
     ...metodosConPropina(hoja),

@@ -19,6 +19,8 @@ import {
 import {
   apartarAgotados,
   avisoDeAgotados,
+  confirmarEnvio,
+  preguntaDeAgotados,
   esRechazoPorAgotado,
 } from '~/restaurante/apartar-agotados';
 import { anchoDelPapel } from '~/impresion/papel';
@@ -930,7 +932,12 @@ function Mesero() {
     const { quedan, apartados } = apartarAgotados(renglones, Array.isArray(menu) ? menu : []);
     if (apartados.length === 0) return null;
     setCarrito([...quedan]);
-    toast.warning(avisoDeAgotados(apartados));
+    // DP-16 · Un toque de confirmación antes de mandar el resto: es otro pedido que el que se armó.
+    const enviar = await confirmarEnvio(toast, preguntaDeAgotados(apartados));
+    if (!enviar) {
+      toast.warning(avisoDeAgotados(apartados));
+      return [];
+    }
     return quedan;
   };
 
@@ -1896,6 +1903,9 @@ function Mesero() {
                     puesto: miPuesto,
                     yoId: posUser?.id,
                     atiendeId: resolverMeseroResponsable(mesaActiva, config)?.id,
+                    unida:
+                      Boolean(mesaActiva.unida_a_mesa_id) ||
+                      (mesas || []).some((m) => m.unida_a_mesa_id === mesaActiva.id),
                   }) && (
                     <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`} className="w-full">
                       <Button variant="outline" className="w-full">

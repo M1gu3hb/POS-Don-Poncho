@@ -217,7 +217,11 @@ function ElegirMesasDialog({ mesaId, ordenId, alCerrar, alHecho }: ElegirMesasPr
     setEnviando(true);
     setFallo(null);
     try {
-      await invocarComando('/api/restaurante/cambiar-mesa', { ordenId, mesaDestinoId: destinoId });
+      await invocarComando('/api/restaurante/cambiar-mesa', {
+        ordenId,
+        mesaDestinoId: destinoId,
+        mesaOrigenId: mesaId,
+      });
       alHecho(destinoId);
     } catch (error: unknown) {
       setFallo(mensajeDe(error, `No se pudo. ${voc.conArticulo('orden')} sigue como estaba.`));

@@ -30,6 +30,11 @@ import { exigirQueNoEsteAbsorbida, tomarLaUnionDeLaMesa } from './union-del-salo
 export const entradaCambiarMesa = z.object({
   ordenId: z.uuid(),
   mesaDestinoId: z.uuid(),
+  /**
+   * DP-16 · La mesa donde la pantalla VIO la cuenta. Si otro ya la movió, el error lo dice («ya se
+   * movió a la mesa N») en vez de mover la cuenta desde donde esté sin que se note.
+   */
+  mesaOrigenId: z.uuid().optional(),
 });
 
 export interface ResultadoCambioDeMesa {
@@ -95,6 +100,16 @@ export const cambiarMesaComando = definirComando<
         'ORDEN_NO_EDITABLE',
         'Esa cuenta ya no está sobre la mesa: se cobró, se canceló o se dividió.',
         { estado: orden.estado },
+      );
+    }
+    if (entrada.mesaOrigenId !== undefined && entrada.mesaOrigenId !== mesaOrigenId) {
+      const actual = await ctx.paso('mesa_donde_esta_ahora', () =>
+        mesaEnSala(ctx.tx, organizacionId, mesaOrigenId),
+      );
+      throw new ErrorDominio(
+        'ORDEN_NO_EDITABLE',
+        `Esa cuenta ya se movió a la mesa ${String(actual.numero)}: otra persona la cambió. Revisa el mapa antes de volver a moverla.`,
+        { mesaActual: actual.numero },
       );
     }
     if (orden.union_id !== null) {

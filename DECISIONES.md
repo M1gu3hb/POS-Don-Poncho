@@ -1921,3 +1921,35 @@ puerta los denuncia todos.
   nombre del pedido; **el CSV** trae «Canal», «Pedido para llevar» y «Nombre del pedido».
 - **Una sola regla** (`corte/canales.ts`): `llevar` es para llevar; todo lo demás, mesas. `aqui` se
   dice «Aquí» (venía de la cafetería).
+
+## DP-D101 · El retiro de la cajera arriba de un monto pide el PIN de un gerente · 10-11-2026
+
+- **Configuración → Caja:** «Pedir PIN de gerente en retiros mayores a $____»
+  (`UmbralDeRetiro.tsx`). Vacío = no se pide (el valor por omisión). Se guarda en
+  `configuracion.valores.retiro_pin_arriba_de_centavos` con `caja.fijar_umbral_de_retiro`, que sólo
+  admite a dueño y administrador y deja antes y después en la auditoría.
+- **El servidor lo exige** (`caja/retiro-con-pin.ts`, en `caja.movimiento` tipo `retiro`): si el
+  monto es MAYOR que el umbral y quien registra es la cajera, pide la autorización firmada de
+  `/api/identidad/supervisor` con `para: 'retiro'` y atada a ESE monto; se gasta una sola vez
+  (`gastarLaAutorizacion`, que ahora también vigila `caja.movimiento`). Una autorización de
+  descuento, de otro monto, vencida o ya usada se niega. Gerente, administrador y dueño no piden el
+  PIN de otro en su propio retiro (la regla es para la cajera); no hay tope por puesto en retiros.
+- **El corte** (`caja.hoja_del_corte` → «Retiros con PIN de gerente · quién autorizó»,
+  `corte/retiros-con-pin.ts`): cada retiro autorizado con su monto, motivo, quién lo autorizó y la hora.
+- **Sin migración.** Lo hizo el agente B (Sonnet); revisado e integrado por la sesión principal.
+
+## DP-D102 · Los menores de la auditoría del 9-11 · 10-11-2026
+
+- **Zonas:** `Zona.activo` deja de ser escribible por el puente (sólo `restaurante.fijar_zona_activa`);
+  al reactivar, si no hay rastro de qué mesas volver o volvieron menos de las apagadas, el resultado
+  lo avisa y la pantalla lo dice. Desactivar ya apagaba todas las mesas libres de la zona (prueba).
+- **El agotado del mesero:** al apartar lo agotado pregunta «Se agotó X. ¿Envío lo demás?» (Enviar /
+  No enviar); cerrar el aviso es «No enviar».
+- **Cambio de mesa:** `restaurante.cambiar_mesa` acepta `mesaOrigenId`: si otro ya la movió, el error
+  dice «ya se movió a la mesa N». Con mesas unidas no se ofrece «Cambiar de mesa».
+- **Auditoría:** `auditoria-reciente.ts` vuelve a sanear al leer (`sanearAlLeer`), con correo y
+  teléfono tapados.
+- **El detector de escrituras sueltas** (DP-D92) ve también `const db = obtenerDb(); db.…`.
+- **`consultarEn`** rechaza una cadena del puerto 6543 (`exigirQueNoSeaElPooler`): las
+  verificaciones contra una base real van por la conexión de sesión (`MORPHIQPOS_DB_VERIFICACION`).
+- **Sin migración.** Agente B.

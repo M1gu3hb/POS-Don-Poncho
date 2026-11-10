@@ -6,6 +6,7 @@ import { IDS_DE_GRUPOS_DE_AUDITORIA, accionesDelGrupo } from '@morphiqpos/domain
 import { z } from 'zod';
 
 import { definirComando } from '../comando.ts';
+import { sanearAlLeer } from '../saneado.ts';
 import { limitesDeLaFecha } from './dia.ts';
 
 /**
@@ -113,7 +114,8 @@ export const auditoriaReciente = definirComando<
         accion: f.accion,
         entidad: f.entidad,
         quien: f.quien,
-        payload: f.payload,
+        // DP-16 · Se vuelve a sanear al leer: lo viejo y los datos de contacto no salen.
+        payload: sanearAlLeer(f.payload),
       })),
     };
   },

@@ -56,8 +56,9 @@ export function PinDeSupervisor({
   montoCentavos,
   alAutorizar,
 }: {
-  readonly ordenId: string;
-  readonly para: 'descuento' | 'cancelacion';
+  /** La cuenta a la que se ata la autorización; el retiro no tiene cuenta, va por su monto. */
+  readonly ordenId?: string;
+  readonly para: 'descuento' | 'cancelacion' | 'retiro';
   readonly quienesAutorizan?: readonly QuienAutoriza[];
   /** El `id` del campo del PIN: dos formularios en una pantalla no lo comparten. */
   readonly idDelCampo: string;
@@ -122,7 +123,7 @@ export function PinDeSupervisor({
       }>('/api/identidad/supervisor', {
         empleoId: supervisor,
         pin,
-        ordenId,
+        ...(ordenId === undefined ? {} : { ordenId }),
         para,
         ...(montoCentavos === undefined ? {} : { montoCentavos }),
       });

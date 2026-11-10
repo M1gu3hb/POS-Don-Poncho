@@ -50,3 +50,53 @@ export function esRechazoPorAgotado(error: unknown): boolean {
   if (typeof datos !== 'object' || datos === null) return false;
   return (datos as { regla?: unknown }).regla === 'PRODUCTO_AGOTADO';
 }
+
+/**
+ * DP-16 · Antes de mandar el resto, UN toque de confirmación: «Se agotó X. ¿Envío lo demás?».
+ * El mesero no manda a la cocina un pedido distinto del que armó sin enterarse.
+ */
+export function preguntaDeAgotados(nombres: readonly string[]): string {
+  if (nombres.length === 1) return `Se agotó ${nombres[0] ?? ''}. ¿Envío lo demás?`;
+  const ultimo = nombres.at(-1) ?? '';
+  const anteriores = nombres.slice(0, -1).join(', ');
+  return `Se agotaron ${anteriores} y ${ultimo}. ¿Envío lo demás?`;
+}
+
+/** Lo mínimo que se usa de `toast` de sonner (se sustituye en las pruebas). */
+export type ToastConAcciones = (
+  mensaje: string,
+  opciones: {
+    readonly duration: number;
+    readonly action: { readonly label: string; readonly onClick: () => void };
+    readonly cancel: { readonly label: string; readonly onClick: () => void };
+    readonly onDismiss: () => void;
+    readonly onAutoClose: () => void;
+  },
+) => unknown;
+
+/** Pregunta con «Enviar» / «No enviar». Cerrar el aviso sin elegir cuenta como NO enviar. */
+export function confirmarEnvio(toast: ToastConAcciones, pregunta: string): Promise<boolean> {
+  return new Promise((resolver) => {
+    toast(pregunta, {
+      duration: Number.POSITIVE_INFINITY,
+      action: {
+        label: 'Enviar',
+        onClick: () => {
+          resolver(true);
+        },
+      },
+      cancel: {
+        label: 'No enviar',
+        onClick: () => {
+          resolver(false);
+        },
+      },
+      onDismiss: () => {
+        resolver(false);
+      },
+      onAutoClose: () => {
+        resolver(false);
+      },
+    });
+  });
+}

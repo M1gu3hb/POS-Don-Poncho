@@ -35,7 +35,7 @@ const Entrada = z.object({
   empleoId: z.uuid(),
   pin: z.string().min(1).max(16),
   ordenId: z.uuid().optional(),
-  para: z.enum(['descuento', 'cancelacion']).optional(),
+  para: z.enum(['descuento', 'cancelacion', 'retiro']).optional(),
   /** DP-14.2 · El descuento exacto que se autoriza, en centavos: la firma lo lleva. */
   montoCentavos: z.number().int().min(1).max(100_000_000).optional(),
 });

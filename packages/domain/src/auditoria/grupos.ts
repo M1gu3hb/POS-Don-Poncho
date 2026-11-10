@@ -51,6 +51,7 @@ export const GRUPOS_DE_AUDITORIA = {
       'configuracion.fijar_termino',
       'configuracion.restablecer_termino',
       'caja.fijar_cajas_simultaneas',
+      'caja.fijar_umbral_de_retiro',
       'propinas.guardar_esquema',
     ],
   },

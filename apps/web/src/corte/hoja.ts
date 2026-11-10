@@ -79,6 +79,15 @@ export interface HojaDelServidor {
     quien: string | null;
     registradoEn: string;
   }[];
+  /** DP-16 · Los retiros que llevaron el PIN de un gerente (`retirosConPinDelCorte`). */
+  readonly retirosConPin?: readonly {
+    movimientoId: string;
+    montoCentavos: string;
+    motivo: string | null;
+    quien: string | null;
+    autorizo: string | null;
+    registradoEn: string;
+  }[];
   readonly conteo: readonly { denominacionCentavos: string; piezas: number }[];
   readonly metodos: readonly {
     metodo: string;

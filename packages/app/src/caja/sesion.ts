@@ -14,7 +14,12 @@ import {
   decidirElCierre,
   type AvisoDelCierre,
 } from './cuentas-vivas-al-cerrar.ts';
-import { entradaAbrirCaja, entradaCerrarCaja, entradaMovimientoCaja } from '../venta/esquemas.ts';
+import { entradaAbrirCaja, entradaCerrarCaja } from '../venta/esquemas.ts';
+import {
+  avalarElRetiro,
+  entradaMovimientoConAutorizacion,
+  leerUmbralDeRetiro,
+} from './retiro-con-pin.ts';
 
 /**
  * Sesión de caja (F1.1-A-08).
@@ -166,7 +171,7 @@ export const abrirCaja = definirComando<
 
 /** Quien responde por la caja: ellos sí hacen gasto, depósito y ajuste. */
 const ROLES_DE_GERENCIA = ['gerente', 'administrador', 'dueno'] as const;
-type TipoDeMovimiento = z.infer<typeof entradaMovimientoCaja>['tipo'];
+type TipoDeMovimiento = z.infer<typeof entradaMovimientoConAutorizacion>['tipo'];
 
 const ETIQUETA_DE_MOVIMIENTO: Readonly<Record<TipoDeMovimiento, string>> = {
   gasto: 'gasto',
@@ -187,7 +192,7 @@ export function puedeRegistrarMovimiento(rol: string, tipo: TipoDeMovimiento): b
 
 export const registrarMovimientoCaja = definirComando<
   Transaccion,
-  typeof entradaMovimientoCaja,
+  typeof entradaMovimientoConAutorizacion,
   { registrado: true }
 >({
   nombre: 'caja.movimiento',
@@ -195,7 +200,7 @@ export const registrarMovimientoCaja = definirComando<
   escribe: true,
   roles: [...ROLES_DE_CAJA],
   paquetes: PAQUETES_MOSTRADOR,
-  entrada: entradaMovimientoCaja,
+  entrada: entradaMovimientoConAutorizacion,
   async ejecutar(ctx, entrada) {
     const { organizacionId, terminalId, empleoId, rol } = ctx.ambito;
     // Primero el permiso: a quien no le toca no se le dice si hay caja abierta.
@@ -226,7 +231,19 @@ export const registrarMovimientoCaja = definirComando<
     const monto =
       entrada.tipo === 'ajuste' ? BigInt(entrada.montoCentavos) : salida ? -magnitud : magnitud;
 
-    await ctx.paso('registrar_movimiento', () =>
+    // DP-16 · Un retiro de la cajera arriba del umbral lleva la autorización de un gerente.
+    const aval =
+      entrada.tipo === 'retiro'
+        ? await ctx.paso('autorizar_el_retiro', async () =>
+            avalarElRetiro(ctx, {
+              umbralCentavos: await leerUmbralDeRetiro(ctx.tx, organizacionId),
+              magnitudCentavos: magnitud,
+              autorizacion: entrada.autorizacion,
+            }),
+          )
+        : null;
+
+    const registrado = await ctx.paso('registrar_movimiento', () =>
       repoCaja.registrarMovimiento(ctx.tx, {
         organizacionId,
         sesionCajaId: sesion.id,
@@ -241,7 +258,20 @@ export const registrarMovimientoCaja = definirComando<
 
     ctx.auditar({
       entidadId: sesion.id,
-      payload: { tipo: entrada.tipo, montoCentavos: monto.toString(), motivo: entrada.motivo },
+      payload: {
+        tipo: entrada.tipo,
+        montoCentavos: monto.toString(),
+        motivo: entrada.motivo,
+        movimientoId: registrado.id,
+        // El nonce gastado: `gastarLaAutorizacion` lo busca aquí, y el corte dice quién autorizó.
+        ...(aval === null
+          ? {}
+          : {
+              autorizadoPor: aval.autorizadoPor,
+              autorizadoRol: aval.autorizadoRol,
+              autorizacion: aval.autorizacion,
+            }),
+      },
     });
     return { registrado: true as const };
   },

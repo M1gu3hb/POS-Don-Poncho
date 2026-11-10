@@ -86,6 +86,35 @@ export function sanear(valor: Saneable, profundidad = 0): unknown {
   return '[no serializable]';
 }
 
+/**
+ * DP-16 · Datos de contacto: al ESCRIBIR se guardan (el motivo de un cambio puede necesitar «a qué
+ * correo»), pero la pantalla de Auditoría no tiene por qué enseñarlos. Nombre de clave, igual que
+ * el resto: sin adivinar por la forma del valor.
+ */
+const CLAVES_DE_CONTACTO = /(correo|e-?mail|tel[eé]fono|telefono|celular|whatsapp|phone)/i;
+
+function taparContacto(valor: unknown, profundidad: number): unknown {
+  if (profundidad > PROFUNDIDAD_MAXIMA) return '[demasiado profundo]';
+  if (Array.isArray(valor)) return valor.map((v) => taparContacto(v, profundidad + 1));
+  if (typeof valor !== 'object' || valor === null) return valor;
+  const salida: Record<string, unknown> = {};
+  for (const [clave, contenido] of Object.entries(valor as Record<string, unknown>)) {
+    salida[clave] = CLAVES_DE_CONTACTO.test(clave)
+      ? REDACTADO
+      : taparContacto(contenido, profundidad + 1);
+  }
+  return salida;
+}
+
+/**
+ * DP-16 · Se vuelve a sanear AL LEER (la auditoría de Registros): lo guardado antes de que existiera
+ * una regla, o por un camino que no la aplicó, no sale tal cual. Aplica el saneado de escritura y,
+ * además, tapa correo y teléfono.
+ */
+export function sanearAlLeer(valor: Saneable): unknown {
+  return taparContacto(sanear(valor), 0);
+}
+
 /** Sanea y, si se pasa de tamaño, deja sólo la constancia de que se pasó. */
 export function payloadDeAuditoria(
   valor: Readonly<Record<string, unknown>>,

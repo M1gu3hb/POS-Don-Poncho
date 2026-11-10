@@ -45,6 +45,7 @@ export default function ZonasDelSalonDialog({ open, onOpenChange, zonas, alRenom
           ? `Zona «${zona.nombre}» reactivada (${r.mesasAfectadas} mesas vuelven)`
           : `Zona «${zona.nombre}» desactivada (${r.mesasAfectadas} mesas dejan de mostrarse)`,
       );
+      if (r.aviso) toast.warning(r.aviso);
       releer();
     } catch (error) {
       toast.error(
@@ -85,7 +86,7 @@ export default function ZonasDelSalonDialog({ open, onOpenChange, zonas, alRenom
     }
     setGuardando('nueva');
     try {
-      await api.entidades.Zona.create({ nombre, orden: ordenDeLaZonaNueva(activas), activo: true });
+      await api.entidades.Zona.create({ nombre, orden: ordenDeLaZonaNueva(activas) });
       toast.success(`Zona «${nombre}» creada`);
       setNueva('');
       releer();

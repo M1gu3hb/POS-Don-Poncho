@@ -70,6 +70,12 @@ export const SIN_ESTADO = [
       'Dos ajustes del negocio (DP-14.2): cuántas cajas a la vez y si se permiten descuentos. No tiene lista que pueda llegar vacía.',
   },
   {
+    pantalla: 'configuracion/UmbralDeRetiro',
+    estado: 'vacio',
+    razon:
+      'Un solo ajuste del negocio (DP-16): a partir de qué monto un retiro pide el PIN de un gerente. Vacío es un valor válido (no se pide), no una lista que llegue sin nada.',
+  },
+  {
     pantalla: 'configuracion/ExperienciaDelNegocio',
     estado: 'vacio',
     razon:

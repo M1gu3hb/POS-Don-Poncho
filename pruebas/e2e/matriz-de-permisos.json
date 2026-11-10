@@ -99,6 +99,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/fijar-umbral-de-retiro",
+      "comando": "caja.fijar_umbral_de_retiro",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/hoja-del-corte",
       "comando": "caja.hoja_del_corte",
       "escribe": false,

@@ -133,6 +133,8 @@ const LECTORES: Readonly<Record<string, 'documento-filtrado' | 'proyeccion' | 'i
   // DP-14.2: lee la bandera `descuentos_permitidos`; no devuelve el documento (escribe por el
   // guardado parcial del puente, con su candado).
   'packages/app/src/venta/descuentos-permitidos.ts': 'interno',
+  // DP-16: lee la bandera `retiro_pin_arriba_de_centavos`; escribe por el guardado parcial del puente.
+  'packages/app/src/caja/retiro-con-pin.ts': 'interno',
   'packages/data/src/repos/archivos.ts': 'interno',
 };
 

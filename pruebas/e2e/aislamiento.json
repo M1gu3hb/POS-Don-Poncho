@@ -670,10 +670,15 @@
       "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"],
       "idRequerido": true,
-      "cuerpo": { "ordenId": "⟨ordenes⟩", "mesaDestinoId": "⟨ordenes⟩" },
+      "cuerpo": {
+        "ordenId": "⟨ordenes⟩",
+        "mesaDestinoId": "⟨ordenes⟩",
+        "mesaOrigenId": "⟨ordenes⟩"
+      },
       "ids": [
         { "camino": "ordenId", "tabla": "ordenes" },
-        { "camino": "mesaDestinoId", "tabla": "ordenes" }
+        { "camino": "mesaDestinoId", "tabla": "ordenes" },
+        { "camino": "mesaOrigenId", "tabla": "ordenes" }
       ]
     },
     {

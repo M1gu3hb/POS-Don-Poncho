@@ -145,6 +145,8 @@ const SOLO_POR_COMANDO = new Set([
   'presentacion_ultimo_acceso',
   // DP-14.2 · Lo cambian sólo el dueño o el administrador, con su comando y su auditoría.
   'descuentos_permitidos',
+  // DP-16 · Pedir PIN de gerente en retiros mayores a $X: sólo dueño o administrador.
+  'retiro_pin_arriba_de_centavos',
 ]);
 
 const MAX_BYTES_CONFIGURACION = 64 * 1024;
@@ -152,6 +154,7 @@ const MAX_BYTES_CONFIGURACION = 64 * 1024;
 /** Campos que las pantallas existentes administran en este documento. */
 const CLAVES_EDITABLES = new Set([
   'descuentos_permitidos',
+  'retiro_pin_arriba_de_centavos',
   'nombre_negocio',
   'nombre_sistema',
   'platform_brand',
@@ -465,6 +468,13 @@ export async function guardarConfiguracionParcial(
   }
   if ('descuentos_permitidos' in parche) {
     exigirForma(z.boolean(), parche['descuentos_permitidos'], '«Permitir descuentos» es sí o no.');
+  }
+  if ('retiro_pin_arriba_de_centavos' in parche) {
+    exigirForma(
+      z.number().int().min(1).max(1_000_000_000).nullable(),
+      parche['retiro_pin_arriba_de_centavos'],
+      'El monto del retiro con PIN es un importe en pesos, o vacío.',
+    );
   }
   if ('portal_qr_comensales_abren_mesa' in parche) {
     exigirForma(
