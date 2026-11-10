@@ -44,6 +44,48 @@ function lectorDesde(ruta) {
 }
 
 /**
+ * DP-16 (2.2) · LA PANTALLA GRANDE DE COCINA son siete archivos de `cocina/`, y sólo UNO de ellos
+ * es la pantalla: `TableroDeCocina` (más `ColumnasDeCocina`, que pinta el vacío y la espera de cada
+ * columna). Los demás son piezas que reciben lo que ya se leyó: el tiempo de una comanda, un
+ * platillo, la tarjeta, la tira de resumen y el cuadro de alertas de Configuración. Cada fila dice
+ * qué estado NO tiene la pieza y quién lo pinta.
+ */
+function ESTADOS_DE_LA_COCINA_GRANDE() {
+  const lo = (pantalla, estados, razon) => estados.map((estado) => ({ pantalla, estado, razon }));
+  const RECIBE =
+    'Recibe lo que el tablero de cocina ya leyó; sus estados los pinta ColumnasDeCocina.';
+  return [
+    ...lo(
+      'cocina/AlertasDeEspera',
+      ['vacio', 'cargando'],
+      'Es un formulario de dos campos de Configuración: no lee nada ni puede estar vacío.',
+    ),
+    ...lo(
+      'cocina/ColumnasDeCocina',
+      ['error'],
+      'No lee nada: el fallo de red lo avisa TableroDeCocina arriba, con el último tablero conocido.',
+    ),
+    ...lo(
+      'cocina/EsperaChip',
+      ['vacio', 'cargando', 'error'],
+      'Es el tiempo de UNA comanda: sin fecha dice «—».',
+    ),
+    ...lo('cocina/RenglonDePlatillo', ['vacio', 'cargando', 'error'], RECIBE),
+    ...lo(
+      'cocina/ResumenDeProduccion',
+      ['vacio', 'cargando', 'error'],
+      'Es la tira de arriba: sin pendientes dice «Nada pendiente por preparar» en su renglón, y no lee nada.',
+    ),
+    ...lo(
+      'cocina/TableroDeCocina',
+      ['vacio', 'cargando'],
+      'No lee nada: sus columnas pintan el vacío y la espera (ColumnasDeCocina).',
+    ),
+    ...lo('cocina/TarjetaDeCocina', ['vacio', 'cargando', 'error'], RECIBE),
+  ];
+}
+
+/**
  * LOS ESTADOS QUE UNA PANTALLA NO TIENE, declarados y no escondidos.
  *
  * Una fila por pantalla y estado, con la razón de por qué ESE estado no existe en
@@ -51,6 +93,7 @@ function lectorDesde(ruta) {
  * acaba pintando el estado, la fila sobra y hay que borrarla.
  */
 export const SIN_ESTADO = [
+  ...ESTADOS_DE_LA_COCINA_GRANDE(),
   {
     pantalla: 'catalogo/opciones/EditorDeGrupo',
     estado: 'vacio',

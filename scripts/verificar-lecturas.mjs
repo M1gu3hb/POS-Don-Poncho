@@ -59,12 +59,6 @@ const LECTURAS_PERMITIDAS = [
       'Es un campo real de PedidoPreparacion y un respaldo heredado para cortes; CorteCaja usa fecha_apertura como fuente primaria.',
   },
   {
-    campo: 'venta_folio',
-    cantidad: 1,
-    razon:
-      'Es una defensa opcional del detector de comandas huérfanas; venta_id y mesa_id resuelven la identidad antes de este respaldo.',
-  },
-  {
     campo: 'venta_ids',
     cantidad: 1,
     razon:

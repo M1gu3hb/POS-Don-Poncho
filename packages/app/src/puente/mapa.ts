@@ -3200,6 +3200,9 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       estado: { columna: 'estado', conversion: 'texto', escribible: false },
       fecha_inicio: { columna: 'iniciada_en', conversion: 'fecha', escribible: false },
       fecha_listo: { columna: 'lista_en', conversion: 'fecha', escribible: false },
+      // DP-16 · Desde cuándo espera: el instante en que se soltó a cocina (F-315). Un fuerte
+      // retenido no llega a cocina «con 40 minutos» sólo porque se capturó antes.
+      fecha_marchada: { columna: 'marchada_en', conversion: 'fecha', escribible: false },
       fecha_entregado: { columna: 'entregada_en', conversion: 'fecha', escribible: false },
       usuario_responsable_id: {
         columna: 'empleado_responsable_id',
@@ -3320,6 +3323,18 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         escribible: false,
       },
       orden_visual: { columna: 'orden_visual', conversion: 'entero', escribible: false },
+    },
+    derivados: {
+      /**
+       * DP-16 · Las opciones elegidas, aparte de la nota: la instantánea de la línea de venta
+       * (`orden_lineas.opciones`), reducida a grupo y nombres. Sin precios ni ids.
+       */
+      opciones: {
+        tabla: 'orden_lineas',
+        porColumna: 'orden_linea_id',
+        columna: 'opciones',
+        conversion: 'opciones_de_cocina',
+      },
     },
   },
 

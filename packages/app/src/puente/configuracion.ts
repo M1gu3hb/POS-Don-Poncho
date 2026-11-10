@@ -220,6 +220,9 @@ const CLAVES_EDITABLES = new Set([
   'presentacion_ultimo_acceso',
   'bascula_etiqueta',
   'comision_terminal_bp',
+  // DP-16 · Desde cuántos minutos esperando la pantalla de cocina pinta ámbar y rojo.
+  'cocina_alerta_ambar_min',
+  'cocina_alerta_roja_min',
 ]);
 
 /**
@@ -286,6 +289,30 @@ function exigirBascula(valor: unknown): void {
     throw new ErrorDominio(
       'PUENTE_CAMPO_INVALIDO',
       leido.error.issues[0]?.message ?? 'La báscula no tiene forma de etiqueta EAN-13.',
+    );
+  }
+}
+
+/**
+ * DP-16 · Las alertas de espera de la cocina: enteros de 1 a 240 minutos, y el rojo después del
+ * ámbar. Un ámbar mayor que el rojo pintaría la alerta al revés; se rechaza al guardar (la
+ * pantalla, además, nunca lo usaría: vuelve a los de siempre).
+ */
+function exigirAlertasDeCocina(parche: Readonly<Record<string, unknown>>): void {
+  const minutos = z.number().int().min(1).max(240);
+  const dicen = {
+    cocina_alerta_ambar_min: 'Los minutos del ámbar van de 1 a 240.',
+    cocina_alerta_roja_min: 'Los minutos del rojo van de 1 a 240.',
+  } as const;
+  for (const [clave, mensaje] of Object.entries(dicen)) {
+    if (clave in parche) exigirForma(minutos, parche[clave], mensaje);
+  }
+  const ambar = parche['cocina_alerta_ambar_min'];
+  const rojo = parche['cocina_alerta_roja_min'];
+  if (typeof ambar === 'number' && typeof rojo === 'number' && rojo <= ambar) {
+    throw new ErrorDominio(
+      'PUENTE_CAMPO_INVALIDO',
+      'El rojo tiene que quedar después del ámbar (más minutos).',
     );
   }
 }
@@ -459,6 +486,7 @@ export async function guardarConfiguracionParcial(
       'El papel del ticket es de 58 o de 80 mm.',
     );
   }
+  exigirAlertasDeCocina(parche);
   if ('portal_qr_envia_a_cocina' in parche) {
     exigirForma(
       z.enum(QUIEN_ENVIA),

@@ -146,3 +146,43 @@ describe('DP-15 · el ancho del papel del ticket (58 u 80 mm) se valida al guard
     }
   });
 });
+
+describe('DP-16 · las alertas de espera de la cocina se validan al guardar', () => {
+  it('enteros de 1 a 240 con el rojo después del ámbar pasan la validación', async () => {
+    for (const parche of [
+      { cocina_alerta_ambar_min: 10, cocina_alerta_roja_min: 20 },
+      { cocina_alerta_ambar_min: 1 },
+      { cocina_alerta_roja_min: 240 },
+    ]) {
+      expect(await codigoDe(guardarConfiguracionParcial({} as Transaccion, ORG, parche))).toBe(
+        'INESPERADO',
+      );
+    }
+  });
+
+  it('fuera de rango, con decimales o como texto no se guardan', async () => {
+    for (const malo of [0, 241, -5, 7.5, '10', true]) {
+      for (const clave of ['cocina_alerta_ambar_min', 'cocina_alerta_roja_min']) {
+        expect(
+          await codigoDe(guardarConfiguracionParcial({} as Transaccion, ORG, { [clave]: malo })),
+        ).toBe('PUENTE_CAMPO_INVALIDO');
+      }
+    }
+  });
+
+  it('un rojo que no queda después del ámbar no se guarda', async () => {
+    for (const [ambar, rojo] of [
+      [20, 20],
+      [30, 10],
+    ]) {
+      expect(
+        await codigoDe(
+          guardarConfiguracionParcial({} as Transaccion, ORG, {
+            cocina_alerta_ambar_min: ambar,
+            cocina_alerta_roja_min: rojo,
+          }),
+        ),
+      ).toBe('PUENTE_CAMPO_INVALIDO');
+    }
+  });
+});

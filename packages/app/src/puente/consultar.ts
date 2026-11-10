@@ -114,6 +114,9 @@ interface ConsultaLibre {
  */
 const BASE = 'b';
 
+/** Cuántos valores admite un filtro de lista (`campo: [a, b, c]`). */
+const MAXIMO_DE_VALORES_EN_UN_FILTRO = 200;
+
 /** Ninguna sucursal: la sesión sin sucursal de quien no consolida no empareja ninguna fila. */
 const NINGUNA_SUCURSAL = '00000000-0000-4000-8000-000000000000';
 
@@ -391,6 +394,27 @@ async function consultarUnaVez(
       // Su `useCajaAbierta` filtra por `tipo_corte='cierre_diario'`, y eso es
       // exactamente lo que significa venir de `sesiones_caja`.
       if (valor !== campo.constante) return [];
+      continue;
+    }
+    // DP-16 · Una lista de valores es un «cualquiera de estos»: la cocina pide sólo sus tres
+    // estados vivos (`estado: ['nuevo', 'en_preparacion', 'listo']`) en vez de bajar el historial.
+    if (Array.isArray(valor)) {
+      const valores = valor as unknown[];
+      if (valores.length === 0) return [];
+      if (
+        valores.length > MAXIMO_DE_VALORES_EN_UN_FILTRO ||
+        !valores.every((v) => typeof v === 'string' || typeof v === 'number')
+      ) {
+        throw new ErrorDominio(
+          'PUENTE_FILTRO_INVALIDO',
+          `La lista de «${clave}» admite hasta ${String(MAXIMO_DE_VALORES_EN_UN_FILTRO)} textos o números.`,
+        );
+      }
+      consulta = consulta.where(
+        `${BASE}.${campo.columna}`,
+        'in',
+        valores.map((v) => valorHaciaLaBase(v, campo)),
+      );
       continue;
     }
     consulta =

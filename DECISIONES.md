@@ -2005,3 +2005,29 @@ puerta los denuncia todos.
 - **Migración 192** (aditiva: mínimo y máximo del grupo, el precio con signo de la línea, «sólo
   presentaciones» y el fondo de la tarjeta del menú digital de la Parte 3), ficha 38.
 
+## DP-D105 · La cocina con volumen: sólo lo vivo, tarjetas compactas, la espera por colores · 10-11-2026
+
+- **Se lee sólo lo vivo.** `/cocina` pide `PedidoPreparacion` con `estado: ['nuevo', 'en_preparacion',
+  'listo']` (el puente acepta ya una lista de valores en un filtro, hasta 200, textos o números; vacía
+  no trae nada) y las ventas sólo de las cuentas a la vista; la lectura de todas las mesas, que nadie
+  usaba, se quitó. Medido con 19 comandas vivas y 1,140 entregadas de otros días: de 967 KB a 62 KB y
+  de 310–340 ms a 25–35 ms por refresco (cada 2 s). Se descartó un comando de lectura nuevo: habría
+  pedido catálogo y matriz sin ganar nada.
+- **Las opciones, aparte de la nota.** El puente sirve en cada platillo sus `opciones` (de la
+  instantánea de la línea, reducidas en el servidor a grupo y nombres: sin ids ni precios, para que lo
+  que cobra una opción no llegue a la cocina) y la pantalla las pinta como fichas resaltadas; la nota
+  va en su recuadro, ya sin el «Grupo: opción» que el mesero le pliega. Sin instantánea (comandas
+  viejas), la nota sale entera.
+- **La espera** cuenta desde `marchada_en` (`fecha_marchada`: cuando se soltó a cocina, no cuando se
+  capturó) y se pinta verde, ámbar o roja con ícono y minutos escritos, nunca sólo color; en «Listos»
+  no hay color. Los umbrales son del negocio (`cocina_alerta_ambar_min` y `cocina_alerta_roja_min`,
+  10 y 20 por omisión, enteros de 1 a 240, el rojo después del ámbar), en Configuración → Negocio.
+- **La pantalla** (`apps/web/src/cocina/`, que usa `Cocina.jsx`): tarjeta compacta por cuenta con un
+  bloque por estación, las más viejas arriba (en «Listos», las que llevan más tiempo listas), la tira
+  «Resumen de producción» (lo pendiente por platillo; lo que va por peso, por presentación: «Barbacoa
+  de horno ½ kg ×6»), modo compacto recordado en el aparato y tres columnas con encabezado fijo y su
+  propio desplazamiento desde 768 px (en teléfono, un selector con los conteos). Se quitó el aviso
+  «Sin venta asociada»: su condición ya no ocurre.
+- **Sin migración.** Lo hizo el agente C (Sonnet: 18 mutantes unitarios muertos, integración del
+  filtro y de las opciones); revisado e integrado por la sesión principal.
+

@@ -1385,7 +1385,7 @@ Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PRO
 | --- | --- | --- | --- |
 | A (worktree propio) | Sonnet | 1.2 «Marcar entregado» del mesero · 1.3 animaciones de las ventanas | entregado tras ~4 h esperando un lint en segundo plano que nunca avisó (se le pidió cerrar): 16 archivos, 16 mutantes muertos, sin navegador. Integrado aquí sin conflictos; la prueba en el navegador encontró que la primera ventana de la página no crecía desde el toque (el oyente se registraba al abrir la primera ventana): corregido. DP-D103 |
 | B (worktree propio, base 5438) | Sonnet | 1.4 retiros con PIN arriba de un monto · 1.5 menores de la auditoría del 9-11 | entregado: 49 archivos, 28 mutantes muertos, sin migración. Integrado aquí (un conflicto de imports en `giros.ts`; dos archivos venían en CRLF y se pasaron a LF): tipos, lint, formato, 10 verificaciones, integración 32/32 y unidad 5275 en verde; en el navegador, el umbral en Configuración → Caja y el retiro de $600 pidiendo el PIN. DP-D101 y DP-D102 |
-| C (worktree propio, base 5439) | Sonnet | 2.2 la cocina con volumen | en curso |
+| C (worktree propio, base 5439) | Sonnet | 2.2 la cocina con volumen | entregado tras ~3.5 h: `src/cocina/` nuevo (18 archivos), el filtro por lista del puente, las opciones de cocina, la espera desde `marchada_en` y los umbrales; 18 mutantes muertos; medido en 1080p y tabletas (967 KB → 62 KB por refresco). Su worktree nació del `main` viejo y lo movió a `6c02c94`. Integrado aquí con un conflicto en `aspecto-permitido.json` (las dos tandas). DP-D105 |
 | D (worktree propio) | Sonnet | 2.1 el editor de grupos de opciones en Productos (biblioteca, precio con signo, mín/máx, orden) | entregado: 4 archivos nuevos en `src/catalogo/opciones/`, 45 pruebas, 7 mutantes muertos; el editor viejo, borrado. Su worktree nació del `main` viejo (`8e06826`) y no de `dp-16-2`: se le avisó y mezcló la rama a media obra. Integrado aquí con un conflicto en `aspecto-permitido.json` (se conservaron las dos tandas); tipos, lint, 108 pruebas y los verificadores en verde |
 | E (worktree propio) | Sonnet | 2.3 el teléfono de cocina nuevo | en curso |
 
@@ -1428,6 +1428,7 @@ Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PRO
   el arranque en frío; luego de 1.3 a 1.7 s), el portal del QR en 5 (de 0.7 a 3.4 s), 8 a la vez
   todos 200 en 3.1 s, red lenta (11 s la primera, 2.2 s con caché) y el manifiesto. WebKit no estaba
   instalado para Playwright en esta máquina: se instaló (`npx playwright install webkit`) y se repitió.
+- 04:49 Una hora después del despliegue (03:47 → 04:49): Vercel **sin errores de ejecución**.
 
 ### 2.1 · Las opciones cobran (la sesión principal, rama `dp-16-2`)
 

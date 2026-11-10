@@ -21,7 +21,7 @@
 | 1.3 | Animaciones de las ventanas | hecho (agente A, integrado; DP-D103): crece desde el toque, 200 ms |
 | 1.4 | Retiros con PIN arriba de un monto | hecho (agente B, integrado; DP-D101) |
 | 1.5 | Menores de la auditoría del 9-11 | hecho (agente B, integrado; DP-D102) |
-| 1 · producción | PR #17, CI 10/10, la 191 en la propia, merge, `READY`, humo, ceros | hecho el 10-11: la 191 a las 03:46 (ensayo y luego en serio, por la de sesión), contrato 1752 columnas y RLS cerrado, merge `8f271a2`, `READY` 03:47, ceros 03:49, humo 03:53 (entrada y portal 200 sin desborde en 6 y 5 aparatos, 8 a la vez en 3.1 s) |
+| 1 · producción | PR #17, CI 10/10, la 191 en la propia, merge, `READY`, humo, ceros | hecho el 10-11: la 191 a las 03:46 (ensayo y luego en serio, por la de sesión), contrato 1752 columnas y RLS cerrado, merge `8f271a2`, `READY` 03:47, ceros 03:49, humo 03:53 (entrada y portal 200 sin desborde en 6 y 5 aparatos, 8 a la vez en 3.1 s); Vercel sin errores hasta las 04:49 |
 | 2.1 | Opciones con precio y productos por peso | en curso en `dp-16-2`: servidor (`996688e`), pantalla del mesero, para llevar y carrito (`beeda85`); ticket, portal, «sólo presentaciones» y corte sin commit; editor de grupos con el agente D |
 | 2.2 | Cocina con volumen | agente C (Sonnet) |
 | 2.3 | Teléfono de cocina nuevo | pendiente |
@@ -30,8 +30,7 @@
 
 ## Lo que sigue
 
-1. 04:50 · Vercel sin errores la hora siguiente al despliegue de la Parte 1 (03:47).
-2. 2.1: terminar (tipos, lint, integración y mutantes de lo de hoy), integrar al agente D (editor de
+1. 2.1: terminar (tipos, lint, integración y mutantes de lo de hoy), integrar al agente D (editor de
    grupos en Productos), probar en el navegador el mesero, el portal, el ticket y el corte.
-3. 2.2: integrar al agente C (cocina con volumen). 2.3: teléfono de cocina.
-4. DECISIONES DP-D104+, ficha 38 (192), PR de la Parte 2, la 192 en la propia, merge y humo.
+2. 2.2: integrar al agente C (cocina con volumen). 2.3: teléfono de cocina.
+3. DECISIONES DP-D104+, ficha 38 (192), PR de la Parte 2, la 192 en la propia, merge y humo.
