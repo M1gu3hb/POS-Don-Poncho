@@ -689,6 +689,8 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
     campos: {
       ...AUTO,
       folio: { columna: 'folio', conversion: 'texto', escribible: false },
+      // DP-17 · La serie del folio: el visor de Registros lo escribe «A-3», como el documento.
+      serie: { columna: 'serie', conversion: 'texto', escribible: false },
       // DP-14.1 · La cuenta de la que es parte, si se dividió. Una parte nace sin mesa
       // (`division.ts`), y la Caja la reconoce por aquí para ofrecerle el descuento.
       orden_padre_id: { columna: 'orden_padre_id', conversion: 'texto', escribible: false },
@@ -933,6 +935,13 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         porColumna: 'mesa_id',
         columna: 'numero',
         conversion: 'entero',
+      },
+      // DP-17 · Su nombre, si lo tiene: el corte la llama como el documento al cerrar.
+      mesa_nombre: {
+        tabla: 'mesas',
+        porColumna: 'mesa_id',
+        columna: 'nombre',
+        conversion: 'texto',
       },
       usuario_mesero_nombre: {
         tabla: 'empleados_visibles',
