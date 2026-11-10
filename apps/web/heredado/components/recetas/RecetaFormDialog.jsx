@@ -28,6 +28,7 @@ import { economiaDelPlatillo } from '~/inventario/costo-del-platillo';
 import IngredienteAutocomplete from './IngredienteAutocomplete';
 import CategoriaSelect from '@/components/productos/CategoriaSelect';
 import ImageUploader from '@/components/common/ImageUploader';
+import { SelectorDeFondo } from '~/portal/menu-digital/SelectorDeFondo';
 import TipoVentaSection from '@/components/productos/TipoVentaSection';
 import { TIPO_VENTA, validarProductoVariable, esProductoVariable } from '@/utils/tipoVentaUtils';
 import { canonicalUnidad, convertirAUnidadBase } from '@/utils/unidadesMedida';
@@ -82,6 +83,7 @@ const EMPTY_PRODUCTO = {
   descripcion: '',
   precio_venta: '',
   imagen_url: '',
+  fondo_tarjeta: null,
   visible_en_pos: true,
   activo: true,
 };
@@ -139,6 +141,7 @@ export default function RecetaFormDialog({
         descripcion: productoToEdit.descripcion || '',
         precio_venta: productoToEdit.precio_venta ?? '',
         imagen_url: productoToEdit.imagen_url || '',
+        fondo_tarjeta: productoToEdit.fondo_tarjeta ?? null,
         visible_en_pos: productoToEdit.visible_en_pos !== false,
         activo: productoToEdit.activo !== false,
       });
@@ -181,6 +184,8 @@ export default function RecetaFormDialog({
         presets_variable_qr: Array.isArray(productoToEdit.presets_variable_qr)
           ? productoToEdit.presets_variable_qr
           : [],
+        // DP-16 (QA R2, H1): «Vender sólo en estas presentaciones» también se edita en Recetas.
+        solo_presets_variable: productoToEdit.solo_presets_variable === true,
         capacidad_contenedor_ml: productoToEdit.capacidad_contenedor_ml,
         porciones_por_contenedor: productoToEdit.porciones_por_contenedor,
         ml_por_porcion: productoToEdit.ml_por_porcion,
@@ -297,6 +302,11 @@ export default function RecetaFormDialog({
             presets_variable_qr: Array.isArray(tipoVentaState.presets_variable_qr)
               ? tipoVentaState.presets_variable_qr
               : [],
+            // DP-16 · Sólo en sus presentaciones (y sólo si tiene alguna), como en Productos.
+            solo_presets_variable:
+              tipoVentaState.solo_presets_variable === true &&
+              Array.isArray(tipoVentaState.presets_variable_qr) &&
+              tipoVentaState.presets_variable_qr.length > 0,
             capacidad_contenedor_ml: tipoVentaState.capacidad_contenedor_ml,
             porciones_por_contenedor: tipoVentaState.porciones_por_contenedor,
             ml_por_porcion: tipoVentaState.ml_por_porcion,
@@ -306,7 +316,7 @@ export default function RecetaFormDialog({
               ? tipoVentaState.presets_porcion_qr
               : [],
           }
-        : { tipo_venta: TIPO_VENTA.PRECIO_FIJO };
+        : { tipo_venta: TIPO_VENTA.PRECIO_FIJO, solo_presets_variable: false };
 
       // El costo, la utilidad y el margen NO viajan. Son columnas que el
       // servidor calcula —`margen_bp` y `utilidad_unitaria` son generadas en la
@@ -321,6 +331,8 @@ export default function RecetaFormDialog({
         // `null` y no '': el puente valida que una imagen sea una URL, y la cadena vacía no lo
         // es; con '' no se podía guardar la receta de un platillo sin foto (DP-9.1).
         imagen_url: producto.imagen_url || null,
+        // DP-16 · El fondo de la tarjeta del menú digital (sin foto); el puente sólo acepta la lista.
+        fondo_tarjeta: producto.fondo_tarjeta ?? null,
         // DP-9.1: el área elegida (o ninguna, y el servidor la aprende de su categoría). La
         // visibilidad en el menú digital no viaja: al crear vale la de la columna y al editar
         // se queda la que tiene, en vez de volver a encender un platillo escondido del QR.
@@ -466,6 +478,16 @@ export default function RecetaFormDialog({
                   />
                 </div>
               </div>
+              {/* DP-16 (QA-D, H-01): con recetas los platillos se editan aquí, no en Productos. */}
+              {!producto.imagen_url && (
+                <div className="sm:col-span-2">
+                  <SelectorDeFondo
+                    valor={producto.fondo_tarjeta}
+                    alCambiar={(fondo) => setProducto({ ...producto, fondo_tarjeta: fondo })}
+                    nombre={producto.nombre}
+                  />
+                </div>
+              )}
               <div className="flex items-center justify-between sm:col-span-2">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">

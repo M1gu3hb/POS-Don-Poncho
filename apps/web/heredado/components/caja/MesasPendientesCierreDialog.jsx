@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/cliente';
 import {
@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, UtensilsCrossed } from 'lucide-react';
 import { MESA_STATUS_CONFIG, insigniaDeEstadoDeMesa } from '@/lib/constants';
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
-import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
+import { liberarConDecision } from '~/restaurante/unir-mesas/liberar-mesa';
+import { obtenerMesasPendientesCierre } from '@/utils/mesasPendientesCierre';
 import { sePuedeMarcarLibre, tieneVentaPorCobrar } from '~/restaurante/mesas-pendientes-del-cierre';
 
 /**
@@ -25,22 +26,41 @@ import { sePuedeMarcarLibre, tieneVentaPorCobrar } from '~/restaurante/mesas-pen
  * consumo sin cobrar). Lo demás no se toca: se cobra o se cancela en su pantalla.
  */
 export default function MesasPendientesCierreDialog({ open, onClose, mesas = [] }) {
-  const arr = Array.isArray(mesas) ? mesas : [];
+  // Tras liberar se vuelve a leer: al separar mesas unidas también quedan libres las demás.
+  const [relectura, setRelectura] = useState(null);
+  const arr = Array.isArray(relectura) ? relectura : Array.isArray(mesas) ? mesas : [];
   const queryClient = useQueryClient();
   const [liberadas, setLiberadas] = useState(() => new Set());
   const [liberando, setLiberando] = useState(null);
   const [fallo, setFallo] = useState(null);
+  // DP-16 (QA-J, H2): la mesa unida se decide AQUÍ, en su renglón. Un diálogo aparte encima de
+  // éste lo cerraba el atrapafoco de éste y la cajera sólo veía el error.
+  const [porDecidir, setPorDecidir] = useState(null);
+  const decisionPendiente = useRef(null);
+  const decidir = (decision) => {
+    const resolver = decisionPendiente.current;
+    decisionPendiente.current = null;
+    setPorDecidir(null);
+    resolver?.(decision);
+  };
 
   const marcarLibre = async (m) => {
     setLiberando(m.id);
     setFallo(null);
     try {
-      const hecho = await liberarMesaConPregunta(m.id, (entrada) =>
-        api.comandos.ejecutar('/api/restaurante/liberar-mesa', entrada),
+      const hecho = await liberarConDecision(
+        m.id,
+        (entrada) => api.comandos.ejecutar('/api/restaurante/liberar-mesa', entrada),
+        () =>
+          new Promise((resolver) => {
+            decisionPendiente.current = resolver;
+            setPorDecidir(m.id);
+          }),
       );
       if (hecho) {
         setLiberadas((previas) => new Set(previas).add(m.id));
         queryClient.invalidateQueries({ queryKey: ['mesas'] });
+        setRelectura(await obtenerMesasPendientesCierre().catch(() => null));
       }
     } catch (err) {
       setFallo(err?.message || 'No se pudo marcar libre la mesa.');
@@ -53,6 +73,10 @@ export default function MesasPendientesCierreDialog({ open, onClose, mesas = [] 
     if (!open) {
       setLiberadas(new Set());
       setFallo(null);
+      decisionPendiente.current?.(null);
+      decisionPendiente.current = null;
+      setPorDecidir(null);
+      setRelectura(null);
     }
   }, [open]);
   const pendientes = arr.filter((m) => !liberadas.has(m.id));
@@ -99,10 +123,8 @@ export default function MesasPendientesCierreDialog({ open, onClose, mesas = [] 
               pendientes.map((m) => {
                 const cfg = MESA_STATUS_CONFIG[m?.estado] || MESA_STATUS_CONFIG.libre;
                 return (
-                  <div
-                    key={m.id}
-                    className="flex items-center gap-3 p-2.5 rounded-lg border bg-card"
-                  >
+                  <div key={m.id} className="rounded-lg border bg-card">
+                  <div className="flex items-center gap-3 p-2.5">
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 font-heading font-black text-xs"
                       style={{
@@ -135,6 +157,32 @@ export default function MesasPendientesCierreDialog({ open, onClose, mesas = [] 
                     ) : (
                       <UtensilsCrossed className="w-4 h-4 text-muted-foreground shrink-0" />
                     )}
+                  </div>
+                  {porDecidir === m.id && (
+                    <div
+                      ref={(nodo) => nodo?.scrollIntoView({ block: 'nearest' })}
+                      role="group"
+                      aria-label={`Mesa ${m?.numero ?? ''} unida a otras`}
+                      className="border-t p-2.5 space-y-2"
+                    >
+                      <p className="text-sm font-medium">¿Separar mesas o dejarlas unidas?</p>
+                      <p className="text-xs text-muted-foreground">
+                        Separadas, cada mesa vuelve a su lugar y a su número. Unidas, el siguiente
+                        cliente las encuentra juntas.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" onClick={() => decidir('separar')}>
+                          Separar mesas
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => decidir('mantener')}>
+                          Dejarlas unidas
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => decidir(null)}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   </div>
                 );
               })

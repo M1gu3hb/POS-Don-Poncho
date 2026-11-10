@@ -37,6 +37,16 @@ export function rotuloDeLaComanda(datos: DatosDelRotulo): string {
 }
 
 /** Lo que dice la voz: «para llevar 3», «mesa 4» o «mostrador» (el nombre se lee en pantalla). */
+/**
+ * DP-16 (QA-J, H8) · ¿La comanda lleva la banda «Cuenta cobrada»? Sólo la de una mesa: el para
+ * llevar se cobra al armarlo, así que en él la advertencia no dice nada.
+ */
+export function avisaCuentaCobrada(
+  datos: DatosDelRotulo & { readonly cuenta_cobrada?: boolean },
+): boolean {
+  return datos.cuenta_cobrada === true && !esParaLlevar(datos);
+}
+
 export function rotuloHablado(datos: DatosDelRotulo): string {
   if (esParaLlevar(datos)) {
     return typeof datos.numero_pedido === 'number'

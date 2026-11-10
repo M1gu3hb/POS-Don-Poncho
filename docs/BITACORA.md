@@ -1388,6 +1388,10 @@ Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PRO
 | C (worktree propio, base 5439) | Sonnet | 2.2 la cocina con volumen | entregado tras ~3.5 h: `src/cocina/` nuevo (18 archivos), el filtro por lista del puente, las opciones de cocina, la espera desde `marchada_en` y los umbrales; 18 mutantes muertos; medido en 1080p y tabletas (967 KB → 62 KB por refresco). Su worktree nació del `main` viejo y lo movió a `6c02c94`. Integrado aquí con un conflicto en `aspecto-permitido.json` (las dos tandas). DP-D105 |
 | D (worktree propio) | Sonnet | 2.1 el editor de grupos de opciones en Productos (biblioteca, precio con signo, mín/máx, orden) | entregado: 4 archivos nuevos en `src/catalogo/opciones/`, 45 pruebas, 7 mutantes muertos; el editor viejo, borrado. Su worktree nació del `main` viejo (`8e06826`) y no de `dp-16-2`: se le avisó y mezcló la rama a media obra. Integrado aquí con un conflicto en `aspecto-permitido.json` (se conservaron las dos tandas); tipos, lint, 108 pruebas y los verificadores en verde |
 | E (worktree propio) | Sonnet | 2.3 el teléfono de cocina nuevo | entregado: el servidor da todas las comandas activas (tope 40) y la tira de mesas; carrusel con deslizar, puntos, pista la primera vez, tira por estado, botones sobre la comanda vista, vibración y voz corta; 12 mutantes muertos, integración 28/28. Trabajó desde `dp-16-2` (`reset --hard` al no poder mezclar). Su `db.mjs migrate` lanzó un `pnpm install` que dejó rotos los enlaces del `node_modules` del repo (la demo dejó de encontrar `next`): se detuvo el servidor y se reinstaló desde el almacén (3.7 min). Al integrar se le quitó a la nota el pliegue de las opciones, como en la pantalla grande (2 mutantes más). DP-D106 |
+| QA-J (worktree propio, copia `qa_dp16_j`) | Sonnet | Parte 4 · la jornada completa con dinero (2 cajas, 10 mesas, 4 para llevar, opciones con precio, descuentos y retiros con PIN, cortes y Cierre) | cuadró al centavo ($8,981.10, 14 tickets) y 0 de 42 violaciones; 3 medios y 6 mejoras (`docs/qa/JORNADA-2026-11-10.md`) |
+| QA-D (worktree propio, copia `qa_dp16_d`) | Sonnet | Parte 4 · los aparatos, la cocina con volumen y el menú del comensal | 55 comprobaciones, 44 en SÍ; 5 medios y 8 mejoras, sin bloqueantes (`docs/qa/APARATOS-2026-11-10.md`) |
+| QA-R2J (worktree propio, copia `qa_dp16_r2j`) | Sonnet | Parte 4 · ronda 2: los arreglos del dinero y una jornada corta | todo en SÍ salvo la bandera de presentaciones en Recetas (arreglada después); cuadró al centavo y 0 de 42 |
+| QA-R2D (worktree propio, copia `qa_dp16_r2d`) | Sonnet | Parte 4 · ronda 2: los arreglos de los aparatos | 7 de 9 en SÍ; dos mejoras nuevas (arregladas) y dos a medias que quedan como mejora |
 
 ### 1.1 · Para llevar (la sesión principal)
 
@@ -1525,3 +1529,51 @@ Sin agentes: la Parte 3 es sobre todo pantalla y se probó a ojo en cada vuelta.
   docena desde la misma IP en la misma mesa, topaba con `telefono_nuevo_mesa_ip` (12 cada 15 min).
   El límite hace lo que debe; para las capturas se vacía `limite_tasa` de la base de demostración
   antes de cada tanda.
+- `verify` local: la excepción de lecturas de `descripcion` bajó a 47 (`ProductoPlaceholder.jsx` se
+  fue), la inicial de la tarjeta pasó a su hoja (`text-[6.5rem]` subía la deuda de ritmo) y los tamaños
+  al token de densidad con 44 px de mínimo, y la prueba del agotado en el portal mira los dos menús
+  nuevos (3 mutantes muertos). Unidad 482 / 5,464, integración 127 / 627, build y verificadores en
+  verde; `verify:pruebas` sólo se queja de los worktrees viejos (ambiental).
+- La primera CI del [#19](https://github.com/M1gu3hb/POS-Don-Poncho/pull/19): la jornada cayó en el
+  e2e del portal, que buscaba la tarjeta vieja (`button.rounded-2xl`). Nueve specs del portal la
+  usaban (la CI se detiene en la primera que falla); ahora buscan `.menu-tarjeta`. Segunda CI: 10 de 10.
+
+### La Parte 3 en producción (10-11, mañana)
+
+- Antes del merge, sólo leyendo por la de sesión: Don Poncho tiene `portal_qr_modo_menu =
+  'menu_subido'` guardado (107 productos, 0 con foto): el menú digital no le cambia nada.
+- 09:19 Merge del #19 (`4343e62`, squash, a nombre de M1gu3hb), sin migración. Production `READY`
+  (`dpl_C5cw…`) a las 09:20.
+- 09:21 Don Poncho en ceros (0 cajas, 0 cuentas, 0 folios, 0 comandas, 0 carritos, 10 mesas libres) y
+  el humo sin cobrar: la entrada 200 y sin desborde en 6 aparatos (de 0.8 a 4.0 s, la primera en
+  frío), el portal en 5 (de 0.68 a 1.34 s), 8 a la vez todos 200 en 2.7 s, red lenta (10 y 12 s la
+  primera vez, 1.6 y 1.9 s con caché) y el manifiesto con sus íconos.
+
+### 4 · El QA (rama `dp-16-4`, 10-11)
+
+- **La copia:** exportación de sólo lectura de la propia por la de sesión
+  (`_PRIVADO\mudanza\2026-11-10-dp16-propia-qa`, 135 tablas, 1,272 filas), importada en copias
+  desechables del clúster local 5460 (`qa_dp16_*`, idénticas al origen en filas y md5) con PIN de
+  prueba que sólo valen ahí (fuera del repositorio). La app, compilada desde el worktree `dp15-codigo`
+  en el commit de cada ronda y servida con `next start` (32751–32754). Guiones y encargos en
+  `D:\mpos-tmp\dp16\qa\`.
+- **Ronda 1** (`987c2ff`, el árbol de la Parte 3): QA-J cuadró al centavo la jornada completa (2 cajas,
+  10 mesas, 4 para llevar, 14 tickets, $8,981.10) y 0 de 42 violaciones, con 3 medios y 6 mejoras;
+  QA-D, 55 comprobaciones (44 en SÍ), 5 medios y 8 mejoras, sin bloqueantes.
+- **Los arreglos** (DP-D108), cada uno con su prueba primero y sus mutantes (28 muertos): el insumo
+  opcional en lo que va por peso y la bandera de presentaciones en Recetas, la mesa unida que se decide
+  en el renglón del cierre, el corte de Registros con opciones y retiros con PIN, el fondo en Recetas,
+  la sombra del texto sobre la foto, los 44 px (ficha, «×», tema, «Páginas subidas», «Entregar»,
+  «Quitar»), la ficha como diálogo con foco y Escape, la cocina a 768 px, el origen de las ventanas
+  desde el centro y la banda «Cuenta cobrada» sólo en mesas.
+- **Ronda 2** (`9e7d6b2`): QA-R2J, todo en SÍ salvo la bandera de presentaciones en Recetas (arreglada
+  después: Recetas no la cargaba ni la mandaba), y la jornada corta cuadrada al centavo (8 tickets,
+  $3,966.85) con 0 de 42 violaciones; QA-R2D, 7 de 9 en SÍ (el origen de «Conectar teléfono» y la ficha
+  modal para el lector de pantalla, a medias) y dos mejoras nuevas, la de «Quitar» y los nombres de − y
+  + ya arregladas.
+- Lo que queda como mejora, en `docs/qa/HALLAZGOS-DP16.md`.
+- **Tropiezos:** el modo espera del aparato se tragaba los toques de los guiones (hay que despertarlo
+  antes); la lista de mesas pendientes del cierre tiene su propio scroll y la pregunta quedaba fuera de
+  la vista (ahora se acerca sola); el encargo decía «Configuración → QR» y es «Portal QR →
+  Configuración», y decía que el para llevar se manda y luego se cobra (es al revés): se les avisó a
+  los agentes a media obra.

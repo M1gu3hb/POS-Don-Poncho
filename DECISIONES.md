@@ -2078,3 +2078,37 @@ puerta los denuncia todos.
   desborde a 360 px y la barra de secciones como navegación con `aria-current`.
 - **Sin migración nueva:** `productos.fondo_tarjeta` llegó con la 192.
 
+
+## DP-D108 · Lo que cambió el QA de DP-16: insumo opcional en lo que va por peso, la mesa unida en el cierre y el corte de Registros completo · 10-11-2026
+
+- **El ingrediente base es opcional en lo que se vende por peso** (`validarProductoVariable`,
+  `TipoVentaSection.jsx`): Don Poncho no lleva insumos y vende la barbacoa por kilo; el formulario
+  exigía el insumo aunque el servidor nunca lo pidió, así que nada de un producto por peso se podía
+  guardar desde Recetas (tampoco «Vender sólo en estas presentaciones», DP-D104). Sin ingrediente base
+  se vende por peso sin descontar inventario. El de porción (contenedor) sí lo sigue pidiendo.
+- **La mesa unida que traba el cierre se decide en su renglón** (`MesasPendientesCierreDialog.jsx`):
+  tras dividir y cobrar la cuenta de mesas unidas, quedan en «Limpieza» y unidas; «Marcar libre» la
+  principal pide decidir (`MESA_UNIDA_SIN_DECISION`). La pregunta salía en un diálogo aparte encima del
+  del cierre y se cerraba sola; ahora «Separar mesas», «Dejarlas unidas» y «Cancelar» salen bajo esa
+  mesa, a la vista, y la lista se vuelve a leer al liberar (al separar quedan libres las demás).
+- **El corte de Registros dice lo mismo que el documento al cerrar** (`extras-del-corte.ts`): el visor
+  lee la hoja del servidor y pinta «Opciones vendidas · cuánto sumaron» y «Retiros con PIN de gerente ·
+  quién autorizó» con los mismos ayudantes; si sólo eso falla, el corte sale y lo dice.
+- **El fondo de la tarjeta se elige también en Recetas** (`RecetaFormDialog.jsx`), donde se editan los
+  platillos con receta (los de Don Poncho); antes sólo al crear desde Productos.
+- **El texto sobre la foto lleva su propia sombra**, del alto de lo que dice (nombre, descripción y
+  precio), más una sombra de letra: sobre fotos claras pasó de 10–47 % del recuadro bajo 4.5:1 a 0 %.
+- **44 px:** en la ficha del platillo («Cerrar», cantidad, presentaciones), la «×» de los paneles
+  (primitiva `sheet`), el botón del tema, las fichas de «Páginas subidas» y su «Agregar», y «Entregar»
+  por estación del mesero. La ficha del platillo es un diálogo (`role="dialog"`, `aria-modal`, título).
+- **La ventana crece desde el toque, medido desde su centro** (`origenEnCss`): una ventana centrada que
+  termina de cargar crece hacia arriba y hacia abajo por igual; medido desde la esquina el origen se
+  corría la mitad de lo que crecía (142 y 213 px en el QA).
+- **En la cocina:** la comanda para llevar ya no lleva la banda ámbar «Cuenta cobrada» (siempre está
+  cobrada: `avisaCuentaCobrada`), y en «Listo» el botón «Quitar de la lista» baja de fila cuando no
+  cabe (tableta a 768 px).
+- **Quedan como mejoras, sin cambiar:** el folio y la mesa se escriben distinto en el visor y en el
+  documento; el Cierre del día desglosa por canal y opciones sólo la caja que cierra; cada mesero une
+  sólo sus mesas; el CSV de Ventas no trae «Opciones» (está en «Exportar productos»); los puntos del
+  carrusel del teléfono de cocina con más de 12 comandas; textos de 11–12 px heredados.
+- **Sin migración.**

@@ -8,7 +8,7 @@
  *
  *   1 · Un oyente en `document` (fase de captura, `pointerdown`) guarda el ÚLTIMO punto tocado.
  *   2 · Al montarse la ventana, `fijarOrigenDeVentana` mide su caja y escribe dos variables CSS:
- *       `--origen-x` y `--origen-y` (px dentro de la caja) y `--escala-inicial-ventana`.
+ *       `--origen-x` y `--origen-y` (relativos al centro de la caja) y `--escala-inicial-ventana`.
  *   3 · `ventanas.css` anima sólo `transform` y `opacity` con esas variables.
  *
  * Sin toque reciente (teclado, apertura programática, más de ~1 s) aparece al centro con un
@@ -87,6 +87,25 @@ export function calcularOrigenDeVentana(entrada: EntradaDelOrigen): OrigenDeVent
   };
 }
 
+/**
+ * DP-16 (QA-D, H-08) · El origen para el CSS, RELATIVO AL CENTRO de la caja (`calc(50% ± Npx)`).
+ * Una ventana centrada que crece al terminar de cargar (una lista, un QR) crece por igual hacia
+ * arriba y hacia abajo: así el punto no se mueve. Medido desde la esquina se corría la mitad de lo
+ * que creció.
+ */
+export function origenEnCss(
+  origen: OrigenDeVentana,
+  caja: Pick<CajaDeVentana, 'ancho' | 'alto'>,
+): { readonly x: string; readonly y: string } {
+  const desdeElCentro = (valor: number, lado: number): string => {
+    const distancia = Math.round(valor - lado / 2);
+    return distancia < 0
+      ? `calc(50% - ${String(-distancia)}px)`
+      : `calc(50% + ${String(distancia)}px)`;
+  };
+  return { x: desdeElCentro(origen.x, caja.ancho), y: desdeElCentro(origen.y, caja.alto) };
+}
+
 /* ── La parte con DOM ─────────────────────────────────────────────────────── */
 
 let ultimoToque: ToqueRegistrado | null = null;
@@ -141,8 +160,9 @@ export function fijarOrigenDeVentana(elemento: HTMLElement | null): void {
     },
     reducirMovimiento: pideMenosMovimiento(),
   });
-  elemento.style.setProperty('--origen-x', `${String(Math.round(origen.x))}px`);
-  elemento.style.setProperty('--origen-y', `${String(Math.round(origen.y))}px`);
+  const enCss = origenEnCss(origen, { ancho: elemento.offsetWidth, alto: elemento.offsetHeight });
+  elemento.style.setProperty('--origen-x', enCss.x);
+  elemento.style.setProperty('--origen-y', enCss.y);
   elemento.style.setProperty('--escala-inicial-ventana', String(origen.escala));
 }
 

@@ -340,7 +340,7 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
                 variant="outline"
                 onClick={() => handleEntregarGrupo(g)}
                 disabled={entregando}
-                className="h-7 px-2 text-[10px] gap-1 shrink-0 border-exito/30 text-exito hover:bg-exito/10"
+                className="h-11 px-3 text-xs gap-1 shrink-0 border-exito/30 text-exito hover:bg-exito/10"
                 title={`Entregar solo ${g.nombre}`}
               >
                 Entregar

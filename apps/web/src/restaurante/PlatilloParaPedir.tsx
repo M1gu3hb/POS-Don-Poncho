@@ -66,7 +66,6 @@ export function PlatilloParaPedir({
       ) : null}
       <Button
         type="button"
-        size="sm"
         onClick={alPedir}
         disabled={agotado}
         aria-label={agotado ? `${platillo.nombre}: agotado hoy` : `Agregar ${platillo.nombre}`}

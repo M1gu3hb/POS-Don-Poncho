@@ -1,6 +1,6 @@
 'use client';
 import { etiquetaDePeso } from '~/restaurante/peso';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useId, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus, Minus, Scale, Beaker } from 'lucide-react';
 import { formatCurrency } from '@/utils/financialUtils';
@@ -41,6 +41,19 @@ export default function ProductoQRDialog({
 }) {
   const [cantidad, setCantidad] = useState(1);
   const [notas, setNotas] = useState('');
+  // DP-16 (QA-D, H-09): la ficha se anuncia como diálogo, con el nombre del platillo de título.
+  const idDelTitulo = useId();
+  // DP-16 (QA ronda 2, H-09): al abrir, el foco entra a la ficha (en «Cerrar»); Escape la cierra.
+  const cerrarRef = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    cerrarRef.current?.focus();
+    const alTeclear = (evento) => {
+      if (evento.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', alTeclear);
+    return () => window.removeEventListener('keydown', alTeclear);
+  }, [open, onClose]);
   // selecciones[grupoNombre] = Set(opcionId) (Set para multi y para única).
   const [selecciones, setSelecciones] = useState({});
   const [errores, setErrores] = useState({});
@@ -248,6 +261,9 @@ export default function ProductoQRDialog({
       className="fixed inset-0 z-50 bg-velo/50 flex items-end sm:items-center justify-center"
     >
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={idDelTitulo}
         initial={{ y: 40 }}
         animate={{ y: 0 }}
         exit={{ y: 40 }}
@@ -276,9 +292,10 @@ export default function ProductoQRDialog({
             </div>
           )}
           <button
+            ref={cerrarRef}
             type="button"
             onClick={onClose}
-            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-velo/60 text-primario-texto flex items-center justify-center backdrop-blur"
+            className="absolute top-3 right-3 w-11 h-11 rounded-full bg-velo/60 text-primario-texto flex items-center justify-center backdrop-blur"
             aria-label="Cerrar"
           >
             <X className="w-5 h-5" />
@@ -287,7 +304,7 @@ export default function ProductoQRDialog({
 
         <div className="p-4 space-y-4">
           <div>
-            <h2 className="text-lg font-heading font-bold leading-tight">
+            <h2 id={idDelTitulo} className="text-lg font-heading font-bold leading-tight">
               {producto.nombre || '—'}
             </h2>
             {producto.descripcion && (
@@ -336,7 +353,7 @@ export default function ProductoQRDialog({
                         key={`preset-${i}`}
                         type="button"
                         onClick={() => setCantVariable(String(valor))}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition-colors ${
+                        className={`min-h-11 px-4 rounded-full text-sm font-semibold border-2 transition-colors ${
                           seleccionado
                             ? 'bg-primary text-primary-foreground border-primary'
                             : 'bg-card border-border hover:bg-muted/40'
@@ -462,7 +479,8 @@ export default function ProductoQRDialog({
                   type="button"
                   onClick={() => cambiarCantidad(-1)}
                   disabled={cantidad <= 1}
-                  className="w-10 h-10 rounded-full border-2 flex items-center justify-center disabled:opacity-40"
+                  aria-label="Uno menos"
+                  className="w-11 h-11 rounded-full border-2 flex items-center justify-center disabled:opacity-40"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
@@ -471,7 +489,8 @@ export default function ProductoQRDialog({
                   type="button"
                   onClick={() => cambiarCantidad(1)}
                   disabled={cantidad >= 99}
-                  className="w-10 h-10 rounded-full border-2 flex items-center justify-center disabled:opacity-40"
+                  aria-label="Uno más"
+                  className="w-11 h-11 rounded-full border-2 flex items-center justify-center disabled:opacity-40"
                 >
                   <Plus className="w-4 h-4" />
                 </button>

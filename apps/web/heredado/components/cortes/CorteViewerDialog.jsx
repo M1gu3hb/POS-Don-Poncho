@@ -20,6 +20,7 @@ import { cancelacionesDeLaCaja } from '~/corte/cancelaciones-leidas';
 import { leerCancelacionesSinTrabar } from '~/corte-heredado/cancelaciones-sin-trabar';
 import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
 import { leerVentasDelDia } from '~/corte-heredado/ventas-del-dia';
+import { leerExtrasDelCorte } from '~/corte-heredado/extras-del-corte';
 
 export default function CorteViewerDialog({ corte, open, onClose }) {
   const { config, paquete_modo } = useConfig();
@@ -42,6 +43,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
     cancelaciones: [],
     cancelacionesNoLeidas: false,
     alertas: [],
+    extras: null,
   });
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -65,7 +67,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
         // neta sale inflada, sin descuentos el costo sale en cero y el margen al
         // 100 %. Un corte a medias no es un corte: se enseña el error y se deja
         // el diálogo vacío, que es lo que hace que alguien reintente.
-        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas, descuentosLeidos, ventasDelDia] =
+        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas, descuentosLeidos, ventasDelDia, extras] =
           await Promise.all([
             api.entidades.Venta.list('-fecha_cierre', 2000),
             api.entidades.GastoOperativo.list('-created_date', 500),
@@ -88,6 +90,9 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
             leerDescuentosDelCorte(corteId),
             // DP-15 (QA, J-H6) · En el Cierre del día, las ventas de todas las cajas; `null` si no.
             leerVentasDelDia(corteId),
+            // DP-16 (QA-J, H3) · Opciones vendidas y retiros con PIN, de la hoja del servidor: lo
+            // mismo que el documento al cerrar. Si sólo esto falla, el corte sale y lo dice.
+            leerExtrasDelCorte(corteId),
           ]);
 
         const matchVenta = (v) => {
@@ -186,6 +191,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
             descuentos: descuentosLeidos,
             ventasDelDia,
             alertas,
+            extras,
           });
           setLoading(false);
         }
@@ -275,6 +281,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
               totalDeCancelaciones={data.totalDeCancelaciones}
               descuentos={data.descuentos}
               ventasDelDia={data.ventasDelDia}
+              extras={data.extras}
               alertas={data.alertas}
               config={config}
               sinCostos={sinCostos}

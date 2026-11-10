@@ -83,6 +83,20 @@
   --tarjeta-texto: hsl(0 0% 100%);
   --tarjeta-fondo: hsl(var(--texto));
 }
+/* El bloque del nombre, la descripción y el precio sobre la foto lleva su propia sombra, del alto
+   de lo que diga: con una foto clara el texto blanco queda arriba de 4.5:1 (QA-D, H-02). Se sale
+   al borde de la tarjeta (margen negativo) y se desvanece hacia arriba en su relleno. */
+.menu-tarjeta-foto .menu-tarjeta-texto {
+  margin: 0 calc(var(--espacio-3) * -1) calc(var(--espacio-3) * -1);
+  padding: 2.5rem var(--espacio-3) var(--espacio-3);
+  background: linear-gradient(
+    to top,
+    hsl(0 0% 0% / 0.72) 0%,
+    hsl(0 0% 0% / 0.62) calc(100% - 2.5rem),
+    hsl(0 0% 0% / 0) 100%
+  );
+  text-shadow: 0 1px 2px hsl(0 0% 0% / 0.5);
+}
 .menu-tarjeta-foto::after {
   content: '';
   position: absolute;

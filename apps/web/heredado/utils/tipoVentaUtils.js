@@ -242,7 +242,8 @@ export function validarProductoVariable(producto = {}) {
   const tipo = producto?.tipo_venta;
 
   if (tipo === TIPO_VENTA.VARIABLE_MEDIDA) {
-    if (!producto?.ingrediente_base_id) errores.push('Falta ingrediente base.');
+    // DP-16 (QA-J, H1): el ingrediente base es opcional. Sin él se vende por peso sin descontar
+    // inventario, como vende Don Poncho la barbacoa (el servidor nunca lo exigió).
     if (!UNIDADES_VARIABLE.includes(producto?.unidad_variable))
       errores.push('Unidad de venta inválida.');
     if (toPos(producto?.precio_por_unidad_variable) === 0)
