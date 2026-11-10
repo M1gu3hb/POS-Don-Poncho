@@ -29,6 +29,8 @@ import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }) {
   const queryClient = useQueryClient();
   const [entregando, setEntregando] = useState(false);
+  // DP-16: el motivo del último fallo, escrito en la tarjeta hasta el siguiente intento.
+  const [falloDeEntrega, setFalloDeEntrega] = useState(null);
 
   // Query local de pedidos listos de ESTA venta. Refetch corto para vista en vivo.
   // HOTFIX 6A.3: refetchInterval bajado a 1500ms para reflejar listos al
@@ -188,6 +190,8 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
   const handleEntregar = async () => {
     if (entregando) return;
     setEntregando(true);
+    setFalloDeEntrega(null);
+    const listosAntes = listosEfectivos;
     // Optimistic: quitar inmediatamente el card.
     optimisticEntregar(null);
     // HOTFIX 6A.3: limpiar el latch manualmente al entregar.
@@ -200,7 +204,10 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
       if (res.ok) {
         toast.success(res.mensaje || 'Entregado');
       } else {
-        toast.error(res.mensaje || 'No se pudo entregar');
+        const motivo = res.mensaje || 'No se pudo entregar';
+        toast.error(motivo);
+        setFalloDeEntrega(motivo);
+        setLastKnownListos(listosAntes);
       }
       refrescarTodo();
       if (typeof onAfterEntregar === 'function') {
@@ -214,7 +221,10 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
       console.error('[ListosParaRecogerCard] handleEntregar:', e);
       // El comando ya traduce: «ese pedido está en "en preparación" y no puede
       // pasar a "entregado"» dice qué ocurrió; el genérico no.
-      toast.error(e?.message || 'No se pudo entregar el pedido. Intenta de nuevo.');
+      const motivo = e?.message || 'No se pudo entregar el pedido. Intenta de nuevo.';
+      toast.error(motivo);
+      setFalloDeEntrega(motivo);
+      setLastKnownListos(listosAntes);
       // Restaurar query si falló.
       refrescarTodo();
     } finally {
@@ -226,6 +236,8 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
   const handleEntregarGrupo = async (grupo) => {
     if (entregando || !grupo?.pedidoIds?.length) return;
     setEntregando(true);
+    setFalloDeEntrega(null);
+    const listosAntes = listosEfectivos;
     optimisticEntregar(grupo.pedidoIds);
     // HOTFIX 6A.3: limpiar latch para los pedidos de esa estación.
     setLastKnownListos((prev) => {
@@ -246,7 +258,10 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
       if (res.ok) {
         toast.success(res.mensaje || `Entregado: ${grupo.nombre}`);
       } else {
-        toast.error(res.mensaje || 'No se pudo entregar');
+        const motivo = res.mensaje || 'No se pudo entregar';
+        toast.error(motivo);
+        setFalloDeEntrega(motivo);
+        setLastKnownListos(listosAntes);
       }
       refrescarTodo();
       if (typeof onAfterEntregar === 'function') {
@@ -258,7 +273,10 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
       }
     } catch (e) {
       console.error('[ListosParaRecogerCard] handleEntregarGrupo:', e);
-      toast.error(e?.message || 'No se pudo entregar. Intenta de nuevo.');
+      const motivo = e?.message || 'No se pudo entregar. Intenta de nuevo.';
+      toast.error(motivo);
+      setFalloDeEntrega(motivo);
+      setLastKnownListos(listosAntes);
       refrescarTodo();
     } finally {
       setEntregando(false);
@@ -267,7 +285,7 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
 
   return (
     <div
-      className="mx-4 mt-3 rounded-xl border-2 overflow-hidden
+      className="mx-4 mt-3 shrink-0 rounded-xl border-2
         bg-gradient-to-b from-exito/10 to-exito/15
         border-exito"
       style={{
@@ -292,23 +310,6 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
             Recoge y entrega al cliente
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={handleEntregar}
-          disabled={entregando}
-          className="h-8 px-3 text-xs font-bold gap-1 shrink-0 text-exito-texto"
-          style={{
-            background: 'linear-gradient(135deg, #16A34A 0%, #15803D 100%)',
-            boxShadow: '0 1px 0 rgba(255,255,255,0.2) inset, 0 2px 6px rgba(22,163,74,0.3)',
-          }}
-        >
-          {entregando ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <CheckCheck className="w-3.5 h-3.5" />
-          )}
-          {labelBoton}
-        </Button>
       </div>
 
       {/* Subtarjetas por estación con productos. Solo se ven si hay > 1
@@ -347,6 +348,35 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
             )}
           </div>
         ))}
+      </div>
+
+      {/* DP-16: el botón principal, a todo lo ancho y de 48 px como mínimo (dedo, no puntero). */}
+      <div className="px-3 pb-3 space-y-2">
+        <Button
+          size="lg"
+          onClick={handleEntregar}
+          disabled={entregando}
+          className="w-full min-h-12 gap-2 text-base font-bold text-exito-texto"
+          style={{
+            background: 'linear-gradient(135deg, #16A34A 0%, #15803D 100%)',
+            boxShadow: '0 1px 0 rgba(255,255,255,0.2) inset, 0 2px 6px rgba(22,163,74,0.3)',
+          }}
+        >
+          {entregando ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <CheckCheck className="w-5 h-5" />
+          )}
+          {labelBoton}
+        </Button>
+        {falloDeEntrega && (
+          <p
+            role="alert"
+            className="rounded-lg border border-peligro/40 bg-peligro/5 px-3 py-2 text-sm font-semibold text-peligro"
+          >
+            {falloDeEntrega} No se marcó nada como entregado: lo de la ventana sigue ahí.
+          </p>
+        )}
       </div>
     </div>
   );

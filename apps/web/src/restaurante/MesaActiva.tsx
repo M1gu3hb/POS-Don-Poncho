@@ -847,6 +847,9 @@ export function MesaActiva(props: MesaActivaProps) {
           Se muestra el último dato conocido.
         </Aviso>
       )}
+      {comandaVisible && hayAlgoQueDecirDeLaVentana ? (
+        <div className="px-(--espacio-3) pt-(--espacio-3) xl:hidden">{bloqueDeListos}</div>
+      ) : null}
       {comandaVisible && mesa?.venta_activa_id != null ? (
         <div className="px-(--espacio-3) pt-(--espacio-3)">
           <AccionesDeLaMesa
@@ -864,9 +867,6 @@ export function MesaActiva(props: MesaActivaProps) {
             }}
           />
         </div>
-      ) : null}
-      {comandaVisible && hayAlgoQueDecirDeLaVentana ? (
-        <div className="px-(--espacio-3) pt-(--espacio-3) xl:hidden">{bloqueDeListos}</div>
       ) : null}
       {contenido}
       {comandaVisible && (
