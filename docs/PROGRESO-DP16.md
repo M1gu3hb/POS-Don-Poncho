@@ -27,14 +27,12 @@
 | 2.3 | Teléfono de cocina nuevo | hecho (agente E, `8d5d522`, DP-D106); en el navegador en Android 360 y 412 y en iPhone (WebKit): sin desborde, botones de 62 px, tira, carrusel y opciones aparte de la nota |
 | 2 · producción | PR #18, CI 10/10, la 192 en la propia, merge, `READY`, humo, ceros | hecho el 10-11: la 192 a las 07:05, merge `2e8da35`, `READY`, ceros y humo 07:07; Vercel sin errores de 07:05 a 08:06 |
 | 3 | Menú del comensal: digital y a la carta | hecho en `dp-16-3` (DP-D107): el menú digital, «a la carta», el modo en Configuración → QR y el fondo de la tarjeta; 8 mutantes muertos; capturas en Android 360, iPhone y tableta, con y sin fotos, sin desborde ni objetivos de menos de 44 px (`D:\mpos-tmp\dp16\laminas\`, fuera del repositorio), enviadas a Miguel; sin migración (la columna venía en la 192) |
-| 3 · producción | PR #19, CI 10/10, merge, `READY`, humo, ceros | hecho el 10-11: merge `4343e62` 09:19, `READY` 09:20, ceros y humo 09:21 (entrada y portal 200 sin desborde en 6 y 5 aparatos, 8 a la vez en 2.7 s); Don Poncho sigue en «Páginas subidas» (107 productos, 0 con foto); Vercel una hora: pendiente (10:21) |
-| 4 | QA final, producción y reporte 010 | pendiente |
+| 3 · producción | PR #19, CI 10/10, merge, `READY`, humo, ceros | hecho el 10-11: merge `4343e62` 09:19, `READY` 09:20, ceros y humo 09:21 (entrada y portal 200 sin desborde en 6 y 5 aparatos, 8 a la vez en 2.7 s); Don Poncho sigue en «Páginas subidas» (107 productos, 0 con foto); Vercel sin errores de 09:19 a 10:22 |
+| 4 | QA final, producción y reporte 010 | QA en dos rondas con 4 agentes Sonnet: el dinero al centavo las dos veces y 0 de 42 violaciones; 8 medios y 6 mejoras arreglados con prueba y 28 mutantes (DP-D108), comprobados en la ronda 2; `verify` local verde. Falta el PR, producción y el reporte |
 
 ## Lo que sigue
 
-1. Vercel una hora después de la Parte 3 (10:21).
-2. Parte 4 (rama `dp-16-4`): QA con dos agentes Sonnet en copias de la propia de hoy (`qa_dp16_j` y
-   `qa_dp16_d` en el 5460, exportación `_PRIVADO\mudanza6-11-10-dp16-propia-qa`; guiones y
-   encargos en `D:\mpos-tmp\dp16\qa\`; la app compilada desde el worktree `dp15-codigo` en
-   `987c2ff`, servida en 32751 y 32752); jornada cuadrada al centavo en `docs/qa/JORNADA-2026-11-10.md`;
-   arreglos con prueba y mutante; humo final y reporte `docs/reports/010-para-llevar-cocina-menu.md`.
+1. PR de la Parte 4 (`dp-16-4`), CI, merge, `READY`, humo, ceros y Vercel una hora.
+2. Cerrar el reporte 010 (la fila de producción de la Parte 4) y el resumen para Miguel.
+3. Limpiar: `apps/web/public/_fotos-demo` (sin seguimiento, nunca se sube), los servidores del QA y las
+   copias `qa_dp16_*`.
