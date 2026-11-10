@@ -247,6 +247,7 @@ export default function ParaLlevarDialog({ open, usuarioId, onCerrar, onCobrar }
       <SeleccionModificadoresDialog
         key={dialogos.turnoDePersonalizar}
         producto={dialogos.productoParaPersonalizar}
+        precioBase={dialogos.productoParaPersonalizar?._variablePendiente?.precio_total_linea}
         open={!!dialogos.productoParaPersonalizar}
         onClose={dialogos.cerrarPersonalizacion}
         onConfirm={dialogos.confirmarPersonalizacion}

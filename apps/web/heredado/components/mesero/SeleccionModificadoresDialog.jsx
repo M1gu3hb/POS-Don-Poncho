@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Check, AlertCircle, ListChecks } from 'lucide-react';
 import { formatCurrency } from '@/utils/financialUtils';
+import { etiquetaDelPrecio, precioConOpciones } from '~/restaurante/toma-de-pedido/precio-de-las-opciones';
 
 /**
  * Modal de personalización al agregar producto al carrito del mesero.
@@ -25,6 +26,11 @@ import { formatCurrency } from '@/utils/financialUtils';
  *  - onClose(): cerrar sin agregar
  *  - onConfirm({ modificadores, notas }): callback al agregar
  *  - conNotas: si ofrece el campo de notas libres (DP-14.6: /pos no las guarda y no lo ofrece)
+ *  - precioBase: DP-16 · el precio del renglón antes de las opciones (lo que va por peso ya trae
+ *    su peso); si falta, el precio del producto.
+ *
+ * DP-16 · Cada opción dice lo que suma o resta («+$15.00») y el pie dice el total; un grupo de
+ * varias respeta su mínimo y su máximo. El precio que cuenta lo pone el servidor.
  */
 export default function SeleccionModificadoresDialog({
   producto,
@@ -32,6 +38,7 @@ export default function SeleccionModificadoresDialog({
   onClose,
   onConfirm,
   conNotas = true,
+  precioBase,
 }) {
   // grupoId -> Set(opcionId) para múltiple, o opcionId string para única
   const [selecciones, setSelecciones] = useState({});
@@ -68,7 +75,10 @@ export default function SeleccionModificadoresDialog({
       if (grupo.tipo === 'multiple') {
         const set = new Set(Array.isArray(next[grupo.id]) ? next[grupo.id] : []);
         if (set.has(opcionId)) set.delete(opcionId);
-        else set.add(opcionId);
+        else if (typeof grupo.maximo === 'number' && set.size >= grupo.maximo) {
+          setError(`En «${grupo.nombre}» se eligen hasta ${grupo.maximo}.`);
+          return prev;
+        } else set.add(opcionId);
         next[grupo.id] = Array.from(set);
       } else {
         next[grupo.id] = next[grupo.id] === opcionId ? '' : opcionId;
@@ -92,10 +102,12 @@ export default function SeleccionModificadoresDialog({
           const ids = Array.isArray(seleccionado) ? seleccionado : [];
           elegidas = g.opciones
             .filter((o) => ids.includes(o.id))
-            .map((o) => ({ id: o.id, nombre: o.nombre }));
+            .map((o) => ({ id: o.id, nombre: o.nombre, precioCentavos: o.precioCentavos ?? '0' }));
         } else if (seleccionado) {
           const op = g.opciones.find((o) => o.id === seleccionado);
-          if (op) elegidas = [{ id: op.id, nombre: op.nombre }];
+          if (op) {
+            elegidas = [{ id: op.id, nombre: op.nombre, precioCentavos: op.precioCentavos ?? '0' }];
+          }
         }
         return {
           grupo_id: g.id,
@@ -120,6 +132,16 @@ export default function SeleccionModificadoresDialog({
       setError(`Selecciona una opción en: ${faltantes.join(', ')}`);
       return;
     }
+    // DP-16 · El mínimo de un grupo de varias (si es obligatorio o ya se eligió algo).
+    for (const g of grupos) {
+      if (g.tipo !== 'multiple' || typeof g.minimo !== 'number' || g.minimo <= 0) continue;
+      const elegidas = Array.isArray(selecciones[g.id]) ? selecciones[g.id].length : 0;
+      const minimo = Math.min(g.minimo, g.opciones.length);
+      if (elegidas < minimo && (g.obligatorio || elegidas > 0)) {
+        setError(`En «${g.nombre}» elige al menos ${minimo}.`);
+        return;
+      }
+    }
     const modificadores = construirModificadoresSeleccionados();
     onConfirm &&
       onConfirm({
@@ -129,7 +151,8 @@ export default function SeleccionModificadoresDialog({
   };
 
   if (!producto) return null;
-  const precio = Number(producto?.precio_venta) || 0;
+  const precio = Number(precioBase ?? producto?.precio_venta) || 0;
+  const total = precioConOpciones(precio, construirModificadoresSeleccionados());
 
   return (
     <Dialog
@@ -181,8 +204,14 @@ export default function SeleccionModificadoresDialog({
                   {g.nombre}
                   {g.obligatorio && <span className="text-peligro ml-1">*</span>}
                 </Label>
-                <span className="text-[10px] text-muted-foreground">
-                  {g.tipo === 'multiple' ? 'Elige una o varias' : 'Elige una'}
+                <span className="text-xs text-muted-foreground">
+                  {g.tipo !== 'multiple'
+                    ? 'Elige una'
+                    : typeof g.minimo === 'number' && typeof g.maximo === 'number'
+                      ? `Elige de ${g.minimo} a ${g.maximo}`
+                      : typeof g.maximo === 'number'
+                        ? `Hasta ${g.maximo}`
+                        : 'Elige una o varias'}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -207,6 +236,11 @@ export default function SeleccionModificadoresDialog({
                         {sel && <Check className="w-3 h-3 text-primario-texto" strokeWidth={3} />}
                       </div>
                       <span className="flex-1 leading-tight">{o.nombre}</span>
+                      {etiquetaDelPrecio(o.precioCentavos) && (
+                        <span className="shrink-0 text-xs font-semibold tabular-nums">
+                          {etiquetaDelPrecio(o.precioCentavos)}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -243,7 +277,7 @@ export default function SeleccionModificadoresDialog({
             Cancelar
           </Button>
           <Button onClick={handleConfirm} className="flex-1">
-            Agregar al pedido
+            Agregar · {formatCurrency(total)}
           </Button>
         </DialogFooter>
       </DialogContent>

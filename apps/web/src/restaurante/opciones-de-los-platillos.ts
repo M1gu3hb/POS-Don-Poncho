@@ -11,6 +11,8 @@ export interface OpcionDelPlatillo {
   readonly id: string;
   readonly nombre: string;
   readonly activo: boolean;
+  /** DP-16 · Lo que suma (o resta) al renglón, en centavos como texto. Un servidor viejo no lo manda. */
+  readonly precioCentavos?: string;
 }
 
 export interface GrupoDelPlatillo {
@@ -19,6 +21,9 @@ export interface GrupoDelPlatillo {
   readonly obligatorio: boolean;
   readonly tipo: 'unica' | 'multiple';
   readonly activo: boolean;
+  /** DP-16 · Cuántas elegir como mínimo y como máximo en un grupo de varias (nulos = sin límite). */
+  readonly minimo?: number | null;
+  readonly maximo?: number | null;
   readonly opciones: readonly OpcionDelPlatillo[];
 }
 
