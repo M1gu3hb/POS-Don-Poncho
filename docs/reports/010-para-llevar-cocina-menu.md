@@ -4,9 +4,10 @@
 - **Dónde:** sesión local de Claude Code en la laptop de Miguel; una rama y un PR por parte:
   `dp-16` ([#17](https://github.com/M1gu3hb/POS-Don-Poncho/pull/17)), `dp-16-2`
   ([#18](https://github.com/M1gu3hb/POS-Don-Poncho/pull/18)), `dp-16-3`
-  ([#19](https://github.com/M1gu3hb/POS-Don-Poncho/pull/19)) y `dp-16-4` (el QA, este reporte).
+  ([#19](https://github.com/M1gu3hb/POS-Don-Poncho/pull/19)), `dp-16-4`
+  ([#20](https://github.com/M1gu3hb/POS-Don-Poncho/pull/20), el QA) y `dp-16-cierre` (este cierre).
 - **Sin secretos ni PIN en este documento:** los accesos viven en `..\_PRIVADO\`.
-- **Producción:** las tres partes en la base propia de Don Poncho, con CI 10/10 cada una; Don Poncho
+- **Producción:** las cuatro partes en la base propia de Don Poncho, con CI 10/10 cada una; Don Poncho
   sigue en ceros (0 cajas, 0 cuentas, 0 folios, 0 comandas, 0 carritos, 10 mesas libres). En
   producción no se cobró nada.
 
@@ -30,7 +31,8 @@
   «Para llevar»); cuando está listo, la Caja lo enseña en «Para llevar de hoy» con su botón
   «Entregado». Lo no cobrado se descarta. El corte y el Cierre separan «Mesas y para llevar»;
   Registros filtra por canal y el CSV trae el canal y el nombre del pedido.
-- **«Marcar entregado» del mesero** (DP-D103): grande, a todo lo ancho, de 48 px o más, sin recortarse.
+- **«Marcar entregado» del mesero** (DP-D103; dice «Entregar listos» cuando lo listo viene de varias
+  estaciones): grande, a todo lo ancho, de 48 px o más, sin recortarse.
 - **Las ventanas crecen desde donde se tocó** (DP-D103): 200 ms, sólo `transform` y `opacity`; con
   «reducir movimiento», un fundido.
 - **Retiros con PIN de gerente arriba de un monto** (DP-D101): el servidor lo exige, el PIN se gasta una
@@ -90,7 +92,7 @@ del commit de cada ronda. Detalle en `docs/qa/HALLAZGOS-DP16.md` y los registros
 | 1 | 191 a las 03:46 | `8f271a2` (#17) | 03:47 | 03:49 y 03:53 | sin errores hasta las 04:49 |
 | 2 | 192 a las 07:05 | `2e8da35` (#18) | 07:06 | 07:07 | sin errores de 07:05 a 08:06 |
 | 3 | — (venía en la 192) | `4343e62` (#19) | 09:20 | 09:21 | sin errores de 09:19 a 10:22 |
-| 4 | — | PENDIENTE | PENDIENTE | PENDIENTE | PENDIENTE |
+| 4 | — | `a947fcb` (#20) | 12:31 | 12:33 | sin errores de 12:30 a 13:33 |
 
 Cada migración: ensayo y luego en serio, con el script `migrate` de `packages/data`, por la conexión de
 sesión (nunca el 6543); después `verify:esquema` estricto y `verify:rls` cerrado. El humo
@@ -104,11 +106,12 @@ sesión (nunca el 6543); después `verify:esquema` estricto y `verify:rls` cerra
 2. **Cocina (pantalla grande y su teléfono):** la comanda aparece en las dos; «Listo» en una la mueve en
    la otra. En el teléfono: «Conectar teléfono» desde la pantalla de Cocina.
 3. **Mesero (teléfono):** abrir una mesa, un platillo con opciones, «Enviar»; cuando Cocina lo marca
-   listo, **«Marcar entregado»**.
+   listo, **«Marcar entregado»** («Entregar listos» si viene de cocina y bebidas).
 4. **Retiro:** con el umbral puesto, un retiro mayor desde Caja → Movimientos pide el PIN de la gerente.
 5. **Portal:** cambiar el modo a «Menú digital», escanear el QR de una mesa, agregar un platillo con
    opciones, ver la bolsa con su número; volver a «Páginas subidas» si aún no lo quiere.
-6. Al final, cerrar la caja de prueba (corte) para dejar todo en ceros.
+6. Lo que cobre en esta prueba queda en Registros y en el corte (es producción): mejor con montos
+   chicos, cancelar esas ventas y cerrar la caja de prueba antes del sábado.
 
 ## 7 · Lo no hecho, y por qué
 
@@ -117,7 +120,7 @@ sesión (nunca el 6543); después `verify:esquema` estricto y `verify:rls` cerra
 
 ## 8 · Las decisiones y las fichas
 
-- DECISIONES: DP-D100 a DP-D107.
+- DECISIONES: DP-D100 a DP-D108 (la 108, lo que cambió el QA).
 - Fichas para el maestro: 37 (para llevar, migración 191) y 38 (opciones con precio y peso en
   presentaciones, migración 192).
 
