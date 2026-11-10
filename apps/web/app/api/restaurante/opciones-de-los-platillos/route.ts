@@ -13,6 +13,6 @@ export const dynamic = 'force-dynamic';
  */
 export function POST(peticion: Request): Promise<Response> {
   return conSesion(peticion, (sesion) => opcionesDeLosPlatillos(sesion), {
-    roles: ['mesero', 'gerente', 'administrador', 'dueno'],
+    roles: ['mesero', 'cajero', 'gerente', 'administrador', 'dueno'],
   });
 }

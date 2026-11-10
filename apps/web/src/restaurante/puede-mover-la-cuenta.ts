@@ -27,9 +27,15 @@ export function puedeMoverLaCuenta(datos: {
   readonly yoId: string | null | undefined;
   /** Quién atiende esta mesa (`resolverMeseroResponsable`); `null` si nadie. */
   readonly atiendeId: string | null | undefined;
+  /**
+   * DP-16 · La mesa es parte de un grupo UNIDO (principal o absorbida): el servidor no la mueve
+   * («sepáralas antes»), así que el enlace no se ofrece. Sin decir: se ofrece (el servidor decide).
+   */
+  readonly unida?: boolean;
 }): boolean {
   const { puesto, yoId, atiendeId } = datos;
   if (puesto === null) return false;
+  if (datos.unida === true) return false;
   if ((DIRECCION as readonly string[]).includes(puesto)) return true;
   if (puesto !== 'mesero') return false;
   return yoId != null && atiendeId != null && yoId === atiendeId;

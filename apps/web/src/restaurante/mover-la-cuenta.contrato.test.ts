@@ -22,7 +22,7 @@ describe('DP-15 · mover la cuenta desde el mapa', () => {
     // abre el enlace al mesero en las mesas que él atiende.
     expect(c).not.toContain('PUEDEN_MOVER_LA_CUENTA');
     expect(c).toContain(
-      '{ventaActiva&&mesaActiva?.id&&puedeMoverLaCuenta({puesto:miPuesto,yoId:posUser?.id,atiendeId:resolverMeseroResponsable(mesaActiva,config)?.id,})&&(<Linkto={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`}',
+      '{ventaActiva&&mesaActiva?.id&&puedeMoverLaCuenta({puesto:miPuesto,yoId:posUser?.id,atiendeId:resolverMeseroResponsable(mesaActiva,config)?.id,unida:Boolean(mesaActiva.unida_a_mesa_id)||(mesas||[]).some((m)=>m.unida_a_mesa_id===mesaActiva.id),})&&(<Linkto={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`}',
     );
     expect(c).toContain('{textoDelEnlaceParaMoverLaCuenta(miPuesto)}');
   });

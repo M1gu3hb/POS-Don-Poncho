@@ -1337,3 +1337,70 @@ PR, rama `dp-15-1` (sale de `dp-15-docs`, con el reporte 009; el PR #14 queda ab
 - 09:29 DECISIONES DP-D93 a DP-D97, el reporte 009 con la ronda, la ficha 36. Commit `b5f2981`.
 - 09:30 PR [#15](https://github.com/M1gu3hb/POS-Don-Poncho/pull/15) (`dp-15-1` → `main`); el #14 se
   cerró como absorbido. `pnpm verify` local en curso.
+
+### El cierre: CI, la 190, el merge y producción
+
+- 09:31 `verify:adopcion` cazó el aviso nuevo del Tablero sin vacío ni carga: declarado en
+  `SIN_ESTADO` con su razón (`0fc0933`). 09:38 `cerrar.test.ts` (unitaria) seguía con el doble viejo
+  de `@morphiqpos/data`, sin `conTransaccion`: ahora comprueba que la revocación va en la transacción
+  (`9f3cfab`).
+- 09:59 `pnpm verify` local en verde sin `verify:entorno` (Postgres 17): unidad 456 / 5234,
+  integración 119 / 580, build. CI del #15: 9 de 9.
+- 10:00 **La 190, aplicada a la propia** con `pnpm db:migrate` por la de sesión. `verify:esquema`
+  estricto cumple (1750 columnas, 1382 restricciones, 445 índices), RLS y permisos cerrados, y el
+  linter de Supabase ya no marca `function_search_path_mutable` (sólo el informativo de RLS sin
+  políticas, que es el diseño: cero acceso para `anon` y `authenticated`).
+- 10:01 `verify:acople` con la app servida en 32743: completo, CI verde en `9f3cfab`.
+- 10:02 Merge del [#15](https://github.com/M1gu3hb/POS-Don-Poncho/pull/15) (`8e06826`, squash, a nombre
+  de M1gu3hb). 10:03 Production `READY` (`dpl_9MDS…`, con `pos-don-poncho.vercel.app`).
+- 10:05 Humo sin cobrar con `link.mjs`, que ya lee por la de sesión: la entrada 200 y sin desborde en
+  6 aparatos (de 1.2 a 1.8 s; 7.8 s la primera, el arranque en frío), el portal del QR en 5, 8 a la vez
+  todos 200 en 2.7 s, la red lenta (3G: 10 s la primera vez, 1.6 s con caché) y el manifiesto.
+- 10:06 Don Poncho en ceros (por la de sesión, `leerEnSoloLectura`): 0 sesiones de caja, 0 cuentas, 0
+  folios, 0 comandas, 0 carritos y las 10 mesas libres. Vercel sin errores desde las 04:32.
+- 10:10 Los worktrees y las bases de los agentes, recogidos.
+
+- 11:06 Una hora después del despliegue (10:03 → 11:06): Vercel **sin errores de ejecución**.
+
+## DP-16 · Para llevar, opciones con precio, cocina con volumen, teléfono de cocina y menú del comensal (09-11 noche → 12-11)
+
+Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PROGRESO-DP16.md`.
+
+- **Skills cargadas:** engineering:code-review, engineering:testing-strategy, engineering:debug,
+  morphiq-prs. «frontend-design» no existe con ese nombre: se usó `anthropic-skills:impeccable`
+  (su equivalente).
+- **Entorno local:** el clúster de desarrollo (`127.0.0.1:55433`) con dos bases nuevas:
+  `dp16_pruebas` (integración, migrada hasta la 191) y `dp16_demo` (la demo de Don Poncho de
+  `scripts/demo-local.mjs`, con PIN de demo fuera del repo). Servidor de desarrollo contra la demo en
+  el 3300 (`D:\mpos-tmp\dp16\dev-demo.sh`) y guiones de Playwright en `D:\mpos-tmp\dp16\` (fuera
+  del repo). Nada vivo.
+- **Un tropiezo:** la primera corrida de `pnpm test:integracion` hizo una instalación parcial (los
+  agentes comparten el almacén) y `@aws-sdk/client-s3` quedó sin `dist-cjs`; se reinstaló ese paquete
+  y siguió. Y la base de pruebas nueva hay que migrarla antes (`node scripts/db.mjs migrate` con su
+  URL): `prepararPostgres` no migra la que viene en `DATABASE_URL_PRUEBAS`.
+
+### Agentes
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| A (worktree propio) | Sonnet | 1.2 «Marcar entregado» del mesero · 1.3 animaciones de las ventanas | entregado tras ~4 h esperando un lint en segundo plano que nunca avisó (se le pidió cerrar): 16 archivos, 16 mutantes muertos, sin navegador. Integrado aquí sin conflictos; la prueba en el navegador encontró que la primera ventana de la página no crecía desde el toque (el oyente se registraba al abrir la primera ventana): corregido. DP-D103 |
+| B (worktree propio, base 5438) | Sonnet | 1.4 retiros con PIN arriba de un monto · 1.5 menores de la auditoría del 9-11 | entregado: 49 archivos, 28 mutantes muertos, sin migración. Integrado aquí (un conflicto de imports en `giros.ts`; dos archivos venían en CRLF y se pasaron a LF): tipos, lint, formato, 10 verificaciones, integración 32/32 y unidad 5275 en verde; en el navegador, el umbral en Configuración → Caja y el retiro de $600 pidiendo el PIN. DP-D101 y DP-D102 |
+| C (worktree propio, base 5439) | Sonnet | 2.2 la cocina con volumen | en curso |
+
+### 1.1 · Para llevar (la sesión principal)
+
+- Servidor: migración 191 (número del día), `armar/descartar/entregar_para_llevar`,
+  `para_llevar_del_dia`, el número en `venta.cobrar`, lo listo para llevar no se entrega solo, el
+  descuento admite el pedido para llevar, el puente sirve canal y número. Integración 7/7 (con el
+  corte de cada caja cuadrado) y 16/16 junto con el descuento; mutantes 6/6 muertos (el del candado
+  sobrevivió a la primera: la prueba de dos cajas no garantiza el cruce; se agregó una con dos
+  transacciones cruzadas a propósito y murió).
+- Pantalla: el botón y el diálogo en la Caja, la lista con aviso y «Entregado», el rótulo único en
+  cocina, teléfono y voz, el ticket, el corte y Registros por canal, el CSV.
+- **En el navegador (demo, Playwright):** la cajera abre caja, toma barbacoa ½ kg + quesadilla con
+  «Relleno: Queso» y nota, cobra $422.50 (ticket «PARA LLEVAR · 1 · Don Beto»), la cocina lo ve con
+  ese rótulo, lo marca listo y se queda en «Listos»; la Caja suena, enseña «LISTO» con «Entregado» y
+  al tocarlo queda «1 entregados hoy». Lo que encontró la prueba y se arregló: la cajera no podía leer
+  las opciones de los platillos (403: la ruta sólo dejaba al mesero), las tarjetas del catálogo se
+  cortaban (filas fijas a 64 px), el título del cobro decía «Cobrar —», se ofrecía «Cancelar la
+  cuenta» en un pedido aún sin cobrar y faltaba el descuento.

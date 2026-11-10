@@ -70,6 +70,8 @@ export interface ResultadoDeZonaActiva {
   readonly zonaId: string;
   readonly activa: boolean;
   readonly mesasAfectadas: number;
+  /** DP-16 · Al reactivar: lo que no se pudo volver, dicho. `null` si todo cuadró. */
+  readonly aviso?: string | null;
 }
 
 /** Desactiva o reactiva una zona; el servidor rechaza con el motivo si no se puede. */

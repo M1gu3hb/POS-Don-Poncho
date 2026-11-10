@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
+import { quienRecoge, rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 
 const ESTADO_COLORS = {
   nuevo: { dot: '#3B82C7', text: 'Nuevo' },
@@ -46,7 +47,7 @@ export default function CocinaPedidoCardCompact({ pedido, onIniciar, onListo }) 
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="font-heading font-bold text-sm">
-                  {pedido.mesa_numero ? `Mesa ${pedido.mesa_numero}` : 'Mostrador'}
+                  {rotuloDeLaComanda(pedido)}
                 </span>
                 <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                   <Clock className="w-3 h-3" />
@@ -135,7 +136,7 @@ export default function CocinaPedidoCardCompact({ pedido, onIniciar, onListo }) 
               )}
               {pedido.estado === 'listo' && (
                 <p className="text-xs text-center text-exito italic">
-                  Esperando que el mesero recoja
+                  {quienRecoge(pedido)}
                 </p>
               )}
             </CardContent>

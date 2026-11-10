@@ -630,6 +630,20 @@
       ]
     },
     {
+      "ruta": "/api/restaurante/armar-para-llevar",
+      "comando": "restaurante.armar_para_llevar",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": {
+        "lineas": [
+          { "productoId": "⟨productos⟩", "cantidad": "prueba de aislamiento", "opciones": [] }
+        ]
+      },
+      "ids": [{ "camino": "lineas[0].productoId", "tabla": "productos" }]
+    },
+    {
       "ruta": "/api/restaurante/asignar-mesero",
       "comando": "restaurante.asignar_mesero",
       "escribe": true,
@@ -656,10 +670,15 @@
       "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"],
       "idRequerido": true,
-      "cuerpo": { "ordenId": "⟨ordenes⟩", "mesaDestinoId": "⟨ordenes⟩" },
+      "cuerpo": {
+        "ordenId": "⟨ordenes⟩",
+        "mesaDestinoId": "⟨ordenes⟩",
+        "mesaOrigenId": "⟨ordenes⟩"
+      },
       "ids": [
         { "camino": "ordenId", "tabla": "ordenes" },
-        { "camino": "mesaDestinoId", "tabla": "ordenes" }
+        { "camino": "mesaDestinoId", "tabla": "ordenes" },
+        { "camino": "mesaOrigenId", "tabla": "ordenes" }
       ]
     },
     {
@@ -723,6 +742,16 @@
       "ids": [{ "camino": "mesaId", "tabla": "mesas" }]
     },
     {
+      "ruta": "/api/restaurante/descartar-para-llevar",
+      "comando": "restaurante.descartar_para_llevar",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "ordenId": "⟨ordenes⟩" },
+      "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
+    },
+    {
       "ruta": "/api/restaurante/descontar-cuenta",
       "comando": "restaurante.descontar_cuenta",
       "escribe": true,
@@ -755,6 +784,16 @@
         { "camino": "particiones[0].tomas[0].lineaId", "tabla": "orden_lineas" },
         { "camino": "particiones[1].tomas[0].lineaId", "tabla": "orden_lineas" }
       ]
+    },
+    {
+      "ruta": "/api/restaurante/entregar-para-llevar",
+      "comando": "restaurante.entregar_para_llevar",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "ordenId": "⟨ordenes⟩" },
+      "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
     },
     {
       "ruta": "/api/restaurante/entregar-pedidos",

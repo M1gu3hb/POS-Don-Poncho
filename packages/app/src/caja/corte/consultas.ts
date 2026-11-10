@@ -315,6 +315,8 @@ export interface VentaDelDetalle {
   readonly cobradaEn: Date | null;
   readonly mesa: string | null;
   readonly nombrePedido: string | null;
+  /** DP-16 · «Pedido para llevar N»; nulo en las mesas. */
+  readonly numeroPedido: number | null;
   readonly cliente: string | null;
   readonly canal: string;
   readonly productos: string | null;
@@ -353,6 +355,7 @@ export async function detalleDeVentas(
            case when m.id is null then null
                 else coalesce(m.nombre, 'Mesa ' || m.numero::text) end as "mesa",
            o.nombre_pedido                                    as "nombrePedido",
+           o.numero_pedido                                    as "numeroPedido",
            coalesce(c.nombre, o.cliente_nombre)               as "cliente",
            o.canal                                            as "canal",
            (select string_agg(

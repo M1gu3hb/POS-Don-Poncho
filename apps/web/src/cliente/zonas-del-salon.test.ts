@@ -60,7 +60,7 @@ describe('DP-15 · la pantalla de zonas', () => {
     expect(dialogo).toContain('problemaDelNombreDeZona(nombre,activas,zona.id)');
     expect(dialogo).toContain('problemaDelNombreDeZona(nombre,activas,null)');
     expect(dialogo).toContain(
-      'api.entidades.Zona.create({nombre,orden:ordenDeLaZonaNueva(activas),activo:true})',
+      'api.entidades.Zona.create({nombre,orden:ordenDeLaZonaNueva(activas)})',
     );
   });
 });

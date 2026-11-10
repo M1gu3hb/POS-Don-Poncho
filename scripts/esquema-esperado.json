@@ -11848,6 +11848,17 @@
       "generada": null
     },
     {
+      "clave": "public.ordenes.dia_del_pedido",
+      "esquema": "public",
+      "tabla": "ordenes",
+      "columna": "dia_del_pedido",
+      "tipo": "date",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.ordenes.division_indice",
       "esquema": "public",
       "tabla": "ordenes",
@@ -12040,6 +12051,17 @@
       "tabla": "ordenes",
       "columna": "notas_alergias",
       "tipo": "text",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
+      "clave": "public.ordenes.numero_pedido",
+      "esquema": "public",
+      "tabla": "ordenes",
+      "columna": "numero_pedido",
+      "tipo": "integer",
       "noNula": false,
       "defaultSql": null,
       "identidad": null,
@@ -28768,6 +28790,28 @@
       "diferidaInicialmente": false
     },
     {
+      "clave": "public.ordenes.ordenes_numero_pedido_con_su_dia",
+      "esquema": "public",
+      "tabla": "ordenes",
+      "nombre": "ordenes_numero_pedido_con_su_dia",
+      "tipo": "check",
+      "definicion": "CHECK ((numero_pedido IS NULL) = (dia_del_pedido IS NULL))",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.ordenes.ordenes_numero_pedido_positivo",
+      "esquema": "public",
+      "tabla": "ordenes",
+      "nombre": "ordenes_numero_pedido_positivo",
+      "tipo": "check",
+      "definicion": "CHECK (numero_pedido IS NULL OR numero_pedido > 0)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
       "clave": "public.ordenes.ordenes_obra_id_fkey",
       "esquema": "public",
       "tabla": "ordenes",
@@ -37235,6 +37279,16 @@
       "primario": false,
       "valido": true,
       "definicion": "CREATE UNIQUE INDEX ordenes_idempotencia ON public.ordenes USING btree (organizacion_id, idempotency_key) WHERE (idempotency_key IS NOT NULL)"
+    },
+    {
+      "clave": "public.ordenes.ordenes_numero_pedido_del_dia",
+      "esquema": "public",
+      "tabla": "ordenes",
+      "nombre": "ordenes_numero_pedido_del_dia",
+      "unico": true,
+      "primario": false,
+      "valido": true,
+      "definicion": "CREATE UNIQUE INDEX ordenes_numero_pedido_del_dia ON public.ordenes USING btree (organizacion_id, dia_del_pedido, numero_pedido) WHERE (numero_pedido IS NOT NULL)"
     },
     {
       "clave": "public.ordenes.ordenes_pkey",

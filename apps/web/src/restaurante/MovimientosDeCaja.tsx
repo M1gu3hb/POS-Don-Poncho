@@ -35,7 +35,7 @@ export function MovimientosDeCaja({
     <div className="grid items-start gap-(--espacio-4) lg:grid-cols-2">
       {/* El corte de turno es de quien tiene la caja: entrega lo suyo y no cierra. */}
       <CorteDeTurno />
-      <RetiroDeCaja alRetirar={alMover} />
+      <RetiroDeCaja alRetirar={alMover} esDeGerencia={puedeAdministrar} />
       {/* DP-15 · El cambio que entra al cajón (antes no había pantalla para `caja.entrada_cambio`). */}
       <EntradaDeCambio alRegistrar={alMover} />
       {puedeAdministrar ? (

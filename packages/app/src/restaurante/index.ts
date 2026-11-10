@@ -37,6 +37,18 @@ export type { ComandaEmitida, ResultadoEnviarPedido } from './pedido.ts';
 export { entradaEnviarPedido, entradaSolicitarCuenta } from './esquemas.ts';
 
 export { entregarPedidos, transicionarPedido } from './preparacion.ts';
+export {
+  armarParaLlevar,
+  descartarParaLlevar,
+  entradaArmarParaLlevar,
+  type ResultadoArmarParaLlevar,
+} from './para-llevar.ts';
+export { entregarParaLlevar } from './para-llevar-entregar.ts';
+export {
+  paraLlevarDelDia,
+  type EstadoParaLlevar,
+  type PedidoParaLlevar,
+} from './para-llevar-del-dia.ts';
 export type { ResultadoEntrega, ResultadoTransicion } from './preparacion.ts';
 
 export { solicitarCuenta } from './cuenta.ts';

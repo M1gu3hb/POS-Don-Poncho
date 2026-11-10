@@ -94,3 +94,9 @@ export {
   terminalesDeLaSucursal,
   type TerminalDeLaSucursal,
 } from './terminales.ts';
+
+export {
+  entradaFijarUmbralDeRetiro,
+  fijarUmbralDeRetiro,
+  type ResultadoUmbralDeRetiro,
+} from './retiro-con-pin.ts';

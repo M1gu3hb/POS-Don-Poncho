@@ -7,8 +7,8 @@
 - **Fecha límite:** jueves 12-11-2026 en la noche. Instalación: sábado 14-11.
 - **Proyecto nuevo de Supabase:** «POS Don Poncho», ref `mqlcusxwqrefpfttjjks`, us-east-2,
   Postgres 17, creado por Miguel el 08-11.
-- **Producción, desde el 08-11 a las 11:03:** en la base propia. Desde el 09-11 a las 04:24, con
-  `main` en `cd76829` (el PR #13; `dpl_8d4e…`, `READY`).
+- **Producción, desde el 08-11 a las 11:03:** en la base propia. Desde el 09-11 a las 10:03, con
+  `main` en `8e06826` (el PR #15, DP-15.1; `dpl_9MDS…`, `READY`); antes, `cd76829` (el PR #13).
 
 ## Estado por fase
 
@@ -24,33 +24,33 @@
 | 6 | Arreglos | hechos; PR #13 en `main` (`cd76829`, 09-11 04:22) con la CI 10/10 y el acople; DP-D83 a DP-D91, ficha 35 |
 | 7 | QA de jornada | hecho: QA-J cuadró al centavo y 0/34; QA-D 54/54; 1 bloqueante y 5 medios arreglados; ronda 2 9/9 (`docs/qa/`) |
 | 8 | Prueba del puro link | hecha (09-11 04:31): 6 aparatos, el portal en 5, 8 a la vez, 3G, «Agregar a inicio»; producción limpia; las alertas eran mis guiones (DP-D91), cero tras corregirlos |
-| 9 | Entrega y reporte 009 | `docs/ENTREGA-DON-PONCHO.md` en `main`; el reporte 009 completo, en el PR de documentos (rama `dp-15-docs`) |
+| 9 | Entrega y reporte 009 | hechos: `docs/ENTREGA-DON-PONCHO.md` y el reporte 009 en `main` (el 009 llegó con el #15) |
 
 ## DP-15.1 · La ronda final antes del sábado (auditoría del orquestador, 09-11)
 
-Rama `dp-15-1` (sale de `dp-15-docs`, que lleva el reporte 009; el PR #14 queda absorbido aquí: un
-solo PR). Worktree `dp15-codigo`. El documento `AUDITORIA-2026-11-09.md` no está en disco: se trabaja
+Rama `dp-15-1` (sale de `dp-15-docs`, que lleva el reporte 009; el PR #14 quedó absorbido): el PR
+[#15](https://github.com/M1gu3hb/POS-Don-Poncho/pull/15), merge `8e06826` (09-11, 10:02). Worktree `dp15-codigo`. El documento `AUDITORIA-2026-11-09.md` no está en disco: se trabaja
 con el resumen del encargo.
 
 | Parte | Qué | Estado |
 | --- | --- | --- |
 | 1 | El 25006: causa confirmada (DP-D92), `conTransaccion` en `read write`, escrituras sueltas a transacción, guiones fuera del 6543, regla en RUNBOOK y entrega | hecho (`a77d1a0`, 8/8 mutantes) |
-| 2.1 | `caja.movimiento`: la cajera sólo retiro y entrada de cambio; ajuste con rastro; motivo mínimo; «1,500» | agente A (Sonnet, worktree `dp151-a`, base 5437) |
-| 2.2 | Registros → Auditoría: filtro en el servidor, fecha, páginas, nombres legibles | agente B (Sonnet, worktree `dp151-b`, base 5438) |
-| 2.3 | El mesero cambia de mesa desde su pantalla | agente A |
-| 2.4 | Lo listo de una cuenta cobrada antes de servir | **sin confirmar por Miguel: se queda como está** (se pregunta al final) |
-| 3 | Zonas desactivables y tablero «hoy» en CDMX (agente B); borrador del mesero (agente A); la 190 `search_path` (hecho, `5102d31`); el iPhone en la entrega (hecho) | en curso |
-| 4 | 009, este archivo y la bitácora | en curso |
-| 5 | PR, CI, la 190 en la propia con `pnpm db:migrate` (sesión), merge, `READY`, humo con `link.mjs` (por la de sesión), Vercel 1 h sin errores, Don Poncho en ceros | pendiente |
+| 2.1 | `caja.movimiento`: la cajera sólo retiro y entrada de cambio; ajuste con rastro; motivo mínimo; «1,500» | hecho (agente A, `047dcf1`; DP-D93) |
+| 2.2 | Registros → Auditoría: filtro en el servidor, fecha, páginas, nombres legibles; lo negado marcado | hecho (agente B, `b5f2981`; DP-D95) |
+| 2.3 | El mesero cambia de mesa desde su pantalla | hecho (`047dcf1`; DP-D94) |
+| 2.4 | Lo listo de una cuenta cobrada antes de servir | **sin confirmar por Miguel: se queda como está** (DP-D97; se le pregunta) |
+| 3 | Zonas desactivables y el «hoy» del Tablero (DP-D96); el borrador y lo agotado (DP-D94); la 190 `search_path` (aplicada a la propia 10:00); el iPhone en la entrega | hecho |
+| 4 | 009, este archivo y la bitácora | hecho (el cierre, en un PR corto de documentos) |
+| 5 | PR, CI, la 190 en la propia, merge, `READY`, humo con `link.mjs`, Vercel 1 h sin errores, Don Poncho en ceros | hecho: CI 9/9, acople, `READY` 10:03, humo verde, ceros y Vercel sin errores hasta las 11:06 |
 
 ## Lo que sigue
 
-1. Integrar los parches de los agentes (`scratchpad\dp151-a.patch`, `dp151-b.patch`), revisarlos,
-   correr sus pruebas y mutantes, y commitear a nombre de M1gu3hb.
-2. `pnpm verify` local, el acople y el PR único a `main`.
-3. Con la CI en verde: la 190 a la propia, merge, `READY`, humo sin cobrar, una hora de Vercel y el
-   estado en ceros (`estado-propia.mjs` por la de sesión).
-4. El reporte 009 cerrado, la bitácora y el mensaje corto a Miguel.
+1. Lo que hace Miguel (`docs/ENTREGA-DON-PONCHO.md`): su revisión de 10 minutos con sus PIN (teléfono,
+   PC, tableta, el QR con la cámara y «Agregar a inicio»; en el iPhone se entra otra vez desde el
+   ícono); el sábado, nombrar «Caja 1» y «Caja 2» y probar la térmica; la primera semana, el uso de
+   Vercel y Supabase.
+2. **Su respuesta:** ¿cobran antes de servir? Si sí, el botón «Entregado» de DP-D97.
+3. **La regla (DP-D92):** ninguna revisión contra producción por el 6543 mientras el restaurante opera.
 
 - Mutantes: todos los vigentes mueren (102; `D:\mpos-tmp\dp15-mutantes-final.log` y los tres rehechos).
 - `pnpm verify` local completo en verde sobre el código final (sin `verify:entorno`; acople aparte).

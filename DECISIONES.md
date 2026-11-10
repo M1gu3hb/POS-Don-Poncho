@@ -1868,3 +1868,106 @@ puerta los denuncia todos.
   (DP-D87/DP-D90: al cobrar, lo listo sale solo de «Listos»; lo que seguía por preparar se queda con la
   marca «Cuenta cobrada»), y se le pregunta. Si lo confirma, es un cambio acotado de la pantalla de la
   estación y del mesero, cuidando no volver a atorar comandas como en J-H3.
+
+## DP-D98 · El pedido para llevar se toma y se cobra en la Caja; su número es del día (migración 191) · 09/10-11-2026
+
+- **La entrada:** en la Caja del restaurante, el botón grande «Para llevar» (cajera, gerente,
+  administrador y dueño: los que entran a la Caja). Abre la toma de pedido del mesero sin mesa
+  (`ParaLlevarDialog.jsx`): categorías y búsqueda (`CatalogoDelPedido.jsx`), opciones obligatorias,
+  notas, barbacoa por peso, agotados y el borrador en el aparato (`useArmadoDelPedido.js`, por
+  persona). El renglón que viaja al servidor sale de una sola pieza (`renglonParaElComando`).
+- **El cobro:** «Cobrar» llama a `restaurante.armar_para_llevar`, que escribe el pedido como el
+  borrador de ESA terminal (el carrito del mostrador, `canal = 'llevar'`, `nombre_pedido`), con el
+  precio del catálogo, el agotado y la opción obligatoria del mesero; NO manda nada a cocina. La Caja
+  abre su diálogo de cobro de siempre (métodos, descuento con PIN, propina, ticket). Las comandas
+  salen en `venta.cobrar` (`comandarLineasPendientes`), dentro de su transacción. Si se cancela el
+  cobro, `restaurante.descartar_para_llevar` vacía el borrador y la pantalla vuelve con el pedido.
+  Volver a tocar «Cobrar» reemplaza las líneas del mismo borrador (no se duplican).
+- **El número:** «Pedido para llevar N» empieza en 1 cada día del negocio (CDMX). Lo toma
+  `venta.cobrar` después del folio y antes de la cocina (`asignarNumeroParaLlevar`), con un candado
+  de transacción por negocio y el índice único `ordenes_numero_pedido_del_dia` como red. Un cobro
+  revertido no gasta número; un reintento conserva el que tenía. **Migración 191**, aditiva:
+  `ordenes.numero_pedido` y `ordenes.dia_del_pedido`. **Alternativa descartada:** derivar el
+  número al leer (por orden de cobro): con dos cajas, el ticket impreso podía decir un número y la
+  cocina otro.
+- **El descuento con PIN** también aplica al pedido para llevar (`motivoParaNoDescontar` lo admite
+  por su canal); la venta de `/pos` sigue sin él (DP-D75).
+- **La cocina** dice «PARA LLEVAR · N · nombre» por el CANAL, no por la falta de mesa
+  (`rotulo-de-la-comanda.ts`: la pantalla, las tarjetas heredadas, el teléfono de cocina y la voz,
+  «para llevar 3»). El puente sirve `canal` y `numero_pedido` en la comanda y en la venta.
+- **El ticket** lleva el renglón grande «PARA LLEVAR · N · nombre» (`PreCuentaTicket`, y
+  `venta.ticket` trae `paraLlevar`).
+- **Sin cambiar:** las mesas; `/pos` sigue fuera del menú.
+
+## DP-D99 · Lo listo de un pedido para llevar espera en la Caja hasta «Entregado» · 10-11-2026
+
+- **Responde DP-D97** (Miguel: sí se cobra antes de servir lo para llevar). Un pedido para llevar
+  ya cobrado NO se entrega solo cuando la cocina lo marca listo: `entregarLoListoYaCobrado` excluye
+  `canal = 'llevar'`. Las mesas no cambian (DP-D87, DP-D90, J-H3).
+- **La Caja** lee `restaurante.para_llevar_del_dia` cada 4 s (`ParaLlevarDeHoy.tsx`): lo listo arriba,
+  grande, con su botón «Entregado» a todo lo ancho (`restaurante.entregar_para_llevar`); cuando uno
+  pasa a listo suena y avisa «Pedido para llevar N listo» una sola vez (lo que ya estaba listo al
+  abrir la Caja no se anuncia). Si una estación terminó y otra no, dice «una parte lista, falta otra».
+- **`entregar_para_llevar`** es aparte de `entregar_pedidos` (el de la mesa): no mueve mesas y sólo
+  entrega lo listo; sin nada listo devuelve cero y no escribe.
+
+## DP-D100 · Mesas y para llevar por separado; «Aquí» en lugar de «En taza» · 10-11-2026
+
+- **El corte y el Cierre del día** (`corte/por-canal.ts`, y el visor heredado `CorteTicket.jsx`): con
+  algún pedido para llevar, el resumen «Mesas y para llevar» (cuentas e importe, que suman el total
+  al centavo) y el detalle de cada uno aparte; el pedido se reconoce por «Llevar N · nombre». Sin
+  pedidos para llevar el documento queda como estaba.
+- **Registros → Ventas** filtra por canal (Todas, Mesas, Para llevar) y la búsqueda encuentra el
+  nombre del pedido; **el CSV** trae «Canal», «Pedido para llevar» y «Nombre del pedido».
+- **Una sola regla** (`corte/canales.ts`): `llevar` es para llevar; todo lo demás, mesas. `aqui` se
+  dice «Aquí» (venía de la cafetería).
+
+## DP-D101 · El retiro de la cajera arriba de un monto pide el PIN de un gerente · 10-11-2026
+
+- **Configuración → Caja:** «Pedir PIN de gerente en retiros mayores a $____»
+  (`UmbralDeRetiro.tsx`). Vacío = no se pide (el valor por omisión). Se guarda en
+  `configuracion.valores.retiro_pin_arriba_de_centavos` con `caja.fijar_umbral_de_retiro`, que sólo
+  admite a dueño y administrador y deja antes y después en la auditoría.
+- **El servidor lo exige** (`caja/retiro-con-pin.ts`, en `caja.movimiento` tipo `retiro`): si el
+  monto es MAYOR que el umbral y quien registra es la cajera, pide la autorización firmada de
+  `/api/identidad/supervisor` con `para: 'retiro'` y atada a ESE monto; se gasta una sola vez
+  (`gastarLaAutorizacion`, que ahora también vigila `caja.movimiento`). Una autorización de
+  descuento, de otro monto, vencida o ya usada se niega. Gerente, administrador y dueño no piden el
+  PIN de otro en su propio retiro (la regla es para la cajera); no hay tope por puesto en retiros.
+- **El corte** (`caja.hoja_del_corte` → «Retiros con PIN de gerente · quién autorizó»,
+  `corte/retiros-con-pin.ts`): cada retiro autorizado con su monto, motivo, quién lo autorizó y la hora.
+- **Sin migración.** Lo hizo el agente B (Sonnet); revisado e integrado por la sesión principal.
+
+## DP-D102 · Los menores de la auditoría del 9-11 · 10-11-2026
+
+- **Zonas:** `Zona.activo` deja de ser escribible por el puente (sólo `restaurante.fijar_zona_activa`);
+  al reactivar, si no hay rastro de qué mesas volver o volvieron menos de las apagadas, el resultado
+  lo avisa y la pantalla lo dice. Desactivar ya apagaba todas las mesas libres de la zona (prueba).
+- **El agotado del mesero:** al apartar lo agotado pregunta «Se agotó X. ¿Envío lo demás?» (Enviar /
+  No enviar); cerrar el aviso es «No enviar».
+- **Cambio de mesa:** `restaurante.cambiar_mesa` acepta `mesaOrigenId`: si otro ya la movió, el error
+  dice «ya se movió a la mesa N». Con mesas unidas no se ofrece «Cambiar de mesa».
+- **Auditoría:** `auditoria-reciente.ts` vuelve a sanear al leer (`sanearAlLeer`), con correo y
+  teléfono tapados.
+- **El detector de escrituras sueltas** (DP-D92) ve también `const db = obtenerDb(); db.…`.
+- **`consultarEn`** rechaza una cadena del puerto 6543 (`exigirQueNoSeaElPooler`): las
+  verificaciones contra una base real van por la conexión de sesión (`MORPHIQPOS_DB_VERIFICACION`).
+- **Sin migración.** Agente B.
+
+## DP-D103 · Las ventanas crecen desde donde se tocó; «Marcar entregado», grande y completo · 10-11-2026
+
+- **Una sola pieza** (`packages/ui/src/sistema/origen-de-ventana.ts` + `estilos/ventanas.css`): guarda el
+  último toque (`pointerdown`, válido 1 s) y, al montar una ventana, le pone ese punto como
+  `transform-origin` relativo a su caja. La ventana crece desde ahí con zoom suave y fundido (200 ms,
+  0.9 → 1, curva ease-out exponencial); sin toque reciente (teclado, apertura programática) aparece al
+  centro con 0.97 → 1. Los paneles laterales, 220 ms (antes 500). Con «reducir movimiento», sólo un
+  fundido corto. Sólo `transform` y `opacity`. La usan los diálogos, alertas y paneles de
+  `packages/ui` y los heredados (`dialog`, `alert-dialog`, `sheet`); ya no entran «de lado»
+  (`slide-in-from-left-1/2`). El oyente se registra al cargar el módulo: en la prueba del navegador, la
+  primera ventana de la página aparecía al centro porque el toque que la abría llegaba antes del oyente.
+- **«Marcar entregado» del mesero** (`ListosParaRecoger.tsx`, `ListosParaRecogerCard.jsx`): la tarjeta
+  ya no se encoge ni recorta (`shrink-0`, sin `overflow-hidden`), queda justo bajo la cabecera de la
+  mesa, y el botón es grande, a todo lo ancho y de al menos 48 px; si falla, el motivo queda escrito en
+  la tarjeta (`role="alert"`) además del aviso, y el botón vuelve a estar disponible.
+- **Sin migración.** Lo hizo el agente A (Sonnet, 16 mutantes muertos); revisado, corregido el oyente e
+  integrado por la sesión principal, con la prueba en el navegador.

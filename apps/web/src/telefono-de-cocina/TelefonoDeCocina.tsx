@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { DialogoDelSonido } from '~/configuracion/DialogoDelSonido';
 import { fraseNuevoPedidoCocina, speak, speakSample } from '@/lib/voiceAlert';
 import { cantidadParaMostrar } from '~/restaurante/peso';
+import { rotuloHablado } from '~/restaurante/rotulo-de-la-comanda';
 import { haceCuanto } from '~/restaurante/vista-de-solicitudes';
 
 import { ComandaEnElTelefono } from './ComandaEnElTelefono';
@@ -16,6 +17,7 @@ import {
   FalloDelTelefono,
   leerPantalla,
   moverDesdeElTelefono,
+  datosDelRotulo,
   type ComandaDelTelefono,
 } from './pantalla-del-telefono';
 import {
@@ -43,6 +45,8 @@ function fraseDe(comanda: ComandaDelTelefono): string {
     })),
     comanda.notas ?? '',
     {
+      // DP-16 · «para llevar 3» o «mesa 4», del mismo rótulo que la pantalla.
+      rotulo: rotuloHablado(datosDelRotulo(comanda)),
       notas_alergias: comanda.alergias,
       celebracion: comanda.celebracion,
       tipo_celebracion: comanda.tipoCelebracion,

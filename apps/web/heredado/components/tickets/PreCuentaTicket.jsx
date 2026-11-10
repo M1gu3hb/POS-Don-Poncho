@@ -9,6 +9,7 @@ import { es } from 'date-fns/locale';
 import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
 import { anchoDelPapel, medidasDelTicket } from '~/impresion/papel';
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
+import { esParaLlevar, rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 
 /**
  * Ticket / pre-cuenta optimizado para impresora térmica de 80mm.
@@ -78,6 +79,15 @@ export default function PreCuentaTicket({
         <p style={{ fontWeight: 'bold', marginTop: '4px', fontSize: px(12) }}>
           {esFinal ? 'TICKET DE PAGO' : 'PRE-CUENTA'}
         </p>
+        {/* DP-16 · El pedido para llevar se grita por su número: va grande, antes de todo. */}
+        {esParaLlevar(venta) && (
+          <p
+            data-para-llevar
+            style={{ fontWeight: 900, marginTop: '4px', fontSize: px(14), letterSpacing: '1px' }}
+          >
+            {rotuloDeLaComanda(venta)}
+          </p>
+        )}
       </div>
 
       {/* Datos */}

@@ -4,6 +4,7 @@ import { speak, fraseNuevoPedidoCocina, getCocinaVozConfig } from '@/lib/voiceAl
 import { sonarAntesDeHablar } from '~/sonidos/gestor';
 import { toast } from 'sonner';
 import { despertarLaPantalla } from '~/espera/despertador';
+import { rotuloDeLaComanda, rotuloHablado } from '~/restaurante/rotulo-de-la-comanda';
 
 const NOTIFIED_KEY = 'mh_cocina_notified_nuevos';
 
@@ -85,9 +86,8 @@ export default function CocinaNuevoPedidoWatcher({ pedidos = [], cargando = fals
     recien.forEach((p) => {
       notifiedRef.current.add(p.id);
       // 1) Visual primero.
-      const desc = p.mesa_numero
-        ? `Mesa ${p.mesa_numero} — ${(p.items || []).length} producto(s)`
-        : `Mostrador — ${(p.items || []).length} producto(s)`;
+      // DP-16 · El rótulo sale del canal: «PARA LLEVAR · 3 · Don Beto» o «Mesa 4».
+      const desc = `${rotuloDeLaComanda(p)} — ${(p.items || []).length} producto(s)`;
       toast.success('Nuevo pedido recibido', { description: desc, duration: 10000 });
 
       // 2) Voz (si activa). Pasamos alergias y celebración como extras para
@@ -96,6 +96,7 @@ export default function CocinaNuevoPedidoWatcher({ pedidos = [], cargando = fals
         try {
           frasesAHablar.push(
             fraseNuevoPedidoCocina(p.mesa_numero, p.items, p.notas, {
+              rotulo: rotuloHablado(p),
               notas_alergias: p.notas_alergias,
               celebracion: p.celebracion_especial,
               tipo_celebracion: p.tipo_celebracion,

@@ -19,6 +19,7 @@ import { sonar } from '~/sonidos/gestor';
 
 import { cantidadParaMostrar } from './peso.ts';
 import { platillosPorPreparar, tieneQuePreparar } from './platillos-de-cocina.ts';
+import { rotuloDeLaComanda } from './rotulo-de-la-comanda.ts';
 
 /**
  * PANTALLA · restaurante · cocina
@@ -160,6 +161,10 @@ export interface ComandaDeCocina {
   readonly id: string;
   readonly estado: string;
   readonly mesa_numero: number | null;
+  /** DP-16 · El canal de la orden decide «PARA LLEVAR · N · nombre» (no la falta de mesa). */
+  readonly canal?: string | null;
+  readonly numero_pedido?: number | null;
+  readonly nombre_pedido?: string | null;
   readonly created_date: string | null;
   readonly notas_alergias: string | null;
   readonly items: readonly ItemDeComanda[];
@@ -456,7 +461,7 @@ interface TarjetaProps {
  * alergia en rojo y el botón que la mueve, a todo lo ancho.
  */
 function Tarjeta({ col, comanda, ahora, ocupada, onAvanzar }: TarjetaProps) {
-  const mesa = comanda.mesa_numero === null ? 'Para llevar' : `Mesa ${comanda.mesa_numero}`;
+  const mesa = rotuloDeLaComanda(comanda);
   const titulo = `comanda-${comanda.id}`;
   return (
     <Superficie

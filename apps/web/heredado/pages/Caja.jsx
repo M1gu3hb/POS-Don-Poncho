@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { api, nuevaClave } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePOSAuth } from '@/lib/POSAuthContext';
@@ -22,6 +22,7 @@ import {
   Scissors,
   Printer,
   FileText,
+  ShoppingBag,
   ShoppingCart,
   Trash2,
   DoorOpen,
@@ -36,6 +37,9 @@ import CorteAutoDownloader from '@/components/cortes/CorteAutoDownloader';
 import { printDocument } from '@/lib/print';
 import CorteHistorialList from '@/components/cortes/CorteHistorialList';
 import ResumenDelDia from '@/components/caja/ResumenDelDia';
+import ParaLlevarDialog, { claveDelParaLlevar } from '@/components/caja/ParaLlevarDialog';
+import { ParaLlevarDeHoy, CLAVE_PARA_LLEVAR_DEL_DIA } from '~/restaurante/para-llevar/ParaLlevarDeHoy';
+import { almacenDelBorrador, borrarBorrador } from '~/restaurante/borrador-del-pedido';
 import {
   agruparPropinasPorMesero,
   desgloseMetodosPagoExacto,
@@ -199,6 +203,41 @@ export default function Caja() {
   useEffect(() => {
     setClaveCobro(ventaEnCobroId === null ? null : nuevaClave());
   }, [ventaEnCobroId]);
+
+  // DP-16 · EL PEDIDO PARA LLEVAR. «Cobrar» en su pantalla arma el borrador en el servidor y abre
+  // ESTE diálogo de cobro. Si se cobra, el pedido guardado en el aparato se borra; si se cancela,
+  // el borrador del servidor se vacía (a la cocina no salió nada) y la pantalla vuelve con todo.
+  const [showParaLlevar, setShowParaLlevar] = useState(false);
+  const [turnoParaLlevar, setTurnoParaLlevar] = useState(0);
+  const paraLlevarEnCobroRef = useRef(null);
+  const paraLlevarPagadoRef = useRef(false);
+  const cobrarParaLlevar = async (ordenId) => {
+    const venta = await api.entidades.Venta.get(ordenId);
+    if (!venta?.id) throw new Error('No se encontró el pedido para cobrarlo. Intenta de nuevo.');
+    paraLlevarEnCobroRef.current = ordenId;
+    paraLlevarPagadoRef.current = false;
+    setShowParaLlevar(false);
+    await abrirVenta(venta);
+  };
+  useEffect(() => {
+    if (ventaEnCobroId !== null || paraLlevarEnCobroRef.current === null) return;
+    const ordenId = paraLlevarEnCobroRef.current;
+    paraLlevarEnCobroRef.current = null;
+    if (paraLlevarPagadoRef.current) {
+      paraLlevarPagadoRef.current = false;
+      const clave = claveDelParaLlevar(posUser?.id);
+      if (clave) borrarBorrador(almacenDelBorrador(), clave);
+      setTurnoParaLlevar((n) => n + 1);
+      queryClient.invalidateQueries({ queryKey: CLAVE_PARA_LLEVAR_DEL_DIA });
+      return;
+    }
+    api.comandos
+      .ejecutar('/api/restaurante/descartar-para-llevar', { ordenId }, nuevaClave())
+      .catch((err) => {
+        toast.warning(err?.message || 'No se pudo limpiar el cobro cancelado.', { duration: 8000 });
+      });
+    setShowParaLlevar(true);
+  }, [ventaEnCobroId, posUser?.id, queryClient]);
 
   // BLOQUE 0: refetch cada 2s para que QR/Mesero → Caja sea casi en vivo.
   // Sin esto, una cuenta solicitada podía tardar hasta 6s en aparecer en Caja.
@@ -779,6 +818,7 @@ export default function Caja() {
         claveCobro || undefined,
       );
       ventaQuedoPagada = true;
+      if (paraLlevarEnCobroRef.current === ventaSeleccionada.id) paraLlevarPagadoRef.current = true;
       // El cambio que se le da al cliente es el del servidor, no el de la resta
       // del navegador: allí es donde se sabe qué se cobró de verdad.
       cambio = aPesos(cobro?.cambioCentavos);
@@ -846,6 +886,10 @@ export default function Caja() {
           // secas —sin la serie— porque es lo que la misma venta enseña luego en
           // Ventas y en Registros, y es el número que el cliente va a citar.
           folio: cobro?.folio ? String(cobro.folio) : ventaSeleccionada?.folio,
+          // DP-16 · El número del pedido para llevar lo pone el servidor al cobrar.
+          ...(typeof cobro?.numeroPedido === 'number'
+            ? { canal: 'llevar', numero_pedido: cobro.numeroPedido }
+            : {}),
           metodo_pago: metodoPago,
           monto_efectivo: mEfec,
           monto_tarjeta: mTar,
@@ -1300,6 +1344,31 @@ export default function Caja() {
         </div>
       )}
 
+      {/* DP-16 · PARA LLEVAR: la cajera toma el pedido aquí y lo cobra directo. */}
+      {!isCajaDirecta && hayCaja && (
+        <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => setShowParaLlevar(true)}
+            className="w-full min-h-20 p-5 rounded-2xl border-2 border-primary bg-primary text-primary-foreground text-left transition-all hover:brightness-110 active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{
+              boxShadow: '0 2px 0 rgba(255,255,255,0.2) inset, 0 6px 18px rgba(0,0,0,0.15)',
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-superficie/20 flex items-center justify-center shrink-0">
+                <ShoppingBag className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-heading font-black text-xl leading-tight">Para llevar</p>
+                <p className="text-xs opacity-90">Toma el pedido y cóbralo aquí</p>
+              </div>
+            </div>
+          </button>
+          <ParaLlevarDeHoy />
+        </div>
+      )}
+
       {hayCaja && cajaAbierta && (
         <div className="px-4 py-2.5 rounded-xl bg-exito/10 border border-exito/30 text-sm text-exito flex items-center gap-2 flex-wrap">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -1497,9 +1566,11 @@ export default function Caja() {
           <DialogHeader>
             <DialogTitle className="font-heading">
               Cobrar —{' '}
-              {ventaSeleccionada?.mesa_numero || ventaSeleccionada?.cliente_nombre
-                ? rotuloDeCaja(ventaSeleccionada)
-                : ventaSeleccionada?.folio}
+              {ventaSeleccionada?.canal === 'llevar'
+                ? `Para llevar${ventaSeleccionada?.nombre_pedido ? ` · ${ventaSeleccionada.nombre_pedido}` : ''}`
+                : ventaSeleccionada?.mesa_numero || ventaSeleccionada?.cliente_nombre
+                  ? rotuloDeCaja(ventaSeleccionada)
+                  : ventaSeleccionada?.folio}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -1789,7 +1860,9 @@ export default function Caja() {
             {/* DP-14.1 (punto 2): el descuento —con la clave de quien lo autoriza— y la
                 cancelación de la cuenta, aquí donde se cobra. Vivían sólo en `/restaurante/cobro`,
                 que ninguna pantalla enlaza. Con los descuentos apagados, el botón no aparece. */}
-            {(ventaSeleccionada?.mesa_id || ventaSeleccionada?.orden_padre_id) &&
+            {(ventaSeleccionada?.mesa_id ||
+              ventaSeleccionada?.orden_padre_id ||
+              ventaSeleccionada?.canal === 'llevar') &&
               ventaSeleccionada.total > 0 && (
                 <DescuentoDeLaCuenta
                   ordenId={ventaSeleccionada.id}
@@ -1802,7 +1875,8 @@ export default function Caja() {
                   }}
                 />
               )}
-            {ventaSeleccionada?.id && ventaSeleccionada.total > 0 && (
+            {/* DP-16 · El pedido para llevar aún no cobrado no se «cancela»: «Cancelar» regresa a él. */}
+            {ventaSeleccionada?.id && ventaSeleccionada.total > 0 && ventaSeleccionada?.canal !== 'llevar' && (
               <CancelarLaCuenta
                 ordenId={ventaSeleccionada.id}
                 alCancelar={(cancelada) => {
@@ -1911,6 +1985,17 @@ export default function Caja() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* DP-16 · La toma del pedido para llevar (se monta al abrirla: lee su borrador del aparato). */}
+      {showParaLlevar && (
+        <ParaLlevarDialog
+          key={turnoParaLlevar}
+          open
+          usuarioId={posUser?.id}
+          onCerrar={() => setShowParaLlevar(false)}
+          onCobrar={cobrarParaLlevar}
+        />
+      )}
 
       {/* === MODAL DE PROPINA EN CAJA === */}
       <PropinaDialog

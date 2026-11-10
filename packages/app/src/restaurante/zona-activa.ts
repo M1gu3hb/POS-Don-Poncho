@@ -37,6 +37,11 @@ export interface ResultadoZonaActiva {
   readonly activa: boolean;
   /** Cuántas mesas se apagaron (al desactivar) o volvieron (al reactivar). */
   readonly mesasAfectadas: number;
+  /**
+   * DP-16 · Algo que la persona debe saber y no es un error: al reactivar, que no se encontró qué
+   * mesas volver (o volvieron menos de las que se apagaron). `null` si todo cuadró.
+   */
+  readonly aviso: string | null;
 }
 
 interface ZonaCargada {
@@ -77,7 +82,7 @@ async function mesasQueSeApagaron(
   tx: Transaccion,
   organizacionId: string,
   zonaId: string,
-): Promise<readonly string[]> {
+): Promise<readonly string[] | null> {
   const { rows } = await sql<{ ids: unknown }>`
     select a.payload -> 'mesasDesactivadas' as ids
       from auditoria a
@@ -91,7 +96,8 @@ async function mesasQueSeApagaron(
      limit 1
   `.execute(tx);
   const ids = rows[0]?.ids;
-  return Array.isArray(ids) ? ids.filter((i): i is string => typeof i === 'string') : [];
+  // `null`: no hay rastro de esa desactivación (la zona se apagó sin él): no se sabe qué volver.
+  return Array.isArray(ids) ? ids.filter((i): i is string => typeof i === 'string') : null;
 }
 
 async function desactivar(ctx: ContextoComando<Transaccion>, zona: ZonaCargada): Promise<number> {
@@ -162,12 +168,30 @@ async function exigirNombreLibre(
   }
 }
 
-async function reactivar(ctx: ContextoComando<Transaccion>, zona: ZonaCargada): Promise<number> {
+/** Lo que se le dice a quien reactiva cuando las mesas que volvieron no son las que se apagaron. */
+export function avisoDeLaReactivacion(
+  rastro: readonly string[] | null,
+  volvieron: number,
+): string | null {
+  if (rastro === null) {
+    return 'La zona volvió, pero no hay registro de qué mesas se apagaron con ella: enciende sus mesas desde el plano.';
+  }
+  if (volvieron < rastro.length) {
+    return `Volvieron ${String(volvieron)} de las ${String(rastro.length)} mesas que se apagaron con la zona; las otras ya no están o ya estaban encendidas. Revisa el plano.`;
+  }
+  return null;
+}
+
+async function reactivar(
+  ctx: ContextoComando<Transaccion>,
+  zona: ZonaCargada,
+): Promise<{ readonly volvieron: number; readonly aviso: string | null }> {
   const { organizacionId } = ctx.ambito;
   await exigirNombreLibre(ctx, zona);
-  const ids = await ctx.paso('recordar_mesas', () =>
+  const rastro = await ctx.paso('recordar_mesas', () =>
     mesasQueSeApagaron(ctx.tx, organizacionId, zona.id),
   );
+  const ids = rastro ?? [];
   const volver =
     ids.length === 0
       ? []
@@ -232,7 +256,7 @@ async function reactivar(ctx: ContextoComando<Transaccion>, zona: ZonaCargada): 
     entidadId: zona.id,
     payload: { activa: true, nombre: zona.nombre, mesasReactivadas: volver.map((m) => m.id) },
   });
-  return volver.length;
+  return { volvieron: volver.length, aviso: avisoDeLaReactivacion(rastro, volver.length) };
 }
 
 export const fijarZonaActiva = definirComando<
@@ -265,12 +289,14 @@ export const fijarZonaActiva = definirComando<
     // Dos toques al mismo botón describen el mismo hecho: el segundo no es un error.
     if (zona.activa === entrada.activa) {
       ctx.auditar({ entidadId: zona.id, payload: { activa: entrada.activa, yaEstaba: true } });
-      return { zonaId: zona.id, activa: zona.activa, mesasAfectadas: 0 };
+      return { zonaId: zona.id, activa: zona.activa, mesasAfectadas: 0, aviso: null };
     }
 
-    const mesasAfectadas = entrada.activa
-      ? await reactivar(ctx, zona)
-      : await desactivar(ctx, zona);
-    return { zonaId: zona.id, activa: entrada.activa, mesasAfectadas };
+    if (entrada.activa) {
+      const { volvieron, aviso } = await reactivar(ctx, zona);
+      return { zonaId: zona.id, activa: true, mesasAfectadas: volvieron, aviso };
+    }
+    const apagadas = await desactivar(ctx, zona);
+    return { zonaId: zona.id, activa: false, mesasAfectadas: apagadas, aviso: null };
   },
 });

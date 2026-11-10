@@ -164,11 +164,35 @@ export async function consultarViva(
  * un script de `scripts/` no puede resolverlo, y duplicar el TLS a mano sería la
  * manera de que un día uno de los dos lo baje sin que nadie lo note.
  */
+/** El puerto del pooler de transacción de Supabase: el de la app, nunca el de una verificación. */
+export const PUERTO_DEL_POOLER_DE_TRANSACCION = '6543';
+
+/**
+ * DP-16 · Lo mismo que `exigirConexionDirecta` de `scripts/lib/lectura-segura.mjs` (DP-D92): una
+ * verificación que entra por el pooler de transacción deja pegado en una conexión que la app
+ * comparte lo que ejecute, y la siguiente petición lo hereda. Lanza si la cadena es del 6543.
+ */
+export function exigirQueNoSeaElPooler(cadena: string): void {
+  let url: URL;
+  try {
+    url = new URL(cadena);
+  } catch {
+    return; // Una cadena que no es URL la rechaza `pg` con su propio mensaje.
+  }
+  if (url.port === PUERTO_DEL_POOLER_DE_TRANSACCION) {
+    throw new Error(
+      'Esta cadena entra por el pooler de transacción (6543), el de la app. Una verificación lee por ' +
+        'la conexión directa o la de sesión (5432): lo que deje pegado en el pooler lo hereda la app (DP-D92).',
+    );
+  }
+}
+
 export async function consultarEn(
   cadena: string,
   sql: string,
   valores: readonly unknown[] = [],
 ): Promise<{ readonly rows: readonly Record<string, unknown>[] }> {
+  exigirQueNoSeaElPooler(cadena);
   // El TLS sale de `tlsPara`, el MISMO que usa la aplicación: raíz de Supabase
   // fijada y `rejectUnauthorized: true`. Que esta conexión sólo lea catálogo no
   // es excusa para bajarlo — por ese canal viaja también la contraseña de la

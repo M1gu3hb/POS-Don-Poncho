@@ -84,6 +84,7 @@ import {
 } from '~/cliente/mesas-del-mapa';
 import { Calculator, BadgePercent } from 'lucide-react';
 import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos';
+import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
@@ -792,6 +793,7 @@ export default function Configuracion() {
         {esDeMando(miPuesto) && (
           <TabsContent value="caja">
             <CajasALaVez />
+            <UmbralDeRetiro />
           </TabsContent>
         )}
         {esDeMando(miPuesto) && (

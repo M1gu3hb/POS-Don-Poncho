@@ -31,6 +31,8 @@ import {
 export const COMANDOS_QUE_GASTAN_AUTORIZACION = [
   'venta.aplicar_descuento',
   'restaurante.descontar_cuenta',
+  // DP-16 · El retiro de la cajera arriba del umbral gasta la suya (`para: 'retiro'`).
+  'caja.movimiento',
 ] as const;
 
 /** La ventana se mide desde que se firmó, con holgura por el reloj de cada lado. */

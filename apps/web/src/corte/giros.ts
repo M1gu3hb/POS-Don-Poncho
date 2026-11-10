@@ -3,7 +3,6 @@ import {
   arqueo,
   centavos,
   datosDelCorte,
-  detalleDeVentas,
   dinero,
   folioDe,
   gastos,
@@ -24,6 +23,8 @@ import {
   type Seccion,
 } from './hoja.ts';
 import { cancelaciones } from './cancelaciones.ts';
+import { ventasPorCanal } from './por-canal.ts';
+import { retirosConPin } from './retiros-con-pin.ts';
 import { devolucionesDelDia } from './devoluciones.ts';
 import { seccionesDeDescuentos } from './descuentos.ts';
 import type { DescuentosLeidos } from '~/corte-heredado/descuentos-del-corte';
@@ -98,14 +99,13 @@ export function corteDeRestaurante(
     datosDelCorte(hoja, 'Cierre diario'),
     ...arqueo(hoja, 'Apertura y fondo'),
     ...ajustesDeCaja(hoja),
+    ...retirosConPin(hoja),
     ...ventasDelDia(hoja),
     resumenFinanciero(hoja, tituloDelResumen(hoja)),
     ...metodosConPropina(hoja),
     ...seccionesDePropina,
-    ...detalleDeVentas(hoja, {
-      titulo: 'Mesa',
-      de: (v) => [v.mesa, v.cliente].filter((x) => x !== null).join(' · ') || null,
-    }),
+    // DP-16 · Mesas y pedidos para llevar, por separado.
+    ...ventasPorCanal(hoja),
     ...productosVendidos(hoja),
     ...insumosConsumidos(hoja),
     ...gastos(hoja),

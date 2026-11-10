@@ -27,6 +27,15 @@ describe('qué cuenta se puede descontar', () => {
     );
   });
 
+  it('DP-16 · SÍ el pedido para llevar de la Caja: se cobra en el mismo diálogo que una mesa', () => {
+    expect(
+      motivoParaNoDescontar({ estado: 'borrador', mesaId: null, padreId: null, canal: 'llevar' }),
+    ).toBeNull();
+    expect(
+      motivoParaNoDescontar({ estado: 'pagada', mesaId: null, padreId: null, canal: 'llevar' }),
+    ).toMatch(/devolución/);
+  });
+
   it('NO una cuenta cobrada, cancelada o ya dividida', () => {
     expect(motivoParaNoDescontar({ estado: 'pagada', mesaId: MESA, padreId: null })).toMatch(
       /devolución/,

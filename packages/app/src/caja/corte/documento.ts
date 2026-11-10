@@ -18,6 +18,7 @@ import * as consultas from './consultas.ts';
 import { devolucionesDelCorte, type DevolucionDelCorte } from './devoluciones.ts';
 import { ventasDelDiaConVariasCajas, type VentasDelDia } from './ventas-del-dia.ts';
 import * as extras from './extras.ts';
+import { retirosConPinDelCorte, type RetiroConPinDelCorte } from './retiros-con-pin.ts';
 
 /**
  * LA HOJA DEL CORTE (F-234, C.6 de la 2.4): todo lo que su PDF enseña, en una lectura.
@@ -89,6 +90,8 @@ export interface HojaDelCorte {
    * ajuste no es dinero que pasó, y no debe esconderse dentro del renglón agrupado.
    */
   readonly ajustes: readonly consultas.AjusteDelCorte[];
+  /** DP-16 · Los retiros que llevaron el PIN de un gerente, con quién lo autorizó. */
+  readonly retirosConPin: readonly RetiroConPinDelCorte[];
   readonly conteo: readonly consultas.PiezasContadas[];
   readonly metodos: readonly consultas.VentasPorMetodo[];
   /**
@@ -168,20 +171,31 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
       throw new ErrorDominio('PUENTE_NO_ENCONTRADO', 'Ese corte no existe en este negocio.');
     }
     const ventana = { ...sesion, cerradaEn: alcance.hasta };
-    const [movimientos, ajustes, conteo, metodos, resumen, ventas, productos, porPersona, gastos] =
-      await ctx.paso('leer_tronco', () =>
-        Promise.all([
-          consultas.movimientosPorTipo(tx, organizacionId, id),
-          consultas.ajustesDelCorte(tx, organizacionId, id),
-          consultas.conteoDelCierre(tx, organizacionId, id),
-          consultas.ventasPorMetodo(tx, organizacionId, id),
-          consultas.resumenDeVentas(tx, organizacionId, id),
-          consultas.detalleDeVentas(tx, organizacionId, id),
-          consultas.productosVendidos(tx, organizacionId, id),
-          consultas.ventasPorPersona(tx, organizacionId, id),
-          consultas.gastosDelCorte(tx, organizacionId, id),
-        ]),
-      );
+    const [
+      movimientos,
+      ajustes,
+      retirosConPin,
+      conteo,
+      metodos,
+      resumen,
+      ventas,
+      productos,
+      porPersona,
+      gastos,
+    ] = await ctx.paso('leer_tronco', () =>
+      Promise.all([
+        consultas.movimientosPorTipo(tx, organizacionId, id),
+        consultas.ajustesDelCorte(tx, organizacionId, id),
+        retirosConPinDelCorte(tx, organizacionId, id),
+        consultas.conteoDelCierre(tx, organizacionId, id),
+        consultas.ventasPorMetodo(tx, organizacionId, id),
+        consultas.resumenDeVentas(tx, organizacionId, id),
+        consultas.detalleDeVentas(tx, organizacionId, id),
+        consultas.productosVendidos(tx, organizacionId, id),
+        consultas.ventasPorPersona(tx, organizacionId, id),
+        consultas.gastosDelCorte(tx, organizacionId, id),
+      ]),
+    );
     const [
       cancelaciones,
       cancelacionesTotal,
@@ -220,6 +234,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
         alcanceDeCancelaciones: alcance.cierraElDia ? 'dia' : 'caja',
         movimientos,
         ajustes,
+        retirosConPin,
         conteo,
         metodos,
         ventasDelDia: delDia,

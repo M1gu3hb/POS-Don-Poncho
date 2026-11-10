@@ -99,6 +99,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/fijar-umbral-de-retiro",
+      "comando": "caja.fijar_umbral_de_retiro",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/hoja-del-corte",
       "comando": "caja.hoja_del_corte",
       "escribe": false,
@@ -407,6 +414,13 @@
       "paquetes": ["restaurante"]
     },
     {
+      "ruta": "/api/restaurante/armar-para-llevar",
+      "comando": "restaurante.armar_para_llevar",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"]
+    },
+    {
       "ruta": "/api/restaurante/asignar-mesero",
       "comando": "restaurante.asignar_mesero",
       "escribe": true,
@@ -470,6 +484,13 @@
       "paquetes": ["restaurante"]
     },
     {
+      "ruta": "/api/restaurante/descartar-para-llevar",
+      "comando": "restaurante.descartar_para_llevar",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"]
+    },
+    {
       "ruta": "/api/restaurante/descontar-cuenta",
       "comando": "restaurante.descontar_cuenta",
       "escribe": true,
@@ -479,6 +500,13 @@
     {
       "ruta": "/api/restaurante/dividir-cuenta",
       "comando": "restaurante.dividir_cuenta",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/entregar-para-llevar",
+      "comando": "restaurante.entregar_para_llevar",
       "escribe": true,
       "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["restaurante"]
@@ -558,6 +586,13 @@
       "comando": "restaurante.marchar_tiempo",
       "escribe": true,
       "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/para-llevar-del-dia",
+      "comando": "restaurante.para_llevar_del_dia",
+      "escribe": false,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["restaurante"]
     },
     {

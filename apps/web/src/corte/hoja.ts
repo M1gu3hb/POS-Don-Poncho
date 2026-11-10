@@ -13,6 +13,7 @@
  */
 
 import { nombreVisibleDelNegocio } from '../marca/nombre-visible.ts';
+import { NOMBRE_DEL_CANAL } from './canales.ts';
 import { textoDeLaLinea } from './linea-de-venta.ts';
 import {
   RECETA_INCOMPLETA,
@@ -78,6 +79,15 @@ export interface HojaDelServidor {
     quien: string | null;
     registradoEn: string;
   }[];
+  /** DP-16 · Los retiros que llevaron el PIN de un gerente (`retirosConPinDelCorte`). */
+  readonly retirosConPin?: readonly {
+    movimientoId: string;
+    montoCentavos: string;
+    motivo: string | null;
+    quien: string | null;
+    autorizo: string | null;
+    registradoEn: string;
+  }[];
   readonly conteo: readonly { denominacionCentavos: string; piezas: number }[];
   readonly metodos: readonly {
     metodo: string;
@@ -118,6 +128,8 @@ export interface HojaDelServidor {
     cobradaEn: string | null;
     mesa: string | null;
     nombrePedido: string | null;
+    /** DP-16 · El número del pedido para llevar (un servidor viejo no lo manda). */
+    numeroPedido?: number | null;
     cliente: string | null;
     canal: string;
     productos: string | null;
@@ -784,7 +796,10 @@ export function detalleDeVentas(
     readonly de: (v: HojaDelServidor['ventas'][number]) => string | null;
   },
   conCanal = false,
+  /** DP-16 · Otra lista y otro título (las mesas y los pedidos para llevar van aparte). */
+  parte?: { readonly titulo: string; readonly ventas: HojaDelServidor['ventas'] },
 ): readonly Seccion[] {
+  const ventas = parte?.ventas ?? hoja.ventas;
   const columnas: Columna[] = [
     { titulo: 'Folio' },
     { titulo: 'Hora' },
@@ -794,9 +809,9 @@ export function detalleDeVentas(
   columnas.push({ titulo: 'Productos' }, { titulo: 'Total', numerica: true }, { titulo: 'Pago' });
   return tablaSiHay({
     tipo: 'tabla',
-    titulo: `Detalle de ventas (${String(hoja.ventas.length)})`,
+    titulo: `${parte?.titulo ?? 'Detalle de ventas'} (${String(ventas.length)})`,
     columnas,
-    filas: hoja.ventas.map((v) => [
+    filas: ventas.map((v) => [
       texto(v.folio),
       hora(v.cobradaEn),
       texto(referencia.de(v)),
@@ -808,12 +823,8 @@ export function detalleDeVentas(
   });
 }
 
-export const CANAL: Readonly<Record<string, string>> = {
-  aqui: 'En taza',
-  llevar: 'Para llevar',
-  plataforma: 'Plataforma',
-  anticipado: 'Anticipado',
-};
+/** DP-16 · «Aquí», no «En taza»: el mismo nombre en el corte, Registros y el CSV. */
+export const CANAL: Readonly<Record<string, string>> = NOMBRE_DEL_CANAL;
 
 /** Productos vendidos: líneas y cantidad real, y costo y utilidad si se ven costos. */
 export function productosVendidos(

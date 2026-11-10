@@ -59,6 +59,10 @@ const DESCRIPCIONES: Readonly<Record<string, (p: Payload) => string>> = {
     `Cambió el nombre de una caja: «${texto(p['antes'])}» → «${texto(p['despues'])}»`,
   'caja.fijar_cajas_simultaneas': (p) =>
     `Cajas abiertas a la vez: ${texto(p['antes'])} → ${texto(p['despues'])}`,
+  'caja.fijar_umbral_de_retiro': (p) =>
+    p['despues'] === null || p['despues'] === undefined
+      ? 'Dejó de pedir PIN de gerente en los retiros'
+      : `Pide PIN de gerente en retiros mayores a ${dinero(p['despues'])}`,
   'catalogo.marcar_agotado': (p) =>
     p['agotado'] === true
       ? `Marcó «${texto(p['nombre'])}» agotado por hoy`
@@ -67,7 +71,7 @@ const DESCRIPCIONES: Readonly<Record<string, (p: Payload) => string>> = {
   'identidad.guardar_empleado': (p) =>
     `Guardó a ${texto(p['nombre']) || 'una persona'}${texto(p['rol']) ? ` (${texto(p['rol'])})` : ''}`,
   'caja.movimiento': (p) =>
-    `${MOVIMIENTOS_DE_CAJA[texto(p['tipo'])] ?? 'Movimiento de efectivo'} de ${dinero(p['montoCentavos'])}${conMotivo(p)}`,
+    `${MOVIMIENTOS_DE_CAJA[texto(p['tipo'])] ?? 'Movimiento de efectivo'} de ${dinero(p['montoCentavos'])}${conMotivo(p)}${p['autorizadoPor'] === undefined ? '' : ' (con PIN de gerente)'}`,
   'caja.entrada_cambio': (p) =>
     `Entró cambio a la caja: ${dinero(p['montoCentavos'])}${ORIGENES_DE_CAMBIO[texto(p['origen'])] === undefined ? '' : ` (${ORIGENES_DE_CAMBIO[texto(p['origen'])] ?? ''})`}`,
   'venta.aplicar_descuento': (p) =>
