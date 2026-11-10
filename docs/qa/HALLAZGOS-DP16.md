@@ -33,21 +33,29 @@ salidas de las consultas) quedó fuera del repositorio, en `D:\mpos-tmp\dp16-qa\
 | D-H-09 | mejora   | La ficha del platillo no era un diálogo                                                                                                                      | `role="dialog"`, `aria-modal`, título, foco al abrir, Escape, nombres en − y +       |
 | R2-01  | mejora   | «Quitar» del carrito de 41 px                                                                                                                                | 44 px                                                                                |
 
-## Lo que queda como mejora (sin cambiar, para después del sábado)
+## Las mejoras, hechas en DP-17 (DP-D109) y comprobadas en la ronda 3
 
-- El folio y la mesa se escriben distinto en el visor de Registros y en el documento al cerrar.
-- El Cierre del día habla de todas las cajas pero desglosa canal, opciones y retiros sólo de la que
-  cierra.
+Lo que la ronda 3 encontró todavía (el aviso al cobrar una parte que no es la última, el PDF que se baja
+al cerrar y la raya «— ·») se arregló después con prueba y mutante, sin otra ronda de QA.
+
+| Mejora                                                         | Cómo quedó                                                                                                 |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Folio y mesa distintos en el visor y el documento              | el visor escribe «CC-2», «A-3» y «Mesa 4» como el documento                                                |
+| El Cierre del día desglosaba sólo la caja que cierra           | «Mesas (N)», «Para llevar (N)», opciones y retiros con PIN de todas las cajas; al centavo en la ronda 3    |
+| Mesas unidas con cuenta dividida, sin la pregunta al cobrar    | al cobrar la última parte se libera la mesa (con la pregunta si están unidas); las anteriores, en silencio |
+| «Liberando…» junto a la pregunta de separar                    | ya no                                                                                                      |
+| «Conectar teléfono» 113 px abajo del toque                     | medido a ≤0.5 px en tableta y PC                                                                           |
+| La ficha no era modal para el lector de pantalla               | el resto `inert`, Escape, el foco vuelve; y el foco ya no salta a «Cerrar» al refrescar el portal          |
+| Los puntos del carrusel con muchas comandas                    | «N de M» con más de 8; la tira distingue las rondas de una mesa                                            |
+| (ronda 3) El PDF que se baja al cerrar sin opciones ni retiros | ya los trae                                                                                                |
+
+## Lo que sigue como mejora
+
 - Cada mesero une sólo sus mesas (el dueño puede unir cualquiera).
 - El CSV de Ventas no trae «Opciones» (está en «Exportar productos»).
-- Al cobrar mesas unidas con la cuenta dividida no se pregunta si separarlas: quedan en «Limpieza» y se
-  resuelven desde el cierre (o el mesero).
-- «Liberando…» queda junto a la pregunta de separar mientras se decide.
-- «Conectar teléfono» crece 113 px abajo del toque; los puntos del carrusel del teléfono de cocina con
-  muchas comandas; la tira de mesas repite el número cuando una mesa tiene dos rondas.
-- Las tarjetas de atrás de la ficha siguen en el árbol de accesibilidad (la ficha no es modal para el
-  lector de pantalla todavía).
 - Textos de 11–12 px heredados («Atención», «Mesa»); la campana flotante tapa la columna izquierda al
   desplazar; el carrito no dice el precio por renglón.
+- La ventana cambia de alto al terminar de cargar; Tab pasa por el cuerpo del documento al salir de la
+  ficha; los puntos del carrusel (8 o menos) miden 29 px.
 - Con ocho personas entrando a la vez en la laptop, cada entrada tardó 8–12 s (en producción, 8 a la vez
-  en 2.7 s).
+  en 2.6 s).
