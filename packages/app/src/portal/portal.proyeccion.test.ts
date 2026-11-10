@@ -207,6 +207,17 @@ describe('el menú no lleva costos, márgenes ni receta', () => {
     ).toEqual([]);
   });
 
+  it('el fondo de la tarjeta sale sólo si es de la lista cerrada (DP-16)', () => {
+    // La columna se valida al escribir, pero lo que ya estuviera en la base (o entrara por otro
+    // lado) no llega al comensal: el portal lo pinta como `data-fondo` y nada más.
+    const con = (fondo: string | null) =>
+      productoDeMenu({ ...FILA_PRODUCTO, fondo_tarjeta: fondo }, true).fondo_tarjeta;
+    expect(con('ilustracion:talavera')).toBe('ilustracion:talavera');
+    expect(con('red; background:url(https://x)')).toBeNull();
+    expect(con('ilustracion:otra')).toBeNull();
+    expect(con(null)).toBeNull();
+  });
+
   it('ni costo, ni utilidad, ni margen, ni receta, ni insumo', () => {
     const claves = Object.keys(producto).join(' ');
     for (const prohibido of ['costo', 'utilidad', 'margen', 'receta', 'insumo', 'estrategia']) {
