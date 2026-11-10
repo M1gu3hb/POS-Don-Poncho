@@ -1577,3 +1577,18 @@ Sin agentes: la Parte 3 es sobre todo pantalla y se probó a ojo en cada vuelta.
   la vista (ahora se acerca sola); el encargo decía «Configuración → QR» y es «Portal QR →
   Configuración», y decía que el para llevar se manda y luego se cobra (es al revés): se les avisó a
   los agentes a media obra.
+
+### La Parte 4 en producción (10-11, mediodía)
+
+- `verify` local: verde (unidad 487 / 5,497, integración 127 / 627, build); la CI del
+  [#20](https://github.com/M1gu3hb/POS-Don-Poncho/pull/20), 10 de 10 a la primera.
+- 12:30 Merge del #20 (`a947fcb`, squash, a nombre de M1gu3hb), sin migración. Production `READY`
+  (`dpl_31bZ…`) a las 12:31.
+- 12:33 Don Poncho en ceros (0 cajas, 0 cuentas, 0 folios, 0 comandas, 0 carritos, 10 mesas libres),
+  todavía en «Páginas subidas» (107 productos, 0 con foto), y el humo sin cobrar: la entrada 200 y sin
+  desborde en 6 aparatos (23.7 s la primera, el arranque en frío tras el despliegue; luego de 0.8 a
+  1.8 s), el portal en 5 (de 0.64 a 5.3 s), 8 a la vez todos 200 en 2.6 s, red lenta (11 y 12 s la
+  primera vez, 1.8 y 2.0 s con caché) y el manifiesto con sus íconos.
+- 13:33 Vercel: ningún error en producción de las 12:30 a las 13:33 (la hora después del despliegue).
+- Limpieza: las fotos de prueba (`apps/web/public/_fotos-demo`, nunca subidas) fuera del árbol, con
+  respaldo en `D:\mpos-tmp\dp16otos-demo-respaldo`; los servidores del QA, parados.
