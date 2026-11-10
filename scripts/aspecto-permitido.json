@@ -1648,6 +1648,11 @@
         "+ texto:Dejarlas unidas",
         "+ texto:Cancelar"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/tickets/CorteTicket.jsx",
+      "porque": "DP-16 (QA-J, H3): el corte de Registros pinta «Opciones vendidas» y «Retiros con PIN de gerente» como el documento al cerrar; si no se pudieron leer, un aviso lo dice. Nada de lo que se veía se quitó.",
+      "testigos": ["+ clase:mb-4", "+ clase:text-xs", "+ clase:text-advertencia"]
     }
   ]
 }

@@ -32,6 +32,7 @@ import {
   subtituloDelMargen,
 } from '~/restaurante/margen-de-las-ventas';
 import { SeccionPintada } from '~/corte/HojaDelCorte';
+import { AVISO_SIN_EXTRAS } from '~/corte-heredado/extras-del-corte';
 import { textoDeLaLinea } from '~/corte/linea-de-venta';
 import { grupoDelCanal, referenciaParaLlevar, sumaPorGrupo } from '~/corte/canales';
 import {
@@ -60,6 +61,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
     descuentos = null,
     // DP-15 (QA, J-H6) · Sólo en el Cierre del día: las ventas de todas las cajas (`leerVentasDelDia`).
     ventasDelDia = null,
+    // DP-16 (QA-J, H3) · Opciones vendidas y retiros con PIN, de la hoja del servidor.
+    extras = null,
     alertas = [],
     config = {},
     sinCostos = false,
@@ -728,6 +731,16 @@ const CorteTicket = React.forwardRef(function CorteTicket(
           )}
         </Section>
       )}
+
+      {/* DP-16 (QA-J, H3) · Lo mismo que el documento al cerrar: opciones y retiros con PIN. */}
+      {extras?.noSePudieronLeer === true && (
+        <p role="status" className="mb-4 text-xs text-advertencia">
+          {AVISO_SIN_EXTRAS}: vuelve a abrir el corte para leerlos.
+        </p>
+      )}
+      {extras?.secciones.map((seccion) => (
+        <SeccionPintada key={seccion.titulo} seccion={seccion} />
+      ))}
 
       {/* Firmas */}
       <div className="grid grid-cols-2 gap-8 mt-10 text-xs">
