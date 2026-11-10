@@ -128,20 +128,23 @@ function TarjetaDelPlatillo({
             Agotado hoy
           </span>
         ) : null}
-        <span className="line-clamp-2 text-lg font-black leading-tight">{producto.nombre}</span>
-        {descripcion === '' ? null : (
-          <span className="line-clamp-2 text-sm leading-snug opacity-90">{descripcion}</span>
-        )}
-        <span className="mt-1 flex items-center justify-between gap-(--espacio-2)">
-          <span className="text-base font-bold tabular-nums">{precio ?? ''}</span>
-          {puedePedir && !agotado ? (
-            <span
-              aria-hidden
-              className="grid size-[max(2.5rem,calc(var(--altura-control)*0.9))] shrink-0 place-items-center rounded-full bg-superficie text-texto ring-1 ring-borde-fuerte/40"
-            >
-              <Plus className="size-5" strokeWidth={2.5} />
-            </span>
-          ) : null}
+        {/* Con foto, este bloque lleva su propia sombra (`menu-digital.css`): crece con el texto. */}
+        <span className="menu-tarjeta-texto flex flex-col gap-1">
+          <span className="line-clamp-2 text-lg font-black leading-tight">{producto.nombre}</span>
+          {descripcion === '' ? null : (
+            <span className="line-clamp-2 text-sm leading-snug opacity-90">{descripcion}</span>
+          )}
+          <span className="mt-1 flex items-center justify-between gap-(--espacio-2)">
+            <span className="text-base font-bold tabular-nums">{precio ?? ''}</span>
+            {puedePedir && !agotado ? (
+              <span
+                aria-hidden
+                className="grid size-[max(2.5rem,calc(var(--altura-control)*0.9))] shrink-0 place-items-center rounded-full bg-superficie text-texto ring-1 ring-borde-fuerte/40"
+              >
+                <Plus className="size-5" strokeWidth={2.5} />
+              </span>
+            ) : null}
+          </span>
         </span>
       </span>
     </>

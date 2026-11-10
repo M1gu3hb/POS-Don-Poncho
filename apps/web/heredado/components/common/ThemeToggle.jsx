@@ -61,7 +61,7 @@ export default function ThemeToggle({ variant = 'icon', className = '', label })
       onClick={toggle}
       aria-label={aria}
       title={aria}
-      className={`relative inline-flex items-center justify-center w-9 h-9 rounded-full border bg-card text-foreground hover:bg-accent transition-colors active:scale-95 ${className}`}
+      className={`relative inline-flex items-center justify-center w-11 h-11 rounded-full border bg-card text-foreground hover:bg-accent transition-colors active:scale-95 ${className}`}
     >
       <Icon
         className="w-4 h-4 transition-transform duration-300"

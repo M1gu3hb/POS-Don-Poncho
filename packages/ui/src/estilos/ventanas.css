@@ -4,7 +4,7 @@
  * Un solo juego de reglas para todos los diálogos, alertas y paneles laterales del sistema.
  * `sistema/origen-de-ventana.ts` pone en cada ventana, al montarla:
  *
- *   --origen-x / --origen-y     el punto tocado, en px dentro de la caja de la ventana
+ *   --origen-x / --origen-y     el punto tocado, relativo al centro de la ventana (calc(50% ± Npx))
  *   --escala-inicial-ventana    0.9 con punto, 0.97 sin punto, 1 con movimiento reducido
  *
  * Sólo `transform` y `opacity` (nada de layout). El centrado de Radix usa la propiedad

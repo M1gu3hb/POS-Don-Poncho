@@ -778,7 +778,7 @@ function Pill({ active, children, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${active ? 'bg-foreground text-background' : 'bg-card border text-muted-foreground'}`}
+      className={`shrink-0 min-h-11 px-4 rounded-full text-sm font-semibold transition-all ${active ? 'bg-foreground text-background' : 'bg-card border text-muted-foreground'}`}
     >
       {children}
     </button>

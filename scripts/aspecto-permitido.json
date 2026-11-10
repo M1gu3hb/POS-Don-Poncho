@@ -1571,6 +1571,50 @@
       "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
       "porque": "DP-16 (3.1): el encabezado del portal al 95 % de opacidad: con la barra de secciones pegada debajo, al 85 % se leía el menú que pasaba por detrás.",
       "testigos": ["- clase:bg-card/85", "+ clase:bg-card/95"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/ThemeToggle.jsx",
+      "porque": "DP-16 (QA-D, H-03): el botón del tema en ícono mide 44 px (antes 36): es un objetivo táctil del portal del comensal.",
+      "testigos": ["- clase:w-9", "- clase:h-9", "+ clase:w-11", "+ clase:h-11"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ProductoQRDialog.jsx",
+      "porque": "DP-16 (QA-D, H-03): en la ficha del platillo «Cerrar» y los botones de cantidad miden 44 px (antes 40) y las presentaciones (¼, ½, 1 kg) son fichas de 44 px de alto con letra de 14 px.",
+      "testigos": [
+        "- clase:w-10",
+        "- clase:w-10",
+        "- clase:w-10",
+        "- clase:h-10",
+        "- clase:h-10",
+        "- clase:h-10",
+        "- clase:px-3",
+        "- clase:py-1.5",
+        "+ clase:w-11",
+        "+ clase:w-11",
+        "+ clase:w-11",
+        "+ clase:h-11",
+        "+ clase:h-11",
+        "+ clase:h-11",
+        "+ clase:px-4",
+        "+ clase:text-sm",
+        "+ clase:min-h-11"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/recetas/RecetaFormDialog.jsx",
+      "porque": "DP-16 (QA-D, H-01): con el módulo de recetas los platillos se editan aquí; el selector del fondo de la tarjeta (cuando no hay foto) ocupa las dos columnas, como la imagen.",
+      "testigos": ["+ clase:sm:col-span-2"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
+      "porque": "DP-16 (QA-D, H-04): en «Páginas subidas» las fichas de cada página miden 44 px de alto (antes 30) con letra de 14 px.",
+      "testigos": [
+        "- clase:text-xs",
+        "- clase:px-3",
+        "- clase:py-1.5",
+        "+ clase:px-4",
+        "+ clase:min-h-11"
+      ]
     }
   ]
 }
