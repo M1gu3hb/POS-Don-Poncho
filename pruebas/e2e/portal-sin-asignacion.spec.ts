@@ -116,7 +116,7 @@ test.describe('el portal sin asignación de mesas', () => {
         telefonoDelComensal = telefono;
         fallos.push(vigilarFallos(telefono));
         const tarjeta = telefono
-          .locator('button.rounded-2xl')
+          .locator('button.menu-tarjeta')
           .filter({ has: telefono.getByText(CARTA.cerveza.nombre, { exact: true }) });
         await expect(
           tarjeta,

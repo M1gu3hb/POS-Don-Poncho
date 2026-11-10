@@ -68,7 +68,7 @@ async function estacionesDeLaCuenta(lector: Page, ventaId: string): Promise<read
 
 async function agregar(telefono: Page, nombre: string): Promise<void> {
   await telefono
-    .locator('button.rounded-2xl')
+    .locator('button.menu-tarjeta')
     .filter({ has: telefono.getByText(nombre, { exact: true }) })
     .click();
   await telefono.getByRole('button', { name: /^Agregar/ }).click();

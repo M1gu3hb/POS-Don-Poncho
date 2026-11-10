@@ -197,7 +197,7 @@ test.describe('arreglos menores de pantalla (DP-13.4)', () => {
 
       await test.step('con un platillo en el carrito, «Atención» no tapa la barra a 320 y 375 px', async () => {
         await tel
-          .locator('button.rounded-2xl')
+          .locator('button.menu-tarjeta')
           .filter({ has: tel.getByText(CARTA.cerveza.nombre, { exact: true }) })
           .click();
         await tel.getByRole('button', { name: /^Agregar/ }).click();

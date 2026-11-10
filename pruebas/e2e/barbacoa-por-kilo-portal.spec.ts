@@ -36,7 +36,7 @@ async function escanear(mesero: Page, mesa: number) {
 
 async function agregarPeso(telefono: Page, atajo: string | null, kilos: number) {
   await telefono
-    .locator('button.rounded-2xl')
+    .locator('button.menu-tarjeta')
     .filter({ has: telefono.getByText(BARBACOA.nombre, { exact: true }) })
     .click();
   if (atajo !== null) {
