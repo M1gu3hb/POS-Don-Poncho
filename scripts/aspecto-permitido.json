@@ -1536,6 +1536,36 @@
         "+ clase:tabular-nums",
         "+ icono:ShoppingBag"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ProductoPlaceholder.jsx",
+      "borrado": true,
+      "porque": "DP-16 (3.1, DP-D107): el marcador de la foto que faltaba elegía un ícono por palabras del nombre (al «Aguacate» le tocaba un tarro de cerveza). La tarjeta y la ficha sin foto usan ahora el fondo de la tarjeta del menú digital con la inicial del platillo.",
+      "testigos": []
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ProductoQRDialog.jsx",
+      "porque": "DP-16 (3.1, DP-D107): la ficha sin foto muestra el fondo de la tarjeta del menú digital con la inicial del platillo, en lugar del marcador con ícono por palabras.",
+      "testigos": [
+        "+ clase:relative",
+        "+ clase:absolute",
+        "+ clase:font-black",
+        "+ clase:menu-tarjeta",
+        "+ clase:overflow-hidden",
+        "+ clase:pointer-events-none",
+        "+ clase:-right-2",
+        "+ clase:-top-8",
+        "+ clase:-z-10",
+        "+ clase:select-none",
+        "+ clase:text-[11rem]",
+        "+ clase:leading-none",
+        "+ clase:opacity-15"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
+      "porque": "DP-16 (3.1): `overflow-x-clip` en lugar de `overflow-x-hidden` en la raíz del portal; `hidden` la volvía un área de desplazamiento y el encabezado y la barra de secciones dejaban de quedarse arriba.",
+      "testigos": ["- clase:overflow-x-hidden", "+ clase:overflow-x-clip"]
     }
   ]
 }

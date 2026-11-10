@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   fondoDeLaTarjeta,
+  inicialDelPlatillo,
   precioDeLaTarjeta,
   SECCION_SIN_CATEGORIA,
   seccionALaVista,
@@ -47,6 +48,23 @@ describe('fondoDeLaTarjeta', () => {
       'color:crema',
     );
     expect(fondoDeLaTarjeta(taco)).toBe('color:crema');
+  });
+
+  it('sin elegir, alterna por su lugar en la sección (un menú sin fotos no es una pared lisa)', () => {
+    expect([0, 1, 2, 3, 4].map((lugar) => fondoDeLaTarjeta(taco, lugar))).toEqual([
+      'color:crema',
+      'ilustracion:papel-picado',
+      'degradado:papel',
+      'ilustracion:talavera',
+      'color:crema',
+    ]);
+    // Lo elegido manda sobre el lugar.
+    expect(fondoDeLaTarjeta({ ...taco, fondo_tarjeta: 'color:marca' }, 3)).toBe('color:marca');
+  });
+
+  it('la inicial del platillo, en mayúscula', () => {
+    expect(inicialDelPlatillo(' ñoquis')).toBe('Ñ');
+    expect(inicialDelPlatillo('')).toBe('');
   });
 });
 

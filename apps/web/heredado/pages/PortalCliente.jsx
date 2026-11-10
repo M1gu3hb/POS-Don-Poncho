@@ -436,7 +436,9 @@ function PortalCliente() {
 
   return (
     <div
-      className="relative min-h-screen bg-background text-foreground pb-32 overflow-x-hidden"
+      // `overflow-x-clip` y no `-hidden`: `hidden` vuelve al contenedor un área de desplazamiento y el
+      // encabezado y la barra de secciones del menú dejaban de quedarse arriba (DP-16).
+      className="relative min-h-screen bg-background text-foreground pb-32 overflow-x-clip"
       {...atributosDelTema(tema)}
       // Los estilos cambian su paleta oscura con `data-modo` en el MISMO elemento.
       {...(tema.estilo === null ? {} : { 'data-modo': oscuro ? 'oscuro' : 'claro' })}

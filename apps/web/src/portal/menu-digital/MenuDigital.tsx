@@ -6,6 +6,7 @@ import { Plus, UtensilsCrossed } from 'lucide-react';
 import { BarraDeSecciones } from './BarraDeSecciones';
 import {
   fondoDeLaTarjeta,
+  inicialDelPlatillo,
   precioDeLaTarjeta,
   seccionesDelMenu,
   type CategoriaDelMenu,
@@ -63,11 +64,12 @@ export function MenuDigital<P extends ProductoDelMenu>({
           <h2 id={`seccion-${s.id}`} className="text-xl font-black tracking-tight text-texto">
             {s.nombre}
           </h2>
-          <ul className="grid grid-cols-2 gap-(--espacio-3)">
-            {s.productos.map((p) => (
+          <ul className="grid grid-cols-2 gap-(--espacio-3) sm:grid-cols-3">
+            {s.productos.map((p, lugar) => (
               <li key={p.id} className="min-w-0">
                 <TarjetaDelPlatillo
                   producto={p}
+                  lugar={lugar}
                   precio={precioDeLaTarjeta(p, mostrarPrecios)}
                   puedePedir={puedePedir}
                   alTocar={() => {
@@ -85,11 +87,13 @@ export function MenuDigital<P extends ProductoDelMenu>({
 
 function TarjetaDelPlatillo({
   producto,
+  lugar,
   precio,
   puedePedir,
   alTocar,
 }: {
   readonly producto: ProductoDelMenu;
+  readonly lugar: number;
   readonly precio: string | null;
   readonly puedePedir: boolean;
   readonly alTocar: () => void;
@@ -109,7 +113,15 @@ function TarjetaDelPlatillo({
           decoding="async"
           className="absolute inset-0 -z-10 size-full object-cover"
         />
-      ) : null}
+      ) : (
+        // Sin foto, la inicial grande de adorno: cada tarjeta se reconoce de un vistazo.
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-1 -top-4 -z-10 select-none text-[6.5rem] font-black leading-none opacity-15"
+        >
+          {inicialDelPlatillo(producto.nombre)}
+        </span>
+      )}
       <span className="flex min-h-0 flex-1 flex-col justify-end gap-1 p-(--espacio-3) text-left">
         {agotado ? (
           <span className="mb-auto self-start rounded-full bg-peligro px-(--espacio-2) py-0.5 text-sm font-bold text-peligro-texto">
@@ -134,14 +146,14 @@ function TarjetaDelPlatillo({
       </span>
     </>
   );
-  const clase = `menu-tarjeta ${conFoto ? 'menu-tarjeta-foto' : ''} relative flex aspect-[4/5] w-full flex-col overflow-hidden rounded-(--radio-lg) shadow-sm ${agotado ? 'opacity-60 grayscale' : ''}`;
+  const clase = `menu-tarjeta ${conFoto ? 'menu-tarjeta-foto' : ''} relative flex ${conFoto ? 'aspect-[4/5]' : 'aspect-square'} w-full flex-col overflow-hidden rounded-(--radio-lg) shadow-sm ${agotado ? 'opacity-60 grayscale' : ''}`;
   const etiqueta = [producto.nombre, precio, agotado ? 'agotado hoy' : null]
     .filter(Boolean)
     .join(', ');
 
   if (!puedePedir || agotado) {
     return (
-      <div data-fondo={conFoto ? undefined : fondoDeLaTarjeta(producto)} className={clase}>
+      <div data-fondo={conFoto ? undefined : fondoDeLaTarjeta(producto, lugar)} className={clase}>
         {contenido}
       </div>
     );
@@ -151,7 +163,7 @@ function TarjetaDelPlatillo({
       type="button"
       onClick={alTocar}
       aria-label={`${etiqueta}. Ver y agregar`}
-      data-fondo={conFoto ? undefined : fondoDeLaTarjeta(producto)}
+      data-fondo={conFoto ? undefined : fondoDeLaTarjeta(producto, lugar)}
       className={`${clase} transition-transform duration-(--duracion-rapida) ease-out active:scale-[0.97] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-anillo motion-reduce:transition-none`}
     >
       {contenido}

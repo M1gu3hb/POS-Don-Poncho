@@ -63,9 +63,30 @@ export function seccionesDelMenu<P extends ProductoDelMenu>(
     : [...secciones, { id: SECCION_SIN_CATEGORIA, nombre: 'Más', productos: sueltos }];
 }
 
-/** El fondo de la tarjeta sin foto: el elegido si es de la lista cerrada; si no, el de omisión. */
-export function fondoDeLaTarjeta(producto: ProductoDelMenu): FondoDeTarjeta {
-  return esFondoDeTarjeta(producto.fondo_tarjeta) ? producto.fondo_tarjeta : FONDO_DE_OMISION;
+/**
+ * Los fondos de omisión, alternados: un menú sin fotos (el de Don Poncho hoy) no se ve como una
+ * pared del mismo color. En dos columnas dan un tablero: crema, papel picado / papel, talavera.
+ */
+export const FONDOS_ALTERNADOS: readonly FondoDeTarjeta[] = [
+  FONDO_DE_OMISION,
+  'ilustracion:papel-picado',
+  'degradado:papel',
+  'ilustracion:talavera',
+];
+
+/**
+ * El fondo de la tarjeta sin foto: el elegido si es de la lista cerrada; si no, el de omisión que
+ * le toca por su lugar en la sección.
+ */
+export function fondoDeLaTarjeta(producto: ProductoDelMenu, lugar = 0): FondoDeTarjeta {
+  if (esFondoDeTarjeta(producto.fondo_tarjeta)) return producto.fondo_tarjeta;
+  return FONDOS_ALTERNADOS[Math.abs(lugar) % FONDOS_ALTERNADOS.length] ?? FONDO_DE_OMISION;
+}
+
+/** La inicial del platillo, de adorno en la tarjeta sin foto. */
+export function inicialDelPlatillo(nombre: string): string {
+  const letra = nombre.trim().charAt(0);
+  return letra === '' ? '' : letra.toLocaleUpperCase('es-MX');
 }
 
 const PESOS = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });

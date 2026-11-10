@@ -9,7 +9,7 @@
 .menu-tarjeta {
   --tarjeta-fondo: hsl(var(--acento-suave));
   --tarjeta-texto: hsl(var(--acento-suave-texto));
-  --tarjeta-dibujo: hsl(var(--primario) / 0.16);
+  --tarjeta-dibujo: hsl(var(--primario) / 0.1);
   background: var(--tarjeta-fondo);
   color: var(--tarjeta-texto);
   isolation: isolate;
@@ -58,14 +58,14 @@
 .menu-tarjeta[data-fondo='ilustracion:talavera'] {
   --tarjeta-fondo: hsl(var(--superficie));
   --tarjeta-texto: hsl(var(--texto));
-  --tarjeta-dibujo: hsl(var(--info) / 0.18);
+  --tarjeta-dibujo: hsl(var(--info) / 0.12);
 }
 .menu-tarjeta[data-fondo='ilustracion:talavera']::before {
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l3.5 9.5L29 16l-9.5 3.5L16 29l-3.5-9.5L3 16l9.5-3.5z'/%3E%3Ccircle cx='0' cy='0' r='4'/%3E%3Ccircle cx='32' cy='0' r='4'/%3E%3Ccircle cx='0' cy='32' r='4'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l3.5 9.5L29 16l-9.5 3.5L16 29l-3.5-9.5L3 16l9.5-3.5z'/%3E%3Ccircle cx='0' cy='0' r='4'/%3E%3Ccircle cx='32' cy='0' r='4'/%3E%3Ccircle cx='0' cy='32' r='4'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/svg%3E");
 }
 .menu-tarjeta[data-fondo='ilustracion:milpa'] {
-  --tarjeta-dibujo: hsl(var(--exito) / 0.16);
+  --tarjeta-dibujo: hsl(var(--exito) / 0.12);
 }
 .menu-tarjeta[data-fondo='ilustracion:milpa']::before {
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M18 34C18 20 10 12 4 10c6 6 10 12 14 24zM18 34c0-14 8-22 14-24-6 6-10 12-14 24z'/%3E%3C/svg%3E");

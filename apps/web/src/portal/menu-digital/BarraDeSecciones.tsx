@@ -65,7 +65,10 @@ export function BarraDeSecciones({
       aria-label="Secciones del menú"
       className="sticky top-[4.5rem] z-20 -mx-(--espacio-4) bg-fondo/95 px-(--espacio-4) py-(--espacio-2) backdrop-blur"
     >
-      <div ref={fichas} className="flex gap-(--espacio-2) overflow-x-auto">
+      <div
+        ref={fichas}
+        className="flex gap-(--espacio-2) overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {secciones.map((s) => (
           <button
             key={s.id}
