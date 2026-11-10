@@ -1664,6 +1664,16 @@
         "+ clase:px-3",
         "+ clase:h-11"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ProductoQRDialog.jsx",
+      "porque": "DP-16 (QA ronda 2, H-09): los botones − y + de la cantidad en la ficha del platillo dicen qué hacen al lector de pantalla («Uno menos», «Uno más»). Nada visible cambia.",
+      "testigos": [
+        "+ label:Uno menos",
+        "+ label:Uno más",
+        "+ aria-label:Uno menos",
+        "+ aria-label:Uno más"
+      ]
     }
   ]
 }

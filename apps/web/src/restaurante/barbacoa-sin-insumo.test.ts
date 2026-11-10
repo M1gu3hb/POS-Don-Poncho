@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { validarProductoVariable } from '../../heredado/utils/tipoVentaUtils.js';
@@ -45,5 +48,30 @@ describe('validarProductoVariable', () => {
       precio_por_porcion: 60,
     });
     expect(errores).toContain('Falta ingrediente base.');
+  });
+});
+
+/**
+ * DP-16 (QA ronda 2, H1) · Y EN RECETAS SE GUARDA «SÓLO EN SUS PRESENTACIONES». Con el insumo
+ * opcional la barbacoa ya guardaba, pero Recetas (donde Don Poncho edita sus platillos) no cargaba
+ * ni mandaba la bandera: el interruptor volvía a apagado al reabrir.
+ */
+describe('Recetas carga y manda «sólo en sus presentaciones»', () => {
+  const RAIZ_WEB = process.cwd().endsWith('web')
+    ? process.cwd()
+    : join(process.cwd(), 'apps', 'web');
+  const c = readFileSync(join(RAIZ_WEB, 'heredado/components/recetas/RecetaFormDialog.jsx'), 'utf8')
+    .replace(/^\s*\/\/.*$/gm, '')
+    .replace(/\s+/g, '');
+
+  it('la carga del platillo que se edita', () => {
+    expect(c).toContain('solo_presets_variable:productoToEdit.solo_presets_variable===true,');
+  });
+
+  it('la manda al guardar, sólo con presentaciones; y la apaga en precio fijo', () => {
+    expect(c).toContain(
+      'solo_presets_variable:tipoVentaState.solo_presets_variable===true&&Array.isArray(tipoVentaState.presets_variable_qr)&&tipoVentaState.presets_variable_qr.length>0,',
+    );
+    expect(c).toContain('{tipo_venta:TIPO_VENTA.PRECIO_FIJO,solo_presets_variable:false}');
   });
 });

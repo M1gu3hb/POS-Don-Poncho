@@ -84,6 +84,23 @@ describe('QA-J · la cocina', () => {
   });
 });
 
+describe('QA ronda 2 · la ficha y el carrito', () => {
+  it('H-09 · la ficha toma el foco al abrir, Escape la cierra y − / + dicen qué hacen', () => {
+    const c = sinEspacios(FICHA);
+    expect(c).toContain('cerrarRef.current?.focus();');
+    expect(c).toContain("if(evento.key==='Escape')onClose?.();");
+    expect(c).toContain('ref={cerrarRef}');
+    expect(c).toContain('aria-label="Unomenos"');
+    expect(c).toContain('aria-label="Unomás"');
+  });
+
+  it('H-R2-01 · «Quitar» del carrito de 44 px (sin `size="sm"`)', () => {
+    expect(sinEspacios('apps/web/src/portal/carrito-compartido/RenglonDelCarrito.tsx')).toContain(
+      '<Buttonvariant="ghost"className="gap-1text-peligro"',
+    );
+  });
+});
+
 describe('QA-D · el mesero', () => {
   it('H-06 · «Entregar» por estación mide 44 px de alto', () => {
     expect(sinEspacios('apps/web/heredado/components/mesero/ListosParaRecogerCard.jsx')).toContain(

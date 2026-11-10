@@ -42,7 +42,6 @@ export function RenglonDelCarrito({
       </span>
       {linea.esMia && alQuitar !== undefined ? (
         <Button
-          size="sm"
           variant="ghost"
           className="gap-1 text-peligro"
           disabled={quitando}

@@ -26,7 +26,9 @@ describe('el diálogo de mesas pendientes del cierre', () => {
     const c = sinEspacios(DIALOGO);
     expect(c).not.toContain('liberarMesaConPregunta');
     expect(c).toContain('liberarConDecision(m.id,');
-    expect(c).toContain('()=>newPromise((resolver)=>{decisionPendiente.current=resolver;setPorDecidir(m.id);})');
+    expect(c).toContain(
+      '()=>newPromise((resolver)=>{decisionPendiente.current=resolver;setPorDecidir(m.id);})',
+    );
   });
 
   it('la pregunta se ve en el renglón de esa mesa, con las tres salidas', () => {

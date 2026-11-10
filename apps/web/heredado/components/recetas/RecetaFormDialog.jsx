@@ -184,6 +184,8 @@ export default function RecetaFormDialog({
         presets_variable_qr: Array.isArray(productoToEdit.presets_variable_qr)
           ? productoToEdit.presets_variable_qr
           : [],
+        // DP-16 (QA R2, H1): «Vender sólo en estas presentaciones» también se edita en Recetas.
+        solo_presets_variable: productoToEdit.solo_presets_variable === true,
         capacidad_contenedor_ml: productoToEdit.capacidad_contenedor_ml,
         porciones_por_contenedor: productoToEdit.porciones_por_contenedor,
         ml_por_porcion: productoToEdit.ml_por_porcion,
@@ -300,6 +302,11 @@ export default function RecetaFormDialog({
             presets_variable_qr: Array.isArray(tipoVentaState.presets_variable_qr)
               ? tipoVentaState.presets_variable_qr
               : [],
+            // DP-16 · Sólo en sus presentaciones (y sólo si tiene alguna), como en Productos.
+            solo_presets_variable:
+              tipoVentaState.solo_presets_variable === true &&
+              Array.isArray(tipoVentaState.presets_variable_qr) &&
+              tipoVentaState.presets_variable_qr.length > 0,
             capacidad_contenedor_ml: tipoVentaState.capacidad_contenedor_ml,
             porciones_por_contenedor: tipoVentaState.porciones_por_contenedor,
             ml_por_porcion: tipoVentaState.ml_por_porcion,
@@ -309,7 +316,7 @@ export default function RecetaFormDialog({
               ? tipoVentaState.presets_porcion_qr
               : [],
           }
-        : { tipo_venta: TIPO_VENTA.PRECIO_FIJO };
+        : { tipo_venta: TIPO_VENTA.PRECIO_FIJO, solo_presets_variable: false };
 
       // El costo, la utilidad y el margen NO viajan. Son columnas que el
       // servidor calcula —`margen_bp` y `utilidad_unitaria` son generadas en la

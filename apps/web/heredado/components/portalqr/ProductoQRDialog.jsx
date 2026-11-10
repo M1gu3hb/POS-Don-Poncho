@@ -1,6 +1,6 @@
 'use client';
 import { etiquetaDePeso } from '~/restaurante/peso';
-import React, { useState, useEffect, useMemo, useId } from 'react';
+import React, { useState, useEffect, useMemo, useId, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus, Minus, Scale, Beaker } from 'lucide-react';
 import { formatCurrency } from '@/utils/financialUtils';
@@ -43,6 +43,17 @@ export default function ProductoQRDialog({
   const [notas, setNotas] = useState('');
   // DP-16 (QA-D, H-09): la ficha se anuncia como diálogo, con el nombre del platillo de título.
   const idDelTitulo = useId();
+  // DP-16 (QA ronda 2, H-09): al abrir, el foco entra a la ficha (en «Cerrar»); Escape la cierra.
+  const cerrarRef = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    cerrarRef.current?.focus();
+    const alTeclear = (evento) => {
+      if (evento.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', alTeclear);
+    return () => window.removeEventListener('keydown', alTeclear);
+  }, [open, onClose]);
   // selecciones[grupoNombre] = Set(opcionId) (Set para multi y para única).
   const [selecciones, setSelecciones] = useState({});
   const [errores, setErrores] = useState({});
@@ -281,6 +292,7 @@ export default function ProductoQRDialog({
             </div>
           )}
           <button
+            ref={cerrarRef}
             type="button"
             onClick={onClose}
             className="absolute top-3 right-3 w-11 h-11 rounded-full bg-velo/60 text-primario-texto flex items-center justify-center backdrop-blur"
@@ -467,6 +479,7 @@ export default function ProductoQRDialog({
                   type="button"
                   onClick={() => cambiarCantidad(-1)}
                   disabled={cantidad <= 1}
+                  aria-label="Uno menos"
                   className="w-11 h-11 rounded-full border-2 flex items-center justify-center disabled:opacity-40"
                 >
                   <Minus className="w-4 h-4" />
@@ -476,6 +489,7 @@ export default function ProductoQRDialog({
                   type="button"
                   onClick={() => cambiarCantidad(1)}
                   disabled={cantidad >= 99}
+                  aria-label="Uno más"
                   className="w-11 h-11 rounded-full border-2 flex items-center justify-center disabled:opacity-40"
                 >
                   <Plus className="w-4 h-4" />
