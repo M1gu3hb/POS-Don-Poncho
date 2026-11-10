@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  avisaCuentaCobrada,
   esParaLlevar,
   quienRecoge,
   rotuloDeLaComanda,
@@ -41,5 +42,28 @@ describe('DP-16 · el rótulo de la comanda sale del canal, no de la falta de me
   it('lo listo de un pedido para llevar lo espera la caja, no el mesero', () => {
     expect(quienRecoge({ canal: 'llevar', numero_pedido: 1 })).toMatch(/caja/);
     expect(quienRecoge({ canal: 'aqui', mesa_numero: 2 })).toMatch(/mesero/);
+  });
+});
+
+/**
+ * DP-16 (QA-J, H8) · «CUENTA COBRADA» SÓLO DONDE AVISA ALGO. El para llevar se cobra al armarlo:
+ * en su comanda la banda ámbar de advertencia sobraba y el cocinero la leía como «algo anda mal».
+ */
+describe('avisaCuentaCobrada', () => {
+  it('en una mesa cobrada, sí', () => {
+    expect(avisaCuentaCobrada({ canal: 'aqui', mesa_numero: 4, cuenta_cobrada: true })).toBe(true);
+  });
+
+  it('en un para llevar (siempre cobrado), no', () => {
+    expect(avisaCuentaCobrada({ canal: 'llevar', numero_pedido: 3, cuenta_cobrada: true })).toBe(
+      false,
+    );
+  });
+
+  it('sin cobrar, no', () => {
+    expect(avisaCuentaCobrada({ canal: 'aqui', mesa_numero: 4, cuenta_cobrada: false })).toBe(
+      false,
+    );
+    expect(avisaCuentaCobrada({ canal: 'aqui', mesa_numero: 4 })).toBe(false);
   });
 });

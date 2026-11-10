@@ -587,7 +587,7 @@ function PortalCliente() {
           </section>
         )}
 
-        {!usarProductos && !usarSecciones && (
+        {!usarDigital && !usarProductos && !usarSecciones && (
           <p className="text-sm text-muted-foreground text-center py-12">
             Sin menú configurado todavía.
           </p>

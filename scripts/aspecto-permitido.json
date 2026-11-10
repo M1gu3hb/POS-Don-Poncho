@@ -1653,6 +1653,17 @@
       "archivo": "apps/web/heredado/components/tickets/CorteTicket.jsx",
       "porque": "DP-16 (QA-J, H3): el corte de Registros pinta «Opciones vendidas» y «Retiros con PIN de gerente» como el documento al cerrar; si no se pudieron leer, un aviso lo dice. Nada de lo que se veía se quitó.",
       "testigos": ["+ clase:mb-4", "+ clase:text-xs", "+ clase:text-advertencia"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/ListosParaRecogerCard.jsx",
+      "porque": "DP-16 (QA-D, H-06): «Entregar» por estación mide 44 px de alto con letra de 12 px (antes 28 px y 10 px): el mesero lo toca con prisa.",
+      "testigos": [
+        "- clase:text-[10px]",
+        "- clase:h-7",
+        "- clase:px-2",
+        "+ clase:px-3",
+        "+ clase:h-11"
+      ]
     }
   ]
 }

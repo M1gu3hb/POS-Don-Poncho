@@ -3,7 +3,11 @@ import { Superficie } from '@morphiqpos/ui/sistema';
 import { Check, Flame, PartyPopper, Trash2, TriangleAlert } from 'lucide-react';
 
 import { platillosPorPreparar } from '../restaurante/platillos-de-cocina.ts';
-import { quienRecoge, rotuloDeLaComanda } from '../restaurante/rotulo-de-la-comanda.ts';
+import {
+  avisaCuentaCobrada,
+  quienRecoge,
+  rotuloDeLaComanda,
+} from '../restaurante/rotulo-de-la-comanda.ts';
 
 import { EsperaChip } from './EsperaChip';
 import { RenglonDePlatillo } from './RenglonDePlatillo';
@@ -74,7 +78,7 @@ export function TarjetaDeCocina(props: TarjetaDeCocinaProps) {
   const alergias = unicos(cuenta.comandas.map((c) => c.notas_alergias));
   const celebraciones = cuenta.comandas.filter((c) => c.celebracion_especial === true);
   const notasDeLaMesa = unicos(cuenta.comandas.map((c) => c.notas));
-  const cobrada = cuenta.comandas.some((c) => c.cuenta_cobrada === true);
+  const cobrada = cuenta.comandas.some(avisaCuentaCobrada);
   const conEstacion = cuenta.comandas.length > 1;
   const titulo = `cuenta-${cuenta.clave}-${estado}`;
 

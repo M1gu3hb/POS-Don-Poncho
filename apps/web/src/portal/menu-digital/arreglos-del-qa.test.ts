@@ -68,6 +68,30 @@ describe('QA-D · el portal del comensal', () => {
   });
 });
 
+describe('QA-J · el portal', () => {
+  it('H9 · en el menú digital no se pinta «Sin menú configurado todavía.»', () => {
+    expect(sinEspacios('apps/web/heredado/pages/PortalCliente.jsx')).toContain(
+      '{!usarDigital&&!usarProductos&&!usarSecciones&&(',
+    );
+  });
+});
+
+describe('QA-J · la cocina', () => {
+  it('H8 · la banda «Cuenta cobrada» sale sólo en las mesas (`avisaCuentaCobrada`)', () => {
+    expect(sinEspacios('apps/web/src/cocina/TarjetaDeCocina.tsx')).toContain(
+      'constcobrada=cuenta.comandas.some(avisaCuentaCobrada);',
+    );
+  });
+});
+
+describe('QA-D · el mesero', () => {
+  it('H-06 · «Entregar» por estación mide 44 px de alto', () => {
+    expect(sinEspacios('apps/web/heredado/components/mesero/ListosParaRecogerCard.jsx')).toContain(
+      'className="h-11px-3text-xsgap-1shrink-0border-exito/30',
+    );
+  });
+});
+
 describe('QA-D · la cocina', () => {
   it('H-05 · en «Listo» el botón baja cuando no cabe: no se encima con el texto', () => {
     const c = sinEspacios('apps/web/src/cocina/TarjetaDeCocina.tsx');
