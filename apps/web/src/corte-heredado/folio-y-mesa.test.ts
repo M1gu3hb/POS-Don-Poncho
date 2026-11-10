@@ -52,6 +52,8 @@ describe('el visor los usa', () => {
 
   it('en el detalle de ventas, el folio con serie y «Mesa N»', () => {
     expect(c).toContain('{folioDeLaVenta(v)}');
-    expect(c).toContain("{mesaDeLaVenta(v)??'—'}");
+    // QA R3: una parte no tiene mesa y su nombre ya la dice («Mesa 9 · cuenta 1 de 2»): sin «— · ».
+    expect(c).toContain("[mesaDeLaVenta(v),v.cliente_nombre].filter(Boolean).join('·')||'—'");
+    expect(c).not.toContain("{mesaDeLaVenta(v)??'—'}");
   });
 });

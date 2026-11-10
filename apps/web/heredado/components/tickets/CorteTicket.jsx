@@ -474,10 +474,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
                     {grupoDelCanal(v.canal) === 'llevar' ? (
                       referenciaParaLlevar(v.numero_pedido, v.nombre_pedido)
                     ) : (
-                      <>
-                        {mesaDeLaVenta(v) ?? '—'}
-                        {v.cliente_nombre ? ` · ${v.cliente_nombre}` : ''}
-                      </>
+                      // DP-17 (QA R3) · Una parte no tiene mesa y su nombre ya la dice: sin «— · ».
+                      [mesaDeLaVenta(v), v.cliente_nombre].filter(Boolean).join(' · ') || '—'
                     )}
                   </td>
                   <td className="border px-2 py-1">

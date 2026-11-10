@@ -79,6 +79,16 @@ describe('liberar tras cobrar', () => {
     }
   });
 
+  it('QA R3 · una PARTE: «no liberable» es que faltan las otras (el servidor no manda cuántas)', async () => {
+    // Al cliente sólo llega la regla (`comando.ts`): `partesSinCobrar` se queda en el servidor.
+    const ejecutar = vi
+      .fn()
+      .mockRejectedValue(
+        new ErrorPuente('REGLA_DE_NEGOCIO', 'sin cobrar', 422, { regla: 'MESA_NO_LIBERABLE' }),
+      );
+    expect(await liberarTrasCobrar('m-9', ejecutar, vi.fn(), true)).toBe('faltan-partes');
+  });
+
   it('otro error sí se avisa (la venta ya está cobrada, la mesa no)', async () => {
     const ejecutar = vi.fn().mockRejectedValue(new ErrorPuente('ERROR_INTERNO', 'x', 500));
     await expect(liberarTrasCobrar('m-9', ejecutar, vi.fn())).rejects.toThrow('x');
@@ -97,5 +107,6 @@ describe('la Caja lo usa al cobrar', () => {
     expect(c).toContain('constmesaALiberar=awaitmesaParaLiberarTrasCobrar(ventaSeleccionada,');
     expect(c).toContain('if(mesaALiberar){');
     expect(c).toContain('awaitliberarTrasCobrar(mesaALiberar,');
+    expect(c).toContain('Boolean(ventaSeleccionada.orden_padre_id),');
   });
 });

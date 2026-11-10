@@ -44,15 +44,22 @@ function faltanPartes(error: unknown): boolean {
 
 export type ResultadoTrasCobrar = 'liberada' | 'sin-liberar' | 'faltan-partes';
 
+/**
+ * `esParte`: lo cobrado era una parte de una cuenta dividida. Al navegador sólo llega la regla del
+ * error (`comando.ts` no manda sus datos), así que con una parte «no liberable» quiere decir que
+ * faltan las otras: no se avisa (QA ronda 3).
+ */
 export async function liberarTrasCobrar(
   mesaId: string,
   ejecutar: EjecutarLiberar,
   preguntar: () => Promise<DecisionDelGrupo | null>,
+  esParte = false,
 ): Promise<ResultadoTrasCobrar> {
   try {
     return (await liberarConDecision(mesaId, ejecutar, preguntar)) ? 'liberada' : 'sin-liberar';
   } catch (error: unknown) {
     if (faltanPartes(error)) return 'faltan-partes';
+    if (esParte && reglaDe(error) === 'MESA_NO_LIBERABLE') return 'faltan-partes';
     throw error;
   }
 }

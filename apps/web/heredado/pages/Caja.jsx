@@ -847,6 +847,7 @@ export default function Caja() {
             mesaALiberar,
             (entrada) => api.comandos.ejecutar('/api/restaurante/liberar-mesa', entrada),
             preguntarPorElGrupo,
+            Boolean(ventaSeleccionada.orden_padre_id),
           );
         }
       } catch (errMesa) {
