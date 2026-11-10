@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Transaccion } from '@morphiqpos/data';
-import { sql } from 'kysely';
+import { sql, type RawBuilder } from 'kysely';
 
 import { ORDEN_VENDIDA, TOPE_DE_FILAS } from './consultas.ts';
 
@@ -26,10 +26,19 @@ export interface OpcionVendida {
 
 const POR_RENGLON = sql`l.tipo_venta in ('variable_medida', 'porcion_contenedor')`;
 
-export async function opcionesVendidas(
+export function opcionesVendidas(
   tx: Transaccion,
   organizacionId: string,
   sesionCajaId: string,
+): Promise<readonly OpcionVendida[]> {
+  return opcionesVendidasEn(tx, organizacionId, sql`select ${sesionCajaId}::uuid`);
+}
+
+/** DP-17 · Las de un CONJUNTO de cajas (`select id …`): el Cierre del día las suma todas. */
+export async function opcionesVendidasEn(
+  tx: Transaccion,
+  organizacionId: string,
+  sesiones: RawBuilder<unknown>,
 ): Promise<readonly OpcionVendida[]> {
   const { rows } = await sql<OpcionVendida>`
     select m.modificador_nombre                                         as "grupo",
@@ -43,7 +52,7 @@ export async function opcionesVendidas(
       join orden_lineas l on l.id = m.orden_linea_id
       join ordenes o on o.id = l.orden_id and o.organizacion_id = l.organizacion_id
      where l.organizacion_id = ${organizacionId}
-       and o.sesion_caja_id = ${sesionCajaId}
+       and o.sesion_caja_id in (${sesiones})
        and ${ORDEN_VENDIDA}
        and l.anulada_en is null
      group by m.modificador_nombre, m.opcion_nombre

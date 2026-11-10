@@ -3,7 +3,12 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { celdasDelDia, leerVentasDelDia, type VentasDelDiaLeidas } from './ventas-del-dia.ts';
+import {
+  celdasDelDia,
+  leerVentasDelDia,
+  seccionesExtraDelDia,
+  type VentasDelDiaLeidas,
+} from './ventas-del-dia.ts';
 
 /**
  * DP-15 · QA de la jornada, J-H6 · El Cierre del día del corte heredado dice las ventas del día.
@@ -49,6 +54,27 @@ describe('las ventas del día del corte heredado', () => {
     ]);
   });
 
+  it('DP-17 · con el desglose del servidor: mesas y para llevar, y las tablas del día', () => {
+    const conDesglose: VentasDelDiaLeidas = {
+      ...DIA,
+      canales: [
+        { grupo: 'mesas', cuentas: 12, totalCentavos: '350000' },
+        { grupo: 'llevar', cuentas: 2, totalCentavos: '57715' },
+      ],
+      opciones: [{ grupo: 'Extras', opcion: 'Queso', veces: '18', importeCentavos: '27000' }],
+      retirosConPin: [],
+    };
+    expect(celdasDelDia(conDesglose).slice(-2)).toEqual([
+      { etiqueta: 'Mesas (12)', pesos: 3500 },
+      { etiqueta: 'Para llevar (2)', pesos: 577.15 },
+    ]);
+    expect(seccionesExtraDelDia(conDesglose).map((s) => s.titulo)).toEqual([
+      'Opciones vendidas del día · todas las cajas',
+    ]);
+    // Un servidor viejo (sin desglose): nada nuevo, nada roto.
+    expect(seccionesExtraDelDia(DIA)).toEqual([]);
+  });
+
   const RAIZ = process.cwd().endsWith('web') ? process.cwd() : join(process.cwd(), 'apps', 'web');
   const sinEspacios = (ruta: string) =>
     readFileSync(join(RAIZ, ruta), 'utf8')
@@ -61,6 +87,9 @@ describe('las ventas del día del corte heredado', () => {
     expect(papel).toContain('{ventasDelDia&&(<Sectiontitle={TITULO_DEL_DIA}>');
     expect(papel).toContain('celdasDelDia(ventasDelDia).map(');
     expect(papel).toContain("ventasDelDia?'Resumendeestacaja'");
+    expect(papel).toContain(
+      '{ventasDelDia&&seccionesExtraDelDia(ventasDelDia).map((seccion)=>(<SeccionPintadakey={seccion.titulo}seccion={seccion}/>))}',
+    );
   });
 
   it('los dos diálogos que arman el PDF las leen y se las pasan al papel', () => {

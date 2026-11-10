@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Transaccion } from '@morphiqpos/data';
-import { sql } from 'kysely';
+import { sql, type RawBuilder } from 'kysely';
 
 /**
  * LOS RETIROS QUE LLEVARON EL PIN DE UN GERENTE, en el corte (DP-16, encargo 1.4).
@@ -25,10 +25,19 @@ export interface RetiroConPinDelCorte {
 
 const TOPE_DE_FILAS = 500;
 
-export async function retirosConPinDelCorte(
+export function retirosConPinDelCorte(
   tx: Transaccion,
   organizacionId: string,
   sesionCajaId: string,
+): Promise<readonly RetiroConPinDelCorte[]> {
+  return retirosConPinEn(tx, organizacionId, sql`select ${sesionCajaId}::uuid`);
+}
+
+/** DP-17 · Los de un CONJUNTO de cajas (`select id …`): el Cierre del día los dice todos. */
+export async function retirosConPinEn(
+  tx: Transaccion,
+  organizacionId: string,
+  sesiones: RawBuilder<unknown>,
 ): Promise<readonly RetiroConPinDelCorte[]> {
   const { rows } = await sql<RetiroConPinDelCorte>`
     select m.id::text                          as "movimientoId",
@@ -47,7 +56,7 @@ export async function retirosConPinDelCorte(
       left join empleados_visibles ev on ev.id = m.empleado_id
       left join empleados_visibles ea on ea.id::text = a.payload ->> 'autorizadoPor'
      where m.organizacion_id = ${organizacionId}
-       and m.sesion_caja_id = ${sesionCajaId}
+       and m.sesion_caja_id in (${sesiones})
        and m.tipo = 'retiro'
      order by m.created_at, m.id
      limit ${TOPE_DE_FILAS}

@@ -1,3 +1,4 @@
+import { seccionesExtraDelDia } from './del-dia.ts';
 import {
   ajustesDeCaja,
   arqueo,
@@ -102,6 +103,8 @@ export function corteDeRestaurante(
     ...ajustesDeCaja(hoja),
     ...retirosConPin(hoja),
     ...ventasDelDia(hoja),
+    // DP-17 · Las opciones y los retiros con PIN del día, de todas las cajas.
+    ...seccionesExtraDelDia(hoja.ventasDelDia ?? null),
     resumenFinanciero(hoja, tituloDelResumen(hoja)),
     ...metodosConPropina(hoja),
     ...seccionesDePropina,

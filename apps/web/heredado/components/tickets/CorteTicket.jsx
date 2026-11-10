@@ -22,7 +22,7 @@ import {
   cuentaDelDescuento,
   tituloDeLosDescuentos,
 } from '~/corte-heredado/descuentos-del-corte';
-import { TITULO_DEL_DIA, celdasDelDia } from '~/corte-heredado/ventas-del-dia';
+import { TITULO_DEL_DIA, celdasDelDia, seccionesExtraDelDia } from '~/corte-heredado/ventas-del-dia';
 import {
   SIN_RECETA,
   costoDelProductoConocido,
@@ -269,6 +269,11 @@ const CorteTicket = React.forwardRef(function CorteTicket(
           </Grid>
         </Section>
       )}
+      {/* DP-17 · Las opciones y los retiros con PIN del día, de todas las cajas. */}
+      {ventasDelDia &&
+        seccionesExtraDelDia(ventasDelDia).map((seccion) => (
+          <SeccionPintada key={seccion.titulo} seccion={seccion} />
+        ))}
 
       {/* Resumen financiero — sin el módulo `costos_basicos` sólo se muestran ventas y métodos de pago */}
       <Section

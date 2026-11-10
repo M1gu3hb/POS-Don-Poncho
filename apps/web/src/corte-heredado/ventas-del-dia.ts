@@ -1,5 +1,10 @@
 import { invocarComando } from '~/cliente/api';
 
+import { seccionesExtraDelDia } from '../corte/del-dia.ts';
+import { etiquetaDelCanal, type CanalDelDia, type HojaDelServidor } from '../corte/hoja.ts';
+
+export { seccionesExtraDelDia };
+
 /**
  * LAS VENTAS DEL DÍA EN EL CORTE HEREDADO (DP-15, QA de la jornada J-H6).
  *
@@ -16,6 +21,10 @@ export interface VentasDelDiaLeidas {
   readonly totalCentavos: string;
   readonly propinasCentavos: string;
   readonly metodos: readonly { readonly metodo: string; readonly ventasCentavos: string }[];
+  /** DP-17 · El desglose del día (un servidor viejo no lo manda). */
+  readonly canales?: readonly CanalDelDia[];
+  readonly opciones?: HojaDelServidor['opciones'];
+  readonly retirosConPin?: HojaDelServidor['retirosConPin'];
 }
 
 export const TITULO_DEL_DIA = 'Ventas del día · todas las cajas';
@@ -65,5 +74,9 @@ export function celdasDelDia(v: VentasDelDiaLeidas): readonly CeldaDelDia[] {
       pesos: pesos(m.ventasCentavos),
     })),
     { etiqueta: 'Propinas', pesos: pesos(v.propinasCentavos) },
+    ...(v.canales ?? []).map((c) => ({
+      etiqueta: etiquetaDelCanal(c),
+      pesos: pesos(c.totalCentavos),
+    })),
   ];
 }
