@@ -128,8 +128,8 @@ export async function payloadDelPortal(
 
   // El menú SUBIDO también pide del catálogo cuando se puede ordenar (DP-5): los botones de cada
   // página (DP-9.7) abren los platillos del catálogo.
-  const usaCatalogo =
-    banderas.modoMenu === 'productos_pos' || banderas.modoMenu === 'mixto' || puedeOrdenar;
+  // DP-16 · El menú digital también es del catálogo: todo modo menos las páginas solas.
+  const usaCatalogo = banderas.modoMenu !== 'menu_subido' || puedeOrdenar;
   const usaSecciones = banderas.modoMenu === 'menu_subido' || banderas.modoMenu === 'mixto';
 
   // Las dos banderas de presentación DECIDEN aquí, en el servidor, y no sólo
@@ -256,6 +256,7 @@ async function productosVisibles(
       'p.precio_por_porcion_centavos as precio_por_porcion_centavos',
       'p.presets_variable as presets_variable',
       'p.solo_presets_variable as solo_presets_variable',
+      'p.fondo_tarjeta as fondo_tarjeta',
       'p.presets_porcion as presets_porcion',
       'p.agotado_hasta as agotado_hasta',
     ])

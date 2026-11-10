@@ -168,6 +168,8 @@ describe('el menú no lleva costos, márgenes ni receta', () => {
         'presets_variable_qr',
         // DP-16 · Sólo en sus presentaciones: un sí o un no, sin precio.
         'solo_presets_variable',
+        // DP-16 · El fondo de la tarjeta del menú digital: una clave de la lista cerrada.
+        'fondo_tarjeta',
         // Los grupos de opciones (DP-5): el sabor del pulque se elige desde el QR. Sólo nombres.
         'modificadores',
         // DP-15 · Agotado del día: el comensal lo ve apagado y no lo puede pedir (un sí o un no; la

@@ -22,6 +22,7 @@ import TipoVentaSection from './TipoVentaSection';
 import { TIPO_VENTA, validarProductoVariable, esProductoVariable } from '@/utils/tipoVentaUtils';
 import { AreaDePreparacionSelect } from '~/restaurante/AreaDePreparacionSelect';
 import { areaInicial, SEGUN_SU_CATEGORIA } from '~/restaurante/area-de-preparacion';
+import { SelectorDeFondo } from '~/portal/menu-digital/SelectorDeFondo';
 
 /**
  * Formulario simple para crear/editar un ProductoTerminado en paquete Esencial.
@@ -33,6 +34,8 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
   const [nombre, setNombre] = useState('');
   const [precio, setPrecio] = useState('');
   const [imagenUrl, setImagenUrl] = useState('');
+  // DP-16 · El fondo de la tarjeta sin foto en el menú digital (null = el de omisión).
+  const [fondoTarjeta, setFondoTarjeta] = useState(null);
   const [descripcion, setDescripcion] = useState('');
   const [activo, setActivo] = useState(true);
   const [categoriaId, setCategoriaId] = useState('');
@@ -62,6 +65,7 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
       setNombre(producto?.nombre || '');
       setPrecio(producto?.precio_venta != null ? String(producto.precio_venta) : '');
       setImagenUrl(producto?.imagen_url || '');
+      setFondoTarjeta(producto?.fondo_tarjeta || null);
       setDescripcion(producto?.descripcion || '');
       setActivo(producto?.activo !== false);
       setCategoriaId(producto?.categoria_id || '');
@@ -157,6 +161,7 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
         nombre: nombre.trim(),
         precio_venta: precioNum,
         imagen_url: imagenUrl.trim() || undefined,
+        fondo_tarjeta: fondoTarjeta,
         descripcion: descripcion.trim() || undefined,
         activo,
         visible_en_pos: true,
@@ -244,6 +249,9 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
               />
             </div>
           </div>
+          {!imagenUrl.trim() && (
+            <SelectorDeFondo valor={fondoTarjeta} alCambiar={setFondoTarjeta} nombre={nombre} />
+          )}
           <div>
             <Label className="text-xs">Descripción (opcional)</Label>
             <Textarea

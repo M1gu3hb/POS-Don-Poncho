@@ -1,0 +1,92 @@
+/**
+ * DP-16 · EL MENÚ DIGITAL DEL COMENSAL — los fondos de la tarjeta sin foto y el degradado sobre la
+ * foto. Todo con los tokens del estilo del negocio (`--primario`, `--acento`, …): cambiar el estilo
+ * en Configuración cambia las tarjetas sin tocar un producto. Las ilustraciones son máscaras SVG
+ * pintadas con un token, nunca colores sueltos. La lista de fondos vive en
+ * `@morphiqpos/contracts` (`FONDOS_DE_TARJETA`); lo que no está ahí no llega aquí.
+ */
+
+.menu-tarjeta {
+  --tarjeta-fondo: hsl(var(--acento-suave));
+  --tarjeta-texto: hsl(var(--acento-suave-texto));
+  --tarjeta-dibujo: hsl(var(--primario) / 0.16);
+  background: var(--tarjeta-fondo);
+  color: var(--tarjeta-texto);
+  isolation: isolate;
+  position: relative;
+}
+
+.menu-tarjeta[data-fondo='color:crema'] {
+  --tarjeta-fondo: hsl(var(--acento-suave));
+  --tarjeta-texto: hsl(var(--acento-suave-texto));
+}
+.menu-tarjeta[data-fondo='color:marca'] {
+  --tarjeta-fondo: hsl(var(--primario));
+  --tarjeta-texto: hsl(var(--primario-texto));
+}
+.menu-tarjeta[data-fondo='color:tierra'] {
+  --tarjeta-fondo: hsl(var(--acento));
+  --tarjeta-texto: hsl(var(--acento-texto));
+}
+.menu-tarjeta[data-fondo='color:carbon'] {
+  --tarjeta-fondo: hsl(var(--texto));
+  --tarjeta-texto: hsl(var(--superficie));
+}
+.menu-tarjeta[data-fondo='degradado:atardecer'] {
+  --tarjeta-fondo: linear-gradient(155deg, hsl(var(--primario)), hsl(var(--acento)));
+  --tarjeta-texto: hsl(var(--primario-texto));
+}
+.menu-tarjeta[data-fondo='degradado:papel'] {
+  --tarjeta-fondo: linear-gradient(155deg, hsl(var(--superficie)), hsl(var(--acento-suave)));
+  --tarjeta-texto: hsl(var(--texto));
+}
+
+/* Las ilustraciones: el papel de fondo y, encima, el dibujo como máscara del color del token. */
+.menu-tarjeta[data-fondo^='ilustracion:']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--tarjeta-dibujo);
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+.menu-tarjeta[data-fondo='ilustracion:papel-picado']::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='30' viewBox='0 0 48 30'%3E%3Cpath fill-rule='evenodd' d='M0 0h48v20l-6 8-6-8-6 8-6-8-6 8-6-8-6 8-6-8zM12 6a4 4 0 1 0 0 8a4 4 0 1 0 0-8zM36 6a4 4 0 1 0 0 8a4 4 0 1 0 0-8zM24 4l3 6-3 6-3-6z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='30' viewBox='0 0 48 30'%3E%3Cpath fill-rule='evenodd' d='M0 0h48v20l-6 8-6-8-6 8-6-8-6 8-6-8-6 8-6-8zM12 6a4 4 0 1 0 0 8a4 4 0 1 0 0-8zM36 6a4 4 0 1 0 0 8a4 4 0 1 0 0-8zM24 4l3 6-3 6-3-6z'/%3E%3C/svg%3E");
+}
+.menu-tarjeta[data-fondo='ilustracion:talavera'] {
+  --tarjeta-fondo: hsl(var(--superficie));
+  --tarjeta-texto: hsl(var(--texto));
+  --tarjeta-dibujo: hsl(var(--info) / 0.18);
+}
+.menu-tarjeta[data-fondo='ilustracion:talavera']::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l3.5 9.5L29 16l-9.5 3.5L16 29l-3.5-9.5L3 16l9.5-3.5z'/%3E%3Ccircle cx='0' cy='0' r='4'/%3E%3Ccircle cx='32' cy='0' r='4'/%3E%3Ccircle cx='0' cy='32' r='4'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l3.5 9.5L29 16l-9.5 3.5L16 29l-3.5-9.5L3 16l9.5-3.5z'/%3E%3Ccircle cx='0' cy='0' r='4'/%3E%3Ccircle cx='32' cy='0' r='4'/%3E%3Ccircle cx='0' cy='32' r='4'/%3E%3Ccircle cx='32' cy='32' r='4'/%3E%3C/svg%3E");
+}
+.menu-tarjeta[data-fondo='ilustracion:milpa'] {
+  --tarjeta-dibujo: hsl(var(--exito) / 0.16);
+}
+.menu-tarjeta[data-fondo='ilustracion:milpa']::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M18 34C18 20 10 12 4 10c6 6 10 12 14 24zM18 34c0-14 8-22 14-24-6 6-10 12-14 24z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M18 34C18 20 10 12 4 10c6 6 10 12 14 24zM18 34c0-14 8-22 14-24-6 6-10 12-14 24z'/%3E%3C/svg%3E");
+}
+
+/* Sobre la foto: letra blanca y el degradado que la deja leer (blanco sobre negro al 78 %). */
+.menu-tarjeta-foto {
+  --tarjeta-texto: hsl(0 0% 100%);
+  --tarjeta-fondo: hsl(var(--texto));
+}
+.menu-tarjeta-foto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to top,
+    hsl(0 0% 0% / 0.78) 0%,
+    hsl(0 0% 0% / 0.45) 38%,
+    hsl(0 0% 0% / 0) 68%
+  );
+  pointer-events: none;
+}

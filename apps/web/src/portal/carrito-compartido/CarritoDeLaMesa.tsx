@@ -51,6 +51,7 @@ import type { CarritoDeLaMesa as Carrito } from './use-carrito-de-la-mesa';
 export function CarritoDeLaMesa({
   carrito,
   alAbrirLaMesa,
+  abrirConSenal = 0,
 }: {
   readonly carrito: Carrito;
   /**
@@ -59,6 +60,11 @@ export function CarritoDeLaMesa({
    * se escribió aquí viaja hasta allá.
    */
   readonly alAbrirLaMesa?: (datos: { readonly notaGeneral: string }) => void;
+  /**
+   * DP-16 · Cada vez que cambia (y es mayor que cero), la hoja del pedido se abre: el contador del
+   * encabezado del menú digital la abre sin duplicar el estado de aquí.
+   */
+  readonly abrirConSenal?: number;
 }) {
   const idNota = useId();
   const [abierto, setAbierto] = useState(false);
@@ -75,6 +81,11 @@ export function CarritoDeLaMesa({
   // se cierran aquí también. Antes se quedaban «abiertos» por dentro y reaparecían solos en
   // cuanto alguien agregaba lo siguiente. Se ajusta al pintar, no en un efecto.
   const [visto, setVisto] = useState({ ronda, vacio });
+  const [senalVista, setSenalVista] = useState(abrirConSenal);
+  if (senalVista !== abrirConSenal) {
+    setSenalVista(abrirConSenal);
+    if (abrirConSenal > 0 && !vacio) setAbierto(true);
+  }
   if (visto.ronda !== ronda || visto.vacio !== vacio) {
     setVisto({ ronda, vacio });
     if (visto.ronda !== ronda || vacio) {
