@@ -4,7 +4,7 @@
 > sigue». Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
 - **Ramas:** `dp-16` (Parte 1, en `main` con el squash `8f271a2` del PR #17, que absorbió el #16),
-  `dp-16-2` (Parte 2, en `main` con el squash `2e8da35` del #18) y `dp-16-3` (Parte 3).
+  `dp-16-2` (Parte 2, en `main` con el squash `2e8da35` del #18) `dp-16-3` (Parte 3, en `main` con el squash `4343e62` del #19) y `dp-16-4` (Parte 4).
 - **Fecha límite:** jueves 12-11-2026 en la noche en producción. Instalación: sábado 14-11.
 - **Base de pruebas local:** clúster de desarrollo `127.0.0.1:55433`, base `dp16_pruebas` (migrada
   hasta la 192). La URL vive en `D:\mpos-tmp\dp16-url.txt` (sin secretos en el repo). La demo
@@ -26,15 +26,15 @@
 | 2.2 | Cocina con volumen | hecho (agente C, `d0fb765`, DP-D105): de 967 KB a 62 KB por refresco; en el navegador a 1080p |
 | 2.3 | Teléfono de cocina nuevo | hecho (agente E, `8d5d522`, DP-D106); en el navegador en Android 360 y 412 y en iPhone (WebKit): sin desborde, botones de 62 px, tira, carrusel y opciones aparte de la nota |
 | 2 · producción | PR #18, CI 10/10, la 192 en la propia, merge, `READY`, humo, ceros | hecho el 10-11: la 192 a las 07:05, merge `2e8da35`, `READY`, ceros y humo 07:07; Vercel sin errores de 07:05 a 08:06 |
-| 3 | Menú del comensal: digital y a la carta | hecho en `dp-16-3` (DP-D107): el menú digital, «a la carta», el modo en Configuración → QR y el fondo de la tarjeta; 8 mutantes muertos; capturas en Android 360, iPhone y tableta, con y sin fotos, sin desborde ni objetivos de menos de 44 px (`D:\mpos-tmp\dp16\laminas\`, fuera del repositorio), enviadas a Miguel; sin migración (la columna venía en la 192). Falta el PR y producción |
+| 3 | Menú del comensal: digital y a la carta | hecho en `dp-16-3` (DP-D107): el menú digital, «a la carta», el modo en Configuración → QR y el fondo de la tarjeta; 8 mutantes muertos; capturas en Android 360, iPhone y tableta, con y sin fotos, sin desborde ni objetivos de menos de 44 px (`D:\mpos-tmp\dp16\laminas\`, fuera del repositorio), enviadas a Miguel; sin migración (la columna venía en la 192) |
+| 3 · producción | PR #19, CI 10/10, merge, `READY`, humo, ceros | hecho el 10-11: merge `4343e62` 09:19, `READY` 09:20, ceros y humo 09:21 (entrada y portal 200 sin desborde en 6 y 5 aparatos, 8 a la vez en 2.7 s); Don Poncho sigue en «Páginas subidas» (107 productos, 0 con foto); Vercel una hora: pendiente (10:21) |
 | 4 | QA final, producción y reporte 010 | pendiente |
 
 ## Lo que sigue
 
-1. Parte 3: `verify` completo, PR, CI, merge, `READY`, humo, ceros y Vercel una hora; comprobar que
-   Don Poncho sigue en «Páginas subidas» en producción.
-2. Parte 4: QA con dos agentes Sonnet en copias de la propia de hoy (`qa_dp16_j` y `qa_dp16_d` en
-   el 5460, exportación `_PRIVADO\mudanza6-11-10-dp16-propia-qa`; guiones y encargos en
-   `D:\mpos-tmp\dp16\qa\`; la app compilada desde el worktree `dp15-codigo`); jornada cuadrada al
-   centavo en `docs/qa/JORNADA-2026-11-10.md`; arreglos con prueba y mutante; humo final y reporte
-   `docs/reports/010-para-llevar-cocina-menu.md`.
+1. Vercel una hora después de la Parte 3 (10:21).
+2. Parte 4 (rama `dp-16-4`): QA con dos agentes Sonnet en copias de la propia de hoy (`qa_dp16_j` y
+   `qa_dp16_d` en el 5460, exportación `_PRIVADO\mudanza6-11-10-dp16-propia-qa`; guiones y
+   encargos en `D:\mpos-tmp\dp16\qa\`; la app compilada desde el worktree `dp15-codigo` en
+   `987c2ff`, servida en 32751 y 32752); jornada cuadrada al centavo en `docs/qa/JORNADA-2026-11-10.md`;
+   arreglos con prueba y mutante; humo final y reporte `docs/reports/010-para-llevar-cocina-menu.md`.

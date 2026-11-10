@@ -1525,3 +1525,22 @@ Sin agentes: la Parte 3 es sobre todo pantalla y se probó a ojo en cada vuelta.
   docena desde la misma IP en la misma mesa, topaba con `telefono_nuevo_mesa_ip` (12 cada 15 min).
   El límite hace lo que debe; para las capturas se vacía `limite_tasa` de la base de demostración
   antes de cada tanda.
+- `verify` local: la excepción de lecturas de `descripcion` bajó a 47 (`ProductoPlaceholder.jsx` se
+  fue), la inicial de la tarjeta pasó a su hoja (`text-[6.5rem]` subía la deuda de ritmo) y los tamaños
+  al token de densidad con 44 px de mínimo, y la prueba del agotado en el portal mira los dos menús
+  nuevos (3 mutantes muertos). Unidad 482 / 5,464, integración 127 / 627, build y verificadores en
+  verde; `verify:pruebas` sólo se queja de los worktrees viejos (ambiental).
+- La primera CI del [#19](https://github.com/M1gu3hb/POS-Don-Poncho/pull/19): la jornada cayó en el
+  e2e del portal, que buscaba la tarjeta vieja (`button.rounded-2xl`). Nueve specs del portal la
+  usaban (la CI se detiene en la primera que falla); ahora buscan `.menu-tarjeta`. Segunda CI: 10 de 10.
+
+### La Parte 3 en producción (10-11, mañana)
+
+- Antes del merge, sólo leyendo por la de sesión: Don Poncho tiene `portal_qr_modo_menu =
+  'menu_subido'` guardado (107 productos, 0 con foto): el menú digital no le cambia nada.
+- 09:19 Merge del #19 (`4343e62`, squash, a nombre de M1gu3hb), sin migración. Production `READY`
+  (`dpl_C5cw…`) a las 09:20.
+- 09:21 Don Poncho en ceros (0 cajas, 0 cuentas, 0 folios, 0 comandas, 0 carritos, 10 mesas libres) y
+  el humo sin cobrar: la entrada 200 y sin desborde en 6 aparatos (de 0.8 a 4.0 s, la primera en
+  frío), el portal en 5 (de 0.68 a 1.34 s), 8 a la vez todos 200 en 2.7 s, red lenta (10 y 12 s la
+  primera vez, 1.6 y 1.9 s con caché) y el manifiesto con sus íconos.
