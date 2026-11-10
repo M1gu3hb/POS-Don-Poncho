@@ -1446,3 +1446,36 @@ Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PRO
   ticket (el cuarto es equivalente: un atajo), 3 de 4 en el corte (el cuarto era el control de
   empates). DP-D104 y la ficha 38.
 
+### La Parte 2: integración, `verify` y el PR (10-11, mañana)
+
+- En el navegador (demo local): la Caja con para llevar y opciones con precio hasta el ticket
+  ($457.50: «½ kg × Barbacoa de horno $417.50 · + Tortillas: Harina (+$20.00)» y «1× Quesadilla
+  $40.00 · + Relleno: Queso (+$15.00)», sin repetir las opciones en la nota); la barbacoa «sólo
+  presentaciones» sin campo libre; el portal a 360 px («Hongos −$5.00», «Queso +$15.00», «Elige una
+  opción en Relleno», «Agregar · $40.00», sin desborde); el editor de grupos (precio a $18 y una
+  opción nueva, guardados y releídos); la cocina a 1080p; el teléfono en Android 360 y 412 y en
+  iPhone (WebKit), sin desborde y con botones de 62 px.
+- `pnpm verify` local sin los pasos atados a la base de producción (`entorno`, `esquema`, `rls`,
+  `acople`, que van tras aplicar la 192): verde hasta los tipos; unidad 479 archivos / 5,443
+  pruebas. `verify:pruebas` se queja sólo de los worktrees viejos en disco (`.claude/worktrees`,
+  1361 avisos, ninguno del repo: ambiental, la CI lo corre en limpio). Se cazaron dos cosas reales:
+  un archivo sin formato (`precio-de-las-opciones.ts`) y una prueba que leía el diálogo viejo de
+  opciones (`ModificadoresDialog.jsx`, borrado): ahora lee el editor nuevo (y un mutante lo prueba).
+- **Dos tropiezos con los verificadores de mutación** (escriben el archivo mutado y lo restauran):
+  Windows bloqueó dos veces la restauración (`UNKNOWN: open …unidades.ts` con `next dev` vivo, y
+  luego `…stock.ts`) y el archivo quedó mutado en disco: se restauró desde git las dos veces. Y un
+  `git add -A` hecho mientras corría `verify:inventario` metió `recetas.ts` mutado (sin `* r.cantidad`)
+  en el commit `76704df`, que se subió: se revirtió en `b5230da` (la rama queda igual al commit bueno
+  más el arreglo; el PR se aplasta al fusionar, así que el mutante no llega a `main`). Regla nueva:
+  nada de commits mientras corre `verify`.
+- Los verificadores de mutación locales, corridos uno por uno tras los bloqueos (catálogo, inventario,
+  comandos de catálogo e inventario, venta, identidad, paquetes): todos en verde y el árbol limpio.
+- El PR: [#18](https://github.com/M1gu3hb/POS-Don-Poncho/pull/18). `main` tiene la Parte 1 aplastada
+  y la rama la trae commit por commit con el mismo contenido (el árbol de `main` es idéntico a
+  `9736f5c`, ancestro de la rama): se registró `main` con la estrategia `ours` para que el PR muestre
+  sólo la Parte 2 (100 archivos).
+- La primera CI cayó en la «Jornada completa»: la tarjeta de la cocina nueva es un `li` (la prueba
+  buscaba un `div`) y en teléfono sólo se veía una columna a la vez, así que los «Listo» de «En
+  preparación» no existían. Ahora en teléfono las tres columnas van apiladas (las fichas de arriba
+  llevan a cada una) y la prueba busca la cuenta como renglón.
+
