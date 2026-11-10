@@ -27,7 +27,24 @@ export interface ComandaDelTelefono {
     readonly unidadVariable: string | null;
     readonly cantidadVariable: string | null;
     readonly notas: string | null;
+    /** DP-16 · Lo que eligió el cliente, aparte de la nota. Opcional: un servidor viejo no lo manda. */
+    readonly opciones?: readonly OpcionDelPlatillo[];
   }[];
+}
+
+export interface OpcionDelPlatillo {
+  readonly grupo: string;
+  readonly nombres: readonly string[];
+}
+
+/** DP-16 · Una tira por mesa o pedido de la estación, con su estado. */
+export interface MesaDelTelefono {
+  readonly comandaId: string;
+  readonly estado: 'nuevo' | 'en_preparacion' | 'listo';
+  readonly mesaNumero: number | null;
+  readonly nombrePedido: string | null;
+  readonly canal: string;
+  readonly numeroPedido: number | null;
 }
 
 export interface PantallaDelTelefono {
@@ -35,6 +52,9 @@ export interface PantallaDelTelefono {
   readonly vigenteHasta: string;
   readonly comanda: ComandaDelTelefono | null;
   readonly pendientes: number;
+  /** DP-16 · Todas las activas, de la más vieja a la más nueva. Opcional: un servidor viejo no lo manda. */
+  readonly comandas?: readonly ComandaDelTelefono[];
+  readonly mesas?: readonly MesaDelTelefono[];
 }
 
 /** El motivo que da el servidor, en español, para enseñarlo tal cual. */

@@ -2031,3 +2031,21 @@ puerta los denuncia todos.
 - **Sin migración.** Lo hizo el agente C (Sonnet: 18 mutantes unitarios muertos, integración del
   filtro y de las opciones); revisado e integrado por la sesión principal.
 
+## DP-D106 · El teléfono de cocina enseña todas las comandas activas · 10-11-2026
+
+- **El servidor** (`telefono-de-cocina/consulta.ts`) devuelve, además de `comanda` y `pendientes`
+  (para no romper un teléfono con la versión vieja abierta), `comandas`: todas las activas de la
+  estación (nuevo y en preparación) con su desglose, de la más vieja a la más nueva, con tope de 40, en
+  una sola lectura de renglones; y `mesas`: la tira por mesa o pedido con su estado, incluidas las
+  listas sin entregar de las últimas 6 horas. Cada platillo trae sus opciones (grupo y nombres, sin
+  precio) y del nombre del pedido sólo la primera palabra, como antes.
+- **La pantalla** (`telefono-de-cocina/`): arriba la tira de mesas por estado (color y texto; tocar
+  lleva a esa comanda); en medio un carrusel con `scroll-snap`, cada tarjeta al 88 % para que se asome
+  la siguiente, puntos y, la primera vez, una pista de deslizar que respeta «reducir movimiento»; abajo
+  los botones grandes (Repetir voz, Preparar, Listo) y la botonera Bluetooth actúan sobre la comanda
+  a la vista. La vista se recuerda por comanda: una nueva entra al final sin mover a quien cocina;
+  vibra y la voz dice algo corto («Mesa 4: 7 platillos, 2 con nota», «Para llevar 3: 4 platillos»,
+  y «con alergia» si la hay); «Repetir voz» sigue leyendo el detalle. La nota del platillo sale sin el
+  pliegue de sus opciones (la misma regla que la pantalla grande, DP-D105). La pantalla no se apaga.
+- **Sin migración.** Lo hizo el agente E (Sonnet); revisado e integrado por la sesión principal.
+

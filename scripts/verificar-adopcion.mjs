@@ -594,6 +594,26 @@ export const SIN_ESTADO = [
     razon:
       'No lee nada: recibe la comanda que el teléfono ya leyó, y el teléfono enseña su espera.',
   },
+  ...['telefono-de-cocina/CarruselDeComandas', 'telefono-de-cocina/TiraDeMesas'].flatMap(
+    (pantalla) => [
+      {
+        pantalla,
+        estado: 'vacio',
+        razon:
+          'DP-16 · 2.3 · Pieza del teléfono de cocina, no pantalla: sin comandas o sin mesas no se pinta, y el teléfono enseña su Vacio.',
+      },
+      {
+        pantalla,
+        estado: 'cargando',
+        razon: 'No lee nada: recibe lo que el teléfono ya leyó, y el teléfono enseña su espera.',
+      },
+      {
+        pantalla,
+        estado: 'error',
+        razon: 'No lee nada: el fallo de la lectura lo dice el teléfono con su Aviso.',
+      },
+    ],
+  ),
   {
     pantalla: 'telefono-de-cocina/ConectarTelefono',
     estado: 'vacio',

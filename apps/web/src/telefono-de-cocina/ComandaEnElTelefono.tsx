@@ -1,33 +1,23 @@
 import { Aviso, Superficie } from '@morphiqpos/ui/sistema';
 import { PartyPopper } from 'lucide-react';
 
-import { cantidadParaMostrar } from '~/restaurante/peso';
 import { rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 
+import { cantidadDelPlatillo, notaDelPlatillo, textoDeLaOpcion } from './carrusel-del-telefono';
 import { datosDelRotulo, type ComandaDelTelefono } from './pantalla-del-telefono';
 
-/** «2×» para piezas; «½ kg ×» para lo que se vende por peso. */
-export function cantidadDelPlatillo(p: ComandaDelTelefono['platillos'][number]): string {
-  const dicha = cantidadParaMostrar({
-    cantidad: p.cantidad,
-    tipo_venta: p.porPeso ? 'variable_medida' : null,
-    unidad_variable: p.unidadVariable,
-    cantidad_variable: p.cantidadVariable,
-  });
-  return p.porPeso ? `${dicha} ×` : `${dicha}×`;
-}
+const conTexto = (texto: string | null): texto is string => texto !== null && texto.trim() !== '';
 
 /**
- * La comanda en vista rápida (DP-9.4): de quién es, qué lleva y lo que no se puede pasar por
- * alto. La alergia va primero y en rojo, como la dice la voz.
+ * La comanda en vista rápida (DP-9.4, DP-16 · 2.3): de quién es, cuánto lleva esperando y el
+ * desglose completo. La alergia va primero y en rojo; las opciones del cliente resaltadas y
+ * aparte de la nota del platillo; la nota de la comanda al final.
  */
 export function ComandaEnElTelefono({
   comanda,
-  pendientes,
   haceCuanto,
 }: {
   readonly comanda: ComandaDelTelefono;
-  readonly pendientes: number;
   readonly haceCuanto: string;
 }) {
   const quien = rotuloDeLaComanda(datosDelRotulo(comanda));
@@ -38,40 +28,46 @@ export function ComandaEnElTelefono({
       relleno={4}
       className="flex flex-col gap-(--espacio-3)"
     >
-      <header className="flex items-baseline justify-between gap-(--espacio-2)">
-        <h2 className="text-display leading-none font-bold">{quien}</h2>
-        <p className="text-texto-sutil">
+      <header className="flex flex-col gap-(--espacio-1)">
+        <h2 className="text-display leading-none font-bold break-words">{quien}</h2>
+        <p className="font-semibold text-texto-sutil">
           {comanda.estado === 'en_preparacion' ? 'Preparando' : 'Nueva'} · {haceCuanto}
         </p>
       </header>
-      {comanda.alergias === null ? null : (
+      {comanda.alergias !== null && comanda.alergias.trim() !== '' ? (
         <Aviso tono="peligro" titulo={`Alergia: ${comanda.alergias}`} />
-      )}
+      ) : null}
       {comanda.celebracion ? (
         <p className="flex items-center gap-(--espacio-2) font-semibold">
           <PartyPopper aria-hidden className="size-5" />
           {comanda.tipoCelebracion ?? 'Celebración'}
         </p>
       ) : null}
-      <ul className="flex flex-col gap-(--espacio-2)">
+      <ul className="flex flex-col gap-(--espacio-3)">
         {comanda.platillos.map((p, i) => (
-          <li key={`${p.nombre}-${String(i)}`} className="text-2xl leading-tight">
-            <span className="font-bold">{cantidadDelPlatillo(p)}</span> {p.nombre}
-            {p.notas === null || p.notas.trim() === '' ? null : (
-              <span className="block text-lg text-texto-sutil">{p.notas}</span>
-            )}
+          <li
+            key={`${p.nombre}-${String(i)}`}
+            className="flex flex-col gap-(--espacio-1) leading-tight"
+          >
+            <p className="text-2xl">
+              <span className="font-bold">{cantidadDelPlatillo(p)}×</span> {p.nombre}
+            </p>
+            {(p.opciones ?? []).map((o) => (
+              <p
+                key={o.grupo}
+                className="rounded-md bg-fondo-sutil px-(--espacio-2) py-(--espacio-1) text-lg font-semibold"
+              >
+                {textoDeLaOpcion(o)}
+              </p>
+            ))}
+            {conTexto(notaDelPlatillo(p)) ? (
+              <p className="text-lg text-texto-sutil">Nota: {notaDelPlatillo(p)}</p>
+            ) : null}
           </li>
         ))}
       </ul>
-      {comanda.notas === null || comanda.notas.trim() === '' ? null : (
-        <p className="text-lg">Nota: {comanda.notas}</p>
-      )}
-      {pendientes > 1 ? (
-        <p className="text-texto-sutil">
-          {pendientes - 1 === 1
-            ? 'Queda 1 comanda más'
-            : `Quedan ${String(pendientes - 1)} comandas más`}
-        </p>
+      {conTexto(comanda.notas) ? (
+        <p className="border-t border-borde pt-(--espacio-2) text-lg">Nota: {comanda.notas}</p>
       ) : null}
     </Superficie>
   );
