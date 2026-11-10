@@ -496,6 +496,9 @@ export interface Modificadores {
   obligatorio: Generated<boolean>;
   tipo: Generated<string>;
   activo: Generated<boolean>;
+  /** DP-16 · Mínimo y máximo de opciones elegidas en un grupo de varias (192). Nulos = sin límite. */
+  minimo_elecciones: number | null;
+  maximo_elecciones: number | null;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 }
@@ -545,6 +548,8 @@ export interface OrdenLineaModificadores {
   opcion_id: string | null;
   opcion_nombre: string;
   precio_extra_centavos: Generated<bigint>;
+  /** DP-16 · Lo que la opción sumó o restó al renglón, firmado (192). */
+  delta_precio_centavos: Generated<bigint>;
   created_at: Generated<Date>;
 }
 
@@ -809,6 +814,10 @@ export interface Productos {
   /** F-323 · 1 la entrada, 2 el fuerte, 3 el postre. Nulo = va inmediato. */
   tiempo_servicio_default: number | null;
   notas: string | null;
+  /** DP-16 · Por peso: sólo en sus presentaciones, no en cantidad libre (192). */
+  solo_presets_variable: Generated<boolean>;
+  /** DP-16 · Fondo de la tarjeta sin foto en el menú digital (192). */
+  fondo_tarjeta: string | null;
   presets_variable: unknown;
   presets_porcion: unknown;
   /** F-156 · Gramos de grano por shot. Traduce «calibré cuatro» a inventario. */

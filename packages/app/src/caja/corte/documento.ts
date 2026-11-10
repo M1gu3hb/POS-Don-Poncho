@@ -19,6 +19,7 @@ import { devolucionesDelCorte, type DevolucionDelCorte } from './devoluciones.ts
 import { ventasDelDiaConVariasCajas, type VentasDelDia } from './ventas-del-dia.ts';
 import * as extras from './extras.ts';
 import { retirosConPinDelCorte, type RetiroConPinDelCorte } from './retiros-con-pin.ts';
+import { opcionesVendidas, type OpcionVendida } from './opciones-vendidas.ts';
 
 /**
  * LA HOJA DEL CORTE (F-234, C.6 de la 2.4): todo lo que su PDF enseña, en una lectura.
@@ -112,6 +113,8 @@ export interface HojaDelCorte {
     /** Con el precio, el margen objetivo DA el costo: se oculta igual. */
     readonly margenObjetivoBp: number | null;
   })[];
+  /** DP-16 · Las opciones cobradas: cuántas veces salió cada una y cuánto sumó o restó. */
+  readonly opciones: readonly OpcionVendida[];
   readonly porPersona: readonly consultas.VentasDePersona[];
   readonly gastos: readonly consultas.GastoDelCorte[];
   readonly cancelaciones: readonly consultas.Cancelacion[];
@@ -180,6 +183,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
       resumen,
       ventas,
       productos,
+      opciones,
       porPersona,
       gastos,
     ] = await ctx.paso('leer_tronco', () =>
@@ -192,6 +196,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
         consultas.resumenDeVentas(tx, organizacionId, id),
         consultas.detalleDeVentas(tx, organizacionId, id),
         consultas.productosVendidos(tx, organizacionId, id),
+        opcionesVendidas(tx, organizacionId, id),
         consultas.ventasPorPersona(tx, organizacionId, id),
         consultas.gastosDelCorte(tx, organizacionId, id),
       ]),
@@ -249,6 +254,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
           costoCentavos: verCostos ? p.costoCentavos : null,
           margenObjetivoBp: verCostos ? p.margenObjetivoBp : null,
         })),
+        opciones,
         porPersona,
         gastos,
         cancelaciones,

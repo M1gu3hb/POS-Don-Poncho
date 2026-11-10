@@ -155,6 +155,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/catalogo/asignar-grupos-de-opciones",
+      "comando": "catalogo.asignar_grupos_de_opciones",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/catalogo/crear-producto",
       "comando": "catalogo.crear_producto",
       "escribe": true,
@@ -164,6 +171,20 @@
     {
       "ruta": "/api/catalogo/fiscal-masivo",
       "comando": "catalogo.fiscal_masivo",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/catalogo/grupos-de-opciones",
+      "comando": "catalogo.grupos_de_opciones",
+      "escribe": false,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/catalogo/guardar-grupo-de-opciones",
+      "comando": "catalogo.guardar_grupo_de_opciones",
       "escribe": true,
       "roles": ["administrador", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]

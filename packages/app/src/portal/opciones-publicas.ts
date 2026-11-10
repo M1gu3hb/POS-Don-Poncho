@@ -9,20 +9,26 @@ import { obtenerDb } from '@morphiqpos/data';
  * del pedido (`qrPedidoFlow.notaConModificadores`), igual que en el mesero. Lo que faltaba era que
  * el menú público los mandara: desde el QR no se podía elegir el sabor del pulque.
  *
- * Salen el NOMBRE del grupo y de cada opción, si es obligatorio y si es de una o varias. Nada de
- * precio: en el restaurante una opción no cobra (DP-D12), y lo que no cobra no se publica como
- * si cobrara. Sólo los grupos y opciones activos.
+ * Salen el NOMBRE del grupo y de cada opción, si es obligatorio y si es de una o varias, y su
+ * mínimo y máximo. DP-16 · Una opción ya puede cobrar (o descontar): su precio sale SÓLO si el
+ * negocio enseña precios en el portal (`portal_qr_mostrar_precios`), igual que el del platillo.
+ * Sólo los grupos y opciones activos, en el orden que el dueño les dio al platillo.
  */
 
 export interface OpcionPublica {
   readonly id: string;
   readonly nombre: string;
+  /** Centavos con signo, como texto. Ausente si el negocio no enseña precios. */
+  readonly precioCentavos?: string;
 }
 
 export interface GrupoPublico {
   readonly nombre: string;
   readonly obligatorio: boolean;
   readonly tipo: 'unica' | 'multiple';
+  /** DP-16 · Cuántas hay que elegir como mínimo y como máximo (nulo = sin límite). */
+  readonly minimo: number | null;
+  readonly maximo: number | null;
   readonly opciones: readonly OpcionPublica[];
 }
 
@@ -33,8 +39,12 @@ export interface FilaDeOpcion {
   readonly grupo: string;
   readonly obligatorio: boolean;
   readonly tipo: string;
+  readonly minimo: number | null;
+  readonly maximo: number | null;
   readonly opcion_id: string;
   readonly opcion: string;
+  /** Lo que la opción suma o resta, en centavos con signo. */
+  readonly precio_centavos: bigint;
 }
 
 /** Un grupo mientras se arma: la fila que lo abrió y las opciones que van llegando. */
@@ -46,12 +56,17 @@ interface Grupo {
 /** Las filas planas, agrupadas por producto y por grupo, en el orden en que llegan. */
 export function gruposPorProducto(
   filas: readonly FilaDeOpcion[],
+  conPrecios = false,
 ): ReadonlyMap<string, readonly GrupoPublico[]> {
   const porProducto = new Map<string, Map<string, Grupo>>();
   for (const f of filas) {
     const grupos = porProducto.get(f.producto_id) ?? new Map<string, Grupo>();
     const grupo = grupos.get(f.grupo_id) ?? { base: f, opciones: [] };
-    grupo.opciones.push({ id: f.opcion_id, nombre: f.opcion });
+    grupo.opciones.push(
+      conPrecios
+        ? { id: f.opcion_id, nombre: f.opcion, precioCentavos: f.precio_centavos.toString() }
+        : { id: f.opcion_id, nombre: f.opcion },
+    );
     grupos.set(f.grupo_id, grupo);
     porProducto.set(f.producto_id, grupos);
   }
@@ -63,6 +78,8 @@ export function gruposPorProducto(
         nombre: base.grupo,
         obligatorio: base.obligatorio,
         tipo: base.tipo === 'multiple' ? 'multiple' : 'unica',
+        minimo: base.minimo,
+        maximo: base.maximo,
         opciones,
       })),
     );
@@ -74,6 +91,7 @@ export function gruposPorProducto(
 export async function opcionesDelMenu(
   organizacionId: string,
   productoIds: readonly string[],
+  conPrecios: boolean,
 ): Promise<ReadonlyMap<string, readonly GrupoPublico[]>> {
   if (productoIds.length === 0) return new Map();
   const filas = await obtenerDb()
@@ -86,8 +104,12 @@ export async function opcionesDelMenu(
       'm.nombre as grupo',
       'm.obligatorio as obligatorio',
       'm.tipo as tipo',
+      'm.minimo_elecciones as minimo',
+      'm.maximo_elecciones as maximo',
       'mo.id as opcion_id',
       'mo.nombre as opcion',
+      'mo.delta_precio_centavos as delta',
+      'mo.precio_extra_centavos as extra',
     ])
     .where('pm.organizacion_id', '=', organizacionId)
     .where('m.organizacion_id', '=', organizacionId)
@@ -95,8 +117,16 @@ export async function opcionesDelMenu(
     .where('m.activo', '=', true)
     .where('mo.activa', '=', true)
     .orderBy('pm.producto_id')
+    .orderBy('pm.orden')
     .orderBy('m.nombre')
     .orderBy('mo.orden')
     .execute();
-  return gruposPorProducto(filas);
+  // El precio de la opción: `delta` (con signo, DP-16) y, si es cero, el extra viejo (sólo sumaba).
+  return gruposPorProducto(
+    filas.map(({ delta, extra, ...f }) => ({
+      ...f,
+      precio_centavos: delta !== 0n ? delta : extra,
+    })),
+    conPrecios,
+  );
 }

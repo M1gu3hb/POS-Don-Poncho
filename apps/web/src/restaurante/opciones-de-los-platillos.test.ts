@@ -72,8 +72,11 @@ describe('las pantallas que leen producto.modificadores los reciben', () => {
   });
 
   it('guardar las opciones vuelve a leerlas', () => {
-    expect(leer('components/productos/ModificadoresDialog.jsx')).toMatch(
-      /invalidateQueries\(\{ queryKey: CLAVE_DE_LAS_OPCIONES \}\)/,
+    // DP-16 · El editor de grupos (Productos → «Opciones») sustituyó al diálogo heredado.
+    const editor = readFileSync(
+      join(HEREDADO, '..', 'src', 'catalogo', 'opciones', 'OpcionesDelPlatilloDialog.tsx'),
+      'utf8',
     );
+    expect(editor).toMatch(/invalidateQueries\(\{ queryKey: CLAVE_DE_LAS_OPCIONES \}\)/);
   });
 });

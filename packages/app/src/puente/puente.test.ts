@@ -19,7 +19,9 @@ import { haciaEl, haciaLaBase, LIMITE_MAXIMO, type Conversion, type MapaEntidad 
  */
 
 /** Un valor representativo por cada tipo de conversión. */
-const MUESTRAS: Readonly<Record<Conversion, readonly unknown[]>> = {
+// `opciones_de_cocina` (DP-16) es sólo de lectura: no tiene vuelta, y su prueba vive en
+// `opciones-de-cocina.test.ts`.
+const MUESTRAS: Readonly<Record<Exclude<Conversion, 'opciones_de_cocina'>, readonly unknown[]>> = {
   texto: ['Panini caprese', '', 'Café con leche · 12 oz'],
   entero: [0, 1, 42, -7],
   // Los que más duelen si el redondeo falla.
@@ -520,6 +522,11 @@ describe('los campos derivados', () => {
       // todos los roles por `Modificador`; la tabla no lleva organización, pero el salto
       // es por clave primaria desde una fila que el ámbito ya acotó.
       'modificador_opciones',
+      // DP-16 · 2.2: la instantánea de las opciones elegidas en la línea de venta
+      // (`orden_lineas.opciones`), para que la cocina las lea APARTE de la nota. Sale reducida a
+      // grupo y nombres por la conversión `opciones_de_cocina` (sin ids ni precios), y la cocina
+      // ya lee esa misma línea por `DetalleVenta` (cocina-sin-costos.contrato.test.ts).
+      'orden_lineas',
     ]);
     for (const [entidad, mapa] of Object.entries(MAPA)) {
       for (const [clave, derivado] of Object.entries(mapa.derivados ?? {})) {

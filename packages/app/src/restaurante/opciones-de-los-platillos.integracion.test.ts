@@ -54,14 +54,9 @@ describe('las opciones de los platillos, para el personal', () => {
 
     expect(Object.keys(porProducto)).toEqual([salon.platillos.arrachera]);
     const grupos = porProducto[salon.platillos.arrachera] ?? [];
+    // DP-16 · En el ORDEN que el producto les da (`producto_modificadores.orden`), no alfabético:
+    // así se guardaron, «Término» primero.
     expect(grupos).toMatchObject([
-      {
-        nombre: 'Extras',
-        obligatorio: false,
-        tipo: 'multiple',
-        activo: false,
-        opciones: [{ nombre: 'Queso', activo: true }],
-      },
       {
         nombre: 'Término',
         obligatorio: true,
@@ -71,6 +66,13 @@ describe('las opciones de los platillos, para el personal', () => {
           { nombre: 'Medio', activo: true },
           { nombre: 'Bien cocido', activo: false },
         ],
+      },
+      {
+        nombre: 'Extras',
+        obligatorio: false,
+        tipo: 'multiple',
+        activo: false,
+        opciones: [{ nombre: 'Queso', activo: true }],
       },
     ]);
     expect(grupos.every((g) => g.id.length > 0 && g.opciones.every((o) => o.id.length > 0))).toBe(

@@ -5,6 +5,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import { repoOrdenes, repoCaja } from '@morphiqpos/data';
 
 import { definirComando } from '../definicion.ts';
+import { opcionConSuPrecio } from '../restaurante/precio-de-las-opciones.ts';
 import { cotizar, type Cotizacion } from './cotizar.ts';
 import { entradaEstadoVenta, entradaTicket } from './esquemas.ts';
 
@@ -59,7 +60,7 @@ async function opcionesDeLasLineas(
   if (lineaIds.length === 0) return {};
   const filas = await tx
     .selectFrom('orden_linea_modificadores')
-    .select(['orden_linea_id', 'modificador_nombre', 'opcion_nombre'])
+    .select(['orden_linea_id', 'modificador_nombre', 'opcion_nombre', 'delta_precio_centavos'])
     .where('orden_linea_id', 'in', [...lineaIds])
     .orderBy('created_at')
     .orderBy('id')
@@ -69,7 +70,8 @@ async function opcionesDeLasLineas(
     const grupos = porLinea.get(f.orden_linea_id) ?? new Map<string, string[]>();
     grupos.set(f.modificador_nombre, [
       ...(grupos.get(f.modificador_nombre) ?? []),
-      f.opcion_nombre,
+      // DP-16 · Con su precio: la cuenta, la precuenta y el ticket dicen cuánto sumó.
+      opcionConSuPrecio(f.opcion_nombre, f.delta_precio_centavos),
     ]);
     porLinea.set(f.orden_linea_id, grupos);
   }

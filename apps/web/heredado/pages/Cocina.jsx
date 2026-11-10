@@ -1,22 +1,28 @@
 'use client';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Clock, CheckCircle, Flame, ChefHat, Layers, AlertTriangle } from 'lucide-react';
-import CocinaPedidoCardPremium from '@/components/cocina/CocinaPedidoCardPremium';
-import CocinaMesaGroupCard from '@/components/cocina/CocinaMesaGroupCard';
+import { ChefHat, Layers, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import CocinaProductoDialog from '@/components/cocina/CocinaProductoDialog';
 import CocinaVozControl from '@/components/cocina/CocinaVozControl';
+import { TableroDeCocina } from '~/cocina/TableroDeCocina';
 import { ConectarTelefono } from '~/telefono-de-cocina/ConectarTelefono';
 import { AgotadosDelDia } from '~/restaurante/AgotadosDelDia';
 import CocinaNuevoPedidoWatcher from '@/components/cocina/CocinaNuevoPedidoWatcher';
-import { useIsDark } from '@/lib/ThemeContext';
-import { COCINA_COLS } from '@/lib/darkPalettes';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { useConfig } from '@/lib/ConfigContext';
 import { COCINA_GENERAL_COLOR } from '@/utils/estacionUtils';
-import { claves } from '~/cliente/claves-de-consulta';
 import { mantenerDespierta } from '~/espera/despertador';
 import { sonar } from '~/sonidos/gestor';
 import { alcanceDeLaCocina, comandasDelAlcance } from '~/restaurante/alcance-de-la-cocina';
@@ -28,50 +34,17 @@ import {
 } from '~/restaurante/toques-en-camino';
 
 const ESTADOS = ['nuevo', 'en_preparacion', 'listo'];
-const ESTADO_LABELS = { nuevo: 'Nuevos', en_preparacion: 'En preparación', listo: 'Listos' };
-
-/**
- * Determina si un pedido es REALMENTE huérfano.
- *
- * Reglas estrictas para evitar falsos positivos (incluido el bug clásico de
- * "huérfano fantasma" cuando la query de ventas refetchea más lento que la
- * query de pedidos):
- *
- *  1. Si tiene venta_id Y la venta existe en BD → NO es huérfano.
- *  2. Si tiene venta_id pero la venta aún no aparece en el map cargado →
- *     NO marcamos huérfano. Puede ser un pedido recién creado mientras el
- *     map de ventas todavía no se refrescó. Damos un margen razonable.
- *  3. Si tiene mesa_id o mesa_numero → NO es huérfano: viene de una mesa real,
- *     aunque por carga lenta la venta aún no esté en el snapshot local.
- *  4. Si NO tiene venta_id, NI mesa_id, NI mesa_numero, NI mesa_nombre → entonces
- *     sí es realmente huérfano (no hay forma de relacionarlo con nada).
- *
- * NO marcamos huérfano por:
- *   - venta no presente en el map local (puede ser race condition de queries).
- *   - mesa.venta_activa_id distinto.
- *   - mesa borrada.
- *   - pedido listo/entregado pendiente de cierre.
- */
-function detectarHuerfano(pedido, ventasMap) {
-  if (!pedido) return false;
-
-  // 1) Venta existente en map → NO huérfano.
-  if (pedido.venta_id && ventasMap && ventasMap[pedido.venta_id]) return false;
-
-  // 2 y 3) Cualquier identificador de mesa o venta → NO huérfano.
-  if (pedido.venta_id) return false;
-  if (pedido.mesa_id) return false;
-  if (pedido.mesa_numero) return false;
-  if (pedido.mesa_nombre) return false;
-  if (pedido.venta_folio) return false;
-
-  // 4) Sin nada de lo anterior → realmente huérfano.
-  return true;
-}
+// DP-16 · 2.2: cuántas comandas vivas y cuántas ventas se piden. Una cocina con diez mesas a la
+// vez tiene unas veinte comandas; 300 es un tope holgado, no un volumen esperado.
+const LIMITE_COMANDAS = 300;
+// El puente acepta hasta 200 valores en un filtro de lista.
+const LIMITE_VENTAS = 200;
 
 export default function Cocina() {
   const queryClient = useQueryClient();
-  const isDark = useIsDark();
+  // La ficha interna de un platillo (al tocarlo) y la comanda lista que se pide quitar.
+  const [fichaItem, setFichaItem] = useState(null);
+  const [porQuitar, setPorQuitar] = useState(null);
   const { posUser, verificada } = usePOSAuth();
   const { config } = useConfig();
   const estacionesActivas = config?.estaciones_preparacion_activas === true;
@@ -99,9 +72,13 @@ export default function Cocina() {
   // HOTFIX 6A.3: bajado a 2000ms para que cocina quite los entregados rápido
   // cuando Mesero marca "Entregado" en su lado. Las acciones manuales
   // además usan optimistic update + refetch inmediato, así que esto es un seguro.
-  const { data: pedidos, isPending: pedidosLoading } = useQuery({
+  const { data: pedidos, isPending: pedidosLoading, isError: pedidosConError } = useQuery({
     queryKey: ['pedidos_cocina', estacionesActivas ? 'all' : 'legacy'],
-    queryFn: () => api.entidades.PedidoPreparacion.list('-created_date', 500),
+    // DP-16 · 2.2: SÓLO las comandas vivas, y sólo sus items. Antes se bajaban las últimas 500
+    // —con las entregadas de días anteriores— y el tope de 1000 items del puente se llenaba con
+    // lo viejo: en un día de mucho volumen a las comandas nuevas les faltaban platillos.
+    queryFn: () =>
+      api.entidades.PedidoPreparacion.filter({ estado: ESTADOS }, '-created_date', LIMITE_COMANDAS),
     placeholderData: (prev) => prev,
     staleTime: 1000,
     refetchInterval: 2000,
@@ -115,23 +92,27 @@ export default function Cocina() {
   // Y los de una misma comanda salen en fila: «Listo» espera a que conteste su «Preparar».
   const [fila] = React.useState(crearFilaPorClave);
 
+  // DP-16 · 2.2: de las ventas sólo las de las comandas que se ven (para marcar «Cuenta
+  // cobrada»), no las últimas 500 cada 10 s; y la lista de todas las mesas, que nadie leía, se fue.
+  const idsDeVentas = useMemo(
+    () =>
+      [
+        ...new Set(
+          (Array.isArray(pedidos) ? pedidos : []).map((p) => p?.venta_id).filter(Boolean),
+        ),
+      ]
+        .sort()
+        .slice(0, LIMITE_VENTAS),
+    [pedidos],
+  );
   const { data: ventas } = useQuery({
-    queryKey: ['ventas_para_cocina'],
-    queryFn: () => api.entidades.Venta.list('-created_date', 500),
+    queryKey: ['ventas_para_cocina', idsDeVentas.join(',')],
+    queryFn: () =>
+      api.entidades.Venta.filter({ id: idsDeVentas }, '-created_date', idsDeVentas.length),
+    enabled: idsDeVentas.length > 0,
     placeholderData: (prev) => prev,
     staleTime: 5000,
     refetchInterval: 10000,
-  });
-
-  const { data: mesas } = useQuery({
-    // TODAS las mesas (también las de baja), con SU clave: compartía `['mesas']` con el mapa
-    // del mesero, que pide sólo las activas, y la primera pintada del mapa salía con las de baja
-    // encima de las activas en las mismas coordenadas: las «mesas encimadas» (21-10).
-    queryKey: claves.mesas.todas(),
-    queryFn: () => api.entidades.Mesa.list('-created_date', 500),
-    placeholderData: (prev) => prev,
-    staleTime: 20000,
-    refetchInterval: 30000,
   });
 
   const ventasMap = useMemo(() => {
@@ -141,15 +122,6 @@ export default function Cocina() {
     });
     return m;
   }, [ventas]);
-
-  // eslint-disable-next-line no-unused-vars
-  const mesasMap = useMemo(() => {
-    const m = {};
-    (Array.isArray(mesas) ? mesas : []).forEach((x) => {
-      if (x?.id) m[x.id] = x;
-    });
-    return m;
-  }, [mesas]);
 
   // Conocer si la estación del usuario es "Cocina general" (es_general:true).
   // Si lo es, también debe ver pedidos legacy sin estacion_preparacion_id
@@ -395,118 +367,48 @@ export default function Cocina() {
         cargando={cargandoPedidos || !verificada}
       />
 
-      {/* F3.1: vista "tipo llaves" SOLO cuando estaciones activas + modo all.
-          En el resto de casos (estación específica, legacy) se renderiza la
-          tarjeta clásica CocinaPedidoCardPremium intacta. */}
-      <div className="flex flex-col md:flex-row md:items-start gap-4">
-        {ESTADOS.map((estado) => {
-          const ICONS = { nuevo: Clock, en_preparacion: Flame, listo: CheckCircle };
-          const baseColors = (isDark ? COCINA_COLS.dark : COCINA_COLS.light)[estado];
-          const colors = { ...baseColors, Icon: ICONS[estado] };
-          const C = colors.Icon;
-          const innerShadow = isDark
-            ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 4px 14px rgba(0,0,0,0.45)'
-            : '0 1px 0 rgba(255,255,255,0.6) inset, 0 4px 12px rgba(0,0,0,0.08)';
+      {/* DP-16 · 2.2: el tablero (resumen de producción, tarjetas por cuenta, tiempo con color,
+          columnas con su propio desplazamiento y modo compacto) vive en `~/cocina`; esta pantalla
+          sigue siendo dueña de las lecturas, los toques en camino, la voz y el alcance. */}
+      <TableroDeCocina
+        comandas={activos}
+        config={config}
+        cargando={cargandoPedidos || !verificada}
+        error={pedidosConError ? 'No se pudo leer los pedidos de la cocina.' : null}
+        onIniciar={iniciarPedido}
+        onListo={marcarListo}
+        onPedirQuitar={setPorQuitar}
+        onVerFicha={setFichaItem}
+      />
 
-          const pedidosCol = Array.isArray(byEstado[estado]) ? byEstado[estado] : [];
+      <CocinaProductoDialog
+        open={!!fichaItem}
+        item={fichaItem}
+        onClose={() => setFichaItem(null)}
+      />
 
-          // Modo "tipo llaves" solo si estaciones activas Y el usuario ve todas.
-          const usarVistaLlaves = estacionesActivas && userScope.mode === 'all';
-
-          // Agrupar por mesa cuando aplica. Sin mesa_id válido → grupo "sin-mesa".
-          let grupos = null;
-          if (usarVistaLlaves) {
-            const map = new Map();
-            pedidosCol.forEach((p) => {
-              const k = p?.mesa_id || `__nomesa__${p?.id || Math.random()}`;
-              if (!map.has(k)) map.set(k, []);
-              map.get(k).push(p);
-            });
-            // Ordenar grupos por el pedido más antiguo (para que la mesa que
-            // lleva más tiempo esperando aparezca arriba).
-            grupos = Array.from(map.entries()).sort((a, b) => {
-              const fa = a[1].reduce((min, p) => {
-                const t = p?.fecha_creacion ? new Date(p.fecha_creacion).getTime() : Infinity;
-                return Math.min(min, t);
-              }, Infinity);
-              const fb = b[1].reduce((min, p) => {
-                const t = p?.fecha_creacion ? new Date(p.fecha_creacion).getTime() : Infinity;
-                return Math.min(min, t);
-              }, Infinity);
-              return fa - fb;
-            });
-          }
-
-          return (
-            <div
-              key={estado}
-              className="premium-sheen flex-1 rounded-2xl p-3"
-              style={{
-                background: colors.bg,
-                border: `2px solid ${colors.border}`,
-                boxShadow: innerShadow,
+      <AlertDialog open={!!porQuitar} onOpenChange={(abierto) => !abierto && setPorQuitar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Quitar este pedido de la lista de cocina?</AlertDialogTitle>
+            <AlertDialogDescription>
+              No se eliminará la venta ni los registros financieros. Solo se quita del tablero de
+              cocina.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                quitarPedidoListo(porQuitar);
+                setPorQuitar(null);
               }}
             >
-              <div
-                className="flex items-center gap-2 mb-3 pb-2 border-b"
-                style={{ borderColor: colors.border + '40' }}
-              >
-                <C className="w-4 h-4" style={{ color: colors.border }} />
-                <h3 className="font-heading font-bold" style={{ color: colors.text }}>
-                  {ESTADO_LABELS[estado]}
-                </h3>
-                <span
-                  className="ml-auto px-2 py-0.5 rounded-full text-xs font-bold"
-                  style={{ background: colors.border, color: 'white' }}
-                >
-                  {pedidosCol.length}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {usarVistaLlaves
-                  ? grupos.map(([key, pedidosMesa]) => (
-                      <CocinaMesaGroupCard
-                        key={`mesa-${key}-${estado}`}
-                        pedidos={pedidosMesa}
-                        onIniciar={iniciarPedido}
-                        onListo={marcarListo}
-                        onQuitarListo={quitarPedidoListo}
-                      />
-                    ))
-                  : pedidosCol.map((pedido) => (
-                      <CocinaPedidoCardPremium
-                        key={pedido.id}
-                        pedido={pedido}
-                        onIniciar={iniciarPedido}
-                        onListo={marcarListo}
-                        isHuerfano={detectarHuerfano(pedido, ventasMap)}
-                        onQuitarListo={quitarPedidoListo}
-                        // En estación específica con estaciones activas no
-                        // mostramos badge (el usuario ya sabe su estación).
-                        mostrarEstacionBadge={false}
-                      />
-                    ))}
-                {pedidosCol.length === 0 &&
-                  (cargandoPedidos ? (
-                    <div
-                      className="text-center py-8 text-sm opacity-60"
-                      style={{ color: colors.text }}
-                    >
-                      Cargando pedidos…
-                    </div>
-                  ) : (
-                    <div
-                      className="text-center py-8 text-sm opacity-50"
-                      style={{ color: colors.text }}
-                    >
-                      Sin pedidos
-                    </div>
-                  ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              Quitar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -31,6 +31,10 @@ export interface ProductoParaVender {
   readonly cantidadMinimaVariable: string | null;
   readonly cantidadMaximaVariable: string | null;
   readonly incrementoVariable: string | null;
+  /** DP-16 · Por peso: sólo en sus presentaciones (192). Ausente = cantidad libre, lo de siempre. */
+  readonly soloPresetsVariable?: boolean;
+  /** Las presentaciones del producto por peso (`[0.25, 0.5, 1]`), en su unidad. */
+  readonly presetsVariable?: unknown;
   readonly capacidadContenedorMl: string | null;
   readonly mlPorPorcion: string | null;
   readonly porcionesPorContenedor: string | null;
@@ -58,6 +62,8 @@ const COLUMNAS = [
   'productos.cantidad_minima_variable as cantidadMinimaVariable',
   'productos.cantidad_maxima_variable as cantidadMaximaVariable',
   'productos.incremento_variable as incrementoVariable',
+  'productos.solo_presets_variable as soloPresetsVariable',
+  'productos.presets_variable as presetsVariable',
   'productos.capacidad_contenedor_ml as capacidadContenedorMl',
   'productos.ml_por_porcion as mlPorPorcion',
   'productos.porciones_por_contenedor as porcionesPorContenedor',

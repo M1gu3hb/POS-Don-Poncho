@@ -10,6 +10,7 @@ import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
 import { anchoDelPapel, medidasDelTicket } from '~/impresion/papel';
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { esParaLlevar, rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
+import { notaSinLasOpciones, renglonesDeLasOpciones } from '~/venta/opciones-del-renglon';
 
 /**
  * Ticket / pre-cuenta optimizado para impresora térmica de 80mm.
@@ -107,6 +108,8 @@ export default function PreCuentaTicket({
         {(detalles || []).map((d, i) => {
           const cantVarTxt = formatearCantidadVariable(d || {});
           const prefijo = cantVarTxt ? `${cantVarTxt} ×` : `${d?.cantidad || 0}×`;
+          // DP-16 · Las opciones salen con su precio; la nota, sólo con lo escrito a mano.
+          const nota = notaSinLasOpciones(d?.notas_producto, d?.opciones_snapshot);
           return (
             <div key={i} style={{ marginBottom: '3px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -115,7 +118,21 @@ export default function PreCuentaTicket({
                 </span>
                 <span style={{ fontWeight: 'bold' }}>{formatCurrency(d?.subtotal)}</span>
               </div>
-              {d?.notas_producto && (
+              {(d?.opciones_snapshot != null
+                ? renglonesDeLasOpciones(d.opciones_snapshot)
+                : String(d?.opciones_texto || '')
+                    .split(' · ')
+                    .filter(Boolean)
+              ).map((texto) => (
+                <p
+                  key={texto}
+                  data-opciones-del-renglon
+                  style={{ fontSize: px(9), paddingLeft: '8px', margin: '1px 0 0' }}
+                >
+                  + {texto}
+                </p>
+              ))}
+              {nota && (
                 <p
                   style={{
                     fontSize: px(9),
@@ -124,7 +141,7 @@ export default function PreCuentaTicket({
                     margin: '1px 0 0',
                   }}
                 >
-                  ↳ {d.notas_producto}
+                  ↳ {nota}
                 </p>
               )}
             </div>

@@ -1385,7 +1385,9 @@ Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PRO
 | --- | --- | --- | --- |
 | A (worktree propio) | Sonnet | 1.2 «Marcar entregado» del mesero · 1.3 animaciones de las ventanas | entregado tras ~4 h esperando un lint en segundo plano que nunca avisó (se le pidió cerrar): 16 archivos, 16 mutantes muertos, sin navegador. Integrado aquí sin conflictos; la prueba en el navegador encontró que la primera ventana de la página no crecía desde el toque (el oyente se registraba al abrir la primera ventana): corregido. DP-D103 |
 | B (worktree propio, base 5438) | Sonnet | 1.4 retiros con PIN arriba de un monto · 1.5 menores de la auditoría del 9-11 | entregado: 49 archivos, 28 mutantes muertos, sin migración. Integrado aquí (un conflicto de imports en `giros.ts`; dos archivos venían en CRLF y se pasaron a LF): tipos, lint, formato, 10 verificaciones, integración 32/32 y unidad 5275 en verde; en el navegador, el umbral en Configuración → Caja y el retiro de $600 pidiendo el PIN. DP-D101 y DP-D102 |
-| C (worktree propio, base 5439) | Sonnet | 2.2 la cocina con volumen | en curso |
+| C (worktree propio, base 5439) | Sonnet | 2.2 la cocina con volumen | entregado tras ~3.5 h: `src/cocina/` nuevo (18 archivos), el filtro por lista del puente, las opciones de cocina, la espera desde `marchada_en` y los umbrales; 18 mutantes muertos; medido en 1080p y tabletas (967 KB → 62 KB por refresco). Su worktree nació del `main` viejo y lo movió a `6c02c94`. Integrado aquí con un conflicto en `aspecto-permitido.json` (las dos tandas). DP-D105 |
+| D (worktree propio) | Sonnet | 2.1 el editor de grupos de opciones en Productos (biblioteca, precio con signo, mín/máx, orden) | entregado: 4 archivos nuevos en `src/catalogo/opciones/`, 45 pruebas, 7 mutantes muertos; el editor viejo, borrado. Su worktree nació del `main` viejo (`8e06826`) y no de `dp-16-2`: se le avisó y mezcló la rama a media obra. Integrado aquí con un conflicto en `aspecto-permitido.json` (se conservaron las dos tandas); tipos, lint, 108 pruebas y los verificadores en verde |
+| E (worktree propio) | Sonnet | 2.3 el teléfono de cocina nuevo | entregado: el servidor da todas las comandas activas (tope 40) y la tira de mesas; carrusel con deslizar, puntos, pista la primera vez, tira por estado, botones sobre la comanda vista, vibración y voz corta; 12 mutantes muertos, integración 28/28. Trabajó desde `dp-16-2` (`reset --hard` al no poder mezclar). Su `db.mjs migrate` lanzó un `pnpm install` que dejó rotos los enlaces del `node_modules` del repo (la demo dejó de encontrar `next`): se detuvo el servidor y se reinstaló desde el almacén (3.7 min). Al integrar se le quitó a la nota el pliegue de las opciones, como en la pantalla grande (2 mutantes más). DP-D106 |
 
 ### 1.1 · Para llevar (la sesión principal)
 
@@ -1404,3 +1406,76 @@ Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PRO
   las opciones de los platillos (403: la ruta sólo dejaba al mesero), las tarjetas del catálogo se
   cortaban (filas fijas a 64 px), el título del cobro decía «Cobrar —», se ofrecía «Cancelar la
   cuenta» en un pedido aún sin cobrar y faltaba el descuento.
+
+### La Parte 1 en producción (10-11, madrugada)
+
+- CI del [#17](https://github.com/M1gu3hb/POS-Don-Poncho/pull/17): 10 de 10 (la jornada completa y el
+  rastreo, los últimos).
+- 03:40 Ensayo de la 191 contra la propia, por la conexión de sesión (5432): válida y revertida.
+  03:46 **La 191, aplicada** con el script `migrate` de `packages/data` (el mismo que llama
+  `pnpm db:migrate`) desde una copia de `dp-16`, para que no entrara la 192 de `dp-16-2`.
+  `verify:esquema` estricto cumple (1752 columnas, 1384 restricciones, 446 índices) y `verify:rls`
+  cerrado (177 relaciones, 16 funciones).
+- **Un tropiezo:** `pnpm db:migrate` en esa copia (con `node_modules` enlazado al del repo) se quedó
+  esperando la verificación de dependencias de pnpm, que lanzó un `pnpm install` en espera; se
+  detuvo a los 5 minutos sin que aplicara nada, y el `node_modules` del repo quedó intacto. Para la
+  próxima: el script `migrate` del paquete directamente, o una copia con su propia instalación.
+- Merge del #17 (`8f271a2`, squash, a nombre de M1gu3hb); el #16 se cerró absorbido. 03:47 Production
+  `READY` (`dpl_39u4…`, sobre `8f271a2`).
+- 03:49 Don Poncho en ceros (sólo lectura, por la de sesión): 0 sesiones de caja, 0 cuentas, 0 folios,
+  0 comandas, 0 carritos y las 10 mesas libres.
+- 03:53 Humo sin cobrar (`link.mjs`): la entrada 200 y sin desborde en 6 aparatos (8.3 s la primera,
+  el arranque en frío; luego de 1.3 a 1.7 s), el portal del QR en 5 (de 0.7 a 3.4 s), 8 a la vez
+  todos 200 en 3.1 s, red lenta (11 s la primera, 2.2 s con caché) y el manifiesto. WebKit no estaba
+  instalado para Playwright en esta máquina: se instaló (`npx playwright install webkit`) y se repitió.
+- 04:49 Una hora después del despliegue (03:47 → 04:49): Vercel **sin errores de ejecución**.
+
+### 2.1 · Las opciones cobran (la sesión principal, rama `dp-16-2`)
+
+- Servidor (`996688e`): el precio de la línea con sus opciones (por pieza; por renglón en lo que va
+  por peso), la biblioteca de grupos, «sólo presentaciones», la división que copia las opciones (antes
+  `22P02`). Integración 12/12 y 13 mutantes muertos.
+- Pantalla, primera parte (`beeda85`): el diálogo de opciones con precio y «Agregar · $…» en el mesero
+  y la Caja, el peso que pasa a sus opciones, el carrito compartido con el precio.
+- Lo de hoy: el ticket y la precuenta (Caja, mesero, `/pos`, Ventas y Registros) dicen cada opción con
+  su precio y la nota sólo con lo escrito a mano; el CSV tiene la columna «Opciones»; el portal manda el
+  precio de cada opción sólo si el negocio enseña precios, y el mínimo y el máximo; el diálogo del
+  comensal los respeta y deja opciones también en lo que va por peso; «Vender sólo en estas
+  presentaciones» en Productos, en el mesero y en el portal; el corte suma «Opciones vendidas · cuánto
+  sumaron». La integración suma la mesa unida con opciones: 8/8. Mutantes: 3 de 4 en el ayudante del
+  ticket (el cuarto es equivalente: un atajo), 3 de 4 en el corte (el cuarto era el control de
+  empates). DP-D104 y la ficha 38.
+
+### La Parte 2: integración, `verify` y el PR (10-11, mañana)
+
+- En el navegador (demo local): la Caja con para llevar y opciones con precio hasta el ticket
+  ($457.50: «½ kg × Barbacoa de horno $417.50 · + Tortillas: Harina (+$20.00)» y «1× Quesadilla
+  $40.00 · + Relleno: Queso (+$15.00)», sin repetir las opciones en la nota); la barbacoa «sólo
+  presentaciones» sin campo libre; el portal a 360 px («Hongos −$5.00», «Queso +$15.00», «Elige una
+  opción en Relleno», «Agregar · $40.00», sin desborde); el editor de grupos (precio a $18 y una
+  opción nueva, guardados y releídos); la cocina a 1080p; el teléfono en Android 360 y 412 y en
+  iPhone (WebKit), sin desborde y con botones de 62 px.
+- `pnpm verify` local sin los pasos atados a la base de producción (`entorno`, `esquema`, `rls`,
+  `acople`, que van tras aplicar la 192): verde hasta los tipos; unidad 479 archivos / 5,443
+  pruebas. `verify:pruebas` se queja sólo de los worktrees viejos en disco (`.claude/worktrees`,
+  1361 avisos, ninguno del repo: ambiental, la CI lo corre en limpio). Se cazaron dos cosas reales:
+  un archivo sin formato (`precio-de-las-opciones.ts`) y una prueba que leía el diálogo viejo de
+  opciones (`ModificadoresDialog.jsx`, borrado): ahora lee el editor nuevo (y un mutante lo prueba).
+- **Dos tropiezos con los verificadores de mutación** (escriben el archivo mutado y lo restauran):
+  Windows bloqueó dos veces la restauración (`UNKNOWN: open …unidades.ts` con `next dev` vivo, y
+  luego `…stock.ts`) y el archivo quedó mutado en disco: se restauró desde git las dos veces. Y un
+  `git add -A` hecho mientras corría `verify:inventario` metió `recetas.ts` mutado (sin `* r.cantidad`)
+  en el commit `76704df`, que se subió: se revirtió en `b5230da` (la rama queda igual al commit bueno
+  más el arreglo; el PR se aplasta al fusionar, así que el mutante no llega a `main`). Regla nueva:
+  nada de commits mientras corre `verify`.
+- Los verificadores de mutación locales, corridos uno por uno tras los bloqueos (catálogo, inventario,
+  comandos de catálogo e inventario, venta, identidad, paquetes): todos en verde y el árbol limpio.
+- El PR: [#18](https://github.com/M1gu3hb/POS-Don-Poncho/pull/18). `main` tiene la Parte 1 aplastada
+  y la rama la trae commit por commit con el mismo contenido (el árbol de `main` es idéntico a
+  `9736f5c`, ancestro de la rama): se registró `main` con la estrategia `ours` para que el PR muestre
+  sólo la Parte 2 (100 archivos).
+- La primera CI cayó en la «Jornada completa»: la tarjeta de la cocina nueva es un `li` (la prueba
+  buscaba un `div`) y en teléfono sólo se veía una columna a la vez, así que los «Listo» de «En
+  preparación» no existían. Ahora en teléfono las tres columnas van apiladas (las fichas de arriba
+  llevan a cada una) y la prueba busca la cuenta como renglón.
+

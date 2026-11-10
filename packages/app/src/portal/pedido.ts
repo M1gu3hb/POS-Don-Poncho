@@ -9,6 +9,10 @@ import {
   instantaneaDeLasOpciones,
   prepararLasOpciones,
 } from '../restaurante/opciones-de-la-linea.ts';
+import {
+  precioConLasOpciones,
+  type OpcionConPrecio,
+} from '../restaurante/precio-de-las-opciones.ts';
 import { definirComandoPublico, type ContextoPortal } from './definicion-publica.ts';
 import { enviarACocina, type ItemParaCocina } from './estaciones.ts';
 import { moverMesaDelPortal } from './escrituras.ts';
@@ -170,11 +174,11 @@ export async function pedirEnLaMesa(
       );
     }
 
+    const suyas = elegidas[indice - 1] ?? [];
     const lineaId = await ctx.paso(`insertar_linea_${indice.toString()}`, () =>
-      insertarLinea(ctx, orden.id, producto, item, visual + indice),
+      insertarLinea(ctx, orden.id, producto, item, visual + indice, suyas),
     );
 
-    const suyas = elegidas[indice - 1] ?? [];
     await ctx.paso(`guardar_opciones_${indice.toString()}`, async () => {
       await guardarLosModificadores(ctx.tx, [{ lineaId, elegidas: suyas }]);
       const instantanea = instantaneaDeLasOpciones(suyas);
@@ -332,9 +336,20 @@ async function insertarLinea(
   producto: ProductoDelMenu,
   item: { readonly cantidad: string; readonly notas: string },
   ordenVisual: number,
+  opciones: readonly OpcionConPrecio[],
 ): Promise<string> {
   const paraPrecio: repoVentaCatalogo.ProductoParaVender = producto.paraVender;
-  const valorada = valorarParaPedido(paraPrecio, item.cantidad);
+  const sinOpciones = valorarParaPedido(paraPrecio, item.cantidad);
+  // DP-16 · Las opciones con precio suman al renglón, del catálogo, como en el mesero.
+  const valorada = {
+    ...sinOpciones,
+    precio: precioConLasOpciones(
+      paraPrecio.tipoVenta,
+      sinOpciones.cantidad,
+      sinOpciones.precio,
+      opciones,
+    ),
+  };
 
   const fila = await ctx.tx
     .insertInto('orden_lineas')

@@ -80,6 +80,7 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
         presets_variable_qr: Array.isArray(producto?.presets_variable_qr)
           ? producto.presets_variable_qr
           : [],
+        solo_presets_variable: producto?.solo_presets_variable === true,
         capacidad_contenedor_ml: producto?.capacidad_contenedor_ml,
         porciones_por_contenedor: producto?.porciones_por_contenedor,
         ml_por_porcion: producto?.ml_por_porcion,
@@ -136,6 +137,11 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
             presets_variable_qr: Array.isArray(tipoVentaState.presets_variable_qr)
               ? tipoVentaState.presets_variable_qr
               : [],
+            // DP-16 · Sólo en sus presentaciones (y sólo si tiene alguna).
+            solo_presets_variable:
+              tipoVentaState.solo_presets_variable === true &&
+              Array.isArray(tipoVentaState.presets_variable_qr) &&
+              tipoVentaState.presets_variable_qr.length > 0,
             capacidad_contenedor_ml: tipoVentaState.capacidad_contenedor_ml,
             porciones_por_contenedor: tipoVentaState.porciones_por_contenedor,
             ml_por_porcion: tipoVentaState.ml_por_porcion,
@@ -145,7 +151,7 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
               ? tipoVentaState.presets_porcion_qr
               : [],
           }
-        : { tipo_venta: TIPO_VENTA.PRECIO_FIJO };
+        : { tipo_venta: TIPO_VENTA.PRECIO_FIJO, solo_presets_variable: false };
 
       const data = {
         nombre: nombre.trim(),

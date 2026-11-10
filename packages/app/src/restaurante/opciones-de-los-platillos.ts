@@ -22,6 +22,8 @@ export interface OpcionDelPlatillo {
   readonly id: string;
   readonly nombre: string;
   readonly activo: boolean;
+  /** DP-16 · Lo que suma (o resta) al renglón, en centavos como texto. «0» = no cambia el precio. */
+  readonly precioCentavos: string;
 }
 
 export interface GrupoDelPlatillo {
@@ -30,6 +32,9 @@ export interface GrupoDelPlatillo {
   readonly obligatorio: boolean;
   readonly tipo: 'unica' | 'multiple';
   readonly activo: boolean;
+  /** DP-16 · Cuántas elegir como mínimo y como máximo (nulos = sin límite). */
+  readonly minimo: number | null;
+  readonly maximo: number | null;
   readonly opciones: readonly OpcionDelPlatillo[];
 }
 
@@ -44,6 +49,10 @@ export interface FilaDeOpcionDelPlatillo {
   readonly opcion_id: string;
   readonly opcion: string;
   readonly opcion_activa: boolean;
+  readonly delta: bigint;
+  readonly extra: bigint;
+  readonly minimo: number | null;
+  readonly maximo: number | null;
 }
 
 /** Más filas que esto no las tiene una carta: es el freno de una consulta sin página. */
@@ -57,13 +66,21 @@ export function agruparLasOpciones(
   for (const f of filas) {
     const grupos = porProducto.get(f.producto_id) ?? new Map<string, GrupoDelPlatillo>();
     const previo = grupos.get(f.grupo_id);
-    const opcion = { id: f.opcion_id, nombre: f.opcion, activo: f.opcion_activa };
+    const opcion = {
+      id: f.opcion_id,
+      nombre: f.opcion,
+      activo: f.opcion_activa,
+      // El mismo criterio que el servidor al cobrar (`gruposDeLosPlatillos`): el firmado manda.
+      precioCentavos: (f.delta !== 0n ? f.delta : f.extra).toString(),
+    };
     grupos.set(f.grupo_id, {
       id: f.grupo_id,
       nombre: f.grupo,
       obligatorio: f.obligatorio,
       tipo: f.tipo === 'multiple' ? 'multiple' : 'unica',
       activo: f.grupo_activo,
+      minimo: f.minimo,
+      maximo: f.maximo,
       opciones: [...(previo?.opciones ?? []), opcion],
     });
     porProducto.set(f.producto_id, grupos);
@@ -96,9 +113,14 @@ export async function opcionesDeLosPlatillos(
         'mo.id as opcion_id',
         'mo.nombre as opcion',
         'mo.activa as opcion_activa',
+        'mo.delta_precio_centavos as delta',
+        'mo.precio_extra_centavos as extra',
+        'm.minimo_elecciones as minimo',
+        'm.maximo_elecciones as maximo',
       ])
       .where('pm.organizacion_id', '=', ambito.organizacionId)
       .orderBy('pm.producto_id')
+      .orderBy('pm.orden')
       .orderBy('m.nombre')
       .orderBy('mo.orden')
       .limit(TOPE_DE_OPCIONES)

@@ -3,6 +3,8 @@ import 'server-only';
 import type { CodigoError } from '@morphiqpos/contracts';
 import { desdeTexto } from '@morphiqpos/domain/dinero';
 
+import { opcionesParaCocina } from './opciones-de-cocina.ts';
+
 /**
  * Los tipos del puente y las conversiones de valor (F1-02 §3).
  *
@@ -46,7 +48,12 @@ export type Conversion =
    * `[0.25, 0.5, 1]` un arreglo nativo, `{0.25,0.5,1}`, y `jsonb` lo rechazaba con `22P02`
    * (los atajos de peso y las plantillas de compra no se guardaban). Hacia él, como `json`.
    */
-  | 'jsonb';
+  | 'jsonb'
+  /**
+   * DP-16 · Sólo de lectura: la instantánea de las opciones de una línea, reducida a grupo y
+   * nombres (`opciones-de-cocina.ts`). Nada de dinero ni de ids llega a la cocina por aquí.
+   */
+  | 'opciones_de_cocina';
 
 export interface CampoMapeado {
   /** La columna en la tabla destino. */
@@ -403,6 +410,8 @@ export function haciaEl(valor: unknown, conversion: Conversion): unknown {
     case 'json':
     case 'jsonb':
       return valor;
+    case 'opciones_de_cocina':
+      return opcionesParaCocina(valor);
     case 'texto':
     default:
       return aTexto(valor);

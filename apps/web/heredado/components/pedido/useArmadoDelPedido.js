@@ -7,6 +7,7 @@ import { sonar } from '~/sonidos/gestor';
 import { ColaDeUnoEnUno } from '~/restaurante/cola-de-uno-en-uno';
 import { conSusOpciones, pideOpciones } from '~/restaurante/opciones-de-los-platillos';
 import { consultaDeLasOpciones } from '~/restaurante/use-opciones-de-los-platillos';
+import { precioConOpciones } from '~/restaurante/toma-de-pedido/precio-de-las-opciones';
 import {
   almacenDelBorrador,
   borrarBorrador,
@@ -166,6 +167,12 @@ export function useArmadoDelPedido({ claveDelAparato, ordenDelBorrador, opciones
     const producto = productoVariable;
     setProductoVariable(null);
     if (!producto || !snapshot) return;
+    // DP-16 · Lo que va por peso con opciones (las tortillas) pasa al diálogo de opciones con su
+    // peso ya puesto: el renglón suma la opción una vez.
+    if (tieneGrupos(producto)) {
+      abrirPersonalizacion({ ...producto, _variablePendiente: snapshot });
+      return;
+    }
     sonar('agregar');
     setCarrito((prev) => [
       ...prev,
@@ -188,17 +195,24 @@ export function useArmadoDelPedido({ claveDelAparato, ordenDelBorrador, opciones
     const producto = productoParaPersonalizar;
     if (!producto) return;
     const delPlatillo = (notas || '').trim();
+    // DP-16 · El carrito enseña el precio con las opciones (el servidor lo vuelve a calcular).
+    const { _variablePendiente: variable, ...sinPendiente } = producto;
+    const base = variable
+      ? Number(variable.precio_total_linea) || 0
+      : Number(producto.precio_venta) || 0;
     sonar('agregar');
     setCarrito((prev) => [
       ...prev,
       {
-        ...producto,
+        ...sinPendiente,
         _linea: nuevaLinea(),
         cantidad: 1,
+        precio_venta: precioConOpciones(base, modificadores),
         notas: [textoDeLasOpciones(modificadores), delPlatillo].filter(Boolean).join(' · '),
         _notaUsuario: delPlatillo,
         _exclusiones: [],
         _modificadores: Array.isArray(modificadores) ? modificadores : [],
+        ...(variable ? { _variable: variable } : {}),
       },
     ]);
     cerrarPersonalizacion();

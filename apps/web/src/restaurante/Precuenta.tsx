@@ -21,6 +21,7 @@ import { useAnchoDelPapel } from '~/impresion/use-ancho-del-papel';
 import { useVocabulario } from '~/cliente/vocabulario';
 
 import { cantidadParaMostrar } from './peso.ts';
+import { notaSinLasOpciones, renglonesDeLasOpciones } from '~/venta/opciones-del-renglon';
 import { lineasQueSigueCobrando, soloLasVivas } from './lineas-vivas.ts';
 import {
   almacenDeLaPestana,
@@ -82,6 +83,8 @@ export interface LineaPrecuenta {
   readonly precio_unitario_snapshot: number;
   readonly total: number;
   readonly notas_producto: string | null;
+  /** DP-16 · Lo elegido de las opciones, con su precio (la instantánea de la línea). */
+  readonly opciones_snapshot?: unknown;
   readonly tipo_venta_snapshot?: string | null;
   readonly cantidad_variable_snapshot?: number | null;
   readonly unidad_variable_snapshot?: string | null;
@@ -145,6 +148,12 @@ function Importe({
 }) {
   if (centavos === null) return <span className={className}>—</span>;
   return <Dinero centavos={centavos} tamano={tamano} className={className} />;
+}
+
+/** « · lo escrito a mano»: las opciones ya salen aparte, con su precio (DP-16). */
+function notaDelRenglon(linea: LineaPrecuenta): string {
+  const nota = notaSinLasOpciones(linea.notas_producto, linea.opciones_snapshot);
+  return nota === '' ? '' : ` · ${nota}`;
 }
 
 function idDeLaUrl(): string | null {
@@ -432,8 +441,13 @@ function Hoja({ cuenta, lineas, estilo, copia, totales }: HojaProps) {
               )}
             />{' '}
             c/u
-            {linea.notas_producto === null ? '' : ` · ${linea.notas_producto}`}
+            {notaDelRenglon(linea)}
           </span>
+          {renglonesDeLasOpciones(linea.opciones_snapshot).map((texto) => (
+            <span key={texto} className="block text-texto-sutil">
+              + {texto}
+            </span>
+          ))}
         </span>
       ),
     },

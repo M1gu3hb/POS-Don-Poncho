@@ -114,6 +114,8 @@ function detallesDelTicket(ticket, carrito) {
       cantidad: Number(l?.cantidad) || 0,
       precio_unitario_snapshot: centavosAPesos(l?.precioUnitarioCentavos),
       subtotal: centavosAPesos(l?.importeCentavos),
+      // DP-16 · Las opciones, ya con su precio («Extras: Queso (+$15.00)»), como las dice el servidor.
+      opciones_texto: l?.opciones || '',
       ...(item?.tipo_venta
         ? {
             tipo_venta_snapshot: item.tipo_venta,

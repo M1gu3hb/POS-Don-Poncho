@@ -1971,3 +1971,81 @@ puerta los denuncia todos.
   la tarjeta (`role="alert"`) además del aviso, y el botón vuelve a estar disponible.
 - **Sin migración.** Lo hizo el agente A (Sonnet, 16 mutantes muertos); revisado, corregido el oyente e
   integrado por la sesión principal, con la prueba en el navegador.
+
+## DP-D104 · Las opciones cobran: precio con signo, biblioteca de grupos y peso en presentaciones · 10-11-2026
+
+- **El precio lo pone siempre el servidor.** Cada opción tiene un precio con signo
+  (`modificador_opciones.delta_precio_centavos`; el viejo `precio_extra_centavos` sólo sumaba y queda
+  como respaldo). Al escribir la línea (mesero, para llevar, portal, carrito compartido, `/pos`),
+  `precioConLasOpciones` lo suma: **por pieza** en lo que va por pieza (2 tacos con queso = 2 × (taco +
+  queso)) y **una vez por renglón** en lo que va por peso o por porción (½ kg de barbacoa con tortillas
+  de harina = ½ kg + $20). Nunca baja de cero. Lo cobrado queda congelado en
+  `orden_linea_modificadores.delta_precio_centavos` y en la instantánea de la línea con el precio de
+  cada opción ese día; descuentos, propina, dividir (la parte copia sus opciones), cancelar, quitar y el
+  margen trabajan sobre el total de la línea, que ya lo trae.
+- **Los grupos son una biblioteca del negocio** (`catalogo.guardar_grupo_de_opciones`,
+  `catalogo.asignar_grupos_de_opciones`, `catalogo.grupos_de_opciones`): nombre, una o varias,
+  obligatorio, mínimo y máximo (sólo en varias), activo y sus opciones con precio; un grupo se reusa en
+  varios productos, en el orden que el dueño le da en cada uno. Guardar con el editor viejo ya no vacía
+  un grupo compartido. **En Productos → «Opciones»** (`src/catalogo/opciones/`) el dueño ordena los
+  grupos del platillo, agrega uno de la biblioteca o crea uno nuevo, y edita nombre, «elige una» o
+  «varias», obligatorio, mínimo y máximo, activo y cada opción con su precio en pesos con signo
+  («15», «-5»); si el grupo lo usan otros productos, avisa que el cambio aplica a todos y pide
+  confirmar. Sustituye al editor viejo por producto (`ModificadoresDialog`/`ModificadoresEditor`).
+- **Dónde se ve:** el diálogo de opciones del mesero y de la Caja («Queso +$15.00», «Agregar · $…»),
+  el portal (sólo si el negocio enseña precios en el portal, igual que el del platillo; con mínimo y
+  máximo), el ticket y la precuenta (un renglón por grupo con su precio; la nota queda sólo con lo
+  escrito a mano), el ticket de `/pos`, y el corte («Opciones vendidas · cuánto sumaron»: veces y
+  cuánto sumó o restó cada una). La cocina las lee aparte de la nota (DP-D105).
+- **Lo que va por peso:** se configura en Productos (unidad, cantidad libre con mínimo, máximo e
+  incremento, sus presentaciones y precio por kilo) y, nuevo, **«Vender sólo en estas
+  presentaciones»** (`productos.solo_presets_variable`): el mesero, la Caja y el comensal eligen ¼, ½ o
+  1 kg y no se teclea otra cantidad; el servidor rechaza cualquier otra (`CANTIDAD_INVALIDA`). Lo que va
+  por peso ya lleva opciones también en el portal.
+- **Migración 192** (aditiva: mínimo y máximo del grupo, el precio con signo de la línea, «sólo
+  presentaciones» y el fondo de la tarjeta del menú digital de la Parte 3), ficha 38.
+
+## DP-D105 · La cocina con volumen: sólo lo vivo, tarjetas compactas, la espera por colores · 10-11-2026
+
+- **Se lee sólo lo vivo.** `/cocina` pide `PedidoPreparacion` con `estado: ['nuevo', 'en_preparacion',
+  'listo']` (el puente acepta ya una lista de valores en un filtro, hasta 200, textos o números; vacía
+  no trae nada) y las ventas sólo de las cuentas a la vista; la lectura de todas las mesas, que nadie
+  usaba, se quitó. Medido con 19 comandas vivas y 1,140 entregadas de otros días: de 967 KB a 62 KB y
+  de 310–340 ms a 25–35 ms por refresco (cada 2 s). Se descartó un comando de lectura nuevo: habría
+  pedido catálogo y matriz sin ganar nada.
+- **Las opciones, aparte de la nota.** El puente sirve en cada platillo sus `opciones` (de la
+  instantánea de la línea, reducidas en el servidor a grupo y nombres: sin ids ni precios, para que lo
+  que cobra una opción no llegue a la cocina) y la pantalla las pinta como fichas resaltadas; la nota
+  va en su recuadro, ya sin el «Grupo: opción» que el mesero le pliega. Sin instantánea (comandas
+  viejas), la nota sale entera.
+- **La espera** cuenta desde `marchada_en` (`fecha_marchada`: cuando se soltó a cocina, no cuando se
+  capturó) y se pinta verde, ámbar o roja con ícono y minutos escritos, nunca sólo color; en «Listos»
+  no hay color. Los umbrales son del negocio (`cocina_alerta_ambar_min` y `cocina_alerta_roja_min`,
+  10 y 20 por omisión, enteros de 1 a 240, el rojo después del ámbar), en Configuración → Negocio.
+- **La pantalla** (`apps/web/src/cocina/`, que usa `Cocina.jsx`): tarjeta compacta por cuenta con un
+  bloque por estación, las más viejas arriba (en «Listos», las que llevan más tiempo listas), la tira
+  «Resumen de producción» (lo pendiente por platillo; lo que va por peso, por presentación: «Barbacoa
+  de horno ½ kg ×6»), modo compacto recordado en el aparato y tres columnas con encabezado fijo y su
+  propio desplazamiento desde 768 px (en teléfono, un selector con los conteos). Se quitó el aviso
+  «Sin venta asociada»: su condición ya no ocurre.
+- **Sin migración.** Lo hizo el agente C (Sonnet: 18 mutantes unitarios muertos, integración del
+  filtro y de las opciones); revisado e integrado por la sesión principal.
+
+## DP-D106 · El teléfono de cocina enseña todas las comandas activas · 10-11-2026
+
+- **El servidor** (`telefono-de-cocina/consulta.ts`) devuelve, además de `comanda` y `pendientes`
+  (para no romper un teléfono con la versión vieja abierta), `comandas`: todas las activas de la
+  estación (nuevo y en preparación) con su desglose, de la más vieja a la más nueva, con tope de 40, en
+  una sola lectura de renglones; y `mesas`: la tira por mesa o pedido con su estado, incluidas las
+  listas sin entregar de las últimas 6 horas. Cada platillo trae sus opciones (grupo y nombres, sin
+  precio) y del nombre del pedido sólo la primera palabra, como antes.
+- **La pantalla** (`telefono-de-cocina/`): arriba la tira de mesas por estado (color y texto; tocar
+  lleva a esa comanda); en medio un carrusel con `scroll-snap`, cada tarjeta al 88 % para que se asome
+  la siguiente, puntos y, la primera vez, una pista de deslizar que respeta «reducir movimiento»; abajo
+  los botones grandes (Repetir voz, Preparar, Listo) y la botonera Bluetooth actúan sobre la comanda
+  a la vista. La vista se recuerda por comanda: una nueva entra al final sin mover a quien cocina;
+  vibra y la voz dice algo corto («Mesa 4: 7 platillos, 2 con nota», «Para llevar 3: 4 platillos»,
+  y «con alergia» si la hay); «Repetir voz» sigue leyendo el detalle. La nota del platillo sale sin el
+  pliegue de sus opciones (la misma regla que la pantalla grande, DP-D105). La pantalla no se apaga.
+- **Sin migración.** Lo hizo el agente E (Sonnet); revisado e integrado por la sesión principal.
+

@@ -81,6 +81,8 @@ describe('lo que lee el teléfono', () => {
         unidadVariable: null,
         cantidadVariable: null,
         notas: null,
+        // DP-16 · 2.3 · Sin opciones elegidas, la lista va vacía (no ausente).
+        opciones: [],
       },
     ]);
     const crudo = JSON.stringify(pantalla);

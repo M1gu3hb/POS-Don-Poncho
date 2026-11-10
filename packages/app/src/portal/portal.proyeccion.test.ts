@@ -166,6 +166,8 @@ describe('el menú no lleva costos, márgenes ni receta', () => {
         // los botones desaparecieron sin que nada fallara.
         'presets_porcion_qr',
         'presets_variable_qr',
+        // DP-16 · Sólo en sus presentaciones: un sí o un no, sin precio.
+        'solo_presets_variable',
         // Los grupos de opciones (DP-5): el sabor del pulque se elige desde el QR. Sólo nombres.
         'modificadores',
         // DP-15 · Agotado del día: el comensal lo ve apagado y no lo puede pedir (un sí o un no; la
@@ -183,6 +185,8 @@ describe('el menú no lleva costos, márgenes ni receta', () => {
       nombre: 'Sabor (básico)',
       obligatorio: true,
       tipo: 'unica' as const,
+      minimo: null,
+      maximo: null,
       opciones: [{ id: 'o-1', nombre: 'Avena' }],
     };
     const conOpciones = productoDeMenu(FILA_PRODUCTO, true, [grupo]);

@@ -48,7 +48,7 @@ const LECTURAS_PERMITIDAS = [
     campo: 'modificadores',
     // 22 desde DP-16: la toma del pedido para llevar (`useArmadoDelPedido`), del producto y del
     // diálogo de opciones, como el mesero.
-    cantidad: 22,
+    cantidad: 20,
     razon:
       'Son DTO de catálogo, selección y carrito; el producto normalizado los guarda mediante catalogo.guardar_modificadores y no como una columna.',
   },
@@ -57,12 +57,6 @@ const LECTURAS_PERMITIDAS = [
     cantidad: 6,
     razon:
       'Es un campo real de PedidoPreparacion y un respaldo heredado para cortes; CorteCaja usa fecha_apertura como fuente primaria.',
-  },
-  {
-    campo: 'venta_folio',
-    cantidad: 1,
-    razon:
-      'Es una defensa opcional del detector de comandas huérfanas; venta_id y mesa_id resuelven la identidad antes de este respaldo.',
   },
   {
     campo: 'venta_ids',

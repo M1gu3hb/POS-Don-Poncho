@@ -12,6 +12,7 @@ import { entradaEnviarPedido } from './esquemas.ts';
 import { insertarLineas } from './lineas.ts';
 import { prepararLasOpciones } from './opciones-de-la-linea.ts';
 import { prepararTodas } from './pedido.ts';
+import { lineaConLasOpciones } from './precio-de-las-opciones.ts';
 
 /**
  * DP-16 · EL PEDIDO PARA LLEVAR, tomado en la Caja y cobrado ahí mismo.
@@ -103,9 +104,8 @@ export const armarParaLlevar = definirComando<
     );
     // Para llevar no hay tiempos: todo sale junto al cobrar.
     const preparadas = valoradas.map((l, i) => ({
-      ...l,
+      ...lineaConLasOpciones(l, elegidas[i] ?? []),
       marchaEstado: 'inmediata' as const,
-      opciones: elegidas[i] ?? [],
     }));
     await ctx.paso('escribir_lineas', () =>
       insertarLineas(ctx.tx, organizacionId, ordenId, preparadas),

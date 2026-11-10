@@ -46,6 +46,7 @@ import ConfiguracionDeVoz from '@/components/configuracion/ConfiguracionDeVoz';
 import { SelectorDeApariencia } from '~/configuracion/SelectorDeApariencia';
 import { ExperienciaDelNegocio } from '~/configuracion/ExperienciaDelNegocio';
 import { ModoEsperaDelAparato } from '~/configuracion/ModoEsperaDelAparato';
+import { AlertasDeEspera } from '~/cocina/AlertasDeEspera';
 import { SonidoDelAparato } from '~/configuracion/SonidoDelAparato';
 import { SonidosDelNegocio } from '~/configuracion/SonidosDelNegocio';
 import { useLocation } from '@/enrutado';
@@ -171,6 +172,8 @@ export default function Configuracion() {
     silenciar_notificaciones_admin: true,
     portal_qr_permitir_pedidos_cliente: false,
     estaciones_preparacion_activas: false,
+    cocina_alerta_ambar_min: 10,
+    cocina_alerta_roja_min: 20,
   });
 
   // Resync cuando llega cfg del backend o cuando cambia (updated_date).
@@ -196,6 +199,8 @@ export default function Configuracion() {
       silenciar_notificaciones_admin: cfg.silenciar_notificaciones_admin ?? true,
       portal_qr_permitir_pedidos_cliente: cfg.portal_qr_permitir_pedidos_cliente === true,
       estaciones_preparacion_activas: cfg.estaciones_preparacion_activas === true,
+      cocina_alerta_ambar_min: cfg.cocina_alerta_ambar_min ?? 10,
+      cocina_alerta_roja_min: cfg.cocina_alerta_roja_min ?? 20,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg?.id, cfg?.updated_date]);
@@ -773,6 +778,16 @@ export default function Configuracion() {
               )}
             </CardContent>
           </Card>
+
+          {/* DP-16 · 2.2: desde cuántos minutos la pantalla de cocina pinta ámbar y rojo. */}
+          <div className="mt-4">
+            <AlertasDeEspera
+              ambar={bizForm.cocina_alerta_ambar_min}
+              roja={bizForm.cocina_alerta_roja_min}
+              onCambiar={(parche) => setBizForm({ ...bizForm, ...parche })}
+              onGuardar={saveBiz}
+            />
+          </div>
 
           {/* Categorías de productos — fuente única para Recetas, Productos, Mesero y Portal QR */}
           <div className="mt-4">

@@ -11,6 +11,7 @@ import type { AmbitoPortal } from './ambito.ts';
 import type { BanderasPortal } from './banderas.ts';
 import { entradaAbrirMesa, itemDelCarrito } from './esquemas.ts';
 import { faltaMesero } from './negocio.ts';
+import { deltasDeLasNotas, precioConLaNota } from './precio-en-el-carrito.ts';
 import { PREFIJO_DEL_PEDIDO_LISTO, comoSeEnvia, type ComoSeEnvia } from './quien-envia.ts';
 
 /**
@@ -369,6 +370,16 @@ export async function estadoDelCarrito(
   const caducoElCarrito = carritoCaducado(ultimaDe(todas), desde, ahora);
   const lineas = caducoElCarrito ? [] : todas;
   if (caducoElCarrito) await resolverElAvisoCaducado(tx, ambito, ahora);
+  // DP-16 · Lo que suman las opciones que el comensal eligió (van plegadas en la nota): el precio
+  // de la línea en el carrito es aproximado, pero ya con ellas. El cobro lo calcula el servidor.
+  const deltaDe =
+    banderas.mostrarPrecios && lineas.length > 0
+      ? await deltasDeLasNotas(
+          tx,
+          ambito.organizacionId,
+          lineas.map((l) => ({ productoId: l.producto_id, nombre: l.nombre, notas: l.notas })),
+        )
+      : () => 0n;
   // Ronda 2 (medio 9) · «Tu pedido se borró…» es de los teléfonos que ESTABAN en ese carrito: la
   // familia nueva que se sienta después (otro teléfono) no lo lee, aunque lo viejo siga ahí.
   const caducado = caducoElCarrito && todas.some((l) => l.dispositivo_huella === huella);
@@ -428,7 +439,9 @@ export async function estadoDelCarrito(
       tipoVenta: l.tipo_venta,
       unidad: l.tipo_venta === 'variable_medida' ? l.unidad_variable : null,
       notas: l.notas,
-      precioCentavos: banderas.mostrarPrecios ? l.precio_venta_centavos.toString() : null,
+      precioCentavos: banderas.mostrarPrecios
+        ? precioConLaNota(l.precio_venta_centavos, l.tipo_venta, l.cantidad, deltaDe(l)).toString()
+        : null,
       esMia: l.dispositivo_huella === huella,
       telefono: telefonos.get(l.dispositivo_huella) ?? 0,
       // DP-15 · Una línea de algo que se agotó hoy se queda en la lista, marcada: al enviar sale.

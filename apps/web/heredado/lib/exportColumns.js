@@ -2,6 +2,7 @@
 import { fechaYHoraDelNegocio } from '@morphiqpos/domain/tiempo';
 import { economiaDeLaVenta, sePintaElMargen } from '~/restaurante/margen-de-las-ventas';
 import { NOMBRE_DEL_CANAL } from '~/corte/canales';
+import { renglonesDeLasOpciones } from '~/venta/opciones-del-renglon';
 /**
  * Definición de columnas estándar por sección para los exports.
  * Centralizado para mantener consistencia entre CSV/XLSX/Sheets.
@@ -149,6 +150,8 @@ export const COLUMNS_DETALLES_VENTA = [
   { key: 'costo_total_linea_snapshot', label: 'Costo línea', format: fmtNum },
   { key: 'utilidad_linea_snapshot', label: 'Utilidad línea', format: fmtNum },
   { key: 'margen_linea_snapshot', label: 'Margen %', format: fmtNum },
+  // DP-16 · Lo elegido de las opciones, con el precio de cada una ese día.
+  { key: 'opciones_snapshot', label: 'Opciones', format: (v) => renglonesDeLasOpciones(v).join(' · ') },
   { key: 'notas_producto', label: 'Notas' },
 ];
 

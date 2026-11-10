@@ -17,9 +17,11 @@ const RELLENO: GrupoDeOpciones = {
   nombre: 'Relleno',
   obligatorio: true,
   tipo: 'unica',
+  minimo: null,
+  maximo: null,
   opciones: [
-    { id: 'o-queso', nombre: 'Queso' },
-    { id: 'o-flor', nombre: 'Flor de calabaza' },
+    { id: 'o-queso', nombre: 'Queso', deltaCentavos: 0n },
+    { id: 'o-flor', nombre: 'Flor de calabaza', deltaCentavos: 1_500n },
   ],
 };
 const EXTRAS: GrupoDeOpciones = {
@@ -27,9 +29,11 @@ const EXTRAS: GrupoDeOpciones = {
   nombre: 'Extras',
   obligatorio: false,
   tipo: 'multiple',
+  minimo: null,
+  maximo: null,
   opciones: [
-    { id: 'o-crema', nombre: 'Crema' },
-    { id: 'o-salsa', nombre: 'Salsa, verde' },
+    { id: 'o-crema', nombre: 'Crema', deltaCentavos: -500n },
+    { id: 'o-salsa', nombre: 'Salsa, verde', deltaCentavos: 0n },
   ],
 };
 
@@ -51,7 +55,13 @@ describe('elegirLasOpciones · lo estructurado', () => {
       '',
     );
     expect(r).toEqual([
-      { grupoId: 'g-relleno', grupo: 'Relleno', opcionId: 'o-flor', opcion: 'Flor de calabaza' },
+      {
+        grupoId: 'g-relleno',
+        grupo: 'Relleno',
+        opcionId: 'o-flor',
+        opcion: 'Flor de calabaza',
+        deltaCentavos: 1_500n,
+      },
     ]);
   });
 
@@ -151,10 +161,67 @@ describe('textoDeLasOpciones', () => {
   it('junta por grupo, como se lee en la comanda', () => {
     expect(
       textoDeLasOpciones([
-        { grupoId: 'g1', grupo: 'Relleno', opcionId: 'a', opcion: 'Queso' },
-        { grupoId: 'g2', grupo: 'Extras', opcionId: 'b', opcion: 'Crema' },
-        { grupoId: 'g2', grupo: 'Extras', opcionId: 'c', opcion: 'Salsa' },
+        { grupoId: 'g1', grupo: 'Relleno', opcionId: 'a', opcion: 'Queso', deltaCentavos: 0n },
+        { grupoId: 'g2', grupo: 'Extras', opcionId: 'b', opcion: 'Crema', deltaCentavos: 0n },
+        { grupoId: 'g2', grupo: 'Extras', opcionId: 'c', opcion: 'Salsa', deltaCentavos: 0n },
       ]),
     ).toBe('Relleno: Queso · Extras: Crema, Salsa');
+  });
+});
+
+describe('DP-16 · el precio de cada opción y el mínimo y máximo de un grupo', () => {
+  const SALSAS: GrupoDeOpciones = {
+    id: 'g-salsas',
+    nombre: 'Salsas',
+    obligatorio: false,
+    tipo: 'multiple',
+    minimo: 2,
+    maximo: 3,
+    opciones: ['a', 'b', 'c', 'd'].map((id) => ({ id, nombre: id, deltaCentavos: 0n })),
+  };
+
+  it('cada elegida lleva el precio que dice el catálogo', () => {
+    const elegidas = elegirLasOpciones(
+      'Quesadilla',
+      [RELLENO, EXTRAS],
+      [
+        { grupoId: 'g-relleno', opcionIds: ['o-flor'] },
+        { grupoId: 'g-extras', opcionIds: ['o-crema'] },
+      ],
+      '',
+    );
+    expect(elegidas.map((o) => o.deltaCentavos)).toEqual([1_500n, -500n]);
+  });
+
+  it('más del máximo no entra', () => {
+    expect(
+      codigoDe(() =>
+        elegirLasOpciones(
+          'Tacos',
+          [SALSAS],
+          [{ grupoId: 'g-salsas', opcionIds: ['a', 'b', 'c', 'd'] }],
+          '',
+        ),
+      ),
+    ).toBe('OPCION_NO_VALIDA');
+  });
+
+  it('menos del mínimo no entra si se eligió algo; nada en un grupo no obligatorio sí', () => {
+    expect(
+      codigoDe(() =>
+        elegirLasOpciones('Tacos', [SALSAS], [{ grupoId: 'g-salsas', opcionIds: ['a'] }], ''),
+      ),
+    ).toBe('OPCION_OBLIGATORIA');
+    expect(elegirLasOpciones('Tacos', [SALSAS], [], '')).toEqual([]);
+    expect(
+      elegirLasOpciones('Tacos', [SALSAS], [{ grupoId: 'g-salsas', opcionIds: ['a', 'b'] }], ''),
+    ).toHaveLength(2);
+  });
+
+  it('obligatorio con mínimo: hay que llegar al mínimo', () => {
+    const obligatorio = { ...SALSAS, obligatorio: true };
+    expect(codigoDe(() => elegirLasOpciones('Tacos', [obligatorio], [], ''))).toBe(
+      'OPCION_OBLIGATORIA',
+    );
   });
 });

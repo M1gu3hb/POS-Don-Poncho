@@ -4,15 +4,22 @@ import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Aviso, EsqueletoDeLista, Vacio } from '@morphiqpos/ui/sistema';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChefHat, Check, Flame, Volume2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DialogoDelSonido } from '~/configuracion/DialogoDelSonido';
 import { fraseNuevoPedidoCocina, speak, speakSample } from '@/lib/voiceAlert';
 import { cantidadParaMostrar } from '~/restaurante/peso';
 import { rotuloHablado } from '~/restaurante/rotulo-de-la-comanda';
-import { haceCuanto } from '~/restaurante/vista-de-solicitudes';
 
-import { ComandaEnElTelefono } from './ComandaEnElTelefono';
+import { CarruselDeComandas } from './CarruselDeComandas';
+import {
+  chipsDeLaTira,
+  comandaALaVista,
+  comandasDeLaPantalla,
+  fraseDeLaLlegada,
+  porAnunciarLasNuevas,
+} from './carrusel-del-telefono';
+import { TiraDeMesas } from './TiraDeMesas';
 import {
   FalloDelTelefono,
   leerPantalla,
@@ -20,12 +27,7 @@ import {
   datosDelRotulo,
   type ComandaDelTelefono,
 } from './pantalla-del-telefono';
-import {
-  accionDeLaTecla,
-  accionesPosibles,
-  porAnunciar,
-  type AccionDelTelefono,
-} from './telefono-de-cocina';
+import { accionDeLaTecla, accionesPosibles, type AccionDelTelefono } from './telefono-de-cocina';
 import { usePantallaEncendida } from './use-pantalla-encendida';
 
 /** Cada cuánto pregunta: la cocina quiere enterarse al momento, sin Realtime. */
@@ -55,10 +57,12 @@ function fraseDe(comanda: ComandaDelTelefono): string {
 }
 
 /**
- * EL TELÉFONO DE UNA ESTACIÓN DE COCINA (DP-9.4). Sin PIN: el token del QR. Enseña la comanda
- * pendiente MÁS RECIENTE de la estación, la lee en voz al llegar, y tiene tres botones grandes
- * —Repetir voz, Preparar, Listo— que también responden a una botonera Bluetooth. Al marcar
- * Listo aparece la siguiente. La pantalla no se apaga mientras está abierta.
+ * EL TELÉFONO DE UNA ESTACIÓN DE COCINA (DP-9.4, DP-16 · 2.3). Sin PIN: el token del QR. Arriba,
+ * una tira de mesas/pedidos por estado; en medio, las comandas activas en un carrusel (la más
+ * vieja primero); abajo, tres botones grandes —Repetir voz, Preparar, Listo— que actúan sobre la
+ * comanda que se está viendo y que también responden a una botonera Bluetooth. Una comanda nueva
+ * vibra y se anuncia con una frase corta SIN mover la vista de quien cocina. La pantalla no se
+ * apaga mientras está abierta.
  */
 export function TelefonoDeCocina({ token }: { readonly token: string }) {
   const clienteDeConsultas = useQueryClient();
@@ -80,7 +84,42 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
         : SONDEO_MS,
     retry: false,
   });
-  const comanda = pantalla.data?.comanda ?? null;
+  const comandas = useMemo(
+    () => (pantalla.data === undefined ? [] : comandasDeLaPantalla(pantalla.data)),
+    [pantalla.data],
+  );
+  const chips = useMemo(
+    () => chipsDeLaTira(pantalla.data?.mesas ?? [], comandas),
+    [pantalla.data, comandas],
+  );
+  // La comanda a la vista se recuerda por id: si llegan nuevas al final, la vista no se mueve.
+  // Si la que se miraba se fue (la dejaron lista), queda la que ocupa su lugar.
+  const [vista, setVista] = useState<{ id: string | null; indice: number }>({
+    id: null,
+    indice: 0,
+  });
+  const comanda = comandaALaVista(comandas, vista.id, vista.indice);
+  const [aviso, setAviso] = useState('');
+
+  const verIndice = useCallback(
+    (indice: number): void => {
+      const elegida = comandas[indice];
+      if (elegida !== undefined) setVista({ id: elegida.id, indice });
+    },
+    [comandas],
+  );
+  const alVer = useCallback(
+    (id: string): void => {
+      setVista({
+        id,
+        indice: Math.max(
+          0,
+          comandas.findIndex((c) => c.id === id),
+        ),
+      });
+    },
+    [comandas],
+  );
 
   useEffect(() => {
     const reloj = setInterval(() => {
@@ -91,19 +130,17 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
     };
   }, []);
 
-  // La voz: cada comanda nueva una vez; las que ya estaban al entrar, no.
+  // Lo nuevo: vibra y dice una frase corta. La primera lectura no anuncia lo que ya estaba.
   useEffect(() => {
     if (pantalla.data === undefined) return;
-    const id = comanda?.id ?? null;
-    if (anunciadas.current === null) {
-      anunciadas.current = new Set(id === null ? [] : [id]);
-      return;
-    }
-    const nueva = porAnunciar(id, anunciadas.current);
-    if (nueva === null || comanda === null) return;
-    anunciadas.current = new Set([...anunciadas.current, nueva]);
-    if (sonidoActivo) speak(fraseDe(comanda), { cocina: true });
-  }, [pantalla.data, comanda, sonidoActivo]);
+    const nuevas = porAnunciarLasNuevas(comandas, anunciadas.current);
+    anunciadas.current = new Set([...(anunciadas.current ?? []), ...comandas.map((c) => c.id)]);
+    if (nuevas.length === 0 || !sonidoActivo) return;
+    const frases = nuevas.map(fraseDeLaLlegada).join('. ');
+    setAviso(frases);
+    if (typeof navigator.vibrate === 'function') navigator.vibrate([250, 120, 250]);
+    speak(frases, { cocina: true });
+  }, [pantalla.data, comandas, sonidoActivo]);
 
   const hacer = useCallback(
     async (accion: AccionDelTelefono): Promise<void> => {
@@ -193,6 +230,10 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
       <DialogoDelSonido abierto={ajusteDelSonido} alCambiar={setAjusteDelSonido} />
       {pantalla.error === null ? null : <Aviso tono="atencion" titulo={pantalla.error.message} />}
       {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
+      <TiraDeMesas chips={chips} vistaId={comanda?.id ?? null} alElegir={verIndice} />
+      <p aria-live="polite" className="sr-only">
+        {aviso}
+      </p>
       {comanda === null ? (
         <Vacio
           icono={<ChefHat aria-hidden />}
@@ -201,19 +242,22 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
           nivelDeTitulo={2}
         />
       ) : (
-        <ComandaEnElTelefono
-          comanda={comanda}
-          pendientes={pantalla.data.pendientes}
-          haceCuanto={haceCuanto(comanda.creadaEn, ahora)}
+        <CarruselDeComandas
+          comandas={comandas}
+          vistaId={comanda.id}
+          ahora={ahora}
+          alVer={alVer}
+          alElegir={verIndice}
         />
       )}
       <nav
         aria-label="Acciones de la comanda"
-        className="mt-auto grid grid-cols-3 gap-(--espacio-2)"
+        className="sticky bottom-0 mt-auto grid grid-cols-3 gap-(--espacio-2) bg-fondo py-(--espacio-2)"
       >
         <Button
           type="button"
           size="lg"
+          className="min-h-[calc(var(--altura-control)*1.3)] flex-col gap-(--espacio-1) px-(--espacio-1) text-base"
           variant="outline"
           disabled={!posibles.has('repetir')}
           onClick={() => void hacer('repetir')}
@@ -223,6 +267,7 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
         <Button
           type="button"
           size="lg"
+          className="min-h-[calc(var(--altura-control)*1.3)] flex-col gap-(--espacio-1) px-(--espacio-1) text-base"
           variant="secondary"
           disabled={!posibles.has('preparar')}
           cargando={enCurso === 'preparar'}
@@ -233,6 +278,7 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
         <Button
           type="button"
           size="lg"
+          className="min-h-[calc(var(--altura-control)*1.3)] flex-col gap-(--espacio-1) px-(--espacio-1) text-base"
           variant="success"
           disabled={!posibles.has('listo')}
           cargando={enCurso === 'listo'}

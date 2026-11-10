@@ -95,6 +95,7 @@ import {
 import { ColaDeUnoEnUno } from '~/restaurante/cola-de-uno-en-uno';
 import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
 import { opcionesParaElComando } from '~/venta/opciones-en-pos';
+import { precioConOpciones } from '~/restaurante/toma-de-pedido/precio-de-las-opciones';
 import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
 import { solicitudesPorMesa } from '~/restaurante/globos-de-solicitud';
 import { SelectorDeVista } from '~/restaurante/SelectorDeVista';
@@ -829,6 +830,13 @@ function Mesero() {
       return;
     }
     const precioLinea = Number(snapshot?.precio_total_linea) || 0;
+    // DP-16 · La barbacoa por peso con opciones (las tortillas) pasa al diálogo de opciones con su
+    // peso ya puesto: el renglón suma la opción una vez.
+    if (productoTieneModificadores(producto)) {
+      setProductoVariable(null);
+      abrirPersonalizacion({ ...producto, _variablePendiente: snapshot });
+      return;
+    }
     sonar('agregar');
     setCarrito((prev) => [
       ...prev,
@@ -866,16 +874,21 @@ function Mesero() {
       )
       .join(' · ');
     const notasFinales = [textoMod, (notas || '').trim()].filter(Boolean).join(' · ');
+    // DP-16 · El carrito enseña el precio con las opciones (el servidor lo vuelve a calcular).
+    const { _variablePendiente: variable, ...sinPendiente } = producto;
+    const base = variable ? Number(variable.precio_total_linea) || 0 : Number(producto.precio_venta) || 0;
     sonar('agregar');
     setCarrito((prev) => [
       ...prev,
       {
-        ...producto,
+        ...sinPendiente,
         cantidad: 1,
+        precio_venta: precioConOpciones(base, modificadores),
         notas: notasFinales,
         _notaUsuario: (notas || '').trim(),
         _exclusiones: [],
         _modificadores: Array.isArray(modificadores) ? modificadores : [],
+        ...(variable ? { _variable: variable } : {}),
       },
     ]);
     cerrarPersonalizacion();
@@ -1962,6 +1975,7 @@ function Mesero() {
       <SeleccionModificadoresDialog
         key={turnoDePersonalizar}
         producto={productoParaPersonalizar}
+        precioBase={productoParaPersonalizar?._variablePendiente?.precio_total_linea}
         open={!!productoParaPersonalizar}
         onClose={cerrarPersonalizacion}
         onConfirm={confirmarPersonalizacion}

@@ -29,6 +29,17 @@ export {
   entradaGuardarModificadores,
   type ResultadoGuardarModificadores,
 } from './modificadores-guardar.ts';
+export {
+  asignarGruposAlProducto,
+  entradaAsignarGrupos,
+  entradaGuardarGrupo,
+  guardarGrupoDeOpciones,
+} from './grupos-de-opciones.ts';
+export {
+  gruposDeOpciones,
+  type GrupoDeLaBiblioteca,
+  type OpcionDeLaBiblioteca,
+} from './grupos-de-opciones-lectura.ts';
 
 export {
   asignarFiscalMasivo,
