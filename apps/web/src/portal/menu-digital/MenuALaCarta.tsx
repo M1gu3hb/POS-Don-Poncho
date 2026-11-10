@@ -135,7 +135,7 @@ function Renglon({
       ) : null}
     </>
   );
-  const clase = `flex w-full items-start gap-(--espacio-3) py-(--espacio-4) ${agotado ? 'opacity-60' : ''}`;
+  const clase = `flex w-full items-center gap-(--espacio-3) py-(--espacio-4) ${agotado ? 'opacity-60' : ''}`;
   if (!activo) return <div className={clase}>{cuerpo}</div>;
   return (
     <button

@@ -1566,6 +1566,11 @@
       "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
       "porque": "DP-16 (3.1): `overflow-x-clip` en lugar de `overflow-x-hidden` en la raíz del portal; `hidden` la volvía un área de desplazamiento y el encabezado y la barra de secciones dejaban de quedarse arriba.",
       "testigos": ["- clase:overflow-x-hidden", "+ clase:overflow-x-clip"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/PortalCliente.jsx",
+      "porque": "DP-16 (3.1): el encabezado del portal al 95 % de opacidad: con la barra de secciones pegada debajo, al 85 % se leía el menú que pasaba por detrás.",
+      "testigos": ["- clase:bg-card/85", "+ clase:bg-card/95"]
     }
   ]
 }

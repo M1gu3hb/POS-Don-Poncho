@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { seccionALaVista } from './menu-digital';
 
 /** La altura de lo que se queda pegado arriba (encabezado del portal + esta barra). */
-export const MARGEN_DE_LAS_SECCIONES = 132;
+export const MARGEN_DE_LAS_SECCIONES = 130;
 
 /**
  * DP-16 · LA BARRA DE SECCIONES DEL MENÚ (menú digital y «a la carta»).
@@ -63,7 +63,7 @@ export function BarraDeSecciones({
   return (
     <nav
       aria-label="Secciones del menú"
-      className="sticky top-[4.5rem] z-20 -mx-(--espacio-4) bg-fondo/95 px-(--espacio-4) py-(--espacio-2) backdrop-blur"
+      className="sticky top-[calc(4.25rem+1px)] z-20 -mx-(--espacio-4) bg-fondo/95 px-(--espacio-4) py-(--espacio-2) backdrop-blur"
     >
       <div
         ref={fichas}

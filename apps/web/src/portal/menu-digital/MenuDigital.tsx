@@ -137,7 +137,7 @@ function TarjetaDelPlatillo({
           {puedePedir && !agotado ? (
             <span
               aria-hidden
-              className="grid size-10 shrink-0 place-items-center rounded-full bg-superficie text-texto"
+              className="grid size-10 shrink-0 place-items-center rounded-full bg-superficie text-texto ring-1 ring-borde-fuerte/40"
             >
               <Plus className="size-5" strokeWidth={2.5} />
             </span>
