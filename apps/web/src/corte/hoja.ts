@@ -88,6 +88,13 @@ export interface HojaDelServidor {
     autorizo: string | null;
     registradoEn: string;
   }[];
+  /** DP-16 · Las opciones cobradas (`opcionesVendidas`); un servidor viejo no las manda. */
+  readonly opciones?: readonly {
+    grupo: string;
+    opcion: string;
+    veces: string;
+    importeCentavos: string;
+  }[];
   readonly conteo: readonly { denominacionCentavos: string; piezas: number }[];
   readonly metodos: readonly {
     metodo: string;

@@ -128,6 +128,8 @@ export interface FilaProductoMenu {
   readonly precio_por_porcion_centavos: bigint | null;
   readonly presets_variable: unknown;
   readonly presets_porcion: unknown;
+  /** DP-16 · Lo que va por peso, sólo en sus presentaciones. */
+  readonly solo_presets_variable?: boolean | null;
   /** DP-15 · Fin del día en que se marcó agotado, o nulo. */
   readonly agotado_hasta?: Date | null;
 }
@@ -172,10 +174,12 @@ export interface ProductoDeMenu {
    */
   readonly presets_variable_qr: readonly unknown[];
   readonly presets_porcion_qr: readonly unknown[];
+  /** DP-16 · Sólo en sus presentaciones: el comensal elige una, no teclea los gramos. */
+  readonly solo_presets_variable: boolean;
   /**
-   * Sus grupos de opciones —el sabor del pulque, el relleno de la quesadilla—, con NOMBRES y
-   * nada más (DP-5). `ProductoQRDialog` los pinta y el carrito los pliega en la nota del pedido;
-   * sin ellos, desde el QR no se podía elegir el sabor. Sin precio: una opción no cobra.
+   * Sus grupos de opciones —el sabor del pulque, el relleno de la quesadilla— (DP-5).
+   * `ProductoQRDialog` los pinta y el carrito los pliega en la nota del pedido. DP-16 · Con el
+   * precio de cada opción sólo si el negocio enseña precios (`opciones-publicas.ts`).
    */
   readonly modificadores: readonly GrupoPublico[];
   /** DP-15 · Agotado del día: se ve en el menú, marcado, y no se puede pedir. */
@@ -222,6 +226,7 @@ export function productoDeMenu(
     precio_por_porcion_centavos: aCentavos(importe(fila.precio_por_porcion_centavos)),
     presets_variable_qr: comoLista(fila.presets_variable),
     presets_porcion_qr: comoLista(fila.presets_porcion),
+    solo_presets_variable: fila.solo_presets_variable === true,
     modificadores,
     agotado: estaAgotado(fila.agotado_hasta, ahora),
   };

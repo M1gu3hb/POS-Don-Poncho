@@ -255,6 +255,7 @@ async function productosVisibles(
       'p.nombre_porcion as nombre_porcion',
       'p.precio_por_porcion_centavos as precio_por_porcion_centavos',
       'p.presets_variable as presets_variable',
+      'p.solo_presets_variable as solo_presets_variable',
       'p.presets_porcion as presets_porcion',
       'p.agotado_hasta as agotado_hasta',
     ])
@@ -271,6 +272,7 @@ async function productosVisibles(
   const opciones = await opcionesDelMenu(
     organizacionId,
     filas.map((fila) => fila.id),
+    conPrecios,
   );
   return filas.map((fila) => productoDeMenu(fila, conPrecios, opciones.get(fila.id) ?? []));
 }

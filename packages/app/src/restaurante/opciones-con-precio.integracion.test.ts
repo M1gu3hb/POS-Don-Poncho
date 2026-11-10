@@ -7,6 +7,7 @@ import { comando } from '../produccion.ts';
 import { clave, exigirOk } from '../pruebas/negocio-real.ts';
 import { ticketDeOrden } from '../venta/consultas.ts';
 import { abrirMesa } from './mesas.ts';
+import { unirMesasComando } from './union-de-mesas.ts';
 import { entradaEnviarPedido } from './esquemas.ts';
 import { armarParaLlevar } from './para-llevar.ts';
 import { enviarPedido } from './pedido.ts';
@@ -135,7 +136,7 @@ async function ticket(ordenId: string) {
 }
 
 beforeAll(async () => {
-  salon = await sembrarSalon({ nombre: 'Opciones con precio', mesas: 6, terminales: 1 });
+  salon = await sembrarSalon({ nombre: 'Opciones con precio', mesas: 8, terminales: 1 });
   [sesion = ''] = await abrirLasCajas(salon, 50_000);
   const fila = await obtenerDb()
     .insertInto('productos')
@@ -396,6 +397,40 @@ describe('DP-16 · las opciones con precio, de la mesa al corte', () => {
     );
   });
 
+  it('mesa unida: las opciones de las dos cuentas viajan a la principal y se cobran', async () => {
+    const principal = await pedirEnMesa(5, [
+      {
+        productoId: salon.platillos.arrachera,
+        cantidad: '1',
+        opciones: [{ grupoId: g['extras'] ?? '', opcionIds: [o['Queso extra'] ?? ''] }],
+      },
+    ]);
+    await pedirEnMesa(6, [
+      {
+        productoId: salon.platillos.guacamole,
+        cantidad: '1',
+        opciones: [{ grupoId: g['totopos'] ?? '', opcionIds: [o['Con queso'] ?? ''] }],
+      },
+    ]);
+    const union = exigirOk(
+      await comando(unirMesasComando, {
+        entrada: { mesaPrincipalId: mesaDe(salon, 5), mesaIds: [mesaDe(salon, 6)] },
+        ambito: caja(),
+        idempotencyKey: clave(),
+      }),
+      'restaurante.unir_mesas',
+    );
+    expect(union.ordenPrincipalId).toBe(principal);
+    const esperado = PRECIO_ARRACHERA + 2_000n + PRECIO_GUACAMOLE + 1_500n;
+    expect(union.totalCentavos).toBe(esperado.toString());
+    await pedirLaCuenta(salon, principal);
+    expect(await cobrarTodo(principal)).toBe(esperado);
+    const opciones = (await ticket(principal)).lineas.map((l) => l.opciones);
+    expect(opciones).toEqual(
+      expect.arrayContaining(['Extras: Queso extra (+$20.00)', 'Totopos: Con queso (+$15.00)']),
+    );
+  });
+
   it('el corte de la caja cuadra con todo lo cobrado, al centavo', async () => {
     const hoja = exigirOk(
       await comando(hojaDelCorte, {
@@ -413,5 +448,19 @@ describe('DP-16 · las opciones con precio, de la mesa al corte', () => {
       .where('sesion_caja_id', '=', sesion)
       .executeTakeFirstOrThrow();
     expect(pagos.total).toBe(hoja.resumen.totalCentavos);
+
+    // «Opciones vendidas»: cuántas veces salió cada una y cuánto sumó (por pieza; lo que va por
+    // peso, una vez por renglón). La división reparte la opción entre las partes sin perderla.
+    const porOpcion = new Map(
+      hoja.opciones.map((op) => [`${op.grupo} · ${op.opcion}`, [op.veces, op.importeCentavos]]),
+    );
+    expect(porOpcion.get('Totopos · Con queso')).toEqual(['3', '4500']);
+    expect(porOpcion.get('Extras · Queso extra')).toEqual(['3', '6000']);
+    expect(porOpcion.get('Extras · Sin cebolla')).toEqual(['2', '-1000']);
+    expect(porOpcion.get('Extras · Aguacate')).toEqual(['2', '5000']);
+    expect(porOpcion.get('Tortillas · Harina')).toEqual(['1', '2000']);
+    expect(porOpcion.get('Término · Término medio')).toEqual(['2', '0']);
+    // Lo que más sumó, primero.
+    expect(hoja.opciones[0]).toMatchObject({ grupo: 'Extras', opcion: 'Queso extra' });
   });
 });

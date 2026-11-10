@@ -72,6 +72,15 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
     return [];
   }, [esMedida, esPorcion, producto]);
 
+  // DP-16 · «Sólo presentaciones»: se elige una de las del negocio; no se teclea otra cantidad
+  // (el servidor rechaza cualquier otra con CANTIDAD_INVALIDA).
+  const presentaciones = useMemo(
+    () => presets.map(Number).filter((n) => Number.isFinite(n) && n > 0),
+    [presets],
+  );
+  const soloPresentaciones =
+    esMedida && producto?.solo_presets_variable === true && presentaciones.length > 0;
+
   // Cálculos
   const cantNum = Number(cantidad);
   const cantValida = Number.isFinite(cantNum) && cantNum > 0;
@@ -96,6 +105,9 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
   // Validaciones de rango / paso (solo para variable_medida)
   const validacion = useMemo(() => {
     if (!esMedida || !cantValida) return { ok: cantValida, msg: '' };
+    if (soloPresentaciones && !presentaciones.includes(cantNum)) {
+      return { ok: false, msg: 'Elige una de las presentaciones' };
+    }
     const min = Number(producto?.cantidad_minima_variable);
     const max = Number(producto?.cantidad_maxima_variable);
     const step = Number(producto?.incremento_variable);
@@ -113,7 +125,7 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
       }
     }
     return { ok: true, msg: '' };
-  }, [esMedida, cantValida, cantNum, unidadElegida, producto]);
+  }, [esMedida, cantValida, cantNum, unidadElegida, producto, soloPresentaciones, presentaciones]);
 
   const puedeConfirmar = cantValida && validacion.ok && precioCalculado > 0;
 
@@ -217,7 +229,9 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
           {/* Presets */}
           {presets.length > 0 && (
             <div>
-              <Label className="text-xs">Cantidad rápida</Label>
+              <Label className="text-xs">
+                {soloPresentaciones ? 'Elige la presentación' : 'Cantidad rápida'}
+              </Label>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {presets.map((p, i) => {
                   const valor = Number(p);
@@ -228,7 +242,8 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
                       key={`preset-${i}`}
                       type="button"
                       onClick={() => setCantidad(String(valor))}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                      aria-pressed={seleccionado}
+                      className={`min-h-11 px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
                         seleccionado
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'bg-card hover:bg-muted/50 border-border'
@@ -244,8 +259,8 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
             </div>
           )}
 
-          {/* Cantidad */}
-          <div>
+          {/* Cantidad (no, si sólo se vende en sus presentaciones) */}
+          <div hidden={soloPresentaciones}>
             <Label className="text-xs">
               {esMedida ? 'Cantidad *' : `Número de ${producto?.nombre_porcion || 'porciones'} *`}
             </Label>
@@ -271,10 +286,12 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
                 </div>
               )}
             </div>
-            {!validacion.ok && validacion.msg && (
-              <p className="text-[11px] text-peligro mt-1">{validacion.msg}</p>
-            )}
           </div>
+          {!validacion.ok && validacion.msg && (
+            <p role="alert" className="text-xs text-peligro -mt-2">
+              {validacion.msg}
+            </p>
+          )}
 
           {/* Total */}
           <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">

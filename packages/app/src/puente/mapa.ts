@@ -265,6 +265,13 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       notas: { columna: 'notas', conversion: 'texto' },
       presets_variable_qr: { columna: 'presets_variable', conversion: 'jsonb', publico: true },
       presets_porcion_qr: { columna: 'presets_porcion', conversion: 'jsonb', publico: true },
+      // DP-16 · Lo que va por peso, sólo en sus presentaciones (sin cantidad libre). El servidor
+      // lo hace cumplir al valorar la línea (`exigirPresentacion`).
+      solo_presets_variable: {
+        columna: 'solo_presets_variable',
+        conversion: 'booleano',
+        publico: true,
+      },
     },
     derivados: {
       /**
@@ -1034,6 +1041,10 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         escribible: false,
       },
       notas_producto: { columna: 'notas', conversion: 'texto', escribible: false },
+      // DP-16 · Lo elegido de las opciones, con el precio que tenía cada una al pedirla (la
+      // instantánea de `instantaneaDeLasOpciones`): la precuenta y el ticket lo imprimen aparte
+      // de la nota.
+      opciones_snapshot: { columna: 'opciones', conversion: 'json', escribible: false },
       orden_visual: { columna: 'orden_visual', conversion: 'entero', escribible: false },
 
       // ── El contrato de trazabilidad del restaurante (migración 045) ──────

@@ -1971,3 +1971,33 @@ puerta los denuncia todos.
   la tarjeta (`role="alert"`) además del aviso, y el botón vuelve a estar disponible.
 - **Sin migración.** Lo hizo el agente A (Sonnet, 16 mutantes muertos); revisado, corregido el oyente e
   integrado por la sesión principal, con la prueba en el navegador.
+
+## DP-D104 · Las opciones cobran: precio con signo, biblioteca de grupos y peso en presentaciones · 10-11-2026
+
+- **El precio lo pone siempre el servidor.** Cada opción tiene un precio con signo
+  (`modificador_opciones.delta_precio_centavos`; el viejo `precio_extra_centavos` sólo sumaba y queda
+  como respaldo). Al escribir la línea (mesero, para llevar, portal, carrito compartido, `/pos`),
+  `precioConLasOpciones` lo suma: **por pieza** en lo que va por pieza (2 tacos con queso = 2 × (taco +
+  queso)) y **una vez por renglón** en lo que va por peso o por porción (½ kg de barbacoa con tortillas
+  de harina = ½ kg + $20). Nunca baja de cero. Lo cobrado queda congelado en
+  `orden_linea_modificadores.delta_precio_centavos` y en la instantánea de la línea con el precio de
+  cada opción ese día; descuentos, propina, dividir (la parte copia sus opciones), cancelar, quitar y el
+  margen trabajan sobre el total de la línea, que ya lo trae.
+- **Los grupos son una biblioteca del negocio** (`catalogo.guardar_grupo_de_opciones`,
+  `catalogo.asignar_grupos_de_opciones`, `catalogo.grupos_de_opciones`): nombre, una o varias,
+  obligatorio, mínimo y máximo (sólo en varias), activo y sus opciones con precio; un grupo se reusa en
+  varios productos, en el orden que el dueño le da en cada uno. Guardar con el editor viejo ya no vacía
+  un grupo compartido.
+- **Dónde se ve:** el diálogo de opciones del mesero y de la Caja («Queso +$15.00», «Agregar · $…»),
+  el portal (sólo si el negocio enseña precios en el portal, igual que el del platillo; con mínimo y
+  máximo), el ticket y la precuenta (un renglón por grupo con su precio; la nota queda sólo con lo
+  escrito a mano), el ticket de `/pos`, y el corte («Opciones vendidas · cuánto sumaron»: veces y
+  cuánto sumó o restó cada una). La cocina las lee aparte de la nota (DP-D105).
+- **Lo que va por peso:** se configura en Productos (unidad, cantidad libre con mínimo, máximo e
+  incremento, sus presentaciones y precio por kilo) y, nuevo, **«Vender sólo en estas
+  presentaciones»** (`productos.solo_presets_variable`): el mesero, la Caja y el comensal eligen ¼, ½ o
+  1 kg y no se teclea otra cantidad; el servidor rechaza cualquier otra (`CANTIDAD_INVALIDA`). Lo que va
+  por peso ya lleva opciones también en el portal.
+- **Migración 192** (aditiva: mínimo y máximo del grupo, el precio con signo de la línea, «sólo
+  presentaciones» y el fondo de la tarjeta del menú digital de la Parte 3), ficha 38.
+

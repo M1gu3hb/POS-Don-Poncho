@@ -25,6 +25,7 @@ import {
 import { cancelaciones } from './cancelaciones.ts';
 import { ventasPorCanal } from './por-canal.ts';
 import { retirosConPin } from './retiros-con-pin.ts';
+import { opcionesVendidas } from './opciones-vendidas.ts';
 import { devolucionesDelDia } from './devoluciones.ts';
 import { seccionesDeDescuentos } from './descuentos.ts';
 import type { DescuentosLeidos } from '~/corte-heredado/descuentos-del-corte';
@@ -107,6 +108,8 @@ export function corteDeRestaurante(
     // DP-16 · Mesas y pedidos para llevar, por separado.
     ...ventasPorCanal(hoja),
     ...productosVendidos(hoja),
+    // DP-16 · De dónde salió lo que sumaron las opciones.
+    ...opcionesVendidas(hoja),
     ...insumosConsumidos(hoja),
     ...gastos(hoja),
     ...inventarioBajo(hoja),

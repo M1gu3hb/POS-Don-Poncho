@@ -1289,6 +1289,74 @@
         "- clase:data-[state=open]:fade-in-0",
         "+ clase:ventana-velo"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/CantidadVariableDialog.jsx",
+      "porque": "DP-16 (2.1, DP-D104): «sólo presentaciones» — se elige la presentación (botones de 44 px) y el campo de cantidad se esconde; el aviso de validación queda fuera del bloque escondido.",
+      "testigos": [
+        "- clase:mt-1",
+        "- clase:px-3",
+        "- clase:text-[11px]",
+        "- texto:Cantidad rápida",
+        "+ clase:text-sm",
+        "+ clase:-mt-2",
+        "+ clase:min-h-11",
+        "+ clase:px-4"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/SeleccionModificadoresDialog.jsx",
+      "porque": "DP-16 (2.1, DP-D104): cada opción enseña su precio («+$15.00») y el botón dice el total con opciones («Agregar · $…»).",
+      "testigos": [
+        "- clase:text-[10px]",
+        "- texto:Agregar al pedido",
+        "+ clase:shrink-0",
+        "+ clase:text-xs",
+        "+ clase:text-xs",
+        "+ clase:tabular-nums",
+        "+ clase:font-semibold"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ProductoQRDialog.jsx",
+      "porque": "DP-16 (2.1, DP-D104): el comensal ve el precio de cada opción (si el negocio enseña precios), el mínimo y el máximo del grupo; objetivos de 44 px y textos de al menos 12 px.",
+      "testigos": [
+        "- clase:text-[11px]",
+        "- clase:text-[10px]",
+        "- clase:px-1.5",
+        "+ clase:text-sm",
+        "+ clase:flex-1",
+        "+ clase:font-semibold",
+        "+ clase:text-xs",
+        "+ clase:text-xs",
+        "+ clase:tabular-nums",
+        "+ clase:px-2",
+        "+ clase:min-w-0",
+        "+ clase:shrink-0",
+        "+ clase:min-h-11",
+        "+ clase:disabled:opacity-45"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/productos/TipoVentaSection.jsx",
+      "porque": "DP-16 (2.1, DP-D104): el interruptor «Vender sólo en estas presentaciones» para lo que va por peso.",
+      "testigos": [
+        "+ clase:p-3",
+        "+ clase:border",
+        "+ clase:flex",
+        "+ clase:justify-between",
+        "+ clase:text-xs",
+        "+ clase:font-semibold",
+        "+ clase:text-muted-foreground",
+        "+ clase:items-start",
+        "+ clase:mt-0.5",
+        "+ clase:gap-3",
+        "+ clase:col-span-2",
+        "+ clase:rounded-lg",
+        "+ clase:min-w-0",
+        "+ clase:text-sm",
+        "+ texto:Vender sólo en estas presentaciones"
+      ]
     }
   ]
 }

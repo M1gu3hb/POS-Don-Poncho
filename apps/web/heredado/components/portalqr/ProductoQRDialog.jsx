@@ -11,12 +11,22 @@ import {
   calcularPrecioPorcion,
   mlPorPorcionEfectivo,
 } from '@/utils/tipoVentaUtils';
+import {
+  avisoDelGrupo,
+  elegidasConPrecio,
+  faltaEnElGrupo,
+  puedeElegirOtra,
+  totalDeLaLinea,
+} from '~/portal/eleccion-de-opciones';
+import { etiquetaDelPrecio } from '~/restaurante/toma-de-pedido/precio-de-las-opciones';
 
 /**
  * Modal de producto para el comensal en Portal QR.
  * - Reutiliza la MISMA estructura de modificadores que ya usa el Mesero
- *   (producto.modificadores: [{nombre, obligatorio, tipo, opciones:[{id,nombre,activo}]}]).
- * - No afecta precio/costo/inventario (igual que en Mesero).
+ *   (producto.modificadores: [{nombre, obligatorio, tipo, minimo, maximo, opciones:[{id,nombre,precioCentavos}]}]).
+ * - DP-16 · Las opciones pueden cobrar: cada una enseña su precio (si el negocio enseña precios),
+ *   el grupo respeta su mínimo y su máximo, y lo que va por peso también lleva opciones. El precio
+ *   que cuenta lo pone el servidor (`eleccion-de-opciones.ts` sólo lo enseña).
  * - Emite onConfirm({producto, cantidad, notas, modificadores})
  *
  * Diseño mobile-first. No introduce nuevas dependencias.
@@ -86,7 +96,7 @@ export default function ProductoQRDialog({
       const next = new Set(actual);
       if (grupo.tipo === 'multiple') {
         if (next.has(opcionId)) next.delete(opcionId);
-        else next.add(opcionId);
+        else if (puedeElegirOtra(grupo, next)) next.add(opcionId);
       } else {
         // 'unica' (default)
         next.clear();
@@ -103,10 +113,8 @@ export default function ProductoQRDialog({
   const validar = () => {
     const errs = {};
     for (const g of gruposActivos) {
-      if (g.obligatorio) {
-        const set = selecciones[g.nombre] || new Set();
-        if (set.size === 0) errs[g.nombre] = true;
-      }
+      const falta = faltaEnElGrupo(g, selecciones[g.nombre] || new Set());
+      if (falta) errs[g.nombre] = falta;
     }
     setErrores(errs);
     return Object.keys(errs).length === 0;
@@ -199,31 +207,16 @@ export default function ProductoQRDialog({
         producto,
         cantidad: 1, // cantidad lógica = 1 para variables (la cantidad real va en _variable)
         notas: notas.trim(),
-        modificadores: [], // los modificadores no se combinan con variable (mantiene simple)
+        // DP-16 · Lo que va por peso también lleva opciones (la barbacoa con su salsa).
+        modificadores: elegidasConPrecio(gruposActivos, selecciones),
         _variable: variableSnap,
       });
       return;
     }
 
-    // Construir array de modificadores compatible con flujo Mesero (precio_fijo).
-    const modificadoresArr = gruposActivos
-      .map((g) => {
-        const set = selecciones[g.nombre] || new Set();
-        if (set.size === 0) return null;
-        const opcionesElegidas = g.opciones
-          .filter((o) => set.has(o.id))
-          .map((o) => ({ id: o.id, nombre: o.nombre }));
-        if (opcionesElegidas.length === 0) return null;
-        return {
-          // CRITICAL: usar `grupo_nombre` (NO `grupo`) para compatibilidad
-          // con CocinaPedidoCardPremium (lee m.grupo_nombre) y con el flujo
-          // Mesero (que también usa grupo_nombre).
-          grupo_nombre: g.nombre,
-          tipo: g.tipo || 'unica',
-          opciones: opcionesElegidas,
-        };
-      })
-      .filter(Boolean);
+    // Los grupos elegidos, compatibles con el flujo del mesero (`grupo_nombre`, no `grupo`: lo
+    // leen la cocina y la nota del pedido), con el precio de cada opción.
+    const modificadoresArr = elegidasConPrecio(gruposActivos, selecciones);
 
     onConfirm?.({
       producto,
@@ -236,7 +229,13 @@ export default function ProductoQRDialog({
   if (!open || !producto) return null;
 
   const precio = Number(producto.precio_venta) || 0;
-  const totalLinea = esVariable ? precioVariable : precio * cantidad;
+  const elegidasAhora = elegidasConPrecio(gruposActivos, selecciones);
+  const totalLinea = esVariable
+    ? totalDeLaLinea({ precio: 0, cantidad: 1, elegidas: elegidasAhora, precioPorPeso: precioVariable })
+    : totalDeLaLinea({ precio, cantidad, elegidas: elegidasAhora });
+  // DP-16 · «Sólo presentaciones»: lo que va por peso se pide en las presentaciones del negocio.
+  const soloPresentaciones =
+    esVariableMedida && producto?.solo_presets_variable === true && presetsVariable.length > 0;
   const puedeConfirmarVariable =
     !esVariable || (cantVariableValida && validacionVariable.ok && precioVariable > 0);
 
@@ -342,7 +341,8 @@ export default function ProductoQRDialog({
                 </div>
               )}
 
-              {/* Input numérico */}
+              {/* Input numérico (no, si el negocio sólo vende sus presentaciones) */}
+              {!soloPresentaciones && (
               <div className="flex gap-2 items-center">
                 <input
                   type="number"
@@ -360,6 +360,7 @@ export default function ProductoQRDialog({
                     : producto?.nombre_porcion || 'porción'}
                 </div>
               </div>
+              )}
 
               {!validacionVariable.ok && validacionVariable.msg && (
                 <p className="text-[11px] text-peligro font-semibold">{validacionVariable.msg}</p>
@@ -367,10 +368,8 @@ export default function ProductoQRDialog({
             </div>
           )}
 
-          {/* Grupos de modificadores — NO se muestran para productos variables
-              en v1 (mantiene la lógica simple). */}
-          {!esVariable &&
-            gruposActivos.map((g) => (
+          {/* Grupos de opciones — DP-16: también en lo que va por peso. */}
+          {gruposActivos.map((g) => (
               <div
                 key={g.nombre}
                 className={`rounded-2xl border p-3 ${
@@ -379,27 +378,35 @@ export default function ProductoQRDialog({
               >
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <p className="text-sm font-heading font-bold">{g.nombre}</p>
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                    {g.obligatorio ? 'Obligatorio' : 'Opcional'}
-                    {g.tipo === 'multiple' ? ' · varios' : ''}
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    {avisoDelGrupo(g)}
                   </span>
                 </div>
                 <div className="space-y-1.5">
                   {g.opciones.map((o) => {
                     const set = selecciones[g.nombre] || new Set();
                     const checked = set.has(o.id);
+                    const tope = !checked && !puedeElegirOtra(g, set);
+                    const etiqueta = mostrarPrecios ? etiquetaDelPrecio(o.precioCentavos) : '';
                     return (
                       <button
                         key={o.id}
                         type="button"
                         onClick={() => toggleOpcion(g, o.id)}
-                        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border-2 text-sm text-left transition-colors ${
+                        disabled={tope}
+                        aria-pressed={checked}
+                        className={`w-full min-h-11 flex items-center justify-between gap-2 px-3 py-2 rounded-xl border-2 text-sm text-left transition-colors disabled:opacity-45 ${
                           checked
                             ? 'border-primary bg-primary/10 text-primary font-semibold'
                             : 'border-border bg-card text-foreground'
                         }`}
                       >
-                        <span>{o.nombre}</span>
+                        <span className="flex-1 min-w-0">{o.nombre}</span>
+                        {etiqueta && (
+                          <span className="shrink-0 tabular-nums text-sm font-semibold">
+                            {etiqueta}
+                          </span>
+                        )}
                         <span
                           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] ${
                             checked
@@ -414,8 +421,8 @@ export default function ProductoQRDialog({
                   })}
                 </div>
                 {errores[g.nombre] && (
-                  <p className="text-[11px] text-peligro mt-1.5 font-semibold">
-                    Selecciona una opción en: {g.nombre}
+                  <p role="alert" className="text-xs text-peligro mt-1.5 font-semibold">
+                    {errores[g.nombre]}
                   </p>
                 )}
               </div>

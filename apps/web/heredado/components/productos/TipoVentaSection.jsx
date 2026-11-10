@@ -28,6 +28,7 @@
 import React, { useMemo } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -94,6 +95,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
         cantidad_maxima_variable: undefined,
         incremento_variable: undefined,
         presets_variable_qr: [],
+        solo_presets_variable: false,
         capacidad_contenedor_ml: undefined,
         porciones_por_contenedor: undefined,
         ml_por_porcion: undefined,
@@ -128,6 +130,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
         cantidad_maxima_variable: undefined,
         incremento_variable: undefined,
         presets_variable_qr: [],
+        solo_presets_variable: false,
         // Defaults razonables
         unidad_contenedor_base: 'ml',
         nombre_porcion: v.nombre_porcion || 'shot',
@@ -332,6 +335,29 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
               <p className="text-[10px] text-muted-foreground mt-0.5">
                 Botones rápidos visibles al comensal en el Portal QR.
               </p>
+            </div>
+            {/* DP-16 · Sólo en sus presentaciones: ¼, ½ y 1 kg, sin cantidad libre. */}
+            <div className="col-span-2 flex items-start justify-between gap-3 rounded-lg border p-3">
+              <div className="min-w-0">
+                <Label htmlFor="solo-presentaciones" className="text-sm font-semibold">
+                  Vender sólo en estas presentaciones
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {Array.isArray(v.presets_variable_qr) && v.presets_variable_qr.length > 0
+                    ? 'El mesero, la caja y el comensal eligen una de las presentaciones; no se teclea otra cantidad.'
+                    : 'Escribe primero las presentaciones (arriba).'}
+                </p>
+              </div>
+              <Switch
+                id="solo-presentaciones"
+                checked={
+                  v.solo_presets_variable === true &&
+                  Array.isArray(v.presets_variable_qr) &&
+                  v.presets_variable_qr.length > 0
+                }
+                disabled={!Array.isArray(v.presets_variable_qr) || v.presets_variable_qr.length === 0}
+                onCheckedChange={(si) => handle({ solo_presets_variable: si === true })}
+              />
             </div>
           </div>
         </div>
