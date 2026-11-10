@@ -51,7 +51,15 @@ describe('DP-15 · las pantallas respetan lo agotado', () => {
   it('el portal no abre un platillo agotado y lo enseña «Agotado hoy»', () => {
     const c = sinEspacios('heredado/pages/PortalCliente.jsx');
     expect(c).toContain('if(!pedidosQRActivos)return;if(producto?.agotado===true){toast.info(');
-    expect(c).toContain('Agotadohoy');
+    // DP-16 · Las tarjetas del portal viven en los dos menús del comensal: cada uno lo marca y no lo
+    // deja tocar (la tarjeta digital sale como `div`, el renglón de «a la carta» sin botón).
+    const digital = sinEspacios('src/portal/menu-digital/MenuDigital.tsx');
+    expect(digital).toContain('constagotado=producto.agotado===true;');
+    expect(digital).toContain('Agotadohoy</span>');
+    expect(digital).toContain('if(!puedePedir||agotado){');
+    const carta = sinEspacios('src/portal/menu-digital/MenuALaCarta.tsx');
+    expect(carta).toContain('constactivo=puedePedir&&!agotado;');
+    expect(carta).toContain('Agotadohoy</span>');
   });
 
   it('el menú del portal en lista también lo enseña «Agotado hoy» y apaga «Agregar» (QA, J-H2)', () => {

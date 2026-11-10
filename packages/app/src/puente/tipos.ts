@@ -60,7 +60,7 @@ export interface CampoMapeado {
   readonly columna: string;
   readonly conversion: Conversion;
   /** Validación adicional antes de aceptar una escritura del navegador. */
-  readonly validacion?: 'url_http';
+  readonly validacion?: 'url_http' | 'fondo_de_tarjeta';
   /**
    * Quién puede LEER este campo. `undefined` = cualquiera con sesión.
    *

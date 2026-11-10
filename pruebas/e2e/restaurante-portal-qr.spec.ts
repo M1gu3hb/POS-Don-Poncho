@@ -267,9 +267,10 @@ test.describe('el portal del comensal', () => {
         ).toBeVisible();
         // Cada platillo con SU precio, en su tarjeta.
         for (const platillo of [CARTA.arrachera, CARTA.sopa, CARTA.cerveza]) {
-          // La tarjeta es un `<div>` si el comensal sólo lee y un `<button>` si también puede pedir.
+          // La tarjeta del menú digital (DP-16) es un `<div>` si el comensal sólo lee y un `<button>`
+          // si también puede pedir.
           const tarjeta = telefono
-            .locator('.rounded-2xl')
+            .locator('.menu-tarjeta')
             .filter({ has: telefono.getByText(platillo.nombre, { exact: true }) })
             .last();
           await expect(tarjeta, `El menú no enseña «${platillo.nombre}».`).toContainText(
@@ -321,7 +322,7 @@ test.describe('el portal del comensal', () => {
         const telefono = telefonoUno!;
         // Con los pedidos del comensal encendidos, cada tarjeta del menú es un botón.
         const tarjeta = telefono
-          .locator('button.rounded-2xl')
+          .locator('button.menu-tarjeta')
           .filter({ has: telefono.getByText(CARTA.cerveza.nombre, { exact: true }) });
         await expect(
           tarjeta,

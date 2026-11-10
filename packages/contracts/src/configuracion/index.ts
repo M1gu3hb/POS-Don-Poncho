@@ -65,3 +65,5 @@ export function navegacionParaPaquete(paquete: Paquete): readonly ItemNavegacion
     CONFIGURACION,
   ];
 }
+
+export * from './fondos-de-tarjeta.ts';

@@ -1478,4 +1478,50 @@ Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PRO
   buscaba un `div`) y en teléfono sólo se veía una columna a la vez, así que los «Listo» de «En
   preparación» no existían. Ahora en teléfono las tres columnas van apiladas (las fichas de arriba
   llevan a cada una) y la prueba busca la cuenta como renglón.
+- La tercera CI del #18: 10 de 10 (la jornada completa en sus tres aparatos y el rastreo).
 
+### La Parte 2 en producción (10-11, mañana)
+
+- 07:05 Ensayo de la 192 contra la propia (por la de sesión) y luego **la 192, aplicada** con el script
+  `migrate` de `packages/data` desde una copia de `dp-16-2` (`7666597`). `verify:esquema` estricto
+  cumple (1757 columnas, 1388 restricciones, 446 índices) y `verify:rls` cerrado (177 relaciones).
+- Merge del [#18](https://github.com/M1gu3hb/POS-Don-Poncho/pull/18) (`2e8da35`, squash, a nombre de
+  M1gu3hb). Production `READY` (`dpl_3GJ7…`) en un minuto: el árbol es el mismo que ya había
+  construido la vista previa del PR.
+- 07:07 Don Poncho en ceros (0 cajas, 0 cuentas, 0 folios, 0 comandas, 0 carritos, 10 mesas libres) y
+  el humo sin cobrar (`link.mjs`): la entrada 200 y sin desborde en 6 aparatos (5.9 s la primera, el
+  arranque en frío; luego de 1.3 a 2.2 s), el portal en 5 (de 0.65 a 1.6 s), 8 a la vez todos 200 en
+  3.4 s, red lenta (10 s la primera, 1.5 s con caché) y el manifiesto.
+- 08:06 Vercel: ningún error en producción de las 07:05 a las 08:06 (la hora después del despliegue).
+
+
+### 3 · El menú del comensal (la sesión principal, rama `dp-16-3`)
+
+Sin agentes: la Parte 3 es sobre todo pantalla y se probó a ojo en cada vuelta.
+
+- **El modo.** `portal_qr_modo_menu` gana `digital` y es el de omisión para quien nunca eligió. Quien ya
+  eligió lo conserva: Don Poncho tiene `menu_subido` guardado a propósito y así sigue en producción.
+  Configuración → QR dice «Cómo se ve el menú»: Menú digital, A la carta, Páginas subidas, A la carta y
+  páginas.
+- **El menú digital** (`src/portal/menu-digital/`): la barra de secciones pegada bajo el encabezado y
+  siguiendo a la que se lee; tarjetas en dos columnas (tres en tableta). Con foto, la foto entera con su
+  degradado y el texto en blanco. Sin foto, un fondo de la lista cerrada (`FONDOS_DE_TARJETA`: cuatro
+  colores, dos degradados y tres ilustraciones dibujadas con máscara: papel picado, talavera y milpa)
+  y la inicial grande de adorno. Si el dueño no eligió, los fondos se alternan para que un menú sin
+  fotos, como el de Don Poncho hoy, no sea una pared del mismo color. El hueco de promociones queda
+  escondido (`data-promociones hidden`).
+- **«A la carta»**: todas las secciones seguidas con la misma barra, nombre y precio en la misma línea y
+  el «+» de 44 px centrado en su renglón.
+- **El encabezado** lleva el nombre de la mesa y la bolsa con las piezas del pedido de la mesa: abre el
+  carrito compartido (`abrirConSenal`).
+- **El fondo** se elige en Productos (`SelectorDeFondo`, sólo si el platillo no tiene foto). El puente lo
+  valida al escribir (`validacion: 'fondo_de_tarjeta'`) y el portal lo vuelve a filtrar al salir (lista
+  blanca): lo que no está en la lista no llega ni como clase. La columna ya venía en la 192: la Parte 3
+  no lleva migración.
+- **Tropiezos.** `overflow-x-hidden` en la raíz del portal volvía a la página un área de desplazamiento y
+  la barra dejaba de pegarse: `overflow-x-clip`. La ficha del platillo sin foto enseñaba un vaso de
+  cerveza de relleno («Aguacate»): ahora lleva el fondo de su tarjeta. En las capturas salía «Sin
+  conexión, reintentando…»: cada aparato abre un navegador limpio (un teléfono nuevo) y, pasada la
+  docena desde la misma IP en la misma mesa, topaba con `telefono_nuevo_mesa_ip` (12 cada 15 min).
+  El límite hace lo que debe; para las capturas se vacía `limite_tasa` de la base de demostración
+  antes de cada tanda.

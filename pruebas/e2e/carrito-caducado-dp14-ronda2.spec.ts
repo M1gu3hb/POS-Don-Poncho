@@ -59,7 +59,7 @@ function envejecerElCarrito(): void {
 
 function tarjetaDe(telefono: Page, nombre: string) {
   return telefono
-    .locator('button.rounded-2xl')
+    .locator('button.menu-tarjeta')
     .filter({ has: telefono.getByText(nombre, { exact: true }) });
 }
 

@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus, Minus, Scale, Beaker } from 'lucide-react';
 import { formatCurrency } from '@/utils/financialUtils';
-import ProductoPlaceholder from '@/components/portalqr/ProductoPlaceholder';
+import { fondoDeLaTarjeta, inicialDelPlatillo } from '~/portal/menu-digital/menu-digital';
+import '~/portal/menu-digital/menu-digital.css';
 import {
   TIPO_VENTA,
   calcularPrecioVariableMedida,
@@ -261,8 +262,17 @@ export default function ProductoQRDialog({
               className="w-full h-44 sm:h-52 object-cover"
             />
           ) : (
-            <div className="w-full h-44 sm:h-52">
-              <ProductoPlaceholder producto={producto} />
+            // DP-16 · Sin foto, el mismo fondo y la inicial que su tarjeta del menú digital.
+            <div
+              data-fondo={fondoDeLaTarjeta(producto)}
+              className="menu-tarjeta relative w-full h-44 sm:h-52 overflow-hidden"
+            >
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -right-2 -top-8 -z-10 select-none text-[11rem] font-black leading-none opacity-15"
+              >
+                {inicialDelPlatillo(producto.nombre || '')}
+              </span>
             </div>
           )}
           <button

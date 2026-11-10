@@ -24,7 +24,7 @@ export default function ConfiguracionQRTab({ config }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
     portal_qr_activo: false,
-    portal_qr_modo_menu: 'productos_pos',
+    portal_qr_modo_menu: 'digital',
     portal_qr_mostrar_precios: true,
     portal_qr_mostrar_sin_imagen: true,
     portal_qr_permitir_ordenar: true,
@@ -44,7 +44,7 @@ export default function ConfiguracionQRTab({ config }) {
     if (!config) return;
     setForm({
       portal_qr_activo: config.portal_qr_activo === true,
-      portal_qr_modo_menu: config.portal_qr_modo_menu || 'productos_pos',
+      portal_qr_modo_menu: config.portal_qr_modo_menu || 'digital',
       portal_qr_mostrar_precios: config.portal_qr_mostrar_precios !== false,
       portal_qr_mostrar_sin_imagen: config.portal_qr_mostrar_sin_imagen !== false,
       portal_qr_permitir_ordenar: config.portal_qr_permitir_ordenar !== false,
@@ -130,18 +130,22 @@ export default function ConfiguracionQRTab({ config }) {
             onCheckedChange={(v) => setForm({ ...form, portal_qr_activo: v })}
           />
         </Row>
-        <Row label="Modo de menú QR" hint="Qué se muestra al cliente cuando escanea el QR.">
+        <Row
+          label="Cómo se ve el menú"
+          hint="Lo que ve el comensal al escanear el QR. «Menú digital» es el estilo nuevo: tarjetas con foto o con su fondo."
+        >
           <Select
             value={form.portal_qr_modo_menu}
             onValueChange={(v) => setForm({ ...form, portal_qr_modo_menu: v })}
           >
-            <SelectTrigger className="w-44 h-9">
+            <SelectTrigger className="w-56 h-9" aria-label="Cómo se ve el menú">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="productos_pos">Productos del POS</SelectItem>
-              <SelectItem value="menu_subido">Menú subido</SelectItem>
-              <SelectItem value="mixto">Mixto</SelectItem>
+              <SelectItem value="digital">Menú digital</SelectItem>
+              <SelectItem value="productos_pos">A la carta</SelectItem>
+              <SelectItem value="menu_subido">Páginas subidas</SelectItem>
+              <SelectItem value="mixto">A la carta y páginas</SelectItem>
             </SelectContent>
           </Select>
         </Row>

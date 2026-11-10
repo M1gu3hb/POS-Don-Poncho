@@ -272,6 +272,14 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         conversion: 'booleano',
         publico: true,
       },
+      // DP-16 · El fondo de la tarjeta sin foto en el menú digital: uno de la lista cerrada
+      // (`FONDOS_DE_TARJETA`); el portal lo pinta con una clase, nunca como CSS.
+      fondo_tarjeta: {
+        columna: 'fondo_tarjeta',
+        conversion: 'texto',
+        publico: true,
+        validacion: 'fondo_de_tarjeta',
+      },
     },
     derivados: {
       /**

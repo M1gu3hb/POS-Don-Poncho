@@ -93,6 +93,50 @@ function ESTADOS_DE_LA_COCINA_GRANDE() {
  * acaba pintando el estado, la fila sobra y hay que borrarla.
  */
 export const SIN_ESTADO = [
+  {
+    pantalla: 'portal/menu-digital/MenuDigital',
+    estado: 'error',
+    razon:
+      'El fallo de la lectura del portal lo pinta la página entera (`PortalCliente`, ScreenError): el menú recibe los platillos ya leídos.',
+  },
+  {
+    pantalla: 'portal/menu-digital/MenuALaCarta',
+    estado: 'error',
+    razon:
+      'El fallo de la lectura del portal lo pinta la página entera (`PortalCliente`, ScreenError): la carta recibe los platillos ya leídos.',
+  },
+  {
+    pantalla: 'portal/menu-digital/BarraDeSecciones',
+    estado: 'vacio',
+    razon:
+      'Pieza de los menús, no pantalla: sólo se pinta cuando hay secciones (el vacío lo dice el menú con `Vacio`).',
+  },
+  {
+    pantalla: 'portal/menu-digital/BarraDeSecciones',
+    estado: 'cargando',
+    razon:
+      'No lee nada: recibe las secciones ya armadas; la carga la pinta el menú con `EsqueletoDeLista`.',
+  },
+  {
+    pantalla: 'portal/menu-digital/BarraDeSecciones',
+    estado: 'error',
+    razon: 'No lee nada: el fallo de la lectura lo pinta la página del portal.',
+  },
+  {
+    pantalla: 'portal/menu-digital/SelectorDeFondo',
+    estado: 'vacio',
+    razon: 'La lista de fondos es fija (`FONDOS_DE_TARJETA`): nunca está vacía.',
+  },
+  {
+    pantalla: 'portal/menu-digital/SelectorDeFondo',
+    estado: 'cargando',
+    razon: 'No lee nada: la lista de fondos viene del código.',
+  },
+  {
+    pantalla: 'portal/menu-digital/SelectorDeFondo',
+    estado: 'error',
+    razon: 'No lee nada ni escribe: el guardado y su error son del diálogo del producto.',
+  },
   ...ESTADOS_DE_LA_COCINA_GRANDE(),
   {
     pantalla: 'catalogo/opciones/EditorDeGrupo',

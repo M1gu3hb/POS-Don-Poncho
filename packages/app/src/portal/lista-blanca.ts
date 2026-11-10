@@ -1,4 +1,5 @@
 import { estaAgotado } from '@morphiqpos/domain/catalogo';
+import { esFondoDeTarjeta } from '@morphiqpos/contracts';
 
 import type { BanderasPortal } from './banderas.ts';
 import { aCentavos, aPesos } from './conversion.ts';
@@ -130,6 +131,8 @@ export interface FilaProductoMenu {
   readonly presets_porcion: unknown;
   /** DP-16 · Lo que va por peso, sólo en sus presentaciones. */
   readonly solo_presets_variable?: boolean | null;
+  /** DP-16 · El fondo de la tarjeta sin foto del menú digital (de la lista cerrada). */
+  readonly fondo_tarjeta?: string | null;
   /** DP-15 · Fin del día en que se marcó agotado, o nulo. */
   readonly agotado_hasta?: Date | null;
 }
@@ -176,6 +179,8 @@ export interface ProductoDeMenu {
   readonly presets_porcion_qr: readonly unknown[];
   /** DP-16 · Sólo en sus presentaciones: el comensal elige una, no teclea los gramos. */
   readonly solo_presets_variable: boolean;
+  /** DP-16 · El fondo de la tarjeta sin foto; uno de `FONDOS_DE_TARJETA` o nulo (el de omisión). */
+  readonly fondo_tarjeta: string | null;
   /**
    * Sus grupos de opciones —el sabor del pulque, el relleno de la quesadilla— (DP-5).
    * `ProductoQRDialog` los pinta y el carrito los pliega en la nota del pedido. DP-16 · Con el
@@ -227,6 +232,7 @@ export function productoDeMenu(
     presets_variable_qr: comoLista(fila.presets_variable),
     presets_porcion_qr: comoLista(fila.presets_porcion),
     solo_presets_variable: fila.solo_presets_variable === true,
+    fondo_tarjeta: esFondoDeTarjeta(fila.fondo_tarjeta) ? fila.fondo_tarjeta : null,
     modificadores,
     agotado: estaAgotado(fila.agotado_hasta, ahora),
   };

@@ -168,6 +168,8 @@ describe('el menú no lleva costos, márgenes ni receta', () => {
         'presets_variable_qr',
         // DP-16 · Sólo en sus presentaciones: un sí o un no, sin precio.
         'solo_presets_variable',
+        // DP-16 · El fondo de la tarjeta del menú digital: una clave de la lista cerrada.
+        'fondo_tarjeta',
         // Los grupos de opciones (DP-5): el sabor del pulque se elige desde el QR. Sólo nombres.
         'modificadores',
         // DP-15 · Agotado del día: el comensal lo ve apagado y no lo puede pedir (un sí o un no; la
@@ -203,6 +205,17 @@ describe('el menú no lleva costos, márgenes ni receta', () => {
     expect(
       productoDeMenu({ ...FILA_PRODUCTO, presets_variable: null }, true).presets_variable_qr,
     ).toEqual([]);
+  });
+
+  it('el fondo de la tarjeta sale sólo si es de la lista cerrada (DP-16)', () => {
+    // La columna se valida al escribir, pero lo que ya estuviera en la base (o entrara por otro
+    // lado) no llega al comensal: el portal lo pinta como `data-fondo` y nada más.
+    const con = (fondo: string | null) =>
+      productoDeMenu({ ...FILA_PRODUCTO, fondo_tarjeta: fondo }, true).fondo_tarjeta;
+    expect(con('ilustracion:talavera')).toBe('ilustracion:talavera');
+    expect(con('red; background:url(https://x)')).toBeNull();
+    expect(con('ilustracion:otra')).toBeNull();
+    expect(con(null)).toBeNull();
   });
 
   it('ni costo, ni utilidad, ni margen, ni receta, ni insumo', () => {

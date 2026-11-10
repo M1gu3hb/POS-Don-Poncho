@@ -2,12 +2,10 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useParams } from '@/enrutado';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatCurrency } from '@/utils/financialUtils';
-import { Bell, Sparkles, CheckCircle2, AlertTriangle, Receipt } from 'lucide-react';
+import { Bell, Sparkles, CheckCircle2, AlertTriangle, Receipt, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import AtencionFAB from '@/components/portalqr/AtencionFAB';
-import ProductoPlaceholder from '@/components/portalqr/ProductoPlaceholder';
 import PedirCuentaQR from '@/components/portalqr/PedirCuentaQR';
 import AbrirMesaQRDialog from '@/components/portalqr/AbrirMesaQRDialog';
 import ProductoQRDialog from '@/components/portalqr/ProductoQRDialog';
@@ -38,6 +36,8 @@ import {
 } from '~/portal/carrito-compartido/carrito-de-la-mesa';
 import { useCarritoDeLaMesa } from '~/portal/carrito-compartido/use-carrito-de-la-mesa';
 import { SONDEO_DEL_PORTAL_MS } from '~/portal/sondeo-del-portal';
+import { MenuDigital } from '~/portal/menu-digital/MenuDigital';
+import { MenuALaCarta } from '~/portal/menu-digital/MenuALaCarta';
 
 /**
  * Vista pública del comensal (sin sidebar, sin POS).
@@ -56,7 +56,8 @@ export default function PortalClienteWithBoundary() {
 
 function PortalCliente() {
   const { token } = useParams();
-  const [tabSeccion, setTabSeccion] = useState('todas');
+  // DP-16 · Una señal para abrir la hoja del pedido desde el contador del encabezado.
+  const [abrirCarrito, setAbrirCarrito] = useState(0);
   const [enviado, setEnviado] = useState(null); // {tipo, time}
   // Qué aviso descartó el comensal con «OK». Se guarda el id y no un booleano:
   // con un booleano, tocar OK dejaba mudo también el SIGUIENTE aviso.
@@ -130,7 +131,8 @@ function PortalCliente() {
   // "Portal no disponible" mientras cargaban las cinco consultas.
   const cargando = cargandoPortal || (!!token && !portalFetched);
 
-  const modoMenu = config?.portal_qr_modo_menu || 'productos_pos';
+  // DP-16 · El menú digital es el estilo nuevo del sistema (el servidor ya decide el modo).
+  const modoMenu = config?.portal_qr_modo_menu || 'digital';
   // FLUJO PRINCIPAL: el mesero dispara la cuenta y el QR muestra propina en vivo.
   // 'mesero_dispara' (default): el cliente NO ve botón "Pedir cuenta" en el FAB.
   // 'cliente_solicita': el cliente sí puede pedir cuenta desde el QR.
@@ -153,16 +155,6 @@ function PortalCliente() {
   // listos» es simplemente «el portal ya cargó»: el flash de «sin productos»
   // que obligaba a mirar `isFetched` de tres queries distintas ya no existe.
   const productosListos = portalFetched;
-
-  const productosFiltrados = useMemo(() => {
-    const arr = Array.isArray(productos) ? productos : [];
-    if (tabSeccion === 'todas') return arr;
-    if (tabSeccion.startsWith('cat-')) {
-      const id = tabSeccion.slice(4);
-      return arr.filter((p) => p?.categoria_id === id);
-    }
-    return arr;
-  }, [productos, tabSeccion]);
 
   const seccionesUtiles = useMemo(
     () =>
@@ -229,6 +221,7 @@ function PortalCliente() {
   // mira cada 2.5 s —con eso cada teléfono deja su latido—. DP-12.2: también con la mesa
   // cerrada: los comensales arman su pedido y el mesero lo confirma al llegar.
   const carritoMesa = useCarritoDeLaMesa(token || '', pedidosQRActivos);
+  const piezasEnElCarrito = carritoMesa.estado?.lineas?.length ?? 0;
 
   // === HANDLERS PEDIDO QR ===
   const handleClickProducto = (producto) => {
@@ -420,6 +413,7 @@ function PortalCliente() {
 
   const mostrarPrecios = config?.portal_qr_mostrar_precios !== false;
   const mostrarSinImagen = config?.portal_qr_mostrar_sin_imagen !== false;
+  const usarDigital = modoMenu === 'digital';
   const usarProductos = modoMenu === 'productos_pos' || modoMenu === 'mixto';
   const usarSecciones = modoMenu === 'menu_subido' || modoMenu === 'mixto';
 
@@ -442,7 +436,9 @@ function PortalCliente() {
 
   return (
     <div
-      className="relative min-h-screen bg-background text-foreground pb-32 overflow-x-hidden"
+      // `overflow-x-clip` y no `-hidden`: `hidden` vuelve al contenedor un área de desplazamiento y el
+      // encabezado y la barra de secciones del menú dejaban de quedarse arriba (DP-16).
+      className="relative min-h-screen bg-background text-foreground pb-32 overflow-x-clip"
       {...atributosDelTema(tema)}
       // Los estilos cambian su paleta oscura con `data-modo` en el MISMO elemento.
       {...(tema.estilo === null ? {} : { 'data-modo': oscuro ? 'oscuro' : 'claro' })}
@@ -467,7 +463,7 @@ function PortalCliente() {
       )}
 
       {/* Header con logo del negocio + toggle de tema */}
-      <header className="sticky top-0 z-30 bg-card/85 backdrop-blur border-b shadow-sm">
+      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur border-b shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           {brandLogo && (
             <img
@@ -493,6 +489,20 @@ function PortalCliente() {
               </p>
             )}
           </div>
+          {/* DP-16 · El pedido de la mesa, también arriba: el contador abre la hoja del pedido. */}
+          {usarDigital && piezasEnElCarrito > 0 && (
+            <button
+              type="button"
+              onClick={() => setAbrirCarrito((n) => n + 1)}
+              aria-label={`Ver el pedido de la mesa: ${piezasEnElCarrito} ${piezasEnElCarrito === 1 ? 'platillo' : 'platillos'}`}
+              className="relative grid min-h-11 min-w-11 place-items-center rounded-full border bg-card"
+            >
+              <ShoppingBag className="size-5" aria-hidden />
+              <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground tabular-nums">
+                {piezasEnElCarrito}
+              </span>
+            </button>
+          )}
           <ThemeToggle variant="icon" />
         </div>
       </header>
@@ -516,54 +526,29 @@ function PortalCliente() {
           </div>
         )}
 
-        {/* MODO PRODUCTOS POS */}
+        {/* DP-16 · EL MENÚ DIGITAL: tarjetas en dos columnas, con foto o con su fondo. */}
+        {usarDigital && (
+          <MenuDigital
+            productos={productos}
+            categorias={categorias}
+            mostrarPrecios={mostrarPrecios}
+            puedePedir={pedidosQRActivos && !cuentaYaSolicitada}
+            alTocar={handleClickProducto}
+            cargando={!productosListos}
+          />
+        )}
+
+        {/* DP-16 · «A LA CARTA»: todas las secciones seguidas, con su barra para saltar. */}
         {usarProductos && (
-          <section>
-            {/* Tabs de categorías */}
-            <div className="flex gap-1.5 overflow-x-auto pb-2">
-              <Pill active={tabSeccion === 'todas'} onClick={() => setTabSeccion('todas')}>
-                Todo
-              </Pill>
-              {(categorias || []).map((c) => (
-                <Pill
-                  key={c.id}
-                  active={tabSeccion === `cat-${c.id}`}
-                  onClick={() => setTabSeccion(`cat-${c.id}`)}
-                >
-                  {c?.nombre || '—'}
-                </Pill>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* HOTFIX 6A.2: si productos aún cargan, mostrar loader.
-                  Antes salía "sin productos" durante el primer fetch. */}
-              {!productosListos ? (
-                <div className="col-span-full flex flex-col items-center gap-2 py-10">
-                  <div className="w-8 h-8 border-4 border-border border-t-primary rounded-full animate-spin" />
-                  <p className="text-xs text-muted-foreground">Cargando menú…</p>
-                </div>
-              ) : (
-                <>
-                  {productosFiltrados
-                    .filter((p) => mostrarSinImagen || p?.imagen_url)
-                    .map((p) => (
-                      <ProductoCardCliente
-                        key={p.id}
-                        producto={p}
-                        mostrarPrecios={mostrarPrecios}
-                        clickable={pedidosQRActivos && !cuentaYaSolicitada}
-                        onClick={() => handleClickProducto(p)}
-                      />
-                    ))}
-                  {productosFiltrados.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-6 col-span-full">
-                      Sin productos en esta categoría.
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-          </section>
+          <MenuALaCarta
+            productos={productos}
+            cargando={!productosListos}
+            categorias={categorias}
+            mostrarPrecios={mostrarPrecios}
+            mostrarSinImagen={mostrarSinImagen}
+            puedePedir={pedidosQRActivos && !cuentaYaSolicitada}
+            alTocar={handleClickProducto}
+          />
         )}
 
         {/* MODO MENÚ SUBIDO — el menú que diseñó el negocio, con sus botones encima de cada
@@ -745,7 +730,11 @@ function PortalCliente() {
       {/* DP-13.3: con la cuenta ya pedida el pedido armado se sigue viendo —con su mensaje claro, no
           un error— en vez de desaparecer; el carrito no se pinta si no hay nada armado. */}
       {pedidosQRActivos && (
-        <CarritoDeLaMesa carrito={carritoMesa} alAbrirLaMesa={abrirDialogoMesa} />
+        <CarritoDeLaMesa
+          carrito={carritoMesa}
+          alAbrirLaMesa={abrirDialogoMesa}
+          abrirConSenal={abrirCarrito}
+        />
       )}
 
       <AnimatePresence>
@@ -793,65 +782,6 @@ function Pill({ active, children, onClick }) {
     >
       {children}
     </button>
-  );
-}
-
-function ProductoCardCliente({ producto, mostrarPrecios, clickable, onClick }) {
-  // Badge "Personalizable" si tiene modificadores activos.
-  const tienePersonalizar = (() => {
-    const arr = Array.isArray(producto?.modificadores) ? producto.modificadores : [];
-    return arr.some(
-      (g) =>
-        g?.activo !== false &&
-        String(g?.nombre || '').trim() &&
-        (Array.isArray(g.opciones) ? g.opciones : []).some(
-          (o) => o?.activo !== false && String(o?.nombre || '').trim(),
-        ),
-    );
-  })();
-  const Comp = clickable ? 'button' : 'div';
-  return (
-    <Comp
-      type={clickable ? 'button' : undefined}
-      onClick={clickable ? onClick : undefined}
-      aria-disabled={producto?.agotado === true ? true : undefined}
-      className={`rounded-2xl bg-card text-card-foreground border overflow-hidden shadow-sm flex flex-col text-left w-full ${
-        clickable ? 'active:scale-[0.98] transition-transform hover:shadow-md cursor-pointer' : ''
-      } ${producto?.agotado === true ? 'opacity-60' : ''}`}
-    >
-      {producto?.imagen_url ? (
-        <img
-          src={producto.imagen_url}
-          alt={producto?.nombre || ''}
-          className="w-full h-32 object-cover"
-        />
-      ) : (
-        <ProductoPlaceholder producto={producto} />
-      )}
-      <div className="p-3 flex-1 flex flex-col">
-        <p className="font-heading font-bold text-sm leading-tight">{producto?.nombre || '—'}</p>
-        {producto?.descripcion && (
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{producto.descripcion}</p>
-        )}
-        <div className="mt-auto pt-2 flex items-center gap-2 flex-wrap">
-          {mostrarPrecios && Number(producto?.precio_venta) > 0 && (
-            <p className="font-heading font-black text-base text-exito">
-              {formatCurrency(producto.precio_venta)}
-            </p>
-          )}
-          {tienePersonalizar && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
-              Personalizable
-            </span>
-          )}
-          {producto?.agotado === true && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-peligro/15 text-peligro">
-              Agotado hoy
-            </span>
-          )}
-        </div>
-      </div>
-    </Comp>
   );
 }
 

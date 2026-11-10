@@ -18,8 +18,11 @@ import { QUIEN_ENVIA, type QuienEnvia } from './quien-envia.ts';
  * son las suyas, copiadas de `PortalCliente.jsx` y `qrUtils.js:31-35`.
  */
 
-/** Cómo se arma el menú: del catálogo del POS, de un menú subido, o los dos. */
-export type ModoMenu = 'productos_pos' | 'menu_subido' | 'mixto';
+/**
+ * Cómo se arma el menú: el menú digital (DP-16, el estilo nuevo del sistema), «a la carta» del
+ * catálogo del POS, las páginas subidas, o «a la carta» y las páginas.
+ */
+export type ModoMenu = 'digital' | 'productos_pos' | 'menu_subido' | 'mixto';
 
 /** Quién puede iniciar el cobro. `mesero_dispara` es el flujo principal. */
 export type ModoCuenta = 'mesero_dispara' | 'cliente_solicita' | 'ambos';
@@ -47,7 +50,7 @@ export interface BanderasPortal {
   readonly comensalesAbrenMesa: boolean;
 }
 
-const MODOS_MENU: readonly string[] = ['productos_pos', 'menu_subido', 'mixto'];
+const MODOS_MENU: readonly string[] = ['digital', 'productos_pos', 'menu_subido', 'mixto'];
 const MODOS_CUENTA: readonly string[] = ['mesero_dispara', 'cliente_solicita', 'ambos'];
 
 /** Los de `getPorcentajesSugeridos` (tipsUtils.js:20) cuando no hay nada válido. */
@@ -113,7 +116,8 @@ export function banderasDe(valores: unknown): BanderasPortal {
     // El portal nace CERRADO. Un negocio que nunca configuró nada no debe
     // tener un menú público en internet porque alguien adivinó una URL.
     portalActivo: bandera(doc, 'portal_qr_activo', false),
-    modoMenu: enumerado(doc, 'portal_qr_modo_menu', MODOS_MENU, 'productos_pos'),
+    // DP-16 · Sin elegir, el menú digital. Quien ya eligió uno lo conserva.
+    modoMenu: enumerado(doc, 'portal_qr_modo_menu', MODOS_MENU, 'digital'),
     modoCuenta: enumerado(doc, 'portal_qr_cuenta_modo', MODOS_CUENTA, 'mesero_dispara'),
     mostrarPrecios: bandera(doc, 'portal_qr_mostrar_precios', true),
     mostrarSinImagen: bandera(doc, 'portal_qr_mostrar_sin_imagen', true),

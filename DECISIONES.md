@@ -2049,3 +2049,32 @@ puerta los denuncia todos.
   pliegue de sus opciones (la misma regla que la pantalla grande, DP-D105). La pantalla no se apaga.
 - **Sin migración.** Lo hizo el agente E (Sonnet); revisado e integrado por la sesión principal.
 
+## DP-D107 · El menú del comensal: el digital como estilo nuevo, «a la carta» mejorado · 10-11-2026
+
+- **Cuatro modos** en la configuración del QR («Cómo se ve el menú»): **Menú digital** (el estilo
+  nuevo), **A la carta** (`productos_pos`), **Páginas subidas** (`menu_subido`, se queda como opción) y
+  **A la carta y páginas** (`mixto`). Sin elegir, el digital (`banderasDe`); quien ya eligió lo conserva:
+  Don Poncho sigue en «Páginas subidas» (así está en su base) hasta que Miguel lo cambie. Sin
+  promociones (el hueco del carrusel queda reservado y apagado).
+- **El menú digital** (`src/portal/menu-digital/MenuDigital.tsx`): arriba el nombre de la mesa y, con
+  pedido, el contador que abre la hoja del pedido de la mesa; la barra de secciones se queda pegada y
+  marca sola la sección que se lee (tocar una lleva a ella, suave salvo con «reducir movimiento»);
+  cada sección en dos columnas de tarjetas redondeadas: con foto, la foto entera con un degradado que
+  deja leer nombre, descripción corta y precio; sin foto, el fondo elegido en Productos. Tocar abre la
+  ficha del platillo de siempre (`ProductoQRDialog`: opciones con precio, peso, cantidad y nota). Lo
+  agotado se ve marcado y no se pide; con la cuenta pedida o sin poder pedir, las tarjetas se leen pero
+  no se tocan. Abajo, la barra del pedido de la mesa con su contador y total (la del carrito
+  compartido); «Llamar a mi mesero» sigue igual.
+- **El fondo de la tarjeta sin foto** es de una **lista cerrada** (`FONDOS_DE_TARJETA` en
+  `@morphiqpos/contracts`): cuatro colores, dos degradados y tres ilustraciones (papel picado,
+  talavera y milpa), todos con los tokens del estilo del negocio (cambiar el estilo cambia las
+  tarjetas). Se elige en Productos (si el platillo no tiene foto); el puente sólo guarda un valor de
+  la lista (`validacion: 'fondo_de_tarjeta'`) y el portal lo pinta con una clase, nunca como CSS.
+- **«A la carta»** (`MenuALaCarta.tsx`): todas las secciones seguidas con la misma barra, letra grande
+  (nombre 18 px, descripción 16 px), el nombre y el precio en la misma línea, el «+» de 44 px alineado
+  y la foto (si hay) pequeña a la izquierda; ya no hay pestañas que escondan el resto del menú.
+- **Accesible:** objetivos de 44 px, texto que no baja de 14 px, contraste AA en las tarjetas (texto
+  blanco sobre el degradado oscuro de la foto; en los fondos, la pareja de tokens del estilo), sin
+  desborde a 360 px y la barra de secciones como navegación con `aria-current`.
+- **Sin migración nueva:** `productos.fondo_tarjeta` llegó con la 192.
+

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ErrorDominio } from '@morphiqpos/contracts';
+import { ErrorDominio, esFondoDeTarjeta } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 import { sql, type RawBuilder } from 'kysely';
 
@@ -135,6 +135,13 @@ function aColumnas(mapa: MapaEntidad, datos: Readonly<Record<string, unknown>>):
           `«${clave}» debe ser una URL HTTP(S) válida.`,
         );
       }
+    }
+    // DP-16 · El fondo de la tarjeta del menú digital: sólo de la lista cerrada (nunca CSS suelto).
+    if (campo.validacion === 'fondo_de_tarjeta' && valor !== null && !esFondoDeTarjeta(valor)) {
+      throw new ErrorDominio(
+        'PUENTE_CAMPO_INVALIDO',
+        `«${clave}» debe ser uno de los fondos del menú digital.`,
+      );
     }
     valores[campo.columna] = valorHaciaLaBase(valor, campo);
   }
