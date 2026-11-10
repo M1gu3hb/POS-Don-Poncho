@@ -104,7 +104,7 @@ function Renglon({
           alt=""
           loading="lazy"
           decoding="async"
-          className="size-16 shrink-0 rounded-(--radio-md) object-cover"
+          className="size-[calc(var(--altura-control)*1.45)] shrink-0 rounded-(--radio-md) object-cover"
         />
       ) : null}
       <span className="flex min-w-0 flex-1 flex-col gap-1 text-left">
@@ -128,7 +128,7 @@ function Renglon({
       {activo ? (
         <span
           aria-hidden
-          className="grid size-11 shrink-0 place-items-center self-center rounded-full bg-primario text-primario-texto"
+          className="grid size-[max(2.75rem,var(--altura-control))] shrink-0 place-items-center self-center rounded-full bg-primario text-primario-texto"
         >
           <Plus className="size-5" strokeWidth={2.5} />
         </span>

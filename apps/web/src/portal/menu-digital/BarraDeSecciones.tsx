@@ -78,7 +78,7 @@ export function BarraDeSecciones({
             onClick={() => {
               irA(s.id);
             }}
-            className={`min-h-11 shrink-0 rounded-full px-(--espacio-4) text-base font-semibold transition-colors duration-(--duracion-rapida) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-anillo ${
+            className={`min-h-[max(2.75rem,var(--altura-control))] shrink-0 rounded-full px-(--espacio-4) text-base font-semibold transition-colors duration-(--duracion-rapida) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-anillo ${
               activa === s.id
                 ? 'bg-texto text-superficie'
                 : 'bg-fondo-sutil text-texto hover:bg-acento-suave'

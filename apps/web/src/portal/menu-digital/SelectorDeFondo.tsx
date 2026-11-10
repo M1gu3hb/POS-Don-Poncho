@@ -44,7 +44,7 @@ export function SelectorDeFondo({
               onClick={() => {
                 alCambiar(o.valor);
               }}
-              className={`menu-tarjeta relative grid aspect-square min-h-11 place-items-center overflow-hidden rounded-(--radio-md) border-2 text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-anillo ${
+              className={`menu-tarjeta relative grid aspect-square min-h-[max(2.75rem,var(--altura-control))] place-items-center overflow-hidden rounded-(--radio-md) border-2 text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-anillo ${
                 activo ? 'border-texto' : 'border-transparent'
               }`}
             >

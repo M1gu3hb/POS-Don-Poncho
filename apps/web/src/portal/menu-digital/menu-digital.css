@@ -72,6 +72,12 @@
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M18 34C18 20 10 12 4 10c6 6 10 12 14 24zM18 34c0-14 8-22 14-24-6 6-10 12-14 24z'/%3E%3C/svg%3E");
 }
 
+/* La inicial de adorno de la tarjeta sin foto: es dibujo de la tarjeta, no ritmo de la pantalla
+   (por eso aquí y no como clase de tamaño). Cabe tres veces en el ancho de una tarjeta a 360 px. */
+.menu-tarjeta-inicial {
+  font-size: 6.5rem;
+}
+
 /* Sobre la foto: letra blanca y el degradado que la deja leer (blanco sobre negro al 78 %). */
 .menu-tarjeta-foto {
   --tarjeta-texto: hsl(0 0% 100%);

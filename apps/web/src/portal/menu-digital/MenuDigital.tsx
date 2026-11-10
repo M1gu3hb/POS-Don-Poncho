@@ -117,7 +117,7 @@ function TarjetaDelPlatillo({
         // Sin foto, la inicial grande de adorno: cada tarjeta se reconoce de un vistazo.
         <span
           aria-hidden
-          className="pointer-events-none absolute -right-1 -top-4 -z-10 select-none text-[6.5rem] font-black leading-none opacity-15"
+          className="menu-tarjeta-inicial pointer-events-none absolute -right-1 -top-4 -z-10 select-none font-black leading-none opacity-15"
         >
           {inicialDelPlatillo(producto.nombre)}
         </span>
@@ -137,7 +137,7 @@ function TarjetaDelPlatillo({
           {puedePedir && !agotado ? (
             <span
               aria-hidden
-              className="grid size-10 shrink-0 place-items-center rounded-full bg-superficie text-texto ring-1 ring-borde-fuerte/40"
+              className="grid size-[max(2.5rem,calc(var(--altura-control)*0.9))] shrink-0 place-items-center rounded-full bg-superficie text-texto ring-1 ring-borde-fuerte/40"
             >
               <Plus className="size-5" strokeWidth={2.5} />
             </span>
@@ -146,7 +146,7 @@ function TarjetaDelPlatillo({
       </span>
     </>
   );
-  const clase = `menu-tarjeta ${conFoto ? 'menu-tarjeta-foto' : ''} relative flex ${conFoto ? 'aspect-[4/5]' : 'aspect-square'} w-full flex-col overflow-hidden rounded-(--radio-lg) shadow-sm ${agotado ? 'opacity-60 grayscale' : ''}`;
+  const clase = `menu-tarjeta ${conFoto ? 'menu-tarjeta-foto' : ''} relative flex ${conFoto ? 'aspect-[4/5]' : 'aspect-square'} w-full flex-col overflow-hidden rounded-(--radio-lg) shadow-1 ${agotado ? 'opacity-60 grayscale' : ''}`;
   const etiqueta = [producto.nombre, precio, agotado ? 'agotado hoy' : null]
     .filter(Boolean)
     .join(', ');
