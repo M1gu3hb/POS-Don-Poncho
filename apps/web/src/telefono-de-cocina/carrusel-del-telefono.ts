@@ -148,19 +148,38 @@ export function chipsDeLaTira(
   mesas: readonly MesaDelTelefono[],
   comandas: readonly ComandaDelTelefono[],
 ): readonly ChipDeLaTira[] {
-  return mesas.map((m) => {
+  const rotulos = mesas.map((m) =>
+    rotuloDeLaComanda({
+      mesa_numero: m.mesaNumero,
+      canal: m.canal,
+      numero_pedido: m.numeroPedido,
+      nombre_pedido: m.nombrePedido,
+    }),
+  );
+  // DP-17 · La misma mesa con varias comandas (rondas): «Mesa 4 · 1», «Mesa 4 · 2».
+  const cuantas = new Map<string, number>();
+  for (const r of rotulos) cuantas.set(r, (cuantas.get(r) ?? 0) + 1);
+  const vistas = new Map<string, number>();
+  return mesas.map((m, i) => {
     const lugar = comandas.findIndex((c) => c.id === m.comandaId);
+    const rotulo = rotulos[i] ?? '';
+    const ronda = (vistas.get(rotulo) ?? 0) + 1;
+    vistas.set(rotulo, ronda);
     return {
       comandaId: m.comandaId,
-      rotulo: rotuloDeLaComanda({
-        mesa_numero: m.mesaNumero,
-        canal: m.canal,
-        numero_pedido: m.numeroPedido,
-        nombre_pedido: m.nombrePedido,
-      }),
+      rotulo: (cuantas.get(rotulo) ?? 0) > 1 ? `${rotulo} · ${String(ronda)}` : rotulo,
       estado: m.estado,
       estadoDicho: ESTADO_DICHO[m.estado],
       indice: lugar === -1 ? null : lugar,
     };
   });
+}
+
+/** Más de esto y los puntos ya no caben en un teléfono: se dice «3 de 16». */
+export const PUNTOS_QUE_CABEN = 8;
+
+/** DP-17 · Cómo se dice dónde vas en el carrusel: nada, puntos o el contador. */
+export function guiaDelCarrusel(total: number): 'nada' | 'puntos' | 'contador' {
+  if (total <= 1) return 'nada';
+  return total <= PUNTOS_QUE_CABEN ? 'puntos' : 'contador';
 }

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { haceCuanto } from '~/restaurante/vista-de-solicitudes';
 import { rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 
-import { indiceALaVista } from './carrusel-del-telefono';
+import { guiaDelCarrusel, indiceALaVista } from './carrusel-del-telefono';
 import { ComandaEnElTelefono } from './ComandaEnElTelefono';
 import { datosDelRotulo, type ComandaDelTelefono } from './pantalla-del-telefono';
 
@@ -152,7 +152,15 @@ export function CarruselDeComandas({
           </div>
         ))}
       </div>
-      {comandas.length > 1 ? (
+      {guiaDelCarrusel(comandas.length) === 'contador' ? (
+        // DP-17 · Con muchas comandas los puntos no caben: se dice dónde vas (la tira lleva a cada una).
+        <p
+          aria-live="polite"
+          className="text-center text-base font-bold text-texto-sutil tabular-nums"
+        >
+          {Math.max(1, comandas.findIndex((c) => c.id === vistaId) + 1)} de {comandas.length}
+        </p>
+      ) : guiaDelCarrusel(comandas.length) === 'puntos' ? (
         <ol aria-label="Dónde vas" className="flex flex-wrap items-center justify-center">
           {comandas.map((comanda, i) => {
             const activa = comanda.id === vistaId;

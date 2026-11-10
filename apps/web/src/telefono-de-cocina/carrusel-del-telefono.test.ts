@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -5,6 +8,7 @@ import {
   comandaALaVista,
   comandasDeLaPantalla,
   fraseDeLaLlegada,
+  guiaDelCarrusel,
   indiceALaVista,
   notaDelPlatillo,
   ordenarComandas,
@@ -191,5 +195,53 @@ describe('la tira y las opciones', () => {
     expect(textoDeLaOpcion({ grupo: 'Salsa', nombres: ['verde', 'roja'] })).toBe(
       'Salsa: verde, roja',
     );
+  });
+});
+
+/**
+ * DP-17 (QA de DP-16, D-H-07) · CON MUCHAS COMANDAS: la tira distingue las rondas de una misma
+ * mesa y los puntos de abajo se vuelven «3 de 16» (16 puntos de 29 px no caben y se recortaban).
+ */
+describe('muchas comandas', () => {
+  const mesa = (comandaId: string, extra: Partial<MesaDelTelefono> = {}): MesaDelTelefono => ({
+    comandaId,
+    estado: 'nuevo',
+    mesaNumero: 4,
+    nombrePedido: null,
+    canal: 'aqui',
+    numeroPedido: null,
+    ...extra,
+  });
+
+  it('la misma mesa con varias comandas: «Mesa 4 · 1», «Mesa 4 · 2»; las demás, igual', () => {
+    const chips = chipsDeLaTira(
+      [mesa('a'), mesa('b'), mesa('c', { mesaNumero: 7 })],
+      [comanda('a'), comanda('b'), comanda('c', { mesaNumero: 7 })],
+    );
+    expect(chips.map((c) => c.rotulo)).toEqual(['Mesa 4 · 1', 'Mesa 4 · 2', 'Mesa 7']);
+  });
+
+  it('hasta 8 comandas, puntos; más, el contador; con una, nada', () => {
+    expect(guiaDelCarrusel(1)).toBe('nada');
+    expect(guiaDelCarrusel(2)).toBe('puntos');
+    expect(guiaDelCarrusel(8)).toBe('puntos');
+    expect(guiaDelCarrusel(9)).toBe('contador');
+    expect(guiaDelCarrusel(16)).toBe('contador');
+  });
+});
+
+describe('el carrusel usa la guía', () => {
+  const RAIZ_WEB = process.cwd().endsWith('web')
+    ? process.cwd()
+    : join(process.cwd(), 'apps', 'web');
+  const c = readFileSync(
+    join(RAIZ_WEB, 'src/telefono-de-cocina/CarruselDeComandas.tsx'),
+    'utf8',
+  ).replace(/\s+/g, '');
+
+  it('con muchas comandas, el contador; si no, los puntos', () => {
+    expect(c).toContain("{guiaDelCarrusel(comandas.length)==='contador'?(");
+    expect(c).toContain("):guiaDelCarrusel(comandas.length)==='puntos'?(");
+    expect(c).toContain('de{comandas.length}');
   });
 });
