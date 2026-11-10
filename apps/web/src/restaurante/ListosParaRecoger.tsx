@@ -173,13 +173,18 @@ export function ListosParaRecoger(props: ListosParaRecogerProps) {
             Listos para recoger ({unidades})
           </h2>
           <p className="text-sm font-medium">{descripcionDeLosListos(listos)}</p>
-          <Button size="sm" className="self-start" cargando={entregando} onClick={alEntregar}>
+          <Button
+            size="lg"
+            className="min-h-[max(3rem,var(--altura-control))] w-full text-base font-bold"
+            cargando={entregando}
+            onClick={alEntregar}
+          >
             Marcar entregado
           </Button>
         </>
       ) : null}
       {falloDeEntrega === null ? null : (
-        <Aviso tono="peligro" titulo={falloDeEntrega}>
+        <Aviso tono="peligro" anuncio="alerta" titulo={falloDeEntrega}>
           No se marcó nada como entregado: lo de la ventana sigue ahí.
         </Aviso>
       )}

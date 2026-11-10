@@ -1195,6 +1195,100 @@
         "+ label:Filtrar por canal",
         "+ aria-label:Filtrar por canal"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/ListosParaRecogerCard.jsx",
+      "porque": "DP-16 (1.2, DP-D103): la tarjeta «Listos para recoger» ya no se encoge ni se recorta (sin `overflow-hidden`), su botón «Marcar entregado» es grande y a todo lo ancho (al menos 48 px), y el motivo de un fallo queda escrito en la tarjeta.",
+      "testigos": [
+        "- clase:shrink-0",
+        "- clase:h-8",
+        "- clase:text-xs",
+        "- clase:gap-1",
+        "- clase:w-3.5",
+        "- clase:w-3.5",
+        "- clase:h-3.5",
+        "- clase:h-3.5",
+        "- aviso:No se pudo entregar",
+        "- aviso:No se pudo entregar",
+        "- aviso:No se pudo entregar el pedido. Intenta de nuevo.",
+        "- aviso:No se pudo entregar. Intenta de nuevo.",
+        "+ clase:px-3",
+        "+ clase:rounded-lg",
+        "+ clase:w-5",
+        "+ clase:w-5",
+        "+ clase:h-5",
+        "+ clase:h-5",
+        "+ clase:text-sm",
+        "+ clase:pb-3",
+        "+ clase:border",
+        "+ clase:gap-2",
+        "+ clase:space-y-2",
+        "+ clase:w-full",
+        "+ clase:min-h-12",
+        "+ clase:text-base",
+        "+ clase:border-peligro/40",
+        "+ clase:bg-peligro/5",
+        "+ clase:py-2",
+        "+ clase:font-semibold",
+        "+ clase:text-peligro"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/ui/alert-dialog.jsx",
+      "porque": "DP-16 (1.3, DP-D103): la alerta ya no entra «de lado» con las animaciones sueltas de Tailwind; crece desde el último toque con la hoja compartida (`ventana-velo`, `ventana-emergente`).",
+      "testigos": [
+        "- clase:data-[state=open]:animate-in",
+        "- clase:data-[state=open]:animate-in",
+        "- clase:data-[state=closed]:animate-out",
+        "- clase:data-[state=closed]:animate-out",
+        "- clase:data-[state=closed]:fade-out-0",
+        "- clase:data-[state=closed]:fade-out-0",
+        "- clase:data-[state=open]:fade-in-0",
+        "- clase:data-[state=open]:fade-in-0",
+        "- clase:duration-200",
+        "- clase:data-[state=closed]:zoom-out-95",
+        "- clase:data-[state=open]:zoom-in-95",
+        "- clase:data-[state=closed]:slide-out-to-left-1/2",
+        "- clase:data-[state=closed]:slide-out-to-top-[48%]",
+        "- clase:data-[state=open]:slide-in-from-left-1/2",
+        "- clase:data-[state=open]:slide-in-from-top-[48%]",
+        "+ clase:ventana-velo",
+        "+ clase:ventana-emergente"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/ui/dialog.jsx",
+      "porque": "DP-16 (1.3, DP-D103): el diálogo ya no entra «de lado» (`slide-in-from-left-1/2`); crece desde el último toque con la hoja compartida (`ventana-velo`, `ventana-emergente`).",
+      "testigos": [
+        "- clase:data-[state=open]:animate-in",
+        "- clase:data-[state=open]:animate-in",
+        "- clase:data-[state=closed]:animate-out",
+        "- clase:data-[state=closed]:animate-out",
+        "- clase:data-[state=closed]:fade-out-0",
+        "- clase:data-[state=closed]:fade-out-0",
+        "- clase:data-[state=open]:fade-in-0",
+        "- clase:data-[state=open]:fade-in-0",
+        "- clase:duration-200",
+        "- clase:data-[state=closed]:zoom-out-95",
+        "- clase:data-[state=open]:zoom-in-95",
+        "- clase:data-[state=closed]:slide-out-to-left-1/2",
+        "- clase:data-[state=closed]:slide-out-to-top-[48%]",
+        "- clase:data-[state=open]:slide-in-from-left-1/2",
+        "- clase:data-[state=open]:slide-in-from-top-[48%]",
+        "+ clase:ventana-velo",
+        "+ clase:ventana-emergente"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/ui/sheet.jsx",
+      "porque": "DP-16 (1.3, DP-D103): el panel lateral usa la hoja compartida (`ventana-velo`) y tarda 220 ms en vez de 500.",
+      "testigos": [
+        "- clase:data-[state=open]:animate-in",
+        "- clase:data-[state=closed]:animate-out",
+        "- clase:data-[state=closed]:fade-out-0",
+        "- clase:data-[state=open]:fade-in-0",
+        "+ clase:ventana-velo"
+      ]
     }
   ]
 }

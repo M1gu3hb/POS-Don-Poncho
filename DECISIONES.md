@@ -1953,3 +1953,21 @@ puerta los denuncia todos.
 - **`consultarEn`** rechaza una cadena del puerto 6543 (`exigirQueNoSeaElPooler`): las
   verificaciones contra una base real van por la conexión de sesión (`MORPHIQPOS_DB_VERIFICACION`).
 - **Sin migración.** Agente B.
+
+## DP-D103 · Las ventanas crecen desde donde se tocó; «Marcar entregado», grande y completo · 10-11-2026
+
+- **Una sola pieza** (`packages/ui/src/sistema/origen-de-ventana.ts` + `estilos/ventanas.css`): guarda el
+  último toque (`pointerdown`, válido 1 s) y, al montar una ventana, le pone ese punto como
+  `transform-origin` relativo a su caja. La ventana crece desde ahí con zoom suave y fundido (200 ms,
+  0.9 → 1, curva ease-out exponencial); sin toque reciente (teclado, apertura programática) aparece al
+  centro con 0.97 → 1. Los paneles laterales, 220 ms (antes 500). Con «reducir movimiento», sólo un
+  fundido corto. Sólo `transform` y `opacity`. La usan los diálogos, alertas y paneles de
+  `packages/ui` y los heredados (`dialog`, `alert-dialog`, `sheet`); ya no entran «de lado»
+  (`slide-in-from-left-1/2`). El oyente se registra al cargar el módulo: en la prueba del navegador, la
+  primera ventana de la página aparecía al centro porque el toque que la abría llegaba antes del oyente.
+- **«Marcar entregado» del mesero** (`ListosParaRecoger.tsx`, `ListosParaRecogerCard.jsx`): la tarjeta
+  ya no se encoge ni recorta (`shrink-0`, sin `overflow-hidden`), queda justo bajo la cabecera de la
+  mesa, y el botón es grande, a todo lo ancho y de al menos 48 px; si falla, el motivo queda escrito en
+  la tarjeta (`role="alert"`) además del aviso, y el botón vuelve a estar disponible.
+- **Sin migración.** Lo hizo el agente A (Sonnet, 16 mutantes muertos); revisado, corregido el oyente e
+  integrado por la sesión principal, con la prueba en el navegador.

@@ -1,0 +1,215 @@
+/**
+ * LAS VENTANAS CRECEN DE DONDE SE TOCÓ (DP-16, 1.3).
+ *
+ * Un solo juego de reglas para todos los diálogos, alertas y paneles laterales del sistema.
+ * `sistema/origen-de-ventana.ts` pone en cada ventana, al montarla:
+ *
+ *   --origen-x / --origen-y     el punto tocado, en px dentro de la caja de la ventana
+ *   --escala-inicial-ventana    0.9 con punto, 0.97 sin punto, 1 con movimiento reducido
+ *
+ * Sólo `transform` y `opacity` (nada de layout). El centrado de Radix usa la propiedad
+ * `translate`, que va aparte de `transform`: aquí no se toca.
+ *
+ * Curva: ease-out exponencial, sin rebote. Entra en 200 ms; el panel lateral, en 220 ms; sale
+ * más rápido (140 ms) porque quien cierra ya quiere seguir.
+ */
+:root {
+  --duracion-ventana: 200ms;
+  --duracion-ventana-salida: 140ms;
+  --duracion-panel: 220ms;
+  --curva-ventana: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-movimiento='nula'] {
+  --duracion-ventana: 0ms;
+  --duracion-ventana-salida: 0ms;
+  --duracion-panel: 0ms;
+}
+
+@keyframes ventana-entra {
+  from {
+    opacity: 0;
+    transform: scale(var(--escala-inicial-ventana, 0.97));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ventana-sale {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(var(--escala-inicial-ventana, 0.97));
+  }
+}
+
+@keyframes ventana-funde {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ventana-desvanece {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes panel-entra-derecha {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes panel-sale-derecha {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes panel-entra-izquierda {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes panel-sale-izquierda {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes panel-entra-abajo {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes panel-sale-abajo {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes panel-entra-arriba {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes panel-sale-arriba {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+.ventana-emergente {
+  transform-origin: var(--origen-x, 50%) var(--origen-y, 50%);
+}
+
+.ventana-emergente[data-state='open'] {
+  animation: ventana-entra var(--duracion-ventana) var(--curva-ventana) backwards;
+}
+
+.ventana-emergente[data-state='closed'] {
+  animation: ventana-sale var(--duracion-ventana-salida) var(--curva-ventana) forwards;
+}
+
+.ventana-velo[data-state='open'] {
+  animation: ventana-funde var(--duracion-ventana) var(--curva-ventana) backwards;
+}
+
+.ventana-velo[data-state='closed'] {
+  animation: ventana-desvanece var(--duracion-ventana-salida) var(--curva-ventana) forwards;
+}
+
+.ventana-panel[data-state='open'] {
+  animation: var(--panel-entra) var(--duracion-panel) var(--curva-ventana) backwards;
+}
+
+.ventana-panel[data-state='closed'] {
+  animation: var(--panel-sale) var(--duracion-ventana-salida) var(--curva-ventana) forwards;
+}
+
+.ventana-panel[data-lado='right'] {
+  --panel-entra: panel-entra-derecha;
+  --panel-sale: panel-sale-derecha;
+}
+
+.ventana-panel[data-lado='left'] {
+  --panel-entra: panel-entra-izquierda;
+  --panel-sale: panel-sale-izquierda;
+}
+
+.ventana-panel[data-lado='bottom'] {
+  --panel-entra: panel-entra-abajo;
+  --panel-sale: panel-sale-abajo;
+}
+
+.ventana-panel[data-lado='top'] {
+  --panel-entra: panel-entra-arriba;
+  --panel-sale: panel-sale-arriba;
+}
+
+/* Con movimiento reducido: sólo un fundido corto, sin zoom ni deslizamiento. */
+@media (prefers-reduced-motion: reduce) {
+  .ventana-emergente[data-state='open'],
+  .ventana-panel[data-state='open'] {
+    animation: ventana-funde 100ms linear backwards;
+  }
+
+  .ventana-emergente[data-state='closed'],
+  .ventana-panel[data-state='closed'] {
+    animation: ventana-desvanece 80ms linear forwards;
+  }
+
+  .ventana-velo[data-state='open'] {
+    animation: ventana-funde 100ms linear backwards;
+  }
+
+  .ventana-velo[data-state='closed'] {
+    animation: ventana-desvanece 80ms linear forwards;
+  }
+}
+
+/* Sin movimiento (perilla `nula`): ninguna animación, y Radix cierra al instante. */
+[data-movimiento='nula'] .ventana-emergente,
+[data-movimiento='nula'] .ventana-velo,
+[data-movimiento='nula'] .ventana-panel {
+  animation: none !important;
+}

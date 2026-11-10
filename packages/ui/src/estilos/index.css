@@ -17,3 +17,6 @@
 
 /* Y la capa fina: lo que los tokens no pueden decir. Va al final para que gane. */
 @import './capas.css';
+
+/* Y cómo se abren las ventanas (DP-16). */
+@import './ventanas.css';
