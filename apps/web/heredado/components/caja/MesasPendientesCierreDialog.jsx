@@ -152,7 +152,7 @@ export default function MesasPendientesCierreDialog({ open, onClose, mesas = [] 
                         disabled={liberando !== null}
                         onClick={() => marcarLibre(m)}
                       >
-                        {liberando === m.id ? 'Liberando…' : 'Marcar libre'}
+                        {liberando === m.id && porDecidir !== m.id ? 'Liberando…' : 'Marcar libre'}
                       </Button>
                     ) : (
                       <UtensilsCrossed className="w-4 h-4 text-muted-foreground shrink-0" />

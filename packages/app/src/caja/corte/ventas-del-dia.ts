@@ -8,6 +8,8 @@ import { z } from 'zod';
 import { definirComando } from '../../definicion.ts';
 import { alcanceDelCorte, type AlcanceDelCorte } from './alcance-del-corte.ts';
 import { ORDEN_VENDIDA, type VentasPorMetodo } from './consultas.ts';
+import { opcionesVendidasEn, type OpcionVendida } from './opciones-vendidas.ts';
+import { retirosConPinEn, type RetiroConPinDelCorte } from './retiros-con-pin.ts';
 
 /**
  * DP-15 · QA de la jornada, J-H6 · LAS VENTAS DEL DÍA EN EL CIERRE DEL DÍA.
@@ -29,6 +31,15 @@ export interface VentasDelDia {
   readonly totalCentavos: string;
   readonly propinasCentavos: string;
   readonly metodos: readonly VentasPorMetodo[];
+  /** DP-17 · Mesas y para llevar del DÍA (`llevar` es para llevar; lo demás, mesas). */
+  readonly canales: readonly {
+    readonly grupo: 'mesas' | 'llevar';
+    readonly cuentas: number;
+    readonly totalCentavos: string;
+  }[];
+  /** DP-17 · Las opciones vendidas y los retiros con PIN de TODAS las cajas del día. */
+  readonly opciones: readonly OpcionVendida[];
+  readonly retirosConPin: readonly RetiroConPinDelCorte[];
 }
 
 /** Las sesiones de caja de la ventana del día: las que cerraron en ella, y la del corte. */
@@ -48,7 +59,7 @@ export async function ventasDelDia(
   alcance: AlcanceDelCorte,
 ): Promise<VentasDelDia> {
   const sesiones = sesionesDelDia(organizacionId, alcance);
-  const [resumen, metodos] = await Promise.all([
+  const [resumen, metodos, canales, opciones, retirosConPin] = await Promise.all([
     sql<{ cajas: number; tickets: number; totalCentavos: string }>`
       select (select count(*) from (${sesiones}) d)::int     as "cajas",
              count(o.id)::int                                as "tickets",
@@ -70,10 +81,30 @@ export async function ventasDelDia(
        group by p.metodo
        order by sum(p.monto_centavos) desc
     `.execute(tx),
+    sql<VentasDelDia['canales'][number]>`
+      select case when o.canal = 'llevar' then 'llevar' else 'mesas' end  as "grupo",
+             count(*)::int                                                as "cuentas",
+             sum(o.total_centavos)::text                                  as "totalCentavos"
+        from ordenes o
+       where o.organizacion_id = ${organizacionId}
+         and o.sesion_caja_id in (${sesiones})
+         and ${ORDEN_VENDIDA}
+       group by 1
+       order by 1 desc
+    `.execute(tx),
+    opcionesVendidasEn(tx, organizacionId, sesiones),
+    retirosConPinEn(tx, organizacionId, sesiones),
   ]);
   const fila = resumen.rows[0] ?? { cajas: 1, tickets: 0, totalCentavos: '0' };
   const propinas = metodos.rows.reduce((suma, m) => suma + BigInt(m.propinasCentavos), 0n);
-  return { ...fila, propinasCentavos: propinas.toString(), metodos: metodos.rows };
+  return {
+    ...fila,
+    propinasCentavos: propinas.toString(),
+    metodos: metodos.rows,
+    canales: canales.rows,
+    opciones,
+    retirosConPin,
+  };
 }
 
 /**

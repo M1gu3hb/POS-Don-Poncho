@@ -6,6 +6,7 @@ import { X, Plus, Minus, Scale, Beaker } from 'lucide-react';
 import { formatCurrency } from '@/utils/financialUtils';
 import { fondoDeLaTarjeta, inicialDelPlatillo } from '~/portal/menu-digital/menu-digital';
 import '~/portal/menu-digital/menu-digital.css';
+import { apagarElResto } from '~/sistema/apagar-el-resto';
 import {
   TIPO_VENTA,
   calcularPrecioVariableMedida,
@@ -44,16 +45,34 @@ export default function ProductoQRDialog({
   // DP-16 (QA-D, H-09): la ficha se anuncia como diálogo, con el nombre del platillo de título.
   const idDelTitulo = useId();
   // DP-16 (QA ronda 2, H-09): al abrir, el foco entra a la ficha (en «Cerrar»); Escape la cierra.
+  // DP-17: el resto de la página queda `inert` (el lector ya no lee las tarjetas de atrás ni el
+  // Tab sale de la ficha) y al cerrar el foco vuelve a donde estaba. El efecto depende SÓLO de
+  // `open`: el portal pasa un `onClose` nuevo en cada refresco, y con él en las dependencias el foco
+  // saltaba a «Cerrar» mientras el comensal escribía su nota.
   const cerrarRef = useRef(null);
+  const capaRef = useRef(null);
+  const alCerrarRef = useRef(onClose);
+  useEffect(() => {
+    alCerrarRef.current = onClose;
+  }, [onClose]);
   useEffect(() => {
     if (!open) return undefined;
+    const anterior = document.activeElement;
+    const capa = capaRef.current;
+    const devolver = capa
+      ? apagarElResto(capa, Array.from(capa.parentElement?.children ?? []))
+      : () => {};
     cerrarRef.current?.focus();
     const alTeclear = (evento) => {
-      if (evento.key === 'Escape') onClose?.();
+      if (evento.key === 'Escape') alCerrarRef.current?.();
     };
     window.addEventListener('keydown', alTeclear);
-    return () => window.removeEventListener('keydown', alTeclear);
-  }, [open, onClose]);
+    return () => {
+      window.removeEventListener('keydown', alTeclear);
+      devolver();
+      if (anterior instanceof HTMLElement && anterior.isConnected) anterior.focus();
+    };
+  }, [open]);
   // selecciones[grupoNombre] = Set(opcionId) (Set para multi y para única).
   const [selecciones, setSelecciones] = useState({});
   const [errores, setErrores] = useState({});
@@ -255,6 +274,7 @@ export default function ProductoQRDialog({
 
   return (
     <motion.div
+      ref={capaRef}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

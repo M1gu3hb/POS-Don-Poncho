@@ -8,10 +8,20 @@ import { dinero, hora, tablaSiHay, texto, type HojaDelServidor, type Seccion } f
  * hay sección. Vive aparte de `hoja.ts` para no mezclarse con el resto del armado.
  */
 export function retirosConPin(hoja: HojaDelServidor): readonly Seccion[] {
-  const retiros = hoja.retirosConPin ?? [];
+  return tablaDeRetirosConPin(
+    hoja.retirosConPin ?? [],
+    'Retiros con PIN de gerente · quién autorizó',
+  );
+}
+
+/** DP-17 · La misma tabla con otras filas y otro título (los del día, en el Cierre del día). */
+export function tablaDeRetirosConPin(
+  retiros: NonNullable<HojaDelServidor['retirosConPin']>,
+  titulo: string,
+): readonly Seccion[] {
   return tablaSiHay({
     tipo: 'tabla',
-    titulo: 'Retiros con PIN de gerente · quién autorizó',
+    titulo,
     columnas: [
       { titulo: 'Hora' },
       { titulo: 'Retiró' },

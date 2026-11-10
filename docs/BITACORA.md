@@ -1592,3 +1592,35 @@ Sin agentes: la Parte 3 es sobre todo pantalla y se probó a ojo en cada vuelta.
 - 13:33 Vercel: ningún error en producción de las 12:30 a las 13:33 (la hora después del despliegue).
 - Limpieza: las fotos de prueba (`apps/web/public/_fotos-demo`, nunca subidas) fuera del árbol, con
   respaldo en `D:\mpos-tmp\dp16otos-demo-respaldo`; los servidores del QA, parados.
+
+## DP-17 · Las mejoras que dejó el QA de DP-16 (10-11, tarde)
+
+Rama `dp-17-mejoras-qa` desde `main` (`9d701ca`). Lo pidió Miguel desde la tarea propuesta al cerrar
+DP-16. Decisión: DP-D109. Cada mejora con su prueba primero y sus mutantes (22 muertos).
+
+- **Folio y mesa iguales** en el visor de Registros y el documento al cerrar («CC-2», «A-3», «Mesa 4»):
+  ayudante `folio-y-mesa.ts`; el puente expone `Venta.serie` y `Venta.mesa_nombre`.
+- **El Cierre del día desglosa el día:** el servidor suma canal, opciones y retiros con PIN de todas las
+  cajas (`opcionesVendidasEn`, `retirosConPinEn` con el conjunto de sesiones; integración nueva
+  `desglose-del-dia.integracion.test.ts`); el documento y el visor lo pintan con `corte/del-dia.ts`.
+- **La mesa se libera al cobrar la última parte** de una cuenta dividida (`liberar-tras-cobrar.ts`),
+  con la pregunta de separar si están unidas; «Liberando…» ya no se queda junto a la pregunta.
+- **La ficha del platillo, modal** para el lector de pantalla (`apagar-el-resto.ts`). Al hacerlo
+  apareció un error que dejó la ronda 2 de DP-16: el efecto del foco dependía de `onClose`, que el
+  portal cambia en cada refresco, y el foco saltaba a «Cerrar» mientras el comensal escribía su nota.
+- **El teléfono de cocina con muchas comandas:** «N de M» y las rondas de una mesa en la tira.
+- **«Conectar teléfono»:** medido en la demo a 1280 y 1024 px, crece exactamente desde el toque; no
+  hizo falta tocarlo.
+- **Ronda 3 del QA** (`94f63fb`, copia `qa_dp16_r3`, app en 32755): 7 de 8 en SÍ, el Cierre del día al
+  centavo con dos cajas ($4,698.85, 13 tickets) y 0 violaciones. El NO: al cobrar la primera parte
+  salía un aviso de error, porque al navegador sólo llega la regla del error (`comando.ts` no manda
+  `partesSinCobrar`). Arreglado (con una parte, «no liberable» = faltan las otras), junto con el PDF
+  que se baja al cerrar sin opciones ni retiros (`CorteAutoDownloader.jsx`) y la raya «— ·» de las
+  partes.
+- `verify` local en `94f63fb`: unidad 490 / 5,520, integración 128 / 628, build y verificadores
+  (`verify:pruebas`, sólo los worktrees viejos); tras los arreglos de la ronda 3, formato, lint, tipos y
+  unidad 490 / 5,521 en verde.
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| QA-R3 (worktree propio, copia `qa_dp16_r3`) | Sonnet | Ronda 3: las siete mejoras de DP-17 | 7 de 8 en SÍ; el Cierre del día al centavo y 0 violaciones; el aviso al cobrar una parte y dos más, arreglados después |

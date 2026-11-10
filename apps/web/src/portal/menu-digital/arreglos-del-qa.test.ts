@@ -88,7 +88,7 @@ describe('QA ronda 2 · la ficha y el carrito', () => {
   it('H-09 · la ficha toma el foco al abrir, Escape la cierra y − / + dicen qué hacen', () => {
     const c = sinEspacios(FICHA);
     expect(c).toContain('cerrarRef.current?.focus();');
-    expect(c).toContain("if(evento.key==='Escape')onClose?.();");
+    expect(c).toContain("if(evento.key==='Escape')alCerrarRef.current?.();");
     expect(c).toContain('ref={cerrarRef}');
     expect(c).toContain('aria-label="Unomenos"');
     expect(c).toContain('aria-label="Unomás"');

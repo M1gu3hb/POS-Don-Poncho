@@ -2112,3 +2112,37 @@ puerta los denuncia todos.
   sólo sus mesas; el CSV de Ventas no trae «Opciones» (está en «Exportar productos»); los puntos del
   carrusel del teléfono de cocina con más de 12 comandas; textos de 11–12 px heredados.
 - **Sin migración.**
+
+## DP-D109 · Las mejoras que dejó el QA de DP-16 · 10-11-2026
+
+- **El corte se escribe igual desde los dos lados** (`corte-heredado/folio-y-mesa.ts`): el visor de
+  Registros dice el folio del corte con su serie («CC-2»), cada venta con la suya («A-3») y la mesa
+  «Mesa 4» (o su nombre), como el documento al cerrar. El puente expone `Venta.serie` y
+  `Venta.mesa_nombre` (sólo lectura).
+- **El Cierre del día desglosa el día** (`caja/corte/ventas-del-dia.ts`): las ventas del día traen,
+  además del total y los métodos, las cuentas y el importe por canal (mesas y para llevar), las opciones
+  vendidas y los retiros con PIN de TODAS las cajas de la ventana. Las consultas de opciones y de retiros
+  reciben el conjunto de sesiones (`opcionesVendidasEn`, `retirosConPinEn`): una en el corte de una
+  caja, todas en el del día. El documento y el visor las pintan con el mismo armado (`corte/del-dia.ts`):
+  celdas «Mesas (N)» y «Para llevar (N)» bajo «Ventas del día · todas las cajas», y las tablas «… del
+  día · todas las cajas». Lo de la caja sigue siendo sólo de la caja (DP-D50).
+- **La mesa se libera al cobrar la última parte de una cuenta dividida**
+  (`unir-mesas/liberar-tras-cobrar.ts`): una parte nace sin mesa; tras cobrarla, la Caja intenta
+  liberar la mesa de su cuenta madre. Con partes pendientes el servidor responde `MESA_NO_LIBERABLE` con
+  `partesSinCobrar` y no se avisa nada; con la última, se libera, y si las mesas están unidas sale la
+  pregunta de separar. Antes quedaban en «Limpieza» hasta el cierre. Al navegador sólo llega la regla
+  del error (`comando.ts` no manda sus datos): con una PARTE, «no liberable» quiere decir que faltan
+  las otras y tampoco se avisa (lo cazó la ronda 3 del QA).
+- **La ficha del platillo es modal también para el lector de pantalla** (`sistema/apagar-el-resto.ts`):
+  al abrir, lo que está junto a su capa queda `inert`; al cerrar vuelve como estaba y el foco regresa a
+  la tarjeta. Su efecto depende sólo de `open`: con `onClose` en las dependencias, cada refresco del
+  portal (el carrito sondea) mandaba el foco a «Cerrar» mientras el comensal escribía su nota.
+- **El teléfono de cocina con muchas comandas**: más de 8, «3 de 16» en lugar de los puntos; la tira
+  numera las rondas de una misma mesa («Mesa 4 · 1», «Mesa 4 · 2»).
+- «Liberando…» ya no se queda junto a la pregunta de separar mientras se decide.
+- **El PDF que se baja solo al cerrar** (`CorteAutoDownloader.jsx`) también trae «Opciones vendidas» y
+  «Retiros con PIN de gerente» (en DP-D108 sólo el visor de Registros), y la parte de una cuenta
+  dividida ya no dice «— · Mesa 9 · cuenta 1 de 2».
+- «Conectar teléfono»: medido en la demo a 1280 y 1024 px, crece exactamente desde el toque con el
+  origen relativo al centro (DP-D108); los 113 px del QA no se reproducen.
+- **Sin migración.**

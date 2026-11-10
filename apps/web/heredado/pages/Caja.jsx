@@ -79,7 +79,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { safeFormatDate } from '@/lib/safeFormat';
 import StatCard from '@/components/common/StatCard';
 import { claves } from '~/cliente/claves-de-consulta';
-import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
+import {
+  liberarMesaConPregunta,
+  preguntarPorElGrupo,
+} from '~/restaurante/unir-mesas/liberar-con-pregunta';
+import {
+  liberarTrasCobrar,
+  mesaParaLiberarTrasCobrar,
+} from '~/restaurante/unir-mesas/liberar-tras-cobrar';
 import { MovimientosDeCaja } from '~/restaurante/MovimientosDeCaja';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 
@@ -823,22 +830,30 @@ export default function Caja() {
       // del navegador: allí es donde se sabe qué se cobró de verdad.
       cambio = aPesos(cobro?.cambioCentavos);
 
-      if (ventaSeleccionada.mesa_id) {
-        // La mesa se libera con su comando, no con un `Mesa.update` suelto y
-        // silencioso (`:923`): «se cobró la mesa y sigue marcada como ocupada»
-        // es exactamente lo que bloquea el cierre del día. La venta YA está
-        // cobrada, así que un fallo aquí no puede tirar el cobro — pero sí se
-        // dice, porque la mesa se queda ocupada y alguien tiene que liberarla.
-        try {
+      // La mesa se libera con su comando, no con un `Mesa.update` suelto y
+      // silencioso (`:923`): «se cobró la mesa y sigue marcada como ocupada»
+      // es exactamente lo que bloquea el cierre del día. La venta YA está
+      // cobrada, así que un fallo aquí no puede tirar el cobro — pero sí se
+      // dice, porque la mesa se queda ocupada y alguien tiene que liberarla.
+      // DP-17: una parte de una cuenta dividida nace sin mesa; la suya es la de su cuenta madre,
+      // y se libera al cobrar la ÚLTIMA parte (con las anteriores el servidor dice que faltan).
+      try {
+        const mesaALiberar = await mesaParaLiberarTrasCobrar(ventaSeleccionada, (ordenId) =>
+          api.entidades.Venta.filter({ id: ordenId }, undefined, 1).then((r) => r[0] ?? null),
+        );
+        if (mesaALiberar) {
           // DP-9.6: la principal de mesas unidas pregunta «¿Separar o dejarlas unidas?».
-          await liberarMesaConPregunta(ventaSeleccionada.mesa_id, (entrada) =>
-            api.comandos.ejecutar('/api/restaurante/liberar-mesa', entrada),
+          await liberarTrasCobrar(
+            mesaALiberar,
+            (entrada) => api.comandos.ejecutar('/api/restaurante/liberar-mesa', entrada),
+            preguntarPorElGrupo,
+            Boolean(ventaSeleccionada.orden_padre_id),
           );
-        } catch (errMesa) {
-          toast.warning(errMesa?.message || 'La venta se cobró, pero la mesa sigue ocupada.', {
-            duration: 10000,
-          });
         }
+      } catch (errMesa) {
+        toast.warning(errMesa?.message || 'La venta se cobró, pero la mesa sigue ocupada.', {
+          duration: 10000,
+        });
       }
 
       // BLOQUE 0 — OPTIMISTIC UPDATE:

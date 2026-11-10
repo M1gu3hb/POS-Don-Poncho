@@ -66,6 +66,17 @@ export interface NegocioDeLaHoja {
   readonly comisionTerminalBp: number | null;
 }
 
+/** DP-17 · Las cuentas del día por canal: `llevar` es para llevar; lo demás, mesas. */
+export interface CanalDelDia {
+  readonly grupo: 'mesas' | 'llevar';
+  readonly cuentas: number;
+  readonly totalCentavos: string;
+}
+
+/** «Mesas (12)», «Para llevar (2)»: la etiqueta del canal con sus cuentas. */
+export const etiquetaDelCanal = (c: CanalDelDia): string =>
+  `${c.grupo === 'llevar' ? 'Para llevar' : 'Mesas'} (${String(c.cuentas)})`;
+
 export interface HojaDelServidor {
   readonly verCostos: boolean;
   readonly negocio: NegocioDeLaHoja;
@@ -114,6 +125,10 @@ export interface HojaDelServidor {
       propinasCentavos: string;
       pagos: number;
     }[];
+    /** DP-17 · Mesas y para llevar, opciones y retiros con PIN del DÍA (un servidor viejo no). */
+    readonly canales?: readonly CanalDelDia[];
+    readonly opciones?: HojaDelServidor['opciones'];
+    readonly retirosConPin?: HojaDelServidor['retirosConPin'];
   } | null;
   readonly resumen: {
     readonly tickets: number;
@@ -653,6 +668,11 @@ export function ventasDelDia(hoja: HojaDelServidor): readonly Seccion[] {
           valor: dinero(m.ventasCentavos),
         })),
         { etiqueta: 'Propinas', valor: dinero(d.propinasCentavos) },
+        // DP-17 · Mesas y para llevar del DÍA, no sólo de la caja que cierra.
+        ...(d.canales ?? []).map((c) => ({
+          etiqueta: etiquetaDelCanal(c),
+          valor: dinero(c.totalCentavos),
+        })),
       ],
     },
   ];

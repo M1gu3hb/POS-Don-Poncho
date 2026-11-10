@@ -22,7 +22,7 @@ import {
   cuentaDelDescuento,
   tituloDeLosDescuentos,
 } from '~/corte-heredado/descuentos-del-corte';
-import { TITULO_DEL_DIA, celdasDelDia } from '~/corte-heredado/ventas-del-dia';
+import { TITULO_DEL_DIA, celdasDelDia, seccionesExtraDelDia } from '~/corte-heredado/ventas-del-dia';
 import {
   SIN_RECETA,
   costoDelProductoConocido,
@@ -33,6 +33,7 @@ import {
 } from '~/restaurante/margen-de-las-ventas';
 import { SeccionPintada } from '~/corte/HojaDelCorte';
 import { AVISO_SIN_EXTRAS } from '~/corte-heredado/extras-del-corte';
+import { folioDelCorte, folioDeLaVenta, mesaDeLaVenta } from '~/corte-heredado/folio-y-mesa';
 import { textoDeLaLinea } from '~/corte/linea-de-venta';
 import { grupoDelCanal, referenciaParaLlevar, sumaPorGrupo } from '~/corte/canales';
 import {
@@ -198,7 +199,7 @@ const CorteTicket = React.forwardRef(function CorteTicket(
         <div className="text-right">
           <p className="text-lg font-black">CORTE DE CAJA</p>
           <p className="text-xs">
-            Folio: <span className="font-mono font-bold">{corte?.folio || '—'}</span>
+            Folio: <span className="font-mono font-bold">{folioDelCorte(corte ?? {})}</span>
           </p>
           <p className="text-[10px] text-texto-sutil mt-1">
             {marcaVisibleDePlataforma(config?.platform_brand)}
@@ -268,6 +269,11 @@ const CorteTicket = React.forwardRef(function CorteTicket(
           </Grid>
         </Section>
       )}
+      {/* DP-17 · Las opciones y los retiros con PIN del día, de todas las cajas. */}
+      {ventasDelDia &&
+        seccionesExtraDelDia(ventasDelDia).map((seccion) => (
+          <SeccionPintada key={seccion.titulo} seccion={seccion} />
+        ))}
 
       {/* Resumen financiero — sin el módulo `costos_basicos` sólo se muestran ventas y métodos de pago */}
       <Section
@@ -458,7 +464,7 @@ const CorteTicket = React.forwardRef(function CorteTicket(
               const dets = detallesPorVenta[v.id] || [];
               return (
                 <tr key={v.id}>
-                  <td className="border px-2 py-1 font-mono">{v.folio}</td>
+                  <td className="border px-2 py-1 font-mono">{folioDeLaVenta(v)}</td>
                   <td className="border px-2 py-1">
                     {v.fecha_cierre
                       ? format(new Date(v.fecha_cierre), 'HH:mm', { locale: es })
@@ -468,10 +474,8 @@ const CorteTicket = React.forwardRef(function CorteTicket(
                     {grupoDelCanal(v.canal) === 'llevar' ? (
                       referenciaParaLlevar(v.numero_pedido, v.nombre_pedido)
                     ) : (
-                      <>
-                        {v.mesa_numero || '—'}
-                        {v.cliente_nombre ? ` · ${v.cliente_nombre}` : ''}
-                      </>
+                      // DP-17 (QA R3) · Una parte no tiene mesa y su nombre ya la dice: sin «— · ».
+                      [mesaDeLaVenta(v), v.cliente_nombre].filter(Boolean).join(' · ') || '—'
                     )}
                   </td>
                   <td className="border px-2 py-1">

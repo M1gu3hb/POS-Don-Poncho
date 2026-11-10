@@ -37,5 +37,7 @@ describe('el diálogo de mesas pendientes del cierre', () => {
     expect(c).toContain("onClick={()=>decidir('separar')}");
     expect(c).toContain("onClick={()=>decidir('mantener')}");
     expect(c).toContain('onClick={()=>decidir(null)}');
+    // DP-17 (QA R4): mientras se decide, el botón no dice «Liberando…» junto a la pregunta.
+    expect(c).toContain("{liberando===m.id&&porDecidir!==m.id?'Liberando…':'Marcarlibre'}");
   });
 });

@@ -73,10 +73,15 @@ describe('el visor de Registros las pinta', () => {
       .replace(/^\s*\/\/.*$/gm, '')
       .replace(/\s+/g, '');
 
-  it('el visor las lee con lo demás y se las pasa al ticket del corte', () => {
-    const c = sinEspacios('heredado/components/cortes/CorteViewerDialog.jsx');
-    expect(c).toContain('leerExtrasDelCorte(corteId),');
-    expect(c).toContain('extras={data.extras}');
+  it('el visor y el PDF que se baja solo al cerrar las leen y se las pasan al ticket (QA R3)', () => {
+    for (const ruta of [
+      'heredado/components/cortes/CorteViewerDialog.jsx',
+      'heredado/components/cortes/CorteAutoDownloader.jsx',
+    ]) {
+      const c = sinEspacios(ruta);
+      expect(c, ruta).toContain('leerExtrasDelCorte(corteId),');
+      expect(c, ruta).toContain('extras={data.extras}');
+    }
   });
 
   it('el ticket del corte las pinta antes de las firmas', () => {

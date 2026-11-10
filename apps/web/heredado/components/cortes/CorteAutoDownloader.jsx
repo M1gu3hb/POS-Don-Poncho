@@ -19,6 +19,7 @@ import { cancelacionesDeLaCaja } from '~/corte/cancelaciones-leidas';
 import { leerCancelacionesSinTrabar } from '~/corte-heredado/cancelaciones-sin-trabar';
 import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
 import { leerVentasDelDia } from '~/corte-heredado/ventas-del-dia';
+import { leerExtrasDelCorte } from '~/corte-heredado/extras-del-corte';
 
 /**
  * Renderiza el CorteTicket fuera de pantalla, genera el PDF y lo descarga.
@@ -57,7 +58,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
         // negocio como si fuera el corte del día. Aquí un fallo NO produce
         // archivo: `data` se queda nulo, el auto-disparo no ocurre y queda el
         // botón de reintento que ya existía.
-        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas, descuentosLeidos, ventasDelDia] =
+        const [allVentas, allGastos, allDescuentos, allIngredientes, allRecetas, cancelacionesLeidas, descuentosLeidos, ventasDelDia, extras] =
           await Promise.all([
             api.entidades.Venta.list('-fecha_cierre', 2000),
             api.entidades.GastoOperativo.list('-created_date', 500),
@@ -78,6 +79,8 @@ export default function CorteAutoDownloader({ corte, onDone }) {
             leerDescuentosDelCorte(corteId),
             // DP-15 (QA, J-H6) · En el Cierre del día, las ventas de todas las cajas; `null` si no.
             leerVentasDelDia(corteId),
+            // DP-17 (QA R3) · Opciones vendidas y retiros con PIN, como el visor de Registros.
+            leerExtrasDelCorte(corteId),
           ]);
 
         const matchVenta = (v) => {
@@ -170,6 +173,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
             descuentos: descuentosLeidos,
             ventasDelDia,
             alertas,
+            extras,
           });
         }
       } catch (err) {
@@ -270,6 +274,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
               totalDeCancelaciones={data.totalDeCancelaciones}
               descuentos={data.descuentos}
               ventasDelDia={data.ventasDelDia}
+              extras={data.extras}
               alertas={data.alertas}
               config={config}
               sinCostos={sinCostos}

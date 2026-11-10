@@ -200,6 +200,49 @@ describe('las reglas del corte', () => {
     );
   });
 
+  it('DP-17 · el Cierre del día desglosa el DÍA: canal, opciones y retiros con PIN de todas las cajas', () => {
+    const doc = documentoDelCorte(
+      hoja(RESTAURANTE, {
+        ventasDelDia: {
+          cajas: 2,
+          tickets: 3,
+          totalCentavos: '100000',
+          propinasCentavos: '0',
+          metodos: [
+            { metodo: 'efectivo', ventasCentavos: '100000', propinasCentavos: '0', pagos: 3 },
+          ],
+          canales: [
+            { grupo: 'mesas', cuentas: 2, totalCentavos: '70000' },
+            { grupo: 'llevar', cuentas: 1, totalCentavos: '30000' },
+          ],
+          opciones: [{ grupo: 'Extras', opcion: 'Queso', veces: '3', importeCentavos: '4500' }],
+          retirosConPin: [
+            {
+              movimientoId: 'm1',
+              montoCentavos: '-65000',
+              motivo: 'tortillas',
+              quien: 'Lupe',
+              autorizo: 'La Gerente',
+              registradoEn: '2026-11-10T15:41:00.000Z',
+            },
+          ],
+        },
+      }),
+    );
+    const delDia = 'Ventas del día · todas las cajas';
+    expect(celda(doc.secciones, delDia, 'Mesas (2)')?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: 70_000,
+    });
+    expect(celda(doc.secciones, delDia, 'Para llevar (1)')?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: 30_000,
+    });
+    const titulos = doc.secciones.map((s) => s.titulo);
+    expect(titulos).toContain('Opciones vendidas del día · todas las cajas');
+    expect(titulos).toContain('Retiros con PIN de gerente del día · todas las cajas');
+  });
+
   it('el corte de una caja que no cierra el día no trae «Ventas del día»', () => {
     const doc = documentoDelCorte(hoja(RESTAURANTE, { ventasDelDia: null }));
     expect(doc.secciones.some((s) => s.titulo === 'Ventas del día · todas las cajas')).toBe(false);
