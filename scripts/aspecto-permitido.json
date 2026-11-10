@@ -1615,6 +1615,39 @@
         "+ clase:px-4",
         "+ clase:min-h-11"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/productos/TipoVentaSection.jsx",
+      "porque": "DP-16 (QA-J, H1): en lo que se vende por peso el ingrediente base es opcional (Don Poncho no lleva insumos y vende la barbacoa por kilo); la nota ya no exige registrarlo y dice qué pasa sin él.",
+      "testigos": [
+        "- clase:text-advertencia",
+        "- texto:Ingrediente base *",
+        "- texto:Necesitas registrar al menos un ingrediente en Inventario para usar este tipo de venta.",
+        "+ clase:text-texto-sutil",
+        "+ texto:Ingrediente base (opcional)",
+        "+ texto:Sin ingrediente base se vende por peso sin descontar inventario."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/caja/MesasPendientesCierreDialog.jsx",
+      "porque": "DP-16 (QA-J, H2): la mesa unida que traba el cierre se decide en su renglón («Separar mesas», «Dejarlas unidas», «Cancelar»): la pregunta en un diálogo aparte, encima de éste, se cerraba sola. Nada de lo que se veía se quitó.",
+      "testigos": [
+        "+ clase:flex",
+        "+ clase:gap-2",
+        "+ clase:text-sm",
+        "+ clase:text-xs",
+        "+ clase:text-muted-foreground",
+        "+ clase:p-2.5",
+        "+ clase:font-medium",
+        "+ clase:border-t",
+        "+ clase:space-y-2",
+        "+ clase:flex-wrap",
+        "+ texto:¿Separar mesas o dejarlas unidas?",
+        "+ texto:Separadas, cada mesa vuelve a su lugar y a su número. Unidas, el siguiente cliente las encuentra juntas.",
+        "+ texto:Separar mesas",
+        "+ texto:Dejarlas unidas",
+        "+ texto:Cancelar"
+      ]
     }
   ]
 }

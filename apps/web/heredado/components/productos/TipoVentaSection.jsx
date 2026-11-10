@@ -216,7 +216,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
         <div className="space-y-3 pt-2 border-t">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Label className="text-xs">Ingrediente base *</Label>
+              <Label className="text-xs">Ingrediente base (opcional)</Label>
               <Select value={v.ingrediente_base_id || ''} onValueChange={onIngredienteChange}>
                 <SelectTrigger>
                   <SelectValue
@@ -236,9 +236,8 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
                 </SelectContent>
               </Select>
               {safeIngredientes.length === 0 && (
-                <p className="text-[11px] text-advertencia mt-1">
-                  Necesitas registrar al menos un ingrediente en Inventario para usar este tipo de
-                  venta.
+                <p className="text-[11px] text-texto-sutil mt-1">
+                  Sin ingrediente base se vende por peso sin descontar inventario.
                 </p>
               )}
             </div>
