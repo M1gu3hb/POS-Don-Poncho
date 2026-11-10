@@ -52,6 +52,18 @@ function lectorDesde(ruta) {
  */
 export const SIN_ESTADO = [
   {
+    pantalla: 'restaurante/para-llevar/ParaLlevarDeHoy',
+    estado: 'vacio',
+    razon:
+      'DP-16 · La lista de pedidos para llevar vive DENTRO de la Caja, bajo el botón «Para llevar»: sin pedidos del día no ocupa lugar (un «no hay pedidos» empujaría hacia abajo los cobros pendientes de las mesas).',
+  },
+  {
+    pantalla: 'restaurante/para-llevar/ParaLlevarDeHoy',
+    estado: 'cargando',
+    razon:
+      'DP-16 · Se relee cada 4 s dentro de la Caja: un esqueleto parpadearía en cada lectura. Mientras llega la primera no pinta nada; si falla, lo dice con un Aviso.',
+  },
+  {
     pantalla: 'configuracion/CajaYDescuentos',
     estado: 'vacio',
     razon:

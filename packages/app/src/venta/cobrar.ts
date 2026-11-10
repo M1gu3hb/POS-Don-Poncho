@@ -21,6 +21,7 @@ import { cotizar, exigirTotalVigente } from './cotizar.ts';
 import { repartirPagos } from './pagos.ts';
 import { porQueYaNoSeCobra } from './ya-cobrada.ts';
 import { efectosDeOpcionesPorLinea } from './opciones-en-consumo.ts';
+import { asignarNumeroParaLlevar } from './numero-para-llevar.ts';
 import { cantidadAConsumir } from './presentacion.ts';
 
 /**
@@ -50,6 +51,8 @@ export interface ResultadoCobro {
   /** Aparte, jamás dentro de `totalCentavos`. Ni en utilidad, ni en margen. */
   readonly propinaCentavos: string;
   readonly cambioCentavos: string;
+  /** DP-16 · «Pedido para llevar N», sólo si la orden es para llevar. */
+  readonly numeroPedido?: number;
 }
 
 export const cobrarOrden = definirComando<
@@ -336,6 +339,15 @@ export const cobrarOrden = definirComando<
       }),
     );
 
+    // 9.5 · DP-16 · El pedido para llevar toma su número del día ANTES de ir a la cocina: la
+    //       comanda sale ya como «PARA LLEVAR · N». Si el cobro se revierte, no gasta número.
+    const paraLlevar =
+      canal === 'llevar'
+        ? await ctx.paso('numero_para_llevar', () =>
+            asignarNumeroParaLlevar(ctx.tx, organizacionId, entrada.ordenId, ctx.ahora),
+          )
+        : null;
+
     // 10 · A la cocina lo que todavía no salió.
     //
     //      En una MESA no hace nada: las líneas ya llevan su `comanda_items`
@@ -394,6 +406,7 @@ export const cobrarOrden = definirComando<
         lineas: cotizacion.lineas.length,
         movimientosStock: movimientos.length,
         comandasEmitidas: comandas.length,
+        ...(paraLlevar === null ? {} : { numeroPedido: paraLlevar.numero }),
       },
     });
 
@@ -406,6 +419,7 @@ export const cobrarOrden = definirComando<
       propinaCentavos: propinaTotal.toString(),
       cambioCentavos: cambio.toString(),
       comandas,
+      ...(paraLlevar === null ? {} : { numeroPedido: paraLlevar.numero }),
     };
   },
 });

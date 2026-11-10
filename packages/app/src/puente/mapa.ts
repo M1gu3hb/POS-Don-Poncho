@@ -773,6 +773,9 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
        * del bote depende de ella— y llegaba `undefined`, así que todo salía «Aquí».
        */
       canal: { columna: 'canal', conversion: 'texto', escribible: false },
+      /** DP-16 · «Pedido para llevar N» (migración 191); nulo en las mesas. */
+      numero_pedido: { columna: 'numero_pedido', conversion: 'entero', escribible: false },
+      nombre_pedido: { columna: 'nombre_pedido', conversion: 'texto', escribible: false },
       propina_porcentaje: {
         rolesLectura: [...CAJA],
         columna: 'propina_puntos_base',
@@ -3232,6 +3235,22 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         porColumna: 'orden_id',
         columna: 'nombre_pedido',
         conversion: 'texto',
+      },
+      /**
+       * DP-16 · La cocina dice «PARA LLEVAR · N · nombre» por el CANAL de la orden, no porque la
+       * comanda no tenga mesa (`Cocina.tsx` le ponía «Para llevar» a todo lo que no tenía mesa).
+       */
+      canal: {
+        tabla: 'ordenes',
+        porColumna: 'orden_id',
+        columna: 'canal',
+        conversion: 'texto',
+      },
+      numero_pedido: {
+        tabla: 'ordenes',
+        porColumna: 'orden_id',
+        columna: 'numero_pedido',
+        conversion: 'entero',
       },
       mesa_numero: {
         tabla: 'mesas',

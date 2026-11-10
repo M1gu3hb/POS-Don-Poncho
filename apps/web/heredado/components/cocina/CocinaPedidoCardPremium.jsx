@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useIsDark } from '@/lib/ThemeContext';
+import { quienRecoge, rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 
 /**
  * Card premium de Cocina.
@@ -214,7 +215,7 @@ export default function CocinaPedidoCardPremium({
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-heading font-black text-base leading-tight">
-            {pedido?.mesa_numero ? `Mesa ${pedido.mesa_numero}` : 'Mostrador'}
+            {rotuloDeLaComanda(pedido || {})}
           </p>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <span className="text-[10px] text-muted-foreground flex items-center gap-1">
@@ -293,7 +294,7 @@ export default function CocinaPedidoCardPremium({
               border: '1px dashed rgba(22,163,74,0.3)',
             }}
           >
-            Esperando que el mesero recoja
+            {quienRecoge(pedido || {})}
           </div>
         )}
       </div>

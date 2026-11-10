@@ -26,6 +26,10 @@ export interface OrdenParaTicket {
   readonly cerradaEn: Date | null;
   readonly organizacionNombre: string;
   readonly sucursalNombre: string;
+  /** DP-16 · `llevar` imprime «PARA LLEVAR · N · nombre». */
+  readonly canal: string;
+  readonly numeroPedido: number | null;
+  readonly nombrePedido: string | null;
 }
 
 export async function ordenParaTicket(
@@ -50,6 +54,9 @@ export async function ordenParaTicket(
       'ordenes.cerrada_en as cerradaEn',
       'organizaciones.nombre as organizacionNombre',
       'sucursales.nombre as sucursalNombre',
+      'ordenes.canal as canal',
+      'ordenes.numero_pedido as numeroPedido',
+      'ordenes.nombre_pedido as nombrePedido',
     ])
     .where('ordenes.organizacion_id', '=', organizacionId)
     .where('ordenes.id', '=', ordenId)

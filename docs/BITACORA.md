@@ -1361,3 +1361,45 @@ PR, rama `dp-15-1` (sale de `dp-15-docs`, con el reporte 009; el PR #14 queda ab
 - 10:10 Los worktrees y las bases de los agentes, recogidos.
 
 - 11:06 Una hora después del despliegue (10:03 → 11:06): Vercel **sin errores de ejecución**.
+
+## DP-16 · Para llevar, opciones con precio, cocina con volumen, teléfono de cocina y menú del comensal (09-11 noche → 12-11)
+
+Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PROGRESO-DP16.md`.
+
+- **Skills cargadas:** engineering:code-review, engineering:testing-strategy, engineering:debug,
+  morphiq-prs. «frontend-design» no existe con ese nombre: se usó `anthropic-skills:impeccable`
+  (su equivalente).
+- **Entorno local:** el clúster de desarrollo (`127.0.0.1:55433`) con dos bases nuevas:
+  `dp16_pruebas` (integración, migrada hasta la 191) y `dp16_demo` (la demo de Don Poncho de
+  `scripts/demo-local.mjs`, con PIN de demo fuera del repo). Servidor de desarrollo contra la demo en
+  el 3300 (`D:\mpos-tmp\dp16\dev-demo.sh`) y guiones de Playwright en `D:\mpos-tmp\dp16\` (fuera
+  del repo). Nada vivo.
+- **Un tropiezo:** la primera corrida de `pnpm test:integracion` hizo una instalación parcial (los
+  agentes comparten el almacén) y `@aws-sdk/client-s3` quedó sin `dist-cjs`; se reinstaló ese paquete
+  y siguió. Y la base de pruebas nueva hay que migrarla antes (`node scripts/db.mjs migrate` con su
+  URL): `prepararPostgres` no migra la que viene en `DATABASE_URL_PRUEBAS`.
+
+### Agentes
+
+| Agente | Modelo | Encargo | Resultado |
+| --- | --- | --- | --- |
+| A (worktree propio) | Sonnet | 1.2 «Marcar entregado» del mesero · 1.3 animaciones de las ventanas | en curso |
+| B (worktree propio, base 5438) | Sonnet | 1.4 retiros con PIN arriba de un monto · 1.5 menores de la auditoría del 9-11 | entregado: 49 archivos, 28 mutantes muertos, sin migración; integración de lo suyo 118 pruebas en verde |
+
+### 1.1 · Para llevar (la sesión principal)
+
+- Servidor: migración 191 (número del día), `armar/descartar/entregar_para_llevar`,
+  `para_llevar_del_dia`, el número en `venta.cobrar`, lo listo para llevar no se entrega solo, el
+  descuento admite el pedido para llevar, el puente sirve canal y número. Integración 7/7 (con el
+  corte de cada caja cuadrado) y 16/16 junto con el descuento; mutantes 6/6 muertos (el del candado
+  sobrevivió a la primera: la prueba de dos cajas no garantiza el cruce; se agregó una con dos
+  transacciones cruzadas a propósito y murió).
+- Pantalla: el botón y el diálogo en la Caja, la lista con aviso y «Entregado», el rótulo único en
+  cocina, teléfono y voz, el ticket, el corte y Registros por canal, el CSV.
+- **En el navegador (demo, Playwright):** la cajera abre caja, toma barbacoa ½ kg + quesadilla con
+  «Relleno: Queso» y nota, cobra $422.50 (ticket «PARA LLEVAR · 1 · Don Beto»), la cocina lo ve con
+  ese rótulo, lo marca listo y se queda en «Listos»; la Caja suena, enseña «LISTO» con «Entregado» y
+  al tocarlo queda «1 entregados hoy». Lo que encontró la prueba y se arregló: la cajera no podía leer
+  las opciones de los platillos (403: la ruta sólo dejaba al mesero), las tarjetas del catálogo se
+  cortaban (filas fijas a 64 px), el título del cobro decía «Cobrar —», se ofrecía «Cancelar la
+  cuenta» en un pedido aún sin cobrar y faltaba el descuento.

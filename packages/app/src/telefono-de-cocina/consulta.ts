@@ -10,6 +10,9 @@ export interface ComandaDelTelefono {
   readonly estado: 'nuevo' | 'en_preparacion';
   readonly mesaNumero: number | null;
   readonly nombrePedido: string | null;
+  /** DP-16 · El canal de la orden y su «Pedido para llevar N». */
+  readonly canal: string;
+  readonly numeroPedido: number | null;
   readonly creadaEn: string;
   readonly notas: string | null;
   readonly alergias: string | null;
@@ -87,6 +90,8 @@ async function comandaMasReciente(
       'c.tipo_celebracion',
       'm.numero as mesa_numero',
       'o.nombre_pedido',
+      'o.canal',
+      'o.numero_pedido',
     ])
     .where('c.organizacion_id', '=', ambito.organizacionId)
     .where('c.estacion_preparacion_id', '=', ambito.estacionId)
@@ -120,6 +125,8 @@ async function comandaMasReciente(
     // Sólo la primera palabra, como el monitor de recogida: basta para «Juan» y no publica
     // el nombre completo de nadie.
     nombrePedido: primeraPalabra(cabecera.nombre_pedido),
+    canal: cabecera.canal ?? 'aqui',
+    numeroPedido: cabecera.numero_pedido ?? null,
     creadaEn: cabecera.created_at.toISOString(),
     notas: cabecera.notas,
     alergias: cabecera.notas_alergias,

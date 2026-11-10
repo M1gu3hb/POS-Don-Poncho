@@ -144,6 +144,11 @@ export interface TicketImpreso {
   readonly emitidoEn: string;
   readonly organizacionNombre: string;
   readonly sucursalNombre: string;
+  /**
+   * DP-16 · El pedido para llevar: su número del día y el nombre del cliente, para el renglón
+   * grande «PARA LLEVAR · N · nombre». `null` en una mesa o en el mostrador.
+   */
+  readonly paraLlevar: { readonly numero: number | null; readonly nombre: string | null } | null;
   readonly lineas: readonly {
     readonly nombre: string;
     readonly cantidad: string;
@@ -207,6 +212,10 @@ export const ticketDeOrden = definirComando<Transaccion, typeof entradaTicket, T
       emitidoEn: (orden.cerradaEn ?? orden.createdAt).toISOString(),
       organizacionNombre: orden.organizacionNombre,
       sucursalNombre: orden.sucursalNombre,
+      paraLlevar:
+        orden.canal === 'llevar'
+          ? { numero: orden.numeroPedido, nombre: orden.nombrePedido }
+          : null,
       lineas: lineas.map((l) => ({
         nombre: l.productoNombre,
         cantidad: l.cantidad,

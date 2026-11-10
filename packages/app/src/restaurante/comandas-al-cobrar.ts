@@ -163,6 +163,10 @@ export async function moverLaMesaTrasCancelar(
  * incluso después del Cierre del día. Los renglones listos de una cuenta PAGADA se dan por
  * entregados en el mismo movimiento, renglón por renglón (en una cuenta dividida, sólo los de las
  * partes pagadas).
+ *
+ * DP-16 · Salvo el pedido PARA LLEVAR: se cobra antes de preparar, y cuando la cocina lo termina
+ * el cliente sigue esperando en la caja. Se queda «listo» hasta que la caja toca «Entregado». Las
+ * mesas siguen igual (DP-D87, DP-D90).
  */
 export async function entregarLoListoYaCobrado(
   tx: Transaccion,
@@ -182,7 +186,10 @@ export async function entregarLoListoYaCobrado(
            join ordenes o on o.organizacion_id = ol.organizacion_id and o.id = ol.orden_id
           where ol.organizacion_id = ci.organizacion_id
             and ol.id = ci.orden_linea_id
-            and o.estado = 'pagada')
+            and o.estado = 'pagada'
+            -- DP-16 · El pedido para llevar ya cobrado NO se entrega solo: espera en la Caja a que
+            -- alguien se lo dé al cliente («Pedido para llevar N listo» → «Entregado»).
+            and o.canal <> 'llevar')
     returning ci.id::text as "id"
   `.execute(tx);
   if (rows.length === 0) return false;

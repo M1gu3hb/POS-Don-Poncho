@@ -40,12 +40,15 @@ const LECTURAS_PERMITIDAS = [
     campo: 'tipo_venta',
     // 41 desde DP-9.5: se fue el carrito local del portal (`CarritoQR`), que lo leía del snapshot.
     // 40 desde DP-12.6: se fue la pastilla de Ventas, que lo leía de una venta que nunca lo trae.
-    cantidad: 40,
+    // 42 desde DP-16: la toma del pedido para llevar (`useArmadoDelPedido`) lee el producto.
+    cantidad: 42,
     razon: 'Las lecturas son de ProductoTerminado y PedidoPreparacionItem, donde sí está mapeado.',
   },
   {
     campo: 'modificadores',
-    cantidad: 19,
+    // 22 desde DP-16: la toma del pedido para llevar (`useArmadoDelPedido`), del producto y del
+    // diálogo de opciones, como el mesero.
+    cantidad: 22,
     razon:
       'Son DTO de catálogo, selección y carrito; el producto normalizado los guarda mediante catalogo.guardar_modificadores y no como una columna.',
   },

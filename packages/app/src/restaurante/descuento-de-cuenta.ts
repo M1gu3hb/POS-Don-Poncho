@@ -60,13 +60,18 @@ export const CUENTAS_DESCONTABLES = [
   'cuenta_solicitada',
 ] as const;
 
-/** ¿Es una cuenta de sala —de una mesa o parte de una dividida— y sigue viva? */
+/**
+ * ¿Es una cuenta de sala —de una mesa, parte de una dividida o (DP-16) un pedido para llevar de la
+ * Caja— y sigue viva? El pedido para llevar se cobra en el MISMO diálogo que una mesa, con su
+ * descuento con PIN; la venta de mostrador (`/pos`) no.
+ */
 export function motivoParaNoDescontar(orden: {
   readonly estado: string;
   readonly mesaId: string | null;
   readonly padreId: string | null;
+  readonly canal?: string;
 }): string | null {
-  if (orden.mesaId === null && orden.padreId === null) {
+  if (orden.mesaId === null && orden.padreId === null && orden.canal !== 'llevar') {
     return 'Esa venta no es la cuenta de una mesa: su descuento se da en el cobro donde se armó.';
   }
   if (!(CUENTAS_DESCONTABLES as readonly string[]).includes(orden.estado)) {
@@ -94,7 +99,7 @@ export const descontarCuenta = definirComando<
     const orden = await ctx.paso('cargar_cuenta', () =>
       ctx.tx
         .selectFrom('ordenes')
-        .select(['id', 'estado', 'mesa_id as mesaId', 'orden_padre_id as padreId'])
+        .select(['id', 'estado', 'canal', 'mesa_id as mesaId', 'orden_padre_id as padreId'])
         // El filtro por organización SIEMPRE: conocer un id ajeno no abre su cuenta.
         .where('organizacion_id', '=', organizacionId)
         .where('id', '=', entrada.ordenId)

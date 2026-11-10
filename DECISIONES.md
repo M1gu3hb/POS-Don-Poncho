@@ -1868,3 +1868,56 @@ puerta los denuncia todos.
   (DP-D87/DP-D90: al cobrar, lo listo sale solo de «Listos»; lo que seguía por preparar se queda con la
   marca «Cuenta cobrada»), y se le pregunta. Si lo confirma, es un cambio acotado de la pantalla de la
   estación y del mesero, cuidando no volver a atorar comandas como en J-H3.
+
+## DP-D98 · El pedido para llevar se toma y se cobra en la Caja; su número es del día (migración 191) · 09/10-11-2026
+
+- **La entrada:** en la Caja del restaurante, el botón grande «Para llevar» (cajera, gerente,
+  administrador y dueño: los que entran a la Caja). Abre la toma de pedido del mesero sin mesa
+  (`ParaLlevarDialog.jsx`): categorías y búsqueda (`CatalogoDelPedido.jsx`), opciones obligatorias,
+  notas, barbacoa por peso, agotados y el borrador en el aparato (`useArmadoDelPedido.js`, por
+  persona). El renglón que viaja al servidor sale de una sola pieza (`renglonParaElComando`).
+- **El cobro:** «Cobrar» llama a `restaurante.armar_para_llevar`, que escribe el pedido como el
+  borrador de ESA terminal (el carrito del mostrador, `canal = 'llevar'`, `nombre_pedido`), con el
+  precio del catálogo, el agotado y la opción obligatoria del mesero; NO manda nada a cocina. La Caja
+  abre su diálogo de cobro de siempre (métodos, descuento con PIN, propina, ticket). Las comandas
+  salen en `venta.cobrar` (`comandarLineasPendientes`), dentro de su transacción. Si se cancela el
+  cobro, `restaurante.descartar_para_llevar` vacía el borrador y la pantalla vuelve con el pedido.
+  Volver a tocar «Cobrar» reemplaza las líneas del mismo borrador (no se duplican).
+- **El número:** «Pedido para llevar N» empieza en 1 cada día del negocio (CDMX). Lo toma
+  `venta.cobrar` después del folio y antes de la cocina (`asignarNumeroParaLlevar`), con un candado
+  de transacción por negocio y el índice único `ordenes_numero_pedido_del_dia` como red. Un cobro
+  revertido no gasta número; un reintento conserva el que tenía. **Migración 191**, aditiva:
+  `ordenes.numero_pedido` y `ordenes.dia_del_pedido`. **Alternativa descartada:** derivar el
+  número al leer (por orden de cobro): con dos cajas, el ticket impreso podía decir un número y la
+  cocina otro.
+- **El descuento con PIN** también aplica al pedido para llevar (`motivoParaNoDescontar` lo admite
+  por su canal); la venta de `/pos` sigue sin él (DP-D75).
+- **La cocina** dice «PARA LLEVAR · N · nombre» por el CANAL, no por la falta de mesa
+  (`rotulo-de-la-comanda.ts`: la pantalla, las tarjetas heredadas, el teléfono de cocina y la voz,
+  «para llevar 3»). El puente sirve `canal` y `numero_pedido` en la comanda y en la venta.
+- **El ticket** lleva el renglón grande «PARA LLEVAR · N · nombre» (`PreCuentaTicket`, y
+  `venta.ticket` trae `paraLlevar`).
+- **Sin cambiar:** las mesas; `/pos` sigue fuera del menú.
+
+## DP-D99 · Lo listo de un pedido para llevar espera en la Caja hasta «Entregado» · 10-11-2026
+
+- **Responde DP-D97** (Miguel: sí se cobra antes de servir lo para llevar). Un pedido para llevar
+  ya cobrado NO se entrega solo cuando la cocina lo marca listo: `entregarLoListoYaCobrado` excluye
+  `canal = 'llevar'`. Las mesas no cambian (DP-D87, DP-D90, J-H3).
+- **La Caja** lee `restaurante.para_llevar_del_dia` cada 4 s (`ParaLlevarDeHoy.tsx`): lo listo arriba,
+  grande, con su botón «Entregado» a todo lo ancho (`restaurante.entregar_para_llevar`); cuando uno
+  pasa a listo suena y avisa «Pedido para llevar N listo» una sola vez (lo que ya estaba listo al
+  abrir la Caja no se anuncia). Si una estación terminó y otra no, dice «una parte lista, falta otra».
+- **`entregar_para_llevar`** es aparte de `entregar_pedidos` (el de la mesa): no mueve mesas y sólo
+  entrega lo listo; sin nada listo devuelve cero y no escribe.
+
+## DP-D100 · Mesas y para llevar por separado; «Aquí» en lugar de «En taza» · 10-11-2026
+
+- **El corte y el Cierre del día** (`corte/por-canal.ts`, y el visor heredado `CorteTicket.jsx`): con
+  algún pedido para llevar, el resumen «Mesas y para llevar» (cuentas e importe, que suman el total
+  al centavo) y el detalle de cada uno aparte; el pedido se reconoce por «Llevar N · nombre». Sin
+  pedidos para llevar el documento queda como estaba.
+- **Registros → Ventas** filtra por canal (Todas, Mesas, Para llevar) y la búsqueda encuentra el
+  nombre del pedido; **el CSV** trae «Canal», «Pedido para llevar» y «Nombre del pedido».
+- **Una sola regla** (`corte/canales.ts`): `llevar` es para llevar; todo lo demás, mesas. `aqui` se
+  dice «Aquí» (venía de la cafetería).

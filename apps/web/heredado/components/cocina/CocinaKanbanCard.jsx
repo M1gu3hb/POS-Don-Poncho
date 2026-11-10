@@ -14,6 +14,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import CocinaProductoDialog from './CocinaProductoDialog';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
+import { quienRecoge, rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -84,7 +85,7 @@ export default function CocinaKanbanCard({
       >
         <div className="flex-1 min-w-0">
           <p className="font-heading font-bold text-sm leading-tight">
-            {pedido?.mesa_numero ? `Mesa ${pedido.mesa_numero}` : 'Mostrador'}
+            {rotuloDeLaComanda(pedido || {})}
           </p>
           <p className="text-[10px] text-muted-foreground">
             {timeLabel} · {totalProductos} producto{totalProductos !== 1 ? 's' : ''} ({itemCount}{' '}
@@ -123,7 +124,7 @@ export default function CocinaKanbanCard({
         )}
         {estado === 'listo' && (
           <p className="text-xs text-center text-exito font-medium italic py-1">
-            Esperando que el mesero recoja
+            {quienRecoge(pedido || {})}
           </p>
         )}
       </div>

@@ -4,12 +4,16 @@
  */
 
 import { idAlAzar } from '~/cliente/id-al-azar';
+import type { DatosDelRotulo } from '~/restaurante/rotulo-de-la-comanda';
 
 export interface ComandaDelTelefono {
   readonly id: string;
   readonly estado: 'nuevo' | 'en_preparacion';
   readonly mesaNumero: number | null;
   readonly nombrePedido: string | null;
+  /** DP-16 · El canal decide «PARA LLEVAR · N · nombre». Opcional: un servidor viejo no lo manda. */
+  readonly canal?: string;
+  readonly numeroPedido?: number | null;
   readonly creadaEn: string;
   readonly notas: string | null;
   readonly alergias: string | null;
@@ -82,4 +86,14 @@ export async function moverDesdeElTelefono(
       body: JSON.stringify({ comandaId, estado }),
     }),
   );
+}
+
+/** DP-16 · Lo que el rótulo único (`rotulo-de-la-comanda`) necesita de la comanda del teléfono. */
+export function datosDelRotulo(comanda: ComandaDelTelefono): DatosDelRotulo {
+  return {
+    mesa_numero: comanda.mesaNumero,
+    canal: comanda.canal ?? null,
+    numero_pedido: comanda.numeroPedido ?? null,
+    nombre_pedido: comanda.nombrePedido,
+  };
 }

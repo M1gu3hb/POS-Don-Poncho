@@ -1,6 +1,7 @@
 'use client';
 import { fechaYHoraDelNegocio } from '@morphiqpos/domain/tiempo';
 import { economiaDeLaVenta, sePintaElMargen } from '~/restaurante/margen-de-las-ventas';
+import { NOMBRE_DEL_CANAL } from '~/corte/canales';
 /**
  * Definición de columnas estándar por sección para los exports.
  * Centralizado para mantener consistencia entre CSV/XLSX/Sheets.
@@ -57,6 +58,10 @@ export const COLUMNS_VENTAS = [
   { key: 'fecha_cierre', label: 'Cobro', format: fmtDate },
   { key: 'tipo_venta', label: 'Tipo' },
   { key: 'mesa_numero', label: 'Mesa' },
+  // DP-16 · Mesas y pedidos para llevar, distinguibles en el CSV.
+  { key: 'canal', label: 'Canal', format: (v) => NOMBRE_DEL_CANAL[v] ?? NOMBRE_DEL_CANAL['aqui'] },
+  { key: 'numero_pedido', label: 'Pedido para llevar' },
+  { key: 'nombre_pedido', label: 'Nombre del pedido' },
   { key: 'personas', label: 'Personas', format: fmtNum },
   { key: 'cliente_nombre', label: 'Cliente' },
   { key: 'usuario_mesero_nombre', label: 'Mesero' },

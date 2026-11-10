@@ -578,7 +578,9 @@ export function fraseListoCocina(mesaNumero, nombreMesero, estacionNombre) {
  */
 export function fraseNuevoPedidoCocina(mesaNumero, items, notaGeneral, extras) {
   const safeItems = Array.isArray(items) ? items : [];
-  const mesaStr = mesaNumero ? `mesa ${mesaNumero}` : 'mostrador';
+  // DP-16 · Quien llama puede pasar el rótulo hablado («para llevar 3»): sale del canal.
+  const rotulo = typeof extras?.rotulo === 'string' ? extras.rotulo.trim() : '';
+  const mesaStr = rotulo || (mesaNumero ? `mesa ${mesaNumero}` : 'mostrador');
   const partes = safeItems
     .filter((i) => i && i.producto_nombre)
     .slice(0, 8) // máximo 8 productos

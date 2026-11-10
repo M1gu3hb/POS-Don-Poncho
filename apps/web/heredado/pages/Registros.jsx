@@ -52,6 +52,7 @@ import { CancelacionesRegistradas } from '~/corte/CancelacionesRegistradas';
 import { AuditoriaReciente } from '~/registros/AuditoriaReciente';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 import { esDeMando } from '@/components/configuracion/puestos';
+import { grupoDelCanal, referenciaParaLlevar } from '~/corte/canales';
 
 export default function Registros() {
   const { config, paquete_modo } = useConfig();
@@ -64,6 +65,8 @@ export default function Registros() {
   const queryClient = useQueryClient();
   const location = useLocation();
   const [search, setSearch] = useState('');
+  // DP-16 · Ventas de las mesas, pedidos para llevar, o todas.
+  const [canal, setCanal] = useState('todos');
   const [verCorte, setVerCorte] = useState(null);
   const [verVenta, setVerVenta] = useState(null);
   const [pdfData, setPdfData] = useState(null);
@@ -185,7 +188,8 @@ export default function Registros() {
     () =>
       ventas.filter(
         (v) =>
-          filterFn(v.folio) ||
+          (canal === 'todos' || grupoDelCanal(v.canal) === canal) &&
+          (filterFn(v.folio) ||
           filterFn(v.codigo_caja) ||
           filterFn(v.cliente_nombre) ||
           filterFn(v.usuario_cajero_nombre) ||
@@ -194,9 +198,10 @@ export default function Registros() {
           filterFn(v.metodo_pago) ||
           filterFn(v.estado) ||
           filterFn(v.fecha_apertura?.slice(0, 10)) ||
-          filterFn(v.fecha_cierre?.slice(0, 10)),
+          filterFn(v.fecha_cierre?.slice(0, 10)) ||
+          filterFn(v.nombre_pedido)),
       ),
-    [ventas, q],
+    [ventas, q, canal],
   );
 
   const cortesFiltrados = useMemo(
@@ -391,7 +396,27 @@ export default function Registros() {
 
         {/* VENTAS */}
         <TabsContent value="ventas" className="mt-4 space-y-3">
-          <div className="flex justify-end gap-2 flex-wrap">
+          <div className="flex justify-between gap-2 flex-wrap">
+            <div className="flex gap-1.5" role="group" aria-label="Filtrar por canal">
+              {[
+                ['todos', 'Todas'],
+                ['mesas', 'Mesas'],
+                ['llevar', 'Para llevar'],
+              ].map(([valor, nombre]) => (
+                <button
+                  key={valor}
+                  type="button"
+                  aria-pressed={canal === valor}
+                  onClick={() => setCanal(valor)}
+                  className={`min-h-9 px-3 rounded-full text-sm font-medium border ${
+                    canal === valor ? 'bg-primary text-primario-texto border-primary' : 'bg-superficie'
+                  }`}
+                >
+                  {nombre}
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-end gap-2 flex-wrap">
             <ExportarSeccionButton
               rows={ventasFiltradas}
               columns={COLUMNS_VENTAS}
@@ -401,6 +426,7 @@ export default function Registros() {
                 Distingue cantidad lógica vs cantidad variable (500 g / 4 shots). */}
             <ExportarDetallesButton ventas={ventasFiltradas} />
             <LimpiarSeccionButton seccion="ventas" />
+            </div>
           </div>
           <div className="space-y-2">
             {ventasFirstLoad ? (
@@ -432,7 +458,11 @@ export default function Registros() {
                       {v.fecha_apertura
                         ? format(new Date(v.fecha_apertura), 'd MMM yyyy, HH:mm', { locale: es })
                         : ''}
-                      {v.mesa_numero ? ` · Mesa ${v.mesa_numero}` : ''}
+                      {grupoDelCanal(v.canal) === 'llevar'
+                        ? ` · ${referenciaParaLlevar(v.numero_pedido, v.nombre_pedido)}`
+                        : v.mesa_numero
+                          ? ` · Mesa ${v.mesa_numero}`
+                          : ''}
                       {v.usuario_cajero_nombre ? ` · ${v.usuario_cajero_nombre}` : ''}
                     </p>
                     {v.satisfaccion_comentario && (

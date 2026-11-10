@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useIsDark } from '@/lib/ThemeContext';
 import CocinaStationMiniCard from './CocinaStationMiniCard';
+import { rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 
 /**
  * F3.1: Tarjeta agrupadora por MESA para vista "Todas las estaciones".
@@ -22,7 +23,7 @@ export default function CocinaMesaGroupCard({ pedidos, onIniciar, onListo, onQui
   if (arr.length === 0) return null;
 
   const first = arr[0] || {};
-  const mesaLabel = first?.mesa_numero ? `Mesa ${first.mesa_numero}` : 'Mostrador';
+  const mesaLabel = rotuloDeLaComanda(first);
 
   // Pedido más antiguo del grupo para tiempo "hace X"
   const fechas = arr

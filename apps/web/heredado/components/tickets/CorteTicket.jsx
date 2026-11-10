@@ -33,6 +33,7 @@ import {
 } from '~/restaurante/margen-de-las-ventas';
 import { SeccionPintada } from '~/corte/HojaDelCorte';
 import { textoDeLaLinea } from '~/corte/linea-de-venta';
+import { grupoDelCanal, referenciaParaLlevar, sumaPorGrupo } from '~/corte/canales';
 import {
   AVISO_SIN_CANCELACIONES,
   EXPLICACION_SIN_CANCELACIONES,
@@ -405,6 +406,37 @@ const CorteTicket = React.forwardRef(function CorteTicket(
         )}
       </Section>
 
+      {/* DP-16 · Mesas y para llevar, por separado (el mismo cálculo que el documento del cierre). */}
+      {ventas.some((v) => grupoDelCanal(v.canal) === 'llevar') &&
+        (() => {
+          const suma = sumaPorGrupo(
+            ventas.map((v) => ({
+              canal: v.canal || 'aqui',
+              totalCentavos: String(Math.round((Number(v.total) || 0) * 100)),
+            })),
+          );
+          return (
+            <Section title="Mesas y para llevar">
+              <table className="w-full text-xs border">
+                <tbody>
+                  {[
+                    ['Mesas', suma.mesas],
+                    ['Para llevar', suma.llevar],
+                  ].map(([nombre, g]) => (
+                    <tr key={nombre}>
+                      <td className="border px-2 py-1">{nombre}</td>
+                      <td className="border px-2 py-1 text-right">{g.cuentas} cuentas</td>
+                      <td className="border px-2 py-1 text-right font-bold">
+                        {formatCurrency(Number(g.totalCentavos) / 100)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Section>
+          );
+        })()}
+
       {/* Detalle de ventas */}
       <Section title={`Detalle de ventas (${ventas.length})`}>
         <table className="w-full text-xs border">
@@ -412,7 +444,7 @@ const CorteTicket = React.forwardRef(function CorteTicket(
             <tr>
               <th className="border px-2 py-1 text-left">Folio</th>
               <th className="border px-2 py-1 text-left">Hora</th>
-              <th className="border px-2 py-1 text-left">Mesa</th>
+              <th className="border px-2 py-1 text-left">Mesa o pedido</th>
               <th className="border px-2 py-1 text-left">Productos</th>
               <th className="border px-2 py-1 text-right">Total</th>
               <th className="border px-2 py-1 text-left">Pago</th>
@@ -430,8 +462,14 @@ const CorteTicket = React.forwardRef(function CorteTicket(
                       : '—'}
                   </td>
                   <td className="border px-2 py-1">
-                    {v.mesa_numero || '—'}
-                    {v.cliente_nombre ? ` · ${v.cliente_nombre}` : ''}
+                    {grupoDelCanal(v.canal) === 'llevar' ? (
+                      referenciaParaLlevar(v.numero_pedido, v.nombre_pedido)
+                    ) : (
+                      <>
+                        {v.mesa_numero || '—'}
+                        {v.cliente_nombre ? ` · ${v.cliente_nombre}` : ''}
+                      </>
+                    )}
                   </td>
                   <td className="border px-2 py-1">
                     {dets.map((d, i) => (

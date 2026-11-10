@@ -2,8 +2,9 @@ import { Aviso, Superficie } from '@morphiqpos/ui/sistema';
 import { PartyPopper } from 'lucide-react';
 
 import { cantidadParaMostrar } from '~/restaurante/peso';
+import { rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 
-import type { ComandaDelTelefono } from './pantalla-del-telefono';
+import { datosDelRotulo, type ComandaDelTelefono } from './pantalla-del-telefono';
 
 /** «2×» para piezas; «½ kg ×» para lo que se vende por peso. */
 export function cantidadDelPlatillo(p: ComandaDelTelefono['platillos'][number]): string {
@@ -29,10 +30,7 @@ export function ComandaEnElTelefono({
   readonly pendientes: number;
   readonly haceCuanto: string;
 }) {
-  const quien =
-    comanda.mesaNumero === null
-      ? `Para llevar${comanda.nombrePedido === null ? '' : ` · ${comanda.nombrePedido}`}`
-      : `Mesa ${String(comanda.mesaNumero)}`;
+  const quien = rotuloDeLaComanda(datosDelRotulo(comanda));
   return (
     <Superficie
       como="article"

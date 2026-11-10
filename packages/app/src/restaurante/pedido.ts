@@ -204,7 +204,7 @@ export type EntradaPedido = z.output<typeof entradaEnviarPedido>;
  * Todo o nada, y por eso la valoración va primero: si el tercer plato no
  * existe, no se ha escrito el primero y no hay nada que deshacer a mano.
  */
-async function prepararTodas(
+export async function prepararTodas(
   tx: Transaccion,
   organizacionId: string,
   entrada: EntradaPedido,
