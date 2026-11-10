@@ -25,7 +25,7 @@
 | 2.1 | Opciones con precio y productos por peso | hecho en `dp-16-2`: servidor (`996688e`), pantalla (`beeda85`, `367e8cc`) y el editor de grupos del agente D (`706d98c`); integración 8/8 + 5/5, en el navegador la Caja (para llevar con barbacoa «sólo presentaciones» + tortillas de harina y quesadilla con queso: $457.50, ticket con cada opción y su precio), el portal a 360 px y el editor del dueño |
 | 2.2 | Cocina con volumen | hecho (agente C, `d0fb765`, DP-D105): de 967 KB a 62 KB por refresco; en el navegador a 1080p |
 | 2.3 | Teléfono de cocina nuevo | hecho (agente E, `8d5d522`, DP-D106); en el navegador en Android 360 y 412 y en iPhone (WebKit): sin desborde, botones de 62 px, tira, carrusel y opciones aparte de la nota |
-| 2 · producción | PR #18, CI 10/10, la 192 en la propia, merge, `READY`, humo, ceros | hecho el 10-11: la 192 a las 07:05, merge `2e8da35`, `READY`, ceros y humo 07:07; Vercel una hora después: pendiente (08:07) |
+| 2 · producción | PR #18, CI 10/10, la 192 en la propia, merge, `READY`, humo, ceros | hecho el 10-11: la 192 a las 07:05, merge `2e8da35`, `READY`, ceros y humo 07:07; Vercel sin errores de 07:05 a 08:06 |
 | 3 | Menú del comensal: digital y a la carta | hecho en `dp-16-3` (DP-D107): el menú digital, «a la carta», el modo en Configuración → QR y el fondo de la tarjeta; 8 mutantes muertos; capturas en Android 360, iPhone y tableta, con y sin fotos, sin desborde ni objetivos de menos de 44 px (`D:\mpos-tmp\dp16\laminas\`, fuera del repositorio), enviadas a Miguel; sin migración (la columna venía en la 192). Falta el PR y producción |
 | 4 | QA final, producción y reporte 010 | pendiente |
 

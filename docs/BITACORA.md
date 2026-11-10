@@ -1492,6 +1492,7 @@ Rama `dp-16` (sale de `origin/dp-15-1-cierre`, `e979da2`). Progreso en `docs/PRO
   el humo sin cobrar (`link.mjs`): la entrada 200 y sin desborde en 6 aparatos (5.9 s la primera, el
   arranque en frío; luego de 1.3 a 2.2 s), el portal en 5 (de 0.65 a 1.6 s), 8 a la vez todos 200 en
   3.4 s, red lenta (10 s la primera, 1.5 s con caché) y el manifiesto.
+- 08:06 Vercel: ningún error en producción de las 07:05 a las 08:06 (la hora después del despliegue).
 
 
 ### 3 · El menú del comensal (la sesión principal, rama `dp-16-3`)
