@@ -1357,6 +1357,18 @@
         "+ clase:text-sm",
         "+ texto:Vender sólo en estas presentaciones"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/productos/ModificadoresDialog.jsx",
+      "borrado": true,
+      "porque": "DP-16: el diálogo «Opciones de preparación» guardaba por producto con el comando viejo y no sabía de precios. Lo sustituye «Opciones de <platillo>» (src/catalogo/opciones/OpcionesDelPlatilloDialog.tsx), sobre la biblioteca de grupos, con orden, precio con signo y grupos compartidos.",
+      "testigos": []
+    },
+    {
+      "archivo": "apps/web/heredado/components/productos/ModificadoresEditor.jsx",
+      "borrado": true,
+      "porque": "DP-16: el editor por producto sólo lo usaba ModificadoresDialog. Su lugar lo toma src/catalogo/opciones/EditorDeGrupo.tsx, que edita un grupo de la biblioteca con precio por opción.",
+      "testigos": []
     }
   ]
 }

@@ -1987,7 +1987,11 @@ puerta los denuncia todos.
   `catalogo.asignar_grupos_de_opciones`, `catalogo.grupos_de_opciones`): nombre, una o varias,
   obligatorio, mínimo y máximo (sólo en varias), activo y sus opciones con precio; un grupo se reusa en
   varios productos, en el orden que el dueño le da en cada uno. Guardar con el editor viejo ya no vacía
-  un grupo compartido.
+  un grupo compartido. **En Productos → «Opciones»** (`src/catalogo/opciones/`) el dueño ordena los
+  grupos del platillo, agrega uno de la biblioteca o crea uno nuevo, y edita nombre, «elige una» o
+  «varias», obligatorio, mínimo y máximo, activo y cada opción con su precio en pesos con signo
+  («15», «-5»); si el grupo lo usan otros productos, avisa que el cambio aplica a todos y pide
+  confirmar. Sustituye al editor viejo por producto (`ModificadoresDialog`/`ModificadoresEditor`).
 - **Dónde se ve:** el diálogo de opciones del mesero y de la Caja («Queso +$15.00», «Agregar · $…»),
   el portal (sólo si el negocio enseña precios en el portal, igual que el del platillo; con mínimo y
   máximo), el ticket y la precuenta (un renglón por grupo con su precio; la nota queda sólo con lo

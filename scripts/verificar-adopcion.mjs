@@ -52,6 +52,18 @@ function lectorDesde(ruta) {
  */
 export const SIN_ESTADO = [
   {
+    pantalla: 'catalogo/opciones/EditorDeGrupo',
+    estado: 'vacio',
+    razon:
+      'Formulario de un solo grupo (DP-16): la lista de opciones vacía no es un estado sino el punto de partida, y el botón «Agregar opción» y el aviso de validación ya lo dicen.',
+  },
+  {
+    pantalla: 'catalogo/opciones/EditorDeGrupo',
+    estado: 'cargando',
+    razon:
+      'No lee nada: recibe el borrador por props desde OpcionesDelPlatilloDialog, que es quien espera la biblioteca y pinta el esqueleto de carga.',
+  },
+  {
     pantalla: 'restaurante/para-llevar/ParaLlevarDeHoy',
     estado: 'vacio',
     razon:

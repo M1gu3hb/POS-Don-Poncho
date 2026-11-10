@@ -48,7 +48,7 @@ const LECTURAS_PERMITIDAS = [
     campo: 'modificadores',
     // 22 desde DP-16: la toma del pedido para llevar (`useArmadoDelPedido`), del producto y del
     // diálogo de opciones, como el mesero.
-    cantidad: 22,
+    cantidad: 20,
     razon:
       'Son DTO de catálogo, selección y carrito; el producto normalizado los guarda mediante catalogo.guardar_modificadores y no como una columna.',
   },

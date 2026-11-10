@@ -44,7 +44,7 @@ import { useConfig } from '@/lib/ConfigContext';
 import { canAccessModule } from '@/lib/packageConfig';
 import ProductoDesglose from '@/components/productos/ProductoDesglose';
 import ProductoSimpleDialog from '@/components/productos/ProductoSimpleDialog';
-import ModificadoresDialog from '@/components/productos/ModificadoresDialog';
+import { OpcionesDelPlatilloDialog } from '~/catalogo/opciones/OpcionesDelPlatilloDialog';
 import FichaResumenVariable from '@/components/productos/FichaResumenVariable';
 import ImagenDePlatillo from '@/components/productos/ImagenDePlatillo';
 import EsqueletoDeProductos, { REJILLA_DE_TARJETAS } from '@/components/productos/EsqueletoDeProductos';
@@ -515,7 +515,7 @@ export default function Productos() {
       />
 
       {/* MODIFICADORES / OPCIONES DE PREPARACIÓN — disponible en todos los paquetes */}
-      <ModificadoresDialog
+      <OpcionesDelPlatilloDialog
         open={!!modificadoresProducto}
         onClose={() => setModificadoresProducto(null)}
         producto={modificadoresProducto}
