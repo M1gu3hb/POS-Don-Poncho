@@ -169,7 +169,10 @@ async function alMapa(page: Page): Promise<void> {
 /** Toño saca TODO lo de esa mesa: cada comanda, de la cocina y de la barra. */
 async function prepararLaMesa(page: Page, numero: number, comandas: number): Promise<void> {
   // DP-16 · Cada cuenta de la cocina es un renglón de su columna (`li`), con el rótulo primero.
-  const tarjetas = page.locator('li').filter({ hasText: new RegExp(`^Mesa ${String(numero)}\\b`) });
+  // `(?!\d)` y no `\b`: el rótulo va pegado a la espera en el texto («Mesa 1Listo hace…»).
+  const tarjetas = page
+    .locator('li')
+    .filter({ hasText: new RegExp(`^Mesa ${String(numero)}(?!\\d)`) });
   for (const [accion, columna] of [
     ['Preparar', 'Nuevos'],
     ['Listo', 'En preparación'],

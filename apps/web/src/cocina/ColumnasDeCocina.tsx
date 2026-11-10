@@ -76,18 +76,20 @@ export function ColumnasDeCocina({ cuentas, cargando, ...tarjeta }: ColumnasDeCo
     <div className="flex flex-col gap-(--espacio-2)">
       <nav aria-label="Ir a una columna de la cocina" className="grid grid-cols-3 gap-1 md:hidden">
         {COLUMNAS.map(({ estado, titulo, Icono, banda }) => (
-          <button
+          // Enlaces a cada columna (no botones): llevan a un lugar de la página.
+          <a
             key={estado}
-            type="button"
+            href={`#columna-${estado}`}
             aria-current={visible === estado ? 'true' : undefined}
-            onClick={() => {
+            onClick={(evento) => {
+              evento.preventDefault();
               irA(estado);
             }}
             className={`flex min-h-(--altura-control) items-center justify-center gap-1 rounded-md px-1 text-sm font-bold ${visible === estado ? banda : 'bg-fondo-sutil text-texto'}`}
           >
             <Icono aria-hidden="true" className="size-4 shrink-0" />
             {titulo} ({contar(cuentas[estado])})
-          </button>
+          </a>
         ))}
       </nav>
 
