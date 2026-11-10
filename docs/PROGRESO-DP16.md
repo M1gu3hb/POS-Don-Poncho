@@ -22,15 +22,17 @@
 | 1.4 | Retiros con PIN arriba de un monto | hecho (agente B, integrado; DP-D101) |
 | 1.5 | Menores de la auditoría del 9-11 | hecho (agente B, integrado; DP-D102) |
 | 1 · producción | PR #17, CI 10/10, la 191 en la propia, merge, `READY`, humo, ceros | hecho el 10-11: la 191 a las 03:46 (ensayo y luego en serio, por la de sesión), contrato 1752 columnas y RLS cerrado, merge `8f271a2`, `READY` 03:47, ceros 03:49, humo 03:53 (entrada y portal 200 sin desborde en 6 y 5 aparatos, 8 a la vez en 3.1 s); Vercel sin errores hasta las 04:49 |
-| 2.1 | Opciones con precio y productos por peso | en curso en `dp-16-2`: servidor (`996688e`), pantalla del mesero, para llevar y carrito (`beeda85`); ticket, portal, «sólo presentaciones» y corte sin commit; editor de grupos con el agente D |
-| 2.2 | Cocina con volumen | agente C (Sonnet) |
-| 2.3 | Teléfono de cocina nuevo | pendiente |
+| 2.1 | Opciones con precio y productos por peso | hecho en `dp-16-2`: servidor (`996688e`), pantalla (`beeda85`, `367e8cc`) y el editor de grupos del agente D (`706d98c`); integración 8/8 + 5/5, en el navegador la Caja (para llevar con barbacoa «sólo presentaciones» + tortillas de harina y quesadilla con queso: $457.50, ticket con cada opción y su precio), el portal a 360 px y el editor del dueño |
+| 2.2 | Cocina con volumen | hecho (agente C, `d0fb765`, DP-D105): de 967 KB a 62 KB por refresco; en el navegador a 1080p |
+| 2.3 | Teléfono de cocina nuevo | hecho (agente E, `8d5d522`, DP-D106); en el navegador en Android 360 y 412 y en iPhone (WebKit): sin desborde, botones de 62 px, tira, carrusel y opciones aparte de la nota |
 | 3 | Menú del comensal: digital y a la carta | pendiente |
 | 4 | QA final, producción y reporte 010 | pendiente |
 
 ## Lo que sigue
 
-1. 2.1: terminar (tipos, lint, integración y mutantes de lo de hoy), integrar al agente D (editor de
-   grupos en Productos), probar en el navegador el mesero, el portal, el ticket y el corte.
-2. 2.2: integrar al agente C (cocina con volumen). 2.3: teléfono de cocina.
-3. DECISIONES DP-D104+, ficha 38 (192), PR de la Parte 2, la 192 en la propia, merge y humo.
+1. `pnpm verify` completo; PR de la Parte 2, la 192 en la propia
+   (ensayo y luego en serio, por la de sesión, con el script `migrate` desde una copia de la rama),
+   merge, `READY`, humo, ceros y Vercel una hora.
+2. Parte 3: el menú digital, «a la carta» mejorado y el modo en Configuración → Portal (con «Páginas
+   subidas» todavía puesto en Don Poncho); capturas para Miguel.
+3. Parte 4: QA, humo y reporte 010.
