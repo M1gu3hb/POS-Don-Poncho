@@ -12,8 +12,9 @@ import { useAlturaDisponible } from './use-altura-disponible';
  *
  * Desde la tableta en vertical (768 px) hacia arriba, el tablero ocupa el alto que queda de la
  * pantalla y CADA columna se desplaza sola, con su encabezado (palabra, icono y conteo) siempre a
- * la vista: bajar por «Nuevos» no se lleva las otras dos. En el teléfono caben una a la vez: un
- * selector con los conteos las alterna, y los conteos de las otras no se pierden.
+ * la vista: bajar por «Nuevos» no se lleva las otras dos. En el teléfono van una debajo de otra
+ * (nada se esconde: lo que pasa a «En preparación» sigue a la mano) y unas fichas con los conteos
+ * llevan a cada columna.
  */
 
 const COLUMNAS: readonly {
@@ -61,24 +62,26 @@ function contar(cuentas: readonly CuentaEnCocina[]): number {
 
 export function ColumnasDeCocina({ cuentas, cargando, ...tarjeta }: ColumnasDeCocinaProps) {
   const [visible, setVisible] = useState<EstadoDeColumna>('nuevo');
+  const irA = (estado: EstadoDeColumna) => {
+    setVisible(estado);
+    const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document
+      .getElementById(`columna-${estado}`)
+      ?.scrollIntoView({ behavior: suave ? 'smooth' : 'auto', block: 'start' });
+  };
   const tablero = useRef<HTMLDivElement>(null);
   const alto = useAlturaDisponible(tablero);
 
   return (
     <div className="flex flex-col gap-(--espacio-2)">
-      <div
-        role="tablist"
-        aria-label="Columnas de la cocina"
-        className="grid grid-cols-3 gap-1 md:hidden"
-      >
+      <nav aria-label="Ir a una columna de la cocina" className="grid grid-cols-3 gap-1 md:hidden">
         {COLUMNAS.map(({ estado, titulo, Icono, banda }) => (
           <button
             key={estado}
             type="button"
-            role="tab"
-            aria-selected={visible === estado}
+            aria-current={visible === estado ? 'true' : undefined}
             onClick={() => {
-              setVisible(estado);
+              irA(estado);
             }}
             className={`flex min-h-(--altura-control) items-center justify-center gap-1 rounded-md px-1 text-sm font-bold ${visible === estado ? banda : 'bg-fondo-sutil text-texto'}`}
           >
@@ -86,7 +89,7 @@ export function ColumnasDeCocina({ cuentas, cargando, ...tarjeta }: ColumnasDeCo
             {titulo} ({contar(cuentas[estado])})
           </button>
         ))}
-      </div>
+      </nav>
 
       <div
         ref={tablero}
@@ -100,7 +103,7 @@ export function ColumnasDeCocina({ cuentas, cargando, ...tarjeta }: ColumnasDeCo
             nivel={0}
             relleno={0}
             aria-labelledby={`columna-${estado}`}
-            className={`${visible === estado ? 'flex' : 'hidden md:flex'} min-h-0 flex-col overflow-hidden ${tinte}`}
+            className={`flex min-h-0 flex-col overflow-hidden ${tinte}`}
           >
             <h2
               id={`columna-${estado}`}

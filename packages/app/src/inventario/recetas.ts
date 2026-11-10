@@ -421,7 +421,7 @@ export async function recalcularCostosRecetas(
   const resultado = await sql<{ id: string }>`
     update productos p set costo_unitario_centavos = costos.costo, updated_at = now()
     from (
-      select r.producto_id, coalesce(sum(round(i.costo_unitario_centavos::numeric * r.cantidad * (10000 + r.merma_bp) / 10000)), 0)::bigint costo
+      select r.producto_id, coalesce(sum(round(i.costo_unitario_centavos::numeric * (10000 + r.merma_bp) / 10000)), 0)::bigint costo
       from recetas r join insumos i on i.id = r.insumo_id and i.organizacion_id = r.organizacion_id
       where r.organizacion_id = ${organizacionId} ${productoId === undefined ? sql`` : sql`and r.producto_id = ${productoId}`}
       group by r.producto_id
