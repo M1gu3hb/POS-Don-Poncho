@@ -1624,3 +1624,14 @@ DP-16. Decisión: DP-D109. Cada mejora con su prueba primero y sus mutantes (22 
 | Agente | Modelo | Encargo | Resultado |
 | --- | --- | --- | --- |
 | QA-R3 (worktree propio, copia `qa_dp16_r3`) | Sonnet | Ronda 3: las siete mejoras de DP-17 | 7 de 8 en SÍ; el Cierre del día al centavo y 0 violaciones; el aviso al cobrar una parte y dos más, arreglados después |
+
+### DP-17 en producción (10-11, tarde)
+
+- La CI del [#22](https://github.com/M1gu3hb/POS-Don-Poncho/pull/22), 10 de 10 a la primera; merge a
+  las 17:00 (`afc7bd4`, squash, a nombre de M1gu3hb), sin migración. Production `READY` (`dpl_6Avh…`)
+  a las 17:01.
+- 17:02 Don Poncho en ceros (0 cajas, 0 cuentas, 0 folios, 0 comandas, 0 carritos, 10 mesas libres),
+  todavía en «Páginas subidas», y el humo sin cobrar: la entrada 200 y sin desborde en 6 aparatos (de
+  0.8 a 3.9 s), el portal en 5 (de 0.64 a 1.32 s), 8 a la vez todos 200 en 2.7 s, red lenta (10.5 y
+  11.9 s la primera vez, 1.5 y 1.8 s con caché) y el manifiesto con sus íconos.
+- 18:03 Vercel: ningún error en producción de las 17:00 a las 18:03 (la hora después del despliegue).
