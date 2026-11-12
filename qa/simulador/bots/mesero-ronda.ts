@@ -14,6 +14,7 @@ import {
   enviarACocina,
   entrarALaMesa,
   totalDelCarrito,
+  vaciarCarrito,
 } from './mesero-ui.ts';
 
 export interface CuentaDelMesero {
@@ -80,6 +81,22 @@ export async function pedirRonda(
     () => entrarALaMesa(pagina, cuenta.mesa),
   );
   if (!dentro) return false;
+  // Lo que quedó de un intento anterior se iría con esta ronda sin estar en el libro.
+  const limpio = await intentar(
+    ctx,
+    pagina,
+    {
+      ...base,
+      hizo: 'Revisar que el carrito de la mesa esté vacío antes de pedir',
+      esperaba: 'Nada pendiente de un intento anterior.',
+      paso: 'vaciar el carrito',
+    },
+    async () => {
+      const quitados = await vaciarCarrito(pagina);
+      if (quitados > 0) contar(ctx.mundo, 'carrito:sobrante-quitado', quitados);
+    },
+  );
+  if (!limpio) return false;
   for (const l of lineas) {
     const ok = await intentar(
       ctx,
@@ -92,7 +109,10 @@ export async function pedirRonda(
       },
       () => agregarLinea(pagina, cuenta.mesa, l),
     );
-    if (!ok) return false;
+    if (!ok) {
+      await vaciarCarrito(pagina).catch(() => undefined);
+      return false;
+    }
   }
   const esperado = totalDe(lineas);
   const enCarrito = await totalDelCarrito(pagina).catch(() => null);
@@ -110,6 +130,9 @@ export async function pedirRonda(
       },
       pagina,
     );
+    // No se manda lo que no cuadra: el libro sólo anota lo que el mesero sabe que pidió.
+    await vaciarCarrito(pagina).catch(() => undefined);
+    return false;
   }
   const nota = ctx.azar.probabilidad(0.12) ? NOTA_LARGA : '';
   const enviado = await intentar(

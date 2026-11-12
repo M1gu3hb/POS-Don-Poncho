@@ -143,6 +143,52 @@ export async function totalDelCarrito(pagina: Page): Promise<number | null> {
   return monto?.[1] === undefined ? null : Math.round(Number(monto[1].replaceAll(',', '')) * 100);
 }
 
+/** Los «−» del carrito (y el «Quitar línea» de lo pedido por peso): no tienen nombre accesible. */
+const QUITAR_DEL_CARRITO = 'button:has(svg.lucide-minus), button[title="Quitar línea"]';
+
+/** ¿Queda algo en el carrito? El globo del teléfono lo dice; en tableta, la lista de al lado. */
+async function hayAlgoEnElCarrito(pagina: Page): Promise<boolean> {
+  if ((await totalDelCarrito(pagina)) !== null) return true;
+  return (await pagina.locator(QUITAR_DEL_CARRITO).filter({ visible: true }).count()) > 0;
+}
+
+/**
+ * Deja vacío el carrito de la mesa. Lo que quedó de un intento que falló a media ronda sobrevive a
+ * la recarga y se iría con la ronda siguiente sin que el libro lo sepa (D1-054, D1-066 y D1-070
+ * del día 1). Cierra la personalización que haya quedado abierta y toca «−» hasta que no quede
+ * nada. Devuelve cuántos toques hizo.
+ */
+export async function vaciarCarrito(pagina: Page): Promise<number> {
+  const personalizacion = pagina.getByRole('dialog', { name: 'Personalizar producto' });
+  if ((await personalizacion.count()) > 0) {
+    await pagina.keyboard.press('Escape');
+    await personalizacion.waitFor({ state: 'detached', timeout: ESPERA_MS });
+  }
+  const quitar = pagina.locator(QUITAR_DEL_CARRITO).filter({ visible: true });
+  let toques = 0;
+  while (toques < 80 && (await hayAlgoEnElCarrito(pagina))) {
+    if ((await quitar.count()) === 0) {
+      await pagina
+        .getByRole('button', { name: /Ver pedido/ })
+        .filter({ visible: true })
+        .last()
+        .click({ timeout: ESPERA_MS });
+      await quitar.first().waitFor({ timeout: ESPERA_MS });
+    }
+    await quitar.first().click({ timeout: ESPERA_MS });
+    toques += 1;
+    await pagina.waitForTimeout(150);
+  }
+  // En el teléfono la hoja del carrito queda abierta y vacía; su velo tapa la mesa: un toque fuera.
+  const hojaVacia = pagina.getByText('Aún no agregas productos').filter({ visible: true });
+  if ((await hojaVacia.count()) > 0) {
+    await pagina.mouse.click(8, 8);
+    await hojaVacia.waitFor({ state: 'hidden', timeout: ESPERA_MS });
+  }
+  if (await hayAlgoEnElCarrito(pagina)) throw new Error('El carrito no quedó vacío.');
+  return toques;
+}
+
 /** «Enviar a Cocina»: abre el carrito si hace falta, deja la nota general y espera el sí del servidor. */
 export async function enviarACocina(pagina: Page, notaGeneral: string): Promise<void> {
   const enviar = pagina

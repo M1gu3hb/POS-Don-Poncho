@@ -26,9 +26,13 @@ export async function abrirLaDivision(pagina: Page, cobro: Locator): Promise<Loc
   return dialogo;
 }
 
+/** Las filas de platillos de la tabla (la del encabezado no lleva « × »). */
+const filasDePlatillo = (dialogo: Locator): Locator =>
+  dialogo.getByRole('row').filter({ hasText: ' × ' });
+
 /** Los renglones de la tabla: «3 × Taco de prueba» y la columna «Por repartir». */
 export async function leerLosRenglones(dialogo: Locator): Promise<readonly RenglonPorRepartir[]> {
-  const filas = dialogo.getByRole('row').filter({ hasText: ' × ' });
+  const filas = filasDePlatillo(dialogo);
   const cuantas = await filas.count();
   const renglones: RenglonPorRepartir[] = [];
   for (let i = 0; i < cuantas; i += 1) {
@@ -53,19 +57,24 @@ async function tenerCuentas(dialogo: Locator, n: number): Promise<void> {
   }
 }
 
-/** Reparte con los «+» según `reparto` (cuentas × renglones) y espera a que diga «Todo repartido». */
+/**
+ * Reparte con los «+» según `reparto` (cuentas × renglones) y espera a que diga «Todo repartido».
+ * El «+» se busca DENTRO de su fila: dos rondas del mismo platillo son dos renglones con botones
+ * del mismo nombre (D1-065 y D1-067 del día 1).
+ */
 export async function repartirUnidades(
   dialogo: Locator,
   renglones: readonly RenglonPorRepartir[],
   reparto: Reparto,
 ): Promise<void> {
   await tenerCuentas(dialogo, reparto.length);
+  const filas = filasDePlatillo(dialogo);
   for (const [cuenta, porRenglon] of reparto.entries()) {
     for (const [i, unidades] of porRenglon.entries()) {
       const nombre = renglones[i]?.nombre;
       if (nombre === undefined)
         throw new Error(`El reparto nombra un renglón (${String(i)}) que no existe.`);
-      const mas = dialogo.getByRole('button', {
+      const mas = filas.nth(i).getByRole('button', {
         name: `Añadir ${nombre} a la cuenta ${String(cuenta + 1)}`,
         exact: true,
       });
