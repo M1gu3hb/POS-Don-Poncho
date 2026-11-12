@@ -149,4 +149,18 @@ describe('el catálogo leído de la copia', () => {
     ).some((l) => l.opciones.some((o) => o.opcion === 'Queso'));
     expect(alguna).toBe(true);
   });
+
+  it('las porciones de contenedor van en enteros (el servidor rechaza fracciones)', () => {
+    const shot = {
+      ...barbacoa,
+      nombre: 'Shot de prueba',
+      tipoVenta: 'porcion_contenedor',
+      presentaciones: [],
+    };
+    for (let s = 0; s < 30; s += 1) {
+      const linea = planearLinea(crearAzar(`shot-${String(s)}`), shot, false);
+      expect(Number.isInteger(linea.cantidad)).toBe(true);
+      expect(linea.cantidad).toBeGreaterThanOrEqual(1);
+    }
+  });
 });

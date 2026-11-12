@@ -88,11 +88,15 @@ export function planearLinea(
   const opciones = p.grupos.flatMap((g) =>
     elegirOpciones(azar, g, (opcion) => apagadas.has(`${p.nombre}/${g.nombre}/${opcion}`)),
   );
-  const cantidad = esPorPeso(p)
-    ? kilosDe(azar, p)
-    : azar.probabilidad(0.75)
-      ? 1
-      : azar.entero(2, 3);
+  // Las porciones de contenedor (el shot) van en enteros: el servidor rechaza «1.25 porciones».
+  const cantidad =
+    p.tipoVenta === 'porcion_contenedor'
+      ? azar.entero(1, 3)
+      : esPorPeso(p)
+        ? kilosDe(azar, p)
+        : azar.probabilidad(0.75)
+          ? 1
+          : azar.entero(2, 3);
   const nota = conNota ? azar.elegir(NOTAS_CORTAS) : '';
   const importeCentavos = importeEsperado(
     p.tipoVenta,

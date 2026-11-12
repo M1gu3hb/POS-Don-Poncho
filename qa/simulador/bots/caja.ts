@@ -162,6 +162,27 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeCaja): Promise
   };
 
   while (!ctx.terminado()) {
+    // Si la página se cerró (un traslado o un caos a medias), la cajera vuelve a entrar en su aparato
+    // y se trae la caja: sin esto, el bucle seguía usando una página muerta todo el día.
+    if (pagina.isClosed()) {
+      const aparato =
+        hechos.trasladada && plan.traslado !== undefined ? plan.traslado.aparato : plan.aparato;
+      try {
+        sesion = await trasladar(ctx, bot, plan, sesion.contexto, aparato);
+        pagina = sesion.pagina;
+      } catch (error: unknown) {
+        await registrarFallo(
+          ctx,
+          lugar,
+          undefined,
+          'Volver a entrar a la caja',
+          'La caja vuelve a este aparato',
+          error,
+        );
+        await ctx.esperarSim(5);
+        continue;
+      }
+    }
     paginasDeCaja.set(plan.caja, pagina);
     if (pausaDeCaos.enCurso) {
       // La disputa de dos cajas sobre una cuenta necesita a las dos quietas un instante.
