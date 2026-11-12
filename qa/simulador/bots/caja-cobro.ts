@@ -288,7 +288,14 @@ export async function cobrarLaCuenta(
     variacionDelCobro(ctx, caos),
     ritmo,
   );
-  if (caos !== undefined) await exigirUnSoloPago(ctx, actual, caos, cuenta.cuenta);
+  if (caos !== undefined) {
+    // La cuenta de mesa se conoce por el id de su llegada; en la base, por el folio que dejó el cobro.
+    const cobro = [...ctx.libro.leer()]
+      .reverse()
+      .find((f) => f.asiento.tipo === 'cobro' && f.asiento.cuenta === cuenta.cuenta);
+    const folio = cobro?.asiento.tipo === 'cobro' ? cobro.asiento.folio : undefined;
+    if (folio !== undefined && folio !== '') await exigirUnSoloPago(ctx, actual, caos, folio);
+  }
   return { efectivo, pagina: actual };
 }
 

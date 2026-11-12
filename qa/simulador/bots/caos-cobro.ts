@@ -19,11 +19,30 @@ export interface CaosEnCobro {
 }
 
 /** Cuántos pagos confirmados tiene una cuenta (lectura de la base: la verdad del sistema). */
-export async function pagosConfirmados(ctx: ContextoDelBot, ordenId: string): Promise<number> {
+const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Cuántos pagos confirmados tiene la cuenta. Las de mesa el simulador las conoce por el id de su
+ * llegada: se buscan por el folio que el cobro dejó en el libro; sin cobro anotado, 0 (se reintenta).
+ */
+export async function pagosConfirmados(ctx: ContextoDelBot, cuenta: string): Promise<number> {
+  let ordenIdOFolio = cuenta;
+  if (!ES_UUID.test(cuenta)) {
+    const cobro = [...ctx.libro.leer()]
+      .reverse()
+      .find((f) => f.asiento.tipo === 'cobro' && f.asiento.cuenta === cuenta);
+    if (cobro?.asiento.tipo !== 'cobro' || cobro.asiento.folio === '') return 0;
+    ordenIdOFolio = cobro.asiento.folio;
+  }
+  const porId = ES_UUID.test(ordenIdOFolio);
   const [fila] = await leerSql<{ n: string }>(
     ctx.entorno.baseUrl,
-    `select count(*)::text as n from pagos where orden_id = $1 and estado = 'confirmado'`,
-    [ordenId],
+    `select count(*)::text as n from pagos where estado = 'confirmado' and orden_id = ${
+      porId
+        ? '$1::uuid'
+        : '(select id from ordenes where folio::text = $1 order by created_at desc limit 1)'
+    }`,
+    [ordenIdOFolio],
   );
   return num(fila?.n);
 }
@@ -32,12 +51,18 @@ export async function pagosConfirmados(ctx: ContextoDelBot, ordenId: string): Pr
  * Cuántas veces está cobrada una cuenta: lo pagado (venta) entre su total. Un mixto son dos filas de
  * pago y sigue siendo UN cobro; un cobro doble da 2.
  */
-export async function vecesCobrada(ctx: ContextoDelBot, ordenId: string): Promise<number> {
+/**
+ * Cuántas veces está cobrada una orden. Acepta el id de la orden (para llevar) o, para las cuentas de
+ * mesa —que el simulador conoce por el id de su llegada—, el FOLIO que el cobro dejó en el libro.
+ */
+export async function vecesCobrada(ctx: ContextoDelBot, ordenIdOFolio: string): Promise<number> {
+  const porId = ES_UUID.test(ordenIdOFolio);
   const [fila] = await leerSql<{ veces: string }>(
     ctx.entorno.baseUrl,
     `select coalesce(round(sum(p.monto_centavos)::numeric / nullif(max(o.total_centavos), 0)), 0)::text as veces
-       from ordenes o left join pagos p on p.orden_id = o.id and p.estado = 'confirmado' where o.id = $1`,
-    [ordenId],
+       from ordenes o left join pagos p on p.orden_id = o.id and p.estado = 'confirmado'
+      where ${porId ? 'o.id = $1::uuid' : 'o.id = (select id from ordenes where folio::text = $1 order by created_at desc limit 1)'}`,
+    [ordenIdOFolio],
   );
   return num(fila?.veces);
 }
