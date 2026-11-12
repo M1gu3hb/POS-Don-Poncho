@@ -67,6 +67,8 @@ function argumento(nombre: string): string | undefined {
 interface Turno {
   readonly bot: Bot;
   readonly entra: number;
+  /** La cocina no se va al terminar el día: termina lo que falta hasta que las cajas cierran. */
+  readonly hastaQueCierrenLasCajas?: true;
 }
 
 /**
@@ -99,12 +101,17 @@ function elPersonal(d: DiaDeLaSemana): Turno[] {
     { persona: 'Cocina Pulques', estacion: 'Pulques' },
   ].map((e) => crearEstacion({ ...e, marcaAgotados: e.estacion === 'Cocina' }));
   return [
-    ...estaciones.map((bot, i) => ({ bot, entra: i * 2 })),
+    ...estaciones.map((bot, i) => ({ bot, entra: i * 2, hastaQueCierrenLasCajas: true as const })),
     ...d.cajas.map((plan, i) => ({ bot: crearBotCaja(plan), entra: 1 + i * 3 })),
-    { bot: crearTelefonoDeCocina({ persona: 'Cocina', estacion: 'Cocina' }), entra: 11 },
+    {
+      bot: crearTelefonoDeCocina({ persona: 'Cocina', estacion: 'Cocina' }),
+      entra: 11,
+      hastaQueCierrenLasCajas: true,
+    },
     {
       bot: crearTelefonoDeCocina({ persona: 'Cocina Parrilla', estacion: 'Parrilla' }),
       entra: 13,
+      hastaQueCierrenLasCajas: true,
     },
     ...meseros.map((bot, i) => ({ bot, entra: 15 + i * 3 })),
     { bot: crearBotGerente(d.gerente), entra: 34 },
@@ -164,6 +171,11 @@ async function main(): Promise<void> {
   process.on('SIGINT', () => {
     parar = true;
   });
+  // Una promesa que un guion dejó sin atender no tumba el día: se dice y se sigue (el bot que la
+  // dejó ya registró su fallo o lo registrará al salir).
+  process.on('unhandledRejection', (razon) => {
+    console.error(`Promesa sin atender en un bot: ${String(razon).slice(0, 300)}`);
+  });
   // En un ensayo (`--hasta`), a esa hora ya no llega nadie más y el día se acaba como uno de verdad:
   // cuando las mesas se vacían y no queda nada por cobrar (con 90 minutos de tope).
   const cierre = finDelEnsayo ?? CIERRE_MIN;
@@ -180,6 +192,14 @@ async function main(): Promise<void> {
     });
   };
   const base: BaseDelDia = { entorno, azar, libro, registro, tiempos, mundo, navegador, terminado };
+  const cajasCerradas = (): boolean => (mundo.volumen.get('cajas_cerradas') ?? 0) >= d.cajas.length;
+  const deLaCocina: BaseDelDia = {
+    ...base,
+    terminado: () =>
+      parar ||
+      (terminado() && cajasCerradas()) ||
+      minutosDesdeLaMedianoche(d.fecha, ahoraSim()) >= tope + 60,
+  };
   const turnos = elPersonal(d);
   const inicio = Date.now();
 
@@ -196,8 +216,8 @@ async function main(): Promise<void> {
   }, 5_000);
 
   const resultados = await Promise.allSettled(
-    turnos.map(async ({ bot, entra }) => {
-      const ctx = contextoPara(base, bot);
+    turnos.map(async ({ bot, entra, hastaQueCierrenLasCajas }) => {
+      const ctx = contextoPara(hastaQueCierrenLasCajas === true ? deLaCocina : base, bot);
       try {
         if (entra > 0) await ctx.esperarSim(entra);
         if (ctx.terminado()) return;

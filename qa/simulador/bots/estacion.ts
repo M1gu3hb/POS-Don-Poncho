@@ -36,7 +36,7 @@ interface EnPreparacion {
   readonly duracion: number;
 }
 
-/** La llave de una comanda en pantalla: «Mesa N» y sus renglones, sin la hora que cambia cada minuto. */
+/** La llave de una comanda en pantalla: «Mesa N» (o «PARA LLEVAR · N») y sus renglones, sin la hora que cambia cada minuto. */
 function llaveDeLaTarjeta(texto: string): string {
   return texto
     .split('\n')
@@ -54,7 +54,10 @@ function llaveDeLaTarjeta(texto: string): string {
 async function tarjetaDe(boton: ReturnType<Page['getByRole']>): Promise<string> {
   const tarjeta = boton
     .first()
-    .locator('xpath=ancestor::*[contains(normalize-space(.), "Mesa")][1]');
+    // La tarjeta dice «Mesa N» o, si es para llevar, «PARA LLEVAR · N · nombre».
+    .locator(
+      'xpath=ancestor::*[contains(normalize-space(.), "Mesa") or contains(normalize-space(.), "PARA LLEVAR")][1]',
+    );
   return llaveDeLaTarjeta(await tarjeta.innerText({ timeout: 10_000 }));
 }
 

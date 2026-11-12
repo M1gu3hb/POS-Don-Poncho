@@ -39,10 +39,28 @@ export async function cierreDeLaCaja(pagina: Page, contadoCentavos: number): Pro
   await cierre.getByPlaceholder('0.00').nth(1).fill('0');
   // Con faltante o sobrante el cierre exige explicarlo: sin la nota el botón sigue apagado.
   await cierre.getByPlaceholder(/^Observaciones/).fill('Cierre de la jornada (simulador)');
-  const descarga = pagina.waitForEvent('download', { timeout: 180_000 });
-  await cierre.getByRole('button', { name: /^Cerrar (caja del día|esta caja)/ }).click();
-  await expect(cierre).toBeHidden({ timeout: 180_000 });
-  const archivo = await descarga;
+  const boton = cierre.getByRole('button', { name: /^Cerrar (caja del día|esta caja)/ });
+  // Si el botón sigue apagado, el diálogo dice por qué: eso es lo que se reporta.
+  if (!(await boton.isEnabled())) {
+    const texto = (await cierre.innerText()).replace(/\s+/g, ' ').slice(0, 400);
+    throw new Error(`«Cerrar caja» sigue apagado. El diálogo dice: ${texto}`);
+  }
+  // La descarga, la respuesta del servidor y el clic juntos: si uno falla, ninguna promesa queda
+  // sin atender (una espera de descarga suelta tumbaba el proceso entero al vencer).
+  const [archivo, respuesta] = await Promise.all([
+    pagina.waitForEvent('download', { timeout: 180_000 }),
+    pagina.waitForResponse(
+      (r) => new URL(r.url()).pathname === '/api/caja/cerrar' && r.request().method() === 'POST',
+      { timeout: 180_000 },
+    ),
+    boton.click(),
+  ]);
+  if (respuesta.status() !== 200) {
+    throw new Error(
+      `/api/caja/cerrar contestó ${String(respuesta.status())}: ${(await respuesta.text()).slice(0, 300)}`,
+    );
+  }
+  await expect(cierre).toBeHidden({ timeout: 60_000 });
   // Al cerrar sale «Caja cerrada correctamente» (con «Ver PDF»): se despide antes de seguir.
   const listo = pagina.getByRole('dialog').filter({ hasText: 'Caja cerrada correctamente' });
   if (

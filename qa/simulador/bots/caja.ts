@@ -14,7 +14,7 @@ import { contar } from '../mundo.ts';
 import { abrirCaja, estadoDeLaCaja, irACaja, traerLaCaja } from '../pantallas/caja.ts';
 import { cierreDeLaCaja } from '../pantallas/corte.ts';
 import { entradaDeCambio, irAMovimientos, retirar } from '../pantallas/movimientos.ts';
-import { entregarLoListo } from '../pantallas/para-llevar.ts';
+import { entregarLoListo, pendientesParaLlevar } from '../pantallas/para-llevar.ts';
 import { esperarAlguno } from '../pantallas/comun.ts';
 import { abrirSesion, GERENTE, medido, registrarFallo } from './comun.ts';
 import {
@@ -287,6 +287,16 @@ async function cerrar(
   pagina: Page,
   cajon: CajonDelLibro,
 ): Promise<void> {
+  // La caja no cierra con pedidos para llevar cobrados sin entregar (regla de la app): antes de
+  // contar, se entrega lo listo y se espera a que la cocina termine lo que falta (sigue trabajando
+  // hasta que las cajas cierran).
+  await irACaja(pagina, ctx.entorno.appUrl);
+  const limiteDeEntrega = Date.now() + 10 * 60_000;
+  while (Date.now() < limiteDeEntrega) {
+    await entregarLoListo(pagina);
+    if ((await pendientesParaLlevar(pagina)) === 0) break;
+    await new Promise((r) => setTimeout(r, 10_000));
+  }
   // Los cierres de caja van uno tras otro (dos a la vez no completaron en el ensayo): cada una espera su turno.
   const turno = plan.cierraDespuesDe ?? 0;
   const limite = Date.now() + 6 * 60_000;

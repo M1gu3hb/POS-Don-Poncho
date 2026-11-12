@@ -51,18 +51,27 @@ export async function entregarLoListo(pagina: Page): Promise<number> {
   const entregar = pagina.getByRole('button', { name: 'Entregado', exact: true });
   let entregados = 0;
   while (entregados < 10 && (await entregar.count()) > 0) {
-    const respuesta = esperarPost(pagina, '/api/restaurante/entregar-para-llevar');
-    // La lista se refresca sola: si el botón se fue entre mirarlo y tocarlo, otra persona ya lo entregó.
-    const toco = await entregar
-      .first()
-      .click({ timeout: 4_000 })
-      .then(
-        () => true,
-        () => false,
-      );
-    if (!toco) break;
-    expect((await respuesta).status()).toBe(200);
+    // La lista se refresca sola: si el botón ya se fue, otra persona lo entregó.
+    if (!(await entregar.first().isVisible())) break;
+    // La respuesta y el clic juntos: si el clic falla, la espera de la respuesta no queda suelta.
+    const [respuesta] = await Promise.all([
+      esperarPost(pagina, '/api/restaurante/entregar-para-llevar'),
+      entregar.first().click({ timeout: 4_000 }),
+    ]);
+    expect(respuesta.status()).toBe(200);
     entregados += 1;
   }
   return entregados;
+}
+
+/** Cuántos pedidos para llevar de hoy faltan por entregar: los que siguen en cocina y los listos. */
+export async function pendientesParaLlevar(pagina: Page): Promise<number> {
+  const lista = pagina.getByRole('region', { name: 'Pedidos para llevar de hoy' });
+  if (!(await lista.isVisible())) return 0;
+  const enCocina = await lista
+    .getByRole('list', { name: 'En cocina' })
+    .getByRole('listitem')
+    .count();
+  const listos = await lista.getByRole('button', { name: 'Entregado', exact: true }).count();
+  return enCocina + listos;
 }
