@@ -1,6 +1,7 @@
 'use client';
 
-import { Aviso, EsqueletoDeLista, Superficie } from '@morphiqpos/ui/sistema';
+import { Aviso, EsqueletoDeLista, Superficie, Vacio } from '@morphiqpos/ui/sistema';
+import { UtensilsCrossed } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -57,6 +58,15 @@ export function PersonalizarMenu() {
     );
   }
   const platillos = datos.platillos.data;
+  if (platillos.length === 0) {
+    return (
+      <Vacio
+        icono={<UtensilsCrossed />}
+        titulo="Todavía no hay platillos en el menú"
+        explicacion="Da de alta tus platillos en Productos; aquí les pones foto, descripción y fondo, y ves cómo quedan en el teléfono."
+      />
+    );
+  }
   const leidas = datos.secciones.data;
   const guardadas = enSuOrden(leidas);
   const secciones = orden ?? guardadas;

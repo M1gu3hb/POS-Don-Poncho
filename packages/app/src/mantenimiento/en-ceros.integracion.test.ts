@@ -101,7 +101,7 @@ describe('DP-18 · 1.6 · dejar en ceros', () => {
       .select('siguiente')
       .where('organizacion_id', '=', org())
       .execute();
-    expect(folios.every((f) => BigInt(f.siguiente) === 1n)).toBe(true);
+    expect(folios.every((f) => f.siguiente === 1n)).toBe(true);
     const despues = await loQueHayParaDejarEnCeros(obtenerDb(), org(), hoyEnCdmx());
     expect(Object.values(despues.conteos).every((n) => n === 0)).toBe(true);
     const auditoriaDespues = await obtenerDb()

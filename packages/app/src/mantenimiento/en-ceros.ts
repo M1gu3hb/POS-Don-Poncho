@@ -40,7 +40,7 @@ export interface LoQueHay {
 }
 
 const contar = async (db: Kysely<Esquema>, consulta: ReturnType<typeof sql<{ n: number }>>) =>
-  Number((await consulta.execute(db)).rows[0]?.n ?? 0);
+  (await consulta.execute(db)).rows[0]?.n ?? 0;
 
 /** Lo que hay del negocio, y lo que hay de antes del día `desde` (AAAA-MM-DD en su zona). */
 export async function loQueHayParaDejarEnCeros(
@@ -127,7 +127,7 @@ export const reiniciarFolios = definirComando<
         select ((select count(*) from ordenes where organizacion_id = ${org} and folio is not null)
               + (select count(*) from sesiones_caja where organizacion_id = ${org} and folio is not null))::int n
       `.execute(ctx.tx);
-      return Number(r.rows[0]?.n ?? 0);
+      return r.rows[0]?.n ?? 0;
     });
     if (enUso > 0) {
       throw new ErrorDominio(

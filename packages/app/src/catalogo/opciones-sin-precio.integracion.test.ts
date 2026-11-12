@@ -129,7 +129,7 @@ describe('DP-18 · M6 · el piso de las opciones', () => {
       .where('modificador_id', '=', grupoId)
       .where('nombre', '=', 'Sin cebolla')
       .executeTakeFirstOrThrow();
-    expect(BigInt(sigue.delta_precio_centavos)).toBe(-500n);
+    expect(sigue.delta_precio_centavos).toBe(-500n);
   });
 
   it('al vender: si el precio del platillo bajó y la opción ya lo deja en $0, no entra a la cuenta', async () => {

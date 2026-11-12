@@ -129,7 +129,7 @@ export async function partirLinea(
 
   // La fila de cada cuenta que se lleva unidades. La primera ES la original.
   const filaDeCadaParte = new Map<number, string>();
-  const opcionPorRenglon = POR_RENGLON.has(String(original.tipo_venta));
+  const opcionPorRenglon = POR_RENGLON.has(original.tipo_venta);
   const cuotaDeLaOpcion = (i: number) => (delta: bigint) =>
     opcionPorRenglon ? (repartirDinero(delta, unidades)[i] ?? 0n) : delta;
 
@@ -235,8 +235,8 @@ async function copiarLasOpciones(
     .values(
       filas.map((f) => ({
         ...f,
-        delta_precio_centavos: cuota(BigInt(f.delta_precio_centavos)),
-        precio_extra_centavos: cuota(BigInt(f.precio_extra_centavos)),
+        delta_precio_centavos: cuota(f.delta_precio_centavos),
+        precio_extra_centavos: cuota(f.precio_extra_centavos),
         orden_linea_id: hacia,
       })),
     )
@@ -258,8 +258,8 @@ async function repartirLasOpcionesDeLaOriginal(
     await tx
       .updateTable('orden_linea_modificadores')
       .set({
-        delta_precio_centavos: cuota(BigInt(f.delta_precio_centavos)),
-        precio_extra_centavos: cuota(BigInt(f.precio_extra_centavos)),
+        delta_precio_centavos: cuota(f.delta_precio_centavos),
+        precio_extra_centavos: cuota(f.precio_extra_centavos),
       })
       .where('id', '=', f.id)
       .execute();

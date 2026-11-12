@@ -17,6 +17,18 @@ vi.mock('@morphiqpos/data', async () => {
   };
 });
 
+// DP-18 · 1.2 · Con caja abierta, `caja.estado` también trae las cajas de otros aparatos (eso lo
+// prueba `otras-cajas.integracion.test.ts` contra la base); aquí sólo importa el arqueo.
+vi.mock('./traer.ts', () => ({
+  cajasDeLaSucursal: vi.fn().mockResolvedValue({
+    enOtraTerminal: null,
+    otrasCajas: [],
+    abiertasEnLaSucursal: 1,
+    puedoAbrir: false,
+    cupoDeCajas: 1,
+  }),
+}));
+
 const CONTEXTO = {
   ambito: {
     organizacionId: '11111111-1111-4111-8111-111111111111',

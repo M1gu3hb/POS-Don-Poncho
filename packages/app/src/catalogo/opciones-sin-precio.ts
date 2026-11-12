@@ -89,7 +89,7 @@ async function gruposDelPlatillo(
       .filter((o) => o.modificador_id === g.id)
       .map((o) => ({
         nombre: o.nombre,
-        deltaCentavos: BigInt(o.delta_precio_centavos),
+        deltaCentavos: o.delta_precio_centavos,
         activa: o.activa,
       })),
   }));

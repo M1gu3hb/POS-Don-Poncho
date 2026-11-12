@@ -38,12 +38,18 @@ export function VistaDelTelefono({
         {...atributosDelTema(tema)}
         role="region"
         aria-label="Vista previa del menú en el teléfono"
-        className="w-[360px] max-w-full overflow-hidden rounded-[2.25rem] border-8 border-texto/80 bg-fondo shadow-xl"
+        className="w-[360px] max-w-full overflow-hidden rounded-[2.25rem] border-8 border-texto/80 shadow-4"
       >
-        <div className="h-[640px] overflow-y-auto overscroll-contain px-(--espacio-3) pb-(--espacio-6)">
+        {/* El bisel es el dibujo del teléfono, no una tarjeta del sistema: el fondo va en la pantalla. */}
+        <div className="h-[640px] overflow-y-auto overscroll-contain bg-fondo px-(--espacio-3) pb-(--espacio-6)">
           <header className="flex flex-col items-center gap-(--espacio-1) py-(--espacio-4) text-center">
             {logo === null ? null : (
-              <img src={logo} alt="" className="h-14 w-auto object-contain" />
+              // eslint-disable-next-line @next/next/no-img-element -- el logo viene del almacén del negocio, fuera de `next/image`
+              <img
+                src={logo}
+                alt=""
+                className="h-[calc(var(--altura-control)*1.5)] w-auto object-contain"
+              />
             )}
             <p className="text-lg font-black text-texto">{nombreDelNegocio}</p>
             {mensaje.trim() === '' ? null : (

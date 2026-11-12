@@ -14,7 +14,9 @@ import { contextoDe, personaDe } from './ayudantes/roles.ts';
 const SLUG = 'prueba-restaurante';
 const MODOS = { carta: 'A la carta', digital: 'Menú digital' } as const;
 
-test('el modo del menú guardado sigue igual al volver de otra pestaña y al recargar', async ({ browser }, info) => {
+test('el modo del menú guardado sigue igual al volver de otra pestaña y al recargar', async ({
+  browser,
+}, info) => {
   const contexto = await contextoDe(browser, info, personaDe(SLUG, 'dueno'));
   const page = await contexto.newPage();
   try {

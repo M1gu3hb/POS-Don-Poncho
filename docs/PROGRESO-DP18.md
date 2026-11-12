@@ -50,11 +50,11 @@
 | Parte | Qué | Estado |
 | --- | --- | --- |
 | 0 | Ubicarse, `verify`, bitácora | hecho: `verify` local en verde (unidad 490 / 5,521, integración 128 / 628, build y verificadores) |
-| 1 | Lo que encontró Miguel (un PR) | en curso en `dp-18-1`: 1.1 a 1.6 hechos con sus pruebas (DP-D110 a DP-D114), 21 mutantes muertos; faltan las e2e locales, `verify` y el PR |
-| 2 | El simulador | en curso: el núcleo (candado, reloj de QA, semilla, libro, incidentes, tiempos, almacén local, servidor) en `D:\mpos-tmp\dp18\sim\`; los agentes A (sala) y B (cajas, gerencia, día 0, árbitro) escriben los bots contra `qa_dp18_a` (32801) y `qa_dp18_b` (32802) |
+| 1 | Lo que encontró Miguel (un PR) | en curso en `dp-18-1`: 1.1 a 1.6 hechos con sus pruebas (DP-D110 a DP-D114), 29 mutantes muertos, las 3 e2e nuevas en verde contra un build local; falta cerrar `verify` y el PR |
+| 2 | El simulador | en curso: el núcleo (candado, reloj de QA, semilla, libro, incidentes, tiempos, almacén local, servidor) en `D:\mpos-tmp\dp18\sim\`; el agente A (sala) terminó: ensayo de 1 h simulada que cuadró con el libro; el B (cajas, gerencia, día 0, árbitro) sigue contra `qa_dp18_b` (32802) |
 | 3 | La semana | pendiente |
 | 4 | Triage, arreglos, reporte 011 | pendiente |
-| 5 | Tres direcciones del menú digital | pendiente |
+| 5 | Tres direcciones del menú digital | capturas mandadas a Miguel (A «Papel de la casa», B «Brasa», C «Cartel»); se programa la que elija |
 
 ## La Parte 1 (rama `dp-18-1`)
 
@@ -75,8 +75,31 @@
   la caja de Miguel (negativas, ensayo, en serio y una segunda corrida). **No se ha corrido en
   producción.**
 - **1.5** La guía de entrega con lo nuevo.
+- **Al pasar `verify`:** los cambios de aspecto declarados con su motivo en `aspecto-permitido.json`
+  (la caja vieja `CajaEnOtraTerminal.jsx` la sustituye la nueva; el aviso «No hay cambios que guardar»;
+  la pestaña «Personalizar menú»); «Personalizar menú» gana su vacío (negocio sin platillos) y sus
+  piezas se declaran en la puerta de adopción; el marco del teléfono usa tokens; lint (conversiones
+  redundantes: el cliente de `pg` ya entrega `int8` como `BigInt`).
+- **Una trampa del entorno:** si Playwright no encuentra el 3200 respondiendo, su `webServer` rehace el
+  build y borra el `.next` del servidor que arrancaba. Esperar a que responda antes de correrlo.
+
+## El simulador: lo que encontró el agente A
+
+- El reloj de QA (`reloj/precarga.ts`) rompía `/api/datos/consultar` con «Date.parse is not a
+  function»: Next copia `Date` y sólo heredaba los estáticos por el prototipo. Arreglado (se copian
+  como propios); los servidores se reiniciaron con el arreglo.
+- La copia de la propia trae la caja de Miguel abierta y el cupo en 1: el día 0 tiene que dejar el cupo
+  en 2 (o traer la caja).
+- `LIMITES.entrar` (20 entradas con PIN por 5 minutos por IP; local, todo es la misma IP) puede
+  estorbar a la semana completa: a revisar en el día 0.
+
+## La Parte 5
+
+Don Poncho no tiene fotos de platillos (121 activos, 0 con foto, 48 con descripción): las capturas usan
+11 fotos de muestra de Wikimedia con licencia libre (`D:\mpos-tmp\dp18\p5\fotos\CREDITOS.md`). Las tres
+hojas y las 18 capturas están en `D:\mpos-tmp\dp18\p5\capturas\`.
 
 ## Lo que sigue
 
-Las e2e de la Parte 1 contra la base desechable (5435) y el build en 3200; `verify`; el PR de la Parte
-1. Luego integrar lo de los agentes A y B en `qa/simulador/` (Parte 2).
+Cerrar `verify` y el PR de la Parte 1. Integrar lo de los agentes A y B en `qa/simulador/` (Parte 2)
+cuando B termine. La Parte 5 espera la elección de Miguel.

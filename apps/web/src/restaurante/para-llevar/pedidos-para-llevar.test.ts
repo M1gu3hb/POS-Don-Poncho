@@ -55,6 +55,8 @@ describe('DP-16 · los avisos de los pedidos para llevar en la Caja', () => {
     expect(tituloDelPedido({ numero: 7, nombre: 'Ana', deOtroDia: true })).toBe(
       'Pedido para llevar 7 · Ana · de ayer',
     );
-    expect(tituloDelPedido({ numero: 7, nombre: null, deOtroDia: false })).toBe('Pedido para llevar 7');
+    expect(tituloDelPedido({ numero: 7, nombre: null, deOtroDia: false })).toBe(
+      'Pedido para llevar 7',
+    );
   });
 });

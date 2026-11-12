@@ -28,7 +28,9 @@ async function irALaCaja(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/caja/);
 }
 
-test('la PC ve la caja de la tableta, con cupo de 1 y de 2, y se entera cuando se cierra', async ({ browser }, info) => {
+test('la PC ve la caja de la tableta, con cupo de 1 y de 2, y se entera cuando se cierra', async ({
+  browser,
+}, info) => {
   test.setTimeout(180_000);
   const tableta = await contextoDe(browser, info, personaDe(SLUG, 'cajero'));
   const pc = await contextoDe(browser, info, personaDe(SLUG, 'dueno'));
@@ -48,7 +50,9 @@ test('la PC ve la caja de la tableta, con cupo de 1 y de 2, y se entera cuando s
     await expect(otras).toBeVisible();
     await expect(otras.getByText(/desde las \d{1,2}:\d{2}/)).toBeVisible();
     await expect(otras.getByRole('button', { name: 'Trasladar aquí' })).toBeVisible();
-    await expect(enPc.getByRole('button', { name: /Abrir otra caja aquí \(2 de 2\)/ })).toBeVisible();
+    await expect(
+      enPc.getByRole('button', { name: /Abrir otra caja aquí \(2 de 2\)/ }),
+    ).toBeVisible();
 
     // Cupo de 1: ya no cabe otra, la de la tableta sigue a la vista con «Trasladar aquí».
     await fijarCupo(enPc, 1);

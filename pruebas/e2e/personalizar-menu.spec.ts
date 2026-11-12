@@ -26,7 +26,11 @@ test('lo que se personaliza se ve al momento, se queda al volver y al recargar, 
   const descripcion = `Hecha al momento ${marca}`;
   const mensaje = `Bienvenidos · ${marca}`;
   try {
-    const token = await prepararElPortalDelComensal(page, { mesa: MESA, zona: 'Interior', mesero: null });
+    const token = await prepararElPortalDelComensal(page, {
+      mesa: MESA,
+      zona: 'Interior',
+      mesero: null,
+    });
     await page.goto('/portal-qr');
     await page.getByRole('tab', { name: 'Personalizar menú' }).click();
     const vista = page.getByRole('region', { name: 'Vista previa del menú en el teléfono' });
@@ -43,9 +47,14 @@ test('lo que se personaliza se ve al momento, se queda al volver y al recargar, 
     await expect(page.getByText(`«${nombre}» guardado`)).toBeVisible();
 
     // Del menú: la segunda sección sube al primer lugar, y el mensaje de bienvenida.
-    const secciones = page.getByRole('list', { name: 'Secciones del menú, en orden' }).getByRole('listitem');
+    const secciones = page
+      .getByRole('list', { name: 'Secciones del menú, en orden' })
+      .getByRole('listitem');
     const subida = (await secciones.nth(1).locator('span').nth(1).innerText()).trim();
-    await secciones.nth(1).getByRole('button', { name: /^Subir / }).click();
+    await secciones
+      .nth(1)
+      .getByRole('button', { name: /^Subir / })
+      .click();
     await page.getByRole('button', { name: 'Guardar orden' }).click();
     await expect(page.getByText('Orden de las secciones guardado')).toBeVisible();
     await page.getByLabel('Mensaje de bienvenida').fill(mensaje);
