@@ -86,32 +86,32 @@ export async function pedirAyuda(pagina: Page): Promise<number> {
 
 /**
  * «Atención» → «Pedir cuenta» (abre «Pedir cuenta — Mesa N»), con la propina que acuerde el grupo si
- * el portal la pregunta, y espera «¡Cuenta solicitada!». Devuelve el porcentaje elegido (0 si no hubo).
+ * el portal la pregunta, «Confirmar» y espera «¡Cuenta solicitada!». Devuelve el porcentaje elegido
+ * (0 si no hubo). Las teselas se llaman con su subtítulo («Sin propina 0%», «10% $73.20»): se buscan
+ * por el principio. Antes se buscaba «Sin propina» exacto y la mesa nunca pedía la cuenta (D1-058).
  */
 export async function pedirCuentaPorElPortal(
   pagina: Page,
   porcentaje: number,
 ): Promise<{ estado: number; porcentaje: number }> {
+  await cerrarLoAbierto(pagina);
   await pagina.getByRole('button', { name: 'Atención', exact: true }).click({ timeout: ESPERA_MS });
   await pagina.getByRole('button', { name: 'Pedir cuenta' }).click({ timeout: ESPERA_MS });
   const listo = pagina.getByText('¡Cuenta solicitada!');
+  const pregunta = pagina.getByText('¿Quieres dejar propina?');
+  const confirmar = pagina.getByRole('button', { name: 'Confirmar', exact: true });
+  await listo.or(pregunta).or(confirmar).first().waitFor({ timeout: ESPERA_MS });
   let elegido = 0;
-  const propina = pagina
-    .getByRole('button', {
-      name: porcentaje === 0 ? /^Sin propina$/ : new RegExp(`^${String(porcentaje)}\\s?%`),
-    })
-    .first();
-  if (
-    !(await listo.isVisible()) &&
-    (await propina.isVisible({ timeout: 2_500 }).catch(() => false))
-  ) {
-    await propina.click();
+  if (await pregunta.first().isVisible()) {
+    await pagina
+      .getByRole('button', {
+        name: porcentaje === 0 ? /^Sin propina\b/ : new RegExp(`^${String(porcentaje)}\\s?%`),
+      })
+      .first()
+      .click({ timeout: ESPERA_MS });
     elegido = porcentaje;
-    const aplicar = pagina
-      .getByRole('button', { name: /^(Aplicar|Confirmar|Pedir cuenta)$/ })
-      .last();
-    if (await aplicar.isVisible({ timeout: 1_000 }).catch(() => false)) await aplicar.click();
   }
+  if (!(await listo.first().isVisible())) await confirmar.last().click({ timeout: ESPERA_MS });
   await listo.first().waitFor({ timeout: ESPERA_MS });
   await cerrarLoAbierto(pagina);
   return { estado: 200, porcentaje: elegido };

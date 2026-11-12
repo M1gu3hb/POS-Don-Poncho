@@ -8,7 +8,7 @@ import type { Page } from '@playwright/test';
 import type { ContextoDelBot } from '../bot.ts';
 import { contar } from '../mundo.ts';
 import { intentar, recuperar } from './ayudas.ts';
-import { confirmarPedidoDelPortal } from './mesero-cuenta.ts';
+import { confirmarPedidoDelPortal, pedirLaCuenta } from './mesero-cuenta.ts';
 import type { MesaEnPantalla } from './mesero-ui.ts';
 
 /** Atiende «Mesa N quiere ordenar»: abre la mesa (o entra a la abierta) y manda a cocina lo del portal. */
@@ -38,6 +38,56 @@ export async function atenderPortal(
     contar(ctx.mundo, 'pedidos_del_portal_confirmados');
   } else {
     await recuperar(pagina, ctx.entorno.appUrl, '/mesero');
+  }
+}
+
+/**
+ * El grupo del portal no pudo pedir la cuenta por el teléfono y se la pide al mesero en persona: el
+ * mesero que ve esa mesa en su pantalla la pide por la suya («la decide la caja») y la deja por cobrar
+ * con lo que de verdad salió a cocina.
+ */
+export async function cuentasQueMePidenEnPersona(
+  ctx: ContextoDelBot,
+  pagina: Page,
+  persona: string,
+  mesas: readonly MesaEnPantalla[],
+  ahoraMin: number,
+): Promise<void> {
+  for (const grupo of [...ctx.mundo.portal.values()]) {
+    if (grupo.pideLaCuentaEnPersona !== true || grupo.cuentaPedida) continue;
+    if (!mesas.some((m) => m.numero === grupo.mesa)) continue;
+    const ok = await intentar(
+      ctx,
+      pagina,
+      {
+        bot: persona,
+        pantalla: `Mesero · mesa ${String(grupo.mesa)}`,
+        hizo: `Pedir la cuenta de la mesa ${String(grupo.mesa)} (del portal), que me la pidieron en persona`,
+        esperaba: 'La pre-cuenta con su código de caja y el total.',
+        paso: 'pedir la cuenta del portal en persona',
+      },
+      async () => {
+        await pedirLaCuenta(pagina, grupo.mesa, 'caja');
+      },
+    );
+    if (!ok) {
+      await recuperar(pagina, ctx.entorno.appUrl, '/mesero');
+      continue;
+    }
+    grupo.cuentaPedida = true;
+    grupo.pideLaCuentaEnPersona = false;
+    ctx.mundo.porCobrar.push({
+      cuenta: grupo.llegada.id,
+      mesa: grupo.mesa,
+      esperadoCentavos: grupo.lineas
+        .slice(0, grupo.enviadas)
+        .reduce((s, l) => s + l.importeCentavos, 0),
+      pedidaEn: ahoraMin,
+      propinaCentavos: 0,
+      propinaPorcentaje: 0,
+      cobrandola: null,
+    });
+    contar(ctx.mundo, 'cuentas_del_portal_pedidas_en_persona');
   }
 }
 

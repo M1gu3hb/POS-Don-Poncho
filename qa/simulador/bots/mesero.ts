@@ -25,7 +25,11 @@ import {
   unirMesas,
   type Propina,
 } from './mesero-cuenta.ts';
-import { atenderPortal, soltarMesasDelPortal } from './mesero-portal.ts';
+import {
+  atenderPortal,
+  cuentasQueMePidenEnPersona,
+  soltarMesasDelPortal,
+} from './mesero-portal.ts';
 import {
   abrirMesa,
   alMapa,
@@ -388,6 +392,7 @@ async function vuelta(ctx: ContextoDelBot, m: Mesero): Promise<void> {
     .getByRole('button', { name: 'Mesas', exact: true })
     .click({ timeout: ESPERA_MS })
     .catch(() => undefined);
+  await cuentasQueMePidenEnPersona(ctx, m.pagina, quien, mesas, ahoraMin);
   await m.unirParaGrupoGrande(mesas);
   await m.cambiarUnaMesa(mesas);
 }

@@ -64,6 +64,13 @@ function anotarLoConfirmado(ctx: ContextoDelBot, grupo: GrupoDePortal, yaAnotada
   return grupo.enviadas;
 }
 
+/** El grupo se fue sin cuenta (nada salió a cocina): la mesa vuelve a estar disponible. */
+function soltarLaMesa(ctx: ContextoDelBot, grupo: GrupoDePortal): void {
+  if (ctx.mundo.portal.get(grupo.mesa) === grupo) ctx.mundo.portal.delete(grupo.mesa);
+  if (ctx.mundo.atendidas.get(grupo.mesa) === grupo.llegada.id)
+    ctx.mundo.atendidas.delete(grupo.mesa);
+}
+
 async function abrirTelefonos(
   ctx: ContextoDelBot,
   llegada: Llegada,
@@ -103,7 +110,10 @@ async function atenderGrupo(
   const telefonos = await abrirTelefonos(ctx, llegada, token);
   try {
     const primero = telefonos[0]?.pagina;
-    if (telefonos.length < llegada.telefonos || primero === undefined) return;
+    if (telefonos.length < llegada.telefonos || primero === undefined) {
+      soltarLaMesa(ctx, grupo); // aún no piden nada: la mesa queda para otro grupo
+      return;
+    }
     let anotadas = 0;
     const inicio = minutoDelDia(ctx.ahoraSim());
     for (let ronda = 1; ronda <= llegada.rondas && !ctx.terminado(); ronda += 1) {
@@ -167,6 +177,10 @@ async function atenderGrupo(
           },
           quien.pagina,
         );
+        // Se van sin esperar más: lo que ya salió a cocina se lo cobran pidiéndole la cuenta al mesero.
+        // Si nada salió, la mesa NO se suelta: su carrito compartido quedó con platillos y el grupo
+        // siguiente se los llevaría sin que el libro lo sepa.
+        if (grupo.enviadas > 0) grupo.pideLaCuentaEnPersona = true;
         return;
       }
       if (ronda < llegada.rondas)
@@ -200,23 +214,33 @@ async function atenderGrupo(
     if (ctx.terminado() || grupo.lineas.length === 0) return;
     const porcentaje = ctx.azar.elegir([0, 10, 10, 15]);
     let elegido = 0;
-    const pidio = await intentar(
-      ctx,
-      primero,
-      {
-        bot,
-        pantalla: 'Portal del comensal',
-        hizo: `Pedir la cuenta${porcentaje === 0 ? '' : ` con ${String(porcentaje)} % de propina`}`,
-        esperaba: 'La cuenta queda solicitada.',
-        paso: 'pedir la cuenta por el portal',
-      },
-      async () => {
-        const r = await pedirCuentaPorElPortal(primero, porcentaje);
-        elegido = r.porcentaje;
-        if (r.estado !== 200) throw new Error(`solicitud respondió ${String(r.estado)}`);
-      },
-    );
-    if (!pidio) return;
+    let pidio = false;
+    // Dos intentos; antes del segundo se vuelve a escanear el QR (como quien recarga la página).
+    for (let intento = 1; intento <= 2 && !pidio && !ctx.terminado(); intento += 1) {
+      if (intento > 1) await abrirElQr(primero, ctx.entorno.appUrl, token).catch(() => undefined);
+      pidio = await intentar(
+        ctx,
+        primero,
+        {
+          bot,
+          pantalla: 'Portal del comensal',
+          hizo: `Pedir la cuenta${porcentaje === 0 ? '' : ` con ${String(porcentaje)} % de propina`}`,
+          esperaba: 'La cuenta queda solicitada.',
+          paso: 'pedir la cuenta por el portal',
+        },
+        async () => {
+          const r = await pedirCuentaPorElPortal(primero, porcentaje);
+          elegido = r.porcentaje;
+          if (r.estado !== 200) throw new Error(`solicitud respondió ${String(r.estado)}`);
+        },
+      );
+    }
+    if (!pidio) {
+      // Se la piden al mesero en persona; si nada salió a cocina no hay cuenta: la mesa se suelta.
+      if (grupo.enviadas > 0) grupo.pideLaCuentaEnPersona = true;
+      else soltarLaMesa(ctx, grupo);
+      return;
+    }
     grupo.cuentaPedida = true;
     const subtotal = grupo.lineas.reduce((s, l) => s + l.importeCentavos, 0);
     ctx.mundo.porCobrar.push({

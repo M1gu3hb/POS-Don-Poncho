@@ -87,6 +87,11 @@ export interface GrupoDePortal {
   enviadas: number;
   /** El grupo ya pidió la cuenta por el portal. */
   cuentaPedida: boolean;
+  /**
+   * El portal no le dejó pedir la cuenta: se la pide al mesero de la mesa en persona (la pide él
+   * por su pantalla). Sin esto la mesa se quedaba ocupada el resto del día (D1-003, D1-016).
+   */
+  pideLaCuentaEnPersona?: boolean;
 }
 
 export interface Mundo {
