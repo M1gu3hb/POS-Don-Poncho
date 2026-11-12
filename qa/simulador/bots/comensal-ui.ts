@@ -29,7 +29,10 @@ export async function agregarAlPortal(pagina: Page, linea: LineaPlaneada): Promi
     else await dialogo.getByRole('spinbutton').first().fill(String(linea.cantidad));
   } else {
     for (const o of linea.opciones)
-      await dialogo.getByRole('button', { name: o.opcion, exact: true }).first().click();
+      await dialogo
+        .getByRole('button', { name: nombreDeOpcion(o.opcion) })
+        .first()
+        .click();
     for (let i = 1; i < linea.cantidad; i += 1)
       await dialogo.getByRole('button', { name: 'Uno más' }).click();
   }
@@ -112,4 +115,13 @@ export async function pedirCuentaPorElPortal(
   await listo.first().waitFor({ timeout: ESPERA_MS });
   await cerrarLoAbierto(pagina);
   return { estado: 200, porcentaje: elegido };
+}
+
+/**
+ * El botón de una opción se llama como la opción y, si cuesta, también lleva su precio («Tarro
+ * helado +$15.00»): se busca por el nombre al principio, no exacto.
+ */
+function nombreDeOpcion(opcion: string): RegExp {
+  const escapada = opcion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${escapada}(\\s|$)`);
 }

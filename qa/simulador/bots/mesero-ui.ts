@@ -92,7 +92,10 @@ async function personalizar(pagina: Page, linea: LineaPlaneada): Promise<void> {
   const dialogo = pagina.getByRole('dialog', { name: 'Personalizar producto' });
   await dialogo.waitFor({ timeout: ESPERA_MS });
   for (const o of linea.opciones)
-    await dialogo.getByRole('button', { name: o.opcion, exact: true }).first().click();
+    await dialogo
+      .getByRole('button', { name: nombreDeOpcion(o.opcion) })
+      .first()
+      .click();
   if (linea.nota !== '') await dialogo.getByRole('textbox').fill(linea.nota);
   await dialogo.getByRole('button', { name: /^Agregar/ }).click();
   await dialogo.waitFor({ state: 'detached', timeout: ESPERA_MS });
@@ -191,4 +194,13 @@ export async function entregarListos(pagina: Page, numero: number): Promise<numb
     await pagina.waitForTimeout(600);
   }
   return toques;
+}
+
+/**
+ * El botón de una opción se llama como la opción y, si cuesta, también lleva su precio («Tarro
+ * helado +$15.00»): se busca por el nombre al principio, no exacto.
+ */
+function nombreDeOpcion(opcion: string): RegExp {
+  const escapada = opcion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${escapada}(\\s|$)`);
 }
