@@ -67,6 +67,23 @@ node --conditions=react-server qa/simulador/correr-dia.ts --dia 1 --app http://l
 hace un ensayo: a los N minutos ya no llega nadie más y el día cierra como uno de verdad. Un día que
 se corta se repite completo desde su molde.
 
+Lo que enseñaron los ensayos:
+
+- **Clonar con el servidor apagado** (o reiniciarlo después): `copia.ts` cierra a la fuerza las
+  conexiones de la base de la que clona, y el pool del servidor se queda con conexiones muertas
+  (500 en `/api/datos/consultar` al empezar el día).
+- **El pool del servidor es de 30** (`MORPHIQPOS_DB_POOL_MAX`, lo pone `servir.ts`): en Vercel cada
+  función abre su propio pool de 10; aquí un solo proceso atiende a ~45 aparatos.
+- **El personal llega escalonado** (cocina y cajas primero, los meseros uno tras otro): 20 entradas con
+  PIN a la vez ahogaban al servidor.
+- **La cocina no se va al terminar el día**: sigue hasta que las cajas cierran, porque una caja no
+  cierra con pedidos para llevar cobrados sin entregar (regla de la app); antes de contar, la cajera
+  entrega lo que quede.
+- **El fin del día cuenta minutos desde la medianoche de la fecha** (`fin-del-dia.ts`): con la hora
+  del reloj, un día que se pasara de las 24:00 dejaba de estar terminado.
+- **El modo espera llega pronto con el reloj acelerado** y se traga los clics: `sesion.ts` deja puesto
+  un «despertador» que lo quita antes de cada acción.
+
 ## La semilla
 
 Todo lo que varía sale de `semilla.ts` (un generador con semilla, con hijos por bot): misma semilla,
