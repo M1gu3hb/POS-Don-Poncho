@@ -98,10 +98,13 @@ export async function arbitrarInventario(
   const [fila] = await leerSql<{ compras: string; gastos: string }>(baseUrl, COMPRAS_Y_GASTOS, [
     desde,
   ]);
+  // Las compras y los gastos se comparan en la MISMA ventana que la base (desde el inicio del día):
+  // el libro trae todos los días (el inventario sí es acumulado) y sumaba también los del día 0.
+  const desdeIso = new Date(desde).toISOString();
   const sumaDe = (tipo: 'compra' | 'gasto', campo: 'costoCentavos' | 'centavos') =>
     libro.reduce(
       (s, f) =>
-        f.asiento.tipo === tipo && campo in f.asiento
+        f.horaSim >= desdeIso && f.asiento.tipo === tipo && campo in f.asiento
           ? s + ((f.asiento as unknown as Record<string, number | undefined>)[campo] ?? 0)
           : s,
       0,

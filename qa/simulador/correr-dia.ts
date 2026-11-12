@@ -207,7 +207,23 @@ async function main(): Promise<void> {
   // bots atorados fallan, su fallo queda registrado y el árbitro corre con lo que haya.
   // Se asigna dentro del intervalo: con el `as`, TypeScript no la da por `null` para siempre.
   let vigilante = null as NodeJS.Timeout | null;
+  // Cada media hora simulada, cómo va el flujo: quién espera mesa, cuántas mesas hay ocupadas y
+  // cuántas cuentas esperan a la caja (para ver dónde se atora el día).
+  let ultimoReporte = -1;
   const vigilar = setInterval(() => {
+    const minuto = Math.floor(minutosDesdeLaMedianoche(d.fecha, ahoraSim()));
+    const tramo = Math.floor(minuto / 30);
+    if (tramo !== ultimoReporte) {
+      ultimoReporte = tramo;
+      const v = (clave: string): number => mundo.volumen.get(clave) ?? 0;
+      const hora = `${String(Math.floor(minuto / 60)).padStart(2, '0')}:${String(minuto % 60).padStart(2, '0')}`;
+      const yaLlegaron = mundo.llegadas.filter((l) => l.horaSim <= minuto).length;
+      console.log(
+        `[${hora}] esperan mesa ${String(yaLlegaron)} · por llegar ${String(mundo.llegadas.length - yaLlegaron)} · ` +
+          `mesas ocupadas ${String(mundo.atendidas.size)} · por cobrar ${String(mundo.porCobrar.length)} · ` +
+          `cuentas de mesa ${String(v('cuentas_de_mesa'))} · portal ${String(v('cuentas_pedidas_por_portal'))}`,
+      );
+    }
     if (!terminado() || vigilante !== null) return;
     vigilante = setTimeout(() => {
       console.log('Bots atorados tras el fin del día: se cierra el navegador.');

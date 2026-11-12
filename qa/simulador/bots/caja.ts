@@ -347,7 +347,18 @@ async function cerrar(
   // La caja no cierra con pedidos para llevar cobrados sin entregar (regla de la app): antes de
   // contar, se entrega lo listo y se espera a que la cocina termine lo que falta (sigue trabajando
   // hasta que las cajas cierran).
-  await entregarTodo(ctx, pagina, 10);
+  // Si la entrega previa falla (la pantalla no está como se espera), se registra y se intenta el
+  // cierre igual: el servidor dirá si falta algo.
+  await entregarTodo(ctx, pagina, 10).catch((error: unknown) =>
+    registrarFallo(
+      ctx,
+      { bot, pantalla: 'Caja → Para llevar' },
+      pagina,
+      'Entregar lo para llevar antes de cerrar',
+      'No queda nada sin entregar',
+      error,
+    ),
+  );
   // Los cierres de caja van uno tras otro (dos a la vez no completaron en el ensayo): cada una espera su turno.
   const turno = plan.cierraDespuesDe ?? 0;
   const limite = Date.now() + 6 * 60_000;
