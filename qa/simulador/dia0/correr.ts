@@ -4,6 +4,8 @@
  *   node qa/simulador/dia0/correr.ts --app http://localhost:32802 --base postgres://…/qa_dp18_b \
  *     --pines D:/mpos-tmp/qa-dp18-b/pines.json --reloj D:/mpos-tmp/dp18/reloj-b.json [--solo usuarios,mesas]
  */
+import { join } from 'node:path';
+
 import { expect } from '@playwright/test';
 
 import { leerEntorno } from '../entorno.ts';
@@ -46,7 +48,7 @@ async function principal(): Promise<void> {
   let fallo: unknown = null;
   try {
     const { pagina } = await sesionDe(navegador, entorno, 'Dueño Don Poncho', 'pc-1920');
-    const d = crearDia0(entorno, pagina);
+    const d = crearDia0(entorno, pagina, join(entorno.salida, 'dia-0'));
     await apagarLaEspera(d);
     for (const paso of PASOS) {
       if (solo !== null && !solo.has(paso.nombre)) continue;
