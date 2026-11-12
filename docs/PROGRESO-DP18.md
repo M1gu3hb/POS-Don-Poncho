@@ -50,8 +50,8 @@
 | Parte | Qué | Estado |
 | --- | --- | --- |
 | 0 | Ubicarse, `verify`, bitácora | hecho: `verify` local en verde (unidad 490 / 5,521, integración 128 / 628, build y verificadores) |
-| 1 | Lo que encontró Miguel (un PR) | en curso en `dp-18-1`: 1.1 a 1.6 hechos con sus pruebas (DP-D110 a DP-D114), 29 mutantes muertos, las 3 e2e nuevas en verde contra un build local; falta cerrar `verify` y el PR |
-| 2 | El simulador | en curso: el núcleo (candado, reloj de QA, semilla, libro, incidentes, tiempos, almacén local, servidor) en `D:\mpos-tmp\dp18\sim\`; el agente A (sala) terminó: ensayo de 1 h simulada que cuadró con el libro; el B (cajas, gerencia, día 0, árbitro) sigue contra `qa_dp18_b` (32802) |
+| 1 | Lo que encontró Miguel (un PR) | **en producción** (#24, `197614f`, 12-11): 1.1 a 1.6 con sus pruebas (DP-D110 a DP-D114), 29 mutantes muertos, las 3 e2e nuevas y la CI completa en verde; `dejar-en-ceros.mjs` NO se ha corrido |
+| 2 | El simulador | en curso en `dp-18-2`: integrado en `qa/simulador/` (núcleo, sala de A, cajas, gerencia, día 0 y árbitro de B, `correr-dia.ts`, `perfiles.ts`, README); un agente termina dividir, descuentos sin PIN, la opción en vivo, las notas y la disputa |
 | 3 | La semana | pendiente |
 | 4 | Triage, arreglos, reporte 011 | pendiente |
 | 5 | Tres direcciones del menú digital | capturas mandadas a Miguel (A «Papel de la casa», B «Brasa», C «Cartel»); se programa la que elija |
@@ -99,7 +99,35 @@ Don Poncho no tiene fotos de platillos (121 activos, 0 con foto, 48 con descripc
 11 fotos de muestra de Wikimedia con licencia libre (`D:\mpos-tmp\dp18\p5\fotos\CREDITOS.md`). Las tres
 hojas y las 18 capturas están en `D:\mpos-tmp\dp18\p5\capturas\`.
 
+## El cierre de la Parte 1
+
+- La galería pidió declarar `/portal-qr` (la pestaña nueva): se regeneró en CI con
+  `actualizar_galeria` y sólo se comprometieron los 9 retratos de Portal QR; la regeneración reescribe
+  todos, y los de Cocina salían con el pie de la barra lateral unos píxeles distinto (en la vuelta
+  del PR coincidían con los viejos).
+- `verify` local tropezó dos veces con Windows: al restaurar un mutante, `writeFileSync` falló con
+  `UNKNOWN` (-4094) y dejó el mutante en el árbol (`precio.ts`, `cierre.ts`). Se restauraron con
+  `git checkout` y se siguió desde esa puerta.
+- Fusionado con squash y en producción el 12-11 a las 5:20 (Vercel «Ready», el acceso responde 200).
+
+## El simulador integrado (12-11)
+
+- Lo que encontró B en el día 0 y su ensayo (para el triage de la Parte 4): asignar estación a una
+  categoría da 422 (`estacion_preparacion_nombre` viaja al guardar); crear un producto «por porción
+  de contenedor» da 500; los productos por peso y por porción quedan con `estrategia_consumo = sku` y
+  la venta no baja su insumo; «Registrar compra» sin almacén da 422 y ninguna pantalla crea el
+  almacén; una compra en efectivo sale del cajón de la caja abierta.
+- Pendiente de B: el cierre de caja dentro del día no llegó a mandar `/api/caja/cerrar` (aislado sí
+  cierra). Se diagnostica con el ensayo de `correr-dia.ts`.
+- **La laptop se apagó** hacia las 3:00 del 12-11 a media integración: se perdieron el ensayo en curso
+  y el agente de cajas a medias (se retomó); no se perdió código. Postgres se recuperó al arrancar.
+- El primer ensayo con todo el personal salió mal y enseñó dos cosas del simulador (no de la app):
+  20 entradas con PIN a la vez ahogan el servidor de la laptop (ahora el personal llega escalonado y
+  la entrada no espera el evento `load`), y el fin del día se calculaba con la hora del reloj, que
+  vuelve a 0 a medianoche: pasado el tope, el día «dejaba de estar terminado» y los bots siguieron
+  3 horas (ahora `fin-del-dia.ts`, con su prueba).
+
 ## Lo que sigue
 
-Cerrar `verify` y el PR de la Parte 1. Integrar lo de los agentes A y B en `qa/simulador/` (Parte 2)
-cuando B termine. La Parte 5 espera la elección de Miguel.
+El ensayo de un día con todo el personal, el cierre de caja, lo del agente, `verify` y el PR de la
+Parte 2. Luego la semana. La Parte 5 espera la elección de Miguel.
