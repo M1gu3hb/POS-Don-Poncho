@@ -6,6 +6,7 @@ import { desdeTexto } from '@morphiqpos/domain/dinero';
 import { z } from 'zod';
 
 import { definirComando } from '../comando.ts';
+import { exigirQueNoQuedenSinPrecio, platillosDelGrupo } from './opciones-sin-precio.ts';
 
 /**
  * DP-16 · LA BIBLIOTECA DE GRUPOS DE OPCIONES: se arman una vez y se reusan en varios productos.
@@ -110,6 +111,14 @@ export const guardarGrupoDeOpciones = definirComando<
           );
 
     await ctx.paso('guardar_opciones', () => guardarOpciones(ctx.tx, grupoId, entrada.opciones));
+    // DP-18 · M6: ningún platillo que use el grupo puede quedar en $0 o menos con sus opciones.
+    await ctx.paso('revisar_precios', async () =>
+      exigirQueNoQuedenSinPrecio(
+        ctx.tx,
+        organizacionId,
+        await platillosDelGrupo(ctx.tx, organizacionId, grupoId),
+      ),
+    );
     ctx.auditar({
       entidadId: grupoId,
       payload: {
@@ -242,6 +251,10 @@ export const asignarGruposAlProducto = definirComando<
           .execute(),
       );
     }
+    // DP-18 · M6: con estos grupos, el platillo no puede quedar en $0 o menos.
+    await ctx.paso('revisar_precios', () =>
+      exigirQueNoQuedenSinPrecio(ctx.tx, organizacionId, [entrada.productoId]),
+    );
     ctx.auditar({ entidadId: entrada.productoId, payload: { grupos: unicos.length } });
     return { productoId: entrada.productoId, grupos: unicos.length };
   },

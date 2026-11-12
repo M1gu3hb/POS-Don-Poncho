@@ -4,12 +4,11 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 /**
- * DP-14 · ronda 2, medio 3 · DOS CAJAS EN LA PANTALLA.
+ * DP-14 · ronda 2, medio 3 · DOS CAJAS EN LA PANTALLA (revisado en DP-18, DP-D111).
  *
- *   · Si cabe otra caja, este aparato ve «No hay caja abierta en este aparato · Abrir caja», no el
- *     aviso de la caja de otra terminal: con el cupo en 2, la segunda caja se ABRE, no se trae.
- *   · «Traer esta caja aquí» sólo aparece si ya no cabe otra, y pide confirmación: la otra terminal
- *     se queda sin caja.
+ *   · DP-18: las cajas abiertas en otros aparatos se ven SIEMPRE («Trasladar aquí», con confirmación:
+ *     el otro aparato se queda sin caja) y, si cabe, «Abrir otra caja aquí (N de M)». Antes (DP-D74),
+ *     si cabía otra, la de la tableta se callaba y parecía cerrada (Miguel, 11-11).
  *   · En la tercera, «Abrir caja» dice en pantalla (no en un tooltip) «Ya hay 2 cajas abiertas:
  *     cierra una».
  *   · Si otra caja ya cobró la cuenta, el cobro se cierra y la lista se relee.
@@ -22,15 +21,14 @@ const leer = (ruta: string) => readFileSync(join(HEREDADO, ruta), 'utf8');
 describe('la Caja con dos cajas', () => {
   const caja = () => leer('pages/Caja.jsx');
 
-  it('si cabe otra caja, «No hay caja abierta en este aparato» y «Abrir caja»', () => {
-    expect(caja()).toMatch(/\{!hayCaja && !cargandoCaja && puedoAbrir && \(/);
+  it('sin caja aquí ni en otro aparato, «No hay caja abierta en este aparato» y «Abrir caja»', () => {
+    expect(caja()).toContain('{!hayCaja && !cargandoCaja && otrasCajas.length === 0 && (');
     expect(caja()).toMatch(/No hay caja abierta en este aparato/);
   });
 
-  it('el aviso de la caja de otra terminal, sólo si ya no cabe otra', () => {
-    expect(caja()).toMatch(
-      /\{!hayCaja && !cargandoCaja && !puedoAbrir && cajaEnOtraTerminal && \(/,
-    );
+  it('DP-18 · las cajas de otros aparatos se enseñan SIEMPRE, quepa otra o no, con caja aquí o sin ella', () => {
+    expect(caja()).toMatch(/\{!cargandoCaja && \(\s*<CajasEnOtrosAparatos\s+cajas=\{otrasCajas\}/);
+    expect(caja()).not.toMatch(/!puedoAbrir && cajaEnOtraTerminal/);
   });
 
   it('en la tercera, «Abrir caja» lo dice en pantalla', () => {
@@ -52,18 +50,21 @@ describe('la Caja con dos cajas', () => {
   });
 });
 
-describe('traer la caja de otra terminal', () => {
-  const aviso = () => leer('components/caja/CajaEnOtraTerminal.jsx');
+describe('trasladar la caja de otro aparato (DP-18)', () => {
+  const aviso = () => leer('components/caja/CajasEnOtrosAparatos.jsx');
 
-  it('se llama «Traer esta caja aquí» y pide confirmar que la otra se queda sin caja', () => {
+  it('se llama «Trasladar aquí» y pide confirmar que el otro aparato se queda sin caja', () => {
     const texto = aviso();
-    expect(texto).toMatch(/Traer esta caja aquí/);
+    expect(texto).toMatch(/Trasladar aquí/);
     expect(texto).toMatch(/se queda sin caja/);
-    expect(texto).toMatch(/onClick=\{\(\) => setConfirmando\(true\)\}/);
-    expect(texto).toMatch(/Sí, traerla/);
+    expect(texto).toContain('onClick={() => setConfirmando(caja.sesionCajaId)}');
+    expect(texto).toMatch(/Sí, trasladarla/);
   });
 
-  it('dice que ya no cabe otra caja', () => {
-    expect(aviso()).toMatch(/cajas abiertas: cierra una para abrir otra aquí/);
+  it('con caja aquí, las otras se enlistan sin botones; sin caja, se ofrece abrir otra si cabe', () => {
+    const texto = aviso();
+    expect(texto).toContain('!hayCaja && caja.puedoTraerla && confirmando !== caja.sesionCajaId');
+    expect(texto).toContain('!hayCaja && puedoAbrir && (');
+    expect(texto).toMatch(/Abrir otra caja aquí/);
   });
 });

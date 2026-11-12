@@ -338,7 +338,6 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
       [
         'ingredientes_all',
         'compras_all',
-        'movimientos_inv',
         'registros_compras',
         'registros_movimientos',
       ].forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }));

@@ -19,15 +19,20 @@ export interface PedidoParaLlevar {
   readonly pendientes: number;
   readonly listas: number;
   readonly listoEn: string | null;
+  /** DP-18 · Se cobró otro día y sigue sin entregarse (un servidor viejo no lo manda). */
+  readonly deOtroDia?: boolean;
 }
 
 export const RUTA_PARA_LLEVAR_DEL_DIA = '/api/restaurante/para-llevar-del-dia';
 export const RUTA_ENTREGAR = '/api/restaurante/entregar-para-llevar';
 
-/** «Pedido para llevar 3 · Don Beto». */
-export function tituloDelPedido(pedido: Pick<PedidoParaLlevar, 'numero' | 'nombre'>): string {
+/** «Pedido para llevar 3 · Don Beto»; si se cobró otro día y no se ha entregado, «… · de ayer». */
+export function tituloDelPedido(
+  pedido: Pick<PedidoParaLlevar, 'numero' | 'nombre'> & { readonly deOtroDia?: boolean },
+): string {
   const nombre = (pedido.nombre ?? '').trim();
-  return `Pedido para llevar ${String(pedido.numero)}${nombre === '' ? '' : ` · ${nombre}`}`;
+  const deAyer = pedido.deOtroDia === true ? ' · de ayer' : '';
+  return `Pedido para llevar ${String(pedido.numero)}${nombre === '' ? '' : ` · ${nombre}`}${deAyer}`;
 }
 
 /**

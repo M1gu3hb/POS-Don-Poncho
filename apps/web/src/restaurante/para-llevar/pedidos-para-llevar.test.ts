@@ -51,5 +51,10 @@ describe('DP-16 · los avisos de los pedidos para llevar en la Caja', () => {
       'Pedido para llevar 3 · Don Beto',
     );
     expect(tituloDelPedido({ numero: 7, nombre: '  ' })).toBe('Pedido para llevar 7');
+    // DP-18 · M3: lo cobrado otro día y sin entregar se distingue del número igual de hoy.
+    expect(tituloDelPedido({ numero: 7, nombre: 'Ana', deOtroDia: true })).toBe(
+      'Pedido para llevar 7 · Ana · de ayer',
+    );
+    expect(tituloDelPedido({ numero: 7, nombre: null, deOtroDia: false })).toBe('Pedido para llevar 7');
   });
 });

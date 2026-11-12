@@ -82,7 +82,7 @@ export default function LimpiarSeccionButton({ seccion, onCleared }) {
         'ventas_hoy',
         'gastos_hoy',
         'compras_all',
-        'movimientos_inv',
+        'registros_movimientos',
       ].forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }));
       onCleared?.();
       setConfirmText('');

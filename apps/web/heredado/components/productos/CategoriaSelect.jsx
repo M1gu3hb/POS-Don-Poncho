@@ -81,7 +81,7 @@ export default function CategoriaSelect({
       const cat = await ensureCategoriaExists(api, nombre, { reactivate: true });
       onChange?.(cat.id, cat.nombre);
       queryClient.invalidateQueries({ queryKey: ['categorias_producto'] });
-      queryClient.invalidateQueries({ queryKey: ['categorias_menu_qr'] });
+      queryClient.invalidateQueries({ queryKey: ['menu_qr_categorias'] });
       queryClient.invalidateQueries({ queryKey: ['categorias'] });
       toast.success(`Categoría "${cat.nombre}" creada`);
       setCreando(false);

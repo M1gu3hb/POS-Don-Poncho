@@ -64,8 +64,17 @@ export interface CajaEnOtraTerminal {
 export async function cajasDeLaSucursal(
   tx: Transaccion,
   ambito: { organizacionId: string; sucursalId: string; empleoId: string; rol: string },
+  /** DP-18 · La caja de ESTE aparato, si tiene: no es «otra». */
+  excluirSesionId: string | null = null,
 ): Promise<{
   readonly enOtraTerminal: CajaEnOtraTerminal | null;
+  /**
+   * DP-18 · TODAS las cajas abiertas en otros aparatos de la sucursal, de la más vieja a la más
+   * nueva. `enOtraTerminal` (la primera) se queda para no romper una pantalla vieja abierta.
+   */
+  readonly otrasCajas: readonly CajaEnOtraTerminal[];
+  /** DP-18 · Cuántas cajas hay abiertas en la sucursal, contando la de este aparato. */
+  readonly abiertasEnLaSucursal: number;
   readonly puedoAbrir: boolean;
   /** DP-14 · ronda 2: cuántas cajas caben a la vez, para decir «Ya hay N cajas abiertas». */
   readonly cupoDeCajas: number;
@@ -90,21 +99,23 @@ export async function cajasDeLaSucursal(
     .where('sesiones_caja.organizacion_id', '=', ambito.organizacionId)
     .where('sesiones_caja.sucursal_id', '=', ambito.sucursalId)
     .where('sesiones_caja.estado', '=', 'abierta')
+    .$if(excluirSesionId !== null, (q) => q.where('sesiones_caja.id', '!=', excluirSesionId ?? ''))
     .orderBy('sesiones_caja.abierta_en', 'asc')
-    .limit(1)
+    .orderBy('sesiones_caja.id', 'asc')
+    // El cupo de la base no pasa de cuatro (179): diez sobra.
+    .limit(10)
     .execute();
-  const ajena = ajenas[0];
+  const otrasCajas = ajenas.map((ajena) => ({
+    sesionCajaId: ajena.id,
+    terminalNombre: ajena.terminalNombre,
+    abiertaPor: ajena.abiertaPor,
+    abiertaEn: ajena.abiertaEn.toISOString(),
+    puedoTraerla: puedeTraerLaCaja(ambito.rol, ambito.empleoId, ajena.abiertaPorId),
+  }));
   return {
-    enOtraTerminal:
-      ajena === undefined
-        ? null
-        : {
-            sesionCajaId: ajena.id,
-            terminalNombre: ajena.terminalNombre,
-            abiertaPor: ajena.abiertaPor,
-            abiertaEn: ajena.abiertaEn.toISOString(),
-            puedoTraerla: puedeTraerLaCaja(ambito.rol, ambito.empleoId, ajena.abiertaPorId),
-          },
+    enOtraTerminal: otrasCajas[0] ?? null,
+    otrasCajas,
+    abiertasEnLaSucursal: abiertas.length,
     puedoAbrir: abiertas.length < cupo,
     cupoDeCajas: cupo,
   };

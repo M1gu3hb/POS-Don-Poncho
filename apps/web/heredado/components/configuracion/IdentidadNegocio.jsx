@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '@/api/cliente';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { hayCambios, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
 import { Upload, Save, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -37,6 +38,8 @@ import {
  */
 export default function IdentidadNegocio({ cfg }) {
   const queryClient = useQueryClient();
+  // DP-18: lo que se leyó al hidratar; al guardar sólo viaja lo que difiere de esto.
+  const leido = useRef({});
   const [form, setForm] = useState({
     nombre_negocio: '',
     nombre_sistema: '',
@@ -65,7 +68,8 @@ export default function IdentidadNegocio({ cfg }) {
   // por otro tab/sesión) para no quedarnos con datos viejos.
   useEffect(() => {
     if (!cfg?.id) return; // ⛔ no pisar con {}
-    setForm((f) => ({
+    setForm((f) => {
+      const desdeLaConfig = {
       ...f,
       nombre_negocio: cfg.nombre_negocio ?? f.nombre_negocio ?? '',
       // El nombre del sistema y la marca traen de fábrica el texto de la plataforma anterior
@@ -89,7 +93,10 @@ export default function IdentidadNegocio({ cfg }) {
       // ⚠ CRÍTICO: usar ?? (no ||) porque `false` es valor válido.
       // Con `|| true` un switch apagado se volvía a prender solo.
       colorear_importes_monetarios: cfg.colorear_importes_monetarios ?? true,
-    }));
+      };
+      leido.current = desdeLaConfig;
+      return desdeLaConfig;
+    });
   }, [cfg?.id, cfg?.updated_date]);
 
   const handleUpload = async (e, field, key) => {
@@ -125,7 +132,7 @@ export default function IdentidadNegocio({ cfg }) {
       // que cualquier campo huésped accidental pise Operación. Esto garantiza
       // que guardar Identidad nunca toca asignacion_mesas_activa, propinas_activas,
       // direccion, telefono, correo, iva_porcentaje, mensaje_ticket, etc.
-      const payload = {
+      const seccion = {
         nombre_negocio: form.nombre_negocio,
         nombre_sistema: form.nombre_sistema,
         platform_brand: form.platform_brand,
@@ -141,6 +148,12 @@ export default function IdentidadNegocio({ cfg }) {
         footer_text: form.footer_text,
         colorear_importes_monetarios: form.colorear_importes_monetarios,
       };
+      const payload = parcheDeLaSeccion(seccion, cfg?.id ? leido.current : {});
+      if (cfg?.id && !hayCambios(payload)) {
+        toast.info('No hay cambios que guardar');
+        setSaving(false);
+        return;
+      }
       if (cfg?.id) {
         await api.entidades.ConfiguracionNegocio.update(cfg.id, payload);
       } else {
@@ -152,7 +165,7 @@ export default function IdentidadNegocio({ cfg }) {
         // camino de «primera vez» fallaba siempre.
         await api.entidades.ConfiguracionNegocio.update(undefined, {
           ...payload,
-          nombre_negocio: payload.nombre_negocio || 'Mi Negocio',
+          nombre_negocio: seccion.nombre_negocio || 'Mi Negocio',
         });
       }
       queryClient.invalidateQueries({ queryKey: ['config'] });

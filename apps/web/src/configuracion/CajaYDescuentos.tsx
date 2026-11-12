@@ -57,6 +57,8 @@ export function CajasALaVez() {
     try {
       await invocarComando('/api/caja/fijar-cajas-simultaneas', { cajas });
       await consultas.invalidateQueries({ queryKey: CLAVE_DE_LAS_CAJAS });
+      // DP-18: la Caja dice si cabe otra y cuáles están abiertas: que se entere del cupo nuevo ya.
+      await consultas.invalidateQueries({ queryKey: ['cortes_caja_estado'] });
     } catch (error: unknown) {
       setFallo(mensajeDe(error, 'No se pudo guardar.'));
     } finally {

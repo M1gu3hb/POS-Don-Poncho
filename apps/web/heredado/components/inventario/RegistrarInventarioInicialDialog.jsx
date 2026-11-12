@@ -372,11 +372,7 @@ export default function RegistrarInventarioInicialDialog({ open, onClose, ingred
       // Invalidar caches SIEMPRE — para reflejar lo que sí quedó y lo que se revirtió.
       [
         'ingredientes_all',
-        'ingredientes_dashboard',
-        'movimientos_inv',
-        'movimientos_inventario',
         'registros_movimientos',
-        'inventario',
       ].forEach((k) => {
         try {
           queryClient.invalidateQueries({ queryKey: [k] });

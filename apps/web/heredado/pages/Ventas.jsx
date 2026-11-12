@@ -165,7 +165,6 @@ export default function Ventas() {
           'detalles_venta',
           'ingredientes_all',
           'descuentos_hoy',
-          'movimientos_inv',
           'registros_ventas',
           'registros_cortes',
           'registros_movimientos',

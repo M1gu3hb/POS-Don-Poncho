@@ -44,6 +44,14 @@ export function repartirDinero(valor: bigint, unidades: readonly number[]): read
   return repartirPorPesos(valor as Centavos, unidades);
 }
 
+/**
+ * DP-18 · M5: en lo que va por peso o por porción, la opción se cobra UNA vez por renglón
+ * (`precio-de-las-opciones.ts`). Al partir ese renglón entre cuentas, cada trozo lleva SU parte del
+ * precio de la opción, con los mismos pesos que el importe: así «Opciones vendidas» del corte suma lo
+ * cobrado y no el precio entero una vez por trozo.
+ */
+const POR_RENGLON: ReadonlySet<string> = new Set(['variable_medida', 'porcion_contenedor']);
+
 /** Lo que la base rellena sola: no se copia a la fila hermana. */
 const GENERADAS = new Set(['id', 'created_at', 'updated_at']);
 
@@ -121,6 +129,9 @@ export async function partirLinea(
 
   // La fila de cada cuenta que se lleva unidades. La primera ES la original.
   const filaDeCadaParte = new Map<number, string>();
+  const opcionPorRenglon = POR_RENGLON.has(String(original.tipo_venta));
+  const cuotaDeLaOpcion = (i: number) => (delta: bigint) =>
+    opcionPorRenglon ? (repartirDinero(delta, unidades)[i] ?? 0n) : delta;
 
   for (const [i, enParte] of unidades.entries()) {
     if (enParte <= 0) continue;
@@ -152,7 +163,13 @@ export async function partirLinea(
       .executeTakeFirstOrThrow();
     filaDeCadaParte.set(i, hermana.id);
     // Y la hermana lleva sus opciones consultables (el ticket y el corte de esa parte las leen).
-    await copiarLasOpciones(tx, datos.lineaId, hermana.id);
+    await copiarLasOpciones(tx, datos.lineaId, hermana.id, cuotaDeLaOpcion(i));
+  }
+
+  // La fila original se queda con SU parte de la opción (al final: las hermanas copiaron el precio entero).
+  const [primera] = filaDeCadaParte.keys();
+  if (opcionPorRenglon && primera !== undefined && filaDeCadaParte.size > 1) {
+    await repartirLasOpcionesDeLaOriginal(tx, datos.lineaId, cuotaDeLaOpcion(primera));
   }
 
   for (const item of items) {
@@ -194,7 +211,12 @@ export async function partirLinea(
 }
 
 /** Copia las opciones elegidas de una línea a su hermana de otra parte de la cuenta. */
-async function copiarLasOpciones(tx: Transaccion, desde: string, hacia: string): Promise<void> {
+async function copiarLasOpciones(
+  tx: Transaccion,
+  desde: string,
+  hacia: string,
+  cuota: (delta: bigint) => bigint,
+): Promise<void> {
   const filas = await tx
     .selectFrom('orden_linea_modificadores')
     .select([
@@ -210,6 +232,36 @@ async function copiarLasOpciones(tx: Transaccion, desde: string, hacia: string):
   if (filas.length === 0) return;
   await tx
     .insertInto('orden_linea_modificadores')
-    .values(filas.map((f) => ({ ...f, orden_linea_id: hacia })))
+    .values(
+      filas.map((f) => ({
+        ...f,
+        delta_precio_centavos: cuota(BigInt(f.delta_precio_centavos)),
+        precio_extra_centavos: cuota(BigInt(f.precio_extra_centavos)),
+        orden_linea_id: hacia,
+      })),
+    )
     .execute();
+}
+
+/** DP-18 · M5: la fila original de un renglón partido se queda con su parte de cada opción. */
+async function repartirLasOpcionesDeLaOriginal(
+  tx: Transaccion,
+  lineaId: string,
+  cuota: (delta: bigint) => bigint,
+): Promise<void> {
+  const filas = await tx
+    .selectFrom('orden_linea_modificadores')
+    .select(['id', 'delta_precio_centavos', 'precio_extra_centavos'])
+    .where('orden_linea_id', '=', lineaId)
+    .execute();
+  for (const f of filas) {
+    await tx
+      .updateTable('orden_linea_modificadores')
+      .set({
+        delta_precio_centavos: cuota(BigInt(f.delta_precio_centavos)),
+        precio_extra_centavos: cuota(BigInt(f.precio_extra_centavos)),
+      })
+      .where('id', '=', f.id)
+      .execute();
+  }
 }

@@ -57,7 +57,8 @@ function recolectar(config) {
 /** Todas las `*.integracion.test.ts` que existen en el disco. */
 function integracionEnDisco(dir = RAIZ, encontradas = []) {
   for (const entrada of readdirSync(dir)) {
-    if (entrada === 'node_modules' || entrada === 'historico' || entrada === '.git') continue;
+    // `.claude` guarda los worktrees de los agentes (en .gitignore): sus pruebas no son de este árbol.
+    if (['node_modules', 'historico', '.git', '.claude'].includes(entrada)) continue;
     const ruta = join(dir, entrada);
     if (statSync(ruta).isDirectory()) integracionEnDisco(ruta, encontradas);
     else if (entrada.endsWith('.integracion.test.ts')) {

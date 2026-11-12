@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '@/api/cliente';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { hayCambios, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
 
 /**
  * Pestaña "Configuración QR": activar portal, modo menú, qué botones se muestran, etc.
@@ -39,10 +40,12 @@ export default function ConfiguracionQRTab({ config }) {
     portal_qr_comensales_abren_mesa: false,
   });
   const [saving, setSaving] = useState(false);
+  // DP-18: lo que se leyó al llenar el formulario; al guardar sólo viaja lo que difiere de esto.
+  const leido = useRef({});
 
   useEffect(() => {
     if (!config) return;
-    setForm({
+    const desdeLaConfig = {
       portal_qr_activo: config.portal_qr_activo === true,
       portal_qr_modo_menu: config.portal_qr_modo_menu || 'digital',
       portal_qr_mostrar_precios: config.portal_qr_mostrar_precios !== false,
@@ -59,7 +62,9 @@ export default function ConfiguracionQRTab({ config }) {
       portal_qr_envia_a_cocina:
         config.portal_qr_envia_a_cocina === 'comensales' ? 'comensales' : 'mesero',
       portal_qr_comensales_abren_mesa: config.portal_qr_comensales_abren_mesa === true,
-    });
+    };
+    leido.current = desdeLaConfig;
+    setForm(desdeLaConfig);
   }, [config]);
 
   const guardar = async () => {
@@ -69,8 +74,15 @@ export default function ConfiguracionQRTab({ config }) {
     }
     setSaving(true);
     try {
-      await api.entidades.ConfiguracionNegocio.update(config.id, form);
-      queryClient.invalidateQueries({ queryKey: ['config_remote'] });
+      const parche = parcheDeLaSeccion(form, leido.current);
+      if (!hayCambios(parche)) {
+        toast.info('No hay cambios que guardar');
+        return;
+      }
+      await api.entidades.ConfiguracionNegocio.update(config.id, parche);
+      // La configuración vive en ['config'] (ConfigContext): al volver a esta pestaña se rellena
+      // con lo nuevo. Era ['config_remote'], que nadie lee (DP-18).
+      await queryClient.invalidateQueries({ queryKey: ['config'] });
       toast.success('Configuración guardada');
     } catch (err) {
       console.error('[ConfiguracionQRTab] guardar:', err);

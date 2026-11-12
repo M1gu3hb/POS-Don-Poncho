@@ -1,3 +1,4 @@
+import { ErrorDominio } from '@morphiqpos/contracts';
 import { centavos, porCantidad, type Centavos } from '@morphiqpos/domain/dinero';
 import type { PrecioLinea } from '@morphiqpos/domain/catalogo';
 
@@ -16,8 +17,12 @@ import type { PrecioLinea } from '@morphiqpos/domain/catalogo';
  *
  * Como el total de la orden se recalcula sobre `subtotal_centavos` de cada línea (`cotizar`),
  * descuentos, propina, dividir, quitar, cancelar, el margen y el corte usan este precio sin
- * cambiar nada más. Nunca baja de cero: una opción mal configurada deja el renglón gratis, no
- * negativo.
+ * cambiar nada más.
+ *
+ * DP-18 · M6 (revisa DP-D104): una opción que resta y deja el renglón en $0 o menos se RECHAZA
+ * (`OPCION_DEJA_SIN_PRECIO`); antes lo dejaba en $0 sin decir nada y un error de captura regalaba el
+ * platillo. El editor y el servidor ya lo impiden al guardar el grupo; esto cubre el platillo cuyo
+ * precio bajó después.
  */
 
 const POR_RENGLON: ReadonlySet<string> = new Set(['variable_medida', 'porcion_contenedor']);
@@ -30,31 +35,41 @@ export function sumaDeLasOpciones(elegidas: readonly OpcionConPrecio[]): bigint 
   return elegidas.reduce((suma, o) => suma + o.deltaCentavos, 0n);
 }
 
-const sinNegativo = (valor: bigint): Centavos => centavos(valor < 0n ? 0n : valor);
+/** Lo que queda tras las opciones: si una que resta lo deja en $0 o menos, no se vende así. */
+function conPiso(valor: bigint, delta: bigint, nombre: string | undefined): Centavos {
+  if (delta < 0n && valor <= 0n) {
+    throw new ErrorDominio(
+      'OPCION_DEJA_SIN_PRECIO',
+      `Con esas opciones${nombre === undefined ? ' el platillo' : ` «${nombre}»`} quedaría en $0 o menos: pide que revisen sus opciones.`,
+    );
+  }
+  return centavos(valor < 0n ? 0n : valor);
+}
 
 export function precioConLasOpciones(
   tipoVenta: string,
   cantidad: string,
   precio: PrecioLinea,
   elegidas: readonly OpcionConPrecio[],
+  nombre?: string,
 ): PrecioLinea {
   const delta = sumaDeLasOpciones(elegidas);
   if (delta === 0n) return precio;
   if (POR_RENGLON.has(tipoVenta)) {
-    return { ...precio, subtotalCentavos: sinNegativo(precio.subtotalCentavos + delta) };
+    return { ...precio, subtotalCentavos: conPiso(precio.subtotalCentavos + delta, delta, nombre) };
   }
-  const unitario = sinNegativo(precio.precioUnitarioCentavos + delta);
+  const unitario = conPiso(precio.precioUnitarioCentavos + delta, delta, nombre);
   return {
     ...precio,
     precioUnitarioCentavos: unitario,
-    subtotalCentavos: sinNegativo(porCantidad(unitario, cantidad)),
+    subtotalCentavos: conPiso(porCantidad(unitario, cantidad), delta, nombre),
   };
 }
 
 /** La línea del pedido con el precio de sus opciones ya sumado, y las opciones colgadas. */
 export function lineaConLasOpciones<
   L extends {
-    readonly producto: { readonly tipoVenta: string };
+    readonly producto: { readonly tipoVenta: string; readonly nombre?: string };
     readonly valorada: { readonly cantidad: string; readonly precio: PrecioLinea };
   },
   O extends OpcionConPrecio,
@@ -68,6 +83,7 @@ export function lineaConLasOpciones<
         linea.valorada.cantidad,
         linea.valorada.precio,
         elegidas,
+        linea.producto.nombre,
       ),
     },
     opciones: elegidas,
