@@ -280,6 +280,18 @@ export default tseslint.config(
     },
   },
 
+  // --- El simulador de la semana (DP-18) ----------------------------------
+  // `qa/simulador/` es una herramienta de línea de comandos que corre en la laptop contra una
+  // copia (su candado lo exige): imprime su avance y su informe. Tiene su tsconfig, así que se
+  // lintea con tipos como el producto; sólo `console` queda permitido.
+  {
+    files: ['qa/**/*.ts'],
+    languageOptions: { globals: { ...globals.node } },
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
   // --- Pruebas -------------------------------------------------------------
   {
     files: ['**/*.test.{ts,tsx}', '**/pruebas/**/*.ts'],
