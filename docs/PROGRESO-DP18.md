@@ -51,8 +51,8 @@
 | --- | --- | --- |
 | 0 | Ubicarse, `verify`, bitácora | hecho: `verify` local en verde (unidad 490 / 5,521, integración 128 / 628, build y verificadores) |
 | 1 | Lo que encontró Miguel (un PR) | **en producción** (#24, `197614f`, 12-11): 1.1 a 1.6 con sus pruebas (DP-D110 a DP-D114), 29 mutantes muertos, las 3 e2e nuevas y la CI completa en verde; `dejar-en-ceros.mjs` NO se ha corrido |
-| 2 | El simulador | en curso en `dp-18-2`: integrado en `qa/simulador/` (núcleo, sala de A, cajas, gerencia, día 0 y árbitro de B, `correr-dia.ts`, `perfiles.ts`, README); un agente termina dividir, descuentos sin PIN, la opción en vivo, las notas y la disputa |
-| 3 | La semana | pendiente |
+| 2 | El simulador | PR #25 (`dp-18-2`): `qa/simulador/` completo (núcleo, sala, cajas, gerencia, almacén, dueño, caos, día 0, árbitro, informes, `correr-dia.ts`, `perfiles.ts`, README); se le siguen sumando los arreglos que enseña la semana |
+| 3 | La semana | en curso en `qa_dp18_semana` (copia de la propia, PIN de prueba, reloj de QA): día 0 verificado (36/36); el día 1 se repite (las dos primeras corridas las contaminaron fallas del simulador) |
 | 4 | Triage, arreglos, reporte 011 | pendiente |
 | 5 | Tres direcciones del menú digital | capturas mandadas a Miguel (A «Papel de la casa», B «Brasa», C «Cartel»); se programa la que elija |
 
@@ -131,3 +131,21 @@ hojas y las 18 capturas están en `D:\mpos-tmp\dp18\p5\capturas\`.
 
 El ensayo de un día con todo el personal, el cierre de caja, lo del agente, `verify` y el PR de la
 Parte 2. Luego la semana. La Parte 5 espera la elección de Miguel.
+
+## La semana (Parte 3)
+
+- **Cómo corre cada día:** `D:\mpos-tmp\dp18\correr-un-dia.sh N [repetir]` para el servidor, saca el molde
+  del inicio del día (`qa_dp18_molde_dN` y la carpeta de salida), levanta el servidor con el pool
+  limpio y corre `correr-dia.ts`. Los informes se publican en `D:\mpos-tmp\dp18\publicar\` y entran al
+  repo con la Parte 4. La salida completa (con la evidencia) vive en `D:\mpos-tmp\dp18\semana\`.
+- **Día 0** (jueves 19): por pantallas, 3 minutos; verificado en sólo lectura, 36/36. Cerró la caja
+  heredada de la copia contando $429.00 (la venta de prueba de Miguel). 6 incidentes reales de la app
+  (los mismos del ensayo de B; el de la caja heredada ya no sale: lo arregló la Parte 1).
+- **Día 1, primera corrida (×6):** 135 min reales; 31 de 130 grupos atendidos. La contaminaron fallas
+  del simulador: la Caja 2 siguió con una página cerrada, un mesero pidió porciones fraccionarias y
+  se atoró, la propina esperada no seguía al descuento, un borrador para llevar sobrante. 10 críticos,
+  todos falsos (del guion). Se repite.
+- **Día 1, segunda corrida (×3):** a las 14:00, las 20 mesas ocupadas a la vez; a las 15:00 la tarde
+  se atoró: tras un cobro con caos, la caja consultaba la base con el id de la llegada (no es uuid), el
+  cobro hecho se tomaba por fallido y la cuenta quedaba «cobrándose» para siempre. Se cortó y se repite.
+- Lo que el simulador encontró de la app, en `D:\mpos-tmp\dp18\triage-borrador.md` (para la Parte 4).
