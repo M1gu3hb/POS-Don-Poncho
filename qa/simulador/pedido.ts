@@ -43,9 +43,16 @@ export const NOTA_LARGA =
   'no toquen nada con mantequilla ni con salsas de la mesa de al lado, y avísenme si algo lleva nuez, ' +
   'porque la señora de la esquina es muy delicada y no queremos sustos en su cumpleaños.';
 
-/** Elige las opciones de un grupo respetando lo obligatorio, el mínimo y el máximo. */
-export function elegirOpciones(azar: Azar, grupo: GrupoConocido): OpcionElegida[] {
-  const activas = grupo.opciones.filter((o) => o.activa);
+/**
+ * Elige las opciones de un grupo respetando lo obligatorio, el mínimo y el máximo. `apagada` dice si
+ * la gerencia la apagó en vivo (el personal ya no la ofrece).
+ */
+export function elegirOpciones(
+  azar: Azar,
+  grupo: GrupoConocido,
+  apagada: (opcion: string) => boolean = () => false,
+): OpcionElegida[] {
+  const activas = grupo.opciones.filter((o) => o.activa && !apagada(o.nombre));
   if (activas.length === 0) return [];
   const minimo = grupo.minimo ?? (grupo.obligatorio ? 1 : 0);
   const tope = Math.min(
@@ -71,8 +78,16 @@ function kilosDe(azar: Azar, p: ProductoConocido): number {
   return azar.elegir([0.35, 0.4, 0.75, 1.25, 1.5, 2]);
 }
 
-export function planearLinea(azar: Azar, p: ProductoConocido, conNota: boolean): LineaPlaneada {
-  const opciones = p.grupos.flatMap((g) => elegirOpciones(azar, g));
+export function planearLinea(
+  azar: Azar,
+  p: ProductoConocido,
+  conNota: boolean,
+  apagadas: ReadonlySet<string> = new Set(),
+): LineaPlaneada {
+  // La llave es la misma que anota la gerente al apagar: «producto/grupo/opción».
+  const opciones = p.grupos.flatMap((g) =>
+    elegirOpciones(azar, g, (opcion) => apagadas.has(`${p.nombre}/${g.nombre}/${opcion}`)),
+  );
   const cantidad = esPorPeso(p)
     ? kilosDe(azar, p)
     : azar.probabilidad(0.75)
@@ -124,7 +139,9 @@ export function planearRonda(
           : sencillos;
     const elegible = lista.length > 0 ? lista : todos;
     if (elegible.length === 0) break;
-    lineas.push(planearLinea(azar, azar.elegir(elegible), azar.probabilidad(0.18)));
+    lineas.push(
+      planearLinea(azar, azar.elegir(elegible), azar.probabilidad(0.18), mundo.opcionesApagadas),
+    );
   }
   return lineas;
 }

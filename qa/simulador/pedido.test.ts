@@ -136,4 +136,17 @@ describe('el catálogo leído de la copia', () => {
     expect(p?.presentaciones).toEqual([0.25, 0.5, 1]);
     expect(p?.estacion).toBe('Cocina');
   });
+
+  it('no pide una opción que la gerencia apagó en vivo', () => {
+    const conTodas = new Set<string>();
+    const sinQueso = new Set([`${quesadilla.nombre}/${quesadilla.grupos[0]?.nombre ?? ''}/Queso`]);
+    for (let s = 0; s < 40; s += 1) {
+      const linea = planearLinea(crearAzar(`apagada-${String(s)}`), quesadilla, false, sinQueso);
+      expect(linea.opciones.some((o) => o.opcion === 'Queso')).toBe(false);
+    }
+    const alguna = Array.from({ length: 40 }, (_, s) =>
+      planearLinea(crearAzar(`apagada-${String(s)}`), quesadilla, false, conTodas),
+    ).some((l) => l.opciones.some((o) => o.opcion === 'Queso'));
+    expect(alguna).toBe(true);
+  });
 });
