@@ -23,6 +23,18 @@ export function parcheDeLaSeccion(
   return parche;
 }
 
+/**
+ * Lo GUARDADO de los campos de una sección (crudo, sin los valores por omisión del formulario): contra
+ * esto se compara. Un campo que nunca se guardó viaja la primera vez con lo que diga el formulario
+ * (como antes); uno que ya está guardado y no se tocó, no viaja.
+ */
+export function leidoDe(
+  configuracion: Readonly<Record<string, unknown>> | null | undefined,
+  campos: readonly string[],
+): Record<string, unknown> {
+  return Object.fromEntries(campos.map((c) => [c, configuracion?.[c]]));
+}
+
 export function hayCambios(parche: Readonly<Record<string, unknown>>): boolean {
   return Object.keys(parche).length > 0;
 }

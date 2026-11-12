@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { hayCambios, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
 
 /**
  * Pestaña "Configuración QR": activar portal, modo menú, qué botones se muestran, etc.
@@ -63,7 +63,8 @@ export default function ConfiguracionQRTab({ config }) {
         config.portal_qr_envia_a_cocina === 'comensales' ? 'comensales' : 'mesero',
       portal_qr_comensales_abren_mesa: config.portal_qr_comensales_abren_mesa === true,
     };
-    leido.current = desdeLaConfig;
+    // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo guardado y no tocado, no.
+    leido.current = leidoDe(config, Object.keys(desdeLaConfig));
     setForm(desdeLaConfig);
   }, [config]);
 

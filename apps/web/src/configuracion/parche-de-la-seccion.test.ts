@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { hayCambios, parcheDeLaSeccion } from './parche-de-la-seccion.ts';
+import { hayCambios, leidoDe, parcheDeLaSeccion } from './parche-de-la-seccion.ts';
 
 describe('el parche de una sección de Configuración', () => {
   const leido = { portal_qr_modo_menu: 'menu_subido', portal_qr_activo: true, propinas: '5,10' };
@@ -29,5 +29,20 @@ describe('el parche de una sección de Configuración', () => {
   it('sin cambios no hay nada que mandar', () => {
     expect(hayCambios(parcheDeLaSeccion(leido, leido))).toBe(false);
     expect(hayCambios({ a: 1 })).toBe(true);
+  });
+
+  it('se compara contra lo GUARDADO: lo que nunca se guardó viaja con el valor del formulario', () => {
+    // La base no tiene la asignación de mesas; el formulario la enseña apagada (su valor por omisión).
+    const leido = leidoDe({ portal_qr_activo: true, otra: 'x' }, [
+      'portal_qr_activo',
+      'asignacion_mesas_activa',
+    ]);
+    expect(leido).toEqual({ portal_qr_activo: true, asignacion_mesas_activa: undefined });
+    expect(
+      parcheDeLaSeccion({ portal_qr_activo: true, asignacion_mesas_activa: false }, leido),
+    ).toEqual({
+      asignacion_mesas_activa: false,
+    });
+    expect(leidoDe(null, ['a'])).toEqual({ a: undefined });
   });
 });

@@ -49,13 +49,34 @@
 
 | Parte | Qué | Estado |
 | --- | --- | --- |
-| 0 | Ubicarse, `verify`, bitácora | en curso |
-| 1 | Lo que encontró Miguel (un PR) | pendiente |
-| 2 | El simulador | pendiente |
+| 0 | Ubicarse, `verify`, bitácora | hecho: `verify` local en verde (unidad 490 / 5,521, integración 128 / 628, build y verificadores) |
+| 1 | Lo que encontró Miguel (un PR) | en curso en `dp-18-1`: 1.1 a 1.6 hechos con sus pruebas (DP-D110 a DP-D114), 21 mutantes muertos; faltan las e2e locales, `verify` y el PR |
+| 2 | El simulador | en curso: el núcleo (candado, reloj de QA, semilla, libro, incidentes, tiempos, almacén local, servidor) en `D:\mpos-tmp\dp18\sim\`; los agentes A (sala) y B (cajas, gerencia, día 0, árbitro) escriben los bots contra `qa_dp18_a` (32801) y `qa_dp18_b` (32802) |
 | 3 | La semana | pendiente |
 | 4 | Triage, arreglos, reporte 011 | pendiente |
 | 5 | Tres direcciones del menú digital | pendiente |
 
+## La Parte 1 (rama `dp-18-1`)
+
+- **1.1** La pestaña del QR invalidaba `['config_remote']` (nadie la lee); ahora `['config']`. La prueba
+  de contrato `llaves-de-consulta.contrato.test.ts` encontró 34 invalidaciones huérfanas más en 14
+  pantallas (reapuntadas o quitadas) y exige que cada sección de Configuración mande sólo su parche
+  (`parche-de-la-seccion.ts`). 4 mutantes muertos.
+- **1.2** La causa, de la auditoría de producción: no fue caché ni carrera; DP-D74 callaba la caja de
+  la tableta cuando cabía otra, y Miguel movió el cupo 2→1 entre las dos visitas. `caja.estado` trae
+  `otrasCajas` siempre y la Caja las enseña («Trasladar aquí», «Abrir otra caja aquí (N de M)»), cada
+  4 s, al volver a la pestaña y al cambiar el cupo. 5 mutantes muertos.
+- **1.4** M1 (candado de la terminal y del borrador), M3 (lo de ayer sin entregar), M5 (la opción por
+  renglón repartida al dividir; lo de peso ya cuadraba) y M6 (el piso de las opciones: editor, guardar,
+  asignar y vender). Pruebas en rojo antes del arreglo; 12 mutantes muertos.
+- **1.3** Portal QR → «Personalizar menú» con la vista previa; recorrido contra una copia de la base
+  propia: guardado, otra pestaña, recarga y el portal de la mesa (capturas en `D:\mpos-tmp\dp18\p1\`).
+- **1.6** `dejar-en-ceros.mjs` y `mantenimiento.reiniciar_folios`, probado en una copia con la venta y
+  la caja de Miguel (negativas, ensayo, en serio y una segunda corrida). **No se ha corrido en
+  producción.**
+- **1.5** La guía de entrega con lo nuevo.
+
 ## Lo que sigue
 
-La Parte 1, en la rama `dp-18-1`.
+Las e2e de la Parte 1 contra la base desechable (5435) y el build en 3200; `verify`; el PR de la Parte
+1. Luego integrar lo de los agentes A y B en `qa/simulador/` (Parte 2).

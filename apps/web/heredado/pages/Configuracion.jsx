@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { hayCambios, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
 import {
   Settings,
   Users,
@@ -206,7 +206,8 @@ export default function Configuracion() {
       cocina_alerta_ambar_min: cfg.cocina_alerta_ambar_min ?? 10,
       cocina_alerta_roja_min: cfg.cocina_alerta_roja_min ?? 20,
       };
-      bizLeido.current = desdeLaConfig;
+      // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo no tocado, no.
+      bizLeido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
       return desdeLaConfig;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

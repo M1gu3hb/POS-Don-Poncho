@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { hayCambios, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
 import { Save, RotateCcw, Palette } from 'lucide-react';
 import { BRAND_DEFAULTS, buildBrandPalette } from '@/lib/brandColors';
 
@@ -38,7 +38,8 @@ export default function ColoresSistemaSection({ cfg }) {
       color_primario: cfg.color_primario || BRAND_DEFAULTS.color_primario,
       color_acento: cfg.color_acento || BRAND_DEFAULTS.color_acento,
     };
-    leido.current = desdeLaConfig;
+    // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo no tocado, no.
+    leido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
     setPrimario(desdeLaConfig.color_primario);
     setAcento(desdeLaConfig.color_acento);
   }, [cfg?.id, cfg?.updated_date]);

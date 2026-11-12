@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { hayCambios, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
 import { Upload, Save, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -94,7 +94,8 @@ export default function IdentidadNegocio({ cfg }) {
       // Con `|| true` un switch apagado se volvía a prender solo.
       colorear_importes_monetarios: cfg.colorear_importes_monetarios ?? true,
       };
-      leido.current = desdeLaConfig;
+      // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo no tocado, no.
+      leido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
       return desdeLaConfig;
     });
   }, [cfg?.id, cfg?.updated_date]);
