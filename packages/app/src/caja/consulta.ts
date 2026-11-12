@@ -66,8 +66,15 @@ export interface EstadoCaja {
    */
   readonly enOtraTerminal?: CajaEnOtraTerminal | null;
   readonly puedoAbrir?: boolean;
-  /** DP-14 · ronda 2: cuántas cajas caben a la vez (sólo sin caja en esta terminal). */
+  /** DP-14 · ronda 2: cuántas cajas caben a la vez. */
   readonly cupoDeCajas?: number;
+  /**
+   * DP-18 · Las cajas abiertas en OTROS aparatos de la sucursal, con caja aquí o sin ella: la
+   * pantalla las enseña siempre (el 11-11 la Caja callaba la de la tableta y parecía cerrada).
+   */
+  readonly otrasCajas?: readonly CajaEnOtraTerminal[];
+  /** DP-18 · Cuántas hay abiertas en la sucursal, contando la de aquí. */
+  readonly abiertasEnLaSucursal?: number;
 }
 
 export type DesgloseDelFondo = {
@@ -120,6 +127,12 @@ export const estadoDeCaja = definirComando<Transaccion, typeof entradaEstadoCaja
       repoCaja.movimientosDeCorte(ctx.tx, organizacionId, sesion.id),
       repoCaja.fondoPorMontones(ctx.tx, organizacionId, sesion.id),
     ]);
+    const otras =
+      sucursalId === null
+        ? null
+        : await ctx.paso('cajas_de_la_sucursal', () =>
+            cajasDeLaSucursal(ctx.tx, { ...ctx.ambito, sucursalId }, sesion.id),
+          );
 
     return {
       abierta: true,
@@ -138,6 +151,13 @@ export const estadoDeCaja = definirComando<Transaccion, typeof entradaEstadoCaja
             ).toString(),
           }),
       fondoDesglosado: desgloseDeclarado(fondo),
+      ...(otras === null
+        ? {}
+        : {
+            otrasCajas: otras.otrasCajas,
+            abiertasEnLaSucursal: otras.abiertasEnLaSucursal,
+            cupoDeCajas: otras.cupoDeCajas,
+          }),
       movimientos: movimientos.map((m) => ({
         tipo: m.tipo,
         montoCentavos: m.montoCentavos.toString(),

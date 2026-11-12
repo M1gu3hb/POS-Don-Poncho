@@ -165,7 +165,7 @@ export default function ImportarDatosDialog({ open, onClose, tipo }) {
       let r = null;
       if (tipo === 'inventario') {
         r = await ejecutarImportInventario(preview.rows, { ajustarStock, posUser });
-        ['ingredientes_all', 'movimientos_inv', 'registros_movimientos'].forEach((k) =>
+        ['ingredientes_all', 'registros_movimientos'].forEach((k) =>
           queryClient.invalidateQueries({ queryKey: [k] }),
         );
       } else if (tipo === 'productos') {

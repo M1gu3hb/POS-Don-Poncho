@@ -55,8 +55,10 @@ export function useCajaAbierta({ deEstaTerminal = false } = {}) {
     queryKey: ['cortes_caja_estado', 'de_esta_terminal'],
     queryFn: () => api.comandos.ejecutar('/api/caja/estado', {}),
     enabled: deEstaTerminal,
-    refetchInterval: 8000,
-    staleTime: 4000,
+    // DP-18: las cajas de los otros aparatos se ven sin recargar: cada 4 s y al volver a la pestaña.
+    refetchInterval: 4000,
+    refetchOnWindowFocus: true,
+    staleTime: 2000,
     placeholderData: (prev) => prev,
   });
 
@@ -88,11 +90,25 @@ export function useCajaAbierta({ deEstaTerminal = false } = {}) {
   const puedoAbrir = !(deEstaTerminal && deLaTerminal?.puedoAbrir === false);
   // DP-14 · ronda 2: el cupo, para que la tercera caja lea «Ya hay 2 cajas abiertas: cierra una».
   const cupoDeCajas = Number(deLaTerminal?.cupoDeCajas) || null;
+  // DP-18: TODAS las cajas abiertas en otros aparatos, con caja aquí o sin ella (`caja.estado`).
+  // Un servidor viejo sólo mandaba `enOtraTerminal` (y sólo sin caja aquí): se toma ésa.
+  const otrasCajas = !deEstaTerminal
+    ? []
+    : Array.isArray(deLaTerminal?.otrasCajas)
+      ? deLaTerminal.otrasCajas
+      : deLaTerminal?.enOtraTerminal
+        ? [deLaTerminal.enOtraTerminal]
+        : [];
+  const abiertasEnLaSucursal =
+    Number(deLaTerminal?.abiertasEnLaSucursal) ||
+    otrasCajas.length + (deLaTerminal?.abierta === true ? 1 : 0);
 
   return {
     cajaAbierta,
     hayCaja: !!cajaAbierta,
     cajaEnOtraTerminal,
+    otrasCajas,
+    abiertasEnLaSucursal,
     puedoAbrir,
     cupoDeCajas,
     isLoading: cargando,

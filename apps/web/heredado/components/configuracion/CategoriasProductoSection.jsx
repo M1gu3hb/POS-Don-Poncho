@@ -120,12 +120,11 @@ export default function CategoriasProductoSection() {
 
   const invalidarTodo = () => {
     queryClient.invalidateQueries({ queryKey: ['categorias_producto'] });
-    queryClient.invalidateQueries({ queryKey: ['categorias_menu_qr'] });
+    queryClient.invalidateQueries({ queryKey: ['menu_qr_categorias'] });
     queryClient.invalidateQueries({ queryKey: ['categorias'] });
     queryClient.invalidateQueries({ queryKey: ['productos_all'] });
     queryClient.invalidateQueries({ queryKey: ['productos_pos'] });
-    queryClient.invalidateQueries({ queryKey: ['productos_menu_qr'] });
-    queryClient.invalidateQueries({ queryKey: ['menu_qr_secciones_publico'] });
+    queryClient.invalidateQueries({ queryKey: ['menu_qr_platillos'] });
   };
 
   const agregarUna = async () => {

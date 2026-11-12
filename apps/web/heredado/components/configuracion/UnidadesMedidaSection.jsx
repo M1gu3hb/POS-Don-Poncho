@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Ruler, Save, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { hayCambios, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
 import { parseUnidadesList, DEFAULT_UNIDADES_COMPRA } from '@/utils/unidadesMedida';
 
 /**
@@ -48,7 +49,16 @@ export default function UnidadesMedidaSection() {
     try {
       const limpio = parsed.join(', ');
       if (cfg?.id) {
-        await api.entidades.ConfiguracionNegocio.update(cfg.id, { unidades_medida_lista: limpio });
+        const parche = parcheDeLaSeccion(
+          { unidades_medida_lista: limpio },
+          { unidades_medida_lista: cfg.unidades_medida_lista },
+        );
+        if (!hayCambios(parche)) {
+          toast.info('No hay cambios que guardar');
+          setSaving(false);
+          return;
+        }
+        await api.entidades.ConfiguracionNegocio.update(cfg.id, parche);
       } else {
         // `ConfiguracionNegocio` NO se crea: es un documento, no una fila, y
         // `guardarConfiguracionParcial` INSERTA solo cuando el negocio todavía
@@ -58,7 +68,7 @@ export default function UnidadesMedidaSection() {
         // camino de «primera vez» fallaba siempre.
         await api.entidades.ConfiguracionNegocio.update(undefined, {
           nombre_negocio: 'Mi negocio',
-          unidades_medida_lista: limpio,
+          ...parcheDeLaSeccion({ unidades_medida_lista: limpio }, {}),
         });
       }
       queryClient.invalidateQueries({ queryKey: ['config'] });

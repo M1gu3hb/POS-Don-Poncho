@@ -50,16 +50,35 @@ describe('DP-16 · el precio de las opciones lo pone el servidor', () => {
     expect(r.subtotalCentavos).toBe(41_750n);
   });
 
-  it('una opción que resta abarata, pero nunca por debajo de cero', () => {
+  it('una opción que resta abarata, pero si deja el renglón en $0 o menos se rechaza (DP-18 · M6)', () => {
     expect(
       precioConLasOpciones('precio_fijo', '1', precio(3_000, 3_000), [{ deltaCentavos: -500n }])
         .subtotalCentavos,
     ).toBe(2_500n);
-    const gratis = precioConLasOpciones('precio_fijo', '3', precio(1_000, 3_000), [
-      { deltaCentavos: -5_000n },
-    ]);
-    expect(gratis.precioUnitarioCentavos).toBe(0n);
-    expect(gratis.subtotalCentavos).toBe(0n);
+    // Antes quedaba «gratis» sin decir nada (DP-D104); ahora no se vende así.
+    expect(() =>
+      precioConLasOpciones(
+        'precio_fijo',
+        '3',
+        precio(1_000, 3_000),
+        [{ deltaCentavos: -5_000n }],
+        'Taco',
+      ),
+    ).toThrow(/«Taco» quedaría en \$0 o menos/);
+    expect(() =>
+      precioConLasOpciones('precio_fijo', '1', precio(1_000, 1_000), [{ deltaCentavos: -1_000n }]),
+    ).toThrow(/OPCION_DEJA_SIN_PRECIO|quedaría en \$0 o menos/);
+    // Por renglón (peso o porción): igual.
+    expect(() =>
+      precioConLasOpciones('variable_medida', '0.25', precio(79_500, 19_875), [
+        { deltaCentavos: -20_000n },
+      ]),
+    ).toThrow(/quedaría en \$0 o menos/);
+    // Un centavo arriba de cero sí se vende.
+    expect(
+      precioConLasOpciones('precio_fijo', '1', precio(1_000, 1_000), [{ deltaCentavos: -999n }])
+        .subtotalCentavos,
+    ).toBe(1n);
   });
 
   it('sin opciones con precio el renglón queda idéntico', () => {

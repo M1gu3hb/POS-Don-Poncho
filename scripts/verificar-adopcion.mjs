@@ -658,6 +658,30 @@ export const SIN_ESTADO = [
       },
     ],
   ),
+  ...[
+    'restaurante/personalizar-menu/EditorDelPlatillo',
+    'restaurante/personalizar-menu/MenuEnGeneral',
+    'restaurante/personalizar-menu/VistaDelTelefono',
+  ].flatMap((pantalla) => [
+    {
+      pantalla,
+      estado: 'vacio',
+      razon:
+        'DP-18 · 1.3 · Pieza de «Personalizar menú», no pantalla: sin platillos no se pinta, y la pantalla enseña su Vacio.',
+    },
+    {
+      pantalla,
+      estado: 'cargando',
+      razon:
+        'No lee nada: recibe lo que «Personalizar menú» ya leyó, y la pantalla enseña su espera.',
+    },
+  ]),
+  {
+    pantalla: 'restaurante/personalizar-menu/VistaDelTelefono',
+    estado: 'error',
+    razon:
+      'No lee ni escribe: dibuja lo que se está editando; los fallos de lectura y de guardado los dice «Personalizar menú» con su Aviso.',
+  },
   {
     pantalla: 'telefono-de-cocina/ConectarTelefono',
     estado: 'vacio',

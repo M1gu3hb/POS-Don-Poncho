@@ -170,7 +170,7 @@ export default function AjustarStockDialog({ open, onClose, ingrediente }) {
           stock_minimo: Math.max(0, Number(alertas.stock_minimo) || 0),
           stock_critico: Math.max(0, Number(alertas.stock_critico) || 0),
         });
-        ['ingredientes_all', 'ingredientes_dashboard', 'inventario'].forEach((k) => {
+        ['ingredientes_all'].forEach((k) => {
           try {
             queryClient.invalidateQueries({ queryKey: [k] });
           } catch {}
@@ -269,11 +269,7 @@ export default function AjustarStockDialog({ open, onClose, ingrediente }) {
       // 3) Invalidar caches relevantes — refrescar la cantidad sin recargar.
       [
         'ingredientes_all',
-        'ingredientes_dashboard',
-        'movimientos_inventario',
-        'movimientos_inv',
         'registros_movimientos',
-        'inventario',
       ].forEach((k) => {
         try {
           queryClient.invalidateQueries({ queryKey: [k] });

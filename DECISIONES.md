@@ -2146,3 +2146,119 @@ puerta los denuncia todos.
 - «Conectar teléfono»: medido en la demo a 1280 y 1024 px, crece exactamente desde el toque con el
   origen relativo al centro (DP-D108); los 113 px del QA no se reproducen.
 - **Sin migración.**
+
+
+## DP-D110 · La configuración no «se regresa»: cada pantalla invalida la llave que se lee y guarda sólo lo que cambió · 11-11-2026
+
+- **Lo que vio Miguel (11-11):** guardaba «Cómo se ve el menú» en Portal QR → Configuración, la base lo
+  guardaba (hoy dice `productos_pos`, a las 10:37) y al cambiar de pestaña y volver el formulario se
+  rellenaba con lo de antes.
+- **La causa:** `ConfiguracionQRTab.jsx` invalidaba `['config_remote']`, una llave que ninguna consulta
+  usa; la configuración vive en `['config']` (`ConfigContext.jsx`, sin refresco al volver a la ventana).
+  El contexto se quedaba con la vieja y la pestaña, al volverse a montar, se llenaba con ella.
+- **Elección:**
+  1. La pestaña invalida `['config']`.
+  2. **Prueba de contrato** (`src/cliente/llaves-de-consulta.contrato.test.ts`): lee el código de las
+     pantallas (`heredado/` y `src/`), junta las raíces de las llaves que se LEEN (`queryKey` de una
+     consulta) y las que se ESCRIBEN desde fuera (invalidar, refrescar, reiniciar, quitar, cancelar,
+     poner datos) y exige que cada raíz escrita sea leída; una llave que no entiende es un error. Al
+     correrla salieron N llaves huérfanas más (abajo, con lo que se hizo con cada una).
+  3. **Cada sección guarda sólo su parche** (`src/configuracion/parche-de-la-seccion.ts`): Datos del
+     negocio, Identidad, Colores, Unidades y Portal QR mandan sólo los campos que difieren de lo que
+     leyeron al entrar. Antes cada una mandaba su formulario entero: un campo que no tocó viajaba con el
+     valor de cuando lo leyó y pisaba lo que otra pantalla u otro aparato hubiera cambiado. El contrato
+     exige que todo `ConfiguracionNegocio.update` de las pantallas pase por el parche.
+- **Pruebas:** la de contrato (en rojo con `config_remote`), las del parche, y Playwright: guardar el modo
+  → otra pestaña → volver → sigue el nuevo; recargar → sigue el nuevo.
+- **Sin migración.**
+
+## DP-D111 · La Caja dice siempre qué cajas están abiertas en otros aparatos · 11-11-2026
+
+- **Lo que pasó en producción el 11-11** (la auditoría, sólo leyendo): la caja se abrió a las 10:14 en
+  «Caja 2» (la tableta). El cupo ya era 2. A las 10:38:30 se movió a 1 y medio segundo después a 2; en
+  la PC, la Caja decía «No hay caja abierta en este aparato · Abrir caja» y no mencionaba la de la
+  tableta. A las 10:40:53 el cupo pasó a 1, y al volver a Caja ya ofrecía «Traer esta caja aquí»
+  (10:41:31, la trajo).
+- **La causa:** no fue caché ni carrera: fue diseño y consulta. DP-D74 decidió que, si cabe otra caja,
+  la pantalla sólo ofreciera abrir y CALLARA la abierta en otro aparato; y `caja.estado` traía sólo la
+  más vieja de las ajenas y sólo cuando el aparato no tenía caja. Con el cupo en 2 no había ni una
+  palabra de la tableta; con el cupo en 1, la ofrecía. Además, cambiar el cupo no refrescaba la Caja
+  (sólo al volver a montarla, y cada 8 s).
+- **Elección:** `caja.estado` trae siempre `otrasCajas`: todas las abiertas en otras terminales de la
+  sucursal (dónde, quién, desde qué hora y si este puesto la puede trasladar), con o sin caja aquí. La
+  Caja las enseña en «Cajas abiertas en otros aparatos» con «Trasladar aquí» (con confirmación: el otro
+  aparato se queda sin caja) y, si cabe, «Abrir otra caja aquí (N de M)»; si no cabe, «Ya hay N cajas
+  abiertas de M». Se relee cada 4 s, al volver a la pestaña y al cambiar el cupo (que ahora invalida
+  la caja).
+- **Revisa DP-D74:** la segunda caja se sigue abriendo si cabe; lo que cambia es que la otra nunca se
+  calla.
+- **Pruebas:** integración (`otrasCajas` con y sin caja propia), unidad del texto, y Playwright con dos
+  contextos (la tableta y la PC): cupo 2, cupo 1, y la PC se entera sin recargar cuando la tableta cierra.
+- **Sin migración.**
+
+## DP-D112 · Los cuatro casos de orilla de la auditoría del 10-11 (M1, M3, M5, M6) · 11-11-2026
+
+- **M1 · «Armar» y «Cobrar» del mismo borrador para llevar:** `armar_para_llevar` leía el borrador de la
+  terminal sin candado y borraba sus renglones sin mirar si seguía siendo borrador. Con un cobro del
+  mismo borrador en vuelo, le reescribía los renglones a la cuenta que en ese instante quedaba pagada;
+  y dos «armar» a la vez en una terminal sin borrador creaban dos y el segundo moría con 23505.
+  Ahora toma primero la terminal con candado (serializa a quien arma en ese aparato), luego el
+  borrador con `FOR UPDATE`, y sólo borra renglones de una cuenta que sigue en `borrador`. Si el cobro
+  ganó, empieza un borrador nuevo.
+- **M3 · El pedido para llevar que cruza la medianoche:** la lista de la Caja traía sólo los pedidos del
+  día; uno cobrado a las 23:55 y listo a las 00:05 desaparecía sin entregarse. Ahora trae también los
+  de los dos días anteriores que siguen en la cocina o listos sin entregar (`deOtroDia`, «de ayer» en
+  la pantalla), hasta que alguien toca «Entregado».
+- **M5 · Dividir una línea con opción «por renglón»:** en lo que va por porción (y por peso) la opción se
+  cobra una vez por renglón; al partir la línea entre las cuentas, cada trozo copiaba la opción con su
+  precio entero y «Opciones vendidas» del corte sumaba de más. Ahora cada trozo lleva SU parte del
+  precio de la opción (repartida con los mismos pesos que el importe de la línea): el corte cuadra con
+  lo cobrado. «Veces» cuenta renglones cobrados (los trozos de una línea partida cuentan cada uno). Lo
+  que va por peso no se parte (va entero a una parte, DP-14.5) y ya cuadraba: queda con su prueba.
+- **M6 · Una opción que resta no deja el platillo en $0 o menos:** antes el servidor lo dejaba en $0
+  («gratis») sin decir nada (DP-D104). Ahora `opcionesQueDejanSinPrecio` (`@morphiqpos/domain/catalogo`)
+  calcula lo peor que pueden restar las opciones que se pueden elegir juntas y se rechaza en el editor
+  de opciones, al guardar el grupo y al asignarlo (`OPCION_DEJA_SIN_PRECIO`) y, si el precio del
+  platillo bajó después, al vender. **Revisa DP-D104** («nunca baja de cero»): ya no se regala.
+- **Sin migración.**
+
+## DP-D113 · «Personalizar menú»: el menú del comensal en un solo lugar, con la vista previa del teléfono · 11-11-2026
+
+- **Lo que pasó:** el fondo de la tarjeta sólo se cambiaba en Recetas → Editar receta o en Productos →
+  Agregar, y Miguel no lo encontró.
+- **Elección:** **Portal QR → «Personalizar menú»** (`src/restaurante/personalizar-menu/`). Por
+  platillo: la foto (el mismo `ImageUploader`), la descripción corta (hasta 140 letras) y el fondo
+  (`SelectorDeFondo`, sólo sin foto). Del menú: el mensaje de bienvenida, los colores (el estilo del
+  portal, `portal_qr_tema.estilo`, el mismo que edita `AspectoDelPortal`) y el orden de las
+  secciones (↑ ↓). Al lado, la **vista previa del teléfono** (360 px) con los mismos menús del portal
+  (el digital, o «A la carta» si así está el negocio, siempre a dos columnas), que cambia mientras se
+  edita, antes de guardar.
+- **Cada bloque guarda su parche** por el puente (`ProductoTerminado`, `CategoriaProducto`,
+  `ConfiguracionNegocio`) y refresca las consultas que lo leen. Al guardar el orden se renumeran las
+  secciones (1, 2, 3…): en la base propia había empates (varias en 1, 2, 3) y el portal las ordenaba como
+  caía.
+- **Pruebas:** unidad (el parche, el tope, la vista previa, mover y renumerar) y Playwright: lo guardado
+  se ve en la vista previa al editarlo, sigue igual al volver de otra pestaña y al recargar, y el
+  portal de la mesa lo enseña. También recorrido contra una copia de la base propia (107 platillos).
+- **Sin migración.**
+
+## DP-D114 · Dejar producción en ceros: un guion por los comandos y `mantenimiento.reiniciar_folios` · 11-11-2026
+
+- **Lo que hay en producción** (11-11): la prueba de Miguel, 1 venta cobrada (A-1, $429.00) y 1 caja
+  abierta; y Miguel seguirá probando.
+- **Elección:** `scripts/dejar-en-ceros.mjs` (`--org`, `--persona` dueño de plataforma, `--desde`
+  AAAA-MM-DD, `--ventas` N, `--ensayo`), como `limpiar-ventas-de-prueba.mjs`: firmado por el dueño, por
+  los comandos de la app y por la conexión de sesión (rechaza el 6543). Antes de escribir comprueba que
+  todo es de prueba (nada de antes de `--desde` en cuentas, cajas ni pagos, y no más cobradas que
+  `--ventas`); luego `mantenimiento.purgar_ventas` (revirtiendo el inventario), `purgar_seccion`
+  «cortes» (la caja de prueba abierta se va con las demás) y `mantenimiento.reiniciar_folios` (nuevo).
+  La auditoría se queda.
+- **`mantenimiento.reiniciar_folios`** (`mantenimiento/en-ceros.ts`): dueño de plataforma y el nombre
+  del negocio como confirmación; se niega si queda una cuenta o un corte con folio (los números
+  chocarían). El número para llevar sale de las cuentas del día: sin cuentas, vuelve a 1 solo.
+- **Probado en una copia de la base propia** (con la venta y la caja de Miguel): con `--desde` del día
+  siguiente y con `--ventas 0` se niega sin escribir; el ensayo dice lo que haría; en serio deja cuentas,
+  cajas, pagos, comandas, carritos y movimientos en 0, las 10 mesas libres, los folios en 1 y la
+  auditoría de 447 a 450 (los tres pasos). Una segunda corrida no hace nada nuevo. Integración: 3 de 3.
+- **En producción se corre sólo cuando Miguel lo pida en el chat**, primero con `--ensayo`.
+- **Sin migración.**

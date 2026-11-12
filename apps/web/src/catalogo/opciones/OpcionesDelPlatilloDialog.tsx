@@ -40,6 +40,7 @@ import {
   type GrupoEditable,
 } from './editor-de-grupos.ts';
 import { EditorDeGrupo } from './EditorDeGrupo.tsx';
+import { problemaDePrecio, type PlatilloConPrecio } from './piso-del-platillo.ts';
 
 const CLAVE_DE_LA_BIBLIOTECA = ['grupos_de_opciones'] as const;
 const RUTA_LEER = '/api/catalogo/grupos-de-opciones';
@@ -47,7 +48,7 @@ const RUTA_GUARDAR = '/api/catalogo/guardar-grupo-de-opciones';
 const RUTA_ASIGNAR = '/api/catalogo/asignar-grupos-de-opciones';
 const BOTON_TACTIL = 'min-h-(--altura-control) min-w-(--altura-control)';
 
-export interface ProductoConOpciones {
+export interface ProductoConOpciones extends PlatilloConPrecio {
   readonly id: string;
   readonly nombre?: string;
 }
@@ -205,6 +206,12 @@ function Contenido({ producto, biblioteca, idsAsignados, onClose }: ContenidoPro
     const invalido = grupos.find((g) => validarGrupo(g).length > 0);
     if (invalido !== undefined) {
       setFallo(`${invalido.nombre || 'Un grupo'}: ${validarGrupo(invalido).join(' ')}`);
+      return;
+    }
+    // DP-18 · M6: ninguna opción que reste puede dejar el platillo en $0 o menos.
+    const sinPrecio = problemaDePrecio(producto, grupos);
+    if (sinPrecio !== null) {
+      setFallo(sinPrecio);
       return;
     }
     if (compartidosCambiados.length > 0 && !porConfirmar) {

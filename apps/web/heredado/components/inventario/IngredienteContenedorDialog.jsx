@@ -143,8 +143,6 @@ export default function IngredienteContenedorDialog({ open, onClose, ingrediente
       // Invalidar lo que dependa de ingredientes (selectores en productos, inventario, etc.)
       [
         'ingredientes_all',
-        'ingredientes_dashboard',
-        'inventario',
         'ingredientes_activos_tipoventa',
       ].forEach((k) => {
         try {

@@ -740,6 +740,11 @@ jobs:
           pnpm test:e2e pruebas/e2e/modo-espera.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/modo-espera-pin.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/sonidos.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
+          # DP-18 · Lo que encontró Miguel: el modo del menú que «se regresaba», las cajas de los
+          # otros aparatos (la tableta y la PC) y «Personalizar menú».
+          pnpm test:e2e pruebas/e2e/configuracion-que-no-se-regresa.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/cajas-del-negocio.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/personalizar-menu.spec.ts --project=escritorio --workers=1 --retries=0
 
       - name: Las trazas del día
         if: always()

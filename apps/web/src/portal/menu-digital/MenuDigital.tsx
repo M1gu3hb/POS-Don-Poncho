@@ -24,6 +24,11 @@ interface Props<P extends ProductoDelMenu> {
   readonly alTocar: (producto: P) => void;
   /** Mientras llega el menú (la primera lectura del portal). */
   readonly cargando?: boolean;
+  /**
+   * DP-18 · Siempre dos columnas, como en el teléfono: la vista previa de «Personalizar menú» vive en
+   * una pantalla ancha y los cortes por ancho miran la ventana, no el marco del teléfono.
+   */
+  readonly comoEnElTelefono?: boolean;
 }
 
 /**
@@ -42,6 +47,7 @@ export function MenuDigital<P extends ProductoDelMenu>({
   puedePedir,
   alTocar,
   cargando = false,
+  comoEnElTelefono = false,
 }: Props<P>) {
   const secciones = seccionesDelMenu(productos, categorias);
   if (cargando) return <EsqueletoDeLista filas={4} />;
@@ -64,7 +70,13 @@ export function MenuDigital<P extends ProductoDelMenu>({
           <h2 id={`seccion-${s.id}`} className="text-xl font-black tracking-tight text-texto">
             {s.nombre}
           </h2>
-          <ul className="grid grid-cols-2 gap-(--espacio-3) sm:grid-cols-3">
+          <ul
+            className={
+              comoEnElTelefono
+                ? 'grid grid-cols-2 gap-(--espacio-3)'
+                : 'grid grid-cols-2 gap-(--espacio-3) sm:grid-cols-3'
+            }
+          >
             {s.productos.map((p, lugar) => (
               <li key={p.id} className="min-w-0">
                 <TarjetaDelPlatillo

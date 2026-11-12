@@ -52,7 +52,7 @@ import {
 } from '@/utils/tipsUtils';
 import SafeBoundary from '@/components/common/SafeBoundary';
 import AbrirCajaDialog from '@/components/caja/AbrirCajaDialog';
-import CajaEnOtraTerminal from '@/components/caja/CajaEnOtraTerminal';
+import CajasEnOtrosAparatos from '@/components/caja/CajasEnOtrosAparatos';
 import CorteTurnoDialog from '@/components/caja/CorteTurnoDialog';
 import CierreDiarioDialog from '@/components/caja/CierreDiarioDialog';
 import MesasPendientesCierreDialog from '@/components/caja/MesasPendientesCierreDialog';
@@ -192,7 +192,8 @@ export default function Caja() {
   const {
     cajaAbierta,
     hayCaja,
-    cajaEnOtraTerminal,
+    otrasCajas,
+    abiertasEnLaSucursal,
     puedoAbrir,
     cupoDeCajas,
     fondoEsperado,
@@ -875,13 +876,12 @@ export default function Caja() {
       queryClient.invalidateQueries({ queryKey: ['registros_ventas'] });
       queryClient.invalidateQueries({ queryKey: ['propinas_dashboard_ventas'] });
       queryClient.invalidateQueries({ queryKey: ['cortes_caja_estado'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard_data'] });
       // El stock y el ledger los movió la misma transacción del cobro: las tres
       // vistas de inventario se refrescan igual que antes lo hacía el bloque
       // que descontaba a mano.
       queryClient.invalidateQueries({ queryKey: ['ingredientes_all'] });
       queryClient.invalidateQueries({ queryKey: ['descuentos_hoy'] });
-      queryClient.invalidateQueries({ queryKey: ['movimientos_inv'] });
+      queryClient.invalidateQueries({ queryKey: ['registros_movimientos'] });
       // Refetch activo de pendientes para que el badge en el header baje al instante.
       queryClient
         .refetchQueries({ queryKey: ['ventas_pendientes_caja'], type: 'active' })
@@ -1292,14 +1292,22 @@ export default function Caja() {
         </div>
       </div>
 
-      {/* DP-14 (ronda 2, medio 3): la caja de la sucursal está abierta en OTRA terminal y ya no cabe
-          otra: traerla (con confirmación), no abrir otra. Si cabe, la segunda caja se ABRE aquí. */}
-      {!hayCaja && !cargandoCaja && !puedoAbrir && cajaEnOtraTerminal && (
-        <CajaEnOtraTerminal caja={cajaEnOtraTerminal} cupo={cupoDeCajas} />
+      {/* DP-18 (revisa DP-14): las cajas abiertas en OTROS aparatos se ven SIEMPRE, con «Trasladar
+          aquí» y, si cabe, «Abrir otra caja aquí (N de M)». El 11-11 esta pantalla callaba la de la
+          tableta cuando cabía otra, y parecía que se había cerrado sola. */}
+      {!cargandoCaja && (
+        <CajasEnOtrosAparatos
+          cajas={otrasCajas}
+          hayCaja={hayCaja}
+          puedoAbrir={puedoAbrir}
+          cupo={cupoDeCajas ?? 1}
+          abiertas={abiertasEnLaSucursal}
+          onAbrir={() => setShowAbrirCaja(true)}
+        />
       )}
 
-      {/* Aviso si NO hay caja abierta en este aparato y cabe abrir una */}
-      {!hayCaja && !cargandoCaja && puedoAbrir && (
+      {/* Aviso si NO hay caja abierta en este aparato ni en otro */}
+      {!hayCaja && !cargandoCaja && otrasCajas.length === 0 && (
         <div className="px-4 py-3 rounded-xl bg-advertencia/10 border-2 border-advertencia/30 text-sm text-advertencia flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-advertencia" />
           <div className="flex-1">

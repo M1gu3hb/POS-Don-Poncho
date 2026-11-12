@@ -1674,6 +1674,41 @@
         "+ aria-label:Uno menos",
         "+ aria-label:Uno más"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/caja/CajaEnOtraTerminal.jsx",
+      "borrado": true,
+      "porque": "DP-18 (1.2, DP-D111): la sustituye CajasEnOtrosAparatos.jsx, que enseña TODAS las cajas abiertas en otros aparatos (no sólo la más vieja, y también cuando el cupo deja abrir otra), con quién la abrió, desde cuándo, «Trasladar aquí» y «Abrir otra caja aquí (N de M)». Lo que decía ésta lo sigue diciendo la nueva."
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+      "porque": "DP-18 (1.1, DP-D110): la sección manda sólo lo que se cambió en ella; si no se cambió nada, lo dice con un aviso en lugar de mandar el formulario entero (que pisaba lo que otra pantalla había guardado). Nada de lo que se veía se quitó.",
+      "testigos": ["+ aviso:No hay cambios que guardar"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "porque": "DP-18 (1.1, DP-D110): la sección manda sólo lo que se cambió en ella; si no se cambió nada, lo dice con un aviso en lugar de mandar el formulario entero (que pisaba lo que otra pantalla había guardado). Nada de lo que se veía se quitó.",
+      "testigos": ["+ aviso:No hay cambios que guardar"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/UnidadesMedidaSection.jsx",
+      "porque": "DP-18 (1.1, DP-D110): la sección manda sólo lo que se cambió en ella; si no se cambió nada, lo dice con un aviso en lugar de mandar el formulario entero (que pisaba lo que otra pantalla había guardado). Nada de lo que se veía se quitó.",
+      "testigos": ["+ aviso:No hay cambios que guardar"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "porque": "DP-18 (1.1, DP-D110): la sección manda sólo lo que se cambió en ella; si no se cambió nada, lo dice con un aviso en lugar de mandar el formulario entero (que pisaba lo que otra pantalla había guardado). Nada de lo que se veía se quitó.",
+      "testigos": ["+ aviso:No hay cambios que guardar"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "porque": "DP-18 (1.1, DP-D110): la sección manda sólo lo que se cambió en ella; si no se cambió nada, lo dice con un aviso en lugar de mandar el formulario entero (que pisaba lo que otra pantalla había guardado). Nada de lo que se veía se quitó.",
+      "testigos": ["+ aviso:No hay cambios que guardar"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/PortalQR.jsx",
+      "porque": "DP-18 (1.3, DP-D113): la pestaña nueva «Personalizar menú» del Portal QR, con la vista previa en un teléfono; las pestañas que había siguen igual.",
+      "testigos": ["+ clase:mt-4", "+ texto:Personalizar menú"]
     }
   ]
 }

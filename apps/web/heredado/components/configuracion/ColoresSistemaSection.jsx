@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '@/api/cliente';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
 import { Save, RotateCcw, Palette } from 'lucide-react';
 import { BRAND_DEFAULTS, buildBrandPalette } from '@/lib/brandColors';
 
@@ -25,14 +26,22 @@ export default function ColoresSistemaSection({ cfg }) {
   const [primario, setPrimario] = useState(BRAND_DEFAULTS.color_primario);
   const [acento, setAcento] = useState(BRAND_DEFAULTS.color_acento);
   const [saving, setSaving] = useState(false);
+  // DP-18: los colores que se leyeron; al guardar sólo viaja el que cambió.
+  const leido = useRef({});
 
   // HOTFIX persistencia: solo hidratar cuando cfg viene real del backend.
   // Antes con `cfg = {}` en el primer render se pisaban los colores con default.
   // También respondemos a updated_date para reflejar cambios remotos.
   useEffect(() => {
     if (!cfg?.id) return;
-    setPrimario(cfg.color_primario || BRAND_DEFAULTS.color_primario);
-    setAcento(cfg.color_acento || BRAND_DEFAULTS.color_acento);
+    const desdeLaConfig = {
+      color_primario: cfg.color_primario || BRAND_DEFAULTS.color_primario,
+      color_acento: cfg.color_acento || BRAND_DEFAULTS.color_acento,
+    };
+    // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo no tocado, no.
+    leido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
+    setPrimario(desdeLaConfig.color_primario);
+    setAcento(desdeLaConfig.color_acento);
   }, [cfg?.id, cfg?.updated_date]);
 
   // Paleta derivada en vivo para la vista previa (sin guardar todavía).
@@ -41,7 +50,15 @@ export default function ColoresSistemaSection({ cfg }) {
   const save = async () => {
     setSaving(true);
     try {
-      const payload = { color_primario: primario, color_acento: acento };
+      const payload = parcheDeLaSeccion(
+        { color_primario: primario, color_acento: acento },
+        cfg?.id ? leido.current : {},
+      );
+      if (cfg?.id && !hayCambios(payload)) {
+        toast.info('No hay cambios que guardar');
+        setSaving(false);
+        return;
+      }
         // `ConfiguracionNegocio` NO se crea: es un documento, no una fila, y
         // `guardarConfiguracionParcial` INSERTA solo cuando el negocio todavía
         // no tiene ninguno (`configuracion.ts:220`). `update` cubre las dos

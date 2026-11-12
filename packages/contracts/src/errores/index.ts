@@ -53,6 +53,11 @@ export const CODIGOS_ERROR = {
   PRODUCTO_NO_ENCONTRADO: 'PRODUCTO_NO_ENCONTRADO',
   /** DP-15 · El platillo está marcado agotado del día: hoy no entra a ninguna cuenta. */
   PRODUCTO_AGOTADO: 'PRODUCTO_AGOTADO',
+  /**
+   * DP-18 · M6 · Una opción que resta dejaría el platillo en $0 o menos: se rechaza al guardar el
+   * grupo, al asignarlo y, si el precio del platillo bajó después, al vender.
+   */
+  OPCION_DEJA_SIN_PRECIO: 'OPCION_DEJA_SIN_PRECIO',
   ORDEN_NO_ENCONTRADA: 'ORDEN_NO_ENCONTRADA',
   /** La orden ya se cobro o se cancelo. R14: no hay `update` libre de estado. */
   ORDEN_NO_EDITABLE: 'ORDEN_NO_EDITABLE',

@@ -10,10 +10,13 @@ import MesasQRTab from '@/components/portalqr/MesasQRTab';
 import MenuQRTab from '@/components/portalqr/MenuQRTab';
 import SolicitudesQRTab from '@/components/portalqr/SolicitudesQRTab';
 import ConfiguracionQRTab from '@/components/portalqr/ConfiguracionQRTab';
+import { PersonalizarMenu } from '~/restaurante/personalizar-menu/PersonalizarMenu';
 
 /**
  * Página interna Portal QR — solo administrador.
- * Cuatro pestañas: Mesas QR, Menú QR, Solicitudes, Configuración.
+ * Cinco pestañas: Mesas QR, Menú QR, Personalizar menú (DP-18: foto, descripción y fondo de cada
+ * platillo, orden de las secciones, encabezado y colores, con la vista previa del teléfono),
+ * Solicitudes y Configuración.
  */
 export default function PortalQRPage() {
   const { posUser } = usePOSAuth();
@@ -43,6 +46,7 @@ export default function PortalQRPage() {
           <TabsList className="flex flex-wrap h-auto">
             <TabsTrigger value="mesas">Mesas QR</TabsTrigger>
             <TabsTrigger value="menu">Menú QR</TabsTrigger>
+            <TabsTrigger value="personalizar">Personalizar menú</TabsTrigger>
             <TabsTrigger value="solicitudes">Solicitudes</TabsTrigger>
             <TabsTrigger value="config">Configuración</TabsTrigger>
           </TabsList>
@@ -52,6 +56,9 @@ export default function PortalQRPage() {
           </TabsContent>
           <TabsContent value="menu" className="mt-4">
             <MenuQRTab />
+          </TabsContent>
+          <TabsContent value="personalizar" className="mt-4">
+            <PersonalizarMenu />
           </TabsContent>
           <TabsContent value="solicitudes" className="mt-4">
             {/* Sin `posUser`: la atribución de quién atendió el aviso sale de la

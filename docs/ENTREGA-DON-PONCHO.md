@@ -77,6 +77,72 @@ público).
    cierre lo dice y lleva al mapa). Sale el documento del día; se guarda en PDF y queda en Registros →
    Cortes.
 
+## Cómo se usa lo nuevo (DP-16 a DP-18)
+
+### Para llevar (en la Caja)
+
+1. En Caja, el botón grande **«Para llevar»**: se arma el pedido como el del mesero (categorías,
+   búsqueda, opciones, notas, la barbacoa por kilo) y, si se quiere, el nombre del cliente.
+2. **«Cobrar»** abre el cobro de siempre (métodos, descuento con PIN, propina, ticket). Al cobrar, el
+   pedido recibe su **número del día** («Pedido para llevar 3 · Don Beto», empieza en 1 cada día) y
+   sale a la cocina. Si se cancela el cobro, a la cocina no sale nada y el pedido vuelve a la pantalla.
+3. Cuando la cocina lo termina, la Caja lo enseña arriba en **«Para llevar de hoy»** (suena y avisa una
+   vez) con su botón **«Entregado»**. Lo listo de un pedido para llevar NO se entrega solo: alguien lo
+   tiene que dar al cliente. Uno cobrado antes de medianoche y listo después sigue en la lista, marcado
+   «de ayer», hasta que se toca «Entregado».
+4. El corte y el Cierre del día separan **mesas y para llevar**; Registros filtra por canal y el CSV
+   trae el canal y el nombre del pedido.
+
+### Las opciones con precio (Productos → el platillo → «Opciones»)
+
+- Cada opción puede **sumar o restar** («Queso +$15», «Sin crema −$5»). En lo que va por pieza se cobra
+  por pieza; en lo que va por peso o por porción, una vez por renglón (½ kg con tortillas de harina =
+  ½ kg + $20).
+- Los grupos son una biblioteca: uno se reusa en varios platillos; si se cambia, avisa que aplica a
+  todos. «Elige una» o «varias» (con mínimo y máximo), obligatorio o no.
+- **Una opción que resta no puede dejar el platillo en $0 o menos:** el editor no deja guardarla y el
+  servidor tampoco (si el precio del platillo baja después, esa combinación no se vende).
+- Lo que va por peso puede venderse **«sólo en estas presentaciones»** (¼, ½, 1 kg).
+- Se ven en el mesero, la Caja, el portal, la comanda (aparte de la nota), el ticket y el corte
+  («Opciones vendidas · cuánto sumaron»).
+
+### El retiro con PIN de gerente
+
+- **Configuración → Caja → «Pedir PIN de gerente en retiros mayores a $____»** (vacío no pide nada; un
+  monto razonable: $500.00). La cajera registra el retiro en Caja → «Movimientos»; si pasa del monto,
+  la gerente teclea su PIN ahí mismo. El PIN se gasta una vez y queda en el corte quién autorizó.
+
+### El teléfono de cocina
+
+- En la pantalla de **Cocina → «Conectar teléfono»**, se escanea el QR con el teléfono que se queda en
+  la estación (vale por el día; generar otro apaga el anterior).
+- Enseña **todas las comandas activas** en un carrusel (se desliza de lado; con más de 8 dice «3 de
+  16»); arriba la tira de mesas por estado (tocar una lleva a su comanda); abajo **Preparar** y
+  **Listo** grandes, que actúan sobre la comanda a la vista; vibra y avisa por voz al llegar una nueva.
+
+### «Personalizar menú» y el modo del menú (Portal QR)
+
+- **Portal QR → «Personalizar menú»**: todo el menú del comensal en un solo lugar, con la **vista
+  previa del teléfono** al lado (cambia mientras se edita):
+  - **por platillo:** la foto, la descripción corta (hasta 140 letras) y el fondo de la tarjeta (para
+    los que no tienen foto); «Guardar platillo»;
+  - **del menú:** el mensaje de bienvenida y los colores, y el **orden de las secciones** (↑ ↓, «Guardar
+    orden»).
+- **Portal QR → Configuración → «Cómo se ve el menú»:** Menú digital (tarjetas con foto o fondo), A la
+  carta (lista con letra grande), Páginas subidas o A la carta y páginas. Lo de «Personalizar menú» se
+  ve en «Menú digital» y en «A la carta».
+
+### Dos cajas y el traslado
+
+- **Configuración → Caja → «Cajas abiertas a la vez»: 1 o 2.**
+- La pantalla de **Caja enseña siempre las cajas abiertas en otros aparatos** («Caja 2 · abierta por
+  Ana desde las 10:14»), aunque este aparato tenga la suya. Si este aparato no tiene caja:
+  - **«Trasladar aquí»** trae esa caja a este aparato (pide confirmar: el otro se queda sin caja), para
+    cobrar y hacer su corte aquí;
+  - **«Abrir otra caja aquí (2 de 2)»** si todavía cabe otra; si no cabe, lo dice.
+- Se actualiza sola cada pocos segundos, al volver a la pestaña y al cambiar el cupo.
+- Cada caja hace su corte en su aparato; el **Cierre del día** se hace con la última.
+
 ## La revisión de Miguel antes del sábado (10 minutos, con sus PIN)
 
 Lo que necesita un PIN real en producción no lo prueba nadie más que Miguel: los PIN están en
@@ -90,6 +156,13 @@ Lo que necesita un PIN real en producción no lo prueba nadie más que Miguel: l
    abre «Don Poncho» a pantalla completa.
 6. Salir de todos los aparatos. Si se abrió una mesa por error, avisar: hay un guion probado que la
    cancela y la purga (`scripts/limpiar-ventas-de-prueba.mjs`).
+
+**Dejar producción en ceros antes de operar** (lo que se cobró en las pruebas): avisar en el chat. Se
+corre `scripts/dejar-en-ceros.mjs` (primero con `--ensayo`, por la conexión de sesión): comprueba que
+todo lo que encuentra es de prueba (nada de antes del día que se le dice y no más ventas cobradas de
+las que se le dicen), purga ventas, comandas, carritos, cajas, cortes, movimientos de caja e inventario
+de esas ventas, y reinicia los folios (el siguiente ticket es el 1; el número para llevar vuelve a 1
+solo). La auditoría se queda.
 
 ## Si algo falla
 

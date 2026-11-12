@@ -65,11 +65,22 @@ export const armarParaLlevar = definirComando<
     const { organizacionId } = ctx.ambito;
     const ordenId = await borradorDeLaCaja(ctx);
 
+    // DP-18 · M1: sólo los renglones de una cuenta que SIGUE en borrador (con su candado tomado en
+    // `borradorDeLaCaja`, esto es la red: nunca se le borra un renglón a una cuenta cobrada).
     await ctx.paso('vaciar_borrador', () =>
       ctx.tx
         .deleteFrom('orden_lineas')
         .where('organizacion_id', '=', organizacionId)
         .where('orden_id', '=', ordenId)
+        .where((eb) =>
+          eb.exists(
+            eb
+              .selectFrom('ordenes')
+              .select('ordenes.id')
+              .where('ordenes.id', '=', ordenId)
+              .where('ordenes.estado', '=', 'borrador'),
+          ),
+        )
         .execute(),
     );
     const nombre =
@@ -211,10 +222,33 @@ async function borradorDeLaCaja(ctx: ContextoComando<Transaccion>): Promise<stri
   if (sesion === null) {
     throw new ErrorDominio('CAJA_CERRADA', 'Abre la caja antes de tomar un pedido para llevar.');
   }
-  const existente = await ctx.paso('buscar_borrador', () =>
-    repoOrdenes.borradorDeTerminal(ctx.tx, organizacionId, terminalId),
+  // DP-18 · M1 (auditoría del 10-11). Primero la TERMINAL con candado: dos «armar» del mismo
+  // aparato a la vez (un doble toque, dos pestañas) se forman en fila; antes los dos veían que no
+  // había borrador, los dos lo creaban y el segundo moría con 23505 (un borrador por terminal).
+  await ctx.paso('bloquear_terminal', () =>
+    ctx.tx
+      .selectFrom('terminales')
+      .select('id')
+      .where('organizacion_id', '=', organizacionId)
+      .where('id', '=', terminalId)
+      .forUpdate()
+      .executeTakeFirstOrThrow(),
   );
-  if (existente !== null) return existente.id;
+  // Luego el borrador con candado: si un cobro de ESE borrador va en vuelo, se espera a que
+  // termine; si quedó pagado, ya no es borrador (Postgres vuelve a mirar el `where` al soltarse el
+  // candado) y se empieza uno nuevo. Antes se leía sin candado y se le reescribían los renglones a
+  // la cuenta que en ese instante quedaba cobrada.
+  const existente = await ctx.paso('buscar_borrador', () =>
+    ctx.tx
+      .selectFrom('ordenes')
+      .select('id')
+      .where('organizacion_id', '=', organizacionId)
+      .where('terminal_id', '=', terminalId)
+      .where('estado', '=', 'borrador')
+      .forUpdate()
+      .executeTakeFirst(),
+  );
+  if (existente !== undefined) return existente.id;
   return ctx.paso('crear_borrador', () =>
     repoOrdenes.crearBorrador(ctx.tx, {
       organizacionId,

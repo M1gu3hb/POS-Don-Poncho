@@ -17,7 +17,14 @@ import { diaDelNegocio } from '../reportes/dia.ts';
  * por entregado solo (`entregarLoListoYaCobrado`): alguien se lo tiene que dar al cliente.
  *
  * Sólo lectura, acotada al día del negocio y a 100 pedidos (el más nuevo primero).
+ *
+ * DP-18 · M3 (auditoría del 10-11): un pedido cobrado a las 23:55 y listo a las 00:05 desaparecía de
+ * la lista a la medianoche, listo y sin entregar. Ahora también vienen los de los DOS días anteriores
+ * que siguen en la cocina o listos (alguna comanda viva), marcados `deOtroDia`, hasta «Entregado».
  */
+
+/** Hasta cuántos días atrás se busca lo que se cobró y no se ha entregado. */
+const DIAS_DE_GRACIA = 2;
 
 const ROLES_DE_CAJA = ['cajero', 'gerente', 'administrador', 'dueno'] as const;
 const TOPE = 100;
@@ -37,6 +44,8 @@ export interface PedidoParaLlevar {
   /** Comandas listas esperando a que se entreguen. */
   readonly listas: number;
   readonly listoEn: string | null;
+  /** DP-18 · Se cobró otro día (antes de medianoche o del Cierre) y no se ha entregado. */
+  readonly deOtroDia: boolean;
 }
 
 export const entradaParaLlevarDelDia = z.object({}).strict();
@@ -52,6 +61,7 @@ interface Fila {
   pendientes: number;
   listas: number;
   listoEn: Date | null;
+  deOtroDia: boolean;
 }
 
 /** El estado del pedido sale de sus comandas: lo que falta manda sobre lo que ya está. */
@@ -78,17 +88,23 @@ export async function leerParaLlevarDelDia(
            o.cerrada_en                                                       as "cobradoEn",
            (count(c.id) filter (where c.estado in ('nuevo', 'en_preparacion')))::int as "pendientes",
            (count(c.id) filter (where c.estado = 'listo'))::int              as "listas",
-           max(c.lista_en)                                                    as "listoEn"
+           max(c.lista_en)                                                    as "listoEn",
+           (o.dia_del_pedido <> ${fecha}::date)                              as "deOtroDia"
       from ordenes o
       left join comandas c
         on c.organizacion_id = o.organizacion_id and c.orden_id = o.id
      where o.organizacion_id = ${organizacionId}
-       and o.dia_del_pedido = ${fecha}::date
+       and (o.dia_del_pedido = ${fecha}::date
+            or (o.dia_del_pedido >= ${fecha}::date - ${DIAS_DE_GRACIA}::int
+                and o.dia_del_pedido < ${fecha}::date
+                and exists (select 1 from comandas v
+                             where v.organizacion_id = o.organizacion_id and v.orden_id = o.id
+                               and v.estado in ('nuevo', 'en_preparacion', 'listo'))))
        and o.numero_pedido is not null
        and o.estado = 'pagada'
        and (${sucursalId}::uuid is null or o.sucursal_id = ${sucursalId}::uuid)
      group by o.id
-     order by o.numero_pedido desc
+     order by o.dia_del_pedido desc, o.numero_pedido desc
      limit ${TOPE}
   `.execute(tx);
 
@@ -103,6 +119,7 @@ export async function leerParaLlevarDelDia(
     pendientes: f.pendientes,
     listas: f.listas,
     listoEn: f.listoEn === null ? null : new Date(f.listoEn).toISOString(),
+    deOtroDia: f.deOtroDia,
   }));
 }
 

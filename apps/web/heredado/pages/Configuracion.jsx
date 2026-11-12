@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
 import {
   Settings,
   Users,
@@ -156,6 +157,8 @@ export default function Configuracion() {
   // Inicializamos con defaults SEGUROS (no leemos cfg aquí porque cfg puede ser
   // null en el primer render). La hidratación real ocurre en el useEffect.
   // IMPORTANTE: usamos ?? donde el valor false es válido (switches), nunca ||.
+  // DP-18: lo que se leyó al llenar Operación; al guardar sólo viaja lo que difiere de esto.
+  const bizLeido = useRef({});
   const [bizForm, setBizForm] = useState({
     direccion: '',
     telefono: '',
@@ -182,7 +185,8 @@ export default function Configuracion() {
   //    incluir updated_date en la dependencia.
   useEffect(() => {
     if (!cfg?.id) return;
-    setBizForm((f) => ({
+    setBizForm((f) => {
+      const desdeLaConfig = {
       ...f,
       direccion: cfg.direccion ?? '',
       telefono: cfg.telefono ?? '',
@@ -201,7 +205,11 @@ export default function Configuracion() {
       estaciones_preparacion_activas: cfg.estaciones_preparacion_activas === true,
       cocina_alerta_ambar_min: cfg.cocina_alerta_ambar_min ?? 10,
       cocina_alerta_roja_min: cfg.cocina_alerta_roja_min ?? 20,
-    }));
+      };
+      // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo no tocado, no.
+      bizLeido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
+      return desdeLaConfig;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cfg?.id, cfg?.updated_date]);
 
@@ -221,7 +229,7 @@ export default function Configuracion() {
         // camino de «primera vez» fallaba siempre.
         await api.entidades.ConfiguracionNegocio.update(cfg?.id, {
           nombre_negocio: 'Mi Negocio',
-          ...bizForm,
+          ...parcheDeLaSeccion(bizForm, {}),
         });
         queryClient.invalidateQueries({ queryKey: ['config'] });
         toast.success('Configuración guardada');
@@ -238,7 +246,12 @@ export default function Configuracion() {
       // Solo persistimos los campos de OPERACIÓN. Identidad maneja su propio save.
       // Nunca tocamos campos de Identidad (nombre_negocio, logos, colores, etc.)
       // desde acá para no pisar lo que la pestaña Identidad haya guardado.
-      await api.entidades.ConfiguracionNegocio.update(cfg.id, bizForm);
+      const parche = parcheDeLaSeccion(bizForm, bizLeido.current);
+      if (!hayCambios(parche)) {
+        toast.info('No hay cambios que guardar');
+        return;
+      }
+      await api.entidades.ConfiguracionNegocio.update(cfg.id, parche);
       queryClient.invalidateQueries({ queryKey: ['config'] });
       toast.success('Configuración guardada');
     } catch (e) {

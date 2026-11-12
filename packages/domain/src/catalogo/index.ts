@@ -43,3 +43,4 @@ export {
   type ProductoConArea,
 } from './area-por-omision.ts';
 export { estaAgotado } from './agotado.ts';
+export * from './opciones-sin-precio.ts';
