@@ -69,6 +69,9 @@ const entorno: NodeJS.ProcessEnv = {
   PIN_PEPPER: pinPepper,
   TZ: 'America/Mexico_City',
   NODE_ENV: 'production',
+  // En Vercel cada función abre su propio pool de 10; aquí UN proceso atiende a ~45 aparatos: con 10
+  // conexiones haría una cola que en producción no existe.
+  MORPHIQPOS_DB_POOL_MAX: process.env['MORPHIQPOS_DB_POOL_MAX'] ?? '30',
   NEXT_TELEMETRY_DISABLED: '1',
   MORPHIQPOS_RELOJ_QA: reloj,
   NODE_OPTIONS: `${process.env['NODE_OPTIONS'] ?? ''} --import ${precarga}`.trim(),

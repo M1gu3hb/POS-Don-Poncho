@@ -45,10 +45,13 @@ export async function cierreDeLaCaja(pagina: Page, contadoCentavos: number): Pro
     const texto = (await cierre.innerText()).replace(/\s+/g, ' ').slice(0, 400);
     throw new Error(`«Cerrar caja» sigue apagado. El diálogo dice: ${texto}`);
   }
-  // La descarga, la respuesta del servidor y el clic juntos: si uno falla, ninguna promesa queda
-  // sin atender (una espera de descarga suelta tumbaba el proceso entero al vencer).
-  const [archivo, respuesta] = await Promise.all([
-    pagina.waitForEvent('download', { timeout: 180_000 }),
+  // Primero lo que contesta el servidor; la descarga sólo importa si cerró. La espera de la descarga
+  // nunca rechaza (devuelve el error como dato): suelta, al vencer tumbaba el proceso entero.
+  const descarga = pagina.waitForEvent('download', { timeout: 180_000 }).then(
+    (d) => ({ ok: true as const, d }),
+    (error: unknown) => ({ ok: false as const, error }),
+  );
+  const [respuesta] = await Promise.all([
     pagina.waitForResponse(
       (r) => new URL(r.url()).pathname === '/api/caja/cerrar' && r.request().method() === 'POST',
       { timeout: 180_000 },
@@ -60,6 +63,10 @@ export async function cierreDeLaCaja(pagina: Page, contadoCentavos: number): Pro
       `/api/caja/cerrar contestó ${String(respuesta.status())}: ${(await respuesta.text()).slice(0, 300)}`,
     );
   }
+  const bajo = await descarga;
+  if (!bajo.ok)
+    throw new Error('La caja cerró pero no bajó el PDF del corte.', { cause: bajo.error });
+  const archivo = bajo.d;
   await expect(cierre).toBeHidden({ timeout: 60_000 });
   // Al cerrar sale «Caja cerrada correctamente» (con «Ver PDF»): se despide antes de seguir.
   const listo = pagina.getByRole('dialog').filter({ hasText: 'Caja cerrada correctamente' });

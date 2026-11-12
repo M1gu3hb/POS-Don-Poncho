@@ -280,6 +280,17 @@ async function trasladar(
   return nuevo;
 }
 
+/** Entrega lo para llevar que la cocina va dejando listo, hasta que no quede nada o pasen `minutos` reales. */
+async function entregarTodo(ctx: ContextoDelBot, pagina: Page, minutos: number): Promise<void> {
+  await irACaja(pagina, ctx.entorno.appUrl);
+  const limite = Date.now() + minutos * 60_000;
+  while (Date.now() < limite) {
+    await entregarLoListo(pagina);
+    if ((await pendientesParaLlevar(pagina)) === 0) return;
+    await new Promise((r) => setTimeout(r, 10_000));
+  }
+}
+
 async function cerrar(
   ctx: ContextoDelBot,
   bot: Bot,
@@ -290,13 +301,7 @@ async function cerrar(
   // La caja no cierra con pedidos para llevar cobrados sin entregar (regla de la app): antes de
   // contar, se entrega lo listo y se espera a que la cocina termine lo que falta (sigue trabajando
   // hasta que las cajas cierran).
-  await irACaja(pagina, ctx.entorno.appUrl);
-  const limiteDeEntrega = Date.now() + 10 * 60_000;
-  while (Date.now() < limiteDeEntrega) {
-    await entregarLoListo(pagina);
-    if ((await pendientesParaLlevar(pagina)) === 0) break;
-    await new Promise((r) => setTimeout(r, 10_000));
-  }
+  await entregarTodo(ctx, pagina, 10);
   // Los cierres de caja van uno tras otro (dos a la vez no completaron en el ensayo): cada una espera su turno.
   const turno = plan.cierraDespuesDe ?? 0;
   const limite = Date.now() + 6 * 60_000;
@@ -306,13 +311,18 @@ async function cerrar(
   const contado = esperado + DIFERENCIA[plan.alCerrar];
   try {
     await irACaja(pagina, ctx.entorno.appUrl);
-    const r = await medido(
-      ctx,
-      { bot, pantalla: 'Caja → Cierre diario' },
-      pagina,
-      'cerrar la caja',
-      () => cierreDeLaCaja(pagina, contado),
-    );
+    const intento = () =>
+      medido(ctx, { bot, pantalla: 'Caja → Cierre diario' }, pagina, 'cerrar la caja', () =>
+        cierreDeLaCaja(pagina, contado),
+      );
+    // Si el servidor dice que aún hay pedidos sin entregar, la cajera lee el aviso, entrega lo que
+    // falta y lo intenta otra vez (una sola).
+    const r = await intento().catch(async (error: unknown) => {
+      if (!String(error).includes('sin entregar')) throw error;
+      await entregarTodo(ctx, pagina, 5);
+      await irACaja(pagina, ctx.entorno.appUrl);
+      return intento();
+    });
     if (r.bloqueadoPorMesas) {
       await registrarFallo(
         ctx,

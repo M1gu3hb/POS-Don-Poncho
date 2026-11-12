@@ -50,16 +50,21 @@ export async function armarParaLlevar(
 export async function entregarLoListo(pagina: Page): Promise<number> {
   const entregar = pagina.getByRole('button', { name: 'Entregado', exact: true });
   let entregados = 0;
-  while (entregados < 10 && (await entregar.count()) > 0) {
+  while (entregados < 10) {
+    const antes = await entregar.count();
     // La lista se refresca sola: si el botón ya se fue, otra persona lo entregó.
-    if (!(await entregar.first().isVisible())) break;
+    if (antes === 0 || !(await entregar.first().isVisible())) break;
     // La respuesta y el clic juntos: si el clic falla, la espera de la respuesta no queda suelta.
     const [respuesta] = await Promise.all([
       esperarPost(pagina, '/api/restaurante/entregar-para-llevar'),
-      entregar.first().click({ timeout: 4_000 }),
+      // 15 s: si el modo espera tapa la lista, el despertador necesita su tiempo para quitarlo.
+      entregar.first().click({ timeout: 15_000 }),
     ]);
     expect(respuesta.status()).toBe(200);
     entregados += 1;
+    // La tarjeta entregada tarda en irse: sin esperarla, la vuelta siguiente tocaba un botón que ya
+    // se estaba yendo.
+    await expect.poll(() => entregar.count(), { timeout: 15_000 }).toBeLessThan(antes);
   }
   return entregados;
 }
@@ -67,7 +72,12 @@ export async function entregarLoListo(pagina: Page): Promise<number> {
 /** Cuántos pedidos para llevar de hoy faltan por entregar: los que siguen en cocina y los listos. */
 export async function pendientesParaLlevar(pagina: Page): Promise<number> {
   const lista = pagina.getByRole('region', { name: 'Pedidos para llevar de hoy' });
-  if (!(await lista.isVisible())) return 0;
+  // La lista llega unos segundos después de la pantalla: sin esperarla, «no se ve» parecía «no hay».
+  const aparecio = await lista.waitFor({ state: 'visible', timeout: 15_000 }).then(
+    () => true,
+    () => false,
+  );
+  if (!aparecio) return 0;
   const enCocina = await lista
     .getByRole('list', { name: 'En cocina' })
     .getByRole('listitem')
