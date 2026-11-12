@@ -26,7 +26,11 @@ import {
   type CaosEnCobro,
 } from './caos-cobro.ts';
 import { dinero } from '../pantallas/comun.ts';
-import { armarParaLlevar, type RenglonLlevar } from '../pantallas/para-llevar.ts';
+import {
+  armarParaLlevar,
+  tomarBorradorSobrante,
+  type RenglonLlevar,
+} from '../pantallas/para-llevar.ts';
 import { medido } from './comun.ts';
 import { descuentosDelCobro, type RitmoDeCaja } from './caja-descuento.ts';
 import { propinaDe } from './division-reparto.ts';
@@ -308,6 +312,21 @@ export async function cobrarParaLlevar(
     'armar el pedido para llevar',
     () => armarParaLlevar(pagina, nombre, renglones),
   );
+  const sobrante = tomarBorradorSobrante(pagina);
+  if (sobrante > 0) {
+    await ctx.incidente(
+      {
+        pantalla: 'Caja → Para llevar',
+        hizo: 'Abrí «Para llevar» para armar un pedido nuevo',
+        esperaba: 'El pedido empieza vacío (el anterior ya se cobró o se descartó)',
+        paso: `El pedido arrancó con ${dinero(sobrante)} de un pedido anterior: el borrador del aparato sobrevivió a una recarga a media venta`,
+        gravedad: 'medio',
+        clase: 'ux',
+        reproducido: 'no intentado',
+      },
+      pagina,
+    );
+  }
   let esperado = 0;
   for (const r of renglones) {
     const importe = r.precioCentavos * r.veces;
