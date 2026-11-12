@@ -51,7 +51,7 @@ async function disputar(ctx: ContextoDelBot, bot: Bot): Promise<void> {
     // Si algo falla a medias la cuenta se SUELTA (o se da por cobrada si la base ya la tiene): sin esto
     // quedaría para siempre «pedida» y la mesa no dejaría cerrar el día.
     soltarSiFalla = async () => {
-      if ((await vecesCobrada(ctx, cuenta.cuenta)) > 0)
+      if ((await vecesCobrada(ctx, cuenta.cuenta, cuenta.mesa)) > 0)
         ctx.mundo.porCobrar.splice(ctx.mundo.porCobrar.indexOf(cuenta), 1);
       else cuenta.cobrandola = null;
     };
@@ -85,12 +85,19 @@ async function disputar(ctx: ContextoDelBot, bot: Bot): Promise<void> {
       })),
     );
     const buenos = cuerpos.filter((c) => c.estado === 200 && c.json.ok !== false);
-    // El cobro que ganó puede tardar un instante en verse en la base: se le da hasta 15 s antes de decir que no está.
-    let pagos = await vecesCobrada(ctx, cuenta.cuenta);
+    // La cuenta se busca por el folio que devolvió el cobro que ganó (el libro aún no lo tiene: se
+    // anota abajo); sin ganador, por la última orden de la mesa. Puede tardar un instante en verse
+    // en la base: se le dan hasta 15 s antes de decir que no está.
+    const folioGanador = buenos[0]?.json.datos?.folio;
+    const contar = () =>
+      folioGanador === undefined || folioGanador === ''
+        ? vecesCobrada(ctx, cuenta.cuenta, cuenta.mesa)
+        : vecesCobrada(ctx, folioGanador);
+    let pagos = await contar();
     const limitePagos = Date.now() + 15_000;
     while (buenos.length > 0 && pagos === 0 && Date.now() < limitePagos) {
       await new Promise((r) => setTimeout(r, 500));
-      pagos = await vecesCobrada(ctx, cuenta.cuenta);
+      pagos = await contar();
     }
     if (buenos.length !== 1 || pagos !== 1) {
       await ctx.incidente(

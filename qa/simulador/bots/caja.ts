@@ -138,7 +138,7 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeCaja): Promise
         error,
       );
       // Si la consulta misma falla, la cuenta vuelve a la fila: nunca se queda «cobrándose» para siempre.
-      const pagos = await pagosConfirmados(ctx, cuenta.cuenta).catch(() => 0);
+      const pagos = await pagosConfirmados(ctx, cuenta.cuenta, cuenta.mesa).catch(() => 0);
       if (pagos > 0) ctx.mundo.porCobrar.splice(ctx.mundo.porCobrar.indexOf(cuenta), 1);
       else cuenta.cobrandola = null;
     }

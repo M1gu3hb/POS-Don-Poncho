@@ -18,51 +18,76 @@ export interface CaosEnCobro {
   readonly contexto: BrowserContext;
 }
 
-/** Cuántos pagos confirmados tiene una cuenta (lectura de la base: la verdad del sistema). */
 const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** La condición SQL (sobre `ordenes o`) que señala la orden de una cuenta, y su valor. */
+interface OrdenEnLaBase {
+  readonly donde: string;
+  readonly valor: string;
+}
+
+const POR_FOLIO =
+  'o.id = (select id from ordenes where folio::text = $1 order by created_at desc limit 1)';
+const POR_MESA = `o.id = (select o2.id from ordenes o2 join mesas m on m.id = o2.mesa_id
+   where m.numero::text = $1 and o2.estado <> 'borrador' and o2.orden_padre_id is null
+   order by o2.created_at desc limit 1)`;
+
 /**
- * Cuántos pagos confirmados tiene la cuenta. Las de mesa el simulador las conoce por el id de su
- * llegada: se buscan por el folio que el cobro dejó en el libro; sin cobro anotado, 0 (se reintenta).
+ * Dónde está en la base la orden de una cuenta. El simulador conoce las de mesa por el id de su
+ * LLEGADA («D1-025»), que la base no tiene: se busca por el folio de su cobro en el libro y, si aún
+ * no hay cobro anotado (la disputa y los fallos preguntan ANTES de anotarlo, D1-091), por la última
+ * orden de su mesa. Un id de orden (para llevar) o un folio numérico van directo.
  */
-export async function pagosConfirmados(ctx: ContextoDelBot, cuenta: string): Promise<number> {
-  let ordenIdOFolio = cuenta;
-  if (!ES_UUID.test(cuenta)) {
-    const cobro = [...ctx.libro.leer()]
-      .reverse()
-      .find((f) => f.asiento.tipo === 'cobro' && f.asiento.cuenta === cuenta);
-    if (cobro?.asiento.tipo !== 'cobro' || cobro.asiento.folio === '') return 0;
-    ordenIdOFolio = cobro.asiento.folio;
-  }
-  const porId = ES_UUID.test(ordenIdOFolio);
+function ordenEnLaBase(
+  ctx: ContextoDelBot,
+  cuenta: string,
+  mesa: number | null,
+): OrdenEnLaBase | null {
+  if (ES_UUID.test(cuenta)) return { donde: 'o.id = $1::uuid', valor: cuenta };
+  if (/^\d+$/.test(cuenta)) return { donde: POR_FOLIO, valor: cuenta };
+  const cobro = [...ctx.libro.leer()]
+    .reverse()
+    .find((f) => f.asiento.tipo === 'cobro' && f.asiento.cuenta === cuenta);
+  if (cobro?.asiento.tipo === 'cobro' && cobro.asiento.folio !== '')
+    return { donde: POR_FOLIO, valor: cobro.asiento.folio };
+  return mesa === null ? null : { donde: POR_MESA, valor: String(mesa) };
+}
+
+/** Cuántos pagos confirmados tiene la cuenta (lectura de la base: la verdad del sistema). */
+export async function pagosConfirmados(
+  ctx: ContextoDelBot,
+  cuenta: string,
+  mesa: number | null = null,
+): Promise<number> {
+  const orden = ordenEnLaBase(ctx, cuenta, mesa);
+  if (orden === null) return 0;
   const [fila] = await leerSql<{ n: string }>(
     ctx.entorno.baseUrl,
-    `select count(*)::text as n from pagos where estado = 'confirmado' and orden_id = ${
-      porId
-        ? '$1::uuid'
-        : '(select id from ordenes where folio::text = $1 order by created_at desc limit 1)'
-    }`,
-    [ordenIdOFolio],
+    `select count(*)::text as n from ordenes o join pagos p on p.orden_id = o.id
+      where p.estado = 'confirmado' and ${orden.donde}`,
+    [orden.valor],
   );
   return num(fila?.n);
 }
 
 /**
  * Cuántas veces está cobrada una cuenta: lo pagado (venta) entre su total. Un mixto son dos filas de
- * pago y sigue siendo UN cobro; un cobro doble da 2.
+ * pago y sigue siendo UN cobro; un cobro doble da 2. Acepta el id de la orden, su folio o, para las
+ * de mesa, el id de la llegada con su mesa.
  */
-/**
- * Cuántas veces está cobrada una orden. Acepta el id de la orden (para llevar) o, para las cuentas de
- * mesa —que el simulador conoce por el id de su llegada—, el FOLIO que el cobro dejó en el libro.
- */
-export async function vecesCobrada(ctx: ContextoDelBot, ordenIdOFolio: string): Promise<number> {
-  const porId = ES_UUID.test(ordenIdOFolio);
+export async function vecesCobrada(
+  ctx: ContextoDelBot,
+  cuenta: string,
+  mesa: number | null = null,
+): Promise<number> {
+  const orden = ordenEnLaBase(ctx, cuenta, mesa);
+  if (orden === null) return 0;
   const [fila] = await leerSql<{ veces: string }>(
     ctx.entorno.baseUrl,
     `select coalesce(round(sum(p.monto_centavos)::numeric / nullif(max(o.total_centavos), 0)), 0)::text as veces
        from ordenes o left join pagos p on p.orden_id = o.id and p.estado = 'confirmado'
-      where ${porId ? 'o.id = $1::uuid' : 'o.id = (select id from ordenes where folio::text = $1 order by created_at desc limit 1)'}`,
-    [ordenIdOFolio],
+      where ${orden.donde}`,
+    [orden.valor],
   );
   return num(fila?.veces);
 }
@@ -83,7 +108,7 @@ export async function interrumpirElCobro(
     siguiente.setDefaultTimeout(30_000);
   }
   await irACaja(siguiente, ctx.entorno.appUrl);
-  const pagos = await pagosConfirmados(ctx, cuenta.cuenta);
+  const pagos = await pagosConfirmados(ctx, cuenta.cuenta, cuenta.mesa);
   if (pagos > 0) {
     await ctx.incidente(
       {
