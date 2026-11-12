@@ -18,7 +18,7 @@
  */
 import { randomInt } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -190,8 +190,10 @@ async function main(): Promise<void> {
     await crearLaBase(destino, molde);
     await reponerElRelojSiLoTiene(destino);
     mkdirSync(carpeta, { recursive: true });
-    for (const archivo of ['pines.json', 'personas.json']) {
-      copyFileSync(join(pinesDelMolde, archivo), join(carpeta, archivo));
+    copyFileSync(join(pinesDelMolde, 'pines.json'), join(carpeta, 'pines.json'));
+    // `personas.json` sólo lo deja una copia armada desde la exportación.
+    if (existsSync(join(pinesDelMolde, 'personas.json'))) {
+      copyFileSync(join(pinesDelMolde, 'personas.json'), join(carpeta, 'personas.json'));
     }
     console.log(`Copia ${destino.pathname.slice(1)} clonada de ${molde}, con sus PIN de prueba.`);
     return;
