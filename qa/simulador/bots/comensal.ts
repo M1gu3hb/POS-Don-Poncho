@@ -225,6 +225,7 @@ async function atenderGrupo(
       esperadoCentavos: subtotal,
       pedidaEn: minutoDelDia(ctx.ahoraSim()),
       propinaCentavos: Math.round((subtotal * elegido) / 100),
+      propinaPorcentaje: elegido,
       cobrandola: null,
     });
     contar(ctx.mundo, 'cuentas_pedidas_por_portal');

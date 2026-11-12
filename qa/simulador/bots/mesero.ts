@@ -229,6 +229,7 @@ class Mesero {
       pedidaEn: ahoraMin,
       codigo,
       propinaCentavos,
+      propinaPorcentaje: preguntoPropina ? porcentaje : 0,
       cobrandola: null,
     });
     contar(ctx.mundo, 'cuentas_pedidas');

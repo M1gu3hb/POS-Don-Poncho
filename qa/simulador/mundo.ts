@@ -59,6 +59,11 @@ export interface CuentaPorCobrar {
   readonly codigo?: string;
   /** La propina que la mesa acordó al pedir la cuenta (la caja la cobra aparte del esperado). */
   readonly propinaCentavos?: number;
+  /**
+   * El porcentaje de esa propina. El servidor la vuelve a calcular sobre el subtotal YA con
+   * descuento: si la cajera descuenta, la propina baja con él.
+   */
+  readonly propinaPorcentaje?: number;
   /** Quién la está cobrando (para el caos de «dos cajas cobrando la misma cuenta»). */
   cobrandola: string | null;
 }

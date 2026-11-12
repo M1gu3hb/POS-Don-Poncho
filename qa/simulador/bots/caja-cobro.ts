@@ -108,6 +108,11 @@ export interface CuentaACobrar {
    * pantalla de cobro ya la suma al «TOTAL A COBRAR». 0 si no hay.
    */
   readonly propinaAcordadaCentavos?: number;
+  /**
+   * Si la propina se acordó como porcentaje: se calcula sobre lo que queda DESPUÉS del descuento,
+   * como lo hace el servidor (y entonces manda sobre `propinaAcordadaCentavos`).
+   */
+  readonly propinaPorcentaje?: number;
 }
 
 /** Con el diálogo de cobro ya abierto: descuento, comparación, pago y asiento. Devuelve el efectivo neto que quedó en el cajón. */
@@ -128,7 +133,10 @@ export async function cobrarEnElDialogo(
       ? 0
       : await descuentosDelCobro(ctx, bot, pagina, cobro, c.cuenta, c.esperadoCentavos, ritmo);
   const esperado = c.esperadoCentavos - descuento;
-  const acordada = c.propinaAcordadaCentavos ?? 0;
+  const acordada =
+    (c.propinaPorcentaje ?? 0) > 0
+      ? Math.round((esperado * (c.propinaPorcentaje ?? 0)) / 100)
+      : (c.propinaAcordadaCentavos ?? 0);
   const enPantalla = await totalEnPantalla(cobro);
   if (enPantalla !== esperado + acordada) {
     await ctx.incidente(
@@ -261,10 +269,17 @@ export async function cobrarLaCuenta(
       canal: 'mesa',
       esperadoCentavos: cuenta.esperadoCentavos,
       rotulo: `la cuenta de la ${titulo}`,
-      // La que la mesa dejó dicha, o la que la cajera eligió si la pantalla se la preguntó.
+      // La que la mesa dejó dicha, o la que la cajera eligió si la pantalla se la preguntó; como
+      // porcentaje, porque el servidor la recalcula si hay descuento.
       propinaAcordadaCentavos:
         (cuenta.propinaCentavos ?? 0) +
         (laCajaDecidioLaPropina(actual) ? propinaDe(cuenta.esperadoCentavos, propina) : 0),
+      propinaPorcentaje:
+        (cuenta.propinaPorcentaje ?? 0) > 0
+          ? (cuenta.propinaPorcentaje ?? 0)
+          : laCajaDecidioLaPropina(actual) && propina !== 'Sin propina'
+            ? propina
+            : 0,
     },
     variacionDelCobro(ctx, caos),
     ritmo,

@@ -95,7 +95,8 @@ export async function intentar(
         pantalla: a.pantalla,
         hizo: a.hizo,
         esperaba: a.esperaba,
-        paso: a.paso,
+        // «Qué pasó»: el paso y el error, no sólo el nombre del paso.
+        paso: `${a.paso}: ${mensajeCorto(error)}`,
         reproducido: 'no intentado',
         gravedad: a.gravedad ?? 'medio',
         clase: a.clase ?? 'ui',
