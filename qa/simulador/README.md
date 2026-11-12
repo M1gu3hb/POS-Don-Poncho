@@ -79,6 +79,7 @@ Lo que enseñaron los ensayos:
 - **La cocina no se va al terminar el día**: sigue hasta que las cajas cierran, porque una caja no
   cierra con pedidos para llevar cobrados sin entregar (regla de la app); antes de contar, la cajera
   entrega lo que quede.
+- **La velocidad del reloj**: a ×6 los meseros no alcanzaban el ritmo de 130 grupos (el día 1 atendió 31); los días normales van a ×3 y los picos a ×2.5.
 - **El fin del día cuenta minutos desde la medianoche de la fecha** (`fin-del-dia.ts`): con la hora
   del reloj, un día que se pasara de las 24:00 dejaba de estar terminado.
 - **El modo espera llega pronto con el reloj acelerado** y se traga los clics: `sesion.ts` deja puesto
@@ -93,13 +94,13 @@ mismo perfil y misma copia dan el mismo día. La semilla del día es `<semilla>-
 
 | Día | Fecha     | Perfil                               | Cuentas de mesa | Reloj |
 | --- | --------- | ------------------------------------ | --------------: | ----: |
-| 1   | vie 20-11 | normal                               |             130 |    ×6 |
-| 2   | sáb 21-11 | pico de fin de semana (el doble)     |             260 |    ×4 |
-| 3   | dom 22-11 | con la red mala                      |             130 |    ×6 |
-| 4   | lun 23-11 | con cambios de configuración en vivo |             130 |    ×6 |
-| 5   | mar 24-11 | tranquilo                            |              70 |    ×6 |
-| 6   | mié 25-11 | pico con 2 cajas y traslado          |             200 |    ×4 |
-| 7   | jue 26-11 | el pico final, con todo junto        |             260 |    ×4 |
+| 1   | vie 20-11 | normal                               |             130 |    ×3 |
+| 2   | sáb 21-11 | pico de fin de semana (el doble)     |             260 |  ×2.5 |
+| 3   | dom 22-11 | con la red mala                      |             130 |    ×3 |
+| 4   | lun 23-11 | con cambios de configuración en vivo |             130 |    ×3 |
+| 5   | mar 24-11 | tranquilo                            |              70 |    ×4 |
+| 6   | mié 25-11 | pico con 2 cajas y traslado          |             200 |  ×2.5 |
+| 7   | jue 26-11 | el pico final, con todo junto        |             260 |  ×2.5 |
 
 Cada día abre a las 8:00 con las cajas y su fondo, tiene sus picos de 13:30 a 16:30 y termina pasadas
 las 19:00, cuando ya no queda nadie en las mesas ni nada por cobrar (tope 20:30): las cajas cierran
