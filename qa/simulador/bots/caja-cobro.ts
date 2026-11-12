@@ -13,6 +13,7 @@ import {
   abrirLaCuenta,
   cobrar,
   decidirLaPropina,
+  laCajaDecidioLaPropina,
   totalEnPantalla,
   type Pago,
   type Propina,
@@ -28,6 +29,7 @@ import { dinero } from '../pantallas/comun.ts';
 import { armarParaLlevar, type RenglonLlevar } from '../pantallas/para-llevar.ts';
 import { medido } from './comun.ts';
 import { descuentosDelCobro, type RitmoDeCaja } from './caja-descuento.ts';
+import { propinaDe } from './division-reparto.ts';
 
 /** Lo que el libro SABE que entró y salió del cajón de esta caja (para el corte). */
 export interface CajonDelLibro {
@@ -259,7 +261,10 @@ export async function cobrarLaCuenta(
       canal: 'mesa',
       esperadoCentavos: cuenta.esperadoCentavos,
       rotulo: `la cuenta de la ${titulo}`,
-      propinaAcordadaCentavos: cuenta.propinaCentavos ?? 0,
+      // La que la mesa dejó dicha, o la que la cajera eligió si la pantalla se la preguntó.
+      propinaAcordadaCentavos:
+        (cuenta.propinaCentavos ?? 0) +
+        (laCajaDecidioLaPropina(actual) ? propinaDe(cuenta.esperadoCentavos, propina) : 0),
     },
     variacionDelCobro(ctx, caos),
     ritmo,

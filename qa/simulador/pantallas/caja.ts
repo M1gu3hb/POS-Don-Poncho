@@ -116,6 +116,12 @@ export async function totalEnPantalla(dialogo: Locator): Promise<number> {
  * pregunta de la propina se abren a la vez y la app marca a los dos `aria-hidden` (ninguno es
  * alcanzable por rol, ni para un lector de pantalla). Si pasa, `alOcultarse` lo dice.
  */
+/** Si al abrir el último cobro de esta página la pantalla preguntó la propina (la decidió la caja). */
+const propinaPreguntada = new WeakMap<Page, boolean>();
+export function laCajaDecidioLaPropina(pagina: Page): boolean {
+  return propinaPreguntada.get(pagina) ?? false;
+}
+
 export async function decidirLaPropina(
   pagina: Page,
   cobro: Locator,
@@ -124,7 +130,9 @@ export async function decidirLaPropina(
 ): Promise<void> {
   const pregunta = pagina.getByText('¿Desean agregar propina?');
   await expect(pregunta.or(cobro).first()).toBeVisible({ timeout: 30_000 });
-  if (!(await pregunta.isVisible())) return;
+  const pregunto = await pregunta.isVisible();
+  propinaPreguntada.set(pagina, pregunto);
+  if (!pregunto) return;
   const sinPropina = pagina.getByRole('button', { name: 'Sin propina', includeHidden: true });
   const aplicar = pagina.getByRole('button', { name: 'Aplicar', exact: true, includeHidden: true });
   if (

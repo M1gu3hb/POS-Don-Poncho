@@ -26,6 +26,7 @@ import { medido } from './comun.ts';
 import {
   planearDivision,
   preciosPorUnidad,
+  propinaDe,
   totalesDelReparto,
   type PlanDeDivision,
 } from './division-reparto.ts';
@@ -141,9 +142,6 @@ export async function dividirYCobrar(
 }
 
 /** La propina que sale de una venta con el porcentaje elegido (a la mitad, hacia arriba); 0 sin propina. */
-function propinaDe(venta: number, propina: Propina): number {
-  return propina === 'Sin propina' ? 0 : Math.round((venta * propina) / 100);
-}
 
 /** Cuánto es la venta cuando la pantalla dice `total` (venta + propina), si el reparto no dejó calcularla de antemano. */
 function ventaSegunLaPantalla(total: number, propina: Propina): number {

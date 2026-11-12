@@ -5,6 +5,7 @@
  *  - «por renglón»: cada platillo va completo a una cuenta («yo pago mis tacos»).
  */
 import type { AsientoFechado } from '../libro.ts';
+import type { Propina } from '../pantallas/caja.ts';
 import type { Reparto } from '../pantallas/caja-division.ts';
 import type { Azar } from '../semilla.ts';
 
@@ -119,4 +120,9 @@ export function totalesDelReparto(
     totales.push(total);
   }
   return totales;
+}
+
+/** La propina de una venta cuando la cajera la elige en la pantalla (redondeo al centavo). */
+export function propinaDe(venta: number, propina: Propina): number {
+  return propina === 'Sin propina' ? 0 : Math.round((venta * propina) / 100);
 }
