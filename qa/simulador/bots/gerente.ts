@@ -7,6 +7,7 @@ import type { NombreDeAparato } from '../aparatos.ts';
 import type { Bot, ContextoDelBot } from '../bot.ts';
 import { BASE_POR_COMPRA, INSUMOS } from '../dia0/datos.ts';
 import { irACompras, registrarCompra } from '../pantallas/inventario.ts';
+import { cambiarOpcionActiva } from '../pantallas/opciones.ts';
 import {
   cambiarElModoDelMenu,
   cambiarPrecio,
@@ -33,6 +34,14 @@ export interface PlanDeGerente {
     readonly producto: string;
     readonly desdeMinuto: number;
     readonly hastaMinuto: number;
+  };
+  /** Apaga una opción de un grupo (p. ej. «Tocino» de «Extras») y la vuelve a prender más tarde. */
+  readonly opciones?: {
+    readonly producto: string;
+    readonly grupo: string;
+    readonly opcion: string;
+    readonly apagaEnMinuto: number;
+    readonly prendeEnMinuto: number;
   };
   readonly precio?: {
     readonly producto: string;
@@ -165,7 +174,27 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeGerente): Prom
         p.enMinuto,
         minutos,
         async () => {
-          await cambiarPrecio(pagina, url, p.producto, p.despuesPesos);
+          const { editarExpuestoConElRenglonCerrado } = await cambiarPrecio(
+            pagina,
+            url,
+            p.producto,
+            p.despuesPesos,
+          );
+          if (editarExpuestoConElRenglonCerrado) {
+            await ctx.incidente(
+              {
+                pantalla: 'Recetas',
+                hizo: `Busqué «Editar receta» de ${p.producto} con su renglón cerrado`,
+                esperaba:
+                  'El contenido cerrado no se ve ni se puede tocar (o «Editar receta» está a la vista)',
+                paso: 'Con el renglón cerrado «Editar receta» seguía a la vista y el encabezado le interceptaba los clics: tocarlo directo agota el tiempo (45 s)',
+                gravedad: 'bajo',
+                clase: 'ux',
+                reproducido: '1/3',
+              },
+              pagina,
+            );
+          }
           const id = ctx.mundo.catalogo.find((c) => c.nombre === p.producto)?.id ?? p.producto;
           ctx.mundo.cambiosDePrecio.set(id, {
             antes: Math.round(p.antesPesos * 100),
@@ -181,6 +210,54 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeGerente): Prom
         },
         `cambiar el precio de ${p.producto}`,
       );
+    }
+    const o = plan.opciones;
+    if (o !== undefined) {
+      for (const [clave, enMinuto, activa] of [
+        ['opcion-apaga', o.apagaEnMinuto, false],
+        ['opcion-prende', o.prendeEnMinuto, true],
+      ] as const) {
+        const que = `${activa ? 'volver a prender' : 'apagar'} la opción «${o.opcion}» de ${o.grupo} en ${o.producto}`;
+        await paso(
+          clave,
+          enMinuto,
+          minutos,
+          async () => {
+            const quedo = await cambiarOpcionActiva(
+              pagina,
+              url,
+              o.producto,
+              o.grupo,
+              o.opcion,
+              activa,
+            );
+            const llave = `${o.producto}/${o.grupo}/${o.opcion}`;
+            if (activa) ctx.mundo.opcionesApagadas.delete(llave);
+            else ctx.mundo.opcionesApagadas.add(llave);
+            ctx.libro.anotar(bot.nombre, {
+              tipo: 'cambio_en_vivo',
+              que: `opción: ${llave}`,
+              antes: activa ? 'apagada' : 'activa',
+              despues: activa ? 'activa' : 'apagada',
+            });
+            if (quedo !== activa) {
+              await ctx.incidente(
+                {
+                  pantalla: 'Platillos → Opciones',
+                  hizo: `Guardé el platillo después de ${que}`,
+                  esperaba: `Al volver a abrirlo la opción sigue ${activa ? 'activa' : 'apagada'}`,
+                  paso: `La pantalla enseña la opción ${quedo ? 'activa' : 'apagada'}`,
+                  gravedad: 'alto',
+                  clase: 'ui',
+                  reproducido: 'no intentado',
+                },
+                pagina,
+              );
+            }
+          },
+          que,
+        );
+      }
     }
     const m = plan.modoDelMenu;
     if (m !== undefined) {

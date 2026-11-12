@@ -2,10 +2,10 @@
  * LAS OPCIONES DE UN PLATILLO (Platillos → «Opciones»): grupos de «elige una» o «elige varias»,
  * obligatorios o no, con mínimo y máximo y con precio en cada opción (positivo o negativo).
  */
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import type { GrupoDePrueba } from '../dia0/datos.ts';
-import { cerrado, dialogoCon, elegir } from './comun.ts';
+import { apareceEn, cerrado, dialogoCon, elegir } from './comun.ts';
 
 export async function irAPlatillos(pagina: Page, appUrl: string): Promise<void> {
   await pagina.goto(`${appUrl}/productos`, { waitUntil: 'domcontentloaded' });
@@ -18,8 +18,14 @@ export async function abrirOpciones(pagina: Page, platillo: string) {
   const tarjeta = pagina
     .getByText(platillo, { exact: true })
     .locator('xpath=ancestor::div[.//button[@title="Opciones de preparación / modificadores"]][1]');
-  await tarjeta.first().getByTitle('Opciones de preparación / modificadores').click();
   const dialogo = dialogoCon(pagina, `Opciones de ${platillo}`);
+  // Recién cargada la lista, el primer toque a veces cae antes de que la pantalla esté lista y no abre
+  // nada: se mira si abrió y, si no, se toca otra vez (hasta tres veces; luego sí falla).
+  for (let intento = 1; intento <= 3; intento += 1) {
+    await tarjeta.first().getByTitle('Opciones de preparación / modificadores').click();
+    if (await apareceEn(dialogo, 6_000)) break;
+    if (intento === 3) break;
+  }
   await expect(dialogo.getByRole('button', { name: 'Crear grupo nuevo' })).toBeVisible({
     timeout: 30_000,
   });
@@ -90,4 +96,56 @@ export async function guardarOpciones(pagina: Page, platillo: string): Promise<v
   )
     await confirmar.click();
   await cerrado(dialogo);
+}
+
+/** Abre el editor del grupo (botón «Editar» de su renglón) dentro del diálogo de opciones. */
+async function abrirElGrupo(pagina: Page, platillo: string, grupo: string): Promise<Locator> {
+  const dialogo = dialogoCon(pagina, `Opciones de ${platillo}`);
+  const renglon = dialogo.getByRole('listitem').filter({ hasText: grupo }).first();
+  await renglon.getByRole('button', { name: 'Editar', exact: true }).click();
+  await expect(dialogo.getByRole('button', { name: 'Aceptar grupo' })).toBeVisible();
+  return dialogo;
+}
+
+/** La posición (0, 1, …) de la opción dentro del editor del grupo abierto, por el nombre que lleva su campo. */
+async function posicionDeLaOpcion(dialogo: Locator, opcion: string): Promise<number> {
+  const nombres = dialogo.getByLabel(/^Nombre de la opción \d+$/);
+  const cuantas = await nombres.count();
+  for (let i = 0; i < cuantas; i += 1) {
+    if ((await nombres.nth(i).inputValue()) === opcion) return i;
+  }
+  throw new Error(`El grupo no tiene una opción llamada «${opcion}» (hay ${String(cuantas)}).`);
+}
+
+/**
+ * Enciende o apaga UNA opción de un grupo de un platillo (Platillos → Opciones → Editar → «Activa»),
+ * guarda, y vuelve a abrir para leer cómo quedó. Devuelve lo que la pantalla dice ya guardado.
+ */
+export async function cambiarOpcionActiva(
+  pagina: Page,
+  appUrl: string,
+  platillo: string,
+  grupo: string,
+  opcion: string,
+  activa: boolean,
+): Promise<boolean> {
+  await irAPlatillos(pagina, appUrl);
+  await abrirOpciones(pagina, platillo);
+  let dialogo = await abrirElGrupo(pagina, platillo, grupo);
+  let interruptor = dialogo
+    .getByRole('switch', { name: 'Activa', exact: true })
+    .nth(await posicionDeLaOpcion(dialogo, opcion));
+  if (((await interruptor.getAttribute('aria-checked')) === 'true') !== activa)
+    await interruptor.click();
+  await dialogo.getByRole('button', { name: 'Aceptar grupo' }).click();
+  await guardarOpciones(pagina, platillo);
+  // Se vuelve a abrir: lo que cuenta es lo que la pantalla enseña ya guardado, no lo que se tocó.
+  await abrirOpciones(pagina, platillo);
+  dialogo = await abrirElGrupo(pagina, platillo, grupo);
+  interruptor = dialogo
+    .getByRole('switch', { name: 'Activa', exact: true })
+    .nth(await posicionDeLaOpcion(dialogo, opcion));
+  const quedo = (await interruptor.getAttribute('aria-checked')) === 'true';
+  await pagina.keyboard.press('Escape');
+  return quedo;
 }

@@ -24,6 +24,8 @@ import {
   pausaDeCaos,
   type TipoDeCaos,
 } from './caos-cobro.ts';
+import { RITMO_POR_OMISION, type RitmoDeCaja } from './caja-descuento.ts';
+import { dividirYCobrar, reanudarLaDivision } from './caja-division.ts';
 import {
   cajonVacio,
   cobrarLaCuenta,
@@ -38,7 +40,7 @@ export interface PlanDeCaja {
   /** La persona que cobra (su PIN de prueba). */
   readonly persona: string;
   readonly aparato: NombreDeAparato;
-  /** A media jornada la caja pasa a este otro aparato («Traer esta caja aquí»). */
+  /** A media jornada la caja pasa a este otro aparato («Trasladar aquí»). */
   readonly traslado?: { readonly aparato: NombreDeAparato; readonly enMinuto: number };
   readonly fondoCentavos: number;
   /** Minutos simulados desde la apertura → monto. Los de más de $500 piden el PIN de la gerente. */
@@ -54,6 +56,8 @@ export interface PlanDeCaja {
   readonly cierraDespuesDe?: number;
   /** Probabilidad (por vuelta sin cuentas) de armar un pedido para llevar. */
   readonly paraLlevar: number;
+  /** Con qué frecuencia divide cuentas y da descuentos (con PIN y el intento sin PIN). Lo que falte vale lo de `RITMO_POR_OMISION`. */
+  readonly ritmo?: Partial<RitmoDeCaja>;
   /** El caos de esta cajera: a la cuenta número N le toca recargar, cerrar la pestaña, red caída o doble toque. */
   readonly caos?: readonly { readonly cuentaNumero: number; readonly tipo: TipoDeCaos }[];
 }
@@ -96,6 +100,7 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeCaja): Promise
   const cajon: CajonDelLibro = cajonVacio(plan.fondoCentavos);
   const apertura = ctx.ahoraSim().getTime();
   const hechos = { retiros: 0, entradas: 0, trasladada: false, cuentas: 0 };
+  const ritmo: RitmoDeCaja = { ...RITMO_POR_OMISION, ...plan.ritmo };
 
   /** Toma la siguiente cuenta pedida y la cobra. Si falla, la suelta (o la da por cobrada si la base ya la tiene). */
   const cobrarLaSiguiente = async (): Promise<boolean> => {
@@ -113,6 +118,12 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeCaja): Promise
         plan.caja,
         cuenta,
         tipo === undefined ? undefined : { tipo, contexto: sesion.contexto },
+        ritmo,
+        {
+          alAbrir: (cobro, propina) =>
+            dividirYCobrar(ctx, bot, pagina, plan.caja, cobro, cuenta, propina),
+          reanudar: (propina) => reanudarLaDivision(ctx, bot, pagina, plan.caja, cuenta, propina),
+        },
       );
       pagina = hecho.pagina;
       cajon.efectivoNetoCentavos += hecho.efectivo;
@@ -131,6 +142,23 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeCaja): Promise
       else cuenta.cobrandola = null;
     }
     return true;
+  };
+
+  /** «Entregado» a lo que la cocina dejó listo para llevar; si falla, queda como incidente. */
+  const entregarLoQueEstaListo = async (): Promise<void> => {
+    try {
+      if (new URL(pagina.url()).pathname !== '/caja') await irACaja(pagina, ctx.entorno.appUrl);
+      await entregarLoListo(pagina);
+    } catch (error: unknown) {
+      await registrarFallo(
+        ctx,
+        { bot, pantalla: 'Caja → Para llevar' },
+        pagina,
+        'Marcar «Entregado» un pedido para llevar listo',
+        'El pedido pasa a entregado',
+        error,
+      );
+    }
   };
 
   while (!ctx.terminado()) {
@@ -155,21 +183,18 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeCaja): Promise
       }
       await movimientos(ctx, bot, plan, pagina, cajon, minutos, hechos);
       if (await cobrarLaSiguiente()) continue;
+      // En cada vuelta ociosa se entrega lo que la cocina ya dejó listo para llevar (el cierre no deja pedidos sin entregar).
+      await entregarLoQueEstaListo();
       if (ctx.azar.probabilidad(plan.paraLlevar)) {
         await irACaja(pagina, ctx.entorno.appUrl);
         const r = ctx.azar.elegir(CATALOGO_LLEVAR);
-        cajon.efectivoNetoCentavos += await cobrarParaLlevar(ctx, bot, pagina, plan.caja, [
-          { ...r, veces: ctx.azar.entero(1, 3) },
-        ]);
-        await entregarLoListo(pagina).catch((error: unknown) =>
-          registrarFallo(
-            ctx,
-            { bot, pantalla: 'Caja → Para llevar' },
-            pagina,
-            'Marcar «Entregado» un pedido para llevar listo',
-            'El pedido pasa a entregado',
-            error,
-          ),
+        cajon.efectivoNetoCentavos += await cobrarParaLlevar(
+          ctx,
+          bot,
+          pagina,
+          plan.caja,
+          [{ ...r, veces: ctx.azar.entero(1, 3) }],
+          ritmo,
         );
       } else {
         await ctx.esperarSim(1);
@@ -252,7 +277,7 @@ async function movimientos(
   }
 }
 
-/** El traslado: se cierra el aparato viejo y la misma cajera, en el nuevo, trae la caja («Traer esta caja aquí»). */
+/** El traslado: se cierra el aparato viejo y la misma cajera, en el nuevo, trae la caja («Trasladar aquí»). */
 async function trasladar(
   ctx: ContextoDelBot,
   bot: Bot,
@@ -263,8 +288,8 @@ async function trasladar(
   await viejo.close();
   const nuevo = await abrirSesion(ctx, plan.persona, aparato);
   await irACaja(nuevo.pagina, ctx.entorno.appUrl);
-  // En el aparato nuevo la pantalla ofrece «Traer esta caja aquí» o ya enseña la caja abierta: se espera a una de las dos.
-  const traer = nuevo.pagina.getByRole('button', { name: 'Traer esta caja aquí' });
+  // En el aparato nuevo la pantalla ofrece «Trasladar aquí» o ya enseña la caja abierta: se espera a una de las dos.
+  const traer = nuevo.pagina.getByRole('button', { name: 'Trasladar aquí' });
   const aqui = nuevo.pagina.getByText(/^Caja abierta desde/);
   const cual = await esperarAlguno(nuevo.pagina, [traer, aqui], 45_000);
   if (cual === 0) {
@@ -273,7 +298,7 @@ async function trasladar(
       { bot, pantalla: 'Caja → Traer' },
       nuevo.pagina,
       'traer la caja a este aparato',
-      () => traerLaCaja(nuevo.pagina),
+      () => traerLaCaja(nuevo.pagina, plan.persona),
     );
   }
   ctx.libro.anotar(bot.nombre, { tipo: 'traslado', caja: plan.caja, de: plan.aparato, a: aparato });

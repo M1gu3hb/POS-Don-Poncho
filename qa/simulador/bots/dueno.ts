@@ -1,6 +1,7 @@
 /**
  * EL DUEÑO (PC): cuando las cajas ya cerraron mira el Tablero, recorre Registros (cortes, ventas,
- * compras, movimientos, gastos y auditoría), exporta los CSV, y hace el Cierre del día. Deja todo lo
+ * compras, movimientos, gastos y auditoría), exporta los CSV, revisa el historial de ventas y sus
+ * notas (`dueno-ventas.ts`) y hace el Cierre del día. Deja todo lo
  * que leyó en `<salida>/dia-N/dueno/` para que el árbitro lo compare contra el libro.
  */
 import { writeFileSync } from 'node:fs';
@@ -17,6 +18,7 @@ import {
 import { abrirSesion, medido, registrarFallo } from './comun.ts';
 import { carpetaDelDia } from '../arbitro/salida.ts';
 import { cierreDelDiaDelDueno } from './dueno-cierre.ts';
+import { revisarLasVentas } from './dueno-ventas.ts';
 
 export interface PlanDelDueno {
   /** Cuántas cajas tienen que haber cerrado antes del Cierre del día. */
@@ -105,6 +107,7 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDelDueno): Promi
     );
   }
   writeFileSync(join(carpeta, 'registros-conteos.json'), JSON.stringify(conteos, null, 2));
+  await revisarLasVentas(ctx, bot, pagina);
   await cierreDelDiaDelDueno(ctx, bot, pagina, carpeta);
   await contexto.close();
 }

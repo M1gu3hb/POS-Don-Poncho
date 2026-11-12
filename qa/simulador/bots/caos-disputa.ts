@@ -57,11 +57,11 @@ async function disputar(ctx: ContextoDelBot, bot: Bot): Promise<void> {
     };
     const titulo = `Mesa ${String(cuenta.mesa)}`;
     const rotulo = new RegExp(`Mesa ${String(cuenta.mesa)}\\b`);
-    const respuestas: Response[] = [];
-    for (const p of [uno, dos]) {
+    const respuestas: { caja: string; r: Response }[] = [];
+    for (const [i, p] of [uno, dos].entries()) {
       p.on('response', (r) => {
         if (new URL(r.url()).pathname === '/api/venta/cobrar' && r.request().method() === 'POST')
-          respuestas.push(r);
+          respuestas.push({ caja: CAJAS[i] ?? '', r });
       });
       await irACaja(p, ctx.entorno.appUrl);
     }
@@ -74,7 +74,8 @@ async function disputar(ctx: ContextoDelBot, bot: Bot): Promise<void> {
     await Promise.all(cobros.map((c) => c.getByRole('button', { name: /^Cobrar \$/ }).click()));
     await esperarQue(() => respuestas.length >= 2, 30_000);
     const cuerpos = await Promise.all(
-      respuestas.map(async (r) => ({
+      respuestas.map(async ({ caja, r }) => ({
+        caja,
         estado: r.status(),
         json: (await r.json()) as {
           ok?: boolean;
@@ -84,7 +85,13 @@ async function disputar(ctx: ContextoDelBot, bot: Bot): Promise<void> {
       })),
     );
     const buenos = cuerpos.filter((c) => c.estado === 200 && c.json.ok !== false);
-    const pagos = await vecesCobrada(ctx, cuenta.cuenta);
+    // El cobro que ganó puede tardar un instante en verse en la base: se le da hasta 15 s antes de decir que no está.
+    let pagos = await vecesCobrada(ctx, cuenta.cuenta);
+    const limitePagos = Date.now() + 15_000;
+    while (buenos.length > 0 && pagos === 0 && Date.now() < limitePagos) {
+      await new Promise((r) => setTimeout(r, 500));
+      pagos = await vecesCobrada(ctx, cuenta.cuenta);
+    }
     if (buenos.length !== 1 || pagos !== 1) {
       await ctx.incidente(
         {
@@ -102,14 +109,28 @@ async function disputar(ctx: ContextoDelBot, bot: Bot): Promise<void> {
       const ganador = buenos[0]?.json.datos;
       const avisoDelOtro =
         cuerpos.find((c) => c.estado !== 200)?.json.error?.mensaje ?? '(sin mensaje)';
+      if (avisoDelOtro === '(sin mensaje)') {
+        await ctx.incidente(
+          {
+            pantalla: lugar.pantalla,
+            hizo: `Las dos cajas tocaron «Cobrar» a la vez en la cuenta de la ${titulo}`,
+            esperaba: 'La caja que no cobró recibe un aviso claro (por qué no se cobró)',
+            paso: 'El servidor la rechazó sin ningún mensaje',
+            gravedad: 'medio',
+            clase: 'ux',
+            reproducido: 'no intentado',
+          },
+          uno,
+        );
+      }
       ctx.libro.anotar(bot.nombre, {
         tipo: 'cobro',
-        caja: 'Caja 1',
+        caja: buenos[0]?.caja ?? 'Caja 1',
         cuenta: cuenta.cuenta,
         folio: ganador?.folio ?? '',
         canal: 'mesa',
         totalCentavos: cuenta.esperadoCentavos,
-        propinaCentavos: 0,
+        propinaCentavos: cuenta.propinaCentavos ?? 0,
         descuentoCentavos: 0,
         pagos: { efectivo: 0, tarjeta: cuenta.esperadoCentavos, transferencia: 0 },
         cambioCentavos: 0,

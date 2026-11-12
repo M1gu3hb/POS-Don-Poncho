@@ -52,28 +52,41 @@ export async function marcarAgotado(
   await expect(dialogo).toBeHidden();
 }
 
-/** Cambia el precio de venta de un platillo por Recetas → «Editar receta». */
+/**
+ * Cambia el precio de venta de un platillo por Recetas → «Editar receta». Devuelve si, con el renglón
+ * CERRADO, «Editar receta» ya se veía y se podía tocar (un defecto de la pantalla: el contenido
+ * cerrado tapado sólo por el recorte, y el encabezado le intercepta los clics).
+ */
 export async function cambiarPrecio(
   pagina: Page,
   appUrl: string,
   platillo: string,
   pesos: number,
-): Promise<void> {
+): Promise<{ editarExpuestoConElRenglonCerrado: boolean }> {
   await pagina.goto(`${appUrl}/recetas`, { waitUntil: 'domcontentloaded' });
   await expect(pagina.getByText(platillo, { exact: true }).first()).toBeVisible({
     timeout: 60_000,
   });
   const tarjeta = pagina
     .getByText(platillo, { exact: true })
-    .locator('xpath=ancestor::div[.//button[normalize-space()="Editar receta"]][1]');
-  const editar = tarjeta.first().getByRole('button', { name: 'Editar receta' });
-  // Cada platillo es un acordeón: «Editar receta» sólo se toca con el renglón abierto (el chevron).
-  if (!(await editar.isVisible())) await tarjeta.first().getByRole('button').first().click();
+    .locator('xpath=ancestor::div[.//button[normalize-space()="Editar receta"]][1]')
+    .first();
+  const editar = tarjeta.getByRole('button', { name: 'Editar receta' });
+  // Cada platillo es un acordeón: «Editar receta» sólo se toca con el renglón abierto. Se mira el
+  // estado del encabezado (`aria-expanded`), no si el botón «se ve»: cerrado también «se ve».
+  const encabezado = tarjeta.locator('button[aria-expanded]').first();
+  const estabaCerrado = (await encabezado.getAttribute('aria-expanded')) === 'false';
+  const editarExpuestoConElRenglonCerrado = estabaCerrado && (await editar.isVisible());
+  if (estabaCerrado) {
+    await encabezado.click();
+    await expect(encabezado).toHaveAttribute('aria-expanded', 'true');
+  }
   await editar.click();
   const dialogo = dialogoCon(pagina, 'Editar receta');
   await dialogo.getByPlaceholder('0.00').first().fill(String(pesos));
   await dialogo.getByRole('button', { name: 'Guardar cambios' }).click();
   await cerrado(dialogo, 45_000);
+  return { editarExpuestoConElRenglonCerrado };
 }
 
 /** El modo del menú del comensal (Portal QR → Configuración → «Cómo se ve el menú»). */

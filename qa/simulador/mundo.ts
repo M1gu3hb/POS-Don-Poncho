@@ -95,6 +95,11 @@ export interface Mundo {
   porCobrar: CuentaPorCobrar[];
   /** Productos agotados hoy (el gerente o la cocina; los meseros no los piden). */
   agotados: Set<string>;
+  /**
+   * Opciones apagadas en vivo por la gerente, como «producto/grupo/opción». Las escribe la gerente;
+   * quien arma pedidos no debe elegirlas mientras estén aquí.
+   */
+  opcionesApagadas: Set<string>;
   /** Precio vigente por producto si cambió en vivo, con la hora simulada del cambio. */
   cambiosDePrecio: Map<string, { antes: number; despues: number; horaSim: number }>;
   /** Mesa → grupo con teléfonos (portal del QR). Lo escriben los comensales; lo lee el mesero. */
@@ -111,6 +116,7 @@ export function mundoVacio(): Mundo {
     atendidas: new Map(),
     porCobrar: [],
     agotados: new Set(),
+    opcionesApagadas: new Set(),
     cambiosDePrecio: new Map(),
     portal: new Map(),
     volumen: new Map(),

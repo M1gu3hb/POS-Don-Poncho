@@ -56,8 +56,11 @@ export function esperarPost(pagina: Page, ruta: string | RegExp, timeout = 30_00
       );
     });
   // Si el clic que la provoca falla antes de que alguien la espere, su tiempo vencido no tumba el proceso:
-  // quien la espera (`await`) sigue viendo el rechazo.
-  respuesta.catch(() => undefined);
+  // quien la espera (`await`) sigue viendo el rechazo. Aquí sólo se deja constancia (no se traga).
+  respuesta.catch((error: unknown) => {
+    process.stderr.write(`(espera de ${String(ruta)} vencida: ${String(error).slice(0, 120)})
+`);
+  });
   return respuesta;
 }
 
@@ -91,26 +94,38 @@ export async function esperarAlguno(
   const capa = pagina.getByRole('dialog', { name: /Modo espera/ });
   const limite = Date.now() + ms;
   while (Date.now() < limite) {
-    for (const [i, c] of controles.entries())
-      if (
-        await c
-          .first()
-          .isVisible()
-          .catch(() => false)
-      )
-        return i;
-    if (await capa.isVisible().catch(() => false)) {
+    for (const [i, c] of controles.entries()) if (await c.first().isVisible()) return i;
+    if (await capa.isVisible()) {
       // Dos toques: el primero arranca el clip de despertar y el segundo lo salta.
-      await capa.click({ timeout: 3_000 }).catch((error: unknown) => {
-        process.stderr.write(`(despertar: ${String(error).slice(0, 80)})\n`);
-      });
-      await capa.click({ timeout: 3_000 }).catch(() => undefined);
+      await tocarSiSigue(capa);
+      await tocarSiSigue(capa);
     }
     await pagina.waitForTimeout(500);
   }
   throw new Error(
     `Ninguno de los ${String(controles.length)} controles esperados apareció en ${String(ms / 1000)} s.`,
   );
+}
+
+/** Toca el control si sigue a la vista; si se fue entre mirarlo y tocarlo lo dice en la salida de error. */
+async function tocarSiSigue(control: Locator): Promise<void> {
+  if (!(await control.isVisible())) return;
+  try {
+    await control.click({ timeout: 3_000 });
+  } catch (error: unknown) {
+    process.stderr.write(`(toque que no llegó: ${String(error).slice(0, 100)})
+`);
+  }
+}
+
+/** Espera hasta `ms` a que el control se vea; dice si apareció. Sólo mira: no actúa ni se traga errores. */
+export async function apareceEn(control: Locator, ms: number): Promise<boolean> {
+  const limite = Date.now() + ms;
+  for (;;) {
+    if (await control.first().isVisible()) return true;
+    if (Date.now() >= limite) return false;
+    await control.page().waitForTimeout(250);
+  }
 }
 
 /** Espera a que desaparezca el diálogo (con margen: la copia a veces va lenta). */
