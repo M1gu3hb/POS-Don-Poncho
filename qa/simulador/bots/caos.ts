@@ -127,7 +127,7 @@ async function sesionVencida(ctx: ContextoDelBot, bot: Bot): Promise<void> {
   await contexto.clearCookies();
   await pagina.reload({ waitUntil: 'domcontentloaded' });
   const alLogin = await pagina
-    .waitForURL((u) => u.pathname.includes('login'), { timeout: 20_000 })
+    .waitForURL((u) => u.pathname.includes('login'), { timeout: 20_000, waitUntil: 'commit' })
     .then(
       () => true,
       () => false,
@@ -161,10 +161,16 @@ async function cambioDeUsuario(ctx: ContextoDelBot, bot: Bot): Promise<void> {
   const lugar = { bot, pantalla: 'Cambiar de persona' };
   const { contexto, pagina } = await abrirSesion(ctx, 'Mesero 6', 'pc-1920');
   await pagina.getByRole('button', { name: 'Salir' }).first().click();
-  await pagina.waitForURL((u) => u.pathname.includes('login'), { timeout: 20_000 });
+  await pagina.waitForURL((u) => u.pathname.includes('login'), {
+    timeout: 20_000,
+    waitUntil: 'commit',
+  });
   await elegirTarjeta(pagina, ctx, REPUESTO);
   await teclear(pagina, pinVigente(ctx.entorno, REPUESTO));
-  await pagina.waitForURL((u) => !u.pathname.includes('login'), { timeout: 30_000 });
+  await pagina.waitForURL((u) => !u.pathname.includes('login'), {
+    timeout: 30_000,
+    waitUntil: 'commit',
+  });
   const cuerpo = await pagina.locator('body').innerText();
   if (cuerpo.includes('Mesero 6')) {
     await ctx.incidente(

@@ -39,13 +39,14 @@ import { crearTelefonoDeCocina } from './bots/telefono-cocina.ts';
 import { abrirCliente, leerCatalogo } from './catalogo.ts';
 import { contextoPara, lectorDelReloj, type BaseDelDia } from './contexto-de-bots.ts';
 import { leerEntorno, type Entorno } from './entorno.ts';
-import { APERTURA_MIN, CIERRE_MIN, generarHorario, minutoDelDia } from './horario.ts';
+import { APERTURA_MIN, CIERRE_MIN, generarHorario } from './horario.ts';
 import { abrirRegistro, type Incidente } from './incidentes.ts';
 import { redactarIncidentes } from './informe-incidentes.ts';
 import { redactarInforme } from './informe.ts';
 import { abrirLibro } from './libro.ts';
 import { mundoVacio } from './mundo.ts';
 import { diaDeLaSemana, type DiaDeLaSemana } from './perfiles.ts';
+import { diaTerminado, minutosDesdeLaMedianoche } from './fin-del-dia.ts';
 import { fijarElReloj } from './reloj/fijar.ts';
 import { horaSimulada } from './reloj/formula.ts';
 import { crearAzar } from './semilla.ts';
@@ -62,8 +63,18 @@ function argumento(nombre: string): string | undefined {
   return i === -1 ? undefined : process.argv[i + 1];
 }
 
-/** El personal del día. Los nombres son los de la copia y los que crea el día 0. */
-function elPersonal(d: DiaDeLaSemana): Bot[] {
+/** Un bot y el minuto simulado (desde las 8:00) en que entra a trabajar. */
+interface Turno {
+  readonly bot: Bot;
+  readonly entra: number;
+}
+
+/**
+ * El personal del día. Los nombres son los de la copia y los que crea el día 0. Llegan escalonados,
+ * como en un restaurante: primero cocina y cajas, luego la gerencia y los meseros uno tras otro (20
+ * entradas con PIN a la vez ahogaban al servidor de la laptop).
+ */
+function elPersonal(d: DiaDeLaSemana): Turno[] {
   const aparatosDeMesero = [
     'android-360',
     'android-412',
@@ -88,17 +99,20 @@ function elPersonal(d: DiaDeLaSemana): Bot[] {
     { persona: 'Cocina Pulques', estacion: 'Pulques' },
   ].map((e) => crearEstacion({ ...e, marcaAgotados: e.estacion === 'Cocina' }));
   return [
-    ...meseros,
-    crearComensales({ maximoDeTelefonos: d.telefonos }),
-    ...estaciones,
-    crearTelefonoDeCocina({ persona: 'Cocina', estacion: 'Cocina' }),
-    crearTelefonoDeCocina({ persona: 'Cocina Parrilla', estacion: 'Parrilla' }),
-    ...d.cajas.map((plan) => crearBotCaja(plan)),
-    crearBotGerente(d.gerente),
-    crearBotAlmacen(d.almacen),
-    crearBotDueno({ cajas: d.cajas.length }),
-    crearBotCaos({ enMinuto: d.caosEnMinuto }),
-    crearBotDisputa({ enMinuto: d.disputaEnMinuto }),
+    ...estaciones.map((bot, i) => ({ bot, entra: i * 2 })),
+    ...d.cajas.map((plan, i) => ({ bot: crearBotCaja(plan), entra: 1 + i * 3 })),
+    { bot: crearTelefonoDeCocina({ persona: 'Cocina', estacion: 'Cocina' }), entra: 11 },
+    {
+      bot: crearTelefonoDeCocina({ persona: 'Cocina Parrilla', estacion: 'Parrilla' }),
+      entra: 13,
+    },
+    ...meseros.map((bot, i) => ({ bot, entra: 15 + i * 3 })),
+    { bot: crearBotGerente(d.gerente), entra: 34 },
+    { bot: crearBotAlmacen(d.almacen), entra: 37 },
+    { bot: crearComensales({ maximoDeTelefonos: d.telefonos }), entra: 30 },
+    { bot: crearBotDueno({ cajas: d.cajas.length }), entra: 40 },
+    { bot: crearBotCaos({ enMinuto: d.caosEnMinuto }), entra: 42 },
+    { bot: crearBotDisputa({ enMinuto: d.disputaEnMinuto }), entra: 44 },
   ];
 }
 
@@ -155,19 +169,18 @@ async function main(): Promise<void> {
   const cierre = finDelEnsayo ?? CIERRE_MIN;
   const tope = finDelEnsayo === null ? TOPE_DURO_MIN : finDelEnsayo + 90;
   const terminado = (): boolean => {
-    if (parar) return true;
-    const min = minutoDelDia(ahoraSim());
-    if (min >= tope) return true;
-    if (finDelEnsayo !== null && min >= finDelEnsayo) mundo.llegadas.length = 0;
-    return (
-      min >= cierre &&
-      mundo.llegadas.length === 0 &&
-      mundo.atendidas.size === 0 &&
-      mundo.porCobrar.length === 0
-    );
+    const minuto = minutosDesdeLaMedianoche(d.fecha, ahoraSim());
+    if (finDelEnsayo !== null && minuto >= finDelEnsayo) mundo.llegadas.length = 0;
+    return diaTerminado({
+      minuto,
+      cierre,
+      tope,
+      parar,
+      pendientes: mundo.llegadas.length + mundo.atendidas.size + mundo.porCobrar.length,
+    });
   };
   const base: BaseDelDia = { entorno, azar, libro, registro, tiempos, mundo, navegador, terminado };
-  const bots = elPersonal(d);
+  const turnos = elPersonal(d);
   const inicio = Date.now();
 
   // Si el día ya terminó y algún bot no sale en ESPERA_DE_SALIDA_MS, se cierra el navegador: los
@@ -183,9 +196,11 @@ async function main(): Promise<void> {
   }, 5_000);
 
   const resultados = await Promise.allSettled(
-    bots.map(async (bot) => {
+    turnos.map(async ({ bot, entra }) => {
       const ctx = contextoPara(base, bot);
       try {
+        if (entra > 0) await ctx.esperarSim(entra);
+        if (ctx.terminado()) return;
         await bot.correr(ctx);
       } catch (error: unknown) {
         await ctx.incidente({

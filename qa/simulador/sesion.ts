@@ -60,7 +60,10 @@ async function tocarTarjetaYTeclear(
   }
   const estado = (await delPin).status();
   if (estado === 200) {
-    await pagina.waitForURL((u) => !u.pathname.endsWith('/login-pos'), { timeout: ESPERA_MS });
+    await pagina.waitForURL((u) => !u.pathname.endsWith('/login-pos'), {
+      timeout: ESPERA_MS,
+      waitUntil: 'commit',
+    });
     return 'entro';
   }
   return estado === 423 || estado === 429 ? 'bloqueado' : 'pin_rechazado';
@@ -97,7 +100,10 @@ export async function salir(pagina: Page): Promise<void> {
     if (await menu.isVisible()) await menu.click({ timeout: ESPERA_MS });
   }
   await salirBtn.click({ timeout: ESPERA_MS });
-  await pagina.waitForURL((u) => u.pathname.endsWith('/login-pos'), { timeout: ESPERA_MS });
+  await pagina.waitForURL((u) => u.pathname.endsWith('/login-pos'), {
+    timeout: ESPERA_MS,
+    waitUntil: 'commit',
+  });
 }
 
 /** ¿Está el modo espera tapando la pantalla? */
@@ -137,7 +143,10 @@ export async function cambiarDePersona(
   const cambiar = pagina.getByRole('button', { name: 'Cambiar de persona' });
   if (await cambiar.isVisible()) {
     await cambiar.click({ timeout: ESPERA_MS });
-    await pagina.waitForURL((u) => u.pathname.endsWith('/login-pos'), { timeout: ESPERA_MS });
+    await pagina.waitForURL((u) => u.pathname.endsWith('/login-pos'), {
+      timeout: ESPERA_MS,
+      waitUntil: 'commit',
+    });
   } else {
     await salir(pagina);
   }
