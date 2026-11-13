@@ -2115,6 +2115,9 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
       const dialogo = beatriz.getByRole('dialog', { name: 'Cancelar la cuenta' });
       await dialogo.locator('#cancelar-cuenta-motivo').fill(motivo);
       await dialogo.getByRole('button', { name: 'Cancelar la cuenta sin cobrar' }).click();
+      // DP-18 · A19: con mesas unidas, cancelar pregunta lo mismo que liberar; aquí se dejan unidas.
+      await expect(dialogo.getByText('¿Separar mesas o dejarlas unidas?')).toBeVisible();
+      await dialogo.getByRole('button', { name: 'Dejarlas unidas' }).click();
       await expect(beatriz.getByText(/Ninguna cuenta está esperando cobro/)).toBeVisible();
 
       await test.step('el servidor la tiene cancelada, sin folio ni un solo pago, y las mesas siguen unidas', async () => {
@@ -2124,7 +2127,7 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         const cuenta = await leerCuenta(duena, principal.ordenId);
         expect(cuenta.folio, 'Una cuenta cancelada no consume folio.').toBeNull();
         expect(cuenta.pagos).toEqual({ efectivo: 0, tarjeta: 0, transferencia: 0 });
-        // DP-9.6: la unión es del salón; cancelar la cuenta no separa las mesas.
+        // DP-9.6: la unión es del salón; con «Dejarlas unidas», cancelar no separa las mesas.
         expect((await unionEnElServidor(duena, unionId)).cerradaEn).toBeNull();
       });
 
