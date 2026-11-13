@@ -40,6 +40,8 @@ export default defineConfig({
             // Los analizadores de las puertas: una puerta sin pruebas propias sólo se ha
             // visto fallar sobre el código real, y eso no dice si PUEDE aprobar.
             'scripts/**/*.test.ts',
+            // DP-18 · El simulador de la semana (`qa/simulador/`): su candado, su reloj y sus cuentas.
+            'qa/*/**/*.test.ts',
           ],
           exclude: [
             '**/node_modules/**',
