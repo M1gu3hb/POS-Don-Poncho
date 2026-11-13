@@ -16,6 +16,7 @@ import {
   type PestanaDeRegistros,
 } from '../pantallas/registros.ts';
 import { abrirSesion, medido, registrarFallo } from './comun.ts';
+import { asegurarSesion } from '../sesion.ts';
 import { carpetaDelDia } from '../arbitro/salida.ts';
 import { cierreDelDiaDelDueno } from './dueno-cierre.ts';
 import { revisarLasVentas } from './dueno-ventas.ts';
@@ -60,6 +61,13 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDelDueno): Promi
   const { contexto, pagina } = await abrirSesion(ctx, 'Dueño Don Poncho', 'pc-1920');
   const carpeta = join(carpetaDelDia(ctx.entorno.salida, ctx.entorno.dia), 'dueno');
   await esperarAlFinDelDia(ctx, plan);
+  // Entró a las 8:00 y lee al cierre, más de 8 h después: su sesión ya venció (quinta corrida del
+  // día 1: el bot se cayó y no bajó el CSV ni leyó el Tablero). Vuelve a entrar antes de leer.
+  try {
+    await asegurarSesion(pagina, ctx.entorno, 'Dueño Don Poncho');
+  } catch (error: unknown) {
+    await registrarFallo(ctx, lugar, pagina, 'Volver a entrar', 'La sesión del dueño sigue', error);
+  }
   const url = ctx.entorno.appUrl;
   try {
     const tablero = await medido(ctx, lugar, pagina, 'abrir el Tablero', () =>

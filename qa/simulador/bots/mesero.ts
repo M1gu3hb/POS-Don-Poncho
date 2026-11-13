@@ -151,7 +151,8 @@ class Mesero {
       (l) =>
         l.cantidad === 1 && c.enviadas.filter((o) => o.producto.id === l.producto.id).length === 1,
     );
-    if (unico !== undefined && c.enviadas.length >= 2 && ctx.azar.probabilidad(0.15)) {
+    // 0.3 y no 0.15: con 0.15 el día 1 dejó 7 cancelaciones y el mínimo es 15.
+    if (unico !== undefined && c.enviadas.length >= 2 && ctx.azar.probabilidad(0.3)) {
       const ok = await intentar(
         ctx,
         this.pagina,
@@ -286,10 +287,11 @@ class Mesero {
   async unirParaGrupoGrande(mesas: readonly MesaEnPantalla[]): Promise<void> {
     const { ctx } = this;
     const grande = this.cuentas.find(
-      (c) => c.personas >= 5 && c.ronda >= 1 && c.fase === 'abierta' && !c.unida,
+      // Desde 4 personas y con 0.7: con 5+ y 0.5 el día 1 dejó 3 uniones y el mínimo es 10.
+      (c) => c.personas >= 4 && c.ronda >= 1 && c.fase === 'abierta' && !c.unida,
     );
     const otra = mesas.find((m) => m.estado === 'Libre' && !ctx.mundo.atendidas.has(m.numero));
-    if (grande === undefined || otra === undefined || !ctx.azar.probabilidad(0.5)) return;
+    if (grande === undefined || otra === undefined || !ctx.azar.probabilidad(0.7)) return;
     ctx.mundo.atendidas.set(otra.numero, `${grande.cuenta}+`);
     grande.unida = true;
     const ok = await intentar(

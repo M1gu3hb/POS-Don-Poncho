@@ -7,6 +7,7 @@ import type { Bot, ContextoDelBot } from '../bot.ts';
 import { INSUMOS } from '../dia0/datos.ts';
 import { ajustarStock, irAInventario } from '../pantallas/inventario.ts';
 import { abrirSesion, medido, registrarFallo } from './comun.ts';
+import { asegurarSesion } from '../sesion.ts';
 
 const ALMACEN = 'Almacén';
 
@@ -64,6 +65,8 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeAlmacen): Prom
     if (hecho.has(clave) || minutos < enMinuto) return;
     hecho.add(clave);
     try {
+      // La sesión dura 8 h y la jornada 11: a media tarde se vuelve a entrar (quinta corrida del día 1).
+      await asegurarSesion(pagina, ctx.entorno, ALMACEN);
       await medido(ctx, lugar, pagina, dicho, accion);
     } catch (error: unknown) {
       await registrarFallo(

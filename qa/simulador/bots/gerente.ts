@@ -15,6 +15,7 @@ import {
   registrarGastoOperativo,
 } from '../pantallas/gerencia.ts';
 import { abrirSesion, medido, registrarFallo, GERENTE } from './comun.ts';
+import { asegurarSesion } from '../sesion.ts';
 
 export interface PlanDeGerente {
   readonly aparato: NombreDeAparato;
@@ -80,6 +81,8 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeGerente): Prom
     if (hecho.has(clave) || minutos < enMinuto) return;
     hecho.add(clave);
     try {
+      // La sesión dura 8 h y la jornada 11: a media tarde se vuelve a entrar (quinta corrida del día 1).
+      await asegurarSesion(pagina, ctx.entorno, GERENTE);
       await medido(ctx, lugar, pagina, dicho, accion);
     } catch (error: unknown) {
       await registrarFallo(ctx, lugar, pagina, dicho, 'El cambio queda guardado', error);
