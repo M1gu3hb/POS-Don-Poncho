@@ -16,11 +16,25 @@ export interface MesaEnPantalla {
   readonly estado: string;
 }
 
-/** La mesa como botón del mapa (escritorio y tableta) o de la lista (teléfono). */
+const CUALQUIER_MESA = new RegExp(`^\\d+\\s*(${ESTADOS})`);
+
+/**
+ * Las mesas que dicen `nombre`. En la lista del teléfono son botones; en el mapa de tableta y
+ * escritorio son `div` sin rol ni foco (hallazgo A15 del día 1: el Mesero 4, en tableta, no vio una
+ * sola mesa en todo el día). Ahí se toca el círculo por su texto, el más chico que lo dice.
+ */
+function mesasQueDicen(pagina: Page, nombre: RegExp): Locator {
+  const enLista = pagina.getByRole('button', { name: nombre });
+  const enMapa = pagina
+    .locator('div')
+    .filter({ hasText: nombre })
+    .filter({ hasNot: pagina.locator('div').filter({ hasText: CUALQUIER_MESA }) });
+  return enLista.or(enMapa);
+}
+
+/** La mesa como círculo del mapa (escritorio y tableta) o botón de la lista (teléfono). */
 export function botonDeMesa(pagina: Page, numero: number): Locator {
-  return pagina
-    .getByRole('button', { name: new RegExp(`^${String(numero)}\\s*(${ESTADOS})`) })
-    .first();
+  return mesasQueDicen(pagina, new RegExp(`^${String(numero)}\\s*(${ESTADOS})`)).first();
 }
 
 /** El diálogo de la mesa abierta: su nombre es el encabezado, «Mesa 1 Esperando orden 3». */
@@ -30,18 +44,17 @@ export function dialogoDeMesa(pagina: Page, numero: number): Locator {
 
 /** Las mesas que ve el mesero en su pantalla, con el estado que dice cada una. */
 export async function mesasEnPantalla(pagina: Page): Promise<MesaEnPantalla[]> {
-  const textos = await pagina
-    .getByRole('button', { name: new RegExp(`^\\d+\\s*(${ESTADOS})`) })
-    .allInnerTexts();
-  return textos.flatMap((t) => {
-    const partes = t
-      .split('\n')
-      .map((x) => x.trim())
-      .filter((x) => x !== '');
-    const numero = Number(partes[0]);
-    const estado = partes.find((x) => new RegExp(`^(${ESTADOS})$`).test(x));
-    return Number.isInteger(numero) && estado !== undefined ? [{ numero, estado }] : [];
-  });
+  const textos = await mesasQueDicen(pagina, CUALQUIER_MESA).allTextContents();
+  const lectura = new RegExp(`^\\s*(\\d+)\\s*(${ESTADOS})`);
+  const vistas = new Map<number, MesaEnPantalla>();
+  for (const t of textos) {
+    const m = lectura.exec(t.replace(/\s+/g, ' '));
+    const numero = Number(m?.[1]);
+    const estado = m?.[2];
+    if (Number.isInteger(numero) && estado !== undefined && !vistas.has(numero))
+      vistas.set(numero, { numero, estado });
+  }
+  return [...vistas.values()];
 }
 
 /** Cierra el diálogo que esté abierto (Escape) y espera a que no quede ninguno. */
