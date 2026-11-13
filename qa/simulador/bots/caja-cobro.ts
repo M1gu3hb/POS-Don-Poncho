@@ -119,6 +119,17 @@ export interface CuentaACobrar {
   readonly propinaPorcentaje?: number;
 }
 
+/** Lo que el libro ya tiene descontado a una cuenta (de intentos de cobro anteriores). */
+function descuentosAnotados(ctx: ContextoDelBot, cuenta: string): number {
+  return ctx.libro
+    .leer()
+    .reduce(
+      (s, f) =>
+        f.asiento.tipo === 'descuento' && f.asiento.cuenta === cuenta ? s + f.asiento.centavos : s,
+      0,
+    );
+}
+
 /** Con el diálogo de cobro ya abierto: descuento, comparación, pago y asiento. Devuelve el efectivo neto que quedó en el cajón. */
 export async function cobrarEnElDialogo(
   ctx: ContextoDelBot,
@@ -264,10 +275,14 @@ export async function cobrarLaCuenta(
     'abrir la cuenta pendiente',
     () => abrirLaCuenta(actual, rotulo, titulo, propina),
   );
+  // Una cuenta que ya trae descuento (de un intento anterior) no se divide: la app reparte el
+  // descuento entre las partes y lo que la cajera espera de cada una ya no sale del libro (D1-057 a
+  // D1-060, críticos falsos: la app lo repartió bien, $7.96 y $7.04 de $15).
   if (
     caos === undefined &&
     dividir !== undefined &&
     (cuenta.propinaCentavos ?? 0) === 0 &&
+    descuentosAnotados(ctx, cuenta.cuenta) === 0 &&
     ctx.azar.probabilidad(ritmo.dividir)
   ) {
     const porPartes = await dividir.alAbrir(cobro, propina);
