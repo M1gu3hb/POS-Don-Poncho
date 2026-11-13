@@ -63,10 +63,12 @@ async function sucursalDelRestaurante(baseUrl: string): Promise<string> {
 async function cuentasAbiertas(
   baseUrl: string,
   sucursal: string,
-): Promise<readonly { id: string; mesa: string | null; estado: string; parte: boolean }[]> {
+): Promise<
+  readonly { id: string; mesa: string | null; estado: string; canal: string; parte: boolean }[]
+> {
   return leerSql(
     baseUrl,
-    `select o.id, coalesce(m.numero, mm.numero)::text as mesa, o.estado,
+    `select o.id, coalesce(m.numero, mm.numero)::text as mesa, o.estado, o.canal,
         o.orden_padre_id is not null as parte
       from ordenes o
       left join mesas m on m.id = o.mesa_id
@@ -157,13 +159,20 @@ async function main(): Promise<void> {
     };
 
     for (const c of await cuentasAbiertas(entorno.baseUrl, sucursal)) {
-      const r = await llamar(pagina, '/api/restaurante/cancelar-orden', {
-        ordenId: c.id,
-        motivo: `Cierre forzado del simulador: la cuenta seguía abierta al terminar el día ${String(entorno.dia)}`,
-      });
+      // Un para llevar armado y sin cobrar es un borrador de la caja, no una cuenta de mesa: se
+      // descarta como lo hace la caja al cancelar su cobro (el día 3, cancelar-orden lo rechazó).
+      const esBorradorParaLlevar = c.canal === 'llevar' && c.estado === 'borrador';
+      const r = esBorradorParaLlevar
+        ? await llamar(pagina, '/api/restaurante/descartar-para-llevar', { ordenId: c.id })
+        : await llamar(pagina, '/api/restaurante/cancelar-orden', {
+            ordenId: c.id,
+            motivo: `Cierre forzado del simulador: la cuenta seguía abierta al terminar el día ${String(entorno.dia)}`,
+          });
       await anotar(
         {
-          que: `Cancelar ${c.parte ? 'una parte de ' : ''}la cuenta de la mesa ${c.mesa ?? '(sin mesa)'} (${c.estado})`,
+          que: esBorradorParaLlevar
+            ? 'Descartar un para llevar armado y sin cobrar'
+            : `Cancelar ${c.parte ? 'una parte de ' : ''}la cuenta de la mesa ${c.mesa ?? '(sin mesa)'} (${c.estado})`,
           ok: r.ok,
           detalle: r.ok ? 'cancelada' : `${String(r.estado)} ${r.mensaje}`,
         },
