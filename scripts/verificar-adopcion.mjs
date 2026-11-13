@@ -137,6 +137,18 @@ export const SIN_ESTADO = [
     estado: 'error',
     razon: 'No lee nada ni escribe: el guardado y su error son del diálogo del producto.',
   },
+  {
+    pantalla: 'inventario/FaltaElAlmacen',
+    estado: 'vacio',
+    razon:
+      'DP-18 (A4) · Pieza de Inventario y Compras, no pantalla: se pinta sólo cuando la sucursal no tiene almacén, que es su único caso.',
+  },
+  {
+    pantalla: 'inventario/FaltaElAlmacen',
+    estado: 'cargando',
+    razon:
+      'No lee nada: quien la pinta ya leyó los almacenes; su única espera es la del botón («Creando…») y su fallo se queda escrito en el aviso.',
+  },
   ...ESTADOS_DE_LA_COCINA_GRANDE(),
   {
     pantalla: 'catalogo/opciones/EditorDeGrupo',

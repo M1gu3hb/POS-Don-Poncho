@@ -94,6 +94,7 @@ export async function productosDeComanda(
       'p.agotado_hasta as agotadoHasta',
       'p.insumo_base_id as insumoBaseId',
       'ib.nombre as insumoBaseNombre',
+      'ib.unidad_base as unidadBaseDelInsumoBase',
       'i.id as insumoId',
       'i.unidad_base as unidadBaseInsumo',
     ])

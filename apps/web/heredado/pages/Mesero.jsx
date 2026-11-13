@@ -1920,12 +1920,14 @@ function Mesero() {
                       Boolean(mesaActiva.unida_a_mesa_id) ||
                       (mesas || []).some((m) => m.unida_a_mesa_id === mesaActiva.id),
                   }) && (
-                    <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`} className="w-full">
-                      <Button variant="outline" className="w-full">
+                    // A15: un solo control. El `Button` con `asChild` se vuelve el enlace; antes era
+                    // un botón DENTRO de un enlace (dos controles anidados para el teclado).
+                    <Button asChild variant="outline" className="w-full">
+                      <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`}>
                         <ArrowLeftRight className="w-4 h-4 mr-1" />
                         {textoDelEnlaceParaMoverLaCuenta(miPuesto)}
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   )}
               </div>
             </div>

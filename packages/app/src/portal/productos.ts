@@ -120,6 +120,8 @@ export async function cargarProductosDelMenu(
         // de `F1-01` §3). Traerlo aquí insinuaría que sí.
         insumoId: null,
         unidadBaseInsumo: null,
+        insumoBaseId: null,
+        unidadBaseDelInsumoBase: null,
       },
     });
   }

@@ -58,6 +58,8 @@ describe('D-17 · el precio lo pone el servidor, no el comensal', () => {
     permiteVentaSinStock: true,
     insumoId: null,
     unidadBaseInsumo: null,
+    insumoBaseId: null,
+    unidadBaseDelInsumoBase: null,
   };
 
   it('un pedido con un precio dentro NO se acepta: se rechaza entero', () => {

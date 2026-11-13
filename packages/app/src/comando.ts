@@ -68,6 +68,44 @@ export interface PeticionComando {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CLAVE_MINIMA = 8;
 
+/**
+ * Los SQLSTATE con que Postgres aborta UNA de dos transacciones que se cruzaron: interbloqueo
+ * (40P01) y conflicto de serialización (40001). La que pierde no dejó nada —se revirtió entera, con
+ * su clave de idempotencia y su auditoría—, así que repetirla es el remedio estándar, y es seguro
+ * porque ningún comando hace nada fuera de su transacción.
+ *
+ * Antes salían como ERROR_INTERNO (500): en la jornada simulada de DP-18 (A12) la estación tocó
+ * «Preparar» mientras el mesero quitaba un platillo de la misma orden y recibió un 500. Cualquier
+ * otro error no se repite: no mejora repitiéndose y repetirlo sólo taparía el defecto.
+ */
+const CONFLICTOS_DE_CONCURRENCIA: ReadonlySet<string> = new Set(['40P01', '40001']);
+const INTENTOS_ANTE_CONCURRENCIA = 3;
+
+function esConflictoDeConcurrencia(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof error.code === 'string' &&
+    CONFLICTOS_DE_CONCURRENCIA.has(error.code)
+  );
+}
+
+/** Corre `fn` y la repite (hasta 3 veces en total) si Postgres la abortó por concurrencia. */
+async function conReintentoAnteConcurrencia<T>(fn: () => Promise<T>): Promise<T> {
+  for (let intento = 1; ; intento += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (intento >= INTENTOS_ANTE_CONCURRENCIA || !esConflictoDeConcurrencia(error)) throw error;
+      // Una espera corta y desigual: si las dos se repitieran al mismo tiempo, se volverían a cruzar.
+      await new Promise((listo) =>
+        setTimeout(listo, 15 * intento + Math.floor(Math.random() * 25)),
+      );
+    }
+  }
+}
+
 /** Rechazo decidido dentro de la transacción: aborta y viaja con su código. */
 export function crearComando<TX>(deps: Dependencias<TX>) {
   const ahora = deps.ahora ?? (() => new Date());
@@ -112,164 +150,168 @@ export function crearComando<TX>(deps: Dependencias<TX>) {
     let entradaValidada: unknown;
 
     try {
-      const datos = await conTransaccion(async (tx) => {
-        // ── Paquete de la organización (A-42) ───────────────────────────────
-        const paquete = await repositorio.leerPaquete(tx, ambito.organizacionId);
-        // Fallar cerrado: si no se sabe qué contrató la organización, no se
-        // ejecuta. Un paquete ilegible no es un permiso.
-        if (paquete === null || !definicion.paquetes.includes(paquete)) {
-          throw new Rechazo('PAQUETE_NO_INCLUYE', 'denegado');
-        }
-
-        // ── Perilla de módulo (F-016) ───────────────────────────────────────
-        // Va DESPUÉS del paquete y ANTES de la entrada, por la misma razón que
-        // el rol: un módulo apagado no debe poder sondear el esquema del
-        // comando a base de entradas inválidas.
-        //
-        // Sólo se consulta si el comando declara módulo. Lo que ningún negocio
-        // puede apagar —cobrar, abrir caja, entrar— no lo declara, y por tanto
-        // no paga esta consulta.
-        if (definicion.modulo !== undefined) {
-          const activos = await repositorio.leerModulosActivos(tx, ambito.organizacionId);
-          // Fallar cerrado, igual que con el paquete: una organización de la
-          // que no se pudo leer el perfil no es una con todo encendido. La
-          // cadena opcional dice eso mismo: si `activos` es `null`, la
-          // comprobación vale `undefined` y el `!` la vuelve verdadera.
-          if (!activos?.has(definicion.modulo)) {
+      const datos = await conReintentoAnteConcurrencia(() =>
+        conTransaccion(async (tx) => {
+          // ── Paquete de la organización (A-42) ───────────────────────────────
+          const paquete = await repositorio.leerPaquete(tx, ambito.organizacionId);
+          // Fallar cerrado: si no se sabe qué contrató la organización, no se
+          // ejecuta. Un paquete ilegible no es un permiso.
+          if (paquete === null || !definicion.paquetes.includes(paquete)) {
             throw new Rechazo('PAQUETE_NO_INCLUYE', 'denegado');
           }
-        }
 
-        // ── Forma de la entrada ─────────────────────────────────────────────
-        const validada = validar(definicion.entrada, peticion.entrada);
-        if (!validada.ok) {
-          // No se audita: es ruido de teclado y de clientes viejos.
-          throw new Rechazo('ENTRADA_INVALIDA', null, validada.error);
-        }
-        entradaValidada = validada.datos;
+          // ── Perilla de módulo (F-016) ───────────────────────────────────────
+          // Va DESPUÉS del paquete y ANTES de la entrada, por la misma razón que
+          // el rol: un módulo apagado no debe poder sondear el esquema del
+          // comando a base de entradas inválidas.
+          //
+          // Sólo se consulta si el comando declara módulo. Lo que ningún negocio
+          // puede apagar —cobrar, abrir caja, entrar— no lo declara, y por tanto
+          // no paga esta consulta.
+          if (definicion.modulo !== undefined) {
+            const activos = await repositorio.leerModulosActivos(tx, ambito.organizacionId);
+            // Fallar cerrado, igual que con el paquete: una organización de la
+            // que no se pudo leer el perfil no es una con todo encendido. La
+            // cadena opcional dice eso mismo: si `activos` es `null`, la
+            // comprobación vale `undefined` y el `!` la vuelve verdadera.
+            if (!activos?.has(definicion.modulo)) {
+              throw new Rechazo('PAQUETE_NO_INCLUYE', 'denegado');
+            }
+          }
 
-        // ── Clave de idempotencia (R10) ─────────────────────────────────────
-        // Sólo para lo que ESCRIBE. Una lectura no tiene nada que no repetir, y guardarle
-        // la respuesta la congelaba: Cobrar abortaba su `caja.estado` al navegar, el
-        // cliente conservaba la clave del intento sin respuesta y la lectura siguiente
-        // —ya con la caja abierta— recibía la foto vieja, «la caja está cerrada» (bloque D
-        // de la 2.4). Para una lectura, la clave que traiga se ignora.
-        const clave = definicion.escribe ? peticion.idempotencyKey : undefined;
-        if (definicion.escribe && (clave === undefined || clave.length < CLAVE_MINIMA)) {
-          throw new Rechazo('IDEMPOTENCIA_REQUERIDA', null);
-        }
+          // ── Forma de la entrada ─────────────────────────────────────────────
+          const validada = validar(definicion.entrada, peticion.entrada);
+          if (!validada.ok) {
+            // No se audita: es ruido de teclado y de clientes viejos.
+            throw new Rechazo('ENTRADA_INVALIDA', null, validada.error);
+          }
+          entradaValidada = validada.datos;
 
-        if (clave !== undefined) {
-          const previa = await repositorio.leerEjecucion(
-            tx,
-            ambito.organizacionId,
-            definicion.nombre,
-            clave,
-          );
-          if (previa !== null) throw new Reintento(previa);
+          // ── Clave de idempotencia (R10) ─────────────────────────────────────
+          // Sólo para lo que ESCRIBE. Una lectura no tiene nada que no repetir, y guardarle
+          // la respuesta la congelaba: Cobrar abortaba su `caja.estado` al navegar, el
+          // cliente conservaba la clave del intento sin respuesta y la lectura siguiente
+          // —ya con la caja abierta— recibía la foto vieja, «la caja está cerrada» (bloque D
+          // de la 2.4). Para una lectura, la clave que traiga se ignora.
+          const clave = definicion.escribe ? peticion.idempotencyKey : undefined;
+          if (definicion.escribe && (clave === undefined || clave.length < CLAVE_MINIMA)) {
+            throw new Rechazo('IDEMPOTENCIA_REQUERIDA', null);
+          }
 
-          const reclamacion = await repositorio.reclamarClave(tx, {
-            organizacionId: ambito.organizacionId,
-            comando: definicion.nombre,
-            idempotencyKey: clave,
-            huellaEntrada: huella(validada.datos),
-            identidadId: ambito.identidadId,
-            correlationId,
-          });
-          // `duplicada` aquí significa que otra ejecución confirmó mientras
-          // ésta esperaba en el índice único. Se resuelve como reintento.
-          if (reclamacion === 'duplicada') {
-            const confirmada = await repositorio.leerEjecucion(
+          if (clave !== undefined) {
+            const previa = await repositorio.leerEjecucion(
               tx,
               ambito.organizacionId,
               definicion.nombre,
               clave,
             );
-            if (confirmada !== null) throw new Reintento(confirmada);
-            throw new Rechazo('COMANDO_EN_CURSO', 'conflicto');
-          }
-          if (reclamacion === 'ocupada') throw new Rechazo('COMANDO_EN_CURSO', 'conflicto');
-        }
+            if (previa !== null) throw new Reintento(previa);
 
-        // ── Frontera por sucursal (D-36) ────────────────────────────────────
-        // Después del rol, del paquete y de la forma, como todo lo que lee la base. Un id
-        // de OTRA sucursal, para quien opera en ésta, no existe: llega al cuerpo cambiado
-        // por uno que no existe en ninguna parte, y el comando contesta lo mismo que a un
-        // id al azar. Lo que se audita sigue siendo lo que se pidió.
-        const frontera =
-          definicion.sucursal === undefined ? null : fronteraDelAmbito(ambito, definicion.escribe);
-        const entrada =
-          definicion.sucursal === undefined || frontera === null
-            ? validada.datos
-            : await dentroDeLaSucursal(
-                definicion.sucursal,
-                validada.datos,
-                (tabla, ids) =>
-                  repositorio.fueraDeLaSucursal(
-                    tx,
-                    ambito.organizacionId,
-                    frontera.sucursalId,
-                    tabla,
-                    ids,
-                  ),
-                nuevoId,
+            const reclamacion = await repositorio.reclamarClave(tx, {
+              organizacionId: ambito.organizacionId,
+              comando: definicion.nombre,
+              idempotencyKey: clave,
+              huellaEntrada: huella(validada.datos),
+              identidadId: ambito.identidadId,
+              correlationId,
+            });
+            // `duplicada` aquí significa que otra ejecución confirmó mientras
+            // ésta esperaba en el índice único. Se resuelve como reintento.
+            if (reclamacion === 'duplicada') {
+              const confirmada = await repositorio.leerEjecucion(
+                tx,
+                ambito.organizacionId,
+                definicion.nombre,
+                clave,
               );
-
-        // ── Cuerpo ──────────────────────────────────────────────────────────
-        const rastro: { entidadId: string | null; payload: Record<string, unknown> }[] = [];
-        const pasosVistos = new Set<string>();
-
-        const ctx: ContextoComando<TX> = {
-          ambito,
-          correlationId,
-          ahora: instante,
-          tx,
-          async paso(nombre, fn) {
-            pasosVistos.add(nombre);
-            if (peticion.interrumpirEn === nombre) {
-              throw new Error(`paso interrumpido a propósito: ${nombre}`);
+              if (confirmada !== null) throw new Reintento(confirmada);
+              throw new Rechazo('COMANDO_EN_CURSO', 'conflicto');
             }
-            return fn();
-          },
-          auditar(entrada) {
-            rastro.push(entrada);
-          },
-        };
+            if (reclamacion === 'ocupada') throw new Rechazo('COMANDO_EN_CURSO', 'conflicto');
+          }
 
-        const salida = await definicion.ejecutar(ctx, entrada);
+          // ── Frontera por sucursal (D-36) ────────────────────────────────────
+          // Después del rol, del paquete y de la forma, como todo lo que lee la base. Un id
+          // de OTRA sucursal, para quien opera en ésta, no existe: llega al cuerpo cambiado
+          // por uno que no existe en ninguna parte, y el comando contesta lo mismo que a un
+          // id al azar. Lo que se audita sigue siendo lo que se pidió.
+          const frontera =
+            definicion.sucursal === undefined
+              ? null
+              : fronteraDelAmbito(ambito, definicion.escribe);
+          const entrada =
+            definicion.sucursal === undefined || frontera === null
+              ? validada.datos
+              : await dentroDeLaSucursal(
+                  definicion.sucursal,
+                  validada.datos,
+                  (tabla, ids) =>
+                    repositorio.fueraDeLaSucursal(
+                      tx,
+                      ambito.organizacionId,
+                      frontera.sucursalId,
+                      tabla,
+                      ids,
+                    ),
+                  nuevoId,
+                );
 
-        // Si se pidió interrumpir un paso y el comando terminó sin ejecutarlo,
-        // el nombre está mal escrito. Dejarlo pasar haría que la prueba de
-        // inyección afirmara una atomicidad que nadie probó.
-        if (peticion.interrumpirEn !== undefined && !pasosVistos.has(peticion.interrumpirEn)) {
-          throw new PasoInexistente(peticion.interrumpirEn);
-        }
+          // ── Cuerpo ──────────────────────────────────────────────────────────
+          const rastro: { entidadId: string | null; payload: Record<string, unknown> }[] = [];
+          const pasosVistos = new Set<string>();
 
-        // ── Auditoría del éxito, DENTRO de la transacción ───────────────────
-        if (definicion.escribe) {
-          const primero = rastro[0];
-          if (primero === undefined) throw new SinRastro(definicion.nombre);
-          await auditar(repositorio, tx, {
-            definicion,
+          const ctx: ContextoComando<TX> = {
             ambito,
             correlationId,
-            entidadId: primero.entidadId,
-            payload: { resultado: 'ok', entrada: validada.datos, ...primero.payload },
-          });
-        }
-
-        if (clave !== undefined) {
-          await repositorio.completarEjecucion(tx, {
-            organizacionId: ambito.organizacionId,
-            comando: definicion.nombre,
-            idempotencyKey: clave,
-            respuesta: salida,
             ahora: instante,
-          });
-        }
+            tx,
+            async paso(nombre, fn) {
+              pasosVistos.add(nombre);
+              if (peticion.interrumpirEn === nombre) {
+                throw new Error(`paso interrumpido a propósito: ${nombre}`);
+              }
+              return fn();
+            },
+            auditar(entrada) {
+              rastro.push(entrada);
+            },
+          };
 
-        return salida;
-      });
+          const salida = await definicion.ejecutar(ctx, entrada);
+
+          // Si se pidió interrumpir un paso y el comando terminó sin ejecutarlo,
+          // el nombre está mal escrito. Dejarlo pasar haría que la prueba de
+          // inyección afirmara una atomicidad que nadie probó.
+          if (peticion.interrumpirEn !== undefined && !pasosVistos.has(peticion.interrumpirEn)) {
+            throw new PasoInexistente(peticion.interrumpirEn);
+          }
+
+          // ── Auditoría del éxito, DENTRO de la transacción ───────────────────
+          if (definicion.escribe) {
+            const primero = rastro[0];
+            if (primero === undefined) throw new SinRastro(definicion.nombre);
+            await auditar(repositorio, tx, {
+              definicion,
+              ambito,
+              correlationId,
+              entidadId: primero.entidadId,
+              payload: { resultado: 'ok', entrada: validada.datos, ...primero.payload },
+            });
+          }
+
+          if (clave !== undefined) {
+            await repositorio.completarEjecucion(tx, {
+              organizacionId: ambito.organizacionId,
+              comando: definicion.nombre,
+              idempotencyKey: clave,
+              respuesta: salida,
+              ahora: instante,
+            });
+          }
+
+          return salida;
+        }),
+      );
 
       return { ok: true, datos, correlationId, reintento: false };
     } catch (error) {

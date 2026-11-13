@@ -62,11 +62,25 @@ export default function MesaShape({
     ? `linear-gradient(135deg, ${shade(cfg.fill, 6)} 0%, ${cfg.fill} 100%)`
     : `linear-gradient(135deg, ${cfg.fill} 0%, ${shade(cfg.fill, -8)} 100%)`;
 
+  // A15 (simulador de jornada): en tableta y escritorio la mesa del mapa era un `div` con clic: ni
+  // Tab, ni Enter, ni nombre para el lector de pantalla. Con clic es un BOTÓN (rol, foco, Enter y
+  // Espacio) y su nombre sale de lo que pinta —«12 Esperando entrega Carlos · 4 pers.»—, igual que
+  // el botón de la rejilla del teléfono (`MesaGridMobile`). Los emojis ya son `aria-hidden`.
+  const esBoton = typeof onClick === 'function';
+  const alTeclear = (e) => {
+    // Sólo la tecla que llega a la mesa misma; nada de lo que se teclee dentro se la roba.
+    if (e.target !== e.currentTarget) return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    onClick(e);
+  };
+
   return (
+    // La caja de afuera pone la mesa en el plano y lleva los globos de solicitud: son botones, y un
+    // botón no puede llevar otro adentro, así que cuelgan de ella y no de la mesa.
     <div
       // DP-12.2: el mapa reconoce la mesa mantenida presionada (`usePulsacionLarga`).
       data-mesa-id={mesa.id}
-      onClick={onClick}
       draggable={draggable}
       onDragStart={onDragStart}
       className={`${inline ? 'relative' : 'absolute'} cursor-pointer transition-transform hover:scale-105 active:scale-95 select-none [-webkit-touch-callout:none]`}
@@ -74,24 +88,33 @@ export default function MesaShape({
         ...(inline ? {} : { left: mesa.posicion_x ?? 100, top: mesa.posicion_y ?? 100 }),
         width: dim.w,
         height: dim.h,
-        background: bgGradient,
-        border: `${borderWidth} solid ${borderColor}`,
-        borderRadius,
-        boxShadow: finalShadow,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        color: cfg.text,
-        // Reflejo premium sutil arriba (más visible en light, sutil en dark)
-        backgroundImage:
-          bgGradient +
-          (isDark
-            ? ', linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 30%)'
-            : ', linear-gradient(to bottom, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 30%)'),
       }}
     >
       {globos}
+      <div
+        {...(esBoton ? { role: 'button', tabIndex: 0, onClick, onKeyDown: alTeclear } : {})}
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          background: bgGradient,
+          border: `${borderWidth} solid ${borderColor}`,
+          borderRadius,
+          boxShadow: finalShadow,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          color: cfg.text,
+          // Reflejo premium sutil arriba (más visible en light, sutil en dark)
+          backgroundImage:
+            bgGradient +
+            (isDark
+              ? ', linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 30%)'
+              : ', linear-gradient(to bottom, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 30%)'),
+        }}
+      >
       {responsableColor && (
         // Punto del color del mesero — más grande y notorio que antes
         // para que la asignación se vea de un vistazo incluso de lejos.
@@ -213,6 +236,7 @@ export default function MesaShape({
           </span>
         );
       })()}
+      </div>
     </div>
   );
 }

@@ -41,7 +41,9 @@ const LECTURAS_PERMITIDAS = [
     // 41 desde DP-9.5: se fue el carrito local del portal (`CarritoQR`), que lo leía del snapshot.
     // 40 desde DP-12.6: se fue la pastilla de Ventas, que lo leía de una venta que nunca lo trae.
     // 42 desde DP-16: la toma del pedido para llevar (`useArmadoDelPedido`) lee el producto.
-    cantidad: 42,
+    // 46 desde DP-18: los dos diálogos que crean un producto (Recetas y Productos) deciden con el
+    // tipo de venta de SU formulario si mandan la unidad y los ml por porción.
+    cantidad: 46,
     razon: 'Las lecturas son de ProductoTerminado y PedidoPreparacionItem, donde sí está mapeado.',
   },
   {

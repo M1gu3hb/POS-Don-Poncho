@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useId } from 'react';
 import { api, nuevaClave } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePOSAuth } from '@/lib/POSAuthContext';
@@ -147,6 +147,8 @@ const TIPOS_DE_PROPINA = [
 const ORIGENES_DE_PROPINA = ['mesero', 'caja', 'tradicional', 'portal_qr', 'pendiente_portal_qr'];
 
 export default function Caja() {
+  // A17: los seis campos del pago mixto (venta y propina) llevan su etiqueta asociada por `id`.
+  const idMixto = useId();
   const { posUser } = usePOSAuth();
   const { config, paquete_modo } = useConfig();
   const queryClient = useQueryClient();
@@ -1761,10 +1763,16 @@ export default function Caja() {
             )}
             {metodoPago === 'mixto' && (
               <>
-                <div className="grid grid-cols-3 gap-2">
+                <fieldset
+                  aria-label="Pago de la venta, por método"
+                  className="grid grid-cols-3 gap-2 min-w-0"
+                >
                   <div>
-                    <Label className="text-xs">Efectivo</Label>
+                    <Label htmlFor={`${idMixto}-venta-efectivo`} className="text-xs">
+                      Efectivo
+                    </Label>
                     <NumericInput
+                      id={`${idMixto}-venta-efectivo`}
                       value={montoEfectivo}
                       onChange={(e) => setMontoEfectivo(e.target.value)}
                       placeholder="0"
@@ -1772,8 +1780,11 @@ export default function Caja() {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Tarjeta</Label>
+                    <Label htmlFor={`${idMixto}-venta-tarjeta`} className="text-xs">
+                      Tarjeta
+                    </Label>
                     <NumericInput
+                      id={`${idMixto}-venta-tarjeta`}
                       value={montoTarjeta}
                       onChange={(e) => setMontoTarjeta(e.target.value)}
                       placeholder="0"
@@ -1781,15 +1792,18 @@ export default function Caja() {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Transfer.</Label>
+                    <Label htmlFor={`${idMixto}-venta-transferencia`} className="text-xs">
+                      Transfer.
+                    </Label>
                     <NumericInput
+                      id={`${idMixto}-venta-transferencia`}
                       value={montoTransferencia}
                       onChange={(e) => setMontoTransferencia(e.target.value)}
                       placeholder="0"
                       className="mt-1"
                     />
                   </div>
-                </div>
+                </fieldset>
                 {/* Los tres importes son la VENTA por método, sin la propina: la propina se
                     desglosa abajo. Decirlo aquí evita el «El pago excede el total» de quien
                     teclea la tarjeta con la propina dentro. */}
@@ -1818,17 +1832,21 @@ export default function Caja() {
 
                 {/* ¿Cómo se pagó la propina? — exacta, no proporcional */}
                 {(Number(ventaSeleccionada?.propina_monto) || 0) > 0 && (
-                  <div className="p-3 rounded-xl bg-peligro/10 border-2 border-peligro/30">
-                    <p className="text-xs font-bold text-peligro mb-2">
+                  <fieldset className="p-3 rounded-xl bg-peligro/10 border-2 border-peligro/30 min-w-0">
+                    {/* A17: el grupo se llama «¿Cómo se pagó la propina?», para distinguirlo del de la venta. */}
+                    <legend className="text-xs font-bold text-peligro mb-2">
                       ¿Cómo se pagó la propina?{' '}
                       <span className="font-mono">
                         {formatCurrency(Number(ventaSeleccionada?.propina_monto) || 0)}
                       </span>
-                    </p>
+                    </legend>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
-                        <Label className="text-[10px]">Efectivo</Label>
+                        <Label htmlFor={`${idMixto}-propina-efectivo`} className="text-[10px]">
+                          Efectivo
+                        </Label>
                         <NumericInput
+                          id={`${idMixto}-propina-efectivo`}
                           value={propinaEfectivo}
                           onChange={(e) => setPropinaEfectivo(e.target.value)}
                           placeholder="0"
@@ -1836,8 +1854,11 @@ export default function Caja() {
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px]">Tarjeta</Label>
+                        <Label htmlFor={`${idMixto}-propina-tarjeta`} className="text-[10px]">
+                          Tarjeta
+                        </Label>
                         <NumericInput
+                          id={`${idMixto}-propina-tarjeta`}
                           value={propinaTarjeta}
                           onChange={(e) => setPropinaTarjeta(e.target.value)}
                           placeholder="0"
@@ -1845,8 +1866,11 @@ export default function Caja() {
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px]">Transfer.</Label>
+                        <Label htmlFor={`${idMixto}-propina-transferencia`} className="text-[10px]">
+                          Transfer.
+                        </Label>
                         <NumericInput
+                          id={`${idMixto}-propina-transferencia`}
                           value={propinaTransferencia}
                           onChange={(e) => setPropinaTransferencia(e.target.value)}
                           placeholder="0"
@@ -1871,7 +1895,7 @@ export default function Caja() {
                         </p>
                       );
                     })()}
-                  </div>
+                  </fieldset>
                 )}
               </>
             )}
