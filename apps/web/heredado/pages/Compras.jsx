@@ -15,6 +15,8 @@ import RegistrarGastoDialog from '@/components/compras/RegistrarGastoDialog';
 import PlantillasGastoSection from '@/components/compras/PlantillasGastoSection';
 import LoadingState from '@/components/common/LoadingState';
 import { claves } from '~/cliente/claves-de-consulta';
+import { almacenPrincipal, leerAlmacenes } from '~/inventario/almacen-de-la-sucursal';
+import { FaltaElAlmacen } from '~/inventario/FaltaElAlmacen';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 
 /**
@@ -52,6 +54,16 @@ export default function Compras() {
     enabled: registra,
   });
 
+  // DP-18 (A4) · Sin almacén `compras.registrar` responde 422 y ninguna pantalla lo creaba.
+  // Quien registra compras lo ve aquí y lo crea con un toque.
+  const { data: almacenes, refetch: releerAlmacenes } = useQuery({
+    queryKey: ['almacenes_de_la_sucursal'],
+    queryFn: ({ signal }) => leerAlmacenes(signal),
+    staleTime: 30000,
+    enabled: registra,
+  });
+  const sinAlmacen = Array.isArray(almacenes) && almacenPrincipal(almacenes) === null;
+
   const safeIngredientes = Array.isArray(ingredientes) ? ingredientes : [];
   const safeCompras = Array.isArray(compras) ? compras : [];
   const safeGastos = Array.isArray(gastos) ? gastos : [];
@@ -70,6 +82,8 @@ export default function Compras() {
           Las compras y los gastos los registra la gerencia. Aquí ves las compras recientes.
         </p>
       )}
+
+      {registra && sinAlmacen && <FaltaElAlmacen onCreado={() => releerAlmacenes()} />}
 
       {/* Acciones grandes */}
       {registra && (
