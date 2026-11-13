@@ -168,3 +168,20 @@ Parte 2. Luego la semana. La Parte 5 espera la elección de Miguel.
   carrito sin nombre (A13), botones repetidos al dividir (A14), el mapa de mesas sin rol ni foco en
   tableta y escritorio (A15), el diálogo del portal en modo mesero que se sale de la pantalla a 360 px
   (A16) y los campos del pago mixto sin etiqueta (A17).
+- **13-11, cambio de prioridades (entrega el lunes 16):** las fallas que estorbaban para operar el
+  lunes (A1–A4, A11 decidido en DP-D115, A12, A15, A16, A17) se arreglaron en una rama aparte y están
+  en producción (#26, f8420ba). El resto de A1–A18 queda para la Parte 4. Una falla del simulador ya
+  no detiene el día: se anota como prueba mal hecha, se esquiva y el día sigue.
+- **Día 1, quinta corrida (×3, completa, aceptada con notas):** 258 min reales. 207 cobros por
+  $133,911.74 (128 de mesa, 79 para llevar), 119 cuentas, 927 renglones, 32 descuentos, 10 divisiones,
+  24 cambios de mesa, 3 uniones, 7 cancelaciones, 7 retiros, 2 gastos, 3 compras, 2 mermas. 9 críticos,
+  todos falsos (propina de las partes de una cuenta «Sin propina» del portal); el libro cuadró 1696 de
+  1703 (3 propinas del guion, 2 de inventario del build viejo —A3, ya en producción— y 2 del dueño, que
+  se cayó con la sesión vencida). Guardada en `corridas\d1-rep4\`.
+- **El día 1 no cerró:** llegó al tope de las 20:30 con 12 mesas ocupadas, 6 grupos en fila y sus dos
+  cajas abiertas, y el día 2 no pudo abrir caja (cupo de 2). Prueba mal hecha: `cierre-forzado.ts`
+  cerró por la app lo que quedó (9 cuentas canceladas con motivo; Caja 30 y Caja 49 cerradas contando
+  justo lo esperado) y corre ya al final de cada día. Para que no se repita (96fc0da): quien espera mesa
+  más de 45 min se va, a las 18:45 ya no se sienta a nadie, ninguna estancia pasa de las 19:00 y la
+  cajera vuelve a entrar antes de cerrar si su sesión venció (A18: la sesión dura 8 h y el día 11).
+- **Días 2 a 7:** en cadena con `D:\mpos-tmp\dp18\correr-la-semana.sh 2 7` desde el 13-11, 02:45.
