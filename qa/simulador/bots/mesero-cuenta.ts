@@ -262,7 +262,14 @@ export async function confirmarPedidoDelPortal(
   const portal = pagina.getByRole('dialog', { name: 'Portal de la mesa · modo mesero' });
   await portal.waitFor({ timeout: ESPERA_MS });
   const abrir = portal.getByRole('button', { name: 'Abrir la mesa' });
-  if (await abrir.isVisible({ timeout: 3_000 }).catch(() => false)) {
+  // El carrito del portal llega después del diálogo: se espera a que diga qué toca (abrir la mesa o
+  // confirmar). Antes se miraba al instante, no se veía «Abrir la mesa» y se esperaba un «Confirmar»
+  // que nunca iba a salir (D1-013).
+  await abrir
+    .or(portal.getByRole('button', { name: 'Confirmar y enviar a cocina' }))
+    .first()
+    .waitFor({ timeout: ESPERA_MS });
+  if (await abrir.isVisible()) {
     await portal
       .getByText('Personas', { exact: true })
       .locator('xpath=following::input[1]')
