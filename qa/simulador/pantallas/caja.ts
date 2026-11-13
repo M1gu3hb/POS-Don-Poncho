@@ -237,6 +237,16 @@ async function elegirElPago(cobro: Locator, pago: Pago): Promise<void> {
     if (pago.tarjetaCentavos > 0) await partes.nth(1).fill(pesos(pago.tarjetaCentavos));
     if (pago.transferenciaCentavos > 0) await partes.nth(2).fill(pesos(pago.transferenciaCentavos));
     await expect(cobro.getByText(/queda cubierta\.$/)).toBeVisible();
+    // Con propina, la pantalla pide además «¿Cómo se pagó la propina?» (exacta, sus propios tres
+    // campos, después de los de la venta). La cajera la recibe en efectivo; el importe se lee de la
+    // pantalla. Sin esto el cobro quedaba trabado (D1-026).
+    const propina = cobro.getByText(/^¿Cómo se pagó la propina\?/).first();
+    if (await propina.isVisible()) {
+      const monto = /\$([\d,]+\.\d\d)/.exec(await propina.innerText())?.[1];
+      if (monto === undefined) throw new Error('No pude leer la propina del pago mixto.');
+      await partes.nth(3).fill(monto.replaceAll(',', ''));
+      await expect(cobro.getByText(/debe ser igual a la propina total/)).toBeHidden();
+    }
   }
 }
 

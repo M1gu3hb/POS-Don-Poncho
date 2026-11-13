@@ -132,9 +132,20 @@ export async function cobrarEnElDialogo(
   ritmo: RitmoDeCaja | null = null,
 ): Promise<number> {
   const lugar = { bot, pantalla: 'Caja → Cobrar' };
+  // Un intento anterior que falló después de descontar dejó el descuento en la cuenta (y en el
+  // libro): se cuenta y no se descuenta otra vez (D1-027 y D1-028, críticos falsos).
+  const yaDescontado = ctx.libro
+    .leer()
+    .reduce(
+      (s, f) =>
+        f.asiento.tipo === 'descuento' && f.asiento.cuenta === c.cuenta
+          ? s + f.asiento.centavos
+          : s,
+      0,
+    );
   const descuento =
-    ritmo === null
-      ? 0
+    ritmo === null || yaDescontado > 0
+      ? yaDescontado
       : await descuentosDelCobro(ctx, bot, pagina, cobro, c.cuenta, c.esperadoCentavos, ritmo);
   const esperado = c.esperadoCentavos - descuento;
   const acordada =
