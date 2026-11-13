@@ -12,7 +12,12 @@ import type { Locator, Page } from '@playwright/test';
 
 import type { Bot, ContextoDelBot } from '../bot.ts';
 import { contar, type CuentaPorCobrar } from '../mundo.ts';
-import { abrirLaCuenta, totalEnPantalla, type Propina } from '../pantallas/caja.ts';
+import {
+  abrirLaCuenta,
+  laCajaDecidioLaPropina,
+  totalEnPantalla,
+  type Propina,
+} from '../pantallas/caja.ts';
 import {
   abrirLaDivision,
   confirmarLaDivision,
@@ -197,15 +202,18 @@ async function cobrarLasPartes(
           alOcultarse,
         ),
     );
-    // La parte nace sin propina: la que la cajera eligió al abrirla se suma al «TOTAL A COBRAR».
+    // La parte nace sin propina: la que la cajera eligió al abrirla se suma al «TOTAL A COBRAR»…
+    // si la pantalla se la preguntó. Una cuenta del portal donde el cliente eligió «Sin propina» no
+    // la pregunta, y sus partes van sin propina (D1-011 a D1-016, críticos falsos de la quinta corrida).
+    const deLaCaja: Propina = laCajaDecidioLaPropina(pagina) ? propina : 'Sin propina';
     const enPantalla = await totalEnPantalla(parte);
-    const venta = estado.esperadas?.[n - 1] ?? ventaSegunLaPantalla(enPantalla, propina);
+    const venta = estado.esperadas?.[n - 1] ?? ventaSegunLaPantalla(enPantalla, deLaCaja);
     estado.efectivo += await cobrarEnElDialogo(ctx, bot, pagina, caja, parte, {
       cuenta: cuenta.cuenta,
       canal: 'mesa',
       esperadoCentavos: venta,
       rotulo: `la parte ${titulo}`,
-      propinaAcordadaCentavos: propinaDe(venta, propina),
+      propinaAcordadaCentavos: propinaDe(venta, deLaCaja),
     });
     estado.sumaEnPantalla += venta;
   }
