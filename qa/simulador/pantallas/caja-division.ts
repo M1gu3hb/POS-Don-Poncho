@@ -8,6 +8,8 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 import { cerrado, dialogoCon, esperarPost } from './comun.ts';
 
+const escaparRegExp = (texto: string): string => texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /** Un renglón de la tabla de dividir: el platillo y cuántas unidades hay por repartir. */
 export interface RenglonPorRepartir {
   readonly nombre: string;
@@ -74,9 +76,11 @@ export async function repartirUnidades(
       const nombre = renglones[i]?.nombre;
       if (nombre === undefined)
         throw new Error(`El reparto nombra un renglón (${String(i)}) que no existe.`);
+      // DP-18 · A14: con dos rondas del mismo platillo la app le pone «(ronda N)» al nombre.
       const mas = filas.nth(i).getByRole('button', {
-        name: `Añadir ${nombre} a la cuenta ${String(cuenta + 1)}`,
-        exact: true,
+        name: new RegExp(
+          `^Añadir ${escaparRegExp(nombre)}(?: \\(ronda \\d+\\))? a la cuenta ${String(cuenta + 1)}$`,
+        ),
       });
       for (let u = 0; u < unidades; u += 1) await mas.click();
     }
