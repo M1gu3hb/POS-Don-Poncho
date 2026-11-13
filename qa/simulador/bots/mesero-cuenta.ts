@@ -6,7 +6,7 @@
 import type { Page } from '@playwright/test';
 
 import { ESPERA_MS, escapar } from './ayudas.ts';
-import { alMapa, botonDeMesa, dialogoDeMesa, entrarALaMesa } from './mesero-ui.ts';
+import { aLaZonaDe, alMapa, botonDeMesa, dialogoDeMesa, entrarALaMesa } from './mesero-ui.ts';
 import { pinDe, type Entorno } from '../entorno.ts';
 
 export type Propina = 'caja' | 'sin' | 10 | 15;
@@ -297,5 +297,6 @@ export async function dejarLimpia(pagina: Page, numero: number): Promise<void> {
   pagina.once('dialog', (aviso) => {
     void aviso.accept();
   });
+  await aLaZonaDe(pagina, numero);
   await botonDeMesa(pagina, numero).click({ timeout: ESPERA_MS });
 }

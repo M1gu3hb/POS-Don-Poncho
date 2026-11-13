@@ -49,17 +49,50 @@ export function dialogoDeMesa(pagina: Page, numero: number): Locator {
   return pagina.getByRole('dialog', { name: new RegExp(`^Mesa ${String(numero)} `) });
 }
 
-/** Las mesas que ve el mesero en su pantalla, con el estado que dice cada una. */
+/**
+ * Las pestañas de zona («Salón (2)», «Terraza (1)»). Salen cuando las mesas del mesero están en más
+ * de una zona, y la pantalla muestra una zona a la vez. El Mesero 3 tiene la 9 y la 10 en el Salón y
+ * la 11 en la Terraza: sin cambiar de pestaña, la 9 y la 10 se quedaron todo el día 1 sin mesero
+ * (sus grupos del portal nunca se confirmaron y las mesas no volvieron a usarse).
+ */
+function pestanasDeZona(pagina: Page): Locator {
+  return pagina
+    .getByRole('button', { name: /^(?!Solicitudes)[^\d$]+ \(\d+\)$/ })
+    .filter({ visible: true });
+}
+
+/** Deja a la vista la zona donde está la mesa (si no lo está ya). */
+export async function aLaZonaDe(pagina: Page, numero: number): Promise<void> {
+  if ((await botonDeMesa(pagina, numero).count()) > 0) return;
+  const pestanas = pestanasDeZona(pagina);
+  const cuantas = await pestanas.count();
+  for (let i = 0; i < cuantas; i += 1) {
+    await pestanas.nth(i).click({ timeout: ESPERA_MS });
+    await pagina.waitForTimeout(300);
+    if ((await botonDeMesa(pagina, numero).count()) > 0) return;
+  }
+}
+
+/** Las mesas que ve el mesero en su pantalla (en todas sus zonas), con el estado que dice cada una. */
 export async function mesasEnPantalla(pagina: Page): Promise<MesaEnPantalla[]> {
-  const textos = await mesasQueDicen(pagina, CUALQUIER_MESA).allTextContents();
   const lectura = numeroYEstado('(\\d+)');
   const vistas = new Map<number, MesaEnPantalla>();
-  for (const t of textos) {
-    const m = lectura.exec(t.replace(/\s+/g, ' '));
-    const numero = Number(m?.[1]);
-    const estado = m?.[2];
-    if (Number.isInteger(numero) && estado !== undefined && !vistas.has(numero))
-      vistas.set(numero, { numero, estado });
+  const leer = async (): Promise<void> => {
+    for (const t of await mesasQueDicen(pagina, CUALQUIER_MESA).allTextContents()) {
+      const m = lectura.exec(t.replace(/\s+/g, ' '));
+      const numero = Number(m?.[1]);
+      const estado = m?.[2];
+      if (Number.isInteger(numero) && estado !== undefined && !vistas.has(numero))
+        vistas.set(numero, { numero, estado });
+    }
+  };
+  await leer();
+  const pestanas = pestanasDeZona(pagina);
+  const cuantas = await pestanas.count();
+  for (let i = 0; cuantas > 1 && i < cuantas; i += 1) {
+    await pestanas.nth(i).click({ timeout: ESPERA_MS });
+    await pagina.waitForTimeout(300);
+    await leer();
   }
   return [...vistas.values()];
 }
@@ -79,6 +112,7 @@ export async function abrirMesa(
   personas: number,
   opciones: { celebracion: boolean; alergia: string },
 ): Promise<void> {
+  await aLaZonaDe(pagina, numero);
   await botonDeMesa(pagina, numero).click({ timeout: ESPERA_MS });
   const apertura = pagina.getByRole('dialog', { name: `Abrir mesa ${String(numero)}` });
   await apertura.waitFor({ timeout: ESPERA_MS });
@@ -100,6 +134,7 @@ export async function abrirMesa(
 /** Abre una mesa que ya tiene cuenta (toca su botón en la lista). */
 export async function entrarALaMesa(pagina: Page, numero: number): Promise<void> {
   if ((await dialogoDeMesa(pagina, numero).count()) > 0) return;
+  await aLaZonaDe(pagina, numero);
   await botonDeMesa(pagina, numero).click({ timeout: ESPERA_MS });
   await dialogoDeMesa(pagina, numero).waitFor({ timeout: ESPERA_MS });
 }
@@ -238,6 +273,7 @@ export async function enviarACocina(pagina: Page, notaGeneral: string): Promise<
 
 /** ¿La mesa dice «Esperando entrega» (hay algo listo en la estación)? */
 export async function hayListoParaRecoger(pagina: Page, numero: number): Promise<boolean> {
+  await aLaZonaDe(pagina, numero);
   const texto = await botonDeMesa(pagina, numero).innerText({ timeout: 5_000 });
   return texto.includes('Esperando entrega');
 }
