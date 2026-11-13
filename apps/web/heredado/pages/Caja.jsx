@@ -219,6 +219,8 @@ export default function Caja() {
   // el borrador del servidor se vacía (a la cocina no salió nada) y la pantalla vuelve con todo.
   const [showParaLlevar, setShowParaLlevar] = useState(false);
   const [turnoParaLlevar, setTurnoParaLlevar] = useState(0);
+  // DP-18 · A7 · Reabrir tras cancelar SU cobro no es un pedido «que quedó de antes».
+  const [paraLlevarVuelveDelCobro, setParaLlevarVuelveDelCobro] = useState(false);
   const paraLlevarEnCobroRef = useRef(null);
   const paraLlevarPagadoRef = useRef(false);
   const cobrarParaLlevar = async (ordenId) => {
@@ -246,6 +248,7 @@ export default function Caja() {
       .catch((err) => {
         toast.warning(err?.message || 'No se pudo limpiar el cobro cancelado.', { duration: 8000 });
       });
+    setParaLlevarVuelveDelCobro(true);
     setShowParaLlevar(true);
   }, [ventaEnCobroId, posUser?.id, queryClient]);
 
@@ -828,7 +831,13 @@ export default function Caja() {
         claveCobro || undefined,
       );
       ventaQuedoPagada = true;
-      if (paraLlevarEnCobroRef.current === ventaSeleccionada.id) paraLlevarPagadoRef.current = true;
+      if (paraLlevarEnCobroRef.current === ventaSeleccionada.id) {
+        paraLlevarPagadoRef.current = true;
+        // DP-18 · A7 · El borrador se borra AL COBRAR, no cuando el diálogo se cierre: una recarga
+        // entre las dos cosas lo dejaba vivo y el pedido siguiente lo arrastraba (cobro doble).
+        const claveDelBorrador = claveDelParaLlevar(posUser?.id);
+        if (claveDelBorrador) borrarBorrador(almacenDelBorrador(), claveDelBorrador);
+      }
       // El cambio que se le da al cliente es el del servidor, no el de la resta
       // del navegador: allí es donde se sabe qué se cobró de verdad.
       cambio = aPesos(cobro?.cambioCentavos);
@@ -1374,7 +1383,10 @@ export default function Caja() {
         <div className="flex flex-col gap-3">
           <button
             type="button"
-            onClick={() => setShowParaLlevar(true)}
+            onClick={() => {
+              setParaLlevarVuelveDelCobro(false);
+              setShowParaLlevar(true);
+            }}
             className="w-full min-h-20 p-5 rounded-2xl border-2 border-primary bg-primary text-primary-foreground text-left transition-all hover:brightness-110 active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               boxShadow: '0 2px 0 rgba(255,255,255,0.2) inset, 0 6px 18px rgba(0,0,0,0.15)',
@@ -1581,8 +1593,15 @@ export default function Caja() {
         </TabsContent>
       </Tabs>
 
-      {/* COBRO DIALOG */}
-      <Dialog open={!!ventaSeleccionada} onOpenChange={() => setVentaSeleccionada(null)}>
+      {/* COBRO DIALOG
+          DP-18 · A9: el cobro y «¿Cómo se pagó la propina?» eran dos diálogos modales abiertos a la
+          vez; Radix oculta (`aria-hidden`) lo de atrás y al lector de pantalla y al teclado se les
+          escondía uno. Van uno tras otro: primero la propina y, al elegirla o cerrarla, el cobro.
+          La cuenta (`ventaSeleccionada`) y lo tecleado viven aquí, así que nada se pierde al ocultarlo. */}
+      <Dialog
+        open={!!ventaSeleccionada && !showPropinaCaja}
+        onOpenChange={() => setVentaSeleccionada(null)}
+      >
         {/* DP-15 · El pie del cobro (Cancelar, Descuento, Cancelar la cuenta, Dividir, Cobrar) no se
             envolvía: a 768 px o más estiraba la columna del diálogo 300 px fuera de la tarjeta y los
             importes quedaban sobre el velo, ilegibles. Ahora se envuelve, y el diálogo es un poco
@@ -2039,6 +2058,7 @@ export default function Caja() {
           key={turnoParaLlevar}
           open
           usuarioId={posUser?.id}
+          volviendoDelCobro={paraLlevarVuelveDelCobro}
           onCerrar={() => setShowParaLlevar(false)}
           onCobrar={cobrarParaLlevar}
         />

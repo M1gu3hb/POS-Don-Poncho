@@ -48,12 +48,41 @@ export function cantidadParaComando(valor: unknown): string | null {
   return numero.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
 }
 
+/** El tope de `orden_lineas.cantidad` en el carrito (`cantidad <= 999`). */
+const MAXIMO_DE_PORCIONES = 999;
+
+/**
+ * DP-18 · A8 · Una porción se vende ENTERA (el servidor rechaza 1.5 con «Captura un número entero
+ * de porciones»): la pantalla sólo deja pedir 1, 2, 3… Lo que va por peso NO pasa por aquí.
+ */
+export function porcionesEnteras(valor: unknown): boolean {
+  const numero = Number(valor);
+  return Number.isInteger(numero) && numero >= 1 && numero <= MAXIMO_DE_PORCIONES;
+}
+
+/** ¿Es un renglón por porción cuya cantidad no se puede vender? (quedó mal de antes, de un borrador) */
+export function porcionesQueNoSeVenden(item: RenglonDelCarrito): boolean {
+  const variable = item._variable ?? null;
+  return (
+    variable?.tipo_venta === PORCION_CONTENEDOR && !porcionesEnteras(variable.cantidad_porciones)
+  );
+}
+
+/** Lo que se le dice a quien manda: cuál renglón y qué hacer (quitarlo con la X y volver a agregarlo). */
+export function porcionesQueNoSeVendenAviso(item: RenglonDelCarrito): string {
+  const cuantas = item._variable?.cantidad_porciones;
+  return `${item.nombre ?? 'Un producto'} lleva ${String(cuantas)} porciones y sólo se venden enteras. Quítalo con la X y vuelve a agregarlo.`;
+}
+
 /**
  * Para un producto por peso o por porción la cantidad REAL es la del snapshot (350 g), no el 1
  * lógico con el que el carrito lo agrupa: mandar 1 cobraría un kilo en vez de 350 g.
  */
 export function renglonParaElComando(item: RenglonDelCarrito): RenglonParaElComando | null {
   const variable = item._variable ?? null;
+  // DP-18 · A8 · Un renglón por porción con decimales (de un borrador viejo) no sale: el servidor
+  // lo rechazaría y la ronda entera quedaba atorada. Quien llama dice cuál es y se quita.
+  if (porcionesQueNoSeVenden(item)) return null;
   const cruda =
     variable?.tipo_venta === VARIABLE_MEDIDA
       ? variable.cantidad_variable

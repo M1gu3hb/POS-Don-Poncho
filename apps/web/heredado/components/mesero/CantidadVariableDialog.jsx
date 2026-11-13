@@ -37,6 +37,7 @@ import {
 } from '@/utils/tipoVentaUtils';
 import { formatCurrency } from '@/utils/financialUtils';
 import { etiquetaDePeso } from '~/restaurante/peso';
+import { porcionesEnteras } from '~/restaurante/toma-de-pedido/renglon-para-el-comando';
 
 export default function CantidadVariableDialog({ open, producto, onClose, onConfirm }) {
   const tipo = producto?.tipo_venta;
@@ -104,6 +105,12 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
 
   // Validaciones de rango / paso (solo para variable_medida)
   const validacion = useMemo(() => {
+    // DP-18 · A8 · Por porción sólo enteros ≥ 1: el servidor rechaza 1.5 y el carrito quedaba atorado.
+    if (esPorcion) {
+      return cantidad.trim() === '' || porcionesEnteras(cantNum)
+        ? { ok: porcionesEnteras(cantNum), msg: '' }
+        : { ok: false, msg: 'Las porciones se piden enteras: 1, 2, 3…' };
+    }
     if (!esMedida || !cantValida) return { ok: cantValida, msg: '' };
     if (soloPresentaciones && !presentaciones.includes(cantNum)) {
       return { ok: false, msg: 'Elige una de las presentaciones' };
@@ -125,7 +132,7 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
       }
     }
     return { ok: true, msg: '' };
-  }, [esMedida, cantValida, cantNum, unidadElegida, producto, soloPresentaciones, presentaciones]);
+  }, [esMedida, esPorcion, cantidad, cantValida, cantNum, unidadElegida, producto, soloPresentaciones, presentaciones]);
 
   const puedeConfirmar = cantValida && validacion.ok && precioCalculado > 0;
 
@@ -267,7 +274,7 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
             <div className="flex gap-2 mt-1">
               <Input
                 type="number"
-                inputMode="decimal"
+                inputMode={esPorcion ? "numeric" : "decimal"}
                 value={cantidad}
                 onChange={(e) => setCantidad(e.target.value)}
                 placeholder="0"
