@@ -32,35 +32,31 @@ const BASE = {
 const deLaBase = (codigo: string): Error =>
   Object.assign(new Error('error de la base'), { code: codigo });
 
-/** Un comando que falla las primeras `veces` con `error` y luego confirma. */
-function fallaPrimero(veces: number, error: () => Error) {
+/**
+ * Corre un comando que falla las primeras `veces` con `error` y luego confirma. La definición se
+ * arma en la llamada, como en `comando.transaccion.test.ts`, para que TypeScript la infiera.
+ */
+async function fallaPrimero(veces: number, error: () => Error) {
   const llamadas = { n: 0 };
-  const definicion = definirComando({
-    ...BASE,
-    async ejecutar(ctx, entrada) {
-      llamadas.n += 1;
-      if (llamadas.n <= veces) throw error();
-      ctx.auditar({ entidadId: entrada.ordenId, payload: {} });
-      return { intento: llamadas.n };
-    },
-  });
-  return { definicion, llamadas };
-}
-
-const ejecutar = async (definicion: Parameters<ReturnType<typeof crearComando<TxFalsa>>>[0]) => {
   const fabrica = crearFabrica('tienda');
-  const salida = await crearComando<TxFalsa>(fabrica)(definicion, {
-    entrada: ENTRADA,
-    ambito: ambitoDeCajero(),
-    idempotencyKey: CLAVE,
-  });
-  return { fabrica, salida };
-};
+  const salida = await crearComando<TxFalsa>(fabrica)(
+    definirComando({
+      ...BASE,
+      async ejecutar(ctx, entrada) {
+        llamadas.n += 1;
+        if (llamadas.n <= veces) throw error();
+        ctx.auditar({ entidadId: entrada.ordenId, payload: {} });
+        return { intento: llamadas.n };
+      },
+    }),
+    { entrada: ENTRADA, ambito: ambitoDeCajero(), idempotencyKey: CLAVE },
+  );
+  return { fabrica, salida, llamadas };
+}
 
 describe('comando() · conflictos de concurrencia de Postgres', () => {
   it('un interbloqueo (40P01) se repite y el comando confirma', async () => {
-    const { definicion, llamadas } = fallaPrimero(1, () => deLaBase('40P01'));
-    const { fabrica, salida } = await ejecutar(definicion);
+    const { fabrica, salida, llamadas } = await fallaPrimero(1, () => deLaBase('40P01'));
 
     expect(salida.ok).toBe(true);
     expect(llamadas.n).toBe(2);
@@ -69,16 +65,14 @@ describe('comando() · conflictos de concurrencia de Postgres', () => {
   });
 
   it('un conflicto de serialización (40001) también se repite', async () => {
-    const { definicion, llamadas } = fallaPrimero(1, () => deLaBase('40001'));
-    const { salida } = await ejecutar(definicion);
+    const { salida, llamadas } = await fallaPrimero(1, () => deLaBase('40001'));
 
     expect(salida.ok).toBe(true);
     expect(llamadas.n).toBe(2);
   });
 
   it('si el conflicto sigue, se rinde al tercer intento con ERROR_INTERNO', async () => {
-    const { definicion, llamadas } = fallaPrimero(99, () => deLaBase('40P01'));
-    const { salida } = await ejecutar(definicion);
+    const { salida, llamadas } = await fallaPrimero(99, () => deLaBase('40P01'));
 
     expect(llamadas.n).toBe(3);
     expect(salida.ok).toBe(false);
@@ -86,19 +80,17 @@ describe('comando() · conflictos de concurrencia de Postgres', () => {
   });
 
   it('otro error de la base no se repite', async () => {
-    const { definicion, llamadas } = fallaPrimero(99, () => deLaBase('23505'));
-    const { salida } = await ejecutar(definicion);
+    const { salida, llamadas } = await fallaPrimero(99, () => deLaBase('23505'));
 
     expect(llamadas.n).toBe(1);
     expect(salida.ok).toBe(false);
   });
 
   it('una regla de negocio no se repite', async () => {
-    const { definicion, llamadas } = fallaPrimero(
+    const { salida, llamadas } = await fallaPrimero(
       99,
       () => new ErrorDominio('TRANSICION_INVALIDA', 'Ese pedido cambió de estado.', {}),
     );
-    const { salida } = await ejecutar(definicion);
 
     expect(llamadas.n).toBe(1);
     expect(salida.ok).toBe(false);

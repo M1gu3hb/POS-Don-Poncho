@@ -64,7 +64,8 @@ describe('el almacén de la sucursal', () => {
     const [url, init] = llamadas[0] ?? [];
     expect(url).toBe('/api/inventario/almacenes/crear');
     expect(init?.method).toBe('POST');
-    expect(JSON.parse(String(init?.body))).toEqual({ nombre: NOMBRE_DEL_ALMACEN_PRINCIPAL });
+    expect(typeof init?.body).toBe('string');
+    expect(JSON.parse(init?.body as string)).toEqual({ nombre: NOMBRE_DEL_ALMACEN_PRINCIPAL });
     const cabeceras = new Headers(init?.headers);
     expect(cabeceras.get('idempotency-key')?.length ?? 0).toBeGreaterThan(8);
   });
