@@ -71,6 +71,21 @@ export async function pagosConfirmados(
 }
 
 /**
+ * ¿La mesa todavía tiene una cuenta pedida sin cobrar? Tras un fallo a medio cobro es lo que decide
+ * si la cajera la vuelve a tomar. Contar pagos no basta: en una cuenta dividida, las partes ya
+ * cobradas tienen pago y la que falló no (la mesa 19 del día 1 se quedó con su parte 3 sin cobrar).
+ */
+export async function quedaPorCobrarEnLaMesa(ctx: ContextoDelBot, mesa: number): Promise<boolean> {
+  const [fila] = await leerSql<{ n: string }>(
+    ctx.entorno.baseUrl,
+    `select count(*)::text as n from ordenes o join mesas m on m.id = o.mesa_id
+      where m.numero::text = $1 and o.estado = 'cuenta_solicitada'`,
+    [String(mesa)],
+  );
+  return num(fila?.n) > 0;
+}
+
+/**
  * Cuántas veces está cobrada una cuenta: lo pagado (venta) entre su total. Un mixto son dos filas de
  * pago y sigue siendo UN cobro; un cobro doble da 2. Acepta el id de la orden, su folio o, para las
  * de mesa, el id de la llegada con su mesa.

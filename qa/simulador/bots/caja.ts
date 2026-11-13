@@ -20,6 +20,7 @@ import { abrirSesion, GERENTE, medido, registrarFallo } from './comun.ts';
 import {
   caosParaLaCuenta,
   pagosConfirmados,
+  quedaPorCobrarEnLaMesa,
   paginasDeCaja,
   pausaDeCaos,
   type TipoDeCaos,
@@ -137,10 +138,15 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeCaja): Promise
         'La cuenta queda cobrada una vez',
         error,
       );
-      // Si la consulta misma falla, la cuenta vuelve a la fila: nunca se queda «cobrándose» para siempre.
-      const pagos = await pagosConfirmados(ctx, cuenta.cuenta, cuenta.mesa).catch(() => 0);
-      if (pagos > 0) ctx.mundo.porCobrar.splice(ctx.mundo.porCobrar.indexOf(cuenta), 1);
-      else cuenta.cobrandola = null;
+      // ¿Queda algo por cobrar? En la mesa, lo dice su cuenta pedida (una dividida puede tener partes
+      // cobradas y otra no); sin mesa, sus pagos. Si la consulta misma falla, la cuenta vuelve a la
+      // fila: nunca se queda «cobrándose» para siempre.
+      const pendiente =
+        cuenta.mesa === null
+          ? (await pagosConfirmados(ctx, cuenta.cuenta).catch(() => 0)) === 0
+          : await quedaPorCobrarEnLaMesa(ctx, cuenta.mesa).catch(() => true);
+      if (pendiente) cuenta.cobrandola = null;
+      else ctx.mundo.porCobrar.splice(ctx.mundo.porCobrar.indexOf(cuenta), 1);
     }
     return true;
   };
