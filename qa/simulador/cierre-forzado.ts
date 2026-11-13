@@ -55,15 +55,25 @@ async function sucursalDelRestaurante(baseUrl: string): Promise<string> {
   return fila.sucursal_id;
 }
 
+/**
+ * Las cuentas sin cobrar, PARTES de una cuenta dividida incluidas (primero ellas): el día 2 las
+ * mesas 5 y 10 se quedaron con dos partes sin cobrar cada una, la madre ya «dividida», y como sólo
+ * se miraban las cuentas sin madre no se cancelaron: las mesas no se liberaron y la caja no cerró.
+ */
 async function cuentasAbiertas(
   baseUrl: string,
   sucursal: string,
-): Promise<readonly { id: string; mesa: string | null; estado: string }[]> {
+): Promise<readonly { id: string; mesa: string | null; estado: string; parte: boolean }[]> {
   return leerSql(
     baseUrl,
-    `select o.id, m.numero::text as mesa, o.estado from ordenes o left join mesas m on m.id = o.mesa_id
-      where o.sucursal_id = $1 and o.orden_padre_id is null and not (o.estado = any($2::text[]))
-      order by o.created_at`,
+    `select o.id, coalesce(m.numero, mm.numero)::text as mesa, o.estado,
+        o.orden_padre_id is not null as parte
+      from ordenes o
+      left join mesas m on m.id = o.mesa_id
+      left join ordenes ma on ma.id = o.orden_padre_id
+      left join mesas mm on mm.id = ma.mesa_id
+      where o.sucursal_id = $1 and not (o.estado = any($2::text[]))
+      order by (o.orden_padre_id is null), o.created_at`,
     [sucursal, CUENTAS_CERRADAS],
   );
 }
@@ -153,7 +163,7 @@ async function main(): Promise<void> {
       });
       await anotar(
         {
-          que: `Cancelar la cuenta de la mesa ${c.mesa ?? '(sin mesa)'} (${c.estado})`,
+          que: `Cancelar ${c.parte ? 'una parte de ' : ''}la cuenta de la mesa ${c.mesa ?? '(sin mesa)'} (${c.estado})`,
           ok: r.ok,
           detalle: r.ok ? 'cancelada' : `${String(r.estado)} ${r.mensaje}`,
         },

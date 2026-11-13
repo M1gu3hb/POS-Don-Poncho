@@ -8,9 +8,14 @@ import { PRODUCTOS_DE_PRUEBA, INSUMOS } from '../dia0/datos.ts';
 import type { AsientoFechado } from '../libro.ts';
 import { leerSql, num, ORGANIZACION, type Comparador } from './base.ts';
 
-const EXISTENCIAS = `
-select i.nombre, coalesce(sum(e.cantidad), 0)::text as cantidad
-  from insumos i left join existencias e on e.insumo_id = i.id
+/**
+ * El movimiento NETO del día por insumo (compras, mermas, ajustes y ventas, con su signo). Se compara
+ * el día y no la existencia acumulada: lo que cancela el cierre forzado de un día (merma por
+ * cancelación, fuera del libro) y un error de un día anterior ya no se arrastran a los siguientes.
+ */
+const NETO_DEL_DIA = `
+select i.nombre, coalesce(sum(m.cantidad), 0)::text as cantidad
+  from insumos i left join movimientos_stock m on m.insumo_id = i.id and m.created_at >= $2::timestamptz
  where i.organizacion_id = ${ORGANIZACION} and i.nombre = any($1::text[]) group by i.nombre`;
 
 const SALIDAS = `
@@ -31,7 +36,10 @@ export function consumoPorUnidad(producto: string): Readonly<Record<string, numb
   return p.receta ?? {};
 }
 
-/** Lo que el libro dice que debe haber por insumo: compras − mermas − consumo de lo cobrado. */
+/**
+ * Lo que el libro dice que se movió por insumo: compras − mermas − consumo de lo cobrado. Con el
+ * libro de un día es el movimiento neto que se espera ese día.
+ */
 export function existenciaEsperada(libro: readonly AsientoFechado[]): {
   existencia: Map<string, number>;
   consumo: Map<string, number>;
@@ -67,9 +75,9 @@ export async function arbitrarInventario(
   const nombres = INSUMOS.map((i) => i.nombre);
   const { existencia, consumo } = existenciaEsperada(libro);
   const reales = new Map(
-    (await leerSql<{ nombre: string; cantidad: string }>(baseUrl, EXISTENCIAS, [nombres])).map(
-      (f) => [f.nombre, num(f.cantidad)],
-    ),
+    (
+      await leerSql<{ nombre: string; cantidad: string }>(baseUrl, NETO_DEL_DIA, [nombres, desde])
+    ).map((f) => [f.nombre, num(f.cantidad)]),
   );
   const salidas = new Map(
     (await leerSql<{ nombre: string; cantidad: string }>(baseUrl, SALIDAS, [nombres, desde])).map(
@@ -80,7 +88,7 @@ export async function arbitrarInventario(
     const unidad = i.base;
     c.comparar(
       'inventario',
-      `${i.nombre}: existencia final (${unidad})`,
+      `${i.nombre}: movimiento neto del día (${unidad})`,
       redondeo(existencia.get(i.nombre) ?? 0),
       redondeo(reales.get(i.nombre) ?? 0),
       'inventario',
