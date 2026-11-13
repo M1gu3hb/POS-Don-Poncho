@@ -89,13 +89,22 @@ export async function entregarLoListo(pagina: Page): Promise<number> {
     const antes = await entregar.count();
     // La lista se refresca sola: si el botón ya se fue, otra persona lo entregó.
     if (antes === 0 || !(await entregar.first().isVisible())) break;
-    // La respuesta y el clic juntos: si el clic falla, la espera de la respuesta no queda suelta.
-    const [respuesta] = await Promise.all([
-      esperarPost(pagina, '/api/restaurante/entregar-para-llevar'),
-      // 15 s: si el modo espera tapa la lista, el despertador necesita su tiempo para quitarlo.
-      entregar.first().click({ timeout: 15_000 }),
-    ]);
-    expect(respuesta.status()).toBe(200);
+    // La espera de la respuesta empieza ANTES del clic (si no, la respuesta rápida se escapa).
+    const respuesta = esperarPost(pagina, '/api/restaurante/entregar-para-llevar');
+    // 15 s: si el modo espera tapa la lista, el despertador necesita su tiempo para quitarlo. Si el
+    // botón se fue entre verlo y tocarlo, la OTRA caja lo entregó (día 1, repetición 3): no es falla.
+    const toco = await entregar
+      .first()
+      .click({ timeout: 15_000 })
+      .then(
+        () => true,
+        async (error: unknown) => {
+          if ((await entregar.count()) < antes) return false;
+          throw error;
+        },
+      );
+    if (!toco) break;
+    expect((await respuesta).status()).toBe(200);
     entregados += 1;
     // La tarjeta entregada tarda en irse: sin esperarla, la vuelta siguiente tocaba un botón que ya
     // se estaba yendo.
