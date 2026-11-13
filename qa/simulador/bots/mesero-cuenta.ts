@@ -157,8 +157,28 @@ export async function cambiarDeMesa(
   if (!respuesta.ok()) throw new Error(`cambiar de mesa respondió ${String(respuesta.status())}`);
 }
 
+/**
+ * En el plano de «Unir mesas» las mesas tiemblan sin parar y Playwright espera a que un elemento se
+ * quede quieto para tocarlo: nunca lo hace (D1-016). Como en las e2e del repo, se pide movimiento
+ * reducido mientras dura (la app lo respeta: `motion-reduce:animate-none`).
+ */
+async function sinTemblor(pagina: Page, fn: () => Promise<void>): Promise<void> {
+  await pagina.emulateMedia({ reducedMotion: 'reduce' });
+  try {
+    await fn();
+  } finally {
+    await pagina.emulateMedia({ reducedMotion: null }).catch(() => undefined);
+  }
+}
+
 /** Une dos mesas desde el mapa («Unir mesas»), contestando lo que pregunta el sistema. */
 export async function unirMesas(pagina: Page, principal: number, otra: number): Promise<void> {
+  // Desde el mapa: con el diálogo de una mesa abierto el botón no está (D1-022).
+  await alMapa(pagina);
+  await sinTemblor(pagina, () => unirEnElPlano(pagina, principal, otra));
+}
+
+async function unirEnElPlano(pagina: Page, principal: number, otra: number): Promise<void> {
   await pagina.getByRole('button', { name: 'Unir mesas' }).click({ timeout: ESPERA_MS });
   const plano = pagina.getByRole('region', { name: 'Unir mesas' });
   const enElPlano = (n: number) =>
@@ -182,6 +202,11 @@ export async function unirMesas(pagina: Page, principal: number, otra: number): 
 }
 
 export async function separarMesas(pagina: Page, principal: number): Promise<void> {
+  await alMapa(pagina);
+  await sinTemblor(pagina, () => separarEnElPlano(pagina, principal));
+}
+
+async function separarEnElPlano(pagina: Page, principal: number): Promise<void> {
   await pagina.getByRole('button', { name: 'Unir mesas' }).click({ timeout: ESPERA_MS });
   const plano = pagina.getByRole('region', { name: 'Unir mesas' });
   await plano.getByRole('button', { name: `Mesa ${String(principal)}`, exact: true }).click();
