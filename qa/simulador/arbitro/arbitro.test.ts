@@ -108,6 +108,11 @@ describe('la existencia que el libro espera', () => {
     expect(existencia.get('Tortilla de prueba')).toBe(-6);
   });
 
+  it('por porción baja su ingrediente base por porción, y por peso 1 000 por kilo (A3)', () => {
+    expect(consumoPorUnidad('Shot de tequila de prueba')).toEqual({ 'Tequila de prueba': 45 });
+    expect(consumoPorUnidad('Barbacoa por kilo de prueba')).toEqual({ 'Carne de prueba': 1000 });
+  });
+
   it('un para llevar que se volvió a armar cuenta sólo su último armado', () => {
     // La app reutiliza la orden del para llevar al rearmarlo y reemplaza sus renglones: el día 2 el
     // libro contaba los dos armados de 7 pedidos (60 tortillas de más contra la base).

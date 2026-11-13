@@ -32,7 +32,11 @@ select (select coalesce(sum(total_centavos), 0) from compras where organizacion_
 export function consumoPorUnidad(producto: string): Readonly<Record<string, number>> {
   const p = PRODUCTOS_DE_PRUEBA.find((x) => x.nombre === producto);
   if (p === undefined) return {};
-  if (p.ingredienteBase !== undefined && p.tipo !== 'porcion') return { [p.ingredienteBase]: 1000 };
+  // Por peso, el renglón va en kg o l: 1 000 de la unidad base por unidad. Por porción, desde DP-18
+  // (A3, en producción) también baja su ingrediente base: la porción (45 ml el shot). Antes la app
+  // no la bajaba y el libro tampoco; el día 3 el sistema bajó 1 710 ml de tequila que el libro no esperaba.
+  if (p.ingredienteBase !== undefined)
+    return { [p.ingredienteBase]: p.tipo === 'porcion' ? (p.presentaciones?.[0] ?? 0) : 1000 };
   return p.receta ?? {};
 }
 
