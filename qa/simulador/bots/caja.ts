@@ -11,6 +11,7 @@ import type { NombreDeAparato } from '../aparatos.ts';
 import type { Bot, ContextoDelBot } from '../bot.ts';
 import { pinVigente } from '../entorno.ts';
 import { contar } from '../mundo.ts';
+import { asegurarSesion } from '../sesion.ts';
 import { abrirCaja, estadoDeLaCaja, irACaja, traerLaCaja } from '../pantallas/caja.ts';
 import { cierreDeLaCaja } from '../pantallas/corte.ts';
 import { entradaDeCambio, irAMovimientos, retirar } from '../pantallas/movimientos.ts';
@@ -189,6 +190,37 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeCaja): Promise
         await ctx.esperarSim(5);
         continue;
       }
+    }
+    // La sesión puede vencerse o cerrarse en el aparato: la cajera vuelve a entrar, como el mesero.
+    // Sin esto la Caja 1 se quedó en la pantalla de acceso 2.5 h de la quinta corrida del día 1 y
+    // su fila de cuentas no avanzó (58 incidentes «no veo Pendientes»).
+    try {
+      if ((await asegurarSesion(pagina, ctx.entorno, plan.persona)) === 'reentro') {
+        await ctx.incidente(
+          {
+            pantalla: 'Sesión',
+            hizo: 'Seguir cobrando',
+            esperaba: 'La sesión de la caja sigue vigente en la jornada.',
+            paso: 'sesión vencida',
+            reproducido: 'no intentado',
+            gravedad: 'medio',
+            clase: 'ux',
+          },
+          pagina,
+        );
+        await irACaja(pagina, ctx.entorno.appUrl);
+      }
+    } catch (error: unknown) {
+      await registrarFallo(
+        ctx,
+        lugar,
+        pagina,
+        'Volver a entrar',
+        'La caja sigue con su sesión',
+        error,
+      );
+      await ctx.esperarSim(5);
+      continue;
     }
     paginasDeCaja.set(plan.caja, pagina);
     if (pausaDeCaos.enCurso) {
