@@ -30,8 +30,10 @@ export function RenglonDelCarritoDelMesero({
   // DP-14 · 1 kg de barbacoa también es «1» en el carrito: se dice «1 kg» y no se cuenta con ±.
   const porPeso = linea.tipoVenta === 'variable_medida';
   return (
-    <li className="flex items-center gap-(--espacio-2) border-b border-borde py-(--espacio-2)">
-      <span className="min-w-0 flex-1">
+    <li className="flex flex-wrap items-center gap-(--espacio-2) border-b border-borde py-(--espacio-2)">
+      {/* A16: a 360 px el nombre ocupa su renglón y la cantidad, el importe y «Quitar» bajan al
+          siguiente, en vez de empujar todo fuera de la pantalla. */}
+      <span className="min-w-0 flex-1 basis-40">
         <span className="block text-sm font-semibold">{linea.nombre}</span>
         {linea.notas === '' ? null : (
           <span className="block text-xs text-texto-sutil">«{linea.notas}»</span>

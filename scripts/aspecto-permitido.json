@@ -1709,6 +1709,25 @@
       "archivo": "apps/web/heredado/pages/PortalQR.jsx",
       "porque": "DP-18 (1.3, DP-D113): la pestaña nueva «Personalizar menú» del Portal QR, con la vista previa en un teléfono; las pestañas que había siguen igual.",
       "testigos": ["+ clase:mt-4", "+ texto:Personalizar menú"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesas/MesaShape.jsx",
+      "porque": "DP-18 (A15, simulador de jornada): la mesa del mapa de tableta y escritorio es un botón con foco de teclado; el anillo de foco sólo se ve al tabular. La mesa se pinta igual: la caja de afuera conserva posición y tamaño y la de adentro lleva el aspecto.",
+      "testigos": [
+        "+ clase:focus-visible:outline-none",
+        "+ clase:focus-visible:ring-2",
+        "+ clase:focus-visible:ring-ring"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-18 (A17, simulador de jornada): los seis campos del pago mixto llevan su etiqueta asociada; cada grupo es un fieldset (el de la venta con nombre accesible y el de la propina con su leyenda de siempre). `min-w-0` porque un fieldset no se encoge por sí solo. Nada de lo que se veía cambió.",
+      "testigos": [
+        "+ clase:min-w-0",
+        "+ clase:min-w-0",
+        "+ label:Pago de la venta, por método",
+        "+ aria-label:Pago de la venta, por método"
+      ]
     }
   ]
 }

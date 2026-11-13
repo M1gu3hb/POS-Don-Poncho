@@ -29,7 +29,10 @@ export function DialogoDelPortalModoMesero({
         if (!abierto) alCerrar();
       }}
     >
-      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-lg">
+      {/* A16: el diálogo es una rejilla y su única columna era «auto»: un renglón más ancho que la
+          pantalla (a 360 px) la estiraba y el título, los importes y el botón se salían por la
+          derecha. `minmax(0,1fr)` deja que la columna se encoja y el contenido se acomode. */}
+      <DialogContent className="max-h-[92dvh] grid-cols-[minmax(0,1fr)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Portal de la mesa · modo mesero</DialogTitle>
           <DialogDescription>
