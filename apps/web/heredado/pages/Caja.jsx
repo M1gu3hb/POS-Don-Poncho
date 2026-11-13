@@ -1592,11 +1592,11 @@ export default function Caja() {
         </TabsContent>
       </Tabs>
 
-      {/* COBRO DIALOG
-          DP-18 · A9: el cobro y «¿Cómo se pagó la propina?» eran dos diálogos modales abiertos a la
+      {/* DP-18 · A9: el cobro y «¿Cómo se pagó la propina?» eran dos diálogos modales abiertos a la
           vez; Radix oculta (`aria-hidden`) lo de atrás y al lector de pantalla y al teclado se les
           escondía uno. Van uno tras otro: primero la propina y, al elegirla o cerrarla, el cobro.
           La cuenta (`ventaSeleccionada`) y lo tecleado viven aquí, así que nada se pierde al ocultarlo. */}
+      {/* COBRO DIALOG */}
       <Dialog
         open={!!ventaSeleccionada && !showPropinaCaja}
         onOpenChange={() => setVentaSeleccionada(null)}
