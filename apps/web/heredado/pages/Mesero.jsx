@@ -1722,6 +1722,7 @@ function Mesero() {
           {/* DP-12.4: quitar un platillo y cancelar la cuenta, con motivo, desde la mesa. */}
           <CancelarDelMesero
             ventaId={ventaActiva?.id || mesaActiva?.venta_activa_id || null}
+            mesaId={mesaActiva?.id ?? null}
             detalles={detallesVenta}
             alActualizar={(cuenta) => {
               setVentaActiva(cuenta.venta);
