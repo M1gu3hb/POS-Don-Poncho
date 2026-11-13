@@ -16,7 +16,14 @@ export interface MesaEnPantalla {
   readonly estado: string;
 }
 
-const CUALQUIER_MESA = new RegExp(`^\\d+\\s*(${ESTADOS})`);
+/**
+ * «12 Esperando entrega» con lo que haya antes, mientras no sea otro dígito: en el mapa el texto
+ * incluye los emojis de la mesa («🎉12 …» con celebración) y el número ya no va al principio
+ * (D1-038 y D1-042: el Mesero 4 no podía entrar a su mesa 12).
+ */
+const numeroYEstado = (numero: string): RegExp => new RegExp(`(?<!\\d)${numero}\\s*(${ESTADOS})`);
+
+const CUALQUIER_MESA = numeroYEstado('\\d+');
 
 /**
  * Las mesas que dicen `nombre`. En la lista del teléfono son botones; en el mapa de tableta y
@@ -34,7 +41,7 @@ function mesasQueDicen(pagina: Page, nombre: RegExp): Locator {
 
 /** La mesa como círculo del mapa (escritorio y tableta) o botón de la lista (teléfono). */
 export function botonDeMesa(pagina: Page, numero: number): Locator {
-  return mesasQueDicen(pagina, new RegExp(`^${String(numero)}\\s*(${ESTADOS})`)).first();
+  return mesasQueDicen(pagina, numeroYEstado(String(numero))).first();
 }
 
 /** El diálogo de la mesa abierta: su nombre es el encabezado, «Mesa 1 Esperando orden 3». */
@@ -45,7 +52,7 @@ export function dialogoDeMesa(pagina: Page, numero: number): Locator {
 /** Las mesas que ve el mesero en su pantalla, con el estado que dice cada una. */
 export async function mesasEnPantalla(pagina: Page): Promise<MesaEnPantalla[]> {
   const textos = await mesasQueDicen(pagina, CUALQUIER_MESA).allTextContents();
-  const lectura = new RegExp(`^\\s*(\\d+)\\s*(${ESTADOS})`);
+  const lectura = numeroYEstado('(\\d+)');
   const vistas = new Map<number, MesaEnPantalla>();
   for (const t of textos) {
     const m = lectura.exec(t.replace(/\s+/g, ' '));
