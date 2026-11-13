@@ -48,7 +48,7 @@ export function cantidadParaComando(valor: unknown): string | null {
   return numero.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
 }
 
-/** El tope de `orden_lineas.cantidad` en el carrito (`cantidad <= 999`). */
+/** El tope del carrito compartido (`carrito_mesa_lineas.cantidad <= 999`, migración 186). */
 const MAXIMO_DE_PORCIONES = 999;
 
 /**

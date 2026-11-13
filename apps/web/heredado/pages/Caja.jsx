@@ -219,8 +219,10 @@ export default function Caja() {
   // el borrador del servidor se vacía (a la cocina no salió nada) y la pantalla vuelve con todo.
   const [showParaLlevar, setShowParaLlevar] = useState(false);
   const [turnoParaLlevar, setTurnoParaLlevar] = useState(0);
-  // DP-18 · A7 · Reabrir tras cancelar SU cobro no es un pedido «que quedó de antes».
-  const [paraLlevarVuelveDelCobro, setParaLlevarVuelveDelCobro] = useState(false);
+  // DP-18 · A7 · El borrador lo dejó ESTA pantalla (cobro cancelado, o la X «Cerrar sin cobrar (el
+  // pedido se guarda)»): al reabrir vuelve sin preguntar. Sólo lo que quedó de antes de una recarga
+  // se pregunta.
+  const [paraLlevarDeEstaSesion, setParaLlevarDeEstaSesion] = useState(false);
   const paraLlevarEnCobroRef = useRef(null);
   const paraLlevarPagadoRef = useRef(false);
   const cobrarParaLlevar = async (ordenId) => {
@@ -248,7 +250,7 @@ export default function Caja() {
       .catch((err) => {
         toast.warning(err?.message || 'No se pudo limpiar el cobro cancelado.', { duration: 8000 });
       });
-    setParaLlevarVuelveDelCobro(true);
+    setParaLlevarDeEstaSesion(true);
     setShowParaLlevar(true);
   }, [ventaEnCobroId, posUser?.id, queryClient]);
 
@@ -1383,10 +1385,7 @@ export default function Caja() {
         <div className="flex flex-col gap-3">
           <button
             type="button"
-            onClick={() => {
-              setParaLlevarVuelveDelCobro(false);
-              setShowParaLlevar(true);
-            }}
+            onClick={() => setShowParaLlevar(true)}
             className="w-full min-h-20 p-5 rounded-2xl border-2 border-primary bg-primary text-primary-foreground text-left transition-all hover:brightness-110 active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{
               boxShadow: '0 2px 0 rgba(255,255,255,0.2) inset, 0 6px 18px rgba(0,0,0,0.15)',
@@ -2058,8 +2057,11 @@ export default function Caja() {
           key={turnoParaLlevar}
           open
           usuarioId={posUser?.id}
-          volviendoDelCobro={paraLlevarVuelveDelCobro}
-          onCerrar={() => setShowParaLlevar(false)}
+          deEstaSesion={paraLlevarDeEstaSesion}
+          onCerrar={() => {
+            setParaLlevarDeEstaSesion(true);
+            setShowParaLlevar(false);
+          }}
           onCobrar={cobrarParaLlevar}
         />
       )}

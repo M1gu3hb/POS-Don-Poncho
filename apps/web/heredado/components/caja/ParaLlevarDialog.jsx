@@ -47,7 +47,7 @@ export const claveDelParaLlevar = (usuarioId) =>
 export default function ParaLlevarDialog({
   open,
   usuarioId,
-  volviendoDelCobro = false,
+  deEstaSesion = false,
   onCerrar,
   onCobrar,
 }) {
@@ -85,7 +85,7 @@ export default function ParaLlevarDialog({
   // DP-18 · A7 · Un borrador que quedó de antes no se mezcla en silencio con el pedido nuevo.
   const sinTerminar = pedidoSinTerminar({
     recuperado: pedido.recuperado,
-    volviendoDelCobro,
+    deEstaSesion,
     decidido,
   });
   const piezas = carrito.reduce((s, i) => s + (Number(i.cantidad) || 0), 0);
@@ -233,9 +233,10 @@ export default function ParaLlevarDialog({
                   </div>
                 }
               >
-                Hay {piezas} {piezas === 1 ? 'pieza' : 'piezas'} ({formatCurrency(total)}) de un pedido
-                para llevar que no se terminó. Antes de empezar otro, di si es el mismo (retómalo) o si
-                ya no sirve (descártalo): así no se cobra dos veces.
+                Hay {carrito.length} {carrito.length === 1 ? 'renglón' : 'renglones'} (
+                {formatCurrency(total)}) de un pedido para llevar que no se terminó. Antes de empezar
+                otro, di si es el mismo (retómalo) o si ya no sirve (descártalo). Si la pantalla se
+                recargó a media venta, revisa antes en Ventas que no se haya cobrado ya.
               </Aviso>
             </div>
           ) : (

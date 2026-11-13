@@ -6,16 +6,17 @@
  * SIGUIENTE con los renglones del anterior: riesgo de cobrar dos veces lo mismo.
  *
  * Regla: al abrir la toma, un borrador que quedó de antes NO se mezcla; la pantalla lo dice y deja
- * retomarlo o descartarlo. La única excepción es volver de un cobro cancelado en esta misma
- * sesión: ahí el pedido es el que la cajera tenía en las manos y vuelve con todo.
+ * retomarlo o descartarlo. La excepción es el borrador que dejó ESTA misma pantalla (un cobro
+ * cancelado, o la X «Cerrar sin cobrar (el pedido se guarda)»): es el que la cajera tenía en las
+ * manos y vuelve con todo. Sólo lo que quedó de antes de una recarga se pregunta.
  */
 export function pedidoSinTerminar(situacion: {
   /** Había un borrador guardado en el aparato al abrir. */
   readonly recuperado: boolean;
-  /** La toma se reabre porque se canceló el cobro que ella misma abrió. */
-  readonly volviendoDelCobro: boolean;
+  /** El borrador lo dejó esta misma pantalla (cobro cancelado o cerrar con la X), sin recargar. */
+  readonly deEstaSesion: boolean;
   /** La cajera ya eligió retomar o descartar. */
   readonly decidido: boolean;
 }): boolean {
-  return situacion.recuperado && !situacion.volviendoDelCobro && !situacion.decidido;
+  return situacion.recuperado && !situacion.deEstaSesion && !situacion.decidido;
 }
