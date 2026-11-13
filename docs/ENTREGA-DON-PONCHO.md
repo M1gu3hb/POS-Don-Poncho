@@ -152,6 +152,10 @@ público).
   de la noche ya no espera ese dinero. Si la compra se pagó con dinero que NO salió de la caja (de la
   bolsa del dueño, por ejemplo), elige **Transferencia** o **Tarjeta** en «Método de pago»: el diálogo
   empieza en Efectivo. Sin una caja abierta, la compra en efectivo no se registra.
+- **Un platillo por peso o por porción con «Ingrediente base»** (Recetas) baja ese insumo al cobrarse:
+  la barbacoa por kilo baja sus kilos. Si el insumo no tiene existencias, el cobro NO se frena (lo que
+  pasó por cocina ya se sirvió): el insumo queda en negativo y el conteo lo enseña. Para que el
+  inventario diga la verdad, carga su inventario inicial o regístralo con una compra.
 
 ## La revisión de Miguel antes del sábado (10 minutos, con sus PIN)
 

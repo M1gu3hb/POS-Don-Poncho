@@ -4,6 +4,11 @@ import { ErrorDominio, esFondoDeTarjeta } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 import { sql, type RawBuilder } from 'kysely';
 
+import {
+  COLUMNAS_DE_COHERENCIA,
+  cuadrarProducto,
+  PRODUCTO_NUEVO,
+} from './coherencia-de-producto.ts';
 import { transaccionLibre } from './db-dinamica.ts';
 
 import { entidadMapeada } from './mapa.ts';
@@ -176,8 +181,10 @@ async function crear(
   mapa: MapaEntidad,
   peticion: PeticionEscritura,
 ): Promise<Fila> {
+  const columnas = aColumnas(mapa, peticion.datos ?? {});
   const valores: Fila = {
-    ...aColumnas(mapa, peticion.datos ?? {}),
+    // DP-18 · Un producto nace coherente: lo derivable se deriva y lo imposible se rechaza (422).
+    ...(mapa.tabla === 'productos' ? cuadrarProducto(PRODUCTO_NUEVO, columnas) : columnas),
     ...(mapa.filtroFijo ?? {}),
     // El ámbito lo pone el servidor. Siempre.
     organizacion_id: ambito.organizacionId,
@@ -212,10 +219,14 @@ async function actualizar(
   if (typeof peticion.id !== 'string' || peticion.id === '') {
     throw new ErrorDominio('PUENTE_CAMPO_INVALIDO', 'Falta el identificador.');
   }
-  const valores = aColumnas(mapa, peticion.datos ?? {});
-  if (Object.keys(valores).length === 0) {
+  const columnas = aColumnas(mapa, peticion.datos ?? {});
+  if (Object.keys(columnas).length === 0) {
     throw new ErrorDominio('PUENTE_CAMPO_INVALIDO', 'No hay nada que actualizar.');
   }
+  const valores =
+    mapa.tabla === 'productos' && COLUMNAS_DE_COHERENCIA.some((c) => c in columnas)
+      ? cuadrarProducto(await productoActual(tx, ambito, mapa, peticion.id), columnas)
+      : columnas;
 
   let consulta = (
     transaccionLibre(tx)
@@ -260,6 +271,28 @@ async function actualizar(
     throw new ErrorDominio('PUENTE_NO_ENCONTRADO', 'Ese registro no existe en este negocio.');
   }
   return traducirFila(fila, mapa, ambito.rol);
+}
+
+/**
+ * Lo que ya tiene el producto en las columnas de coherencia, para cuadrarlo con la edición.
+ * Si no existe en el negocio, falla igual que el `update` (nada de éxito silencioso).
+ */
+async function productoActual(
+  tx: Transaccion,
+  ambito: AmbitoEscritura,
+  mapa: MapaEntidad,
+  id: string,
+): Promise<Fila> {
+  const fila = (await transaccionLibre(tx)
+    .selectFrom(mapa.tabla)
+    .select([...COLUMNAS_DE_COHERENCIA] as never)
+    .where('id' as never, '=', id as never)
+    .where('organizacion_id' as never, '=', ambito.organizacionId as never)
+    .executeTakeFirst()) as Fila | undefined;
+  if (fila === undefined) {
+    throw new ErrorDominio('PUENTE_NO_ENCONTRADO', 'Ese registro no existe en este negocio.');
+  }
+  return fila;
 }
 
 /** Si la fila existe en este negocio: distingue «está en uso» de «no existe». */

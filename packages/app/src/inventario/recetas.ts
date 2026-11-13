@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { archivarProducto } from '../catalogo/productos.ts';
 import { definirComando, type ContextoComando } from '../comando.ts';
+import { estrategiaDeConsumo } from '../puente/coherencia-de-producto.ts';
 
 const ROLES = ['dueno', 'administrador', 'gerente', 'almacen'] as const;
 
@@ -131,7 +132,7 @@ export const guardarReceta = definirComando<
   async ejecutar(ctx, entrada) {
     const producto = await ctx.tx
       .selectFrom('productos')
-      .select('id')
+      .select(['id', 'tipo_venta', 'insumo_base_id'])
       .where('id', '=', entrada.productoId)
       .where('organizacion_id', '=', ctx.ambito.organizacionId)
       .where('activo', '=', true)
@@ -196,11 +197,21 @@ export const guardarReceta = definirComando<
     });
     await ctx.tx
       .updateTable('productos')
-      // Sin líneas, el producto deja de consumir: `sku` y no `receta`. Marcarlo
+      // Sin líneas, el producto deja de consumir por receta: `sku` y no `receta`. Marcarlo
       // igualmente como `receta` lo dejaría con una estrategia de consumo que
-      // no tiene con qué cumplirse.
+      // no tiene con qué cumplirse. EXCEPTO el que se vende por peso o por porción y tiene su
+      // ingrediente base: ese sigue bajando ese insumo (`insumo_base`). Antes la pantalla, que
+      // llama a este comando siempre al guardar, lo devolvía a `sku` y la venta no descontaba
+      // nada (DP-18 · A3).
       .set({
-        estrategia_consumo: filas.length === 0 ? 'sku' : 'receta',
+        estrategia_consumo:
+          filas.length > 0
+            ? 'receta'
+            : estrategiaDeConsumo({
+                tipo_venta: producto.tipo_venta,
+                insumo_base_id: producto.insumo_base_id,
+                estrategia_consumo: 'sku',
+              }),
         updated_at: ctx.ahora,
       })
       .where('id', '=', entrada.productoId)

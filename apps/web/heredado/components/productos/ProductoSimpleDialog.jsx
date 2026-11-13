@@ -19,7 +19,12 @@ import CategoriaSelect from './CategoriaSelect';
 import ImageUploader from '@/components/common/ImageUploader';
 import { ensureCategoriaExists } from '@/utils/categoriaUtils';
 import TipoVentaSection from './TipoVentaSection';
-import { TIPO_VENTA, validarProductoVariable, esProductoVariable } from '@/utils/tipoVentaUtils';
+import {
+  TIPO_VENTA,
+  validarProductoVariable,
+  esProductoVariable,
+  mlPorPorcionEfectivo,
+} from '@/utils/tipoVentaUtils';
 import { AreaDePreparacionSelect } from '~/restaurante/AreaDePreparacionSelect';
 import { areaInicial, SEGUN_SU_CATEGORIA } from '~/restaurante/area-de-preparacion';
 import { SelectorDeFondo } from '~/portal/menu-digital/SelectorDeFondo';
@@ -132,8 +137,14 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
       const tipoVentaPayload = esProductoVariable(tipoVentaState)
         ? {
             tipo_venta: tipoVentaState.tipo_venta,
-            ingrediente_base_id: tipoVentaState.ingrediente_base_id || '',
-            unidad_variable: tipoVentaState.unidad_variable || '',
+            // `null`, no '': la columna es un uuid y '' no lo es.
+            ingrediente_base_id: tipoVentaState.ingrediente_base_id || null,
+            // Sólo el producto por medida lleva unidad. '' no es una unidad y la base lo
+            // rechazaba (DP-18 · A2: el de porción mandaba '').
+            unidad_variable:
+              tipoVentaState.tipo_venta === TIPO_VENTA.VARIABLE_MEDIDA
+                ? tipoVentaState.unidad_variable || null
+                : null,
             precio_por_unidad_variable: tipoVentaState.precio_por_unidad_variable,
             cantidad_minima_variable: tipoVentaState.cantidad_minima_variable,
             cantidad_maxima_variable: tipoVentaState.cantidad_maxima_variable,
@@ -148,7 +159,12 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
               tipoVentaState.presets_variable_qr.length > 0,
             capacidad_contenedor_ml: tipoVentaState.capacidad_contenedor_ml,
             porciones_por_contenedor: tipoVentaState.porciones_por_contenedor,
-            ml_por_porcion: tipoVentaState.ml_por_porcion,
+            // El «auto» de la pantalla viaja ya calculado (capacidad ÷ porciones): la base
+            // exige el dato y el cobro lo usa para saber cuánto baja del contenedor.
+            ml_por_porcion:
+              tipoVentaState.tipo_venta === TIPO_VENTA.PORCION_CONTENEDOR
+                ? mlPorPorcionEfectivo(tipoVentaState) || undefined
+                : tipoVentaState.ml_por_porcion,
             nombre_porcion: tipoVentaState.nombre_porcion || '',
             precio_por_porcion: tipoVentaState.precio_por_porcion,
             presets_porcion_qr: Array.isArray(tipoVentaState.presets_porcion_qr)

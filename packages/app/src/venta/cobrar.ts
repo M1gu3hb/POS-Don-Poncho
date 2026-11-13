@@ -212,9 +212,22 @@ export const cobrarOrden = definirComando<
       canal,
     );
     if (movimientos.length > 0) {
+      // DP-18 · LO QUE PASÓ POR COCINA YA SE PREPARÓ Y SE SIRVIÓ: el inventario no traba su cobro.
+      // Con el almacén creado y un insumo sin existencias cargadas (lo normal el primer día), el
+      // cobro se frenaba con «No hay inventario suficiente» y el comensal se quedaba en la caja
+      // con la comida ya comida. Como al cancelar (DP-D57), la existencia queda en negativo para
+      // que el conteo lo enseñe. Lo que se vende en mostrador sin cocina sigue la regla del
+      // producto (`permite_venta_sin_stock`).
+      const pasoPorCocina = await ctx.paso('ver_si_paso_por_cocina', () =>
+        ordenConComandas(ctx.tx, organizacionId, entrada.ordenId),
+      );
       await ctx.paso('descontar_stock', () =>
         repoStock.aplicarMovimientos(
-          movimientos.map((m) => ({ ...m, empleadoId: empleoId })),
+          movimientos.map((m) => ({
+            ...m,
+            empleadoId: empleoId,
+            ...(pasoPorCocina ? { permiteNegativo: true } : {}),
+          })),
           ctx.tx,
         ),
       );
@@ -463,6 +476,22 @@ function conCantidad(linea: LineaDeLaCuenta, cantidad: string): LineaDeLaCuenta 
   };
 }
 
+/** ¿La orden tiene comandas? Es decir: ¿se mandó a cocina (mesa, para llevar o portal)? */
+async function ordenConComandas(
+  tx: Transaccion,
+  organizacionId: string,
+  ordenId: string,
+): Promise<boolean> {
+  const fila = await tx
+    .selectFrom('comandas')
+    .select('id')
+    .where('organizacion_id', '=', organizacionId)
+    .where('orden_id', '=', ordenId)
+    .limit(1)
+    .executeTakeFirst();
+  return fila !== undefined;
+}
+
 export async function planearConsumo(
   tx: Transaccion,
   organizacionId: string,
@@ -564,6 +593,11 @@ export async function planearConsumo(
       continue;
     }
 
+    if (producto.estrategiaConsumo === 'insumo_base') {
+      paraConsumo.push(consumoDelIngredienteBase(producto, linea.id, comun, aConsumir));
+      continue;
+    }
+
     if (producto.estrategiaConsumo === 'receta') {
       // La receta que DE VERDAD se preparó: la del canal, con la leche que se eligió y
       // al tamaño que se pidió. Ver `recetaConOpciones`.
@@ -593,4 +627,82 @@ export async function planearConsumo(
   }
 
   return calcularConsumo(paraConsumo);
+}
+
+/**
+ * DP-18 · A3 · Lo que baja un producto por peso o por porción: su INGREDIENTE BASE.
+ *
+ *   · por medida: la cantidad vendida (0.25 kg) en la unidad en que se capturó, convertida a la
+ *     unidad base del insumo;
+ *   · por porción: porciones vendidas × ml por porción, en ml convertidos a la unidad del insumo;
+ *   · cualquier otro tipo de venta con esta estrategia baja la cantidad vendida del insumo base.
+ *
+ * Un producto `insumo_base` sin insumo base no puede salir de la base (el `check` de la 040), pero
+ * si llegara, vender sin descontar en silencio sería peor que decirlo (R12).
+ */
+function consumoDelIngredienteBase(
+  producto: repoVentaCatalogo.ProductoParaVender,
+  lineaId: string,
+  comun: {
+    readonly organizacionId: string;
+    readonly almacenId: string;
+    readonly ordenId: string;
+    readonly lineaId: string;
+    readonly cantidad: string;
+    readonly permiteVentaSinStock: boolean;
+  },
+  aConsumir: { readonly cantidad: string; readonly unidadVenta: string },
+): LineaParaConsumo {
+  if (producto.insumoBaseId === null || producto.unidadBaseDelInsumoBase === null) {
+    throw new ErrorDominio(
+      'CATALOGO_INVALIDO',
+      `"${producto.nombre}" baja su ingrediente base y no tiene ninguno elegido.`,
+      { productoId: producto.id, lineaId },
+    );
+  }
+  const base = {
+    insumoId: producto.insumoBaseId,
+    unidadBase: producto.unidadBaseDelInsumoBase,
+  };
+  if (producto.tipoVenta === 'variable_medida') {
+    return {
+      ...comun,
+      estrategiaConsumo: 'insumo_base',
+      ...base,
+      captura: {
+        tipoVenta: 'variable_medida',
+        cantidad: aConsumir.cantidad,
+        unidad: aConsumir.unidadVenta,
+      },
+    };
+  }
+  if (producto.tipoVenta === 'porcion_contenedor') {
+    if (producto.capacidadContenedorMl === null) {
+      throw new ErrorDominio(
+        'CATALOGO_INVALIDO',
+        `"${producto.nombre}" se vende por porción y no tiene la capacidad del contenedor.`,
+        { productoId: producto.id, lineaId },
+      );
+    }
+    return {
+      ...comun,
+      estrategiaConsumo: 'insumo_base',
+      ...base,
+      captura: {
+        tipoVenta: 'porcion_contenedor',
+        cantidadPorciones: aConsumir.cantidad,
+        capacidadMl: producto.capacidadContenedorMl,
+        ...(producto.mlPorPorcion === null ? {} : { mlPorPorcion: producto.mlPorPorcion }),
+        ...(producto.porcionesPorContenedor === null
+          ? {}
+          : { porcionesPorContenedor: producto.porcionesPorContenedor }),
+      },
+    };
+  }
+  return {
+    ...comun,
+    estrategiaConsumo: 'sku',
+    ...base,
+    unidadVenta: aConsumir.unidadVenta,
+  };
 }

@@ -2275,3 +2275,19 @@ puerta los denuncia todos.
   `docs/ENTREGA-DON-PONCHO.md` («El almacén y las compras»). Un tope contra el efectivo esperado se
   deja para después de la entrega: cambiaría también los gastos y no lo pidió el negocio.
 - **Sin migración ni cambio de código.**
+
+## DP-D116 · Lo que pasó por cocina se cobra aunque el almacén diga que no había · 12-11-2026
+
+- **El riesgo** (al arreglar A3, DP-18): el cobro no bajaba el «Ingrediente base» de los productos
+  por peso y por porción. Al hacerlo bajar —y al poder crear por fin el almacén (A4)— un platillo
+  cuyo insumo no tiene existencias cargadas (lo normal el primer día) frenaba el cobro con «No hay
+  inventario suficiente para completar la venta»: `permite_venta_sin_stock` nace en `false` y
+  ninguna pantalla del restaurante lo enciende.
+- **Decisión:** si la orden tiene comandas (pasó por cocina: mesa, para llevar o portal), el cobro
+  descuenta permitiendo el negativo. La comida ya se preparó y se sirvió: frenar el cobro sólo
+  detiene la caja con el comensal enfrente. Es la misma regla que al cancelar (DP-D57): la existencia
+  queda en negativo para que el conteo lo enseñe. Lo que se vende en mostrador sin cocina sigue la
+  regla del producto.
+- **Prueba:** `insumo-base-por-peso-y-porcion.integracion.test.ts` (un kilo de carne sin existencias
+  se cobra y la carne queda en −500 g). Mutantes muertos: sin el permiso y sin la consulta de comandas.
+- **Sin migración.**

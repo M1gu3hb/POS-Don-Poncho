@@ -174,20 +174,11 @@ export default function CategoriasProductoSection() {
       }
       const payload = { nombre };
       if (estacionesActivas) {
-        const estacionId = editForm.estacion_id || '';
-        if (estacionId) {
-          const est = (Array.isArray(estaciones) ? estaciones : []).find(
-            (e) => e?.id === estacionId,
-          );
-          payload.estacion_preparacion_id = estacionId;
-          payload.estacion_preparacion_nombre = est?.nombre || '';
-          payload.estacion_preparacion_color = est?.color || COCINA_GENERAL_COLOR;
-        } else {
-          // Limpiar asignación → cae a Cocina general en UI
-          payload.estacion_preparacion_id = '';
-          payload.estacion_preparacion_nombre = '';
-          payload.estacion_preparacion_color = '';
-        }
+        // Sólo viaja lo que se GUARDA: la clave de la estación. Su nombre y su color son derivados
+        // —el puente los saca del `join` con `estaciones_preparacion` al leer— y el servidor
+        // rechaza mandarlos («se calcula al leer y no se guarda», 422). Limpiar la asignación
+        // (cae a Cocina general en la UI) es `null`, no '': la columna es un uuid y '' no lo es.
+        payload.estacion_preparacion_id = editForm.estacion_id || null;
       }
       await api.entidades.CategoriaProducto.update(editing.id, payload);
       toast.success('Categoría actualizada');
