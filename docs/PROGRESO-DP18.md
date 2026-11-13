@@ -148,4 +148,23 @@ Parte 2. Luego la semana. La Parte 5 espera la elección de Miguel.
 - **Día 1, segunda corrida (×3):** a las 14:00, las 20 mesas ocupadas a la vez; a las 15:00 la tarde
   se atoró: tras un cobro con caos, la caja consultaba la base con el id de la llegada (no es uuid), el
   cobro hecho se tomaba por fallido y la cuenta quedaba «cobrándose» para siempre. Se cortó y se repite.
-- Lo que el simulador encontró de la app, en `D:\mpos-tmp\dp18\triage-borrador.md` (para la Parte 4).
+- **12-11, la laptop se apagó** a media semana; se retomó desde el molde del día 1.
+- **Día 1, tercera corrida (×3, se paró a las 15:30):** 7 críticos, todos falsos y del guion: el
+  carrito del mesero sobrevive a la recarga y un intento fallido se iba en la ronda siguiente (la base
+  tenía justo los renglones de más), los pagos de la disputa de dos cajas se buscaban con el id de la
+  llegada, y el portal no pedía la cuenta con «Sin propina» (la tesela se llama «Sin propina 0%»): 5 de
+  20 mesas atoradas. El Mesero 4 (tableta) no vio una mesa en todo el día: el mapa son `div` sin rol.
+  Guardada en `D:\mpos-tmp\dp18\corridas\d1-rep2\`.
+- **Día 1, cuarta corrida (×3, se paró a las 17:00):** 9 críticos, todos falsos y del guion (la app
+  cuadró al centavo cada uno): el pago mixto con propina no llenaba «¿Cómo se pagó la propina?», el
+  reintento perdía el descuento ya aplicado y la división heredaba ese descuento. Además: unir mesas
+  (el plano tiembla), las pestañas de zona del Mesero 3 (las mesas 9 y 10 sin mesero todo el día), la
+  mesa con 🎉 delante, la parte de una cuenta dividida que se daba por cobrada, el tope del 30 % de la
+  gerente. Con 20 mesas y estancias de ~66 min el reparto de llegadas no alcanzaba las 120 cuentas: se
+  calibró (946d0a4). Guardada en `corridas\d1-rep3\`. Todo corregido en `dp-18-2` y probado con sondas
+  (carrito, zonas, tableta) antes de la quinta corrida.
+- Lo que el simulador encontró de la app, en `D:\mpos-tmp\dp18\triage-borrador.md` (para la Parte 4):
+  A1–A17; los nuevos de estas corridas son el interbloqueo de «Preparar» (A12, 500), los «−»/«+» del
+  carrito sin nombre (A13), botones repetidos al dividir (A14), el mapa de mesas sin rol ni foco en
+  tableta y escritorio (A15), el diálogo del portal en modo mesero que se sale de la pantalla a 360 px
+  (A16) y los campos del pago mixto sin etiqueta (A17).
