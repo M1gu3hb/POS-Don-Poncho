@@ -39,12 +39,12 @@ import { crearTelefonoDeCocina } from './bots/telefono-cocina.ts';
 import { abrirCliente, leerCatalogo } from './catalogo.ts';
 import { contextoPara, lectorDelReloj, type BaseDelDia } from './contexto-de-bots.ts';
 import { leerEntorno, type Entorno } from './entorno.ts';
-import { APERTURA_MIN, CIERRE_MIN, generarHorario } from './horario.ts';
+import { APERTURA_MIN, CIERRE_MIN, generarHorario, quienesSeVan } from './horario.ts';
 import { abrirRegistro, type Incidente } from './incidentes.ts';
 import { redactarIncidentes } from './informe-incidentes.ts';
 import { redactarInforme } from './informe.ts';
 import { abrirLibro } from './libro.ts';
-import { mundoVacio } from './mundo.ts';
+import { contar, mundoVacio } from './mundo.ts';
 import { diaDeLaSemana, type DiaDeLaSemana } from './perfiles.ts';
 import { diaTerminado, minutosDesdeLaMedianoche } from './fin-del-dia.ts';
 import { fijarElReloj } from './reloj/fijar.ts';
@@ -213,6 +213,11 @@ async function main(): Promise<void> {
   const vigilar = setInterval(() => {
     const minuto = Math.floor(minutosDesdeLaMedianoche(d.fecha, ahoraSim()));
     const tramo = Math.floor(minuto / 30);
+    // Quien se cansa de esperar mesa se va (y a las 18:45 ya no se sienta a nadie).
+    for (const l of quienesSeVan(mundo.llegadas, minuto)) {
+      mundo.llegadas.splice(mundo.llegadas.indexOf(l), 1);
+      contar(mundo, 'grupos_que_se_fueron');
+    }
     if (tramo !== ultimoReporte) {
       ultimoReporte = tramo;
       const v = (clave: string): number => mundo.volumen.get(clave) ?? 0;

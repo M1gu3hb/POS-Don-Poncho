@@ -11,7 +11,7 @@ import type { Page } from '@playwright/test';
 
 import type { NombreDeAparato } from '../aparatos.ts';
 import type { Bot, ContextoDelBot } from '../bot.ts';
-import { minutoDelDia } from '../horario.ts';
+import { estanciaAlSentarse, minutoDelDia } from '../horario.ts';
 import { contar, type GrupoDePortal, type Llegada } from '../mundo.ts';
 import { planearRonda } from '../pedido.ts';
 import { intentar, vigilarServidor } from './ayudas.ts';
@@ -116,6 +116,7 @@ async function atenderGrupo(
     }
     let anotadas = 0;
     const inicio = minutoDelDia(ctx.ahoraSim());
+    const estancia = estanciaAlSentarse(llegada, inicio);
     for (let ronda = 1; ronda <= llegada.rondas && !ctx.terminado(); ronda += 1) {
       const lineas = planearRonda(ctx.azar, ctx.mundo, llegada.personas, 4);
       for (const l of lineas) {
@@ -184,11 +185,7 @@ async function atenderGrupo(
         return;
       }
       if (ronda < llegada.rondas)
-        await esperarMinutos(
-          ctx,
-          Math.max(8, Math.floor(llegada.minutosEnLaMesa / llegada.rondas)),
-          () => false,
-        );
+        await esperarMinutos(ctx, Math.max(8, Math.floor(estancia / llegada.rondas)), () => false);
     }
     if (ctx.azar.probabilidad(0.25)) {
       await intentar(
@@ -208,7 +205,7 @@ async function atenderGrupo(
     }
     await esperarMinutos(
       ctx,
-      Math.max(0, llegada.minutosEnLaMesa - (minutoDelDia(ctx.ahoraSim()) - inicio)),
+      Math.max(0, estancia - (minutoDelDia(ctx.ahoraSim()) - inicio)),
       () => false,
     );
     if (ctx.terminado() || grupo.lineas.length === 0) return;

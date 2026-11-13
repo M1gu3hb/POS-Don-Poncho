@@ -10,7 +10,7 @@ import type { Page } from '@playwright/test';
 
 import type { Bot, ContextoDelBot } from '../bot.ts';
 import type { NombreDeAparato } from '../aparatos.ts';
-import { minutoDelDia } from '../horario.ts';
+import { estanciaAlSentarse, minutoDelDia } from '../horario.ts';
 import { contar, type Llegada } from '../mundo.ts';
 import { planearRonda } from '../pedido.ts';
 import { asegurarSesion, despertar, entrarOFallar } from '../sesion.ts';
@@ -116,7 +116,7 @@ class Mesero {
       mesa: mesa.numero,
       personas: llegada.personas,
       rondas: llegada.rondas,
-      pedirCuentaEn: ahoraMin + llegada.minutosEnLaMesa,
+      pedirCuentaEn: ahoraMin + estanciaAlSentarse(llegada, ahoraMin),
       enviadas: [],
       quitadas: 0,
       ronda: 0,

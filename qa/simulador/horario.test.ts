@@ -3,10 +3,14 @@ import { describe, expect, it } from 'vitest';
 import {
   APERTURA_MIN,
   CIERRE_MIN,
+  ESTANCIA_MINIMA_MIN,
+  estanciaAlSentarse,
   generarHorario,
   horaDicha,
   minutoDelDia,
   PERFIL_NORMAL,
+  quienesSeVan,
+  ULTIMA_MESA_MIN,
 } from './horario.ts';
 import { crearAzar } from './semilla.ts';
 
@@ -69,5 +73,38 @@ describe('la hora del día', () => {
   it('lee los minutos desde la medianoche en la zona de CDMX', () => {
     expect(minutoDelDia(new Date('2026-11-16T08:30:00-06:00'))).toBe(8 * 60 + 30);
     expect(horaDicha(14 * 60 + 5)).toBe('14:05');
+  });
+});
+
+describe('el cierre del día', () => {
+  const llegada = (horaSim: number) => ({
+    id: `L${String(horaSim)}`,
+    horaSim,
+    personas: 2,
+    usaQr: false,
+    telefonos: 0,
+    minutosEnLaMesa: 90,
+    rondas: 1,
+    celebracion: false,
+  });
+
+  it('se van los que llevan más de 45 minutos esperando mesa; los demás siguen en la fila', () => {
+    const fila = [llegada(600), llegada(640), llegada(700)];
+    expect(quienesSeVan(fila, 646).map((l) => l.id)).toEqual(['L600']);
+    expect(quienesSeVan(fila, 645)).toEqual([]);
+  });
+
+  it('a las 18:45 se va todo el que siga esperando, pero no quien aún no llega', () => {
+    const fila = [llegada(ULTIMA_MESA_MIN - 10), llegada(ULTIMA_MESA_MIN + 5)];
+    expect(quienesSeVan(fila, ULTIMA_MESA_MIN).map((l) => l.id)).toEqual([
+      `L${String(ULTIMA_MESA_MIN - 10)}`,
+    ]);
+  });
+
+  it('la estancia no pasa de las 19:00, salvo los 35 minutos mínimos de quien se sienta tarde', () => {
+    expect(estanciaAlSentarse({ minutosEnLaMesa: 90 }, 12 * 60)).toBe(90);
+    expect(estanciaAlSentarse({ minutosEnLaMesa: 90 }, CIERRE_MIN - 60)).toBe(60);
+    expect(estanciaAlSentarse({ minutosEnLaMesa: 90 }, CIERRE_MIN - 10)).toBe(ESTANCIA_MINIMA_MIN);
+    expect(estanciaAlSentarse({ minutosEnLaMesa: 40 }, CIERRE_MIN - 60)).toBe(40);
   });
 });

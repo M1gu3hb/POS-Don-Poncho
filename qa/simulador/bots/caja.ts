@@ -383,6 +383,19 @@ async function cerrar(
   pagina: Page,
   cajon: CajonDelLibro,
 ): Promise<void> {
+  // Al cierre la sesión de la mañana puede haber vencido (8 h, A18): en la quinta corrida del día 1
+  // la Caja 1 quiso cerrar con la pantalla de acceso delante (D1-436, D1-439) y su caja quedó abierta
+  // para el día 2. La cajera vuelve a entrar antes de entregar y contar.
+  await asegurarSesion(pagina, ctx.entorno, plan.persona).catch((error: unknown) =>
+    registrarFallo(
+      ctx,
+      { bot, pantalla: 'Sesión' },
+      pagina,
+      'Volver a entrar para cerrar la caja',
+      'La sesión de la caja sigue vigente al cierre',
+      error,
+    ),
+  );
   // La caja no cierra con pedidos para llevar cobrados sin entregar (regla de la app): antes de
   // contar, se entrega lo listo y se espera a que la cocina termine lo que falta (sigue trabajando
   // hasta que las cajas cierran).

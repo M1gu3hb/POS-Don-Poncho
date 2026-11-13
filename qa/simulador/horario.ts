@@ -10,6 +10,12 @@ import type { Azar } from './semilla.ts';
 
 export const APERTURA_MIN = 8 * 60;
 export const CIERRE_MIN = 19 * 60;
+/** Lo menos que dura un grupo en la mesa. */
+export const ESTANCIA_MINIMA_MIN = 35;
+/** Cuánto aguanta un grupo esperando mesa antes de irse (minutos simulados). */
+export const ESPERA_MAXIMA_MIN = 45;
+/** Desde qué minuto ya no se sienta a nadie: los que siguen esperando se van. */
+export const ULTIMA_MESA_MIN = CIERRE_MIN - 15;
 
 export interface PerfilDelDia {
   /** Cuentas de mesa del día (grupos que se sientan). */
@@ -36,6 +42,31 @@ const PESO_DE_CADA_MEDIA_HORA: readonly number[] = [
   0.5, 0.8, 1.1, 1.4, 1.7, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.6, 3.8, 3.8, 3.8, 3.6, 3.4, 2.7, 2.3,
   1.8, 1.2, 0, 0,
 ];
+
+/**
+ * Los grupos que ya llegaron y se cansan de esperar mesa: llevan más de `ESPERA_MAXIMA_MIN` en
+ * la fila, o siguen en ella a las 18:45. En la quinta corrida del día 1 la fila llegó a 20 grupos y
+ * a las 20:30 aún esperaban 6: la gente de verdad se va, y el día tiene que poder terminar.
+ */
+export function quienesSeVan(llegadas: readonly Llegada[], minuto: number): readonly Llegada[] {
+  return llegadas.filter(
+    (l) =>
+      l.horaSim <= minuto && (minuto - l.horaSim > ESPERA_MAXIMA_MIN || minuto >= ULTIMA_MESA_MIN),
+  );
+}
+
+/**
+ * Cuánto se queda en la mesa un grupo que se sienta a `minuto`: lo suyo, pero sin pasar de las
+ * 19:00 (salvo los 35 min mínimos de quien se sienta tarde). En la quinta corrida del día 1 los
+ * grupos sentados a las 18:00 con estancias de 95 min dejaron 19 mesas ocupadas a las 19:00, y el
+ * día llegó al tope con 12 abiertas y las cajas sin poder cerrar.
+ */
+export function estanciaAlSentarse(
+  llegada: Pick<Llegada, 'minutosEnLaMesa'>,
+  minuto: number,
+): number {
+  return Math.min(llegada.minutosEnLaMesa, Math.max(ESTANCIA_MINIMA_MIN, CIERRE_MIN - minuto));
+}
 
 /** Minutos desde la medianoche de la hora simulada (zona de CDMX). */
 export function minutoDelDia(fecha: Date): number {
@@ -91,7 +122,7 @@ export function generarHorario(
       personas: personasDeUnGrupo(azar),
       usaQr,
       telefonos: usaQr ? azar.entero(2, 4) : 0,
-      minutosEnLaMesa: azar.entero(35, 95),
+      minutosEnLaMesa: azar.entero(ESTANCIA_MINIMA_MIN, 95),
       rondas: azar.entero(1, 3),
       celebracion: azar.probabilidad(perfil.celebracion),
     });
