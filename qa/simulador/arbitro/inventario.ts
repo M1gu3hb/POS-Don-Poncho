@@ -36,6 +36,9 @@ export function consumoPorUnidad(producto: string): Readonly<Record<string, numb
   return p.receta ?? {};
 }
 
+/** Los renglones de un mismo armado se anotan juntos: un minuto simulado los separa de otro. */
+const UN_ARMADO_MS = 60_000;
+
 /**
  * Lo que el libro dice que se movió por insumo: compras − mermas − consumo de lo cobrado. Con el
  * libro de un día es el movimiento neto que se espera ese día.
@@ -47,14 +50,28 @@ export function existenciaEsperada(libro: readonly AsientoFechado[]): {
   const cobradas = new Set(
     libro.flatMap((f) => (f.asiento.tipo === 'cobro' ? [f.asiento.cuenta] : [])),
   );
+  // Un para llevar que se vuelve a armar reutiliza su orden y REEMPLAZA sus renglones (el día 2,
+  // 7 pedidos rearmados contaban dos veces: 60 tortillas de más). De cada uno cuenta su último armado.
+  const ultimoArmado = new Map<string, number>();
+  for (const f of libro)
+    if (f.asiento.tipo === 'linea' && f.asiento.canal === 'llevar')
+      ultimoArmado.set(
+        f.asiento.cuenta,
+        Math.max(ultimoArmado.get(f.asiento.cuenta) ?? 0, Date.parse(f.horaSim)),
+      );
+  const vigente = (f: AsientoFechado): boolean =>
+    f.asiento.tipo !== 'linea' ||
+    f.asiento.canal !== 'llevar' ||
+    Date.parse(f.horaSim) >= (ultimoArmado.get(f.asiento.cuenta) ?? 0) - UN_ARMADO_MS;
   const existencia = new Map<string, number>();
   const consumo = new Map<string, number>();
   const mover = (m: Map<string, number>, nombre: string, delta: number) =>
     m.set(nombre, (m.get(nombre) ?? 0) + delta);
-  for (const { asiento } of libro) {
+  for (const f of libro) {
+    const { asiento } = f;
     if (asiento.tipo === 'compra') mover(existencia, asiento.insumo, asiento.cantidad);
     if (asiento.tipo === 'merma') mover(existencia, asiento.insumo, -asiento.cantidad);
-    if (asiento.tipo === 'linea' && cobradas.has(asiento.cuenta)) {
+    if (asiento.tipo === 'linea' && cobradas.has(asiento.cuenta) && vigente(f)) {
       for (const [insumo, cantidad] of Object.entries(consumoPorUnidad(asiento.producto))) {
         mover(existencia, insumo, -cantidad * asiento.cantidad);
         mover(consumo, insumo, cantidad * asiento.cantidad);
