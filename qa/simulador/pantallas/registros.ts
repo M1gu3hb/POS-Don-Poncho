@@ -76,6 +76,16 @@ export async function filtrarVentas(pagina: Page, canal: CanalDeVentas): Promise
 }
 
 /** La tarjeta de una venta en Registros → Ventas (por su folio; la serie puede ir delante: «A-12»). */
+/**
+ * Escribe en el buscador de Registros (vacío lo limpia). La lista de Ventas enseña sólo las 200 más
+ * recientes (A20): el día 2, con 258 cobros, los folios del principio del día sólo salían buscando.
+ */
+export async function buscarEnRegistros(pagina: Page, texto: string): Promise<void> {
+  const buscador = pagina.getByPlaceholder(/^Buscar por código de corte, folio/);
+  await buscador.fill(texto);
+  await expect(buscador).toHaveValue(texto);
+}
+
 export function tarjetaDeVenta(pagina: Page, folio: string): Locator {
   return pagina
     .locator('div')
