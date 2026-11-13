@@ -108,6 +108,46 @@ describe('la existencia que el libro espera', () => {
     expect(existencia.get('Tortilla de prueba')).toBe(-6);
   });
 
+  it('por porción baja su ingrediente base por porción, y por peso 1 000 por kilo (A3)', () => {
+    expect(consumoPorUnidad('Shot de tequila de prueba')).toEqual({ 'Tequila de prueba': 45 });
+    expect(consumoPorUnidad('Barbacoa por kilo de prueba')).toEqual({ 'Carne de prueba': 1000 });
+  });
+
+  it('un para llevar que se volvió a armar cuenta sólo su último armado', () => {
+    // La app reutiliza la orden del para llevar al rearmarlo y reemplaza sus renglones: el día 2 el
+    // libro contaba los dos armados de 7 pedidos (60 tortillas de más contra la base).
+    const renglon = (veces: number, horaSim: string): AsientoFechado => ({
+      ...fila({
+        tipo: 'linea',
+        cuenta: 'orden-1',
+        producto: 'Taco de prueba',
+        cantidad: veces,
+        opciones: [],
+        importeCentavos: veces * 3_500,
+        estacion: 'cocina',
+        canal: 'llevar',
+      }),
+      horaSim,
+    });
+    const libro = [
+      renglon(2, '2026-11-22T00:56:10.000Z'),
+      renglon(3, '2026-11-22T01:06:23.000Z'),
+      fila({
+        tipo: 'cobro',
+        caja: 'Caja 1',
+        cuenta: 'orden-1',
+        folio: '453',
+        canal: 'llevar',
+        totalCentavos: 10_500,
+        propinaCentavos: 0,
+        descuentoCentavos: 0,
+        pagos: { efectivo: 10_500, tarjeta: 0, transferencia: 0 },
+        cambioCentavos: 0,
+      }),
+    ];
+    expect(existenciaEsperada(libro).consumo.get('Carne de prueba')).toBe(3 * 60);
+  });
+
   it('cada producto de prueba nombra insumos que existen y cada insumo se compra en una unidad conocida', () => {
     const nombres = new Set(INSUMOS.map((i) => i.nombre));
     for (const p of PRODUCTOS_DE_PRUEBA) {

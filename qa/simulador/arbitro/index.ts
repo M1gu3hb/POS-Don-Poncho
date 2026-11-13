@@ -36,8 +36,12 @@ export async function arbitrar(
   const libro = leerLibros(salida, dias);
   const delDia = libro.filter((f) => f.dia === dia);
   const carpeta = carpetaDelDia(salida, dia);
-  await arbitrarCajas(baseUrl, libro, desde, c);
-  await arbitrarInventario(baseUrl, libro, desde, c);
+  // Cajas e inventario, SÓLO lo del día contra la base desde el inicio del día. Con el libro de
+  // toda la semana, el día 2 buscó los 207 cobros del día 1 en la ventana del día 2 («está en el
+  // libro y no en la base», 207 críticos falsos) y comparó la salida por venta acumulada contra la
+  // del día. El inventario se compara como movimiento neto del día (ver `inventario.ts`).
+  await arbitrarCajas(baseUrl, delDia, desde, c);
+  await arbitrarInventario(baseUrl, delDia, desde, c);
   const [pagadas] = await leerSql<{ n: string }>(
     baseUrl,
     `select count(*)::text as n from ordenes where organizacion_id = ${ORGANIZACION} and estado = 'pagada'`,
