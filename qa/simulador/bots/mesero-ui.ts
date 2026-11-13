@@ -19,9 +19,14 @@ export interface MesaEnPantalla {
 /**
  * «12 Esperando entrega» con lo que haya antes, mientras no sea otro dígito: en el mapa el texto
  * incluye los emojis de la mesa («🎉12 …» con celebración) y el número ya no va al principio
- * (D1-038 y D1-042: el Mesero 4 no podía entrar a su mesa 12).
+ * (D1-038 y D1-042: el Mesero 4 no podía entrar a su mesa 12). Una mesa unida lleva entre el
+ * número y el estado su leyenda («7 Mesa 7 · Unida con 8 Ocupada»): sin admitirla, la 7 no se
+ * encontraba y el «8» de la leyenda pasaba por otra mesa (quinta corrida del día 1: el Mesero 2
+ * no pudo entrar a la 7 en siete horas y la mesa no se cobró).
  */
-const numeroYEstado = (numero: string): RegExp => new RegExp(`(?<!\\d)${numero}\\s*(${ESTADOS})`);
+const LEYENDA_DE_UNION = '(?:Mesa \\d+ · Unida con [\\d ,y]+?\\s*)?';
+const numeroYEstado = (numero: string): RegExp =>
+  new RegExp(`(?<!\\d)${numero}\\s*${LEYENDA_DE_UNION}(${ESTADOS})`);
 
 const CUALQUIER_MESA = numeroYEstado('\\d+');
 
