@@ -2262,3 +2262,32 @@ puerta los denuncia todos.
   auditoría de 447 a 450 (los tres pasos). Una segunda corrida no hace nada nuevo. Integración: 3 de 3.
 - **En producción se corre sólo cuando Miguel lo pida en el chat**, primero con `--ensayo`.
 - **Sin migración.**
+
+## DP-D115 · La compra en efectivo sale del cajón de la caja abierta · 12-11-2026
+
+- **El hallazgo** (simulador de jornada, A11): una compra de contado bajó el efectivo esperado de la
+  caja abierta, hasta dejarlo en negativo cuando la compra era más grande que lo que había en el cajón.
+- **Decisión: se queda así.** Es la regla de la 2.4 (bloque D), la misma de un gasto en efectivo: el
+  dinero que se le da al proveedor sale del cajón, y si la compra no lo registrara, el arqueo de la
+  noche esperaría un efectivo que ya se fue. Sin caja abierta, la compra en efectivo no se registra.
+- **Lo que cambia es la instrucción:** si el dinero NO salió de la caja (lo pagó el dueño de su bolsa),
+  la compra se registra como transferencia o tarjeta. El diálogo empieza en «Efectivo», así que va en
+  `docs/ENTREGA-DON-PONCHO.md` («El almacén y las compras»). Un tope contra el efectivo esperado se
+  deja para después de la entrega: cambiaría también los gastos y no lo pidió el negocio.
+- **Sin migración ni cambio de código.**
+
+## DP-D116 · Lo que pasó por cocina se cobra aunque el almacén diga que no había · 12-11-2026
+
+- **El riesgo** (al arreglar A3, DP-18): el cobro no bajaba el «Ingrediente base» de los productos
+  por peso y por porción. Al hacerlo bajar —y al poder crear por fin el almacén (A4)— un platillo
+  cuyo insumo no tiene existencias cargadas (lo normal el primer día) frenaba el cobro con «No hay
+  inventario suficiente para completar la venta»: `permite_venta_sin_stock` nace en `false` y
+  ninguna pantalla del restaurante lo enciende.
+- **Decisión:** si la orden tiene comandas (pasó por cocina: mesa, para llevar o portal), el cobro
+  descuenta permitiendo el negativo. La comida ya se preparó y se sirvió: frenar el cobro sólo
+  detiene la caja con el comensal enfrente. Es la misma regla que al cancelar (DP-D57): la existencia
+  queda en negativo para que el conteo lo enseñe. Lo que se vende en mostrador sin cocina sigue la
+  regla del producto.
+- **Prueba:** `insumo-base-por-peso-y-porcion.integracion.test.ts` (un kilo de carne sin existencias
+  se cobra y la carne queda en −500 g). Mutantes muertos: sin el permiso y sin la consulta de comandas.
+- **Sin migración.**

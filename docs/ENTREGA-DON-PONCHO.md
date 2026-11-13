@@ -143,6 +143,20 @@ público).
 - Se actualiza sola cada pocos segundos, al volver a la pestaña y al cambiar el cupo.
 - Cada caja hace su corte en su aparato; el **Cierre del día** se hace con la última.
 
+### El almacén y las compras (DP-18, lunes)
+
+- **Una sola vez, antes de la primera compra o del primer inventario:** el dueño o la gerente abre
+  Compras (o Inventario) y, si dice «Esta sucursal todavía no tiene almacén», toca **«Crear el almacén
+  principal»**. Sin almacén no se pueden recibir compras ni guardar el inventario.
+- **Una compra en «Efectivo» sale del cajón de la caja abierta**, como un gasto en efectivo: el corte
+  de la noche ya no espera ese dinero. Si la compra se pagó con dinero que NO salió de la caja (de la
+  bolsa del dueño, por ejemplo), elige **Transferencia** o **Tarjeta** en «Método de pago»: el diálogo
+  empieza en Efectivo. Sin una caja abierta, la compra en efectivo no se registra.
+- **Un platillo por peso o por porción con «Ingrediente base»** (Recetas) baja ese insumo al cobrarse:
+  la barbacoa por kilo baja sus kilos. Si el insumo no tiene existencias, el cobro NO se frena (lo que
+  pasó por cocina ya se sirvió): el insumo queda en negativo y el conteo lo enseña. Para que el
+  inventario diga la verdad, carga su inventario inicial o regístralo con una compra.
+
 ## La revisión de Miguel antes del sábado (10 minutos, con sus PIN)
 
 Lo que necesita un PIN real en producción no lo prueba nadie más que Miguel: los PIN están en

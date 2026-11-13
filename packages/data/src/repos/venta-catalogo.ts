@@ -44,6 +44,9 @@ export interface ProductoParaVender {
   /** El insumo que descuenta este producto, si lo tiene. */
   readonly insumoId: string | null;
   readonly unidadBaseInsumo: string | null;
+  /** DP-18 · El «Ingrediente base» (`insumo_base_id`): lo que bajan el producto por peso o por porción. */
+  readonly insumoBaseId: string | null;
+  readonly unidadBaseDelInsumoBase: string | null;
 }
 
 const COLUMNAS = [
@@ -72,6 +75,8 @@ const COLUMNAS = [
   'productos.permite_venta_sin_stock as permiteVentaSinStock',
   'insumos.id as insumoId',
   'insumos.unidad_base as unidadBaseInsumo',
+  'productos.insumo_base_id as insumoBaseId',
+  'base.unidad_base as unidadBaseDelInsumoBase',
 ] as const;
 
 export async function productoParaVender(
@@ -83,6 +88,7 @@ export async function productoParaVender(
     .selectFrom('productos')
     // `leftJoin`: un servicio no tiene insumo y debe poder venderse igual.
     .leftJoin('insumos', 'insumos.producto_id', 'productos.id')
+    .leftJoin('insumos as base', 'base.id', 'productos.insumo_base_id')
     .select(COLUMNAS)
     .where('productos.organizacion_id', '=', organizacionId)
     .where('productos.id', '=', productoId)

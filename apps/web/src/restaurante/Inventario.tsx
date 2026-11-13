@@ -35,6 +35,8 @@ import {
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 
 import { ErrorApi, consultarPuente, invocarComando } from '~/cliente/api';
+import { almacenPrincipal, leerAlmacenes } from '~/inventario/almacen-de-la-sucursal';
+import { FaltaElAlmacen } from '~/inventario/FaltaElAlmacen';
 import { centavosDe } from '~/cliente/dinero-del-puente';
 
 import { MOTIVO_DEL_CONTEO, motivoVigente, ordenDelAjuste } from './ajuste-de-inventario.ts';
@@ -668,6 +670,8 @@ export function Inventario({ filasIniciales, almacenId }: InventarioProps) {
    * ledger, que dice en qué almacén vive lo que se mueve.
    */
   const [almacen, setAlmacen] = useState<string | null>(almacenId ?? null);
+  /** DP-18 (A4): la sucursal no tiene NINGÚN almacén (lo dijo el resumen): se ofrece crearlo. */
+  const [sinAlmacen, setSinAlmacen] = useState(false);
 
   useEffect(() => {
     if (filasIniciales !== undefined) return;
@@ -705,8 +709,18 @@ export function Inventario({ filasIniciales, almacenId }: InventarioProps) {
       limite: 1,
       signal: control.signal,
     })
-      .then((movimientos) => {
-        if (!control.signal.aborted) setAlmacen(movimientos[0]?.almacen_id ?? null);
+      .then(async (movimientos) => {
+        const delLedger = movimientos[0]?.almacen_id ?? null;
+        if (delLedger !== null) {
+          if (!control.signal.aborted) setAlmacen(delLedger);
+          return;
+        }
+        // DP-18 (A4): sin movimientos todavía (una sucursal recién abierta) el ledger no lo dice;
+        // lo dice el resumen. Si tampoco hay ninguno, la pantalla ofrece crearlo.
+        const principal = almacenPrincipal(await leerAlmacenes(control.signal));
+        if (control.signal.aborted) return;
+        setAlmacen(principal?.id ?? null);
+        setSinAlmacen(principal === null);
       })
       .catch(() => {
         // Quien lee la alacena sin leer el ledger —la cocina— no ajusta: la pantalla sigue
@@ -834,10 +848,21 @@ export function Inventario({ filasIniciales, almacenId }: InventarioProps) {
     );
   }
 
+  // DP-18 (A4): sin almacén no se guarda nada; el aviso lo crea y la pantalla sigue con él.
+  const faltaElAlmacen = sinAlmacen ? (
+    <FaltaElAlmacen
+      onCreado={(id) => {
+        setAlmacen(id);
+        setSinAlmacen(false);
+      }}
+    />
+  ) : null;
+
   if (ordenadas.length === 0) {
     return (
       <main className={PAGINA}>
         <h1 className="text-2xl font-bold">Inventario</h1>
+        {faltaElAlmacen}
         {/* El vacío ENSEÑA: dice qué pasó y qué va a vivir aquí. */}
         <Vacio
           className="flex-1"
@@ -910,6 +935,8 @@ export function Inventario({ filasIniciales, almacenId }: InventarioProps) {
           atender
         </p>
       </header>
+
+      {faltaElAlmacen}
 
       {urgentes.length > 0 && <LoUrgente urgentes={urgentes} />}
 

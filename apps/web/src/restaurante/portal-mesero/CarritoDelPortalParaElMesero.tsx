@@ -151,12 +151,12 @@ export function CarritoDelPortalParaElMesero({
       como="section"
       nivel={0}
       relleno={3}
-      className="flex flex-col gap-(--espacio-3)"
+      className="flex min-w-0 flex-col gap-(--espacio-3)"
       data-carrito-del-portal={mesa.id}
       aria-label={`Pedido del portal de la mesa ${String(mesa.numero)}`}
     >
       <header className="flex flex-wrap items-baseline justify-between gap-(--espacio-2)">
-        <h3 className="text-base font-semibold">Pedido del portal · Mesa {mesa.numero}</h3>
+        <h3 className="min-w-0 text-base font-semibold">Pedido del portal · Mesa {mesa.numero}</h3>
         <span className="flex items-center gap-1 text-xs text-texto-sutil">
           <Smartphone className="size-3.5" aria-hidden />
           {carrito.conectados === 1 ? '1 teléfono' : `${String(carrito.conectados)} teléfonos`}
@@ -173,7 +173,7 @@ export function CarritoDelPortalParaElMesero({
         <Vacio tamano="compacto" titulo="Los comensales todavía no han armado nada." />
       ) : (
         porTelefono(carrito.lineas).map(([telefono, lineas]) => (
-          <div key={telefono} className="flex flex-col gap-(--espacio-1)">
+          <div key={telefono} className="flex min-w-0 flex-col gap-(--espacio-1)">
             <p className="text-xs font-semibold text-texto-sutil">Teléfono {telefono}</p>
             <ul className="flex flex-col">
               {lineas.map((linea) => (
@@ -197,7 +197,7 @@ export function CarritoDelPortalParaElMesero({
         <footer className="flex flex-wrap items-end justify-between gap-(--espacio-2)">
           <Button
             variant="outline"
-            className="text-peligro"
+            className="max-w-full text-peligro"
             disabled={ocupado !== null}
             onClick={() => {
               setBorrando(true);
@@ -206,7 +206,7 @@ export function CarritoDelPortalParaElMesero({
             <Trash2 className="size-4" aria-hidden /> Borrar el pedido
           </Button>
           {mesa.ordenId === null ? (
-            <span className="flex items-end gap-(--espacio-2)">
+            <span className="flex min-w-0 max-w-full items-end gap-(--espacio-2)">
               <span className="flex flex-col gap-1">
                 <Label htmlFor={idPersonas} className="text-xs">
                   Personas
@@ -227,7 +227,7 @@ export function CarritoDelPortalParaElMesero({
             </span>
           ) : (
             <Button
-              className="gap-(--espacio-2)"
+              className="max-w-full gap-(--espacio-2)"
               disabled={ocupado !== null}
               onClick={() => {
                 if (mesa.cuentaPedida) setReabriendo(true);
