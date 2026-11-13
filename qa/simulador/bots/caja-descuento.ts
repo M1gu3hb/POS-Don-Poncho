@@ -40,14 +40,22 @@ export const RITMO_POR_OMISION: RitmoDeCaja = {
 
 const MOTIVOS = ['cliente frecuente', 'producto golpeado', 'cortesía de la casa', 'espera larga'];
 
-/** El descuento que se le ocurre a la cajera: porcentaje (10 o 20) o pesos redondos, siempre menor a la cuenta. */
+/** Lo más que autoriza la gerente de prueba (su tope en la configuración): 30 % de la cuenta. */
+const TOPE_DE_LA_GERENTE = 0.3;
+
+/**
+ * El descuento que se le ocurre a la cajera: porcentaje (10 o 20) o pesos redondos, siempre dentro
+ * de lo que la gerente puede autorizar. Antes pedía $20 sobre $60 (33 %): la app lo frena, como debe,
+ * y el guion se quedaba esperando «Aplicar» (D1-049).
+ */
 function elegirDescuento(
   ctx: ContextoDelBot,
   baseCentavos: number,
 ): { d: Omit<Descuento, 'autoriza'>; centavos: number } {
   const motivo = ctx.azar.elegir(MOTIVOS);
-  if (baseCentavos >= 6_000 && ctx.azar.probabilidad(0.4)) {
-    const pesos = ctx.azar.elegir([10, 15, 20]);
+  const enPesos = [10, 15, 20].filter((p) => p * 100 <= baseCentavos * TOPE_DE_LA_GERENTE);
+  if (enPesos.length > 0 && ctx.azar.probabilidad(0.4)) {
+    const pesos = ctx.azar.elegir(enPesos);
     return { d: { tipo: 'pesos', valor: pesos, motivo }, centavos: pesos * 100 };
   }
   const porcentaje = ctx.azar.elegir([10, 10, 20]);
