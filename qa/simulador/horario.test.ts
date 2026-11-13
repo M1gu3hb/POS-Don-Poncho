@@ -40,10 +40,22 @@ describe('el horario de llegadas', () => {
     }
   });
 
+  // Los siete días de la semana, sembrados como los siembra `correr-dia` (una sola semilla tiene
+  // demasiado ruido con 130 llegadas: la 18 sola daba 35 % en el pico y otras 57 %).
+  const semana = Array.from({ length: 7 }, (_, i) =>
+    generarHorario(crearAzar(`18-dia-${String(i + 1)}`).hijo('horario'), PERFIL_NORMAL),
+  );
+  const parte = (desde: number, hasta: number): number =>
+    semana.flat().filter((l) => l.horaSim >= desde && l.horaSim < hasta).length /
+    semana.flat().length;
+
   it('concentra las llegadas en el pico de 13:30 a 16:30', () => {
-    const h = generarHorario(crearAzar(18), PERFIL_NORMAL);
-    const enElPico = h.filter((l) => l.horaSim >= 13 * 60 + 30 && l.horaSim < 16 * 60 + 30).length;
-    expect(enElPico / h.length).toBeGreaterThan(0.4);
+    expect(parte(13 * 60 + 30, 16 * 60 + 30)).toBeGreaterThan(0.4);
+  });
+
+  it('reparte la mañana: casi la tercera parte llega antes de la una y nadie después de las 18:30', () => {
+    expect(parte(0, 13 * 60)).toBeGreaterThan(0.3);
+    expect(semana.flat().every((l) => l.horaSim < 18 * 60 + 30)).toBe(true);
   });
 
   it('sale ordenado por hora y con ids únicos', () => {

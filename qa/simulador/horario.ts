@@ -22,10 +22,19 @@ export interface PerfilDelDia {
 
 export const PERFIL_NORMAL: PerfilDelDia = { cuentas: 130, proporcionQr: 0.56, celebracion: 0.07 };
 
-/** El peso de cada tramo de media hora (empieza en las 8:00): lo que pesa llegar a esa hora. */
+/**
+ * El peso de cada tramo de media hora (empieza en las 8:00): lo que pesa llegar a esa hora.
+ *
+ * Calibrado con el día 1: 20 mesas con estancias de ~66 min sientan ~16 grupos por hora. El primer
+ * reparto metía el 60 % entre 13:00 y 17:00 y casi nada en la mañana: en el pico la fila llegaba a
+ * 17 grupos, al cierre quedaban sin sentar y el día no alcanzaba las 120 cuentas de mesa. Ahora la
+ * tercera parte llega antes de la una, el pico de 13:30 a 16:30 sigue (≥ 40 %, las 20 mesas
+ * llenas) y nadie llega después de las 18:30 (antes esos tramos se recortaban a las 18:15 y se
+ * amontonaban ahí).
+ */
 const PESO_DE_CADA_MEDIA_HORA: readonly number[] = [
-  0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.4, 1.8, 2.2, 2.6, 3.2, 3.2, 3.4, 3.4, 3.4, 3.0, 2.6,
-  2.0, 1.4, 1.0, 0.6,
+  0.5, 0.8, 1.1, 1.4, 1.7, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.6, 3.8, 3.8, 3.8, 3.6, 3.4, 2.7, 2.3,
+  1.8, 1.2, 0, 0,
 ];
 
 /** Minutos desde la medianoche de la hora simulada (zona de CDMX). */
