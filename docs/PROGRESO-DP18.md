@@ -194,3 +194,10 @@ Parte 2. Luego la semana. La Parte 5 espera la elección de Miguel.
   dos revisiones (para llevar y Registros). La repetición del día 1 con ese build (14-11, 05:50–10:40):
   0 críticos, cajas e inventario al centavo, el día cierra solo antes del tope. Reporte:
   `docs/reports/011-semana-de-operacion.md`; los informes, en `docs/qa/semana/`.
+- **Cierre de las Partes 3 y 4 (14-11):** #27 unido a `main` a las 10:25 y en producción a las 10:25:38;
+  humo de sólo lectura en verde (200 / 403, los textos de A7, A8 y A21 en el JavaScript publicado).
+  Las copias de la laptop se archivaron (`pg_dump` del inicio del día 1, del final de la semana y del
+  final de la repetición, fuera del repo) y se borraron las 19 `qa_dp18_*`; los worktrees y ramas de
+  los agentes, también. Queda `.work/dp18-integrar` por si hace falta otra simulación.
+- **Pendiente:** el estado del domingo 15 a las 18:00; `dejar-en-ceros.mjs` sólo si Miguel lo pide; la
+  elección A, B o C de la Parte 5; la decisión de A18 (sesión de 8 h). Después del lunes: A23, A24, A5.
