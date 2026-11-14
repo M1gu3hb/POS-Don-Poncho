@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   avisoDelTopeDeRegistros,
+  fechaEnElPeriodo,
   leerPeriodoCompleto,
   rangoDelPeriodo,
   unirPorId,
@@ -9,17 +10,25 @@ import {
 } from './periodo-de-registros.ts';
 
 /** Una «base» de filas con instante `t` (ms) que responde como el puente: tope y rango inclusivo. */
-function baseDeInstantes(total: number, inicio: number, paso: number, tope: number) {
-  const filas = Array.from({ length: total }, (_, i) => ({
-    id: `v${String(i)}`,
-    t: inicio + i * paso,
-  }));
+function baseDeInstantes(
+  total: number,
+  inicio: number,
+  paso: number,
+  tope: number,
+  extras: readonly { id: string; t: number }[] = [],
+) {
+  const filas = [
+    ...Array.from({ length: total }, (_, i) => ({ id: `v${String(i)}`, t: inicio + i * paso })),
+    ...extras,
+  ];
   const peticiones: PeticionDeRango[] = [];
   const leer = (p: PeticionDeRango) => {
     peticiones.push(p);
     const desde = new Date(p.desde).getTime();
     const hasta = new Date(p.hasta).getTime();
-    return Promise.resolve(filas.filter((f) => f.t >= desde && f.t <= hasta).slice(0, tope));
+    // Como el puente con `-created_date`: lo más reciente primero, y el tope corta lo más viejo.
+    const dentro = filas.filter((f) => f.t >= desde && f.t <= hasta).sort((a, b) => b.t - a.t);
+    return Promise.resolve(dentro.slice(0, tope));
   };
   return { filas, peticiones, leer };
 }
@@ -69,6 +78,11 @@ describe('DP-18 · A21 · leerPeriodoCompleto', () => {
     });
     expect(r.truncada).toBe(true);
     expect(r.filas.length).toBeLessThan(2500);
+    // Lo que se conserva es lo MÁS RECIENTE (el aviso dice «más recientes»): v2499 está, v0 no.
+    const ids = new Set(r.filas.map((f) => f.id));
+    expect(ids.has('v2499')).toBe(true);
+    expect(ids.has('v2000')).toBe(true);
+    expect(ids.has('v0')).toBe(false);
   });
 
   it('avisa si mil filas caen en una ventana que ya no se puede partir', async () => {
@@ -80,6 +94,44 @@ describe('DP-18 · A21 · leerPeriodoCompleto', () => {
       leer: base.leer,
     });
     expect(r.truncada).toBe(true);
+  });
+
+  it('no pierde una fila entre las dos mitades: instantes con fracciones de milisegundo', async () => {
+    const desde = rango.from.getTime();
+    const hasta = rango.to.getTime();
+    const mitad = Math.floor((desde + hasta) / 2);
+    // 1 500 filas parten la ventana; una cae en `mitad + 0,4 ms` (timestamptz guarda microsegundos).
+    // Las 1 500 filas son TODAS más nuevas que `mitad`: la fila de `mitad + 0,4 ms` es la más vieja
+    // y sólo la alcanza la lectura de la mitad reciente si ésta arranca en `mitad` (no en `mitad + 1`).
+    const base = baseDeInstantes(1500, mitad + 60_000, 1000, 1000, [
+      { id: 'entre-mitades', t: mitad + 0.4 },
+    ]);
+    const r = await leerPeriodoCompleto({
+      campo: 'created_date',
+      tipo: 'fecha',
+      rango,
+      leer: base.leer,
+    });
+    expect(r.truncada).toBe(false);
+    expect(r.filas.map((f) => f.id)).toContain('entre-mitades');
+    expect(r.filas).toHaveLength(1501);
+  });
+
+  it('una fila sin id no se duplica al releer las mitades', async () => {
+    const sinId = { t: rango.from.getTime() + 5 * 60_000, nota: 'sin id' } as {
+      id?: string;
+      t: number;
+      nota: string;
+    };
+    const base = baseDeInstantes(1200, rango.from.getTime(), 400_000, 1000);
+    const leer = async (p: PeticionDeRango) => {
+      const filas = await base.leer(p);
+      const d = new Date(p.desde).getTime();
+      const h = new Date(p.hasta).getTime();
+      return sinId.t >= d && sinId.t <= h ? [...filas, sinId] : filas;
+    };
+    const r = await leerPeriodoCompleto({ campo: 'created_date', tipo: 'fecha', rango, leer });
+    expect(r.filas.filter((f) => 'nota' in f)).toHaveLength(1);
   });
 
   it('en campos de DÍA parte por días y pide fechas sin hora', async () => {
@@ -136,5 +188,40 @@ describe('DP-18 · rango del periodo y unión por id', () => {
 
   it('unirPorId no duplica una venta creada y cobrada en el periodo', () => {
     expect(unirPorId([{ id: 'a' }, { id: 'b' }], [{ id: 'b' }, { id: 'c' }])).toHaveLength(3);
+  });
+});
+
+describe('DP-18 · fechaEnElPeriodo: los días no son medianoche UTC', () => {
+  const hoy = new Date(2026, 10, 14, 15, 30); // 14 nov, hora local del aparato
+
+  it('«Hoy»: una compra o gasto de HOY (día sin hora) suma', () => {
+    const r = rangoDelPeriodo('today', '', '', hoy);
+    expect(fechaEnElPeriodo('2026-11-14', r)).toBe(true);
+    expect(fechaEnElPeriodo('2026-11-13', r)).toBe(false);
+    expect(fechaEnElPeriodo('2026-11-15', r)).toBe(false);
+  });
+
+  it('«Últimos 7 días» y «Este mes» no pierden su primer día', () => {
+    const siete = rangoDelPeriodo('7d', '', '', hoy);
+    expect(fechaEnElPeriodo('2026-11-08', siete)).toBe(true);
+    expect(fechaEnElPeriodo('2026-11-07', siete)).toBe(false);
+    const mes = rangoDelPeriodo('mes', '', '', hoy);
+    expect(fechaEnElPeriodo('2026-11-01', mes)).toBe(true);
+    expect(fechaEnElPeriodo('2026-10-31', mes)).toBe(false);
+  });
+
+  it('«Personalizado» incluye el primer y el último día', () => {
+    const r = rangoDelPeriodo('custom', '2026-11-10', '2026-11-12');
+    expect(fechaEnElPeriodo('2026-11-10', r)).toBe(true);
+    expect(fechaEnElPeriodo('2026-11-12', r)).toBe(true);
+    expect(fechaEnElPeriodo('2026-11-13', r)).toBe(false);
+  });
+
+  it('un instante con hora se compara como instante; lo vacío no cuenta', () => {
+    const r = rangoDelPeriodo('today', '', '', hoy);
+    expect(fechaEnElPeriodo(new Date(2026, 10, 14, 9, 0).toISOString(), r)).toBe(true);
+    expect(fechaEnElPeriodo(new Date(2026, 10, 13, 23, 0).toISOString(), r)).toBe(false);
+    expect(fechaEnElPeriodo(undefined, r)).toBe(false);
+    expect(fechaEnElPeriodo('', r)).toBe(false);
   });
 });

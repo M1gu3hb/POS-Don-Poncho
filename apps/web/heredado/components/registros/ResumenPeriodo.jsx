@@ -21,6 +21,7 @@ import { useConfig } from '@/lib/ConfigContext';
 import { canAccessModule } from '@/lib/packageConfig';
 import { sumarPropinas } from '@/utils/tipsUtils';
 import { EsqueletoDeBloque, EsqueletoDeCifras } from '~/cliente/EstadosDeCarga';
+import { fechaEnElPeriodo } from '~/registros/periodo-de-registros';
 import { economiaDelPeriodo, subtituloDelMargen } from '~/restaurante/margen-de-las-ventas';
 
 const PERIODOS = [
@@ -51,11 +52,7 @@ export default function ResumenPeriodo({
   const { config, paquete_modo } = useConfig();
   const colorize = config?.colorear_importes_monetarios !== false;
   const sinCostos = !canAccessModule('costos_basicos', paquete_modo);
-  const inRange = (dateStr) => {
-    if (!dateStr) return false;
-    const t = new Date(dateStr).getTime();
-    return t >= range.from.getTime() && t <= range.to.getTime();
-  };
+  const inRange = (fecha) => fechaEnElPeriodo(fecha, range);
 
   const ventasP = ventas.filter(
     (v) => v.estado === 'pagada' && inRange(v.fecha_cierre || v.created_date),
@@ -88,6 +85,7 @@ export default function ResumenPeriodo({
         </div>
         <Button
           size="sm"
+          disabled={cargando}
           onClick={() =>
             onPDF?.({
               ...range,

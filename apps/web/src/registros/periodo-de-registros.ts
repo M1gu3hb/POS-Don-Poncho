@@ -136,18 +136,22 @@ export async function leerPeriodoCompleto<T extends { readonly id?: unknown }>(o
   const tope = opciones.tope ?? TOPE_POR_LECTURA;
   const techo = opciones.techo ?? TECHO_DE_SEGURIDAD;
   const p = particionDe(opciones.tipo, opciones.rango);
-  const vistas = new Map<unknown, T>();
-  const sinId: T[] = [];
+  const vistas = new Map<string, T>();
   let truncada = false;
 
   const guardar = (filas: readonly T[]): void => {
-    for (const f of filas) {
-      if (f.id === undefined || f.id === null) sinId.push(f);
-      else vistas.set(f.id, f);
-    }
+    for (const f of filas) vistas.set(claveDeFila(f), f);
   };
-  const juntas = (): number => vistas.size + sinId.length;
 
+  /**
+   * Lee una ventana. Si llega al tope, la parte y pide PRIMERO la mitad RECIENTE (el orden de la
+   * lectura es «más recientes primero»): si se llega al techo de seguridad, lo que se conserva
+   * es lo más nuevo, y el aviso «más recientes» dice la verdad.
+   *
+   * Las mitades se TRASLAPAN en `mitad` (instantes: pueden tener microsegundos y una fila en
+   * `mitad + 0,4 ms` no cabría en `[mitad + 1, …]`); lo repetido lo une `claveDeFila`.
+   * En días el traslape no hace falta: la mitad reciente arranca al día siguiente.
+   */
   const ventana = async (desde: number, hasta: number): Promise<void> => {
     const filas = await opciones.leer({ campo: opciones.campo, ...p.aPeticion(desde, hasta) });
     guardar(filas);
@@ -157,32 +161,38 @@ export async function leerPeriodoCompleto<T extends { readonly id?: unknown }>(o
       return;
     }
     const mitad = Math.floor((desde + hasta) / 2);
-    // Las filas de esta ventana ya están guardadas: al pedir las mitades se repiten y el `id` las une.
-    await ventana(desde, mitad);
+    await ventana(opciones.tipo === 'dia' ? mitad + 1 : mitad, hasta);
     if (juntas() >= techo) {
       truncada = true;
       return;
     }
-    await ventana(mitad + 1, hasta);
+    await ventana(desde, mitad);
   };
 
+  const juntas = (): number => vistas.size;
   if (p.hasta >= p.desde) await ventana(p.desde, p.hasta);
-  return { filas: [...vistas.values(), ...sinId], truncada };
+  return { filas: [...vistas.values()], truncada };
+}
+
+/** La identidad de una fila: su `id`; sin él, su contenido (nunca se duplica en una relectura). */
+function claveDeFila(fila: { readonly id?: unknown }): string {
+  return fila.id === undefined || fila.id === null
+    ? `contenido:${JSON.stringify(fila)}`
+    : `id:${typeof fila.id === 'string' || typeof fila.id === 'number' ? String(fila.id) : JSON.stringify(fila.id)}`;
 }
 
 /** Une listas de filas por `id` (la primera gana). */
 export function unirPorId<T extends { readonly id?: unknown }>(
   ...listas: readonly (readonly T[])[]
 ): T[] {
-  const mapa = new Map<unknown, T>();
-  const sinId: T[] = [];
+  const mapa = new Map<string, T>();
   for (const lista of listas) {
     for (const f of lista) {
-      if (f.id === undefined || f.id === null) sinId.push(f);
-      else if (!mapa.has(f.id)) mapa.set(f.id, f);
+      const clave = claveDeFila(f);
+      if (!mapa.has(clave)) mapa.set(clave, f);
     }
   }
-  return [...mapa.values(), ...sinId];
+  return [...mapa.values()];
 }
 
 /**
@@ -200,4 +210,21 @@ export function avisoDelTopeDeRegistros(
     'hay más. Elige un periodo más corto para verlas todas: la búsqueda y lo que exportes ' +
     'sólo incluyen lo que se muestra.'
   );
+}
+
+/**
+ * ¿Cae esta fecha dentro del rango del periodo?
+ *
+ * Las compras y los gastos guardan un DÍA (`yyyy-MM-dd`, sin hora). `new Date('2026-11-14')` es la
+ * medianoche UTC —el 13 a las 18:00 en México—: en «Hoy» la compra de hoy quedaba fuera y en los
+ * demás periodos se perdía el primer día. Un día se compara como TEXTO con los días del rango;
+ * un instante (con hora), como instante.
+ */
+export function fechaEnElPeriodo(valor: unknown, rango: RangoDePeriodo): boolean {
+  if (typeof valor !== 'string' || valor === '') return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    return valor >= format(rango.from, 'yyyy-MM-dd') && valor <= format(rango.to, 'yyyy-MM-dd');
+  }
+  const t = new Date(valor).getTime();
+  return t >= rango.from.getTime() && t <= rango.to.getTime();
 }

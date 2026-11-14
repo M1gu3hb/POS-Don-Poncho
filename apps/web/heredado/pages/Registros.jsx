@@ -60,6 +60,8 @@ import {
 } from '~/registros/periodo-de-registros';
 import {
   CAMPO_DEL_PERIODO,
+  OPCIONES_DE_LECTURA,
+  leerCortesDelPeriodo,
   leerDelPeriodo,
   leerVentasDelPeriodo,
 } from '~/registros/lecturas-de-registros';
@@ -155,24 +157,23 @@ export default function Registros() {
 
   // Sin initialData:[] — distinguimos "primer fetch" (loading) de "vacío real".
   // Antes mostraba "Sin registros" mientras cargaba la primera vez.
-  // placeholderData mantiene los datos previos durante invalidaciones sin parpadeo.
+  // DP-18 · Sin «datos anteriores» de relleno: al cambiar de periodo no se enseña el anterior bajo el rótulo nuevo.
   // DP-18 · Cada pestaña pide el PERIODO al servidor (con ventanas si pasa del tope por petición)
   // y devuelve `{ filas, truncada }`: si algo quedó sin traer, la pantalla lo dice.
   const delPeriodo = { desde: desdeIso, hasta: hastaIso };
   const lectura = (entidad, { campo, tipo }) => ({
     queryFn: () => leerDelPeriodo(api.entidades[entidad], campo, tipo, range),
-    placeholderData: (prev) => prev,
-    staleTime: 5000,
+    ...OPCIONES_DE_LECTURA,
   });
   const { data: cortesRaw, isPending: cortesLoading } = useQuery({
     queryKey: ['registros_cortes', delPeriodo],
-    ...lectura('CorteCaja', CAMPO_DEL_PERIODO.cortes),
+    queryFn: () => leerCortesDelPeriodo(api.entidades.CorteCaja, range),
+    ...OPCIONES_DE_LECTURA,
   });
   const { data: ventasRaw, isPending: ventasLoading } = useQuery({
     queryKey: claves.registrosVentas.delPeriodo(desdeIso, hastaIso),
     queryFn: () => leerVentasDelPeriodo(api.entidades.Venta, range),
-    placeholderData: (prev) => prev,
-    staleTime: 5000,
+    ...OPCIONES_DE_LECTURA,
   });
   const { data: comprasRaw, isPending: comprasLoading } = useQuery({
     queryKey: ['registros_compras', delPeriodo],
@@ -408,6 +409,7 @@ export default function Registros() {
             <ExportarSeccionButton
               rows={(q ? cortesFiltrados : cortes).filter((c) => c.estado === 'cerrado')}
               columns={COLUMNS_CORTES}
+              disabled={cortesFirstLoad}
               filename="cortes-caja"
             />
             <LimpiarSeccionButton seccion="cortes" />
@@ -471,11 +473,12 @@ export default function Registros() {
             <ExportarSeccionButton
               rows={ventasFiltradas}
               columns={COLUMNS_VENTAS}
+              disabled={ventasFirstLoad}
               filename="ventas"
             />
             {/* 6B / 1.I — Export granular por producto (líneas de venta).
                 Distingue cantidad lógica vs cantidad variable (500 g / 4 shots). */}
-            <ExportarDetallesButton ventas={ventasFiltradas} />
+            <ExportarDetallesButton ventas={ventasFiltradas} disabled={ventasFirstLoad} />
             <LimpiarSeccionButton seccion="ventas" />
             </div>
           </div>
@@ -546,6 +549,7 @@ export default function Registros() {
             <ExportarSeccionButton
               rows={comprasFiltradas}
               columns={COLUMNS_COMPRAS}
+              disabled={comprasFirstLoad}
               filename="compras"
             />
             <LimpiarSeccionButton seccion="compras" />
@@ -589,6 +593,7 @@ export default function Registros() {
             <ExportarSeccionButton
               rows={movimientosFiltrados}
               columns={COLUMNS_MOVIMIENTOS}
+              disabled={movimientosFirstLoad}
               filename="movimientos-inventario"
             />
             <LimpiarSeccionButton seccion="movimientos" />
@@ -607,6 +612,7 @@ export default function Registros() {
             <ExportarSeccionButton
               rows={gastosFiltrados}
               columns={COLUMNS_GASTOS}
+              disabled={gastosFirstLoad}
               filename="gastos-operativos"
             />
             <LimpiarSeccionButton seccion="gastos" />
@@ -698,7 +704,7 @@ function LoadingRow({ label = 'Cargando…' }) {
  * Distingue cantidad lógica (líneas) vs cantidad variable real (g, ml, shots).
  * Para productos precio_fijo, las columnas variables salen vacías (no NaN).
  */
-function ExportarDetallesButton({ ventas }) {
+function ExportarDetallesButton({ ventas, disabled = false }) {
   const [busy, setBusy] = useState(false);
   const run = async () => {
     const lista = Array.isArray(ventas) ? ventas : [];
@@ -752,7 +758,13 @@ function ExportarDetallesButton({ ventas }) {
     setBusy(false);
   };
   return (
-    <Button size="sm" variant="outline" disabled={busy} onClick={run} className="gap-1.5">
+    <Button
+      size="sm"
+      variant="outline"
+      disabled={busy || disabled}
+      onClick={run}
+      className="gap-1.5"
+    >
       <FileText className="w-4 h-4" />
       {busy ? 'Exportando…' : 'Exportar productos'}
     </Button>
