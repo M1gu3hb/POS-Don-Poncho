@@ -108,6 +108,45 @@ describe('la existencia que el libro espera', () => {
     expect(existencia.get('Tortilla de prueba')).toBe(-6);
   });
 
+  it('un platillo quitado de la cuenta no consume, aunque la cuenta se cobre', () => {
+    const linea = (producto: string, importe: number) =>
+      fila({
+        tipo: 'linea',
+        cuenta: 'c9',
+        producto,
+        cantidad: 1,
+        opciones: [],
+        importeCentavos: importe,
+        estacion: 'cocina',
+        canal: 'mesa',
+      });
+    const libro = [
+      linea('Barbacoa por kilo de prueba', 79_500),
+      linea('Taco de prueba', 3_500),
+      fila({
+        tipo: 'cancelacion',
+        cuenta: 'c9',
+        producto: 'Barbacoa por kilo de prueba',
+        importeCentavos: 79_500,
+        motivo: 'Me equivoqué al tomar la orden',
+      }),
+      fila({
+        tipo: 'cobro',
+        caja: 'Caja 1',
+        cuenta: 'c9',
+        folio: '7',
+        canal: 'mesa',
+        totalCentavos: 3_500,
+        propinaCentavos: 0,
+        descuentoCentavos: 0,
+        pagos: { efectivo: 3_500, tarjeta: 0, transferencia: 0 },
+        cambioCentavos: 0,
+      }),
+    ];
+    // Sólo el taco: 60 g de carne; la barbacoa quitada no.
+    expect(existenciaEsperada(libro).consumo.get('Carne de prueba')).toBe(60);
+  });
+
   it('por porción baja su ingrediente base por porción, y por peso 1 000 por kilo (A3)', () => {
     expect(consumoPorUnidad('Shot de tequila de prueba')).toEqual({ 'Tequila de prueba': 45 });
     expect(consumoPorUnidad('Barbacoa por kilo de prueba')).toEqual({ 'Carne de prueba': 1000 });
