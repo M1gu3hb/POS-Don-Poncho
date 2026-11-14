@@ -3,9 +3,9 @@
 131 incidentes. La evidencia (capturas, consola, red) vive fuera del repositorio, en la carpeta de salida del simulador.
 
 | Día | Crítico | Alto | Medio | Bajo |
-| ---: | ---: | ---: | ---: | ---: |
-| 0 | 0 | 6 | 0 | 0 |
-| 1 | 0 | 5 | 60 | 60 |
+| --: | ------: | ---: | ----: | ---: |
+|   0 |       0 |    6 |     0 |    0 |
+|   1 |       0 |    5 |    60 |   60 |
 
 ## Alto (11)
 
