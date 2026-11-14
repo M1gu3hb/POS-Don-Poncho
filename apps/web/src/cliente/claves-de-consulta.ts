@@ -110,6 +110,11 @@ export const claves = {
       'registros_ventas',
       { orden, limite },
     ],
+    /** DP-18 · Las ventas del PERIODO elegido en Registros (el servidor las filtra por fecha). */
+    delPeriodo: (desde: string, hasta: string): ClaveDeConsulta => [
+      'registros_ventas',
+      { desde, hasta },
+    ],
   },
 
   usuarios: {

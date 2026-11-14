@@ -54,6 +54,8 @@ import {
 export interface CancelarDelMeseroProps {
   /** La cuenta abierta de la mesa, o `null` si no hay. */
   readonly ventaId: string | null;
+  /** DP-18 · La mesa de la cuenta: si encabeza mesas unidas, cancelar pregunta qué hacer con ellas. */
+  readonly mesaId?: string | null;
   /** Los renglones que la página tiene de esa cuenta. */
   readonly detalles: readonly DetalleDeLaCuenta[];
   readonly alActualizar: (cuenta: CuentaViva) => void;
@@ -66,6 +68,7 @@ const CADA_CUANTO_SE_RELEE_LA_COCINA = 3_000;
 
 export function CancelarDelMesero({
   ventaId,
+  mesaId = null,
   detalles,
   alActualizar,
   alCancelarLaCuenta,
@@ -191,6 +194,7 @@ export function CancelarDelMesero({
       ) : null}
       <CancelarLaCuenta
         ordenId={ventaId}
+        mesaId={mesaId}
         aviso={avisoDePerdidaAlCancelar(detalles, yaSalieron)}
         cocina={estadoDeLaCocina({ comprobando, leida: cocinaLeida, fallo: sinLeerLaCocina })}
         alAbrir={() => {

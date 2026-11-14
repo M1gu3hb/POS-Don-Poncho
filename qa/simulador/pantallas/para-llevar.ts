@@ -39,7 +39,14 @@ export async function armarParaLlevar(
     .first()
     .click();
   let pedido = dialogoCon(pagina, 'Pedido para llevar');
-  await expect(pedido.getByLabel('Nombre')).toBeVisible();
+  // DP-18 · A7: un borrador de antes de una recarga ya no se mezcla en silencio: la app pregunta
+  // («Quedó un pedido sin terminar») y aquí se descarta. Es lo correcto: no se registra.
+  const sinTerminar = pedido.getByText('Quedó un pedido sin terminar');
+  await expect(pedido.getByLabel('Nombre').or(sinTerminar).first()).toBeVisible();
+  if (await sinTerminar.isVisible()) {
+    await pedido.getByRole('button', { name: 'Descartarlo y empezar uno nuevo' }).click();
+    await expect(pedido.getByLabel('Nombre')).toBeVisible();
+  }
   // El borrador del pedido vive en el aparato y la app sólo lo borra si ve terminar el cobro en la
   // misma página: tras una recarga a media venta sobrevive y el pedido nuevo se armaba encima.
   // Se avisa (lo registra quien llama) y se descarta como lo hace la app al cobrar.

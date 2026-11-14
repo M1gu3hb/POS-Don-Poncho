@@ -262,6 +262,7 @@ export default function MesaActivaView({
                         type="button"
                         onClick={() => cambiarCantidad?.(item?.id, -1)}
                         className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
+                        aria-label={`Quitar uno de ${item?.nombre || 'este platillo'}`}
                       >
                         <Minus className="w-3 h-3" />
                       </button>
@@ -272,6 +273,7 @@ export default function MesaActivaView({
                         type="button"
                         onClick={() => cambiarCantidad?.(item?.id, 1)}
                         className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
+                        aria-label={`Agregar uno de ${item?.nombre || 'este platillo'}`}
                       >
                         <Plus className="w-3 h-3" />
                       </button>

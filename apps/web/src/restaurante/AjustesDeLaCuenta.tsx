@@ -30,6 +30,14 @@ import {
   pideElPinDelSupervisor,
   type EstadoDeLaCocina,
 } from './permiso-al-cancelar.ts';
+import {
+  DEJARLAS_UNIDAS,
+  EXPLICACION_DEL_GRUPO,
+  PREGUNTA_DEL_GRUPO,
+  SEPARAR_MESAS,
+  type DecisionDelGrupo,
+} from './unir-mesas/liberar-mesa';
+import { useUnionDeLaMesa } from './unir-mesas/use-union-de-la-mesa';
 
 /**
  * LO QUE CAMBIA UNA CUENTA ANTES DE COBRARLA: el descuento y la cancelación (día completo
@@ -116,12 +124,19 @@ export function DescuentoDeLaCuenta({
 
 export function CancelarLaCuenta({
   ordenId,
+  mesaId = null,
   alCancelar,
   aviso = null,
   cocina: cocinaLeida,
   alAbrir,
 }: {
   readonly ordenId: string;
+  /**
+   * DP-18 (A19) · La mesa de la cuenta. Si encabeza mesas unidas, al cancelar se pregunta lo mismo
+   * que al liberarla —«¿Separar mesas o dejarlas unidas?»— y la respuesta viaja como `grupo`.
+   * Sin ella (mostrador, una parte de una cuenta dividida) no hay nada que preguntar.
+   */
+  readonly mesaId?: string | null;
   readonly alCancelar: (cancelada: boolean) => void;
   /**
    * DP-12.4 · Lo que hay que saber ANTES de cancelar, si hay algo: «la cocina ya preparó X, queda
@@ -149,6 +164,11 @@ export function CancelarLaCuenta({
   // DP-14.6-7 · Si «Comprobando la cocina…» no contesta en 8 s, deja de esperar.
   const [vencida, setVencida] = useState(false);
   const [intento, setIntento] = useState(0);
+  // DP-18 · El grupo que encabeza la mesa, releído en cada apertura del diálogo.
+  const [lecturaDelGrupo, setLecturaDelGrupo] = useState(0);
+  const grupoDeLaMesa = useUnionDeLaMesa(mesaId, lecturaDelGrupo);
+  /** La pregunta del grupo va AQUÍ, dentro del diálogo: encima de él, el atrapafoco la cerraba. */
+  const [preguntandoElGrupo, setPreguntandoElGrupo] = useState(false);
   useEffect(() => {
     if (!abierto || cocinaLeida !== 'comprobando') return undefined;
     const reloj = setTimeout(() => {
@@ -173,7 +193,7 @@ export function CancelarLaCuenta({
       ? 'por error'
       : `en ${voc.enFrase('unidad_servicio')} ${voc.articulo('unidad_servicio') === 'el' ? 'equivocado' : 'equivocada'}`;
 
-  async function cancelar(): Promise<void> {
+  async function cancelar(grupo?: DecisionDelGrupo): Promise<void> {
     setEnviando(true);
     setFallo(null);
     try {
@@ -183,6 +203,7 @@ export function CancelarLaCuenta({
         ...(autorizada === null ? {} : { autorizacion: autorizada.token }),
         // DP-14.6-7 · Sin poder comprobar la cocina, el servidor cuenta todo como ya hecho.
         ...(sinRespuesta ? { sinComprobarLaCocina: true } : {}),
+        ...(grupo === undefined ? {} : { grupo }),
       });
       setAbierto(false);
       alCancelar(true);
@@ -204,6 +225,8 @@ export function CancelarLaCuenta({
         variant="outline"
         onClick={() => {
           setVencida(false);
+          setPreguntandoElGrupo(false);
+          setLecturaDelGrupo((n) => n + 1);
           setAbierto(true);
           alAbrir?.();
         }}
@@ -286,17 +309,58 @@ export function CancelarLaCuenta({
           ) : (
             <Aviso tono="exito" titulo={`Autorizó ${autorizada.nombre}.`} />
           )}
+          {preguntandoElGrupo ? (
+            <Aviso tono="atencion" titulo={PREGUNTA_DEL_GRUPO}>
+              {EXPLICACION_DEL_GRUPO}
+            </Aviso>
+          ) : null}
           <DialogFooter>
-            <Button
-              variant="destructive"
-              disabled={!listo}
-              cargando={enviando}
-              onClick={() => {
-                void cancelar();
-              }}
-            >
-              Cancelar {voc.enFrase('orden')} sin cobrar
-            </Button>
+            {preguntandoElGrupo ? (
+              <>
+                <Button
+                  variant="ghost"
+                  disabled={enviando}
+                  onClick={() => {
+                    setPreguntandoElGrupo(false);
+                  }}
+                >
+                  Volver
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={!listo}
+                  cargando={enviando}
+                  onClick={() => {
+                    void cancelar('mantener');
+                  }}
+                >
+                  {DEJARLAS_UNIDAS}
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={!listo}
+                  cargando={enviando}
+                  onClick={() => {
+                    void cancelar('separar');
+                  }}
+                >
+                  {SEPARAR_MESAS}
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="destructive"
+                disabled={!listo}
+                cargando={enviando}
+                onClick={() => {
+                  // Mesas unidas: antes de cancelar se decide qué pasa con el grupo (DP-18, A19).
+                  if (grupoDeLaMesa === null) void cancelar();
+                  else setPreguntandoElGrupo(true);
+                }}
+              >
+                Cancelar {voc.enFrase('orden')} sin cobrar
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

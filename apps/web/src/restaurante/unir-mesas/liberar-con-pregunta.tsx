@@ -12,7 +12,15 @@ import {
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { createRoot } from 'react-dom/client';
 
-import { liberarConDecision, type DecisionDelGrupo, type EjecutarLiberar } from './liberar-mesa';
+import {
+  DEJARLAS_UNIDAS,
+  EXPLICACION_DEL_GRUPO,
+  PREGUNTA_DEL_GRUPO,
+  SEPARAR_MESAS,
+  liberarConDecision,
+  type DecisionDelGrupo,
+  type EjecutarLiberar,
+} from './liberar-mesa';
 
 /**
  * «¿SEPARAR MESAS O DEJARLAS UNIDAS?» (DP-9.6).
@@ -36,11 +44,8 @@ function PreguntaDelGrupo({
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Separar mesas o dejarlas unidas?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Separadas, cada mesa vuelve a su lugar y a su número. Unidas, el siguiente cliente las
-            encuentra juntas, con el mismo número.
-          </AlertDialogDescription>
+          <AlertDialogTitle>{PREGUNTA_DEL_GRUPO}</AlertDialogTitle>
+          <AlertDialogDescription>{EXPLICACION_DEL_GRUPO}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -50,14 +55,14 @@ function PreguntaDelGrupo({
               alDecidir('mantener');
             }}
           >
-            Dejarlas unidas
+            {DEJARLAS_UNIDAS}
           </Button>
           <Button
             onClick={() => {
               alDecidir('separar');
             }}
           >
-            Separar mesas
+            {SEPARAR_MESAS}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

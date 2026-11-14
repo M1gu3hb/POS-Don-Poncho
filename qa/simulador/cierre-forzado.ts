@@ -6,7 +6,8 @@
  *
  * Entra como el dueño y, con las mismas llamadas que hacen sus botones:
  *   1. cancela cada cuenta que quedó sin cobrar (`/api/restaurante/cancelar-orden`, con motivo);
- *   2. libera cada mesa que quedó ocupada (`/api/restaurante/liberar-mesa`, separando las unidas);
+ *   2. libera cada mesa que quedó ocupada (`/api/restaurante/liberar-mesa`) y separa las uniones
+ *      que sigan abiertas (`/api/restaurante/separar-mesas`);
  *   3. trae cada caja abierta a su pantalla y la cierra contando justo lo esperado.
  * Cada cosa que hizo queda como incidente de clase «prueba» del día que la dejó, y el resumen en
  * `<salida>/dia-N/cierre-forzado.json`.
@@ -54,15 +55,27 @@ async function sucursalDelRestaurante(baseUrl: string): Promise<string> {
   return fila.sucursal_id;
 }
 
+/**
+ * Las cuentas sin cobrar, PARTES de una cuenta dividida incluidas (primero ellas): el día 2 las
+ * mesas 5 y 10 se quedaron con dos partes sin cobrar cada una, la madre ya «dividida», y como sólo
+ * se miraban las cuentas sin madre no se cancelaron: las mesas no se liberaron y la caja no cerró.
+ */
 async function cuentasAbiertas(
   baseUrl: string,
   sucursal: string,
-): Promise<readonly { id: string; mesa: string | null; estado: string }[]> {
+): Promise<
+  readonly { id: string; mesa: string | null; estado: string; canal: string; parte: boolean }[]
+> {
   return leerSql(
     baseUrl,
-    `select o.id, m.numero::text as mesa, o.estado from ordenes o left join mesas m on m.id = o.mesa_id
-      where o.sucursal_id = $1 and o.orden_padre_id is null and not (o.estado = any($2::text[]))
-      order by o.created_at`,
+    `select o.id, coalesce(m.numero, mm.numero)::text as mesa, o.estado, o.canal,
+        o.orden_padre_id is not null as parte
+      from ordenes o
+      left join mesas m on m.id = o.mesa_id
+      left join ordenes ma on ma.id = o.orden_padre_id
+      left join mesas mm on mm.id = ma.mesa_id
+      where o.sucursal_id = $1 and not (o.estado = any($2::text[]))
+      order by (o.orden_padre_id is null), o.created_at`,
     [sucursal, CUENTAS_CERRADAS],
   );
 }
@@ -75,6 +88,20 @@ async function mesasOcupadas(
     baseUrl,
     `select id, numero::text as numero, estado from mesas
       where sucursal_id = $1 and estado <> 'libre' and activa is not false order by numero`,
+    [sucursal],
+  );
+}
+
+async function unionesAbiertas(
+  baseUrl: string,
+  sucursal: string,
+): Promise<readonly { id: string; principal: string | null; miembros: string | null }[]> {
+  return leerSql(
+    baseUrl,
+    `select u.id, (select numero::text from mesas where id = u.mesa_principal_id) as principal,
+       (select string_agg(m.numero::text, ', ' order by m.numero) from union_mesa_miembros um
+          join mesas m on m.id = um.mesa_id where um.union_id = u.id) as miembros
+      from uniones_mesa u where u.sucursal_id = $1 and u.cerrada_en is null`,
     [sucursal],
   );
 }
@@ -132,13 +159,20 @@ async function main(): Promise<void> {
     };
 
     for (const c of await cuentasAbiertas(entorno.baseUrl, sucursal)) {
-      const r = await llamar(pagina, '/api/restaurante/cancelar-orden', {
-        ordenId: c.id,
-        motivo: `Cierre forzado del simulador: la cuenta seguía abierta al terminar el día ${String(entorno.dia)}`,
-      });
+      // Un para llevar armado y sin cobrar es un borrador de la caja, no una cuenta de mesa: se
+      // descarta como lo hace la caja al cancelar su cobro (el día 3, cancelar-orden lo rechazó).
+      const esBorradorParaLlevar = c.canal === 'llevar' && c.estado === 'borrador';
+      const r = esBorradorParaLlevar
+        ? await llamar(pagina, '/api/restaurante/descartar-para-llevar', { ordenId: c.id })
+        : await llamar(pagina, '/api/restaurante/cancelar-orden', {
+            ordenId: c.id,
+            motivo: `Cierre forzado del simulador: la cuenta seguía abierta al terminar el día ${String(entorno.dia)}`,
+          });
       await anotar(
         {
-          que: `Cancelar la cuenta de la mesa ${c.mesa ?? '(sin mesa)'} (${c.estado})`,
+          que: esBorradorParaLlevar
+            ? 'Descartar un para llevar armado y sin cobrar'
+            : `Cancelar ${c.parte ? 'una parte de ' : ''}la cuenta de la mesa ${c.mesa ?? '(sin mesa)'} (${c.estado})`,
           ok: r.ok,
           detalle: r.ok ? 'cancelada' : `${String(r.estado)} ${r.mensaje}`,
         },
@@ -160,6 +194,22 @@ async function main(): Promise<void> {
         },
         'Cierre forzado → mesas',
         'Ninguna mesa queda ocupada al cierre',
+      );
+    }
+
+    // Cancelar la cuenta de mesas unidas las deja libres pero UNIDAS (A19): el día 2 la mesa 8, aún
+    // unida a la 7, mandó lo de su grupo del QR a la cuenta del grupo de la 7 (D2-091/092, D2-094 y
+    // D2-096, críticos falsos). Al cierre ningún bot tiene mesas unidas: las que queden se separan.
+    for (const u of await unionesAbiertas(entorno.baseUrl, sucursal)) {
+      const r = await llamar(pagina, '/api/restaurante/separar-mesas', { unionId: u.id });
+      await anotar(
+        {
+          que: `Separar la ${u.miembros ?? '(sin miembros)'} de la mesa ${u.principal ?? '?'}`,
+          ok: r.ok,
+          detalle: r.ok ? 'separadas' : `${String(r.estado)} ${r.mensaje}`,
+        },
+        'Cierre forzado → mesas',
+        'Ninguna mesa queda unida al cierre',
       );
     }
 

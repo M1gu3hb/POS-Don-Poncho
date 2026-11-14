@@ -199,11 +199,18 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeGerente): Prom
             );
           }
           const id = ctx.mundo.catalogo.find((c) => c.nombre === p.producto)?.id ?? p.producto;
+          const despues = Math.round(p.despuesPesos * 100);
           ctx.mundo.cambiosDePrecio.set(id, {
             antes: Math.round(p.antesPesos * 100),
-            despues: Math.round(p.despuesPesos * 100),
+            despues,
             horaSim: ctx.ahoraSim().getTime(),
           });
+          // Lo que se pida desde ahora va al precio nuevo: los meseros y el portal planean con el
+          // catálogo del mundo, y el día 4 seguían anotando $60 un pulque que la app ya cobraba a $62
+          // (D4-116/117, críticos falsos). Lo ya pedido conserva su importe en el libro.
+          ctx.mundo.catalogo = ctx.mundo.catalogo.map((c) =>
+            c.id === id ? { ...c, precioCentavos: despues } : c,
+          );
           ctx.libro.anotar(bot.nombre, {
             tipo: 'cambio_en_vivo',
             que: `precio: ${p.producto}`,

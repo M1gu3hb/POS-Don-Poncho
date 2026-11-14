@@ -15,6 +15,7 @@ import {
   llevarElGrupoConLaPrincipal,
 } from './mesas-escrituras.ts';
 import { propagarAItems } from './propagacion.ts';
+import { separarMesas, unionAbiertaDeMesa } from './sala-escrituras.ts';
 import { ESTADOS_COMANDA_ACTIVOS } from './transiciones.ts';
 
 /**
@@ -67,6 +68,12 @@ export interface ResultadoCancelacion {
   readonly comandasCanceladas: number;
   /** `true` cuando ya estaba cancelada: el segundo toque no es un error. */
   readonly yaEstabaCancelada: boolean;
+  /**
+   * DP-18 · La unión que tenía la mesa de la cuenta y qué se hizo con ella: `separada: true` si
+   * llegó `grupo: 'separar'` y cada mesa volvió a su lugar; `false` si sigue abierta (sin `grupo`
+   * o con `'mantener'`). `null`: la mesa no estaba unida.
+   */
+  readonly union: { readonly unionId: string; readonly separada: boolean } | null;
 }
 
 export const cancelarOrden = definirComando<
@@ -98,6 +105,7 @@ export const cancelarOrden = definirComando<
         mesaLiberada: false,
         comandasCanceladas: 0,
         yaEstabaCancelada: true,
+        union: null,
       };
     }
 
@@ -160,11 +168,17 @@ export const cancelarOrden = definirComando<
     // la mesa apuntando con `orden_activa_id` a una orden cancelada — el estado
     // imposible que `detectarHuerfano` busca hoy con cuatro reglas heurísticas.
     const mesaId = orden.madreId === null ? orden.mesaId : null;
+    let union: ResultadoCancelacion['union'] = null;
     if (mesaId !== null) {
       // El estado previo sale de la MESA, no de la orden: son dos máquinas de
       // estados distintas y el ledger de F-305 vigila la de la mesa.
       const estadoPrevio = await ctx.paso('mirar_mesa', () =>
         mesaOperable(ctx.tx, organizacionId, mesaId),
+      );
+      // DP-18 (A19) · La unión es del salón, no de la cuenta (DP-9.6): al cancelar se decide igual
+      // que al liberar —separar o dejarlas unidas— y no se deja decidida por omisión.
+      const unionId = await ctx.paso('mirar_grupo', () =>
+        unionAbiertaDeMesa(ctx.tx, organizacionId, mesaId),
       );
       await ctx.paso('liberar_mesa', () =>
         limpiarMesa(ctx.tx, organizacionId, mesaId, {
@@ -174,16 +188,25 @@ export const cancelarOrden = definirComando<
           ahora: ctx.ahora,
         }),
       );
-      // La cuenta de un grupo de mesas unidas vive en la principal: cancelarla libera también a
-      // las demás, o se quedaban ocupadas sin cuenta. El grupo sigue unido (DP-9.6).
-      await ctx.paso('soltar_el_grupo', () =>
-        llevarElGrupoConLaPrincipal(ctx.tx, organizacionId, mesaId, {
-          estado: 'libre',
-          ordenId: orden.id,
-          empleoId,
-          ahora: ctx.ahora,
-        }),
-      );
+      const separa = unionId !== null && entrada.grupo === 'separar';
+      if (unionId !== null && separa) {
+        // Separar libera a las miembro y las devuelve a su lugar, en ESTA transacción.
+        await ctx.paso('separar_el_grupo', () =>
+          separarMesas(ctx.tx, { organizacionId, unionId, empleadoId: empleoId, ahora: ctx.ahora }),
+        );
+      } else {
+        // La cuenta de un grupo vive en la principal: cancelarla libera también a las demás, o se
+        // quedaban ocupadas sin cuenta. Con «dejarlas unidas» el grupo sigue unido (DP-9.6).
+        await ctx.paso('soltar_el_grupo', () =>
+          llevarElGrupoConLaPrincipal(ctx.tx, organizacionId, mesaId, {
+            estado: 'libre',
+            ordenId: orden.id,
+            empleoId,
+            ahora: ctx.ahora,
+          }),
+        );
+      }
+      union = unionId === null ? null : { unionId, separada: separa };
     }
 
     // DP-14.6 · La madre vale lo que suman sus partes vivas, y la mesa no se queda ocupada si
@@ -211,6 +234,7 @@ export const cancelarOrden = definirComando<
         comandasCanceladas: comandas.length,
         mesaId: mesaDeLaCuenta,
         autorizadoPor,
+        ...(union === null ? {} : { unionId: union.unionId, unionSeparada: union.separada }),
         ...(orden.madreId === null ? {} : { parteDeLaCuenta: orden.madreId }),
         // El corte lo lee de aquí (`caja/corte/cancelaciones.ts`): todo lo vivo es pérdida.
         ...(todoComoHecho ? { todoComoHecho: true } : {}),
@@ -223,6 +247,7 @@ export const cancelarOrden = definirComando<
       mesaLiberada,
       comandasCanceladas: comandas.length,
       yaEstabaCancelada: false,
+      union,
     };
   },
 });

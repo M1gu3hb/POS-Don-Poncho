@@ -59,6 +59,11 @@ export async function textoDelTablero(pagina: Page, appUrl: string): Promise<str
     process.stderr.write(`(el Tablero no quedó quieto en 20 s: ${String(error).slice(0, 80)})
 `);
   }
+  // El día 6 se leyó con «Sincronizando datos del dashboard…» todavía en pantalla y las ventas en
+  // $0.00 (diferencia falsa del árbitro): se espera a que termine de sincronizar.
+  await expect(pagina.getByText(/Sincronizando datos del dashboard/)).toBeHidden({
+    timeout: 60_000,
+  });
   const principal = pagina.locator('main').first();
   return (await principal.count()) > 0 ? principal.innerText() : pagina.locator('body').innerText();
 }
@@ -76,6 +81,16 @@ export async function filtrarVentas(pagina: Page, canal: CanalDeVentas): Promise
 }
 
 /** La tarjeta de una venta en Registros → Ventas (por su folio; la serie puede ir delante: «A-12»). */
+/**
+ * Escribe en el buscador de Registros (vacío lo limpia). La lista de Ventas enseña sólo las 200 más
+ * recientes (A20): el día 2, con 258 cobros, los folios del principio del día sólo salían buscando.
+ */
+export async function buscarEnRegistros(pagina: Page, texto: string): Promise<void> {
+  const buscador = pagina.getByPlaceholder(/^Buscar por código de corte, folio/);
+  await buscador.fill(texto);
+  await expect(buscador).toHaveValue(texto);
+}
+
 export function tarjetaDeVenta(pagina: Page, folio: string): Locator {
   return pagina
     .locator('div')

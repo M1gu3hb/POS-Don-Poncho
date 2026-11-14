@@ -25,6 +25,7 @@ import {
   variacionDelCobro,
   type CaosEnCobro,
 } from './caos-cobro.ts';
+import { leerSql } from '../arbitro/base.ts';
 import { dinero } from '../pantallas/comun.ts';
 import {
   armarParaLlevar,
@@ -119,6 +120,22 @@ export interface CuentaACobrar {
   readonly propinaPorcentaje?: number;
 }
 
+const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * El descuento que la cuenta tiene DE VERDAD en la base, si se puede leer (las cuentas para llevar
+ * se anotan con el id de su orden; las de mesa, con el de la llegada, y ésas devuelven `null`).
+ */
+async function descuentoEnLaBase(ctx: ContextoDelBot, cuenta: string): Promise<number | null> {
+  if (!ES_UUID.test(cuenta)) return null;
+  const [fila] = await leerSql<{ d: string }>(
+    ctx.entorno.baseUrl,
+    'select descuento_centavos::text as d from ordenes where id = $1::uuid',
+    [cuenta],
+  );
+  return fila === undefined ? null : Number(fila.d);
+}
+
 /** Lo que el libro ya tiene descontado a una cuenta (de intentos de cobro anteriores). */
 function descuentosAnotados(ctx: ContextoDelBot, cuenta: string): number {
   return ctx.libro
@@ -145,7 +162,11 @@ export async function cobrarEnElDialogo(
   const lugar = { bot, pantalla: 'Caja → Cobrar' };
   // Un intento anterior que falló después de descontar dejó el descuento en la cuenta (y en el
   // libro): se cuenta y no se descuenta otra vez (D1-027 y D1-028, críticos falsos).
-  const yaDescontado = descuentosAnotados(ctx, c.cuenta);
+  // Pero sólo si quedó en la cuenta: el para llevar que se vuelve a armar reutiliza su orden SIN el
+  // descuento del intento que falló (D2-310 y D2-314, críticos falsos: la app cobró sin descuento,
+  // que es lo correcto). Donde se puede, manda la base.
+  const anotado = descuentosAnotados(ctx, c.cuenta);
+  const yaDescontado = anotado > 0 ? ((await descuentoEnLaBase(ctx, c.cuenta)) ?? anotado) : 0;
   const descuento =
     ritmo === null || yaDescontado > 0
       ? yaDescontado

@@ -54,3 +54,13 @@ export async function liberarConDecision(
   await ejecutar({ mesaId, grupo });
   return true;
 }
+
+/**
+ * LOS TEXTOS DE LA PREGUNTA, una sola vez. Los usan el diálogo de liberar (`liberar-con-pregunta`)
+ * y el de cancelar la cuenta de mesas unidas (DP-18, A19): es LA MISMA pregunta y no se inventa otra.
+ */
+export const PREGUNTA_DEL_GRUPO = '¿Separar mesas o dejarlas unidas?';
+export const EXPLICACION_DEL_GRUPO =
+  'Separadas, cada mesa vuelve a su lugar y a su número. Unidas, el siguiente cliente las encuentra juntas, con el mismo número.';
+export const SEPARAR_MESAS = 'Separar mesas';
+export const DEJARLAS_UNIDAS = 'Dejarlas unidas';

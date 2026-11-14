@@ -136,6 +136,13 @@ export const entradaCancelarOrden = z.object({
    * cuenta cuenta como ya hecho: pérdida en el corte y merma en el almacén.
    */
   sinComprobarLaCocina: z.literal(true).optional(),
+  /**
+   * DP-18 (A19) · Sólo para la cuenta de la principal de mesas unidas: al cancelarla, ¿separarlas
+   * (cada mesa vuelve a su lugar) o dejarlas unidas? Es la MISMA pregunta de `liberar_mesa`
+   * (`entradaLiberarMesa.grupo`). Sin respuesta queda como en DP-9.6: las mesas quedan libres y
+   * la unión abierta, igual que con `'mantener'`.
+   */
+  grupo: z.enum(['separar', 'mantener']).optional(),
 });
 
 export const entradaSolicitarCuenta = z.object({

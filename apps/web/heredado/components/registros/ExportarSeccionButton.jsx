@@ -21,6 +21,8 @@ export default function ExportarSeccionButton({
   filename,
   label = 'Exportar',
   size = 'sm',
+  // DP-18 · Mientras llega el periodo nuevo no se exporta nada (sería el anterior o nada).
+  disabled = false,
 }) {
   const [busy, setBusy] = useState(false);
 
@@ -45,7 +47,7 @@ export default function ExportarSeccionButton({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size={size} variant="outline" disabled={busy} className="gap-1.5">
+        <Button size={size} variant="outline" disabled={busy || disabled} className="gap-1.5">
           <Download className="w-4 h-4" />
           {label}
           <ChevronDown className="w-3 h-3 opacity-60" />

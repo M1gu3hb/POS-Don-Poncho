@@ -2291,3 +2291,29 @@ puerta los denuncia todos.
 - **Prueba:** `insumo-base-por-peso-y-porcion.integracion.test.ts` (un kilo de carne sin existencias
   se cobra y la carne queda en −500 g). Mutantes muertos: sin el permiso y sin la consulta de comandas.
 - **Sin migración.**
+
+## DP-D117 · Cancelar la cuenta de mesas unidas pregunta si separarlas · 13-11-2026
+
+- **El hueco** (A19, DP-18): al cobrar, las mesas de un grupo van a limpieza y al limpiar la principal
+  se pregunta «¿Separar mesas o dejarlas unidas?» (DP-9.6). Al CANCELAR iban directo a libres y la
+  unión quedaba abierta sin que nadie lo decidiera; en la simulación, el grupo siguiente que se sentó
+  en la mesa secundaria pidió por su QR a la cuenta del grupo de la principal.
+- **Decisión:** cancelar hace la misma pregunta que liberar. `restaurante.cancelar_orden` acepta
+  `grupo: 'separar' | 'mantener'`; con `separar` separa la unión en la misma transacción. Sin `grupo`
+  queda como antes (unidas, DP-9.6), por compatibilidad: la Caja y el mesero siempre lo mandan.
+- **Pruebas:** `cancelar-grupo-de-mesas.integracion.test.ts` y `cancelar-con-mesas-unidas.contrato.test.ts`.
+  **Sin migración.**
+
+## DP-D118 · Registros lee el periodo elegido en el servidor, no «las últimas N» · 14-11-2026
+
+- **El problema** (A21, DP-18): cada pestaña de Registros cargaba las últimas N filas (1 000 ventas,
+  200 cortes, 300 compras, 500 movimientos, 300 gastos) y filtraba en el navegador. Pasado el tope lo
+  viejo desaparecía sin aviso del historial, la búsqueda, el rótulo y el CSV; Don Poncho llega al tope
+  de ventas en unos cinco días.
+- **Decisión:** el periodo de la página (Hoy por omisión) se pide al servidor (`enRango`); si una
+  lectura llega al tope del puente (1 000), la ventana se parte (lo reciente primero) hasta 10 000 por
+  pestaña, y si algo quedó fuera la pantalla lo dice. Ventas y cortes se leen por apertura y por cierre.
+  La búsqueda y el CSV trabajan sobre el periodo cargado; un folio buscado va primero (A25).
+- **De paso** (A22): el resumen comparaba los días de compras y gastos como medianoche UTC (el día
+  anterior en CDMX) y no sumaba los de hoy.
+- **Pruebas:** `apps/web/src/registros/*.test.ts`. **Sin migración.** Pendiente: Propinas (A23).
