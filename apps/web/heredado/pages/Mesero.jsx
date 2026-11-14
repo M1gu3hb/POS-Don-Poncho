@@ -95,6 +95,10 @@ import {
 import { ColaDeUnoEnUno } from '~/restaurante/cola-de-uno-en-uno';
 import { liberarMesaConPregunta } from '~/restaurante/unir-mesas/liberar-con-pregunta';
 import { opcionesParaElComando } from '~/venta/opciones-en-pos';
+import {
+  porcionesQueNoSeVenden,
+  porcionesQueNoSeVendenAviso,
+} from '~/restaurante/toma-de-pedido/renglon-para-el-comando';
 import { precioConOpciones } from '~/restaurante/toma-de-pedido/precio-de-las-opciones';
 import { GlobosDeSolicitud } from '~/restaurante/GlobosDeSolicitud';
 import { solicitudesPorMesa } from '~/restaurante/globos-de-solicitud';
@@ -998,6 +1002,12 @@ function Mesero() {
             : variableSnap?.tipo_venta === TIPO_VENTA.PORCION_CONTENEDOR
               ? variableSnap.cantidad_porciones
               : item.cantidad;
+        // DP-18 · A8 · Un renglón por porción con decimales (de un borrador viejo) se nombra y se
+        // quita; si no, el servidor rechazaba la ronda entera y el mesero no podía mandarla.
+        if (porcionesQueNoSeVenden(item)) {
+          toast.error(porcionesQueNoSeVendenAviso(item));
+          return;
+        }
         const cantidad = cantidadParaComando(cantidadCruda);
         if (cantidad === null) {
           toast.error(`La cantidad de ${item?.nombre || 'un producto'} no es válida.`);
@@ -1712,6 +1722,7 @@ function Mesero() {
           {/* DP-12.4: quitar un platillo y cancelar la cuenta, con motivo, desde la mesa. */}
           <CancelarDelMesero
             ventaId={ventaActiva?.id || mesaActiva?.venta_activa_id || null}
+            mesaId={mesaActiva?.id ?? null}
             detalles={detallesVenta}
             alActualizar={(cuenta) => {
               setVentaActiva(cuenta.venta);

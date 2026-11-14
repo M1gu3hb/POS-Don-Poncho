@@ -138,6 +138,8 @@ const REJILLA =
 export interface CuentaPorCobrar {
   readonly id: string;
   readonly codigo_caja: string | null;
+  /** DP-18 · La mesa de la cuenta: si encabeza mesas unidas, cancelar pregunta qué hacer con ellas. */
+  readonly mesa_id?: string | null;
   readonly cliente_nombre: string | null;
   readonly subtotal: number | null;
   readonly impuestos: number | null;
@@ -745,7 +747,11 @@ export function Cobro({
             él, el PIN del supervisor— o cancelarla con su motivo (la mesa que se fue). */}
         <div className="grid grid-cols-2 gap-(--espacio-2)">
           <DescuentoDeLaCuenta ordenId={cuenta.id} base={venta} alAplicar={alDescontar} />
-          <CancelarLaCuenta ordenId={cuenta.id} alCancelar={setCancelada} />
+          <CancelarLaCuenta
+            ordenId={cuenta.id}
+            mesaId={cuenta.mesa_id ?? null}
+            alCancelar={setCancelada}
+          />
           <DividirLaCuenta ordenId={cuenta.id} lineas={lineas} className="col-span-2" />
         </div>
       </section>

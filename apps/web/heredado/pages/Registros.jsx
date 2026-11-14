@@ -53,6 +53,21 @@ import { AuditoriaReciente } from '~/registros/AuditoriaReciente';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 import { esDeMando } from '@/components/configuracion/puestos';
 import { grupoDelCanal, referenciaParaLlevar } from '~/corte/canales';
+import { Aviso } from '@morphiqpos/ui/sistema';
+import {
+  avisoDelTopeDeRegistros,
+  rangoDelPeriodo,
+} from '~/registros/periodo-de-registros';
+import {
+  CAMPO_DEL_PERIODO,
+  OPCIONES_DE_LECTURA,
+  leerCortesDelPeriodo,
+  leerDelPeriodo,
+  leerVentasDelPeriodo,
+} from '~/registros/lecturas-de-registros';
+
+// Tarjetas que se pintan a la vez (las demás siguen en la búsqueda y en el CSV).
+const TOPE_EN_PANTALLA = 200;
 
 export default function Registros() {
   const { config, paquete_modo } = useConfig();
@@ -65,6 +80,13 @@ export default function Registros() {
   const queryClient = useQueryClient();
   const location = useLocation();
   const [search, setSearch] = useState('');
+  // DP-18 · El periodo es de la página: el resumen y todas las listas piden al servidor el mismo.
+  const [periodo, setPeriodo] = useState('today');
+  const [desde, setDesde] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [hasta, setHasta] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const range = useMemo(() => rangoDelPeriodo(periodo, desde, hasta), [periodo, desde, hasta]);
+  const desdeIso = range.from.toISOString();
+  const hastaIso = range.to.toISOString();
   // DP-16 · Ventas de las mesas, pedidos para llevar, o todas.
   const [canal, setCanal] = useState('todos');
   const [verCorte, setVerCorte] = useState(null);
@@ -135,44 +157,59 @@ export default function Registros() {
 
   // Sin initialData:[] — distinguimos "primer fetch" (loading) de "vacío real".
   // Antes mostraba "Sin registros" mientras cargaba la primera vez.
-  // placeholderData mantiene los datos previos durante invalidaciones sin parpadeo.
+  // DP-18 · Sin «datos anteriores» de relleno: al cambiar de periodo no se enseña el anterior bajo el rótulo nuevo.
+  // DP-18 · Cada pestaña pide el PERIODO al servidor (con ventanas si pasa del tope por petición)
+  // y devuelve `{ filas, truncada }`: si algo quedó sin traer, la pantalla lo dice.
+  const delPeriodo = { desde: desdeIso, hasta: hastaIso };
+  const lectura = (entidad, { campo, tipo }) => ({
+    queryFn: () => leerDelPeriodo(api.entidades[entidad], campo, tipo, range),
+    ...OPCIONES_DE_LECTURA,
+  });
   const { data: cortesRaw, isPending: cortesLoading } = useQuery({
-    queryKey: ['registros_cortes'],
-    queryFn: () => api.entidades.CorteCaja.list('-created_date', 200),
-    placeholderData: (prev) => prev,
-    staleTime: 5000,
+    queryKey: ['registros_cortes', delPeriodo],
+    queryFn: () => leerCortesDelPeriodo(api.entidades.CorteCaja, range),
+    ...OPCIONES_DE_LECTURA,
   });
   const { data: ventasRaw, isPending: ventasLoading } = useQuery({
-    queryKey: claves.registrosVentas.porOrden('-created_date', 1000),
-    queryFn: () => api.entidades.Venta.list('-created_date', 1000),
-    placeholderData: (prev) => prev,
-    staleTime: 5000,
+    queryKey: claves.registrosVentas.delPeriodo(desdeIso, hastaIso),
+    queryFn: () => leerVentasDelPeriodo(api.entidades.Venta, range),
+    ...OPCIONES_DE_LECTURA,
   });
   const { data: comprasRaw, isPending: comprasLoading } = useQuery({
-    queryKey: ['registros_compras'],
-    queryFn: () => api.entidades.CompraInsumo.list('-created_date', 300),
-    placeholderData: (prev) => prev,
-    staleTime: 5000,
+    queryKey: ['registros_compras', delPeriodo],
+    ...lectura('CompraInsumo', CAMPO_DEL_PERIODO.compras),
   });
   const { data: movimientosRaw, isPending: movimientosLoading } = useQuery({
-    queryKey: ['registros_movimientos'],
-    queryFn: () => api.entidades.MovimientoInventario.list('-created_date', 500),
-    placeholderData: (prev) => prev,
-    staleTime: 5000,
+    queryKey: ['registros_movimientos', delPeriodo],
+    ...lectura('MovimientoInventario', CAMPO_DEL_PERIODO.movimientos),
   });
   const { data: gastosRaw, isPending: gastosLoading } = useQuery({
-    queryKey: ['registros_gastos'],
-    queryFn: () => api.entidades.GastoOperativo.list('-created_date', 300),
-    placeholderData: (prev) => prev,
-    staleTime: 5000,
+    queryKey: ['registros_gastos', delPeriodo],
+    ...lectura('GastoOperativo', CAMPO_DEL_PERIODO.gastos),
   });
 
   // Normalización defensiva (nunca undefined a .filter/.map).
-  const cortes = Array.isArray(cortesRaw) ? cortesRaw : [];
-  const ventas = Array.isArray(ventasRaw) ? ventasRaw : [];
-  const compras = Array.isArray(comprasRaw) ? comprasRaw : [];
-  const movimientos = Array.isArray(movimientosRaw) ? movimientosRaw : [];
-  const gastos = Array.isArray(gastosRaw) ? gastosRaw : [];
+  const filasDe = (lecturaDe) => (Array.isArray(lecturaDe?.filas) ? lecturaDe.filas : []);
+  const cortes = filasDe(cortesRaw);
+  const ventas = filasDe(ventasRaw);
+  const compras = filasDe(comprasRaw);
+  const movimientos = filasDe(movimientosRaw);
+  const gastos = filasDe(gastosRaw);
+  // Se pintan las más recientes; la búsqueda y la exportación usan todas las cargadas.
+  const avisoDeLoListado = (total) => {
+    if (total <= TOPE_EN_PANTALLA) return null;
+    const texto = `Se listan las ${TOPE_EN_PANTALLA} más recientes de ${total}; la búsqueda y la exportación incluyen las ${total}.`;
+    return <Aviso tono="info" titulo={texto} />;
+  };
+  // DP-18 · Si una lectura llegó al techo, lo que falta se AVISA (antes desaparecía sin decir).
+  const avisoDe = (nombre, lecturaDe) => {
+    const texto = avisoDelTopeDeRegistros(
+      nombre,
+      filasDe(lecturaDe).length,
+      lecturaDe?.truncada === true,
+    );
+    return texto === null ? null : <Aviso tono="atencion" titulo={texto} />;
+  };
 
   // Flags de "primera carga aún en curso": NO mostrar empty mientras esté true.
   const cortesFirstLoad = cortesLoading && !cortesRaw;
@@ -269,12 +306,24 @@ export default function Registros() {
 
       {/* Resumen general con periodos y PDF */}
       <ResumenPeriodo
+        periodo={periodo}
+        desde={desde}
+        hasta={hasta}
+        range={range}
+        onPeriodo={setPeriodo}
+        onDesde={setDesde}
+        onHasta={setHasta}
         ventas={ventas}
         compras={compras}
         gastos={gastos}
         onPDF={handlePDF}
         cargando={ventasFirstLoad || (showOperativos && (comprasFirstLoad || gastosFirstLoad))}
       />
+
+      <p className="text-xs text-muted-foreground">
+        Las listas de abajo muestran el periodo de arriba:{' '}
+        {format(range.from, 'd MMM', { locale: es })} – {format(range.to, 'd MMM yyyy', { locale: es })}.
+      </p>
 
       {/* Buscador universal */}
       <div className="relative">
@@ -355,10 +404,12 @@ export default function Registros() {
 
         {/* CORTES */}
         <TabsContent value="cortes" className="mt-4 space-y-3">
+          {avisoDe('cortes', cortesRaw)}
           <div className="flex justify-end gap-2">
             <ExportarSeccionButton
               rows={(q ? cortesFiltrados : cortes).filter((c) => c.estado === 'cerrado')}
               columns={COLUMNS_CORTES}
+              disabled={cortesFirstLoad}
               filename="cortes-caja"
             />
             <LimpiarSeccionButton seccion="cortes" />
@@ -376,7 +427,7 @@ export default function Registros() {
                     (tipo === 'turno' && c?.estado === 'registrado')
                   );
                 })
-                .slice(0, 200);
+                .slice(0, TOPE_EN_PANTALLA);
               if (items.length === 0) return <Empty />;
               return (
                 <div className="space-y-2">
@@ -396,6 +447,8 @@ export default function Registros() {
 
         {/* VENTAS */}
         <TabsContent value="ventas" className="mt-4 space-y-3">
+          {avisoDe('ventas', ventasRaw)}
+          {avisoDeLoListado(ventasFiltradas.length)}
           <div className="flex justify-between gap-2 flex-wrap">
             <div className="flex gap-1.5" role="group" aria-label="Filtrar por canal">
               {[
@@ -420,11 +473,12 @@ export default function Registros() {
             <ExportarSeccionButton
               rows={ventasFiltradas}
               columns={COLUMNS_VENTAS}
+              disabled={ventasFirstLoad}
               filename="ventas"
             />
             {/* 6B / 1.I — Export granular por producto (líneas de venta).
                 Distingue cantidad lógica vs cantidad variable (500 g / 4 shots). */}
-            <ExportarDetallesButton ventas={ventasFiltradas} />
+            <ExportarDetallesButton ventas={ventasFiltradas} disabled={ventasFirstLoad} />
             <LimpiarSeccionButton seccion="ventas" />
             </div>
           </div>
@@ -435,7 +489,7 @@ export default function Registros() {
               <Empty />
             ) : null}
             {!ventasFirstLoad &&
-              ventasFiltradas.slice(0, 200).map((v) => (
+              ventasFiltradas.slice(0, TOPE_EN_PANTALLA).map((v) => (
                 <Card
                   key={v.id}
                   className="premium-sheen p-3 flex items-center gap-3 flex-wrap bg-superficie/70 backdrop-blur-sm"
@@ -490,10 +544,12 @@ export default function Registros() {
 
         {/* COMPRAS */}
         <TabsContent value="compras" className="mt-4 space-y-3">
+          {avisoDe('compras', comprasRaw)}
           <div className="flex justify-end gap-2">
             <ExportarSeccionButton
               rows={comprasFiltradas}
               columns={COLUMNS_COMPRAS}
+              disabled={comprasFirstLoad}
               filename="compras"
             />
             <LimpiarSeccionButton seccion="compras" />
@@ -532,10 +588,12 @@ export default function Registros() {
 
         {/* MOVIMIENTOS — con paginación */}
         <TabsContent value="movimientos" className="mt-4 space-y-3">
+          {avisoDe('movimientos', movimientosRaw)}
           <div className="flex justify-end gap-2">
             <ExportarSeccionButton
               rows={movimientosFiltrados}
               columns={COLUMNS_MOVIMIENTOS}
+              disabled={movimientosFirstLoad}
               filename="movimientos-inventario"
             />
             <LimpiarSeccionButton seccion="movimientos" />
@@ -549,10 +607,12 @@ export default function Registros() {
 
         {/* GASTOS */}
         <TabsContent value="gastos" className="mt-4 space-y-3">
+          {avisoDe('gastos', gastosRaw)}
           <div className="flex justify-end gap-2">
             <ExportarSeccionButton
               rows={gastosFiltrados}
               columns={COLUMNS_GASTOS}
+              disabled={gastosFirstLoad}
               filename="gastos-operativos"
             />
             <LimpiarSeccionButton seccion="gastos" />
@@ -644,7 +704,7 @@ function LoadingRow({ label = 'Cargando…' }) {
  * Distingue cantidad lógica (líneas) vs cantidad variable real (g, ml, shots).
  * Para productos precio_fijo, las columnas variables salen vacías (no NaN).
  */
-function ExportarDetallesButton({ ventas }) {
+function ExportarDetallesButton({ ventas, disabled = false }) {
   const [busy, setBusy] = useState(false);
   const run = async () => {
     const lista = Array.isArray(ventas) ? ventas : [];
@@ -698,7 +758,13 @@ function ExportarDetallesButton({ ventas }) {
     setBusy(false);
   };
   return (
-    <Button size="sm" variant="outline" disabled={busy} onClick={run} className="gap-1.5">
+    <Button
+      size="sm"
+      variant="outline"
+      disabled={busy || disabled}
+      onClick={run}
+      className="gap-1.5"
+    >
       <FileText className="w-4 h-4" />
       {busy ? 'Exportando…' : 'Exportar productos'}
     </Button>

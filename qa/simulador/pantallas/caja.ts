@@ -133,17 +133,28 @@ export async function decidirLaPropina(
   const pregunto = await pregunta.isVisible();
   propinaPreguntada.set(pagina, pregunto);
   if (!pregunto) return;
-  const sinPropina = pagina.getByRole('button', { name: 'Sin propina', includeHidden: true });
-  const aplicar = pagina.getByRole('button', { name: 'Aplicar', exact: true, includeHidden: true });
+  // Los botones se buscan DENTRO del diálogo de la pregunta: con el cobro abierto a la vez (A9) el
+  // cobro trae también su «Sin propina» y la página tenía tres (D4-114: «strict mode violation»; el
+  // día 4 se quedaron 7 cuentas divididas a medias y las cajas sin cerrar).
+  const deLaPregunta = pagina
+    .locator('[role="dialog"]')
+    .filter({ hasText: '¿Desean agregar propina?' })
+    .last();
+  const sinPropina = deLaPregunta.getByRole('button', { name: 'Sin propina', includeHidden: true });
+  const aplicar = deLaPregunta.getByRole('button', {
+    name: 'Aplicar',
+    exact: true,
+    includeHidden: true,
+  });
   if (
     alOcultarse !== undefined &&
-    (await pagina.getByRole('button', { name: 'Sin propina' }).count()) === 0
+    (await deLaPregunta.getByRole('button', { name: 'Sin propina' }).count()) === 0
   )
     alOcultarse();
   if (propina === 'Sin propina') {
     await sinPropina.click();
   } else {
-    await pagina.getByText(`${String(propina)}%`, { exact: true }).click();
+    await deLaPregunta.getByText(`${String(propina)}%`, { exact: true }).click();
     await aplicar.click();
   }
   await expect(pregunta).toBeHidden();

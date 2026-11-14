@@ -19,6 +19,8 @@ import type { Vocabulario } from '@morphiqpos/domain/vocabulario';
 
 import { etiquetaDePeso, piezasDe } from './peso.ts';
 
+import { nombresParaBotones } from './nombres-para-botones.ts';
+
 /** Cómo pasa una línea del puente al diálogo: quien lo abre la arma con esto (DP-14). */
 export { paraDividir } from './peso.ts';
 
@@ -208,6 +210,7 @@ function PorRepartir({ valor }: { readonly valor: number }) {
 
 interface ArmadoDeColumnas {
   readonly voc: Vocabulario;
+  readonly lineas: readonly LineaParaDividir[];
   readonly partes: readonly Parte[];
   readonly pendientes: Readonly<Record<string, number>>;
   readonly bloqueado: boolean;
@@ -218,18 +221,20 @@ const claveDeParte = (indice: number): string => `parte-${String(indice)}`;
 
 function columnasDe({
   voc,
+  lineas,
   partes,
   pendientes,
   bloqueado,
   mover,
 }: ArmadoDeColumnas): readonly ColumnaDeTabla<LineaParaDividir>[] {
+  const nombresDeBotones = nombresParaBotones(lineas);
   const deLasPartes = partes.map((parte, indice): ColumnaDeTabla<LineaParaDividir> => ({
     clave: claveDeParte(indice),
     titulo: `${voc.titulo('orden')} ${String(indice + 1)}`,
     numerica: true,
     celda: (linea) => (
       <ControlDeUnidades
-        nombre={linea.nombre}
+        nombre={nombresDeBotones[linea.id] ?? linea.nombre}
         cuenta={`${voc.enFrase('orden')} ${String(indice + 1)}`}
         tomadas={parte.tomas[linea.id] ?? 0}
         puedeSumar={(pendientes[linea.id] ?? 0) > 0}
@@ -403,7 +408,7 @@ export function DividirCuentaDialog({
     }
   }
 
-  const columnas = columnasDe({ voc, partes, pendientes, bloqueado: enviando, mover });
+  const columnas = columnasDe({ voc, lineas, partes, pendientes, bloqueado: enviando, mover });
   const enElMaximo = partes.length >= MAXIMO_PARTES;
 
   return (

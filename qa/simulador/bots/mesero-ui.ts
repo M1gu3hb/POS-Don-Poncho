@@ -22,11 +22,13 @@ export interface MesaEnPantalla {
  * (D1-038 y D1-042: el Mesero 4 no podía entrar a su mesa 12). Una mesa unida lleva entre el
  * número y el estado su leyenda («7 Mesa 7 · Unida con 8 Ocupada»): sin admitirla, la 7 no se
  * encontraba y el «8» de la leyenda pasaba por otra mesa (quinta corrida del día 1: el Mesero 2
- * no pudo entrar a la 7 en siete horas y la mesa no se cobró).
+ * no pudo entrar a la 7 en siete horas y la mesa no se cobró). En el TELÉFONO la leyenda va sin
+ * «Mesa N · » («18 Unida con 19 Ocupada»): el día 2 el Mesero 6 no entró a su 18 en nueve horas.
  */
-const LEYENDA_DE_UNION = '(?:Mesa \\d+ · Unida con [\\d ,y]+?\\s*)?';
+const LEYENDA_DE_UNION = '(?:(?:Mesa \\d+ · )?Unida con [\\d ,y]+?\\s*)?';
+// Un número tras «con », «, » o «y » es de la leyenda (la mesa secundaria), no una mesa del mapa.
 const numeroYEstado = (numero: string): RegExp =>
-  new RegExp(`(?<!\\d)${numero}\\s*${LEYENDA_DE_UNION}(${ESTADOS})`);
+  new RegExp(`(?<!\\d)(?<!con )(?<!, )(?<!y )${numero}\\s*${LEYENDA_DE_UNION}(${ESTADOS})`);
 
 const CUALQUIER_MESA = numeroYEstado('\\d+');
 

@@ -15,7 +15,9 @@ import OpcionesNoLeidasDialog from '@/components/mesero/OpcionesNoLeidasDialog';
 import { formatCurrency } from '@/utils/financialUtils';
 import CatalogoDelPedido from '@/components/pedido/CatalogoDelPedido';
 import { useArmadoDelPedido } from '@/components/pedido/useArmadoDelPedido';
+import { Aviso } from '@morphiqpos/ui/sistema';
 import { claveDelBorrador } from '~/restaurante/borrador-del-pedido';
+import { pedidoSinTerminar } from '~/restaurante/pedido-sin-terminar';
 import { conSusOpciones } from '~/restaurante/opciones-de-los-platillos';
 import { useOpcionesDeLosPlatillos } from '~/restaurante/use-opciones-de-los-platillos';
 import {
@@ -23,7 +25,11 @@ import {
   avisoDeAgotados,
   esRechazoPorAgotado,
 } from '~/restaurante/apartar-agotados';
-import { renglonParaElComando } from '~/restaurante/toma-de-pedido/renglon-para-el-comando';
+import {
+  porcionesQueNoSeVenden,
+  porcionesQueNoSeVendenAviso,
+  renglonParaElComando,
+} from '~/restaurante/toma-de-pedido/renglon-para-el-comando';
 
 /** El borrador del pedido para llevar es uno por persona en este aparato. */
 export const ORDEN_DEL_BORRADOR_PARA_LLEVAR = 'para-llevar';
@@ -38,10 +44,17 @@ export const claveDelParaLlevar = (usuarioId) =>
  * pedido en el servidor (`restaurante.armar_para_llevar`, sin mandar nada a cocina) y la Caja abre
  * su diálogo de cobro de siempre; la comanda sale con el cobro, en la misma transacción.
  */
-export default function ParaLlevarDialog({ open, usuarioId, onCerrar, onCobrar }) {
+export default function ParaLlevarDialog({
+  open,
+  usuarioId,
+  deEstaSesion = false,
+  onCerrar,
+  onCobrar,
+}) {
   const queryClient = useQueryClient();
   const [armando, setArmando] = useState(false);
   const [verPedido, setVerPedido] = useState(false);
+  const [decidido, setDecidido] = useState(false);
 
   const productosQ = useQuery({
     queryKey: ['productos_pos'],
@@ -69,6 +82,12 @@ export default function ParaLlevarDialog({ open, usuarioId, onCerrar, onCobrar }
     opcionesListas: listas,
   });
   const { carrito, total, dialogos } = pedido;
+  // DP-18 · A7 · Un borrador que quedó de antes no se mezcla en silencio con el pedido nuevo.
+  const sinTerminar = pedidoSinTerminar({
+    recuperado: pedido.recuperado,
+    deEstaSesion,
+    decidido,
+  });
   const piezas = carrito.reduce((s, i) => s + (Number(i.cantidad) || 0), 0);
 
   /** Lo agotado se aparta y se avisa; la cajera revisa y vuelve a tocar «Cobrar». */
@@ -101,6 +120,10 @@ export default function ParaLlevarDialog({ open, usuarioId, onCerrar, onCobrar }
     for (const item of carrito) {
       const linea = renglonParaElComando(item);
       if (linea === null) {
+        if (porcionesQueNoSeVenden(item)) {
+          toast.error(porcionesQueNoSeVendenAviso(item));
+          return;
+        }
         toast.error(`La cantidad de ${item?.nombre || 'un producto'} no es válida.`);
         return;
       }
@@ -190,6 +213,33 @@ export default function ParaLlevarDialog({ open, usuarioId, onCerrar, onCobrar }
             />
           </div>
 
+          {sinTerminar ? (
+            <div className="flex-1 overflow-y-auto p-4">
+              <Aviso
+                tono="atencion"
+                titulo="Quedó un pedido sin terminar"
+                accion={
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={() => setDecidido(true)}>Retomarlo</Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        pedido.vaciar();
+                        setDecidido(true);
+                      }}
+                    >
+                      Descartarlo y empezar uno nuevo
+                    </Button>
+                  </div>
+                }
+              >
+                Hay {carrito.length} {carrito.length === 1 ? 'renglón' : 'renglones'} (
+                {formatCurrency(total)}) de un pedido para llevar que no se terminó. Antes de empezar
+                otro, di si es el mismo (retómalo) o si ya no sirve (descártalo). Si la pantalla se
+                recargó a media venta, revisa antes en Ventas que no se haya cobrado ya.
+              </Aviso>
+            </div>
+          ) : (
           <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
             <CatalogoDelPedido
               productos={productos}
@@ -214,9 +264,16 @@ export default function ParaLlevarDialog({ open, usuarioId, onCerrar, onCobrar }
               <div className="px-4 py-3 border-t shrink-0">{botonCobrar}</div>
             </aside>
           </div>
+          )}
 
           {/* Teléfono: la barra de abajo con el pedido y el cobro siempre a la mano. */}
-          <div className="md:hidden border-t px-3 py-2 flex gap-2 shrink-0 bg-background">
+          <div
+            className={
+              sinTerminar
+                ? 'hidden'
+                : 'md:hidden border-t px-3 py-2 flex gap-2 shrink-0 bg-background'
+            }
+          >
             <Button
               variant="outline"
               className="min-h-14 shrink-0"

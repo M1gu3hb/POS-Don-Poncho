@@ -144,15 +144,18 @@ export default function ProductoFichaExpandible({
               onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
               className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
               title="Quitar línea"
+              aria-label={`Quitar ${item?.nombre || 'la línea'} del carrito`}
             >
               <X className="w-3 h-3" />
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-1 shrink-0">
+            {/* DP-18 · A13: sin nombre accesible el lector de pantalla sólo oía «botón». */}
             <button
               onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
               className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
+              aria-label={`Quitar uno de ${item?.nombre || 'este platillo'}`}
             >
               <Minus className="w-3 h-3" />
             </button>
@@ -160,6 +163,7 @@ export default function ProductoFichaExpandible({
             <button
               onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, 1)}
               className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
+              aria-label={`Agregar uno de ${item?.nombre || 'este platillo'}`}
             >
               <Plus className="w-3 h-3" />
             </button>

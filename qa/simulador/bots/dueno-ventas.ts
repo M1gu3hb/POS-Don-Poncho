@@ -14,6 +14,7 @@ import type { Asiento } from '../libro.ts';
 import { dinero } from '../pantallas/comun.ts';
 import {
   abrirPestana,
+  buscarEnRegistros,
   filtrarVentas,
   irARegistros,
   textoDeLaVenta,
@@ -127,6 +128,8 @@ export async function revisarLasVentas(ctx: ContextoDelBot, bot: Bot, pagina: Pa
     const folio = delFolio(c);
     try {
       await filtrarVentas(pagina, 'Todas');
+      // Por el buscador: la lista sólo enseña las 200 ventas más recientes (A20).
+      await buscarEnRegistros(pagina, folio);
       const tarjeta = await textoDeLaVenta(pagina, folio);
       const total = [dinero(c.totalCentavos), dinero(c.totalCentavos + c.propinaCentavos)];
       if (tarjeta === null || !total.some((t) => tarjeta.includes(t))) {
@@ -180,4 +183,5 @@ export async function revisarLasVentas(ctx: ContextoDelBot, bot: Bot, pagina: Pa
       );
     }
   }
+  await buscarEnRegistros(pagina, '').catch(() => undefined);
 }
