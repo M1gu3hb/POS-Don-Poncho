@@ -67,6 +67,23 @@ export function existenciaEsperada(libro: readonly AsientoFechado[]): {
     f.asiento.tipo !== 'linea' ||
     f.asiento.canal !== 'llevar' ||
     Date.parse(f.horaSim) >= (ultimoArmado.get(f.asiento.cuenta) ?? 0) - UN_ARMADO_MS;
+  // Un platillo quitado de la cuenta (cancelación con motivo) no se vende: su renglón no consume. La
+  // repetición del día 1 esperaba 2 000 g de carne de un costillar y una barbacoa quitados.
+  const quitados = new Map<string, number>();
+  const claveDeQuitado = (cuenta: string, producto: string, importe: number) =>
+    `${cuenta}|${producto}|${String(importe)}`;
+  for (const { asiento } of libro)
+    if (asiento.tipo === 'cancelacion') {
+      const k = claveDeQuitado(asiento.cuenta, asiento.producto, asiento.importeCentavos);
+      quitados.set(k, (quitados.get(k) ?? 0) + 1);
+    }
+  const quitado = (asiento: Extract<AsientoFechado['asiento'], { tipo: 'linea' }>): boolean => {
+    const k = claveDeQuitado(asiento.cuenta, asiento.producto, asiento.importeCentavos);
+    const n = quitados.get(k) ?? 0;
+    if (n === 0) return false;
+    quitados.set(k, n - 1);
+    return true;
+  };
   const existencia = new Map<string, number>();
   const consumo = new Map<string, number>();
   const mover = (m: Map<string, number>, nombre: string, delta: number) =>
@@ -75,7 +92,12 @@ export function existenciaEsperada(libro: readonly AsientoFechado[]): {
     const { asiento } = f;
     if (asiento.tipo === 'compra') mover(existencia, asiento.insumo, asiento.cantidad);
     if (asiento.tipo === 'merma') mover(existencia, asiento.insumo, -asiento.cantidad);
-    if (asiento.tipo === 'linea' && cobradas.has(asiento.cuenta) && vigente(f)) {
+    if (
+      asiento.tipo === 'linea' &&
+      cobradas.has(asiento.cuenta) &&
+      vigente(f) &&
+      !quitado(asiento)
+    ) {
       for (const [insumo, cantidad] of Object.entries(consumoPorUnidad(asiento.producto))) {
         mover(existencia, insumo, -cantidad * asiento.cantidad);
         mover(consumo, insumo, cantidad * asiento.cantidad);
