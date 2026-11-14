@@ -53,6 +53,7 @@ import { AuditoriaReciente } from '~/registros/AuditoriaReciente';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 import { esDeMando } from '@/components/configuracion/puestos';
 import { grupoDelCanal, referenciaParaLlevar } from '~/corte/canales';
+import { primeroElFolioExacto } from '~/registros/folio-exacto';
 import { Aviso } from '@morphiqpos/ui/sistema';
 import {
   avisoDelTopeDeRegistros,
@@ -223,7 +224,8 @@ export default function Registros() {
 
   const ventasFiltradas = useMemo(
     () =>
-      ventas.filter(
+      // DP-18 · Un folio buscado va primero: «2» coincide con casi todo (fechas, totales, mesas).
+      primeroElFolioExacto(ventas.filter(
         (v) =>
           (canal === 'todos' || grupoDelCanal(v.canal) === canal) &&
           (filterFn(v.folio) ||
@@ -237,7 +239,7 @@ export default function Registros() {
           filterFn(v.fecha_apertura?.slice(0, 10)) ||
           filterFn(v.fecha_cierre?.slice(0, 10)) ||
           filterFn(v.nombre_pedido)),
-      ),
+      ), q),
     [ventas, q, canal],
   );
 
