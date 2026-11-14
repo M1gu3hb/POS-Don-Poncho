@@ -42,9 +42,13 @@ export async function arbitrar(
   // del día. El inventario se compara como movimiento neto del día (ver `inventario.ts`).
   await arbitrarCajas(baseUrl, delDia, desde, c);
   await arbitrarInventario(baseUrl, delDia, desde, c);
+  // Registros enseña el PERIODO elegido («Hoy» al abrir; A21, #27): las cuentas pagadas creadas o
+  // cobradas desde el inicio del día. Antes eran las últimas 1 000 y se comparaba contra todas.
   const [pagadas] = await leerSql<{ n: string }>(
     baseUrl,
-    `select count(*)::text as n from ordenes where organizacion_id = ${ORGANIZACION} and estado = 'pagada'`,
+    `select count(*)::text as n from ordenes where organizacion_id = ${ORGANIZACION} and estado = 'pagada'
+       and (created_at >= $1::timestamptz or cerrada_en >= $1::timestamptz)`,
+    [desde],
   );
   arbitrarAlDueno(carpeta, delDia, c, num(pagadas?.n));
   await arbitrarInvariantes(baseUrl, salida, c);

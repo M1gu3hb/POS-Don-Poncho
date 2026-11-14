@@ -106,7 +106,7 @@ export function arbitrarAlDueno(
     if (cobradas !== undefined)
       c.comparar(
         'dueño',
-        'Registros → Ventas: cuántas cobradas dice el rótulo (las pagadas de la base)',
+        'Registros → Ventas: cuántas cobradas dice el rótulo (las pagadas del día en la base)',
         pagadasEnBase,
         Number(cobradas),
         'dinero',
