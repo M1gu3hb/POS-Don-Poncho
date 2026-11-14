@@ -150,8 +150,11 @@ y perfil, en una salida aparte (`docs/qa/semana/REPETICION-*.md`).
 ## 6 · Producción
 
 - `main` con #24, #26 y #25: Vercel «Ready». En producción no se cobró nada durante la semana.
-- #27: CI completo en verde; se une a `main` con este reporte (ver la bitácora para la hora y la
-  verificación en producción).
+- #27: CI completo en verde (10/10); unido a `main` el 14-11 a las 10:25 y en producción («Ready») a
+  las 10:25:38. Humo de sólo lectura: las páginas responden 200, la API sin sesión 403, y el JavaScript
+  publicado trae los textos nuevos de A7, A8 y A21.
+- **En producción, Don Poncho necesita:** «Crear el almacén principal» una vez (A4) y, el domingo en la
+  noche y sólo si Miguel lo pide, `dejar-en-ceros.mjs` (primero `--ensayo`).
 
 ## 7 · Lo no hecho, y por qué
 
