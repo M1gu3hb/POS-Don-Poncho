@@ -59,6 +59,11 @@ export async function textoDelTablero(pagina: Page, appUrl: string): Promise<str
     process.stderr.write(`(el Tablero no quedó quieto en 20 s: ${String(error).slice(0, 80)})
 `);
   }
+  // El día 6 se leyó con «Sincronizando datos del dashboard…» todavía en pantalla y las ventas en
+  // $0.00 (diferencia falsa del árbitro): se espera a que termine de sincronizar.
+  await expect(pagina.getByText(/Sincronizando datos del dashboard/)).toBeHidden({
+    timeout: 60_000,
+  });
   const principal = pagina.locator('main').first();
   return (await principal.count()) > 0 ? principal.innerText() : pagina.locator('body').innerText();
 }

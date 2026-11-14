@@ -38,14 +38,18 @@ export async function cierreDelDiaDelDueno(
   const lugar = { bot, pantalla: 'Dueño → Cierre del día' };
   const url = ctx.entorno.appUrl;
   await irACaja(pagina, url);
-  if ((await estadoDeLaCaja(pagina)) === 'cerrada') {
-    // Con las dos cajas del día aún abiertas (el cupo es de 2) la suya no abre y el Cierre del día
-    // dice «No hay ninguna caja abierta que cerrar» (días 1 a 3: el bot se caía buscando el conteo).
-    // Es consecuencia de lo que dejó abiertas las cajas, que ya tiene su incidente: se dice y se sigue.
-    const abierta = await abrirCaja(pagina, 0, 'Caja del dueño para el cierre del día').then(
-      () => true,
-      () => false,
-    );
+  const antes = await estadoDeLaCaja(pagina);
+  if (antes !== 'abierta') {
+    // Con las dos cajas del día aún abiertas (el cupo es de 2) la suya no abre (o la pantalla dice
+    // que hay caja en otro aparato) y el Cierre del día dice «No hay ninguna caja abierta que
+    // cerrar» (días 1 a 5: el bot se caía buscando el conteo). Es consecuencia de lo que dejó
+    // abiertas las cajas, que ya tiene su incidente: se dice y se sigue.
+    const abierta =
+      antes === 'cerrada' &&
+      (await abrirCaja(pagina, 0, 'Caja del dueño para el cierre del día').then(
+        () => true,
+        () => false,
+      ));
     if (!abierta || (await estadoDeLaCaja(pagina)) !== 'abierta') {
       await ctx.incidente(
         {
