@@ -1,0 +1,803 @@
+# Incidentes de la semana simulada
+
+131 incidentes. La evidencia (capturas, consola, red) vive fuera del repositorio, en la carpeta de salida del simulador.
+
+| Día | Crítico | Alto | Medio | Bajo |
+| ---: | ---: | ---: | ---: | ---: |
+| 0 | 0 | 6 | 0 | 0 |
+| 1 | 0 | 5 | 60 | 60 |
+
+## Alto (11)
+
+- **D0-001** · día 0, 2026-11-19T14:04:13.248Z · dueno-dia0 (dueno, pc-1920) · servidor · reproducido no intentado
+  - Pantalla: Configuración → Operación → Categorías de productos → Editar categoría
+  - Hizo: Elegí la estación «Parrilla» para la categoría «Del carbón» y toqué Guardar
+  - Esperaba: La categoría queda con su estación y el diálogo se cierra
+  - Pasó: POST /api/datos/escribir → 422: {"ok":false,"error":{"codigo":"REGLA_DE_NEGOCIO","mensaje":"«estacion_preparacion_nombre» se calcula al leer y no se guarda.","datos":{"regla":"PUENTE_CAMPO_INV
+  - Evidencia: captura `«ruta local»`; correlationId ``; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: [CategoriasProductoSection] guardarEdicion: ErrorPuen…; red: FALLÓ GET /mesero: net::ERR_ABORTED · 422 POST /api/datos/escribir
+- **D0-002** · día 0, 2026-11-19T14:04:21.672Z · dueno-dia0 (dueno, pc-1920) · servidor, repetición · reproducido no intentado
+  - Pantalla: Configuración → Operación → Categorías de productos → Editar categoría
+  - Hizo: Elegí la estación «Postres» para la categoría «Lo dulce» y toqué Guardar
+  - Esperaba: La categoría queda con su estación y el diálogo se cierra
+  - Pasó: POST /api/datos/escribir → 422: {"ok":false,"error":{"codigo":"REGLA_DE_NEGOCIO","mensaje":"«estacion_preparacion_nombre» se calcula al leer y no se guarda.","datos":{"regla":"PUENTE_CAMPO_INV
+  - Evidencia: captura `«ruta local»`; correlationId ``; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: [CategoriasProductoSection] guardarEdicion: ErrorPuen…; red: 422 POST /api/datos/escribir · 422 POST /api/datos/escribir
+- **D0-003** · día 0, 2026-11-19T14:04:29.676Z · dueno-dia0 (dueno, pc-1920) · servidor, repetición · reproducido no intentado
+  - Pantalla: Configuración → Operación → Categorías de productos → Editar categoría
+  - Hizo: Elegí la estación «Pulques» para la categoría «Pulques» y toqué Guardar
+  - Esperaba: La categoría queda con su estación y el diálogo se cierra
+  - Pasó: POST /api/datos/escribir → 422: {"ok":false,"error":{"codigo":"REGLA_DE_NEGOCIO","mensaje":"«estacion_preparacion_nombre» se calcula al leer y no se guarda.","datos":{"regla":"PUENTE_CAMPO_INV
+  - Evidencia: captura `«ruta local»`; correlationId ``; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: [CategoriasProductoSection] guardarEdicion: ErrorPuen…; red: 422 POST /api/datos/escribir · 422 POST /api/datos/escribir
+- **D0-004** · día 0, 2026-11-19T14:08:14.694Z · dueno-dia0 (dueno, pc-1920) · ux · reproducido no intentado
+  - Pantalla: Compras → Registrar compra
+  - Hizo: Registré la primera compra de un insumo nuevo (Tortilla de prueba) en un negocio sin almacén
+  - Esperaba: La compra se guarda, o la pantalla ofrece crear el almacén
+  - Pasó: POST /api/compras/registrar → 422: {"ok":false,"error":{"codigo":"REGLA_DE_NEGOCIO","mensaje":"Esta sucursal no tiene un almacén donde recibir la compra.","datos":{"regla":"INVENTARIO_INVALIDO"}},"correlationId":"5e5f8e47-f598-42d5-b11
+  - Evidencia: captura `«ruta local»`; correlationId `5e5f8e47-f598-42d5-b11e-1c349e7da70e`; consola: error: [CategoriasProductoSection] guardarEdicion: ErrorPuente: «estacion_preparacion_nombre» se calcula al leer y no se guarda. at s (http://localhost:32800/_…; red: FALLÓ GET /restaurante/cierre-diario-y-arqueo: net::ERR_ABORTED · 422 POST /api/compras/registrar 5e5f8e47-f598-42d5-b11e-1c349e7da70e
+- **D0-005** · día 0, 2026-11-19T14:17:14.820Z · dueno-dia0 (dueno, pc-1920) · ui · reproducido no intentado
+  - Pantalla: Recetas → Nueva receta → Por porción de contenedor
+  - Hizo: Creé «Shot de tequila de prueba» por porción de contenedor (capacidad 750 ml, 16 porciones, $45 la porción) y toqué «Crear receta»
+  - Esperaba: El producto se guarda (ml por porción se calcula, como dice «opcional»)
+  - Pasó: Rechazos: 500 /api/datos/escribir {"ok":false,"error":{"codigo":"ERROR_INTERNO","mensaje":"Algo falló de nuestro lado. Nada se guardó a medias."},"correlationId":"10ecc903-55f6-44ed-a295-68bb2a332ebd"} ← {"entidad":"ProductoTerminado","operacion":"create","datos":{"nombre":"Shot de tequila de prueba","categoria_id":"3d68ff8e-4ca1-4964-8b49-f4ca22fbd464","descripcion":"","precio_venta":45,"imagen_url":null,"fondo_tarjeta":null,"visible_en_pos":true,"activo":true,"tipo_venta":"porcion_contenedor","ingrediente_base_id":"73bc5df0-cbc6-4912-bef1-56ccd734e9a5","unidad_variable":"","presets_variable…
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: FALLÓ GET /inventario: net::ERR_ABORTED · 500 POST /api/datos/escribir
+- **D0-006** · día 0, 2026-11-19T14:19:02.358Z · dueno-dia0 (dueno, pc-1920) · inventario · reproducido no intentado
+  - Pantalla: Recetas → Nueva receta → Variable por medida / Por porción
+  - Hizo: Creé «Arrachera por peso de prueba», «Barbacoa por kilo de prueba», «Costillar de prueba», «Shot de tequila de prueba» con su «Ingrediente base» elegido
+  - Esperaba: Los productos por peso y por porción descuentan su ingrediente base al venderse (estrategia «insumo_base»)
+  - Pasó: Quedaron con estrategia_consumo = sku: la venta no baja la existencia del insumo
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: FALLÓ GET /ventas: net::ERR_ABORTED · FALLÓ GET /productos: net::ERR_ABORTED
+- **D1-121** · día 1, 2026-11-21T01:42:27.621Z · Dueño (dueno, pc-1920) · dinero · reproducido no intentado
+  - Pantalla: Registros → Ventas
+  - Hizo: Busqué en el historial de ventas el folio 2 que cobró Caja 1
+  - Esperaba: Aparece con total $27.00 (ya con su descuento de $3.00)
+  - Pasó: No aparece en el historial
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: FALLÓ GET /portal-qr: net::ERR_ABORTED · FALLÓ GET /compras: net::ERR_ABORTED
+- **D1-122** · día 1, 2026-11-21T01:43:11.778Z · Dueño (dueno, pc-1920) · dinero, repetición · reproducido no intentado
+  - Pantalla: Registros → Ventas
+  - Hizo: Busqué en el historial de ventas el folio 6 que cobró Caja 2
+  - Esperaba: Aparece con total $70.00
+  - Pasó: No aparece en el historial
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: FALLÓ GET /portal-qr: net::ERR_ABORTED · FALLÓ GET /compras: net::ERR_ABORTED
+- **D1-123** · día 1, 2026-11-14T15:45:14.472Z · arbitro (arbitro, ninguno) · inventario · reproducido no intentado
+  - Pantalla: inventario
+  - Hizo: Comparar «Carne de prueba: movimiento neto del día (g)» entre el libro y el sistema
+  - Esperaba: -47480
+  - Pasó: El sistema dice: -45480
+  - Evidencia: sin evidencia adjunta
+- **D1-124** · día 1, 2026-11-14T15:45:14.477Z · arbitro (arbitro, ninguno) · inventario · reproducido no intentado
+  - Pantalla: inventario
+  - Hizo: Comparar «Carne de prueba: salida por venta (g)» entre el libro y el sistema
+  - Esperaba: 55480
+  - Pasó: El sistema dice: 53480
+  - Evidencia: sin evidencia adjunta
+- **D1-125** · día 1, 2026-11-14T15:45:14.481Z · arbitro (arbitro, ninguno) · inventario · reproducido no intentado
+  - Pantalla: invariantes
+  - Hizo: Comparar «I06 · existencia negativa (informativa: tras una cancelación puede ser legítima, DP-D57)» entre el libro y el sistema
+  - Esperaba: ninguna fila que viole la regla
+  - Pasó: El sistema dice: 1 filas (antes de la semana: 0); ejemplo {"nombre":"Carne de prueba","cantidad":"-6980.0000"}
+  - Evidencia: sin evidencia adjunta
+
+## Medio (60)
+
+- **D1-002** · día 1, 2026-11-20T15:04:15.810Z · Gerente (gerente, tableta-1024) · rendimiento · reproducido no intentado
+  - Pantalla: Gerencia
+  - Hizo: comprar 8 kg de Carne de prueba
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 3.3 s
+  - Evidencia: captura `«ruta local»`; red: FALLÓ GET /configuracion: net::ERR_ABORTED · FALLÓ GET /restaurante/cierre-diario-y-arqueo: net::ERR_ABORTED
+- **D1-005** · día 1, 2026-11-20T15:39:42.906Z · Mesero 6 (mesero, iphone) · ui · reproducido no intentado
+  - Pantalla: Mesero · cambiar de mesa
+  - Hizo: Pasar la cuenta de la mesa 18 a la 20
+  - Esperaba: La cuenta se va a la otra mesa.
+  - Pasó: cambiar de mesa: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+- **D1-007** · día 1, 2026-11-20T15:49:53.895Z · Caja 2 (caja, tableta-1024) · prueba · reproducido no intentado
+  - Pantalla: Caja → Para llevar
+  - Hizo: Marcar «Entregado» un pedido para llevar listo
+  - Esperaba: El pedido pasa a entregado
+  - Pasó: Error: expect(received).toBeLessThan(expected) Expected: < 1
+  - Evidencia: captura `«ruta local»`; red: FALLÓ GET /ventas: net::ERR_ABORTED · FALLÓ GET /restaurante/cierre-diario-y-arqueo: net::ERR_ABORTED
+- **D1-008** · día 1, 2026-11-20T16:07:11.577Z · Almacén (almacen, pc-1920) · ux · reproducido no intentado
+  - Pantalla: Inventario → Registrar compra (almacén)
+  - Hizo: Toqué «Registrar compra» en Inventario con el puesto de almacén
+  - Esperaba: Se abre el formulario de la compra, o el botón no se ofrece
+  - Pasó: Me lleva a Compras, que dice «las compras y los gastos los registra la gerencia» y no deja registrar nada
+  - Evidencia: captura `«ruta local»`; red: FALLÓ GET /recetas: net::ERR_ABORTED
+- **D1-009** · día 1, 2026-11-20T16:11:46.455Z · Cocina Parrilla (teléfono de Parrilla) (telefono_cocina, android-412) · ui · reproducido no intentado
+  - Pantalla: Teléfono de Parrilla
+  - Hizo: Tocar «Preparar»
+  - Esperaba: La comanda pasa a preparación.
+  - Pasó: preparar (teléfono): el servidor rechazó «Preparar»
+  - Evidencia: captura `«ruta local»`; consola: el servidor rechazó «Preparar»; red: 422 POST /api/publico/cocina/«enlace firmado, omitido»…
+- **D1-013** · día 1, 2026-11-20T16:37:22.818Z · Almacén (almacen, pc-1920) · rendimiento · reproducido no intentado
+  - Pantalla: Almacén
+  - Hizo: registrar merma de Pan de prueba
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 3.3 s
+  - Evidencia: captura `«ruta local»`; red: FALLÓ GET /recetas: net::ERR_ABORTED
+- **D1-014** · día 1, 2026-11-20T16:41:43.617Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · cambiar de mesa
+  - Hizo: Pasar la cuenta de la mesa 12 a la 14
+  - Esperaba: La cuenta se va a la otra mesa.
+  - Pasó: cambiar de mesa: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m; red: FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-017** · día 1, 2026-11-20T16:52:23.556Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · cambiar de mesa
+  - Hizo: Pasar la cuenta de la mesa 12 a la 14
+  - Esperaba: La cuenta se va a la otra mesa.
+  - Pasó: cambiar de mesa: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m; red: FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-021** · día 1, 2026-11-20T17:24:31.881Z · Caja 2 (caja, tableta-1024) · rendimiento · reproducido no intentado
+  - Pantalla: Caja → Movimientos
+  - Hizo: registrar un retiro
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 4.1 s
+  - Evidencia: captura `«ruta local»`; red: FALLÓ GET /ventas: net::ERR_ABORTED · FALLÓ GET /restaurante/cierre-diario-y-arqueo: net::ERR_ABORTED
+- **D1-022** · día 1, 2026-11-20T17:25:40.209Z · Mesero 3 (mesero, iphone) · ui · reproducido no intentado
+  - Pantalla: Mesero · unir mesas
+  - Hizo: Unir la mesa 9 con la 11
+  - Esperaba: Las dos mesas quedan unidas.
+  - Pasó: unir mesas: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('region', { name: 'Unir mesas' }).getByRole('button', { name: 'Mesa 11', exact: true })[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('region', { name: 'Unir mesas' }).getByRole('button', { name: 'Mesa 11', exact:…; red: FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-024** · día 1, 2026-11-20T18:04:27.360Z · Mesero 6 (mesero, iphone) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · cambiar de mesa
+  - Hizo: Pasar la cuenta de la mesa 20 a la 19
+  - Esperaba: La cuenta se va a la otra mesa.
+  - Pasó: cambiar de mesa: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+- **D1-030** · día 1, 2026-11-20T18:59:52.839Z · Cocina (teléfono de Cocina) (telefono_cocina, android-412) · ui · reproducido no intentado
+  - Pantalla: Teléfono de Cocina
+  - Hizo: Tocar «Preparar»
+  - Esperaba: La comanda pasa a preparación.
+  - Pasó: preparar (teléfono): locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: 'Preparar', exact: true })[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: 'Preparar', exact: true })[22m
+- **D1-031** · día 1, 2026-11-20T19:02:26.460Z · Caja 1 (caja, pc-1920) · rendimiento · reproducido no intentado
+  - Pantalla: Caja → Movimientos
+  - Hizo: registrar un retiro
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 4.1 s
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: 422 POST /api/restaurante/liberar-mesa eae23056-d89a-4e7d-ac52-138ae9667948 · 422 POST /api/restaurante/liberar-mesa e6d06c7b-9cd1-44bd-9f07-3d9e86861869
+- **D1-041** · día 1, 2026-11-20T20:02:40.716Z · Mesero 5 (mesero, android-412) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · cambiar de mesa
+  - Hizo: Pasar la cuenta de la mesa 16 a la 15
+  - Esperaba: La cuenta se va a la otra mesa.
+  - Pasó: cambiar de mesa: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m; red: 422 POST /api/restaurante/atender-solicitud 70c03ba1-7aca-4a56-92c5-f445ea30c79f · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-042** · día 1, 2026-11-20T20:07:37.800Z · Almacén (almacen, pc-1920) · rendimiento · reproducido no intentado
+  - Pantalla: Almacén
+  - Hizo: registrar merma de Leche de prueba
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 3.4 s
+  - Evidencia: captura `«ruta local»`; red: FALLÓ GET /recetas: net::ERR_ABORTED
+- **D1-051** · día 1, 2026-11-20T21:04:09.684Z · Mesero 4 (mesero, tableta-768) · ui · reproducido no intentado
+  - Pantalla: Mesero · mesa 14
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ GET /restaurante/mesa-activa: net::ERR_ABORTED · FALLÓ GET /restaurante/mesa-activa: net::ERR_ABORTED
+- **D1-054** · día 1, 2026-11-20T21:27:54.504Z · Caja 2 (caja, tableta-1024) · rendimiento · reproducido no intentado
+  - Pantalla: Caja → Pendientes
+  - Hizo: abrir la cuenta pendiente
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 3.1 s
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: 422 POST /api/venta/cobrar e20cdef1-3e9c-446c-9043-a892b187237f · 422 POST /api/restaurante/liberar-mesa 9026f8ff-ab3f-44c8-914e-1da7effc9296
+- **D1-056** · día 1, 2026-11-20T21:31:07.455Z · Mesero 5 (mesero, android-412) · ui · reproducido no intentado
+  - Pantalla: Mesero · mesa 16
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /(?<!\d)(?<!con )(?<!, )(?<!y )16\s*(?:(?:Mesa \d+ · )?Unida con [\d ,y]+?\s*)?(Libre/Esperando orden/Pedido enviado/En preparación/Esperando entrega/Ocupada/Cuenta solicitada/Limpieza)/ }).or(locator(
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /(?<!\d)(?<!con )(?<!, )(?<!y )16\s*(?:(?:Mesa \d+ · )?Unida …; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-057** · día 1, 2026-11-20T21:34:33.867Z · Caja 2 (caja, tableta-1024) · rendimiento · reproducido no intentado
+  - Pantalla: Caja → Movimientos
+  - Hizo: registrar un retiro
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 4.1 s
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: 422 POST /api/venta/cobrar e20cdef1-3e9c-446c-9043-a892b187237f · 422 POST /api/restaurante/liberar-mesa 9026f8ff-ab3f-44c8-914e-1da7effc9296
+- **D1-058** · día 1, 2026-11-20T22:00:36.981Z · Cocina (Cocina) (estacion, pc-1920) · ux · reproducido no intentado
+  - Pantalla: Estación Cocina
+  - Hizo: Seguir en la estación
+  - Esperaba: La sesión de la estación sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: 401 POST /api/datos/consultar · FALLÓ GET /cocina: net::ERR_ABORTED
+- **D1-060** · día 1, 2026-11-20T22:01:52.053Z · Caja 1 (caja, pc-1920) · ux · reproducido no intentado
+  - Pantalla: Sesión
+  - Hizo: Seguir cobrando
+  - Esperaba: La sesión de la caja sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: 401 POST /api/datos/consultar · 401 GET /api/catalogo/sesion
+- **D1-061** · día 1, 2026-11-20T22:02:08.280Z · Caja 1 (caja, pc-1920) · rendimiento · reproducido no intentado
+  - Pantalla: Caja → Movimientos
+  - Hizo: registrar un retiro
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 4.2 s
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: FALLÓ GET /ventas: net::ERR_ABORTED · FALLÓ GET /restaurante/cierre-diario-y-arqueo: net::ERR_ABORTED
+- **D1-062** · día 1, 2026-11-20T22:02:15.849Z · Bebidas (Bebidas) (estacion, pc-1920) · ux · reproducido no intentado
+  - Pantalla: Estación Bebidas
+  - Hizo: Seguir en la estación
+  - Esperaba: La sesión de la estación sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: 401 GET /api/catalogo/sesion · 401 POST /api/datos/consultar
+- **D1-063** · día 1, 2026-11-20T22:04:08.367Z · Cocina Parrilla (Parrilla) (estacion, pc-1920) · ux · reproducido no intentado
+  - Pantalla: Estación Parrilla
+  - Hizo: Seguir en la estación
+  - Esperaba: La sesión de la estación sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: 401 POST /api/datos/consultar · 401 GET /api/catalogo/sesion
+- **D1-065** · día 1, 2026-11-20T22:06:35.931Z · Cocina Postres (Postres) (estacion, pc-1920) · ux · reproducido no intentado
+  - Pantalla: Estación Postres
+  - Hizo: Seguir en la estación
+  - Esperaba: La sesión de la estación sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: 401 POST /api/datos/consultar · 401 GET /api/catalogo/sesion
+- **D1-066** · día 1, 2026-11-20T22:08:32.982Z · Cocina Pulques (Pulques) (estacion, pc-1920) · ux · reproducido no intentado
+  - Pantalla: Estación Pulques
+  - Hizo: Seguir en la estación
+  - Esperaba: La sesión de la estación sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: FALLÓ GET /cocina: net::ERR_ABORTED · FALLÓ GET /cocina: net::ERR_ABORTED
+- **D1-068** · día 1, 2026-11-20T22:15:08.799Z · Mesero 1 (mesero, android-360) · ux · reproducido no intentado
+  - Pantalla: Sesión
+  - Hizo: Seguir trabajando
+  - Esperaba: La sesión del mesero sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: 401 GET /api/catalogo/sesion · FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-069** · día 1, 2026-11-20T22:18:23.061Z · Mesero 2 (mesero, android-412) · ux, repetición · reproducido no intentado
+  - Pantalla: Sesión
+  - Hizo: Seguir trabajando
+  - Esperaba: La sesión del mesero sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: FALLÓ GET /login-pos: net::ERR_ABORTED · FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-070** · día 1, 2026-11-20T22:21:33.999Z · Mesero 3 (mesero, iphone) · ux, repetición · reproducido no intentado
+  - Pantalla: Sesión
+  - Hizo: Seguir trabajando
+  - Esperaba: La sesión del mesero sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: 401 POST /api/datos/consultar · FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-071** · día 1, 2026-11-20T22:25:02.766Z · Mesero 4 (mesero, tableta-768) · ux, repetición · reproducido no intentado
+  - Pantalla: Sesión
+  - Hizo: Seguir trabajando
+  - Esperaba: La sesión del mesero sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: 401 POST /api/datos/consultar · FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-072** · día 1, 2026-11-20T22:27:07.308Z · Mesero 5 (mesero, android-412) · ux, repetición · reproducido no intentado
+  - Pantalla: Sesión
+  - Hizo: Seguir trabajando
+  - Esperaba: La sesión del mesero sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: FALLÓ GET /mesero: net::ERR_ABORTED · FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-073** · día 1, 2026-11-20T22:30:11.829Z · Mesero 6 (mesero, iphone) · ux, repetición · reproducido no intentado
+  - Pantalla: Sesión
+  - Hizo: Seguir trabajando
+  - Esperaba: La sesión del mesero sigue vigente en la jornada.
+  - Pasó: sesión vencida
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: 401 POST /api/datos/consultar · FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-079** · día 1, 2026-11-20T23:05:23.829Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 14
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ GET /restaurante/mesa-activa: net::ERR_ABORTED · FALLÓ GET /restaurante/mesa-activa: net::ERR_ABORTED
+- **D1-081** · día 1, 2026-11-20T23:10:10.752Z · Mesero 6 (mesero, iphone) · ui · reproducido no intentado
+  - Pantalla: Mesero · mesa 19
+  - Hizo: Entrar a la mesa 19
+  - Esperaba: Abrir el diálogo de la mesa.
+  - Pasó: entrar a la mesa: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /(?<!\d)(?<!con )(?<!, )(?<!y )19\s*(?:(?:Mesa \d+ · )?Unida con [\d ,y]+?\s*)?(Libre/Esperando orden/Pedido enviado/En preparación/Esperando entrega/Ocupada/Cuenta solicitada/Limpieza)/ }).or(locator(
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /(?<!\d)(?<!con )(?<!, )(?<!y )19\s*(?:(?:Mesa \d+ · )?Unida …; red: 401 POST /api/datos/consultar · FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-089** · día 1, 2026-11-20T23:56:18.771Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · cambiar de mesa
+  - Hizo: Pasar la cuenta de la mesa 12 a la 14
+  - Esperaba: La cuenta se va a la otra mesa.
+  - Pasó: cambiar de mesa: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m; red: FALLÓ GET /restaurante/mesa-activa: net::ERR_ABORTED · FALLÓ GET /restaurante/mesa-activa: net::ERR_ABORTED
+- **D1-090** · día 1, 2026-11-20T23:57:07.470Z · Mesero 3 (mesero, iphone) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · unir mesas
+  - Hizo: Unir la mesa 10 con la 11
+  - Esperaba: Las dos mesas quedan unidas.
+  - Pasó: unir mesas: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('region', { name: 'Unir mesas' }).getByRole('button', { name: 'Mesa 11', exact: true })[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('region', { name: 'Unir mesas' }).getByRole('button', { name: 'Mesa 11', exact:…; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · 422 POST /api/restaurante/atender-solicitud b3d117d6-33c0-47b8-a75e-d847fa030298
+- **D1-091** · día 1, 2026-11-20T23:57:57.579Z · Almacén (almacen, pc-1920) · rendimiento · reproducido no intentado
+  - Pantalla: Almacén
+  - Hizo: registrar merma de Tortilla de prueba
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 3.2 s
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: FALLÓ GET /recetas: net::ERR_ABORTED · FALLÓ GET /recetas: net::ERR_ABORTED
+- **D1-095** · día 1, 2026-11-21T00:16:01.512Z · Mesero 1 (mesero, android-360) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · cambiar de mesa
+  - Hizo: Pasar la cuenta de la mesa 2 a la 1
+  - Esperaba: La cuenta se va a la otra mesa.
+  - Pasó: cambiar de mesa: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-097** · día 1, 2026-11-21T00:26:32.928Z · Caja 2 (caja, tableta-1024) · prueba · reproducido no intentado
+  - Pantalla: Caja
+  - Hizo: Un paso de la caja
+  - Esperaba: El paso termina sin error
+  - Pasó: Error: expect(locator).toBeVisible() failed Locator: getByText('¿Separar mesas o dejarlas unidas?').or(getByRole('dialog').filter({ hasText: 'TICKET DE PAGO' })).first()
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: 422 POST /api/restaurante/liberar-mesa 97336f9c-358f-407a-84eb-f1eb99aeb9b9 · 422 POST /api/venta/cobrar 4fe7d1e2-c1d1-4fb9-88f0-544177ca6215
+- **D1-098** · día 1, 2026-11-21T00:26:44.073Z · Caja 1 (caja, pc-1920) · prueba, repetición · reproducido no intentado
+  - Pantalla: Caja
+  - Hizo: Un paso de la caja
+  - Esperaba: El paso termina sin error
+  - Pasó: Error: expect(locator).toBeVisible() failed Locator: getByText('¿Separar mesas o dejarlas unidas?').or(getByRole('dialog').filter({ hasText: 'TICKET DE PAGO' })).first()
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: FALLÓ GET /restaurante/cierre-diario-y-arqueo: net::ERR_ABORTED · 422 POST /api/venta/cobrar 66c6e282-f286-43bc-9fa9-bb76c4c133ce
+- **D1-100** · día 1, 2026-11-21T00:30:05.031Z · Caja 1 (caja, pc-1920) · prueba, repetición · reproducido no intentado
+  - Pantalla: Caja
+  - Hizo: Un paso de la caja
+  - Esperaba: El paso termina sin error
+  - Pasó: Error: expect(locator).toBeVisible() failed Locator: getByText('¿Separar mesas o dejarlas unidas?').or(getByRole('dialog').filter({ hasText: 'TICKET DE PAGO' })).first()
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: 422 POST /api/venta/cobrar 66c6e282-f286-43bc-9fa9-bb76c4c133ce · 422 POST /api/venta/cobrar 8324f334-82b2-4118-bad0-8f05ce7fb9e0
+- **D1-101** · día 1, 2026-11-21T00:38:09.474Z · Almacén (almacen, pc-1920) · rendimiento · reproducido no intentado
+  - Pantalla: Almacén
+  - Hizo: conteo físico de Leche de prueba con faltante
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 3.5 s
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 401 (Unauthorized) · error: Failed to load resource: the server responded with a status o…; red: FALLÓ GET /recetas: net::ERR_ABORTED · FALLÓ GET /recetas: net::ERR_ABORTED
+- **D1-103** · día 1, 2026-11-21T00:59:42.546Z · Mesero 1 (mesero, android-360) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · cambiar de mesa
+  - Hizo: Pasar la cuenta de la mesa 2 a la 4
+  - Esperaba: La cuenta se va a la otra mesa.
+  - Pasó: cambiar de mesa: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-104** · día 1, 2026-11-21T01:01:44.520Z · Mesero 4 (mesero, tableta-768) · ui · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-105** · día 1, 2026-11-21T01:05:05.430Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-106** · día 1, 2026-11-21T01:08:26.499Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-107** · día 1, 2026-11-21T01:09:50.076Z · Caja 1 (caja, pc-1920) · prueba, repetición · reproducido no intentado
+  - Pantalla: Caja
+  - Hizo: Un paso de la caja
+  - Esperaba: El paso termina sin error
+  - Pasó: Error: expect(locator).toBeVisible() failed Locator: getByText('¿Separar mesas o dejarlas unidas?').or(getByRole('dialog').filter({ hasText: 'TICKET DE PAGO' })).first()
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: FALLÓ GET /restaurante/cierre-diario-y-arqueo: net::ERR_ABORTED · 422 POST /api/venta/cobrar 79572365-bddf-4b5c-b30b-ca338ecfddc0
+- **D1-108** · día 1, 2026-11-21T01:11:47.565Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-109** · día 1, 2026-11-21T01:15:08.409Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-110** · día 1, 2026-11-21T01:18:29.601Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-111** · día 1, 2026-11-21T01:21:50.652Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-112** · día 1, 2026-11-21T01:25:11.613Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-113** · día 1, 2026-11-21T01:27:32.334Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · cambiar de mesa
+  - Hizo: Pasar la cuenta de la mesa 12 a la 14
+  - Esperaba: La cuenta se va a la otra mesa.
+  - Pasó: cambiar de mesa: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.getAttribute: Timeout 45000ms exceeded. Call log: [2m - waiting for locator('a[href^="/restaurante/mesa-activa"]').first()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-114** · día 1, 2026-11-21T01:30:49.935Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-115** · día 1, 2026-11-21T01:31:21.801Z · Caja 1 (caja, pc-1920) · prueba, repetición · reproducido no intentado
+  - Pantalla: Caja
+  - Hizo: Un paso de la caja
+  - Esperaba: El paso termina sin error
+  - Pasó: Error: expect(locator).toBeVisible() failed Locator: getByText('¿Separar mesas o dejarlas unidas?').or(getByRole('dialog').filter({ hasText: 'TICKET DE PAGO' })).first()
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: FALLÓ GET /restaurante/cierre-diario-y-arqueo: net::ERR_ABORTED · 422 POST /api/venta/cobrar 84686ed9-f048-415e-b9fc-acb519f60814
+- **D1-116** · día 1, 2026-11-21T01:34:11.862Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-117** · día 1, 2026-11-21T01:37:32.865Z · Mesero 4 (mesero, tableta-768) · ui, repetición · reproducido no intentado
+  - Pantalla: Mesero · mesa 12
+  - Hizo: Solicitar cuenta
+  - Esperaba: La pre-cuenta con su código de caja y el total.
+  - Pasó: pedir la cuenta: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m
+  - Evidencia: captura `«ruta local»`; consola: locator.click: Timeout 45000ms exceeded. Call log: [2m - waiting for getByRole('button', { name: /^Mesa abierta\b/ }).visible().last()[22m; red: FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED · FALLÓ POST /api/restaurante/carrito-de-la-mesa: net::ERR_ABORTED
+- **D1-118** · día 1, 2026-11-21T01:39:55.692Z · Caja 1 (caja, pc-1920) · prueba, repetición · reproducido no intentado
+  - Pantalla: Caja
+  - Hizo: Un paso de la caja
+  - Esperaba: El paso termina sin error
+  - Pasó: Error: expect(locator).toBeVisible() failed Locator: getByText('¿Separar mesas o dejarlas unidas?').or(getByRole('dialog').filter({ hasText: 'TICKET DE PAGO' })).first()
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: 422 POST /api/venta/cobrar 84686ed9-f048-415e-b9fc-acb519f60814 · 422 POST /api/venta/cobrar e1ce9ae3-3cba-4128-9340-a5e21028d08d
+- **D1-119** · día 1, 2026-11-21T01:41:04.257Z · Caja 1 (caja, pc-1920) · rendimiento · reproducido no intentado
+  - Pantalla: Caja → Cierre diario
+  - Hizo: cerrar la caja
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 22.0 s
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: 422 POST /api/venta/cobrar 84686ed9-f048-415e-b9fc-acb519f60814 · 422 POST /api/venta/cobrar e1ce9ae3-3cba-4128-9340-a5e21028d08d
+- **D1-120** · día 1, 2026-11-21T01:41:59.136Z · Caja 2 (caja, tableta-1024) · rendimiento · reproducido no intentado
+  - Pantalla: Caja → Cierre diario
+  - Hizo: cerrar la caja
+  - Esperaba: Responder en menos de 3 s
+  - Pasó: Tardó 16.8 s
+  - Evidencia: captura `«ruta local»`; consola: error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) · error: Failed to load resource: the server responded with a …; red: 422 POST /api/venta/cobrar 4fe7d1e2-c1d1-4fb9-88f0-544177ca6215 · 422 POST /api/restaurante/liberar-mesa db4f9035-66fb-40bc-9563-dd42d17b8520
+
+## Bajo (60)
+
+- **D1-001** · día 1, 2026-11-20T14:50:51.957Z · Comensales (comensal, android-412) · rendimiento · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-003** · día 1, 2026-11-20T15:10:46.644Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-004** · día 1, 2026-11-20T15:31:28.245Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-006** · día 1, 2026-11-20T15:45:35.904Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-010** · día 1, 2026-11-20T16:14:33.855Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.9 s
+- **D1-011** · día 1, 2026-11-20T16:22:35.478Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-012** · día 1, 2026-11-20T16:25:30.855Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-015** · día 1, 2026-11-20T16:50:35.067Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-016** · día 1, 2026-11-20T16:51:42.078Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-018** · día 1, 2026-11-20T16:59:32.709Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-019** · día 1, 2026-11-20T17:08:35.010Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.0 s
+- **D1-020** · día 1, 2026-11-20T17:11:53.289Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-023** · día 1, 2026-11-20T17:43:13.242Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-025** · día 1, 2026-11-20T18:07:18.447Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-026** · día 1, 2026-11-20T18:18:39.399Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.2 s
+- **D1-027** · día 1, 2026-11-20T18:24:39.420Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.4 s
+- **D1-028** · día 1, 2026-11-20T18:29:11.781Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-029** · día 1, 2026-11-20T18:43:59.607Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-032** · día 1, 2026-11-20T19:03:15.762Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-033** · día 1, 2026-11-20T19:14:18.813Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.6 s
+- **D1-034** · día 1, 2026-11-20T19:22:28.092Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-035** · día 1, 2026-11-20T19:27:41.334Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-036** · día 1, 2026-11-20T19:28:21.027Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-037** · día 1, 2026-11-20T19:39:47.418Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.2 s
+- **D1-038** · día 1, 2026-11-20T19:52:26.958Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-039** · día 1, 2026-11-20T19:52:47.535Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-040** · día 1, 2026-11-20T19:55:41.970Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-043** · día 1, 2026-11-20T20:08:40.476Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.6 s
+- **D1-044** · día 1, 2026-11-20T20:09:47.211Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-045** · día 1, 2026-11-20T20:15:20.304Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-046** · día 1, 2026-11-20T20:21:39.114Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-047** · día 1, 2026-11-20T20:22:40.134Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-048** · día 1, 2026-11-20T20:32:23.445Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s; red: FALLÓ GET /morfi/cargando.webm: net::ERR_ABORTED
+- **D1-049** · día 1, 2026-11-20T20:47:22.329Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.2 s
+- **D1-050** · día 1, 2026-11-20T21:02:50.547Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-052** · día 1, 2026-11-20T21:13:39.027Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-053** · día 1, 2026-11-20T21:27:23.088Z · Comensales (comensal, android-412) · rendimiento · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Pedir la cuenta con 10 % de propina
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: pedir la cuenta por el portal (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 3.2 s
+- **D1-055** · día 1, 2026-11-20T21:28:24.726Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.3 s
+- **D1-059** · día 1, 2026-11-20T22:01:36.603Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.0 s
+- **D1-064** · día 1, 2026-11-20T22:04:18.297Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-067** · día 1, 2026-11-20T22:14:41.667Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.9 s
+- **D1-074** · día 1, 2026-11-20T22:30:31.353Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-075** · día 1, 2026-11-20T22:38:21.306Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-076** · día 1, 2026-11-20T22:43:53.484Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-077** · día 1, 2026-11-20T22:58:04.308Z · Mesero 6 (mesero, iphone) · rendimiento · reproducido no intentado
+  - Pantalla: Mesero · mesa 19
+  - Hizo: Solicitar cuenta
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: pedir la cuenta (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 3.5 s; red: 401 POST /api/datos/consultar · FALLÓ GET /mesero: net::ERR_ABORTED
+- **D1-078** · día 1, 2026-11-20T23:04:52.260Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-080** · día 1, 2026-11-20T23:09:53.883Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.1 s
+- **D1-082** · día 1, 2026-11-20T23:13:36.981Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-083** · día 1, 2026-11-20T23:20:52.278Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.2 s
+- **D1-084** · día 1, 2026-11-20T23:22:57.774Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.2 s
+- **D1-085** · día 1, 2026-11-20T23:37:53.826Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-086** · día 1, 2026-11-20T23:39:33.417Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-087** · día 1, 2026-11-20T23:50:04.521Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-088** · día 1, 2026-11-20T23:55:27.645Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.3 s
+- **D1-092** · día 1, 2026-11-21T00:02:25.848Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.8 s
+- **D1-093** · día 1, 2026-11-21T00:06:50.247Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-094** · día 1, 2026-11-21T00:13:59.238Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-096** · día 1, 2026-11-21T00:17:54.492Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 7.6 s
+- **D1-099** · día 1, 2026-11-21T00:27:40.326Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 5.7 s
+- **D1-102** · día 1, 2026-11-21T00:43:40.755Z · Comensales (comensal, android-412) · rendimiento, repetición · reproducido no intentado
+  - Pantalla: Portal del comensal
+  - Hizo: Llamar a mi mesero para confirmar
+  - Esperaba: Responder en menos de 3 s.
+  - Pasó: llamar al mesero (lento)
+  - Evidencia: captura `«ruta local»`; consola: tardó 6.2 s

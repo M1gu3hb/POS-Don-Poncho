@@ -185,3 +185,12 @@ Parte 2. Luego la semana. La Parte 5 espera la elección de Miguel.
   más de 45 min se va, a las 18:45 ya no se sienta a nadie, ninguna estancia pasa de las 19:00 y la
   cajera vuelve a entrar antes de cerrar si su sesión venció (A18: la sesión dura 8 h y el día 11).
 - **Días 2 a 7:** en cadena con `D:\mpos-tmp\dp18\correr-la-semana.sh 2 7` desde el 13-11, 02:45.
+- **Días 2 a 7** (13 y 14-11): todos completos, cerrados por la app al final de cada uno. Ningún
+  crítico fue de la app; con el árbitro corregido, cada cobro y cada corte cuadraron al centavo. Lo
+  que la semana encontró de la app: A19 (cancelar mesas unidas), A20–A22 (Registros), A24 (merma con
+  existencia negativa); A9 resultó alto (en tableta deja partes sin cobrar). Lo del simulador, en el
+  reporte 011 §4.
+- **La Parte 4** (`dp-18-4`, #27): A7, A8, A9, A13, A14, A19, A21, A22 y A25, con pruebas, mutantes y
+  dos revisiones (para llevar y Registros). La repetición del día 1 con ese build (14-11, 05:50–10:40):
+  0 críticos, cajas e inventario al centavo, el día cierra solo antes del tope. Reporte:
+  `docs/reports/011-semana-de-operacion.md`; los informes, en `docs/qa/semana/`.
