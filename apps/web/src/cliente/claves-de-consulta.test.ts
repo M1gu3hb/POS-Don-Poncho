@@ -38,6 +38,7 @@ function todasLasVariantes(): readonly {
     { raiz: 'cortes_historial', clave: claves.cortes.historial(100) },
     { raiz: 'registros_ventas', clave: claves.registrosVentas.porOrden('-created_date', 1000) },
     { raiz: 'registros_ventas', clave: claves.registrosVentas.porOrden('-fecha_cierre', 2000) },
+    { raiz: 'registros_ventas', clave: claves.registrosVentas.delPeriodo('a', 'b') },
     { raiz: 'usuarios_pos', clave: claves.usuarios.activos() },
     { raiz: 'usuarios_pos', clave: claves.usuarios.meseros() },
     { raiz: 'usuarios_pos', clave: claves.usuarios.inactivos() },

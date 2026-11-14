@@ -1,5 +1,5 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,16 +15,7 @@ import {
   DollarSign,
   Heart,
 } from 'lucide-react';
-import {
-  format,
-  startOfDay,
-  endOfDay,
-  subDays,
-  startOfMonth,
-  endOfMonth,
-  startOfYear,
-  endOfYear,
-} from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useConfig } from '@/lib/ConfigContext';
 import { canAccessModule } from '@/lib/packageConfig';
@@ -48,24 +39,18 @@ export default function ResumenPeriodo({
   onPDF,
   // Ventas, compras o gastos todavía no llegan: los importes serían los de un periodo vacío.
   cargando = false,
+  // DP-18 · El periodo es de la PÁGINA: el resumen y las pestañas piden al servidor el mismo.
+  periodo,
+  desde,
+  hasta,
+  range,
+  onPeriodo,
+  onDesde,
+  onHasta,
 }) {
   const { config, paquete_modo } = useConfig();
   const colorize = config?.colorear_importes_monetarios !== false;
   const sinCostos = !canAccessModule('costos_basicos', paquete_modo);
-  const [periodo, setPeriodo] = useState('today');
-  const [desde, setDesde] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [hasta, setHasta] = useState(format(new Date(), 'yyyy-MM-dd'));
-
-  const range = useMemo(() => {
-    const now = new Date();
-    if (periodo === 'today') return { from: startOfDay(now), to: endOfDay(now) };
-    if (periodo === '7d') return { from: startOfDay(subDays(now, 6)), to: endOfDay(now) };
-    if (periodo === '30d') return { from: startOfDay(subDays(now, 29)), to: endOfDay(now) };
-    if (periodo === 'mes') return { from: startOfMonth(now), to: endOfMonth(now) };
-    if (periodo === 'year') return { from: startOfYear(now), to: endOfDay(now) };
-    return { from: startOfDay(new Date(desde)), to: endOfDay(new Date(hasta)) };
-  }, [periodo, desde, hasta]);
-
   const inRange = (dateStr) => {
     if (!dateStr) return false;
     const t = new Date(dateStr).getTime();
@@ -125,7 +110,7 @@ export default function ResumenPeriodo({
         {PERIODOS.map((p) => (
           <button
             key={p.id}
-            onClick={() => setPeriodo(p.id)}
+            onClick={() => onPeriodo(p.id)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${periodo === p.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/70'}`}
           >
             {p.label}
@@ -140,7 +125,7 @@ export default function ResumenPeriodo({
             <Input
               type="date"
               value={desde}
-              onChange={(e) => setDesde(e.target.value)}
+              onChange={(e) => onDesde(e.target.value)}
               className="h-8 text-xs"
             />
           </div>
@@ -149,7 +134,7 @@ export default function ResumenPeriodo({
             <Input
               type="date"
               value={hasta}
-              onChange={(e) => setHasta(e.target.value)}
+              onChange={(e) => onHasta(e.target.value)}
               className="h-8 text-xs"
             />
           </div>

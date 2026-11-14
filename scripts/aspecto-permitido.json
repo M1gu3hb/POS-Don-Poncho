@@ -1728,6 +1728,14 @@
         "+ label:Pago de la venta, por método",
         "+ aria-label:Pago de la venta, por método"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Registros.jsx",
+      "porque": "DP-18 (A21): Registros dice qué periodo muestran las listas (una línea bajo el resumen) y, si una lectura llega al tope o se listan menos de las cargadas, un Aviso del sistema lo dice; antes lo viejo desaparecía sin aviso. Nada de lo que se veía se quitó.",
+      "testigos": [
+        "+ clase:text-muted-foreground",
+        "+ clase:text-xs"
+      ]
     }
   ]
 }
