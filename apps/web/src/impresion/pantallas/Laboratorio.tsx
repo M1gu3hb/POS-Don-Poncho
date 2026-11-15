@@ -19,6 +19,7 @@ import { LabBytes } from './LabBytes';
 import { LabCajon, LabQueImprime } from './LabCajon';
 import { LabConexion } from './LabConexion';
 import { LabCorte, LabMedidas } from './LabMedidas';
+import { LabMotor } from './LabMotor';
 import { LabPendientes } from './LabPendientes';
 import { LabPerfil } from './LabPerfil';
 import { LabPruebas } from './LabPruebas';
@@ -95,6 +96,8 @@ export function Laboratorio({
           Salir
         </Button>
       </Superficie>
+
+      <LabMotor />
 
       {app === null ? (
         <>

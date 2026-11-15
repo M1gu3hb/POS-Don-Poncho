@@ -17,6 +17,8 @@ import { estiloOPredeterminado } from '@morphiqpos/ui/tokens';
 
 import { sesionDelServidor } from '~/servidor/http';
 
+import { AvisoDeAparatoViejo } from '~/compatibilidad/AvisoDeAparatoViejo';
+import { GUION_DE_RELLENOS } from '~/compatibilidad/rellenos';
 import { CABECERA_NONCE } from '~/seguridad/csp';
 
 import { CABECERA_RUTA } from '../middleware';
@@ -211,12 +213,16 @@ export default async function LayoutRaiz({ children }: { children: ReactNode }) 
       data-url-publica={urlPublica}
     >
       <head>
+        {/* DP-20.1 · Lo que un motor viejo no trae (`toSorted`, `URL.canParse`), antes que nada. */}
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: GUION_DE_RELLENOS }} />
         {/* Pone la clase del tema ANTES del primer pintado. */}
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: GUION_SIN_PARPADEO }} />
         {/* Y el modo del SISTEMA, derivado de esa clase: `data-modo`. Detrás, no antes. */}
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: GUION_DEL_MODO }} />
       </head>
       <body>
+        {/* DP-20.1 · Sólo se ve en un motor que no entiende las capas de CSS (Chromium < 99). */}
+        <AvisoDeAparatoViejo />
         <Proveedores conSesion={conSesion} apariencia={apariencia} experiencia={experiencia}>
           {children}
         </Proveedores>

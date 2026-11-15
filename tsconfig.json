@@ -14,7 +14,10 @@
     "scripts/lib/menu.test.ts",
     "scripts/lib/plano-de-mesas.test.ts",
     "scripts/lib/unidades.test.ts",
-    "scripts/lib/vocabulario-de-color.test.ts"
+    "scripts/lib/vocabulario-de-color.test.ts",
+    "scripts/modo-compatible/api-nuevas.test.ts",
+    "scripts/modo-compatible/contrato.test.ts",
+    "scripts/modo-compatible/plugin.test.ts"
   ],
   "exclude": ["node_modules", "dist", "build", ".next", ".turbo", "coverage", "historico"],
   "compilerOptions": {

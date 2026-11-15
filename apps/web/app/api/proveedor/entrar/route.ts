@@ -28,7 +28,22 @@ import { cookieDelProveedor } from '~/servidor/proveedor';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const Entrada = z.object({ clave: z.string().min(1).max(200) });
+/**
+ * El motor del aparato (DP-20.1), medido por la página al entrar. Es un dato de diagnóstico: si
+ * llega mal formado se ignora —nunca le cierra la puerta a una contraseña buena— y, bien formado,
+ * queda en la auditoría de la entrada. Acotado: un agente de usuario y una lista corta de `id`.
+ */
+const Motor = z.object({
+  ua: z.string().max(400),
+  mayor: z.number().int().min(0).max(9999).nullable(),
+  nivel: z.enum(['moderno', 'compatible', 'demasiado-viejo']),
+  fallan: z.array(z.string().regex(/^[a-z0-9-]{1,40}$/)).max(60),
+});
+
+const Entrada = z.object({
+  clave: z.string().min(1).max(200),
+  motor: Motor.optional().catch(undefined),
+});
 
 const SIN_CACHE = { 'cache-control': 'no-store' } as const;
 
@@ -80,7 +95,7 @@ export async function POST(peticion: Request): Promise<Response> {
     }
 
     await devolver('proveedor', peticion.headers, entorno.PIN_PEPPER);
-    await dejarRastroDelProveedor(quien, true);
+    await dejarRastroDelProveedor(quien, true, validada.data.motor);
     const firmado = firmarPermisoDelProveedor(
       sesion.organizacionId,
       sesion.identidadId,

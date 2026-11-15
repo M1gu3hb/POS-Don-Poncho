@@ -271,3 +271,34 @@
   --fuente-ui: Georgia, 'Times New Roman', serif;
   --fuente-display: var(--fuente-ui);
 }
+
+/* ===========================================================================
+   DP-20.1 · «ESTE APARATO ES DEMASIADO VIEJO».
+   ---------------------------------------------------------------------------
+   El aviso (`src/compatibilidad/AvisoDeAparatoViejo.tsx`) nace oculto. La regla SIN capa lo
+   enseña; la de dentro de `@layer` lo vuelve a ocultar, y con `!important` las capas le ganan a
+   lo que no tiene capa. Un motor que entiende las capas (Chromium 99 o más nuevo) lo deja oculto;
+   uno que no las entiende descarta el bloque `@layer` entero —y con él todo Tailwind— y el aviso
+   se queda a la vista, en lugar de un POS sin estilos. Las dos reglas van juntas: quitar una
+   enseña el aviso a todo el mundo o no se lo enseña a nadie (`verify:modo-compatible` lo mira).
+   =========================================================================== */
+#aparato-demasiado-viejo {
+  display: block !important;
+}
+
+@layer base {
+  #aparato-demasiado-viejo {
+    display: none !important;
+  }
+}
+
+/* DP-20.1 · `inert` en un motor que no lo conoce (Chromium < 102). La ficha del platillo del portal
+   apaga lo de atrás con el atributo (`src/sistema/apagar-el-resto.ts`); aquí ese atributo deja de
+   recibir el dedo. Va en el mismo `@supports not` que el resto del modo compatible: un motor
+   moderno no entra, y en el 102–103, que ya traen `inert` de verdad, no cambia nada. */
+@supports not (translate: 0) {
+  [inert] {
+    pointer-events: none;
+    user-select: none;
+  }
+}

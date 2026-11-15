@@ -8,6 +8,11 @@ import { Aviso, Esqueleto } from '@morphiqpos/ui/sistema';
 import { ChevronDown, ChevronRight, KeyRound, Wrench } from 'lucide-react';
 
 import { invocarComando, nuevaClave } from '~/cliente/api';
+import {
+  motorParaLaAuditoria,
+  probarCompatibilidad,
+  type VentanaSondeable,
+} from '~/compatibilidad/sondas';
 
 import {
   AVISO_DEL_LABORATORIO,
@@ -49,7 +54,11 @@ function PedirLaContrasena({
     setEntrando(true);
     setFallo(null);
     try {
-      await invocarComando('/api/proveedor/entrar', { clave: enviada }, sinReintento());
+      // Con la contraseña viaja qué motor trae el aparato: queda en la auditoría de la entrada.
+      const motor = motorParaLaAuditoria(
+        probarCompatibilidad(window as unknown as VentanaSondeable),
+      );
+      await invocarComando('/api/proveedor/entrar', { clave: enviada, motor }, sinReintento());
       await consultas.invalidateQueries({ queryKey: CLAVE_DEL_PROVEEDOR });
       alEntrar();
     } catch (error: unknown) {
