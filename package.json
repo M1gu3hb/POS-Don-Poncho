@@ -65,6 +65,7 @@
     "verify:entradas": "node scripts/verificar-entradas-de-comando.mjs",
     "test:integracion": "vitest run --config vitest.integracion.config.ts",
     "test:e2e": "playwright test",
+    "test:impresion": "playwright test -c playwright.impresion.config.ts",
     "test:e2e:ui": "playwright test --ui",
     "verify:pruebas": "node scripts/verificar-pruebas.mjs",
     "verify:mutaciones-backend": "node scripts/verificar-mutaciones-backend.mjs",

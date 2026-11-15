@@ -166,7 +166,7 @@ export default function PreCuentaTicket({
               ))}
               {nota && (
                 <p style={{ fontSize: px(letra.chica), paddingLeft: '16px', margin: '2px 0 0' }}>
-                  ↳ {nota}
+                  » {nota}
                 </p>
               )}
             </div>

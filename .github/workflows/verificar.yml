@@ -424,6 +424,12 @@ jobs:
         # corre ahí. Firefox y WebKit son 300 MB por cabeza que nadie usa aquí.
         run: pnpm exec playwright install --with-deps chromium
 
+      # DP-20 · Sin aplicación ni base: el ticket se dibuja en el navegador, se codifica a ESC/POS
+      # y la impresora falsa lee los bytes de vuelta. Una vez basta: no depende del estilo.
+      - name: El ticket impreso es el de la pantalla, punto por punto
+        if: matrix.estilo == 'reducido' || matrix.estilo == 'don-poncho'
+        run: pnpm test:impresion
+
       - name: El rol de la aplicación en la base
         env:
           PGPASSWORD: morphiqpos_ci

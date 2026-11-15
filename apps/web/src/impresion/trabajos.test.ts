@@ -4,6 +4,7 @@ import {
   crearMesaDeTrabajos,
   enCurso,
   falloDelPuente,
+  mensajeDe,
   textoDeLaFase,
   type ControlesDelTrabajo,
   type FinDelTrabajo,
@@ -119,6 +120,25 @@ describe('un trabajo a la vez por botón', () => {
       fallo: { titulo: 'El navegador no pudo dibujar el documento.' },
     });
     expect(enCurso(mesa.leer('ticket:A-1'))).toBe(false);
+  });
+
+  it('un rechazo del puente (objeto plano, no un Error) también dice su mensaje', async () => {
+    const mesa = crearMesaDeTrabajos();
+    const rechazo: unknown = {
+      name: 'ORIGEN',
+      codigo: 'ORIGEN',
+      message: 'Esta página no puede usar la app.',
+    };
+    const fin = await mesa.lanzar('t', contador(), () =>
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- así rechaza el puente.
+      Promise.reject(rechazo),
+    );
+    expect(fin).toMatchObject({
+      ok: false,
+      fallo: { titulo: 'Esta página no puede usar la app.' },
+    });
+    expect(mensajeDe('texto suelto')).toBeNull();
+    expect(mensajeDe({ message: '' })).toBeNull();
   });
 
   it('avisa a quien escucha en cada cambio, y el avance pasa a «Imprimiendo…»', async () => {

@@ -42,6 +42,8 @@ const IGNORADO = [
   // por git. Lintearlas desde aquí es lintear el repositorio dos o tres veces —y con lo que
   // el subagente tenga a medias—.
   '.claude/**',
+  // DP-20 · El arnés de la prueba del ticket, ya empaquetado: lo genera `pnpm test:impresion`.
+  'pruebas/impresion/.arnes/**',
 ];
 
 /**

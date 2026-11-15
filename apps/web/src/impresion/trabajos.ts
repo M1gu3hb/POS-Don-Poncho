@@ -88,6 +88,16 @@ const FALLO_INESPERADO: Fallo = {
 
 type Tarea = (controles: ControlesDelTrabajo) => Promise<FinDelTrabajo>;
 
+/**
+ * El mensaje de lo que se lanzó. Los rechazos del puente de la app no son un `Error`: son un
+ * objeto plano `{ codigo, message }` (es lo que deja pasar el aislamiento de contexto).
+ */
+export function mensajeDe(error: unknown): string | null {
+  if (typeof error !== 'object' || error === null) return null;
+  const mensaje = (error as { message?: unknown }).message;
+  return typeof mensaje === 'string' && mensaje !== '' ? mensaje : null;
+}
+
 export function crearMesaDeTrabajos(): MesaDeTrabajos {
   const estados = new Map<string, EstadoDelTrabajo>();
   const lanzados = new Map<
@@ -138,7 +148,7 @@ export function crearMesaDeTrabajos(): MesaDeTrabajos {
           },
         });
       } catch (error: unknown) {
-        const detalle = error instanceof Error && error.message !== '' ? error.message : null;
+        const detalle = mensajeDe(error);
         fin = {
           ok: false,
           fallo: detalle === null ? FALLO_INESPERADO : { ...FALLO_INESPERADO, titulo: detalle },
