@@ -6,7 +6,7 @@ Bitácora para retomar. Empezó el sábado 14-11-2026. Entrega: lunes 16.
 
 | Qué | Dónde |
 | --- | --- |
-| El POS (esta rama) | worktree `..\.work\dp20`, rama `dp-20` (sale de `main` en `237e194`) |
+| El POS (esta rama) | worktree `..\.work\dp20`, rama `dp-20` (salió de `main` en `237e194`; unida en `0b754ed`, PR #29) |
 | Las pantallas del laboratorio (agente) | worktree `..\.work\dp20-lab`, rama `dp-20-lab` |
 | El repo de las apps | `..\morphiq-pos-apps` → <https://github.com/M1gu3hb/morphiq-pos-apps> (público) |
 | Las llaves de Android | `..\_PRIVADO\apps\` (`pos-don-poncho.jks`, `firma.properties`) |
@@ -112,6 +112,25 @@ contrato de quién lee el documento de configuración y un componente huérfano.
   DP-D125.
 - **La galería:** Configuración ganó la pestaña «Impresión», así que sus retratos se regeneraron
   con el flujo `actualizar_galeria` y viajan en esta rama.
+
+### En producción (15-11, 01:30)
+
+- **El PR #29 se unió a `main`** (`0b754ed`) con la CI en verde: 10 de 10, incluida la galería con
+  los retratos nuevos de Configuración. Antes, el rastreo completo en los nueve estilos pasó sobre
+  la rama (flujo manual).
+- **El despliegue de Production quedó listo a la 01:31.** Humo sin sesión y sin escribir nada: el
+  inicio de sesión responde 200 y las rutas nuevas (`/api/proveedor/estado`, `/api/proveedor/entrar`,
+  `/api/venta/registrar-impresion`, `/api/caja/cajon-por-cobro`,
+  `/api/caja/fijar-copias-de-impresion`) responden 401 «inicia sesión»; minutos antes, con la
+  producción anterior, respondían 404.
+- **La app de Windows contra esa producción:** su prueba de humo con ventanas ocultas pasa entera
+  (la página de producción recibe el puente, lo ajeno se bloquea, imprime por red a un servidor
+  falso).
+- **Lo que NO se pudo comprobar sin Miguel:** entrar al laboratorio en producción con la contraseña
+  real (hace falta una sesión con PIN, y los PIN reales sólo los teclea él). Lo comprobado es que
+  el hash guardado verifica esa contraseña y rechaza otra, y que el mismo camino —entrar, permiso,
+  estado— pasa de punta a punta en local con una contraseña desechable. Es lo primero que hay que
+  hacer en el primer POS.
 
 ## Falta
 
