@@ -1,5 +1,5 @@
 /**
- * UN TRABAJO A LA VEZ POR BOTÓN (DP-20 · refuerzo §4). Puro.
+ * UN TRABAJO A LA VEZ POR DOCUMENTO (DP-20 · refuerzo §4). Puro.
  *
  * Lo que evita los tickets repetidos por picarle varias veces: mientras un trabajo está en curso,
  * el mismo botón no acepta otro toque. Al terminar —bien o mal— se puede volver a imprimir: no

@@ -135,6 +135,9 @@ const LECTORES: Readonly<Record<string, 'documento-filtrado' | 'proyeccion' | 'i
   'packages/app/src/venta/descuentos-permitidos.ts': 'interno',
   // DP-16: lee la bandera `retiro_pin_arriba_de_centavos`; escribe por el guardado parcial del puente.
   'packages/app/src/caja/retiro-con-pin.ts': 'interno',
+  // DP-20: lee `copias_de_impresion` (ticket, precuenta y corte); no devuelve el documento y
+  // escribe por el guardado parcial del puente.
+  'packages/app/src/caja/copias-de-impresion.ts': 'interno',
   'packages/data/src/repos/archivos.ts': 'interno',
 };
 

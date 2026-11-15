@@ -1257,17 +1257,6 @@ export const SIN_ESTADO = [
       'No lee nada del servidor para pintarse: enseña el avance de cada trabajo, que es su propio «cargando» (la barra de progreso de cada renglón).',
   },
   {
-    pantalla: 'impresion/BotonDeImprimir',
-    estado: 'vacio',
-    razon: 'Es un BOTÓN y su aviso, no una pantalla: no pinta ninguna lista.',
-  },
-  {
-    pantalla: 'impresion/BotonDeImprimir',
-    estado: 'cargando',
-    razon:
-      'Su espera es el propio botón («Enviando…», «Imprimiendo…» con su barra): no hay un bloque que esperar con esqueleto.',
-  },
-  {
     pantalla: 'impresion/CajonEnLaCaja',
     estado: 'vacio',
     razon:
