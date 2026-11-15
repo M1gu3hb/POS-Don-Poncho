@@ -15,6 +15,8 @@ import {
   pulsoEnTiempoReal,
   unir,
 } from './escpos.ts';
+import { idAlAzar } from '../../cliente/id-al-azar.ts';
+
 import type { MapaDeBits } from './mapa.ts';
 import type { CajonDelPerfil, PerfilDeImpresion } from './perfil.ts';
 
@@ -103,5 +105,5 @@ export function aHexadecimal(datos: Uint8Array, maximo = 4096): string {
 
 /** Un id por trabajo: un reintento lleva el MISMO id y la app no imprime dos veces lo entregado. */
 export function nuevoIdDeTrabajo(prefijo: string): string {
-  return `${prefijo}-${crypto.randomUUID()}`;
+  return `${prefijo}-${idAlAzar()}`;
 }

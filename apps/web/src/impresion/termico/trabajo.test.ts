@@ -59,6 +59,14 @@ describe('el trabajo', () => {
     expect(papel.alto).toBe(40 + 60 + 44 + 60);
   });
 
+  it('con cajón en el perfil, imprimir SIN pedirlo no lo abre (una precuenta, una reimpresión)', () => {
+    const perfil = perfil80({ cajon: cajonPorOmision() });
+    expect(emular(armarTrabajo(perfil, [dibujo(576, 8, 2)]), 576).pulsos).toEqual([]);
+    expect(
+      emular(armarTrabajo(perfil, [dibujo(576, 8, 2)], { abrirCajon: false }), 576).pulsos,
+    ).toEqual([]);
+  });
+
   it('sin cajón en el perfil no se manda ningún pulso aunque se pida', () => {
     const papel = emular(armarTrabajo(perfil80(), [dibujo(576, 8, 2)], { abrirCajon: true }), 576);
     expect(papel.pulsos).toEqual([]);
