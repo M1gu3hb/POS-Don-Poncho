@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useSyncExternalStore, type ReactElement } from 'react';
 
 import { Button } from '@morphiqpos/ui/primitivas/button';
-import { Aviso } from '@morphiqpos/ui/sistema';
+import { Aviso, Superficie } from '@morphiqpos/ui/sistema';
 import { Printer } from 'lucide-react';
 
 import { consultarPuente } from '~/cliente/api';
@@ -95,10 +95,12 @@ function Renglon({ trabajo }: { readonly trabajo: TrabajoALaVista }): ReactEleme
 
   const avance = estado.fase === 'imprimiendo' ? estado.avance : null;
   return (
-    <div
+    <Superficie
+      nivel={3}
+      relleno={0}
       role="status"
       data-fase-de-impresion={estado.fase}
-      className="flex items-center gap-(--espacio-3) rounded-lg border border-borde bg-superficie px-(--espacio-4) py-(--espacio-3) text-sm shadow-3"
+      className="flex items-center gap-(--espacio-3) px-(--espacio-4) py-(--espacio-3) text-sm"
     >
       <Printer aria-hidden className="size-4 shrink-0 text-primario" />
       <span className="font-medium">{salidas.titulo}</span>
@@ -118,7 +120,7 @@ function Renglon({ trabajo }: { readonly trabajo: TrabajoALaVista }): ReactEleme
           />
         </span>
       ) : null}
-    </div>
+    </Superficie>
   );
 }
 

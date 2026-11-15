@@ -2,6 +2,7 @@
 
 import type { ReactElement } from 'react';
 
+import { Superficie, Vacio } from '@morphiqpos/ui/sistema';
 import { Binary } from 'lucide-react';
 
 import { aHexadecimal } from '../termico/trabajo.ts';
@@ -24,20 +25,28 @@ export function LabBytes({ ultimo }: { readonly ultimo: UltimoTrabajo | null }):
       descripcion="Lo último que mandó una prueba de impresión, en hexadecimal."
     >
       {ultimo === null ? (
-        <p className="text-sm text-texto-sutil">Todavía no se ha imprimido ninguna prueba.</p>
+        <Vacio
+          tamano="compacto"
+          titulo="Todavía no hay bytes que enseñar"
+          explicacion="Imprime una prueba y aquí sale lo que se mandó."
+        />
       ) : (
         <div className="flex flex-col gap-(--espacio-2)">
           <p className="text-sm">
             <span className="font-medium">{ultimo.titulo}</span>
             {` · ${conMiles(ultimo.bytes.length)} bytes · dibujar ${conMiles(ultimo.msDeDibujo)} ms · enviar ${conMiles(ultimo.msDeEnvio)} ms`}
           </p>
-          <pre
+          <Superficie
+            como="pre"
+            nivel={0}
+            radio="md"
+            relleno={3}
             tabIndex={0}
             aria-label="Bytes del último trabajo en hexadecimal"
-            className="max-h-96 overflow-auto rounded-md border border-borde bg-fondo-sutil p-(--espacio-3) font-mono text-xs leading-5 focus-visible:ring-[3px] focus-visible:ring-anillo/60 focus-visible:outline-none"
+            className="max-h-96 overflow-auto font-mono text-xs leading-5 focus-visible:ring-[3px] focus-visible:ring-anillo/60 focus-visible:outline-none"
           >
             {aHexadecimal(ultimo.bytes, BYTES_A_MOSTRAR)}
-          </pre>
+          </Superficie>
         </div>
       )}
     </SeccionDelLab>

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactElement } from 'react';
 
 import { Button } from '@morphiqpos/ui/primitivas/button';
-import { Aviso, Esqueleto } from '@morphiqpos/ui/sistema';
+import { Aviso, Esqueleto, Vacio } from '@morphiqpos/ui/sistema';
 import { Cable, RefreshCw } from 'lucide-react';
 
 import type { Impresora, MorphiqApp } from '../puente/contrato.ts';
@@ -51,10 +51,11 @@ function Impresoras({
 
   if (delTipo.length === 0) {
     return (
-      <p className="text-sm text-texto-sutil">
-        No se encontró ninguna impresora con esta conexión. Conéctala, enciéndela y toca «Buscar de
-        nuevo».
-      </p>
+      <Vacio
+        tamano="compacto"
+        titulo="No se encontró ninguna impresora con esta conexión"
+        explicacion="Conéctala, enciéndela y toca «Buscar de nuevo»."
+      />
     );
   }
   return (
@@ -107,11 +108,7 @@ function Impresoras({
           )}
         </div>
       ))}
-      {errores.elegida === undefined ? null : (
-        <p role="alert" className="text-sm text-peligro">
-          × {errores.elegida}
-        </p>
-      )}
+      {errores.elegida === undefined ? null : <Aviso tono="peligro" titulo={errores.elegida} />}
     </fieldset>
   );
 }
