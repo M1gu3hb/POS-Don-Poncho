@@ -6,6 +6,7 @@
  * el corte) y se le entrega a la app. El avance vuelve por el evento `progreso`.
  */
 import type { MorphiqApp, Resultado, Trabajo } from './puente/contrato.ts';
+import { PAPEL } from './termico/colores-del-papel.ts';
 import { dibujarPieza, mapaComoPng, type Pieza } from './termico/dibujar-elemento.ts';
 import type { MapaDeBits } from './termico/mapa.ts';
 import type { PerfilDeImpresion } from './termico/perfil.ts';
@@ -55,7 +56,7 @@ function paginaParaElDriver(mapas: readonly MapaDeBits[]): string {
     .join('');
   return (
     '<!doctype html><html><head><meta charset="utf-8">' +
-    '<style>@page{margin:0}html,body{margin:0;padding:0;background:#fff}img{image-rendering:pixelated}</style>' +
+    `<style>@page{margin:0}html,body{margin:0;padding:0;background:${PAPEL}}img{image-rendering:pixelated}</style>` +
     `</head><body>${hojas}</body></html>`
   );
 }

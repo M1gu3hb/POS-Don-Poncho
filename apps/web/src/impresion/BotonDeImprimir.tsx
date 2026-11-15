@@ -118,7 +118,7 @@ export function BotonDeImprimir({
           className="ml-2 inline-block h-1.5 w-12 overflow-hidden rounded-full bg-current/25"
         >
           <span
-            className="block h-full origin-left rounded-full bg-current transition-transform duration-150"
+            className="block h-full origin-left rounded-full bg-current transition-transform duration-(--duracion-rapida)"
             style={{ transform: `scaleX(${String(avance)})` }}
           />
         </span>

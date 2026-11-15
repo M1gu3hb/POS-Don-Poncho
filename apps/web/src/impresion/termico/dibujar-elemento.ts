@@ -9,6 +9,7 @@ import type { ReactElement } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
+import { PAPEL, TINTA } from './colores-del-papel.ts';
 import type { MapaDeBits } from './mapa.ts';
 import { aMonocromo } from './monocromo.ts';
 import { dibujarNodo } from './rasterizar.ts';
@@ -47,7 +48,7 @@ function crearAnfitrion(puntos: number): HTMLDivElement {
   anfitrion.setAttribute('data-lienzo-de-impresion', '');
   anfitrion.style.cssText =
     `position:fixed;left:-100000px;top:0;width:${String(puntos)}px;` +
-    'background:#fff;color:#000;pointer-events:none;zoom:1;';
+    `background:${PAPEL};color:${TINTA};pointer-events:none;zoom:1;`;
   document.body.appendChild(anfitrion);
   return anfitrion;
 }

@@ -9,6 +9,7 @@ import { Eye } from 'lucide-react';
 import { useConfig } from '@/lib/ConfigContext';
 
 import { armarDocumento } from '../imprimir-en-la-app.ts';
+import { PAPEL } from '../termico/colores-del-papel.ts';
 import { mapaComoPng } from '../termico/dibujar-elemento.ts';
 import { emular } from '../termico/emulador.ts';
 import type { PerfilDeImpresion } from '../termico/perfil.ts';
@@ -103,7 +104,10 @@ export function LabVistaPrevia({
       <div className="grid gap-(--espacio-6) lg:grid-cols-2">
         <figure className="flex flex-col gap-(--espacio-2)">
           <figcaption className="text-sm font-medium">Como se ve en pantalla</figcaption>
-          <div className="max-h-[70vh] overflow-auto rounded-md border border-borde bg-white p-(--espacio-2)">
+          <div
+            className="max-h-[70vh] overflow-auto rounded-md border border-borde p-(--espacio-2)"
+            style={{ background: PAPEL }}
+          >
             {perfil === null
               ? null
               : ticketDeEjemplo({ config, puntos: perfil.puntos, conLogo, soloLienzo: false })}
@@ -111,7 +115,10 @@ export function LabVistaPrevia({
         </figure>
         <figure className="flex flex-col gap-(--espacio-2)">
           <figcaption className="text-sm font-medium">Lo que saldría (1 bit)</figcaption>
-          <div className="max-h-[70vh] overflow-auto rounded-md border border-borde bg-white p-(--espacio-2)">
+          <div
+            className="max-h-[70vh] overflow-auto rounded-md border border-borde p-(--espacio-2)"
+            style={{ background: PAPEL }}
+          >
             {vista === null ? (
               <p className="p-(--espacio-4) text-sm text-texto-sutil">
                 Toca «Ver la vista previa» para dibujarla.

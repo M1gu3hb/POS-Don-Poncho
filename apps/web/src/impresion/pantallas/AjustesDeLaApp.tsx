@@ -67,7 +67,7 @@ function ModoLigeroDelAparato({ app }: { readonly app: MorphiqApp }): ReactEleme
         {OPCIONES_DEL_MODO_LIGERO.map((opcion) => (
           <label
             key={opcion.valor}
-            className="flex min-h-11 cursor-pointer items-center gap-(--espacio-2) rounded-md border border-borde bg-superficie px-(--espacio-4) text-sm has-checked:border-primario has-checked:font-semibold has-focus-visible:ring-[3px] has-focus-visible:ring-anillo/60"
+            className="flex min-h-(--altura-control) cursor-pointer items-center gap-(--espacio-2) rounded-md border border-borde bg-superficie px-(--espacio-4) text-sm has-checked:border-primario has-checked:font-semibold has-focus-visible:ring-[3px] has-focus-visible:ring-anillo/60"
           >
             <input
               type="radio"

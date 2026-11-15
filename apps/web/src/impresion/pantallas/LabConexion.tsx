@@ -65,7 +65,7 @@ function Impresoras({
           key={impresora.id}
           className="flex flex-wrap items-center justify-between gap-(--espacio-2) rounded-md border border-borde px-(--espacio-3) py-(--espacio-2)"
         >
-          <label className="flex min-h-11 flex-1 cursor-pointer items-center gap-(--espacio-3) text-sm">
+          <label className="flex min-h-(--altura-control) flex-1 cursor-pointer items-center gap-(--espacio-3) text-sm">
             <input
               type="radio"
               name="impresora-del-laboratorio"
@@ -149,7 +149,7 @@ export function LabConexion({
             return (
               <label
                 key={conexion}
-                className="flex min-h-11 cursor-pointer items-start gap-(--espacio-3) rounded-md border border-borde px-(--espacio-3) py-(--espacio-2) text-sm has-checked:border-primario has-disabled:cursor-not-allowed has-disabled:opacity-60"
+                className="flex min-h-(--altura-control) cursor-pointer items-start gap-(--espacio-3) rounded-md border border-borde px-(--espacio-3) py-(--espacio-2) text-sm has-checked:border-primario has-disabled:cursor-not-allowed has-disabled:opacity-60"
               >
                 <input
                   type="radio"

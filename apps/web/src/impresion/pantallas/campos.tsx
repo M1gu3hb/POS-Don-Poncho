@@ -186,7 +186,7 @@ export function Casilla({
     <div className="flex flex-col gap-(--espacio-1)">
       <label
         htmlFor={id}
-        className="flex min-h-11 cursor-pointer items-center gap-(--espacio-3) text-sm font-medium has-disabled:cursor-not-allowed has-disabled:opacity-60"
+        className="flex min-h-(--altura-control) cursor-pointer items-center gap-(--espacio-3) text-sm font-medium has-disabled:cursor-not-allowed has-disabled:opacity-60"
       >
         <input
           id={id}
@@ -202,7 +202,7 @@ export function Casilla({
         {etiqueta}
       </label>
       {ayuda === undefined ? null : (
-        <p id={`${id}-ayuda`} className="pl-8 text-xs text-texto-sutil">
+        <p id={`${id}-ayuda`} className="pl-(--espacio-8) text-xs text-texto-sutil">
           {ayuda}
         </p>
       )}

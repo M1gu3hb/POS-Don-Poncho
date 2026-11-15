@@ -107,7 +107,7 @@ export function AparatoEnLaCaja({
   const { app, perfil } = usePerfilDelAparato();
   if (app === null || perfil == null) return null;
   return (
-    <div className="mb-3 flex flex-col gap-2" data-aparato-en-la-caja>
+    <div className="mb-(--espacio-3) flex flex-col gap-2" data-aparato-en-la-caja>
       <AvisoDeLaImpresora />
       <BotonAbrirCajon rol={rol} />
     </div>

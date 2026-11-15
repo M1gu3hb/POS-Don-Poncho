@@ -644,7 +644,9 @@ html[data-ligero] *::after {
 }
 html[data-ligero] .shadow-lg,
 html[data-ligero] .shadow-xl,
-html[data-ligero] .shadow-2xl {
+html[data-ligero] .shadow-2xl,
+html[data-ligero] .shadow-3,
+html[data-ligero] .shadow-4 {
   box-shadow: 0 0 0 1px hsl(var(--border)) !important;
 }
 html[data-ligero] .carga-barra {

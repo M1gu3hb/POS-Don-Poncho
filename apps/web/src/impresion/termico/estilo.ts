@@ -14,6 +14,10 @@
  */
 import type { AnchoDelPapel } from '../papel.ts';
 
+import { PAPEL, TINTA } from './colores-del-papel.ts';
+
+export { PAPEL, TINTA };
+
 /** 203 dpi son 8 puntos por milímetro (lo de casi toda térmica de tickets). */
 export const PUNTOS_POR_MM = 8;
 
@@ -54,9 +58,6 @@ export function letraTermica(ancho: AnchoDelPapel): LetraTermica {
 
 /** Fuentes del sistema, gruesas y sin remates: están en Windows y en Android sin descargar nada. */
 export const FUENTE_TERMICA = "Arial, 'Helvetica Neue', Helvetica, Roboto, 'Noto Sans', sans-serif";
-
-export const TINTA = '#000';
-export const PAPEL = '#fff';
 
 /** El separador: sólido y de 2 puntos (uno solo se pierde al quemar). */
 export const LINEA_TERMICA = `2px solid ${TINTA}`;

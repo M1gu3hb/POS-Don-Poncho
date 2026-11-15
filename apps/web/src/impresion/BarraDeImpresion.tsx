@@ -46,7 +46,7 @@ function Renglon({ trabajo }: { readonly trabajo: TrabajoALaVista }): ReactEleme
       <Aviso
         tono="peligro"
         titulo={`${salidas.titulo}: ${estado.fallo.titulo}`}
-        className="bg-superficie shadow-lg"
+        className="bg-superficie shadow-3"
       >
         <p>
           {estado.fallo.queHacer}
@@ -98,7 +98,7 @@ function Renglon({ trabajo }: { readonly trabajo: TrabajoALaVista }): ReactEleme
     <div
       role="status"
       data-fase-de-impresion={estado.fase}
-      className="flex items-center gap-(--espacio-3) rounded-lg border border-borde bg-superficie px-(--espacio-4) py-(--espacio-3) text-sm shadow-lg"
+      className="flex items-center gap-(--espacio-3) rounded-lg border border-borde bg-superficie px-(--espacio-4) py-(--espacio-3) text-sm shadow-3"
     >
       <Printer aria-hidden className="size-4 shrink-0 text-primario" />
       <span className="font-medium">{salidas.titulo}</span>
@@ -113,7 +113,7 @@ function Renglon({ trabajo }: { readonly trabajo: TrabajoALaVista }): ReactEleme
           className="h-1.5 w-24 overflow-hidden rounded-full bg-fondo-sutil"
         >
           <span
-            className="block h-full origin-left rounded-full bg-primario transition-transform duration-150 motion-reduce:transition-none"
+            className="block h-full origin-left rounded-full bg-primario transition-transform duration-(--duracion-rapida) motion-reduce:transition-none"
             style={{ transform: `scaleX(${String(avance ?? 0.15)})` }}
           />
         </span>

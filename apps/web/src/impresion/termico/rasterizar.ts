@@ -9,6 +9,7 @@
  * Lo que este camino no admite, a propósito: pseudo-elementos (`::before`), fuentes web y
  * fondos por URL. El estilo térmico no usa ninguno.
  */
+import { PAPEL } from './colores-del-papel.ts';
 import type { ImagenRgba, Zona } from './mapa.ts';
 
 export interface Dibujo {
@@ -152,7 +153,7 @@ export async function dibujarNodo(nodo: HTMLElement): Promise<Dibujo> {
   lienzo.height = alto;
   const pincel = lienzo.getContext('2d', { willReadFrequently: true });
   if (pincel === null) throw new Error('Este navegador no deja dibujar el documento.');
-  pincel.fillStyle = '#fff';
+  pincel.fillStyle = PAPEL;
   pincel.fillRect(0, 0, ancho, alto);
   pincel.drawImage(dibujado, 0, 0, ancho, alto);
   const pixeles = pincel.getImageData(0, 0, ancho, alto);

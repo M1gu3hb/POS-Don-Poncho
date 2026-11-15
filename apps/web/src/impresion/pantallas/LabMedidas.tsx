@@ -89,7 +89,7 @@ export function LabMedidas({ formulario, errores, actualizar }: PropsDelFormular
               size="sm"
               variant={formulario.puntos === String(valor) ? 'default' : 'outline'}
               aria-pressed={formulario.puntos === String(valor)}
-              className="min-h-11"
+              className="min-h-(--altura-control)"
               onClick={() => {
                 actualizar(poniendo({ puntos: String(valor) }));
               }}

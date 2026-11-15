@@ -8,6 +8,7 @@
     "playwright.config.ts",
     "playwright.impresion.config.ts",
     "scripts/lib/adopcion.test.ts",
+    "scripts/lib/buscar-secreto.test.ts",
     "scripts/lib/clases-de-color.test.ts",
     "scripts/lib/lectura-segura.test.ts",
     "scripts/lib/menu.test.ts",
