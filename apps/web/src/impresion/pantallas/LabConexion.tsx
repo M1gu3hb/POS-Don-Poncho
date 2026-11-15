@@ -14,6 +14,8 @@ import { conConexion, conImpresoraElegida } from './cambios-del-formulario.ts';
 import { poniendo, type PropsDelFormulario } from './lab-tipos.ts';
 import { mismoDestino, NOMBRES_DE_CONEXIONES } from './nombres.ts';
 import { resultadoDeUnError } from './resultado-de-prueba.ts';
+import { RevisionDelSpooler } from './RevisionDelSpooler';
+import { aplicaLaRevision } from './revision-del-spooler.ts';
 
 /**
  * 2 · LAS CONEXIONES (DP-20 · laboratorio): las que la plataforma sabe hacer, y las que no se ven
@@ -226,6 +228,8 @@ export function LabConexion({
       ) : (
         <Impresoras app={app} props={props} impresoras={impresoras.data} />
       )}
+
+      {aplicaLaRevision(formulario.conexion) ? <RevisionDelSpooler app={app} /> : null}
 
       <Button
         type="button"

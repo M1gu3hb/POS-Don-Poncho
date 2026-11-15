@@ -68,22 +68,59 @@ Bitácora para retomar. Empezó el sábado 14-11-2026. Entrega: lunes 16.
 - Pruebas unitarias: 67 de impresión + los contratos que tocan el ticket, los sonidos, las cookies
   y las llaves de consulta (337 en verde). `tsc` de `app` y `web` en cero; lint de lo nuevo en cero.
 
-## En curso
+### Las pantallas (agente Sonnet, revisado e integrado)
 
-- Agente (Sonnet) en `..\.work\dp20-lab`: Configuración → Impresión, las copias en Operación y el
-  laboratorio «Hardware y pruebas de impresión».
+- **Configuración → Impresión** (`pantallas/ImpresionDelAparato`): sin la app, el aviso de instalarla;
+  con la app, el estado («Impresora lista ✓» y el perfil), «Página de prueba», «Abrir cajón», el modo
+  ligero (Automático / Encendido / Apagado), la versión con «Buscar actualización» y «Diagnóstico».
+- **Operación**, hasta abajo: «Copias de impresión» y «Hardware y pruebas de impresión» (la puerta
+  con la contraseña del proveedor y el laboratorio: el aparato, las conexiones —las que la
+  plataforma no puede, apagadas y con su razón—, el lenguaje y las medidas, el corte, el cajón, qué
+  imprime el aparato, las pruebas, la vista previa de la imagen de 1 bit, los bytes en hexadecimal
+  y el perfil: guardar, exportar, importar, quitar).
+- En el laboratorio, con la impresora instalada en Windows: «Preguntar a Windows si la impresora
+  está lista antes de imprimir» (se apaga si un driver dice «fuera de línea» sin estarlo).
+
+### Lo que se comprobó, y cómo
+
+| Qué | Cómo | Resultado |
+| --- | --- | --- |
+| El ticket que sale es el de la pantalla | `pnpm test:impresion`: el componente real en Chromium → 1 bit → ESC/POS → la impresora falsa | 13 de 13. Cero puntos de diferencia; contra la captura de la pantalla, 0 puntos fuera de lugar y ~0.4 % de puntos de borde |
+| De punta a punta, con una app falsa | `pruebas/e2e/impresion-por-la-app.spec.ts` contra un servidor compilado y una base desechable (`dp20_e2e`) | 2 de 2: contraseña mala no entra, la buena sí; vista previa; el ticket de ejemplo llega a la app como imagen con su corte y sin pulso de cajón; perfil guardado → «Impresora lista ✓»; copias guardadas |
+| Los comandos nuevos | Integración contra Postgres 18 local (`dp20_pruebas`) | 6 de 6 |
+| Las pruebas unitarias del repo | `pnpm test:unit` | 5 898 en verde (las 2 que fallaron eran de ambiente: se repitieron en verde) |
+| Mutaciones | Siete en el codificador, el emulador y la cola; cinco del agente en las pantallas | Todas mueren (una sobrevivía y destapó una prueba que faltaba: imprimir sin pedirlo no abre el cajón) |
+| Las pantallas, a la vista | Capturas del recorrido en un navegador real | Revisadas: la pestaña, las copias, la puerta, el laboratorio completo |
+
+Lo que cazaron las puertas del repo y se corrigió: la matriz de permisos, el registro de aspecto
+(el ticket cambió de clases a estilo en línea), los tokens del sistema (la tinta y el papel viven
+sólo en `termico/colores-del-papel.ts`), la adopción (superficies y estados del sistema), el
+contrato de quién lee el documento de configuración y un componente huérfano.
 
 ## Falta
 
-- La comparación pixel por pixel con navegador real (Playwright): HTML → 1 bit → ESC/POS →
-  emulador → comparar, en 58 y 80, con y sin logo.
-- Pruebas de integración (Postgres) de los tres comandos y de la contraseña del proveedor.
-- El modo ligero en la web (la app avisa; la web quita blur, sombras y animaciones).
-- `DECISIONES.md` (DP-D119 en adelante), `pnpm verify`, el PR y su CI.
-- El hash de la contraseña del proveedor en Vercel (Production) y su copia en `_PRIVADO`: **falta
-  que Miguel dé la contraseña en el chat**. Sin la variable, nadie entra al laboratorio.
-- Con hardware, con Miguel: la lista corta por POS de `INSTALAR.md` y la foto del ticket junto a
-  la captura de la pantalla.
+- **La contraseña del proveedor:** Miguel la da en el chat; con ella se guarda su hash en Vercel
+  (Production, `PROVEEDOR_CLAVE_HASH`) y una copia en `..\_PRIVADO\`, y se corre
+  `scripts/verificar-clave-del-proveedor.mjs` contra el `.next` y las apps empaquetadas. Sin la
+  variable, nadie entra al laboratorio (y sin laboratorio no hay perfil: la Caja imprime con el
+  navegador, como hoy).
+- **Con hardware, con Miguel:** la lista corta por POS de `INSTALAR.md`, la foto del ticket junto a
+  la captura de la pantalla, y medir RAM y procesador con el Tablero, la Caja y la Cocina abiertos.
+- **La prueba de actualización:** publicar una 1.0.1 de prueba y ver que llegue sola a un POS.
+- El recorrido `impresion-por-la-app.spec.ts` corre en local; falta colgarlo de un trabajo de la CI
+  (necesita el hash de una contraseña desechable en el entorno del servidor de la corrida).
+- El encabezado de Configuración dice «Ajustes de Morphiq POS» (venía así): por el §6 del refuerzo
+  debería decir POS Don Poncho. No es de esta rama; queda señalado.
+
+## Cómo correr lo de esta etapa
+
+```bash
+pnpm test:impresion                      # el ticket, punto por punto (sin app ni base)
+MORPHIQPOS_CHROMIUM="C:/Program Files/Google/Chrome/Application/chrome.exe" pnpm test:impresion
+```
+
+En la laptop no hay Docker: la integración corre contra el clúster local de pruebas (Postgres 18,
+puerto 55433) con una base propia por etapa, y `verify` en dos tramos (`D:\mpos-tmp\dp20\`).
 
 ## Lo que NO llega en esta entrega (se dice, no se instala a medias)
 

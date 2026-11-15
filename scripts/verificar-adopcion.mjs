@@ -1316,6 +1316,12 @@ export const SIN_ESTADO = [
       'El diagnóstico del aparato siempre trae sistema, memoria y pantalla; las listas que pueden venir sin nada (impresoras, USB) lo dicen con su texto dentro de la tarjeta.',
   },
   {
+    pantalla: 'impresion/pantallas/RevisionDelSpooler',
+    estado: 'vacio',
+    razon:
+      'Un solo ajuste del aparato (preguntar o no al spooler de Windows antes de imprimir): no hay lista que pueda llegar vacía.',
+  },
+  {
     pantalla: 'impresion/pantallas/LabMedidas',
     estado: 'vacio',
     razon: 'Campos fijos del perfil (lenguaje, puntos, corte): no hay lista.',
