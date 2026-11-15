@@ -54,6 +54,14 @@ const FAMILIAS: Readonly<Record<string, string>> = {
   cliente: 'Cambio de clientes',
 };
 
+/** DP-20 · Por qué se abrió el cajón sin venta (`caja.abrir_cajon`). */
+const MOTIVOS_DEL_CAJON: Readonly<Record<string, string>> = {
+  dar_cambio: 'dar cambio',
+  guardar_billete: 'guardar un billete',
+  conteo: 'conteo',
+  otro: 'otro motivo',
+};
+
 const DESCRIPCIONES: Readonly<Record<string, (p: Payload) => string>> = {
   'caja.nombrar_terminal': (p) =>
     `Cambió el nombre de una caja: «${texto(p['antes'])}» → «${texto(p['despues'])}»`,
@@ -63,6 +71,16 @@ const DESCRIPCIONES: Readonly<Record<string, (p: Payload) => string>> = {
     p['despues'] === null || p['despues'] === undefined
       ? 'Dejó de pedir PIN de gerente en los retiros'
       : `Pide PIN de gerente en retiros mayores a ${dinero(p['despues'])}`,
+  'caja.abrir_cajon': (p) =>
+    `Abrió el cajón sin venta${MOTIVOS_DEL_CAJON[texto(p['motivo'])] === undefined ? '' : ` (${MOTIVOS_DEL_CAJON[texto(p['motivo'])] ?? ''})`}`,
+  'caja.cajon_por_cobro': (p) =>
+    `Se abrió el cajón al cobrar${texto(p['referencia']) === '' ? '' : ` el ticket ${texto(p['referencia'])}`}`,
+  'caja.fijar_copias_de_impresion': (p) => {
+    const despues = (p['despues'] ?? {}) as Payload;
+    return `Copias de impresión: ticket ${texto(despues['ticket'])}, precuenta ${texto(despues['precuenta'])}, corte ${texto(despues['corte'])}`;
+  },
+  'venta.registrar_impresion': (p) =>
+    `${p['reimpresion'] === true ? 'Reimprimió' : 'Imprimió'} el ticket${texto(p['folio']) === '' ? '' : ` ${texto(p['folio'])}`}${p['reimpresion'] === true ? ` (salida ${texto(p['numero'])})` : ''}`,
   'catalogo.marcar_agotado': (p) =>
     p['agotado'] === true
       ? `Marcó «${texto(p['nombre'])}» agotado por hoy`

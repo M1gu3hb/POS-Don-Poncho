@@ -147,6 +147,8 @@ const SOLO_POR_COMANDO = new Set([
   'descuentos_permitidos',
   // DP-16 · Pedir PIN de gerente en retiros mayores a $X: sólo dueño o administrador.
   'retiro_pin_arriba_de_centavos',
+  // DP-20 · Copias del ticket, la precuenta y el corte: sólo dueño o administrador.
+  'copias_de_impresion',
 ]);
 
 const MAX_BYTES_CONFIGURACION = 64 * 1024;
@@ -155,6 +157,7 @@ const MAX_BYTES_CONFIGURACION = 64 * 1024;
 const CLAVES_EDITABLES = new Set([
   'descuentos_permitidos',
   'retiro_pin_arriba_de_centavos',
+  'copias_de_impresion',
   'nombre_negocio',
   'nombre_sistema',
   'platform_brand',
@@ -502,6 +505,14 @@ export async function guardarConfiguracionParcial(
       z.number().int().min(1).max(1_000_000_000).nullable(),
       parche['retiro_pin_arriba_de_centavos'],
       'El monto del retiro con PIN es un importe en pesos, o vacío.',
+    );
+  }
+  if ('copias_de_impresion' in parche) {
+    const copias = z.number().int().min(1).max(3);
+    exigirForma(
+      z.object({ ticket: copias, precuenta: copias, corte: copias }),
+      parche['copias_de_impresion'],
+      'Las copias de impresión van de 1 a 3.',
     );
   }
   if ('portal_qr_comensales_abren_mesa' in parche) {

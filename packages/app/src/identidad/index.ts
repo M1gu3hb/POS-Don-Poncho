@@ -43,3 +43,14 @@ export {
   type PeticionDeSupervisor,
   type ResultadoDeSupervisor,
 } from './supervisor.ts';
+
+// DP-20 · La contraseña del proveedor: sólo su hash en el despliegue, y un permiso firmado de 30 minutos.
+export {
+  comprobarClaveDelProveedor,
+  dejarRastroDelProveedor,
+  firmarPermisoDelProveedor,
+  VARIABLE_DEL_HASH_DEL_PROVEEDOR,
+  VIGENCIA_DEL_PERMISO_SEGUNDOS,
+  vigenciaDelPermiso,
+  type ClaveComprobada,
+} from './proveedor.ts';

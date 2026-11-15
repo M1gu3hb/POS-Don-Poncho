@@ -20,6 +20,8 @@ blob-report
 # La salida de las pruebas de navegador: trazas, capturas y el .last-run.json.
 # Se coló al indice en la primera corrida y no es codigo: cambia en cada pasada.
 pruebas/e2e/.resultados
+pruebas/impresion/.resultados
+pruebas/impresion/.arnes
 # Las sesiones guardadas por rol (`storageState`) del día completo: una cookie de demo
 # por persona, para entrar UNA vez por corrida y no quemar el límite de intentos.
 pruebas/e2e/.sesiones

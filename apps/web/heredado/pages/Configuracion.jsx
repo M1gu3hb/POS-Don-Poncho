@@ -40,6 +40,7 @@ import {
   Database,
   Tablet,
   Volume2,
+  Printer,
 } from 'lucide-react';
 import IntegracionesRespaldos from '@/components/configuracion/IntegracionesRespaldos';
 import DatosSection from '@/components/datos/DatosSection';
@@ -87,6 +88,9 @@ import {
 import { Calculator, BadgePercent } from 'lucide-react';
 import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos';
 import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
+import { ImpresionDelAparato } from '~/impresion/pantallas/ImpresionDelAparato';
+import { CopiasDeImpresion } from '~/impresion/pantallas/CopiasDeImpresion';
+import { EntradaAlLaboratorio } from '~/impresion/pantallas/EntradaAlLaboratorio';
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
@@ -447,6 +451,10 @@ export default function Configuracion() {
             <Tablet className="w-3 h-3 mr-1" />
             Este aparato
           </TabsTrigger>
+          <TabsTrigger value="impresion">
+            <Printer className="w-3 h-3 mr-1" />
+            Impresión
+          </TabsTrigger>
           <TabsTrigger value="sonidos">
             <Volume2 className="w-3 h-3 mr-1" />
             Sonidos
@@ -528,6 +536,11 @@ export default function Configuracion() {
             {/* DP-11.3: cuánto suena ESTE aparato (Apagado, Suave, Normal). */}
             <SonidoDelAparato />
           </div>
+        </TabsContent>
+
+        {/* DP-20: la impresora de ESTE aparato, su prueba y el cajón (el personal no cambia el perfil). */}
+        <TabsContent value="impresion">
+          <ImpresionDelAparato rol={posUser?.rol} />
         </TabsContent>
 
         {/* DP-11.3: cada momento con su sonido, el del teclado y el portal (del negocio). */}
@@ -816,6 +829,10 @@ export default function Configuracion() {
           <div className="mt-4">
             <ProveedoresSection />
           </div>
+
+          {/* DP-20: las copias de impresión y, discreta y última, la entrada al laboratorio del proveedor. */}
+          <CopiasDeImpresion puedeCambiar={esDeMando(miPuesto)} />
+          <EntradaAlLaboratorio />
         </TabsContent>
 
         {esDeMando(miPuesto) && (

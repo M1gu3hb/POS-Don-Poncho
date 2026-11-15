@@ -624,6 +624,56 @@ html.dark .printable-doc [class*='dark:text-gray-'] {
   }
 }
 
+/* ----- Modo ligero (DP-20 · Parte 6) -----
+   La app lo enciende en los POS con poca memoria o procesador (`<html data-ligero>`, ver
+   `~/impresion/modo-ligero`): sin desenfoques, sin sombras pesadas y con las duraciones en cero,
+   como con «reducir movimiento». Los indicadores de carga que giran se quedan: cuestan poco y
+   dicen que la pantalla sigue viva. */
+html[data-ligero] {
+  --duracion-rapida: 0ms;
+  --duracion-normal: 0ms;
+  --duracion-lenta: 0ms;
+  scroll-behavior: auto !important;
+}
+html[data-ligero] *,
+html[data-ligero] *::before,
+html[data-ligero] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition-duration: 0ms !important;
+}
+html[data-ligero] .shadow-lg,
+html[data-ligero] .shadow-xl,
+html[data-ligero] .shadow-2xl,
+html[data-ligero] .shadow-3,
+html[data-ligero] .shadow-4 {
+  box-shadow: 0 0 0 1px hsl(var(--border)) !important;
+}
+html[data-ligero] .carga-barra {
+  animation: none;
+}
+
+/* ----- El lienzo térmico (DP-20) -----
+   El ticket se dibuja en un lienzo medido en PUNTOS de la impresora y se achica con `zoom` a su
+   tamaño real (576 puntos = 72 mm). Su caja no lleva relleno —el lienzo ya trae el suyo— y el
+   logo conserva sus medidas en puntos. Las medidas viven en `~/impresion/termico/estilo`. */
+@media print {
+  html[data-print-mode='thermal'] .ticket-printable.ticket-termico.thermal-80,
+  html[data-print-mode='thermal'] .ticket-printable.ticket-termico.thermal-58 {
+    padding: 0 !important;
+  }
+  html[data-print-mode='thermal'] .ticket-printable.ticket-termico.thermal-80 img {
+    max-width: 280px !important;
+    max-height: 140px !important;
+    margin: 0 auto 8px !important;
+  }
+  html[data-print-mode='thermal'] .ticket-printable.ticket-termico.thermal-58 img {
+    max-width: 200px !important;
+    max-height: 110px !important;
+    margin: 0 auto 8px !important;
+  }
+}
+
 /* ----- Sólo el documento, desde arriba de la hoja (DP-15) -----
    `print.js` marca (`~/impresion/aislar`) lo que sobra: se quita del flujo —no sólo se esconde,
    que dejaba hojas en blanco antes del ticket— y los contenedores del documento pierden

@@ -45,3 +45,6 @@ export {
   topesDeLosPuestos,
   type TopeDelPuesto,
 } from './topes-de-los-puestos.ts';
+
+// DP-20 · Cada ticket que sale queda registrado; desde el segundo dice «REIMPRESIÓN».
+export { registrarImpresion, type ResultadoRegistrarImpresion } from './impresion-del-ticket.ts';

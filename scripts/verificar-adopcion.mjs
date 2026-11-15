@@ -1243,6 +1243,225 @@ export const SIN_ESTADO = [
     razon:
       'DP-15.1 · No lee nada del servidor: recibe por props cuántas ventas llegaron; la carga la pinta el Tablero.',
   },
+  // ── DP-20 · La impresión por la app, Configuración → Impresión y el laboratorio de hardware ──
+  {
+    pantalla: 'impresion/BarraDeImpresion',
+    estado: 'vacio',
+    razon:
+      'Sin trabajos de impresión no pinta NADA (devuelve `null`): la barra sólo existe mientras algo sale o falló. No es una lista que se consulte.',
+  },
+  {
+    pantalla: 'impresion/BarraDeImpresion',
+    estado: 'cargando',
+    razon:
+      'No lee nada del servidor para pintarse: enseña el avance de cada trabajo, que es su propio «cargando» (la barra de progreso de cada renglón).',
+  },
+  {
+    pantalla: 'impresion/CajonEnLaCaja',
+    estado: 'vacio',
+    razon:
+      'Piezas de la Caja (el botón «Abrir cajón» y el aviso de la impresora): sin app o sin cajón no pintan nada. No hay lista.',
+  },
+  {
+    pantalla: 'impresion/CajonEnLaCaja',
+    estado: 'cargando',
+    razon:
+      'Mientras se leen los ajustes del aparato no se pinta nada (un botón que aparece tarde es mejor que un hueco en la Caja); abrir el cajón lo dice el botón con `cargando`.',
+  },
+  {
+    pantalla: 'impresion/pantallas/AjustesDeLaApp',
+    estado: 'vacio',
+    razon:
+      'Tres ajustes fijos del aparato (modo ligero, versión y diagnóstico): no hay lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'impresion/pantallas/AjustesDeLaApp',
+    estado: 'cargando',
+    razon:
+      'La app contesta al instante desde el propio aparato; mientras, las opciones se ven sin elegir y la versión dice «…». No hay viaje al servidor.',
+  },
+  {
+    pantalla: 'impresion/pantallas/ImpresionDelAparato',
+    estado: 'vacio',
+    razon:
+      'Sin impresora configurada no hay «lista vacía»: hay un Aviso que dice quién la deja lista y dónde.',
+  },
+  {
+    pantalla: 'impresion/pantallas/CopiasDeImpresion',
+    estado: 'vacio',
+    razon:
+      'Tres números del negocio (ticket, precuenta y corte) que siempre valen de 1 a 3: nunca están vacíos.',
+  },
+  {
+    pantalla: 'impresion/pantallas/EntradaAlLaboratorio',
+    estado: 'vacio',
+    razon: 'La puerta del laboratorio: pide la contraseña o enseña el laboratorio. No lista nada.',
+  },
+  {
+    pantalla: 'impresion/pantallas/Laboratorio',
+    estado: 'vacio',
+    razon:
+      'El armazón del laboratorio: monta sus secciones, que son fijas. El vacío de cada lista lo dice su sección (las impresoras, los bytes).',
+  },
+  {
+    pantalla: 'impresion/pantallas/Laboratorio',
+    estado: 'cargando',
+    razon:
+      'No lee nada por sí mismo: parte del perfil del aparato, que ya leyó quien lo monta; cada sección pinta su propia espera.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabAparato',
+    estado: 'vacio',
+    razon:
+      'El diagnóstico del aparato siempre trae sistema, memoria y pantalla; las listas que pueden venir sin nada (impresoras, USB) lo dicen con su texto dentro de la tarjeta.',
+  },
+  {
+    pantalla: 'impresion/pantallas/RevisionDelSpooler',
+    estado: 'vacio',
+    razon:
+      'Un solo ajuste del aparato (preguntar o no al spooler de Windows antes de imprimir): no hay lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabMedidas',
+    estado: 'vacio',
+    razon: 'Campos fijos del perfil (lenguaje, puntos, corte): no hay lista.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabMedidas',
+    estado: 'cargando',
+    razon: 'Formulario controlado por el laboratorio: no lee nada.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabMedidas',
+    estado: 'error',
+    razon:
+      'El error de cada campo lo pinta el propio campo (`campos`), junto a lo que hay que corregir; la sección no tiene un fallo propio.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabCajon',
+    estado: 'vacio',
+    razon: 'Campos fijos del perfil (el cajón y qué imprime el aparato): no hay lista.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabCajon',
+    estado: 'cargando',
+    razon: 'Formulario controlado por el laboratorio: no lee nada.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabCajon',
+    estado: 'error',
+    razon:
+      'El error de cada campo lo pinta el propio campo (`campos`); la sección no tiene un fallo propio.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabPruebas',
+    estado: 'vacio',
+    razon: 'Una botonera fija de pruebas: no hay lista.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabPruebas',
+    estado: 'cargando',
+    razon:
+      'La espera de cada prueba la dice su botón («Enviando…») y su resultado al lado: no hay un bloque que esperar.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabVistaPrevia',
+    estado: 'vacio',
+    razon:
+      'Antes de pedirla no hay «vista vacía»: hay un botón para dibujarla. Lo que enseña es una imagen, no una lista.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabVistaPrevia',
+    estado: 'cargando',
+    razon: 'Dibujar tarda décimas de segundo y lo dice el botón con `cargando`.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabBytes',
+    estado: 'cargando',
+    razon: 'Enseña los bytes del último trabajo, que ya están en memoria: no espera nada.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabBytes',
+    estado: 'error',
+    razon:
+      'No hace nada que pueda fallar: sólo escribe en hexadecimal lo que el laboratorio ya mandó.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabPerfil',
+    estado: 'vacio',
+    razon: 'Guardar, exportar, importar y quitar el perfil: acciones, no una lista.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabPerfil',
+    estado: 'cargando',
+    razon: 'La espera de cada acción la dice su botón con `cargando`.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabPendientes',
+    estado: 'vacio',
+    razon:
+      'Una lista fija y corta de lo que todavía no está disponible: nunca llega vacía (cuando se vacíe, la sección se quita).',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabPendientes',
+    estado: 'cargando',
+    razon:
+      'Es texto fijo escrito en el propio archivo: no lee nada del servidor ni del aparato, así que no hay nada que esperar.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabPendientes',
+    estado: 'error',
+    razon: 'Texto fijo: no hace nada que pueda fallar.',
+  },
+  {
+    pantalla: 'impresion/pantallas/BotonDePrueba',
+    estado: 'vacio',
+    razon: 'Es un BOTÓN con su resultado al lado, no una pantalla: no pinta ninguna lista.',
+  },
+  {
+    pantalla: 'impresion/pantallas/BotonDePrueba',
+    estado: 'cargando',
+    razon: 'Su espera es el propio botón (`cargando`) y el texto «Enviando…».',
+  },
+  {
+    pantalla: 'impresion/pantallas/BotonDePrueba',
+    estado: 'error',
+    razon:
+      'El resultado de la prueba —bien o mal— va en una línea junto al botón, con su símbolo y su texto: un Aviso por cada botón de la botonera la volvería ilegible.',
+  },
+  {
+    pantalla: 'impresion/pantallas/ReglaDeCalibracion',
+    estado: 'vacio',
+    razon:
+      'No es una pantalla: es un DOCUMENTO que se imprime (la regla en puntos de la impresora), con el estilo térmico.',
+  },
+  {
+    pantalla: 'impresion/pantallas/ReglaDeCalibracion',
+    estado: 'cargando',
+    razon: 'Un dibujo fijo que sale al rollo: no lee nada.',
+  },
+  {
+    pantalla: 'impresion/pantallas/ReglaDeCalibracion',
+    estado: 'error',
+    razon: 'Un dibujo fijo que sale al rollo: no hace nada que pueda fallar.',
+  },
+  {
+    pantalla: 'impresion/pantallas/campos',
+    estado: 'vacio',
+    razon:
+      'Son CAMPOS del laboratorio (texto, número, casilla, opciones), no una pantalla: no pintan ninguna lista.',
+  },
+  {
+    pantalla: 'impresion/pantallas/campos',
+    estado: 'cargando',
+    razon: 'Campos controlados por quien los monta: no leen nada.',
+  },
+  {
+    pantalla: 'impresion/pantallas/campos',
+    estado: 'error',
+    razon:
+      'El mensaje de un campo va pegado a ese campo y ligado con `aria-describedby` (así lo lee el lector de pantalla al entrar al campo); un Aviso aparte perdería esa liga.',
+  },
 ];
 
 const argumentos = process.argv.slice(2);

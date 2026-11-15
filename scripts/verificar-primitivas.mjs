@@ -255,6 +255,12 @@ const EXENTOS = new Map([
       'papel, no colores de la interfaz. Viven solo en ese archivo',
   ],
   [
+    'colores-del-papel.ts',
+    'La tinta y el papel de la impresora termica (DP-20): el negro puro y el blanco puro con que ' +
+      'se dibuja lo que va al rollo y de los que sale la imagen de 1 bit. No son colores de la ' +
+      'interfaz ni cambian con el estilo. Viven solo en ese archivo',
+  ],
+  [
     'manifest.ts',
     'El manifiesto web (DP-3) pide sus dos colores en hexadecimal: el navegador lo lee antes ' +
       'que cualquier hoja de estilo y no entiende variables CSS. Son el negro del letrero, el ' +

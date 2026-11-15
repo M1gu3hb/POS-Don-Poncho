@@ -57,6 +57,11 @@ export const LIMITES = {
    * quien se equivoca de sección y lo repite.
    */
   mantenimiento: { intentos: 3, ventanaSegundos: 3600 },
+  /**
+   * DP-20 · La contraseña del proveedor (`/api/proveedor/entrar`): 5 fallos y 15 minutos de
+   * espera. La contraseña buena devuelve su intento, como el PIN.
+   */
+  proveedor: { intentos: 5, ventanaSegundos: 900 },
 } as const;
 
 export type AccionLimitada = keyof typeof LIMITES;
@@ -138,7 +143,7 @@ function claveDelOrigen(
  * lo justo —más estricto, nunca más abierto— y la persona ya entró.
  */
 export async function devolver(
-  accion: 'entrar' | 'supervisor',
+  accion: 'entrar' | 'supervisor' | 'proveedor',
   cabeceras: { get(nombre: string): string | null },
   pimienta: string,
 ): Promise<void> {

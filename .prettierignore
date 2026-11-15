@@ -45,3 +45,6 @@ docs/reports/
 # se somete al estandar. El codigo NUEVO de `apps/web` —`src/`, `app/`— si se
 # formatea, y queda fuera de esta exclusion a proposito.
 apps/web/heredado/
+
+# DP-20 · El arnés de la prueba del ticket, ya empaquetado (lo genera `pnpm test:impresion`).
+pruebas/impresion/.arnes/

@@ -1733,6 +1733,24 @@
       "archivo": "apps/web/heredado/pages/Registros.jsx",
       "porque": "DP-18 (A21): Registros dice qué periodo muestran las listas (una línea bajo el resumen) y, si una lectura llega al tope o se listan menos de las cargadas, un Aviso del sistema lo dice; antes lo viejo desaparecía sin aviso. Nada de lo que se veía se quitó.",
       "testigos": ["+ clase:text-muted-foreground", "+ clase:text-xs"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/tickets/PreCuentaTicket.jsx",
+      "porque": "DP-20 (refuerzo §1): el ticket lleva el ESTILO TÉRMICO y se dibuja en un lienzo medido en puntos de la impresora (negro puro, letra gruesa, separadores sólidos), porque ese mismo lienzo es el que se manda como imagen a la térmica. El fondo, el color y el centrado pasan de clases a estilo en línea (el blanco y el negro del papel no dependen del estilo de la pantalla); `ticket-termico` marca el contenedor para el CSS de impresión, y «REIMPRESIÓN» es la marca de la segunda salida en adelante. Lo comprueba `pnpm test:impresion` contra la captura de la pantalla.",
+      "testigos": [
+        "- clase:bg-superficie",
+        "- clase:text-texto",
+        "- clase:text-center",
+        "- clase:pb-2",
+        "- clase:mb-2",
+        "+ clase:ticket-termico",
+        "+ texto:REIMPRESIÓN"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "porque": "DP-20 (Parte 3.1): la pestaña nueva «Impresión» de Configuración, con su ícono, después de «Este aparato». Las copias y el laboratorio se montan al final de «Operación» como componentes. Nada de lo que se veía se quitó.",
+      "testigos": ["+ clase:mr-1", "+ icono:Printer"]
     }
   ]
 }

@@ -19,28 +19,60 @@
  * `thermal-80`, de `ancho_papel_ticket`), o `ancho` si quien llama lo sabe. Y
  * el documento se AÍSLA (`~/impresion/aislar`): lo demás sale del flujo, no sólo
  * se esconde, para que el ticket salga desde arriba de la primera hoja.
+ *
+ * ── DP-20 · La app imprime directo ────────────────────────────────────────
+ * Si la página corre dentro de la app (`window.MorphiqApp`) y el aparato tiene
+ * su impresora configurada, el documento térmico NO pasa por el diálogo: el
+ * mismo nodo de la pantalla se dibuja y sale directo (`~/impresion/imprimir-documento`).
+ * Sin la app, todo sigue como aquí abajo. En los dos caminos el ticket de una
+ * venta se registra antes de salir, y desde la segunda salida dice «REIMPRESIÓN».
  */
 import { aislarParaImprimir, documentoAImprimir } from '~/impresion/aislar';
+import {
+  LIENZO_TERMICO,
+  datosDelDocumento,
+  imprimirDirecto,
+  registrarSalidaDelTicket,
+  salioElPapel,
+} from '~/impresion/imprimir-documento';
 import { anchoDeLasClases, anchoDelPapel, paginaDeImpresion } from '~/impresion/papel';
+import { marcarReimpresion, quitarMarcas } from '~/impresion/termico/decorar';
+import { nuevoIdDeTrabajo } from '~/impresion/termico/trabajo';
 
 const SELECTOR = {
   thermal: '.ticket-printable.thermal-58, .ticket-printable.thermal-80',
   letter: '.ticket-printable.letter-doc, .cash-cut-pdf',
 };
 
-export function printDocument({ mode = 'letter', title = 'Documento', ancho } = {}) {
+/** Lo que dice el papel cuando no se pudo registrar su salida: nunca pasa por original. */
+const SIN_REGISTRAR = 'Sin conexión: esta salida no quedó registrada';
+
+/** La marca del ticket que sale por el navegador (`null` = es la original). */
+async function marcaDelTicket(objetivo) {
+  const { tipo, ordenId } = datosDelDocumento(objetivo);
+  if (tipo !== 'ticket' || ordenId === null) return { marca: null, ordenId: null };
+  try {
+    return { marca: await registrarSalidaDelTicket(ordenId, nuevoIdDeTrabajo('ticket')), ordenId };
+  } catch (err) {
+    console.error('[print] no se pudo registrar la salida del ticket:', err);
+    return { marca: SIN_REGISTRAR, ordenId: null };
+  }
+}
+
+async function imprimirConElNavegador({ modo, title, ancho, objetivo }) {
   const html = document.documentElement;
   const prevMode = html.getAttribute('data-print-mode');
   const prevTitle = document.title;
-  const modo = mode === 'thermal' ? 'thermal' : 'letter';
-
-  const objetivo = documentoAImprimir(document, SELECTOR[modo]);
   const rollo =
     ancho !== undefined
       ? anchoDelPapel(ancho)
       : objetivo
         ? anchoDeLasClases(objetivo.className)
         : anchoDelPapel(undefined);
+
+  const lienzo = modo === 'thermal' && objetivo ? objetivo.querySelector(LIENZO_TERMICO) : null;
+  const salida = lienzo ? await marcaDelTicket(objetivo) : { marca: null, ordenId: null };
+  if (lienzo && salida.marca !== null) marcarReimpresion(lienzo, salida.marca, rollo);
 
   html.setAttribute('data-print-mode', modo);
   document.title = title;
@@ -58,6 +90,7 @@ export function printDocument({ mode = 'letter', title = 'Documento', ancho } = 
     document.title = prevTitle;
     hoja.remove();
     deshacerAislado();
+    if (lienzo) quitarMarcas(lienzo);
     window.removeEventListener('afterprint', cleanup);
   };
   window.addEventListener('afterprint', cleanup);
@@ -65,7 +98,26 @@ export function printDocument({ mode = 'letter', title = 'Documento', ancho } = 
   // Pequeño delay para asegurar que los estilos aplicaron
   setTimeout(() => {
     window.print();
+    if (salida.ordenId !== null) salioElPapel(salida.ordenId);
     // Fallback por si afterprint no dispara
     setTimeout(cleanup, 1500);
   }, 80);
+}
+
+export function printDocument({ mode = 'letter', title = 'Documento', ancho } = {}) {
+  const modo = mode === 'thermal' ? 'thermal' : 'letter';
+  const objetivo = documentoAImprimir(document, SELECTOR[modo]);
+  const conElNavegador = () => {
+    void imprimirConElNavegador({ modo, title, ancho, objetivo });
+  };
+
+  // DP-20 · Con la app y la impresora del aparato, el ticket sale directo.
+  if (
+    modo === 'thermal' &&
+    objetivo &&
+    imprimirDirecto({ objetivo, titulo: title, alNavegador: conElNavegador })
+  ) {
+    return;
+  }
+  conElNavegador();
 }
