@@ -16,6 +16,7 @@ import {
   type PaginaDeCodigos,
   type PerfilDeImpresion,
 } from '../termico/perfil.ts';
+import { problemaDeLaDireccion } from '../termico/direccion-local.ts';
 import {
   BAUDIOS_POR_OMISION,
   entero,
@@ -132,7 +133,9 @@ function destinoDelFormulario(
   if (sinDestino) return { conexion: f.conexion };
   if (f.conexion === 'red') {
     const host = f.host.trim();
-    if (host === '') anotar('host', 'Escribe la IP o el nombre de la impresora.');
+    // DP-D125: sólo a la red local, y dicho aquí en lugar de al imprimir (las apps lo exigen).
+    const problema = problemaDeLaDireccion(host);
+    if (problema !== null) anotar('host', problema);
     const puerto =
       f.puerto.trim() === ''
         ? PUERTO_DE_RED_POR_OMISION

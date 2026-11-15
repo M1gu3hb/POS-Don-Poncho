@@ -83,8 +83,24 @@ describe('el destino armado', () => {
     const resultado = perfilDesdeFormulario(conCampos({ host: '   ' }));
     expect(resultado).toMatchObject({
       ok: false,
-      errores: { host: 'Escribe la IP o el nombre de la impresora.' },
+      errores: { host: 'Escribe la dirección IP de la impresora.' },
     });
+  });
+
+  it('«red» sólo acepta una dirección IP de la red local (DP-D125): ni nombres ni internet', () => {
+    expect(perfilDesdeFormulario(conCampos({ host: 'impresora-cocina' }))).toMatchObject({
+      ok: false,
+      errores: {
+        host: 'Escribe la dirección IP completa de la impresora (por ejemplo 192.168.1.50), no su nombre.',
+      },
+    });
+    expect(perfilDesdeFormulario(conCampos({ host: '8.8.8.8' }))).toMatchObject({
+      ok: false,
+      errores: {
+        host: 'Sólo se imprime en red hacia direcciones de tu red local (como 192.168.x.x o 10.x.x.x).',
+      },
+    });
+    expect(perfilDesdeFormulario(conCampos({ host: '192.168.1.50' })).ok).toBe(true);
   });
 
   it('«serie» lleva COM y baudios; el COM se normaliza y el baudio vacío vale 9600', () => {

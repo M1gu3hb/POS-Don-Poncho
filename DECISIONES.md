@@ -2443,3 +2443,42 @@ publicadas. Ninguna halló nada crítico.
   `WEB_MESSAGE_LISTENER`; en la ventana oculta del driver, JavaScript apagado.
 - **Menores, anotados:** el límite de intentos de la contraseña cuenta por IP y no por negocio; un
   intento rechazado por el límite (429) no deja fila en la auditoría (los fallos de contraseña sí).
+
+## DP-D126 · El modo compatible: respaldos en el CSS, no otra versión del POS · 15-11-2026
+
+El iMin D4-503 (Android 7.1.2, sin servicios de Google) trae un WebView que no se actualiza ni
+instalando «Android System WebView» o Chrome. Entiende las capas de CSS (Chromium 99) pero no
+`color-mix` (111), ni `translate`/`scale`/`rotate` sueltos (104), ni `dvh` (108), ni `:has()` (105).
+Reproducido en la laptop con el Chromium 99.0.4844.0 oficial: mismas teclas crema sin número,
+mismos diálogos corridos.
+
+- **Se arregla en la hoja que ya se sirve, con respaldos.** Un plugin de PostCSS propio
+  (`scripts/modo-compatible/`), después de Tailwind: el respaldo de cada opacidad pasa de sólido a
+  `hsl(var(--token) / N%)` (exacto: los tokens son tripletas `H S% L%`); cada regla y cada
+  animación con transformaciones sueltas recibe su `transform` compuesto dentro de
+  `@supports not (translate: 0)`; cada `dvh`, su `vh`. **En un motor moderno no cambia un pixel**:
+  todo va en respaldos que el motor nuevo ya reemplaza o en bloques `@supports not` en los que no
+  entra. No se detecta el navegador por su nombre, no hay una segunda hoja ni un segundo build.
+- **Por qué no bajar los «targets» del compilador:** Tailwind 4 no sabe calcular la transparencia
+  de un color que es una variable (`hsl(var(--acento))`), y pedirle a Lightning CSS navegadores
+  más viejos cambia prefijos y sintaxis de TODA la hoja, también para lo moderno. El plugin toca
+  sólo lo que falla y deja escrito por qué.
+- **El piso es Chromium 99.** Por debajo no hay capas de CSS y el navegador tira toda la hoja de
+  Tailwind: ahí el POS enseña «Este aparato es demasiado viejo para el POS. Pide ayuda a tu
+  proveedor», decidido por la propia hoja (una regla sin capa lo enseña y otra, en `@layer`, lo
+  oculta), sin JavaScript. Probado con Chromium 97.
+- **JavaScript:** el POS usa `toSorted` (el mapa de mesas ordena con él las solicitudes del QR) y
+  `URL.canParse`; un motor viejo no las trae y ahí la pantalla se cae. Van como relleno en línea
+  en el `<head>`, que sólo se instala si falta. Ni una librería de rellenos entera.
+- **El contrato, en la CI** (`verify:modo-compatible`, después del build): sobre el CSS y el
+  JavaScript que salen de `next build`. Una mezcla con respaldo sólido, una transformación sin su
+  `transform`, un `dvh` sin su `vh` o una función más nueva que Chromium 99 sin relleno detienen la
+  CI. Si Tailwind o Next cambian la forma del CSS, se ve ahí y no en el restaurante.
+- **Lo que queda como está, a sabiendas:** `:has()` (resaltes de selección y algún acomodo de
+  tarjetas; lo del laboratorio ya no depende de él) y las consultas de contenedor (Recetas e
+  Inventario muestran su acomodo angosto, que es un acomodo válido). `text-wrap` y `field-sizing`
+  degradan solos. Sin `inert` (Chromium < 102) la ficha del portal apaga lo de atrás con
+  `aria-hidden` y sin clics, pero no atrapa el foco del teclado.
+- **Las pruebas con el motor viejo no van en la CI:** necesitan bajar un Chromium de 180 MB sin
+  parches de seguridad. Se corren en la laptop (`MORPHIQPOS_CHROMIUM_VIEJO`), sólo contra el
+  servidor local. En la CI va el contrato, que es lo que impide la regresión.

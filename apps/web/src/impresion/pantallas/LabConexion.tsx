@@ -148,7 +148,9 @@ export function LabConexion({
             return (
               <label
                 key={conexion}
-                className="flex min-h-(--altura-control) cursor-pointer items-start gap-(--espacio-3) rounded-md border border-borde px-(--espacio-3) py-(--espacio-2) text-sm has-checked:border-primario has-disabled:cursor-not-allowed has-disabled:opacity-60"
+                className={`flex min-h-(--altura-control) items-start gap-(--espacio-3) rounded-md border px-(--espacio-3) py-(--espacio-2) text-sm ${
+                  formulario.conexion === conexion ? 'border-primario' : 'border-borde'
+                } ${disponible ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
               >
                 <input
                   type="radio"
