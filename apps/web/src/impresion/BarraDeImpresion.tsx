@@ -11,6 +11,7 @@ import { consultarPuente } from '~/cliente/api';
 
 import { CLAVE_DE_LAS_COPIAS, copiasLeidas, recordarCopias } from './copias.ts';
 import { enCurso, MESA_DE_TRABAJOS, textoDeLaFase, type TrabajoALaVista } from './trabajos.ts';
+import { useModoLigero } from './modo-ligero.ts';
 import { useApp } from './use-app.ts';
 
 /**
@@ -123,6 +124,8 @@ function Renglon({ trabajo }: { readonly trabajo: TrabajoALaVista }): ReactEleme
 
 export function BarraDeImpresion(): ReactElement | null {
   const app = useApp();
+  // DP-20 · Parte 6 · La app dice si este aparato va en modo ligero.
+  useModoLigero(app);
   // Las copias del negocio, al alcance de `printDocument` (que no es un componente).
   const copias = useQuery({
     queryKey: CLAVE_DE_LAS_COPIAS,

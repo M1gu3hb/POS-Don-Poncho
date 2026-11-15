@@ -624,6 +624,33 @@ html.dark .printable-doc [class*='dark:text-gray-'] {
   }
 }
 
+/* ----- Modo ligero (DP-20 · Parte 6) -----
+   La app lo enciende en los POS con poca memoria o procesador (`<html data-ligero>`, ver
+   `~/impresion/modo-ligero`): sin desenfoques, sin sombras pesadas y con las duraciones en cero,
+   como con «reducir movimiento». Los indicadores de carga que giran se quedan: cuestan poco y
+   dicen que la pantalla sigue viva. */
+html[data-ligero] {
+  --duracion-rapida: 0ms;
+  --duracion-normal: 0ms;
+  --duracion-lenta: 0ms;
+  scroll-behavior: auto !important;
+}
+html[data-ligero] *,
+html[data-ligero] *::before,
+html[data-ligero] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition-duration: 0ms !important;
+}
+html[data-ligero] .shadow-lg,
+html[data-ligero] .shadow-xl,
+html[data-ligero] .shadow-2xl {
+  box-shadow: 0 0 0 1px hsl(var(--border)) !important;
+}
+html[data-ligero] .carga-barra {
+  animation: none;
+}
+
 /* ----- El lienzo térmico (DP-20) -----
    El ticket se dibuja en un lienzo medido en PUNTOS de la impresora y se achica con `zoom` a su
    tamaño real (576 puntos = 72 mm). Su caja no lleva relleno —el lienzo ya trae el suyo— y el

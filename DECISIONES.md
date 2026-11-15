@@ -2317,3 +2317,107 @@ puerta los denuncia todos.
 - **De paso** (A22): el resumen comparaba los días de compras y gastos como medianoche UTC (el día
   anterior en CDMX) y no sumaba los de hoy.
 - **Pruebas:** `apps/web/src/registros/*.test.ts`. **Sin migración.** Pendiente: Propinas (A23).
+
+## DP-D119 · Las apps son transporte: la página arma los bytes y `printDocument` decide · 14-11-2026
+
+- **El encargo (DP-20):** un `.exe` (Electron) y una `.apk` (Capacitor) que abren el POS de producción,
+  imprimen sin el diálogo del navegador, abren el cajón y se actualizan solas.
+- **Alternativas:** (a) que cada app dibuje y codifique el ticket (captura nativa de la página y un
+  codificador en cada plataforma); (b) que la PÁGINA lo dibuje y lo codifique, y la app sólo entregue
+  bytes.
+- **Elección: (b).** El dibujo, el paso a 1 bit, ESC/POS, el corte, el cajón, las copias y la marca
+  de reimpresión viven en `apps/web/src/impresion/`; las apps (`M1gu3hb/morphiq-pos-apps`, público y
+  genérico por cliente) entregan los bytes por el spooler en crudo, red, USB, Bluetooth o serie, o
+  imprimen por el driver de Windows. Un mismo puente en las dos, `window.MorphiqApp` (contrato v1),
+  expuesto sólo a `https://pos-don-poncho.vercel.app` y a las pantallas propias de la app; cada
+  llamada vuelve a revisar el origen.
+- **Consecuencias:** un arreglo de impresión sale con un despliegue de Vercel, sin reinstalar nada en
+  los POS; hay UN codificador y se prueba en el repo; las apps casi no cambian. A cambio, el dibujo
+  depende del navegador del aparato (Chromium de Electron o el WebView de Android, 111 o más nuevo).
+- **Las pantallas no cambian:** siguen llamando a `printDocument` (`heredado/lib/print.js`). Con la
+  app y un perfil que imprime ese documento, sale directo; si no, el diálogo del navegador de siempre.
+  El avance y los errores van en una barra global (`BarraDeImpresion`): «Enviando…» → «Imprimiendo…» →
+  «Impreso ✓» o «Enviado ✓» (cuando la impresora no confirma), y el error con sus tres salidas
+  (reintentar, navegador, ir a Impresión). Un trabajo a la vez por documento; el reintento lleva el
+  mismo id y la app no imprime dos veces lo entregado (`trabajos.ts`).
+- **El perfil de impresión vive en el aparato** (lo guarda la app): cada POS tiene su impresora.
+- **Sin migración.** Agentes Sonnet para Electron y para Android; revisados e integrados.
+
+## DP-D120 · El ticket sale igual al de la pantalla: el mismo nodo, en puntos, con estilo térmico · 14-11-2026
+
+- **El problema que ya vivió Miguel:** en «ESC/POS» el ticket salía raro (página de códigos, ancho,
+  grises y letras delgadas, búfer que se llena).
+- **Elección:** por omisión el ticket se imprime como IMAGEN del mismo HTML. `PreCuentaTicket` se
+  dibuja en un lienzo medido en puntos de la impresora (384 en 58 mm; 576 o 512 en 80 mm; 8 por mm)
+  con el **estilo térmico** (`termico/estilo.ts`): negro puro, letra gruesa del sistema (peso 700,
+  nunca menor de 21 puntos), separadores sólidos de 2 puntos. En pantalla se achica con `zoom` a su
+  tamaño real; al imprimir, una copia de ESE nodo se dibuja con el motor del navegador (SVG con
+  `foreignObject`), el texto pasa a 1 bit con umbral y el logo con tramado (Floyd–Steinberg), y sale
+  en franjas `GS v 0` (filas por franja, bloque y pausa configurables), con líneas de avance antes del
+  corte. Alternativa por columnas (`ESC *`) y por el driver de Windows con la misma imagen.
+- **Descartado:** `html2canvas` (redibuja el CSS a su manera: no es el motor de la pantalla) y una
+  plantilla de texto aparte como camino principal (es justo lo que salía raro; queda como plan B).
+- **La comprobación** (`pnpm test:impresion`, en la CI): el componente real en Chromium → 1 bit →
+  ESC/POS → `emulador.ts` (una impresora falsa que lee los bytes de vuelta) → comparar. Cero puntos
+  de diferencia, y contra la captura de la pantalla, cero tinta fuera de lugar (sólo ~0.4 % de puntos
+  del borde de las letras, por el suavizado). En 58 y 80 mm, con y sin logo, con acentos y ñ.
+- **Lo que cambió a la vista:** la nota del renglón lleva «»» en lugar de «↳» (la letra gruesa no
+  trae esa flecha).
+
+## DP-D121 · El cajón: al cobrar queda en la auditoría; a mano, el comando que ya existía · 14-11-2026
+
+- **Lo que había:** `caja.abrir_cajon` (F-984, `/api/caja/cajon`): abrir el cajón SIN venta, con la
+  caja abierta de esa terminal, su motivo y un movimiento de cero en el turno. Ninguna pantalla lo
+  usaba.
+- **Elección:** el botón «Abrir cajón» de la Caja (cajera, gerente, administrador y dueño) usa ESE
+  comando, con su motivo (dar cambio, guardar un billete, conteo, otro). Para la apertura que se
+  dispara sola al cobrar en efectivo, un comando nuevo y mínimo, `caja.cajon_por_cobro`, que sólo deja
+  el rastro (quién, cuándo, con qué cobro). En los dos casos: primero el servidor, después el pulso.
+- **Se descartó** un comando único con motivo «cobro» o «manual» (el del encargo): duplicaba el que
+  ya existía y perdía su regla de la caja abierta. **Revisa el encargo DP-20 §3.4.**
+- Un cajón que no abre nunca deshace el cobro: se avisa y queda el botón. **Sin migración.**
+
+## DP-D122 · Copias y «REIMPRESIÓN»: el servidor cuenta las salidas en la auditoría · 14-11-2026
+
+- **Copias:** `configuracion.valores.copias_de_impresion` (ticket, precuenta y corte: 1 a 3, 1 por
+  omisión), por `caja.fijar_copias_de_impresion` (dueño o administrador, con antes y después). Cada
+  copia dice al pie «ORIGINAL — CLIENTE» o «COPIA — NEGOCIO»; el cajón se abre una sola vez.
+- **Reimpresión:** «Imprimir» nunca se bloquea. Antes de mandar el papel de un ticket, la pantalla
+  pide `venta.registrar_impresion`: el servidor cuenta en la auditoría las salidas de ESA venta y
+  contesta si es la original o una reimpresión, con su hora; desde la segunda el papel dice
+  «REIMPRESIÓN» con fecha y hora, por la app y también por el navegador. El reintento de un trabajo
+  que falló reusa su registro (misma clave de idempotencia): no cuenta otra salida.
+- **Sin el servidor** (por el navegador): el papel sale marcado «sin conexión: esta salida no quedó
+  registrada»; nunca pasa por original. Sin internet, la app reimprime su copia local del último
+  ticket, marcada, desde la pantalla «Sin internet».
+- **Sin migración** (se descartó una columna de conteo en `ordenes`: la auditoría ya lo tiene).
+
+## DP-D123 · «Hardware y pruebas de impresión»: la contraseña del proveedor, sólo su hash · 14-11-2026
+
+- **Dónde:** hasta abajo de Configuración → Operación. Ahí se decide con qué impresora y cómo imprime
+  cada aparato, y se guarda como el perfil de ese POS (exportable). El personal sólo ve el estado en
+  Configuración → Impresión.
+- **La contraseña** (el repositorio es público): no existe en ningún archivo. El despliegue guarda
+  su hash Argon2id en `PROVEEDOR_CLAVE_HASH`; se compara en el servidor (`/api/proveedor/entrar`),
+  con 5 fallos y 15 minutos de espera (`LIMITES.proveedor`), y cada entrada y cada fallo en la
+  auditoría (`proveedor.entrar`, `proveedor.fallar`). Si acierta: un permiso firmado de 30 minutos,
+  atado al negocio, en una cookie `httpOnly` y `SameSite=Strict`. Sin la variable, nadie entra.
+- **No es un comando** por lo mismo que el PIN del supervisor: un comando que rechaza revierte su
+  transacción y el rastro del fallo se perdería.
+- **Lo que esto no cubre, dicho:** el puente de la app no puede comprobar ese permiso (el perfil se
+  guarda en el aparato). Por eso las apps publicadas llevan apagadas las herramientas de
+  desarrollador y el puente sólo existe para la página de producción.
+
+## DP-D124 · Lo que DP-20 deja para después · 14-11-2026
+
+- **Texto ESC/POS por página de códigos** (CP437/850/858/1252/8859-1) con su hoja de acentos,
+  **Star** (Line/StarPRNT), **código de barras y QR nativos** y los **SDK de Sunmi/iMin**: el
+  laboratorio los enseña apagados con su razón. La candidata para codificarlos es
+  `@point-of-sale/receipt-printer-encoder` (4.0.1); no entró porque la imagen, que es lo que se usa,
+  se codifica con cuarenta líneas propias y probadas.
+- **El corte y el Cierre del día al rollo** y **las comandas en impresora de estación:** el perfil
+  ya trae sus casillas; esos documentos todavía no tienen lienzo térmico y salen como hoy.
+- **Windows 7/8:** queda el guion `construir:legado` (Electron 22), sin construir. Chromium 108 no
+  alcanza a Tailwind 4 (111): ahí el POS puede verse mal. Recomendación: Windows 10.
+- **El modo ligero** quita desenfoques, sombras pesadas y transiciones (`<html data-ligero>`); no
+  toca las animaciones hechas en JavaScript ni cambia qué carga cada pantalla.

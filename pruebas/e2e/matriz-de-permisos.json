@@ -22,6 +22,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/cajon-por-cobro",
+      "comando": "caja.cajon_por_cobro",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/cajon",
       "comando": "caja.abrir_cajon",
       "escribe": true,
@@ -94,6 +101,13 @@
     {
       "ruta": "/api/caja/fijar-cajas-simultaneas",
       "comando": "caja.fijar_cajas_simultaneas",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/caja/fijar-copias-de-impresion",
+      "comando": "caja.fijar_copias_de_impresion",
       "escribe": true,
       "roles": ["administrador", "dueno"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
@@ -750,6 +764,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/venta/registrar-impresion",
+      "comando": "venta.registrar_impresion",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/venta/ticket",
       "comando": "venta.ticket",
       "escribe": false,
@@ -908,6 +929,18 @@
     },
     {
       "ruta": "/api/mantenimiento/vaciar-mesas",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
+    },
+    {
+      "ruta": "/api/proveedor/entrar",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
+    },
+    {
+      "ruta": "/api/proveedor/estado",
+      "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
+    },
+    {
+      "ruta": "/api/proveedor/salir",
       "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
     },
     {
