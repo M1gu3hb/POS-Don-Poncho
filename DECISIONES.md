@@ -2421,3 +2421,25 @@ puerta los denuncia todos.
   alcanza a Tailwind 4 (111): ahí el POS puede verse mal. Recomendación: Windows 10.
 - **El modo ligero** quita desenfoques, sombras pesadas y transiciones (`<html data-ligero>`); no
   toca las animaciones hechas en JavaScript ni cambia qué carga cada pantalla.
+
+## DP-D125 · La revisión de seguridad de DP-20: lo que se corrigió y lo que queda para la 1.0.1 · 15-11-2026
+
+Dos revisiones independientes (agentes Sonnet, sólo lectura): el POS de esta rama y las dos apps
+publicadas. Ninguna halló nada crítico.
+
+- **Corregido aquí:** el permiso del proveedor iba atado sólo al negocio; si otra persona entraba
+  con su PIN en ese aparato antes de los 30 minutos, heredaba el laboratorio. Ahora el permiso
+  firmado lleva también a quien tenía la sesión (`<negocio>.<persona>.<vence>.<firma>`) y
+  `/api/proveedor/estado` lo compara con la sesión que pregunta.
+- **Se queda como está, a sabiendas:** el instalador de Windows no lleva firma de código (hace
+  falta un certificado), así que la integridad de la actualización descansa en la cuenta de GitHub
+  y en `latest.yml` por HTTPS: esa cuenta tiene que tener verificación en dos pasos. Y el puente
+  confía en la página de producción: un XSS ahí lo heredaría todo.
+- **Para la 1.0.1 de las apps** (que además será la prueba real de la actualización automática):
+  imprimir por red sólo a direcciones privadas —la misma regla en el perfil de la página, en
+  Electron y en Android—; en Windows, aceptar sólo impresoras que estén en la lista del sistema
+  (una compartida `\equipo\impresora` instalada sí; un nombre UNC inventado no); en Android, topes
+  de tamaño para el documento y los ajustes, y no cargar el POS si el WebView no tiene
+  `WEB_MESSAGE_LISTENER`; en la ventana oculta del driver, JavaScript apagado.
+- **Menores, anotados:** el límite de intentos de la contraseña cuenta por IP y no por negocio; un
+  intento rechazado por el límite (429) no deja fila en la auditoría (los fallos de contraseña sí).

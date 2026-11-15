@@ -19,8 +19,10 @@ import { payloadDeAuditoria } from '../saneado.ts';
  * omisión) y la pantalla lo dice.
  *
  * Si acierta, el aparato recibe un PERMISO firmado de 30 minutos en una cookie `httpOnly`: una
- * firma HMAC con el secreto de sesión y un prefijo propio (`proveedor:`), atada al negocio. Una
- * cookie de sesión no sirve de permiso ni al revés.
+ * firma HMAC con el secreto de sesión y un prefijo propio (`proveedor:`), atada al negocio Y A
+ * QUIEN TENÍA LA SESIÓN cuando se tecleó la contraseña: si otra persona entra con su PIN en ese
+ * aparato antes de los 30 minutos, el permiso no le sirve. Una cookie de sesión no sirve de
+ * permiso ni al revés.
  *
  * Cada entrada y cada fallo quedan en la auditoría. No es un comando por la misma razón que el
  * PIN del supervisor: un comando que rechaza revierte su transacción, y aquí el rastro del fallo
@@ -66,21 +68,26 @@ function igualEnTiempoConstante(a: string, b: string): boolean {
   return x.length === y.length && timingSafeEqual(x, y);
 }
 
-/** El permiso: `<negocio>.<vence en segundos>.<firma>`. Sin datos personales. */
+/** El permiso: `<negocio>.<quién tenía la sesión>.<vence en segundos>.<firma>`. Sólo ids. */
 export function firmarPermisoDelProveedor(
   organizacionId: string,
+  identidadId: string,
   secreto: string,
   ahora: Date = new Date(),
 ): { readonly permiso: string; readonly vence: Date } {
   const exp = Math.floor(ahora.getTime() / 1000) + VIGENCIA_DEL_PERMISO_SEGUNDOS;
-  const cuerpo = `${organizacionId}.${String(exp)}`;
+  const cuerpo = `${organizacionId}.${identidadId}.${String(exp)}`;
   return { permiso: `${cuerpo}.${firma(cuerpo, secreto)}`, vence: new Date(exp * 1000) };
 }
 
-/** Hasta cuándo vale el permiso para ESE negocio, o `null` si no vale (otro negocio, vencido, alterado). */
+/**
+ * Hasta cuándo vale el permiso para ESE negocio y ESA persona, o `null` si no vale (otro negocio,
+ * otra persona, vencido, alterado).
+ */
 export function vigenciaDelPermiso(
   permiso: string | undefined,
   organizacionId: string,
+  identidadId: string,
   secreto: string,
   ahora: Date = new Date(),
 ): Date | null {
@@ -89,8 +96,11 @@ export function vigenciaDelPermiso(
   if (punto <= 0) return null;
   const cuerpo = permiso.slice(0, punto);
   if (!igualEnTiempoConstante(permiso.slice(punto + 1), firma(cuerpo, secreto))) return null;
-  const [negocio, exp] = cuerpo.split('.');
-  if (negocio !== organizacionId || exp === undefined || !/^\d{1,12}$/.test(exp)) return null;
+  const partes = cuerpo.split('.');
+  if (partes.length !== 3) return null;
+  const [negocio, identidad, exp] = partes;
+  if (negocio !== organizacionId || identidad !== identidadId) return null;
+  if (exp === undefined || !/^\d{1,12}$/.test(exp)) return null;
   const vence = new Date(Number(exp) * 1000);
   return vence.getTime() > ahora.getTime() ? vence : null;
 }

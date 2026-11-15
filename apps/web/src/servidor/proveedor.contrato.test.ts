@@ -91,9 +91,12 @@ describe('/api/proveedor/entrar', () => {
 });
 
 describe('/api/proveedor/estado y /salir', () => {
-  it('el estado sale de la cookie firmada, atada al negocio de la sesión', () => {
+  it('el estado sale de la cookie firmada, atada al negocio y a la persona de la sesión', () => {
     expect(ruta('estado')).toMatch(
-      /vigenciaDelPermiso\(\s*permisoDeLaCookie\(peticion\.headers\.get\('cookie'\)\),\s*sesion\.organizacionId,/,
+      /vigenciaDelPermiso\(\s*permisoDeLaCookie\(peticion\.headers\.get\('cookie'\)\),\s*sesion\.organizacionId,\s*sesion\.identidadId,/,
+    );
+    expect(ruta('entrar')).toMatch(
+      /firmarPermisoDelProveedor\(\s*sesion\.organizacionId,\s*sesion\.identidadId,/,
     );
   });
 

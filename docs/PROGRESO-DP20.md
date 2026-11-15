@@ -45,9 +45,11 @@ Bitácora para retomar. Empezó el sábado 14-11-2026. Entrega: lunes 16.
   copias, duplicado, progreso, último ticket y reimpresión. Instalador NSIS por usuario construido.
 - **Android (Capacitor 7.6.10, minSdk 23):** agente Sonnet, revisado e integrado. 83 pruebas JVM y
   16 del guion del puente. APK firmado con la llave de `_PRIVADO` (`apksigner`: huella
-  `3E:04:46:7E…`; `aapt2`: `mx.morphiq.pos.donponcho`, versionCode 1, minSdk 23).
-- **Publicado:** release `don-poncho-v0.1.0` (diagnóstico) y el canal `canal-don-poncho` (lo que
-  leen las apps para actualizarse; sus URL responden sin token).
+  `3E:04:46:7E…`; `aapt2`: `mx.morphiq.pos.donponcho`, minSdk 23).
+- **Publicado:** release `don-poncho-v1.0.0` (la de entrega: `.exe`, `.apk`, diagnóstico sin
+  instalar y huellas; versionCode 2) y el canal `canal-don-poncho` en 1.0.0 (lo que leen las apps
+  para actualizarse; responde sin token y el APK bajado del canal coincide con su huella). La
+  `don-poncho-v0.1.0` fue la de diagnóstico. Copias en `..Apps.0.0`.
 - `INSTALAR.md` y `herramientas/diagnostico-windows.bat` (diagnóstico sin instalar; probado aquí).
 
 ### El POS (rama `dp-20`)
@@ -97,16 +99,30 @@ Lo que cazaron las puertas del repo y se corrigió: la matriz de permisos, el re
 sólo en `termico/colores-del-papel.ts`), la adopción (superficies y estados del sistema), el
 contrato de quién lee el documento de configuración y un componente huérfano.
 
+### La contraseña del proveedor y la revisión de seguridad (15-11, madrugada)
+
+- **La contraseña:** Miguel la dio en el chat. Su hash Argon2id (los parámetros de los PIN) quedó
+  en Vercel, Production, como variable sensible `PROVEEDOR_CLAVE_HASH`, y una copia en
+  `.._PRIVADOappsproveedor-clave-hash.txt`. La contraseña no se escribió en ningún archivo.
+- **No está en lo publicado:** `scripts/verificar-clave-del-proveedor.mjs` no la encuentra en el
+  build de la web (3 567 archivos), en la app de Windows desempaquetada, en el APK abierto ni en
+  el código de las apps; `git grep` tampoco, ni a ella ni a su hash, en los dos repos.
+- **Revisión de seguridad** (dos agentes, sólo lectura): nada crítico. Se corrigió que el permiso
+  del proveedor iba atado sólo al negocio (ahora también a la persona de la sesión). Lo demás, en
+  DP-D125.
+- **La galería:** Configuración ganó la pestaña «Impresión», así que sus retratos se regeneraron
+  con el flujo `actualizar_galeria` y viajan en esta rama.
+
 ## Falta
 
-- **La contraseña del proveedor:** Miguel la da en el chat; con ella se guarda su hash en Vercel
-  (Production, `PROVEEDOR_CLAVE_HASH`) y una copia en `..\_PRIVADO\`, y se corre
-  `scripts/verificar-clave-del-proveedor.mjs` contra el `.next` y las apps empaquetadas. Sin la
-  variable, nadie entra al laboratorio (y sin laboratorio no hay perfil: la Caja imprime con el
-  navegador, como hoy).
-- **Con hardware, con Miguel:** la lista corta por POS de `INSTALAR.md`, la foto del ticket junto a
-  la captura de la pantalla, y medir RAM y procesador con el Tablero, la Caja y la Cocina abiertos.
-- **La prueba de actualización:** publicar una 1.0.1 de prueba y ver que llegue sola a un POS.
+- **Con hardware, con Miguel:** la lista corta por POS de `INSTALAR.md` (entrar al laboratorio con
+  la contraseña, elegir la conexión, «Página de prueba», «Ticket de ejemplo», cajón, guardar el
+  perfil), la foto del ticket junto a la captura de la pantalla, y medir RAM y procesador con el
+  Tablero, la Caja y la Cocina abiertos. Hasta que eso pase no hay «este POS funcionó con este
+  modo».
+- **La 1.0.1 de las apps:** los endurecimientos de DP-D125. Publicarla es además la prueba real de
+  que la actualización llega sola a un POS.
+- **La cuenta de GitHub con verificación en dos pasos:** de ella depende lo que se instala solo.
 - El recorrido `impresion-por-la-app.spec.ts` corre en local; falta colgarlo de un trabajo de la CI
   (necesita el hash de una contraseña desechable en el entorno del servidor de la corrida).
 - El encabezado de Configuración dice «Ajustes de Morphiq POS» (venía así): por el §6 del refuerzo

@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto';
+
 import { hash } from '@node-rs/argon2';
 import { describe, expect, it } from 'vitest';
 
@@ -18,6 +20,8 @@ import {
 const SECRETO = 'secreto_de_prueba_de_la_firma_del_proveedor_2026';
 const NEGOCIO = '11111111-1111-4111-8111-111111111111';
 const OTRO_NEGOCIO = '22222222-2222-4222-8222-222222222222';
+const QUIEN = '33333333-3333-4333-8333-333333333333';
+const OTRA_PERSONA = '44444444-4444-4444-8444-444444444444';
 const AHORA = new Date('2026-11-14T18:00:00.000Z');
 
 describe('la contraseña se compara contra el hash del despliegue', () => {
@@ -51,33 +55,56 @@ describe('la contraseña se compara contra el hash del despliegue', () => {
 });
 
 describe('el permiso firmado', () => {
-  it('vale 30 minutos para ESE negocio', () => {
-    const { permiso, vence } = firmarPermisoDelProveedor(NEGOCIO, SECRETO, AHORA);
+  it('vale 30 minutos para ESE negocio y para quien tenía la sesión', () => {
+    const { permiso, vence } = firmarPermisoDelProveedor(NEGOCIO, QUIEN, SECRETO, AHORA);
     expect(vence.getTime() - AHORA.getTime()).toBe(VIGENCIA_DEL_PERMISO_SEGUNDOS * 1000);
     expect(VIGENCIA_DEL_PERMISO_SEGUNDOS).toBe(30 * 60);
-    expect(vigenciaDelPermiso(permiso, NEGOCIO, SECRETO, AHORA)).toEqual(vence);
+    expect(vigenciaDelPermiso(permiso, NEGOCIO, QUIEN, SECRETO, AHORA)).toEqual(vence);
     const casiAlFinal = new Date(vence.getTime() - 1000);
-    expect(vigenciaDelPermiso(permiso, NEGOCIO, SECRETO, casiAlFinal)).toEqual(vence);
+    expect(vigenciaDelPermiso(permiso, NEGOCIO, QUIEN, SECRETO, casiAlFinal)).toEqual(vence);
   });
 
   it('vencido, de otro negocio, con otra firma o alterado: no vale', () => {
-    const { permiso, vence } = firmarPermisoDelProveedor(NEGOCIO, SECRETO, AHORA);
-    expect(vigenciaDelPermiso(permiso, NEGOCIO, SECRETO, vence)).toBeNull();
-    expect(vigenciaDelPermiso(permiso, OTRO_NEGOCIO, SECRETO, AHORA)).toBeNull();
-    expect(vigenciaDelPermiso(permiso, NEGOCIO, `${SECRETO}x`, AHORA)).toBeNull();
+    const { permiso, vence } = firmarPermisoDelProveedor(NEGOCIO, QUIEN, SECRETO, AHORA);
+    expect(vigenciaDelPermiso(permiso, NEGOCIO, QUIEN, SECRETO, vence)).toBeNull();
+    expect(vigenciaDelPermiso(permiso, OTRO_NEGOCIO, QUIEN, SECRETO, AHORA)).toBeNull();
+    expect(vigenciaDelPermiso(permiso, NEGOCIO, QUIEN, `${SECRETO}x`, AHORA)).toBeNull();
     // Alargarle la vida a mano rompe la firma.
-    const [negocio, exp, firma] = permiso.split('.');
-    const alargado = `${negocio ?? ''}.${String(Number(exp) + 3600)}.${firma ?? ''}`;
-    expect(vigenciaDelPermiso(alargado, NEGOCIO, SECRETO, AHORA)).toBeNull();
-    expect(vigenciaDelPermiso(undefined, NEGOCIO, SECRETO, AHORA)).toBeNull();
-    expect(vigenciaDelPermiso('', NEGOCIO, SECRETO, AHORA)).toBeNull();
-    expect(vigenciaDelPermiso('sin-puntos', NEGOCIO, SECRETO, AHORA)).toBeNull();
+    const [negocio, quien, exp, firma] = permiso.split('.');
+    const alargado = `${negocio ?? ''}.${quien ?? ''}.${String(Number(exp) + 3600)}.${firma ?? ''}`;
+    expect(vigenciaDelPermiso(alargado, NEGOCIO, QUIEN, SECRETO, AHORA)).toBeNull();
+    expect(vigenciaDelPermiso(undefined, NEGOCIO, QUIEN, SECRETO, AHORA)).toBeNull();
+    expect(vigenciaDelPermiso('', NEGOCIO, QUIEN, SECRETO, AHORA)).toBeNull();
+    expect(vigenciaDelPermiso('sin-puntos', NEGOCIO, QUIEN, SECRETO, AHORA)).toBeNull();
   });
 
-  it('el permiso no trae la contraseña ni datos de nadie: negocio, vencimiento y firma', () => {
-    const { permiso } = firmarPermisoDelProveedor(NEGOCIO, SECRETO, AHORA);
-    expect(permiso.split('.')).toHaveLength(3);
-    expect(permiso.startsWith(`${NEGOCIO}.`)).toBe(true);
+  it('otra persona que entra con su PIN en ese aparato no hereda el permiso', () => {
+    const { permiso, vence } = firmarPermisoDelProveedor(NEGOCIO, QUIEN, SECRETO, AHORA);
+    expect(vigenciaDelPermiso(permiso, NEGOCIO, QUIEN, SECRETO, AHORA)).toEqual(vence);
+    expect(vigenciaDelPermiso(permiso, NEGOCIO, OTRA_PERSONA, SECRETO, AHORA)).toBeNull();
+  });
+
+  it('un permiso con otra forma (sin la persona, o con un tramo de más) no vale aunque esté bien firmado', () => {
+    // La forma vieja: `<negocio>.<vence>.<firma>`, firmada con el mismo secreto.
+    const exp = String(Math.floor(AHORA.getTime() / 1000) + 600);
+    const firmar = (cuerpo: string): string =>
+      `${cuerpo}.${createHmac('sha256', SECRETO).update(`proveedor:${cuerpo}`, 'utf8').digest('base64url')}`;
+    expect(
+      vigenciaDelPermiso(firmar(`${NEGOCIO}.${exp}`), NEGOCIO, QUIEN, SECRETO, AHORA),
+    ).toBeNull();
+    expect(
+      vigenciaDelPermiso(firmar(`${NEGOCIO}.${QUIEN}.${exp}.x`), NEGOCIO, QUIEN, SECRETO, AHORA),
+    ).toBeNull();
+    // Y la forma buena, firmada igual, sí: la prueba de arriba no pasa por accidente.
+    expect(
+      vigenciaDelPermiso(firmar(`${NEGOCIO}.${QUIEN}.${exp}`), NEGOCIO, QUIEN, SECRETO, AHORA),
+    ).not.toBeNull();
+  });
+
+  it('el permiso no trae la contraseña ni datos de nadie: negocio, quién, vencimiento y firma', () => {
+    const { permiso } = firmarPermisoDelProveedor(NEGOCIO, QUIEN, SECRETO, AHORA);
+    expect(permiso.split('.')).toHaveLength(4);
+    expect(permiso.startsWith(`${NEGOCIO}.${QUIEN}.`)).toBe(true);
   });
 });
 

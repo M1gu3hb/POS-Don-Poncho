@@ -18,6 +18,7 @@ export async function POST(peticion: Request): Promise<Response> {
     const vence = vigenciaDelPermiso(
       permisoDeLaCookie(peticion.headers.get('cookie')),
       sesion.organizacionId,
+      sesion.identidadId,
       entorno.SESSION_SECRET,
     );
     const hash = process.env[VARIABLE_DEL_HASH_DEL_PROVEEDOR]?.trim() ?? '';

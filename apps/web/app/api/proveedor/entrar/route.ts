@@ -81,7 +81,11 @@ export async function POST(peticion: Request): Promise<Response> {
 
     await devolver('proveedor', peticion.headers, entorno.PIN_PEPPER);
     await dejarRastroDelProveedor(quien, true);
-    const firmado = firmarPermisoDelProveedor(sesion.organizacionId, entorno.SESSION_SECRET);
+    const firmado = firmarPermisoDelProveedor(
+      sesion.organizacionId,
+      sesion.identidadId,
+      entorno.SESSION_SECRET,
+    );
     return Response.json(
       { ok: true, datos: { dentro: true, vence: firmado.vence.toISOString() } },
       {
