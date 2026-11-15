@@ -88,6 +88,7 @@ import {
   mesaParaLiberarTrasCobrar,
 } from '~/restaurante/unir-mesas/liberar-tras-cobrar';
 import { MovimientosDeCaja } from '~/restaurante/MovimientosDeCaja';
+import { AparatoEnLaCaja, abrirCajonAlCobrar } from '~/impresion/CajonEnLaCaja';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 
 /** DP-15 · Quien registra un gasto o una devolución desde la caja (los roles de esos comandos). */
@@ -946,6 +947,8 @@ export default function Caja() {
       setPropinaTransferencia('');
       toast.success(`¡Venta cobrada! Cambio: ${formatCurrency(cambio)}`);
       sonar('cobro');
+      // DP-20 · El cajón del aparato se abre solo al cobrar en efectivo (y queda en la auditoría).
+      if (mEfec > 0) abrirCajonAlCobrar(cobro?.folio ? String(cobro.folio) : undefined);
     } catch (err) {
       // 🟡 HOTFIX bandera amarilla #2: mensaje correcto según el momento del fallo.
       // - Si venta NO quedó pagada → el motivo TAL CUAL lo dice el dominio, que
@@ -1416,6 +1419,9 @@ export default function Caja() {
           </span>
         </div>
       )}
+
+      {/* DP-20 · Dentro de la app: «Abrir cajón» y el aviso de la impresora del aparato. */}
+      <AparatoEnLaCaja rol={posUser?.rol} />
 
       <Tabs defaultValue={isCajaDirecta ? 'buscar' : 'cobros'}>
         {/* Tabs scrollable horizontalmente en móvil */}

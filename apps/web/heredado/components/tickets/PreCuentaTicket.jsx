@@ -7,14 +7,31 @@ import { propinaDerivada } from '@/utils/tipsUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { NOMBRE_DEL_NEGOCIO } from '~/marca/nombre-visible';
-import { anchoDelPapel, medidasDelTicket } from '~/impresion/papel';
+import { anchoDelPapel } from '~/impresion/papel';
+import {
+  ESCALA_EN_PANTALLA,
+  LINEA_GRUESA,
+  LINEA_TERMICA,
+  estiloDelLienzo,
+  letraTermica,
+  logoTermico,
+  puntosDelLienzo,
+} from '~/impresion/termico/estilo';
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { esParaLlevar, rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 import { notaSinLasOpciones, renglonesDeLasOpciones } from '~/venta/opciones-del-renglon';
 
 /**
- * Ticket / pre-cuenta optimizado para impresora térmica de 80mm.
- * Ancho: el rollo del negocio, 58 u 80 mm (`ancho_papel_ticket`). Imprime con @media print (.ticket-printable).
+ * Ticket / pre-cuenta para impresora térmica, con el ESTILO TÉRMICO (DP-20 · refuerzo §1).
+ *
+ * Ancho: el rollo del negocio, 58 u 80 mm (`ancho_papel_ticket`). El documento se dibuja en un
+ * lienzo medido en PUNTOS de la impresora (`puntos`: 384, 576 o los del perfil del aparato) con
+ * negro puro, letra gruesa y separadores sólidos; en pantalla se achica con `zoom` a su tamaño
+ * real en papel. Es el MISMO lienzo el que se manda como imagen a la impresora (`soloLienzo`) y
+ * el que imprime el navegador (@media print, `.ticket-printable`): no hay plantilla aparte.
+ *
+ * `pie`: «ORIGINAL — CLIENTE» / «COPIA — NEGOCIO». `reimpresion`: la fecha y la hora, si este
+ * papel es una reimpresión.
  */
 export default function PreCuentaTicket({
   venta,
@@ -23,13 +40,18 @@ export default function PreCuentaTicket({
   config,
   codigo,
   esFinal = false,
+  puntos,
+  pie,
+  reimpresion,
+  soloLienzo = false,
 }) {
   if (!venta) return null;
-  // DP-15 · El rollo del negocio (58 u 80 mm): ancho de la caja, relleno y letra a su medida.
+  // DP-15 · El rollo del negocio (58 u 80 mm); DP-20 · sus puntos, o los del perfil del aparato.
   const ancho = anchoDelPapel(config?.ancho_papel_ticket);
-  const medidas = medidasDelTicket(ancho);
-  const escala = medidas.letraPx / medidasDelTicket(80).letraPx;
-  const px = (n) => `${Math.round(n * escala * 10) / 10}px`;
+  const enPuntos = puntosDelLienzo(ancho, puntos);
+  const letra = letraTermica(ancho);
+  const logo = logoTermico(ancho);
+  const px = (n) => `${n}px`;
   const montoPropina = propinaDerivada(venta);
   const fecha =
     venta.fecha_cierre || venta.fecha_apertura
@@ -38,53 +60,63 @@ export default function PreCuentaTicket({
         })
       : format(new Date(), 'd MMM yyyy · HH:mm', { locale: es });
 
-  return (
+  const lienzo = (
     <div
-      className={`ticket-printable thermal-${String(ancho)} bg-superficie text-texto mx-auto`}
-      style={{
-        width: `${String(ancho)}mm`,
-        maxWidth: `${String(ancho)}mm`,
-        padding: ancho === 58 ? '3mm' : '4mm',
-        overflowWrap: 'anywhere',
-        fontFamily: 'monospace',
-        fontSize: px(11),
-        lineHeight: '1.35',
-        color: '#000',
-      }}
+      data-lienzo-termico
+      style={{ ...estiloDelLienzo(ancho, enPuntos), zoom: soloLienzo ? 1 : ESCALA_EN_PANTALLA }}
     >
+      {reimpresion && (
+        <div
+          data-reimpresion
+          style={{
+            border: LINEA_GRUESA,
+            textAlign: 'center',
+            padding: '6px 4px',
+            marginBottom: '10px',
+          }}
+        >
+          <p style={{ fontWeight: 900, fontSize: px(letra.fuerte), letterSpacing: '2px', margin: 0 }}>
+            REIMPRESIÓN
+          </p>
+          <p style={{ fontSize: px(letra.chica), margin: 0 }}>{reimpresion}</p>
+        </div>
+      )}
+
       {/* Encabezado con logo */}
-      <div className="text-center pb-2 mb-2" style={{ borderBottom: '1px dashed #000' }}>
+      <div style={{ textAlign: 'center', paddingBottom: '10px', marginBottom: '10px', borderBottom: LINEA_TERMICA }}>
         {(config?.logo_ticket_url || config?.logo_url) && config?.mostrar_logo_ticket !== false && (
           <img
             src={config.logo_ticket_url || config.logo_url}
             alt=""
             crossOrigin="anonymous"
             style={{
-              maxWidth: ancho === 58 ? '100px' : '140px',
-              maxHeight: '60px',
+              maxWidth: px(logo.ancho),
+              maxHeight: px(logo.alto),
               width: 'auto',
               height: 'auto',
               objectFit: 'contain',
-              margin: '0 auto 6px',
+              margin: '0 auto 8px',
               display: 'block',
             }}
           />
         )}
-        <h1 style={{ fontWeight: 900, fontSize: px(15), letterSpacing: '2px', margin: 0 }}>
+        <h1 style={{ fontWeight: 900, fontSize: px(letra.titulo), letterSpacing: '1px', lineHeight: 1.1, margin: 0 }}>
           {config?.nombre_negocio || NOMBRE_DEL_NEGOCIO}
         </h1>
         {config?.direccion && (
-          <p style={{ fontSize: px(9), margin: '2px 0 0' }}>{config.direccion}</p>
+          <p style={{ fontSize: px(letra.chica), margin: '4px 0 0' }}>{config.direccion}</p>
         )}
-        {config?.telefono && <p style={{ fontSize: px(9), margin: 0 }}>Tel: {config.telefono}</p>}
-        <p style={{ fontWeight: 'bold', marginTop: '4px', fontSize: px(12) }}>
+        {config?.telefono && (
+          <p style={{ fontSize: px(letra.chica), margin: 0 }}>Tel: {config.telefono}</p>
+        )}
+        <p style={{ fontWeight: 900, marginTop: '8px', marginBottom: 0, fontSize: px(letra.fuerte) }}>
           {esFinal ? 'TICKET DE PAGO' : 'PRE-CUENTA'}
         </p>
         {/* DP-16 · El pedido para llevar se grita por su número: va grande, antes de todo. */}
         {esParaLlevar(venta) && (
           <p
             data-para-llevar
-            style={{ fontWeight: 900, marginTop: '4px', fontSize: px(14), letterSpacing: '1px' }}
+            style={{ fontWeight: 900, marginTop: '6px', marginBottom: 0, fontSize: px(letra.titulo), letterSpacing: '1px' }}
           >
             {rotuloDeLaComanda(venta)}
           </p>
@@ -92,7 +124,7 @@ export default function PreCuentaTicket({
       </div>
 
       {/* Datos */}
-      <div style={{ fontSize: px(10), marginBottom: '6px' }}>
+      <div style={{ fontSize: px(letra.chica), marginBottom: '10px' }}>
         <Row label="Folio" value={venta.folio} bold />
         {mesa && <Row label="Mesa" value={`#${mesa.numero}${sufijoDelNombreDeLaMesa(mesa)}`} />}
         {venta.personas > 0 && <Row label="Personas" value={venta.personas} />}
@@ -104,19 +136,19 @@ export default function PreCuentaTicket({
 
       {/* Productos — 6B: si la línea es variable, mostramos "500 g × Producto"
           o "4 shots × Producto" en lugar de "1× Producto". precio_fijo intacto. */}
-      <div style={{ borderTop: '1px dashed #000', paddingTop: '4px', marginBottom: '4px' }}>
+      <div style={{ borderTop: LINEA_TERMICA, paddingTop: '8px', marginBottom: '8px' }}>
         {(detalles || []).map((d, i) => {
           const cantVarTxt = formatearCantidadVariable(d || {});
           const prefijo = cantVarTxt ? `${cantVarTxt} ×` : `${d?.cantidad || 0}×`;
           // DP-16 · Las opciones salen con su precio; la nota, sólo con lo escrito a mano.
           const nota = notaSinLasOpciones(d?.notas_producto, d?.opciones_snapshot);
           return (
-            <div key={i} style={{ marginBottom: '3px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 'bold', flex: 1, paddingRight: '4px' }}>
+            <div key={i} style={{ marginBottom: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
+                <span style={{ flex: 1 }}>
                   {prefijo} {d?.producto_nombre || ''}
                 </span>
-                <span style={{ fontWeight: 'bold' }}>{formatCurrency(d?.subtotal)}</span>
+                <span style={{ whiteSpace: 'nowrap' }}>{formatCurrency(d?.subtotal)}</span>
               </div>
               {(d?.opciones_snapshot != null
                 ? renglonesDeLasOpciones(d.opciones_snapshot)
@@ -127,20 +159,13 @@ export default function PreCuentaTicket({
                 <p
                   key={texto}
                   data-opciones-del-renglon
-                  style={{ fontSize: px(9), paddingLeft: '8px', margin: '1px 0 0' }}
+                  style={{ fontSize: px(letra.chica), paddingLeft: '16px', margin: '2px 0 0' }}
                 >
                   + {texto}
                 </p>
               ))}
               {nota && (
-                <p
-                  style={{
-                    fontSize: px(9),
-                    fontStyle: 'italic',
-                    paddingLeft: '8px',
-                    margin: '1px 0 0',
-                  }}
-                >
+                <p style={{ fontSize: px(letra.chica), paddingLeft: '16px', margin: '2px 0 0' }}>
                   ↳ {nota}
                 </p>
               )}
@@ -155,7 +180,7 @@ export default function PreCuentaTicket({
       {(() => {
         const papel = totalesDelPapel(venta, detalles);
         return (
-          <div style={{ borderTop: '1px dashed #000', paddingTop: '4px', marginBottom: '4px' }}>
+          <div style={{ borderTop: LINEA_TERMICA, paddingTop: '8px', marginBottom: '8px' }}>
             <Row label="Subtotal" value={formatCurrency(papel.renglones)} />
             {papel.descuento > 0 && (
               <Row label="Descuento" value={`-${formatCurrency(papel.descuento)}`} />
@@ -179,18 +204,18 @@ export default function PreCuentaTicket({
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontWeight: 'bold',
-                fontSize: px(14),
-                borderTop: '1px solid #000',
-                marginTop: '3px',
-                paddingTop: '3px',
+                fontWeight: 900,
+                fontSize: px(letra.total),
+                borderTop: LINEA_GRUESA,
+                marginTop: '6px',
+                paddingTop: '6px',
               }}
             >
               <span>TOTAL</span>
               <span>{formatCurrency(papel.total + montoPropina)}</span>
             </div>
             {esFinal && venta.metodo_pago && (
-              <div style={{ marginTop: '4px', fontSize: px(10) }}>
+              <div style={{ marginTop: '8px', fontSize: px(letra.chica) }}>
                 <Row label="Pago" value={venta.metodo_pago} capitalize />
                 {venta.monto_efectivo > 0 && (
                   <Row label="Efectivo" value={formatCurrency(venta.monto_efectivo)} />
@@ -214,38 +239,71 @@ export default function PreCuentaTicket({
       {!esFinal && codigo && (
         <div
           style={{
-            border: '2px solid #000',
+            border: LINEA_GRUESA,
             textAlign: 'center',
-            padding: '8px 4px',
-            margin: '8px 0',
-            borderRadius: '4px',
+            padding: '12px 6px',
+            margin: '14px 0',
           }}
         >
-          <p style={{ fontSize: px(9), margin: 0 }}>CÓDIGO PARA CAJA</p>
+          <p style={{ fontSize: px(letra.chica), margin: 0 }}>CÓDIGO PARA CAJA</p>
           <p
-            style={{ fontSize: px(20), fontWeight: 'bold', letterSpacing: ancho === 58 ? '2px' : '4px', margin: '2px 0' }}
+            style={{
+              fontSize: px(letra.codigo),
+              fontWeight: 900,
+              lineHeight: 1.1,
+              letterSpacing: ancho === 58 ? '4px' : '8px',
+              margin: '4px 0',
+            }}
           >
             {codigo}
           </p>
-          <p style={{ fontSize: px(9), margin: 0 }}>Presenta este código en caja</p>
+          <p style={{ fontSize: px(letra.chica), margin: 0 }}>Presenta este código en caja</p>
         </div>
       )}
 
       {/* Footer */}
-      <div
-        style={{
-          textAlign: 'center',
-          borderTop: '1px dashed #000',
-          paddingTop: '4px',
-          fontSize: px(10),
-        }}
-      >
+      <div style={{ textAlign: 'center', borderTop: LINEA_TERMICA, paddingTop: '8px', fontSize: px(letra.chica) }}>
         <p style={{ margin: 0 }}>{config?.mensaje_ticket || '¡Gracias por tu visita!'}</p>
-        {config?.ticket_footer && (
-          <p style={{ fontSize: px(9), margin: '2px 0 0' }}>{config.ticket_footer}</p>
-        )}
-        {esFinal && <p style={{ fontSize: px(9), margin: '2px 0 0' }}>Conserva este ticket</p>}
+        {config?.ticket_footer && <p style={{ margin: '2px 0 0' }}>{config.ticket_footer}</p>}
+        {esFinal && <p style={{ margin: '2px 0 0' }}>Conserva este ticket</p>}
       </div>
+
+      {/* DP-20 · El pie de la copia: de quién es este papel. */}
+      {pie && (
+        <p
+          data-pie-de-copia
+          style={{
+            textAlign: 'center',
+            fontWeight: 900,
+            fontSize: px(letra.base),
+            borderTop: LINEA_TERMICA,
+            marginTop: '10px',
+            marginBottom: 0,
+            paddingTop: '8px',
+          }}
+        >
+          {pie}
+        </p>
+      )}
+    </div>
+  );
+
+  if (soloLienzo) return lienzo;
+
+  return (
+    <div
+      className={`ticket-printable ticket-termico thermal-${String(ancho)} mx-auto`}
+      data-puntos={enPuntos}
+      data-documento={esFinal ? 'ticket' : 'precuenta'}
+      data-orden-id={venta.id || undefined}
+      style={{
+        width: `${enPuntos * ESCALA_EN_PANTALLA}px`,
+        maxWidth: '100%',
+        background: '#fff',
+        color: '#000',
+      }}
+    >
+      {lienzo}
     </div>
   );
 }
@@ -256,11 +314,12 @@ function Row({ label, value, bold, capitalize }) {
       style={{
         display: 'flex',
         justifyContent: 'space-between',
+        gap: '10px',
         textTransform: capitalize ? 'capitalize' : 'none',
       }}
     >
       <span>{label}:</span>
-      <span style={{ fontWeight: bold ? 'bold' : 'normal' }}>{value}</span>
+      <span style={{ fontWeight: bold ? 900 : 700, textAlign: 'right' }}>{value}</span>
     </div>
   );
 }

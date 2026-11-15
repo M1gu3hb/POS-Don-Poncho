@@ -11,6 +11,7 @@ import { ThemeProvider } from '@/lib/ThemeContext';
 import type { AparienciaInicial } from '@morphiqpos/ui/hooks';
 
 import { ProveedorDeSonidos } from '~/sonidos/ProveedorDeSonidos';
+import { BarraDeImpresion } from '~/impresion/BarraDeImpresion';
 
 import { ProveedorDeApariencia } from './Apariencia';
 import { ProveedorDeExperiencia, type ExperienciaDelNegocio } from './Experiencia';
@@ -76,6 +77,8 @@ export function Proveedores({
                   <ConfigProvider>
                     <GuardiaDePlantilla />
                     {children}
+                    {/* DP-20 · El avance y los errores de lo que se imprime directo por la app. */}
+                    <BarraDeImpresion />
                   </ConfigProvider>
                 ) : (
                   children

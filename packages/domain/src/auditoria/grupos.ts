@@ -39,7 +39,12 @@ export const GRUPOS_DE_AUDITORIA = {
   },
   efectivo: {
     titulo: 'Movimientos de efectivo',
-    acciones: ['caja.movimiento', 'caja.entrada_cambio'],
+    acciones: [
+      'caja.movimiento',
+      'caja.entrada_cambio',
+      'caja.abrir_cajon',
+      'caja.cajon_por_cobro',
+    ],
   },
   configuracion: {
     titulo: 'Cambios de configuración',
@@ -52,6 +57,7 @@ export const GRUPOS_DE_AUDITORIA = {
       'configuracion.restablecer_termino',
       'caja.fijar_cajas_simultaneas',
       'caja.fijar_umbral_de_retiro',
+      'caja.fijar_copias_de_impresion',
       'propinas.guardar_esquema',
     ],
   },

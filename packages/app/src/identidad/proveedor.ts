@@ -1,0 +1,127 @@
+import 'server-only';
+
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+import { verify } from '@node-rs/argon2';
+import { conTransaccion, repoComandos } from '@morphiqpos/data';
+
+import { payloadDeAuditoria } from '../saneado.ts';
+
+/**
+ * LA CONTRASEÑA DEL PROVEEDOR (DP-20 · refuerzo §2).
+ *
+ * «Hardware y pruebas de impresión» es de Morphiq, no del personal: ahí se decide con qué
+ * impresora y cómo imprime cada aparato. Lo protege UNA contraseña, la del proveedor.
+ *
+ * El repositorio es público, así que la contraseña no existe en ningún archivo: el servidor sólo
+ * conoce su HASH (Argon2id), que vive en la variable de entorno `PROVEEDOR_CLAVE_HASH` del
+ * despliegue. Se compara aquí, nunca en el navegador. Sin la variable, nadie entra (cerrado por
+ * omisión) y la pantalla lo dice.
+ *
+ * Si acierta, el aparato recibe un PERMISO firmado de 30 minutos en una cookie `httpOnly`: una
+ * firma HMAC con el secreto de sesión y un prefijo propio (`proveedor:`), atada al negocio. Una
+ * cookie de sesión no sirve de permiso ni al revés.
+ *
+ * Cada entrada y cada fallo quedan en la auditoría. No es un comando por la misma razón que el
+ * PIN del supervisor: un comando que rechaza revierte su transacción, y aquí el rastro del fallo
+ * tiene que quedar.
+ */
+
+export const VARIABLE_DEL_HASH_DEL_PROVEEDOR = 'PROVEEDOR_CLAVE_HASH';
+
+/** Treinta minutos: lo que tarda en dejarse listo un aparato. */
+export const VIGENCIA_DEL_PERMISO_SEGUNDOS = 30 * 60;
+
+export const ACCION_ENTRAR = 'proveedor.entrar';
+export const ACCION_FALLAR = 'proveedor.fallar';
+
+/** Sólo Argon2id: es lo que se guarda (como los PIN). */
+const PREFIJO_DEL_HASH = '$argon2id$';
+
+export type ClaveComprobada = 'correcta' | 'incorrecta' | 'sin_configurar';
+
+/** Compara la contraseña tecleada contra el hash del despliegue. */
+export async function comprobarClaveDelProveedor(
+  clave: string,
+  hashDelDespliegue: string | undefined,
+): Promise<ClaveComprobada> {
+  const guardado = hashDelDespliegue?.trim() ?? '';
+  if (!guardado.startsWith(PREFIJO_DEL_HASH)) return 'sin_configurar';
+  try {
+    return (await verify(guardado, clave)) ? 'correcta' : 'incorrecta';
+  } catch {
+    // Un hash con la forma de Argon2id que la librería no puede leer está mal copiado en el
+    // despliegue: nadie entra, y se dice «sin configurar» en lugar de «contraseña incorrecta».
+    return 'sin_configurar';
+  }
+}
+
+function firma(cuerpo: string, secreto: string): string {
+  return createHmac('sha256', secreto).update(`proveedor:${cuerpo}`, 'utf8').digest('base64url');
+}
+
+function igualEnTiempoConstante(a: string, b: string): boolean {
+  const x = Buffer.from(a);
+  const y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/** El permiso: `<negocio>.<vence en segundos>.<firma>`. Sin datos personales. */
+export function firmarPermisoDelProveedor(
+  organizacionId: string,
+  secreto: string,
+  ahora: Date = new Date(),
+): { readonly permiso: string; readonly vence: Date } {
+  const exp = Math.floor(ahora.getTime() / 1000) + VIGENCIA_DEL_PERMISO_SEGUNDOS;
+  const cuerpo = `${organizacionId}.${String(exp)}`;
+  return { permiso: `${cuerpo}.${firma(cuerpo, secreto)}`, vence: new Date(exp * 1000) };
+}
+
+/** Hasta cuándo vale el permiso para ESE negocio, o `null` si no vale (otro negocio, vencido, alterado). */
+export function vigenciaDelPermiso(
+  permiso: string | undefined,
+  organizacionId: string,
+  secreto: string,
+  ahora: Date = new Date(),
+): Date | null {
+  if (permiso === undefined) return null;
+  const punto = permiso.lastIndexOf('.');
+  if (punto <= 0) return null;
+  const cuerpo = permiso.slice(0, punto);
+  if (!igualEnTiempoConstante(permiso.slice(punto + 1), firma(cuerpo, secreto))) return null;
+  const [negocio, exp] = cuerpo.split('.');
+  if (negocio !== organizacionId || exp === undefined || !/^\d{1,12}$/.test(exp)) return null;
+  const vence = new Date(Number(exp) * 1000);
+  return vence.getTime() > ahora.getTime() ? vence : null;
+}
+
+export interface QuienIntenta {
+  readonly organizacionId: string;
+  readonly identidadId: string;
+  readonly terminalId: string | null;
+  readonly empleoId: string;
+  readonly rol: string;
+  readonly correlationId: string;
+}
+
+/** Deja en la auditoría la entrada (o el fallo) al laboratorio, en su propia transacción. */
+export async function dejarRastroDelProveedor(quien: QuienIntenta, entro: boolean): Promise<void> {
+  const accion = entro ? ACCION_ENTRAR : ACCION_FALLAR;
+  await conTransaccion((tx) =>
+    repoComandos.escribirAuditoria(tx, {
+      organizacionId: quien.organizacionId,
+      identidadId: quien.identidadId,
+      terminalId: quien.terminalId,
+      accion,
+      entidad: 'laboratorio_de_impresion',
+      entidadId: null,
+      correlationId: quien.correlationId,
+      payload: payloadDeAuditoria({
+        v: 1,
+        comando: accion,
+        rol: quien.rol,
+        empleoId: quien.empleoId,
+      }),
+    }),
+  );
+}

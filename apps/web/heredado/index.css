@@ -624,6 +624,27 @@ html.dark .printable-doc [class*='dark:text-gray-'] {
   }
 }
 
+/* ----- El lienzo térmico (DP-20) -----
+   El ticket se dibuja en un lienzo medido en PUNTOS de la impresora y se achica con `zoom` a su
+   tamaño real (576 puntos = 72 mm). Su caja no lleva relleno —el lienzo ya trae el suyo— y el
+   logo conserva sus medidas en puntos. Las medidas viven en `~/impresion/termico/estilo`. */
+@media print {
+  html[data-print-mode='thermal'] .ticket-printable.ticket-termico.thermal-80,
+  html[data-print-mode='thermal'] .ticket-printable.ticket-termico.thermal-58 {
+    padding: 0 !important;
+  }
+  html[data-print-mode='thermal'] .ticket-printable.ticket-termico.thermal-80 img {
+    max-width: 280px !important;
+    max-height: 140px !important;
+    margin: 0 auto 8px !important;
+  }
+  html[data-print-mode='thermal'] .ticket-printable.ticket-termico.thermal-58 img {
+    max-width: 200px !important;
+    max-height: 110px !important;
+    margin: 0 auto 8px !important;
+  }
+}
+
 /* ----- Sólo el documento, desde arriba de la hoja (DP-15) -----
    `print.js` marca (`~/impresion/aislar`) lo que sobra: se quita del flujo —no sólo se esconde,
    que dejaba hojas en blanco antes del ticket— y los contenedores del documento pierden

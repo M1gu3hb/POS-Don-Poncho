@@ -100,3 +100,18 @@ export {
   fijarUmbralDeRetiro,
   type ResultadoUmbralDeRetiro,
 } from './retiro-con-pin.ts';
+
+// DP-20 · El cajón que se abre al cobrar (a la auditoría) y las copias del ticket, la precuenta y el corte.
+export {
+  cajonPorCobro,
+  entradaCajonPorCobro,
+  type ResultadoCajonPorCobro,
+} from './cajon-por-cobro.ts';
+export {
+  CLAVE_COPIAS_DE_IMPRESION,
+  COPIAS_POR_OMISION,
+  copiasDeImpresionEn,
+  entradaFijarCopiasDeImpresion,
+  fijarCopiasDeImpresion,
+  type CopiasDeImpresion,
+} from './copias-de-impresion.ts';
