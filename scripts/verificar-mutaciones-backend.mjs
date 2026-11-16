@@ -370,7 +370,7 @@ comprobarMutacion({
   variable: 'MORPHIQPOS_SESSION_RESOLVER_SOURCE_PATH',
   prueba: PRUEBA_RESOLVER_SESION,
   transformar: (codigo) =>
-    codigo.replace('await repoSesion.sesionActiva', 'await repoSesion.sesionOmitida'),
+    codigo.replace('await repoSesion.vencimientoDeLaSesion', 'await repoSesion.sesionOmitida'),
 });
 comprobarMutacion({
   nombre: 'sesión no persistida al entrar',

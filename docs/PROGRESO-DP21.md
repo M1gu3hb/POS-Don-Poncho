@@ -79,36 +79,65 @@ el tiempo, se cae lo último.
 
 ## Línea base
 
-_(se llena al terminar el `verify` de arranque)_
+`main` en `faed6cc`: puertas estáticas, formato, lint y tipos en verde; unitarias 5,991 de 5,992
+(`portal/avisos-caducados.test.ts` se pasó de tiempo bajo carga —14 s contra 5 s— y sola pasa en
+2 s: el mismo ruido ambiental de DP-18). La cadena se detuvo ahí; la CI de `faed6cc` estaba en
+verde (PR #31).
 
-## Estado por bloque
+## Estado por bloque (16-11, 03:00)
 
 | Bloque | Qué | PR | Estado |
 | --- | --- | --- | --- |
-| 1 | El IVA | A | en curso |
-| 2 | Entrar con PIN y las estaciones que se recuerdan | A | pendiente |
-| 3 | Nada de app instalable; el portal a salvo | A | pendiente |
-| 4 | La propina: una sola verdad | A | pendiente |
-| 5 | Las cajas con nombre fijo | A | pendiente |
-| 6 | Folios de verdad | A | pendiente |
-| 7 | El cajón | A | pendiente |
-| 8 | La voz de cocina | A | agente 1, en curso |
-| 9 | Lo táctil | B | pendiente |
-| 10 | Cambiar de mesa | B | pendiente |
-| 11 | Gastos de Caja = Compras y gastos | B | pendiente |
-| 12 | El ticket a tu gusto | B | pendiente |
+| 1 | El IVA | A | hecho (`424dbe8`) · DP-D129 · e2e `sin-iva.spec.ts` |
+| 2 | Entrar con PIN y las estaciones que se recuerdan | A | hecho (`89702b1`) · DP-D130 · e2e `pin-al-abrir.spec.ts` |
+| 3 | Nada de app instalable; el portal a salvo | A | hecho (`53bd278`, agente) · DP-D134 |
+| 4 | La propina: una sola verdad | A | hecho (`78fe0f4`, `41292f8`) · DP-D131 · e2e `propina-una-sola-verdad.spec.ts` |
+| 5 | Las cajas con nombre fijo | A | hecho (`36ab6b9`) · migración 193 · DP-D132 · e2e `cajas-del-negocio.spec.ts` |
+| 6 | Folios de verdad | A | hecho (`43ab909`, agente 2) · DP-D128 · e2e `folios-con-prefijo.spec.ts` |
+| 7 | El cajón | A | hecho (`8af0c71`, agente) · DP-D133 |
+| 8 | La voz de cocina | A | hecho (`c45370f`, agente 1) · DP-D133 |
+| 9 | Lo táctil | B | hecho por el agente 1 (`f9b8167`), unido a `dp-21-b`; falta mi revisión y probar en aparato |
+| 10 | Cambiar de mesa | B | pendiente (sesión principal) |
+| 11 | Gastos de Caja = Compras y gastos | B | pendiente (sesión principal) |
+| 12 | El ticket a tu gusto | B | pendiente (sesión principal) |
 | 13 | El tablero | C | pendiente |
 | 14 | Configuración limpia | C | pendiente |
-| 15 | Colores del iMin | B | pendiente |
+| 15 | Colores del iMin | B | agente 1, en curso |
 | 16 | El barrido visual | C | pendiente |
 | 17 | Las guías | C | pendiente |
 | 18 | Los cortes en una carpeta (app 1.0.2) | C | pendiente |
 | 19 | Lo que quedó de DP-19 | C | pendiente |
-| 20 | Lo desconectado, roto o sin propósito | B y C | agente 2, inventario en curso |
-| 21 | La Configuración, ordenada | B | mapa escrito; mudanza pendiente |
+| 20 | Lo desconectado, roto o sin propósito | B y C | inventario hecho (`docs/reports/012-anexo-inventario.md`, 128 renglones) |
+| 21 | La Configuración, ordenada | B | mapa en `docs/CONFIGURACION-MAPA.md`; mudanza: agente 2, en curso |
+
+### Ramas
+
+- `dp-21-a` (árbol `.work\dp20`): el PR A completo, Bloques 1 a 8.
+- `dp-21-b` (árbol `.work\dp18-integrar`): `dp-21-a` + Bloque 9; ahí trabaja el agente 2 la mudanza.
+- `dp-21-ag1` (árbol `.work\dp20-lab`): el agente 1, Bloque 15.
+
+### Decisiones tomadas sin Miguel (opción por omisión, anotadas)
+
+- El almacén teclea su PIN como el cajero (DP-D130).
+- La voz conserva «Nuevo pedido mesa 4:» (DP-D133).
+- El portal sólo manda a calificar si la cuenta sigue abierta; «Tu cuenta ya se pagó» cierra y ya.
+- El mapa de la Configuración lo redactó el agente 2 (hizo el inventario) y lo revisó la sesión
+  principal; sus 14 dudas se resolvieron con la opción por omisión del encargo y están en el mapa.
+- Integraciones se quita completa en la mudanza, con su «Cola de sincronización» (era de demostración).
+- El arnés e2e deja la marca del PIN tecleado en las sesiones guardadas (DP-D130).
+
+### Trampas de esta etapa
+
+- La base desechable de las e2e usa un directorio fijo: dos corridas a la vez necesitan
+  `MORPHIQPOS_BASE_DESECHABLE_DIR` y `…_PUERTO` propios (`D:\mpos-tmp\dp21\e2e-entorno.sh`).
+- `verify:mutaciones-backend` tiene mutantes que buscan texto: si el código cambia de forma, el
+  mutante «no cambia el archivo» y hay que apuntarlo a la forma nueva (pasó con el resolver de sesión).
 
 ## Lo que sigue
 
-1. Bloque 1 (IVA), con su prueba primero.
-2. Revisar e integrar el Bloque 8 cuando el agente 1 termine; luego mandarlo al Bloque 9.
-3. Bloques 2 a 7, en orden.
+1. Cerrar el PR A: e2e de sus bloques contra un solo build, `verify` local completo,
+   `test:impresion`, migración 193 a producción (`pnpm db:migrate`, ensayo antes), PR, CI (regenerar
+   los retratos de `/configuracion` de la galería), unir, esperar la fila **Production**, humo sin
+   cobrar y una hora de errores de Vercel.
+2. PR B: revisar el Bloque 9, hacer los Bloques 10, 11 y 12, recibir el 15 y la mudanza del 21.
+3. PR C y la Parte final (simulador, lista para Miguel a las 14:00, dejar en ceros con sus dos «sí»).
