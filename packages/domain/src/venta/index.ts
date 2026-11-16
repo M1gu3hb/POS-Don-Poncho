@@ -18,6 +18,7 @@ export {
   type ParticionPedida,
   type TomaDeLinea,
 } from './division.ts';
+export { esRfcValido, normalizarRfc } from './rfc.ts';
 export {
   MOTIVOS_ANULACION,
   elConsumoSePerdio,

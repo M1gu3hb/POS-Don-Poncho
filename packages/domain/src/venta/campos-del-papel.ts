@@ -72,7 +72,7 @@ export type PapelATuGusto = Readonly<Record<PapelDeVenta, ElegidoDeUnPapel>>;
 
 /** Lo que llega de una configuración: lo que falte, o no se entienda, vale «sale». */
 export type PapelATuGustoParcial =
-  | { readonly [P in PapelDeVenta]?: { readonly [C in IdDeCampo]?: unknown } | null }
+  | Readonly<Partial<Record<PapelDeVenta, Readonly<Partial<Record<IdDeCampo, unknown>>> | null>>>
   | null
   | undefined;
 

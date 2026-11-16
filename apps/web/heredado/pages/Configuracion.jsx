@@ -39,6 +39,7 @@ import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
 import { IvaDelNegocio } from '~/configuracion/IvaDelNegocio';
 import { FoliosDelNegocio } from '~/configuracion/FoliosDelNegocio';
 import { PapelATuGusto } from '~/configuracion/PapelATuGusto';
+import { CorteDeLaCaja } from '~/configuracion/CorteDeLaCaja';
 import { CandadoDeMando } from '~/configuracion/CandadoDeMando';
 import { QuienEligeLaPropina } from '~/configuracion/QuienEligeLaPropina';
 import { TarjetaDeAjustes } from '~/configuracion/TarjetaDeAjustes';
@@ -178,6 +179,7 @@ export default function Configuracion() {
     copias: () => <CopiasDeImpresion puedeCambiar={esDeMando(miPuesto)} />,
     'las-cajas': () => <CajasALaVez />,
     'pin-en-retiros': () => <UmbralDeRetiro />,
+    'corte-de-la-caja': () => <CorteDeLaCaja puedeCambiar={esDeMando(miPuesto)} />,
     'pdf-al-cerrar': () => <TarjetaDeAjustes id="pdf-al-cerrar" configuracion={cfg} />,
     'mapa-de-mesas': () => (
       <MapaDeMesasDeConfiguracion

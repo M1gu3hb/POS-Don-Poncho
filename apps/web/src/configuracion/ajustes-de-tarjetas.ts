@@ -1,3 +1,5 @@
+import { esRfcValido, normalizarRfc } from '@morphiqpos/domain/venta';
+
 import { hayCambios, leidoDe, parcheDeLaSeccion } from './parche-de-la-seccion.ts';
 
 /**
@@ -26,6 +28,8 @@ export interface CampoDeTexto extends CampoBase {
   readonly ancho?: 'completo';
   /** Sólo se enseña si esta otra clave de la misma tarjeta está encendida. */
   readonly visibleSiEncendida?: string;
+  /** Lo tecleado se pasa a mayúsculas y sin espacios (el RFC). */
+  readonly comoRfc?: boolean;
 }
 
 export interface CampoInterruptor extends CampoBase {
@@ -69,6 +73,16 @@ export const AJUSTES_DE_TARJETAS: Readonly<Record<string, AjustesDeUnaTarjeta>> 
       },
       { tipo: 'texto', clave: 'telefono', etiqueta: 'Teléfono', porOmision: '' },
       { tipo: 'texto', clave: 'correo', etiqueta: 'Correo', porOmision: '' },
+      {
+        tipo: 'texto',
+        clave: 'rfc',
+        etiqueta: 'RFC',
+        ayuda:
+          'Sale en el corte como «RFC: …». 12 caracteres (persona moral) o 13 (persona física), en mayúsculas. Vacío, no sale.',
+        porOmision: '',
+        placeholder: 'Ej: ABC850101AB1',
+        comoRfc: true,
+      },
     ],
   },
   propinas: {
@@ -247,6 +261,31 @@ export function parcheDe(
   configuracion: Configuracion,
 ): Record<string, unknown> {
   return parcheDeLaSeccion(formulario, leidoDe(configuracion, clavesDe(ajustes)));
+}
+
+/** Lo que se teclea en un campo, ya como debe quedar (el RFC, en mayúsculas y sin espacios). */
+export function comoSeGuarda(
+  campo: Campo,
+  valor: string | number | boolean,
+): string | number | boolean {
+  return campo.tipo === 'texto' && campo.comoRfc === true && typeof valor === 'string'
+    ? normalizarRfc(valor)
+    : valor;
+}
+
+/** Por qué todavía no se puede guardar la tarjeta, o `null` (hoy: el RFC con una forma que no es). */
+export function errorDelFormulario(
+  ajustes: AjustesDeUnaTarjeta,
+  formulario: Formulario,
+): string | null {
+  for (const campo of ajustes.campos) {
+    if (campo.tipo !== 'texto' || campo.comoRfc !== true) continue;
+    const valor = formulario[campo.clave];
+    if (typeof valor === 'string' && valor !== '' && !esRfcValido(valor)) {
+      return 'El RFC lleva 12 caracteres (persona moral) o 13 (persona física), en mayúsculas y sin espacios.';
+    }
+  }
+  return null;
 }
 
 export function hayCambiosEn(

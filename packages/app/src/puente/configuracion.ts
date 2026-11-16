@@ -2,6 +2,7 @@ import 'server-only';
 
 import { ErrorDominio, plantillaDeOrganizacion } from '@morphiqpos/contracts';
 import { leyendoConReintento, obtenerDb, type Transaccion } from '@morphiqpos/data';
+import { esRfcValido } from '@morphiqpos/domain/venta';
 import { z } from 'zod';
 
 import { leerDocumentoConCandado } from '../configuracion/documento-con-candado.ts';
@@ -164,6 +165,10 @@ const SOLO_POR_COMANDO = new Set([
   'retiro_pin_arriba_de_centavos',
   // DP-20 · Copias del ticket, la precuenta y el corte: sólo dueño o administrador.
   'copias_de_impresion',
+  // DP-21 · Bloque 20 · Si el cajero ve costos en su corte y la comisión de la terminal: sólo dueño o
+  // administrador (`caja.fijar_ajustes_del_corte`), no un gerente por el camino genérico.
+  'mostrar_costos_a_caja',
+  'comision_terminal_bp',
   // DP-21 · Bloque 12 · Qué renglones salen en la precuenta y en el ticket: sólo dueño o administrador
   // (`caja.fijar_papel_a_tu_gusto`).
   CLAVE_PAPEL_A_TU_GUSTO,
@@ -244,6 +249,8 @@ const CLAVES_EDITABLES = new Set([
   'direccion',
   'telefono',
   'correo',
+  // DP-21 · Bloque 20 · El RFC que el corte imprime («RFC: …»): 12 o 13 caracteres, en mayúsculas.
+  'rfc',
   'propinas_activas',
   'propina_porcentajes_sugeridos',
   'asignacion_mesas_activa',
@@ -318,6 +325,17 @@ const BASCULA = z
  * La tasa de la terminal: entero de 0 a 1000 puntos base (0 a 10 %). El mercado va del 2 al
  * 4 %; un 36 tecleado donde iba 3.6 cobraría una comisión diez veces mayor en cada corte.
  */
+/** El RFC: vacío (o `null`) lo quita; si hay, 12 o 13 caracteres en mayúsculas (`@morphiqpos/domain/venta`). */
+function exigirRfc(valor: unknown): void {
+  if (valor === null || valor === '') return;
+  if (typeof valor !== 'string' || !esRfcValido(valor)) {
+    throw new ErrorDominio(
+      'PUENTE_CAMPO_INVALIDO',
+      'El RFC lleva 12 caracteres (persona moral) o 13 (persona física), en mayúsculas y sin espacios.',
+    );
+  }
+}
+
 function exigirTasaDeTerminal(valor: unknown): void {
   if (valor === null) return;
   if (typeof valor !== 'number' || !Number.isInteger(valor) || valor < 0 || valor > 1000) {
@@ -548,6 +566,7 @@ export async function guardarConfiguracionParcial(
     );
   }
   if ('comision_terminal_bp' in parche) exigirTasaDeTerminal(parche['comision_terminal_bp']);
+  if ('rfc' in parche) exigirRfc(parche['rfc']);
   if ('ancho_papel_ticket' in parche) {
     exigirForma(
       z.union([z.literal(58), z.literal(80)]),

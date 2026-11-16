@@ -140,6 +140,7 @@ const LECTORES: Readonly<Record<string, 'documento-filtrado' | 'proyeccion' | 'i
   'packages/app/src/caja/copias-de-impresion.ts': 'interno',
   // DP-21 · Bloque 12: lee `papel_a_tu_gusto` para el «antes» de la auditoría; no devuelve el documento.
   'packages/app/src/caja/papel-a-tu-gusto.ts': 'interno',
+  'packages/app/src/caja/corte-de-la-caja.ts': 'interno',
   // DP-21: lee `impuesto` (la tasa y si va incluido) para el «antes» de la auditoría; no devuelve
   // el documento y escribe por el guardado parcial del puente.
   'packages/app/src/configuracion/impuesto.ts': 'interno',

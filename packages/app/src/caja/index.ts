@@ -101,6 +101,15 @@ export {
   type ResultadoUmbralDeRetiro,
 } from './retiro-con-pin.ts';
 
+// DP-21 · Bloque 20 · Costos al cajero y comisión de la terminal, en el corte.
+export {
+  CLAVE_COMISION_DE_LA_TERMINAL,
+  CLAVE_COSTOS_A_CAJA,
+  ajustesDelCorteEn,
+  entradaFijarAjustesDelCorte,
+  fijarAjustesDelCorte,
+  type AjustesDelCorte,
+} from './corte-de-la-caja.ts';
 // DP-20 · El cajón que se abre al cobrar (a la auditoría) y las copias del ticket, la precuenta y el corte.
 export {
   cajonPorCobro,

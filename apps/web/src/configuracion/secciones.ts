@@ -181,7 +181,7 @@ export const TARJETAS: readonly Tarjeta[] = [
     componente: 'TarjetaDeAjustes',
     grupo: 'datos-del-negocio',
     visiblePara: 'todos',
-    guarda: ['nombre_negocio', 'direccion', 'telefono', 'correo'],
+    guarda: ['nombre_negocio', 'direccion', 'telefono', 'correo', 'rfc'],
     con: GENERICO,
   },
   {
@@ -357,6 +357,15 @@ export const TARJETAS: readonly Tarjeta[] = [
     visiblePara: 'mando',
     guarda: ['retiro_pin_arriba_de_centavos'],
     con: 'caja.fijar_umbral_de_retiro',
+  },
+  {
+    id: 'corte-de-la-caja',
+    seccion: 'caja',
+    titulo: 'El corte de la caja',
+    componente: 'CorteDeLaCaja',
+    visiblePara: 'mando',
+    guarda: ['mostrar_costos_a_caja', 'comision_terminal_bp'],
+    con: 'caja.fijar_ajustes_del_corte',
   },
   {
     id: 'pdf-al-cerrar',

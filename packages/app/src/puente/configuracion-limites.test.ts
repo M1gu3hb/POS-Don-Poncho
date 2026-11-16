@@ -110,7 +110,12 @@ describe('la tasa de la terminal se valida al guardar (C.10 de la 2.4)', () => {
     for (const mala of [1_001, -1, 3.6, '360']) {
       expect(
         await codigoDe(
-          guardarConfiguracionParcial({} as Transaccion, ORG, { comision_terminal_bp: mala }),
+          guardarConfiguracionParcial(
+            {} as Transaccion,
+            ORG,
+            { comision_terminal_bp: mala },
+            { desdeComando: true },
+          ),
         ),
       ).toBe('PUENTE_CAMPO_INVALIDO');
     }
@@ -119,7 +124,12 @@ describe('la tasa de la terminal se valida al guardar (C.10 de la 2.4)', () => {
   it('una tasa de verdad pasa la validación y llega a la base', async () => {
     expect(
       await codigoDe(
-        guardarConfiguracionParcial({} as Transaccion, ORG, { comision_terminal_bp: 360 }),
+        guardarConfiguracionParcial(
+          {} as Transaccion,
+          ORG,
+          { comision_terminal_bp: 360 },
+          { desdeComando: true },
+        ),
       ),
     ).toBe('INESPERADO');
   });
@@ -183,6 +193,26 @@ describe('DP-16 · las alertas de espera de la cocina se validan al guardar', ()
           }),
         ),
       ).toBe('PUENTE_CAMPO_INVALIDO');
+    }
+  });
+});
+
+describe('DP-21 · Bloque 20 · el RFC se valida al guardar', () => {
+  it('lo que no es un RFC de 12 o 13 caracteres en mayúsculas no se guarda', async () => {
+    for (const malo of ['abc850101ab1', 'ABC850101', 'ABC850101AB1XX', 'ABC 850101 AB1', 5]) {
+      expect(
+        await codigoDe(guardarConfiguracionParcial({} as Transaccion, ORG, { rfc: malo })),
+        String(malo),
+      ).toBe('PUENTE_CAMPO_INVALIDO');
+    }
+  });
+
+  it('uno de verdad, y vacío para quitarlo, pasan la validación y llegan a la base', async () => {
+    for (const bueno of ['ABC850101AB1', 'XAXX010101000', '', null]) {
+      expect(
+        await codigoDe(guardarConfiguracionParcial({} as Transaccion, ORG, { rfc: bueno })),
+        String(bueno),
+      ).toBe('INESPERADO');
     }
   });
 });

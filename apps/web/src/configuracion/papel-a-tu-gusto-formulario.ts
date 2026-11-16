@@ -26,7 +26,7 @@ export function papelLeido(
   if (typeof crudo !== 'object' || crudo === null || Array.isArray(crudo)) {
     return completarPapel(undefined);
   }
-  return completarPapel(crudo as Parameters<typeof completarPapel>[0]);
+  return completarPapel(crudo);
 }
 
 /** El papel con un renglón encendido o apagado; el original no se toca. */
