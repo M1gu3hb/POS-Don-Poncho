@@ -128,8 +128,7 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              className="fixed inset-x-0 bottom-0 z-[66] bg-superficie rounded-t-3xl shadow-2xl flex flex-col"
-              style={{ maxHeight: '88dvh' }}
+              className="fixed inset-x-0 bottom-0 z-[66] bg-superficie rounded-t-3xl shadow-2xl flex flex-col max-h-[88dvh]"
             >
               <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b">
                 <div className="flex items-center gap-2">

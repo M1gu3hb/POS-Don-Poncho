@@ -85,22 +85,24 @@ export default function AppLayout({ marco = 'interno' }) {
   const espacioAlFinal = !conBotonRedondo ? '' : deModelo ? ' pb-24 lg:pb-0' : ' pb-24 md:pb-24 lg:pb-8';
 
   return (
-    <div className="flex relative" style={{ minHeight: '100dvh' }}>
+    // DP-20.1: el alto va en la clase (`min-h-dvh`) y no en un `style` en línea. Un motor sin `dvh`
+    // (Chromium < 108) tira el estilo en línea y el armazón se quedaba del alto de su contenido; a
+    // la clase, la hoja le pone su respaldo en `vh`. En un motor moderno mide lo mismo.
+    <div className="flex relative min-h-dvh">
       <BrandColorsApplier />
       <BrandedBackground />
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
       <main
         // `min-w-0` (DP-11.1): un hijo de flex mide por omisión lo que su contenido más ancho, y en el
         // teléfono una fila que no se encoge estiraba la página a lo ancho (Configuración: 543 de 412).
-        className={`min-w-0 flex-1 transition-all duration-300 ${collapsed ? 'lg:ml-16' : 'lg:ml-60'} relative z-10`}
-        style={{ minHeight: '100dvh' }}
+        className={`min-w-0 flex-1 transition-all duration-300 ${collapsed ? 'lg:ml-16' : 'lg:ml-60'} relative z-10 min-h-dvh`}
       >
         <div
           className={
+            'min-h-dvh ' +
             (deModelo ? 'pt-14 lg:pt-0' : 'p-4 md:p-6 lg:p-8 pt-14 md:pt-14 lg:pt-6') +
             espacioAlFinal
           }
-          style={{ minHeight: '100dvh' }}
         >
           <Outlet />
         </div>

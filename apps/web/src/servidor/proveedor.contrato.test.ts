@@ -61,7 +61,18 @@ describe('/api/proveedor/entrar', () => {
 
   it('deja rastro del fallo y de la entrada', () => {
     expect(entrar).toMatch(/dejarRastroDelProveedor\(quien, false\)/);
-    expect(entrar).toMatch(/dejarRastroDelProveedor\(quien, true\)/);
+    expect(entrar).toMatch(/dejarRastroDelProveedor\(quien, true, validada\.data\.motor\)/);
+  });
+
+  it('el motor del aparato (DP-20.1) sólo acompaña a la entrada buena, acotado y sin cerrar la puerta', () => {
+    // Un fallo de contraseña no deja escrito nada del aparato.
+    expect(entrar.match(/validada\.data\.motor/g)).toHaveLength(1);
+    // Mal formado se ignora: nunca convierte una contraseña buena en un 400.
+    expect(entrar).toMatch(/motor: Motor\.optional\(\)\.catch\(undefined\)/);
+    // Acotado: el agente de usuario y una lista corta de identificadores con forma fija.
+    expect(entrar).toMatch(/ua: z\.string\(\)\.max\(400\)/);
+    expect(entrar).toMatch(/z\.string\(\)\.regex\(\/\^\[a-z0-9-\]\{1,40\}\$\/\)\)\s*\.max\(60\)/);
+    expect(entrar).toMatch(/nivel: z\.enum\(\['moderno', 'compatible', 'demasiado-viejo'\]\)/);
   });
 
   it('devuelve el intento sólo cuando la contraseña fue la buena', () => {

@@ -49,6 +49,9 @@ catalog:
   react-dom: 19.2.8
   tailwindcss: 4.3.3
   '@tailwindcss/postcss': 4.3.3
+  # DP-20.1: el plugin del modo compatible y su contrato leen el CSS con el mismo PostCSS que ya
+  # trae `@tailwindcss/postcss` (no entra una versión nueva: sólo se puede importar desde la raíz).
+  postcss: 8.5.28
   '@tanstack/react-query': 5.102.8
   sonner: 2.0.8
   lucide-react: 1.42.0

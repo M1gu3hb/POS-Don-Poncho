@@ -271,3 +271,51 @@
   --fuente-ui: Georgia, 'Times New Roman', serif;
   --fuente-display: var(--fuente-ui);
 }
+
+/* ===========================================================================
+   DP-20.1 · «ESTE APARATO ES DEMASIADO VIEJO»: su aspecto.
+   ---------------------------------------------------------------------------
+   El aviso (`src/compatibilidad/AvisoDeAparatoViejo.tsx`) nace oculto y sólo lo enseña su guion en
+   un motor que no entiende las capas de CSS: uno que tira toda la hoja de Tailwind. Por eso su
+   aspecto va AQUÍ, fuera de cualquier capa, con propiedades de siempre. Esta regla no decide si se
+   ve: no lleva `display`, y `verify:modo-compatible` no deja que lo lleve (el intento de
+   decidirlo con `!important` y capas falló en el Chromium 99: ver el componente).
+   =========================================================================== */
+#aparato-demasiado-viejo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 18vh 8vw 0;
+  /* Los tokens del estilo viven fuera de las capas, así que ese motor sí los tiene; por si no. */
+  background-color: hsl(var(--fondo, 60 5% 8%));
+  color: hsl(var(--texto, 40 40% 93%));
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Arial,
+    sans-serif;
+  font-size: 26px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+#aparato-demasiado-viejo p {
+  margin: 0 0 12px;
+}
+
+/* DP-20.1 · `inert` en un motor que no lo conoce (Chromium < 102). La ficha del platillo del portal
+   apaga lo de atrás con el atributo (`src/sistema/apagar-el-resto.ts`); aquí ese atributo deja de
+   recibir el dedo. Va en el mismo `@supports not` que el resto del modo compatible: un motor
+   moderno no entra, y en el 102–103, que ya traen `inert` de verdad, no cambia nada. */
+@supports not (translate: 0) {
+  [inert] {
+    pointer-events: none;
+    user-select: none;
+  }
+}

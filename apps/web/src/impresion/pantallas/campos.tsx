@@ -186,7 +186,9 @@ export function Casilla({
     <div className="flex flex-col gap-(--espacio-1)">
       <label
         htmlFor={id}
-        className="flex min-h-(--altura-control) cursor-pointer items-center gap-(--espacio-3) text-sm font-medium has-disabled:cursor-not-allowed has-disabled:opacity-60"
+        className={`flex min-h-(--altura-control) items-center gap-(--espacio-3) text-sm font-medium ${
+          deshabilitada ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+        }`}
       >
         <input
           id={id}

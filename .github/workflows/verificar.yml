@@ -203,6 +203,12 @@ jobs:
       - name: Build de producción
         run: pnpm build
 
+      # DP-20.1: sobre el CSS que acaba de salir del build. Si Tailwind o Next cambian la forma
+      # del CSS y un POS con motor viejo se quedaría con colores sólidos o diálogos corridos, se
+      # ve aquí y no en el restaurante.
+      - name: El modo compatible, en el CSS de producción
+        run: pnpm verify:modo-compatible
+
       - name: Cabeceras de seguridad en vivo
         run: pnpm verify:cabeceras
 

@@ -21,7 +21,7 @@
     },
     {
       "archivo": "apps/web/heredado/components/common/AppLayout.jsx",
-      "porque": "DP-11.1 (DP-D38): la carga de pantalla completa (al entrar con el PIN o recargar) deja el círculo girando suelto y es la carga larga del sistema: una tarjeta que dice qué carga («Cargando tu caja», «Cargando las mesas») con su barra, y Morfi asomado detrás si el negocio lo tiene encendido. Nada se ve antes de 600 ms. Y el <main> lleva min-w-0: como hijo de flex medía lo que su contenido más ancho, y en el teléfono una fila que no se encoge estiraba la página entera a lo ancho (Configuración → Apariencia: 543 px en un teléfono de 412). No cambia nada en tableta ni PC.",
+      "porque": "DP-11.1 (DP-D38): la carga de pantalla completa (al entrar con el PIN o recargar) deja el círculo girando suelto y es la carga larga del sistema: una tarjeta que dice qué carga («Cargando tu caja», «Cargando las mesas») con su barra, y Morfi asomado detrás si el negocio lo tiene encendido. Nada se ve antes de 600 ms. Y el <main> lleva min-w-0: como hijo de flex medía lo que su contenido más ancho, y en el teléfono una fila que no se encoge estiraba la página entera a lo ancho (Configuración → Apariencia: 543 px en un teléfono de 412). No cambia nada en tableta ni PC. DP-20.1: el alto del armazón (el contenedor, el <main> y su caja) pasa de un `style` en línea (`minHeight: 100dvh`) a la clase `min-h-dvh`, que mide lo mismo. Un motor sin `dvh` (los POS con Android 7, Chromium 99–103) tiraba el estilo en línea y el armazón se quedaba del alto de su contenido; a la clase, el modo compatible le pone su respaldo en `vh`.",
       "testigos": [
         "- clase:fixed",
         "- clase:inset-0",
@@ -35,7 +35,10 @@
         "- clase:border-t-primary",
         "- clase:rounded-full",
         "- clase:animate-spin",
-        "+ clase:min-w-0"
+        "+ clase:min-w-0",
+        "+ clase:min-h-dvh",
+        "+ clase:min-h-dvh",
+        "+ clase:min-h-dvh"
       ]
     },
     {
@@ -1751,6 +1754,11 @@
       "archivo": "apps/web/heredado/pages/Configuracion.jsx",
       "porque": "DP-20 (Parte 3.1): la pestaña nueva «Impresión» de Configuración, con su ícono, después de «Este aparato». Las copias y el laboratorio se montan al final de «Operación» como componentes. Nada de lo que se veía se quitó.",
       "testigos": ["+ clase:mr-1", "+ icono:Printer"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/MeseroCartFAB.jsx",
+      "porque": "DP-20.1: el alto máximo de la hoja del carrito del mesero pasa de un `style` en línea (`maxHeight: 88dvh`) a la clase `max-h-[88dvh]`, que mide lo mismo. Un motor sin `dvh` (Chromium anterior al 108) tiraba el estilo en línea y la hoja podía salirse de la pantalla; a la clase, el modo compatible le pone su respaldo en `vh`.",
+      "testigos": ["+ clase:max-h-[88dvh]"]
     }
   ]
 }

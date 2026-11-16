@@ -1462,6 +1462,36 @@ export const SIN_ESTADO = [
     razon:
       'El mensaje de un campo va pegado a ese campo y ligado con `aria-describedby` (así lo lee el lector de pantalla al entrar al campo); un Aviso aparte perdería esa liga.',
   },
+  // ── DP-20.1 · El modo compatible ──────────────────────────────────────────────────────────────
+  {
+    pantalla: 'impresion/pantallas/LabMotor',
+    estado: 'vacio',
+    razon:
+      'No pinta una lista que pueda venir vacía: las sondas son una lista fija que sale al tocar «Probar compatibilidad».',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabMotor',
+    estado: 'cargando',
+    razon: 'Las sondas se le preguntan al navegador en el momento: no espera a nadie ni lee nada.',
+  },
+  {
+    pantalla: 'compatibilidad/AvisoDeAparatoViejo',
+    estado: 'vacio',
+    razon:
+      'Es un aviso fijo de dos renglones para un motor sin capas de CSS: no pinta ninguna lista.',
+  },
+  {
+    pantalla: 'compatibilidad/AvisoDeAparatoViejo',
+    estado: 'cargando',
+    razon:
+      'Sale ya escrito en el HTML del servidor, sin JavaScript: no lee nada ni espera a nadie.',
+  },
+  {
+    pantalla: 'compatibilidad/AvisoDeAparatoViejo',
+    estado: 'error',
+    razon:
+      'Se ve justo donde el sistema de diseño NO llegó (un motor sin `@layer` descarta toda la hoja de Tailwind): un `Aviso` del sistema saldría sin estilos. Su aspecto va en `app/globals.css`, fuera de las capas.',
+  },
 ];
 
 const argumentos = process.argv.slice(2);

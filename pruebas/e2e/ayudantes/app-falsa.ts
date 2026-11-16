@@ -47,7 +47,7 @@ export function instalarAppFalsa(): void {
     bytes: 0,
     ms: 1,
   });
-  const red = { conexion: 'red', host: '192.0.2.10', puerto: 9100 };
+  const red = { conexion: 'red', host: '192.168.50.10', puerto: 9100 };
   const impresoras = [
     {
       id: 'spooler:POS-80',
@@ -56,7 +56,7 @@ export function instalarAppFalsa(): void {
       detalle: 'USB001 · POS-80 Printer',
       predeterminada: true,
     },
-    { id: 'red:192.0.2.10:9100', nombre: 'Cocina (red)', destino: red },
+    { id: 'red:192.168.50.10:9100', nombre: 'Cocina (red)', destino: red },
   ];
   const app = {
     contrato: 1,

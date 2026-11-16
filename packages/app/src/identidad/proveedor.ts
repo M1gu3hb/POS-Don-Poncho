@@ -114,8 +114,27 @@ export interface QuienIntenta {
   readonly correlationId: string;
 }
 
-/** Deja en la auditoría la entrada (o el fallo) al laboratorio, en su propia transacción. */
-export async function dejarRastroDelProveedor(quien: QuienIntenta, entro: boolean): Promise<void> {
+/**
+ * El motor del aparato que entra (DP-20.1): qué navegador interno trae y qué no entiende. Lo mide
+ * la página («Probar compatibilidad») y sirve para conocer los motores de todos los aparatos sin
+ * ir a cada uno. No lleva datos de nadie: el agente de usuario, la versión y una lista de `id`.
+ */
+export interface MotorDelAparato {
+  readonly ua: string;
+  readonly mayor: number | null;
+  readonly nivel: 'moderno' | 'compatible' | 'demasiado-viejo';
+  readonly fallan: readonly string[];
+}
+
+/**
+ * Deja en la auditoría la entrada (o el fallo) al laboratorio, en su propia transacción. El motor
+ * sólo se guarda con la entrada: quien falla la contraseña no deja escrito nada suyo.
+ */
+export async function dejarRastroDelProveedor(
+  quien: QuienIntenta,
+  entro: boolean,
+  motor?: MotorDelAparato,
+): Promise<void> {
   const accion = entro ? ACCION_ENTRAR : ACCION_FALLAR;
   await conTransaccion((tx) =>
     repoComandos.escribirAuditoria(tx, {
@@ -131,6 +150,7 @@ export async function dejarRastroDelProveedor(quien: QuienIntenta, entro: boolea
         comando: accion,
         rol: quien.rol,
         empleoId: quien.empleoId,
+        ...(entro && motor !== undefined ? { motor } : {}),
       }),
     }),
   );
