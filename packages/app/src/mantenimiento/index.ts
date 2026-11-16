@@ -42,3 +42,8 @@ export {
   quitarBloqueoDeOperacion,
   type ResultadoDeOperacion,
 } from './operacion-real.ts';
+export {
+  entradaRenombrarAparatos,
+  renombrarAparatos,
+  type AparatosRenombrados,
+} from './renombrar-aparatos.ts';

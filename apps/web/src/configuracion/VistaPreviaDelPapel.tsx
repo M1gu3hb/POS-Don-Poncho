@@ -55,7 +55,7 @@ export function VistaPreviaDelPapel({
       como="div"
       relleno={0}
       data-vista-previa-del-papel={papel}
-      className="max-h-[32rem] overflow-auto bg-white p-(--espacio-2)"
+      className="max-h-[32rem] overflow-auto bg-fondo-sutil p-(--espacio-2)"
     >
       <PreCuentaTicket
         venta={VENTA}

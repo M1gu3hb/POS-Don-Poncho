@@ -85,11 +85,86 @@ const MOTIVOS_DEL_CAJON: Readonly<Record<string, string>> = {
   otro: 'otro motivo',
 };
 
+const objeto = (valor: unknown): Payload =>
+  typeof valor === 'object' && valor !== null && !Array.isArray(valor) ? (valor as Payload) : {};
+
+/** «16 % incluido en el precio», «8 % sumado al precio» o «sin IVA». */
+function ivaEnPalabras(valor: unknown): string {
+  const iva = objeto(valor);
+  const puntos = Number(iva['puntosBase']);
+  if (!Number.isFinite(puntos) || puntos <= 0) return 'sin IVA';
+  return `${String(puntos / 100)} % ${iva['incluidoEnPrecio'] === false ? 'sumado al precio' : 'incluido en el precio'}`;
+}
+
+/** «comensales y Caja», «comensales, mesero y Caja» o «nadie». */
+function quienElige(valor: unknown): string {
+  const casillas = objeto(valor);
+  const quienes = [
+    casillas['comensales'] === true ? 'comensales' : null,
+    casillas['mesero'] === true ? 'mesero' : null,
+    casillas['caja'] === true ? 'Caja' : null,
+  ].filter((q): q is string => q !== null);
+  if (quienes.length === 0) return 'nadie';
+  if (quienes.length === 1) return quienes[0] ?? 'nadie';
+  return `${quienes.slice(0, -1).join(', ')} y ${quienes[quienes.length - 1] ?? ''}`;
+}
+
+/** «10 %», «sin propina» o «por decidir». Nunca un importe: la propina se calcula sobre el total. */
+function propinaEnPalabras(valor: unknown): string {
+  const propina = objeto(valor);
+  const tipo = texto(propina['tipo']);
+  const puntos = Number(propina['puntosBase']);
+  if (tipo === 'sin_propina') return 'sin propina';
+  if (Number.isFinite(puntos) && puntos > 0) return `${String(puntos / 100)} %`;
+  return 'por decidir';
+}
+
+/** Los nombres por lugar; sin nombre, «Caja N». Tantos como tenga la lista más larga de las dos. */
+function nombresDeCajas(lista: unknown, laOtra: unknown): string {
+  const propia: readonly unknown[] = Array.isArray(lista) ? lista : [];
+  const ajena: readonly unknown[] = Array.isArray(laOtra) ? laOtra : [];
+  const cuantas = Math.max(propia.length, ajena.length, 1);
+  return Array.from({ length: cuantas }, (_, i) => {
+    const nombre = texto(propia[i]);
+    return `«${nombre === '' ? `Caja ${String(i + 1)}` : nombre}»`;
+  }).join(', ');
+}
+
 const DESCRIPCIONES: Readonly<
   Record<string, (p: Payload, folios: ConFolios | null | undefined) => string>
 > = {
+  // DP-21 · Bloque 5: una terminal es un APARATO; la caja es un lugar con su nombre.
   'caja.nombrar_terminal': (p) =>
-    `Cambió el nombre de una caja: «${texto(p['antes'])}» → «${texto(p['despues'])}»`,
+    `Cambió el nombre de un aparato: «${texto(p['antes'])}» → «${texto(p['despues'])}»`,
+  'caja.nombrar_cajas': (p) =>
+    `Nombres de las cajas: ${nombresDeCajas(p['antes'], p['despues'])} → ${nombresDeCajas(p['despues'], p['antes'])}`,
+  'mantenimiento.renombrar_aparatos': (p) => {
+    const omitidos = Number(p['omitidos']) || 0;
+    const resto =
+      omitidos === 0
+        ? ''
+        : omitidos === 1
+          ? ' (1 se quedó como estaba)'
+          : ` (${String(omitidos)} se quedaron como estaban)`;
+    return `Renombró ${texto(p['renombrados'])} aparatos de «Caja N» a «Aparato N»${resto}`;
+  },
+  // DP-21 · Bloque 6 (H1): desde el arranque real, lo cobrado ya no se borra.
+  'mantenimiento.activar_operacion': (p) =>
+    p['yaEstaba'] === true
+      ? 'Pidió activar la operación real: ya estaba activa'
+      : 'Activó la operación real: desde aquí lo cobrado ya no se borra',
+  'mantenimiento.quitar_bloqueo_de_operacion': () => 'QUITÓ el bloqueo de la operación real',
+  // DP-21 · Bloques 1, 2 y 4.
+  'configuracion.fijar_impuesto': (p) =>
+    `Cambió el IVA: ${ivaEnPalabras(p['antes'])} → ${ivaEnPalabras(p['despues'])}`,
+  'configuracion.fijar_candado_de_mando': (p) =>
+    `Candado del mando sin uso: ${texto(objeto(p['antes'])['minutos'])} min → ${texto(objeto(p['despues'])['minutos'])} min`,
+  'configuracion.fijar_quien_elige_la_propina': (p) =>
+    `Quién elige la propina: ${quienElige(p['antes'])} → ${quienElige(p['despues'])}`,
+  'cuenta.fijar_propina': (p) =>
+    p['cambio'] === true
+      ? `La Caja CAMBIÓ la propina que ya estaba elegida: ${propinaEnPalabras(p['antes'])} → ${propinaEnPalabras(p['despues'])}`
+      : `La Caja eligió la propina: ${propinaEnPalabras(p['despues'])}`,
   'caja.fijar_cajas_simultaneas': (p) =>
     `Cajas abiertas a la vez: ${texto(p['antes'])} → ${texto(p['despues'])}`,
   'caja.fijar_umbral_de_retiro': (p) =>
