@@ -2,10 +2,12 @@ import 'server-only';
 
 import { ErrorDominio, PAQUETES_PORTAL } from '@morphiqpos/contracts';
 
+import { hayCupoParaAvisar, yaSeAvisoDeMas } from './cupo-de-avisos.ts';
 import { definirComandoPublico, type ContextoPortal } from './definicion-publica.ts';
 import { violaIndice } from './errores-sql.ts';
 import { ORDEN_ACTIVA } from './estados.ts';
 import { entradaCrearSolicitud } from './esquemas.ts';
+import { huellaSiEsFirmado } from './telefono.ts';
 
 /**
  * `portal.crear_solicitud` — «llama al mesero» sin carrera (E7-3).
@@ -36,9 +38,22 @@ export const crearSolicitudQR = definirComandoPublico<
   paquetes: PAQUETES_PORTAL,
   entrada: entradaCrearSolicitud,
   async ejecutar(ctx, entrada) {
+    // DP-21 · El tope de avisos va primero: lo que se rechaza también gasta cuota.
+    const huella = huellaSiEsFirmado(ctx.pimienta, entrada.dispositivo);
+    const hayCupo = await ctx.paso('cupo_de_avisos', () => hayCupoParaAvisar(ctx, huella));
+    if (!hayCupo) throw yaSeAvisoDeMas(entrada.tipo);
+
     exigirTipoHabilitado(ctx, entrada.tipo);
 
     const ordenId = await ctx.paso('buscar_venta', () => ordenActiva(ctx));
+    // DP-21 · «Pedir la cuenta» sólo con la cuenta abierta: sin ella no hay nada que pedir, y el
+    // aviso sería ruido para el mesero (el QR de una mesa vacía lo puede tocar cualquiera).
+    if (entrada.tipo === 'cuenta' && ordenId === null) {
+      throw new ErrorDominio(
+        'ORDEN_NO_ENCONTRADA',
+        'No hay una cuenta abierta en esta mesa. Llama al mesero.',
+      );
+    }
     const ruteo = ruteoDeLaMesa(ctx);
 
     const id = await ctx.paso('crear_solicitud', () =>

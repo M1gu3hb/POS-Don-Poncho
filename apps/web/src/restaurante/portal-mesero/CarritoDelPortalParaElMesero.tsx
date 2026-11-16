@@ -32,6 +32,7 @@ import {
   useCarritoDelMesero,
   type MesaBuscada,
 } from './api-del-carrito-del-mesero';
+import { etiquetaDelTelefono } from './etiqueta-del-telefono';
 import { RenglonDelCarritoDelMesero } from './RenglonDelCarritoDelMesero';
 
 /**
@@ -174,7 +175,9 @@ export function CarritoDelPortalParaElMesero({
       ) : (
         porTelefono(carrito.lineas).map(([telefono, lineas]) => (
           <div key={telefono} className="flex min-w-0 flex-col gap-(--espacio-1)">
-            <p className="text-xs font-semibold text-texto-sutil">Teléfono {telefono}</p>
+            <p className="text-xs font-semibold text-texto-sutil">
+              {etiquetaDelTelefono(telefono, lineas)}
+            </p>
             <ul className="flex flex-col">
               {lineas.map((linea) => (
                 <RenglonDelCarritoDelMesero

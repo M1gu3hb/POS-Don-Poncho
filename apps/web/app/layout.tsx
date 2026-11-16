@@ -85,10 +85,9 @@ export const metadata: Metadata = {
     ],
     apple: { url: '/iconos/apple-touch-icon.png', sizes: '180x180' },
   },
-  // DP-15 · En el iPhone, «Agregar a pantalla de inicio» abre como app y se llama «Don Poncho».
-  appleWebApp: { capable: true, title: 'Don Poncho', statusBarStyle: 'default' },
-  // Next emite `mobile-web-app-capable`; el iPhone de antes de iOS 16.4 sólo lee ésta (QA, H-03).
-  other: { 'apple-mobile-web-app-capable': 'yes' },
+  // DP-21 · El sitio NO se instala: ni manifiesto, ni modo app de iPhone, ni service worker. El
+  // personal usa las apps de Morphiq (.exe y .apk) y los comensales, sólo el navegador. Los íconos
+  // de arriba se quedan (pestaña y favicon); lo vigila `sin-instalacion.contrato.test.ts`.
 };
 
 export const viewport: Viewport = {
