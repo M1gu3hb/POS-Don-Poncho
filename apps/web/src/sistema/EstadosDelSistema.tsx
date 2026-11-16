@@ -176,7 +176,11 @@ function Muestra({ pieza, nombre, c }: { pieza: string; nombre: string; c: Conju
         {rotulo('tarjeta elegida')}
       </label>
       <p data-muestra-de="seleccion">Texto que se selecciona para ver su color</p>
-      <button type="button" data-muestra-de="foco" className="rounded-md border px-(--espacio-3) py-2">
+      <button
+        type="button"
+        data-muestra-de="foco"
+        className="rounded-md border px-(--espacio-3) py-2"
+      >
         {rotulo('botón con foco')}
       </button>
     </section>
@@ -187,7 +191,10 @@ export function EstadosDelSistema() {
   // Fuera del armazón del POS (aquí no hay), el relleno de `:has()` se monta por su cuenta.
   useEffect(() => montarTieneEnElNavegador(), []);
   return (
-    <main className="grid gap-(--espacio-6) p-(--espacio-6) lg:grid-cols-2" aria-label="Estados de las piezas">
+    <main
+      className="grid gap-(--espacio-6) p-(--espacio-6) lg:grid-cols-2"
+      aria-label="Estados de las piezas"
+    >
       <Muestra
         pieza="sistema"
         nombre="Sistema"
