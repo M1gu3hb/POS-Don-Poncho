@@ -51,6 +51,7 @@ const ROTULO = />\s*(IVA|Impuestos?)\s*<|['"`](IVA|IVA incluido|Impuestos?)['"`]
  */
 const NO_SON_RENGLONES: Readonly<Record<string, string>> = {
   'src/configuracion/IvaDelNegocio.tsx': 'es el ajuste: el título «IVA» de su tarjeta',
+  'src/configuracion/secciones.ts': 'el mapa de la Configuración: el título «IVA» de su tarjeta',
   'heredado/lib/exportColumns.js':
     'define la columna; quien exporta la quita con `sinColumnaDeIvaEnCeros` (se afirma abajo)',
 };

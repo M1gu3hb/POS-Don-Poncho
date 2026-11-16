@@ -123,3 +123,24 @@ export {
   type FolioEntendido,
   type ResultadoDelPrefijo,
 } from './folio-visible.ts';
+
+export {
+  AVISO_SIN_FOLIO,
+  CAMPOS_DEL_PAPEL,
+  IDS_DE_CAMPOS,
+  LO_QUE_NUNCA_SE_QUITA,
+  NOMBRE_DEL_PAPEL,
+  PAPELES_DE_VENTA,
+  PAPEL_POR_OMISION,
+  avisoAlQuitar,
+  camposDelPapel,
+  completarPapel,
+  papelIgual,
+  seEnsena,
+  type CampoDelPapel,
+  type ElegidoDeUnPapel,
+  type IdDeCampo,
+  type PapelATuGusto,
+  type PapelATuGustoParcial,
+  type PapelDeVenta,
+} from './campos-del-papel.ts';

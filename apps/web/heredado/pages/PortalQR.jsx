@@ -9,7 +9,7 @@ import ErrorBoundary from '@/components/common/ErrorBoundary';
 import MesasQRTab from '@/components/portalqr/MesasQRTab';
 import MenuQRTab from '@/components/portalqr/MenuQRTab';
 import SolicitudesQRTab from '@/components/portalqr/SolicitudesQRTab';
-import ConfiguracionQRTab from '@/components/portalqr/ConfiguracionQRTab';
+import { Link } from '@/enrutado';
 import { PersonalizarMenu } from '~/restaurante/personalizar-menu/PersonalizarMenu';
 
 /**
@@ -48,7 +48,7 @@ export default function PortalQRPage() {
             <TabsTrigger value="menu">Menú QR</TabsTrigger>
             <TabsTrigger value="personalizar">Personalizar menú</TabsTrigger>
             <TabsTrigger value="solicitudes">Solicitudes</TabsTrigger>
-            <TabsTrigger value="config">Configuración</TabsTrigger>
+            <TabsTrigger value="config">Ajustes del portal</TabsTrigger>
           </TabsList>
 
           <TabsContent value="mesas" className="mt-4">
@@ -66,7 +66,22 @@ export default function PortalQRPage() {
             <SolicitudesQRTab />
           </TabsContent>
           <TabsContent value="config" className="mt-4">
-            <ConfiguracionQRTab config={config} />
+            {/* DP-21 · Bloque 21: los ajustes del portal viven en Configuración → Portal de comensales
+                (un solo lugar, nunca el mismo ajuste en dos). Aquí queda lo operativo. */}
+            <div className="rounded-xl border bg-superficie p-4 max-w-2xl space-y-2">
+              <p className="text-sm font-bold">Los ajustes del portal están en Configuración</p>
+              <p className="text-xs text-muted-foreground">
+                Activar el portal, cómo se ve el menú, quién manda a cocina, los botones de
+                atención, la cuenta y la propina. Aquí sigues administrando los QR, el menú y las
+                solicitudes.
+              </p>
+              <Link
+                to="/configuracion?seccion=portal"
+                className="inline-flex text-sm font-medium underline underline-offset-2"
+              >
+                Ir a Configuración → Portal de comensales
+              </Link>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

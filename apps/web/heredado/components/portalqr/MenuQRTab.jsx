@@ -234,6 +234,7 @@ export default function MenuQRTab() {
                   <Label className="text-xs">Orden</Label>
                   <Input
                     type="number"
+                    inputMode="numeric"
                     value={editForm.orden}
                     onChange={(e) => setEditForm({ ...editForm, orden: e.target.value })}
                   />

@@ -21,7 +21,7 @@ const PANTALLAS = [
   'heredado/components/portalqr/MesasQRTab.jsx',
   'heredado/components/portalqr/QRMesaDialog.jsx',
   'heredado/components/tickets/PreCuentaTicket.jsx',
-  'heredado/pages/Configuracion.jsx',
+  'heredado/components/configuracion/MapaDeMesasDeConfiguracion.jsx',
   'heredado/pages/PortalCliente.jsx',
 ] as const;
 

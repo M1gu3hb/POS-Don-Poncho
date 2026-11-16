@@ -992,11 +992,10 @@ export async function prepararElPortalDelComensal(
 ): Promise<string> {
   const envian = que.envian ?? (que.pedidosDelComensal === true ? 'comensales' : 'mesero');
   const abrenMesa = envian === 'comensales' && (que.abrenMesa ?? que.envian === undefined);
-  // 1 · Configuración → Operación: «Activar asignación de mesas a meseros», encendida si la mesa
-  // lleva mesero y apagada si no.
+  // 1 · Configuración → Salón: «Activar asignación de mesas a meseros», encendida si la mesa
+  // lleva mesero y apagada si no (DP-21 · Bloque 21: cada tarjeta guarda lo suyo).
   const conAsignacion = que.mesero !== null;
-  await duena.goto('/configuracion');
-  await duena.getByRole('tab', { name: 'Operación' }).click();
+  await duena.goto('/configuracion?seccion=salon');
   const asignacion = duena
     .getByText('Activar asignación de mesas a meseros')
     .locator('xpath=ancestor::div[contains(@class,"flex items-start")][1]')
@@ -1006,8 +1005,15 @@ export async function prepararElPortalDelComensal(
     await asignacion.click();
   }
   await expect(asignacion).toHaveAttribute('aria-checked', String(conAsignacion));
+  await guardarLaTarjeta(duena, 'Asignación de mesas a meseros');
+  await expect
+    .poll(async () => (await configuracionDelNegocio(duena))['asignacion_mesas_activa'], {
+      message: 'La asignación de mesas no quedó guardada en el servidor.',
+    })
+    .toBe(conAsignacion);
   if (que.pedidosDelComensal === true) {
-    // «Permitir que el comensal envíe pedidos desde el QR»: con y sin asignación (DP-9.2).
+    // Configuración → Portal de comensales → Pedidos: «Permitir que el comensal envíe pedidos».
+    await duena.goto('/configuracion?seccion=portal');
     const pedidos = duena
       .getByText('Permitir que el comensal envíe pedidos desde el QR')
       .locator('xpath=ancestor::div[contains(@class,"flex items-start")][1]')
@@ -1015,14 +1021,7 @@ export async function prepararElPortalDelComensal(
     await expect(pedidos).toBeEnabled();
     if ((await pedidos.getAttribute('aria-checked')) !== 'true') await pedidos.click();
     await expect(pedidos).toHaveAttribute('aria-checked', 'true');
-  }
-  await duena.getByRole('button', { name: 'Guardar configuración' }).first().click();
-  await expect
-    .poll(async () => (await configuracionDelNegocio(duena))['asignacion_mesas_activa'], {
-      message: 'La asignación de mesas no quedó guardada en el servidor.',
-    })
-    .toBe(conAsignacion);
-  if (que.pedidosDelComensal === true) {
+    await guardarLaTarjeta(duena, 'Pedidos desde el portal');
     await expect
       .poll(
         async () => (await configuracionDelNegocio(duena))['portal_qr_permitir_pedidos_cliente'],
@@ -1034,9 +1033,8 @@ export async function prepararElPortalDelComensal(
   // 2 · Configuración → Mesas: el mesero de la mesa, si lleva.
   if (que.mesero !== null) await asignarElMesero(duena, que.mesa, que.zona, que.mesero);
 
-  // 3 · Portal QR → Configuración: encenderlo y dejar que sea el comensal quien pide la cuenta.
-  await duena.goto('/portal-qr');
-  await duena.getByRole('tab', { name: 'Configuración' }).click();
+  // 3 · Configuración → Portal de comensales: encenderlo y dejar que sea el comensal quien pide la cuenta.
+  await duena.goto('/configuracion?seccion=portal');
   const fila = (rotulo: string) =>
     duena
       .getByText(rotulo, { exact: true })
@@ -1058,7 +1056,13 @@ export async function prepararElPortalDelComensal(
   if (envian === 'comensales' && (await abren.getAttribute('aria-checked')) !== String(abrenMesa)) {
     await abren.click();
   }
-  await duena.getByRole('button', { name: 'Guardar configuración' }).click();
+  for (const tarjeta of [
+    'Activación y menú',
+    'Pedidos desde el portal',
+    'Cuenta y propina desde QR',
+  ]) {
+    await guardarLaTarjeta(duena, tarjeta);
+  }
   await expect
     .poll(
       async () => {
@@ -1105,7 +1109,7 @@ async function asignarElMesero(
   zona: string,
   mesero: string,
 ): Promise<void> {
-  await duena.getByRole('tab', { name: 'Mesas' }).click();
+  await duena.goto('/configuracion?seccion=salon');
   await duena.getByRole('button', { name: new RegExp(`^${escapar(zona)}`) }).click();
   const enLaLista = duena.getByRole('button', { name: `Editar mesa ${String(mesa)}`, exact: true });
   const delMapa = duena.locator('div.select-none').getByText(String(mesa), { exact: true }).first();
@@ -1122,4 +1126,17 @@ async function asignarElMesero(
       message: `La mesa ${String(mesa)} no quedó con su mesero asignado en el servidor.`,
     })
     .toBe(mesero);
+}
+
+/**
+ * Configuración → una tarjeta: toca su «Guardar» si hay algo que guardar (DP-21 · Bloque 21: cada
+ * tarjeta guarda sólo lo suyo y su botón está apagado mientras no cambió nada).
+ */
+export async function guardarLaTarjeta(page: Page, tarjeta: string): Promise<void> {
+  const guardar = page.getByRole('region', { name: tarjeta }).getByRole('button', {
+    name: 'Guardar',
+    exact: true,
+  });
+  await expect(guardar).toBeVisible();
+  if (await guardar.isEnabled()) await guardar.click();
 }

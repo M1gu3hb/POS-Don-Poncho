@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { refConOrigenDeVentana } from '@morphiqpos/ui/ventanas';
+import { focoAlAbrir } from '@morphiqpos/ui/foco-al-abrir';
 
 const Dialog = DialogPrimitive.Root;
 
@@ -27,15 +28,18 @@ const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
-const DialogContent = React.forwardRef(({ className, children, ...props }, ref) => (
+const DialogContent = React.forwardRef(({ className, children, onOpenAutoFocus, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
+      data-slot="dialog-content"
       ref={refConOrigenDeVentana(ref)}
       className={cn(
         'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg ventana-emergente sm:rounded-lg',
         className,
       )}
+      // DP-21 · M16/O7: con el dedo, el foco no va al primer campo (el teclado saldría solo).
+      onOpenAutoFocus={focoAlAbrir(onOpenAutoFocus)}
       {...props}
     >
       {children}

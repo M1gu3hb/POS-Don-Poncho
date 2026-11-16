@@ -117,6 +117,15 @@ export {
 } from './copias-de-impresion.ts';
 
 export {
+  CLAVE_PAPEL_A_TU_GUSTO,
+  cambiosDelPapel,
+  entradaFijarPapelATuGusto,
+  esquemaPapelATuGusto,
+  fijarPapelATuGusto,
+  papelATuGustoEn,
+} from './papel-a-tu-gusto.ts';
+
+export {
   CLAVE_NOMBRES_DE_CAJAS,
   LUGARES_MAXIMOS,
   cajaConSuAparato,

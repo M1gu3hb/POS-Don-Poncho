@@ -96,7 +96,7 @@ test.describe('QA-1 · 00 · preparar la copia', () => {
 
       await test.step('estaciones: Postres y Barbacoa, con su categoría y su cocinero', async () => {
         if (leerEstado()['cocineros'] !== undefined) return; // ya hechas en una vuelta anterior
-        await duena.goto('/configuracion?tab=negocio');
+        await duena.goto('/configuracion?seccion=cocina');
         const cocineros: Record<string, { nombre: string; pin: string }> = {};
         for (const { nombre, categorias } of ESTACIONES_NUEVAS) {
           await crearEstacion(duena, nombre);

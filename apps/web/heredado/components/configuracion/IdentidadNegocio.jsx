@@ -17,12 +17,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import ColoresSistemaSection from '@/components/configuracion/ColoresSistemaSection';
+import { useCambiosSinGuardar } from '~/configuracion/cambios-sin-guardar';
 import {
   MARCA_DE_PLATAFORMA,
   marcaVisibleDePlataforma,
   nombreVisibleDelSistema,
 } from '~/marca/nombre-visible';
+
+/** DP-21 · Bloque 21: la identidad se reparte en tarjetas; cada una guarda sólo estas claves. */
+const CLAVES_DEL_GRUPO = {
+  marca: ['nombre_sistema', 'platform_brand', 'logo_url'],
+  'logos-de-papel': ['logo_ticket_url', 'logo_pdf_url'],
+  fondo: ['background_image_url', 'background_logo_url', 'background_opacity', 'background_fit'],
+  importes: ['colorear_importes_monetarios'],
+};
+const TITULOS_DEL_GRUPO = {
+  marca: 'Logo y marca',
+  'logos-de-papel': 'Logos del ticket y de los PDF',
+  fondo: 'Fondo del sistema',
+  importes: 'Importes en color',
+};
+const AYUDA_DEL_GRUPO = {
+  marca: 'Los nombres y el logo con los que se ve el sistema en pantallas, tickets y PDFs.',
+  'logos-de-papel': 'El logo que sale en el ticket térmico y el que sale en cortes y reportes.',
+  fondo: 'La imagen o marca de agua de fondo de las pantallas.',
+  importes: 'Si los importes de dinero llevan color o se ven sobrios.',
+};
 
 /**
  * Sección "Identidad del negocio".
@@ -36,7 +56,7 @@ import {
  *
  * Opacidad del fondo: 0% a 100%.
  */
-export default function IdentidadNegocio({ cfg }) {
+export default function IdentidadNegocio({ cfg, grupo = 'marca' }) {
   const queryClient = useQueryClient();
   // DP-18: lo que se leyó al hidratar; al guardar sólo viaja lo que difiere de esto.
   const leido = useRef({});
@@ -58,6 +78,7 @@ export default function IdentidadNegocio({ cfg }) {
   });
   const [uploading, setUploading] = useState(null); // 'logo'|'ticket'|'pdf'|'bg'|'bgimage'
   const [saving, setSaving] = useState(false);
+  const [guardado, setGuardado] = useState(false);
 
   // HOTFIX persistencia: solo hidratar cuando cfg ya viene del backend (tiene id).
   // Sin esta guarda, en el primer render cfg = {} y los || pisaban el form con
@@ -124,53 +145,38 @@ export default function IdentidadNegocio({ cfg }) {
     e.target.value = '';
   };
 
+  // DP-21 · Bloque 21: cada tarjeta guarda SÓLO lo suyo (sus claves), con su «Guardado».
+  const clavesDelGrupo = CLAVES_DEL_GRUPO[grupo] ?? [];
+  const seccionDelGrupo = Object.fromEntries(
+    Object.entries({
+      nombre_sistema: form.nombre_sistema,
+      platform_brand: form.platform_brand,
+      logo_url: form.logo_url,
+      logo_ticket_url: form.logo_ticket_url,
+      logo_pdf_url: form.logo_pdf_url,
+      background_logo_url: form.background_logo_url,
+      background_image_url: form.background_image_url,
+      background_opacity: form.background_opacity,
+      background_fit: form.background_fit,
+      colorear_importes_monetarios: form.colorear_importes_monetarios,
+    }).filter(([clave]) => clavesDelGrupo.includes(clave)),
+  );
+  const sucia = !!cfg?.id && hayCambios(parcheDeLaSeccion(seccionDelGrupo, leido.current));
+  useCambiosSinGuardar('identidad:' + grupo, sucia);
+
   const save = async () => {
     setSaving(true);
+    setGuardado(false);
     try {
-      // HOTFIX: solo enviamos los campos que ESTA sección administra.
-      // Antes mandábamos `form` directo, lo cual era seguro porque form solo
-      // tiene campos de Identidad — pero formalizamos el payload para evitar
-      // que cualquier campo huésped accidental pise Operación. Esto garantiza
-      // que guardar Identidad nunca toca asignacion_mesas_activa, propinas_activas,
-      // direccion, telefono, correo, mensaje_ticket, etc.
-      const seccion = {
-        nombre_negocio: form.nombre_negocio,
-        nombre_sistema: form.nombre_sistema,
-        platform_brand: form.platform_brand,
-        logo_url: form.logo_url,
-        logo_ticket_url: form.logo_ticket_url,
-        logo_pdf_url: form.logo_pdf_url,
-        background_logo_url: form.background_logo_url,
-        background_image_url: form.background_image_url,
-        background_opacity: form.background_opacity,
-        background_fit: form.background_fit,
-        ticket_footer: form.ticket_footer,
-        pdf_footer: form.pdf_footer,
-        footer_text: form.footer_text,
-        colorear_importes_monetarios: form.colorear_importes_monetarios,
-      };
-      const payload = parcheDeLaSeccion(seccion, cfg?.id ? leido.current : {});
+      const payload = parcheDeLaSeccion(seccionDelGrupo, cfg?.id ? leido.current : {});
       if (cfg?.id && !hayCambios(payload)) {
         toast.info('No hay cambios que guardar');
         setSaving(false);
         return;
       }
-      if (cfg?.id) {
-        await api.entidades.ConfiguracionNegocio.update(cfg.id, payload);
-      } else {
-        // `ConfiguracionNegocio` NO se crea: es un documento, no una fila, y
-        // `guardarConfiguracionParcial` INSERTA solo cuando el negocio todavía
-        // no tiene ninguno (`configuracion.ts:220`). `update` cubre las dos
-        // veces. La rama `create` que había aquí no sólo sobraba: el puente la
-        // rechaza —«sólo se actualiza, no se crea ni se borra»— así que este
-        // camino de «primera vez» fallaba siempre.
-        await api.entidades.ConfiguracionNegocio.update(undefined, {
-          ...payload,
-          nombre_negocio: seccion.nombre_negocio || 'Mi Negocio',
-        });
-      }
-      queryClient.invalidateQueries({ queryKey: ['config'] });
-      toast.success('Identidad guardada correctamente');
+      await api.entidades.ConfiguracionNegocio.update(cfg?.id, payload);
+      await queryClient.invalidateQueries({ queryKey: ['config'] });
+      setGuardado(true);
     } catch (err) {
       toast.error('Error al guardar: ' + (err?.message || ''));
     }
@@ -237,55 +243,46 @@ export default function IdentidadNegocio({ cfg }) {
   );
 
   const opacityPct = Math.round((form.background_opacity || 0) * 100);
+  const es = (g) => grupo === g;
 
   return (
-    <Card>
+    <Card className="mt-4">
       <CardHeader>
-        <CardTitle className="text-base font-heading">Identidad del negocio</CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Personaliza nombres, logos y datos del negocio. Estos valores se usan en pantallas,
-          tickets y PDFs.
-        </p>
+        <CardTitle className="text-base font-heading">{TITULOS_DEL_GRUPO[grupo]}</CardTitle>
+        <p className="text-xs text-muted-foreground">{AYUDA_DEL_GRUPO[grupo]}</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Nombres */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label className="text-xs">Nombre del negocio</Label>
-            <Input
-              value={form.nombre_negocio}
-              onChange={(e) => setForm({ ...form, nombre_negocio: e.target.value })}
-              placeholder="Mi Restaurante"
-            />
-          </div>
-          <div>
-            <Label className="text-xs">Nombre del sistema</Label>
-            <Input
-              value={form.nombre_sistema}
-              onChange={(e) => setForm({ ...form, nombre_sistema: e.target.value })}
-              placeholder="Morphiq POS"
-            />
-          </div>
-          <div>
-            <Label className="text-xs">Plataforma (marca)</Label>
-            <Input
-              value={form.platform_brand}
-              onChange={(e) => setForm({ ...form, platform_brand: e.target.value })}
-              placeholder="Morphiq"
-            />
-          </div>
-        </div>
-
-        {/* Logos */}
-        <div className="border-t pt-4">
-          <p className="text-sm font-semibold mb-3">Logos del negocio</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {es('marca') && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs">Nombre del sistema</Label>
+                <Input
+                  value={form.nombre_sistema}
+                  onChange={(e) => setForm({ ...form, nombre_sistema: e.target.value })}
+                  placeholder="Morphiq POS"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Plataforma (marca)</Label>
+                <Input
+                  value={form.platform_brand}
+                  onChange={(e) => setForm({ ...form, platform_brand: e.target.value })}
+                  placeholder="Morphiq"
+                />
+              </div>
+            </div>
             <ImageField
               field="logo_url"
               label="Logo del negocio"
               helper="Se usa en sidebar, login y como fallback de los demás"
               uploadKey="logo"
             />
+          </>
+        )}
+
+        {es('logos-de-papel') && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ImageField
               field="logo_ticket_url"
               label="Logo en tickets"
@@ -299,111 +296,72 @@ export default function IdentidadNegocio({ cfg }) {
               uploadKey="pdf"
             />
           </div>
-        </div>
+        )}
 
-        {/* Fondo del sistema */}
-        <div className="border-t pt-4">
-          <p className="text-sm font-semibold mb-1">Fondo del sistema</p>
-          <p className="text-xs text-muted-foreground mb-3">
-            Imagen que se muestra como fondo de las pantallas del sistema. Si subes una imagen aquí
-            se usará como <strong>fondo completo</strong> (cubre toda la pantalla). Si la dejas
-            vacía, se usará el "Logo de fondo" como marca de agua.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <ImageField
-              field="background_image_url"
-              label="Fondo del sistema (imagen completa)"
-              helper="Se aplica como fondo a pantalla completa."
-              uploadKey="bgimage"
-              preview="wide"
-            />
-            <ImageField
-              field="background_logo_url"
-              label="Logo de fondo (marca de agua)"
-              helper="Solo se usa si no hay imagen de fondo arriba."
-              uploadKey="bg"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            <div>
-              <Label className="text-xs">Opacidad del fondo: {opacityPct}%</Label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={form.background_opacity}
-                onChange={(e) =>
-                  setForm({ ...form, background_opacity: parseFloat(e.target.value) })
-                }
-                className="w-full mt-1"
+        {es('fondo') && (
+          <div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Imagen que se muestra como fondo de las pantallas del sistema. Si subes una imagen aquí
+              se usará como <strong>fondo completo</strong> (cubre toda la pantalla). Si la dejas
+              vacía, se usará el "Logo de fondo" como marca de agua.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <ImageField
+                field="background_image_url"
+                label="Fondo del sistema (imagen completa)"
+                helper="Se aplica como fondo a pantalla completa."
+                uploadKey="bgimage"
+                preview="wide"
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                0% = invisible · 100% = totalmente visible.
-              </p>
-            </div>
-            <div>
-              <Label className="text-xs">Ajuste del fondo</Label>
-              <Select
-                value={form.background_fit}
-                onValueChange={(v) => setForm({ ...form, background_fit: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cover">Cubrir toda la pantalla (recomendado)</SelectItem>
-                  <SelectItem value="contain">Mostrar imagen completa</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Solo aplica al "Fondo del sistema".
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Datos de contacto (dirección/teléfono/correo) — viven ahora en
-            Operación → Datos del negocio para evitar duplicación. */}
-
-        {/* Colores del sistema — afectan login, sidebar, botones, tarjetas. */}
-        <ColoresSistemaSection cfg={cfg} />
-
-        {/* Footers */}
-        <div className="border-t pt-4">
-          <p className="text-sm font-semibold mb-3">Pie de tickets y PDFs</p>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs">Pie del ticket térmico</Label>
-              <Input
-                value={form.ticket_footer}
-                onChange={(e) => setForm({ ...form, ticket_footer: e.target.value })}
-                placeholder="Ej: Visítanos pronto · @restaurante"
+              <ImageField
+                field="background_logo_url"
+                label="Logo de fondo (marca de agua)"
+                helper="Solo se usa si no hay imagen de fondo arriba."
+                uploadKey="bg"
               />
             </div>
-            <div>
-              <Label className="text-xs">Pie de los PDFs</Label>
-              <Input
-                value={form.pdf_footer}
-                onChange={(e) => setForm({ ...form, pdf_footer: e.target.value })}
-                placeholder="Ej: Documento confidencial"
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Texto legal o pie general</Label>
-              <Input
-                value={form.footer_text}
-                onChange={(e) => setForm({ ...form, footer_text: e.target.value })}
-                placeholder="Ej: RFC, dirección fiscal, etc."
-              />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div>
+                <Label className="text-xs">Opacidad del fondo: {opacityPct}%</Label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={form.background_opacity}
+                  onChange={(e) =>
+                    setForm({ ...form, background_opacity: parseFloat(e.target.value) })
+                  }
+                  className="w-full mt-1"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  0% = invisible · 100% = totalmente visible.
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs">Ajuste del fondo</Label>
+                <Select
+                  value={form.background_fit}
+                  onValueChange={(v) => setForm({ ...form, background_fit: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cover">Cubrir toda la pantalla (recomendado)</SelectItem>
+                    <SelectItem value="contain">Mostrar imagen completa</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Solo aplica al "Fondo del sistema".
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Apariencia */}
-        <div className="border-t pt-4">
-          <p className="text-sm font-semibold mb-3">Apariencia</p>
+        {es('importes') && (
           <div className="flex items-start justify-between gap-4 p-3 rounded-lg border bg-muted/30">
             <div className="flex-1">
               <Label className="text-sm font-medium">Colorear importes monetarios</Label>
@@ -418,12 +376,19 @@ export default function IdentidadNegocio({ cfg }) {
               onCheckedChange={(v) => setForm({ ...form, colorear_importes_monetarios: v })}
             />
           </div>
-        </div>
+        )}
 
-        <Button onClick={save} disabled={saving} className="gap-2">
-          <Save className="w-4 h-4" />
-          {saving ? 'Guardando…' : 'Guardar identidad'}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={save} disabled={saving || !sucia} className="gap-2" variant="outline">
+            <Save className="w-4 h-4" />
+            {saving ? 'Guardando…' : 'Guardar'}
+          </Button>
+          {guardado && (
+            <p role="status" className="text-sm font-medium">
+              ✓ Guardado
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

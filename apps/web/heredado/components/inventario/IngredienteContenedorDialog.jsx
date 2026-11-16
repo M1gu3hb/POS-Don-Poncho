@@ -224,6 +224,7 @@ export default function IngredienteContenedorDialog({ open, onClose, ingrediente
                 <Label className="text-xs">Capacidad por contenedor (ml) *</Label>
                 <Input
                   type="number"
+                  inputMode="numeric"
                   step="1"
                   min="0"
                   value={capacidadMl}
@@ -235,6 +236,7 @@ export default function IngredienteContenedorDialog({ open, onClose, ingrediente
                 <Label className="text-xs">Porciones por contenedor *</Label>
                 <Input
                   type="number"
+                  inputMode="numeric"
                   step="1"
                   min="0"
                   value={porciones}
@@ -246,6 +248,7 @@ export default function IngredienteContenedorDialog({ open, onClose, ingrediente
                 <Label className="text-xs">ml por porción (opcional)</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   min="0"
                   value={mlPorPorcion}

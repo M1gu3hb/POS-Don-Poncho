@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-import { configuracionDelNegocio } from '../ayudantes/mesas-heredadas.ts';
+import { configuracionDelNegocio, guardarLaTarjeta } from '../ayudantes/mesas-heredadas.ts';
 
 import { PRECIO, type Platillo } from './carta-qa.ts';
 
@@ -37,14 +37,13 @@ export async function escanearConLista(mesero: Page, mesa: number): Promise<void
   await deLaLista.click();
 }
 
-/** Portal QR → Configuración: quién manda a cocina y si los comensales abren su mesa. */
+/** Configuración → Portal de comensales: quién manda a cocina y si los comensales abren su mesa. */
 export async function quienEnviaDesdeElPortal(
   duena: Page,
   envian: 'mesero' | 'comensales',
   abrenMesa: boolean,
 ): Promise<void> {
-  await duena.goto('/portal-qr');
-  await duena.getByRole('tab', { name: 'Configuración' }).click();
+  await duena.goto('/configuracion?seccion=portal');
   const fila = (rotulo: string) =>
     duena
       .getByText(rotulo, { exact: true })
@@ -59,7 +58,7 @@ export async function quienEnviaDesdeElPortal(
     const abren = fila('Los comensales pueden abrir su mesa').getByRole('switch');
     if ((await abren.getAttribute('aria-checked')) !== String(abrenMesa)) await abren.click();
   }
-  await duena.getByRole('button', { name: 'Guardar configuración' }).click();
+  await guardarLaTarjeta(duena, 'Pedidos desde el portal');
   await expect
     .poll(
       async () => {

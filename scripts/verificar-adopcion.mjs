@@ -94,6 +94,24 @@ function ESTADOS_DE_LA_COCINA_GRANDE() {
  */
 export const SIN_ESTADO = [
   {
+    pantalla: 'tacto/MapaDeMesas',
+    estado: 'vacio',
+    razon:
+      'Pieza del mapa del mesero, no pantalla: dibuja lo que le pasan (las mesas, y encima «no hay mesas» y «cargando», que pinta la página que la usa). El fallo de la lectura lo dice la página.',
+  },
+  {
+    pantalla: 'tacto/MapaDeMesas',
+    estado: 'cargando',
+    razon:
+      'Pieza del mapa del mesero, no pantalla: dibuja lo que le pasan (las mesas, y encima «no hay mesas» y «cargando», que pinta la página que la usa). El fallo de la lectura lo dice la página.',
+  },
+  {
+    pantalla: 'tacto/MapaDeMesas',
+    estado: 'error',
+    razon:
+      'Pieza del mapa del mesero, no pantalla: dibuja lo que le pasan (las mesas, y encima «no hay mesas» y «cargando», que pinta la página que la usa). El fallo de la lectura lo dice la página.',
+  },
+  {
     pantalla: 'portal/menu-digital/MenuDigital',
     estado: 'error',
     razon:
@@ -263,10 +281,64 @@ export const SIN_ESTADO = [
       'Siempre está «Este aparato» (DP-21 · Bloque 5); la lista de los demás aparatos, si no hay ninguno, simplemente no se pinta: no es un vacío que haya que explicar.',
   },
   {
+    pantalla: 'configuracion/TarjetaDeAjustes',
+    estado: 'vacio',
+    razon:
+      'Campos fijos de la configuración (DP-21 · Bloque 21) con valores de omisión: no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/BarraLateralDelAparato',
+    estado: 'cargando',
+    razon:
+      'Lee el almacén del navegador, que responde al instante: no hay viaje al servidor (DP-21 · Bloque 21).',
+  },
+  {
+    pantalla: 'configuracion/BarraLateralDelAparato',
+    estado: 'error',
+    razon:
+      'No lee nada que pueda fallar: si el aparato no deja guardar, la elección vive en memoria (use-barra-lateral).',
+  },
+  {
+    pantalla: 'configuracion/TarjetaDeAjustes',
+    estado: 'cargando',
+    razon:
+      'Recibe la configuración que la pantalla ya leyó; mientras llega, sus campos van deshabilitados (DP-21 · Bloque 21).',
+  },
+  {
+    pantalla: 'configuracion/BarraLateralDelAparato',
+    estado: 'vacio',
+    razon:
+      'Dos opciones fijas (abierta o plegada) que se recuerdan en el aparato (DP-21 · Bloque 21): no tiene lista ni lectura al servidor.',
+  },
+  {
     pantalla: 'configuracion/FoliosDelNegocio',
     estado: 'vacio',
     razon:
       'Tres campos fijos (prefijo y los dos primeros folios) con valores de omisión (DP-21 · Bloque 6): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/VistaPreviaDelPapel',
+    estado: 'vacio',
+    razon:
+      'Dibuja una cuenta de ejemplo fija (DP-21 · Bloque 12): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/VistaPreviaDelPapel',
+    estado: 'cargando',
+    razon:
+      'Pieza de la tarjeta «El ticket a tu gusto», no pantalla: recibe ya leída la configuración que ésta cargó; el esqueleto de la espera lo pinta la tarjeta.',
+  },
+  {
+    pantalla: 'configuracion/VistaPreviaDelPapel',
+    estado: 'error',
+    razon:
+      'Pieza de la tarjeta «El ticket a tu gusto», no pantalla: no hace su propio viaje al servidor; el fallo de la lectura lo dice la tarjeta.',
+  },
+  {
+    pantalla: 'configuracion/PapelATuGusto',
+    estado: 'vacio',
+    razon:
+      'Dos columnas de interruptores fijos (DP-21 · Bloque 12): no tiene lista que pueda llegar vacía.',
   },
   {
     pantalla: 'configuracion/CandadoDeMando',

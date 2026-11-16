@@ -23,6 +23,7 @@ import {
   tasaEnTexto,
   type IvaDelNegocio as Iva,
 } from './iva-formulario.ts';
+import { useCambiosSinGuardar } from '~/configuracion/cambios-sin-guardar';
 
 /**
  * CONFIGURACIÓN → VENTAS Y COBRO · «IVA» (DP-21 · Bloque 1).
@@ -58,6 +59,8 @@ export function IvaDelNegocio({ puedeCambiar }: { readonly puedeCambiar: boolean
   const actual = elegido ?? guardado.data;
   const hayCambios =
     actual !== undefined && guardado.data !== undefined && !ivaIgual(actual, guardado.data);
+  // DP-21 · Bloque 21: salir con esto sin guardar avisa.
+  useCambiosSinGuardar('iva', hayCambios);
 
   async function guardar(): Promise<void> {
     if (guardando || actual === undefined) return;

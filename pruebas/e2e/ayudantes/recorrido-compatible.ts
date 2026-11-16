@@ -122,20 +122,19 @@ async function entrarConElPin(
 /** Configuración, pestaña por pestaña, hasta el laboratorio del proveedor. */
 async function recorrerConfiguracion(page: Page, alLlegar: EnLaParada): Promise<void> {
   await page.goto('/configuracion');
-  await expect(page.getByRole('tab', { name: 'Impresión' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Este aparato' })).toBeVisible();
   await page.waitForLoadState('networkidle');
   await alLlegar({ nombre: 'configuracion', tapar: [] });
 
-  await page.getByRole('tab', { name: 'Impresión' }).click();
+  await page.getByRole('tab', { name: 'Este aparato' }).click();
   await expect(page.getByRole('region', { name: 'Impresora de este aparato' })).toBeVisible();
   await alLlegar({ nombre: 'configuracion-impresion', tapar: [] });
 }
 
-/** Configuración → Operación → «Hardware y pruebas de impresión», con la contraseña del proveedor. */
+/** Configuración → Laboratorio del proveedor → «Hardware y pruebas de impresión», con la contraseña del proveedor. */
 async function recorrerElLaboratorio(page: Page, alLlegar: EnLaParada): Promise<void> {
   expect(CLAVE_DEL_PROVEEDOR, 'falta MORPHIQPOS_E2E_CLAVE_PROVEEDOR').toBeTruthy();
-  await page.goto('/configuracion');
-  await page.getByRole('tab', { name: 'Operación' }).click();
+  await page.goto('/configuracion?seccion=laboratorio');
   await page.getByRole('button', { name: 'Hardware y pruebas de impresión' }).click();
   await page.getByLabel('Contraseña del proveedor').fill(CLAVE_DEL_PROVEEDOR ?? '');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();

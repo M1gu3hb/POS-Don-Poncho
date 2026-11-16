@@ -46,7 +46,7 @@ describe('DP-15 · la pantalla de zonas', () => {
   it('Configuración → Mesas tiene «Zonas» para quien las escribe, y el diálogo usa la regla', () => {
     const raiz = process.cwd().endsWith('web') ? process.cwd() : join(process.cwd(), 'apps', 'web');
     const config = readFileSync(
-      join(raiz, 'heredado', 'pages', 'Configuracion.jsx'),
+      join(raiz, 'heredado', 'components', 'configuracion', 'MapaDeMesasDeConfiguracion.jsx'),
       'utf8',
     ).replace(/\s+/g, '');
     expect(config).toContain("constPUEDEN_EDITAR_ZONAS=['dueno','administrador','gerente'];");

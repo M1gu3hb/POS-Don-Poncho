@@ -1,6 +1,6 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
-import { configuracionDelNegocio } from './ayudantes/mesas-heredadas.ts';
+import { configuracionDelNegocio, guardarLaTarjeta } from './ayudantes/mesas-heredadas.ts';
 import { Equipo, opcionesDelProyecto } from './ayudantes/roles.ts';
 import {
   cabecerasDeEscrituraDePrueba,
@@ -43,7 +43,7 @@ const fila = (pagina: Page, nombre: string) =>
 
 async function abrirUsuarios(pagina: Page): Promise<void> {
   await pagina.goto('/configuracion?tab=usuarios');
-  await expect(pagina.getByRole('tab', { name: 'Usuarios POS' })).toBeVisible();
+  await expect(pagina.getByRole('tab', { name: 'Personas y seguridad' })).toBeVisible();
   await expect(fila(pagina, 'Dueña de prueba')).toBeVisible();
 }
 
@@ -135,7 +135,7 @@ test.describe('usuarios y mesas (DP-14, ronda 2)', () => {
       await duena.keyboard.press('Escape');
       await duena.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
       await expect(duena.getByRole('tab', { name: 'Caja', exact: true })).toBeVisible();
-      await expect(duena.getByRole('tab', { name: 'Descuentos', exact: true })).toBeVisible();
+      await expect(duena.getByRole('tab', { name: 'Ventas y cobro', exact: true })).toBeVisible();
 
       await duena.getByRole('button', { name: 'Editar a Beatriz', exact: true }).click();
       await duena.getByPlaceholder('Nombre del usuario').fill('Beatriz S. la gerente');
@@ -145,10 +145,15 @@ test.describe('usuarios y mesas (DP-14, ronda 2)', () => {
 
       // Su sesión sigue viva (no se la cerraron por cambiarle el nombre) y no ve lo del mando.
       await gerente.goto('/configuracion?tab=usuarios');
-      await expect(gerente.getByRole('tab', { name: 'Usuarios POS' })).toBeVisible();
+      await expect(gerente.getByRole('tab', { name: 'Personas y seguridad' })).toBeVisible();
       await expect(fila(gerente, 'Beatriz S. la gerente')).toContainText('Gerente');
-      await expect(gerente.getByRole('tab', { name: 'Caja', exact: true })).toHaveCount(0);
-      await expect(gerente.getByRole('tab', { name: 'Descuentos', exact: true })).toHaveCount(0);
+      // DP-21 · Bloque 21: la sección «Caja» también lleva «PDF del corte al cerrar», que la gerente
+      // ya veía en Operación; lo de mando (las cajas, el PIN en retiros, los descuentos) no.
+      await gerente.goto('/configuracion?seccion=caja');
+      await expect(gerente.getByRole('region', { name: 'Cajas abiertas a la vez' })).toHaveCount(0);
+      await expect(gerente.getByRole('region', { name: 'Permitir descuentos' })).toHaveCount(0);
+      await gerente.goto('/configuracion?seccion=ventas-y-cobro');
+      await expect(gerente.getByRole('region', { name: 'Permitir descuentos' })).toHaveCount(0);
       await expect(gerente.getByRole('button', { name: 'Nuevo usuario' })).toHaveCount(0);
       await expect(gerente.getByRole('button', { name: /^Editar a / })).toHaveCount(0);
       // El reseteo no repone nombres: Beatriz vuelve a ser Beatriz por la misma pantalla.
@@ -223,14 +228,13 @@ test.describe('usuarios y mesas (DP-14, ronda 2)', () => {
       await resetear(duena);
 
       // La asignación de mesas encendida (Operación) y un segundo mesero, Memo, con su PIN.
-      await duena.goto('/configuracion');
-      await duena.getByRole('tab', { name: 'Operación' }).click();
+      await duena.goto('/configuracion?seccion=salon');
       const asignacion = duena
         .getByText('Activar asignación de mesas a meseros')
         .locator('xpath=ancestor::div[contains(@class,"flex items-start")][1]')
         .getByRole('switch');
       if ((await asignacion.getAttribute('aria-checked')) !== 'true') await asignacion.click();
-      await duena.getByRole('button', { name: 'Guardar configuración' }).first().click();
+      await guardarLaTarjeta(duena, 'Asignación de mesas a meseros');
       await expect
         .poll(async () => (await configuracionDelNegocio(duena))['asignacion_mesas_activa'])
         .toBe(true);

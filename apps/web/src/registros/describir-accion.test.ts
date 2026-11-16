@@ -179,4 +179,18 @@ describe('DP-21 · Bloque 6 · el folio en la auditoría, como se lee en el tick
       'Folios: prefijo «DP», primer folio de las cuentas 1001 y de los cortes 101 (antes: sin prefijo, 1 y 1)',
     );
   });
+
+  it('el ticket a tu gusto dice qué se quitó y qué se volvió a poner, sin nombres de campo crudos', () => {
+    expect(
+      describirAccion('caja.fijar_papel_a_tu_gusto', {
+        apagados: ['ticket.folio', 'precuenta.mesero'],
+        encendidos: ['ticket.propina'],
+      }),
+    ).toBe(
+      'Ticket a su gusto: quitó folio (ticket de venta), mesero (precuenta); volvió a poner propina (ticket de venta)',
+    );
+    expect(describirAccion('caja.fijar_papel_a_tu_gusto', { apagados: [], encendidos: [] })).toBe(
+      'Ticket a su gusto: sin cambios',
+    );
+  });
 });

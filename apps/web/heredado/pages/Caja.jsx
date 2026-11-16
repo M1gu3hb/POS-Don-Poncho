@@ -1250,7 +1250,6 @@ export default function Caja() {
       // Cola de sincronización (no bloqueante)
       try {
         await api.comandos.ejecutar('/api/caja/encolar-sincronizacion', { corteId });
-        queryClient.invalidateQueries({ queryKey: ['integration_sync_logs_pending'] });
       } catch (err) {
         // La caja YA está cerrada: esto es una cola externa, y no encolar un
         // envío a Sheets no invalida el corte. Pero se dice, en vez de tragarlo.
@@ -1292,7 +1291,7 @@ export default function Caja() {
   };
 
   return (
-    <div className="space-y-4 px-1 sm:px-0 max-w-full overflow-x-hidden">
+    <div className="space-y-4 px-1 sm:px-0 max-w-full overflow-x-clip">
       {/* Header — responsive: stack en móvil, botones en grid 3-col */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">

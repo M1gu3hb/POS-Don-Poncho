@@ -177,7 +177,8 @@ describe('el mapa del mesero', () => {
 });
 
 describe('el editor de mesas de Configuración', () => {
-  const configuracion = leer('heredado/pages/Configuracion.jsx');
+  // DP-21 · Bloque 21: el editor de mesas se mudó a su propio archivo (Configuración → Salón).
+  const configuracion = leer('heredado/components/configuracion/MapaDeMesasDeConfiguracion.jsx');
 
   it('las zonas son las del negocio, y el diálogo de la mesa recibe esas mismas (DP-5)', () => {
     expect(inicializadorDe(configuracion, 'zonasDelEditor')).toEqual([

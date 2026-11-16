@@ -146,6 +146,7 @@ export default function StockMinCritInput({
           <Label className="text-xs">Stock mínimo</Label>
           <Input
             type="number"
+            inputMode="decimal"
             min="0"
             step="any"
             value={minDisplay}
@@ -158,6 +159,7 @@ export default function StockMinCritInput({
           <Label className="text-xs">Stock crítico</Label>
           <Input
             type="number"
+            inputMode="decimal"
             min="0"
             step="any"
             value={critDisplay}

@@ -46,6 +46,7 @@ interface Montado {
   readonly ancho: number;
   readonly alto: number;
   readonly anchoEnPantalla: number;
+  readonly texto: string;
   readonly logos: readonly { x: number; y: number; ancho: number; alto: number }[];
 }
 
@@ -56,6 +57,8 @@ interface Caso {
   readonly copias?: number;
   readonly desdeElNodo?: boolean;
   readonly reimpresion?: string;
+  /** DP-21 · Bloque 12: los renglones del ticket que el dueño apagó. */
+  readonly ocultos?: readonly string[];
 }
 
 /** El interlineado de fábrica: lo que avanza cada línea antes del corte. */
@@ -116,93 +119,155 @@ const imprimir = (page: Page, caso: Caso): Promise<Impreso> =>
     caso,
   );
 
-for (const papelMm of [58, 80] as const) {
-  for (const conLogo of [true, false]) {
-    const caso: Caso = { papelMm, conLogo };
-    const nombre = `${String(papelMm)} mm ${conLogo ? 'con logo' : 'sin logo'}`;
+/**
+ * DP-21 · Bloque 12 · «El ticket a tu gusto»: con renglones apagados el papel sigue siendo el mismo
+ * dibujo en pantalla, en puntos y en los bytes ESC/POS (la imagen sale del mismo HTML).
+ */
+const CASOS_A_TU_GUSTO: readonly { readonly nombre: string; readonly caso: Caso }[] = [
+  {
+    nombre: '80 mm sin logo, dirección, teléfono ni mensaje',
+    caso: {
+      papelMm: 80,
+      conLogo: true,
+      ocultos: ['logo', 'direccion', 'telefono', 'mensaje'],
+    },
+  },
+  {
+    nombre: '58 mm sin folio, mesa, mesero, cajero ni fecha',
+    caso: {
+      papelMm: 58,
+      conLogo: false,
+      ocultos: ['folio', 'mesa', 'mesero', 'cajero', 'fecha'],
+    },
+  },
+  {
+    nombre: '80 mm sin opciones, notas, descuento, forma de pago, efectivo ni cambio',
+    caso: {
+      papelMm: 80,
+      conLogo: false,
+      ocultos: ['opciones', 'notas', 'descuento', 'forma_de_pago', 'efectivo_recibido', 'cambio'],
+    },
+  },
+];
 
-    test(`${nombre}: los bytes ESC/POS devuelven la imagen dibujada, punto por punto`, async ({
-      page,
-    }) => {
-      await abrir(page);
-      const montado = await montar(page, caso);
-      const impreso = await imprimir(page, caso);
-      expect(impreso.avisos).toEqual([]);
-      expect(impreso.puntos).toBe(papelMm === 58 ? 384 : 576);
+const CASOS: readonly { readonly nombre: string; readonly caso: Caso }[] = [
+  ...([58, 80] as const).flatMap((papelMm) =>
+    [true, false].map((conLogo) => ({
+      nombre: `${String(papelMm)} mm ${conLogo ? 'con logo' : 'sin logo'}`,
+      caso: { papelMm, conLogo } as Caso,
+    })),
+  ),
+  ...CASOS_A_TU_GUSTO,
+];
 
-      const dibujado = mapaDe(impreso.mapas[0] ?? { ancho: 0, alto: 0, base64: '' });
-      expect(dibujado.ancho).toBe(impreso.puntos);
-      expect(dibujado.alto).toBe(montado.alto);
-      // Un ticket en blanco también «coincidiría»: tiene que haber tinta, y no ser todo negro.
-      const tinta = puntosNegros(dibujado) / dibujado.puntos.length;
-      expect(tinta).toBeGreaterThan(0.03);
-      expect(tinta).toBeLessThan(0.5);
+for (const { nombre, caso } of CASOS) {
+  const papelMm = caso.papelMm;
 
-      const papel = emular(deBase64(impreso.base64), impreso.puntos);
-      expect(papel.alto).toBe(dibujado.alto + impreso.lineasAntesDelCorte * PUNTOS_POR_LINEA);
-      expect(puntosDistintos(recorte(papel, 0, dibujado.alto), dibujado)).toBe(0);
-      expect(puntosNegros(recorte(papel, dibujado.alto, papel.alto - dibujado.alto))).toBe(0);
-      expect(papel.cortes).toEqual([{ fila: papel.alto, parcial: true }]);
-      expect(papel.pulsos).toEqual([]);
-    });
+  test(`${nombre}: los bytes ESC/POS devuelven la imagen dibujada, punto por punto`, async ({
+    page,
+  }) => {
+    await abrir(page);
+    const montado = await montar(page, caso);
+    const impreso = await imprimir(page, caso);
+    expect(impreso.avisos).toEqual([]);
+    expect(impreso.puntos).toBe(papelMm === 58 ? 384 : 576);
 
-    test(`${nombre}: el papel es el ticket de la pantalla`, async ({ page }) => {
-      await abrir(page);
-      const montado = await montar(page, caso);
-      // En pantalla mide su tamaño real: 8 puntos por milímetro.
-      expect(montado.anchoEnPantalla).toBeCloseTo((montado.ancho / 8) * (96 / 25.4), 0);
+    const dibujado = mapaDe(impreso.mapas[0] ?? { ancho: 0, alto: 0, base64: '' });
+    expect(dibujado.ancho).toBe(impreso.puntos);
+    expect(dibujado.alto).toBe(montado.alto);
+    // Un ticket en blanco también «coincidiría»: tiene que haber tinta, y no ser todo negro.
+    const tinta = puntosNegros(dibujado) / dibujado.puntos.length;
+    expect(tinta).toBeGreaterThan(0.03);
+    expect(tinta).toBeLessThan(0.5);
 
-      const impreso = await imprimir(page, caso);
-      const dibujado = mapaDe(impreso.mapas[0] ?? { ancho: 0, alto: 0, base64: '' });
-      const captura = await page
-        .locator('#en-puntos [data-lienzo-termico]')
-        .screenshot({ scale: 'css' });
-      const enUnBit = mapaDe(
-        await page.evaluate(
-          ([png, umbral]) =>
-            (
-              window as unknown as {
-                arnes: { capturaEnUnBit(png: string, umbral: number): Promise<MapaEnviado> };
-              }
-            ).arnes.capturaEnUnBit(png, umbral),
-          [captura.toString('base64'), UMBRAL_POR_OMISION] as const,
-        ),
+    const papel = emular(deBase64(impreso.base64), impreso.puntos);
+    expect(papel.alto).toBe(dibujado.alto + impreso.lineasAntesDelCorte * PUNTOS_POR_LINEA);
+    expect(puntosDistintos(recorte(papel, 0, dibujado.alto), dibujado)).toBe(0);
+    expect(puntosNegros(recorte(papel, dibujado.alto, papel.alto - dibujado.alto))).toBe(0);
+    expect(papel.cortes).toEqual([{ fila: papel.alto, parcial: true }]);
+    expect(papel.pulsos).toEqual([]);
+  });
+
+  test(`${nombre}: el papel es el ticket de la pantalla`, async ({ page }) => {
+    await abrir(page);
+    const montado = await montar(page, caso);
+    // En pantalla mide su tamaño real: 8 puntos por milímetro.
+    expect(montado.anchoEnPantalla).toBeCloseTo((montado.ancho / 8) * (96 / 25.4), 0);
+
+    const impreso = await imprimir(page, caso);
+    const dibujado = mapaDe(impreso.mapas[0] ?? { ancho: 0, alto: 0, base64: '' });
+    const captura = await page
+      .locator('#en-puntos [data-lienzo-termico]')
+      .screenshot({ scale: 'css' });
+    const enUnBit = mapaDe(
+      await page.evaluate(
+        ([png, umbral]) =>
+          (
+            window as unknown as {
+              arnes: { capturaEnUnBit(png: string, umbral: number): Promise<MapaEnviado> };
+            }
+          ).arnes.capturaEnUnBit(png, umbral),
+        [captura.toString('base64'), UMBRAL_POR_OMISION] as const,
+      ),
+    );
+    expect([enUnBit.ancho, enUnBit.alto]).toEqual([dibujado.ancho, dibujado.alto]);
+
+    // Fuera del logo (que va tramado): punto por punto contra la captura.
+    const fueraDelLogo = (x: number, y: number): boolean =>
+      !montado.logos.some(
+        (logo) =>
+          x >= logo.x - 1 &&
+          x <= logo.x + logo.ancho + 1 &&
+          y >= logo.y - 1 &&
+          y <= logo.y + logo.alto + 1,
       );
-      expect([enUnBit.ancho, enUnBit.alto]).toEqual([dibujado.ancho, dibujado.alto]);
-
-      // Fuera del logo (que va tramado): punto por punto contra la captura.
-      const fueraDelLogo = (x: number, y: number): boolean =>
-        !montado.logos.some(
-          (logo) =>
-            x >= logo.x - 1 &&
-            x <= logo.x + logo.ancho + 1 &&
-            y >= logo.y - 1 &&
-            y <= logo.y + logo.alto + 1,
-        );
-      let comparados = 0;
-      let distintos = 0;
-      let fueraDeLugar = 0;
-      for (let y = 0; y < dibujado.alto; y += 1) {
-        for (let x = 0; x < dibujado.ancho; x += 1) {
-          if (!fueraDelLogo(x, y)) continue;
-          comparados += 1;
-          const i = y * dibujado.ancho + x;
-          if (dibujado.puntos[i] === enUnBit.puntos[i]) continue;
-          distintos += 1;
-          const conTinta = dibujado.puntos[i] === 1 ? enUnBit : dibujado;
-          if (!hayTintaCerca(conTinta, x, y)) fueraDeLugar += 1;
-        }
+    let comparados = 0;
+    let distintos = 0;
+    let fueraDeLugar = 0;
+    for (let y = 0; y < dibujado.alto; y += 1) {
+      for (let x = 0; x < dibujado.ancho; x += 1) {
+        if (!fueraDelLogo(x, y)) continue;
+        comparados += 1;
+        const i = y * dibujado.ancho + x;
+        if (dibujado.puntos[i] === enUnBit.puntos[i]) continue;
+        distintos += 1;
+        const conTinta = dibujado.puntos[i] === 1 ? enUnBit : dibujado;
+        if (!hayTintaCerca(conTinta, x, y)) fueraDeLugar += 1;
       }
-      test.info().annotations.push({
-        type: 'contra la pantalla',
-        description: `${String(distintos)} puntos de borde y ${String(fueraDeLugar)} fuera de lugar, de ${String(comparados)}`,
-      });
-      expect(comparados).toBeGreaterThan(0);
-      expect(distintos / comparados).toBeLessThan(PUNTOS_DE_BORDE_TOLERADOS);
-      expect(fueraDeLugar / comparados).toBeLessThan(TINTA_FUERA_DE_LUGAR_TOLERADA);
+    }
+    test.info().annotations.push({
+      type: 'contra la pantalla',
+      description: `${String(distintos)} puntos de borde y ${String(fueraDeLugar)} fuera de lugar, de ${String(comparados)}`,
     });
-  }
+    expect(comparados).toBeGreaterThan(0);
+    expect(distintos / comparados).toBeLessThan(PUNTOS_DE_BORDE_TOLERADOS);
+    expect(fueraDeLugar / comparados).toBeLessThan(TINTA_FUERA_DE_LUGAR_TOLERADA);
+  });
 }
+
+test('a tu gusto: lo apagado no sale ni en pantalla ni en el papel, y lo que nunca se quita sí', async ({
+  page,
+}) => {
+  await abrir(page);
+  const completo = await montar(page, { papelMm: 80, conLogo: false });
+  const apagado = await montar(page, {
+    papelMm: 80,
+    conLogo: false,
+    ocultos: ['direccion', 'telefono', 'folio', 'mesero', 'cajero', 'fecha', 'descuento', 'cambio'],
+  });
+  for (const rotulo of ['Carr. a Sta. Cecilia', 'Tel:', 'Folio:', 'Mesero:', 'Cajero:', 'Fecha:']) {
+    expect(completo.texto, rotulo).toContain(rotulo);
+    expect(apagado.texto, rotulo).not.toContain(rotulo);
+  }
+  expect(completo.texto).toContain('Descuento:');
+  expect(apagado.texto).not.toContain('Descuento:');
+  expect(apagado.texto).not.toContain('Cambio:');
+  // Lo que nunca se quita.
+  for (const siempre of ['Barbacoa de borrego', 'Subtotal:', 'TOTAL', 'Don Poncho']) {
+    expect(apagado.texto, siempre).toContain(siempre);
+  }
+  expect(apagado.alto).toBeLessThan(completo.alto);
+});
 
 test('lado a lado: el ticket de la pantalla y el papel que sale de los bytes (para verlo)', async ({
   page,

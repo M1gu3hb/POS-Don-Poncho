@@ -274,6 +274,7 @@ export default function CantidadVariableDialog({ open, producto, onClose, onConf
             <div className="flex gap-2 mt-1">
               <Input
                 type="number"
+                inputMode="decimal"
                 inputMode={esPorcion ? "numeric" : "decimal"}
                 value={cantidad}
                 onChange={(e) => setCantidad(e.target.value)}
