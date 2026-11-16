@@ -1,3 +1,4 @@
+import { CLAVES_DE_CATEGORIA_DE_GASTO } from '@morphiqpos/domain/gastos';
 import { z } from 'zod';
 
 /**
@@ -39,15 +40,8 @@ const cantidadPositiva = z
 
 const unidadDeCompra = z.string().trim().min(1).max(30);
 const metodoPago = z.enum(['efectivo', 'tarjeta', 'transferencia']);
-const categoriaGasto = z.enum([
-  'limpieza',
-  'transporte',
-  'reparacion',
-  'servicios',
-  'pago_extraordinario',
-  'marketing',
-  'otro',
-]);
+// DP-21 · Bloque 11: el catálogo es UNO (`@morphiqpos/domain/gastos`), el de la Caja y el de Compras.
+const categoriaGasto = z.enum(CLAVES_DE_CATEGORIA_DE_GASTO);
 const nota = z.string().trim().max(500);
 
 /**

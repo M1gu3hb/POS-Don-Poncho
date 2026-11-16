@@ -2,6 +2,8 @@ import { seccionesExtraDelDia } from './del-dia.ts';
 import {
   ajustesDeCaja,
   arqueo,
+  cascada,
+  comprasYGastosPagadosDeLaCaja,
   centavos,
   datosDelCorte,
   dinero,
@@ -100,6 +102,8 @@ export function corteDeRestaurante(
   return documento(hoja, 'CORTE DE CAJA', [
     datosDelCorte(hoja, 'Cierre diario'),
     ...arqueo(hoja, 'Apertura y fondo'),
+    // DP-21 · Bloque 11: de dónde salió el efectivo esperado, y cuadra a la vista.
+    ...cascada(hoja),
     ...ajustesDeCaja(hoja),
     ...retirosConPin(hoja),
     ...ventasDelDia(hoja),
@@ -114,6 +118,7 @@ export function corteDeRestaurante(
     // DP-16 · De dónde salió lo que sumaron las opciones.
     ...opcionesVendidas(hoja),
     ...insumosConsumidos(hoja),
+    ...comprasYGastosPagadosDeLaCaja(hoja),
     ...gastos(hoja),
     ...inventarioBajo(hoja),
     ...cancelaciones(hoja),

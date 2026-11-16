@@ -20,24 +20,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Save } from 'lucide-react';
+import { CATEGORIAS_DE_GASTO } from '@morphiqpos/domain/gastos';
+import { avisoAntesDeGuardar, useCajonParaPagar } from '~/venta/cajon-para-pagar';
+import { PagoDeLaCaja } from '~/venta/PagoDeLaCaja';
 import { toast } from 'sonner';
 import { textoDecimal } from '@/components/inventario/comandos';
 
-const CATEGORIAS = [
-  { value: 'servicios', label: 'Servicios (luz, agua, gas, internet)' },
-  { value: 'limpieza', label: 'Limpieza' },
-  { value: 'transporte', label: 'Transporte' },
-  { value: 'reparacion', label: 'Reparación / mantenimiento' },
-  { value: 'pago_extraordinario', label: 'Pago extraordinario' },
-  { value: 'marketing', label: 'Marketing / publicidad' },
-  { value: 'otro', label: 'Otro' },
-];
+// DP-21 · Bloque 11: el catálogo es UNO, el mismo que usa la Caja (`@morphiqpos/domain/gastos`).
+const CATEGORIAS = CATEGORIAS_DE_GASTO.map((c) => ({ value: c.clave, label: c.completo }));
 
 export default function RegistrarGastoDialog({ open, onClose }) {
   // Quién registra el gasto sale de la sesión, no del cuerpo de la petición.
   const queryClient = useQueryClient();
   const [form, setForm] = useState(empty());
   const [saving, setSaving] = useState(false);
+  // DP-21 · Bloque 11: en «Efectivo» se dice de qué caja sale y se avisa si la dejaría en negativo.
+  const cajon = useCajonParaPagar(open && form.metodo_pago === 'efectivo');
+  const [porConfirmar, setPorConfirmar] = useState(null);
   // Un gasto en efectivo saca dinero del cajón: un doble clic lo sacaría dos
   // veces. La clave vive mientras el diálogo esté abierto.
   const claveDelDialogo = useRef(null);
@@ -56,6 +55,7 @@ export default function RegistrarGastoDialog({ open, onClose }) {
   }
 
   const close = () => {
+    setPorConfirmar(null);
     setForm(empty());
     claveDelDialogo.current = null;
     onClose();
@@ -67,6 +67,15 @@ export default function RegistrarGastoDialog({ open, onClose }) {
       toast.error('Completa descripción y monto');
       return;
     }
+    if (form.metodo_pago === 'efectivo') {
+      // Aviso, no bloqueo: el primer clic lo enseña y confirmarlo guarda.
+      const advertencia = avisoAntesDeGuardar(cajon, Math.round(monto * 100));
+      if (advertencia !== null && porConfirmar !== advertencia) {
+        setPorConfirmar(advertencia);
+        return;
+      }
+    }
+    setPorConfirmar(null);
     setSaving(true);
     try {
       // `es_recurrente` es una COLUMNA, no un prefijo dentro del texto de las
@@ -147,7 +156,10 @@ export default function RegistrarGastoDialog({ open, onClose }) {
                 type="number"
                 inputMode="decimal"
                 value={form.monto}
-                onChange={(e) => setForm({ ...form, monto: e.target.value })}
+                onChange={(e) => {
+                  setPorConfirmar(null);
+                  setForm({ ...form, monto: e.target.value });
+                }}
                 placeholder="$0.00"
               />
             </div>
@@ -165,7 +177,10 @@ export default function RegistrarGastoDialog({ open, onClose }) {
             <Label className="text-xs">Método de pago</Label>
             <Select
               value={form.metodo_pago}
-              onValueChange={(v) => setForm({ ...form, metodo_pago: v })}
+              onValueChange={(v) => {
+                setPorConfirmar(null);
+                setForm({ ...form, metodo_pago: v });
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -177,6 +192,8 @@ export default function RegistrarGastoDialog({ open, onClose }) {
               </SelectContent>
             </Select>
           </div>
+
+          <PagoDeLaCaja metodo={form.metodo_pago} lectura={cajon} aviso={porConfirmar} />
 
           <label className="flex items-start gap-2 p-2.5 rounded-lg border bg-muted/40 cursor-pointer">
             <input
@@ -208,7 +225,11 @@ export default function RegistrarGastoDialog({ open, onClose }) {
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            <Save className="w-4 h-4 mr-1" /> {saving ? 'Guardando...' : 'Guardar gasto'}
+            <Save className="w-4 h-4 mr-1" /> {saving
+              ? 'Guardando...'
+              : porConfirmar !== null
+                ? 'Sí, lo pagué de la caja: guardar'
+                : 'Guardar gasto'}
           </Button>
         </DialogFooter>
       </DialogContent>

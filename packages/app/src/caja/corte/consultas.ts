@@ -539,6 +539,49 @@ export async function gastosDelCorte(
   return rows;
 }
 
+/**
+ * DP-21 · Bloque 11 · «Compras y gastos pagados de la caja»: CADA salida de efectivo del cajón por
+ * un gasto o una compra de contado, con lo que se pagó. Sale de los MISMOS movimientos que el
+ * efectivo esperado (`tipo = 'gasto'`), no de `gastos` + `compras` por separado: la suma de esta
+ * lista ES el renglón de la cascada, y por eso nunca se cuenta doble ni se queda una salida fuera.
+ * `origen`: `gasto` (Compras y gastos o la Caja), `compra` (de contado) o `movimiento` (una salida
+ * a mano de la caja, sin gasto detrás).
+ */
+export interface PagadoDeLaCaja {
+  readonly origen: 'gasto' | 'compra' | 'movimiento';
+  readonly categoria: string | null;
+  readonly descripcion: string;
+  /** Positivo: lo que salió. */
+  readonly montoCentavos: string;
+}
+
+export async function pagadosDeLaCaja(
+  tx: Transaccion,
+  organizacionId: string,
+  sesionCajaId: string,
+): Promise<readonly PagadoDeLaCaja[]> {
+  const { rows } = await sql<PagadoDeLaCaja>`
+    select case when m.referencia_tipo = 'gasto' and g.id is not null then 'gasto'
+                when m.referencia_tipo = 'pago_proveedor' and c.id is not null then 'compra'
+                else 'movimiento' end                        as "origen",
+           g.categoria                                       as "categoria",
+           coalesce(g.descripcion,
+                    case when c.id is not null
+                         then 'Compra a ' || coalesce(c.proveedor_nombre, 'proveedor') end,
+                    m.motivo, 'Salida de la caja')           as "descripcion",
+           (-m.monto_centavos)::text                         as "montoCentavos"
+      from movimientos_caja m
+      left join gastos g on m.referencia_tipo = 'gasto' and g.id = m.referencia_id
+      left join compras c on m.referencia_tipo = 'pago_proveedor' and c.id = m.referencia_id
+     where m.organizacion_id = ${organizacionId}
+       and m.sesion_caja_id = ${sesionCajaId}
+       and m.tipo = 'gasto'
+     order by m.created_at
+     limit ${TOPE_DE_FILAS}
+  `.execute(tx);
+  return rows;
+}
+
 // Las cancelaciones salieron a su propio archivo (DP-12.4): las leen la hoja del corte, la lectura
 // del corte heredado y Registros, y el archivo ya pasaba de 600 líneas.
 export { cancelacionesDelCorte, type Cancelacion } from './cancelaciones.ts';

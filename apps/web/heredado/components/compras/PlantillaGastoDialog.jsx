@@ -20,18 +20,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Save } from 'lucide-react';
+import { CATEGORIAS_DE_GASTO } from '@morphiqpos/domain/gastos';
 import { toast } from 'sonner';
 import { textoDecimal } from '@/components/inventario/comandos';
 
-const CATEGORIAS = [
-  { value: 'servicios', label: 'Servicios (luz, agua, gas, internet)' },
-  { value: 'limpieza', label: 'Limpieza' },
-  { value: 'transporte', label: 'Transporte' },
-  { value: 'reparacion', label: 'Reparación / mantenimiento' },
-  { value: 'pago_extraordinario', label: 'Pago extraordinario' },
-  { value: 'marketing', label: 'Marketing / publicidad' },
-  { value: 'otro', label: 'Otro' },
-];
+// DP-21 · Bloque 11: el catálogo es UNO, el mismo que usa la Caja (`@morphiqpos/domain/gastos`).
+const CATEGORIAS = CATEGORIAS_DE_GASTO.map((c) => ({ value: c.clave, label: c.completo }));
 
 const PERIODICIDADES = [
   { value: 'mensual', label: 'Mensual' },

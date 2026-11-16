@@ -12,6 +12,7 @@
  *       margen, y no se inventa un cero.
  */
 
+import { RENGLON_DE_COMPRAS_Y_GASTOS } from '@morphiqpos/domain/gastos';
 import { folioVisible } from '@morphiqpos/domain/venta';
 import { nombreVisibleDelNegocio } from '../marca/nombre-visible.ts';
 import { NOMBRE_DEL_CANAL } from './canales.ts';
@@ -179,6 +180,16 @@ export interface HojaDelServidor {
     categoria: string;
     descripcion: string;
     metodo: string;
+    montoCentavos: string;
+  }[];
+  /**
+   * DP-21 · Bloque 11 · Cada gasto y compra de contado que salió del cajón (de los mismos
+   * movimientos que el efectivo esperado), con lo que salió en positivo.
+   */
+  readonly pagadosDeLaCaja: readonly {
+    origen: 'gasto' | 'compra' | 'movimiento';
+    categoria: string | null;
+    descripcion: string;
     montoCentavos: string;
   }[];
   /**
@@ -433,7 +444,7 @@ const MOVIMIENTO: Readonly<Record<string, string>> = {
   abono: 'Abonos de cuenta',
   anticipo_cita: 'Anticipos de cita',
   retiro: 'Retiros',
-  gasto: 'Gastos pagados del cajón',
+  gasto: RENGLON_DE_COMPRAS_Y_GASTOS,
   devolucion: 'Devoluciones',
   ajuste: 'Ajustes',
 };
@@ -552,6 +563,12 @@ export function arqueo(
   if (hoja.ajustes.some((a) => centavos(a.montoCentavos) !== 0)) {
     celdas.push({ etiqueta: 'Ajustes de caja', valor: dinero(totalDeAjustes(hoja)) });
   }
+  // DP-21 · Bloque 11: lo que los gastos y las compras en efectivo sacaron del cajón, a la vista
+  // antes del esperado (es una de las cuentas que lo explican; la cascada de abajo las suma todas).
+  const pagado = totalPagadoDeLaCaja(hoja);
+  if (pagado > 0) {
+    celdas.push({ etiqueta: RENGLON_DE_COMPRAS_Y_GASTOS, valor: dinero(-pagado) });
+  }
   celdas.push(
     { etiqueta: 'Efectivo esperado', valor: dinero(s.esperadoCentavos) },
     { etiqueta: 'Efectivo contado', valor: dinero(s.contadoCentavos) },
@@ -597,6 +614,36 @@ export function cascada(hoja: HojaDelServidor): readonly Seccion[] {
       },
     },
   ];
+}
+
+/** Lo que salió del cajón por gastos y compras de contado, en centavos y en positivo. */
+export const totalPagadoDeLaCaja = (hoja: HojaDelServidor): number =>
+  hoja.pagadosDeLaCaja.reduce((suma, p) => suma + centavos(p.montoCentavos), 0);
+
+const ORIGEN_DEL_PAGO: Readonly<Record<string, string>> = {
+  gasto: 'Gasto',
+  compra: 'Compra',
+  movimiento: 'Salida a mano',
+};
+
+/**
+ * DP-21 · Bloque 11 · «Compras y gastos pagados de la caja»: cada uno, con su total, que es el MISMO
+ * renglón de la cascada del efectivo esperado. Es lo que explica el efectivo; los «Gastos
+ * operativos» de más abajo son los gastos vistos para la utilidad: no se restan dos veces.
+ */
+export function comprasYGastosPagadosDeLaCaja(hoja: HojaDelServidor): readonly Seccion[] {
+  return tablaSiHay({
+    tipo: 'tabla',
+    titulo: RENGLON_DE_COMPRAS_Y_GASTOS,
+    columnas: [{ titulo: 'Qué' }, { titulo: 'Descripción' }, { titulo: 'Monto', numerica: true }],
+    filas: hoja.pagadosDeLaCaja.map((p) => [
+      texto(ORIGEN_DEL_PAGO[p.origen] ?? p.origen),
+      texto(p.descripcion),
+      dinero(p.montoCentavos),
+    ]),
+    total: [texto('TOTAL'), texto(''), dinero(totalPagadoDeLaCaja(hoja))],
+    nota: 'Salió del cajón: está dentro del efectivo esperado. Los gastos operativos de abajo son los mismos gastos vistos para la utilidad; no se restan dos veces.',
+  });
 }
 
 export const totalDeGastos = (hoja: HojaDelServidor): number =>

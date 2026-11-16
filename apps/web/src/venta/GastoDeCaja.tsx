@@ -1,5 +1,6 @@
 'use client';
 
+import { CATEGORIAS_DE_GASTO, type ClaveDeCategoriaDeGasto } from '@morphiqpos/domain/gastos';
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Input } from '@morphiqpos/ui/primitivas/input';
 import { Label } from '@morphiqpos/ui/primitivas/label';
@@ -8,6 +9,9 @@ import { Receipt } from 'lucide-react';
 import { useState } from 'react';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
+
+import { avisoAntesDeGuardar, useCajonParaPagar } from './cajon-para-pagar.ts';
+import { PagoDeLaCaja } from './PagoDeLaCaja.tsx';
 
 /**
  * EL GASTO QUE SALE DEL CAJÓN (§8.3 de cada `02-DINERO-Y-CAJA`, bloque D de la 2.4).
@@ -22,15 +26,8 @@ import { ErrorApi, invocarComando } from '~/cliente/api';
  * cajón y se registra en compras. Lo registra quien administra (el servidor lo exige).
  */
 
-const CATEGORIAS = [
-  { clave: 'servicios', etiqueta: 'Servicios' },
-  { clave: 'limpieza', etiqueta: 'Limpieza' },
-  { clave: 'transporte', etiqueta: 'Transporte' },
-  { clave: 'reparacion', etiqueta: 'Reparación' },
-  { clave: 'otro', etiqueta: 'Otro' },
-] as const;
-
-type Categoria = (typeof CATEGORIAS)[number]['clave'];
+// DP-21 · Bloque 11: las categorías son las de Compras y gastos (`@morphiqpos/domain/gastos`), no una lista propia.
+type Categoria = ClaveDeCategoriaDeGasto;
 
 /** Centavos enteros a «pesos.centavos» exacto: el servidor no recibe un flotante. */
 export function pesosDeCentavos(centavos: number): string {
@@ -43,6 +40,9 @@ export function GastoDeCaja({ alRegistrar }: { readonly alRegistrar: () => void 
   const [descripcion, setDescripcion] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [aviso, setAviso] = useState<{ tono: 'peligro' | 'atencion'; texto: string } | null>(null);
+  const cajon = useCajonParaPagar(true);
+  /** El aviso de «la caja sólo tiene $X» que se enseñó y está esperando que se confirme. */
+  const [porConfirmar, setPorConfirmar] = useState<string | null>(null);
   /** Lo último que salió del cajón, para decirlo: un formulario que sólo se vacía no dice si entró. */
   const [registrado, setRegistrado] = useState<number | null>(null);
 
@@ -55,6 +55,13 @@ export function GastoDeCaja({ alRegistrar }: { readonly alRegistrar: () => void 
       setAviso({ tono: 'atencion', texto: 'Escribe en qué se gastó.' });
       return;
     }
+    // Aviso ANTES de guardar, no bloqueo: la primera vez se enseña; confirmarlo lo guarda.
+    const advertencia = avisoAntesDeGuardar(cajon, monto);
+    if (advertencia !== null && porConfirmar !== advertencia) {
+      setPorConfirmar(advertencia);
+      return;
+    }
+    setPorConfirmar(null);
     setGuardando(true);
     setAviso(null);
     setRegistrado(null);
@@ -105,12 +112,19 @@ export function GastoDeCaja({ alRegistrar }: { readonly alRegistrar: () => void 
 
       <div className="flex flex-col gap-(--espacio-2)">
         <Label htmlFor="gasto-monto">Cuánto</Label>
-        <CampoDeDinero id="gasto-monto" centavos={monto} alCambiar={setMonto} />
+        <CampoDeDinero
+          id="gasto-monto"
+          centavos={monto}
+          alCambiar={(centavos) => {
+            setMonto(centavos);
+            setPorConfirmar(null);
+          }}
+        />
       </div>
       <fieldset>
         <legend className="mb-(--espacio-2) text-sm font-medium">De qué</legend>
         <div className="flex flex-wrap gap-(--espacio-2)">
-          {CATEGORIAS.map((opcion) => (
+          {CATEGORIAS_DE_GASTO.map((opcion) => (
             <Button
               key={opcion.clave}
               type="button"
@@ -121,7 +135,7 @@ export function GastoDeCaja({ alRegistrar }: { readonly alRegistrar: () => void 
                 setCategoria(opcion.clave);
               }}
             >
-              {opcion.etiqueta}
+              {opcion.nombre}
             </Button>
           ))}
         </div>
@@ -139,6 +153,7 @@ export function GastoDeCaja({ alRegistrar }: { readonly alRegistrar: () => void 
         />
       </div>
 
+      <PagoDeLaCaja metodo="efectivo" lectura={cajon} aviso={porConfirmar} />
       {aviso === null ? null : <Aviso tono={aviso.tono} titulo={aviso.texto} />}
       {registrado === null ? null : (
         <Aviso
@@ -160,7 +175,7 @@ export function GastoDeCaja({ alRegistrar }: { readonly alRegistrar: () => void 
           disabled={guardando}
           cargando={guardando}
         >
-          Registrar el gasto
+          {porConfirmar === null ? 'Registrar el gasto' : 'Sí, lo pagué de la caja: registrar'}
         </Button>
       </div>
     </Superficie>
