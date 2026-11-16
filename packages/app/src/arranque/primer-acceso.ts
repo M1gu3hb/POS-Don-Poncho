@@ -119,7 +119,7 @@ async function exigirPrimerAcceso(tx: Transaccion, negocio: Negocio): Promise<vo
   if (conPin !== undefined) {
     throw new Error(
       `«${negocio.organizacion}» ya tiene un dueño con PIN. db:bootstrap sólo da el PRIMER acceso ` +
-        'de un negocio: el PIN de uno que ya entra lo cambia su dueño desde Configuración → Accesos.',
+        'de un negocio: el PIN de uno que ya entra lo cambia su dueño desde Configuración → Personas y seguridad → Usuarios POS.',
     );
   }
 }

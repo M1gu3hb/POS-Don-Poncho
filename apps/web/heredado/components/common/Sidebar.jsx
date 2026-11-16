@@ -331,15 +331,15 @@ export default function Sidebar({ collapsed, onToggle }) {
             >
               <Volume2 className="w-4 h-4" />
             </button>
-            {!plegada && (
-              <button
-                onClick={logout}
-                className="text-sidebar-foreground/50 hover:text-peligro transition-colors p-1"
-                aria-label="Salir"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            )}
+            {/* DP-21: también plegada. La barra del mesero y de la cocina nace plegada en los POS, y
+                quien comparte el aparato sale sin tener que abrir el menú. */}
+            <button
+              onClick={logout}
+              className="text-sidebar-foreground/50 hover:text-peligro transition-colors p-1"
+              aria-label="Salir"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

@@ -177,7 +177,7 @@ export default function ConfiguracionQRTab({ config, grupo = 'activacion', conMe
           <li>
             <strong>Portal QR encendido + "Quiero ordenar" apagado:</strong> el cliente ve el menú
             pero no puede avisar «quiero ordenar». Que pueda mandar pedidos depende de «Permitir que
-            el comensal envíe pedidos desde el QR» (Configuración → Portal).
+            el comensal envíe pedidos desde el QR» (Configuración → Portal de comensales).
           </li>
           <li>
             <strong>"Pedir cuenta" apagado:</strong> el cliente no solicita cuenta desde el QR;

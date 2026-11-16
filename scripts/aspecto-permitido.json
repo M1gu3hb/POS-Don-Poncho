@@ -2380,13 +2380,47 @@
       "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
       "testigos": [
         "- texto:el cliente ve el menú pero NO puede mandar pedidos a cocina.",
-        "+ texto:el cliente ve el menú pero no puede avisar «quiero ordenar». Que pueda mandar pedidos depende de «Permitir que el comensal envíe pedidos desde el QR» (Configuración → Portal)."
+        "+ texto:el cliente ve el menú pero no puede avisar «quiero ordenar». Que pueda mandar pedidos depende de «Permitir que el comensal envíe pedidos desde el QR» (Configuración → Portal de comensales)."
       ]
     },
     {
       "archivo": "apps/web/heredado/components/recetas/RecetaFormDialog.jsx",
       "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
       "testigos": ["- placeholder:Ej: Capuchino", "+ placeholder:Ej: Barbacoa de borrego"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/UsuarioPOSDialog.jsx",
+      "porque": "DP-21 · Bloque 21 (la Configuración, ordenada): el texto mandaba a una pestaña que ya no existe («Operación», «Usuarios POS», «Mapa de mesas»). Ahora nombra la sección de hoy. Es el mismo aviso, con el camino correcto.",
+      "testigos": [
+        "- texto:Aún no hay estaciones creadas. Ve a Configuración → Operación → Estaciones de preparación.",
+        "- aviso:Aún no hay estaciones creadas. Crea al menos una en Configuración → Operación → Estaciones de preparación.",
+        "+ texto:Aún no hay estaciones creadas. Ve a Configuración → Cocina → Estaciones de preparación.",
+        "+ aviso:Aún no hay estaciones creadas. Crea al menos una en Configuración → Cocina → Estaciones de preparación."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/MesasQRTab.jsx",
+      "porque": "DP-21 · Bloque 21 (la Configuración, ordenada): el texto mandaba a una pestaña que ya no existe («Operación», «Usuarios POS», «Mapa de mesas»). Ahora nombra la sección de hoy. Es el mismo aviso, con el camino correcto.",
+      "testigos": [
+        "- texto:Crea mesas en Configuración → Mapa de mesas.",
+        "+ texto:Crea mesas en Configuración → Salón → Mapa de mesas."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Cocina.jsx",
+      "porque": "DP-21 · Bloque 21 (la Configuración, ordenada): el texto mandaba a una pestaña que ya no existe («Operación», «Usuarios POS», «Mapa de mesas»). Ahora nombra la sección de hoy. Es el mismo aviso, con el camino correcto.",
+      "testigos": [
+        "- texto:Configuración → Usuarios POS",
+        "+ texto:Configuración → Personas y seguridad → Usuarios POS"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-21 · Bloque 21 (la Configuración, ordenada): el texto mandaba a una pestaña que ya no existe («Operación», «Usuarios POS», «Mapa de mesas»). Ahora nombra la sección de hoy. Es el mismo aviso, con el camino correcto.",
+      "testigos": [
+        "- texto:Configúralas en Configuración → Mapa de mesas.",
+        "+ texto:Configúralas en Configuración → Salón → Mapa de mesas."
+      ]
     }
   ]
 }

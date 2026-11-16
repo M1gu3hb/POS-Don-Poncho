@@ -203,7 +203,7 @@ export default function UsuarioPOSDialog({ open, onClose, user, onSave, miPuesto
     if (mostrarEstacion) {
       if (estacionesArr.length === 0) {
         toast.error(
-          'Aún no hay estaciones creadas. Crea al menos una en Configuración → Operación → Estaciones de preparación.',
+          'Aún no hay estaciones creadas. Crea al menos una en Configuración → Cocina → Estaciones de preparación.',
         );
         return;
       }
@@ -372,7 +372,7 @@ export default function UsuarioPOSDialog({ open, onClose, user, onSave, miPuesto
                 <div className="text-[11px] flex items-start gap-1.5 px-2 py-1.5 rounded-md bg-advertencia/10 border border-advertencia/30 text-advertencia">
                   <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
                   <span>
-                    Aún no hay estaciones creadas. Ve a Configuración → Operación → Estaciones de
+                    Aún no hay estaciones creadas. Ve a Configuración → Cocina → Estaciones de
                     preparación.
                   </span>
                 </div>

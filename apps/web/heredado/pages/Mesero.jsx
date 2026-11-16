@@ -1603,7 +1603,7 @@ function Mesero() {
                   <div className="text-center">
                     <UtensilsCrossed className="w-10 h-10 mx-auto mb-2 opacity-40" />
                     <p className="text-sm">No hay mesas en {zonaActiva}.</p>
-                    <p className="text-xs">Configúralas en Configuración → Mapa de mesas.</p>
+                    <p className="text-xs">Configúralas en Configuración → Salón → Mapa de mesas.</p>
                   </div>
                 </div>
               )}

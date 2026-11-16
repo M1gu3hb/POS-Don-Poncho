@@ -2642,7 +2642,7 @@ confundía con las apps de verdad.
 - El portal de comensales tiene cupo de avisos por mesa y por teléfono (`portal/cupo-de-avisos.ts`):
   desde fuera no se puede inundar la sala de llamadas.
 
-## DP-D135 · «Permitir venta sin stock» y «Usar mesas»: ni se borran ni mienten · 17-11-2026
+## DP-D135 · «Permitir venta sin stock» y «Usar mesas»: ni se borran ni mienten · 16-11-2026
 
 DP-21 · Bloque 14 (M20, O2 y O11). Dos ajustes de la Configuración que parecían mandar y no mandaban.
 
@@ -2661,7 +2661,7 @@ DP-21 · Bloque 14 (M20, O2 y O11). Dos ajustes de la Configuración que parecí
   (`configuracion/cada-clave-tiene-quien-la-lee.contrato.test.ts`); la única sin lector declarado es
   `permitir_venta_sin_stock`, con su razón.
 
-## DP-D136 · El tablero suma en el servidor, por día del negocio · 17-11-2026
+## DP-D136 · El tablero suma en el servidor, por día del negocio · 16-11-2026
 
 DP-21 · Bloque 13 (M7 y M8). «Análisis financiero» bajaba las ventas del día al navegador (con tope
 de 1000) y sumaba allá con la medianoche del aparato.
@@ -2681,3 +2681,123 @@ de 1000) y sumaba allá con la medianoche del aparato.
   Miguel diga.
 - **Quién la ve:** dueño, administrador y gerente (los del comando), atado a la matriz de permisos.
 
+## DP-D137 · Lo táctil: una sola decisión para el foco, el menú del sistema y el teclado · 16-11-2026
+
+DP-21 · Bloque 9 (M2, M3, M4, M5, M16, M21 y M23; O4 a O7). Lo que Miguel vio en el iMin y en la
+PC táctil: el teclado salía solo al abrir un diálogo, la pulsación larga seleccionaba texto, el
+mapa se cortaba con la barra abierta y Movimientos no se dejaba desplazar.
+
+- **El foco al abrir** (`packages/ui/src/sistema/foco-al-abrir.ts`): con puntero grueso
+  (`any-pointer: coarse`) el foco se queda en el contenedor del diálogo y el teclado sale cuando la
+  persona TOCA el campo. Vale para `Dialog`, `Sheet` y sus hermanas de `heredado`. El PIN tiene su
+  propio teclado y no pasa por ahí (declarado en su contrato).
+- **`ArmazonTactil`** se monta una vez en el armazón de las pantallas internas (el portal del
+  comensal queda fuera): quita la selección y el menú del sistema en la pulsación larga (salvo en
+  campos de texto), mantiene `--alto-visible` y lleva al centro el campo enfocado, una vez.
+- **El mapa** (`tacto/MapaDeMesas`) escala el lienzo para que quepa, nunca agranda y respeta un piso
+  de 56 px; las posiciones guardadas no se tocan. **La barra lateral** tiene botón de 44 px y
+  recuerda su elección en este aparato (`mpos.barra-lateral`). **El corte** ya no enfoca nada al
+  abrir y sus dos cajas miden lo mismo.
+- **El scroll:** la raíz de la Caja pasa de `overflow-x-hidden` a `overflow-x-clip` (ya no es un
+  scroller anidado); contrato: ninguna página de `heredado/pages` usa `overflow-x-hidden`.
+- **«Salir», también con la barra plegada.** La barra del mesero y de la cocina nace plegada (lo
+  pide el encargo) y los cuatro POS tienen barra fija: «Salir» sólo se pintaba desplegada y quien
+  comparte el aparato tenía que abrir el menú para salir. Se decidió sin Miguel, por omisión.
+- **Falta probar en aparato:** nada de esto se vio en el iMin ni en la PC táctil. Está en la lista
+  de Miguel. El editor de mesas de Configuración y el plano de «Unir mesas» no se escalaron.
+
+## DP-D138 · Cambiar de mesa sin salir del mapa · 16-11-2026
+
+DP-21 · Bloque 10 (M24). «Cambiar de mesa» llevaba a otra pantalla. Ahora el panel de la mesa abre
+ahí mismo las mesas libres (primero las de su zona; las demás, con un toque más), pregunta «¿Pasar
+la cuenta de la mesa 3 a la mesa 7?» y avisa «La cuenta pasó a la mesa 7». El comando, las mesas
+elegibles y quién puede mover la cuenta son los de siempre. «Unir o dividir la cuenta» es un enlace
+aparte a «Mesa activa», sólo para la dirección (al mesero esa pantalla no le da dividir).
+
+- **Sigue igual, a sabiendas:** recién abierta la mesa, el botón no aparece hasta volver a abrirla
+  desde el mapa (el panel conserva la mesa como estaba al tocarla, sin quien la atiende).
+
+## DP-D139 · Un gasto es un gasto, se registre en la Caja o en Compras · 16-11-2026
+
+DP-21 · Bloque 11 (M22, A11 y H4). Se queda DP-D115 (el efectivo sale del cajón de la caja abierta;
+sin caja abierta no se registra), pero ahora se ve.
+
+- **Un solo catálogo** de categorías (`@morphiqpos/domain/gastos`), con contrato: ninguna pantalla
+  trae su lista y la base acepta exactamente ésas.
+- **De qué caja sale** lo dice el servidor (`gastos.cajon_para_pagar`, dueño, administrador y
+  gerente: el cajero no ve el esperado, el conteo sigue a ciegas): «Sale del cajón de Caja
+  principal», y si deja el esperado en negativo, un aviso antes de guardar que no bloquea.
+- **Compras y gastos** dice «Pagado en efectivo de Caja principal» (`gastos.pagos_de_la_caja`).
+- **El corte** (pantalla, PDF y papel salen del mismo documento) trae el renglón «Compras y gastos
+  pagados de la caja» y la cascada del efectivo esperado. Sale de los mismos movimientos del cajón
+  que el esperado: no se cuenta doble.
+- **Queda fuera:** el visor heredado de cortes ya cerrados (Registros) no tiene el renglón nuevo.
+
+## DP-D140 · El ticket a tu gusto · 16-11-2026
+
+DP-21 · Bloque 12 (M10). Dos columnas de interruptores (precuenta y ticket de venta) en
+Configuración → Ticket y folios, con vista previa en vivo sobre el mismo `PreCuentaTicket` que se
+imprime. Lo guarda `caja.fijar_papel_a_tu_gusto` (dueño y administrador, con auditoría) en
+`configuracion.valores.papel_a_tu_gusto`; el camino genérico lo rechaza.
+
+- **Nunca se quitan** los platillos con su importe, el subtotal y el TOTAL. El IVA no tiene
+  interruptor (sale sólo con tasa mayor que 0). Quitar el folio del ticket se permite, con su aviso.
+- **Por omisión todo encendido:** el ticket de hoy no cambia ni un punto (`test:impresion`).
+- **La auditoría guarda nombres apagados, no un objeto por interruptor:** el saneado redacta por
+  nombre de clave y «propina» contiene «pin».
+
+## DP-D141 · La Configuración, ordenada en secciones; cada tarjeta guarda lo suyo · 16-11-2026
+
+DP-21 · Bloque 21. De 13 pestañas a 16 secciones en una columna (en el teléfono, la lista y luego
+su página). El mapa completo está en `docs/CONFIGURACION-MAPA.md`. Nada se quitó salvo
+«Integraciones» (era de demostración, con su cola de sincronización).
+
+- **Los enlaces de antes** (`?tab=…`) caen en su sección nueva. La dirección nueva es
+  `/configuracion?seccion=<id>`.
+- **Cada tarjeta guarda sólo sus claves** y sólo lo que cambió; los permisos de cada tarjeta son
+  los de su pestaña de antes.
+- **Dos reglas que salieron al abrirla en el navegador** (`parche-de-la-seccion.ts`):
+  `ponerAlDia` —al guardar una tarjeta, las demás se ponen al día SIN borrar lo que se tecleó en
+  ellas— y `seToco` —«con cambios» es lo que la persona tocó, no lo que nunca se había guardado—.
+- **Lo desconectado o roto** (usar mesas, vender sin existencia, texto legal) se mudó a «Avanzado»,
+  plegado, con su línea «qué era». Lo decide Miguel.
+- **Los textos que mandan a Configuración** («Configuración → Operación → …») nombran la sección
+  de hoy; `destinos-de-los-textos.contrato.test.ts` los lee todos, también los errores del servidor.
+- **`heredado/*.jsx` no pasa por lint ni tipos:** una referencia sin declarar truena al abrir la
+  pantalla. El recorrido `configuracion-secciones.spec.ts` abre cada sección en tres aparatos.
+
+## DP-D142 · Los colores del iMin se arreglan en el plugin, no pantalla por pantalla · 16-11-2026
+
+DP-21 · Bloque 15 (M25, O12 y O13). El WebView del iMin es un Chromium 99–103. Dos cosas le
+faltaban al modo compatible (`scripts/modo-compatible/`), y las dos se arreglan una vez, en el CSS
+que sale del build:
+
+- **`lab()`, `lch()`, `oklab()` y `oklch()`** (Chromium 111): la paleta de fábrica de Tailwind 4
+  viene en ellos y un motor viejo deja SIN color la propiedad que la usa. El respaldo es el mismo
+  valor en `rgb()`, dentro de `@supports not (color: lab(0% 0 0))`, justo después de la regla.
+- **`:has(:checked)` y `:has(:focus-visible)`** (Chromium 105): la misma regla sobre una marca
+  (`[data-tiene-checked]`, `[data-tiene-focus-visible]`) dentro de `@supports not selector(:has(a))`;
+  la marca la pone y la quita `compatibilidad/tiene-de-respaldo.ts`.
+- **El velo del PIN** ya no usa `color-mix` en línea: se arma en JS con sus canales ya calculados
+  (`compatibilidad/velo-de-color.ts`).
+- **Un motor moderno no entra a ningún bloque:** la galería, `test:impresion` y `verify` no cambian
+  ni un pixel.
+- **Cómo se prueba:** la página `/sistema` enseña cada estado (seleccionado, abierto, marcado, foco) y
+  `motor-viejo.spec.ts` compara el color calculado de texto, fondo y borde en Chromium 99 y 103
+  contra el Chrome de hoy. **En el iMin de verdad no se ha visto:** va en la lista de Miguel.
+
+## DP-D143 · Lo que el servidor niega no se ofrece; lo que el corte lee, alguien lo escribe · 16-11-2026
+
+DP-21 · Bloque 20 (lo de dinero, seguridad y datos). El inventario completo está en
+`docs/reports/012-anexo-inventario.md`.
+
+- **«Eliminar corte»** (Registros) sólo lo ve el dueño y **«Vaciar todas»** (solicitudes del portal)
+  sólo dueño y administrador: lo que el comando deja. La pantalla usa el puesto REAL (`usePuesto`),
+  no `posUser.rol`, que junta dueño, administrador y gerente. Un contrato ata la pantalla a la
+  matriz de permisos.
+- **«Mostrar costos al cajero» y la comisión de la terminal** las leía el corte y nadie las podía
+  escribir: ahora tienen su tarjeta (Configuración → Caja → «El corte de la caja») y su comando,
+  `caja.fijar_ajustes_del_corte` (dueño y administrador, con auditoría); el camino genérico las
+  rechaza.
+- **El RFC** del negocio se valida (`@morphiqpos/domain/venta/rfc`): 12 o 13 caracteres con su forma;
+  vacío se permite.
