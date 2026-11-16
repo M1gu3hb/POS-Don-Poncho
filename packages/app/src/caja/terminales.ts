@@ -38,7 +38,7 @@ export const entradaNombrarTerminal = z.object({
 function nombreRepetido(nombre: string): ErrorDominio {
   return new ErrorDominio(
     'TERMINAL_NOMBRE_REPETIDO',
-    `Ya hay otra caja que se llama «${nombre}». Elige otro nombre.`,
+    `Ya hay otro aparato que se llama «${nombre}». Elige otro nombre.`,
   );
 }
 
@@ -77,10 +77,33 @@ async function leerTerminales(
   return rows;
 }
 
+/** El aparato desde el que se pregunta (DP-21 · Bloque 5: «Nombre de este aparato»). */
+export interface EsteAparato {
+  readonly id: string;
+  readonly nombre: string;
+}
+
+async function leerEsteAparato(
+  tx: Transaccion,
+  organizacionId: string,
+  sucursalId: string,
+  terminalId: string | null,
+): Promise<EsteAparato | null> {
+  if (terminalId === null) return null;
+  const fila = await tx
+    .selectFrom('terminales')
+    .select(['id', 'nombre'])
+    .where('organizacion_id', '=', organizacionId)
+    .where('sucursal_id', '=', sucursalId)
+    .where('id', '=', terminalId)
+    .executeTakeFirst();
+  return fila === undefined ? null : { id: fila.id, nombre: fila.nombre };
+}
+
 export const terminalesDeLaSucursal = definirComando<
   Transaccion,
   typeof entradaTerminales,
-  { readonly terminales: readonly TerminalDeLaSucursal[] }
+  { readonly terminales: readonly TerminalDeLaSucursal[]; readonly esteAparato: EsteAparato | null }
 >({
   nombre: 'caja.terminales',
   entidad: 'terminal',
@@ -93,7 +116,10 @@ export const terminalesDeLaSucursal = definirComando<
     const terminales = await ctx.paso('leer_terminales', () =>
       leerTerminales(ctx.tx, ctx.ambito.organizacionId, sucursalId),
     );
-    return { terminales };
+    const esteAparato = await ctx.paso('leer_este_aparato', () =>
+      leerEsteAparato(ctx.tx, ctx.ambito.organizacionId, sucursalId, ctx.ambito.terminalId),
+    );
+    return { terminales, esteAparato };
   },
 });
 

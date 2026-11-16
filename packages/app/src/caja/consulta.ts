@@ -7,6 +7,8 @@ import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
 import { cajasDeLaSucursal, type CajaEnOtraTerminal } from './traer.ts';
+import { nombreDeLaCaja } from './lugares.ts';
+import type { LugarLibre } from './traer.ts';
 
 /**
  * El estado del turno para la pantalla de corte (F1.1-C-10).
@@ -75,6 +77,12 @@ export interface EstadoCaja {
   readonly otrasCajas?: readonly CajaEnOtraTerminal[];
   /** DP-18 · Cuántas hay abiertas en la sucursal, contando la de aquí. */
   readonly abiertasEnLaSucursal?: number;
+  /** DP-21 · El lugar de caja de la que está abierta en este aparato (1, 2…). */
+  readonly lugar?: number | null;
+  /** DP-21 · «Caja principal»: el nombre de la caja abierta aquí, que no cambia por el aparato. */
+  readonly nombreDeLaCaja?: string;
+  /** DP-21 · Los lugares sin abrir, con su nombre: «Abrir Caja 2 aquí». */
+  readonly lugaresLibres?: readonly LugarLibre[];
 }
 
 export type DesgloseDelFondo = {
@@ -119,7 +127,16 @@ export const estadoDeCaja = definirComando<Transaccion, typeof entradaEstadoCaja
       const otras = await ctx.paso('cajas_de_la_sucursal', () =>
         cajasDeLaSucursal(ctx.tx, { ...ctx.ambito, sucursalId }),
       );
-      return { ...vacia, ...otras };
+      // De las cajas de la sucursal viaja el nombre ya resuelto de cada una, no la lista cruda.
+      return {
+        ...vacia,
+        enOtraTerminal: otras.enOtraTerminal,
+        otrasCajas: otras.otrasCajas,
+        abiertasEnLaSucursal: otras.abiertasEnLaSucursal,
+        puedoAbrir: otras.puedoAbrir,
+        cupoDeCajas: otras.cupoDeCajas,
+        lugaresLibres: otras.lugaresLibres,
+      };
     }
 
     const [arqueo, movimientos, fondo] = await Promise.all([
@@ -151,12 +168,15 @@ export const estadoDeCaja = definirComando<Transaccion, typeof entradaEstadoCaja
             ).toString(),
           }),
       fondoDesglosado: desgloseDeclarado(fondo),
+      lugar: sesion.lugar,
       ...(otras === null
         ? {}
         : {
             otrasCajas: otras.otrasCajas,
             abiertasEnLaSucursal: otras.abiertasEnLaSucursal,
             cupoDeCajas: otras.cupoDeCajas,
+            lugaresLibres: otras.lugaresLibres,
+            nombreDeLaCaja: nombreDeLaCaja(sesion.lugar, otras.nombresDeCajas, null),
           }),
       movimientos: movimientos.map((m) => ({
         tipo: m.tipo,

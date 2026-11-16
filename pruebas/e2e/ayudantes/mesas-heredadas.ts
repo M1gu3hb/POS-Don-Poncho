@@ -710,7 +710,7 @@ export async function abrirLaCaja(rosa: Page, fondoCentavos: number): Promise<vo
   const apertura = rosa.getByRole('dialog').filter({ hasText: 'Efectivo inicial contado' });
   await apertura.getByPlaceholder('0.00').fill(pesos(fondoCentavos));
   await apertura.getByRole('button', { name: 'Abrir caja' }).click();
-  await expect(rosa.getByText('Caja abierta. Ya puedes cobrar.').first()).toBeVisible({
+  await expect(rosa.getByText(/abierta. Ya puedes cobrar./).first()).toBeVisible({
     timeout: 30_000,
   });
 }

@@ -20,6 +20,7 @@ import {
   entradaMovimientoConAutorizacion,
   leerUmbralDeRetiro,
 } from './retiro-con-pin.ts';
+import { cajaConSuAparato, leerNombresDeCajas, lugarParaAbrir, nombreDeLaCaja } from './lugares.ts';
 
 /**
  * Sesión de caja (F1.1-A-08).
@@ -61,6 +62,13 @@ function traducirAperturaQuePerdio(error: unknown, cupo: number): never {
       { cupo },
     );
   }
+  if (violaIndice(error, 'sesiones_caja_un_lugar_abierto')) {
+    throw new ErrorDominio(
+      'CAJA_YA_ABIERTA',
+      'Esa caja se acaba de abrir en otro aparato. Tráela aquí o abre otra.',
+      { cupo },
+    );
+  }
   if (violaIndice(error, 'sesiones_caja_una_abierta_por_terminal')) {
     throw new ErrorDominio(
       'CAJA_YA_ABIERTA',
@@ -73,7 +81,7 @@ function traducirAperturaQuePerdio(error: unknown, cupo: number): never {
 export const abrirCaja = definirComando<
   Transaccion,
   typeof entradaAbrirCaja,
-  { sesionCajaId: string }
+  { sesionCajaId: string; lugar: number; nombreDeLaCaja: string }
 >({
   nombre: 'caja.abrir',
   entidad: 'sesion_caja',
@@ -109,16 +117,36 @@ export const abrirCaja = definirComando<
     const { cupo, abiertas } = await ctx.paso('leer_cupo_de_cajas', () =>
       repoCaja.cupoDeCajas(ctx.tx, organizacionId, sucursalId),
     );
+    const nombres = await ctx.paso('leer_nombres_de_cajas', () =>
+      leerNombresDeCajas(ctx.tx, organizacionId),
+    );
     if (abiertas.length >= cupo) {
       const ajena = abiertas[0];
       throw new ErrorDominio(
         'CAJA_YA_ABIERTA',
         cupo === 1
-          ? `Esta sucursal ya tiene una caja abierta, en la terminal «${ajena?.terminalNombre ?? 'sin nombre'}». ` +
-              'Sólo puede haber una a la vez: haz el corte desde ESA terminal antes de abrir aquí.'
+          ? `Esta sucursal ya tiene su caja abierta: ${cajaConSuAparato(ajena?.lugar, nombres, ajena?.terminalNombre ?? 'otro aparato')}. ` +
+              'Sólo puede haber una a la vez: tráela a este aparato o haz su corte allá.'
           : // DP-14.2 · «Ya hay 2 cajas abiertas: cierra una», con las palabras de Miguel.
             `Ya hay ${String(cupo)} cajas abiertas: cierra una.`,
         { sesionCajaId: ajena?.id ?? null, terminalId: ajena?.terminalId ?? null, cupo },
+      );
+    }
+
+    // DP-21 · La caja es un LUGAR de la sucursal, no este aparato: abre en el que se pidió, si
+    // está libre, o en el primero libre. El índice de la 193 respalda la elección.
+    const lugar = lugarParaAbrir(
+      cupo,
+      abiertas.map((a) => a.lugar),
+      entrada.lugar,
+    );
+    if (lugar === null) {
+      throw new ErrorDominio(
+        'CAJA_YA_ABIERTA',
+        entrada.lugar === undefined
+          ? 'No hay una caja libre en esta sucursal: trae una a este aparato.'
+          : 'Esa caja ya está abierta en otro aparato. Tráela aquí o abre otra.',
+        { cupo },
       );
     }
 
@@ -128,7 +156,10 @@ export const abrirCaja = definirComando<
     // de hoy. Sin cierre anterior, o sin que dijera cuánto dejaba, no hay con qué
     // compararlo y se espera lo que se contó.
     const dejadoAnoche = await ctx.paso('leer_lo_que_se_dejo', () =>
-      repoCaja.fondoDejadoPorElUltimoCierre(ctx.tx, organizacionId, terminalId),
+      repoCaja.fondoDejadoPorElUltimoCierre(ctx.tx, organizacionId, terminalId, {
+        sucursalId,
+        lugar,
+      }),
     );
     const sesionCajaId = await ctx.paso('abrir_sesion', async () => {
       try {
@@ -144,6 +175,7 @@ export const abrirCaja = definirComando<
           fondoMonedasCentavos: BigInt(entrada.fondoMonedasCentavos),
           fondoChicosCentavos: BigInt(entrada.fondoChicosCentavos),
           fondoGrandesCentavos: BigInt(entrada.fondoGrandesCentavos),
+          lugar,
         });
       } catch (error) {
         return traducirAperturaQuePerdio(error, cupo);
@@ -164,8 +196,12 @@ export const abrirCaja = definirComando<
       motivo: 'Fondo inicial',
     });
 
-    ctx.auditar({ entidadId: sesionCajaId, payload: { fondoCentavos: fondo.toString() } });
-    return { sesionCajaId };
+    const nombreDeLaCajaAbierta = nombreDeLaCaja(lugar, nombres, null);
+    ctx.auditar({
+      entidadId: sesionCajaId,
+      payload: { fondoCentavos: fondo.toString(), lugar, caja: nombreDeLaCajaAbierta },
+    });
+    return { sesionCajaId, lugar, nombreDeLaCaja: nombreDeLaCajaAbierta };
   },
 });
 

@@ -162,6 +162,8 @@ const SOLO_POR_COMANDO = new Set([
   // (`configuracion.fijar_quien_elige_la_propina`). La de los comensales ya era del portal.
   'propina_la_elige_mesero',
   'propina_la_elige_caja',
+  // DP-21 · El nombre de cada lugar de caja («Caja principal»): `caja.nombrar_cajas`.
+  'nombres_de_cajas',
 ]);
 
 /**
@@ -186,6 +188,7 @@ const CLAVES_EDITABLES = new Set([
   'candado_de_mando_min',
   'propina_la_elige_mesero',
   'propina_la_elige_caja',
+  'nombres_de_cajas',
   'nombre_negocio',
   'nombre_sistema',
   'platform_brand',
@@ -555,6 +558,13 @@ export async function guardarConfiguracionParcial(
     if (casilla in parche) {
       exigirForma(z.boolean(), parche[casilla], 'Quién puede elegir la propina es sí o no.');
     }
+  }
+  if ('nombres_de_cajas' in parche) {
+    exigirForma(
+      z.array(z.string().max(40).nullable()).max(4),
+      parche['nombres_de_cajas'],
+      'Los nombres de las cajas son hasta cuatro, de 40 letras como mucho.',
+    );
   }
   if ('candado_de_mando_min' in parche) {
     exigirForma(

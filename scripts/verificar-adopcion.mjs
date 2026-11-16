@@ -245,6 +245,24 @@ export const SIN_ESTADO = [
       'Tres opciones fijas (sin IVA, 8 % y 16 %) y un interruptor (DP-21): no tiene lista que pueda llegar vacía.',
   },
   {
+    pantalla: 'configuracion/NombresDeLasCajas',
+    estado: 'vacio',
+    razon:
+      'Un campo por lugar de caja (DP-21 · Bloque 5): el cupo va de 1 a 4, nunca hay cero lugares.',
+  },
+  {
+    pantalla: 'configuracion/NombresDeLasCajas',
+    estado: 'cargando',
+    razon:
+      'Lee la configuración del negocio que el armazón ya cargó (`useConfig`) y el cupo que le pasa «Cajas abiertas a la vez», que es quien pinta el esqueleto. No hace su propio viaje al servidor.',
+  },
+  {
+    pantalla: 'configuracion/TerminalesDeLaSucursal',
+    estado: 'vacio',
+    razon:
+      'Siempre está «Este aparato» (DP-21 · Bloque 5); la lista de los demás aparatos, si no hay ninguno, simplemente no se pinta: no es un vacío que haya que explicar.',
+  },
+  {
     pantalla: 'configuracion/CandadoDeMando',
     estado: 'vacio',
     razon:

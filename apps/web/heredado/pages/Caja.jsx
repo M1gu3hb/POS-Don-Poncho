@@ -52,6 +52,7 @@ import {
 } from '@/utils/tipsUtils';
 import SafeBoundary from '@/components/common/SafeBoundary';
 import AbrirCajaDialog from '@/components/caja/AbrirCajaDialog';
+import { textoDeAbrir } from '~/restaurante/cajas-en-otros-aparatos';
 import CajasEnOtrosAparatos from '@/components/caja/CajasEnOtrosAparatos';
 import CorteTurnoDialog from '@/components/caja/CorteTurnoDialog';
 import CierreDiarioDialog from '@/components/caja/CierreDiarioDialog';
@@ -188,6 +189,8 @@ export default function Caja() {
 
   // === Estados de los 3 modales nuevos ===
   const [showAbrirCaja, setShowAbrirCaja] = useState(false);
+  // DP-21 · Bloque 5: el lugar que se eligió abrir («Abrir Caja 2 aquí»); null = el primero libre.
+  const [lugarParaAbrir, setLugarParaAbrir] = useState(null);
   const [showCorteTurno, setShowCorteTurno] = useState(false);
   const [showCierreDiario, setShowCierreDiario] = useState(false);
   const [accionLoading, setAccionLoading] = useState(false);
@@ -207,6 +210,8 @@ export default function Caja() {
     abiertasEnLaSucursal,
     puedoAbrir,
     cupoDeCajas,
+    lugaresLibres,
+    nombreDeLaCaja,
     fondoEsperado,
     isLoading: cargandoCaja,
   } = useCajaAbierta({ deEstaTerminal: true });
@@ -1077,12 +1082,15 @@ export default function Caja() {
       // Del formulario sólo viaja el efectivo contado: el fondo esperado y la
       // diferencia los deriva el servidor, y el folio lo pone el consecutivo
       // atómico, no `generateFolio` en el navegador.
-      await api.comandos.ejecutar('/api/caja/abrir', {
+      const abierta = await api.comandos.ejecutar('/api/caja/abrir', {
         fondoInicialCentavos: aCentavos(form.efectivo_inicial_contado),
+        // DP-21 · Bloque 5: la caja es un lugar con nombre; sin elegir, el servidor da el primero libre.
+        ...(lugarParaAbrir ? { lugar: lugarParaAbrir } : {}),
       });
       invalidarCajaQueries();
       setShowAbrirCaja(false);
-      toast.success('Caja abierta. Ya puedes cobrar.');
+      setLugarParaAbrir(null);
+      toast.success(`${abierta?.nombreDeLaCaja || 'Caja'} abierta. Ya puedes cobrar.`);
     } catch (err) {
       toast.error(err?.message || 'No se pudo abrir la caja');
     } finally {
@@ -1297,9 +1305,11 @@ export default function Caja() {
             <h1 className="text-xl font-heading font-bold">Caja</h1>
             <p className="text-xs text-muted-foreground truncate">
               {hayCaja
-                ? isCajaDirecta
-                  ? 'Punto de venta directo'
-                  : `${ventasPendientes.length} cobros pendientes`
+                ? `${nombreDeLaCaja ? `${nombreDeLaCaja} · ` : ''}${
+                    isCajaDirecta
+                      ? 'Punto de venta directo'
+                      : `${ventasPendientes.length} cobros pendientes`
+                  }`
                 : 'Caja cerrada'}
             </p>
           </div>
@@ -1315,6 +1325,7 @@ export default function Caja() {
                 toast.error(`Ya hay ${cupoDeCajas ?? 2} cajas abiertas: cierra una.`);
                 return;
               }
+              setLugarParaAbrir(null);
               setShowAbrirCaja(true);
             }}
             disabled={hayCaja || cargandoCaja}
@@ -1375,7 +1386,11 @@ export default function Caja() {
           puedoAbrir={puedoAbrir}
           cupo={cupoDeCajas ?? 1}
           abiertas={abiertasEnLaSucursal}
-          onAbrir={() => setShowAbrirCaja(true)}
+          lugaresLibres={lugaresLibres}
+          onAbrir={(lugar) => {
+            setLugarParaAbrir(lugar ?? null);
+            setShowAbrirCaja(true);
+          }}
         />
       )}
 
@@ -1390,9 +1405,35 @@ export default function Caja() {
               caja abierta.
             </p>
           </div>
-          <Button size="sm" onClick={() => setShowAbrirCaja(true)} className="shrink-0">
-            <DoorOpen className="w-4 h-4 mr-1" /> Abrir caja
-          </Button>
+          {/* DP-21 · Bloque 5: con dos lugares libres se elige cuál; con uno, se dice su nombre. */}
+          {lugaresLibres.length > 1 ? (
+            <div className="flex shrink-0 flex-wrap gap-2">
+              {lugaresLibres.map((libre) => (
+                <Button
+                  key={libre.lugar}
+                  size="sm"
+                  onClick={() => {
+                    setLugarParaAbrir(libre.lugar);
+                    setShowAbrirCaja(true);
+                  }}
+                >
+                  <DoorOpen className="w-4 h-4 mr-1" /> {textoDeAbrir(libre)}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => {
+                setLugarParaAbrir(null);
+                setShowAbrirCaja(true);
+              }}
+              className="shrink-0"
+            >
+              <DoorOpen className="w-4 h-4 mr-1" />{' '}
+              {lugaresLibres.length === 1 ? textoDeAbrir(lugaresLibres[0]) : 'Abrir caja'}
+            </Button>
+          )}
         </div>
       )}
 

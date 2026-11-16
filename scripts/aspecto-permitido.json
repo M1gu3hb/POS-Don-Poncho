@@ -1799,6 +1799,21 @@
       "archivo": "apps/web/heredado/pages/Caja.jsx",
       "porque": "DP-21 (Bloque 4, M11 y O8): la propina que elige la Caja se guarda en el servidor en el momento (`cuenta.fijar_propina`), ya no hasta cobrar. Si ese guardado falla por algo que no es «otra pantalla la eligió antes» (eso sale en su propio aviso, con «Usar ésa» y «Cambiarla»), la Caja lo dice. Nada de lo que se veía se quitó.",
       "testigos": ["+ aviso:No se pudo guardar la propina. Intenta de nuevo."]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-21 (Bloque 5, M1 y O9): la caja ya no es el aparato, es un lugar de la sucursal con su nombre. Al abrirla el aviso dice cuál se abrió («Caja principal abierta. Ya puedes cobrar.») en vez del genérico «Caja abierta…», y cuando hay dos lugares libres el aviso de «No hay caja abierta en este aparato» ofrece un botón por cada uno («Abrir Caja principal aquí», «Abrir Caja 2 aquí») con las mismas clases del botón «Abrir caja» que ya estaba.",
+      "testigos": [
+        "- aviso:Caja abierta. Ya puedes cobrar.",
+        "+ aviso:${abierta?.nombreDeLaCaja || 'Caja'} abierta. Ya puedes cobrar.",
+        "+ clase:flex",
+        "+ clase:shrink-0",
+        "+ clase:gap-2",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:mr-1",
+        "+ clase:flex-wrap"
+      ]
     }
   ]
 }

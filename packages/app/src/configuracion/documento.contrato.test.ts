@@ -147,6 +147,8 @@ const LECTORES: Readonly<Record<string, 'documento-filtrado' | 'proyeccion' | 'i
   'packages/app/src/propinas/fijar-propina.ts': 'interno',
   'packages/app/src/propinas/quien-elige.ts': 'interno',
   'packages/app/src/restaurante/cuenta.ts': 'interno',
+  // DP-21: lee `nombres_de_cajas` (el nombre de cada lugar de caja); no devuelve el documento.
+  'packages/app/src/caja/lugares.ts': 'interno',
   'packages/data/src/repos/archivos.ts': 'interno',
 };
 

@@ -26,6 +26,8 @@ export interface SesionAbierta {
   readonly serie: string;
   readonly fondoInicialCentavos: bigint;
   readonly abiertaEn: Date;
+  /** DP-21 · El lugar de caja de la sucursal (1, 2…); nulo en las sesiones anteriores a la 193. */
+  readonly lugar: number | null;
 }
 
 export async function sesionAbiertaDeTerminal(
@@ -49,6 +51,7 @@ export async function sesionAbiertaDeTerminal(
       'serie',
       'fondo_inicial_centavos as fondoInicialCentavos',
       'abierta_en as abiertaEn',
+      'lugar',
     ])
     .where('organizacion_id', '=', organizacionId)
     .where('terminal_id', '=', terminalId)
@@ -86,6 +89,7 @@ export async function sesionAbiertaDeSucursal(
       'sesiones_caja.serie as serie',
       'sesiones_caja.fondo_inicial_centavos as fondoInicialCentavos',
       'sesiones_caja.abierta_en as abiertaEn',
+      'sesiones_caja.lugar as lugar',
       'terminales.nombre as terminalNombre',
     ])
     .where('sesiones_caja.organizacion_id', '=', organizacionId)
@@ -118,6 +122,8 @@ export async function abrirSesion(
      * quedaba en el `default 0` y la «diferencia de apertura» salía igual al fondo.
      */
     readonly fondoEsperadoCentavos?: bigint;
+    /** DP-21 · El lugar de caja en el que abre (1, 2…). Lo elige el comando, no el aparato. */
+    readonly lugar?: number | null;
   },
 ): Promise<string> {
   const fila = await tx
@@ -136,6 +142,7 @@ export async function abrirSesion(
       fondo_chicos_centavos: datos.fondoChicosCentavos ?? 0n,
       fondo_grandes_centavos: datos.fondoGrandesCentavos ?? 0n,
       estado: 'abierta',
+      lugar: datos.lugar ?? null,
     })
     .returning('id')
     .executeTakeFirstOrThrow();
@@ -370,7 +377,29 @@ export async function fondoDejadoPorElUltimoCierre(
   tx: Transaccion,
   organizacionId: string,
   terminalId: string,
+  /**
+   * DP-21 · La caja ya no es el aparato: lo que se dejó anoche es de ESE LUGAR de caja, esté
+   * hoy en el aparato que esté. Sin lugar (o si ese lugar nunca cerró), el del aparato, como antes.
+   */
+  caja?: { readonly sucursalId: string; readonly lugar: number },
 ): Promise<bigint | null> {
+  if (caja !== undefined) {
+    const delLugar = await tx
+      .selectFrom('sesiones_caja')
+      .select(['efectivo_contado_centavos as contado', 'efectivo_retirado_centavos as retirado'])
+      .where('organizacion_id', '=', organizacionId)
+      .where('sucursal_id', '=', caja.sucursalId)
+      .where('lugar', '=', caja.lugar)
+      .where('estado', '=', 'cerrada')
+      .orderBy('cerrada_en', 'desc')
+      .limit(1)
+      .executeTakeFirst();
+    if (delLugar !== undefined) {
+      return delLugar.contado === null || delLugar.retirado === null
+        ? null
+        : delLugar.contado - delLugar.retirado;
+    }
+  }
   const ultimo = await tx
     .selectFrom('sesiones_caja')
     .select(['efectivo_contado_centavos as contado', 'efectivo_retirado_centavos as retirado'])
@@ -787,6 +816,7 @@ export async function cupoDeCajas(
       'sesiones_caja.serie as serie',
       'sesiones_caja.fondo_inicial_centavos as fondoInicialCentavos',
       'sesiones_caja.abierta_en as abiertaEn',
+      'sesiones_caja.lugar as lugar',
       'terminales.nombre as terminalNombre',
     ])
     .where('sesiones_caja.organizacion_id', '=', organizacionId)

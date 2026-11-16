@@ -53,9 +53,11 @@ describe('la Caja con dos cajas', () => {
 describe('trasladar la caja de otro aparato (DP-18)', () => {
   const aviso = () => leer('components/caja/CajasEnOtrosAparatos.jsx');
 
-  it('se llama «Trasladar aquí» y pide confirmar que el otro aparato se queda sin caja', () => {
+  it('se llama «Traer <la caja> a este aparato» y pide confirmar que el otro se queda sin caja', () => {
     const texto = aviso();
-    expect(texto).toMatch(/Trasladar aquí/);
+    // DP-21 · Bloque 5: el botón dice QUÉ caja se trae, por su nombre («Traer Caja principal…»).
+    expect(texto).toContain('{textoDeTraer(caja)}');
+    expect(texto).not.toMatch(/Trasladar aquí/);
     expect(texto).toMatch(/se queda sin caja/);
     expect(texto).toContain('onClick={() => setConfirmando(caja.sesionCajaId)}');
     expect(texto).toMatch(/Sí, trasladarla/);
@@ -65,6 +67,8 @@ describe('trasladar la caja de otro aparato (DP-18)', () => {
     const texto = aviso();
     expect(texto).toContain('!hayCaja && caja.puedoTraerla && confirmando !== caja.sesionCajaId');
     expect(texto).toContain('!hayCaja && puedoAbrir && (');
-    expect(texto).toMatch(/Abrir otra caja aquí/);
+    // DP-21 · Bloque 5: lo que se abre es un lugar con nombre («Abrir Caja 2 aquí»).
+    expect(texto).toContain('onClick={() => onAbrir(libre.lugar)}');
+    expect(texto).toContain('{textoDeAbrir(libre)}');
   });
 });

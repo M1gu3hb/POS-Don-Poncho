@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
 import { violaIndice } from '../portal/errores-sql.ts';
+import { leerNombresDeCajas, lugaresLibres, nombreDeLaCaja } from './lugares.ts';
 
 /**
  * TRAER LA CAJA A ESTE DISPOSITIVO (restaurante, 21-10-2026).
@@ -48,8 +49,19 @@ export function puedeTraerLaCaja(rol: string, empleoId: string, abiertaPor: stri
 }
 
 /** La caja abierta de la sucursal en OTRA terminal, como la enseña la pantalla de caja. */
+/** Un lugar de caja sin abrir. */
+export interface LugarLibre {
+  readonly lugar: number;
+  readonly nombre: string;
+}
+
 export interface CajaEnOtraTerminal {
   readonly sesionCajaId: string;
+  /** DP-21 · El lugar de caja (1, 2…); nulo en una sesión anterior a la 193. */
+  readonly lugar: number | null;
+  /** DP-21 · «Caja principal»: el nombre de la CAJA, que no cambia por el aparato. */
+  readonly nombreDeLaCaja: string;
+  /** El aparato que la tiene abierta («iMin mostrador»). */
   readonly terminalNombre: string | null;
   readonly abiertaPor: string | null;
   readonly abiertaEn: string;
@@ -78,6 +90,10 @@ export async function cajasDeLaSucursal(
   readonly puedoAbrir: boolean;
   /** DP-14 · ronda 2: cuántas cajas caben a la vez, para decir «Ya hay N cajas abiertas». */
   readonly cupoDeCajas: number;
+  /** DP-21 · Los lugares de caja sin abrir, con su nombre: «Abrir Caja 2 aquí». */
+  readonly lugaresLibres: readonly LugarLibre[];
+  /** DP-21 · Los nombres de las cajas por lugar, para quien llama. */
+  readonly nombresDeCajas: readonly (string | null)[];
 }> {
   const { cupo, abiertas } = await repoCaja.cupoDeCajas(
     tx,
@@ -93,6 +109,7 @@ export async function cajasDeLaSucursal(
       'sesiones_caja.id as id',
       'sesiones_caja.abierta_en as abiertaEn',
       'sesiones_caja.empleado_abre_id as abiertaPorId',
+      'sesiones_caja.lugar as lugar',
       'terminales.nombre as terminalNombre',
       'personas.nombre as abiertaPor',
     ])
@@ -105,8 +122,11 @@ export async function cajasDeLaSucursal(
     // El cupo de la base no pasa de cuatro (179): diez sobra.
     .limit(10)
     .execute();
+  const nombres = await leerNombresDeCajas(tx, ambito.organizacionId);
   const otrasCajas = ajenas.map((ajena) => ({
     sesionCajaId: ajena.id,
+    lugar: ajena.lugar,
+    nombreDeLaCaja: nombreDeLaCaja(ajena.lugar, nombres, ajena.terminalNombre),
     terminalNombre: ajena.terminalNombre,
     abiertaPor: ajena.abiertaPor,
     abiertaEn: ajena.abiertaEn.toISOString(),
@@ -118,6 +138,11 @@ export async function cajasDeLaSucursal(
     abiertasEnLaSucursal: abiertas.length,
     puedoAbrir: abiertas.length < cupo,
     cupoDeCajas: cupo,
+    lugaresLibres: lugaresLibres(
+      cupo,
+      abiertas.map((a) => a.lugar),
+    ).map((lugar) => ({ lugar, nombre: nombreDeLaCaja(lugar, nombres, null) })),
+    nombresDeCajas: nombres,
   };
 }
 

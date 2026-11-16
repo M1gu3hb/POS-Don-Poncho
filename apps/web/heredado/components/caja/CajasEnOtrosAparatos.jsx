@@ -5,7 +5,15 @@ import { toast } from 'sonner';
 import { DoorOpen, MonitorSmartphone } from 'lucide-react';
 import { api } from '@/api/cliente';
 import { Button } from '@/components/ui/button';
-import { abiertaDesde, dondeEsta, textoDelCupo } from '~/restaurante/cajas-en-otros-aparatos';
+import {
+  cajaYDonde,
+  cualCaja,
+  dondeEsta,
+  porQuienYDesde,
+  textoDeAbrir,
+  textoDeTraer,
+  textoDelCupo,
+} from '~/restaurante/cajas-en-otros-aparatos';
 
 /**
  * DP-18 · LAS CAJAS ABIERTAS EN OTROS APARATOS, SIEMPRE A LA VISTA (antes «CajaEnOtraTerminal»).
@@ -13,12 +21,24 @@ import { abiertaDesde, dondeEsta, textoDelCupo } from '~/restaurante/cajas-en-ot
  * El 11-11 Miguel tenía una caja abierta en la tableta desde las 10:14; en la PC, con cupo de 2, la
  * Caja decía «No hay caja abierta en este aparato · Abrir caja» y callaba la de la tableta (DP-D74):
  * creyó que se había cerrado sola. Ahora se ve cada caja abierta en otro aparato —dónde, quién y
- * desde qué hora—, con «Trasladar aquí» (con confirmación: el otro aparato se queda sin caja) y,
+ * desde qué hora—, con el botón de traerla (con confirmación: el otro aparato se queda sin caja) y,
  * si todavía cabe otra, «Abrir otra caja aquí (N de M)». Con caja propia, las demás se enlistan sin
  * botones. Los datos llegan de `caja.estado` (`otrasCajas`), que se relee cada pocos segundos, al
  * volver a la pestaña y al cambiar el cupo.
+ *
+ * DP-21 · Bloque 5: cada caja se dice por SU nombre («Caja principal · abierta en «iMin
+ * mostrador»»), el traslado es «Traer Caja principal a este aparato» y lo que se abre es un lugar
+ * con nombre («Abrir Caja 2 aquí»): nunca una caja nueva por cada aparato que entra.
  */
-export default function CajasEnOtrosAparatos({ cajas, hayCaja, puedoAbrir, cupo, abiertas, onAbrir }) {
+export default function CajasEnOtrosAparatos({
+  cajas,
+  hayCaja,
+  puedoAbrir,
+  cupo,
+  abiertas,
+  lugaresLibres = [],
+  onAbrir,
+}) {
   const queryClient = useQueryClient();
   const [trayendo, setTrayendo] = useState(null);
   const [confirmando, setConfirmando] = useState(null);
@@ -29,7 +49,7 @@ export default function CajasEnOtrosAparatos({ cajas, hayCaja, puedoAbrir, cupo,
     try {
       await api.comandos.ejecutar('/api/caja/traer', { sesionCajaId: caja.sesionCajaId });
       await queryClient.invalidateQueries({ queryKey: ['cortes_caja_estado'] });
-      toast.success('Listo: la caja ya está en este aparato. Puedes cobrar y hacer el corte.');
+      toast.success(`Listo: ${cualCaja(caja)} ya está en este aparato. Puedes cobrar y hacer el corte.`);
     } catch (err) {
       toast.error(err?.message || 'No se pudo trasladar la caja');
     } finally {
@@ -55,13 +75,16 @@ export default function CajasEnOtrosAparatos({ cajas, hayCaja, puedoAbrir, cupo,
           <li key={caja.sesionCajaId} className="flex flex-wrap items-center gap-2">
             <MonitorSmartphone className="size-5 shrink-0 text-info" aria-hidden />
             <span className="min-w-0 flex-1">
-              <span className="font-semibold">{dondeEsta(caja)}</span>
-              {' · '}
-              {abiertaDesde(caja)}
+              <span className="font-semibold">{cajaYDonde(caja)}</span> {porQuienYDesde(caja)}
             </span>
             {!hayCaja && caja.puedoTraerla && confirmando !== caja.sesionCajaId && (
-              <Button size="sm" variant="outline" className="min-h-11" onClick={() => setConfirmando(caja.sesionCajaId)}>
-                Trasladar aquí
+              <Button
+                size="sm"
+                variant="outline"
+                className="min-h-11"
+                onClick={() => setConfirmando(caja.sesionCajaId)}
+              >
+                {textoDeTraer(caja)}
               </Button>
             )}
             {!hayCaja && caja.puedoTraerla && confirmando === caja.sesionCajaId && (
@@ -85,9 +108,25 @@ export default function CajasEnOtrosAparatos({ cajas, hayCaja, puedoAbrir, cupo,
         <p className="text-xs text-texto-sutil">{textoDelCupo({ puedoAbrir, cupo, abiertas })}</p>
       )}
       {!hayCaja && puedoAbrir && (
-        <Button size="sm" className="min-h-11 self-start" onClick={onAbrir}>
-          <DoorOpen className="mr-1 size-4" aria-hidden /> Abrir otra caja aquí ({String(abiertas + 1)} de {String(cupo)})
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {lugaresLibres.length === 0 ? (
+            <Button size="sm" className="min-h-11 self-start" onClick={() => onAbrir()}>
+              <DoorOpen className="mr-1 size-4" aria-hidden /> Abrir otra caja aquí ({String(abiertas + 1)} de{' '}
+              {String(cupo)})
+            </Button>
+          ) : (
+            lugaresLibres.map((libre) => (
+              <Button
+                key={libre.lugar}
+                size="sm"
+                className="min-h-11 self-start"
+                onClick={() => onAbrir(libre.lugar)}
+              >
+                <DoorOpen className="mr-1 size-4" aria-hidden /> {textoDeAbrir(libre)}
+              </Button>
+            ))
+          )}
+        </div>
       )}
     </section>
   );

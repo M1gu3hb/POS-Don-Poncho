@@ -88,7 +88,15 @@ export async function leerSesion(
            s.bote_contado_centavos::text          as "boteContadoCentavos",
            s.saldo_recargas_apertura_centavos::text as "saldoRecargasAperturaCentavos",
            s.saldo_recargas_cierre_centavos::text as "saldoRecargasCierreCentavos",
-           t.nombre                               as "terminal",
+           -- DP-21 · La caja es un lugar con nombre («Caja principal»), no el aparato; el aparato
+           -- va después. Una sesión anterior a la 193 (sin lugar) se llama como su aparato.
+           case
+             when s.lugar is null then t.nombre
+             else coalesce(
+                    nullif(btrim(cfg.valores -> 'nombres_de_cajas' ->> (s.lugar - 1)), ''),
+                    'Caja ' || s.lugar::text
+                  ) || coalesce(' · ' || t.nombre, '')
+           end                                    as "terminal",
            su.nombre                              as "sucursal",
            su.direccion                           as "sucursalDireccion",
            su.telefono                            as "sucursalTelefono",
@@ -97,6 +105,7 @@ export async function leerSesion(
       from sesiones_caja s
       join sucursales su on su.id = s.sucursal_id and su.organizacion_id = s.organizacion_id
       left join terminales t on t.id = s.terminal_id and t.organizacion_id = s.organizacion_id
+      left join configuracion cfg on cfg.organizacion_id = s.organizacion_id
       left join empleados_visibles ea on ea.id = s.empleado_abre_id
       left join empleados_visibles ec on ec.id = s.empleado_cierra_id
      where s.organizacion_id = ${organizacionId}

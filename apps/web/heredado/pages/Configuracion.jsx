@@ -88,6 +88,7 @@ import {
 } from '~/cliente/mesas-del-mapa';
 import { Calculator, BadgePercent } from 'lucide-react';
 import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos';
+import { AparatosDeLaSucursal } from '~/configuracion/TerminalesDeLaSucursal';
 import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
 import { IvaDelNegocio } from '~/configuracion/IvaDelNegocio';
 import { CandadoDeMando } from '~/configuracion/CandadoDeMando';
@@ -534,6 +535,8 @@ export default function Configuracion() {
         {/* DP-11.2: lo que es de ESTE aparato y no del negocio (el modo espera). */}
         <TabsContent value="aparato">
           <div className="space-y-6">
+            {/* DP-21 · Bloque 5: el aparato tiene su nombre, aparte del de la caja. */}
+            <AparatosDeLaSucursal puedeCambiar={miPuesto === 'dueno' || miPuesto === 'administrador'} />
             <ModoEsperaDelAparato />
             {/* DP-11.3: cuánto suena ESTE aparato (Apagado, Suave, Normal). */}
             <SonidoDelAparato />

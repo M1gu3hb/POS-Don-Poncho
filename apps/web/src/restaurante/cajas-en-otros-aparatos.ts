@@ -1,5 +1,9 @@
 /**
  * DP-18 · Cómo se dice una caja abierta en otro aparato (la pantalla, sin React, para probarlo).
+ *
+ * DP-21 · Bloque 5: la caja ya no es el aparato. Cada caja es un LUGAR de la sucursal con su
+ * nombre («Caja principal», «Caja 2») y el aparato sólo la tiene abierta: «Caja principal · abierta
+ * en «iMin mostrador»», «Traer Caja principal a este aparato», «Abrir Caja 2 aquí».
  */
 export interface CajaEnOtroAparato {
   readonly sesionCajaId: string;
@@ -7,14 +11,50 @@ export interface CajaEnOtroAparato {
   readonly abiertaPor: string | null;
   readonly abiertaEn: string;
   readonly puedoTraerla: boolean;
+  /** El lugar de la caja (1, 2…). Una sesión de antes de DP-21 no lo tiene. */
+  readonly lugar?: number | null;
+  /** «Caja principal»: el nombre que le puso el dueño al lugar, o «Caja N». */
+  readonly nombreDeLaCaja?: string | null;
+}
+
+/** Un lugar de caja sin abrir, como lo manda `caja.estado`. */
+export interface LugarLibre {
+  readonly lugar: number;
+  readonly nombre: string;
 }
 
 const ZONA = 'America/Mexico_City';
 
-/** «Caja 2» o «Otro aparato» si nadie le puso nombre. */
+/** El aparato: ««iMin mostrador»» u «otro aparato» si nadie le puso nombre. */
 export function dondeEsta(caja: Pick<CajaEnOtroAparato, 'terminalNombre'>): string {
   const nombre = (caja.terminalNombre ?? '').trim();
   return nombre === '' ? 'Otro aparato' : `«${nombre}»`;
+}
+
+/** La caja, por su nombre. Con una sesión de antes (sin lugar), «La caja». */
+export function cualCaja(caja: Pick<CajaEnOtroAparato, 'lugar' | 'nombreDeLaCaja'>): string {
+  const nombre = (caja.nombreDeLaCaja ?? '').trim();
+  if (caja.lugar === null || caja.lugar === undefined || nombre === '') return 'La caja';
+  return nombre;
+}
+
+/** «Caja principal · abierta en «iMin mostrador»». */
+export function cajaYDonde(
+  caja: Pick<CajaEnOtroAparato, 'lugar' | 'nombreDeLaCaja' | 'terminalNombre'>,
+): string {
+  const aparato = dondeEsta(caja);
+  return `${cualCaja(caja)} · abierta en ${aparato === 'Otro aparato' ? 'otro aparato' : aparato}`;
+}
+
+/** «Traer Caja principal a este aparato». */
+export function textoDeTraer(caja: Pick<CajaEnOtroAparato, 'lugar' | 'nombreDeLaCaja'>): string {
+  const cual = cualCaja(caja);
+  return `Traer ${cual === 'La caja' ? 'la caja' : cual} a este aparato`;
+}
+
+/** «Abrir Caja 2 aquí». */
+export function textoDeAbrir(lugar: Pick<LugarLibre, 'nombre'>): string {
+  return `Abrir ${lugar.nombre} aquí`;
 }
 
 const fechaEnCdmx = (d: Date) =>
@@ -46,6 +86,14 @@ export function abiertaDesde(
     month: 'short',
   }).format(desde);
   return `${por} desde el ${dia} a las ${hora}`;
+}
+
+/** «por Ana desde las 10:14»: lo de `abiertaDesde` sin repetir «abierta» tras «abierta en…». */
+export function porQuienYDesde(
+  caja: Pick<CajaEnOtroAparato, 'abiertaPor' | 'abiertaEn'>,
+  ahora: Date = new Date(),
+): string {
+  return abiertaDesde(caja, ahora).replace(/^abierta\s+/, '');
 }
 
 /** Lo que dice el cupo cuando este aparato no tiene caja. */

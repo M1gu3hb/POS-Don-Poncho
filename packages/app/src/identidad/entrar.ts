@@ -216,7 +216,9 @@ export async function resolverTerminal(
       repoIdentidad.crearTerminalParaDispositivo(tx, {
         organizacionId: peticion.organizacionId,
         sucursalId,
-        nombre: `Caja ${String(yaHay + 1 + intento)}`,
+        // DP-21 · Un aparato NO es una caja: la caja es un lugar de la sucursal con su nombre
+        // (`caja/lugares.ts`). Su nombre propio se le pone en Configuración → Este aparato.
+        nombre: `Aparato ${String(yaHay + 1 + intento)}`,
         deviceTokenHash,
         ahora,
       }),
@@ -231,7 +233,7 @@ export async function resolverTerminal(
     repoIdentidad.crearTerminalParaDispositivo(tx, {
       organizacionId: peticion.organizacionId,
       sucursalId,
-      nombre: `Caja ${String(ahora.getTime())}`,
+      nombre: `Aparato ${String(ahora.getTime())}`,
       deviceTokenHash,
       ahora,
     }),

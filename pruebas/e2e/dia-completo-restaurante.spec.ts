@@ -500,7 +500,7 @@ test.describe('el día completo del restaurante', () => {
         const apertura = rosa.getByRole('dialog').filter({ hasText: 'Efectivo inicial contado' });
         await apertura.getByPlaceholder('0.00').fill(pesos(FONDO_CENTAVOS));
         await apertura.getByRole('button', { name: 'Abrir caja' }).click();
-        await expect(rosa.getByText('Caja abierta. Ya puedes cobrar.').first()).toBeVisible({
+        await expect(rosa.getByText(/abierta. Ya puedes cobrar./).first()).toBeVisible({
           timeout: 30_000,
         });
         sesion = (await sesionDeLaCaja(rosa)) ?? '';

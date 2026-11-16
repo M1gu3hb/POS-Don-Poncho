@@ -115,3 +115,18 @@ export {
   fijarCopiasDeImpresion,
   type CopiasDeImpresion,
 } from './copias-de-impresion.ts';
+
+export {
+  CLAVE_NOMBRES_DE_CAJAS,
+  LUGARES_MAXIMOS,
+  cajaConSuAparato,
+  entradaNombrarCajas,
+  leerNombresDeCajas,
+  lugarParaAbrir,
+  lugaresLibres,
+  nombrarCajas,
+  nombreDeLaCaja,
+  nombresDeCajasEn,
+  type CajasNombradas,
+} from './lugares.ts';
+export type { LugarLibre } from './traer.ts';
