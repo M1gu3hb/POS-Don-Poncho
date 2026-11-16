@@ -96,6 +96,7 @@ function hoja(extras: ExtrasDelServidor, cambios: Partial<HojaDelServidor> = {})
     ],
     porPersona: [],
     gastos: [],
+    pagadosDeLaCaja: [],
     ajustes: [],
     cancelaciones: [],
     corteHasta: '2026-09-26T03:00:00.000Z',
@@ -813,5 +814,74 @@ describe('DP-15.1 · los ajustes de caja no se esconden en el esperado', () => {
     expect(etiquetas.indexOf('Ajustes de caja')).toBeLessThan(
       etiquetas.indexOf('Efectivo esperado'),
     );
+  });
+});
+
+describe('DP-21 · Bloque 11 · «Compras y gastos pagados de la caja» y la cascada que cuadra', () => {
+  const CON_PAGOS = hoja(RESTAURANTE, {
+    sesion: { ...hoja(RESTAURANTE).sesion, esperadoCentavos: '380000' },
+    movimientos: [
+      { tipo: 'apertura', montoCentavos: '95000', cuantos: 1 },
+      { tipo: 'venta', montoCentavos: '325000', cuantos: 4 },
+      { tipo: 'gasto', montoCentavos: '-40000', cuantos: 2 },
+    ],
+    pagadosDeLaCaja: [
+      { origen: 'gasto', categoria: 'servicios', descripcion: 'Garrafón', montoCentavos: '15000' },
+      {
+        origen: 'compra',
+        categoria: null,
+        descripcion: 'Compra a Don Beto',
+        montoCentavos: '25000',
+      },
+    ],
+  });
+
+  it('el arqueo trae el renglón propio, en negativo y antes del esperado', () => {
+    const doc = documentoDelCorte(CON_PAGOS);
+    expect(
+      celda(doc.secciones, 'Apertura y fondo', 'Compras y gastos pagados de la caja')?.valor,
+    ).toEqual({
+      tipo: 'dinero',
+      centavos: -40_000,
+    });
+    const arqueo = doc.secciones.find((s) => s.titulo === 'Apertura y fondo');
+    if (arqueo?.tipo !== 'celdas') throw new Error('falta el arqueo');
+    const etiquetas = arqueo.celdas.map((c) => c.etiqueta);
+    expect(etiquetas.indexOf('Compras y gastos pagados de la caja')).toBeLessThan(
+      etiquetas.indexOf('Efectivo esperado'),
+    );
+  });
+
+  it('la cascada lo dice con ese nombre y SUMA exactamente al efectivo esperado', () => {
+    const doc = documentoDelCorte(CON_PAGOS);
+    const cascada = doc.secciones.find((s) => s.tipo === 'cascada');
+    if (cascada?.tipo !== 'cascada') throw new Error('falta la cascada');
+    const paso = cascada.pasos.find((p) =>
+      p.etiqueta.startsWith('Compras y gastos pagados de la caja'),
+    );
+    expect(paso?.centavos).toBe(-40_000);
+    expect(cascada.pasos.reduce((suma, p) => suma + p.centavos, 0)).toBe(
+      cascada.resultado.centavos,
+    );
+  });
+
+  it('la sección lista cada gasto y compra, y su TOTAL es el renglón de la cascada: no cuenta doble', () => {
+    const doc = documentoDelCorte(CON_PAGOS);
+    const seccion = doc.secciones.find(
+      (s) => s.titulo === 'Compras y gastos pagados de la caja' && s.tipo === 'tabla',
+    );
+    if (seccion?.tipo !== 'tabla') throw new Error('falta la sección');
+    expect(seccion.filas).toHaveLength(2);
+    expect(JSON.stringify(seccion.total)).toContain('40000');
+    // Los gastos operativos (utilidad) no incluyen la compra: sólo lo que es gasto.
+    expect(titulos(doc.secciones)).not.toContain('Gastos operativos');
+  });
+
+  it('sin gastos ni compras en efectivo: ni renglón ni sección', () => {
+    const doc = documentoDelCorte(hoja(RESTAURANTE));
+    expect(
+      celda(doc.secciones, 'Apertura y fondo', 'Compras y gastos pagados de la caja'),
+    ).toBeUndefined();
+    expect(titulos(doc.secciones)).not.toContain('Compras y gastos pagados de la caja');
   });
 });

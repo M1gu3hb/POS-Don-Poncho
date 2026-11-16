@@ -2323,6 +2323,11 @@
         "- icono:ShieldAlert",
         "- icono:Database"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Compras.jsx",
+      "porque": "DP-21 · Bloque 11: el distintivo del pago de cada gasto y compra ya no dice «efectivo» (en minúscula, con `capitalize`) sino la frase del servidor, «Pagado en efectivo de Caja principal»: con `capitalize` se leería «Pagado En Efectivo De Caja Principal». Es la misma insignia, con la frase completa en su sitio.",
+      "testigos": ["- clase:capitalize", "- clase:capitalize"]
     }
   ]
 }

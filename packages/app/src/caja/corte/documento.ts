@@ -117,6 +117,8 @@ export interface HojaDelCorte {
   readonly opciones: readonly OpcionVendida[];
   readonly porPersona: readonly consultas.VentasDePersona[];
   readonly gastos: readonly consultas.GastoDelCorte[];
+  /** DP-21 · Bloque 11 · Cada gasto y compra pagados del cajón: su suma es el renglón de la cascada. */
+  readonly pagadosDeLaCaja: readonly consultas.PagadoDeLaCaja[];
   readonly cancelaciones: readonly consultas.Cancelacion[];
   /**
    * DP-14.6 · TODAS las cancelaciones del corte, contadas y sumadas en SQL: la lista de arriba tiene
@@ -186,6 +188,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
       opciones,
       porPersona,
       gastos,
+      pagadosDeLaCaja,
     ] = await ctx.paso('leer_tronco', () =>
       Promise.all([
         consultas.movimientosPorTipo(tx, organizacionId, id),
@@ -199,6 +202,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
         opcionesVendidas(tx, organizacionId, id),
         consultas.ventasPorPersona(tx, organizacionId, id),
         consultas.gastosDelCorte(tx, organizacionId, id),
+        consultas.pagadosDeLaCaja(tx, organizacionId, id),
       ]),
     );
     const [
@@ -257,6 +261,7 @@ export const hojaDelCorte = definirComando<Transaccion, typeof entradaHojaDelCor
         opciones,
         porPersona,
         gastos,
+        pagadosDeLaCaja,
         cancelaciones,
         cancelacionesTotal,
         devoluciones: devoluciones.map((d) => ({

@@ -18,6 +18,7 @@ import { claves } from '~/cliente/claves-de-consulta';
 import { almacenPrincipal, leerAlmacenes } from '~/inventario/almacen-de-la-sucursal';
 import { FaltaElAlmacen } from '~/inventario/FaltaElAlmacen';
 import { usePuesto } from '@/components/configuracion/usePuesto';
+import { frasePagado } from '@morphiqpos/domain/gastos';
 
 /**
  * DP-15 · Quien registra compras y gastos (los `roles` de `compras.registrar` y `gastos.registrar`).
@@ -69,6 +70,22 @@ export default function Compras() {
   const safeGastos = Array.isArray(gastos) ? gastos : [];
   const cargandoCompras = comprasLoading && !compras;
   const cargandoGastos = gastosLoading && !gastos;
+
+  // DP-21 · Bloque 11: de qué caja salió cada gasto o compra en efectivo. El NOMBRE lo pone el
+  // servidor («Caja principal», el del Bloque 5); aquí sólo se pinta la frase que devuelve.
+  const gastosVisibles = safeGastos.slice(0, 12);
+  const comprasVisibles = safeCompras.slice(0, 12);
+  const gastoIds = gastosVisibles.filter((g) => g.metodo_pago === 'efectivo').map((g) => g.id);
+  const compraIds = comprasVisibles.filter((c) => c.metodo_pago === 'efectivo').map((c) => c.id);
+  const { data: pagosDeLaCaja } = useQuery({
+    queryKey: ['pagos_de_la_caja', gastoIds, compraIds],
+    queryFn: () => api.comandos.ejecutar('/api/gastos/pagos-de-la-caja', { gastoIds, compraIds }),
+    enabled: registra && (gastoIds.length > 0 || compraIds.length > 0),
+    placeholderData: (prev) => prev,
+    staleTime: 5000,
+  });
+  const cajaDe = (tipo, id) =>
+    (pagosDeLaCaja?.pagos ?? []).find((p) => p.tipo === tipo && p.id === id)?.caja ?? null;
 
   return (
     <div className="space-y-6">
@@ -156,8 +173,8 @@ export default function Compras() {
                     {c.fecha} {c.usuario_nombre ? `· ${c.usuario_nombre}` : ''}
                   </p>
                 </div>
-                <Badge variant="secondary" className="capitalize text-[10px]">
-                  {c.metodo_pago || '—'}
+                <Badge variant="secondary" className="text-[10px]">
+                  {c.metodo_pago ? frasePagado(c.metodo_pago, cajaDe('compra', c.id)) : '—'}
                 </Badge>
                 <p className="font-heading font-black min-w-[80px] text-right">
                   {formatCurrency(c.total_compra)}
@@ -202,8 +219,8 @@ export default function Compras() {
                       Fijo mensual
                     </Badge>
                   )}
-                  <Badge variant="secondary" className="capitalize text-[10px]">
-                    {g.metodo_pago || '—'}
+                  <Badge variant="secondary" className="text-[10px]">
+                    {g.metodo_pago ? frasePagado(g.metodo_pago, cajaDe('gasto', g.id)) : '—'}
                   </Badge>
                   <p className="font-heading font-black min-w-[80px] text-right text-peligro">
                     −{formatCurrency(g.monto)}

@@ -341,6 +341,18 @@ export const SIN_ESTADO = [
       'Dos columnas de interruptores fijos (DP-21 · Bloque 12): no tiene lista que pueda llegar vacía.',
   },
   {
+    pantalla: 'venta/PagoDeLaCaja',
+    estado: 'vacio',
+    razon:
+      'Pieza de los diálogos de gasto y compra (DP-21 · Bloque 11): dibuja dos frases y un aviso que le pasan; no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'venta/PagoDeLaCaja',
+    estado: 'cargando',
+    razon:
+      'Pieza de los diálogos de gasto y compra, no pantalla: mientras la lectura del cajón no llega no pinta nada y el diálogo sigue usable (es un dato extra, nunca bloquea).',
+  },
+  {
     pantalla: 'configuracion/CandadoDeMando',
     estado: 'vacio',
     razon:

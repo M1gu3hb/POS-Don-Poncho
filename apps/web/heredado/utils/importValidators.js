@@ -13,6 +13,7 @@
  * capa después de que el usuario confirme.
  */
 
+import { CLAVES_DE_CATEGORIA_DE_GASTO } from '@morphiqpos/domain/gastos';
 import { toNumber, toBool } from '@/utils/csvParser';
 import {
   normalizarNombreIngrediente,
@@ -31,15 +32,8 @@ import {
 } from '@/utils/unidadesMedida';
 
 const UNIDADES_BASE_VALIDAS = ['g', 'ml', 'pieza'];
-const CATEGORIAS_GASTO_VALIDAS = [
-  'limpieza',
-  'transporte',
-  'reparacion',
-  'servicios',
-  'pago_extraordinario',
-  'marketing',
-  'otro',
-];
+// DP-21 · Bloque 11: el catálogo de categorías es UNO (`@morphiqpos/domain/gastos`).
+const CATEGORIAS_GASTO_VALIDAS = CLAVES_DE_CATEGORIA_DE_GASTO;
 const METODOS_PAGO_VALIDOS = ['efectivo', 'tarjeta', 'transferencia'];
 
 // ============================================================

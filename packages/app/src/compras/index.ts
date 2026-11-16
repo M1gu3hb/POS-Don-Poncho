@@ -18,6 +18,12 @@ export {
 } from './compras.ts';
 export { guardarPlantillaCompra, lineasDePlantilla, marcarPlantillaUsada } from './plantillas.ts';
 export { guardarPlantillaGasto, registrarGasto, type ResultadoGasto } from './gastos.ts';
+export {
+  cajonParaPagar,
+  pagosDeLaCaja,
+  type CajonParaPagar,
+  type PagoDeLaCaja,
+} from './pago-de-la-caja.ts';
 
 export {
   entradaGuardarPlantillaCompra,

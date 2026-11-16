@@ -337,6 +337,20 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/gastos/cajon-para-pagar",
+      "comando": "gastos.cajon_para_pagar",
+      "escribe": false,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/gastos/pagos-de-la-caja",
+      "comando": "gastos.pagos_de_la_caja",
+      "escribe": false,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/gastos/plantilla",
       "comando": "gastos.guardar_plantilla",
       "escribe": true,

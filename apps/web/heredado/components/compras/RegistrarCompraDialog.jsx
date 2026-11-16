@@ -36,6 +36,8 @@ import RepetirCompraDialog from '@/components/compras/RepetirCompraDialog';
 import { History, Star, ChevronDown, ChevronUp, Bell } from 'lucide-react';
 import StockMinCritInput from '@/components/inventario/StockMinCritInput';
 import { textoDecimal } from '@/components/inventario/comandos';
+import { avisoAntesDeGuardar, useCajonParaPagar } from '~/venta/cajon-para-pagar';
+import { PagoDeLaCaja } from '~/venta/PagoDeLaCaja';
 
 /** Cada línea: ingrediente existente o nuevo; cantidad/unidad/costo. */
 export default function RegistrarCompraDialog({ open, onClose, ingredientes = [] }) {
@@ -54,6 +56,10 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
   const [proveedor, setProveedor] = useState(''); // texto libre cuando proveedorMode === '__libre__'
   const [notas, setNotas] = useState('');
   const [saving, setSaving] = useState(false);
+  // DP-21 · Bloque 11 (A11/H4): una compra en efectivo sale del cajón; se dice de cuál y se avisa antes
+  // de guardar si la dejaría en negativo (aviso, no bloqueo).
+  const cajon = useCajonParaPagar(open && metodoPago === 'efectivo');
+  const [porConfirmar, setPorConfirmar] = useState(null);
   const [showRepetir, setShowRepetir] = useState(false);
   const [guardarPlantilla, setGuardarPlantilla] = useState(false);
   const [nombrePlantilla, setNombrePlantilla] = useState('');
@@ -136,6 +142,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
   };
 
   const close = () => {
+    setPorConfirmar(null);
     reset();
     onClose();
   };
@@ -184,6 +191,15 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
       toast.error('Agrega al menos una línea válida con cantidad y costo');
       return;
     }
+
+    if (metodoPago === 'efectivo') {
+      const advertencia = avisoAntesDeGuardar(cajon, Math.round(totalCompra * 100));
+      if (advertencia !== null && porConfirmar !== advertencia) {
+        setPorConfirmar(advertencia);
+        return;
+      }
+    }
+    setPorConfirmar(null);
 
     // Validar equivalencia + compatibilidad por línea (mensajes específicos)
     for (const l of baseValid) {
@@ -387,7 +403,13 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
             </div>
             <div>
               <Label className="text-[10px] uppercase">Pago</Label>
-              <Select value={metodoPago} onValueChange={setMetodoPago}>
+              <Select
+                value={metodoPago}
+                onValueChange={(v) => {
+                  setPorConfirmar(null);
+                  setMetodoPago(v);
+                }}
+              >
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
@@ -720,12 +742,19 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
           </div>
         </div>
 
+        <PagoDeLaCaja metodo={metodoPago} lectura={cajon} aviso={porConfirmar} />
+
         <DialogFooter>
           <Button variant="outline" onClick={close}>
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            <Save className="w-4 h-4 mr-1" /> {saving ? 'Guardando...' : 'Guardar compra'}
+            <Save className="w-4 h-4 mr-1" />{' '}
+            {saving
+              ? 'Guardando...'
+              : porConfirmar !== null
+                ? 'Sí, lo pagué de la caja: guardar'
+                : 'Guardar compra'}
           </Button>
         </DialogFooter>
       </DialogContent>

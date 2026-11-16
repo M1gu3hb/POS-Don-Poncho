@@ -374,7 +374,7 @@
       "cuerpo": {
         "plantillaId": "⟨plantillas_compra⟩",
         "nombre": "prueba de aislamiento",
-        "categoria": "limpieza",
+        "categoria": "servicios",
         "montoSugerido": "prueba de aislamiento",
         "metodoPago": "efectivo",
         "periodicidad": "mensual"
@@ -389,7 +389,7 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
       "idRequerido": false,
       "cuerpo": {
-        "categoria": "limpieza",
+        "categoria": "servicios",
         "descripcion": "prueba de aislamiento",
         "monto": "prueba de aislamiento",
         "metodoPago": "efectivo",
