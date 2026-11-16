@@ -1828,6 +1828,11 @@
         "- aviso:Liquidación ${liquidacion?.folio || ''} registrada · ${formatCurrency(aPesos(liquidacion?.totalCentavos))}",
         "+ aviso:Liquidación ${folioVisible(liquidacion?.serie, liquidacion?.folio, null, 'numero')} registrada · ${formatCurrency(aPesos(liquidacion?.totalCentavos))}"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-21 (Bloque 10, M24): «Cambiar de mesa» ya no saca al mesero del mapa: el botón del panel de la mesa abre ahí mismo las mesas libres de la zona (`CambiarDeMesaAqui`). Unir y dividir siguen en «Mesa activa»; para llegar ahí la dirección tiene ahora un enlace aparte que dice lo que hace: «Unir o dividir la cuenta». El botón «Cambiar de mesa» conserva su icono y sus clases.",
+      "testigos": ["+ texto:Unir o dividir la cuenta"]
     }
   ]
 }

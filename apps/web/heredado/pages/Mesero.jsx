@@ -121,10 +121,10 @@ import { usePuesto } from '@/components/configuracion/usePuesto';
 
 import { VistaDeSolicitudes } from '~/restaurante/VistaDeSolicitudes';
 // DP-15.1 · Quién ve «Cambiar de mesa» en el panel de la mesa: dirección siempre; el mesero, en sus mesas.
-import {
-  puedeMoverLaCuenta,
-  textoDelEnlaceParaMoverLaCuenta,
-} from '~/restaurante/puede-mover-la-cuenta';
+import { puedeMoverLaCuenta } from '~/restaurante/puede-mover-la-cuenta';
+// DP-21 · Bloque 10 · «Cambiar de mesa» abre aquí mismo las mesas libres: no saca del mapa.
+import { CambiarDeMesaAqui } from '~/restaurante/CambiarDeMesaAqui';
+import { avisoDelCambio, puedeUnirODividir } from '~/restaurante/cambiar-de-mesa-aqui';
 // DP-12.2: el portal en modo mesero (escanear el QR, mantener presionada una mesa, el carrito).
 import BarcodeScanner from '@/components/barcode/BarcodeScanner';
 import { esPedidoListo } from '~/restaurante/globos-de-solicitud';
@@ -229,6 +229,8 @@ function Mesero() {
 
   // Propina (RP — antes de pedir cuenta)
   const [showPropinaMesero, setShowPropinaMesero] = useState(false);
+  // DP-21 · Bloque 10: el panel de «Cambiar de mesa», abierto sobre el de la mesa.
+  const [cambiandoDeMesa, setCambiandoDeMesa] = useState(false);
 
   // Reparación de mesa huérfana (estado != libre pero sin venta_activa_id)
   const [mesaHuerfana, setMesaHuerfana] = useState(null);
@@ -1481,6 +1483,25 @@ function Mesero() {
         }}
       />
       <DialogoDelPortalModoMesero buscada={portalDeMesa} alCerrar={() => setPortalDeMesa(null)} />
+      {cambiandoDeMesa && ventaActiva?.id && mesaActiva?.id && (
+        <CambiarDeMesaAqui
+          mesa={{
+            id: mesaActiva.id,
+            numero: Number(mesaActiva.numero),
+            zona: mesaActiva.zona ?? null,
+          }}
+          ordenId={ventaActiva.id}
+          alCerrar={() => setCambiandoDeMesa(false)}
+          alPasar={(destino) => {
+            // La cuenta ya está en la otra mesa: se avisa, se cierra el panel de la que quedó
+            // libre y el mapa se relee. No se sale de /mesero.
+            setCambiandoDeMesa(false);
+            toast.success(avisoDelCambio(destino.numero));
+            cerrarDialog();
+            queryClient.invalidateQueries({ queryKey: ['mesas'] });
+          }}
+        />
+      )}
       <MenuDeLaMesa
         mesa={menuDeMesa}
         alCerrar={cerrarMenuDeMesa}
@@ -1945,14 +1966,27 @@ function Mesero() {
                       Boolean(mesaActiva.unida_a_mesa_id) ||
                       (mesas || []).some((m) => m.unida_a_mesa_id === mesaActiva.id),
                   }) && (
-                    // A15: un solo control. El `Button` con `asChild` se vuelve el enlace; antes era
-                    // un botón DENTRO de un enlace (dos controles anidados para el teclado).
-                    <Button asChild variant="outline" className="w-full">
-                      <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`}>
+                    // DP-21 · Bloque 10 (M24): «Cambiar de mesa» abre AQUÍ las mesas libres; ya no
+                    // saca del mapa. Unir y dividir siguen en «Mesa activa», con un enlace que dice
+                    // lo que hace y que sólo ve quien ahí puede hacerlo (la dirección).
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setCambiandoDeMesa(true)}
+                      >
                         <ArrowLeftRight className="w-4 h-4 mr-1" />
-                        {textoDelEnlaceParaMoverLaCuenta(miPuesto)}
-                      </Link>
-                    </Button>
+                        Cambiar de mesa
+                      </Button>
+                      {puedeUnirODividir(miPuesto) && (
+                        // A15: un solo control. El `Button` con `asChild` se vuelve el enlace.
+                        <Button asChild variant="link" className="w-full">
+                          <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`}>
+                            Unir o dividir la cuenta
+                          </Link>
+                        </Button>
+                      )}
+                    </>
                   )}
               </div>
             </div>
