@@ -2641,3 +2641,43 @@ confundía con las apps de verdad.
   apps de Android y Windows siguen siendo las de `morphiq-pos-apps`.
 - El portal de comensales tiene cupo de avisos por mesa y por teléfono (`portal/cupo-de-avisos.ts`):
   desde fuera no se puede inundar la sala de llamadas.
+
+## DP-D135 · «Permitir venta sin stock» y «Usar mesas»: ni se borran ni mienten · 17-11-2026
+
+DP-21 · Bloque 14 (M20, O2 y O11). Dos ajustes de la Configuración que parecían mandar y no mandaban.
+
+- **«Permitir venta sin stock» (`permitir_venta_sin_stock`)**: el servidor sólo lee la opción de CADA
+  PRODUCTO (`permite_venta_sin_stock`) y, desde DP-D116, lo que pasó por cocina (mesa, para llevar,
+  portal) se cobra aunque no haya existencia. Una regla del negocio por encima de la del producto
+  cambiaría qué se puede vender sin existencia en TODO el negocio sin que nadie lo pidiera, y
+  duplicaría la regla de D116. **Decisión:** no se conecta al cobro. Se queda en Avanzado, con su
+  ayuda: «manda la opción de cada producto; este interruptor no cambia lo que se cobra». No se borra;
+  si Miguel quiere una regla global, es un cambio de `venta/cobrar.ts` con su prueba.
+- **«Usar mesas» (`usa_mesas`)**: en un restaurante apagarlo no tiene sentido y puede romper el
+  flujo. **Decisión:** se ESCONDE con el paquete restaurante (`visiblePara: 'fuera-del-restaurante'`
+  en `configuracion/secciones.ts`), no se borra; fuera del restaurante sigue en Avanzado. Se eligió
+  esconder y no «dejarlo en Avanzado»: el restaurante no debe ver un interruptor que lo rompe.
+- **Contrato:** «cada clave que la pantalla guarda tiene quien la lee»
+  (`configuracion/cada-clave-tiene-quien-la-lee.contrato.test.ts`); la única sin lector declarado es
+  `permitir_venta_sin_stock`, con su razón.
+
+## DP-D136 · El tablero suma en el servidor, por día del negocio · 17-11-2026
+
+DP-21 · Bloque 13 (M7 y M8). «Análisis financiero» bajaba las ventas del día al navegador (con tope
+de 1000) y sumaba allá con la medianoche del aparato.
+
+- **Decisión:** `tablero.serie` agrega en el servidor (`packages/app/src/tablero/serie.ts`): por hora,
+  día del negocio o mes, en centavos enteros, sin traer filas ni truncar, con la zona de la
+  organización (America/Mexico_City) y las mismas reglas que el corte (`ORDEN_VENDIDA`, costo sólo de
+  cuentas con costo completo, venta sin propina). La pantalla sólo pinta («¿Cómo va tu semana?»,
+  `apps/web/src/tablero/ComoVaTuSemana.tsx`): barras de lunes a domingo con la semana pasada como
+  referencia, Hoy por hora, Este mes por día contra el mes pasado, Este año por mes, y «Ver gastos y
+  utilidad» apagado por omisión. La lectura no sabe quién la llama: Registros (H3) puede compartirla.
+- **Gráfica:** la del sistema (`GraficaDeBarras`, SVG con `--grafico-n`), no recharts: se lee en claro,
+  oscuro y motor viejo (sin `color-mix` en línea) y no anima nada, así que el modo ligero no tiene qué
+  apagar.
+- **Se quita** «Control del restaurante» (`AccesosDelDueno`, sin otro uso). `FinancialChart.jsx` queda
+  en el repositorio sin usarse (su contrato de ventas sin receta sigue leyéndolo); se borra cuando
+  Miguel diga.
+- **Quién la ve:** dueño, administrador y gerente (los del comando), atado a la matriz de permisos.
+

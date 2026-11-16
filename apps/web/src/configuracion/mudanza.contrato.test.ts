@@ -313,6 +313,7 @@ describe('los enlaces viejos siguen sirviendo', () => {
       tieneMesas: true,
       rolAdministrador: false,
       esPlataforma: false,
+      paquete: 'tienda',
     };
     const visibles = seccionesVisibles(cajero);
     expect(seccionAMostrar(destinoDeLaUrl('?tab=mantenimiento'), visibles)).toBe(visibles[0]?.id);
@@ -326,6 +327,7 @@ describe('los permisos no cambian', () => {
     tieneMesas: true,
     rolAdministrador: true,
     esPlataforma: false,
+    paquete: 'tienda',
     ...parte,
   });
   const ids = (q: QuienMira): string[] => TARJETAS.filter((t) => laVe(t, q)).map((t) => t.id);
@@ -359,6 +361,13 @@ describe('los permisos no cambian', () => {
       'reiniciar-sistema',
     );
     expect(ids(quien({ esPlataforma: true }))).toContain('reiniciar-sistema');
+  });
+
+  it('«Usar mesas» se esconde con el paquete restaurante y sigue donde estaba en los demás', () => {
+    expect(ids(quien({ paquete: 'restaurante' }))).not.toContain('usar-mesas');
+    expect(ids(quien({ paquete: 'tienda' }))).toContain('usar-mesas');
+    // No se borra: la tarjeta y su clave siguen en el mapa.
+    expect(TARJETAS.find((t) => t.id === 'usar-mesas')?.guarda).toEqual(['usa_mesas']);
   });
 
   it('una sección sin tarjetas visibles no aparece en la lista', () => {

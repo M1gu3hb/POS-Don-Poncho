@@ -146,7 +146,7 @@ export function PaginaDelSistema() {
     <div className="min-h-dvh bg-fondo text-texto">
       <BarraFija className="border-b border-borde">
         <div className="mx-auto flex max-w-5xl flex-col gap-(--espacio-3) px-(--espacio-4) py-(--espacio-4)">
-          <Migas pasos={[{ rotulo: 'MorphiqPOS' }, { rotulo: 'Sistema de diseño' }]} />
+          <Migas pasos={[{ rotulo: 'POS Don Poncho' }, { rotulo: 'Sistema de diseño' }]} />
           <h1 className="text-2xl font-semibold tracking-tight">El sistema, en vivo</h1>
 
           {/* EL SELECTOR · el estilo y las cuatro perillas, sobre estas mismas

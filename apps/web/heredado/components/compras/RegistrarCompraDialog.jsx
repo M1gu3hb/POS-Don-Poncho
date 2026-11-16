@@ -526,7 +526,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
                       <Input
                         value={line.nuevo_nombre}
                         onChange={(e) => updateLine(idx, { nuevo_nombre: e.target.value })}
-                        placeholder="Ej: Café molido"
+                        placeholder="Ej: Carne de borrego"
                       />
                     </div>
                     <div>

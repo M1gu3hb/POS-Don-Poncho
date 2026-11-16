@@ -35,6 +35,16 @@ export function puedeEliminarCortes(puesto) {
   return PUESTOS_QUE_ELIMINAN_CORTES.includes(puesto);
 }
 
+/**
+ * DP-21 · Bloque 13 · Quien puede leer «¿Cómo va tu semana?» (`tablero.serie`): dueño, administrador y
+ * gerente. Espejo del comando; la matriz de permisos lo ata en `botones-segun-el-puesto.contrato.test.ts`.
+ */
+export const PUESTOS_QUE_VEN_LA_SERIE_DEL_TABLERO = ['dueno', 'administrador', 'gerente'];
+
+export function puedeVerLaSerieDelTablero(puesto) {
+  return PUESTOS_QUE_VEN_LA_SERIE_DEL_TABLERO.includes(puesto);
+}
+
 /** Quienes reparten las mesas entre los meseros. */
 export const PUESTOS_QUE_REPARTEN = ['dueno', 'administrador', 'gerente'];
 

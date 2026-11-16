@@ -6,8 +6,10 @@ import { describe, expect, it } from 'vitest';
 import {
   PUESTOS_DE_MANDO,
   PUESTOS_QUE_ELIMINAN_CORTES,
+  PUESTOS_QUE_VEN_LA_SERIE_DEL_TABLERO,
   esDeMando,
   puedeEliminarCortes,
+  puedeVerLaSerieDelTablero,
 } from '../../heredado/components/configuracion/puestos.js';
 
 /**
@@ -76,5 +78,24 @@ describe('«Vaciar todas» las solicitudes QR', () => {
     const pestana = leer('apps/web/heredado/components/portalqr/SolicitudesQRTab.jsx');
     expect(pestana).toMatch(/const puedeVaciar = esDeMando\(usePuesto\(\)\);/);
     expect(pestana).toMatch(/\{puedeVaciar && \(\s*<Button[\s\S]{0,260}onClick=\{vaciarDia\}/);
+  });
+});
+
+describe('«¿Cómo va tu semana?» del Tablero', () => {
+  it('la ve exactamente quien el comando deja (la matriz de permisos)', () => {
+    expect([...PUESTOS_QUE_VEN_LA_SERIE_DEL_TABLERO].sort()).toEqual(
+      [...rolesDe('/api/tablero/serie')].sort(),
+    );
+    for (const puesto of ['cajero', 'mesero', 'cocina', 'almacen', null]) {
+      expect(puedeVerLaSerieDelTablero(puesto), String(puesto)).toBe(false);
+    }
+  });
+
+  it('el Tablero pinta la gráfica del servidor, sin «Control del restaurante» ni la gráfica vieja', () => {
+    const tablero = leer('apps/web/heredado/pages/Dashboard.jsx');
+    expect(tablero).toMatch(/\{showFinancialChart && puedeVerLaSerie && <ComoVaTuSemana \/>\}/);
+    expect(tablero).toContain('puedeVerLaSerieDelTablero(usePuesto())');
+    expect(tablero).not.toContain('AccesosDelDueno');
+    expect(tablero).not.toMatch(/<FinancialChart/);
   });
 });

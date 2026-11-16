@@ -85,7 +85,7 @@ export async function GET(peticion: Request): Promise<Response> {
     const respuesta = json(200, {
       ok: true,
       datos: {
-        negocio: unico?.nombre ?? 'Morphiq POS',
+        negocio: unico?.nombre ?? 'Don Poncho',
         slug: unico?.slug,
         negocios: contextos.map(({ nombre, slug }) => ({ nombre, slug })),
         usuarios,

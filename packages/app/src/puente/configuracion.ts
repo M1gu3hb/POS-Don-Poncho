@@ -325,6 +325,25 @@ const BASCULA = z
  * La tasa de la terminal: entero de 0 a 1000 puntos base (0 a 10 %). El mercado va del 2 al
  * 4 %; un 36 tecleado donde iba 3.6 cobraría una comisión diez veces mayor en cada corte.
  */
+/** Los porcentajes de propina que se sugieren: hasta 6 (la tarjeta lo promete; aquí se cumple). */
+export const MAXIMO_DE_PORCENTAJES_DE_PROPINA = 6;
+function exigirPorcentajesDePropina(valor: unknown): void {
+  if (valor === null) return;
+  const partes =
+    typeof valor === 'string'
+      ? valor
+          .split(',')
+          .map((p) => p.trim())
+          .filter((p) => p !== '')
+      : null;
+  if (partes === null || partes.length > MAXIMO_DE_PORCENTAJES_DE_PROPINA) {
+    throw new ErrorDominio(
+      'PUENTE_CAMPO_INVALIDO',
+      `Los porcentajes de propina son hasta ${String(MAXIMO_DE_PORCENTAJES_DE_PROPINA)}, separados por coma.`,
+    );
+  }
+}
+
 /** El RFC: vacío (o `null`) lo quita; si hay, 12 o 13 caracteres en mayúsculas (`@morphiqpos/domain/venta`). */
 function exigirRfc(valor: unknown): void {
   if (valor === null || valor === '') return;
@@ -567,6 +586,9 @@ export async function guardarConfiguracionParcial(
   }
   if ('comision_terminal_bp' in parche) exigirTasaDeTerminal(parche['comision_terminal_bp']);
   if ('rfc' in parche) exigirRfc(parche['rfc']);
+  if ('propina_porcentajes_sugeridos' in parche) {
+    exigirPorcentajesDePropina(parche['propina_porcentajes_sugeridos']);
+  }
   if ('ancho_papel_ticket' in parche) {
     exigirForma(
       z.union([z.literal(58), z.literal(80)]),

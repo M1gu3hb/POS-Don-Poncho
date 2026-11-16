@@ -40,6 +40,11 @@ export interface GraficaProps {
   readonly series: readonly SerieDeGrafica[];
   /** Cómo se lee un valor. Dinero, piezas, porcentaje… lo decide la pantalla. */
   readonly formato?: (valor: number) => string;
+  /**
+   * Lo que dice cada barra al pasar el dedo (su `<title>`), en la gráfica de barras. Sin esto:
+   * «serie · eje: valor». Con esto, lo que la pantalla sepa decir de esa barra: cuentas, ticket…
+   */
+  readonly detalle?: (serie: number, columna: number) => string;
   /** Qué dice esta gráfica. Es el nombre accesible del SVG: no es opcional. */
   readonly titulo: string;
   readonly alto?: number;
@@ -140,6 +145,7 @@ export function GraficaDeBarras({
   ejes,
   series,
   formato = PORCENTAJE,
+  detalle,
   titulo,
   alto = 180,
   className,
@@ -185,7 +191,10 @@ export function GraficaDeBarras({
                 rx={2}
                 fill={color(indiceSerie)}
               >
-                <title>{`${serie.etiqueta} · ${ejes[columna] ?? ''}: ${formato(valor)}`}</title>
+                <title>
+                  {detalle?.(indiceSerie, columna) ??
+                    `${serie.etiqueta} · ${ejes[columna] ?? ''}: ${formato(valor)}`}
+                </title>
               </rect>
             );
           }),
