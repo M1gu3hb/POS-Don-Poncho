@@ -200,6 +200,27 @@ describe('el PIN del supervisor en la terminal de la cajera', () => {
     ).toMatchObject({ supervisor: GERENTE, solicita: GERENTE, para: 'cancelacion' });
   });
 
+  it('DP-21 · Bloque 7 · para el CAJÓN, el gerente con la sesión abierta también teclea SU PIN y la autorización es de cajón', async () => {
+    await credencialCon('2345');
+    const resultado = await autorizarConPin(
+      { ...peticion('2345'), solicitaEmpleoId: GERENTE, para: 'cajon' },
+      AHORA,
+    );
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    const esperado = { organizacionId: ORG, solicitaEmpleoId: GERENTE };
+    expect(
+      leerAutorizacion(resultado.autorizacion, { ...esperado, para: 'cajon' }, SECRETO, AHORA),
+    ).toMatchObject({ supervisor: GERENTE, solicita: GERENTE, para: 'cajon' });
+    // Y no sirve para un descuento ni para un retiro.
+    expect(
+      leerAutorizacion(resultado.autorizacion, { ...esperado, para: 'descuento' }, SECRETO, AHORA),
+    ).toBeNull();
+    expect(
+      leerAutorizacion(resultado.autorizacion, { ...esperado, para: 'retiro' }, SECRETO, AHORA),
+    ).toBeNull();
+  });
+
   it('ronda 2 (medio 6) · teclear su PIN no abre otra puerta: un PIN malo propio sigue contando y un puesto que no autoriza no firma', async () => {
     await credencialCon('2345');
     expect(

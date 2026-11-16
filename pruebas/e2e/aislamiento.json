@@ -71,6 +71,16 @@
   ],
   "rutas": [
     {
+      "ruta": "/api/caja/cajon-por-cobro",
+      "comando": "caja.cajon_por_cobro",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "ordenId": "⟨ordenes⟩" },
+      "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
+    },
+    {
       "ruta": "/api/caja/cajon",
       "comando": "caja.abrir_cajon",
       "escribe": true,

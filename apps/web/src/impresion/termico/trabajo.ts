@@ -54,7 +54,8 @@ export function armarTrabajo(
 ): Uint8Array {
   if (copias.length === 0) throw new RangeError('Un trabajo lleva al menos una copia.');
   const partes: Uint8Array[] = [iniciar()];
-  if (opciones.abrirCajon === true && perfil.cajon !== null)
+  // DP-21 · Sin el interruptor «Este aparato tiene cajón» no sale pulso, aunque el trabajo lo pida.
+  if (opciones.abrirCajon === true && perfil.tieneCajon && perfil.cajon !== null)
     partes.push(bytesDelCajon(perfil.cajon));
   for (const mapa of copias) {
     partes.push(

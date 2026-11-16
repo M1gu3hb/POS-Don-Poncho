@@ -1424,6 +1424,17 @@ export const SIN_ESTADO = [
       'La espera de cada prueba la dice su botón («Enviando…») y su resultado al lado: no hay un bloque que esperar.',
   },
   {
+    pantalla: 'impresion/pantallas/LabProbarCajon',
+    estado: 'vacio',
+    razon: 'Un botón de prueba y una pregunta de sí o no: no hay lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabProbarCajon',
+    estado: 'cargando',
+    razon:
+      'La espera del pulso la dice el botón de prueba («Enviando…»); la pregunta «¿Se abrió el cajón?» sólo aparece cuando ya hay qué confirmar.',
+  },
+  {
     pantalla: 'impresion/pantallas/LabVistaPrevia',
     estado: 'vacio',
     razon:

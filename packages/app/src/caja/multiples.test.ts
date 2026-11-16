@@ -120,24 +120,24 @@ describe('F-235 · varias cajas abiertas a la vez', () => {
 });
 
 describe('F-984 · el cajón que se abre SIN venta', () => {
-  it('queda registrado con su motivo, en el mismo sitio que todo lo del turno', async () => {
-    // Un registro aparte sería un segundo lugar donde mirar cuando el arqueo no
-    // cuadra, y nadie mira dos sitios a las diez de la noche.
-    const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'), AHORA);
+  // La apertura con su autorización de supervisor (queda anotada con su motivo, en el mismo
+  // sitio que todo lo del turno) se prueba contra Postgres: `abrir-cajon-con-pin.integracion.test.ts`.
+  it('DP-21 · sin la autorización del supervisor no se abre, ni deja rastro, ni para el gerente', async () => {
+    for (const rol of ['cajero', 'gerente', 'dueno'] as const) {
+      const base = baseDe();
+      const { ctx } = contextoFalso(base.tx, ambitoDe(rol), AHORA);
 
-    const salida = await abrirCajon.ejecutar(ctx, {
-      sesionCajaId: SESION_CAJA,
-      motivo: 'dar_cambio',
-      nota: 'billete de 500',
-    });
+      const codigo = await codigoDe(() =>
+        abrirCajon.ejecutar(ctx, {
+          sesionCajaId: SESION_CAJA,
+          motivo: 'dar_cambio',
+          nota: 'billete de 500',
+        }),
+      );
 
-    expect(salida.pulso).toEqual(PULSO_CAJON);
-    const movimiento = base.filas('movimientos_caja')[0];
-    // Cero pesos: no mueve dinero, y aun así deja rastro.
-    expect(movimiento?.['monto_centavos']).toBe(0n);
-    expect(movimiento?.['motivo']).toContain('dar_cambio');
-    expect(movimiento?.['motivo']).toContain('billete de 500');
+      expect(codigo).toBe('PUESTO_NO_OTORGABLE');
+      expect(base.filas('movimientos_caja')).toEqual([]);
+    }
   });
 
   it('EL CAJÓN DE OTRA TERMINAL NO SE ABRE', async () => {

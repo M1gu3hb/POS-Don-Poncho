@@ -9,7 +9,11 @@ import { resumenDeLaVista } from './resumen-de-la-vista.ts';
 
 /** DP-20 · el resumen de la vista previa mide el papel que leyó la impresora falsa. */
 
-const perfil = { ...perfilPorOmision(80, { conexion: 'spooler' }), cajon: cajonPorOmision() };
+const perfil = {
+  ...perfilPorOmision(80, { conexion: 'spooler' }),
+  tieneCajon: true,
+  cajon: cajonPorOmision(),
+};
 
 describe('el resumen de la vista previa', () => {
   it('mide el papel, cuenta los bytes y dice dónde cortó', () => {

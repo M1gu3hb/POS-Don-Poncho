@@ -5,6 +5,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
+import { avalarElCajon } from './aval-del-cajon.ts';
 
 /**
  * F-235 · Varias cajas a la vez · F-984 · El cajón de dinero.
@@ -50,6 +51,11 @@ export const entradaAbrirCajon = z.object({
   sesionCajaId: z.uuid(),
   motivo: z.enum(['dar_cambio', 'guardar_billete', 'conteo', 'otro']),
   nota: z.string().trim().max(200).optional(),
+  /**
+   * DP-21 · La autorización firmada de un gerente, administrador o dueño (`para: 'cajon'`): sin ella
+   * no se abre, ni para quien ya es de mando. Opcional en el esquema para negarla con su motivo.
+   */
+  autorizacion: z.string().min(20).max(2_000).optional(),
 });
 
 export interface CajaAbierta {
@@ -185,6 +191,10 @@ export const abrirCajon = definirComando<Transaccion, typeof entradaAbrirCajon, 
       );
     }
 
+    // DP-21 · El PIN lo exige el servidor, después de saber que la caja es de esta terminal y está
+    // abierta: una autorización no se gasta en una apertura que de todos modos no procede.
+    const aval = await ctx.paso('avalar', () => avalarElCajon(ctx, entrada.autorizacion));
+
     // Se registra como movimiento de CERO: no mueve dinero, y aun así tiene que
     // quedar en el mismo sitio donde se lee todo lo demás del turno. Un registro
     // aparte sería un segundo lugar donde mirar cuando el arqueo no cuadra.
@@ -206,7 +216,15 @@ export const abrirCajon = definirComando<Transaccion, typeof entradaAbrirCajon, 
         .execute(),
     );
 
-    ctx.auditar({ entidadId: entrada.sesionCajaId, payload: { motivo: entrada.motivo } });
+    ctx.auditar({
+      entidadId: entrada.sesionCajaId,
+      payload: {
+        motivo: entrada.motivo,
+        autorizadoPor: aval.autorizadoPor,
+        autorizadoRol: aval.autorizadoRol,
+        autorizacion: aval.autorizacion,
+      },
+    });
     return { sesionCajaId: entrada.sesionCajaId, motivo: entrada.motivo, pulso: PULSO_CAJON };
   },
 });
