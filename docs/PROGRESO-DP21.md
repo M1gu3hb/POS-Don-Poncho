@@ -84,7 +84,7 @@ el tiempo, se cae lo último.
 2 s: el mismo ruido ambiental de DP-18). La cadena se detuvo ahí; la CI de `faed6cc` estaba en
 verde (PR #31).
 
-## Estado por bloque (16-11, 10:20)
+## Estado por bloque (16-11, 12:40)
 
 | Bloque | Qué | PR | Estado |
 | --- | --- | --- | --- |
@@ -100,11 +100,11 @@ verde (PR #31).
 | 10 | Cambiar de mesa | B | en producción (`a019fe3`) · DP-D138 · 9 mutantes muertos · e2e `cambiar-de-mesa-en-el-mapa.spec.ts` |
 | 11 | Gastos de Caja = Compras y gastos | B | en producción (`9efe2da`, agente 2) · DP-D139 |
 | 12 | El ticket a tu gusto | B | en producción (`511e441`, agente 2) · DP-D140 · `test:impresion` 20 de 20 |
-| 13 | El tablero | C | hecho (`d88bb8f`, agente 2) · DP-D136 · en el PR #34 |
-| 14 | Configuración limpia | C | hecho (`d88bb8f`, agente 2) · DP-D135 · en el PR #34 |
+| 13 | El tablero | C | en producción (`d88bb8f`, agente 2) · DP-D136 |
+| 14 | Configuración limpia | C | en producción (`d88bb8f`, agente 2) · DP-D135 |
 | 15 | Colores del iMin | B | en producción (`9cb3290`, agente 1; `8d483e4`) · DP-D142 · **falta ver el iMin** |
-| 16 | El barrido visual | C | hecho (agente 1) · DP-D144 · `barrido-visual.spec.ts`, 13 de 14 pantallas; el tablero, pendiente · en el PR #34 |
-| 17 | Las guías | C | hecho (`a4f9cee`, agente 2) · en el PR #34 |
+| 16 | El barrido visual | C | en producción (`945138f` y `a4c71ee`, agente 1) · DP-D144 · `barrido-visual.spec.ts`, 14 pantallas en 6 tamaños · **falta probar en aparato** |
+| 17 | Las guías | C | en producción (`a4f9cee`, agente 2) · 3 mutantes muertos |
 | 18 | Los cortes en una carpeta (app 1.0.2) | C | **no entra:** no alcanzó el tiempo antes del congelado |
 | 19 | Lo que quedó de DP-19 | C | **no entra:** era «sólo si sobra tiempo» |
 | 20 | Lo desconectado, roto o sin propósito | B y C | inventario (`docs/reports/012-anexo-inventario.md`); lo de dinero y seguridad, en producción (`50b42c7`) · DP-D143 |
@@ -114,7 +114,8 @@ verde (PR #31).
 
 - `dp-21-a`: el PR A (#32), en `main` como `13e9d77`.
 - `dp-21-pr-b` (subida como `dp-21-prb`): el PR B (#33), en `main` como `bed26a5`.
-- `dp-21-pr-c`: el PR C (#34): Bloques 13, 14, 16 y 17.
+- `dp-21-pr-c`: el PR C (#34), en `main` como `a69b8b2`.
+- `dp-21-informe`: la bitácora y el informe 012 (sólo documentos).
 - `dp-21-ag1` (árbol `.work\dp20-lab`): el agente 1, Bloque 16. `dp-21-ag2` (árbol
   `.work\dp18-integrar`): el agente 2, el simulador.
 
@@ -238,17 +239,42 @@ verde (PR #31).
 - **El «Primer folio» (1001 y 101) lo guarda Miguel DESPUÉS de dejar en ceros** y antes del bloqueo
   H1: el comando sólo lo deja cambiar con los folios en cero, y hoy hay 9 cuentas con folio.
 
+### PR C en producción (16-11, 11:18)
+
+- [PR #34](https://github.com/M1gu3hb/POS-Don-Poncho/pull/34) unido a `main` como `a69b8b2`, con la
+  CI en 10 de 10 (a la cuarta vuelta: un `prefer-includes` de lint, un localizador del portal que
+  la ayuda nueva volvió ambiguo, y los retratos de la galería). Sin migraciones.
+- Trae los Bloques 13, 14, 16 y 17, «Salir» con la barra plegada, los textos de Configuración con
+  la sección de hoy y las decisiones DP-D135 a DP-D144.
+- Despliegue de **Production** «Ready». **Humo sin sesión y sin cobrar: 27 de 27**, y la ruta nueva
+  `/api/tablero/serie` existe y exige sesión. **0 errores de ejecución en Vercel** en las dos horas
+  siguientes.
+- Producción, sólo leyendo, a las 12:35: igual que al empezar (9 cuentas pagadas, $3,050.80; 1 caja
+  cerrada; 35 terminales «Caja N»; cupo 1; 0 almacenes; `configuracion.valores` en la versión 21,
+  sin tocar desde el 15-11).
+- **Para Miguel:** en producción «Silenciar notificaciones del administrador» está encendido y desde
+  el PR C sí se respeta: el administrador ya no oye el aviso de las solicitudes del portal en
+  «Mesas y pedidos»; los meseros sí. Se apaga en Configuración → Sonidos y avisos.
+
+### El día del simulador
+
+- El agente 2 adaptó los bots a las pantallas de DP-21 (el PIN al abrir, la propina por omisión,
+  la Configuración en secciones, las cajas con nombre, «Cambiar de mesa» ahí mismo, la barra
+  plegada). Día 0 por pantallas: 36 de 36 comprobaciones, 0 diferencias.
+- **Un ensayo de 75 minutos simulados** (sobre el build del PR B): 0 críticos, 245 comparaciones
+  con 0 diferencias, 21 cobros.
+- **El primer intento del día «de verdad» (10:24) murió al arrancar** y nadie lo vio hasta las
+  12:28: la base rehecha no traía el esquema del reloj de pruebas (`qa_reloj`) y el agente dio el
+  día por arrancado sin mirar el registro. Lección: comprobar a los dos minutos que el registro
+  avanza. Se relanzó a las 12:30 sobre el build final (`main`, `a69b8b2`), acortado para quedar
+  arbitrado antes de las 13:45.
+
 ## Lo que sigue
 
-1. PR C (congelado a las 14:00; en la CI hacia las 12:30): falta unir el Bloque 16 (agente 1), los
-   retratos de la galería (el tablero, la barra con «Salir», los botones «¿Cómo funciona?»), la CI,
-   unir, desplegar y el humo.
-2. Vigilar los errores de Vercel del PR B hasta las 11:15.
-3. El día del simulador (agente 2): `D:\mpos-tmp\dp21\` trae sus guiones y registros.
-4. La lista para Miguel a las 14:00: `D:\mpos-tmp\dp21\lista-14.md`.
-5. Dejar en ceros, sólo con sus dos «sí»: ensayo, en serio, Miguel guarda «Folios» (1001 y 101),
+1. El informe del árbitro del día simulado (agente 2), antes de las 13:45.
+2. La lista para Miguel a las 14:00: `D:\mpos-tmp\dp21\lista-14.md`.
+3. Dejar en ceros, sólo con sus dos «sí»: ensayo, en serio, Miguel guarda «Folios» (1001 y 101),
    `scripts/renombrar-aparatos.mjs`, `scripts/operacion-real.mjs` (H1) y la verificación de sólo
    lectura.
-6. El informe `docs/reports/012-cierre-antes-de-instalar.md` (borrador en
-   `D:\mpos-tmp\dp21
--borrador.md`).
+4. El informe `docs/reports/012-cierre-antes-de-instalar.md`, en su PR de sólo documentos (rama
+   `dp-21-informe`). Se une cuando Miguel diga: unirlo vuelve a desplegar producción.
