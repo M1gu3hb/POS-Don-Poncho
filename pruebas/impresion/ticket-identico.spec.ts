@@ -154,7 +154,7 @@ const CASOS: readonly { readonly nombre: string; readonly caso: Caso }[] = [
   ...([58, 80] as const).flatMap((papelMm) =>
     [true, false].map((conLogo) => ({
       nombre: `${String(papelMm)} mm ${conLogo ? 'con logo' : 'sin logo'}`,
-      caso: { papelMm, conLogo } as Caso,
+      caso: { papelMm, conLogo },
     })),
   ),
   ...CASOS_A_TU_GUSTO,
