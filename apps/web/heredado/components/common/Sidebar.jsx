@@ -169,11 +169,13 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   const closeMobile = () => setMobileOpen(false);
 
-  const SidebarContent = () => (
+  // DP-21 · Bloque 9: `plegada` lo dice quien lo pinta. La barra fija de escritorio, como la
+  // tenga la persona; el cajón del teléfono y de la tableta, SIEMPRE con sus nombres.
+  const SidebarContent = ({ plegada }) => (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
       <div
-        className={`flex items-center gap-3 py-4 border-b border-sidebar-border ${collapsed ? 'flex-col px-2' : 'px-3'}`}
+        className={`flex items-center gap-3 py-4 border-b border-sidebar-border ${plegada ? 'flex-col px-2' : 'px-3'}`}
       >
         <div className="w-10 h-10 rounded-full overflow-hidden bg-superficie/10 flex items-center justify-center shrink-0 ring-2 ring-borde/10">
           {config.logo_url ? (
@@ -186,7 +188,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             <Sparkles className="w-5 h-5 text-info" />
           )}
         </div>
-        {!collapsed && (
+        {!plegada && (
           <div className="min-w-0">
             <p className="text-sm font-heading font-bold truncate tracking-wide">
               {nombreVisibleDelNegocio(config.nombre_negocio)}
@@ -203,16 +205,16 @@ export default function Sidebar({ collapsed, onToggle }) {
         <button
           type="button"
           onClick={onToggle}
-          className={`hidden min-h-11 min-w-11 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80 lg:flex ${collapsed ? 'w-full flex-col gap-0.5 px-0.5 text-[10px] leading-tight font-medium' : 'ml-auto gap-2 px-3 text-sm font-medium'}`}
-          aria-label={collapsed ? 'Mostrar menú' : 'Ocultar menú'}
+          className={`hidden min-h-11 min-w-11 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80 lg:flex ${plegada ? 'w-full flex-col gap-0.5 px-0.5 text-[10px] leading-tight font-medium' : 'ml-auto gap-2 px-3 text-sm font-medium'}`}
+          aria-label={plegada ? 'Mostrar menú' : 'Ocultar menú'}
           style={{ touchAction: 'manipulation' }}
         >
-          {collapsed ? (
+          {plegada ? (
             <PanelLeftOpen className="w-5 h-5" aria-hidden="true" />
           ) : (
             <PanelLeftClose className="w-5 h-5" aria-hidden="true" />
           )}
-          <span>{collapsed ? 'Mostrar' : 'Ocultar'}</span>
+          <span>{plegada ? 'Mostrar' : 'Ocultar'}</span>
         </button>
       </div>
 
@@ -230,8 +232,8 @@ export default function Sidebar({ collapsed, onToggle }) {
               onClick={closeMobile}
               // Colapsada sólo queda el ícono: sin esto el enlace no tiene nombre y un
               // lector de pantalla —o quien no reconoce el dibujo— no sabe a dónde lleva.
-              aria-label={collapsed ? etiquetaDeNavegacion(item, vocabulario) : undefined}
-              title={collapsed ? etiquetaDeNavegacion(item, vocabulario) : undefined}
+              aria-label={plegada ? etiquetaDeNavegacion(item, vocabulario) : undefined}
+              title={plegada ? etiquetaDeNavegacion(item, vocabulario) : undefined}
               aria-current={active ? 'page' : undefined}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${active ? 'text-primario-texto font-semibold' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'}`}
               style={
@@ -279,7 +281,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                     : undefined
                 }
               />
-              {!collapsed && (
+              {!plegada && (
                 <span className="truncate">{etiquetaDeNavegacion(item, vocabulario)}</span>
               )}
             </Link>
@@ -289,7 +291,7 @@ export default function Sidebar({ collapsed, onToggle }) {
 
       {/* Theme toggle — visible en todas las páginas internas */}
       <div className="px-2 pb-1">
-        {collapsed ? (
+        {plegada ? (
           <div className="flex justify-center pb-1">
             <ThemeToggle
               variant="icon"
@@ -305,12 +307,12 @@ export default function Sidebar({ collapsed, onToggle }) {
       {posUser && (
         <div className="border-t border-sidebar-border p-3">
           <div
-            className={`flex items-center gap-3 ${collapsed ? 'flex-col justify-center' : ''}`}
+            className={`flex items-center gap-3 ${plegada ? 'flex-col justify-center' : ''}`}
           >
             <div className="w-8 h-8 bg-sidebar-accent rounded-full flex items-center justify-center text-xs font-bold shrink-0">
               {posUser.nombre?.charAt(0).toUpperCase()}
             </div>
-            {!collapsed && (
+            {!plegada && (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate">{posUser.nombre}</p>
                 <p className="text-[10px] text-sidebar-foreground/50">{posUser.etiqueta ?? ROLE_LABELS[posUser.rol]}</p>
@@ -329,7 +331,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             >
               <Volume2 className="w-4 h-4" />
             </button>
-            {!collapsed && (
+            {!plegada && (
               <button
                 onClick={logout}
                 className="text-sidebar-foreground/50 hover:text-peligro transition-colors p-1"
@@ -380,7 +382,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             >
               <X className="w-5 h-5" />
             </button>
-            <SidebarContent />
+            <SidebarContent plegada={false} />
           </div>
         </div>
       )}
@@ -389,7 +391,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       <div
         className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-30 transition-all duration-300 shadow-xl ${collapsed ? 'w-16' : 'w-60'}`}
       >
-        <SidebarContent />
+        <SidebarContent plegada={collapsed} />
       </div>
 
       <DialogoDelSonido abierto={sonidoAbierto} alCambiar={setSonidoAbierto} />

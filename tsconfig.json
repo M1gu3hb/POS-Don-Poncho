@@ -19,6 +19,7 @@
     "scripts/modo-compatible/colores-nuevos.test.ts",
     "scripts/modo-compatible/contrato.test.ts",
     "scripts/modo-compatible/plugin.test.ts",
+    "scripts/modo-compatible/tiene.d.mts",
     "scripts/modo-compatible/tiene.test.ts",
     "scripts/modo-compatible/turbo.test.ts"
   ],

@@ -359,6 +359,24 @@ export const SIN_ESTADO = [
       'Un interruptor y un porcentaje (DP-21 · Bloque 20): no tiene lista que pueda llegar vacía.',
   },
   {
+    pantalla: 'sistema/EstadosDelSistema',
+    estado: 'vacio',
+    razon:
+      'Página de muestras fijas para comparar el motor viejo con el de hoy (DP-21 · Bloque 15): pinta las mismas piezas en sus estados y no lee datos: no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'sistema/EstadosDelSistema',
+    estado: 'cargando',
+    razon:
+      'Página de muestras fijas para comparar el motor viejo con el de hoy (DP-21 · Bloque 15): pinta las mismas piezas en sus estados y no lee datos: no tiene nada que esperar.',
+  },
+  {
+    pantalla: 'sistema/EstadosDelSistema',
+    estado: 'error',
+    razon:
+      'Página de muestras fijas para comparar el motor viejo con el de hoy (DP-21 · Bloque 15): pinta las mismas piezas en sus estados y no lee datos: no tiene lectura que pueda fallar.',
+  },
+  {
     pantalla: 'configuracion/CandadoDeMando',
     estado: 'vacio',
     razon:
