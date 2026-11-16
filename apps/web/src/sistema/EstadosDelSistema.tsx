@@ -101,7 +101,7 @@ function Muestra({ pieza, nombre, c }: { pieza: string; nombre: string; c: Conju
     <section
       aria-label={nombre}
       data-muestra={pieza}
-      className="flex flex-col gap-4 rounded-lg border p-4"
+      className="flex flex-col gap-(--espacio-4) rounded-lg border p-(--espacio-4)"
     >
       <h2 className="text-lg font-semibold">{nombre}</h2>
 
@@ -161,7 +161,7 @@ function Muestra({ pieza, nombre, c }: { pieza: string; nombre: string; c: Conju
         <CollapsibleContent>Dentro del desplegable</CollapsibleContent>
       </Collapsible>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-(--espacio-4)">
         <Switch defaultChecked aria-label={rotulo('interruptor')} />
         <Checkbox defaultChecked aria-label={rotulo('casilla')} />
         <RadioGroup defaultValue="b" aria-label={rotulo('opciones')}>
@@ -171,12 +171,12 @@ function Muestra({ pieza, nombre, c }: { pieza: string; nombre: string; c: Conju
       </div>
 
       {/* La tarjeta con la opción elegida: `:has(:checked)` y `:has(:focus-visible)`, que Chromium < 105 no lee. */}
-      <label className="flex items-center gap-2 rounded-md border-2 border-transparent px-3 py-2 has-checked:border-primario has-checked:font-semibold has-focus-visible:ring-[3px] has-focus-visible:ring-anillo/60">
+      <label className="flex items-center gap-2 rounded-md border-2 border-transparent px-(--espacio-3) py-2 has-checked:border-primario has-checked:font-semibold has-focus-visible:ring-[3px] has-focus-visible:ring-anillo/60">
         <input type="radio" name={`tarjeta-${pieza}`} defaultChecked />
         {rotulo('tarjeta elegida')}
       </label>
       <p data-muestra-de="seleccion">Texto que se selecciona para ver su color</p>
-      <button type="button" data-muestra-de="foco" className="rounded-md border px-3 py-2">
+      <button type="button" data-muestra-de="foco" className="rounded-md border px-(--espacio-3) py-2">
         {rotulo('botón con foco')}
       </button>
     </section>
@@ -187,7 +187,7 @@ export function EstadosDelSistema() {
   // Fuera del armazón del POS (aquí no hay), el relleno de `:has()` se monta por su cuenta.
   useEffect(() => montarTieneEnElNavegador(), []);
   return (
-    <main className="grid gap-6 p-6 lg:grid-cols-2" aria-label="Estados de las piezas">
+    <main className="grid gap-(--espacio-6) p-(--espacio-6) lg:grid-cols-2" aria-label="Estados de las piezas">
       <Muestra
         pieza="sistema"
         nombre="Sistema"
