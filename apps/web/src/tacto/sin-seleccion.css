@@ -1,0 +1,32 @@
+/* DP-21 · Bloque 9 · M4 — La pulsación larga no selecciona nada.
+
+   Mantener el dedo sobre una mesa seleccionaba el texto de su botón y sacaba el «copiar,
+   seleccionar todo» del sistema, encima de los botones. En todo el POS —la marca la pone el
+   armazón (`ArmazonTactil`), así que el portal del comensal queda fuera— nada se selecciona y no
+   sale el menú táctil, salvo en los campos de texto, donde copiar y pegar sí hacen falta.
+
+   `@layer base`: lo que una pantalla pida a propósito (`select-text` en un folio que se copia)
+   gana, como cualquier utilidad. Motores viejos (iMin, Chromium 99): `user-select` sin prefijo y
+   con él; `-webkit-touch-callout` es de iOS y ahí se ignora sin daño. */
+@layer base {
+  html[data-pos-tactil] body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  html[data-pos-tactil]
+    :is(
+      input,
+      textarea,
+      select,
+      [contenteditable]:not([contenteditable='false']),
+      [data-seleccionable]
+    ),
+  html[data-pos-tactil] [contenteditable]:not([contenteditable='false']) *,
+  html[data-pos-tactil] [data-seleccionable] * {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+}

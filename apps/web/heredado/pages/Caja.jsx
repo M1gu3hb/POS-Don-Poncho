@@ -1226,7 +1226,7 @@ export default function Caja() {
   };
 
   return (
-    <div className="space-y-4 px-1 sm:px-0 max-w-full overflow-x-hidden">
+    <div className="space-y-4 px-1 sm:px-0 max-w-full overflow-x-clip">
       {/* Header — responsive: stack en móvil, botones en grid 3-col */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">

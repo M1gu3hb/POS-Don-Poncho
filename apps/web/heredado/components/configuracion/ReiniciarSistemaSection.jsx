@@ -18,6 +18,7 @@ import { AlertTriangle, Trash2, RefreshCw, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { esUsuarioDePlataforma } from '@/lib/permissions';
+import { puedeEnfocarAlAbrir } from '@morphiqpos/ui/foco-al-abrir';
 
 /**
  * Sección administrativa de mantenimiento.
@@ -295,7 +296,7 @@ export default function ReiniciarSistemaSection() {
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 placeholder="Nombre del negocio"
-                autoFocus
+                autoFocus={puedeEnfocarAlAbrir()}
                 disabled={loading}
               />
             </div>

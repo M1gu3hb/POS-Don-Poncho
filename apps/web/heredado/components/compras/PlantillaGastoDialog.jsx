@@ -174,6 +174,7 @@ export default function PlantillaGastoDialog({ open, onClose, plantilla = null }
               <Label className="text-xs">Monto sugerido *</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 value={form.monto_sugerido}
                 onChange={(e) => setForm({ ...form, monto_sugerido: e.target.value })}
                 placeholder="$0.00"
@@ -219,6 +220,7 @@ export default function PlantillaGastoDialog({ open, onClose, plantilla = null }
               <Label className="text-xs">Día de pago sugerido</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 min="1"
                 max="31"
                 value={form.dia_pago_sugerido}

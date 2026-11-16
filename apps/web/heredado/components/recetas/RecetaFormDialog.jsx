@@ -467,6 +467,7 @@ export default function RecetaFormDialog({
                 <Label className="text-xs">Precio de venta *</Label>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   value={producto.precio_venta}
                   onChange={(e) => setProducto({ ...producto, precio_venta: e.target.value })}
@@ -584,6 +585,7 @@ export default function RecetaFormDialog({
                       </Label>
                       <Input
                         type="number"
+                        inputMode="decimal"
                         step="0.01"
                         value={l.cantidad_usada}
                         onChange={(e) => updateLinea(idx, { cantidad_usada: e.target.value })}

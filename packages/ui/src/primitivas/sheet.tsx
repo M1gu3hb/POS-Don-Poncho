@@ -5,6 +5,8 @@ import { cn } from '../utilidades/cn'
 import { XIcon } from "lucide-react"
 import { Dialog as SheetPrimitive } from "radix-ui"
 
+import { focoAlAbrir } from '../sistema/foco-al-abrir'
+
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
@@ -48,6 +50,7 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
@@ -71,6 +74,8 @@ function SheetContent({
             "inset-x-0 bottom-0 h-auto border-t",
           className
         )}
+        // DP-21 · M16/O7: con el dedo, el foco no va al primer campo (el teclado saldría solo).
+        onOpenAutoFocus={focoAlAbrir(onOpenAutoFocus)}
         {...props}
       >
         {children}

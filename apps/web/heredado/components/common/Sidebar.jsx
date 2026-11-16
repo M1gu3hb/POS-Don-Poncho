@@ -14,8 +14,6 @@ import {
   CalendarDays,
   CalendarPlus,
   ChefHat,
-  ChevronLeft,
-  ChevronRight,
   ClipboardCheck,
   Clock,
   Coffee,
@@ -35,6 +33,8 @@ import {
   Menu,
   NotebookPen,
   Package,
+  PanelLeftClose,
+  PanelLeftOpen,
   PlusCircle,
   QrCode,
   Receipt,
@@ -172,7 +172,9 @@ export default function Sidebar({ collapsed, onToggle }) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
-      <div className="flex items-center gap-3 px-3 py-4 border-b border-sidebar-border">
+      <div
+        className={`flex items-center gap-3 py-4 border-b border-sidebar-border ${collapsed ? 'flex-col px-2' : 'px-3'}`}
+      >
         <div className="w-10 h-10 rounded-full overflow-hidden bg-superficie/10 flex items-center justify-center shrink-0 ring-2 ring-borde/10">
           {config.logo_url ? (
             <img
@@ -194,12 +196,23 @@ export default function Sidebar({ collapsed, onToggle }) {
             </p>
           </div>
         )}
+        {/* DP-21 · Bloque 9 (O5/M3): un botón claro y grande, a la vista plegada y desplegada. Era un
+            chevron de 16 px al 50 % de opacidad. 44 × 44 como mínimo, con el icono Y la palabra. Plegada,
+            la palabra va debajo del icono (la barra mide 64 px). Abajo de `lg:` no hay barra fija: ahí
+            está el botón «Menú» del cajón (más abajo), del mismo tamaño. */}
         <button
+          type="button"
           onClick={onToggle}
-          className="ml-auto text-sidebar-foreground/50 hover:text-sidebar-foreground hidden lg:block"
-          aria-label={collapsed ? 'Expandir' : 'Colapsar'}
+          className={`hidden min-h-11 min-w-11 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80 lg:flex ${collapsed ? 'w-full flex-col gap-0.5 px-0.5 text-[10px] leading-tight font-medium' : 'ml-auto gap-2 px-3 text-sm font-medium'}`}
+          aria-label={collapsed ? 'Mostrar menú' : 'Ocultar menú'}
+          style={{ touchAction: 'manipulation' }}
         >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {collapsed ? (
+            <PanelLeftOpen className="w-5 h-5" aria-hidden="true" />
+          ) : (
+            <PanelLeftClose className="w-5 h-5" aria-hidden="true" />
+          )}
+          <span>{collapsed ? 'Mostrar' : 'Ocultar'}</span>
         </button>
       </div>
 
@@ -333,15 +346,17 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   return (
     <>
-      {/* Hamburguesa móvil/tablet (oculto en lg+) */}
+      {/* El botón del cajón, móvil/tablet (oculto en lg+). DP-21 · Bloque 9: del mismo tamaño que el de
+          plegar de la barra fija (44 px como mínimo) y con la palabra «Menú», no sólo el dibujo. */}
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-3 left-3 z-[70] w-11 h-11 bg-sidebar rounded-xl flex items-center justify-center text-sidebar-foreground shadow-lg active:scale-95 transition-transform"
+        className="lg:hidden fixed top-3 left-3 z-[70] min-h-11 min-w-11 gap-2 px-3 bg-sidebar rounded-xl flex items-center justify-center text-sm font-medium text-sidebar-foreground shadow-lg active:scale-95 transition-transform"
         aria-label="Abrir menú"
         style={{ touchAction: 'manipulation' }}
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-5 h-5" aria-hidden="true" />
+        <span>Menú</span>
       </button>
 
       {/* Drawer móvil/tablet */}

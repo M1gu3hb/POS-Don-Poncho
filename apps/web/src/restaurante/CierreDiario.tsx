@@ -7,8 +7,8 @@
  * el dueño. Es la pantalla que menos se usa y la que más cuesta cuando falla.
  *
  * ── El arqueo A CIEGAS es la regla que define esta pantalla ──────────────
- * El campo de conteo va PRIMERO, vacío y con el foco puesto, y el esperado no
- * aparece hasta que hay una cifra escrita. Si se enseñara antes, todo el mundo
+ * El campo de conteo va PRIMERO y vacío (DP-21: sin el foco puesto, para que el teclado en
+ * pantalla no salte al abrir), y el esperado no aparece hasta que hay una cifra escrita. Si se enseñara antes, todo el mundo
  * teclearía ese número y el arqueo dejaría de existir como control: sería un
  * formulario que se copia solo.
  *
@@ -518,8 +518,8 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
     <div className="grid items-start gap-(--espacio-4) p-(--espacio-3) md:p-(--espacio-4) xl:grid-cols-[minmax(0,1fr)_24rem]">
       <h1 className="text-xl font-bold xl:col-span-2">Cierre diario y arqueo</h1>
 
-      {/* 4 · CONTEO — primero en el DOM porque encabeza la jerarquía y se lleva
-          el foco. Fijo arriba en teléfono y tablet —con tope de alto, para que
+      {/* 4 · CONTEO — primero en el DOM porque encabeza la jerarquía (sin llevarse el foco:
+          DP-21, el teclado no sale solo). Fijo arriba en teléfono y tablet —con tope de alto, para que
           nunca tape el corte entero— y carril derecho pegajoso en PC. */}
       <Superficie
         como="section"
@@ -531,26 +531,28 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
           <span className="font-numeros text-texto-sutil tabular-nums">4 ·</span> Conteo de efectivo
           y fondo
         </h2>
-        <div className="grid gap-(--espacio-3) sm:grid-cols-2 xl:grid-cols-1">
-          <div className="flex flex-col gap-(--espacio-1) sm:col-span-2 xl:col-span-1">
+        {/* DP-21 (M23/O6) · Las dos cajas, una junto a la otra y del mismo alto. La ayuda larga del
+            conteo y el aviso del fondo van FUERA de la fila: lo que cuelga de una caja la baja
+            respecto de su vecina. Sin foco automático: al abrir se ve lo de arriba y el teclado sólo
+            sale cuando la persona toca la caja. */}
+        <div
+          data-fila-de-conteo
+          className="grid items-end gap-(--espacio-3) sm:grid-cols-2 xl:grid-cols-1"
+        >
+          <div className="flex flex-col gap-(--espacio-1)">
             <Label htmlFor="contado">Efectivo contado físicamente *</Label>
-            {/* El campo que manda: el más grande de la pantalla, porque es lo
-                único que aquí se TECLEA y se teclea contando billetes. `enorme`
-                (text-2xl) y no `grande` (text-lg): las cifras del resumen van en
-                text-xl, y lo que se relee antes de sellar no puede quedar debajo. */}
+            {/* El campo que manda: lo único que aquí se TECLEA y se teclea contando billetes.
+                `enorme` (text-2xl) y no `grande` (text-lg): las cifras del resumen van en text-xl
+                y lo que se relee antes de sellar no puede quedar debajo. El fondo, a su lado, mide
+                lo mismo. */}
             <CampoDeDinero
               id="contado"
-              autoFocus
               placeholder="0.00"
               aria-describedby="ayuda-contado"
               centavos={contado}
               alCambiar={setContado}
               tamano="enorme"
             />
-            <p id="ayuda-contado" className="text-xs text-texto-sutil">
-              Cuenta el cajón antes de mirar nada más: el esperado aparece cuando escribas, para que
-              el arqueo siga siendo un control y no un número que se copia.
-            </p>
           </div>
           <div className="flex flex-col gap-(--espacio-1)">
             <Label htmlFor="fondo">Dinero dejado en caja (fondo)</Label>
@@ -564,14 +566,19 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
                 setFondo(centavos);
                 setFondoIlegible(!detalle.valido);
               }}
+              tamano="enorme"
             />
-            {fondoIlegible && (
-              <p id="fondo-ilegible" className="text-sm text-peligro">
-                Eso no es un importe: escríbelo como 1000 o 1,000.00.
-              </p>
-            )}
           </div>
         </div>
+        <p id="ayuda-contado" className="text-xs text-texto-sutil">
+          Cuenta el cajón antes de mirar nada más: el esperado aparece cuando escribas, para que el
+          arqueo siga siendo un control y no un número que se copia.
+        </p>
+        {fondoIlegible && (
+          <p id="fondo-ilegible" className="text-sm text-peligro">
+            Eso no es un importe: escríbelo como 1000 o 1,000.00.
+          </p>
+        )}
 
         {cuenta !== null && (
           <Superficie

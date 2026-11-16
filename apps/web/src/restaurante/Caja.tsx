@@ -39,6 +39,7 @@ import { MovimientosDeCaja } from './MovimientosDeCaja';
 import { rotuloDeLaCuenta } from './cuenta-de-la-caja.ts';
 import type { Vocabulario } from '@morphiqpos/domain/vocabulario';
 import { ChevronRight, CircleCheckBig, Search, SearchX, TriangleAlert } from 'lucide-react';
+import { puedeEnfocarAlAbrir } from '@morphiqpos/ui/foco-al-abrir';
 
 /**
  * PANTALLA · restaurante · caja
@@ -174,7 +175,7 @@ function FondoDeApertura({
           </Label>
           <CampoDeDinero
             id={`caja-fondo-${monton.clave}`}
-            autoFocus={indice === 0}
+            autoFocus={indice === 0 && puedeEnfocarAlAbrir()}
             centavos={fondo[monton.clave]}
             alCambiar={(centavos) => {
               alCambiar((antes) => ({ ...antes, [monton.clave]: centavos }));

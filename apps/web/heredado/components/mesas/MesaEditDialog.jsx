@@ -186,6 +186,7 @@ export default function MesaEditDialog({
               <Label className="text-xs">Número *</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 value={form.numero}
                 onChange={(e) => setForm({ ...form, numero: e.target.value })}
               />
@@ -217,6 +218,7 @@ export default function MesaEditDialog({
               <Label className="text-xs">Capacidad</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 value={form.capacidad}
                 onChange={(e) => setForm({ ...form, capacidad: e.target.value })}
               />
@@ -255,6 +257,7 @@ export default function MesaEditDialog({
               <Label className="text-xs">Posición X</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 value={form.posicion_x}
                 onChange={(e) => setForm({ ...form, posicion_x: e.target.value })}
               />
@@ -263,6 +266,7 @@ export default function MesaEditDialog({
               <Label className="text-xs">Posición Y</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 value={form.posicion_y}
                 onChange={(e) => setForm({ ...form, posicion_y: e.target.value })}
               />

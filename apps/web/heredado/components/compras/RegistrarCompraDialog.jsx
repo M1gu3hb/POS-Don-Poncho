@@ -534,6 +534,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
                     <Label className="text-xs">Cantidad comprada</Label>
                     <Input
                       type="number"
+                      inputMode="decimal"
                       value={line.cantidad}
                       onChange={(e) => updateLine(idx, { cantidad: e.target.value })}
                       placeholder="0"
@@ -561,6 +562,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
                     <Label className="text-xs">Costo total ($)</Label>
                     <Input
                       type="number"
+                      inputMode="decimal"
                       value={line.costo_total}
                       onChange={(e) => updateLine(idx, { costo_total: e.target.value })}
                       placeholder="$0"
@@ -641,6 +643,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
                           </Label>
                           <Input
                             type="number"
+                            inputMode="decimal"
                             value={line.piezas_por_paquete}
                             onChange={(e) =>
                               updateLine(idx, { piezas_por_paquete: e.target.value })

@@ -136,8 +136,8 @@ test.describe('el sonido (DP-14.6-8)', () => {
       .getByRole('button', { name: 'Sonido de este aparato' })
       .filter({ visible: true });
     await expect(boton.first()).toBeVisible();
-    await duena.getByRole('button', { name: 'Colapsar' }).click();
-    await expect(duena.getByRole('button', { name: 'Expandir' })).toBeVisible();
+    await duena.getByRole('button', { name: 'Ocultar menú' }).click();
+    await expect(duena.getByRole('button', { name: 'Mostrar menú' })).toBeVisible();
     await expect(
       boton.first(),
       'Con el menú colapsado el botón de sonido desapareció.',

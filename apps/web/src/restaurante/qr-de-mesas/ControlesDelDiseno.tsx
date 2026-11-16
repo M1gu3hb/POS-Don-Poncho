@@ -247,6 +247,7 @@ export function ControlesDelDiseno({
               <Input
                 id={id}
                 type="number"
+                inputMode="numeric"
                 min={0}
                 max={360}
                 value={degradado.angulo}

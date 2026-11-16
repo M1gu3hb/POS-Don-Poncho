@@ -249,6 +249,7 @@ export default function ProductoSimpleDialog({ open, onClose, producto = null })
             <Label className="text-xs">Precio</Label>
             <Input
               type="number"
+              inputMode="decimal"
               value={precio}
               onChange={(e) => setPrecio(e.target.value)}
               placeholder="0.00"
