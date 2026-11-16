@@ -8,6 +8,7 @@ import { BrowserMultiFormatReader } from '@zxing/browser';
 import { normalizeBarcode, isLikelyValidBarcode, isSuspiciousBarcode } from '@/utils/barcodeUtils';
 import ScanFeedbackOverlay from './ScanFeedbackOverlay';
 import ScannerMiniCart from './ScannerMiniCart';
+import { puedeEnfocarAlAbrir } from '@morphiqpos/ui/foco-al-abrir';
 
 /**
  * BarcodeScanner — modal reutilizable con lectura ESTABLE.
@@ -402,7 +403,7 @@ export default function BarcodeScanner({
                 onChange={e => setManualValue(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleManualSubmit(); } }}
                 placeholder="Escribe o escanea con lector USB..."
-                autoFocus
+                autoFocus={puedeEnfocarAlAbrir()}
                 inputMode="numeric"
                 className="h-12 text-base bg-superficie text-texto"
               />

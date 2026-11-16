@@ -145,6 +145,7 @@ export default function RegistrarGastoDialog({ open, onClose }) {
               <Label className="text-xs">Monto</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 value={form.monto}
                 onChange={(e) => setForm({ ...form, monto: e.target.value })}
                 placeholder="$0.00"

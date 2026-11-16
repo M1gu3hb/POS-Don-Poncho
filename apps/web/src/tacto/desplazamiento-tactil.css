@@ -1,0 +1,26 @@
+/* DP-21 · Bloque 9 · M5 — Los diálogos y paneles largos se desplazan con el dedo.
+
+   Un diálogo sin tope de alto (`DialogContent` no lo trae) se sale de la pantalla y lo de abajo —su
+   pie, los botones— queda inalcanzable; y uno que sí se desplaza dejaba pasar el gesto a la página de
+   atrás al llegar al final. Por omisión: tope de alto con el alto que de verdad se ve
+   (`--alto-visible`, que mantiene `ArmazonTactil`; sin él, `100vh`), desplazamiento por dentro y el
+   gesto contenido.
+
+   En `@layer base`: lo que una pantalla pide a propósito (`max-h-[92vh]`, `overflow-y-auto`, un
+   `h-[100dvh]` de pantalla completa) lo conserva, como con cualquier utilidad. Con el teclado en
+   pantalla manda `teclado-en-pantalla.css`. Sólo `max-height`, `overflow` y `overscroll-behavior`:
+   nada de lo que se anima al abrir (`transform`, `opacity`). Se apunta por `data-slot`, no por
+   `role="dialog"`: un popover también lo tiene y se coloca por su cuenta. */
+@layer base {
+  [data-slot='dialog-content'],
+  [data-slot='alert-dialog-content'] {
+    max-height: calc(var(--alto-visible, 100vh) - var(--espacio-4));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  [data-slot='sheet-content'] {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}

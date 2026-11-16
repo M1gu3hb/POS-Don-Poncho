@@ -8,6 +8,7 @@ import { BadgePercent, KeyRound } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
+import { puedeEnfocarAlAbrir } from '@morphiqpos/ui/foco-al-abrir';
 
 import { PinDeSupervisor, type Autorizada } from './PinDeSupervisor';
 import {
@@ -202,7 +203,7 @@ export function DescuentoDeVenta({
           <Label htmlFor="descuento-importe">Cuánto se descuenta</Label>
           <CampoDeDinero
             id="descuento-importe"
-            autoFocus
+            autoFocus={puedeEnfocarAlAbrir()}
             centavos={importe}
             alCambiar={(valor) => {
               setImporte(valor);
@@ -217,7 +218,7 @@ export function DescuentoDeVenta({
             id="descuento-porcentaje"
             inputMode="decimal"
             autoComplete="off"
-            autoFocus
+            autoFocus={puedeEnfocarAlAbrir()}
             placeholder="10"
             value={porcentaje}
             onChange={(evento) => {

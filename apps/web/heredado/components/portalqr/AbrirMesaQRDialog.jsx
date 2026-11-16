@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Users, Loader2, AlertTriangle, PartyPopper } from 'lucide-react';
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
+import { puedeEnfocarAlAbrir } from '@morphiqpos/ui/foco-al-abrir';
 
 /**
  * Modal para que el comensal abra una mesa libre desde el Portal QR.
@@ -107,7 +108,7 @@ export default function AbrirMesaQRDialog({ mesa, loading, onClose, onConfirm })
               value={personas}
               onChange={(e) => setPersonas(e.target.value)}
               className="w-full h-14 text-center text-2xl font-black border rounded-xl bg-card mt-1"
-              autoFocus
+              autoFocus={puedeEnfocarAlAbrir()}
             />
             {capacidad > 0 && (
               <p className="text-[10px] text-muted-foreground mt-1">

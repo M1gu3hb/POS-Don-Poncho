@@ -70,7 +70,8 @@ export function MenuDeLaMesa({
         nivel={3}
         relleno={0}
         conBorde={false}
-        className="absolute flex flex-col gap-1 bg-texto p-(--espacio-2) text-fondo"
+        // El globo nace bajo el dedo que lo abrió: su texto no se selecciona ni sale el menú del sistema (M4).
+        className="absolute flex select-none flex-col gap-1 bg-texto p-(--espacio-2) text-fondo [-webkit-touch-callout:none]"
         style={{ left, top, width: globo.ancho }}
         onPointerDown={(e) => {
           e.stopPropagation();

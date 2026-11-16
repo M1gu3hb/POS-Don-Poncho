@@ -135,6 +135,9 @@ import { MenuDeLaMesa } from '~/restaurante/portal-mesero/MenuDeLaMesa';
 import { QrDeLaMesaEnPantalla } from '~/restaurante/portal-mesero/QrDeLaMesaEnPantalla';
 import { tokenDelQrEscaneado } from '~/restaurante/portal-mesero/qr-escaneado';
 import { usePulsacionLarga } from '~/restaurante/portal-mesero/use-pulsacion-larga';
+// DP-21 · Bloque 9 (O4/M2): el mapa se escala al espacio que hay.
+import { MapaDeMesas } from '~/tacto/MapaDeMesas';
+import { cajasDelMapa } from '~/tacto/escala-del-mapa';
 import { useEscanerDelDocumento } from '~/cliente/use-escaner-del-documento';
 import {
   almacenDelAparato,
@@ -145,7 +148,6 @@ import { frasePorSolicitud, getAlertConfig, speak } from '@/lib/voiceAlert';
 import { sonar, sonarAntesDeHablar } from '~/sonidos/gestor';
 import { folioVisible } from '@morphiqpos/domain/venta';
 
-const MAP_HEIGHT = 600;
 // Hook simple para detectar móvil
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(
@@ -1548,19 +1550,50 @@ function Mesero() {
           />
         </div>
       ) : (
-        <div
-          {...pulsacionLarga}
-          className="relative rounded-2xl overflow-hidden border-2"
-          style={{
-            height: MAP_HEIGHT,
-            background: floor.bg,
-            backgroundImage: floor.dotPattern,
-            backgroundSize: '24px 24px',
-            borderColor: floor.border,
-            boxShadow: isDark
+        // DP-21 · Bloque 9 (O4/M2): el dibujo entero de la zona se escala al ancho y al alto que hay (con
+        // la barra abierta o cerrada), sin mover las posiciones guardadas; si ni a 56 px por mesa cabe,
+        // se desplaza con el dedo. Era un alto fijo de 600 con `overflow-hidden`: las mesas de la
+        // orilla se cortaban.
+        <MapaDeMesas
+          agarre={pulsacionLarga}
+          cajas={cajasDelMapa(mesasZona, (id) => {
+            const unida = cajaDeLaUnion(
+              mesasZona.find((m) => m.id === id),
+              mesasDeLaZona,
+            );
+            return unida ? { x: unida.x, y: unida.y, ancho: unida.ancho, alto: unida.alto } : null;
+          })}
+          fondo={{
+            color: floor.bg,
+            patron: floor.dotPattern,
+            borde: floor.border,
+            sombra: isDark
               ? 'inset 0 4px 14px rgba(0,0,0,0.6), inset 0 -2px 6px rgba(255,255,255,0.05)'
               : 'inset 0 4px 10px rgba(0,0,0,0.15), inset 0 -2px 6px rgba(255,255,255,0.5)',
           }}
+          superposicion={
+            <>
+              {mesasZona.length === 0 && !sinMesasAsignadas && !cargandoMesas && (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/60">
+                  <div className="text-center">
+                    <UtensilsCrossed className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">No hay mesas en {zonaActiva}.</p>
+                    <p className="text-xs">Configúralas en Configuración → Mapa de mesas.</p>
+                  </div>
+                </div>
+              )}
+              {cargandoMesas && (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/70">
+                  <div className="text-center">
+                    <div className="w-10 h-10 rounded-2xl bg-muted/60 mx-auto mb-2 flex items-center justify-center">
+                      <UtensilsCrossed className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <p className="text-sm">Cargando mapa de mesas…</p>
+                  </div>
+                </div>
+              )}
+            </>
+          }
         >
           {mesasZona.map((mesa) => {
             const resp = getResponsable(mesa);
@@ -1579,26 +1612,7 @@ function Mesero() {
               />
             );
           })}
-          {mesasZona.length === 0 && !sinMesasAsignadas && !cargandoMesas && (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/60">
-              <div className="text-center">
-                <UtensilsCrossed className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No hay mesas en {zonaActiva}.</p>
-                <p className="text-xs">Configúralas en Configuración → Mapa de mesas.</p>
-              </div>
-            </div>
-          )}
-          {cargandoMesas && (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/70">
-              <div className="text-center">
-                <div className="w-10 h-10 rounded-2xl bg-muted/60 mx-auto mb-2 flex items-center justify-center">
-                  <UtensilsCrossed className="w-5 h-5 animate-pulse" />
-                </div>
-                <p className="text-sm">Cargando mapa de mesas…</p>
-              </div>
-            </div>
-          )}
-        </div>
+        </MapaDeMesas>
       )}
 
       {/* Cards persistentes de solicitudes QR debajo del mapa */}

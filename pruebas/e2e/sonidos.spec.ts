@@ -156,7 +156,7 @@ test.describe('los sonidos de la interfaz', () => {
     ).toBeVisible();
     const hamburguesa = mesera.getByRole('button', { name: 'Abrir menú' });
     if (await hamburguesa.isVisible()) await hamburguesa.click();
-    const expandir = mesera.getByRole('button', { name: 'Expandir' }).filter({ visible: true });
+    const expandir = mesera.getByRole('button', { name: 'Mostrar menú' }).filter({ visible: true });
     if ((await expandir.count()) > 0) await expandir.first().click();
     await mesera
       .getByRole('button', { name: 'Sonido de este aparato' })
@@ -272,11 +272,11 @@ test.describe('los sonidos de la interfaz', () => {
   test('un botón cualquiera, el toque de siempre (Felt)', async ({ browser }, info) => {
     test.skip(
       info.project.name !== 'escritorio',
-      'el botón «Colapsar» del menú sólo está en la PC',
+      'el botón «Ocultar menú» del menú sólo está en la PC',
     );
     const duena = await new Equipo(browser, SLUG).pagina(info, 'dueno');
     await duena.goto('/inventario');
-    await duena.getByRole('button', { name: 'Colapsar' }).click();
+    await duena.getByRole('button', { name: 'Ocultar menú' }).click();
     await sono(duena, 'felt');
   });
 });

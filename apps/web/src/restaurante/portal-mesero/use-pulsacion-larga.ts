@@ -39,6 +39,8 @@ export function usePulsacionLarga(alMantener: (mesaId: string, x: number, y: num
         if (viva === null) return;
         tirarElClic.current = true;
         soltar();
+        // Si el navegador alcanzó a seleccionar algo bajo el dedo antes de abrir el globo, se suelta (M4).
+        window.getSelection()?.removeAllRanges();
         alMantener(viva.mesaId, viva.x, viva.y);
       }, MS_PARA_MANTENER);
     },

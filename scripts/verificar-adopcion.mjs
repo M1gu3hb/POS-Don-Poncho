@@ -94,6 +94,24 @@ function ESTADOS_DE_LA_COCINA_GRANDE() {
  */
 export const SIN_ESTADO = [
   {
+    pantalla: 'tacto/MapaDeMesas',
+    estado: 'vacio',
+    razon:
+      'Pieza del mapa del mesero, no pantalla: dibuja lo que le pasan (las mesas, y encima «no hay mesas» y «cargando», que pinta la página que la usa). El fallo de la lectura lo dice la página.',
+  },
+  {
+    pantalla: 'tacto/MapaDeMesas',
+    estado: 'cargando',
+    razon:
+      'Pieza del mapa del mesero, no pantalla: dibuja lo que le pasan (las mesas, y encima «no hay mesas» y «cargando», que pinta la página que la usa). El fallo de la lectura lo dice la página.',
+  },
+  {
+    pantalla: 'tacto/MapaDeMesas',
+    estado: 'error',
+    razon:
+      'Pieza del mapa del mesero, no pantalla: dibuja lo que le pasan (las mesas, y encima «no hay mesas» y «cargando», que pinta la página que la usa). El fallo de la lectura lo dice la página.',
+  },
+  {
     pantalla: 'portal/menu-digital/MenuDigital',
     estado: 'error',
     razon:

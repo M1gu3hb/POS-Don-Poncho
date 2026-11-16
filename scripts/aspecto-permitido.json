@@ -279,7 +279,7 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Mesero.jsx",
-      "porque": "DP-9.3 (DP-D24): el botón «Solicitudes» del encabezado y su modal (SolicitudesQRPanel) se van; los sustituye el selector Mesas / Solicitudes arriba de las zonas, que convierte la pantalla entera en la lista de pendientes. Lo nuevo vive en src (SelectorDeVista, VistaDeSolicitudes). DP-9.6 (DP-D30): arriba del mapa, alineado a la derecha, el botón «Unir mesas» con su icono (Combine) entra al modo de unir mesas en el mapa (src: UnirMesasEnElMapa).",
+      "porque": "DP-9.3 (DP-D24): el botón «Solicitudes» del encabezado y su modal (SolicitudesQRPanel) se van; los sustituye el selector Mesas / Solicitudes arriba de las zonas, que convierte la pantalla entera en la lista de pendientes. Lo nuevo vive en src (SelectorDeVista, VistaDeSolicitudes). DP-9.6 (DP-D30): arriba del mapa, alineado a la derecha, el botón «Unir mesas» con su icono (Combine) entra al modo de unir mesas en el mapa (src: UnirMesasEnElMapa). · DP-21 · Bloque 9 (O4/M2): el contenedor del mapa de mesas (alto fijo de 600 con overflow-hidden) lo pinta ahora `MapaDeMesas`, que escala el dibujo al espacio que hay; la caja conserva borde, esquinas y recorte, y las mesas siguen en sus posiciones.",
       "testigos": [
         "- clase:flex",
         "- clase:flex",
@@ -316,7 +316,11 @@
         "- texto:Solicitudes",
         "- icono:Bell",
         "+ clase:justify-end",
-        "+ icono:Combine"
+        "+ icono:Combine",
+        "- clase:relative",
+        "- clase:border-2",
+        "- clase:rounded-2xl",
+        "- clase:overflow-hidden"
       ]
     },
     {
@@ -605,7 +609,7 @@
     },
     {
       "archivo": "apps/web/heredado/components/common/Sidebar.jsx",
-      "porque": "DP-13.3 (punto 14): junto a «Salir», el botón «Sonido de este aparato» (el mismo tamaño y tono tenue que «Salir», con el ícono del volumen) abre el ajuste de Configuración → Este aparato en un diálogo, para que el mesero, la cocina y la caja bajen o apaguen el sonido de SU aparato sin entrar a Configuración. En el teléfono cierra el cajón del menú antes de abrir el diálogo.",
+      "porque": "DP-13.3 (punto 14): junto a «Salir», el botón «Sonido de este aparato» (el mismo tamaño y tono tenue que «Salir», con el ícono del volumen) abre el ajuste de Configuración → Este aparato en un diálogo, para que el mesero, la cocina y la caja bajen o apaguen el sonido de SU aparato sin entrar a Configuración. En el teléfono cierra el cajón del menú antes de abrir el diálogo. · DP-21 · Bloque 9 (O5/M3): el botón de plegar la barra era un chevron de 16 px al 50 % de opacidad, sólo en lg:; ahora es un botón de 44 × 44 como mínimo con icono (PanelLeftClose/PanelLeftOpen) y la palabra «Ocultar»/«Mostrar», visible plegada y desplegada (plegada, la cabecera apila logo y botón). El botón del cajón (teléfono y tableta) mide lo mismo y dice «Menú».",
       "testigos": [
         "+ clase:text-sidebar-foreground/50",
         "+ clase:hover:text-sidebar-foreground",
@@ -615,7 +619,58 @@
         "+ clase:transition-colors",
         "+ label:Sonido de este aparato",
         "+ aria-label:Sonido de este aparato",
-        "+ icono:Volume2"
+        "+ icono:Volume2",
+        "- clase:ml-auto",
+        "- clase:lg:block",
+        "- clase:w-4",
+        "- clase:h-4",
+        "- clase:w-11",
+        "- clase:h-11",
+        "- icono:ChevronLeft",
+        "- icono:ChevronRight",
+        "+ clase:flex-col",
+        "+ clase:text-sidebar-foreground",
+        "+ clase:items-center",
+        "+ clase:px-3",
+        "+ clase:justify-center",
+        "+ clase:w-5",
+        "+ clase:w-5",
+        "+ clase:h-5",
+        "+ clase:h-5",
+        "+ clase:text-sm",
+        "+ clase:text-sm",
+        "+ clase:text-[10px]",
+        "+ clase:bg-sidebar-accent",
+        "+ clase:font-medium",
+        "+ clase:transition-colors",
+        "+ clase:rounded-lg",
+        "+ clase:?",
+        "+ clase:?",
+        "+ clase::",
+        "+ clase::",
+        "+ clase:${collapsed",
+        "+ clase:${collapsed",
+        "+ clase:lg:flex",
+        "+ clase:min-h-11",
+        "+ clase:min-h-11",
+        "+ clase:min-w-11",
+        "+ clase:min-w-11",
+        "+ clase:gap-2",
+        "+ clase:gap-2",
+        "+ clase:'flex-col",
+        "+ clase:px-2'",
+        "+ clase:'px-3'}",
+        "+ clase:hover:bg-sidebar-accent/80",
+        "+ clase:'w-full",
+        "+ clase:gap-0.5",
+        "+ clase:px-0.5",
+        "+ clase:leading-tight",
+        "+ clase:font-medium'",
+        "+ clase:'ml-auto",
+        "+ clase:font-medium'}",
+        "+ texto:Menú",
+        "+ icono:PanelLeftClose",
+        "+ icono:PanelLeftOpen"
       ]
     },
     {
@@ -629,11 +684,13 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Caja.jsx",
-      "porque": "DP-13.5 (QA1-5): la cuenta de una mesa se divide en su cobro; al dividir, el cobro se cierra y el aviso dice dónde quedan las partes. DP-21 (Bloque 6): el folio de este aviso se dice con `folioVisible` (prefijo del negocio: «DP-01001», «DPC-0101»; sin prefijo, lo de siempre). Sólo cambia el texto del folio dentro del aviso.",
+      "porque": "DP-13.5 (QA1-5): la cuenta de una mesa se divide en su cobro; al dividir, el cobro se cierra y el aviso dice dónde quedan las partes. DP-21 (Bloque 6): el folio de este aviso se dice con `folioVisible` (prefijo del negocio: «DP-01001», «DPC-0101»; sin prefijo, lo de siempre). Sólo cambia el texto del folio dentro del aviso. · DP-21 · Bloque 9 (M5): la raíz de la página pasa de `overflow-x-hidden` a `overflow-x-clip`: recorta lo mismo sin volverse un scroller vertical anidado que agarraba el dedo.",
       "testigos": [
         "+ aviso:Cuenta dividida: cobra cada parte en Pendientes.",
         "- aviso:¿Seguro que quieres borrar este ticket en cero (${venta.folio})?\\nEsta acción no se puede deshacer.",
-        "+ aviso:¿Seguro que quieres borrar este ticket en cero (${folioVisible(venta.serie, venta.folio, config, 'numero')})?\\nEsta acción no se puede deshacer."
+        "+ aviso:¿Seguro que quieres borrar este ticket en cero (${folioVisible(venta.serie, venta.folio, config, 'numero')})?\\nEsta acción no se puede deshacer.",
+        "- clase:overflow-x-hidden",
+        "+ clase:overflow-x-clip"
       ]
     },
     {
