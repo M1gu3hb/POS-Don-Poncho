@@ -9,7 +9,11 @@
  *     compuesto dentro de `@supports not (translate: 0)`; y toda animación que mueve `transform`,
  *     su gemela ahí dentro;
  *  3. toda declaración con `dvh` / `svh` / `lvh` tiene, después, su respaldo en `vh`;
- *  4. toda dirección de degradado «in oklab» tiene, después, la misma sin el espacio de color.
+ *  4. toda dirección de degradado «in oklab» tiene, después, la misma sin el espacio de color;
+ *  5. todo color en `lab()`, `lch()`, `oklab()` u `oklch()` (la paleta de Tailwind, Chromium 111)
+ *     tiene, después, su respaldo en `rgb()` dentro de `@supports not (color: lab(0% 0 0))`;
+ *  6. toda regla `:has(:checked)` o `:has(:focus-visible)` tiene, después, la misma sobre su marca
+ *     (`[data-tiene-…]`) dentro de `@supports not selector(:has(a))`.
  *
  * Si una actualización de Tailwind o de Next cambia la forma del CSS, esto falla y lo dice.
  */
@@ -20,6 +24,8 @@ import {
   enBloqueDeInterpolacion,
   SIN_INTERPOLACION,
 } from './degradados.mjs';
+import { SIN_COLORES_NUEVOS, tieneColoresNuevos } from './colores-nuevos.mjs';
+import { partesDelSelector, SIN_HAS } from './tiene.mjs';
 import { esReinicio, SIN_SUELTAS } from './transformaciones.mjs';
 import { SIN_DINAMICAS, tieneDinamicas } from './unidades.mjs';
 import { compacto, dentroDeFotogramas, dentroDeSoporte, partirAlNivelCero } from './valores.mjs';
@@ -169,6 +175,59 @@ function revisarDegradados(root, problemas) {
   return cuenta;
 }
 
+/** ¿La regla vive dentro de un `@supports (color: lab()/lch()/oklab()/oklch())` positivo? */
+function enSoporteDeColorNuevo(regla) {
+  for (let p = regla.parent; p !== undefined && p.type !== 'root'; p = p.parent) {
+    if (
+      p.type === 'atrule' &&
+      p.name === 'supports' &&
+      /^\(?color:(ok)?l(ab|ch)\(/.test(compacto(p.params))
+    )
+      return true;
+  }
+  return false;
+}
+
+function revisarColoresNuevos(root, problemas) {
+  let cuenta = 0;
+  root.walkDecls((d) => {
+    if (!tieneColoresNuevos(d.value)) return;
+    const regla = d.parent;
+    if (regla.type !== 'rule' || dentroDeSoporte(regla, SIN_COLORES_NUEVOS)) return;
+    cuenta += 1;
+    // El minificador de Next (Lightning CSS) ya baja estos colores: deja el valor en hex y el de
+    // espacio nuevo en un `@supports (color: lab(…))`, que un motor sin ellos no lee. Eso es cubierto.
+    if (enSoporteDeColorNuevo(regla)) return;
+    for (const selector of selectores(regla)) {
+      const cubierta = tieneGemela(regla, SIN_COLORES_NUEVOS, selector, (r) =>
+        declara(r, d.prop, (x) => !tieneColoresNuevos(x.value)),
+      );
+      if (!cubierta)
+        problemas.push(
+          `color de espacio nuevo sin respaldo en rgb(): ${corto(`${regla.selector} { ${d.prop} }`)}`,
+        );
+    }
+  });
+  return cuenta;
+}
+
+function revisarTiene(root, problemas) {
+  let cuenta = 0;
+  root.walkRules((regla) => {
+    for (let p = regla.parent; p.type !== 'root'; p = p.parent)
+      if (p.type === 'atrule' && p.name === 'supports') return;
+    for (const selector of partirAlNivelCero(regla.selector, ',')) {
+      const partes = partesDelSelector(selector);
+      if (partes === null) continue;
+      cuenta += 1;
+      const marcado = compacto(`${partes[0]}[data-tiene-${partes[1]}]`);
+      if (!tieneGemela(regla, SIN_HAS, marcado, () => true))
+        problemas.push(`:has(:${partes[1]}) sin respaldo sobre la marca: ${corto(selector)}`);
+    }
+  });
+  return cuenta;
+}
+
 export const SELECTOR_DEL_AVISO = '#aparato-demasiado-viejo';
 
 /**
@@ -194,7 +253,7 @@ function revisarAviso(root) {
  * Revisa una hoja ya analizada por PostCSS.
  * @returns {{
  *   problemas: string[],
- *   cuentas: { mezclas: number, sueltas: number, animaciones: number, dinamicas: number },
+ *   cuentas: { mezclas: number, sueltas: number, animaciones: number, dinamicas: number, coloresNuevos: number },
  *   aviso: { aspecto: boolean, decideLaHoja: boolean },
  * }}
  */
@@ -204,9 +263,11 @@ export function revisar(root) {
   const { reglas, animaciones } = revisarSueltas(root, problemas);
   const dinamicas = revisarDinamicas(root, problemas);
   const degradados = revisarDegradados(root, problemas);
+  const coloresNuevos = revisarColoresNuevos(root, problemas);
+  const tiene = revisarTiene(root, problemas);
   return {
     problemas,
-    cuentas: { mezclas, sueltas: reglas, animaciones, dinamicas, degradados },
+    cuentas: { mezclas, sueltas: reglas, animaciones, dinamicas, degradados, coloresNuevos, tiene },
     aviso: revisarAviso(root),
   };
 }

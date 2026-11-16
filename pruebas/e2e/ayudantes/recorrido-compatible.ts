@@ -11,6 +11,7 @@ import {
   pedirLaCuentaDeLaMesa,
 } from './recorrido-sala.ts';
 import type { AlFallar, AlLlegar, EnLaParada } from './recorrido-tipos.ts';
+import { recorrerElGloboDeLaMesa, recorrerLasPiezas } from './recorrido-estados.ts';
 import { entradaDe } from './sesion.ts';
 
 export {
@@ -167,6 +168,12 @@ export async function recorrer(
       tapar: [...tapar, page.getByRole('region', { name: /Notifications/ })],
       ...(nota === undefined ? {} : { nota }),
     });
+  // `MORPHIQPOS_SOLO_PIEZAS=1`: sólo los estados de las piezas de Radix (sin sesión, sin caja, sin
+  // proveedor): para repasar rápido los colores del motor viejo.
+  if (process.env['MORPHIQPOS_SOLO_PIEZAS'] !== undefined) {
+    await tramo('estados de las piezas', alFallar, () => recorrerLasPiezas(page, enLaParada));
+    return;
+  }
   page = await entrarConElPin(pestana, enLaParada, alFallar);
   await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
   await page.waitForLoadState('networkidle');
@@ -182,6 +189,9 @@ export async function recorrer(
   } finally {
     await dejarLaSalaComoEstaba(page);
   }
+  await tramo('globo de la mesa', alFallar, () => recorrerElGloboDeLaMesa(page, enLaParada));
   await tramo('configuración', alFallar, () => recorrerConfiguracion(page, enLaParada));
   await tramo('laboratorio', alFallar, () => recorrerElLaboratorio(page, enLaParada));
+  // DP-21 · Bloque 15: las piezas de Radix en sus estados abiertos y marcados (sin sesión).
+  await tramo('estados de las piezas', alFallar, () => recorrerLasPiezas(page, enLaParada));
 }

@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 
 import { hayPunteroGrueso } from '@morphiqpos/ui/foco-al-abrir';
 
+import { montarTieneEnElNavegador } from '~/compatibilidad/tiene-de-respaldo';
+
 import { montarAltoVisible } from './alto-visible';
 import { montarLlevarAlCentro } from './llevar-al-centro';
 import { montarSinMenuNativo } from './sin-seleccion';
@@ -56,7 +58,10 @@ export function ArmazonTactil(): null {
       },
       () => hayPunteroGrueso(),
     );
+    // DP-21 · Bloque 15: `:has(:checked)` y `:has(:focus-visible)` en un motor sin `:has()` (Chromium < 105).
+    const desmontarTiene = montarTieneEnElNavegador();
     return () => {
+      desmontarTiene();
       desmontarMenu();
       desmontarAlto();
       desmontarCentro();

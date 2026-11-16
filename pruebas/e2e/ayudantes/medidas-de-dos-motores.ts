@@ -31,6 +31,12 @@ export interface Medida extends Recuadro {
   readonly borde: Color | null;
   readonly opacidad: number;
   readonly peso: string;
+  /** DP-21 · Bloque 15: el contorno (anillo de foco), o `null` si no tiene. */
+  readonly contorno: Color | null;
+  /** DP-21 · Bloque 15: el color de la primera sombra (el anillo de `ring-*` va ahí), o `null`. */
+  readonly sombra: Color | null;
+  /** DP-21 · Bloque 15: el texto seleccionado (`::selection`); sólo de lo marcado `data-muestra-de="seleccion"`. */
+  readonly seleccion: { readonly tinta: Color; readonly fondo: Color } | null;
 }
 
 /** Lo que se ve en la pantalla, elemento por elemento. Lo que toca una zona de `tapar` no cuenta. */
@@ -62,6 +68,16 @@ export async function medidasDeLoVisible(
         ];
         vistos.set(texto, leido);
         return leido;
+      };
+      // El color de la primera sombra: el que viene antes de las medidas, `rgb(0, 0, 0) 0px 0px 0px 3px`.
+      const colorDeLaSombra = (sombra: string): [number, number, number, number] | null => {
+        if (sombra === 'none') return null;
+        const m = /^(\w+\([^)]*\)|#[0-9a-f]+|[a-z]+)\s/i.exec(sombra);
+        if (m?.[1] === undefined) return null;
+        const c = color(m[1]);
+        // Una sombra transparente (la de `ring-0`, `shadow-none`) no se ve: el moderno la informa y el
+        // viejo no, y no es una diferencia de color.
+        return c[3] === 0 ? null : c;
       };
       const camino = (elemento: Element): string => {
         const tramos: string[] = [];
@@ -136,6 +152,18 @@ export async function medidasDeLoVisible(
           borde: Number.parseFloat(estilo.borderTopWidth) > 0 ? color(estilo.borderTopColor) : null,
           opacidad: Number(estilo.opacity),
           peso: estilo.fontWeight,
+          contorno:
+            estilo.outlineStyle !== 'none' && Number.parseFloat(estilo.outlineWidth) > 0
+              ? color(estilo.outlineColor)
+              : null,
+          sombra: colorDeLaSombra(estilo.boxShadow),
+          seleccion:
+            elemento.getAttribute('data-muestra-de') === 'seleccion'
+              ? {
+                  tinta: color(getComputedStyle(elemento, '::selection').color),
+                  fondo: color(getComputedStyle(elemento, '::selection').backgroundColor),
+                }
+              : null,
         });
       }
       return medidas;
@@ -204,7 +232,16 @@ export function desplazados(
 export interface DiferenciaDeEstilo {
   readonly camino: string;
   readonly texto: string;
-  readonly que: 'tinta' | 'fondo' | 'borde' | 'opacidad' | 'peso';
+  readonly que:
+    | 'tinta'
+    | 'fondo'
+    | 'borde'
+    | 'opacidad'
+    | 'peso'
+    | 'contorno'
+    | 'sombra'
+    | 'seleccion (texto)'
+    | 'seleccion (fondo)';
   readonly viejo: string;
   readonly moderno: string;
 }
@@ -241,6 +278,16 @@ export function diferenciasDeEstilo(
     if (!mismoColor(v.tinta, m.tinta, tolerancia)) anotar('tinta', decir(v.tinta), decir(m.tinta));
     if (!mismoColor(v.fondo, m.fondo, tolerancia)) anotar('fondo', decir(v.fondo), decir(m.fondo));
     if (!mismoColor(v.borde, m.borde, tolerancia)) anotar('borde', decir(v.borde), decir(m.borde));
+    if (!mismoColor(v.contorno, m.contorno, tolerancia))
+      anotar('contorno', decir(v.contorno), decir(m.contorno));
+    if (!mismoColor(v.sombra, m.sombra, tolerancia))
+      anotar('sombra', decir(v.sombra), decir(m.sombra));
+    if (m.seleccion !== null) {
+      if (!mismoColor(v.seleccion?.tinta ?? null, m.seleccion.tinta, tolerancia))
+        anotar('seleccion (texto)', decir(v.seleccion?.tinta ?? null), decir(m.seleccion.tinta));
+      if (!mismoColor(v.seleccion?.fondo ?? null, m.seleccion.fondo, tolerancia))
+        anotar('seleccion (fondo)', decir(v.seleccion?.fondo ?? null), decir(m.seleccion.fondo));
+    }
     if (Math.abs(v.opacidad - m.opacidad) > 0.02)
       anotar('opacidad', String(v.opacidad), String(m.opacidad));
     if (v.peso !== m.peso) anotar('peso', v.peso, m.peso);
