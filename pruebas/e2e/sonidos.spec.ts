@@ -36,6 +36,18 @@ async function olvidarLoQueSono(page: Page): Promise<void> {
   });
 }
 
+/**
+ * DP-21 · Bloque 21: abre una sección de Configuración por su nombre en la lista. En el teléfono la
+ * sección abierta ocupa la pantalla y la lista vuelve con «Secciones».
+ */
+async function abrirSeccion(page: Page, nombre: string): Promise<void> {
+  const enLaLista = page.getByRole('tab', { name: nombre });
+  const volver = page.getByRole('button', { name: 'Secciones', exact: true });
+  await expect(enLaLista.or(volver).first()).toBeVisible();
+  if (!(await enLaLista.isVisible())) await volver.click();
+  await enLaLista.click();
+}
+
 async function perfil(page: Page, nombre: 'Apagado' | 'Suave' | 'Normal'): Promise<void> {
   await page.goto('/configuracion?tab=aparato');
   await page.getByRole('radio', { name: nombre }).click();
@@ -70,10 +82,10 @@ test.describe('los sonidos de la interfaz', () => {
   }, info) => {
     const duena = await new Equipo(browser, SLUG).pagina(info, 'dueno');
     await duena.goto('/configuracion?tab=aparato');
-    await duena.getByRole('tab', { name: 'Sonidos' }).click();
+    await abrirSeccion(duena, 'Sonidos');
     await sono(duena, 'notch');
 
-    await duena.getByRole('tab', { name: 'Este aparato' }).click();
+    await abrirSeccion(duena, 'Este aparato');
     const interruptor = duena.getByRole('switch', { name: /Modo espera en este aparato/ });
     await interruptor.click();
     await sono(duena, 'unclasp');
@@ -102,12 +114,9 @@ test.describe('los sonidos de la interfaz', () => {
     const duena = await new Equipo(browser, SLUG).pagina(info, 'dueno');
     await perfil(duena, 'Apagado');
     await olvidarLoQueSono(duena);
-    // DP-21 · Bloque 21: la lista de secciones dice cuál está abierta con `aria-selected`.
-    await duena.getByRole('tab', { name: 'Sonidos' }).click();
-    await expect(duena.getByRole('tab', { name: 'Sonidos' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    // DP-21 · Bloque 21: la sección abierta es un panel con su nombre (en el teléfono, sin la lista).
+    await abrirSeccion(duena, 'Sonidos');
+    await expect(duena.getByRole('tabpanel', { name: 'Sonidos y avisos' })).toBeVisible();
     await expect(duena.locator('html')).not.toHaveAttribute('data-ultimo-sonido', /.+/);
 
     await duena.getByRole('button', { name: 'Oír Thock' }).click();
