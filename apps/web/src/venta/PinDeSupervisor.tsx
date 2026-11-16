@@ -58,7 +58,7 @@ export function PinDeSupervisor({
 }: {
   /** La cuenta a la que se ata la autorización; el retiro no tiene cuenta, va por su monto. */
   readonly ordenId?: string;
-  readonly para: 'descuento' | 'cancelacion' | 'retiro';
+  readonly para: 'descuento' | 'cancelacion' | 'retiro' | 'cajon';
   readonly quienesAutorizan?: readonly QuienAutoriza[];
   /** El `id` del campo del PIN: dos formularios en una pantalla no lo comparten. */
   readonly idDelCampo: string;

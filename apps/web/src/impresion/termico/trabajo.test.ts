@@ -50,7 +50,7 @@ describe('el trabajo', () => {
   });
 
   it('dos copias: dos cortes, y el cajón se abre UNA sola vez', () => {
-    const perfil = perfil80({ cajon: cajonPorOmision(), lineasAntesDelCorte: 2 });
+    const perfil = perfil80({ tieneCajon: true, cajon: cajonPorOmision(), lineasAntesDelCorte: 2 });
     const original = dibujo(576, 40, 5);
     const copia = dibujo(576, 44, 3);
     const papel = emular(armarTrabajo(perfil, [original, copia], { abrirCajon: true }), 576);
@@ -60,7 +60,7 @@ describe('el trabajo', () => {
   });
 
   it('con cajón en el perfil, imprimir SIN pedirlo no lo abre (una precuenta, una reimpresión)', () => {
-    const perfil = perfil80({ cajon: cajonPorOmision() });
+    const perfil = perfil80({ tieneCajon: true, cajon: cajonPorOmision() });
     expect(emular(armarTrabajo(perfil, [dibujo(576, 8, 2)]), 576).pulsos).toEqual([]);
     expect(
       emular(armarTrabajo(perfil, [dibujo(576, 8, 2)], { abrirCajon: false }), 576).pulsos,
@@ -69,6 +69,12 @@ describe('el trabajo', () => {
 
   it('sin cajón en el perfil no se manda ningún pulso aunque se pida', () => {
     const papel = emular(armarTrabajo(perfil80(), [dibujo(576, 8, 2)], { abrirCajon: true }), 576);
+    expect(papel.pulsos).toEqual([]);
+  });
+
+  it('DP-21 · con el interruptor del cajón apagado no sale pulso, aunque el perfil traiga uno', () => {
+    const perfil = perfil80({ tieneCajon: false, cajon: cajonPorOmision() });
+    const papel = emular(armarTrabajo(perfil, [dibujo(576, 8, 2)], { abrirCajon: true }), 576);
     expect(papel.pulsos).toEqual([]);
   });
 
@@ -130,7 +136,12 @@ describe('el perfil del aparato', () => {
   });
 
   it('se exporta y se importa igual en otro POS', () => {
-    const perfil = perfil80({ nombre: 'Caja 1', cajon: cajonPorOmision(), puntos: 512 });
+    const perfil = perfil80({
+      nombre: 'Caja 1',
+      tieneCajon: true,
+      cajon: cajonPorOmision(),
+      puntos: 512,
+    });
     const importado = importarPerfil(exportarPerfil(perfil));
     expect(importado).toEqual({ ok: true, perfil });
   });

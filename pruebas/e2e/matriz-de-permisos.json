@@ -260,6 +260,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/configuracion/fijar-impuesto",
+      "comando": "configuracion.fijar_impuesto",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/configuracion/modulo-restablecer",
       "comando": "configuracion.restablecer_modulo",
       "escribe": true,

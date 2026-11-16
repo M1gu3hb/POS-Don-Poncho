@@ -33,6 +33,8 @@ export const COMANDOS_QUE_GASTAN_AUTORIZACION = [
   'restaurante.descontar_cuenta',
   // DP-16 · El retiro de la cajera arriba del umbral gasta la suya (`para: 'retiro'`).
   'caja.movimiento',
+  // DP-21 · Abrir el cajón a mano (`para: 'cajon'`): cada apertura lleva su PIN.
+  'caja.abrir_cajon',
 ] as const;
 
 /** La ventana se mide desde que se firmó, con holgura por el reloj de cada lado. */
