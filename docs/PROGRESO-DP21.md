@@ -133,6 +133,23 @@ verde (PR #31).
 - `verify:mutaciones-backend` tiene mutantes que buscan texto: si el código cambia de forma, el
   mutante «no cambia el archivo» y hay que apuntarlo a la forma nueva (pasó con el resolver de sesión).
 
+### El cierre del PR A (16-11, madrugada)
+
+- **Migración 193 en la base propia:** ensayo correcto (aplicó y revirtió) y luego en serio, las dos
+  veces por la conexión de sesión (5432) con `pnpm db:migrate` (`D:\mpos-tmp\dp21\migrar-produccion.sh`),
+  hacia las 02:56. Segunda pasada: «Sin migraciones pendientes (125 ya aplicadas)». Es aditiva: el
+  código desplegado (`faed6cc`) corre igual sobre ella.
+- **Un hueco del Bloque 2 que encontró la revisión antes de subir:** el acceso de producción
+  (`heredado/pages/POSLogin.jsx`, el de `/login-pos`) no dejaba la marca del PIN: tras entrar, el
+  candado lo habría pedido otra vez. Lo deja `login()` de `POSAuthContext`; contrato
+  `espera/pin-al-entrar.contrato.test.ts` (toda pantalla que comprueba un PIN deja la marca) y e2e.
+- **`verify` local:** estáticas, formato, lint, tipos, 6,307 unitarias, 102 mutantes del backend,
+  contratos de catálogo/inventario/venta/identidad/paquetes, build, modo compatible, cobertura y
+  cabeceras. La integración completa corre al final y en la CI.
+- **e2e del PR A**, contra un solo build y la base desechable propia (5437): `pin-al-abrir`,
+  `sin-instalacion`, `cajas-del-negocio`, `sin-iva`, `folios-con-prefijo` y
+  `propina-una-sola-verdad`.
+
 ## Lo que sigue
 
 1. Cerrar el PR A: e2e de sus bloques contra un solo build, `verify` local completo,

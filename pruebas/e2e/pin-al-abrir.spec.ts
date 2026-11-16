@@ -1,6 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
-import { pinDe, SLUG } from './ayudantes/modo-espera.ts';
+import { abrirConReloj, pinDe, SLUG } from './ayudantes/modo-espera.ts';
 import { opcionesDelProyecto, personaDe, type RolDePrueba } from './ayudantes/roles.ts';
 import { cabecerasDeEscrituraDePrueba, entrar, exigirDemostracion } from './ayudantes/sesion.ts';
 
@@ -107,11 +107,12 @@ test.describe('el PIN al abrir la app (DP-21 · Bloque 2)', () => {
       const contexto = await browser.newContext(opcionesDelProyecto(info));
       try {
         await navegadorCon(contexto, rol);
-        // Su cookie SÍ se recuerda: doce horas desde el último uso, no «hasta cerrar».
+        // Su cookie SÍ se recuerda (no es «hasta cerrar»): vive hasta el tope de 7 días; las 12
+        // horas desde el último uso las hace cumplir la fila de la sesión en el servidor.
         const cookie = await cookieDeLaSesion(contexto);
-        const enDoceHoras = Date.now() / 1000 + 12 * 60 * 60;
+        const elTope = Date.now() / 1000 + 7 * 24 * 60 * 60;
         expect(cookie?.expires ?? 0).toBeGreaterThan(Date.now() / 1000 + 11 * 60 * 60);
-        expect(cookie?.expires ?? 0).toBeLessThan(enDoceHoras + 10 * 60);
+        expect(cookie?.expires ?? 0).toBeLessThan(elTope + 10 * 60);
         expect(cookie?.httpOnly).toBe(true);
 
         const reabierta = await contexto.newPage();
@@ -128,6 +129,37 @@ test.describe('el PIN al abrir la app (DP-21 · Bloque 2)', () => {
       }
     });
   }
+
+  test('sin tocar la pantalla 10 minutos, el mando se cierra con su PIN; la cajera, no', async ({
+    browser,
+  }, info) => {
+    const deLaDuena = await browser.newContext(opcionesDelProyecto(info));
+    const deLaCajera = await browser.newContext(opcionesDelProyecto(info));
+    try {
+      const duena = await navegadorCon(deLaDuena, 'dueno');
+      const cajera = await navegadorCon(deLaCajera, 'cajero');
+      // El reloj de la página, de mentira: la misma pestaña (con su marca) vuelve a cargar con él.
+      await abrirConReloj(duena.pagina, '/configuracion');
+      await abrirConReloj(cajera.pagina, '/caja');
+      await expect(pinDe(duena.pagina)).toHaveCount(0);
+
+      // A los 9 minutos todavía no; pasados los 10 (lo de omisión), sí.
+      await duena.pagina.clock.fastForward('09:00');
+      await expect(pinDe(duena.pagina)).toHaveCount(0);
+      await duena.pagina.clock.fastForward('01:30');
+      await expect(pinDe(duena.pagina)).toBeVisible();
+      // Recargar no lo quita: la marca se borró.
+      await duena.pagina.reload();
+      await expect(pinDe(duena.pagina)).toBeVisible();
+
+      // La cajera no tiene candado propio por falta de uso.
+      await cajera.pagina.clock.fastForward('10:30');
+      await expect(pinDe(cajera.pagina)).toHaveCount(0);
+    } finally {
+      await deLaDuena.close();
+      await deLaCajera.close();
+    }
+  });
 
   test('con la sesión terminada en el servidor, el mesero vuelve a ver el PIN y sus peticiones reciben 401', async ({
     browser,

@@ -153,7 +153,15 @@ const CLAVE_DEL_PIN_DE_ESTA_EJECUCION = 'morphiqpos.pin-de-esta-ejecucion';
  * PIN —así se creó la sesión guardada—: se deja la marca que deja la pantalla de acceso, con el
  * empleo que el SERVIDOR dice que tiene la sesión, y sólo si la página no trae ya una.
  *
- * Lo que prueba el candado (`pin-al-abrir.spec.ts`) abre su navegador sin pasar por aquí.
+ * Y LA MARCA NO SE QUITA SOLA. El mando se cierra a los 10 minutos sin tocar la pantalla (se
+ * borra la marca), y aquí la pantalla de la dueña pasa más que eso quieta mientras la mesera y
+ * la cajera trabajan con el reloj de verdad: al volver a ella, un toque daría contra el candado y
+ * la prueba fallaría por algo que no está probando. En estos navegadores esa marca no se borra:
+ * es como si la persona tecleara su PIN cada vez que se lo piden. «Salir» sigue terminando la
+ * sesión en el servidor, y quien entra después deja SU marca encima.
+ *
+ * Lo que prueba el candado (`pin-al-abrir.spec.ts`: al abrir la app y sin tocar la pantalla) abre
+ * su navegador sin pasar por aquí.
  */
 export async function conElPinTecleado(contexto: BrowserContext): Promise<BrowserContext> {
   const respuesta = await contexto.request.get('/api/catalogo/sesion');
@@ -166,6 +174,14 @@ export async function conElPinTecleado(contexto: BrowserContext): Promise<Browse
       try {
         if (window.sessionStorage.getItem(clave) === null) {
           window.sessionStorage.setItem(clave, empleo);
+        }
+        const quitar = Object.getOwnPropertyDescriptor(Storage.prototype, 'removeItem')?.value as
+          ((this: Storage, cual: string) => void) | undefined;
+        if (quitar !== undefined) {
+          Storage.prototype.removeItem = function (this: Storage, cual: string): void {
+            if (this === window.sessionStorage && cual === clave) return;
+            quitar.call(this, cual);
+          };
         }
       } catch {
         // Sin almacén no hay marca: la pantalla pedirá el PIN, como a cualquiera.
