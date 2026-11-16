@@ -10,6 +10,7 @@ import {
   cajonPorOmision,
   esquemaDelPerfil,
   perfilPorOmision,
+  type CajonDelPerfil,
   type Conexion,
   type Destino,
   type Lenguaje,
@@ -46,7 +47,8 @@ export interface FormularioDelPerfil {
   readonly lineasAntesDelCorte: string;
   readonly corte: Corte;
   readonly paginaDeCodigos: PaginaDeCodigos;
-  readonly hayCajon: boolean;
+  /** DP-21 · «Este aparato tiene cajón de dinero»: sólo lo enciende la prueba confirmada. */
+  readonly tieneCajon: boolean;
   readonly cajonPin: 2 | 5;
   readonly cajonModo: 'esc-p' | 'tiempo-real';
   readonly cajonEncendidoMs: string;
@@ -88,7 +90,7 @@ export function formularioDesdePerfil(perfil: PerfilDeImpresion): FormularioDelP
     lineasAntesDelCorte: String(perfil.lineasAntesDelCorte),
     corte: perfil.corte,
     paginaDeCodigos: perfil.paginaDeCodigos,
-    hayCajon: perfil.cajon !== null,
+    tieneCajon: perfil.tieneCajon,
     cajonPin: cajon.pin,
     cajonModo: cajon.modo,
     cajonEncendidoMs: String(cajon.encendidoMs),
@@ -158,6 +160,39 @@ function destinoDelFormulario(
   return { conexion: f.conexion };
 }
 
+/** El pulso del cajón tal como está en el formulario, con sus tiempos validados. */
+function cajonDelFormulario(f: FormularioDelPerfil, anotar: Anotar): CajonDelPerfil {
+  return {
+    pin: f.cajonPin,
+    modo: f.cajonModo,
+    encendidoMs: numero(
+      f.cajonEncendidoMs,
+      'Pulso encendido',
+      RANGOS.pulsoMs,
+      'cajonEncendidoMs',
+      anotar,
+    ),
+    apagadoMs: numero(f.cajonApagadoMs, 'Pulso apagado', RANGOS.pulsoMs, 'cajonApagadoMs', anotar),
+    alCobrarEnEfectivo: f.cajonAlCobrar,
+  };
+}
+
+export type PulsoDelFormulario =
+  | { readonly ok: true; readonly cajon: CajonDelPerfil }
+  | { readonly ok: false; readonly errores: Errores };
+
+/**
+ * El pulso de PRUEBA: lo que hay en el formulario aunque el interruptor siga apagado (para eso es
+ * la prueba: el interruptor se enciende DESPUÉS de que el cajón abrió).
+ */
+export function pulsoDelFormulario(f: FormularioDelPerfil): PulsoDelFormulario {
+  const errores: Partial<Record<CampoDelFormulario, string>> = {};
+  const cajon = cajonDelFormulario(f, (campo, mensaje) => {
+    errores[campo] ??= mensaje;
+  });
+  return Object.keys(errores).length === 0 ? { ok: true, cajon } : { ok: false, errores };
+}
+
 export interface OpcionesDelPerfil {
   /** Para la vista previa: no se exige impresora, sólo las medidas. */
   readonly sinDestino?: boolean;
@@ -200,27 +235,7 @@ export function perfilDesdeFormulario(
     anotar,
   );
 
-  const cajon = f.hayCajon
-    ? {
-        pin: f.cajonPin,
-        modo: f.cajonModo,
-        encendidoMs: numero(
-          f.cajonEncendidoMs,
-          'Pulso encendido',
-          RANGOS.pulsoMs,
-          'cajonEncendidoMs',
-          anotar,
-        ),
-        apagadoMs: numero(
-          f.cajonApagadoMs,
-          'Pulso apagado',
-          RANGOS.pulsoMs,
-          'cajonApagadoMs',
-          anotar,
-        ),
-        alCobrarEnEfectivo: f.cajonAlCobrar,
-      }
-    : null;
+  const cajon = f.tieneCajon ? cajonDelFormulario(f, anotar) : null;
 
   const estacion = f.estacion.trim();
   if (estacion.length > LARGO_MAXIMO_DEL_NOMBRE) {
@@ -245,6 +260,7 @@ export function perfilDesdeFormulario(
     lineasAntesDelCorte,
     corte: f.corte,
     paginaDeCodigos: f.paginaDeCodigos,
+    tieneCajon: f.tieneCajon,
     cajon,
     imprime: {
       ticket: f.imprimeTicket,

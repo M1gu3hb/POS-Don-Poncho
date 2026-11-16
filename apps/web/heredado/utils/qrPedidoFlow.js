@@ -39,6 +39,7 @@
 // =====================================================
 
 import { api } from '@/api/cliente';
+import { dispositivoDelTelefono } from '~/portal/carrito-compartido/carrito-de-la-mesa';
 
 /** La escala de `numeric(14,4)` y el tope de `cantidadPedida` del esquema. */
 const MAXIMO_CANTIDAD = 999;
@@ -261,7 +262,11 @@ export function enviarPedidoQR({ token, items, notaGeneral, clave }) {
  * avisamos al mesero. Llegará en un momento.»— y eso ES la respuesta.
  */
 export function crearSolicitudQR({ token, tipo, clave }) {
-  return api.comandos.ejecutar(rutaPublica(token, '/solicitud'), { tipo }, clave);
+  // DP-21 · El id del teléfono (el que emitió el servidor) va sólo para contarle el tope de avisos:
+  // el servidor decide si vale. Sin id, el aviso sale igual.
+  const dispositivo = dispositivoDelTelefono();
+  const entrada = dispositivo === '' ? { tipo } : { tipo, dispositivo };
+  return api.comandos.ejecutar(rutaPublica(token, '/solicitud'), entrada, clave);
 }
 
 /**

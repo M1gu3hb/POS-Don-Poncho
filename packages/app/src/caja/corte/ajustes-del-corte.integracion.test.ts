@@ -1,7 +1,8 @@
 import type { Ambito } from '@morphiqpos/contracts';
 import { obtenerDb } from '@morphiqpos/data';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { firmarAutorizacion } from '../../identidad/supervisor.ts';
 import { comando } from '../../produccion.ts';
 import { abrirCajaReal, clave, exigirOk, sembrarCompanero } from '../../pruebas/negocio-real.ts';
 import { ambitoDeCaja, sembrarSalon } from '../../restaurante/pruebas/salon-real.ts';
@@ -17,6 +18,12 @@ import { hojaDelCorte } from './documento.ts';
  * corte lo enseña en un renglón aparte, con su motivo y con quién lo hizo; y la cajera, que es quien
  * cuenta el cajón, no puede hacerlo.
  */
+
+const SECRETO = 'secreto_de_integracion_de_los_ajustes_del_corte_2026';
+vi.mock('@morphiqpos/contracts', async (original) => ({
+  ...(await original<typeof import('@morphiqpos/contracts')>()),
+  validarEntorno: () => ({ SESSION_SECRET: SECRETO }),
+}));
 
 const POR_COMANDOS = 120_000;
 const FONDO = 50_000;
@@ -92,7 +99,23 @@ describe('los ajustes de caja en el corte', () => {
       // motivo y quién, pero no cambia lo que el corte espera.
       exigirOk(
         await comando(abrirCajon, {
-          entrada: { sesionCajaId: sesionId, motivo: 'dar_cambio' },
+          // DP-21 · La apertura a mano lleva la autorización firmada de la gerente.
+          entrada: {
+            sesionCajaId: sesionId,
+            motivo: 'dar_cambio',
+            autorizacion: firmarAutorizacion(
+              {
+                org: cajera.organizacionId,
+                supervisor: gerente.empleoId,
+                rol: 'gerente',
+                solicita: cajera.empleoId,
+                exp: Math.floor(Date.now() / 1000) + 120,
+                n: clave(),
+                para: 'cajon',
+              },
+              SECRETO,
+            ),
+          },
           ambito: cajera,
           idempotencyKey: clave(),
         }),

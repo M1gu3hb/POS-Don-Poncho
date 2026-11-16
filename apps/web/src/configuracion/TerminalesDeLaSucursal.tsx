@@ -1,21 +1,25 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useId, useState } from 'react';
+import { MonitorSmartphone } from 'lucide-react';
+import { useId, useState, type ReactElement } from 'react';
 
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Input } from '@morphiqpos/ui/primitivas/input';
-import { Aviso, Esqueleto, Vacio } from '@morphiqpos/ui/sistema';
+import { Aviso, Esqueleto, Superficie } from '@morphiqpos/ui/sistema';
 
 import { invocarComando } from '~/cliente/api';
 
 /**
- * LAS CAJAS DE LA SUCURSAL, CON SU NOMBRE (DP-14 · ronda 2, medio 3). Configuración → Caja.
+ * EL NOMBRE DE ESTE APARATO, Y EL DE LOS DEMÁS (DP-21 · Bloque 5). Configuración → Este aparato.
  *
- * Cada navegador que abre la caja se da de alta solo como «Caja N»; con dos cajas, el aviso «Ya se
- * cobró en Caja 7» no le dice a nadie cuál es. Aquí el dueño o el administrador ve cada una —y cuál
- * tiene la caja abierta— y le pone su nombre («Caja 1», «Barra»). El servidor dice si el nombre ya
- * lo tiene otra (`caja.nombrar_terminal`) y deja el cambio en la auditoría.
+ * Cada navegador o aparato que entra se da de alta solo, como «Aparato N». Hasta DP-21 se llamaba
+ * «Caja N» y ése era el nombre que veía la caja: por eso «las cajas se sumaban». Ahora la caja
+ * tiene su propio nombre (Configuración → Caja) y el aparato el suyo, que sólo sirve para decir
+ * dónde está: «Caja principal · abierta en «iMin mostrador»».
+ *
+ * El dueño o el administrador le pone nombre a éste y a los que han tenido la caja. El servidor
+ * dice si el nombre ya lo tiene otro (`caja.nombrar_terminal`) y deja el cambio en la auditoría.
  */
 
 interface Terminal {
@@ -24,13 +28,25 @@ interface Terminal {
   readonly cajaAbierta: boolean;
 }
 
+interface AparatosLeidos {
+  readonly terminales: readonly Terminal[];
+  /** El aparato desde el que se pregunta. Un servidor de antes no lo manda. */
+  readonly esteAparato?: { readonly id: string; readonly nombre: string } | null;
+}
+
 const CLAVE_DE_LAS_TERMINALES = ['caja', 'terminales'] as const;
 
 function mensajeDe(error: unknown): string {
   return error instanceof Error ? error.message : 'No se pudo guardar el nombre.';
 }
 
-function FilaDeTerminal({ terminal }: { readonly terminal: Terminal }) {
+function FilaDeAparato({
+  terminal,
+  etiqueta,
+}: {
+  readonly terminal: Terminal;
+  readonly etiqueta: string;
+}) {
   const consultas = useQueryClient();
   const idCampo = useId();
   const [nombre, setNombre] = useState(terminal.nombre);
@@ -56,7 +72,7 @@ function FilaDeTerminal({ terminal }: { readonly terminal: Terminal }) {
   return (
     <li className="flex flex-col gap-(--espacio-1)">
       <label htmlFor={idCampo} className="text-sm font-medium">
-        {terminal.cajaAbierta ? `${terminal.nombre} · con la caja abierta` : terminal.nombre}
+        {terminal.cajaAbierta ? `${etiqueta} · con una caja abierta` : etiqueta}
       </label>
       <div className="flex gap-(--espacio-2)">
         <Input
@@ -86,26 +102,47 @@ function FilaDeTerminal({ terminal }: { readonly terminal: Terminal }) {
   );
 }
 
-export function TerminalesDeLaSucursal() {
+/** Sólo el dueño y el administrador ponen nombres: a los demás no se les enseña la tarjeta. */
+export function AparatosDeLaSucursal({
+  puedeCambiar,
+}: {
+  readonly puedeCambiar: boolean;
+}): ReactElement | null {
   const idTitulo = useId();
+  const idOtros = useId();
   const lectura = useQuery({
     queryKey: CLAVE_DE_LAS_TERMINALES,
-    queryFn: ({ signal }) =>
-      invocarComando<{ readonly terminales: readonly Terminal[] }>(
-        '/api/caja/terminales',
-        {},
-        { signal },
-      ),
+    enabled: puedeCambiar,
+    queryFn: ({ signal }) => invocarComando<AparatosLeidos>('/api/caja/terminales', {}, { signal }),
   });
+  if (!puedeCambiar) return null;
+
+  const este = lectura.data?.esteAparato ?? null;
+  const otros = (lectura.data?.terminales ?? []).filter((t) => t.id !== este?.id);
+  const esteConCaja = (lectura.data?.terminales ?? []).some(
+    (t) => t.id === este?.id && t.cajaAbierta,
+  );
 
   return (
-    <div className="flex flex-col gap-(--espacio-2)">
-      <h4 id={idTitulo} className="text-base font-semibold">
-        El nombre de cada caja
-      </h4>
+    <Superficie
+      como="section"
+      relleno={0}
+      aria-labelledby={idTitulo}
+      className="flex flex-col gap-(--espacio-4) p-(--espacio-4) sm:p-(--espacio-6)"
+    >
+      <div className="flex flex-col gap-(--espacio-1)">
+        <h3 id={idTitulo} className="flex items-center gap-(--espacio-2) text-lg font-semibold">
+          <MonitorSmartphone aria-hidden className="size-5 shrink-0 text-primario" />
+          Nombre de este aparato
+        </h3>
+        <p className="max-w-prose text-sm text-texto-sutil">
+          Sirve para decir dónde está abierta una caja: «Caja principal · abierta en «iMin
+          mostrador»». No es el nombre de la caja: ése se pone en Configuración → Caja.
+        </p>
+      </div>
       {lectura.data === undefined ? (
         lectura.isError ? (
-          <Aviso tono="peligro" titulo="No se pudieron leer las cajas.">
+          <Aviso tono="peligro" titulo="No se pudieron leer los aparatos.">
             <Button variant="outline" size="sm" onClick={() => void lectura.refetch()}>
               Reintentar
             </Button>
@@ -113,19 +150,35 @@ export function TerminalesDeLaSucursal() {
         ) : (
           <Esqueleto className="h-(--altura-control) w-full rounded-lg" />
         )
-      ) : lectura.data.terminales.length === 0 ? (
-        <Vacio
-          tamano="compacto"
-          titulo="Todavía no hay cajas"
-          explicacion="Cada navegador que abre la caja aparece aquí para ponerle nombre."
-        />
       ) : (
-        <ul aria-labelledby={idTitulo} className="flex flex-col gap-(--espacio-3)">
-          {lectura.data.terminales.map((t) => (
-            <FilaDeTerminal key={`${t.id}-${t.nombre}`} terminal={t} />
-          ))}
-        </ul>
+        <>
+          {este === null ? (
+            <p className="text-sm text-texto-sutil">
+              Este aparato todavía no está dado de alta en una sucursal.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-(--espacio-3)">
+              <FilaDeAparato
+                key={`${este.id}-${este.nombre}`}
+                terminal={{ ...este, cajaAbierta: esteConCaja }}
+                etiqueta="Este aparato"
+              />
+            </ul>
+          )}
+          {otros.length === 0 ? null : (
+            <div className="flex flex-col gap-(--espacio-2)">
+              <h4 id={idOtros} className="text-base font-semibold">
+                Otros aparatos que han tenido la caja
+              </h4>
+              <ul aria-labelledby={idOtros} className="flex flex-col gap-(--espacio-3)">
+                {otros.map((t) => (
+                  <FilaDeAparato key={`${t.id}-${t.nombre}`} terminal={t} etiqueta={t.nombre} />
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
       )}
-    </div>
+    </Superficie>
   );
 }

@@ -5,6 +5,12 @@
  * cajón, bloques— queda como el perfil de ESE punto de venta. Se guarda en el aparato (por el
  * puente de la app), no en el servidor: cada POS tiene su impresora. Se exporta e importa como
  * JSON para dejar listo en un minuto otro POS idéntico.
+ *
+ * EL CAJÓN (DP-21 · Bloque 7): «Este aparato tiene cajón de dinero» es un interruptor EXPLÍCITO
+ * (`tieneCajon`), apagado por omisión. Lo enciende el laboratorio sólo cuando la persona confirma
+ * que el cajón se abrió con el pulso de prueba. `tieneCajon` y `cajon` (el pulso) van juntos: sin
+ * interruptor no hay pulso, y sin pulso no hay interruptor. Un perfil guardado ANTES del Bloque 7
+ * no trae el campo: al leerlo conserva su cajón (el que ya tenía pulso queda encendido).
  */
 import { z } from 'zod';
 
@@ -56,7 +62,7 @@ const esquemaDelCajon = z.object({
 });
 export type CajonDelPerfil = z.infer<typeof esquemaDelCajon>;
 
-export const esquemaDelPerfil = z.object({
+const esquemaBaseDelPerfil = z.object({
   version: z.literal(1),
   nombre: z.string().trim().min(1).max(60),
   destino: esquemaDelDestino,
@@ -72,6 +78,8 @@ export const esquemaDelPerfil = z.object({
   lineasAntesDelCorte: z.number().int().min(0).max(20),
   corte: z.enum(CORTES),
   paginaDeCodigos: z.enum(PAGINAS_DE_CODIGOS),
+  /** DP-21 · «Este aparato tiene cajón de dinero». Sin él no hay «Abrir cajón» ni apertura al cobrar. */
+  tieneCajon: z.boolean(),
   cajon: esquemaDelCajon.nullable(),
   /** Qué imprime este aparato. `estacion`: el nombre de la estación cuyas comandas salen aquí. */
   imprime: z.object({
@@ -82,7 +90,27 @@ export const esquemaDelPerfil = z.object({
     estacion: z.string().trim().min(1).max(60).nullable(),
   }),
 });
-export type PerfilDeImpresion = z.infer<typeof esquemaDelPerfil>;
+
+/**
+ * Lo guardado antes del Bloque 7 no trae `tieneCajon`: el que ya tenía pulso lo conserva. Lo
+ * explícito manda: apagado deja el pulso sin uso, y se descarta para que nada lo abra por
+ * accidente.
+ */
+function conElInterruptorDelCajon(guardado: unknown): unknown {
+  if (typeof guardado !== 'object' || guardado === null || Array.isArray(guardado)) return guardado;
+  const perfil = guardado as Record<string, unknown>;
+  const tieneCajon =
+    perfil['tieneCajon'] ?? (perfil['cajon'] !== null && perfil['cajon'] !== undefined);
+  return { ...perfil, tieneCajon, ...(tieneCajon === false ? { cajon: null } : {}) };
+}
+
+export const esquemaDelPerfil = z
+  .preprocess(conElInterruptorDelCajon, esquemaBaseDelPerfil)
+  .refine((perfil) => !perfil.tieneCajon || perfil.cajon !== null, {
+    path: ['tieneCajon'],
+    message: 'Un aparato con cajón necesita su pulso.',
+  });
+export type PerfilDeImpresion = z.infer<typeof esquemaBaseDelPerfil>;
 
 export const PUNTOS_POR_PAPEL: Readonly<Record<58 | 80, readonly number[]>> = {
   58: [384],
@@ -106,6 +134,7 @@ export function perfilPorOmision(papelMm: 58 | 80, destino: Destino): PerfilDeIm
     lineasAntesDelCorte: 4,
     corte: 'parcial-con-avance',
     paginaDeCodigos: 'cp858',
+    tieneCajon: false,
     cajon: null,
     imprime: { ticket: true, precuenta: true, corte: true, cierre: true, estacion: null },
   };

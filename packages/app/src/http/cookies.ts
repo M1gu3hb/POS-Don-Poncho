@@ -10,7 +10,12 @@ import { NOMBRE_COOKIE } from './ruta.ts';
 
 export interface OpcionesCookie {
   readonly token: string;
-  readonly maxEdadSegundos: number;
+  /**
+   * Cuánto se RECUERDA la cookie. `null` = cookie de sesión, sin `Max-Age`: se va al cerrar la
+   * app o el navegador (DP-21: dueño, administrador, gerente, cajero y almacén entran siempre
+   * con PIN). Con número, sobrevive al cierre (mesero y cocina).
+   */
+  readonly maxEdadSegundos: number | null;
   /** En desarrollo local no hay HTTPS, y `Secure` haría que el navegador la descarte. */
   readonly seguro: boolean;
 }
@@ -27,8 +32,8 @@ export function cookieDeSesion({ token, maxEdadSegundos, seguro }: OpcionesCooki
     'Path=/',
     'HttpOnly',
     'SameSite=Lax',
-    `Max-Age=${maxEdadSegundos}`,
   ];
+  if (maxEdadSegundos !== null) partes.push(`Max-Age=${String(maxEdadSegundos)}`);
   if (seguro) partes.push('Secure');
   return partes.join('; ');
 }

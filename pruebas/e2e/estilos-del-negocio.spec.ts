@@ -134,7 +134,7 @@ async function identidadDelNegocio(page: Page): Promise<Record<string, unknown>>
     'color_secundario',
     'color_acento',
     'moneda',
-    'iva_porcentaje',
+    'impuesto',
     'paquete_modo',
   ];
   return Object.fromEntries(claves.map((c) => [c, config?.[c]]));

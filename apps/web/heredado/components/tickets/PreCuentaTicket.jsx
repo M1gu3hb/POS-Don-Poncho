@@ -2,6 +2,7 @@
 import React from 'react';
 import { formatCurrency } from '@/utils/financialUtils';
 import { totalesDelPapel } from '~/venta/totales-del-papel';
+import { seMencionaElIva } from '~/venta/se-menciona-el-iva';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import { propinaDerivada } from '@/utils/tipsUtils';
 import { format } from 'date-fns';
@@ -20,6 +21,7 @@ import {
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { esParaLlevar, rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 import { notaSinLasOpciones, renglonesDeLasOpciones } from '~/venta/opciones-del-renglon';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 /**
  * Ticket / pre-cuenta para impresora térmica, con el ESTILO TÉRMICO (DP-20 · refuerzo §1).
@@ -125,7 +127,7 @@ export default function PreCuentaTicket({
 
       {/* Datos */}
       <div style={{ fontSize: px(letra.chica), marginBottom: '10px' }}>
-        <Row label="Folio" value={venta.folio} bold />
+        <Row label="Folio" value={folioVisible(venta.serie, venta.folio, config, 'numero')} bold />
         {mesa && <Row label="Mesa" value={`#${mesa.numero}${sufijoDelNombreDeLaMesa(mesa)}`} />}
         {venta.personas > 0 && <Row label="Personas" value={venta.personas} />}
         {venta.cliente_nombre && <Row label="Cliente" value={venta.cliente_nombre} />}
@@ -185,7 +187,7 @@ export default function PreCuentaTicket({
             {papel.descuento > 0 && (
               <Row label="Descuento" value={`-${formatCurrency(papel.descuento)}`} />
             )}
-            {papel.iva > 0 && (
+            {seMencionaElIva(papel.iva) && (
               <Row
                 label={papel.ivaSeSuma ? 'IVA' : 'IVA incluido'}
                 value={formatCurrency(papel.iva)}

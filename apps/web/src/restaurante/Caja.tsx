@@ -114,6 +114,8 @@ export interface ResumenDeTurno {
 /** La caja abierta en otra terminal, como la describe `caja.estado`. */
 interface CajaEnOtraTerminal {
   readonly sesionCajaId: string;
+  /** DP-21 · Bloque 5: el nombre de la caja («Caja principal»), que no es el del aparato. */
+  readonly nombreDeLaCaja?: string | null;
   readonly terminalNombre: string | null;
   readonly abiertaPor: string | null;
   readonly abiertaEn: string;
@@ -711,7 +713,7 @@ export function Caja({ filasIniciales, turnoInicial, onCobrar }: CajaProps) {
             <p className="text-sm text-texto-sutil">
               {ajena === null
                 ? 'Sin sesión de caja, un cobro no entra en ningún corte. Declara el fondo y ábrela.'
-                : `Está abierta en «${ajena.terminalNombre ?? 'otra terminal'}». ${dondeEstaLaCaja(ajena)}`}
+                : `${ajena.nombreDeLaCaja ?? 'La caja'} está abierta en «${ajena.terminalNombre ?? 'otro aparato'}». ${dondeEstaLaCaja(ajena)}`}
             </p>
           </div>
           {error === null ? null : <Aviso tono="peligro" titulo={error} />}

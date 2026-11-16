@@ -260,12 +260,6 @@ const EXENTOS = new Map([
       'se dibuja lo que va al rollo y de los que sale la imagen de 1 bit. No son colores de la ' +
       'interfaz ni cambian con el estilo. Viven solo en ese archivo',
   ],
-  [
-    'manifest.ts',
-    'El manifiesto web (DP-3) pide sus dos colores en hexadecimal: el navegador lo lee antes ' +
-      'que cualquier hoja de estilo y no entiende variables CSS. Son el negro del letrero, el ' +
-      'mismo `--lateral-fondo` de `don-poncho.css`',
-  ],
 ]);
 
 /**

@@ -3,13 +3,12 @@
 import { useState, type ReactElement, type ReactNode } from 'react';
 
 import { Aviso } from '@morphiqpos/ui/sistema';
-import { Banknote, FileText, FlaskConical, Gauge, ImageIcon, Printer, Ruler } from 'lucide-react';
+import { FileText, FlaskConical, Gauge, ImageIcon, Printer, Ruler } from 'lucide-react';
 
 import { useConfig } from '@/lib/ConfigContext';
 
 import type { MorphiqApp } from '../puente/contrato.ts';
 import type { PerfilDeImpresion } from '../termico/perfil.ts';
-import { aBase64, bytesDelCajon } from '../termico/trabajo.ts';
 import { BotonDePrueba } from './BotonDePrueba';
 import { SeccionDelLab } from './campos';
 import { RENGLONES_DEL_TICKET_LARGO } from './datos-de-ejemplo.ts';
@@ -73,13 +72,12 @@ export function LabPruebas({
     clave: string,
     etiqueta: string,
     tarea: (perfilListo: PerfilDeImpresion) => Promise<ResultadoDePrueba>,
-    sinRazon?: string,
   ): ReactNode => (
     <BotonDePrueba
       etiqueta={etiqueta}
       estado={corredor.estados[clave]}
       ocupado={corredor.ocupado}
-      razon={razon ?? sinRazon}
+      razon={razon}
       alPulsar={() => {
         if (perfil === null) return;
         void corredor.correr(clave, () => tarea(perfil));
@@ -161,25 +159,6 @@ export function LabPruebas({
           )}
         >
           {`El de ejemplo con ${String(RENGLONES_DEL_TICKET_LARGO)} renglones. Al terminar dice cuánto tardó y cuántos bytes mandó.`}
-        </Prueba>
-        <Prueba
-          titulo="Abrir el cajón"
-          icono={iconoDe(Banknote)}
-          boton={botonDe(
-            'cajon',
-            'Abrir el cajón',
-            async (listo) => {
-              if (listo.cajon === null) throw new Error('Este perfil no tiene cajón.');
-              const base64 = aBase64(bytesDelCajon(listo.cajon));
-              return resultadoDelPuente(await app.abrirCajon({ destino: listo.destino, base64 }));
-            },
-            perfil !== null && perfil.cajon === null
-              ? 'Marca «Esta impresora tiene cajón de dinero» en el paso 5.'
-              : undefined,
-          )}
-        >
-          Manda el pulso con los valores del formulario. Es una prueba de hardware: no pasa por el
-          servidor de caja y no queda anotada en ningún turno.
         </Prueba>
         <Prueba
           titulo="Estado de la impresora"

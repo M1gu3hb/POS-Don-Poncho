@@ -138,6 +138,19 @@ const LECTORES: Readonly<Record<string, 'documento-filtrado' | 'proyeccion' | 'i
   // DP-20: lee `copias_de_impresion` (ticket, precuenta y corte); no devuelve el documento y
   // escribe por el guardado parcial del puente.
   'packages/app/src/caja/copias-de-impresion.ts': 'interno',
+  // DP-21: lee `impuesto` (la tasa y si va incluido) para el «antes» de la auditoría; no devuelve
+  // el documento y escribe por el guardado parcial del puente.
+  'packages/app/src/configuracion/impuesto.ts': 'interno',
+  // DP-21: lee `candado_de_mando_min` para el «antes» de la auditoría; escribe por el puente.
+  'packages/app/src/configuracion/candado-de-mando.ts': 'interno',
+  // DP-21 · Bloque 6: el prefijo, los primeros folios y `operacion_desde`; nunca devuelve el documento.
+  'packages/app/src/configuracion/folios-leidos.ts': 'interno',
+  // DP-21: leen las casillas de «quién puede elegir la propina»; ninguno devuelve el documento.
+  'packages/app/src/propinas/fijar-propina.ts': 'interno',
+  'packages/app/src/propinas/quien-elige.ts': 'interno',
+  'packages/app/src/restaurante/cuenta.ts': 'interno',
+  // DP-21: lee `nombres_de_cajas` (el nombre de cada lugar de caja); no devuelve el documento.
+  'packages/app/src/caja/lugares.ts': 'interno',
   'packages/data/src/repos/archivos.ts': 'interno',
 };
 

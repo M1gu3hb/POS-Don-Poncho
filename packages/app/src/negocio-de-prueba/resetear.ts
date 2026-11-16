@@ -23,6 +23,7 @@ import {
   CAJAS_SIMULTANEAS_DE_PRUEBA,
   IMPUESTO_DE_PRUEBA,
   PIN_DEL_DUENO_DE_PRUEBA,
+  PROPINA_DE_PRUEBA,
   TOPES_DE_DESCUENTO,
 } from './como-nueva.ts';
 import { semillaDePrueba } from './datos.ts';
@@ -44,7 +45,8 @@ export const entradaResetearNegocioDePrueba = z.object({
 
 /**
  * LA CONFIGURACIÓN DEL RESTAURANTE DE PRUEBA, escrita entera (bloque B.2 de la 2.4): IVA
- * general incluido en el precio y su apariencia. Nada de lo que dejó la corrida anterior.
+ * general incluido en el precio, su apariencia y la mesera eligiendo la propina (DP-21). Nada de
+ * lo que dejó la corrida anterior.
  */
 export async function reponerConfiguracion(tx: Transaccion, organizacionId: string): Promise<void> {
   // Con candado (DP-13.3b). Este SÍ reemplaza el documento entero a propósito —una demo recién
@@ -55,6 +57,7 @@ export async function reponerConfiguracion(tx: Transaccion, organizacionId: stri
   const valores = {
     impuesto: { ...IMPUESTO_DE_PRUEBA },
     apariencia: { ...APARIENCIA_DE_PRUEBA },
+    ...PROPINA_DE_PRUEBA,
   };
 
   if (fila === undefined) {

@@ -1,9 +1,9 @@
 import 'server-only';
 
 import { ErrorDominio } from '@morphiqpos/contracts';
-import { z } from 'zod';
 import { centavos } from '@morphiqpos/domain/dinero';
 
+import { reglaDeImpuestoEn } from '../configuracion/impuesto-del-negocio.ts';
 import { porCantidad } from './escala.ts';
 import { calcularTotales, type ReglaImpuesto, type TotalesOrden } from '@morphiqpos/domain/venta';
 import type { Kysely } from 'kysely';
@@ -52,27 +52,10 @@ export async function impuestoDe(
     .where('organizacion_id', '=', organizacionId)
     .executeTakeFirst();
 
-  const leido = FORMA_IMPUESTO.safeParse(fila?.valores ?? {});
-  // Una configuración dañada NO tumba la venta: se cobra con el IVA general y
-  // el negocio sigue operando. Dejar de vender por un JSON malformado sería
-  // peor que cobrar el 16 % que ese negocio ya cobraba.
-  if (!leido.success || leido.data.impuesto === undefined) return IMPUESTO_POR_OMISION;
-
-  const { puntosBase, incluidoEnPrecio } = leido.data.impuesto;
-  return {
-    tasaPuntosBase: puntosBase ?? IMPUESTO_POR_OMISION.tasaPuntosBase,
-    incluidoEnPrecio: incluidoEnPrecio ?? IMPUESTO_POR_OMISION.incluidoEnPrecio,
-  };
+  // Una configuración dañada NO tumba la venta: se cobra con el IVA general y el negocio sigue
+  // operando (`impuestoEn`). Y «Sin IVA» (0) es un dato, no la ausencia de uno: se respeta.
+  return reglaDeImpuestoEn(fila?.valores);
 }
-
-const FORMA_IMPUESTO = z.object({
-  impuesto: z
-    .object({
-      puntosBase: z.number().int().min(0).max(3500).optional(),
-      incluidoEnPrecio: z.boolean().optional(),
-    })
-    .optional(),
-});
 
 export interface LineaCotizada {
   readonly id: string;

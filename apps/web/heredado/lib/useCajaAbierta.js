@@ -103,9 +103,18 @@ export function useCajaAbierta({ deEstaTerminal = false } = {}) {
     Number(deLaTerminal?.abiertasEnLaSucursal) ||
     otrasCajas.length + (deLaTerminal?.abierta === true ? 1 : 0);
 
+  // DP-21 · Bloque 5: la caja es un LUGAR con nombre. Los que están sin abrir («Abrir Caja 2
+  // aquí») y cómo se llama la que tiene este aparato. Un servidor de antes no manda ninguno.
+  const lugaresLibres =
+    deEstaTerminal && Array.isArray(deLaTerminal?.lugaresLibres) ? deLaTerminal.lugaresLibres : [];
+  const nombreDeLaCaja =
+    deEstaTerminal && deLaTerminal?.abierta === true ? deLaTerminal.nombreDeLaCaja || null : null;
+
   return {
     cajaAbierta,
     hayCaja: !!cajaAbierta,
+    lugaresLibres,
+    nombreDeLaCaja,
     cajaEnOtraTerminal,
     otrasCajas,
     abiertasEnLaSucursal,

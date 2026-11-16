@@ -2,10 +2,12 @@ import 'server-only';
 
 import { ErrorDominio, PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
+import { sql } from 'kysely';
 import { aplicarPorcentaje, centavos } from '@morphiqpos/domain/dinero';
 import type { TotalesOrden } from '@morphiqpos/domain/venta';
 
 import { definirComando } from '../definicion.ts';
+import { laEscribeElMesero, quienPuedeElegirEn } from '../propinas/una-sola-verdad.ts';
 import { cotizar, type LineaCotizada } from '../venta/cotizar.ts';
 import { mesaOperable, ordenDeMesa } from './datos.ts';
 import { entradaSolicitarCuenta } from './esquemas.ts';
@@ -96,6 +98,16 @@ export const solicitarCuenta = definirComando<
         ? null
         : await ctx.paso('cargar_mesa', () => mesaOperable(ctx.tx, organizacionId, mesaId));
 
+    // DP-21 · La propina del mesero (M11 y M12). Se escribe sólo si el negocio deja que el
+    // mesero la elija y si nadie la decidió antes desde otra pantalla: la primera que se
+    // confirma gana. Si no, la cuenta se pide igual y la propina se queda como estaba.
+    const tipoPedido = entrada.propinaTipo;
+    const eligePropina =
+      tipoPedido !== undefined &&
+      (await ctx.paso('propina_del_mesero', () =>
+        elMeseroPuedeElegir(ctx.tx, organizacionId, entrada.ordenId, tipoPedido),
+      ));
+
     const codigoCaja = await ctx.paso('marcar_cuenta_solicitada', () =>
       marcarCuentaSolicitada(ctx.tx, {
         organizacionId,
@@ -104,8 +116,8 @@ export const solicitarCuenta = definirComando<
         codigoPrevio: orden.codigoCaja,
         estrategiaCaptura: orden.estrategiaCaptura,
         totales,
-        propinaPuntosBase: entrada.propinaPuntosBase,
-        propinaTipo: entrada.propinaTipo,
+        propinaPuntosBase: eligePropina ? entrada.propinaPuntosBase : undefined,
+        propinaTipo: eligePropina ? entrada.propinaTipo : undefined,
       }),
     );
 
@@ -149,6 +161,40 @@ export const solicitarCuenta = definirComando<
   },
 });
 
+/**
+ * ¿La propina que mandó el mesero se escribe? (DP-21). Sólo si el negocio deja que el mesero la
+ * elija (Configuración → Ventas y cobro → Propinas) y si no la decidió antes otra pantalla.
+ * La cuenta ya está tomada con candado por `ordenDeMesa`: lo que se lee aquí no cambia.
+ */
+async function elMeseroPuedeElegir(
+  tx: Transaccion,
+  organizacionId: string,
+  ordenId: string,
+  tipo: string,
+): Promise<boolean> {
+  const negocio = await tx
+    .selectFrom('configuracion')
+    .select('valores')
+    .where('organizacion_id', '=', organizacionId)
+    .executeTakeFirst();
+  const cuenta = await tx
+    .selectFrom('ordenes')
+    .select(['propina_tipo', 'propina_puntos_base', 'propina_origen'])
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', ordenId)
+    .executeTakeFirst();
+  if (cuenta === undefined) return false;
+  return laEscribeElMesero(
+    tipo,
+    {
+      tipo: cuenta.propina_tipo,
+      puntosBase: cuenta.propina_puntos_base,
+      origen: cuenta.propina_origen,
+    },
+    quienPuedeElegirEn(negocio?.valores),
+  );
+}
+
 interface DatosDeCuenta {
   readonly organizacionId: string;
   readonly ordenId: string;
@@ -189,6 +235,9 @@ async function marcarCuentaSolicitada(tx: Transaccion, datos: DatosDeCuenta): Pr
             propina_tipo: datos.propinaTipo,
             propina_puntos_base: datos.propinaPuntosBase ?? 0,
             propina_origen: origenDePropina(datos.estrategiaCaptura),
+            // DP-21: la propina cambió, así que la cuenta cambia de versión. La Caja que la
+            // tenga abierta se entera al releer, y su cobro con la versión vieja se rechaza.
+            version: sql<number>`version + 1`,
           }),
     })
     .where('organizacion_id', '=', datos.organizacionId)

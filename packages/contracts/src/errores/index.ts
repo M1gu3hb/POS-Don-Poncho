@@ -159,6 +159,11 @@ export const CODIGOS_ERROR = {
   PLANTILLA_NO_ENCONTRADA: 'PLANTILLA_NO_ENCONTRADA',
   /** Se intentó liquidar una propina que ya está liquidada. */
   PROPINA_YA_LIQUIDADA: 'PROPINA_YA_LIQUIDADA',
+  /**
+   * DP-21 · Esa pantalla no elige la propina en este negocio (Configuración → Ventas y cobro →
+   * Propinas: «¿Quién puede elegir la propina?»).
+   */
+  PROPINA_NO_PERMITIDA: 'PROPINA_NO_PERMITIDA',
   /** El rango no tiene propinas pendientes, o está al revés. */
   LIQUIDACION_INVALIDA: 'LIQUIDACION_INVALIDA',
 

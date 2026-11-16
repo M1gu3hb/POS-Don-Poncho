@@ -9,7 +9,7 @@ import { Aviso, Dinero, Esqueleto, Superficie } from '@morphiqpos/ui/sistema';
 import { BadgePercent, Calculator } from 'lucide-react';
 
 import { invocarComando } from '~/cliente/api';
-import { TerminalesDeLaSucursal } from './TerminalesDeLaSucursal';
+import { NombresDeLasCajas } from './NombresDeLasCajas';
 import { topesEnPantalla, type TopeDelPuestoLeido } from './topes-de-los-puestos';
 import {
   CLAVE_DE_DESCUENTOS_PERMITIDOS,
@@ -116,8 +116,8 @@ export function CajasALaVez() {
         <p className="text-sm text-texto-sutil">Abiertas ahora: {String(lectura.data.abiertas)}.</p>
       ) : null}
       {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
-      {/* DP-14 · ronda 2, medio 3: el nombre de cada caja, para que «Ya se cobró en …» diga cuál. */}
-      <TerminalesDeLaSucursal />
+      {/* DP-21 · Bloque 5: el nombre es de la CAJA (un lugar de la sucursal), no del aparato. */}
+      {lectura.data === undefined ? null : <NombresDeLasCajas lugares={lectura.data.cajas} />}
     </Superficie>
   );
 }

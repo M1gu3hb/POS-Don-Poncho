@@ -5,6 +5,7 @@ import { sql } from 'kysely';
 
 import type { AlcanceDelCorte } from './alcance-del-corte.ts';
 import { estadoDelCostoDe, lineaSinCosto, lineaSinCostoCompleto } from './costo-conocido.ts';
+import { folioVisibleDeLaSesion, foliosParaVestir, vestirFolios } from './folios-vestidos.ts';
 
 /**
  * LO QUE TODO CORTE LLEVA, leído de la base en la transacción del documento (C.6 de la 2.4).
@@ -34,6 +35,8 @@ export interface SesionDelCorte {
   readonly sucursalId: string;
   readonly serie: string;
   readonly folio: string | null;
+  /** DP-21 · El folio como se lee (con el prefijo del negocio): «CC-2» o «DPC-0102». */
+  readonly folioVisible: string | null;
   readonly estado: string;
   readonly turno: string | null;
   readonly abiertaEn: Date;
@@ -65,7 +68,7 @@ export async function leerSesion(
   organizacionId: string,
   sesionCajaId: string,
 ): Promise<SesionDelCorte | null> {
-  const { rows } = await sql<SesionDelCorte>`
+  const { rows } = await sql<Omit<SesionDelCorte, 'folioVisible'>>`
     select s.id                                   as "id",
            s.sucursal_id                          as "sucursalId",
            s.serie                                as "serie",
@@ -88,7 +91,15 @@ export async function leerSesion(
            s.bote_contado_centavos::text          as "boteContadoCentavos",
            s.saldo_recargas_apertura_centavos::text as "saldoRecargasAperturaCentavos",
            s.saldo_recargas_cierre_centavos::text as "saldoRecargasCierreCentavos",
-           t.nombre                               as "terminal",
+           -- DP-21 · La caja es un lugar con nombre («Caja principal»), no el aparato; el aparato
+           -- va después. Una sesión anterior a la 193 (sin lugar) se llama como su aparato.
+           case
+             when s.lugar is null then t.nombre
+             else coalesce(
+                    nullif(btrim(cfg.valores -> 'nombres_de_cajas' ->> (s.lugar - 1)), ''),
+                    'Caja ' || s.lugar::text
+                  ) || coalesce(' · ' || t.nombre, '')
+           end                                    as "terminal",
            su.nombre                              as "sucursal",
            su.direccion                           as "sucursalDireccion",
            su.telefono                            as "sucursalTelefono",
@@ -97,12 +108,16 @@ export async function leerSesion(
       from sesiones_caja s
       join sucursales su on su.id = s.sucursal_id and su.organizacion_id = s.organizacion_id
       left join terminales t on t.id = s.terminal_id and t.organizacion_id = s.organizacion_id
+      left join configuracion cfg on cfg.organizacion_id = s.organizacion_id
       left join empleados_visibles ea on ea.id = s.empleado_abre_id
       left join empleados_visibles ec on ec.id = s.empleado_cierra_id
      where s.organizacion_id = ${organizacionId}
        and s.id = ${sesionCajaId}
   `.execute(tx);
-  return rows[0] ?? null;
+  const fila = rows[0];
+  if (fila === undefined) return null;
+  const folios = await foliosParaVestir(tx, organizacionId);
+  return { ...fila, folioVisible: folioVisibleDeLaSesion(fila.serie, fila.folio, folios) };
 }
 
 export interface NegocioCrudo {
@@ -391,7 +406,7 @@ export async function detalleDeVentas(
      order by coalesce(o.cobrada_en, o.cerrada_en, o.updated_at)
      limit ${TOPE_DE_FILAS}
   `.execute(tx);
-  return rows;
+  return vestirFolios(rows, await foliosParaVestir(tx, organizacionId));
 }
 
 export interface ProductoVendido {

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { Transaccion } from '@morphiqpos/data';
+import { leerNombresDeCajas, nombreDeLaCaja } from '../caja/lugares.ts';
 
 /**
  * POR QUÉ YA NO SE COBRA UNA CUENTA, dicho para la caja (DP-14.2, decisión DP-D60).
@@ -24,12 +25,16 @@ export async function porQueYaNoSeCobra(
       .selectFrom('ordenes as o')
       .leftJoin('sesiones_caja as s', 's.id', 'o.sesion_caja_id')
       .leftJoin('terminales as t', 't.id', 's.terminal_id')
-      .select('t.nombre as terminal')
+      .select(['t.nombre as terminal', 's.lugar as lugar'])
       .where('o.organizacion_id', '=', organizacionId)
       .where('o.id', '=', ordenId)
       .executeTakeFirst();
     const terminal = fila?.terminal ?? null;
-    return terminal === null ? 'Esa cuenta ya se cobró.' : `Ya se cobró en ${terminal}.`;
+    const lugar = fila?.lugar ?? null;
+    if (terminal === null && lugar === null) return 'Esa cuenta ya se cobró.';
+    // DP-21 · Se dice la CAJA («Caja principal»), no el aparato en el que estaba abierta.
+    const nombres = lugar === null ? [] : await leerNombresDeCajas(tx, organizacionId);
+    return `Ya se cobró en ${nombreDeLaCaja(lugar, nombres, terminal)}.`;
   }
   if (estado === 'cancelada') return 'Esa cuenta se canceló: ya no se cobra.';
   if (estado === 'dividida') return 'Esa cuenta se dividió: cobra cada una de sus partes.';

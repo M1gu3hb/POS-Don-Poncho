@@ -1,8 +1,9 @@
 import 'server-only';
 
 import { esRol, plantillaDeOrganizacion, type Ambito, type Paquete } from '@morphiqpos/contracts';
-import { obtenerDb, repoSesion } from '@morphiqpos/data';
+import { conTransaccion, obtenerDb, repoSesion } from '@morphiqpos/data';
 
+import { nuevaExpiracion } from './politica.ts';
 import { verificarSesion, type Verificacion } from './token.ts';
 
 /**
@@ -53,12 +54,16 @@ export async function resolverSesion(opciones: OpcionesResolver): Promise<Result
   if (!verificado.ok) return { ok: false, motivo: traducir(verificado) };
 
   const db = obtenerDb();
-  const registrada = await repoSesion.sesionActiva(
+  const ahora = new Date();
+  // La vigencia que manda es la del servidor (DP-21): una sesión vencida aquí no vale aunque
+  // la cookie siga en el aparato y el token no haya llegado a su tope.
+  const venceEn = await repoSesion.vencimientoDeLaSesion(
     db,
     verificado.carga.sid,
     verificado.carga.empleoId,
+    ahora,
   );
-  if (!registrada) return { ok: false, motivo: 'revocada' };
+  if (venceEn === null) return { ok: false, motivo: 'revocada' };
 
   const fila = await repoSesion.resolverAmbito(
     db,
@@ -106,6 +111,20 @@ export async function resolverSesion(opciones: OpcionesResolver): Promise<Result
     // vieja después de dar de baja el dispositivo.
     if (terminal === null) return { ok: false, motivo: 'revocada' };
     sucursalId = terminal.sucursalId;
+  }
+
+  // DP-21 · La sesión se renueva con el uso, según el puesto: el mando corre sus 30 minutos y
+  // las estaciones sus 12 horas; el cajero no se renueva. Como mucho una escritura por minuto.
+  const renovada = nuevaExpiracion({
+    rol: fila.rol,
+    ahora,
+    expiraEn: venceEn,
+    topeDelToken: new Date(verificado.carga.exp * 1000),
+  });
+  if (renovada !== null) {
+    await conTransaccion((tx) =>
+      repoSesion.renovarSesion(tx, verificado.carga.sid, renovada, ahora),
+    );
   }
 
   const ambito: Ambito = {

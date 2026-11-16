@@ -60,6 +60,16 @@ export function telefonoNoReconocido(): ErrorDominio {
   );
 }
 
+/** La huella del teléfono si lo firmó este servidor; `null` si no (nunca lanza: es para contar topes). */
+export function huellaSiEsFirmado(
+  pimienta: string,
+  dispositivo: string | undefined,
+): string | null {
+  return dispositivo !== undefined && telefonoFirmado(pimienta, dispositivo)
+    ? huellaDelDispositivo(pimienta, dispositivo)
+    : null;
+}
+
 /**
  * La huella del teléfono, o `QR_TELEFONO_NO_RECONOCIDO` si el id no lo firmó el servidor. Todo lo que
  * guarda algo a nombre de un teléfono (agregar, quitar, enviar, llamar, el latido) pasa por aquí.

@@ -155,6 +155,11 @@ export const entradaAbrirCaja = z
     fondoMonedasCentavos: centavosNoNegativos.optional(),
     fondoChicosCentavos: centavosNoNegativos.optional(),
     fondoGrandesCentavos: centavosNoNegativos.optional(),
+    /**
+     * DP-21 · En qué lugar de caja se abre (1, 2…), cuando hay varios libres y la persona eligió.
+     * Sin él, el servidor toma el primero libre. El cupo de la base va de 1 a 4.
+     */
+    lugar: z.number().int().min(1).max(4).optional(),
   })
   .refine(
     (v) =>
@@ -184,6 +189,8 @@ export const entradaAbrirCaja = z
       fondoMonedasCentavos: desglose ? monedas : (v.fondoInicialCentavos ?? 0),
       fondoChicosCentavos: chicos,
       fondoGrandesCentavos: grandes,
+      // DP-21 · El lugar de caja pedido, si lo hubo: sin él, el servidor toma el primero libre.
+      ...(v.lugar === undefined ? {} : { lugar: v.lugar }),
     };
   });
 

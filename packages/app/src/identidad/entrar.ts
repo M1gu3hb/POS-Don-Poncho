@@ -2,9 +2,11 @@ import 'server-only';
 
 import { randomBytes } from 'node:crypto';
 
+import { esRol } from '@morphiqpos/contracts';
 import { conTransaccion, obtenerDb, repoIdentidad, repoSesion } from '@morphiqpos/data';
 
-import { DURACION_SESION_SEGUNDOS, firmarSesion, nuevoIdDeSesion } from '../sesion/token.ts';
+import { politicaDeSesion } from '../sesion/politica.ts';
+import { firmarSesion, nuevoIdDeSesion } from '../sesion/token.ts';
 import { esperaTrasFallo, FORMA_PIN, INTENTOS_ANTES_DE_BLOQUEAR, verificarPin } from './pin.ts';
 import { hashearDispositivo, VIGENCIA_DISPOSITIVO_SEGUNDOS } from './dispositivo.ts';
 
@@ -48,7 +50,11 @@ export type ResultadoEntrar =
   | {
       readonly ok: true;
       readonly token: string;
-      readonly maxEdadSegundos: number;
+      /**
+       * Cuánto se recuerda la cookie; `null` = cookie de sesión (DP-21: el mando, el cajero y
+       * el almacén entran siempre con PIN; el mesero y la cocina se recuerdan).
+       */
+      readonly maxEdadSegundos: number | null;
       readonly organizacionId: string;
       readonly rol: string;
       readonly nombre: string;
@@ -111,9 +117,13 @@ export async function entrarConPin(
   // 5 · La terminal. Ya con el PIN verificado, y sólo entonces.
   const terminal = await resolverTerminal(peticion, ambito.sucursalId, ahora);
 
+  // DP-21 · Cuánto vive la sesión lo dice el PUESTO (`sesion/politica.ts`). El `exp` del token
+  // es el tope; lo que manda es la fila de `sesiones`, que se renueva con el uso o se deja vencer.
+  if (!esRol(ambito.rol)) return { ok: false, motivo: 'credenciales' };
+  const politica = politicaDeSesion(ambito.rol);
   const sid = nuevoIdDeSesion();
-  const exp = Math.floor(ahora.getTime() / 1000) + DURACION_SESION_SEGUNDOS;
-  const expiraEn = new Date(exp * 1000);
+  const exp = Math.floor(ahora.getTime() / 1000) + politica.topeSegundos;
+  const expiraEn = new Date(ahora.getTime() + politica.vigenciaSegundos * 1000);
 
   // La fila y la limpieza del bloqueo confirman juntas. La cookie sólo se
   // firma después: nunca se entrega un sid que la base no haya registrado.
@@ -143,7 +153,7 @@ export async function entrarConPin(
   return {
     ok: true,
     token,
-    maxEdadSegundos: DURACION_SESION_SEGUNDOS,
+    maxEdadSegundos: politica.cookieRecordada ? politica.topeSegundos : null,
     organizacionId: ambito.organizacionId,
     rol: ambito.rol,
     nombre: ambito.nombrePersona,
@@ -206,7 +216,9 @@ export async function resolverTerminal(
       repoIdentidad.crearTerminalParaDispositivo(tx, {
         organizacionId: peticion.organizacionId,
         sucursalId,
-        nombre: `Caja ${String(yaHay + 1 + intento)}`,
+        // DP-21 · Un aparato NO es una caja: la caja es un lugar de la sucursal con su nombre
+        // (`caja/lugares.ts`). Su nombre propio se le pone en Configuración → Este aparato.
+        nombre: `Aparato ${String(yaHay + 1 + intento)}`,
         deviceTokenHash,
         ahora,
       }),
@@ -221,7 +233,7 @@ export async function resolverTerminal(
     repoIdentidad.crearTerminalParaDispositivo(tx, {
       organizacionId: peticion.organizacionId,
       sucursalId,
-      nombre: `Caja ${String(ahora.getTime())}`,
+      nombre: `Aparato ${String(ahora.getTime())}`,
       deviceTokenHash,
       ahora,
     }),

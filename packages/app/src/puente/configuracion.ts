@@ -5,7 +5,18 @@ import { leyendoConReintento, obtenerDb, type Transaccion } from '@morphiqpos/da
 import { z } from 'zod';
 
 import { leerDocumentoConCandado } from '../configuracion/documento-con-candado.ts';
+import {
+  CLAVE_DEL_IMPUESTO,
+  esquemaDelImpuesto,
+  impuestoEn,
+} from '../configuracion/impuesto-del-negocio.ts';
 import { CLAVE_DE_EXPERIENCIA, EXPERIENCIA } from '../configuracion/experiencia.ts';
+import {
+  CLAVE_DE_FOLIOS,
+  CLAVE_DE_OPERACION_DESDE,
+  esquemaDeFolios,
+  foliosEn,
+} from '../configuracion/folios-del-negocio.ts';
 import { BOTONES_DEL_MENU, CLAVE_DE_BOTONES } from '../portal/botones-del-menu.ts';
 import { CLAVE_DE_QR_DE_MESAS, QR_DE_MESAS } from '../portal/qr-de-mesas.ts';
 import { QUIEN_ENVIA } from '../portal/quien-envia.ts';
@@ -50,7 +61,6 @@ export const CONFIG_POR_OMISION = {
   color_acento: '#ac8a5f',
   moneda: 'MXN',
   simbolo_moneda: '$',
-  iva_porcentaje: 0,
   usa_mesas: true,
   usa_cocina: true,
   usa_barra: true,
@@ -86,9 +96,10 @@ export const CONFIG_POR_OMISION = {
 /**
  * Lo ÚNICO que puede ver quien escanea un QR sin haber entrado.
  *
- * Nombre, logo y colores para que el menú se vea del negocio; moneda e IVA
- * para que los precios cuadren; y los interruptores que cambian lo que el
- * comensal puede pedir. Nada más.
+ * Nombre, logo y colores para que el menú se vea del negocio; la moneda para que
+ * los precios cuadren; y los interruptores que cambian lo que el comensal puede
+ * pedir. Nada más. El IVA no viaja (DP-21): lo que el comensal ve de su cuenta ya
+ * trae los importes del servidor, y un renglón de IVA sale sólo si su importe no es 0.
  *
  * Fuera, explícitamente: `presentacion_password`, cualquier identificador de
  * integración, `mostrar_costos_a_caja` y `paquete_modo`.
@@ -106,7 +117,6 @@ export const PUBLICOS = [
   'color_acento',
   'moneda',
   'simbolo_moneda',
-  'iva_porcentaje',
   'mensaje_ticket',
   'usa_mesas',
 ] as const;
@@ -149,7 +159,34 @@ const SOLO_POR_COMANDO = new Set([
   'retiro_pin_arriba_de_centavos',
   // DP-20 · Copias del ticket, la precuenta y el corte: sólo dueño o administrador.
   'copias_de_impresion',
+  // DP-21 · El IVA cambia el total de toda cuenta posterior: `configuracion.fijar_impuesto`.
+  CLAVE_DEL_IMPUESTO,
+  // DP-21 · Bloque 6 · El prefijo y el primer folio: `configuracion.fijar_folios` (sólo el dueño).
+  CLAVE_DE_FOLIOS,
+  // DP-21 · Bloque 6 · Desde cuándo opera de verdad el negocio (H1): la escriben los comandos de
+  // `mantenimiento/operacion-real.ts`; ninguna pantalla la manda.
+  CLAVE_DE_OPERACION_DESDE,
+  // DP-21 · A los cuántos minutos sin uso se cierra la pantalla del mando: sólo dueño o
+  // administrador (`configuracion.fijar_candado_de_mando`).
+  'candado_de_mando_min',
+  // DP-21 · Quién puede elegir la propina (el mesero y la Caja): sólo dueño o administrador
+  // (`configuracion.fijar_quien_elige_la_propina`). La de los comensales ya era del portal.
+  'propina_la_elige_mesero',
+  'propina_la_elige_caja',
+  // DP-21 · El nombre de cada lugar de caja («Caja principal»): `caja.nombrar_cajas`.
+  'nombres_de_cajas',
 ]);
+
+/**
+ * Claves RETIRADAS (DP-21): ni se leen ni se escriben.
+ *
+ * `iva_porcentaje` era el campo «IVA / Impuesto (%)» de la pantalla. Nadie lo leía: el servidor
+ * cobra con `impuesto`. Si quedó guardado en el documento de algún negocio, no sale al leer; y
+ * si llega en el parche de una pantalla que se quedó abierta de antes, se IGNORA en vez de
+ * rechazar todo el guardado (esa pantalla lo manda junto con el teléfono o el mensaje del
+ * ticket, que sí deben guardarse).
+ */
+const RETIRADAS = new Set(['iva_porcentaje']);
 
 const MAX_BYTES_CONFIGURACION = 64 * 1024;
 
@@ -158,6 +195,13 @@ const CLAVES_EDITABLES = new Set([
   'descuentos_permitidos',
   'retiro_pin_arriba_de_centavos',
   'copias_de_impresion',
+  CLAVE_DEL_IMPUESTO,
+  CLAVE_DE_FOLIOS,
+  CLAVE_DE_OPERACION_DESDE,
+  'candado_de_mando_min',
+  'propina_la_elige_mesero',
+  'propina_la_elige_caja',
+  'nombres_de_cajas',
   'nombre_negocio',
   'nombre_sistema',
   'platform_brand',
@@ -173,7 +217,6 @@ const CLAVES_EDITABLES = new Set([
   'color_acento',
   'moneda',
   'simbolo_moneda',
-  'iva_porcentaje',
   'usa_mesas',
   'usa_cocina',
   'usa_barra',
@@ -395,6 +438,12 @@ export async function leerConfiguracion(
     // El nombre vive en `organizaciones`, no en el documento: es el mismo que
     // usa la facturación y no puede divergir.
     nombre_negocio: fila.nombreNegocio,
+    // DP-21 · El IVA sale ya completo (tasa y si va incluido), con lo de un negocio nuevo donde
+    // no haya nada guardado: la pantalla enseña lo MISMO con lo que el servidor cobra.
+    [CLAVE_DEL_IMPUESTO]: impuestoEn(guardados),
+    // DP-21 · Bloque 6 · El prefijo y el primer folio, completos: sin escribir, un negocio lee su
+    // folio como siempre (sin prefijo, desde 1).
+    [CLAVE_DE_FOLIOS]: foliosEn(guardados),
     // Su `Configuracion.jsx` depende de `updated_date` para volver a hidratar
     // los formularios; sin él los interruptores se quedan con el valor viejo.
     id: fila.configId ?? organizacionId,
@@ -406,6 +455,7 @@ export async function leerConfiguracion(
   // clave que no existe y no pase nada, en silencio.
   const visible: Registro = {};
   for (const [clave, valor] of Object.entries(completa)) {
+    if (RETIRADAS.has(clave)) continue;
     if (!NUNCA_SALEN.has(clave)) visible[clave] = valor;
   }
 
@@ -425,9 +475,14 @@ export async function leerConfiguracion(
 export async function guardarConfiguracionParcial(
   tx: Transaccion,
   organizacionId: string,
-  parche: Readonly<Record<string, unknown>>,
+  parcheRecibido: Readonly<Record<string, unknown>>,
   opciones: { readonly desdeComando?: boolean } = {},
 ): Promise<Registro> {
+  // Las claves retiradas no entran al documento, vengan de donde vengan (ver `RETIRADAS`).
+  const parche: Record<string, unknown> = {};
+  for (const [clave, valor] of Object.entries(parcheRecibido)) {
+    if (!RETIRADAS.has(clave)) parche[clave] = valor;
+  }
   for (const prohibido of NUNCA_SALEN) {
     if (prohibido in parche) {
       throw new ErrorDominio(
@@ -515,6 +570,46 @@ export async function guardarConfiguracionParcial(
       'Las copias de impresión van de 1 a 3.',
     );
   }
+  for (const casilla of ['propina_la_elige_mesero', 'propina_la_elige_caja'] as const) {
+    if (casilla in parche) {
+      exigirForma(z.boolean(), parche[casilla], 'Quién puede elegir la propina es sí o no.');
+    }
+  }
+  if ('nombres_de_cajas' in parche) {
+    exigirForma(
+      z.array(z.string().max(40).nullable()).max(4),
+      parche['nombres_de_cajas'],
+      'Los nombres de las cajas son hasta cuatro, de 40 letras como mucho.',
+    );
+  }
+  if ('candado_de_mando_min' in parche) {
+    exigirForma(
+      z.number().int().min(5).max(30),
+      parche['candado_de_mando_min'],
+      'El candado de los puestos de mando va de 5 a 30 minutos.',
+    );
+  }
+  if (CLAVE_DEL_IMPUESTO in parche) {
+    exigirForma(
+      esquemaDelImpuesto,
+      parche[CLAVE_DEL_IMPUESTO],
+      'El IVA es sin IVA, 8 % o 16 %, y dice si va incluido en el precio.',
+    );
+  }
+  if (CLAVE_DE_FOLIOS in parche) {
+    exigirForma(
+      esquemaDeFolios,
+      parche[CLAVE_DE_FOLIOS],
+      'Los folios llevan un prefijo de 2 a 4 letras (o ninguno) y el primer folio de las cuentas y de los cortes.',
+    );
+  }
+  if (CLAVE_DE_OPERACION_DESDE in parche) {
+    exigirForma(
+      z.iso.datetime({ offset: true }),
+      parche[CLAVE_DE_OPERACION_DESDE],
+      'La fecha desde la que opera el negocio va en ISO 8601 con zona, o vacía.',
+    );
+  }
   if ('portal_qr_comensales_abren_mesa' in parche) {
     exigirForma(
       z.boolean(),
@@ -570,7 +665,9 @@ export async function guardarConfiguracionParcial(
     const previa = anteriores[CLAVE_DE_EXPERIENCIA];
     resto[CLAVE_DE_EXPERIENCIA] = { ...(esObjeto(previa) ? previa : {}), ...experienciaNueva };
   }
-  const valores = { ...anteriores, ...resto };
+  const valores: Record<string, unknown> = { ...anteriores, ...resto };
+  // Lo retirado que hubiera quedado guardado de antes se va con el primer guardado.
+  for (const retirada of RETIRADAS) Reflect.deleteProperty(valores, retirada);
   const valoresSerializados = serializarConfiguracion(valores);
 
   if (actual === undefined) {

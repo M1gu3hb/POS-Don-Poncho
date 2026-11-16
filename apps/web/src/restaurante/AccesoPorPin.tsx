@@ -19,6 +19,7 @@ import { flushSync } from 'react-dom';
 import { ErrorApi, invocarComando, obtenerApi } from '~/cliente/api';
 import { negocioParaEntrar, rutaDeEmpleados } from '~/cliente/entrada';
 import { abrir as abrirElCandado } from '~/espera/candado-del-pin';
+import { almacenDeLaEjecucion, marcarPin } from '~/espera/pin-de-esta-ejecucion';
 import { sonarAntesDeIrse } from '~/sonidos/gestor';
 
 import { almacenDelAparato } from './vista-de-solicitudes';
@@ -406,6 +407,9 @@ export function AccesoPorPin({ empleadosIniciales, onEntro }: AccesoPorPinProps)
         setError(null);
         // DP-11.2: entrar con el PIN quita el candado del modo espera que hubiera en el aparato.
         abrirElCandado(almacenDelAparato());
+        // DP-21: y deja dicho que ESTA ejecución de la app ya tecleó el PIN de este empleo. Al
+        // reabrir la app la marca no está, y el mando y la caja vuelven a teclearlo.
+        marcarPin(almacenDeLaEjecucion(), empleoId);
         // A dónde va cada rol lo decide el armazón: aquí sólo se resuelve QUIÉN.
         //
         // Y se RECARGA la página en vez de navegar con el enrutador, a

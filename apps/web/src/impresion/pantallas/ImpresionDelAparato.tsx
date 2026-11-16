@@ -18,8 +18,8 @@ import { useCorredorDePruebas } from './use-pruebas.ts';
  * CONFIGURACIÓN → IMPRESIÓN (DP-20 · Parte 4), para el personal.
  *
  * Dice si la impresora de este aparato está lista y deja probarla («Página de prueba», «Abrir
- * cajón»). El perfil NO se cambia aquí: lo deja listo el proveedor en Operación → «Hardware y
- * pruebas de impresión». Sin la app, la impresión de hoy —el diálogo del navegador— sigue igual.
+ * cajón»; con el PIN de un gerente). El perfil NO se cambia aquí —tampoco si el aparato tiene
+ * cajón—: lo deja listo el proveedor en Operación → «Hardware y pruebas de impresión». Sin la app, la impresión de hoy —el diálogo del navegador— sigue igual.
  */
 
 function ImpresoraLista({
@@ -46,6 +46,8 @@ function ImpresoraLista({
           <dd>{describirDestino(perfil.destino)}</dd>
           <dt className="text-texto-sutil">Papel</dt>
           <dd>{`${String(perfil.papelMm)} mm · ${String(perfil.puntos)} puntos`}</dd>
+          <dt className="text-texto-sutil">Cajón de dinero</dt>
+          <dd>{perfil.tieneCajon ? 'Sí, este aparato tiene cajón' : 'No tiene cajón'}</dd>
         </dl>
       </div>
       <div className="flex flex-wrap items-start gap-(--espacio-4)">

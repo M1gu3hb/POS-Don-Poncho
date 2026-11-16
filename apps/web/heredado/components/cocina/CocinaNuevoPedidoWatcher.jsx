@@ -1,10 +1,13 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
-import { speak, fraseNuevoPedidoCocina, getCocinaVozConfig } from '@/lib/voiceAlert';
+import { speak, getCocinaVozConfig } from '@/lib/voiceAlert';
 import { sonarAntesDeHablar } from '~/sonidos/gestor';
 import { toast } from 'sonner';
 import { despertarLaPantalla } from '~/espera/despertador';
-import { rotuloDeLaComanda, rotuloHablado } from '~/restaurante/rotulo-de-la-comanda';
+import { rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
+import { almacenDelAparato } from '~/restaurante/vista-de-solicitudes';
+import { comandasPorAnunciar, frasesAAnunciar } from '~/cocina/anuncio-de-comandas';
+import { leerAnuncioDelAparato } from '~/voz/anuncio-del-aparato';
 
 const NOTIFIED_KEY = 'mh_cocina_notified_nuevos';
 
@@ -75,13 +78,11 @@ export default function CocinaNuevoPedidoWatcher({ pedidos = [], cargando = fals
       firstLoadRef.current = false;
       return;
     }
-    const recien = nuevos.filter((p) => !notifiedRef.current.has(p.id));
+    // DP-21: cada comanda se anuncia UNA vez por aparato, aunque la lectura la traiga repetida.
+    const recien = comandasPorAnunciar(nuevos, notifiedRef.current);
     if (recien.length === 0) return;
     // DP-11.2: una comanda nueva de mi estación despierta la pantalla (si estaba en modo espera).
     despertarLaPantalla('comanda');
-
-    const vozCfg = getCocinaVozConfig();
-    const frasesAHablar = [];
 
     recien.forEach((p) => {
       notifiedRef.current.add(p.id);
@@ -89,23 +90,19 @@ export default function CocinaNuevoPedidoWatcher({ pedidos = [], cargando = fals
       // DP-16 · El rótulo sale del canal: «PARA LLEVAR · 3 · Don Beto» o «Mesa 4».
       const desc = `${rotuloDeLaComanda(p)} — ${(p.items || []).length} producto(s)`;
       toast.success('Nuevo pedido recibido', { description: desc, duration: 10000 });
-
-      // 2) Voz (si activa). Pasamos alergias y celebración como extras para
-      //    que se anuncien con prioridad (HOTFIX bandera roja de auditoría).
-      if (vozCfg.voz_activa) {
-        try {
-          frasesAHablar.push(
-            fraseNuevoPedidoCocina(p.mesa_numero, p.items, p.notas, {
-              rotulo: rotuloHablado(p),
-              notas_alergias: p.notas_alergias,
-              celebracion: p.celebracion_especial,
-              tipo_celebracion: p.tipo_celebracion,
-            }),
-          );
-        } catch {}
-      }
     });
     saveSet(notifiedRef.current);
+
+    // 2) Voz. DP-21: sólo si ESTE aparato anuncia («Esta pantalla anuncia las comandas»: con dos
+    //    pantallas en la misma estación se apaga en la secundaria) y con los renglones iguales
+    //    ya juntos («tres Consomés de carnero»). Las alergias y la celebración van con prioridad
+    //    (HOTFIX bandera roja de auditoría).
+    const anuncia = leerAnuncioDelAparato(almacenDelAparato());
+    if (!anuncia) return;
+    const frasesAHablar = frasesAAnunciar(recien, {
+      anuncia,
+      vozActiva: getCocinaVozConfig().voz_activa,
+    });
 
     // 3) Audio con pequeño delay después del visual.
     // La cola interna de speak() garantiza que TODAS las frases se lean en orden,
@@ -115,9 +112,7 @@ export default function CocinaNuevoPedidoWatcher({ pedidos = [], cargando = fals
     setTimeout(() => {
       sonarAntesDeHablar('comandaNueva').then(() => {
         frasesAHablar.forEach((frase) => {
-          try {
-            speak(frase, { cocina: true });
-          } catch {}
+          speak(frase, { cocina: true });
         });
       });
     }, 280);

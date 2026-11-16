@@ -42,9 +42,8 @@ const FUENTES = [join(RAIZ, 'apps', 'web', 'src'), APP];
 
 /** Las rutas que sirve un archivo que no es `page.tsx` y que sí existen. */
 const RUTAS_QUE_NO_SON_PANTALLA = new Set([
-  // El manifiesto y los iconos los sirve `app/` con otros nombres de archivo.
+  // Los iconos los sirve `app/` con otros nombres de archivo. Ya no hay manifiesto (DP-21).
   '/icono.svg',
-  '/manifest.webmanifest',
   '/favicon.ico',
 ]);
 

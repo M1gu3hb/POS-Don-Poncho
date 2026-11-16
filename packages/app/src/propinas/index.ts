@@ -3,6 +3,35 @@ import 'server-only';
 /** Propinas y liquidación (F1-02 E6-7). */
 
 export {
+  conflictoDePropina,
+  entradaFijarPropina,
+  fijarPropina,
+  mensajeDeLaVigente,
+  type PropinaFijada,
+} from './fijar-propina.ts';
+export {
+  casillasDeQuienElige,
+  entradaFijarQuienEligeLaPropina,
+  fijarQuienEligeLaPropina,
+} from './quien-elige.ts';
+export {
+  CLAVE_LA_ELIGE_EL_MESERO,
+  CLAVE_LA_ELIGE_LA_CAJA,
+  CLAVE_LA_ELIGEN_LOS_COMENSALES,
+  QUIEN_ELIGE_POR_OMISION,
+  decidirPropina,
+  laEscribeElMesero,
+  propinaDecidida,
+  puedeElegir,
+  quienLaDecidio,
+  quienPuedeElegirEn,
+  type PropinaDeLaCuenta,
+  type QuienElige,
+  type QuienPuedeElegir,
+  type Veredicto,
+} from './una-sola-verdad.ts';
+
+export {
   desglosarPagos,
   efectivoDelCajon,
   etiquetaDeMesero,

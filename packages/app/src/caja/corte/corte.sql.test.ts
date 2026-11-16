@@ -76,8 +76,10 @@ describe('la hoja del corte · cada consulta, acotada', () => {
   it.each(CONSULTAS)('%s lleva el negocio y se acota a su %s', async (_nombre, acotada, correr) => {
     const { tx, conexion } = grabadora();
     await correr(tx);
-    expect(conexion.consultas).toHaveLength(1);
-    const [consulta] = conexion.consultas;
+    // Una sola consulta del corte; las que visten los folios (DP-21) sólo leen su prefijo.
+    const delCorte = conexion.consultas.filter((c) => !c.sql.includes('from "configuracion"'));
+    expect(delCorte).toHaveLength(1);
+    const [consulta] = delCorte;
     const parametros = consulta?.parameters ?? [];
     expect(
       parametros,

@@ -2530,3 +2530,114 @@ la 1.0.0: misma firma, mismo paquete, mismos ajustes.
   canal ni al personal. La `release` no es depurable (lo comprueba una prueba de construcción).
 - **Sigue igual, a sabiendas:** el instalador de Windows sin firma de código; el puente confía en
   la página de producción.
+
+## DP-D128 · Folios de verdad: prefijo, primer folio y bloqueo después del arranque · 16-11-2026
+
+DP-21 · Bloque 6. Las cuentas se leen «DP-01001» y los cortes «DPC-0101»; el número sigue siendo el
+consecutivo atómico de siempre (`repos/folios.ts`, series `A` y `CC`): sin huecos y sin letras al azar.
+
+- **Un solo formateador** (`@morphiqpos/domain/venta`, `folioVisible(serie, folio, configuración)`):
+  cuentas `<PREFIJO>-<5 dígitos mínimo>` (100 000 → «DP-100000»), cortes `<PREFIJO>C-<4 mínimo>`.
+  **Sin prefijo, cada sitio dice lo que decía** (el ticket «3»; el documento del corte «A-3», «CC-2»):
+  por eso recibe cómo lo decía el sitio (`'numero'` o `'con-serie'`). REM, CR, LIQ y CT no cambian.
+  Un número sin serie conocida no se disfraza de cuenta. `coincideConElFolio` (búsqueda, el folio
+  exacto va primero, DP-D118) y `entenderElFolio` (lo tecleado en devoluciones) son sus inversas.
+- **Contrato** `venta/folio.contrato.test.ts`: todo `.folio` de `heredado/` y `src/` va dentro de un
+  formateador o se declara con su razón. El corte, sus cancelaciones, devoluciones y descuentos
+  arman el folio en SQL: el servidor lo viste al leer (`caja/corte/folios-vestidos.ts`).
+- **Ajustes** en `configuracion.valores.folios` (lector único `foliosEn`; sin migración) con
+  `configuracion.fijar_folios`, sólo el dueño, con antes y después en la auditoría. El prefijo (2 a 4
+  letras A–Z, mayúsculas) se cambia siempre; el «Primer folio» sólo con los folios en cero y sin H1.
+  Reubica el MISMO contador (`fijarSiguienteFolio`) de cada sucursal.
+- **`mantenimiento.reiniciar_folios`** deja cuentas y cortes en su «Primer folio» (la serie `CT`, en 1) y
+  se niega si hay folios en otra serie (REM, fiado, LIQ…). `dejar-en-ceros.mjs` comprueba y dice el
+  siguiente folio.
+- **H1** `operacion_desde` (hora del servidor): `mantenimiento.activar_operacion` (idempotente) y
+  `quitar_bloqueo_de_operacion` (dueño, con el nombre del negocio; la auditoría guarda la fecha). Con una
+  sola cuenta posterior se niegan las purgas de ventas y cortes, reiniciar pruebas/todo/folios, dejar en
+  ceros y el cambio de «Primer folio». **Falla cerrada:** una fecha ilegible bloquea. Guion:
+  `scripts/operacion-real.mjs`.
+- **Sigue igual, a sabiendas:** una sucursal creada después de fijar el primer folio arranca en 1.
+
+## DP-D129 · El IVA: un solo ajuste, con su comando; «Sin IVA» no se menciona · 16-11-2026
+
+DP-21 · Bloque 1 (M9 y O1). Miguel ponía el IVA en 0 y el ticket seguía diciendo «IVA 13.79 %»: el
+campo guardaba `iva_porcentaje`, que nadie leía; se cobraba con el 16 % incluido de omisión.
+
+- **Una sola verdad:** `configuracion.valores.impuesto` (`puntosBase` 0, 800 o 1600, e
+  `incluidoEnPrecio`), que lee `venta/cotizar.ts`. La escribe sólo `configuracion.fijar_impuesto`
+  (dueño y administrador, con antes y después en la auditoría); el camino genérico la rechaza.
+- **`iva_porcentaje` se retira:** no se lee, no se escribe, sale de `PUBLICOS` y se borra del
+  documento al guardar. Una pestaña vieja que lo mande se ignora en silencio (no rompe el guardado).
+- **«Sin IVA»:** `impuestos_centavos = 0` y la regla es una sola, `seMencionaElIva`: si el IVA de lo
+  que se enseña es 0, el renglón no existe (cobro, precuenta, ticket, reimpresión, corte, Registros,
+  Ventas, exportaciones). Contrato `venta/sin-iva.contrato.test.ts`.
+- **Un negocio nuevo sigue en 16 % incluido.** En producción el valor lo guarda Miguel con su PIN.
+
+## DP-D130 · La sesión, por puesto: quién teclea su PIN y cuánto dura · 16-11-2026
+
+DP-21 · Bloque 2 (M14, O10 y A18). El administrador reabría la app y entraba sin PIN.
+
+- **Mando** (dueño, administrador, gerente): cookie de sesión (sin `Max-Age`), vigencia en el
+  servidor de 30 minutos que se renueva con la actividad (tope de 12 horas), y candado con PIN a los
+  10 minutos sin tocar la pantalla (de 5 a 30; `configuracion.fijar_candado_de_mando`).
+- **Caja** (cajero y **almacén**): cookie de sesión, 12 horas, sin renovar. El almacén no estaba en
+  la tabla del encargo: entra como el cajero, que es lo más estricto de lo operativo (decisión de la
+  sesión, sin Miguel).
+- **Estación** (mesero y cocina): entra directo; cookie de 12 horas que se renueva con el uso (tope
+  de 7 días).
+- **El servidor manda:** la fila de `sesiones` (`expira_en`) es la verdad; el `exp` del token es sólo
+  el tope. **La pantalla** pide el PIN a mando y caja si no trae la marca de esta ejecución
+  (`sessionStorage`, sin secretos: el id del empleo); desbloquear vuelve a comprobar el PIN en el
+  servidor, con sus intentos y su bloqueo.
+- **Las pruebas e2e** reúsan sesiones guardadas: su arnés deja esa marca (`conElPinTecleado`), como
+  la deja la pantalla de acceso. Lo que prueba el candado abre su navegador sin el arnés.
+
+## DP-D131 · La propina se decide una sola vez · 16-11-2026
+
+DP-21 · Bloque 4 (M11, M12 y O8). El comensal y la Caja podían elegir propinas distintas y ganaba la
+última que escribía.
+
+- **`cuenta.fijar_propina`** con la versión de la cuenta: la primera que se confirma gana; la segunda
+  recibe 409 con la vigente (`datos.regla = 'PROPINA_VIGENTE'`) y decide «Usar ésa» o «Cambiarla»
+  (cambiar es explícito y queda en la auditoría). El cobro manda la versión que vio.
+- **La Caja** relee la cuenta cada 2.5 s y el aviso interrumpe. **El portal** se cierra solo si la
+  Caja la eligió («Tu propina ya quedó registrada en caja») o si la cuenta ya se pagó (sólo cierra,
+  sin mandar a calificar).
+- **«¿Quién puede elegir la propina?»** (`configuracion.fijar_quien_elige_la_propina`): comensales,
+  mesero y Caja; por omisión, comensales y Caja. El mesero sólo la escribe si está permitido.
+
+## DP-D132 · La caja es un lugar con nombre; el aparato, «Aparato N» · 16-11-2026
+
+DP-21 · Bloque 5 (M1 y O9). «Las cajas se suman (Caja 28, Caja 32…)»: el nombre era el del aparato.
+
+- **Migración 193** (aditiva): `sesiones_caja.lugar` y un índice único parcial por lugar abierto.
+  Ficha 39 en `docs/para-el-maestro/`.
+- El cupo de la sucursal define los lugares; el dueño los nombra (`caja.nombrar_cajas`, en
+  `configuracion.valores.nombres_de_cajas`); sin nombre, «Caja 1», «Caja 2». El lugar viaja con la
+  caja al trasladarla. Una sesión anterior a la 193 se sigue llamando como su aparato.
+- Las terminales nuevas nacen «Aparato N». Las «Caja N» que ya existen se renombran con
+  `mantenimiento.renombrar_aparatos` (dueño de plataforma, con auditoría), que se corre al dejar en
+  ceros; no en la migración.
+
+## DP-D133 · El cajón y la voz de cocina · 16-11-2026
+
+DP-21 · Bloques 7 y 8 (M15, M17, O16 y O17).
+
+- **El cajón:** se abre por la impresora del aparato sólo si su perfil dice que tiene cajón
+  (`tieneCajon`), con el aval del servidor (`caja/aval-del-cajon.ts`); la prueba del cajón vive en el
+  laboratorio.
+- **La voz:** la frase dice cuántos de cada platillo («Nuevo pedido mesa 4: dos arracheras, una
+  cerveza»). Se conservó el arranque «Nuevo pedido mesa 4:»; el ejemplo del encargo decía «Mesa 4:».
+  Cambiarlo es una línea (`cocina/anuncio-de-comandas.ts`). Con dos pantallas en una estación, sólo
+  la que se marca como principal anuncia.
+
+## DP-D134 · Sin app instalable; el portal, a salvo desde fuera · 16-11-2026
+
+DP-21 · Bloque 3 (M13 y O3). El navegador ofrecía «Instalar» y abría una ventana sin barra que
+confundía con las apps de verdad.
+
+- Se quita el manifiesto y todo lo que lo anuncia (contrato `sin-instalacion.contrato.test.ts`). Las
+  apps de Android y Windows siguen siendo las de `morphiq-pos-apps`.
+- El portal de comensales tiene cupo de avisos por mesa y por teléfono (`portal/cupo-de-avisos.ts`):
+  desde fuera no se puede inundar la sala de llamadas.

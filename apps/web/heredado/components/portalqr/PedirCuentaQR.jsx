@@ -1,5 +1,5 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { nuevaClave } from '@/api/cliente';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -9,6 +9,11 @@ import { tipsEnabled, getPorcentajesSugeridos } from '@/utils/tipsUtils';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import { pedirCuentaQR } from '@/utils/qrPedidoFlow';
 import { toast } from 'sonner';
+import {
+  ESPERA_ANTES_DE_CERRAR_MS,
+  cierreDeLaPropina,
+  textoDelCierre,
+} from '~/portal/propina-ya-registrada';
 
 /**
  * Vista "Pedir cuenta" del Portal QR.
@@ -42,7 +47,15 @@ import { toast } from 'sonner';
  *  - onClose(): cerrar la vista.
  *  - onConfirmed(): callback cuando se solicitó la cuenta con éxito.
  */
-export default function PedirCuentaQR({ token, mesa, config, cuenta, onClose, onConfirmed }) {
+export default function PedirCuentaQR({
+  token,
+  mesa,
+  config,
+  cuenta,
+  onClose,
+  onConfirmed,
+  onYaRegistrada,
+}) {
   const queryClient = useQueryClient();
   const verPrecuenta = config?.portal_qr_mostrar_precuenta !== false;
   const propinasGlobales = tipsEnabled(config);
@@ -133,6 +146,31 @@ export default function PedirCuentaQR({ token, mesa, config, cuenta, onClose, on
     }
   };
 
+  // DP-21 (Bloque 4): ¿la propina ya quedó decidida en otra pantalla, o la cuenta ya se cobró?
+  const huboCuentaRef = useRef(Boolean(cuenta?.id));
+  const ultimaCuentaRef = useRef(cuenta?.id ?? null);
+  const cuentaId = cuenta?.id ?? null;
+  useEffect(() => {
+    if (cuentaId === null) return;
+    huboCuentaRef.current = true;
+    ultimaCuentaRef.current = cuentaId;
+  }, [cuentaId]);
+  const [cierreDelServidor, setCierreDelServidor] = useState(null);
+  const cierre = cierreDelServidor ?? cierreDeLaPropina(cuenta, huboCuentaRef.current, enviado);
+  useEffect(() => {
+    if (cierre === null) return undefined;
+    const reloj = setTimeout(() => {
+      // Con la cuenta aún abierta, el comensal pasa a la calificación; ya cobrada, sólo se cierra.
+      if (cierre === 'caja' && typeof onYaRegistrada === 'function') {
+        onYaRegistrada(ultimaCuentaRef.current);
+      } else {
+        onClose();
+      }
+    }, ESPERA_ANTES_DE_CERRAR_MS);
+    return () => clearTimeout(reloj);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cierre]);
+
   const confirmar = async () => {
     if (enviando) return;
     if (!mesa?.id) {
@@ -153,7 +191,7 @@ export default function PedirCuentaQR({ token, mesa, config, cuenta, onClose, on
       // líneas persistidas, calcula la propina en centavos enteros, congela los
       // totales, marca la venta con su código de caja, avisa al mesero sólo si
       // hace falta y mueve la mesa. O queda todo, o no queda nada.
-      await pedirCuentaQR({
+      const respuesta = await pedirCuentaQR({
         token,
         propinaTipo,
         propinaPorcentaje: pctActivo > 0 ? pctActivo : 0,
@@ -163,6 +201,13 @@ export default function PedirCuentaQR({ token, mesa, config, cuenta, onClose, on
 
       // Que el portal vuelva a leer: la venta ya está en `cuenta_solicitada`.
       queryClient.invalidateQueries({ queryKey: ['portal_publico', token] });
+
+      // DP-21: la caja (o el mesero) ya la había elegido. La de este teléfono no se aplicó:
+      // se dice y la pantalla se cierra sola.
+      if (respuesta?.propinaYaRegistradaEn) {
+        setCierreDelServidor('caja');
+        return;
+      }
 
       // `setEnviado(true)` SÓLO tras respuesta OK del servidor.
       setEnviado(true);
@@ -175,6 +220,26 @@ export default function PedirCuentaQR({ token, mesa, config, cuenta, onClose, on
       setEnviando(false);
     }
   };
+
+  // DP-21 (Bloque 4): la propina se decide una sola vez. Si la caja ya la eligió o la cuenta
+  // ya se cobró mientras esta pantalla estaba abierta, se cierra sola y lo dice.
+  if (cierre !== null) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-velo/50 flex items-end sm:items-center justify-center"
+      >
+        <div
+          role="status"
+          className="bg-card text-card-foreground w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-6 text-center shadow-2xl"
+        >
+          <p className="font-heading font-bold text-lg">{textoDelCierre(cierre)}</p>
+        </div>
+      </motion.div>
+    );
+  }
 
   // ----- RENDER -----
   return (

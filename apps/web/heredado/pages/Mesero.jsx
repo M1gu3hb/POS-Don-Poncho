@@ -54,6 +54,7 @@ import MesaGridMobile from '@/components/mesero/MesaGridMobile';
 import MeseroCartFAB from '@/components/mesero/MeseroCartFAB';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
 import PropinaDialog from '@/components/propinas/PropinaDialog';
+import { elMeseroEligeLaPropina } from '~/venta/propina-en-la-caja';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
 import MesaHuerfanaDialog from '@/components/mesero/MesaHuerfanaDialog';
 import ProductoFichaExpandible from '@/components/mesero/ProductoFichaExpandible';
@@ -142,6 +143,7 @@ import {
 } from '~/restaurante/vista-de-solicitudes';
 import { frasePorSolicitud, getAlertConfig, speak } from '@/lib/voiceAlert';
 import { sonar, sonarAntesDeHablar } from '~/sonidos/gestor';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 const MAP_HEIGHT = 600;
 // Hook simple para detectar móvil
@@ -1194,6 +1196,18 @@ function Mesero() {
       return;
     }
 
+    // DP-21 (M12): sin la casilla «Mesero» de Configuración → Propinas, «Pedir cuenta» nunca
+    // enseña el diálogo de propina: la cuenta se pide y la propina queda pendiente para quien sí
+    // la elige (los comensales o la Caja). El servidor tampoco la aceptaría.
+    if (!elMeseroEligeLaPropina(config)) {
+      finalizarPedirCuenta({
+        propina_monto: 0,
+        propina_porcentaje: 0,
+        propina_tipo: 'pendiente',
+        propina_origen: 'mesero',
+      });
+      return;
+    }
     // Flujo clásico: abrir modal de propina del mesero.
     setShowPropinaMesero(true);
   };
@@ -1292,7 +1306,7 @@ function Mesero() {
       return;
     }
     sonar('ticket');
-    printDocument({ mode: 'thermal', title: `PreCuenta-${preCuentaData?.venta?.folio || ''}` });
+    printDocument({ mode: 'thermal', title: `PreCuenta-${folioVisible(preCuentaData?.venta?.serie, preCuentaData?.venta?.folio, config, 'numero')}` });
   };
 
   // Liberar una mesa huérfana (sin venta_activa_id). NO borra ventas reales.

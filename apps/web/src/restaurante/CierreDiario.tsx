@@ -100,6 +100,8 @@ export {
   type ResumenDelDia,
   type VentaDelDia,
 } from './resumen-del-dia.ts';
+import { folioVisible, type ConFolios } from '@morphiqpos/domain/venta';
+import { useConfig } from '@/lib/ConfigContext';
 
 /** DP-13.2 · Un importe que sin costo completo no se sabe: «—, sin receta», no un cero. */
 function DineroOSinReceta({ centavos }: { readonly centavos: number | null }) {
@@ -250,6 +252,8 @@ function SeccionDelCorte({
 }
 
 export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
+  // DP-21 · El prefijo de los folios: «Corte DPC-0101».
+  const { config } = useConfig() as unknown as { readonly config: ConFolios };
   const voc = useVocabulario();
   const [datos, setDatos] = useState<DatosDelDia | null>(datosIniciales ?? null);
   const [falloDeCarga, setFalloDeCarga] = useState<string | null>(null);
@@ -364,7 +368,7 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
         <header className="flex flex-col gap-(--espacio-1) text-center">
           <h1 className="text-xl font-bold">Caja cerrada</h1>
           <p className="text-sm text-texto-sutil">
-            Corte {corte.serie}-{corte.folio} · {corte.numeroVentas} tickets
+            Corte {folioVisible(corte.serie, corte.folio, config)} · {corte.numeroVentas} tickets
           </p>
         </header>
         {/* LA respuesta del día, y lo único grande: ¿cuadró? La cifra manda y la

@@ -35,3 +35,10 @@ export {
   quitarPlataforma,
   type ResultadoQuitarPlataforma,
 } from './plataforma-cambios.ts';
+export {
+  activarOperacion,
+  entradaQuitarBloqueo,
+  exigirQueNoHayaOperacionReal,
+  quitarBloqueoDeOperacion,
+  type ResultadoDeOperacion,
+} from './operacion-real.ts';

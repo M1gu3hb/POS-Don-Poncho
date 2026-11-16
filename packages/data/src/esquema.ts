@@ -970,6 +970,7 @@ export interface SesionesCaja {
   saldo_recargas_apertura_centavos: Generated<bigint>;
   saldo_recargas_cierre_centavos: bigint | null;
   turno: string | null;
+  lugar: number | null;
 }
 
 export interface SolicitudesQr {

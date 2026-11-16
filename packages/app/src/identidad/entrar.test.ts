@@ -103,17 +103,98 @@ describe('entrarConPin · emisión revocable', () => {
     expect(verificado.ok).toBe(true);
     if (!verificado.ok) return;
 
+    // DP-21 · El dueño: 30 minutos en el servidor (se renuevan con el uso) y 12 h de tope en el
+    // token. Antes eran 8 h para todos y las dos fechas coincidían.
     expect(dobles.crearSesion).toHaveBeenCalledWith(dobles.tx, {
       sid: verificado.carga.sid,
       organizacionId: ORG,
       empleoId: EMPLEO,
       creadaEn: AHORA,
-      expiraEn: new Date('2026-03-04T18:00:00.000Z'),
+      expiraEn: new Date(AHORA.getTime() + 30 * 60_000),
     });
+    expect(verificado.carga.exp).toBe(Math.floor(AHORA.getTime() / 1000) + 12 * 60 * 60);
     expect(dobles.limpiarIntentos).toHaveBeenCalledWith(
       dobles.tx,
       '44444444-4444-4444-8444-444444444444',
     );
+  });
+
+  /**
+   * DP-21 · Bloque 2 · La cookie y la vigencia las decide el puesto de quien entra.
+   */
+  describe('por puesto', () => {
+    const peticion = {
+      empleoId: EMPLEO,
+      pin: '4821',
+      deviceToken: '',
+      organizacionId: ORG,
+      pimienta: 'pimienta-de-prueba',
+      secretoSesion: SECRETO,
+    };
+    const entrarComo = async (rol: string) => {
+      dobles.resolverAmbito.mockResolvedValue({
+        organizacionId: ORG,
+        sucursalId: null,
+        identidadId: IDENTIDAD,
+        empleoId: EMPLEO,
+        rol,
+        nombrePersona: 'Rosa',
+        paquete: 'restaurante',
+        nombreNegocio: 'Morphiq',
+        nombreSucursal: null,
+      });
+      const resultado = await entrarConPin(peticion, AHORA);
+      if (!resultado.ok) throw new Error(`no entró como ${rol}`);
+      const [, sesion] = dobles.crearSesion.mock.calls.at(-1) as [unknown, { expiraEn: Date }];
+      return {
+        maxEdadSegundos: resultado.maxEdadSegundos,
+        minutosEnElServidor: (sesion.expiraEn.getTime() - AHORA.getTime()) / 60_000,
+      };
+    };
+
+    it.each(['dueno', 'administrador', 'gerente'])(
+      '%s: cookie de sesión (sin Max-Age) y 30 minutos en el servidor',
+      async (rol) => {
+        expect(await entrarComo(rol)).toEqual({ maxEdadSegundos: null, minutosEnElServidor: 30 });
+      },
+    );
+
+    it.each(['cajero', 'almacen'])(
+      '%s: cookie de sesión y la jornada (12 h) en el servidor',
+      async (rol) => {
+        expect(await entrarComo(rol)).toEqual({
+          maxEdadSegundos: null,
+          minutosEnElServidor: 12 * 60,
+        });
+      },
+    );
+
+    it.each(['mesero', 'cocina'])(
+      '%s: la cookie se recuerda y vive 12 h en el servidor',
+      async (rol) => {
+        const { maxEdadSegundos, minutosEnElServidor } = await entrarComo(rol);
+        expect(minutosEnElServidor).toBe(12 * 60);
+        expect(maxEdadSegundos).not.toBeNull();
+        expect(maxEdadSegundos).toBeGreaterThanOrEqual(12 * 60 * 60);
+      },
+    );
+
+    it('un puesto que el sistema no conoce no entra', async () => {
+      dobles.resolverAmbito.mockResolvedValue({
+        organizacionId: ORG,
+        sucursalId: null,
+        identidadId: IDENTIDAD,
+        empleoId: EMPLEO,
+        rol: 'inventado',
+        nombrePersona: 'Rosa',
+        paquete: 'restaurante',
+        nombreNegocio: 'Morphiq',
+        nombreSucursal: null,
+      });
+      const resultado = await entrarConPin(peticion, AHORA);
+      expect(resultado).toEqual({ ok: false, motivo: 'credenciales' });
+      expect(dobles.crearSesion).not.toHaveBeenCalled();
+    });
   });
 
   it('purga las sesiones vencidas que llevan siete días retenidas', async () => {

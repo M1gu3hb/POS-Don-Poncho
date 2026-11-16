@@ -132,7 +132,7 @@ export default function IdentidadNegocio({ cfg }) {
       // tiene campos de Identidad — pero formalizamos el payload para evitar
       // que cualquier campo huésped accidental pise Operación. Esto garantiza
       // que guardar Identidad nunca toca asignacion_mesas_activa, propinas_activas,
-      // direccion, telefono, correo, iva_porcentaje, mensaje_ticket, etc.
+      // direccion, telefono, correo, mensaje_ticket, etc.
       const seccion = {
         nombre_negocio: form.nombre_negocio,
         nombre_sistema: form.nombre_sistema,

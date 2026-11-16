@@ -211,6 +211,117 @@ export const SIN_ESTADO = [
       'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
   },
   {
+    pantalla: 'configuracion/QuienEligeLaPropina',
+    estado: 'vacio',
+    razon:
+      'Tres casillas fijas (comensales, mesero y Caja; DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/QuienEligeLaPropina',
+    estado: 'cargando',
+    razon:
+      'Lee la configuración del negocio que el armazón ya cargó (`useConfig`); mientras no llega pinta lo de omisión. No hace su propio viaje al servidor.',
+  },
+  {
+    pantalla: 'venta/AvisoDePropina',
+    estado: 'vacio',
+    razon: 'Un aviso con dos botones (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'venta/AvisoDePropina',
+    estado: 'cargando',
+    razon: 'Pinta lo que la Caja ya leyó; no hace viajes al servidor.',
+  },
+  {
+    pantalla: 'venta/AvisoDePropina',
+    estado: 'error',
+    razon:
+      'No hace viajes al servidor: el error de guardar la propina o de cobrar lo dice la Caja, que es quien llama.',
+  },
+  {
+    pantalla: 'configuracion/IvaDelNegocio',
+    estado: 'vacio',
+    razon:
+      'Tres opciones fijas (sin IVA, 8 % y 16 %) y un interruptor (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/NombresDeLasCajas',
+    estado: 'vacio',
+    razon:
+      'Un campo por lugar de caja (DP-21 · Bloque 5): el cupo va de 1 a 4, nunca hay cero lugares.',
+  },
+  {
+    pantalla: 'configuracion/NombresDeLasCajas',
+    estado: 'cargando',
+    razon:
+      'Lee la configuración del negocio que el armazón ya cargó (`useConfig`) y el cupo que le pasa «Cajas abiertas a la vez», que es quien pinta el esqueleto. No hace su propio viaje al servidor.',
+  },
+  {
+    pantalla: 'configuracion/TerminalesDeLaSucursal',
+    estado: 'vacio',
+    razon:
+      'Siempre está «Este aparato» (DP-21 · Bloque 5); la lista de los demás aparatos, si no hay ninguno, simplemente no se pinta: no es un vacío que haya que explicar.',
+  },
+  {
+    pantalla: 'configuracion/FoliosDelNegocio',
+    estado: 'vacio',
+    razon:
+      'Tres campos fijos (prefijo y los dos primeros folios) con valores de omisión (DP-21 · Bloque 6): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/CandadoDeMando',
+    estado: 'vacio',
+    razon:
+      'Un selector de minutos con opciones fijas (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/CandadoDeMando',
+    estado: 'cargando',
+    razon:
+      'Lee la configuración del negocio que el armazón ya cargó (`useConfig`); mientras no llega pinta los 10 minutos de omisión. No hace su propio viaje al servidor.',
+  },
+  {
+    pantalla: 'espera/CandadoDeLaSesion',
+    estado: 'vacio',
+    razon:
+      'Una capa que pide el PIN o no pinta nada (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'espera/CandadoDeLaSesion',
+    estado: 'cargando',
+    razon:
+      'Decide con la sesión del armazón y una marca del navegador, que responden al instante. El «comprobando» del PIN lo pinta `PedirPinAlDespertar`.',
+  },
+  {
+    pantalla: 'espera/CandadoDeLaSesion',
+    estado: 'error',
+    razon:
+      'No hace viajes al servidor: el PIN lo comprueba `PedirPinAlDespertar`, que es quien pinta el Aviso si el PIN no es o no hay conexión.',
+  },
+  {
+    pantalla: 'configuracion/AnuncioDeComandasDelAparato',
+    estado: 'vacio',
+    razon: 'Un interruptor de ESTE aparato (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/AnuncioDeComandasDelAparato',
+    estado: 'cargando',
+    razon:
+      'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
+  },
+  {
+    pantalla: 'configuracion/PruebaDeLaVozDeComandas',
+    estado: 'vacio',
+    razon:
+      'Un botón que dice una comanda de ejemplo fija (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/PruebaDeLaVozDeComandas',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la frase de ejemplo se arma al pintarse y la voz es del navegador. No hay viaje al servidor.',
+  },
+  {
     pantalla: 'configuracion/SonidoDelAparato',
     estado: 'vacio',
     razon:
@@ -1363,6 +1474,17 @@ export const SIN_ESTADO = [
     estado: 'cargando',
     razon:
       'La espera de cada prueba la dice su botón («Enviando…») y su resultado al lado: no hay un bloque que esperar.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabProbarCajon',
+    estado: 'vacio',
+    razon: 'Un botón de prueba y una pregunta de sí o no: no hay lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'impresion/pantallas/LabProbarCajon',
+    estado: 'cargando',
+    razon:
+      'La espera del pulso la dice el botón de prueba («Enviando…»); la pregunta «¿Se abrió el cajón?» sólo aparece cuando ya hay qué confirmar.',
   },
   {
     pantalla: 'impresion/pantallas/LabVistaPrevia',

@@ -8,6 +8,7 @@ import { useConfig } from '@/lib/ConfigContext';
 import { printDocument } from '@/lib/print';
 import { sonar } from '~/sonidos/gestor';
 import PreCuentaTicket from './PreCuentaTicket';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 /**
  * Dialog que muestra el ticket real de una venta y permite reimprimirlo.
@@ -61,14 +62,14 @@ export default function TicketViewerDialog({ venta, open, onClose }) {
 
   const handlePrint = () => {
     sonar('ticket');
-    printDocument({ mode: 'thermal', title: `Ticket-${venta?.folio || ''}` });
+    printDocument({ mode: 'thermal', title: `Ticket-${folioVisible(venta?.serie, venta?.folio, config, 'numero')}` });
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto p-0">
         <DialogHeader className="no-print px-5 pt-4 pb-3 border-b sticky top-0 bg-superficie z-10 flex-row items-center justify-between">
-          <DialogTitle className="font-heading">Ticket · {venta?.folio}</DialogTitle>
+          <DialogTitle className="font-heading">Ticket · {folioVisible(venta?.serie, venta?.folio, config, 'numero')}</DialogTitle>
           <div className="flex gap-2">
             {/* Si el ticket no se pudo leer entero, no se ofrece imprimirlo. */}
             {!error && (

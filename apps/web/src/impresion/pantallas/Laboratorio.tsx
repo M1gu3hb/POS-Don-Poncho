@@ -116,7 +116,7 @@ export function Laboratorio({
           <LabConexion app={app} {...props} />
           <LabMedidas {...props} />
           <LabCorte {...props} />
-          <LabCajon {...props} />
+          <LabCajon {...props} app={app} destino={completo.ok ? completo.perfil.destino : null} />
           <LabQueImprime {...props} />
           <LabPruebas
             app={app}

@@ -448,14 +448,16 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Registros.jsx",
-      "porque": "DP-12.4: pestaña «Cancelaciones» de Registros (cuentas canceladas y platillos anulados, con quién, cuándo, motivo, importe y marca de pérdida), porque el mesero ya cancela desde su pantalla y una cuenta cancelada no podía distinguirse de una venta más.",
+      "porque": "DP-12.4: pestaña «Cancelaciones» de Registros (cuentas canceladas y platillos anulados, con quién, cuándo, motivo, importe y marca de pérdida), porque el mesero ya cancela desde su pantalla y una cuenta cancelada no podía distinguirse de una venta más. DP-21 (Bloque 6): el folio de este aviso se dice con `folioVisible` (prefijo del negocio: «DP-01001», «DPC-0101»; sin prefijo, lo de siempre). Sólo cambia el texto del folio dentro del aviso.",
       "testigos": [
         "+ clase:gap-1",
         "+ clase:w-3",
         "+ clase:h-3",
         "+ clase:mt-4",
         "+ clase:space-y-3",
-        "+ icono:Ban"
+        "+ icono:Ban",
+        "- aviso:¿Eliminar corte ${c.folio}? Esta acción no se puede deshacer.",
+        "+ aviso:¿Eliminar corte ${folioVisible(c.serie, c.folio, config, 'numero')}? Esta acción no se puede deshacer."
       ]
     },
     {
@@ -627,8 +629,12 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Caja.jsx",
-      "porque": "DP-13.5 (QA1-5): la cuenta de una mesa se divide en su cobro; al dividir, el cobro se cierra y el aviso dice dónde quedan las partes.",
-      "testigos": ["+ aviso:Cuenta dividida: cobra cada parte en Pendientes."]
+      "porque": "DP-13.5 (QA1-5): la cuenta de una mesa se divide en su cobro; al dividir, el cobro se cierra y el aviso dice dónde quedan las partes. DP-21 (Bloque 6): el folio de este aviso se dice con `folioVisible` (prefijo del negocio: «DP-01001», «DPC-0101»; sin prefijo, lo de siempre). Sólo cambia el texto del folio dentro del aviso.",
+      "testigos": [
+        "+ aviso:Cuenta dividida: cobra cada parte en Pendientes.",
+        "- aviso:¿Seguro que quieres borrar este ticket en cero (${venta.folio})?\\nEsta acción no se puede deshacer.",
+        "+ aviso:¿Seguro que quieres borrar este ticket en cero (${folioVisible(venta.serie, venta.folio, config, 'numero')})?\\nEsta acción no se puede deshacer."
+      ]
     },
     {
       "archivo": "apps/web/heredado/pages/Mesero.jsx",
@@ -1759,6 +1765,69 @@
       "archivo": "apps/web/heredado/components/mesero/MeseroCartFAB.jsx",
       "porque": "DP-20.1: el alto máximo de la hoja del carrito del mesero pasa de un `style` en línea (`maxHeight: 88dvh`) a la clase `max-h-[88dvh]`, que mide lo mismo. Un motor sin `dvh` (Chromium anterior al 108) tiraba el estilo en línea y la hoja podía salirse de la pantalla; a la clase, el modo compatible le pone su respaldo en `vh`.",
       "testigos": ["+ clase:max-h-[88dvh]"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "porque": "DP-21 (Bloque 1, M9): el campo «IVA / Impuesto (%)» de Operación guardaba `iva_porcentaje`, una clave que nadie leía (el servidor cobra con `impuesto`). Lo sustituye la tarjeta «IVA» (`IvaDelNegocio`: sin IVA, 8 % o 16 %, y si los precios ya lo incluyen), que se monta como componente y guarda por su comando. El campo viejo, su ayuda y su «0» de relleno se van con él.",
+      "testigos": [
+        "- texto:IVA / Impuesto (%)",
+        "- texto:Porcentaje de IVA o impuesto. Si no manejas impuesto desglosado, déjalo en 0.",
+        "- placeholder:0"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/PedirCuentaQR.jsx",
+      "porque": "DP-21 (Bloque 4, M11): la propina se decide una sola vez. Si mientras el comensal tiene abierta su pantalla de propina la caja ya la eligió o la cuenta ya se cobró, la pantalla se cierra sola y lo dice («Tu propina ya quedó registrada en caja» o «Tu cuenta ya se pagó, ¡gracias!»). Ese aviso reusa el mismo velo y la misma hoja que la pantalla que sustituye: por eso sus clases aparecen una vez más. Nada de lo que se veía se quitó.",
+      "testigos": [
+        "+ clase:fixed",
+        "+ clase:inset-0",
+        "+ clase:z-50",
+        "+ clase:bg-velo/50",
+        "+ clase:flex",
+        "+ clase:items-end",
+        "+ clase:sm:items-center",
+        "+ clase:justify-center",
+        "+ clase:bg-card",
+        "+ clase:text-card-foreground",
+        "+ clase:w-full",
+        "+ clase:sm:max-w-md",
+        "+ clase:sm:rounded-2xl",
+        "+ clase:rounded-t-2xl",
+        "+ clase:shadow-2xl",
+        "+ clase:font-heading",
+        "+ clase:font-bold",
+        "+ clase:text-center",
+        "+ clase:text-lg",
+        "+ clase:p-6"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-21 (Bloque 4, M11 y O8): la propina que elige la Caja se guarda en el servidor en el momento (`cuenta.fijar_propina`), ya no hasta cobrar. Si ese guardado falla por algo que no es «otra pantalla la eligió antes» (eso sale en su propio aviso, con «Usar ésa» y «Cambiarla»), la Caja lo dice. Nada de lo que se veía se quitó.",
+      "testigos": ["+ aviso:No se pudo guardar la propina. Intenta de nuevo."]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-21 (Bloque 5, M1 y O9): la caja ya no es el aparato, es un lugar de la sucursal con su nombre. Al abrirla el aviso dice cuál se abrió («Caja principal abierta. Ya puedes cobrar.») en vez del genérico «Caja abierta…», y cuando hay dos lugares libres el aviso de «No hay caja abierta en este aparato» ofrece un botón por cada uno («Abrir Caja principal aquí», «Abrir Caja 2 aquí») con las mismas clases del botón «Abrir caja» que ya estaba.",
+      "testigos": [
+        "- aviso:Caja abierta. Ya puedes cobrar.",
+        "+ aviso:${abierta?.nombreDeLaCaja || 'Caja'} abierta. Ya puedes cobrar.",
+        "+ clase:flex",
+        "+ clase:shrink-0",
+        "+ clase:gap-2",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:mr-1",
+        "+ clase:flex-wrap"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/propinas/LiquidarPropinasDialog.jsx",
+      "porque": "DP-21 (Bloque 6): el folio de este aviso se dice con `folioVisible` (prefijo del negocio: «DP-01001», «DPC-0101»; sin prefijo, lo de siempre). Sólo cambia el texto del folio dentro del aviso.",
+      "testigos": [
+        "- aviso:Liquidación ${liquidacion?.folio || ''} registrada · ${formatCurrency(aPesos(liquidacion?.totalCentavos))}",
+        "+ aviso:Liquidación ${folioVisible(liquidacion?.serie, liquidacion?.folio, null, 'numero')} registrada · ${formatCurrency(aPesos(liquidacion?.totalCentavos))}"
+      ]
     }
   ]
 }

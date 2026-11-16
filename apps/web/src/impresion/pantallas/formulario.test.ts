@@ -36,6 +36,7 @@ function completo(destino: Destino): PerfilDeImpresion {
     pausaMs: 20,
     lineasAntesDelCorte: 6,
     corte: 'completo-con-avance',
+    tieneCajon: true,
     cajon: { ...cajonPorOmision(), pin: 5, modo: 'tiempo-real', alCobrarEnEfectivo: false },
     imprime: { ticket: true, precuenta: false, corte: true, cierre: false, estacion: 'Cocina' },
   };
@@ -59,8 +60,30 @@ describe('del perfil al formulario y de vuelta', () => {
   });
 
   it('un perfil sin cajón vuelve sin cajón', () => {
-    const perfil = { ...completo(RED), cajon: null };
+    const perfil = { ...completo(RED), tieneCajon: false, cajon: null };
     expect(perfilDesdeFormulario(formularioDesdePerfil(perfil))).toEqual({ ok: true, perfil });
+  });
+
+  it('DP-21 · el interruptor del cajón viaja en el formulario y un perfil nuevo lo trae apagado', () => {
+    expect(formularioDesdePerfil(completo(RED)).tieneCajon).toBe(true);
+    expect(formularioInicial().tieneCajon).toBe(false);
+    const apagado = perfilDesdeFormulario(conCampos({ tieneCajon: false }));
+    expect(apagado.ok && apagado.perfil).toMatchObject({ tieneCajon: false, cajon: null });
+  });
+
+  it('DP-21 · con el interruptor apagado, un pulso a medio teclear no estorba', () => {
+    const resultado = perfilDesdeFormulario(
+      conCampos({ tieneCajon: false, cajonEncendidoMs: 'abc' }),
+    );
+    expect(resultado.ok).toBe(true);
+  });
+
+  it('DP-21 · con el interruptor encendido, el pulso se valida', () => {
+    const resultado = perfilDesdeFormulario(
+      conCampos({ tieneCajon: true, cajonEncendidoMs: '9999' }),
+    );
+    expect(resultado.ok).toBe(false);
+    expect(!resultado.ok && resultado.errores.cajonEncendidoMs).toBeTruthy();
   });
 
   it('lo que sale siempre pasa el esquema del perfil', () => {

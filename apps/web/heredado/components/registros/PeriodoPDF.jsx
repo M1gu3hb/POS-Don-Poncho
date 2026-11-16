@@ -10,6 +10,7 @@ import {
   notaDeLasVentasSinReceta,
   textoDelMargen,
 } from '~/restaurante/margen-de-las-ventas';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 /**
  * PDF imprimible de un periodo seleccionado en Registros.
@@ -160,7 +161,7 @@ export default function PeriodoPDF({ data, config = {}, sinCostos = false }) {
           <tbody>
             {ventas.slice(0, 100).map((v) => (
               <tr key={v.id}>
-                <td className="border px-1.5 py-1 font-mono">{v.folio}</td>
+                <td className="border px-1.5 py-1 font-mono">{folioVisible(v.serie, v.folio, config, 'numero')}</td>
                 <td className="border px-1.5 py-1">
                   {v.fecha_cierre ? format(new Date(v.fecha_cierre), 'd/MM HH:mm') : ''}
                 </td>

@@ -71,16 +71,54 @@ export async function sesionActiva(
   empleoId: string,
   ahora: Date = new Date(),
 ): Promise<boolean> {
+  return (await vencimientoDeLaSesion(db, sid, empleoId, ahora)) !== null;
+}
+
+/**
+ * Cuándo vence una sesión VIVA, o `null` si no existe, se revocó o ya venció (DP-21).
+ *
+ * La vigencia que manda es ésta, la del servidor: la cookie y el `exp` del token sólo ponen el
+ * tope. Quien resuelve la sesión la usa para decidir si la renueva (`renovarSesion`).
+ */
+export async function vencimientoDeLaSesion(
+  db: Kysely<Esquema>,
+  sid: string,
+  empleoId: string,
+  ahora: Date = new Date(),
+): Promise<Date | null> {
   const fila = await db
     .selectFrom('sesiones')
-    .select('sid')
+    .select('expira_en')
     .where('sid', '=', sid)
     .where('empleo_id', '=', empleoId)
     .where('revocada_en', 'is', null)
     .where('expira_en', '>', ahora)
     .executeTakeFirst();
 
-  return fila !== undefined;
+  return fila?.expira_en ?? null;
+}
+
+/**
+ * Corre el vencimiento de una sesión que se acaba de usar (DP-21 · Bloque 2).
+ *
+ * Sólo ALARGA, y sólo una sesión que sigue viva: una revocada («Salir») o ya vencida no revive,
+ * y dos peticiones a la vez no pueden acortarla (la condición `expira_en < nueva` va en la
+ * misma sentencia que escribe).
+ */
+export async function renovarSesion(
+  db: Kysely<Esquema>,
+  sid: string,
+  nuevaExpiracion: Date,
+  ahora: Date = new Date(),
+): Promise<void> {
+  await db
+    .updateTable('sesiones')
+    .set({ expira_en: nuevaExpiracion })
+    .where('sid', '=', sid)
+    .where('revocada_en', 'is', null)
+    .where('expira_en', '>', ahora)
+    .where('expira_en', '<', nuevaExpiracion)
+    .execute();
 }
 
 /** Marca una sola sesión como revocada. Es idempotente para cierres repetidos. */

@@ -26,6 +26,8 @@ vi.mock('./traer.ts', () => ({
     abiertasEnLaSucursal: 1,
     puedoAbrir: false,
     cupoDeCajas: 1,
+    lugaresLibres: [],
+    nombresDeCajas: ['Caja principal'],
   }),
 }));
 
@@ -54,6 +56,7 @@ describe('D-3 · arqueo visible después del conteo', () => {
       id: '66666666-6666-4666-8666-666666666666',
       sucursalId: '22222222-2222-4222-8222-222222222222',
       terminalId: '33333333-3333-4333-8333-333333333333',
+      lugar: 1,
       serie: 'CC',
       fondoInicialCentavos: 200_000n,
       abiertaEn: new Date('2026-09-14T08:00:00.000Z'),

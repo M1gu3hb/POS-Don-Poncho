@@ -71,6 +71,16 @@
   ],
   "rutas": [
     {
+      "ruta": "/api/caja/cajon-por-cobro",
+      "comando": "caja.cajon_por_cobro",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "ordenId": "⟨ordenes⟩" },
+      "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
+    },
+    {
       "ruta": "/api/caja/cajon",
       "comando": "caja.abrir_cajon",
       "escribe": true,
@@ -1101,6 +1111,21 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
       "idRequerido": false,
       "cuerpo": { "ordenId": "⟨ordenes⟩" },
+      "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
+    },
+    {
+      "ruta": "/api/venta/fijar-propina",
+      "comando": "cuenta.fijar_propina",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": {
+        "ordenId": "⟨ordenes⟩",
+        "version": 0,
+        "propinaTipo": "sin_propina",
+        "propinaPuntosBase": 0
+      },
       "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
     },
     {

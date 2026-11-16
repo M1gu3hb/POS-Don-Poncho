@@ -17546,6 +17546,17 @@
       "generada": null
     },
     {
+      "clave": "public.sesiones_caja.lugar",
+      "esquema": "public",
+      "tabla": "sesiones_caja",
+      "columna": "lugar",
+      "tipo": "smallint",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.sesiones_caja.notas_apertura",
       "esquema": "public",
       "tabla": "sesiones_caja",
@@ -33256,6 +33267,17 @@
       "diferidaInicialmente": false
     },
     {
+      "clave": "public.sesiones_caja.sesiones_caja_lugar_valido",
+      "esquema": "public",
+      "tabla": "sesiones_caja",
+      "nombre": "sesiones_caja_lugar_valido",
+      "tipo": "check",
+      "definicion": "CHECK (lugar IS NULL OR lugar >= 1 AND lugar <= 4)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
       "clave": "public.sesiones_caja.sesiones_caja_organizacion_id_fkey",
       "esquema": "public",
       "tabla": "sesiones_caja",
@@ -38628,6 +38650,16 @@
       "primario": false,
       "valido": true,
       "definicion": "CREATE INDEX sesiones_caja_por_organizacion ON public.sesiones_caja USING btree (organizacion_id, abierta_en DESC)"
+    },
+    {
+      "clave": "public.sesiones_caja.sesiones_caja_un_lugar_abierto",
+      "esquema": "public",
+      "tabla": "sesiones_caja",
+      "nombre": "sesiones_caja_un_lugar_abierto",
+      "unico": true,
+      "primario": false,
+      "valido": true,
+      "definicion": "CREATE UNIQUE INDEX sesiones_caja_un_lugar_abierto ON public.sesiones_caja USING btree (organizacion_id, sucursal_id, lugar) WHERE ((estado = 'abierta'::text) AND (lugar IS NOT NULL))"
     },
     {
       "clave": "public.sesiones_caja.sesiones_caja_una_abierta_por_terminal",

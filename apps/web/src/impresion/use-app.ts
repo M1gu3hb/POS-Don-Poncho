@@ -5,7 +5,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 
 import { puenteDeLaApp, type Ajustes, type MorphiqApp } from './puente/contrato.ts';
 import { leerPerfil, type PerfilDeImpresion } from './termico/perfil.ts';
-import { aBase64, bytesDelCajon } from './termico/trabajo.ts';
+import { perfilParaLaApp } from './termico/perfil-para-la-app.ts';
 
 /**
  * ¿ESTA PÁGINA CORRE DENTRO DE LA APP? (DP-20 · Parte 2)
@@ -40,18 +40,6 @@ export interface PerfilDelAparato {
   readonly ajustes: Ajustes | undefined;
   /** Guarda el perfil EN EL APARATO, con el pulso del cajón ya armado para la app. */
   guardarPerfil(perfil: PerfilDeImpresion | null): Promise<void>;
-}
-
-/** El perfil como lo guarda la app: lo de la página, más los bytes del cajón que ella usa. */
-export function perfilParaLaApp(perfil: PerfilDeImpresion | null): unknown {
-  if (perfil === null) return null;
-  return {
-    ...perfil,
-    cajon:
-      perfil.cajon === null
-        ? null
-        : { ...perfil.cajon, base64: aBase64(bytesDelCajon(perfil.cajon)) },
-  };
 }
 
 export function usePerfilDelAparato(): PerfilDelAparato {

@@ -2,7 +2,6 @@ import type { Ambito } from '@morphiqpos/contracts';
 import { obtenerDb } from '@morphiqpos/data';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { cajonPorCobro } from '../caja/cajon-por-cobro.ts';
 import { copiasDeImpresionEn, fijarCopiasDeImpresion } from '../caja/copias-de-impresion.ts';
 import { comando } from '../produccion.ts';
 import { clave, exigirOk, sembrarCompanero } from '../pruebas/negocio-real.ts';
@@ -23,7 +22,7 @@ import { registrarImpresion } from './impresion-del-ticket.ts';
  *
  *   · Cada ticket que sale queda en la auditoría; la primera salida es la original y desde la
  *     segunda el servidor contesta «reimpresión». El reintento con la MISMA clave no cuenta.
- *   · El cajón que se abre al cobrar queda en la auditoría con quién y con qué cobro.
+ *   · El cajón que se abre al cobrar (con su X2) se prueba en `caja/cajon-por-cobro.integracion.test.ts`.
  *   · Las copias (1 a 3) las cambian sólo el dueño o el administrador, con antes y después.
  */
 
@@ -32,7 +31,6 @@ const POR_COMANDOS = 120_000;
 let salon: Salon;
 let otro: Salon;
 let cajera: Ambito;
-let mesero: Ambito;
 let gerente: Ambito;
 let dueno: Ambito;
 let ordenId = '';
@@ -41,11 +39,9 @@ beforeAll(async () => {
   salon = await sembrarSalon({ nombre: 'Fonda que imprime', mesas: 2, terminales: 1 });
   otro = await sembrarSalon({ nombre: 'La fonda de enfrente', mesas: 1, terminales: 1 });
   const cajeraId = await sembrarCompanero(salon.negocio, { nombre: 'La Cajera', rol: 'cajero' });
-  const meseroId = await sembrarCompanero(salon.negocio, { nombre: 'El Mesero', rol: 'mesero' });
   const gerenteId = await sembrarCompanero(salon.negocio, { nombre: 'La Gerente', rol: 'gerente' });
   const duenoId = await sembrarCompanero(salon.negocio, { nombre: 'Don Poncho', rol: 'dueno' });
   cajera = { ...ambitoDeCaja(salon), rol: 'cajero', empleoId: cajeraId };
-  mesero = { ...ambitoDeCaja(salon), rol: 'mesero', empleoId: meseroId };
   gerente = { ...ambitoDeCaja(salon), rol: 'gerente', empleoId: gerenteId };
   dueno = { ...ambitoDeCaja(salon), rol: 'dueno', empleoId: duenoId };
   await abrirLasCajas(salon);
@@ -105,36 +101,6 @@ describe('venta.registrar_impresion', () => {
     expect(ajena.ok).toBe(false);
     expect(await rastro('venta.registrar_impresion', otro.negocio.organizacionId)).toHaveLength(0);
   });
-});
-
-describe('caja.cajon_por_cobro', () => {
-  it(
-    'deja en la auditoría quién abrió el cajón y con qué cobro; el mesero no puede',
-    { timeout: POR_COMANDOS },
-    async () => {
-      const abierto = exigirOk(
-        await comando(cajonPorCobro, {
-          entrada: { referencia: '12' },
-          ambito: cajera,
-          idempotencyKey: clave(),
-        }),
-        'cajón por cobro',
-      );
-      expect(abierto.registrado).toBe(true);
-
-      const negado = await comando(cajonPorCobro, {
-        entrada: {},
-        ambito: mesero,
-        idempotencyKey: clave(),
-      });
-      expect(negado.ok).toBe(false);
-
-      const filas = await rastro('caja.cajon_por_cobro');
-      const aceptadas = filas.filter((f) => (f.payload as { motivo?: unknown }).motivo === 'cobro');
-      expect(aceptadas).toHaveLength(1);
-      expect(aceptadas[0]?.payload).toMatchObject({ referencia: '12', rol: 'cajero' });
-    },
-  );
 });
 
 describe('caja.fijar_copias_de_impresion', () => {
