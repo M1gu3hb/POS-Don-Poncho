@@ -211,6 +211,29 @@ export const SIN_ESTADO = [
       'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
   },
   {
+    pantalla: 'configuracion/AnuncioDeComandasDelAparato',
+    estado: 'vacio',
+    razon: 'Un interruptor de ESTE aparato (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/AnuncioDeComandasDelAparato',
+    estado: 'cargando',
+    razon:
+      'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
+  },
+  {
+    pantalla: 'configuracion/PruebaDeLaVozDeComandas',
+    estado: 'vacio',
+    razon:
+      'Un botón que dice una comanda de ejemplo fija (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/PruebaDeLaVozDeComandas',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la frase de ejemplo se arma al pintarse y la voz es del navegador. No hay viaje al servidor.',
+  },
+  {
     pantalla: 'configuracion/SonidoDelAparato',
     estado: 'vacio',
     razon:

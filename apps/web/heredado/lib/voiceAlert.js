@@ -558,59 +558,11 @@ export function fraseListoCocina(mesaNumero, nombreMesero, estacionNombre) {
 }
 
 /**
- * Frase descriptiva para cocina cuando llega un pedido nuevo.
- *
- * 🔴 HOTFIX BANDERA ROJA: ahora menciona ALERGIAS y CELEBRACIÓN cuando vienen
- * en el pedido. Las alergias son información de seguridad — siempre se anuncian
- * PRIMERO. La celebración va después. Si no hay, no se dice nada (no aparece
- * "undefined" ni "null").
- *
- * Reglas:
- *  - notas_alergias: se limita a 80 caracteres para no leer textos enormes.
- *  - celebracion / tipoCelebracion: solo se mencionan si celebracion=true.
- *  - Si notas_alergias es null/undefined/'' → no se anuncia alergia.
- *  - Anti-duplicado en speak() evita que se repita en bucle.
- *
- * @param {number|string} mesaNumero
- * @param {Array} items                array [{producto_nombre, cantidad, notas}]
- * @param {string} notaGeneral         nota global del pedido
- * @param {Object} [extras]            { notas_alergias, celebracion, tipo_celebracion }
+ * Frase descriptiva para cocina cuando llega un pedido nuevo (alergias primero, celebración,
+ * platillos juntos con su cantidad en palabras). DP-21: vive tipada en `~/voz/frase-de-la-comanda`;
+ * aquí se re-exporta para no cambiar a quien ya la importa de este módulo.
  */
-export function fraseNuevoPedidoCocina(mesaNumero, items, notaGeneral, extras) {
-  const safeItems = Array.isArray(items) ? items : [];
-  // DP-16 · Quien llama puede pasar el rótulo hablado («para llevar 3»): sale del canal.
-  const rotulo = typeof extras?.rotulo === 'string' ? extras.rotulo.trim() : '';
-  const mesaStr = rotulo || (mesaNumero ? `mesa ${mesaNumero}` : 'mostrador');
-  const partes = safeItems
-    .filter((i) => i && i.producto_nombre)
-    .slice(0, 8) // máximo 8 productos
-    .map((i) => {
-      const cant = Number(i.cantidad) > 1 ? `${i.cantidad} ` : '';
-      const nota = (i.notas || '').trim();
-      if (!nota) return `${cant}${i.producto_nombre}`.trim();
-      return `${cant}${i.producto_nombre}, ${nota}`.trim();
-    });
-  const cuerpo = partes.length > 0 ? partes.join(', ') : 'pedido nuevo';
-  const ng = (notaGeneral || '').trim();
-  const colaNota = ng ? ` Nota general: ${ng}.` : '';
-
-  // ALERGIAS — prioridad alta, hasta 80 chars para no leer textos enormes.
-  let prefijoAlerta = '';
-  const aler = (extras?.notas_alergias || '').trim();
-  if (aler) {
-    const resumen = aler.length > 80 ? aler.slice(0, 80) + '…' : aler;
-    prefijoAlerta = `Atención, alergia: ${resumen}. `;
-  }
-
-  // CELEBRACIÓN — solo si celebracion=true.
-  let colaCelebra = '';
-  if (extras?.celebracion === true) {
-    const tipo = (extras?.tipo_celebracion || '').trim();
-    colaCelebra = tipo ? ` Celebración: ${tipo}.` : ' Celebración especial.';
-  }
-
-  return `${prefijoAlerta}Nuevo pedido ${mesaStr}: ${cuerpo}.${colaNota}${colaCelebra}`;
-}
+export { fraseNuevoPedidoCocina } from '~/voz/frase-de-la-comanda';
 
 export function testVoice(nombre) {
   if (!isVoiceSupported()) return false;

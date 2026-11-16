@@ -11,6 +11,7 @@ import { Play } from 'lucide-react';
 
 import { invocarComando } from '~/cliente/api';
 import { useTextoDelAparato } from '~/cliente/texto-del-aparato';
+import { PruebaDeLaVozDeComandas } from './PruebaDeLaVozDeComandas';
 import { useExperiencia, type ExperienciaDelNegocio } from '~/proveedores/Experiencia';
 import { oir } from '~/sonidos/gestor';
 import {
@@ -188,6 +189,8 @@ export function SonidosDelNegocio() {
         filas={EVENTOS}
         claveDe={(evento) => evento}
       />
+      {/* DP-21: cómo dice cocina una comanda (cantidades, opciones, peso). */}
+      <PruebaDeLaVozDeComandas />
     </div>
   );
 }

@@ -47,6 +47,7 @@ import DatosSection from '@/components/datos/DatosSection';
 import ConfiguracionDeVoz from '@/components/configuracion/ConfiguracionDeVoz';
 import { SelectorDeApariencia } from '~/configuracion/SelectorDeApariencia';
 import { ExperienciaDelNegocio } from '~/configuracion/ExperienciaDelNegocio';
+import { AnuncioDeComandasDelAparato } from '~/configuracion/AnuncioDeComandasDelAparato';
 import { ModoEsperaDelAparato } from '~/configuracion/ModoEsperaDelAparato';
 import { AlertasDeEspera } from '~/cocina/AlertasDeEspera';
 import { SonidoDelAparato } from '~/configuracion/SonidoDelAparato';
@@ -534,6 +535,8 @@ export default function Configuracion() {
             <ModoEsperaDelAparato />
             {/* DP-11.3: cuánto suena ESTE aparato (Apagado, Suave, Normal). */}
             <SonidoDelAparato />
+            {/* DP-21: con dos pantallas en una estación, sólo la principal anuncia las comandas. */}
+            <AnuncioDeComandasDelAparato />
           </div>
         </TabsContent>
 
