@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import {
+  hayCambios,
+  leidoDe,
+  parcheDeLaSeccion,
+  ponerAlDia,
+  seToco,
+} from '~/configuracion/parche-de-la-seccion';
 import { Upload, Save, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -60,6 +66,7 @@ export default function IdentidadNegocio({ cfg, grupo = 'marca' }) {
   const queryClient = useQueryClient();
   // DP-18: lo que se leyó al hidratar; al guardar sólo viaja lo que difiere de esto.
   const leido = useRef({});
+  const alLlenar = useRef(null);
   const [form, setForm] = useState({
     nombre_negocio: '',
     nombre_sistema: '',
@@ -117,7 +124,10 @@ export default function IdentidadNegocio({ cfg, grupo = 'marca' }) {
       };
       // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo no tocado, no.
       leido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
-      return desdeLaConfig;
+      // DP-21 · Bloque 21: otra tarjeta que guarda no borra lo que aquí está a medias.
+      const antes = alLlenar.current;
+      alLlenar.current = desdeLaConfig;
+      return ponerAlDia(f, antes, desdeLaConfig);
     });
   }, [cfg?.id, cfg?.updated_date]);
 
@@ -161,7 +171,8 @@ export default function IdentidadNegocio({ cfg, grupo = 'marca' }) {
       colorear_importes_monetarios: form.colorear_importes_monetarios,
     }).filter(([clave]) => clavesDelGrupo.includes(clave)),
   );
-  const sucia = !!cfg?.id && hayCambios(parcheDeLaSeccion(seccionDelGrupo, leido.current));
+  // DP-21: «con cambios» es lo que se tocó desde que se llenó, no lo que nunca se guardó.
+  const sucia = !!cfg?.id && seToco(seccionDelGrupo, alLlenar.current);
   useCambiosSinGuardar('identidad:' + grupo, sucia);
 
   const save = async () => {

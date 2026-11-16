@@ -1078,8 +1078,10 @@ export async function prepararElPortalDelComensal(
     )
     .toEqual([true, 'cliente_solicita', envian, abrenMesa]);
 
-  // 4 · Portal QR → Mesas QR: los códigos que se imprimen. El botón pregunta con el diálogo del
+  // 4 · Portal QR → Mesas QR: los códigos que se imprimen. Desde DP-21 los ajustes del portal viven
+  // en Configuración, así que hay que IR a la pantalla del Portal QR. El botón pregunta con el diálogo del
   // navegador.
+  await duena.goto('/portal-qr');
   await duena.getByRole('tab', { name: 'Mesas QR' }).click();
   duena.once('dialog', (aviso) => {
     void aviso.accept();

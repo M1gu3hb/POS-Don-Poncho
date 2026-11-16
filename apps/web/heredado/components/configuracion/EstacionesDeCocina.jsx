@@ -8,7 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { UtensilsCrossed } from 'lucide-react';
 import { toast } from 'sonner';
-import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import {
+  hayCambios,
+  leidoDe,
+  parcheDeLaSeccion,
+  ponerAlDia,
+  seToco,
+} from '~/configuracion/parche-de-la-seccion';
 import { useCambiosSinGuardar } from '~/configuracion/cambios-sin-guardar';
 import EstacionesPreparacionSection from '@/components/configuracion/EstacionesPreparacionSection';
 import EstacionesAyuda from '@/components/configuracion/EstacionesAyuda';
@@ -23,6 +29,7 @@ import EstacionesAyuda from '@/components/configuracion/EstacionesAyuda';
 export default function EstacionesDeCocina({ cfg }) {
   const queryClient = useQueryClient();
   const leido = useRef({});
+  const alLlenar = useRef(null);
   const [activas, setActivas] = useState(false);
   const [guardado, setGuardado] = useState(false);
 
@@ -32,11 +39,20 @@ export default function EstacionesDeCocina({ cfg }) {
       estaciones_preparacion_activas: cfg.estaciones_preparacion_activas === true,
     };
     leido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
-    setActivas(desdeLaConfig.estaciones_preparacion_activas);
+    // DP-21 · Bloque 21: otra tarjeta que guarda no borra lo que aquí está a medias.
+    const antes = alLlenar.current;
+    alLlenar.current = desdeLaConfig;
+    setActivas(
+      (enPantalla) =>
+        ponerAlDia({ estaciones_preparacion_activas: enPantalla }, antes, desdeLaConfig)
+          .estaciones_preparacion_activas,
+    );
   }, [cfg?.id, cfg?.updated_date]);
 
   const parche = parcheDeLaSeccion({ estaciones_preparacion_activas: activas }, leido.current);
-  const sucia = !!cfg?.id && hayCambios(parche);
+  // DP-21: «con cambios» es lo que se tocó desde que se llenó, no lo que nunca se guardó.
+  const sucia =
+    !!cfg?.id && seToco({ estaciones_preparacion_activas: activas }, alLlenar.current);
   useCambiosSinGuardar('estaciones', sucia);
 
   const guardar = async () => {

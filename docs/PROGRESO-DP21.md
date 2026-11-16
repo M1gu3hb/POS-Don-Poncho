@@ -84,7 +84,7 @@ el tiempo, se cae lo último.
 2 s: el mismo ruido ambiental de DP-18). La cadena se detuvo ahí; la CI de `faed6cc` estaba en
 verde (PR #31).
 
-## Estado por bloque (16-11, 03:00)
+## Estado por bloque (16-11, 04:10)
 
 | Bloque | Qué | PR | Estado |
 | --- | --- | --- | --- |
@@ -96,10 +96,10 @@ verde (PR #31).
 | 6 | Folios de verdad | A | hecho (`43ab909`, agente 2) · DP-D128 · e2e `folios-con-prefijo.spec.ts` |
 | 7 | El cajón | A | hecho (`8af0c71`, agente) · DP-D133 |
 | 8 | La voz de cocina | A | hecho (`c45370f`, agente 1) · DP-D133 |
-| 9 | Lo táctil | B | hecho por el agente 1 (`f9b8167`), unido a `dp-21-b`; falta mi revisión y probar en aparato |
-| 10 | Cambiar de mesa | B | pendiente (sesión principal) |
-| 11 | Gastos de Caja = Compras y gastos | B | pendiente (sesión principal) |
-| 12 | El ticket a tu gusto | B | pendiente (sesión principal) |
+| 9 | Lo táctil | B | hecho por el agente 1 (`f9b8167`), en `dp-21-pr-b`; falta probar en aparato |
+| 10 | Cambiar de mesa | B | hecho (`a019fe3`) · 9 mutantes muertos · e2e `cambiar-de-mesa-en-el-mapa.spec.ts` |
+| 11 | Gastos de Caja = Compras y gastos | B | agente 2, en curso |
+| 12 | El ticket a tu gusto | B | hecho por el agente 2 (`511e441`) · `test:impresion` 20 de 20 |
 | 13 | El tablero | C | pendiente |
 | 14 | Configuración limpia | C | pendiente |
 | 15 | Colores del iMin | B | agente 1, en curso |
@@ -108,7 +108,7 @@ verde (PR #31).
 | 18 | Los cortes en una carpeta (app 1.0.2) | C | pendiente |
 | 19 | Lo que quedó de DP-19 | C | pendiente |
 | 20 | Lo desconectado, roto o sin propósito | B y C | inventario hecho (`docs/reports/012-anexo-inventario.md`, 128 renglones) |
-| 21 | La Configuración, ordenada | B | mapa en `docs/CONFIGURACION-MAPA.md`; mudanza: agente 2, en curso |
+| 21 | La Configuración, ordenada | B | mudanza hecha por el agente 2 (`097b6b9`): 16 secciones, 49 tarjetas; e2e `configuracion-secciones.spec.ts` |
 
 ### Ramas
 
@@ -150,11 +150,30 @@ verde (PR #31).
   `sin-instalacion`, `cajas-del-negocio`, `sin-iva`, `folios-con-prefijo` y
   `propina-una-sola-verdad`.
 
+### PR A en producción (16-11, 04:01)
+
+- [PR #32](https://github.com/M1gu3hb/POS-Don-Poncho/pull/32) unido a `main` como `13e9d77`, con la CI
+  en 10 de 10. La primera vuelta de la CI encontró dos cosas que el `verify` local por partes no
+  había visto y se corrigieron antes de unir: una prueba de integración del cupo que esperaba el
+  mensaje de antes («Caja 1» era el aparato), y el día completo, que pide la cuenta con la mesera
+  eligiendo la propina (el restaurante de prueba enciende ahora esa casilla; DP-D131).
+- Despliegue de **Production** «Ready» con `13e9d77`. **Humo sin sesión y sin cobrar: 19 de 19**
+  (`D:\mpos-tmp\dp21\humo-produccion.sh`; contra la versión anterior marcaba justo las 8 cosas
+  nuevas: las 6 rutas del PR A y el manifiesto). **0 errores de ejecución en Vercel.**
+- Producción, sólo leyendo, después del despliegue: lo mismo que al empezar (9 cuentas pagadas,
+  $3,050.80; 1 caja cerrada; 35 terminales «Caja N»; cupo 1). Nada se escribió salvo la 193.
+- Lo que cambia para Miguel desde ese momento: el mando y la caja teclean su PIN al abrir la app;
+  el mesero ya no pregunta la propina; el IVA sigue en 16 % incluido hasta que él elija «Sin IVA».
+- Lección: antes de subir, correr la integración COMPLETA y las suites que corre la CI
+  (`restaurante`, `dia-completo-restaurante`, `rastreo`), no sólo las del bloque. Variables del
+  restaurante de prueba para correrlas en local: las del flujo `verificar.yml`.
+
 ## Lo que sigue
 
-1. Cerrar el PR A: e2e de sus bloques contra un solo build, `verify` local completo,
-   `test:impresion`, migración 193 a producción (`pnpm db:migrate`, ensayo antes), PR, CI (regenerar
-   los retratos de `/configuracion` de la galería), unir, esperar la fila **Production**, humo sin
-   cobrar y una hora de errores de Vercel.
-2. PR B: revisar el Bloque 9, hacer los Bloques 10, 11 y 12, recibir el 15 y la mudanza del 21.
+1. PR B (11:00): está ensamblándose en `dp-21-pr-b` (árbol `.work\dp20`): el PR A + Bloque 9
+   (táctil) + Bloque 10 (cambiar de mesa) + Bloque 12 (el ticket a tu gusto) + Bloque 21 (la
+   mudanza). Faltan el Bloque 11 (agente 2, en curso), el Bloque 15 (agente 1, en curso) y lo de
+   dinero, seguridad y datos del Bloque 20. Luego: e2e, `verify`, integración completa, las suites
+   de la CI en local, retratos de la galería (`/configuracion` cambió entera), PR, CI, unir, humo.
+2. Vigilar los errores de Vercel del PR A hasta las 05:00.
 3. PR C y la Parte final (simulador, lista para Miguel a las 14:00, dejar en ceros con sus dos «sí»).

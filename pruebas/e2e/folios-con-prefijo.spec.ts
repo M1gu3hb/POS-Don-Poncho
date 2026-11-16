@@ -69,7 +69,7 @@ async function resetear(duena: Page): Promise<void> {
 
 /** La dueña pone prefijo y primeros folios en la tarjeta «Folios» y espera su «Guardado». */
 async function fijarLosFolios(duena: Page): Promise<void> {
-  await duena.goto('/configuracion?tab=negocio');
+  await duena.goto('/configuracion?seccion=ticket-y-folios');
   const tarjeta = duena.getByRole('region', { name: 'Folios' });
   const prefijo = tarjeta.getByLabel('Prefijo del folio');
   const cuentas = tarjeta.getByLabel('Primer folio de las cuentas');

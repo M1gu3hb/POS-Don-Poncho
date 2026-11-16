@@ -2,10 +2,13 @@ import { expect, test } from '@playwright/test';
 
 import {
   abrirLaMesa,
+  alMapa,
   CARTA,
   comandar,
   dialogoDeLaMesa,
+  laMesa,
   mesaEnElServidor,
+  yaAbierto,
   type PlatilloPedido,
 } from './ayudantes/mesas-heredadas.ts';
 import { Equipo } from './ayudantes/roles.ts';
@@ -56,6 +59,10 @@ test.describe('cambiar de mesa sin salir del mapa (DP-21 · Bloque 10)', () => {
 
     const { ordenId } = await abrirLaMesa(lupita, duena, ORIGEN, 2);
     await comandar(lupita, ORIGEN, PEDIDO);
+    // «Nos pasamos a la 5» llega después: la mesera vuelve al mapa y abre la mesa otra vez.
+    await alMapa(lupita);
+    await laMesa(lupita, ORIGEN).click();
+    await yaAbierto(dialogoDeLaMesa(lupita, ORIGEN));
     // Las navegaciones de página entera, para probar que NINGUNA ocurre al cambiar de mesa.
     const navegaciones: string[] = [];
     lupita.on('framenavigated', (marco) => {

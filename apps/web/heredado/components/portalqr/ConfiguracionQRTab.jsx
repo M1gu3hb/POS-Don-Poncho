@@ -16,7 +16,13 @@ import {
 } from '@/components/ui/select';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import {
+  hayCambios,
+  leidoDe,
+  parcheDeLaSeccion,
+  ponerAlDia,
+  seToco,
+} from '~/configuracion/parche-de-la-seccion';
 import { useCambiosSinGuardar } from '~/configuracion/cambios-sin-guardar';
 
 /** DP-21 · Bloque 21: el portal se reparte en tres tarjetas; cada una guarda sólo estas claves. */
@@ -75,6 +81,7 @@ export default function ConfiguracionQRTab({ config, grupo = 'activacion', conMe
   const [saving, setSaving] = useState(false);
   // DP-18: lo que se leyó al llenar el formulario; al guardar sólo viaja lo que difiere de esto.
   const leido = useRef({});
+  const alLlenar = useRef(null);
 
   useEffect(() => {
     if (!config) return;
@@ -99,7 +106,11 @@ export default function ConfiguracionQRTab({ config, grupo = 'activacion', conMe
     };
     // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo guardado y no tocado, no.
     leido.current = leidoDe(config, Object.keys(desdeLaConfig));
-    setForm(desdeLaConfig);
+    // DP-21 · Bloque 21: otra tarjeta que guarda (o un aparato que cambia algo) no borra lo que
+    // aquí se eligió y todavía no se guarda.
+    const antes = alLlenar.current;
+    alLlenar.current = desdeLaConfig;
+    setForm((enPantalla) => ponerAlDia(enPantalla, antes, desdeLaConfig));
   }, [config]);
 
   // DP-21 · Bloque 21: cada tarjeta del portal guarda SÓLO sus claves.
@@ -107,7 +118,8 @@ export default function ConfiguracionQRTab({ config, grupo = 'activacion', conMe
   const delGrupo = Object.fromEntries(
     Object.entries(form).filter(([clave]) => clavesDelGrupo.includes(clave)),
   );
-  const sucia = !!config?.id && hayCambios(parcheDeLaSeccion(delGrupo, leido.current));
+  // DP-21: «con cambios» es lo que se tocó desde que se llenó, no lo que nunca se guardó.
+  const sucia = !!config?.id && seToco(delGrupo, alLlenar.current);
   useCambiosSinGuardar('portal:' + grupo, sucia);
 
   const guardar = async () => {

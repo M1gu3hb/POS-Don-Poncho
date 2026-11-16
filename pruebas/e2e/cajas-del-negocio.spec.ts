@@ -22,7 +22,7 @@ import { abrirCajaPorLaRuta, soltarLaCaja } from './ayudantes/sesion.ts';
 const SLUG = 'prueba-restaurante';
 
 async function fijarCupo(page: Page, cajas: 1 | 2): Promise<void> {
-  await page.goto('/configuracion?tab=caja');
+  await page.goto('/configuracion?seccion=caja');
   const boton = page.getByRole('button', { name: cajas === 1 ? '1 caja' : '2 cajas', exact: true });
   await boton.click();
   await expect(boton).toHaveAttribute('aria-pressed', 'true');

@@ -14,12 +14,12 @@ import { invocarComando } from '~/cliente/api';
 import {
   AJUSTES_DE_TARJETAS,
   formularioDe,
-  hayCambiosEn,
   parcheDe,
   type Campo,
   type Formulario,
 } from './ajustes-de-tarjetas.ts';
 import { useCambiosSinGuardar } from './cambios-sin-guardar.ts';
+import { ponerAlDia, seToco } from './parche-de-la-seccion.ts';
 
 /**
  * UNA TARJETA DE AJUSTES SENCILLOS (DP-21 · Bloque 21): sus campos, su «Guardar» y su «✓ Guardado».
@@ -52,21 +52,29 @@ export function TarjetaDeAjustes({
   const [fallo, setFallo] = useState<string | null>(null);
   const [listo, setListo] = useState(false);
   const hidratadaCon = useRef<unknown>(null);
+  /** El formulario como quedó la última vez que se llenó: contra eso se sabe qué se tecleó. */
+  const alLlenar = useRef<Formulario | null>(null);
 
   const version = configuracion?.['updated_date'];
   useEffect(() => {
     if (ajustes === undefined || configuracion === null) return;
-    // Sólo se vuelve a llenar cuando la configuración cambió en el servidor: no pisa lo que se tecleó.
+    // Sólo se vuelve a llenar cuando la configuración cambió en el servidor, y sin pisar lo que se
+    // tecleó: otra tarjeta que guarda no borra lo que aquí está a medias (`ponerAlDia`).
     if (hidratadaCon.current === version) return;
     hidratadaCon.current = version;
-    setFormulario(formularioDe(ajustes, configuracion));
+    const delServidor = formularioDe(ajustes, configuracion);
+    const antes = alLlenar.current;
+    alLlenar.current = delServidor;
+    setFormulario((enPantalla) => ponerAlDia(enPantalla, antes, delServidor));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version]);
 
   const sucia =
     ajustes !== undefined &&
     configuracion !== null &&
-    hayCambiosEn(ajustes, formulario, configuracion);
+    // Contra lo que la configuración de ahora pondría en el formulario (con sus valores por
+    // omisión): un ajuste que nunca se guardó no cuenta como cambio.
+    seToco(formulario, formularioDe(ajustes, configuracion));
   useCambiosSinGuardar(`ajustes:${id}`, sucia);
 
   if (ajustes === undefined) return null;

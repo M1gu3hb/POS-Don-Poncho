@@ -3,7 +3,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { api } from '@/api/cliente';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import {
+  hayCambios,
+  leidoDe,
+  parcheDeLaSeccion,
+  ponerAlDia,
+  seToco,
+} from '~/configuracion/parche-de-la-seccion';
 import { useCambiosSinGuardar } from '~/configuracion/cambios-sin-guardar';
 import { AlertasDeEspera } from '~/cocina/AlertasDeEspera';
 
@@ -15,6 +21,7 @@ import { AlertasDeEspera } from '~/cocina/AlertasDeEspera';
 export default function AlertasDeEsperaDeCocina({ cfg }) {
   const queryClient = useQueryClient();
   const leido = useRef({});
+  const alLlenar = useRef(null);
   const [minutos, setMinutos] = useState({
     cocina_alerta_ambar_min: 10,
     cocina_alerta_roja_min: 20,
@@ -28,11 +35,15 @@ export default function AlertasDeEsperaDeCocina({ cfg }) {
       cocina_alerta_roja_min: cfg.cocina_alerta_roja_min ?? 20,
     };
     leido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
-    setMinutos(desdeLaConfig);
+    // DP-21 · Bloque 21: otra tarjeta que guarda no borra lo que aquí está a medias.
+    const antes = alLlenar.current;
+    alLlenar.current = desdeLaConfig;
+    setMinutos((enPantalla) => ponerAlDia(enPantalla, antes, desdeLaConfig));
   }, [cfg?.id, cfg?.updated_date]);
 
   const parche = parcheDeLaSeccion(minutos, leido.current);
-  const sucia = !!cfg?.id && hayCambios(parche);
+  // DP-21: «con cambios» es lo que se tocó desde que se llenó, no lo que nunca se guardó.
+  const sucia = !!cfg?.id && seToco(minutos, alLlenar.current);
   useCambiosSinGuardar('alertas-de-espera', sucia);
 
   const guardar = async () => {

@@ -133,7 +133,7 @@ export default function Configuracion() {
   if (configLoading && !cfg) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Configuración" description="Ajustes de Morphiq POS" />
+        <PageHeader title="Configuración" description="Ajustes de POS Don Poncho" />
         <Card>
           <CardContent className="py-12 flex flex-col items-center gap-3 text-muted-foreground">
             <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-primary rounded-full animate-spin" />
@@ -319,7 +319,7 @@ export default function Configuracion() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Configuración" description="Ajustes de Morphiq POS" />
+      <PageHeader title="Configuración" description="Ajustes de POS Don Poncho" />
       {isMobile ? (
         seccion === null ? (
           lista
