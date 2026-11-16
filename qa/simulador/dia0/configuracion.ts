@@ -65,33 +65,49 @@ async function alertasDeCocina(d: Dia0): Promise<void> {
   await irAConfiguracion(d, 'Operación');
   const ambar = pagina.getByLabel('Ámbar desde (minutos)');
   const rojo = pagina.getByLabel('Rojo desde (minutos)');
-  await ambar.fill(String(CONFIGURACION.alertaAmbarMinutos));
-  await rojo.fill(String(CONFIGURACION.alertaRojoMinutos));
-  const seccion = rojo.locator('xpath=ancestor::div[.//button[normalize-space()="Guardar"]][1]');
-  const guardado = esperarPost(pagina, '/api/datos/escribir');
-  await seccion.getByRole('button', { name: 'Guardar', exact: true }).click();
-  expect((await guardado).status()).toBe(200);
+  // DP-21: la tarjeta guarda sólo si algo cambió (con lo mismo, «Guardar» no hace nada): idempotente.
+  const yaEstan =
+    (await ambar.inputValue()) === String(CONFIGURACION.alertaAmbarMinutos) &&
+    (await rojo.inputValue()) === String(CONFIGURACION.alertaRojoMinutos);
+  if (!yaEstan) {
+    await ambar.fill(String(CONFIGURACION.alertaAmbarMinutos));
+    await rojo.fill(String(CONFIGURACION.alertaRojoMinutos));
+    await guardarLaTarjeta(pagina, rojo);
+  }
   d.nota(
     'configuracion',
     `alertas de cocina: ámbar ${String(CONFIGURACION.alertaAmbarMinutos)} min, rojo ${String(CONFIGURACION.alertaRojoMinutos)} min`,
   );
 }
 
+/** La tarjeta más chica que trae el control y su «Guardar» (cada tarjeta de Configuración guarda lo suyo). */
+function tarjetaDe(control: Locator): Locator {
+  return control.locator('xpath=ancestor::*[.//button[normalize-space()="Guardar"]][1]');
+}
+
+async function guardarLaTarjeta(pagina: Page, control: Locator): Promise<void> {
+  const guardado = esperarPost(pagina, '/api/datos/escribir');
+  await tarjetaDe(control).getByRole('button', { name: 'Guardar', exact: true }).click();
+  expect((await guardado).status()).toBe(200);
+}
+
+/**
+ * DP-21 · El portal es la sección «Portal de comensales» de Configuración, con una tarjeta por tema
+ * y su propio «Guardar»: el modo del menú está en «Activación y menú» y la propina del comensal en
+ * «Cuenta y propina desde QR».
+ */
 async function menuYPropina(d: Dia0): Promise<void> {
   const { pagina } = d;
-  await ir(d, '/portal-qr');
-  await pagina.getByRole('tab', { name: 'Configuración', exact: true }).click();
+  await ir(d, '/configuracion?seccion=portal');
   const modo = pagina.getByRole('combobox', { name: 'Cómo se ve el menú' });
   await expect(modo).toBeVisible();
   if (!(await modo.innerText()).includes(CONFIGURACION.modoDelMenu)) {
     await modo.click();
     await pagina.getByRole('option', { name: CONFIGURACION.modoDelMenu, exact: true }).click();
+    await guardarLaTarjeta(pagina, modo);
   }
   const propina = filaDe(pagina, 'Propina elegida por comensal desde QR').getByRole('switch');
-  await fijarInterruptor(propina, true);
-  const guardado = esperarPost(pagina, '/api/datos/escribir');
-  await pagina.getByRole('button', { name: 'Guardar configuración' }).click();
-  expect((await guardado).status()).toBe(200);
+  if (await fijarInterruptor(propina, true)) await guardarLaTarjeta(pagina, propina);
   d.anotar({
     tipo: 'cambio_en_vivo',
     que: 'modo del menú del comensal',

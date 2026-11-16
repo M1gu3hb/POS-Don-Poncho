@@ -22,6 +22,10 @@ import { pasoOpciones } from './opciones.ts';
 import { pasoProductos } from './productos.ts';
 import { pasoUsuarios } from './usuarios.ts';
 
+// DP-21 · Las secciones de Configuración cargan sus tarjetas al leer la configuración: en la máquina de QA
+// eso pasa de los 5 s que da `expect` por omisión.
+expect.configure({ timeout: 30_000 });
+
 /** El orden importa: las estaciones antes que sus cocineros y los insumos antes que las recetas. */
 export const PASOS: readonly { readonly nombre: string; readonly correr: PasoDelDia0 }[] = [
   { nombre: 'estaciones', correr: pasoEstaciones },

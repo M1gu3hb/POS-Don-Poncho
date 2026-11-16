@@ -87,10 +87,9 @@ export async function traerLaCaja(pagina: Page, abiertaPor?: string): Promise<vo
   const cajas = seccion.getByRole('listitem');
   // Sin nombre (la caja heredada del día 0, de quien sea) se traslada la primera.
   const suya =
-    abiertaPor === undefined
-      ? cajas.first()
-      : cajas.filter({ hasText: `abierta por ${abiertaPor} desde` });
-  await suya.getByRole('button', { name: 'Trasladar aquí' }).click();
+    abiertaPor === undefined ? cajas.first() : cajas.filter({ hasText: `por ${abiertaPor} desde` });
+  // DP-21: «Traer Caja principal a este aparato» (la caja es un lugar con nombre).
+  await suya.getByRole('button', { name: /^Traer .+ a este aparato$/ }).click();
   const r = await tocarYEsperar(
     pagina,
     suya.getByRole('button', { name: 'Sí, trasladarla' }),

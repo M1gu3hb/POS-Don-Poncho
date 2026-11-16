@@ -39,6 +39,33 @@ export async function sesionVencida(pagina: Page, entorno: Entorno): Promise<boo
   return respuesta.status() === 401 || respuesta.status() === 403;
 }
 
+/** La marca con la que la app sabe que ESTA ejecución ya tecleó el PIN (`espera/pin-de-esta-ejecucion.ts`). */
+const CLAVE_DEL_PIN_DE_ESTA_EJECUCION = 'morphiqpos.pin-de-esta-ejecucion';
+
+/**
+ * DP-21 · Quien tiene un puesto de mando (dueño, gerente, cajero, almacén) ve el candado de PIN en toda
+ * página que no traiga la marca de «ya tecleé el PIN en esta ejecución». Un bot que acaba de teclear
+ * su PIN lo hizo: se le pone la marca (con el id de su empleo, como la deja el arnés e2e) en todas las
+ * páginas del contexto, también en las que abra después y en las que recargue. No se imprime ningún PIN.
+ */
+export async function marcarElPinTecleado(pagina: Page): Promise<void> {
+  const contexto = pagina.context();
+  const respuesta = await contexto.request.get('/api/catalogo/sesion').catch(() => null);
+  if (respuesta?.status() !== 200) return;
+  const cuerpo = (await respuesta.json()) as { readonly datos?: { readonly id?: unknown } };
+  const empleoId = cuerpo.datos?.id;
+  if (typeof empleoId !== 'string') return;
+  const poner = ([clave, empleo]: readonly [string, string]): void => {
+    try {
+      window.sessionStorage.setItem(clave, empleo);
+    } catch {
+      // Sin almacén no hay marca: la pantalla pedirá el PIN, como a cualquiera.
+    }
+  };
+  await contexto.addInitScript(poner, [CLAVE_DEL_PIN_DE_ESTA_EJECUCION, empleoId] as const);
+  await pagina.evaluate(poner, [CLAVE_DEL_PIN_DE_ESTA_EJECUCION, empleoId] as const);
+}
+
 /** Toca la tarjeta de la persona y teclea su PIN en la pantalla de acceso que ya está abierta. */
 async function tocarTarjetaYTeclear(
   pagina: Page,
@@ -64,6 +91,7 @@ async function tocarTarjetaYTeclear(
       timeout: ESPERA_MS,
       waitUntil: 'commit',
     });
+    await marcarElPinTecleado(pagina);
     return 'entro';
   }
   return estado === 423 || estado === 429 ? 'bloqueado' : 'pin_rechazado';

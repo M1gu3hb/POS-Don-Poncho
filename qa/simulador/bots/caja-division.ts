@@ -155,6 +155,15 @@ function ventaSegunLaPantalla(total: number, propina: Propina): number {
   return aprox;
 }
 
+const PORCENTAJES: readonly Propina[] = [5, 10, 15, 20];
+
+/** El porcentaje que el cobro de la parte ya trae sumado («Propina (5%)»); sin la línea, sin propina. */
+async function propinaQueTraeLaParte(parte: Locator): Promise<Propina> {
+  const texto = await parte.innerText();
+  const porcentaje = Number(/Propina \((\d+)%\)/.exec(texto)?.[1] ?? 0);
+  return PORCENTAJES.find((p) => p === porcentaje) ?? 'Sin propina';
+}
+
 async function cobrarLasPartes(
   ctx: ContextoDelBot,
   bot: Bot,
@@ -202,10 +211,14 @@ async function cobrarLasPartes(
           alOcultarse,
         ),
     );
-    // La parte nace sin propina: la que la cajera eligió al abrirla se suma al «TOTAL A COBRAR»…
-    // si la pantalla se la preguntó. Una cuenta del portal donde el cliente eligió «Sin propina» no
-    // la pregunta, y sus partes van sin propina (D1-011 a D1-016, críticos falsos de la quinta corrida).
-    const deLaCaja: Propina = laCajaDecidioLaPropina(pagina) ? propina : 'Sin propina';
+    // Si la pantalla le preguntó la propina a la cajera, se suma la que eligió. Si no, la parte trae la
+    // propina que la cuenta ya tenía: la de la casa (DP-21: la fija la Caja/el comensal, no el mesero)
+    // o la que el cliente eligió en el portal; se lee de la línea «Propina (N%)» del cobro y se exige
+    // que el total sea la venta más ESE porcentaje. «Sin propina» no pone línea (D1-011 a D1-016, y
+    // D1-006 a D1-008 de la corrida sobre a69b8b2, críticos falsos: el bot suponía cero).
+    const deLaCaja: Propina = laCajaDecidioLaPropina(pagina)
+      ? propina
+      : await propinaQueTraeLaParte(parte);
     const enPantalla = await totalEnPantalla(parte);
     const venta = estado.esperadas?.[n - 1] ?? ventaSegunLaPantalla(enPantalla, deLaCaja);
     estado.efectivo += await cobrarEnElDialogo(ctx, bot, pagina, caja, parte, {

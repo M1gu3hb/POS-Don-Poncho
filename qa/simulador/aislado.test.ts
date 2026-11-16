@@ -39,7 +39,8 @@ describe('el simulador queda fuera de lo que se despliega', () => {
     const guardados = git(['ls-files', '--', ...CARPETAS_QUE_SE_DESPLIEGAN]).salida.split('\n');
     expect(guardados.length).toBeGreaterThan(500);
     expect(quienesMencionan(PROHIBIDO, CARPETAS_QUE_SE_DESPLIEGAN)).toEqual([]);
-  });
+    // `git grep` sobre todo lo que se despliega: en una laptop con el disco ocupado pasa de 5 s.
+  }, 120_000);
 
   it('la búsqueda sí ve una mención cuando la hay', () => {
     // El propio simulador se nombra a sí mismo: la misma búsqueda sobre qa/ lo encuentra.

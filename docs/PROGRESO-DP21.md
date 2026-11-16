@@ -268,13 +268,41 @@ verde (PR #31).
   día por arrancado sin mirar el registro. Lección: comprobar a los dos minutos que el registro
   avanza. Se relanzó a las 12:30 sobre el build final (`main`, `a69b8b2`), acortado para quedar
   arbitrado antes de las 13:45.
+- **El día 1 que sí corrió (12:44 a 13:17):** 08:00 a 09:30 simuladas sobre `main` (`a69b8b2`): 22
+  cobros por $4,114.50 (18 para llevar y 4 de mesa, una cuenta dividida en 3), propinas $291.53,
+  **255 comparaciones y 0 diferencias** (cajas 189, inventario 14, compras y gastos 2, el dueño 26,
+  invariantes 24). 3 críticos, 4 medios y 3 bajos, ninguno de la app: los críticos son del bot
+  (esperaba el total de cada parte sin la propina que ya estaba elegida) y «no ofrece Cambiar de
+  mesa» era una mesa unida. No se simuló la hora pico ni los días 2 a 7.
+- Los bots adaptados a DP-21 entran al repo con el informe (`qa/simulador/`); la corrección del
+  bot de la cuenta dividida no se volvió a correr sobre un día.
+
+### PR D · el arreglo urgente (16-11, 13:58)
+
+- **Qué pasó:** una captura de un incidente del simulador (el panel de la mesa en un teléfono de
+  360 px) enseñó las tarjetas de platillos aplastadas; la misma pantalla con el build del PR B
+  estaba bien. Reproducido con la hoja de estilos de producción y las clases reales de la rejilla:
+  con el dedo, 44 px; con ratón, 88. Era el piso global de 44 px del Bloque 16 (DP-D145).
+- **Medido en la app real** (agente 2, sobre la copia con 117 platillos): antes, las 8 primeras
+  tarjetas en 44 px con dedo, en el teléfono y en el iMin a 1280; después, 86.5 a 106.5. Con ratón,
+  igual antes y después. Capturas en `D:\mpos-tmp\dp21\prueba-d\`.
+- **De paso:** en el teléfono el botón «Menú» (más ancho desde el Bloque 9) tapaba el número de la
+  mesa en el panel; el título se recorre donde existe ese botón.
+- [PR #35](https://github.com/M1gu3hb/POS-Don-Poncho/pull/35) unido a `main` como `8971c94`, CI en 10
+  de 10 a la primera. Production «Ready» a las 13:58; humo 27 de 27; la hoja de producción ya no
+  trae el selector global; 0 errores en Vercel.
+- **Lecciones:** (1) una regla táctil global no se prueba con la galería (es de ratón) ni con el
+  restaurante de prueba (tiene pocos platillos): hace falta dedo Y datos de verdad; (2) un
+  `min-height` explícito quita el mínimo automático de los elementos de rejilla y de caja flexible;
+  (3) las capturas del simulador se miran, aunque el incidente sea del bot.
 
 ## Lo que sigue
 
-1. El informe del árbitro del día simulado (agente 2), antes de las 13:45.
-2. La lista para Miguel a las 14:00: `D:\mpos-tmp\dp21\lista-14.md`.
-3. Dejar en ceros, sólo con sus dos «sí»: ensayo, en serio, Miguel guarda «Folios» (1001 y 101),
-   `scripts/renombrar-aparatos.mjs`, `scripts/operacion-real.mjs` (H1) y la verificación de sólo
-   lectura.
-4. El informe `docs/reports/012-cierre-antes-de-instalar.md`, en su PR de sólo documentos (rama
-   `dp-21-informe`). Se une cuando Miguel diga: unirlo vuelve a desplegar producción.
+1. Miguel prueba en los cuatro POS con la lista de las 14:00 (`D:\mpos-tmp\dp21\lista-14.md`).
+2. Dejar en ceros, sólo con sus dos «sí» (`D:\mpos-tmp\dp21\ceros.sh`): ensayo, en serio, Miguel
+   guarda «Folios» (1001 y 101), `scripts/renombrar-aparatos.mjs`, `scripts/operacion-real.mjs` (H1)
+   y la verificación de sólo lectura. Después, completar §6 del informe 012.
+3. Este PR de documentos y QA (rama `dp-21-informe`) se une cuando Miguel diga: unirlo vuelve a
+   desplegar producción (el código de la app no cambia).
+4. Pendientes para después de instalar: los Bloques 18 y 19, los 44 px por componente con un
+   barrido de dedo y catálogo lleno, y la puerta de nombres sin declarar para `heredado/`.

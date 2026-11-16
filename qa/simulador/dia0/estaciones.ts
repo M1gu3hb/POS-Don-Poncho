@@ -114,6 +114,9 @@ export async function pasoEstaciones(d: Dia0): Promise<void> {
     await crearEstacion(d, nombre);
     d.nota('estaciones', `creada la estación ${nombre}`);
   }
+  // DP-21: las categorías viven en la sección «Productos e inventario», no junto a las estaciones.
+  await irAConfiguracion(d, 'Productos');
+  await expect(pagina.getByPlaceholder('Ej. Tacos')).toBeVisible();
   for (const { categoria, estacion, crear } of CATEGORIA_A_ESTACION) {
     if (crear === true && (await filaDeCategoria(pagina, categoria).count()) === 0) {
       await crearCategoria(d, categoria);

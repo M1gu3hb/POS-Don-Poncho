@@ -326,7 +326,7 @@ class Mesero {
         esperaba: 'La cuenta se va a la otra mesa.',
         paso: 'cambiar de mesa',
       },
-      () => cambiarDeMesa(this.pagina, ctx.entorno.appUrl, c.mesa, destino.numero),
+      () => cambiarDeMesa(this.pagina, c.mesa, destino.numero),
     );
     if (ok) {
       ctx.mundo.atendidas.delete(c.mesa);
