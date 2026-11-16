@@ -1,9 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { sesionDeLaCaja } from './ayudantes/conciliacion.ts';
-import { pedirLaCuenta } from './ayudantes/cancelar-desde-la-mesa.ts';
 import {
-  abrirElCobro,
   abrirElQrDeLaMesa,
   abrirLaCaja,
   abrirLaMesa,
@@ -58,6 +56,32 @@ const PEDIDO: readonly PlatilloPedido[] = [
 const VENTA = importeDe(PEDIDO);
 /** El 10 % del total de la cuenta, en centavos: lo que la propina de cualquiera de las dos vale. */
 const PROPINA = Math.round(VENTA * 0.1);
+
+/**
+ * La mesera pide la cuenta como lo hace su pantalla SIN la casilla del mesero: no pregunta la
+ * propina y la deja pendiente para quien sí la elige (`Mesero.jsx`, `propina_tipo: 'pendiente'`).
+ */
+async function pedirLaCuenta(mesera: Page, ordenId: string): Promise<void> {
+  const respuesta = await mesera.request.post('/api/restaurante/solicitar-cuenta', {
+    headers: cabecerasDeEscrituraDePrueba(),
+    data: { ordenId, propinaTipo: 'pendiente', propinaPuntosBase: 0 },
+  });
+  expect(respuesta.status(), `solicitar-cuenta: ${await respuesta.text()}`).toBe(200);
+}
+
+/**
+ * Rosa toca la cuenta en «Pendientes». Con la propina pendiente la Caja pregunta ANTES de dejar
+ * usar el cobro: su diálogo queda debajo, oculto para el lector de pantalla, hasta contestar.
+ */
+async function tocarLaCuenta(rosa: Page, mesa: number): Promise<void> {
+  await rosa.getByRole('tab', { name: /^Pendientes/ }).click();
+  await rosa.getByRole('button', { name: new RegExp(`^Mesa ${String(mesa)} Cuenta`) }).click();
+}
+
+/** El diálogo de cobro de la mesa. */
+function cobroDe(rosa: Page, mesa: number): Locator {
+  return rosa.getByRole('dialog').filter({ hasText: `Cobrar — Mesa ${String(mesa)}` });
+}
 
 /** El diálogo de «¿Desean agregar propina?» (el mismo del mesero y de la Caja). */
 function preguntaDePropina(page: Page): Locator {
@@ -127,6 +151,13 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
         });
         expect(reseteo.status(), await reseteo.text()).toBe(200);
         await prepararElPortalDelComensal(duena, { mesa: MESA_A, zona: ZONA, mesero: null });
+        // Lo de omisión de un negocio (y lo de Don Poncho): eligen los comensales y la Caja, no
+        // el mesero. El restaurante de prueba nace con el mesero encendido; aquí se apaga.
+        const quienElige = await duena.request.post('/api/configuracion/quien-elige-la-propina', {
+          headers: cabecerasDeEscrituraDePrueba(),
+          data: { comensales: true, mesero: false, caja: true },
+        });
+        expect(quienElige.status(), await quienElige.text()).toBe(200);
       });
       const tokenA = (await mesaEnElServidor(duena, MESA_A)).qrToken ?? '';
       const tokenB = (await mesaEnElServidor(duena, MESA_B)).qrToken ?? '';
@@ -154,7 +185,8 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
 
         // Cuenta pedida por la mesera, sin propina (no se le pregunta): la Caja la ve en Pendientes.
         await pedirLaCuenta(lupita, ordenA);
-        const cobro = await abrirElCobro(rosa, MESA_A);
+        await tocarLaCuenta(rosa, MESA_A);
+        const cobro = cobroDe(rosa, MESA_A);
         const pregunta = preguntaDePropina(rosa);
         await yaAbierto(pregunta);
         await pregunta.getByText('10%', { exact: true }).click();
@@ -195,12 +227,13 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
         const hoja = await abrirLaPantallaDePropina(telefono, MESA_B);
 
         // La Caja abre el cobro y deja sin elegir la propina: cierra la pregunta sin decidir.
-        const cobro = await abrirElCobro(rosa, MESA_B);
+        await tocarLaCuenta(rosa, MESA_B);
+        const cobro = cobroDe(rosa, MESA_B);
         const pregunta = preguntaDePropina(rosa);
-        if (await pregunta.isVisible()) {
-          await rosa.keyboard.press('Escape');
-          await expect(pregunta).toBeHidden();
-        }
+        await yaAbierto(pregunta);
+        await rosa.keyboard.press('Escape');
+        await expect(pregunta).toBeHidden();
+        await yaAbierto(cobro);
 
         // El comensal confirma primero: 10 %.
         await hoja.getByRole('button', { name: /^10%/ }).click();

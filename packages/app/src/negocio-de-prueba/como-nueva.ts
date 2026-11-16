@@ -33,6 +33,18 @@ export const APARIENCIA_DE_PRUEBA: AparienciaGuardada = {
 export const IMPUESTO_DE_PRUEBA = { puntosBase: 1600, incluidoEnPrecio: true } as const;
 
 /**
+ * QUIÉN ELIGE LA PROPINA EN EL RESTAURANTE DE PRUEBA (DP-21 · Bloque 4): también la mesera.
+ *
+ * Por omisión un negocio nace con comensales y Caja, sin mesero (lo que decidió Miguel para Don
+ * Poncho). El restaurante de prueba enciende además la casilla del mesero: las suites del día
+ * completo recorren a la mesera preguntando la propina al pedir la cuenta, que sigue siendo una
+ * configuración válida, y con la casilla apagada ese diálogo no existe. Lo de omisión —la Caja
+ * pregunta y el portal elige— lo prueban `propinas/una-sola-verdad` y su e2e, que apaga esta
+ * casilla antes de empezar.
+ */
+export const PROPINA_DE_PRUEBA = { propina_la_elige_mesero: true } as const;
+
+/**
  * CUÁNTAS CAJAS ABRE A LA VEZ (F-235, 179): el restaurante tiene un cajón (§8.1 de su
  * `02-DINERO-Y-CAJA`). Una prueba que suba el cupo queda deshecha al resetear.
  */
