@@ -1070,7 +1070,9 @@ export async function prepararElPortalDelComensal(
         return [
           guardada['portal_qr_activo'],
           guardada['portal_qr_cuenta_modo'],
-          guardada['portal_qr_envia_a_cocina'],
+          // Lo EFECTIVO: sin guardar nunca, manda el mesero (lo de omisión). Desde DP-21 una
+          // tarjeta sólo guarda lo que se tocó, así que elegir lo que ya decía no escribe nada.
+          guardada['portal_qr_envia_a_cocina'] === 'comensales' ? 'comensales' : 'mesero',
           guardada['portal_qr_comensales_abren_mesa'] === true,
         ];
       },
