@@ -383,6 +383,24 @@ export const SIN_ESTADO = [
       'Una gráfica por cubetas fijas (DP-21 · Bloque 13): un periodo sin ventas no es una lista vacía, es una gráfica en cero (los días sin venta salen en cero, por diseño).',
   },
   {
+    pantalla: 'guias/GuiaDeRecetasEInventario',
+    estado: 'vacio',
+    razon:
+      'Un panel de texto fijo (DP-21 · Bloque 17, «¿Cómo funciona?»): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'guias/GuiaDeRecetasEInventario',
+    estado: 'cargando',
+    razon:
+      'Un panel de texto fijo que vive en el código: no lee nada del servidor, así que no hay nada que esperar.',
+  },
+  {
+    pantalla: 'guias/GuiaDeRecetasEInventario',
+    estado: 'error',
+    razon:
+      'Un panel de texto fijo que vive en el código: no lee nada del servidor, así que no hay lectura que pueda fallar.',
+  },
+  {
     pantalla: 'configuracion/CandadoDeMando',
     estado: 'vacio',
     razon:

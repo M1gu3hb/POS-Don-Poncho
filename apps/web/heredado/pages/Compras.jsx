@@ -1,4 +1,5 @@
 'use client';
+import { BotonComoFunciona } from '~/guias/GuiaDeRecetasEInventario';
 import React, { useState } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery } from '@tanstack/react-query';
@@ -92,6 +93,7 @@ export default function Compras() {
       <PageHeader
         title="Compras y gastos"
         description="Compras de insumos suman al inventario. Gastos operativos NO afectan el inventario."
+        actions={<BotonComoFunciona />}
       />
 
       {!registra && (

@@ -1,4 +1,5 @@
 'use client';
+import { BotonComoFunciona } from '~/guias/GuiaDeRecetasEInventario';
 import React, { useState, useMemo, useRef } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -207,15 +208,18 @@ export default function Recetas() {
             : 'Consulta los ingredientes y gramajes de cada receta'
         }
         actions={
-          canEdit ? (
-            <Button onClick={openNew} className="gap-2">
-              <Plus className="w-4 h-4" /> Nueva receta
-            </Button>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground">
-              <Eye className="w-3.5 h-3.5" /> Solo lectura
-            </span>
-          )
+          <>
+            <BotonComoFunciona />
+            {canEdit ? (
+              <Button onClick={openNew} className="gap-2">
+                <Plus className="w-4 h-4" /> Nueva receta
+              </Button>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground">
+                <Eye className="w-3.5 h-3.5" /> Solo lectura
+              </span>
+            )}
+          </>
         }
       />
 

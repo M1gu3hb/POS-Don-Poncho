@@ -1,4 +1,5 @@
 'use client';
+import { BotonComoFunciona } from '~/guias/GuiaDeRecetasEInventario';
 import React, { useState, useMemo } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -228,6 +229,7 @@ export default function Inventario() {
         description="Ingredientes e insumos"
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            <BotonComoFunciona />
             <Button
               size="sm"
               variant="outline"

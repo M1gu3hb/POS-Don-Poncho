@@ -1,4 +1,5 @@
 'use client';
+import { BotonComoFunciona } from '~/guias/GuiaDeRecetasEInventario';
 import React, { useState, useMemo } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery } from '@tanstack/react-query';
@@ -526,6 +527,7 @@ export default function Productos() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading">Ficha del producto</DialogTitle>
+            <BotonComoFunciona enLaFicha />
           </DialogHeader>
           {/* `min-w-0`: en un diálogo de rejilla, sin él la columna crece hasta los 500 px de la
               ficha y el diálogo se sale del teléfono en vez de encogerla. */}
