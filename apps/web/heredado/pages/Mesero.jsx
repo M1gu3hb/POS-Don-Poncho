@@ -1697,7 +1697,9 @@ function Mesero() {
             [&>button.absolute]:w-11 [&>button.absolute]:h-11 [&>button.absolute]:rounded-full [&>button.absolute]:bg-muted [&>button.absolute]:opacity-100 [&>button.absolute]:flex [&>button.absolute]:items-center [&>button.absolute]:justify-center [&>button.absolute]:top-3 [&>button.absolute]:right-3 [&>button.absolute>svg]:w-5 [&>button.absolute>svg]:h-5"
         >
           <DialogHeader className="px-4 pt-4 pb-3 border-b shrink-0">
-            <DialogTitle className="font-heading flex items-center gap-2 flex-wrap pr-14">
+            {/* `max-lg:pl-28`: en el teléfono y la tableta el botón «Menú» flota arriba a la izquierda,
+                por encima de este panel; sin el hueco tapaba el número de la mesa. */}
+            <DialogTitle className="font-heading flex items-center gap-2 flex-wrap pr-14 max-lg:pl-28">
               <UtensilsCrossed className="w-5 h-5 text-primary" />
               Mesa {mesaActiva?.numero}
               <span
