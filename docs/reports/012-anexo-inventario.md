@@ -243,3 +243,21 @@ Buscado en `apps/web/heredado` y `apps/web/src`: «Pendiente de conectar», «Pr
 - **Cola de sincronización** (punto 7): pendiente (datos que sólo crecen); lo decide Miguel.
 - **`PUBLICOS`** (punto 8): pendiente; recortarla a las 3 claves que el portal usa es un cambio de superficie pública que lo decide Miguel.
 - **`iva_porcentaje`** (punto 1): ya resuelto en el Bloque 1 (`configuracion.fijar_impuesto`).
+
+### PR C · Bloque 14 · lo que se hizo en la Configuración
+
+- «Ajustes de Morphiq POS» (§4): arreglado en PR C, dice «Ajustes de» + el nombre del negocio (`tituloDeLosAjustes`).
+- Placeholders de Identidad, migas de `/sistema`, nombre por omisión del acceso y marca por omisión del corte (§4): arreglado en PR C (ahora «POS Don Poncho» o «Don Poncho»). «Sistema por Morphiq» de `marca/contenido.ts` NO se tocó: lo decide Miguel.
+- «Módulo no incluido» (mandaba a «Configuración → Presentación», que ya no existe), «NIPs» y enlaces sin sección de Primeros pasos, el paso 1 que siempre salía completo, la ayuda de «Datos del negocio» (ya no dice «Portal QR»), la de «Quiero ordenar», la de la propina del QR y los ejemplos de cafetería de las plantillas y placeholders: arreglado en PR C.
+- «Hasta 6 valores» de propinas: arreglado en PR C (el servidor rechaza más de seis y los lectores muestran seis).
+- `footer_text`: conectado en PR C (sale en el pie del corte, antes del pie de los PDF).
+- `silenciar_notificaciones_admin`: conectado en PR C a las solicitudes (`Mesero.jsx` · `anunciarSolicitudes`).
+- «Permitir venta sin stock»: decidido en PR C (DP-D135): se queda en Avanzado diciendo que manda la opción de cada producto; no se conecta al cobro. «Usar mesas»: escondido para el restaurante (DP-D135).
+- Contrato nuevo: cada clave que guarda una tarjeta tiene quien la lee.
+- RFC por el camino genérico (como dirección y teléfono): se queda así, decidido con la coordinación.
+
+### PR C · Bloque 13 · el tablero
+
+- «Análisis financiero» del Tablero (`FinancialChart.jsx`: sumaba en el navegador, con tope de 1000 ventas y el día del aparato): cambiado en PR C por «¿Cómo va tu semana?» (`tablero.serie`, suma en el servidor). El archivo viejo queda sin usarse; se borra con el visto bueno de Miguel.
+- «Control del restaurante» (`AccesosDelDueno.tsx`): quitado del Tablero y borrado (ninguna otra pantalla lo usaba).
+

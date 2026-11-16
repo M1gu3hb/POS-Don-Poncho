@@ -367,8 +367,13 @@ export function negocioDe(
     correo: textoDe(valores['correo']),
     rfc: textoDe(valores['rfc']),
     logoUrl: textoDe(valores['logo_pdf_url']) ?? textoDe(valores['logo_url']),
-    marca: textoDe(valores['platform_brand']) ?? 'MorphiqPOS',
-    pie: textoDe(valores['pdf_footer']),
+    marca: textoDe(valores['platform_brand']) ?? 'POS Don Poncho',
+    // DP-21 · Bloque 14: el «Texto legal o pie general» (`footer_text`) sale en el pie del corte, antes
+    // del pie de los PDF.
+    pie:
+      [textoDe(valores['footer_text']), textoDe(valores['pdf_footer'])]
+        .filter((parte): parte is string => parte !== null)
+        .join(' · ') || null,
     descargarAlCerrar: valores['descargar_pdf_corte_auto'] !== false,
     comisionTerminalBp: tasaDe(valores['comision_terminal_bp']),
   };

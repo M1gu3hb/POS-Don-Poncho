@@ -185,6 +185,7 @@ describe('los interruptores del portal', () => {
   it('los porcentajes de propina se validan en el servidor', () => {
     expect(porcentajesValidos('5,10,15,20')).toEqual([5, 10, 15, 20]);
     expect(porcentajesValidos('5, 200, abc, -3')).toEqual([5]);
+    expect(porcentajesValidos('5,10,15,20,25,30,35,40')).toEqual([5, 10, 15, 20, 25, 30]);
     expect(porcentajesValidos('basura')).toEqual([5, 10, 15, 20]);
     expect(porcentajesValidos(undefined)).toEqual([5, 10, 15, 20]);
   });

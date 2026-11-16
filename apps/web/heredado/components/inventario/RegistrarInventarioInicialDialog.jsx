@@ -522,7 +522,7 @@ export default function RegistrarInventarioInicialDialog({ open, onClose, ingred
                       <Input
                         value={line.nuevo_nombre}
                         onChange={(e) => updateLine(idx, { nuevo_nombre: e.target.value })}
-                        placeholder="Ej: Café molido"
+                        placeholder="Ej: Carne de borrego"
                       />
                     </div>
                     <div>

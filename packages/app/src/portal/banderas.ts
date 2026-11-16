@@ -88,7 +88,8 @@ export function porcentajesValidos(crudo: unknown): readonly number[] {
     .map((parte) => Number(parte.trim()))
     .filter((n) => Number.isInteger(n) && n > 0 && n <= 100);
 
-  return limpios.length > 0 ? limpios : PORCENTAJES_POR_OMISION;
+  // Hasta 6, como promete la Configuración: lo que sobre no se pinta.
+  return limpios.length > 0 ? limpios.slice(0, 6) : PORCENTAJES_POR_OMISION;
 }
 
 function enumerado<T extends string>(

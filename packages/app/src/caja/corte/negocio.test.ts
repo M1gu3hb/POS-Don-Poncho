@@ -19,4 +19,15 @@ describe('negocioDe', () => {
       negocioDe('Café', { comision_terminal_bp: 5_000 }, SUCURSAL).comisionTerminalBp,
     ).toBeNull();
   });
+
+  it('el texto legal y el pie de los PDF salen juntos en el pie del corte; sin ninguno, no hay pie', () => {
+    expect(negocioDe('Café', { footer_text: 'RFC ABC850101AB1' }, SUCURSAL).pie).toBe(
+      'RFC ABC850101AB1',
+    );
+    expect(negocioDe('Café', { pdf_footer: 'Confidencial' }, SUCURSAL).pie).toBe('Confidencial');
+    expect(
+      negocioDe('Café', { footer_text: 'Texto legal', pdf_footer: 'Confidencial' }, SUCURSAL).pie,
+    ).toBe('Texto legal · Confidencial');
+    expect(negocioDe('Café', { footer_text: '  ' }, SUCURSAL).pie).toBeNull();
+  });
 });

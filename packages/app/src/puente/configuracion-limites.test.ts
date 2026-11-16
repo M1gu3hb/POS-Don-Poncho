@@ -216,3 +216,31 @@ describe('DP-21 · Bloque 20 · el RFC se valida al guardar', () => {
     }
   });
 });
+
+describe('DP-21 · Bloque 14 · «hasta 6 valores» de los porcentajes de propina se cumple al guardar', () => {
+  it('más de seis, o algo que no es texto, no se guarda', async () => {
+    for (const malo of ['5,10,15,20,25,30,35', 7]) {
+      expect(
+        await codigoDe(
+          guardarConfiguracionParcial({} as Transaccion, ORG, {
+            propina_porcentajes_sugeridos: malo,
+          }),
+        ),
+        String(malo),
+      ).toBe('PUENTE_CAMPO_INVALIDO');
+    }
+  });
+
+  it('hasta seis pasan la validación y llegan a la base', async () => {
+    for (const bueno of ['5,10,15,20', '5,10,15,20,25,30', '10', '']) {
+      expect(
+        await codigoDe(
+          guardarConfiguracionParcial({} as Transaccion, ORG, {
+            propina_porcentajes_sugeridos: bueno,
+          }),
+        ),
+        bueno,
+      ).toBe('INESPERADO');
+    }
+  });
+});

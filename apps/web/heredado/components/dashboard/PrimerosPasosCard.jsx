@@ -1,4 +1,5 @@
 'use client';
+import { direccionDeLaSeccion } from '~/configuracion/secciones';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from '@/enrutado';
 import { usePOSAuth } from '@/lib/POSAuthContext';
@@ -31,11 +32,11 @@ const DISMISSED_KEY = 'mh_primeros_pasos_dismissed';
 const COMPLETED_KEY = 'mh_primeros_pasos_completed';
 
 const PASOS = [
-  { key: 'negocio', label: 'Configura los datos del negocio', to: '/configuracion' },
-  { key: 'usuarios', label: 'Crea usuarios y NIPs', to: '/configuracion' },
-  { key: 'mesas', label: 'Configura las mesas (si usas mesas)', to: '/configuracion' },
-  { key: 'categorias', label: 'Crea categorías de productos', to: '/configuracion' },
-  { key: 'unidades', label: 'Revisa las unidades de medida', to: '/configuracion' },
+  { key: 'negocio', label: 'Configura los datos del negocio', to: direccionDeLaSeccion('el-negocio') },
+  { key: 'usuarios', label: 'Crea usuarios y PIN', to: direccionDeLaSeccion('personas') },
+  { key: 'mesas', label: 'Configura las mesas', to: direccionDeLaSeccion('salon') },
+  { key: 'categorias', label: 'Crea categorías de productos', to: direccionDeLaSeccion('productos') },
+  { key: 'unidades', label: 'Revisa las unidades de medida', to: direccionDeLaSeccion('productos') },
   { key: 'inventario', label: 'Registra tu inventario existente', to: '/inventario' },
   { key: 'recetas', label: 'Crea recetas o productos', to: '/recetas' },
   { key: 'caja', label: 'Abre caja y empieza a operar', to: '/caja' },

@@ -1,4 +1,6 @@
 'use client';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { puedeVerLaSerieDelTablero } from '@/components/configuracion/puestos';
 import React, { useMemo, useState } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery } from '@tanstack/react-query';
@@ -34,13 +36,12 @@ import { AvisoDelTopeDeVentas } from '~/tablero/AvisoDelTopeDeVentas';
 import { delDia } from '~/tablero/del-dia';
 import CorteHistorialList from '@/components/cortes/CorteHistorialList';
 import ColoredStatCard, { PAYMENT_COLORS } from '@/components/dashboard/ColoredStatCard';
-import FinancialChart from '@/components/dashboard/FinancialChart';
 import { useCajaAbierta } from '@/lib/useCajaAbierta';
 import PropinasDashboardSection from '@/components/propinas/PropinasDashboardSection';
 import { tipsEnabled } from '@/utils/tipsUtils';
 import LoadingState from '@/components/common/LoadingState';
 import PrimerosPasosCard, { primerosPasosVigente } from '@/components/dashboard/PrimerosPasosCard';
-import { AccesosDelDueno } from '~/restaurante/AccesosDelDueno';
+import { ComoVaTuSemana } from '~/tablero/ComoVaTuSemana';
 import { RecetasPendientes } from '~/restaurante/RecetasPendientes';
 import { claves } from '~/cliente/claves-de-consulta';
 import {
@@ -67,6 +68,8 @@ export default function Dashboard() {
   const showCostos = canAccessModule('costos_basicos', paquete_modo);
   const showInventario = canAccessModule('inventario', paquete_modo);
   const showFinancialChart = canAccessModule('reportes_financieros_avanzados', paquete_modo);
+  // El servidor sólo da la serie a dueño, administrador y gerente (`tablero.serie`).
+  const puedeVerLaSerie = puedeVerLaSerieDelTablero(usePuesto());
   const showCompras = canAccessModule('compras', paquete_modo);
   const { hayCaja, isLoading: cajaLoading } = useCajaAbierta();
   // Nota: la neutralización del color del MONTO la hace cada card internamente
@@ -218,11 +221,10 @@ export default function Dashboard() {
   // Progreso de onboarding — flags simples basados en lo que YA existe en BD.
   // Es solo informativo. No bloquea nada.
   const progresoOnboarding = useMemo(() => {
-    // Negocio "configurado" = no es ninguno de los nombres por defecto y no está vacío.
-    const nombreNeg = String(config?.nombre_negocio || '').trim();
-    const esDefault =
-      nombreNeg === 'MH Astral Systems' || nombreNeg === 'Mi negocio' || nombreNeg === '';
-    const negocioOk = !esDefault;
+    // Negocio "configurado" = ya escribió un dato que no viene de fábrica: el nombre de la casa
+    // («Don Poncho») nace puesto, así que lo que cuenta es la dirección, el teléfono o el RFC.
+    const escrito = (clave) => String(config?.[clave] || '').trim() !== '';
+    const negocioOk = escrito('direccion') || escrito('telefono') || escrito('rfc');
     const usuariosOk = (Array.isArray(usuarios) ? usuarios : []).length > 0;
     const mesasOk =
       config?.usa_mesas === false ? true : (Array.isArray(mesasAll) ? mesasAll : []).length > 0;
@@ -286,7 +288,6 @@ export default function Dashboard() {
         }
       />
 
-      <AccesosDelDueno />
       <AvisoDelTopeDeVentas recibidas={Array.isArray(ventas) ? ventas.length : 0} />
       <RecetasPendientes />
 
@@ -438,7 +439,8 @@ export default function Dashboard() {
       )}
 
       {/* Análisis financiero — gráfica con filtros de período (solo Restaurante Pro) */}
-      {showFinancialChart && <FinancialChart ventas={ventas} gastos={gastos} />}
+      {/* DP-21 · Bloque 13: la gráfica sale agregada del servidor (`tablero.serie`), por día del negocio. */}
+      {showFinancialChart && puedeVerLaSerie && <ComoVaTuSemana />}
 
       {/* Propinas — solo si están activadas y existen propinas registradas */}
       {tipsEnabled(config) && <PropinasDashboardSection />}

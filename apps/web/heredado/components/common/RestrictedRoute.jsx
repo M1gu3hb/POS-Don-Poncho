@@ -39,7 +39,7 @@ export default function RestrictedRoute({ children, redirectTo = '/' }) {
               <strong>{getPackageLabel(paquete_modo)}</strong>.
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-              Para activarlo, cambia el paquete en Configuración → Presentación.
+              Para activarlo, pídelo a tu proveedor.
             </p>
           </div>
           <Button asChild className="w-full">

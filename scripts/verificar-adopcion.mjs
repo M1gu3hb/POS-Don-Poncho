@@ -377,6 +377,12 @@ export const SIN_ESTADO = [
       'Página de muestras fijas para comparar el motor viejo con el de hoy (DP-21 · Bloque 15): pinta las mismas piezas en sus estados y no lee datos: no tiene lectura que pueda fallar.',
   },
   {
+    pantalla: 'tablero/ComoVaTuSemana',
+    estado: 'vacio',
+    razon:
+      'Una gráfica por cubetas fijas (DP-21 · Bloque 13): un periodo sin ventas no es una lista vacía, es una gráfica en cero (los días sin venta salen en cero, por diseño).',
+  },
+  {
     pantalla: 'configuracion/CandadoDeMando',
     estado: 'vacio',
     razon:
@@ -1196,24 +1202,6 @@ export const SIN_ESTADO = [
     estado: 'error',
     razon:
       'No tiene operación que falle: si el cierre lo rechaza el servidor, CierreDiario lo pinta en su Aviso de peligro.',
-  },
-  {
-    pantalla: 'restaurante/AccesosDelDueno',
-    estado: 'vacio',
-    razon:
-      'Seis accesos fijos del giro, escritos en el archivo: no hay lista que pueda llegar vacía.',
-  },
-  {
-    pantalla: 'restaurante/AccesosDelDueno',
-    estado: 'cargando',
-    razon:
-      'No lee nada: la sesión ya la trae el proveedor de autenticación del tablero, y sin dueño ni administrador la pieza no se pinta.',
-  },
-  {
-    pantalla: 'restaurante/AccesosDelDueno',
-    estado: 'error',
-    razon:
-      'Son enlaces: ni lee ni escribe, así que no hay operación que pueda fallar dentro de la pieza.',
   },
   {
     pantalla: 'restaurante/DividirLaCuenta',

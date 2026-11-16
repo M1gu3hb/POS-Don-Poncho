@@ -8,6 +8,7 @@ import { ArrowLeft, ChevronRight, Tablet } from 'lucide-react';
 import { useLocation, useNavigate } from '@/enrutado';
 import { canAccessModule } from '@/lib/packageConfig';
 import { useConfig } from '@/lib/ConfigContext';
+import { tituloDeLosAjustes } from '~/marca/nombre-visible';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { esUsuarioDePlataforma, hasPermission } from '@/lib/permissions';
 import { usePuesto } from '@/components/configuracion/usePuesto';
@@ -107,6 +108,7 @@ export default function Configuracion() {
     tieneMesas,
     rolAdministrador: posUser?.rol === 'administrador',
     esPlataforma: esUsuarioDePlataforma(posUser),
+    paquete: paquete_modo ?? null,
   };
   const visibles = seccionesVisibles(quien);
   const busqueda = location.search;
@@ -134,7 +136,7 @@ export default function Configuracion() {
   if (configLoading && !cfg) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Configuración" description="Ajustes de POS Don Poncho" />
+        <PageHeader title="Configuración" description={tituloDeLosAjustes(cfg?.nombre_negocio)} />
         <Card>
           <CardContent className="py-12 flex flex-col items-center gap-3 text-muted-foreground">
             <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-primary rounded-full animate-spin" />
@@ -321,7 +323,7 @@ export default function Configuracion() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Configuración" description="Ajustes de POS Don Poncho" />
+      <PageHeader title="Configuración" description={tituloDeLosAjustes(cfg?.nombre_negocio)} />
       {isMobile ? (
         seccion === null ? (
           lista

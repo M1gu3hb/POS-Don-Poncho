@@ -2338,6 +2338,55 @@
         "+ clase:${plegada",
         "+ clase:${plegada"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/RestrictedRoute.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": [
+        "- texto:Para activarlo, cambia el paquete en Configuración → Presentación.",
+        "+ texto:Para activarlo, pídelo a tu proveedor."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/compras/RegistrarCompraDialog.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": ["- placeholder:Ej: Café molido", "+ placeholder:Ej: Carne de borrego"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": [
+        "- placeholder:Morphiq POS",
+        "- placeholder:Morphiq",
+        "+ placeholder:POS Don Poncho",
+        "+ placeholder:POS Don Poncho"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": [
+        "- placeholder:Ej: Panadería San José",
+        "+ placeholder:Ej: Carnicería La Barranca"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/inventario/RegistrarInventarioInicialDialog.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": ["- placeholder:Ej: Café molido", "+ placeholder:Ej: Carne de borrego"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": [
+        "- texto:el cliente ve el menú pero NO puede mandar pedidos a cocina.",
+        "+ texto:el cliente ve el menú pero no puede avisar «quiero ordenar». Que pueda mandar pedidos depende de «Permitir que el comensal envíe pedidos desde el QR» (Configuración → Portal)."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/recetas/RecetaFormDialog.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": ["- placeholder:Ej: Capuchino", "+ placeholder:Ej: Barbacoa de borrego"]
     }
   ]
 }

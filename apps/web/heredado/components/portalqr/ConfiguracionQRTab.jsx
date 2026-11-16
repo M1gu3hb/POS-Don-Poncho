@@ -176,7 +176,8 @@ export default function ConfiguracionQRTab({ config, grupo = 'activacion', conMe
           </li>
           <li>
             <strong>Portal QR encendido + "Quiero ordenar" apagado:</strong> el cliente ve el menú
-            pero NO puede mandar pedidos a cocina.
+            pero no puede avisar «quiero ordenar». Que pueda mandar pedidos depende de «Permitir que
+            el comensal envíe pedidos desde el QR» (Configuración → Portal).
           </li>
           <li>
             <strong>"Pedir cuenta" apagado:</strong> el cliente no solicita cuenta desde el QR;
@@ -383,7 +384,7 @@ export default function ConfiguracionQRTab({ config, grupo = 'activacion', conMe
               hint={
                 propinasGlobalActivas
                   ? 'Si está apagada, no aparecen opciones de propina al cliente. La propina la maneja mesero/caja.'
-                  : 'Activa “Propinas” en Configuración general para usar esta función.'
+                  : 'Activa “Propinas” en Configuración → Ventas y cobro para usar esta función.'
               }
             >
               <Switch
