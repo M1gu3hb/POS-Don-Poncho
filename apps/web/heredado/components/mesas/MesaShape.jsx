@@ -197,13 +197,15 @@ export default function MesaShape({
 
         // CASO 1 — Hay mesero asignado → badge fusionado
         if (responsableNombre) {
-          const nombreCorto = small
+          // DP-21 · Bloque 16: «Dueña de prueba · 2 pers.» no cabe en 72 px: debajo de 100 px, nombre de pila y sólo el número.
+          const apretada = dim.w < 100;
+          const nombreCorto = apretada
             ? responsableNombre.replace(/^(Mesero:|Atiende:)\s*/i, '').split(' ')[0] ||
               responsableNombre
             : responsableNombre.replace(/^(Mesero:|Atiende:)\s*/i, '');
           // Sufijo de personas: en mesas chicas solo el número, en grandes "4 pers."
           const sufijo =
-            personasValor > 0 ? (small ? ` · ${personasValor}` : ` · ${personasValor} pers.`) : '';
+            personasValor > 0 ? (apretada ? ` · ${personasValor}` : ` · ${personasValor} pers.`) : '';
           return (
             <span
               className="font-bold mt-1 px-2 py-0.5 rounded-full truncate"

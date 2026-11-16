@@ -125,6 +125,14 @@ export function nombreVisibleDelNegocio(nombre: unknown): string {
 }
 
 /**
+ * DP-21 · Bloque 14 · El subtítulo de Configuración: «Ajustes de Don Poncho» (o del nombre del
+ * negocio), nunca la marca de la plataforma.
+ */
+export function tituloDeLosAjustes(nombre: unknown): string {
+  return `Ajustes de ${nombreVisibleDelNegocio(nombre)}`;
+}
+
+/**
  * La firma del SISTEMA en la barra lateral y en el corte («POS Don Poncho»). Es un campo
  * editable (`platform_brand`): si el negocio escribió otra cosa, se respeta; lo vacío, la
  * marca anterior y la de Morphiq se leen como el nombre del producto.

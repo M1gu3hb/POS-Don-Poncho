@@ -19,7 +19,7 @@ import { useCorredorDePruebas } from './use-pruebas.ts';
  *
  * Dice si la impresora de este aparato está lista y deja probarla («Página de prueba», «Abrir
  * cajón»; con el PIN de un gerente). El perfil NO se cambia aquí —tampoco si el aparato tiene
- * cajón—: lo deja listo el proveedor en Operación → «Hardware y pruebas de impresión». Sin la app, la impresión de hoy —el diálogo del navegador— sigue igual.
+ * cajón—: lo deja listo el proveedor en Configuración → Laboratorio del proveedor. Sin la app, la impresión de hoy —el diálogo del navegador— sigue igual.
  */
 
 function ImpresoraLista({
@@ -103,7 +103,7 @@ export function ImpresionDelAparato({ rol }: { readonly rol: string | undefined 
               Este aparato todavía no tiene impresora configurada.
             </p>
             <p className="max-w-prose text-sm text-texto-sutil">
-              La deja lista tu proveedor en Operación → «Hardware y pruebas de impresión».
+              La deja lista tu proveedor en Configuración → Laboratorio del proveedor.
             </p>
           </div>
         ) : (

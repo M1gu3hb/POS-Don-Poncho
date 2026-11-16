@@ -102,3 +102,27 @@ describe('el cajón del teléfono y de la tableta nunca sale plegado', () => {
     expect(sinEspacios.split('<SidebarContent').length - 1).toBe(2);
   });
 });
+
+/**
+ * Desde DP-21 la barra del mesero y de la cocina NACE plegada, y los cuatro POS tienen barra fija.
+ * «Salir» sólo se pintaba con la barra desplegada: quien comparte el aparato tenía que abrir el
+ * menú para poder salir. Lo vio la e2e de los sonidos, que buscaba «Salir» en la PC de la mesera.
+ */
+describe('«Salir» está también con la barra plegada', () => {
+  const salir = BARRA.indexOf('aria-label="Salir"');
+  const entreElSonidoYSalir = BARRA.slice(
+    BARRA.lastIndexOf('aria-label="Sonido de este aparato"', salir),
+    salir,
+  );
+
+  it('el botón no vive dentro de un «sólo desplegada»', () => {
+    expect(salir).toBeGreaterThan(0);
+    expect(entreElSonidoYSalir.length).toBeGreaterThan(50);
+    expect(entreElSonidoYSalir).not.toContain('{!plegada && (');
+    expect(entreElSonidoYSalir).not.toContain('{!collapsed && (');
+  });
+
+  it('sigue cerrando la sesión', () => {
+    expect(botonConEtiqueta('aria-label="Salir"')).toContain('onClick={logout}');
+  });
+});

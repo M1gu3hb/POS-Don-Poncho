@@ -199,7 +199,7 @@ export default function ProveedoresSection() {
                 <Input
                   value={editing.nombre || ''}
                   onChange={(e) => setEditing({ ...editing, nombre: e.target.value })}
-                  placeholder="Ej: Panadería San José"
+                  placeholder="Ej: Carnicería La Barranca"
                 />
               </div>
               <div>

@@ -38,7 +38,8 @@ export function getPorcentajesSugeridos(config) {
     .split(',')
     .map((s) => Number(s.trim()))
     .filter((n) => Number.isFinite(n) && n > 0 && n <= 100);
-  return list.length > 0 ? list : [5, 10, 15, 20];
+  // Hasta 6, como promete la Configuración: lo que sobre no se pinta.
+  return list.length > 0 ? list.slice(0, 6) : [5, 10, 15, 20];
 }
 
 /**

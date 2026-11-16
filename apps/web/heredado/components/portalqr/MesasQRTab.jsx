@@ -160,7 +160,7 @@ export default function MesasQRTab({ config }) {
         <div className="text-center py-12 text-sm text-muted-foreground">
           <QrCode className="w-10 h-10 mx-auto mb-2 opacity-40" />
           <p>No hay mesas configuradas.</p>
-          <p className="text-xs">Crea mesas en Configuración → Mapa de mesas.</p>
+          <p className="text-xs">Crea mesas en Configuración → Salón → Mapa de mesas.</p>
         </div>
       )}
 

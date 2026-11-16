@@ -121,7 +121,7 @@ test.describe('Recetas y el área del platillo', () => {
       await duena.goto('/recetas');
       await duena.getByRole('button', { name: 'Nueva receta' }).first().click();
       const dialogo = duena.getByRole('dialog', { name: 'Nueva receta' });
-      await dialogo.getByPlaceholder('Ej: Capuchino').fill(NUEVA);
+      await dialogo.getByPlaceholder('Ej: Barbacoa de borrego').fill(NUEVA);
       await dialogo.getByPlaceholder('0.00').first().fill('45');
       await dialogo.getByRole('combobox').first().click();
       await duena.getByRole('option', { name: 'Bebidas', exact: true }).click();

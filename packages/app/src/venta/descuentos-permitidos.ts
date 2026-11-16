@@ -46,7 +46,7 @@ export async function exigirDescuentosPermitidos(
   if (await permitidosEnLaBase(tx, organizacionId)) return;
   throw new ErrorDominio(
     'DESCUENTOS_APAGADOS',
-    'Los descuentos están apagados en este negocio: el dueño los enciende en Configuración → Descuentos.',
+    'Los descuentos están apagados en este negocio: el dueño los enciende en Configuración → Ventas y cobro → «Permitir descuentos».',
   );
 }
 

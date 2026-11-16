@@ -299,7 +299,7 @@ export default function Cocina() {
           </p>
           <p className="text-sm text-advertencia">
             Se asigna en
-            <strong> Configuración → Usuarios POS</strong>, o ahí mismo se le marca «Todas las
+            <strong> Configuración → Personas y seguridad → Usuarios POS</strong>, o ahí mismo se le marca «Todas las
             estaciones».
           </p>
         </div>

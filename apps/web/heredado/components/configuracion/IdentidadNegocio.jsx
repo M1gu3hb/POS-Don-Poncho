@@ -271,7 +271,7 @@ export default function IdentidadNegocio({ cfg, grupo = 'marca' }) {
                 <Input
                   value={form.nombre_sistema}
                   onChange={(e) => setForm({ ...form, nombre_sistema: e.target.value })}
-                  placeholder="Morphiq POS"
+                  placeholder="POS Don Poncho"
                 />
               </div>
               <div>
@@ -279,7 +279,7 @@ export default function IdentidadNegocio({ cfg, grupo = 'marca' }) {
                 <Input
                   value={form.platform_brand}
                   onChange={(e) => setForm({ ...form, platform_brand: e.target.value })}
-                  placeholder="Morphiq"
+                  placeholder="POS Don Poncho"
                 />
               </div>
             </div>

@@ -150,6 +150,8 @@ export type VisiblePara =
   | 'mesas'
   /** La pantalla Portal QR de antes sólo la abre el administrador. */
   | 'portal'
+  /** DP-21 · Bloque 14: lo que no tiene sentido en un restaurante se esconde (no se borra). */
+  | 'fuera-del-restaurante'
   /** La pestaña Mantenimiento: administrador y usuario de plataforma. */
   | 'plataforma';
 
@@ -659,11 +661,11 @@ export const TARJETAS: readonly Tarjeta[] = [
     titulo: 'Usar mesas',
     componente: 'TarjetaDeAjustes',
     grupo: 'usar-mesas',
-    visiblePara: 'todos',
+    visiblePara: 'fuera-del-restaurante',
     guarda: ['usa_mesas'],
     con: GENERICO,
     queEra:
-      'Un interruptor que sólo lee el paso «Configura las mesas» de Primeros pasos: apagarlo no esconde mesas, mapa ni mesero.',
+      'Un interruptor que sólo lee el paso «Configura las mesas» de Primeros pasos: apagarlo no esconde mesas, mapa ni mesero. En un restaurante apagarlo no tiene sentido y puede romper el flujo: se esconde con el paquete restaurante (sigue guardado, no se borra).',
   },
   {
     id: 'vender-sin-existencia',
@@ -675,7 +677,7 @@ export const TARJETAS: readonly Tarjeta[] = [
     guarda: ['permitir_venta_sin_stock'],
     con: GENERICO,
     queEra:
-      'El servidor decide por producto (`permite_venta_sin_stock`); este interruptor no cambia lo que se cobra. El Bloque 14 lo conecta y lo pasa a Productos e inventario.',
+      'Manda la opción de cada producto (`permite_venta_sin_stock`) y, desde DP-D116, lo que pasó por cocina se cobra aunque no haya existencia; este interruptor del negocio no cambia lo que se cobra. Se queda aquí, explicándolo, y no se borra (DP-D135).',
   },
   {
     id: 'texto-legal',
@@ -699,6 +701,8 @@ export interface QuienMira {
   readonly rolAdministrador: boolean;
   /** Es el usuario de plataforma. */
   readonly esPlataforma: boolean;
+  /** El paquete del negocio (`restaurante`, `tienda`…): decide lo que se esconde para el restaurante. */
+  readonly paquete: string | null;
 }
 
 const PUESTOS_DE_MANDO: readonly string[] = ['dueno', 'administrador'];
@@ -711,6 +715,8 @@ export function laVe(tarjeta: Pick<Tarjeta, 'visiblePara'>, quien: QuienMira): b
       return quien.puesto !== null && PUESTOS_DE_MANDO.includes(quien.puesto);
     case 'mesas':
       return quien.tieneMesas;
+    case 'fuera-del-restaurante':
+      return quien.paquete !== 'restaurante';
     case 'portal':
       return quien.rolAdministrador;
     case 'plataforma':

@@ -1,4 +1,5 @@
 'use client';
+import { BotonComoFunciona } from '~/guias/GuiaDeRecetasEInventario';
 import React, { useState, useMemo } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery } from '@tanstack/react-query';
@@ -310,7 +311,7 @@ export default function Productos() {
                       altura. */}
                   <div className="grid min-h-[3.75rem] grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                     <div className="min-w-0">
-                      <p className="truncate font-heading font-semibold" title={p.nombre}>
+                      <p className="line-clamp-2 break-words font-heading font-semibold leading-tight" title={p.nombre}>
                         {p.nombre}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
@@ -526,6 +527,7 @@ export default function Productos() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading">Ficha del producto</DialogTitle>
+            <BotonComoFunciona enLaFicha />
           </DialogHeader>
           {/* `min-w-0`: en un diálogo de rejilla, sin él la columna crece hasta los 500 px de la
               ficha y el diálogo se sale del teléfono en vez de encogerla. */}

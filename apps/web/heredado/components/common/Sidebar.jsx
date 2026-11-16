@@ -175,7 +175,7 @@ export default function Sidebar({ collapsed, onToggle }) {
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
       <div
-        className={`flex items-center gap-3 py-4 border-b border-sidebar-border ${plegada ? 'flex-col px-2' : 'px-3'}`}
+        className={`flex items-center gap-3 py-4 border-b border-sidebar-border ${plegada ? 'flex-col px-2' : 'flex-wrap px-3'}`}
       >
         <div className="w-10 h-10 rounded-full overflow-hidden bg-superficie/10 flex items-center justify-center shrink-0 ring-2 ring-borde/10">
           {config.logo_url ? (
@@ -189,8 +189,8 @@ export default function Sidebar({ collapsed, onToggle }) {
           )}
         </div>
         {!plegada && (
-          <div className="min-w-0">
-            <p className="text-sm font-heading font-bold truncate tracking-wide">
+          <div className="min-w-0 grow basis-32">
+            <p className="text-sm font-heading font-bold line-clamp-2 break-words leading-tight tracking-wide">
               {nombreVisibleDelNegocio(config.nombre_negocio)}
             </p>
             <p className="text-[10px] text-sidebar-foreground/50 truncate">
@@ -205,7 +205,7 @@ export default function Sidebar({ collapsed, onToggle }) {
         <button
           type="button"
           onClick={onToggle}
-          className={`hidden min-h-11 min-w-11 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80 lg:flex ${plegada ? 'w-full flex-col gap-0.5 px-0.5 text-[10px] leading-tight font-medium' : 'ml-auto gap-2 px-3 text-sm font-medium'}`}
+          className={`hidden min-h-11 min-w-11 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80 lg:flex ${plegada ? 'w-full flex-col gap-0.5 px-0.5 text-[10px] leading-tight font-medium' : 'w-full gap-2 px-3 text-sm font-medium'}`}
           aria-label={plegada ? 'Mostrar menú' : 'Ocultar menú'}
           style={{ touchAction: 'manipulation' }}
         >
@@ -314,7 +314,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             </div>
             {!plegada && (
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">{posUser.nombre}</p>
+                <p className="text-xs font-medium break-words leading-tight">{posUser.nombre}</p>
                 <p className="text-[10px] text-sidebar-foreground/50">{posUser.etiqueta ?? ROLE_LABELS[posUser.rol]}</p>
               </div>
             )}
@@ -331,15 +331,15 @@ export default function Sidebar({ collapsed, onToggle }) {
             >
               <Volume2 className="w-4 h-4" />
             </button>
-            {!plegada && (
-              <button
-                onClick={logout}
-                className="text-sidebar-foreground/50 hover:text-peligro transition-colors p-1"
-                aria-label="Salir"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            )}
+            {/* DP-21: también plegada. La barra del mesero y de la cocina nace plegada en los POS, y
+                quien comparte el aparato sale sin tener que abrir el menú. */}
+            <button
+              onClick={logout}
+              className="text-sidebar-foreground/50 hover:text-peligro transition-colors p-1"
+              aria-label="Salir"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

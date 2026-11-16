@@ -75,6 +75,7 @@ import { printDocument } from '@/lib/print';
 import { tipsEnabled, getPorcentajesSugeridos } from '@/utils/tipsUtils';
 import {
   asignacionActiva,
+  debeEscucharAudio,
   debeUsarNombreEnVoz,
   filtrarMesasParaUsuario,
   responsableTexto,
@@ -320,6 +321,9 @@ function Mesero() {
   // vigilante global en cualquier pantalla). Cada aparato la configura en Alertas: sonido, voz o
   // las dos; `speak` respeta el modo. El nombre del mesero sólo va en las suyas.
   const anunciarSolicitudes = (nuevas) => {
+    // DP-21 · Bloque 14: «Silenciar notificaciones del administrador» manda también aquí: el
+    // administrador no oye el aviso ni la voz de las solicitudes (sigue viendo las insignias).
+    if (!debeEscucharAudio(posUser, config)) return;
     const alertas = getAlertConfig();
     // DP-12.6: el aviso (Signal) es del gestor de sonido y la voz empieza cuando termina.
     const sonido =
@@ -1599,7 +1603,7 @@ function Mesero() {
                   <div className="text-center">
                     <UtensilsCrossed className="w-10 h-10 mx-auto mb-2 opacity-40" />
                     <p className="text-sm">No hay mesas en {zonaActiva}.</p>
-                    <p className="text-xs">Configúralas en Configuración → Mapa de mesas.</p>
+                    <p className="text-xs">Configúralas en Configuración → Salón → Mapa de mesas.</p>
                   </div>
                 </div>
               )}

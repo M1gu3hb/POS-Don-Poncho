@@ -444,7 +444,7 @@ export default function RecetaFormDialog({
                 <Input
                   value={producto.nombre}
                   onChange={(e) => setProducto({ ...producto, nombre: e.target.value })}
-                  placeholder="Ej: Capuchino"
+                  placeholder="Ej: Barbacoa de borrego"
                 />
               </div>
               <div>

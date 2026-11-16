@@ -609,7 +609,7 @@
     },
     {
       "archivo": "apps/web/heredado/components/common/Sidebar.jsx",
-      "porque": "DP-13.3 (punto 14): junto a «Salir», el botón «Sonido de este aparato» (el mismo tamaño y tono tenue que «Salir», con el ícono del volumen) abre el ajuste de Configuración → Este aparato en un diálogo, para que el mesero, la cocina y la caja bajen o apaguen el sonido de SU aparato sin entrar a Configuración. En el teléfono cierra el cajón del menú antes de abrir el diálogo. · DP-21 · Bloque 9 (O5/M3): el botón de plegar la barra era un chevron de 16 px al 50 % de opacidad, sólo en lg:; ahora es un botón de 44 × 44 como mínimo con icono (PanelLeftClose/PanelLeftOpen) y la palabra «Ocultar»/«Mostrar», visible plegada y desplegada (plegada, la cabecera apila logo y botón). El botón del cajón (teléfono y tableta) mide lo mismo y dice «Menú».",
+      "porque": "DP-13.3 (punto 14): junto a «Salir», el botón «Sonido de este aparato» (el mismo tamaño y tono tenue que «Salir», con el ícono del volumen) abre el ajuste de Configuración → Este aparato en un diálogo, para que el mesero, la cocina y la caja bajen o apaguen el sonido de SU aparato sin entrar a Configuración. En el teléfono cierra el cajón del menú antes de abrir el diálogo. · DP-21 · Bloque 9 (O5/M3): el botón de plegar la barra era un chevron de 16 px al 50 % de opacidad, sólo en lg:; ahora es un botón de 44 × 44 como mínimo con icono (PanelLeftClose/PanelLeftOpen) y la palabra «Ocultar»/«Mostrar», visible plegada y desplegada (plegada, la cabecera apila logo y botón). El botón del cajón (teléfono y tableta) mide lo mismo y dice «Menú». · DP-21 · Bloque 16: el nombre del negocio (cabecera de la barra) pasa a dos renglones (`line-clamp-2`) y el nombre de quien entró (pie) a varios (`break-words leading-tight`) en lugar de cortarse con puntos suspensivos: con el botón «Ocultar» y los de sonido y salir de 44 px al lado se leía «Restaurante de pru…» y «Dueña de pr…». · DP-21 · Bloque 16: la cabecera de la barra (con el botón «Ocultar» de 44 px) deja el nombre del negocio en dos renglones por palabras y pasa el botón a su propio renglón (`flex-wrap`, `grow basis-32`, `w-full`): en una sola fila el nombre se partía a media palabra («Restaurant / e de prueba»). El pie (nombre de quien entró) también pasa a varios renglones.",
       "testigos": [
         "+ clase:text-sidebar-foreground/50",
         "+ clase:hover:text-sidebar-foreground",
@@ -670,7 +670,19 @@
         "+ clase:font-medium'}",
         "+ texto:Menú",
         "+ icono:PanelLeftClose",
-        "+ icono:PanelLeftOpen"
+        "+ icono:PanelLeftOpen",
+        "- clase:truncate",
+        "- clase:truncate",
+        "+ clase:line-clamp-2",
+        "+ clase:break-words",
+        "+ clase:break-words",
+        "+ clase:leading-tight",
+        "+ clase:leading-tight",
+        "+ clase:grow",
+        "+ clase:basis-32",
+        "+ clase:'flex-wrap",
+        "+ clase:px-3'}",
+        "+ clase:'w-full"
       ]
     },
     {
@@ -700,8 +712,14 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Productos.jsx",
-      "porque": "DP-13.5 (QA1-4): el editor de opciones no abre vacío un juego que al guardar se reemplaza entero; si todavía no llegan, lo dice.",
-      "testigos": ["+ aviso:Cargando las opciones… intenta en un momento."]
+      "porque": "DP-13.5 (QA1-4): el editor de opciones no abre vacío un juego que al guardar se reemplaza entero; si todavía no llegan, lo dice. · DP-21 · Bloque 16: el nombre del platillo se pasa a dos renglones (`line-clamp-2`) en lugar de cortarse con puntos suspensivos.",
+      "testigos": [
+        "+ aviso:Cargando las opciones… intenta en un momento.",
+        "- clase:truncate",
+        "+ clase:leading-tight",
+        "+ clase:line-clamp-2",
+        "+ clase:break-words"
+      ]
     },
     {
       "archivo": "apps/web/heredado/components/tickets/CorteTicket.jsx",
@@ -1058,10 +1076,16 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Dashboard.jsx",
-      "porque": "DP-15 (auditoría por función, A2-M1): «Ventas hoy» cuenta las ventas del día de todas las cajas aunque estén cerradas, y el aviso de abrir caja lo dice.",
+      "porque": "DP-15 (auditoría por función, A2-M1): «Ventas hoy» cuenta las ventas del día de todas las cajas aunque estén cerradas, y el aviso de abrir caja lo dice. · DP-21 · Bloque 16: en la tarjeta de cifras, la fila se envuelve (`flex-wrap`, `grow basis-28`) y el importe se parte (`break-words`) en lugar de cortarse con puntos suspensivos (`truncate`): a 1024 px el icono apretaba «$0.00» hasta cortarlo.",
       "testigos": [
         "- texto:Abre caja para comenzar operación. Los indicadores operativos están en cero hasta que se abra una caja.",
-        "+ texto:Abre caja para comenzar operación. Las cifras de abajo son las del día, de todas las cajas."
+        "+ texto:Abre caja para comenzar operación. Las cifras de abajo son las del día, de todas las cajas.",
+        "- clase:flex-1",
+        "- clase:truncate",
+        "+ clase:flex-wrap",
+        "+ clase:grow",
+        "+ clase:basis-28",
+        "+ clase:break-words"
       ]
     },
     {
@@ -1324,7 +1348,7 @@
     },
     {
       "archivo": "apps/web/heredado/components/ui/dialog.jsx",
-      "porque": "DP-16 (1.3, DP-D103): el diálogo ya no entra «de lado» (`slide-in-from-left-1/2`); crece desde el último toque con la hoja compartida (`ventana-velo`, `ventana-emergente`).",
+      "porque": "DP-16 (1.3, DP-D103): el diálogo ya no entra «de lado» (`slide-in-from-left-1/2`); crece desde el último toque con la hoja compartida (`ventana-velo`, `ventana-emergente`). · DP-21 · Bloque 16: el botón de cerrar del diálogo centra su icono (`inline-flex items-center justify-center`) para que, con el piso de 44 px del dedo, la «X» no se quede en la esquina de su caja. Con ratón mide y se ve igual.",
       "testigos": [
         "- clase:data-[state=open]:animate-in",
         "- clase:data-[state=open]:animate-in",
@@ -1342,18 +1366,24 @@
         "- clase:data-[state=open]:slide-in-from-left-1/2",
         "- clase:data-[state=open]:slide-in-from-top-[48%]",
         "+ clase:ventana-velo",
-        "+ clase:ventana-emergente"
+        "+ clase:ventana-emergente",
+        "+ clase:inline-flex",
+        "+ clase:items-center",
+        "+ clase:justify-center"
       ]
     },
     {
       "archivo": "apps/web/heredado/components/ui/sheet.jsx",
-      "porque": "DP-16 (1.3, DP-D103): el panel lateral usa la hoja compartida (`ventana-velo`) y tarda 220 ms en vez de 500.",
+      "porque": "DP-16 (1.3, DP-D103): el panel lateral usa la hoja compartida (`ventana-velo`) y tarda 220 ms en vez de 500. · DP-21 · Bloque 16: igual que el diálogo, el botón de cerrar del panel centra su icono.",
       "testigos": [
         "- clase:data-[state=open]:animate-in",
         "- clase:data-[state=closed]:animate-out",
         "- clase:data-[state=closed]:fade-out-0",
         "- clase:data-[state=open]:fade-in-0",
-        "+ clase:ventana-velo"
+        "+ clase:ventana-velo",
+        "+ clase:inline-flex",
+        "+ clase:items-center",
+        "+ clase:justify-center"
       ]
     },
     {
@@ -2338,6 +2368,118 @@
         "+ clase:${plegada",
         "+ clase:${plegada"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/RestrictedRoute.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": [
+        "- texto:Para activarlo, cambia el paquete en Configuración → Presentación.",
+        "+ texto:Para activarlo, pídelo a tu proveedor."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/compras/RegistrarCompraDialog.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase. · DP-21 · Bloque 16: la fila «Cantidad · Unidad · Costo» se alinea por abajo (`items-end`) y en el teléfono apila sus tres campos (`grid-cols-1 sm:grid-cols-3`): con una etiqueta de dos renglones las cajas quedaban a distinta altura.",
+      "testigos": [
+        "- placeholder:Ej: Café molido",
+        "+ placeholder:Ej: Carne de borrego",
+        "- clase:grid-cols-3",
+        "+ clase:grid-cols-1",
+        "+ clase:items-end",
+        "+ clase:sm:grid-cols-3"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": [
+        "- placeholder:Morphiq POS",
+        "- placeholder:Morphiq",
+        "+ placeholder:POS Don Poncho",
+        "+ placeholder:POS Don Poncho"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": [
+        "- placeholder:Ej: Panadería San José",
+        "+ placeholder:Ej: Carnicería La Barranca"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/inventario/RegistrarInventarioInicialDialog.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase. · DP-21 · Bloque 16: igual que en Compras, la fila de cantidad, unidad y costo se alinea por abajo y en el teléfono se apila.",
+      "testigos": [
+        "- placeholder:Ej: Café molido",
+        "+ placeholder:Ej: Carne de borrego",
+        "- clase:grid-cols-3",
+        "+ clase:grid-cols-1",
+        "+ clase:items-end",
+        "+ clase:sm:grid-cols-3"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": [
+        "- texto:el cliente ve el menú pero NO puede mandar pedidos a cocina.",
+        "+ texto:el cliente ve el menú pero no puede avisar «quiero ordenar». Que pueda mandar pedidos depende de «Permitir que el comensal envíe pedidos desde el QR» (Configuración → Portal de comensales)."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/recetas/RecetaFormDialog.jsx",
+      "porque": "DP-21 · Bloque 14 (Configuración limpia): el texto visible decía Morphiq como si fuera la marca, o mandaba a una pestaña que ya no existe, o daba un ejemplo de cafetería. Ahora habla de Don Poncho y de un restaurante. Es el mismo control, con otra frase.",
+      "testigos": ["- placeholder:Ej: Capuchino", "+ placeholder:Ej: Barbacoa de borrego"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/UsuarioPOSDialog.jsx",
+      "porque": "DP-21 · Bloque 21 (la Configuración, ordenada): el texto mandaba a una pestaña que ya no existe («Operación», «Usuarios POS», «Mapa de mesas»). Ahora nombra la sección de hoy. Es el mismo aviso, con el camino correcto.",
+      "testigos": [
+        "- texto:Aún no hay estaciones creadas. Ve a Configuración → Operación → Estaciones de preparación.",
+        "- aviso:Aún no hay estaciones creadas. Crea al menos una en Configuración → Operación → Estaciones de preparación.",
+        "+ texto:Aún no hay estaciones creadas. Ve a Configuración → Cocina → Estaciones de preparación.",
+        "+ aviso:Aún no hay estaciones creadas. Crea al menos una en Configuración → Cocina → Estaciones de preparación."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/MesasQRTab.jsx",
+      "porque": "DP-21 · Bloque 21 (la Configuración, ordenada): el texto mandaba a una pestaña que ya no existe («Operación», «Usuarios POS», «Mapa de mesas»). Ahora nombra la sección de hoy. Es el mismo aviso, con el camino correcto.",
+      "testigos": [
+        "- texto:Crea mesas en Configuración → Mapa de mesas.",
+        "+ texto:Crea mesas en Configuración → Salón → Mapa de mesas."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Cocina.jsx",
+      "porque": "DP-21 · Bloque 21 (la Configuración, ordenada): el texto mandaba a una pestaña que ya no existe («Operación», «Usuarios POS», «Mapa de mesas»). Ahora nombra la sección de hoy. Es el mismo aviso, con el camino correcto.",
+      "testigos": [
+        "- texto:Configuración → Usuarios POS",
+        "+ texto:Configuración → Personas y seguridad → Usuarios POS"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-21 · Bloque 21 (la Configuración, ordenada): el texto mandaba a una pestaña que ya no existe («Operación», «Usuarios POS», «Mapa de mesas»). Ahora nombra la sección de hoy. Es el mismo aviso, con el camino correcto.",
+      "testigos": [
+        "- texto:Configúralas en Configuración → Mapa de mesas.",
+        "+ texto:Configúralas en Configuración → Salón → Mapa de mesas."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Inventario.jsx",
+      "porque": "DP-21 · Bloque 16: el nombre del ingrediente se pasa a dos renglones (`line-clamp-2`) en lugar de cortarse con puntos suspensivos.",
+      "testigos": [
+        "- clase:truncate",
+        "+ clase:line-clamp-2",
+        "+ clase:break-words",
+        "+ clase:leading-tight"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/dashboard/PrimerosPasosCard.jsx",
+      "porque": "DP-21 · Bloque 16: los enlaces de la guía miden 44 px con el dedo (`any-pointer-coarse:min-h-(--altura-tactil)`); con ratón, la densidad de siempre.",
+      "testigos": ["+ clase:any-pointer-coarse:min-h-(--altura-tactil)"]
     }
   ]
 }

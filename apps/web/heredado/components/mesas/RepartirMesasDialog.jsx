@@ -96,7 +96,7 @@ export default function RepartirMesasDialog({ open, mesas, asignacionActiva, onC
 
         {!asignacionActiva && (
           <p className="text-xs rounded-md border border-advertencia/30 bg-advertencia/10 text-advertencia px-2 py-1.5">
-            La asignación de mesas está apagada (Configuración → Operación): se guardan, pero
+            La asignación de mesas está apagada (Configuración → Salón): se guardan, pero
             mientras siga apagada todos los meseros ven todas las mesas.
           </p>
         )}

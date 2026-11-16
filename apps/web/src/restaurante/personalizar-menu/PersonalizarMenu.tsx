@@ -101,7 +101,7 @@ export function PersonalizarMenu() {
         {config.portal_qr_modo_menu === 'menu_subido' ? (
           <Aviso
             tono="info"
-            titulo="El portal enseña hoy «Páginas subidas»: lo de aquí se ve en «Menú digital» y «A la carta» (Portal QR → Configuración → Cómo se ve el menú)."
+            titulo="El portal enseña hoy «Páginas subidas»: lo de aquí se ve en «Menú digital» y «A la carta» (Configuración → Portal de comensales → Cómo se ve el menú)."
           />
         ) : null}
         <Superficie relleno={4} className="flex flex-col gap-(--espacio-4)">

@@ -1,4 +1,5 @@
 'use client';
+import { BotonComoFunciona } from '~/guias/GuiaDeRecetasEInventario';
 import React, { useState, useMemo } from 'react';
 import { api } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -228,6 +229,7 @@ export default function Inventario() {
         description="Ingredientes e insumos"
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            <BotonComoFunciona />
             <Button
               size="sm"
               variant="outline"
@@ -376,7 +378,7 @@ export default function Inventario() {
                 <div className={FILA_DE_INVENTARIO}>
                   <div className="col-span-2 min-w-0 @2xl:col-span-1">
                     <div className="mb-1 flex min-w-0 items-center gap-2">
-                      <p className="min-w-0 truncate text-sm font-medium" title={ing.nombre}>
+                      <p className="min-w-0 line-clamp-2 break-words text-sm font-medium leading-tight" title={ing.nombre}>
                         {ing.nombre}
                       </p>
                       <div className="shrink-0">

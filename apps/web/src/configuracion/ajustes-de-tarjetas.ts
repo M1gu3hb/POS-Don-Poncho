@@ -54,7 +54,7 @@ export interface AjustesDeUnaTarjeta {
 export const AJUSTES_DE_TARJETAS: Readonly<Record<string, AjustesDeUnaTarjeta>> = {
   'datos-del-negocio': {
     titulo: 'Datos del negocio',
-    descripcion: 'Estos datos aparecen en tickets, PDFs y Portal QR.',
+    descripcion: 'Estos datos aparecen en tickets, PDFs y el corte.',
     campos: [
       {
         tipo: 'texto',
@@ -202,6 +202,8 @@ export const AJUSTES_DE_TARJETAS: Readonly<Record<string, AjustesDeUnaTarjeta>> 
         tipo: 'interruptor',
         clave: 'permitir_venta_sin_stock',
         etiqueta: 'Permitir venta sin stock',
+        ayuda:
+          'Hoy manda la opción de cada producto («Permitir venta sin stock» en el producto); este interruptor del negocio no cambia lo que se cobra. Lo que pasó por cocina (mesa, para llevar o portal) se cobra aunque no haya existencia.',
         porOmision: false,
       },
     ],
