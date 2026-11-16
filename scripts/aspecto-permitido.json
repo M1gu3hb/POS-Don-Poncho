@@ -1076,10 +1076,16 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Dashboard.jsx",
-      "porque": "DP-15 (auditoría por función, A2-M1): «Ventas hoy» cuenta las ventas del día de todas las cajas aunque estén cerradas, y el aviso de abrir caja lo dice.",
+      "porque": "DP-15 (auditoría por función, A2-M1): «Ventas hoy» cuenta las ventas del día de todas las cajas aunque estén cerradas, y el aviso de abrir caja lo dice. · DP-21 · Bloque 16: en la tarjeta de cifras, la fila se envuelve (`flex-wrap`, `grow basis-28`) y el importe se parte (`break-words`) en lugar de cortarse con puntos suspensivos (`truncate`): a 1024 px el icono apretaba «$0.00» hasta cortarlo.",
       "testigos": [
         "- texto:Abre caja para comenzar operación. Los indicadores operativos están en cero hasta que se abra una caja.",
-        "+ texto:Abre caja para comenzar operación. Las cifras de abajo son las del día, de todas las cajas."
+        "+ texto:Abre caja para comenzar operación. Las cifras de abajo son las del día, de todas las cajas.",
+        "- clase:flex-1",
+        "- clase:truncate",
+        "+ clase:flex-wrap",
+        "+ clase:grow",
+        "+ clase:basis-28",
+        "+ clase:break-words"
       ]
     },
     {
@@ -2469,6 +2475,11 @@
         "+ clase:break-words",
         "+ clase:leading-tight"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/dashboard/PrimerosPasosCard.jsx",
+      "porque": "DP-21 · Bloque 16: los enlaces de la guía miden 44 px con el dedo (`any-pointer-coarse:min-h-(--altura-tactil)`); con ratón, la densidad de siempre.",
+      "testigos": ["+ clase:any-pointer-coarse:min-h-(--altura-tactil)"]
     }
   ]
 }

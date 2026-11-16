@@ -153,7 +153,7 @@ export default function PrimerosPasosCard({ progreso, ready = true }) {
                 <li key={p.key}>
                   <Link
                     to={p.to}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors any-pointer-coarse:min-h-(--altura-tactil) ${
                       ok
                         ? 'text-muted-foreground line-through'
                         : 'hover:bg-primary/5 text-foreground'

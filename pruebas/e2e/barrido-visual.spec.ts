@@ -236,10 +236,8 @@ test.describe('el barrido visual (DP-21 · Bloque 16)', () => {
         '',
       ].join('\n'),
     );
-    // El tablero lo rehace otro agente (Bloques 13 y 14): se retrata y se informa, pero no se exige aquí.
-    const exigidas = filas.filter((f) => f.pantalla !== 'tablero');
     expect(
-      exigidas
+      filas
         .slice(0, 40)
         .map(
           (f) => `${f.vista} · ${f.hallazgo.tipo} · ${f.hallazgo.donde} · ${f.hallazgo.detalle}`,

@@ -636,13 +636,15 @@ function PaymentCard({ label, value, color, icon: Icon }) {
         boxShadow: sheen,
       }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
+      {/* DP-21 · Bloque 16: la fila se envuelve y el texto pide un mínimo (`basis-28`): en una tarjeta angosta
+          el icono pasa abajo en vez de apretar el importe hasta cortarlo. */}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="grow basis-28 min-w-0">
           <p className="text-[10px] uppercase tracking-wide font-semibold" style={{ color }}>
             {label}
           </p>
           <p
-            className="text-xl font-heading font-black mt-1 truncate"
+            className="text-xl font-heading font-black mt-1 break-words"
             style={{ color: valueColor }}
           >
             {formatCurrency(value)}
