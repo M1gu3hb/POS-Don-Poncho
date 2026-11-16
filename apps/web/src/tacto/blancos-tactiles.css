@@ -1,0 +1,57 @@
+/* DP-21 · Bloque 16 (M21) — Todo blanco táctil mide 44 px como mínimo.
+
+   Los POS se tocan con el dedo (el iMin, las pantallas táctiles de Windows y los teléfonos de los
+   meseros) y un botón de 28 o 32 px se falla. Los botones, pestañas, campos, renglones de menú y
+   enlaces del menú lateral heredados miden 28–40 px según dónde nacieron; en vez de tocar uno por
+   uno, un piso con el token `--altura-tactil` (el mismo 44 px de `--altura-control`, que el modo
+   compacto baja y esto NO).
+
+   Sólo donde hay un dedo (`any-pointer: coarse`): con ratón, la densidad de siempre y la galería de la
+   CI —que se retrata con ratón— no cambia ni un pixel. En `@layer base`: un componente que pida a
+   propósito un tamaño mayor lo conserva (sólo se pone un MÍNIMO). Los interruptores, casillas y
+   opciones (`role=switch|checkbox|radio`) quedan fuera: su blanco es la fila con su etiqueta, y un
+   riel de 44 px de alto los deformaría. Los enlaces sueltos dentro de un párrafo tampoco: sólo los del
+   menú (`nav a`). */
+:root {
+  --altura-tactil: 2.75rem;
+}
+
+@layer base {
+  @media (any-pointer: coarse) {
+    html[data-pos-tactil]
+      :is(
+        button,
+        [role='button'],
+        [role='tab'],
+        [role='menuitem'],
+        [role='option'],
+        [role='combobox'],
+        nav a[href],
+        a[href][class*='inline-flex'],
+        select,
+        textarea,
+        input:not([type='hidden'], [type='checkbox'], [type='radio'], [type='range'], [type='file'])
+      ):not([role='switch'], [role='checkbox'], [role='radio'], [data-tactil-ya]) {
+      min-height: var(--altura-tactil);
+      min-width: var(--altura-tactil);
+    }
+  }
+
+  /* Los interruptores y las casillas no se estiran (deformarían su riel), pero su blanco sí crece:
+     un área transparente de 44 px centrada en ellos. */
+  @media (any-pointer: coarse) {
+    html[data-pos-tactil] :is([role='switch'], [role='checkbox']) {
+      position: relative;
+    }
+
+    html[data-pos-tactil] :is([role='switch'], [role='checkbox'])::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: max(100%, var(--altura-tactil));
+      height: max(100%, var(--altura-tactil));
+      transform: translate(-50%, -50%);
+    }
+  }
+}

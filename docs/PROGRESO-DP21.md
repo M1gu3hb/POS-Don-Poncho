@@ -103,7 +103,7 @@ verde (PR #31).
 | 13 | El tablero | C | hecho (`d88bb8f`, agente 2) · DP-D136 · en el PR #34 |
 | 14 | Configuración limpia | C | hecho (`d88bb8f`, agente 2) · DP-D135 · en el PR #34 |
 | 15 | Colores del iMin | B | en producción (`9cb3290`, agente 1; `8d483e4`) · DP-D142 · **falta ver el iMin** |
-| 16 | El barrido visual | C | agente 1, en curso (entrega 11:00) |
+| 16 | El barrido visual | C | hecho (agente 1) · DP-D144 · `barrido-visual.spec.ts`, 13 de 14 pantallas; el tablero, pendiente · en el PR #34 |
 | 17 | Las guías | C | hecho (`a4f9cee`, agente 2) · en el PR #34 |
 | 18 | Los cortes en una carpeta (app 1.0.2) | C | **no entra:** no alcanzó el tiempo antes del congelado |
 | 19 | Lo que quedó de DP-19 | C | **no entra:** era «sólo si sobra tiempo» |

@@ -519,7 +519,7 @@ export function CierreDiario({ datosIniciales }: CierreDiarioProps) {
   }
 
   return (
-    <div className="grid items-start gap-(--espacio-4) p-(--espacio-3) md:p-(--espacio-4) xl:grid-cols-[minmax(0,1fr)_24rem]">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-(--espacio-4) p-(--espacio-3) md:p-(--espacio-4) xl:grid-cols-[minmax(0,1fr)_24rem]">
       <h1 className="text-xl font-bold xl:col-span-2">Cierre diario y arqueo</h1>
 
       {/* 4 · CONTEO — primero en el DOM porque encabeza la jerarquía (sin llevarse el foco:

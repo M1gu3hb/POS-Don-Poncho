@@ -551,7 +551,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
                 )}
 
                 {/* Cantidad / unidad / costo */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-3">
                   <div>
                     <Label className="text-xs">Cantidad comprada</Label>
                     <Input

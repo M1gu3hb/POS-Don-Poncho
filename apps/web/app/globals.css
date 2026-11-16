@@ -44,6 +44,7 @@
 
 /* DP-21 · Bloque 9 · M5 y M16: los diálogos y paneles largos se desplazan con el dedo, y con el teclado
    en pantalla usan el alto que se ve. */
+@import '../src/tacto/blancos-tactiles.css';
 @import '../src/tacto/desplazamiento-tactil.css';
 @import '../src/tacto/teclado-en-pantalla.css';
 

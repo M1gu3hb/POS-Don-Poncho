@@ -311,7 +311,7 @@ export default function Productos() {
                       altura. */}
                   <div className="grid min-h-[3.75rem] grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                     <div className="min-w-0">
-                      <p className="truncate font-heading font-semibold" title={p.nombre}>
+                      <p className="line-clamp-2 break-words font-heading font-semibold leading-tight" title={p.nombre}>
                         {p.nombre}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">

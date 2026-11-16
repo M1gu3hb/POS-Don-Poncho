@@ -2801,3 +2801,25 @@ DP-21 · Bloque 20 (lo de dinero, seguridad y datos). El inventario completo est
   rechaza.
 - **El RFC** del negocio se valida (`@morphiqpos/domain/venta/rfc`): 12 o 13 caracteres con su forma;
   vacío se permite.
+
+## DP-D144 · El barrido visual: un piso de 44 px para el dedo, no un arreglo por botón · 16-11-2026
+
+DP-21 · Bloque 16 (M21). Un recorrido con Playwright (`pruebas/e2e/barrido-visual.spec.ts`) mide 14
+pantallas en 6 tamaños (1920×1080, 1280×800, 1366×768, 1024×768, 800×1280 y 390×844), con la barra
+abierta y plegada, y con el teclado abierto (el alto visible menos 40 %) en el iMin y el teléfono.
+Falla con datos: desborde horizontal, blancos de menos de 44 px, texto cortado, tarjetas de una
+fila de distinto alto, campos desalineados y lo tapado.
+
+- **El piso de 44 px** (`tacto/blancos-tactiles.css`, token `--altura-tactil`) vale sólo con dedo
+  (`any-pointer: coarse`) y sólo dentro del POS (`html[data-pos-tactil]`; el portal del comensal
+  queda fuera). Va en `@layer base`: quien pide a propósito un tamaño mayor lo conserva. Con ratón
+  nada cambia, así que la galería no se mueve por esto.
+- **Los interruptores y las casillas no se estiran:** crece su área de toque, no su dibujo.
+- **Lo que sí cambia con ratón:** el nombre del negocio en dos renglones en la barra, los nombres
+  de productos e ingredientes en dos renglones en vez de cortados, las tarjetas de Caja →
+  Movimientos del mismo alto, y «Cantidad · Unidad · Costo» alineado (apilado en el teléfono).
+- **Queda pendiente:** el tablero (8 enlaces de 32 px y un importe cortado a 1024) sólo se retrató;
+  las 16 secciones de Configuración se recorren en su propia e2e, no en el barrido; y el barrido
+  no corre en la CI (tarda y necesita su base): se corre a mano antes de un cambio visual.
+- **Sin probar en aparato:** el teclado del barrido es el alto reducido de Playwright, no el del
+  iMin. Antes y después, en `qa/dp21/barrido/`.

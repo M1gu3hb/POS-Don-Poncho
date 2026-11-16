@@ -32,7 +32,7 @@ export function MovimientosDeCaja({
   readonly alMover: () => void;
 }) {
   return (
-    <div className="grid items-start gap-(--espacio-4) lg:grid-cols-2">
+    <div className="grid gap-(--espacio-4) lg:grid-cols-2">
       {/* El corte de turno es de quien tiene la caja: entrega lo suyo y no cierra. */}
       <CorteDeTurno />
       <RetiroDeCaja alRetirar={alMover} esDeGerencia={puedeAdministrar} />
