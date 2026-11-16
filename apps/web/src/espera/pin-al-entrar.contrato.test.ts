@@ -44,7 +44,7 @@ const NO_SON_PANTALLAS = new Set([
 /** ¿El archivo COMPRUEBA un PIN (llama a la entrada), no sólo la menciona en un comentario? */
 function compruebaUnPin(codigo: string): boolean {
   return (
-    /invocarComando\(\s*'\/api\/auth\/entrar'/.test(codigo) || /api\.auth\.entrar\(/.test(codigo)
+    /invocarComando\(\s*'\/api\/auth\/entrar'/.test(codigo) || codigo.includes('api.auth.entrar(')
   );
 }
 
@@ -71,7 +71,7 @@ describe('quien comprueba un PIN deja la marca de esta ejecución', () => {
 
   it.each(pantallas)('%s deja la marca: ella misma o por `login()`', (ruta) => {
     const codigo = leer(ruta);
-    const marcaElla = /marcarPin\(almacenDeLaEjecucion\(\), /.test(codigo);
+    const marcaElla = codigo.includes('marcarPin(almacenDeLaEjecucion(), ');
     // El acceso heredado entra por el contexto: `login(entrado)` DESPUÉS de comprobar el PIN.
     const entraPorElContexto =
       /await api\.auth\.entrar\([\s\S]*?\blogin\(entrado\);/.test(codigo) &&
