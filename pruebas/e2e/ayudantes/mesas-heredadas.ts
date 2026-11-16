@@ -1017,10 +1017,11 @@ export async function prepararElPortalDelComensal(
   if (que.pedidosDelComensal === true) {
     // Configuración → Portal de comensales → Pedidos: «Permitir que el comensal envíe pedidos».
     await duena.goto('/configuracion?seccion=portal');
-    const pedidos = duena
-      .getByText('Permitir que el comensal envíe pedidos desde el QR')
-      .locator('xpath=ancestor::div[contains(@class,"flex items-start")][1]')
-      .getByRole('switch');
+    // Por su nombre accesible: la ayuda de la tarjeta también cita esta frase (DP-21 · Bloque 14).
+    const pedidos = duena.getByRole('switch', {
+      name: 'Permitir que el comensal envíe pedidos desde el QR',
+      exact: true,
+    });
     await expect(pedidos).toBeEnabled();
     if ((await pedidos.getAttribute('aria-checked')) !== 'true') await pedidos.click();
     await expect(pedidos).toHaveAttribute('aria-checked', 'true');

@@ -28,7 +28,7 @@ function archivosDe(carpeta: string, salida: string[] = []): string[] {
   for (const nombre of readdirSync(carpeta)) {
     const ruta = join(carpeta, nombre);
     if (statSync(ruta).isDirectory()) archivosDe(ruta, salida);
-    else if (/\.(tsx|jsx|ts|js)$/.test(nombre) && !/\.test\./.test(nombre)) salida.push(ruta);
+    else if (/\.(tsx|jsx|ts|js)$/.test(nombre) && !nombre.includes('.test.')) salida.push(ruta);
   }
   return salida;
 }
