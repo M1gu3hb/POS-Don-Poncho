@@ -158,6 +158,10 @@ const SOLO_POR_COMANDO = new Set([
   // DP-21 · A los cuántos minutos sin uso se cierra la pantalla del mando: sólo dueño o
   // administrador (`configuracion.fijar_candado_de_mando`).
   'candado_de_mando_min',
+  // DP-21 · Quién puede elegir la propina (el mesero y la Caja): sólo dueño o administrador
+  // (`configuracion.fijar_quien_elige_la_propina`). La de los comensales ya era del portal.
+  'propina_la_elige_mesero',
+  'propina_la_elige_caja',
 ]);
 
 /**
@@ -180,6 +184,8 @@ const CLAVES_EDITABLES = new Set([
   'copias_de_impresion',
   CLAVE_DEL_IMPUESTO,
   'candado_de_mando_min',
+  'propina_la_elige_mesero',
+  'propina_la_elige_caja',
   'nombre_negocio',
   'nombre_sistema',
   'platform_brand',
@@ -544,6 +550,11 @@ export async function guardarConfiguracionParcial(
       parche['copias_de_impresion'],
       'Las copias de impresión van de 1 a 3.',
     );
+  }
+  for (const casilla of ['propina_la_elige_mesero', 'propina_la_elige_caja'] as const) {
+    if (casilla in parche) {
+      exigirForma(z.boolean(), parche[casilla], 'Quién puede elegir la propina es sí o no.');
+    }
   }
   if ('candado_de_mando_min' in parche) {
     exigirForma(

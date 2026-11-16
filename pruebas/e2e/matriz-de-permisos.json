@@ -295,6 +295,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/configuracion/quien-elige-la-propina",
+      "comando": "configuracion.fijar_quien_elige_la_propina",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/configuracion/vocabulario-restablecer",
       "comando": "configuracion.restablecer_termino",
       "escribe": true,
@@ -762,6 +769,13 @@
       "escribe": false,
       "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/venta/fijar-propina",
+      "comando": "cuenta.fijar_propina",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"]
     },
     {
       "ruta": "/api/venta/para-devolver",

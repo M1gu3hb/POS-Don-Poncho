@@ -143,6 +143,10 @@ const LECTORES: Readonly<Record<string, 'documento-filtrado' | 'proyeccion' | 'i
   'packages/app/src/configuracion/impuesto.ts': 'interno',
   // DP-21: lee `candado_de_mando_min` para el «antes» de la auditoría; escribe por el puente.
   'packages/app/src/configuracion/candado-de-mando.ts': 'interno',
+  // DP-21: leen las casillas de «quién puede elegir la propina»; ninguno devuelve el documento.
+  'packages/app/src/propinas/fijar-propina.ts': 'interno',
+  'packages/app/src/propinas/quien-elige.ts': 'interno',
+  'packages/app/src/restaurante/cuenta.ts': 'interno',
   'packages/data/src/repos/archivos.ts': 'interno',
 };
 

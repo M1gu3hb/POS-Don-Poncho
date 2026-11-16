@@ -130,6 +130,13 @@ export const entradaCobrarOrdenConPropina = entradaCobrarOrden
     propinaPuntosBase: puntosBase.optional(),
     propinaTipo: z.enum(TIPOS_DE_PROPINA).optional(),
     propinaOrigen: z.enum(ORIGENES_DE_PROPINA).optional(),
+    /**
+     * DP-21 · La `version` de la cuenta que la Caja tenía en pantalla al cobrar. Si la cuenta
+     * cambió después (los comensales eligieron su propina, el mesero añadió algo), el cobro se
+     * rechaza con la propina vigente: nunca se cobra en silencio una distinta de la que se ve.
+     * Opcional: quien no la manda cobra como antes.
+     */
+    versionDeLaCuenta: z.number().int().min(0).optional(),
   })
   .superRefine((cobro, ctx) => {
     // La propina de un renglón sin venta se mide contra la CUENTA: es la de la mesa entera.

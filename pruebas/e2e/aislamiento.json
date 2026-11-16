@@ -1104,6 +1104,21 @@
       "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
     },
     {
+      "ruta": "/api/venta/fijar-propina",
+      "comando": "cuenta.fijar_propina",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": {
+        "ordenId": "⟨ordenes⟩",
+        "version": 0,
+        "propinaTipo": "sin_propina",
+        "propinaPuntosBase": 0
+      },
+      "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
+    },
+    {
       "ruta": "/api/venta/para-devolver",
       "comando": "venta.para_devolver",
       "escribe": false,

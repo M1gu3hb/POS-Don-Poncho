@@ -23,6 +23,7 @@ import { porQueYaNoSeCobra } from './ya-cobrada.ts';
 import { efectosDeOpcionesPorLinea } from './opciones-en-consumo.ts';
 import { asignarNumeroParaLlevar } from './numero-para-llevar.ts';
 import { cantidadAConsumir } from './presentacion.ts';
+import { conflictoDePropina, mensajeDeLaVigente } from '../propinas/fijar-propina.ts';
 
 /**
  * `cobrarOrden` — la tarea más importante del corte (F1.1-A-09).
@@ -110,7 +111,14 @@ export const cobrarOrden = definirComando<
     const bloqueada = await ctx.paso('bloquear_orden', () =>
       ctx.tx
         .selectFrom('ordenes')
-        .select(['id', 'estado'])
+        .select([
+          'id',
+          'estado',
+          'version',
+          'propina_tipo',
+          'propina_puntos_base',
+          'propina_origen',
+        ])
         .where('organizacion_id', '=', organizacionId)
         .where('id', '=', entrada.ordenId)
         .forUpdate()
@@ -129,6 +137,25 @@ export const cobrarOrden = definirComando<
         'ORDEN_NO_EDITABLE',
         await porQueYaNoSeCobra(ctx.tx, organizacionId, entrada.ordenId, bloqueada.estado),
         { estado: bloqueada.estado },
+      );
+    }
+    // 1.1 · DP-21 · La cuenta que se cobra es la que la Caja tiene en pantalla. Si cambió desde
+    //       que la leyó —lo normal: los comensales acaban de elegir su propina en el portal—, se
+    //       rechaza con la propina vigente y la Caja la enseña antes de volver a cobrar.
+    if (
+      bloqueada !== undefined &&
+      entrada.versionDeLaCuenta !== undefined &&
+      entrada.versionDeLaCuenta !== bloqueada.version
+    ) {
+      const vigente = {
+        tipo: bloqueada.propina_tipo,
+        puntosBase: bloqueada.propina_puntos_base,
+        origen: bloqueada.propina_origen,
+      };
+      throw conflictoDePropina(
+        `La cuenta cambió mientras se cobraba. ${mensajeDeLaVigente(vigente)} Revísala y vuelve a cobrar.`,
+        vigente,
+        bloqueada.version,
       );
     }
     const remitida = await ctx.paso('mirar_remision', () =>

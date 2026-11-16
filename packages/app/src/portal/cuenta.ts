@@ -5,6 +5,7 @@ import { aplicarPorcentaje, centavos, CERO } from '@morphiqpos/domain/dinero';
 import type { TotalesOrden } from '@morphiqpos/domain/venta';
 import type { z } from 'zod';
 
+import { decidirPropina, quienLaDecidio } from '../propinas/una-sola-verdad.ts';
 import { cotizar } from '../venta/cotizar.ts';
 import { definirComandoPublico, type ContextoPortal } from './definicion-publica.ts';
 import { marcarCuentaSolicitadaDesdeQR, moverMesaDelPortal } from './escrituras.ts';
@@ -56,6 +57,11 @@ export interface ResultadoCuenta {
   readonly propinaTipo: string;
   /** El código que el comensal lleva a la caja (`F1-04` §6.3). */
   readonly codigoCaja: string;
+  /**
+   * DP-21 · Sólo cuando la propina YA la había decidido otra pantalla (la caja o el mesero): la
+   * de este teléfono no se aplicó y el portal dice «Tu propina ya quedó registrada en caja».
+   */
+  readonly propinaYaRegistradaEn?: 'caja' | 'mesero';
 }
 
 const PUNTOS_BASE_POR_PUNTO = 100;
@@ -73,6 +79,37 @@ export const pedirCuentaQR = definirComandoPublico<typeof entradaPedirCuenta, Re
     const { totales } = await ctx.paso('cotizar', () =>
       cotizar(ctx.tx, ctx.ambito.organizacionId, orden.id),
     );
+
+    // DP-21 · La propina se decide UNA vez: si la caja (o el mesero) ya la eligió, la de este
+    // teléfono no la pisa. No se toca la cuenta ni se avisa al mesero —ya se está cobrando—; el
+    // intento queda en la auditoría y el comensal se entera de la vigente.
+    const vigente = {
+      tipo: orden.propina_tipo,
+      puntosBase: orden.propina_puntos_base,
+      origen: orden.propina_origen,
+    };
+    const veredicto = decidirPropina(vigente, { quien: 'portal_qr', cambiar: false });
+    if (!veredicto.aplicar) {
+      const autor = quienLaDecidio(vigente) === 'mesero' ? 'mesero' : 'caja';
+      const subtotal = centavos(totales.totalCentavos);
+      ctx.auditar({
+        entidadId: orden.id,
+        payload: {
+          propinaYaRegistradaEn: autor,
+          propinaTipo: vigente.tipo,
+          propinaBp: vigente.puntosBase,
+          totalCentavos: totales.totalCentavos.toString(),
+        },
+      });
+      return {
+        ventaId: orden.id,
+        subtotalCentavos: subtotal.toString(),
+        propinaCentavos: aplicarPorcentaje(subtotal, vigente.puntosBase).toString(),
+        propinaTipo: vigente.tipo ?? 'sin_propina',
+        codigoCaja: orden.codigo_caja ?? '',
+        propinaYaRegistradaEn: autor,
+      };
+    }
 
     const cuenta = calcularPropina(ctx, totales.totalCentavos, entrada);
 
@@ -130,6 +167,7 @@ interface OrdenParaCobrar {
   readonly version: number;
   readonly codigo_caja: string | null;
   readonly propina_tipo: string | null;
+  readonly propina_puntos_base: number;
   readonly propina_origen: string | null;
 }
 
@@ -138,7 +176,15 @@ async function ordenParaCobrar(ctx: ContextoPortal): Promise<OrdenParaCobrar> {
   // medias termina primero, y la cuenta se calcula con sus renglones dentro.
   const orden = await ctx.tx
     .selectFrom('ordenes')
-    .select(['id', 'estado', 'version', 'codigo_caja', 'propina_tipo', 'propina_origen'])
+    .select([
+      'id',
+      'estado',
+      'version',
+      'codigo_caja',
+      'propina_tipo',
+      'propina_puntos_base',
+      'propina_origen',
+    ])
     .where('organizacion_id', '=', ctx.ambito.organizacionId)
     .where('mesa_id', '=', ctx.ambito.mesaId)
     .where('estado', 'in', ORDEN_ACTIVA)
