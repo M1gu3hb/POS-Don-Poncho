@@ -6,6 +6,7 @@ import { claveDeContexto } from '~/cliente/contexto-de-consultas';
 import { mismaCocina } from '~/restaurante/alcance-de-la-cocina';
 import { almacenDelAparato } from '~/restaurante/vista-de-solicitudes';
 import { abrir as abrirElCandado } from '~/espera/candado-del-pin';
+import { almacenDeLaEjecucion, olvidarPin } from '~/espera/pin-de-esta-ejecucion';
 import { sonarAntesDeIrse } from '~/sonidos/gestor';
 
 /** @typedef {{id: string, nombre: string, rol: string, etiqueta?: string, paquete?: string, organizacionId?: string, estacion_preparacion_id?: string | null, estacion_preparacion_nombre?: string | null, estacion_preparacion_color?: string | null, puede_ver_todas_estaciones?: boolean, es_plataforma?: boolean}} UsuarioDePOS */
@@ -196,6 +197,9 @@ export function POSAuthProvider({ children, conSesion = true }) {
     // DP-11.2: el candado del modo espera se quita sólo cuando el servidor cerró la sesión; si
     // `salir` falla, sigue puesto (una recarga no debe entrar sin el PIN).
     abrirElCandado(almacenDelAparato());
+    // DP-21: «Salir» termina la sesión en ese momento, y con ella la marca del PIN de esta
+    // ejecución: quien entre después teclea el suyo.
+    olvidarPin(almacenDeLaEjecucion());
     // DP-11.3: suena la salida ANTES de soltar la sesión: sin sesión, la pantalla ya navega sola
     // a la entrada y la recarga de abajo llegaría encima. La recarga corta el audio.
     await sonarAntesDeIrse('salir');

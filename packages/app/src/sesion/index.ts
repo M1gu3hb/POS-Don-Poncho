@@ -1,5 +1,4 @@
 export {
-  DURACION_SESION_SEGUNDOS,
   firmarSesion,
   nuevoIdDeSesion,
   verificarSesion,
@@ -15,3 +14,12 @@ export {
 } from './resolver.ts';
 
 export { cerrarSesion } from './cerrar.ts';
+
+export {
+  MARGEN_DE_RENOVACION_SEGUNDOS,
+  claseDeSesion,
+  nuevaExpiracion,
+  politicaDeSesion,
+  type ClaseDeSesion,
+  type PoliticaDeSesion,
+} from './politica.ts';

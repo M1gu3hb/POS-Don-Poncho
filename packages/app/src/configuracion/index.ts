@@ -29,6 +29,13 @@ export {
   type ConfiguracionOrganizacion,
 } from './configuracion.ts';
 
+export {
+  CANDADO_DE_MANDO,
+  CLAVE_DEL_CANDADO_DE_MANDO,
+  candadoDeMandoEn,
+  entradaFijarCandadoDeMando,
+  fijarCandadoDeMando,
+} from './candado-de-mando.ts';
 export { entradaFijarImpuesto, fijarImpuesto } from './impuesto.ts';
 export {
   CLAVE_DEL_IMPUESTO,

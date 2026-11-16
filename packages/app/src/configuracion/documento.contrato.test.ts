@@ -141,6 +141,8 @@ const LECTORES: Readonly<Record<string, 'documento-filtrado' | 'proyeccion' | 'i
   // DP-21: lee `impuesto` (la tasa y si va incluido) para el «antes» de la auditoría; no devuelve
   // el documento y escribe por el guardado parcial del puente.
   'packages/app/src/configuracion/impuesto.ts': 'interno',
+  // DP-21: lee `candado_de_mando_min` para el «antes» de la auditoría; escribe por el puente.
+  'packages/app/src/configuracion/candado-de-mando.ts': 'interno',
   'packages/data/src/repos/archivos.ts': 'interno',
 };
 

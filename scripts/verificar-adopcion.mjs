@@ -211,6 +211,42 @@ export const SIN_ESTADO = [
       'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
   },
   {
+    pantalla: 'configuracion/IvaDelNegocio',
+    estado: 'vacio',
+    razon:
+      'Tres opciones fijas (sin IVA, 8 % y 16 %) y un interruptor (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/CandadoDeMando',
+    estado: 'vacio',
+    razon:
+      'Un selector de minutos con opciones fijas (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/CandadoDeMando',
+    estado: 'cargando',
+    razon:
+      'Lee la configuración del negocio que el armazón ya cargó (`useConfig`); mientras no llega pinta los 10 minutos de omisión. No hace su propio viaje al servidor.',
+  },
+  {
+    pantalla: 'espera/CandadoDeLaSesion',
+    estado: 'vacio',
+    razon:
+      'Una capa que pide el PIN o no pinta nada (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'espera/CandadoDeLaSesion',
+    estado: 'cargando',
+    razon:
+      'Decide con la sesión del armazón y una marca del navegador, que responden al instante. El «comprobando» del PIN lo pinta `PedirPinAlDespertar`.',
+  },
+  {
+    pantalla: 'espera/CandadoDeLaSesion',
+    estado: 'error',
+    razon:
+      'No hace viajes al servidor: el PIN lo comprueba `PedirPinAlDespertar`, que es quien pinta el Aviso si el PIN no es o no hay conexión.',
+  },
+  {
     pantalla: 'configuracion/AnuncioDeComandasDelAparato',
     estado: 'vacio',
     razon: 'Un interruptor de ESTE aparato (DP-21): no tiene lista que pueda llegar vacía.',

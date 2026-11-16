@@ -155,6 +155,9 @@ const SOLO_POR_COMANDO = new Set([
   'copias_de_impresion',
   // DP-21 · El IVA cambia el total de toda cuenta posterior: `configuracion.fijar_impuesto`.
   CLAVE_DEL_IMPUESTO,
+  // DP-21 · A los cuántos minutos sin uso se cierra la pantalla del mando: sólo dueño o
+  // administrador (`configuracion.fijar_candado_de_mando`).
+  'candado_de_mando_min',
 ]);
 
 /**
@@ -176,6 +179,7 @@ const CLAVES_EDITABLES = new Set([
   'retiro_pin_arriba_de_centavos',
   'copias_de_impresion',
   CLAVE_DEL_IMPUESTO,
+  'candado_de_mando_min',
   'nombre_negocio',
   'nombre_sistema',
   'platform_brand',
@@ -539,6 +543,13 @@ export async function guardarConfiguracionParcial(
       z.object({ ticket: copias, precuenta: copias, corte: copias }),
       parche['copias_de_impresion'],
       'Las copias de impresión van de 1 a 3.',
+    );
+  }
+  if ('candado_de_mando_min' in parche) {
+    exigirForma(
+      z.number().int().min(5).max(30),
+      parche['candado_de_mando_min'],
+      'El candado de los puestos de mando va de 5 a 30 minutos.',
     );
   }
   if (CLAVE_DEL_IMPUESTO in parche) {

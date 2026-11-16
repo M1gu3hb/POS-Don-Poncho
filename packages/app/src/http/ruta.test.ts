@@ -51,6 +51,15 @@ describe('cookieDeSesion', () => {
     expect(cookie).toContain('Path=/');
   });
 
+  it('sin `maxEdadSegundos` es una cookie de SESIÓN: no lleva Max-Age ni Expires (DP-21)', () => {
+    const cookie = cookieDeSesion({ token: 'tok', maxEdadSegundos: null, seguro: true });
+    expect(cookie).not.toMatch(/Max-Age/i);
+    expect(cookie).not.toMatch(/Expires/i);
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('SameSite=Lax');
+    expect(cookie).toContain('Secure');
+  });
+
   it('omite Secure sólo cuando se pide explícitamente', () => {
     // En `http://` local el navegador descarta una cookie `Secure`, y el sistema
     // parecería no loguear nunca. Es la única razón por la que la bandera es

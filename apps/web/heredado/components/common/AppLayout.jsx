@@ -17,6 +17,7 @@ import { useRouteCleanup } from '@/lib/useRouteCleanup';
 import { MorfiCargando } from '~/morfi/MorfiCargando';
 import { textoDeCarga } from '~/morfi/textos-de-carga';
 import { ModoEspera } from '~/espera/ModoEspera';
+import { CandadoDeLaSesion } from '~/espera/CandadoDeLaSesion';
 
 /**
  * `marco="modelo"` (bloque D de la 2.4): las pantallas de los cinco modelos no tenían
@@ -113,6 +114,9 @@ export default function AppLayout({ marco = 'interno' }) {
       <MobileAdminRadialMenu />
       {/* DP-11.2: el modo espera, una capa encima; la pantalla de abajo sigue montada. */}
       <ModoEspera ruta={pathname} />
+      {/* DP-21: el mando, el cajero y el almacén teclean su PIN al abrir la app; el mando,
+          además, a los minutos sin tocar la pantalla. Mesero y cocina entran directo. */}
+      <CandadoDeLaSesion />
     </div>
   );
 }

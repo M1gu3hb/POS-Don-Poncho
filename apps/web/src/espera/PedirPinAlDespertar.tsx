@@ -11,6 +11,7 @@ import { negocioParaEntrar } from '~/cliente/entrada';
 
 import { CapaModal } from './CapaModal';
 import { mensajeDelPin } from './mensaje-del-pin';
+import { almacenDeLaEjecucion, marcarPin } from './pin-de-esta-ejecucion';
 
 const LARGO_DEL_PIN = 4;
 const TECLAS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
@@ -46,6 +47,9 @@ export function PedirPinAlDespertar({
         pin: completo,
         ...negocioParaEntrar(),
       });
+      // DP-21: el servidor aceptó el PIN de este empleo; esta ejecución ya no lo vuelve a pedir
+      // (ni el candado de la sesión ni el del modo espera, que comparten esta pantalla).
+      marcarPin(almacenDeLaEjecucion(), empleoId);
       alVolver();
     } catch (error: unknown) {
       setPin('');

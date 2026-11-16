@@ -90,6 +90,7 @@ import { Calculator, BadgePercent } from 'lucide-react';
 import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos';
 import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
 import { IvaDelNegocio } from '~/configuracion/IvaDelNegocio';
+import { CandadoDeMando } from '~/configuracion/CandadoDeMando';
 import { ImpresionDelAparato } from '~/impresion/pantallas/ImpresionDelAparato';
 import { CopiasDeImpresion } from '~/impresion/pantallas/CopiasDeImpresion';
 import { EntradaAlLaboratorio } from '~/impresion/pantallas/EntradaAlLaboratorio';
@@ -829,6 +830,8 @@ export default function Configuracion() {
           <TabsContent value="caja">
             <CajasALaVez />
             <UmbralDeRetiro />
+            {/* DP-21: quién teclea su PIN al abrir y a los cuántos minutos se cierra el mando. */}
+            <CandadoDeMando puedeCambiar={esDeMando(miPuesto)} />
           </TabsContent>
         )}
         {esDeMando(miPuesto) && (

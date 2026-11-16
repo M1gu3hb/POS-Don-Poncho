@@ -32,8 +32,11 @@ export interface CargaSesion {
   readonly exp: number;
 }
 
-/** Ocho horas: una jornada. Más allá, el cajero vuelve a teclear su PIN. */
-export const DURACION_SESION_SEGUNDOS = 8 * 60 * 60;
+/*
+ * Cuánto vive una sesión ya no es una constante (eran 8 horas para todos): depende del puesto,
+ * y lo decide `politica.ts` (DP-21). Aquí `exp` es sólo el TOPE; la vigencia que manda es la de
+ * la fila de `sesiones`, que el servidor renueva con el uso o deja vencer.
+ */
 
 export function nuevoIdDeSesion(): string {
   return randomBytes(16).toString('hex');

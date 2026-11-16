@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  DURACION_SESION_SEGUNDOS,
-  firmarSesion,
-  nuevoIdDeSesion,
-  verificarSesion,
-  type CargaSesion,
-} from './token.ts';
+import { firmarSesion, nuevoIdDeSesion, verificarSesion, type CargaSesion } from './token.ts';
 
 /**
  * El token de sesión.
@@ -25,7 +19,7 @@ function carga(cambios: Partial<CargaSesion> = {}): CargaSesion {
     identidadId: '11111111-1111-4111-8111-111111111111',
     empleoId: '22222222-2222-4222-8222-222222222222',
     terminalId: '33333333-3333-4333-8333-333333333333',
-    exp: Math.floor(Date.now() / 1000) + DURACION_SESION_SEGUNDOS,
+    exp: Math.floor(Date.now() / 1000) + 8 * 60 * 60,
     ...cambios,
   };
 }

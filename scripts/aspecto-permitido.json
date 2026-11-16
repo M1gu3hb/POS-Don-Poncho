@@ -1759,6 +1759,15 @@
       "archivo": "apps/web/heredado/components/mesero/MeseroCartFAB.jsx",
       "porque": "DP-20.1: el alto máximo de la hoja del carrito del mesero pasa de un `style` en línea (`maxHeight: 88dvh`) a la clase `max-h-[88dvh]`, que mide lo mismo. Un motor sin `dvh` (Chromium anterior al 108) tiraba el estilo en línea y la hoja podía salirse de la pantalla; a la clase, el modo compatible le pone su respaldo en `vh`.",
       "testigos": ["+ clase:max-h-[88dvh]"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "porque": "DP-21 (Bloque 1, M9): el campo «IVA / Impuesto (%)» de Operación guardaba `iva_porcentaje`, una clave que nadie leía (el servidor cobra con `impuesto`). Lo sustituye la tarjeta «IVA» (`IvaDelNegocio`: sin IVA, 8 % o 16 %, y si los precios ya lo incluyen), que se monta como componente y guarda por su comando. El campo viejo, su ayuda y su «0» de relleno se van con él.",
+      "testigos": [
+        "- texto:IVA / Impuesto (%)",
+        "- texto:Porcentaje de IVA o impuesto. Si no manejas impuesto desglosado, déjalo en 0.",
+        "- placeholder:0"
+      ]
     }
   ]
 }
