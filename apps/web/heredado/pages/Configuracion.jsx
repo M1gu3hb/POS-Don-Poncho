@@ -88,6 +88,7 @@ import {
 import { Calculator, BadgePercent } from 'lucide-react';
 import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos';
 import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
+import { IvaDelNegocio } from '~/configuracion/IvaDelNegocio';
 import { ImpresionDelAparato } from '~/impresion/pantallas/ImpresionDelAparato';
 import { CopiasDeImpresion } from '~/impresion/pantallas/CopiasDeImpresion';
 import { EntradaAlLaboratorio } from '~/impresion/pantallas/EntradaAlLaboratorio';
@@ -167,7 +168,6 @@ export default function Configuracion() {
     direccion: '',
     telefono: '',
     correo: '',
-    iva_porcentaje: 0,
     usa_mesas: true,
     permitir_venta_sin_stock: false,
     mensaje_ticket: '¡Gracias por tu visita!',
@@ -195,7 +195,6 @@ export default function Configuracion() {
       direccion: cfg.direccion ?? '',
       telefono: cfg.telefono ?? '',
       correo: cfg.correo ?? '',
-      iva_porcentaje: cfg.iva_porcentaje ?? 0,
       usa_mesas: cfg.usa_mesas ?? true,
       permitir_venta_sin_stock: cfg.permitir_venta_sin_stock ?? false,
       mensaje_ticket: cfg.mensaje_ticket ?? '¡Gracias por tu visita!',
@@ -581,22 +580,6 @@ export default function Configuracion() {
                     onChange={(e) => setBizForm({ ...bizForm, correo: e.target.value })}
                   />
                 </div>
-                <div>
-                  <Label className="text-xs">IVA / Impuesto (%)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={bizForm.iva_porcentaje}
-                    onChange={(e) =>
-                      setBizForm({ ...bizForm, iva_porcentaje: parseFloat(e.target.value) || 0 })
-                    }
-                    placeholder="0"
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    Porcentaje de IVA o impuesto. Si no manejas impuesto desglosado, déjalo en 0.
-                  </p>
-                </div>
                 <div className="sm:col-span-2">
                   <Label className="text-xs">Mensaje en ticket</Label>
                   <Input
@@ -754,6 +737,10 @@ export default function Configuracion() {
               <Button onClick={saveBiz}>Guardar configuración</Button>
             </CardContent>
           </Card>
+
+          {/* DP-21 · El IVA con el que se cobra: su tarjeta, su comando y su «Guardado». El campo
+              de antes («IVA / Impuesto (%)») guardaba una clave que nadie leía. */}
+          <IvaDelNegocio puedeCambiar={esDeMando(miPuesto)} />
 
           {/* === ESTACIONES DE PREPARACIÓN (6A) ===
               UNA sola card que contiene:

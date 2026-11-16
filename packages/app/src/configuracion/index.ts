@@ -29,6 +29,18 @@ export {
   type ConfiguracionOrganizacion,
 } from './configuracion.ts';
 
+export { entradaFijarImpuesto, fijarImpuesto } from './impuesto.ts';
+export {
+  CLAVE_DEL_IMPUESTO,
+  IMPUESTO_DE_UN_NEGOCIO_NUEVO,
+  TASAS_DE_IVA,
+  esquemaDelImpuesto,
+  impuestoEn,
+  reglaDeImpuestoEn,
+  type ImpuestoDelNegocio,
+  type TasaDeIva,
+} from './impuesto-del-negocio.ts';
+
 export {
   entradaFijarModulo,
   entradaRestablecerModulo,

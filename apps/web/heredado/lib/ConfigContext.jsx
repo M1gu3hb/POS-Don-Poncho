@@ -40,7 +40,6 @@ const DEFAULT_CONFIG = {
   color_acento: '#ac8a5f',
   moneda: 'MXN',
   simbolo_moneda: '$',
-  iva_porcentaje: 0,
   usa_mesas: true,
   usa_cocina: true,
   usa_barra: true,

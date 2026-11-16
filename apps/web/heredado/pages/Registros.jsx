@@ -40,6 +40,7 @@ import {
   COLUMNS_DETALLES_VENTA,
 } from '@/lib/exportColumns';
 import { exportToCSV } from '@/lib/exportUtils';
+import { sinColumnaDeIvaEnCeros } from '~/venta/se-menciona-el-iva';
 import { useConfig } from '@/lib/ConfigContext';
 import { canAccessModule } from '@/lib/packageConfig';
 import { printDocument } from '@/lib/print';
@@ -474,7 +475,7 @@ export default function Registros() {
             <div className="flex justify-end gap-2 flex-wrap">
             <ExportarSeccionButton
               rows={ventasFiltradas}
-              columns={COLUMNS_VENTAS}
+              columns={sinColumnaDeIvaEnCeros(COLUMNS_VENTAS, ventasFiltradas)}
               disabled={ventasFirstLoad}
               filename="ventas"
             />

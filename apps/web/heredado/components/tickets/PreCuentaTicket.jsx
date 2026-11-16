@@ -2,6 +2,7 @@
 import React from 'react';
 import { formatCurrency } from '@/utils/financialUtils';
 import { totalesDelPapel } from '~/venta/totales-del-papel';
+import { seMencionaElIva } from '~/venta/se-menciona-el-iva';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import { propinaDerivada } from '@/utils/tipsUtils';
 import { format } from 'date-fns';
@@ -185,7 +186,7 @@ export default function PreCuentaTicket({
             {papel.descuento > 0 && (
               <Row label="Descuento" value={`-${formatCurrency(papel.descuento)}`} />
             )}
-            {papel.iva > 0 && (
+            {seMencionaElIva(papel.iva) && (
               <Row
                 label={papel.ivaSeSuma ? 'IVA' : 'IVA incluido'}
                 value={formatCurrency(papel.iva)}

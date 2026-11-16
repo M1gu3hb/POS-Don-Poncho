@@ -22,6 +22,7 @@ import { useVocabulario } from '~/cliente/vocabulario';
 
 import { cantidadParaMostrar } from './peso.ts';
 import { notaSinLasOpciones, renglonesDeLasOpciones } from '~/venta/opciones-del-renglon';
+import { seMencionaElIva } from '~/venta/se-menciona-el-iva';
 import { lineasQueSigueCobrando, soloLasVivas } from './lineas-vivas.ts';
 import {
   almacenDeLaPestana,
@@ -499,10 +500,15 @@ function Hoja({ cuenta, lineas, estilo, copia, totales }: HojaProps) {
         <dd className="text-right">
           <Importe centavos={totales.subtotal} />
         </dd>
-        <dt>IVA</dt>
-        <dd className="text-right">
-          <Importe centavos={totales.impuestos} />
-        </dd>
+        {/* DP-21 · Sin IVA, el renglón no existe (`seMencionaElIva`). */}
+        {seMencionaElIva(totales.impuestos) ? (
+          <>
+            <dt>IVA</dt>
+            <dd className="text-right">
+              <Importe centavos={totales.impuestos} />
+            </dd>
+          </>
+        ) : null}
         {/* Con propina decidida, lo que se CONSUMIÓ y lo que se PAGA son dos renglones: la
             propina no es consumo, y sumarla en silencio al total de la cuenta la volvería venta. */}
         {propina.tipo === 'porcentaje' ? (

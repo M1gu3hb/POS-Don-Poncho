@@ -101,6 +101,7 @@ import { rotuloDeLaCuenta } from '~/restaurante/cuenta-de-la-caja';
 import { DescuentoAutorizado } from '~/restaurante/DescuentoAutorizado';
 import { cantidadParaMostrar } from '~/restaurante/peso';
 import { totalesDelPapel } from '~/venta/totales-del-papel';
+import { seMencionaElIva } from '~/venta/se-menciona-el-iva';
 
 const METODOS = [
   {
@@ -1701,7 +1702,7 @@ export default function Caja() {
                   <DescuentoAutorizado ordenId={ventaSeleccionada.id} />
                 </div>
               )}
-              {papelDelCobro.iva > 0 && (
+              {seMencionaElIva(papelDelCobro.iva) && (
                 <div className="flex justify-between text-sm text-muted-foreground">
                   <span>{papelDelCobro.ivaSeSuma ? 'IVA' : 'IVA incluido'}</span>
                   <span>{formatCurrency(papelDelCobro.iva)}</span>

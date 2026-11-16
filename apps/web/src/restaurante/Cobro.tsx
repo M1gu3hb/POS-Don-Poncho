@@ -49,6 +49,7 @@ import {
 } from './pagos-del-cobro.ts';
 import { bloqueoDe, columnasDeLaCuenta } from './piezas-del-cobro';
 import { sonar } from '~/sonidos/gestor';
+import { seMencionaElIva } from '~/venta/se-menciona-el-iva';
 
 /**
  * PANTALLA · restaurante · cobro
@@ -481,6 +482,7 @@ export function Cobro({
     );
   // El desglose es un recibo: tabla densa con la cantidad y el importe alineados,
   // y debajo lo que el comensal pregunta cuando pregunta.
+  const impuestosDeLaCuenta = centavosDe('Venta', 'impuestos', cuenta.impuestos) ?? 0;
   const detalle = (
     <div className="flex flex-col gap-(--espacio-3)">
       {renglones}
@@ -489,10 +491,15 @@ export function Cobro({
         <dd className="text-right">
           <Dinero centavos={centavosDe('Venta', 'subtotal', cuenta.subtotal) ?? 0} tamano="sm" />
         </dd>
-        <dt className="text-texto-sutil">Impuestos</dt>
-        <dd className="text-right">
-          <Dinero centavos={centavosDe('Venta', 'impuestos', cuenta.impuestos) ?? 0} tamano="sm" />
-        </dd>
+        {/* DP-21 · Sin IVA, el renglón no existe (`seMencionaElIva`). */}
+        {seMencionaElIva(impuestosDeLaCuenta) ? (
+          <>
+            <dt className="text-texto-sutil">IVA</dt>
+            <dd className="text-right">
+              <Dinero centavos={impuestosDeLaCuenta} tamano="sm" />
+            </dd>
+          </>
+        ) : null}
         <dt className="text-texto-sutil">Propina</dt>
         <dd className="text-right">
           <Dinero centavos={suPropina} tamano="sm" />
