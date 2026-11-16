@@ -2846,5 +2846,8 @@ de las 11:18 a las ~14:30 del 16-11 y se quitó.
 - **La regla desde ahora:** un blanco de 44 px se da por componente, con su clase
   (`any-pointer-coarse:min-h-(--altura-tactil)`), donde se sabe que el contenido cabe; nunca con un
   selector global sobre `button`. El barrido sigue midiendo los blancos, pero ya no los exige.
+- **De paso, el botón «Menú» del teléfono** (Bloque 9) tapaba el número de la mesa en el panel del
+  mesero: flota por encima de los diálogos y desde DP-21 es más ancho. El título del panel se
+  recorre donde existe ese botón (`max-lg:pl-28`).
 - **Pendiente:** dar los 44 px pantalla por pantalla, y medir con el dedo Y con el catálogo lleno
   (un barrido con los 117 platillos de Don Poncho) antes de volver a tocar tamaños globales.

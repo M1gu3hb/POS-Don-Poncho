@@ -2480,6 +2480,11 @@
       "archivo": "apps/web/heredado/components/dashboard/PrimerosPasosCard.jsx",
       "porque": "DP-21 · Bloque 16: los enlaces de la guía miden 44 px con el dedo (`any-pointer-coarse:min-h-(--altura-tactil)`); con ratón, la densidad de siempre.",
       "testigos": ["+ clase:any-pointer-coarse:min-h-(--altura-tactil)"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-21 (arreglo del Bloque 9): en el teléfono y la tableta el botón «Menú» flota arriba a la izquierda, por encima del panel de la mesa, y desde que dice «Menú» con letra tapaba el número de la mesa. El título del panel se recorre donde existe ese botón (`max-lg:`); en la PC no cambia nada.",
+      "testigos": ["+ clase:max-lg:pl-28"]
     }
   ]
 }

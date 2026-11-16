@@ -126,3 +126,28 @@ describe('«Salir» está también con la barra plegada', () => {
     expect(botonConEtiqueta('aria-label="Salir"')).toContain('onClick={logout}');
   });
 });
+
+/**
+ * El botón del cajón flota arriba a la izquierda (`fixed`, por encima de los diálogos) en el
+ * teléfono y la tableta. Desde DP-21 dice «Menú» y mide ~105 px: sobre el panel de la mesa, que en
+ * el teléfono ocupa toda la pantalla, tapaba «Mesa 2» entero y el mesero no veía qué mesa tenía
+ * abierta. Se vio en las capturas del simulador. El título le deja su sitio donde hay botón.
+ */
+describe('el panel de la mesa no queda debajo del botón «Menú»', () => {
+  const mesero = leer('heredado/pages/Mesero.jsx');
+  const titulo = mesero.slice(
+    mesero.lastIndexOf('<DialogTitle', mesero.indexOf('Mesa {mesaActiva?.numero}')),
+    mesero.indexOf('Mesa {mesaActiva?.numero}'),
+  );
+
+  it('el título se recorre donde existe el botón del cajón (abajo de `lg`)', () => {
+    expect(titulo.length).toBeGreaterThan(20);
+    expect(titulo).toMatch(/max-lg:pl-28/);
+  });
+
+  it('el botón sigue siendo sólo de teléfono y tableta, y sigue por encima', () => {
+    const boton = botonConEtiqueta('Abrir menú');
+    expect(boton).toMatch(/lg:hidden/);
+    expect(boton).toMatch(/fixed top-3 left-3/);
+  });
+});
