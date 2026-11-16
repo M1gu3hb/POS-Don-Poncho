@@ -14,6 +14,7 @@
  * actualización de Tailwind o de Next cambia la forma del CSS, la CI lo dice.
  */
 import { respaldarColores } from './colores.mjs';
+import { respaldarDegradados } from './degradados.mjs';
 import { respaldarTransformaciones } from './transformaciones.mjs';
 import { respaldarUnidades } from './unidades.mjs';
 
@@ -24,8 +25,9 @@ export function aplicarModoCompatible(root, ayudas) {
   const colores = respaldarColores(root, ayudas);
   // Las unidades antes que las transformaciones: así el respaldo del alto queda pegado a su regla.
   const unidades = respaldarUnidades(root, ayudas);
+  const degradados = respaldarDegradados(root, ayudas);
   const transformaciones = respaldarTransformaciones(root, ayudas);
-  return { colores, unidades, transformaciones };
+  return { colores, unidades, degradados, transformaciones };
 }
 
 export default function modoCompatible() {

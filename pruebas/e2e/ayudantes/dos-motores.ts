@@ -4,10 +4,16 @@ import type { Page } from '@playwright/test';
  * DP-20.1 · COMPARAR LO QUE PINTAN DOS MOTORES.
  *
  * El modo compatible promete que un POS con Chromium 99 se ve como uno actual. Aquí se mide: dos
- * capturas de la misma pantalla, una por motor, se comparan POR BLOQUES —el color medio de cada
- * cuadro de `lado` × `lado` pixeles— y no pixel a pixel, porque dos versiones del mismo navegador
- * no dibujan el borde de una letra exactamente igual y eso no es un defecto. Un fondo sólido donde
- * debía ir uno translúcido, o un diálogo corrido, cambian bloques enteros: eso sí.
+ * capturas de la misma pantalla, una por motor. No vale comparar pixel contra pixel: dos versiones
+ * del mismo navegador no dibujan igual la tinta —la moderna deja las letras y los iconos algo más
+ * gruesos, con los mismos estilos calculados— y eso no es un defecto. Por eso se mide de dos formas:
+ *
+ *  - LAS ZONAS LISAS, por pixeles (`compararCapturas`): fondos, tarjetas, velos, degradados. Un
+ *    fondo sólido donde debía ir uno translúcido o un diálogo corrido cambian zonas enteras.
+ *  - LA TINTA Y LOS BORDES, por estilos calculados (`medidasDeLoVisible` + `diferenciasDeEstilo`):
+ *    el color del texto, del fondo y del borde de cada cosa, pasados por un lienzo para que
+ *    `rgba(…)` del motor viejo y `oklab(…)` del moderno se comparen como lo que son, y la caja de
+ *    cada elemento, para ver qué se movió.
  *
  * La cuenta se hace dentro de una página (un lienzo): así no hace falta ninguna librería para leer
  * PNG, y de paso sale la imagen «lado a lado» —viejo, moderno y las diferencias marcadas—.
@@ -23,8 +29,12 @@ export interface Recuadro {
 export interface OpcionesDeComparacion {
   /** El lado del bloque, en pixeles. */
   readonly lado?: number;
-  /** Cuánto puede diferir el color medio de un bloque (por canal, de 0 a 255) sin contar. */
+  /** Cuánto puede diferir un pixel liso entre los dos motores (por canal, de 0 a 255). */
   readonly tolerancia?: number;
+  /** El vecindario que decide si un pixel está en zona lisa: `radio` pixeles a cada lado. */
+  readonly radio?: number;
+  /** Cuántos pixeles lisos tienen que diferir para que el bloque cuente como distinto. */
+  readonly minimo?: number;
   /** Zonas que cambian de una corrida a otra (relojes, folios): no se comparan. */
   readonly tapar?: readonly Recuadro[];
 }
@@ -48,7 +58,9 @@ export interface Comparacion {
 }
 
 export const LADO_DEL_BLOQUE = 8;
-export const TOLERANCIA_POR_CANAL = 12;
+export const TOLERANCIA_POR_CANAL = 10;
+export const RADIO_DEL_VECINDARIO = 2;
+export const PIXELES_PARA_CONTAR_EL_BLOQUE = 4;
 
 /**
  * Compara dos capturas del mismo tamaño. `herramienta` es cualquier página abierta (sólo presta su
@@ -61,7 +73,7 @@ export async function compararCapturas(
   opciones: OpcionesDeComparacion = {},
 ): Promise<Comparacion> {
   return herramienta.evaluate(
-    async ({ a, b, lado, tolerancia, tapar }) => {
+    async ({ a, b, lado, tolerancia, radio, minimo, tapar }) => {
       const leer = async (base64: string): Promise<ImageBitmap> => {
         const respuesta = await fetch(`data:image/png;base64,${base64}`);
         return createImageBitmap(await respuesta.blob());
@@ -85,25 +97,75 @@ export async function compararCapturas(
         tapar.some(
           (r) => x < r.x + r.ancho && x + lado > r.x && y < r.y + r.alto && y + lado > r.y,
         );
+      /**
+       * El mínimo y el máximo de cada canal en el vecindario de cada pixel (dos pasadas, una por
+       * eje). Con ellos se sabe si un pixel está en una zona lisa: sólo ésas se comparan aquí.
+       */
+      const LISO = 16;
+      const extremos = (datos: Uint8ClampedArray): { min: Uint8Array; max: Uint8Array } => {
+        const pasada = (
+          origen: Uint8Array | Uint8ClampedArray,
+          mayor: boolean,
+          paso: number,
+          largo: number,
+          lineas: number,
+          salto: number,
+        ): Uint8Array => {
+          const destino = new Uint8Array(origen.length);
+          for (let linea = 0; linea < lineas; linea += 1) {
+            for (let p = 0; p < largo; p += 1) {
+              const desde = Math.max(0, p - radio);
+              const hasta = Math.min(largo - 1, p + radio);
+              for (let canal = 0; canal < 3; canal += 1) {
+                let extremo = mayor ? 0 : 255;
+                for (let q = desde; q <= hasta; q += 1) {
+                  const v = origen[linea * salto + q * paso + canal] ?? 0;
+                  if (mayor ? v > extremo : v < extremo) extremo = v;
+                }
+                destino[linea * salto + p * paso + canal] = extremo;
+              }
+            }
+          }
+          return destino;
+        };
+        const enFilas = (mayor: boolean): Uint8Array =>
+          pasada(datos, mayor, 4, ancho, alto, ancho * 4);
+        const enColumnas = (origen: Uint8Array, mayor: boolean): Uint8Array =>
+          pasada(origen, mayor, ancho * 4, alto, ancho, 4);
+        return { min: enColumnas(enFilas(false), false), max: enColumnas(enFilas(true), true) };
+      };
+      const entornoA = extremos(datosA);
+      const entornoB = extremos(datosB);
+      /** ¿El pixel está en una zona de color liso (sin letra, icono ni borde alrededor)? */
+      const liso = (entorno: { min: Uint8Array; max: Uint8Array }, i: number): boolean => {
+        for (let canal = 0; canal < 3; canal += 1) {
+          if ((entorno.max[i + canal] ?? 0) - (entorno.min[i + canal] ?? 0) > LISO) return false;
+        }
+        return true;
+      };
+      const difiere = (i: number): boolean => {
+        for (let canal = 0; canal < 3; canal += 1) {
+          if (Math.abs((datosA[i + canal] ?? 0) - (datosB[i + canal] ?? 0)) > tolerancia)
+            return true;
+        }
+        return false;
+      };
+
       const distintos: { x: number; y: number; diferencia: number }[] = [];
       let bloques = 0;
       for (let y = 0; y < alto; y += lado) {
         for (let x = 0; x < ancho; x += lado) {
           if (tapado(x, y)) continue;
           bloques += 1;
-          const suma = [0, 0, 0];
-          let cuantos = 0;
+          let malos = 0;
           for (let dy = 0; dy < lado && y + dy < alto; dy += 1) {
             for (let dx = 0; dx < lado && x + dx < ancho; dx += 1) {
               const i = ((y + dy) * ancho + (x + dx)) * 4;
-              for (let canal = 0; canal < 3; canal += 1)
-                suma[canal] =
-                  (suma[canal] ?? 0) + (datosA[i + canal] ?? 0) - (datosB[i + canal] ?? 0);
-              cuantos += 1;
+              // La tinta (letras, iconos, bordes finos) no se compara aquí: va por los estilos.
+              if (liso(entornoA, i) && liso(entornoB, i) && difiere(i)) malos += 1;
             }
           }
-          const diferencia = Math.max(...suma.map((s) => Math.abs(s / cuantos)));
-          if (diferencia > tolerancia) distintos.push({ x, y, diferencia: Math.round(diferencia) });
+          if (malos >= minimo) distintos.push({ x, y, diferencia: malos });
         }
       }
 
@@ -138,99 +200,9 @@ export async function compararCapturas(
       b: moderno.toString('base64'),
       lado: opciones.lado ?? LADO_DEL_BLOQUE,
       tolerancia: opciones.tolerancia ?? TOLERANCIA_POR_CANAL,
+      radio: opciones.radio ?? RADIO_DEL_VECINDARIO,
+      minimo: opciones.minimo ?? PIXELES_PARA_CONTAR_EL_BLOQUE,
       tapar: [...(opciones.tapar ?? [])],
     },
   );
-}
-
-/** Dónde está (y cuánto mide) cada cosa visible de la pantalla: para ver qué se movió. */
-export interface Medida extends Recuadro {
-  /** El camino del elemento en el documento: `main>div:1>button:3`. */
-  readonly camino: string;
-  readonly texto: string;
-}
-
-/**
- * Las cajas de lo que se ve, con su camino en el documento. Dos motores que pintan la misma página
- * tienen que dejar cada cosa en el mismo sitio: un diálogo corrido o una columna rota salen aquí
- * con nombre, no como «algo cambió por ahí».
- */
-export async function medidasDeLoVisible(page: Page): Promise<Medida[]> {
-  return page.evaluate(() => {
-    const camino = (elemento: Element): string => {
-      const tramos: string[] = [];
-      for (
-        let e: Element | null = elemento;
-        e !== null && e !== document.body;
-        e = e.parentElement
-      ) {
-        const padre: Element | null = e.parentElement;
-        const indice = padre === null ? 0 : Array.prototype.indexOf.call(padre.children, e);
-        tramos.unshift(`${e.tagName.toLowerCase()}:${String(indice)}`);
-      }
-      return tramos.join('>');
-    };
-    const medidas: {
-      camino: string;
-      texto: string;
-      x: number;
-      y: number;
-      ancho: number;
-      alto: number;
-    }[] = [];
-    const interesa =
-      'button, a[href], input, select, textarea, h1, h2, h3, [role="dialog"], [role="alertdialog"], [role="tab"], [role="menuitem"], label, img, svg, th, td, li, p';
-    for (const elemento of Array.from(document.body.querySelectorAll(interesa))) {
-      const caja = elemento.getBoundingClientRect();
-      if (caja.width < 1 || caja.height < 1) continue;
-      if (caja.bottom < 0 || caja.right < 0 || caja.top > innerHeight || caja.left > innerWidth)
-        continue;
-      const estilo = getComputedStyle(elemento);
-      if (estilo.visibility === 'hidden' || estilo.display === 'none' || estilo.opacity === '0')
-        continue;
-      medidas.push({
-        camino: camino(elemento),
-        texto: (elemento.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40),
-        x: Math.round(caja.left),
-        y: Math.round(caja.top),
-        ancho: Math.round(caja.width),
-        alto: Math.round(caja.height),
-      });
-    }
-    return medidas;
-  });
-}
-
-export interface Desplazamiento {
-  readonly camino: string;
-  readonly texto: string;
-  readonly viejo: Recuadro | null;
-  readonly moderno: Recuadro;
-}
-
-/** Lo que el motor viejo deja en otro sitio (o no pinta), con `tolerancia` pixeles de margen. */
-export function desplazados(
-  viejo: readonly Medida[],
-  moderno: readonly Medida[],
-  tolerancia = 2,
-): Desplazamiento[] {
-  const delViejo = new Map(viejo.map((m) => [m.camino, m]));
-  const fuera: Desplazamiento[] = [];
-  for (const m of moderno) {
-    const v = delViejo.get(m.camino);
-    const igual =
-      v !== undefined &&
-      Math.abs(v.x - m.x) <= tolerancia &&
-      Math.abs(v.y - m.y) <= tolerancia &&
-      Math.abs(v.ancho - m.ancho) <= tolerancia &&
-      Math.abs(v.alto - m.alto) <= tolerancia;
-    if (igual) continue;
-    fuera.push({
-      camino: m.camino,
-      texto: m.texto,
-      viejo: v === undefined ? null : { x: v.x, y: v.y, ancho: v.ancho, alto: v.alto },
-      moderno: { x: m.x, y: m.y, ancho: m.ancho, alto: m.alto },
-    });
-  }
-  return fuera;
 }

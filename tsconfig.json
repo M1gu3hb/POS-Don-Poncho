@@ -17,7 +17,8 @@
     "scripts/lib/vocabulario-de-color.test.ts",
     "scripts/modo-compatible/api-nuevas.test.ts",
     "scripts/modo-compatible/contrato.test.ts",
-    "scripts/modo-compatible/plugin.test.ts"
+    "scripts/modo-compatible/plugin.test.ts",
+    "scripts/modo-compatible/turbo.test.ts"
   ],
   "exclude": ["node_modules", "dist", "build", ".next", ".turbo", "coverage", "historico"],
   "compilerOptions": {

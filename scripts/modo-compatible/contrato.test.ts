@@ -19,6 +19,7 @@ const SIN_RESPALDAR =
   `::placeholder{color:currentColor}${MEZCLA}{::placeholder{color:color-mix(in oklab, currentcolor 50%, transparent)}}` +
   '.-translate-y-1\\/2{--tw-translate-y:-50%;translate:var(--tw-translate-x) var(--tw-translate-y)}' +
   '.rotate-180{rotate:180deg}.h-dvh{height:100dvh}' +
+  '.bg-gradient-to-br{--tw-gradient-position:to bottom right in oklab;background-image:linear-gradient(var(--tw-gradient-stops))}' +
   '}@keyframes ventana-entra{0%{transform:scale(.97)}to{transform:scale(1)}}' +
   '@media print{[data-ruta]{transform:none!important;translate:var(--sin-traslado,none)!important}}';
 
@@ -51,7 +52,13 @@ describe('el contrato sobre la hoja de producción', () => {
   it('la hoja que deja el plugin pasa, y cuenta lo que revisó', async () => {
     const { problemas, cuentas } = revisar(postcss.parse(await respaldada()));
     expect(problemas).toEqual([]);
-    expect(cuentas).toEqual({ mezclas: 3, sueltas: 2, animaciones: 1, dinamicas: 1 });
+    expect(cuentas).toEqual({
+      mezclas: 3,
+      sueltas: 2,
+      animaciones: 1,
+      dinamicas: 1,
+      degradados: 1,
+    });
   });
 
   it('la hoja sin el plugin falla en cada frente', () => {
@@ -63,6 +70,7 @@ describe('el contrato sobre la hoja de producción', () => {
       'sin transform de respaldo: .rotate-180',
       '@keyframes ventana-entra sin su gemela de respaldo',
       'height: 100dvh sin respaldo en vh: .h-dvh',
+      'degradado «to bottom right in oklab» sin respaldo: .bg-gradient-to-br',
     ]);
   });
 
@@ -93,6 +101,20 @@ describe('el contrato sobre la hoja de producción', () => {
     expect(problemasDe(hoja)).toEqual(['height: 100dvh sin respaldo en vh: .h-dvh']);
   });
 
+  it('si se pierde la dirección sin «in oklab» de un degradado, lo dice', async () => {
+    const hoja = sin(await respaldada(), (n) => esBloque(n, /^not \(background-image/, /gradient/));
+    expect(problemasDe(hoja)).toEqual([
+      'degradado «to bottom right in oklab» sin respaldo: .bg-gradient-to-br',
+    ]);
+  });
+
+  it('la dirección que Tailwind ya separa con su propio `@supports` no pide respaldo', () => {
+    const hoja =
+      '.bg-linear-to-r{--tw-gradient-position:to right}' +
+      '@supports (background-image:linear-gradient(in lab, red, red)){.bg-linear-to-r{--tw-gradient-position:to right in oklab}}';
+    expect(problemasDe(hoja)).toEqual([]);
+  });
+
   it('si se pierde la opacidad del texto de ayuda, lo dice', async () => {
     const hoja = sin(await respaldada(), (n) => esBloque(n, /^not \(color/, /placeholder/));
     expect(problemasDe(hoja)).toEqual([
@@ -110,22 +132,19 @@ describe('el contrato sobre la hoja de producción', () => {
     expect(problemasDe('@media print{.x{transform:none!important;translate:none}}')).toEqual([]);
   });
 
-  it('reconoce las dos reglas del aviso de «aparato demasiado viejo», cada una en su sitio', () => {
-    const ensena = '#aparato-demasiado-viejo{display:block!important}';
-    const oculta = '@layer base{#aparato-demasiado-viejo{display:none!important}}';
+  it('el aviso de «aparato demasiado viejo»: la hoja le da el aspecto fuera de las capas y no decide si se ve', () => {
+    const aspecto = '#aparato-demasiado-viejo{position:fixed;top:0;left:0}';
     const avisoDe = (css: string): object => revisar(postcss.parse(css)).aviso;
-    expect(avisoDe(ensena + oculta)).toEqual({ ensena: true, oculta: true });
-    expect(avisoDe(ensena)).toEqual({ ensena: true, oculta: false });
-    expect(avisoDe(oculta)).toEqual({ ensena: false, oculta: true });
-    // Sin `!important` la capa no le gana a lo de fuera, y dentro de una capa no «enseña».
-    expect(avisoDe('@layer base{#aparato-demasiado-viejo{display:none}}')).toEqual({
-      ensena: false,
-      oculta: false,
-    });
-    expect(avisoDe('@layer base{#aparato-demasiado-viejo{display:block!important}}')).toEqual({
-      ensena: false,
-      oculta: false,
-    });
+    expect(avisoDe(aspecto)).toEqual({ aspecto: true, decideLaHoja: false });
+    expect(avisoDe('.otra{position:fixed}')).toEqual({ aspecto: false, decideLaHoja: false });
+    // Dentro de una capa el aspecto no le sirve al motor que no las entiende.
+    expect(avisoDe(`@layer base{${aspecto}}`)).toEqual({ aspecto: false, decideLaHoja: false });
+    // El cruce de `!important` y capas que falló en el Chromium 99: no vuelve.
+    expect(
+      avisoDe(
+        `${aspecto}#aparato-demasiado-viejo{display:block!important}@layer base{#aparato-demasiado-viejo{display:none!important}}`,
+      ),
+    ).toEqual({ aspecto: true, decideLaHoja: true });
   });
 
   it('acepta que el minificador funda varias reglas en un mismo bloque de respaldo', () => {

@@ -8,11 +8,18 @@
  *  2. toda regla con `translate`, `scale`, `rotate` o `transform` tiene, después, su `transform`
  *     compuesto dentro de `@supports not (translate: 0)`; y toda animación que mueve `transform`,
  *     su gemela ahí dentro;
- *  3. toda declaración con `dvh` / `svh` / `lvh` tiene, después, su respaldo en `vh`.
+ *  3. toda declaración con `dvh` / `svh` / `lvh` tiene, después, su respaldo en `vh`;
+ *  4. toda dirección de degradado «in oklab» tiene, después, la misma sin el espacio de color.
  *
  * Si una actualización de Tailwind o de Next cambia la forma del CSS, esto falla y lo dice.
  */
 import { ES_BLOQUE_DE_MEZCLA, SIN_MEZCLA, tieneMezcla, valorSolido } from './colores.mjs';
+import {
+  conEspacio,
+  DIRECCION,
+  enBloqueDeInterpolacion,
+  SIN_INTERPOLACION,
+} from './degradados.mjs';
 import { esReinicio, SIN_SUELTAS } from './transformaciones.mjs';
 import { SIN_DINAMICAS, tieneDinamicas } from './unidades.mjs';
 import { compacto, dentroDeFotogramas, dentroDeSoporte, partirAlNivelCero } from './valores.mjs';
@@ -145,24 +152,40 @@ function revisarDinamicas(root, problemas) {
   return cuenta;
 }
 
+function revisarDegradados(root, problemas) {
+  let cuenta = 0;
+  root.walkDecls(DIRECCION, (d) => {
+    const regla = d.parent;
+    if (!conEspacio(d.value) || regla.type !== 'rule') return;
+    if (enBloqueDeInterpolacion(regla) || dentroDeSoporte(regla, SIN_INTERPOLACION)) return;
+    cuenta += 1;
+    for (const selector of selectores(regla)) {
+      const cubierta = tieneGemela(regla, SIN_INTERPOLACION, selector, (r) =>
+        declara(r, DIRECCION, (x) => !conEspacio(x.value)),
+      );
+      if (!cubierta) problemas.push(`degradado «${d.value}» sin respaldo: ${corto(selector)}`);
+    }
+  });
+  return cuenta;
+}
+
 export const SELECTOR_DEL_AVISO = '#aparato-demasiado-viejo';
 
 /**
- * Las dos reglas del aviso de «aparato demasiado viejo» (`app/globals.css`): la que lo enseña, sin
- * capa, y la que lo oculta, dentro de una. Si el build pierde una, o se lo enseña a todos o a nadie.
+ * El aviso de «aparato demasiado viejo» (`AvisoDeAparatoViejo.tsx`): la hoja le da su ASPECTO,
+ * fuera de las capas —es donde tiene que verse—, y nunca decide si se ve. Decidirlo con
+ * `!important` y capas falló en el Chromium 99 (el aviso tapó el POS): lo enseña su guion.
  */
 function revisarAviso(root) {
-  const aviso = { ensena: false, oculta: false };
+  const aviso = { aspecto: false, decideLaHoja: false };
   root.walkRules((regla) => {
     if (!selectores(regla).includes(SELECTOR_DEL_AVISO)) return;
-    const d = regla.nodes.findLast((x) => x.type === 'decl' && x.prop === 'display');
-    if (d === undefined || d.important !== true) return;
+    if (declara(regla, 'display')) aviso.decideLaHoja = true;
     let enCapa = false;
     for (let p = regla.parent; p.type !== 'root'; p = p.parent) {
       if (p.type === 'atrule' && p.name === 'layer') enCapa = true;
     }
-    if (!enCapa && d.value === 'block') aviso.ensena = true;
-    if (enCapa && d.value === 'none') aviso.oculta = true;
+    if (!enCapa && declara(regla, 'position')) aviso.aspecto = true;
   });
   return aviso;
 }
@@ -172,7 +195,7 @@ function revisarAviso(root) {
  * @returns {{
  *   problemas: string[],
  *   cuentas: { mezclas: number, sueltas: number, animaciones: number, dinamicas: number },
- *   aviso: { ensena: boolean, oculta: boolean },
+ *   aviso: { aspecto: boolean, decideLaHoja: boolean },
  * }}
  */
 export function revisar(root) {
@@ -180,9 +203,10 @@ export function revisar(root) {
   const mezclas = revisarMezclas(root, problemas);
   const { reglas, animaciones } = revisarSueltas(root, problemas);
   const dinamicas = revisarDinamicas(root, problemas);
+  const degradados = revisarDegradados(root, problemas);
   return {
     problemas,
-    cuentas: { mezclas, sueltas: reglas, animaciones, dinamicas },
+    cuentas: { mezclas, sueltas: reglas, animaciones, dinamicas, degradados },
     aviso: revisarAviso(root),
   };
 }

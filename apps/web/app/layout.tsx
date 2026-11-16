@@ -221,8 +221,8 @@ export default async function LayoutRaiz({ children }: { children: ReactNode }) 
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: GUION_DEL_MODO }} />
       </head>
       <body>
-        {/* DP-20.1 · Sólo se ve en un motor que no entiende las capas de CSS (Chromium < 99). */}
-        <AvisoDeAparatoViejo />
+        {/* DP-20.1 · Sólo lo enseña su guion en un motor sin capas de CSS (Chromium < 99). */}
+        <AvisoDeAparatoViejo nonce={nonce} />
         <Proveedores conSesion={conSesion} apariencia={apariencia} experiencia={experiencia}>
           {children}
         </Proveedores>

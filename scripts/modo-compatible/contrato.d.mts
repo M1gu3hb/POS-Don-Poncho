@@ -7,8 +7,9 @@ export interface RevisionDelModoCompatible {
     readonly sueltas: number;
     readonly animaciones: number;
     readonly dinamicas: number;
+    readonly degradados: number;
   };
-  readonly aviso: { readonly ensena: boolean; readonly oculta: boolean };
+  readonly aviso: { readonly aspecto: boolean; readonly decideLaHoja: boolean };
 }
 
 /** Revisa una hoja ya analizada por PostCSS contra el contrato del modo compatible. */

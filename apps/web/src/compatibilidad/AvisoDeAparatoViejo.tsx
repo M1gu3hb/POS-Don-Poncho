@@ -1,4 +1,9 @@
-import type { CSSProperties, ReactElement } from 'react';
+import type { ReactElement } from 'react';
+
+import {
+  GUION_DEL_AVISO_DE_APARATO_VIEJO,
+  ID_DEL_AVISO_DE_APARATO_VIEJO,
+} from './aviso-de-aparato-viejo.ts';
 
 /**
  * «ESTE APARATO ES DEMASIADO VIEJO» (DP-20.1).
@@ -7,44 +12,40 @@ import type { CSSProperties, ReactElement } from 'react';
  * de eso el navegador tira TODA la hoja de Tailwind —vive en `@layer`— y el POS saldría sin
  * estilos, que es peor que no salir: parece roto y nadie sabe por qué. Ahí se enseña este aviso.
  *
- * No se detecta el navegador ni se usa JavaScript (un motor así de viejo puede no ejecutar el del
- * POS). Lo decide la propia hoja, en `app/globals.css`:
+ * El aviso nace oculto (`display: none` en línea) y lo enseña un guion de una línea que le pregunta
+ * al motor si conoce las capas (`CSSLayerBlockRule`). No mira el nombre del navegador. Va en línea
+ * y con sintaxis de siempre: un motor así de viejo puede no ejecutar el JavaScript del POS, pero
+ * éste sí.
  *
- *   - el aviso nace oculto, con `display: none` en línea: si la hoja no llega a cargar, no sale;
- *   - una regla SIN capa lo enseña (`display: block !important`);
- *   - otra, dentro de `@layer`, lo vuelve a ocultar (`display: none !important`). Con `!important`
- *     las capas ganan a lo que no tiene capa, así que en cualquier motor que las entienda queda
- *     oculto. El que no las entiende descarta ese bloque entero… y el aviso se queda a la vista.
+ * ── Por qué no lo decide la hoja ───────────────────────────────────────────────────────────────
+ * Se intentó sin JavaScript: una regla sin capa que lo enseñaba (`display: block !important`) y
+ * otra dentro de `@layer` que lo volvía a ocultar; con `!important` las capas ganan a lo que no
+ * tiene capa, así que sólo un motor sin capas lo dejaba a la vista. En la hoja real, el Chromium
+ * 99.0.4844.0 resolvió ese cruce AL REVÉS y el aviso tapó todo el POS… en el motor más viejo que
+ * sí lo pinta bien (lo atrapó `pruebas/e2e/motor-viejo.spec.ts`). Un aviso que puede salir donde
+ * no debe es peor que no tenerlo: con el guion, donde hay capas no se enseña nunca.
  *
- * Sus estilos van en línea y con propiedades de siempre: tiene que verse bien justo donde nada de
- * lo demás funciona. En un motor moderno no ocupa ni un pixel.
+ * Su aspecto va en `app/globals.css`, fuera de las capas (ahí es donde tiene que verse), y no usa
+ * el sistema de diseño a propósito. En un motor moderno no ocupa ni un pixel.
  */
 
-export const ID_DEL_AVISO_DE_APARATO_VIEJO = 'aparato-demasiado-viejo';
-
-const ESTILO: CSSProperties = {
-  display: 'none',
-  position: 'fixed',
-  top: 0,
-  right: 0,
-  bottom: 0,
-  left: 0,
-  zIndex: 2147483647,
-  boxSizing: 'border-box',
-  padding: '18vh 8vw 0',
-  backgroundColor: '#161614',
-  color: '#f4efe6',
-  fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif',
-  fontSize: '26px',
-  lineHeight: 1.4,
-  textAlign: 'center',
-};
-
-export function AvisoDeAparatoViejo(): ReactElement {
+export function AvisoDeAparatoViejo({
+  nonce,
+}: {
+  readonly nonce: string | undefined;
+}): ReactElement {
   return (
-    <div id={ID_DEL_AVISO_DE_APARATO_VIEJO} role="alert" style={ESTILO}>
-      <p style={{ margin: 0, fontWeight: 700 }}>Este aparato es demasiado viejo para el POS.</p>
-      <p style={{ margin: '12px 0 0' }}>Pide ayuda a tu proveedor.</p>
-    </div>
+    <>
+      <div id={ID_DEL_AVISO_DE_APARATO_VIEJO} style={{ display: 'none' }}>
+        <p>
+          <strong>Este aparato es demasiado viejo para el POS.</strong>
+        </p>
+        <p>Pide ayuda a tu proveedor.</p>
+      </div>
+      <script
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: GUION_DEL_AVISO_DE_APARATO_VIEJO }}
+      />
+    </>
   );
 }

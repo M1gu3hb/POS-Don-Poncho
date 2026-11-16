@@ -273,23 +273,40 @@
 }
 
 /* ===========================================================================
-   DP-20.1 · «ESTE APARATO ES DEMASIADO VIEJO».
+   DP-20.1 · «ESTE APARATO ES DEMASIADO VIEJO»: su aspecto.
    ---------------------------------------------------------------------------
-   El aviso (`src/compatibilidad/AvisoDeAparatoViejo.tsx`) nace oculto. La regla SIN capa lo
-   enseña; la de dentro de `@layer` lo vuelve a ocultar, y con `!important` las capas le ganan a
-   lo que no tiene capa. Un motor que entiende las capas (Chromium 99 o más nuevo) lo deja oculto;
-   uno que no las entiende descarta el bloque `@layer` entero —y con él todo Tailwind— y el aviso
-   se queda a la vista, en lugar de un POS sin estilos. Las dos reglas van juntas: quitar una
-   enseña el aviso a todo el mundo o no se lo enseña a nadie (`verify:modo-compatible` lo mira).
+   El aviso (`src/compatibilidad/AvisoDeAparatoViejo.tsx`) nace oculto y sólo lo enseña su guion en
+   un motor que no entiende las capas de CSS: uno que tira toda la hoja de Tailwind. Por eso su
+   aspecto va AQUÍ, fuera de cualquier capa, con propiedades de siempre. Esta regla no decide si se
+   ve: no lleva `display`, y `verify:modo-compatible` no deja que lo lleve (el intento de
+   decidirlo con `!important` y capas falló en el Chromium 99: ver el componente).
    =========================================================================== */
 #aparato-demasiado-viejo {
-  display: block !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 18vh 8vw 0;
+  /* Los tokens del estilo viven fuera de las capas, así que ese motor sí los tiene; por si no. */
+  background-color: hsl(var(--fondo, 60 5% 8%));
+  color: hsl(var(--texto, 40 40% 93%));
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Arial,
+    sans-serif;
+  font-size: 26px;
+  line-height: 1.4;
+  text-align: center;
 }
 
-@layer base {
-  #aparato-demasiado-viejo {
-    display: none !important;
-  }
+#aparato-demasiado-viejo p {
+  margin: 0 0 12px;
 }
 
 /* DP-20.1 · `inert` en un motor que no lo conoce (Chromium < 102). La ficha del platillo del portal

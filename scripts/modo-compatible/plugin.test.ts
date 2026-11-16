@@ -216,6 +216,27 @@ describe('dvh, svh y lvh: su `vh` en `@supports not`', () => {
   });
 });
 
+describe('los degradados: la dirección sin «in oklab» en `@supports not`', () => {
+  const SIN_OKLAB = '@supports not (background-image:linear-gradient(in lab, red, red))';
+
+  it('la utilidad heredada (`bg-gradient-to-*`) recibe su dirección de siempre', async () => {
+    const regla =
+      '.bg-gradient-to-br{--tw-gradient-position:to bottom right in oklab;background-image:linear-gradient(var(--tw-gradient-stops))}';
+    const { css } = await pasar(regla);
+    expect(compacto(css)).toBe(
+      compacto(`${regla}${SIN_OKLAB}{.bg-gradient-to-br{--tw-gradient-position:to bottom right}}`),
+    );
+  });
+
+  it('también con matiz (`in oklch longer hue`), y la que ya separa Tailwind no se toca', async () => {
+    const { css } = await pasar('.a{--tw-gradient-position:to right in oklch longer hue}');
+    expect(compacto(css)).toContain(compacto(`${SIN_OKLAB}{.a{--tw-gradient-position:to right}}`));
+    const separada =
+      '.b{--tw-gradient-position:to right}@supports (background-image:linear-gradient(in lab, red, red)){.b{--tw-gradient-position:to right in oklab}}';
+    expect((await pasar(separada)).css).toBe(separada);
+  });
+});
+
 describe('la regla de oro: un motor moderno ve lo mismo que antes', () => {
   const HOJA =
     '@layer utilities{' +
@@ -223,6 +244,7 @@ describe('la regla de oro: un motor moderno ve lo mismo que antes', () => {
     `.t{color:hsl(var(--t))}${MEZCLA}{.t{color:color-mix(in oklab, hsl(var(--t)) 60%, transparent)}}` +
     '.-translate-y-1\\/2{--tw-translate-y:calc(calc(1 / 2 * 100%) * -1);translate:var(--tw-translate-x) var(--tw-translate-y)}' +
     '.rotate-180{rotate:180deg}.h-dvh{height:100dvh}' +
+    '.bg-gradient-to-r{--tw-gradient-position:to right in oklab}' +
     `::placeholder{color:currentColor}${MEZCLA}{::placeholder{color:color-mix(in oklab, currentcolor 50%, transparent)}}` +
     '}@keyframes spin{to{transform:rotate(360deg)}}';
 

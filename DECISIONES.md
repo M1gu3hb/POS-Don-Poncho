@@ -2456,7 +2456,9 @@ mismos diálogos corridos.
   (`scripts/modo-compatible/`), después de Tailwind: el respaldo de cada opacidad pasa de sólido a
   `hsl(var(--token) / N%)` (exacto: los tokens son tripletas `H S% L%`); cada regla y cada
   animación con transformaciones sueltas recibe su `transform` compuesto dentro de
-  `@supports not (translate: 0)`; cada `dvh`, su `vh`. **En un motor moderno no cambia un pixel**:
+  `@supports not (translate: 0)`; cada `dvh`, su `vh`; y cada dirección de degradado «in oklab»
+  (sintaxis de Chromium 111: sin ella el degradado entero es inválido y el fondo de marca salía
+  liso), la misma sin el espacio de color. **En un motor moderno no cambia un pixel**:
   todo va en respaldos que el motor nuevo ya reemplaza o en bloques `@supports not` en los que no
   entra. No se detecta el navegador por su nombre, no hay una segunda hoja ni un segundo build.
 - **Por qué no bajar los «targets» del compilador:** Tailwind 4 no sabe calcular la transparencia
@@ -2465,8 +2467,14 @@ mismos diálogos corridos.
   sólo lo que falla y deja escrito por qué.
 - **El piso es Chromium 99.** Por debajo no hay capas de CSS y el navegador tira toda la hoja de
   Tailwind: ahí el POS enseña «Este aparato es demasiado viejo para el POS. Pide ayuda a tu
-  proveedor», decidido por la propia hoja (una regla sin capa lo enseña y otra, en `@layer`, lo
-  oculta), sin JavaScript. Probado con Chromium 97.
+  proveedor». El aviso nace oculto y lo enseña un guion de una línea que le pregunta al motor si
+  conoce las capas (`CSSLayerBlockRule`); su aspecto va en la hoja, fuera de las capas. Probado con
+  Chromium 97. **Se intentó primero sin JavaScript** —una regla sin capa que lo enseñaba y otra en
+  `@layer` que lo ocultaba, las dos con `!important`— **y se descartó:** con la hoja real el
+  Chromium 99.0.4844.0 resolvió ese cruce al revés y el aviso tapó el POS entero en el motor más
+  viejo que sí lo pinta bien. Lo atrapó la prueba con el motor viejo, no la revisión. Un aviso que
+  puede salir donde no debe es peor que no tenerlo: `verify:modo-compatible` ya no deja que la hoja
+  decida con `display` si se ve.
 - **JavaScript:** el POS usa `toSorted` (el mapa de mesas ordena con él las solicitudes del QR) y
   `URL.canParse`; un motor viejo no las trae y ahí la pantalla se cae. Van como relleno en línea
   en el `<head>`, que sólo se instala si falta. Ni una librería de rellenos entera.
@@ -2474,11 +2482,51 @@ mismos diálogos corridos.
   JavaScript que salen de `next build`. Una mezcla con respaldo sólido, una transformación sin su
   `transform`, un `dvh` sin su `vh` o una función más nueva que Chromium 99 sin relleno detienen la
   CI. Si Tailwind o Next cambian la forma del CSS, se ve ahí y no en el restaurante.
-- **Lo que queda como está, a sabiendas:** `:has()` (resaltes de selección y algún acomodo de
-  tarjetas; lo del laboratorio ya no depende de él) y las consultas de contenedor (Recetas e
-  Inventario muestran su acomodo angosto, que es un acomodo válido). `text-wrap` y `field-sizing`
-  degradan solos. Sin `inert` (Chromium < 102) la ficha del portal apaga lo de atrás con
-  `aria-hidden` y sin clics, pero no atrapa el foco del teclado.
+- **El plugin es una entrada del build.** Vive fuera de `apps/web` y Turbo sólo cuenta los
+  archivos del paquete: un cambio que tocaba sólo el plugin salió de la caché con el CSS de antes.
+  `turbo.json` lo declara en `globalDependencies` (y una prueba no deja quitarlo).
+- **Los estilos en línea no los alcanza el plugin.** El armazón heredado ponía su alto con
+  `style={{ minHeight: '100dvh' }}`: un motor sin `dvh` tira ese estilo y el armazón se quedaba
+  del alto de su contenido (el fondo se cortaba a media pantalla). Pasó a la clase `min-h-dvh`,
+  que mide lo mismo y sí recibe su respaldo; igual la hoja del carrito del mesero. Declarado en
+  `scripts/aspecto-permitido.json`.
+- **Lo que queda como está, a sabiendas:** `:has()` no tiene respaldo en CSS. Lo único que se ve en
+  las pantallas de la operación: **el botón del sistema con icono queda hasta 10 px más ancho** (no
+  sabe que lleva icono y deja 5 px más de margen por lado; lo que comparte su fila se corre lo
+  mismo). La prueba lo cuenta aparte y no deja pasar ninguna otra diferencia de acomodo. Arreglarlo
+  pide un guion que vigile la página en el aparato viejo; no se mete código nuevo a correr ahí sin
+  poder probarlo en el aparato. Lo del laboratorio ya no depende de `:has()`. Las consultas de
+  contenedor (Recetas e Inventario) muestran su acomodo angosto, que es un acomodo válido.
+  `text-wrap` y `field-sizing` degradan solos. Sin `inert` (Chromium < 102) la ficha del portal
+  apaga lo de atrás con `aria-hidden` y sin clics, pero no atrapa el foco del teclado.
 - **Las pruebas con el motor viejo no van en la CI:** necesitan bajar un Chromium de 180 MB sin
   parches de seguridad. Se corren en la laptop (`MORPHIQPOS_CHROMIUM_VIEJO`), sólo contra el
   servidor local. En la CI va el contrato, que es lo que impide la regresión.
+
+## DP-D127 · Las apps 1.0.1: lo que DP-D125 dejó pendiente, hecho · 15-11-2026
+
+La 1.0.1 de `morphiq-pos-apps` cierra la lista de DP-D125 y es la primera actualización que
+reciben los POS instalados (la prueba real de la actualización automática). Se instala encima de
+la 1.0.0: misma firma, mismo paquete, mismos ajustes.
+
+- **La impresora de red vive en la red local, en los tres sitios:** la página (formulario del
+  laboratorio), Windows y Android aceptan sólo una dirección IP literal privada, de enlace local,
+  ULA o del propio aparato; nunca un nombre (no se consulta DNS). Lectura estricta y los mismos
+  casos de prueba en los tres. **Consecuencia:** un perfil guardado con un nombre de host deja de
+  imprimir por red hasta que se cambie por la IP; el mensaje lo dice. No se borra nada.
+- **Windows:** sólo se imprime en impresoras que estén en la lista del sistema (una compartida
+  instalada sí, un UNC inventado no; si la lista no se puede leer, no se imprime a ciegas);
+  JavaScript apagado en la ventana oculta del driver; `will-frame-navigate`; fuses de Electron
+  (`RunAsNode`, `NODE_OPTIONS` e `--inspect` apagados, sólo se carga la app del asar).
+- **Android:** topes de tamaño (documento, ajustes, llamada), plazo total de envío en USB, red y
+  Bluetooth, y el puente no se instala en iframes. **No se bloquea el POS si el WebView no deja
+  preparar el puente al inicio del documento:** se usa el plan B completo y se avisa una vez. En
+  esos WebView las llamadas llegan por `addJavascriptInterface`, que se ve en todos los marcos:
+  queda la revisión de la URL de la página principal en cada llamada.
+- **Modo ligero automático** también por 32 bits y por WebView anterior al 111: en el iMin se
+  enciende solo. Lo que alguien fije a mano manda.
+- **Variante de depuración de Android** (`.debug`, WebView depurable por USB): otro paquete, firma
+  de depuración, sin actualización automática. Sólo para Miguel y para quien desarrolla; nunca al
+  canal ni al personal. La `release` no es depurable (lo comprueba una prueba de construcción).
+- **Sigue igual, a sabiendas:** el instalador de Windows sin firma de código; el puente confía en
+  la página de producción.

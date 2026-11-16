@@ -47,20 +47,22 @@ try {
   process.exit(1);
 }
 
-const total = { mezclas: 0, sueltas: 0, animaciones: 0, dinamicas: 0 };
-const avisoDeAparatoViejo = { ensena: false, oculta: false };
+const total = { mezclas: 0, sueltas: 0, animaciones: 0, dinamicas: 0, degradados: 0 };
+const avisoDeAparatoViejo = { aspecto: false, decideLaHoja: false };
 const fallos = [];
 for (const archivo of archivos) {
   const { problemas, cuentas, aviso } = revisar(postcss.parse(readFileSync(archivo, 'utf8')));
   for (const clave of Object.keys(total)) total[clave] += cuentas[clave];
   for (const problema of problemas) fallos.push(`${relative(RAIZ, archivo)}: ${problema}`);
-  avisoDeAparatoViejo.ensena ||= aviso.ensena;
-  avisoDeAparatoViejo.oculta ||= aviso.oculta;
+  avisoDeAparatoViejo.aspecto ||= aviso.aspecto;
+  avisoDeAparatoViejo.decideLaHoja ||= aviso.decideLaHoja;
 }
-if (!avisoDeAparatoViejo.ensena)
-  fallos.push('falta la regla SIN capa que enseña el aviso de «aparato demasiado viejo»');
-if (!avisoDeAparatoViejo.oculta)
-  fallos.push('falta la regla en @layer que oculta el aviso de «aparato demasiado viejo»');
+if (!avisoDeAparatoViejo.aspecto)
+  fallos.push('falta, fuera de las capas, el aspecto del aviso de «aparato demasiado viejo»');
+if (avisoDeAparatoViejo.decideLaHoja)
+  fallos.push(
+    'la hoja decide con `display` si se ve el aviso de «aparato demasiado viejo»: lo enseña su guion',
+  );
 
 // El JavaScript: ninguna función más nueva que el motor viejo sin su relleno.
 const rellenos = rellenosDeclarados(readFileSync(RELLENOS, 'utf8'));
@@ -103,6 +105,6 @@ if (fallos.length > 0) {
 console.log(
   `✓ modo compatible: ${total.mezclas} mezclas con respaldo transparente, ` +
     `${total.sueltas} reglas y ${total.animaciones} animaciones con su transform, ` +
-    `${total.dinamicas} alturas dinámicas con su vh; ` +
+    `${total.dinamicas} alturas dinámicas con su vh, ${total.degradados} degradados sin «in oklab»; ` +
     `${guiones.length} guiones revisados, con relleno para ${[...usadas].join(', ') || 'nada (no usa funciones nuevas)'}.`,
 );
