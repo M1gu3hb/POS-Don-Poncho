@@ -7,9 +7,9 @@ import { ChefHat, Check, Flame, Volume2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { DialogoDelSonido } from '~/configuracion/DialogoDelSonido';
-import { fraseNuevoPedidoCocina, speak, speakSample } from '@/lib/voiceAlert';
-import { cantidadParaMostrar } from '~/restaurante/peso';
-import { rotuloHablado } from '~/restaurante/rotulo-de-la-comanda';
+import { speak, speakSample } from '@/lib/voiceAlert';
+import { almacenDelAparato } from '~/restaurante/vista-de-solicitudes';
+import { leerAnuncioDelAparato } from '~/voz/anuncio-del-aparato';
 
 import { CarruselDeComandas } from './CarruselDeComandas';
 import {
@@ -19,42 +19,14 @@ import {
   fraseDeLaLlegada,
   porAnunciarLasNuevas,
 } from './carrusel-del-telefono';
+import { fraseDeLaComandaDelTelefono } from './frase-del-telefono';
 import { TiraDeMesas } from './TiraDeMesas';
-import {
-  FalloDelTelefono,
-  leerPantalla,
-  moverDesdeElTelefono,
-  datosDelRotulo,
-  type ComandaDelTelefono,
-} from './pantalla-del-telefono';
+import { FalloDelTelefono, leerPantalla, moverDesdeElTelefono } from './pantalla-del-telefono';
 import { accionDeLaTecla, accionesPosibles, type AccionDelTelefono } from './telefono-de-cocina';
 import { usePantallaEncendida } from './use-pantalla-encendida';
 
 /** Cada cuánto pregunta: la cocina quiere enterarse al momento, sin Realtime. */
 const SONDEO_MS = 2500;
-
-function fraseDe(comanda: ComandaDelTelefono): string {
-  return fraseNuevoPedidoCocina(
-    // Sin mesa la voz dice «mostrador», como en la pantalla grande.
-    comanda.mesaNumero ?? '',
-    comanda.platillos.map((p) => ({
-      // La voz no lee «0.5000»: lo que va por peso dice su peso junto al nombre.
-      producto_nombre: p.porPeso
-        ? `${p.nombre}, ${cantidadParaMostrar({ cantidad: p.cantidad, tipo_venta: 'variable_medida', unidad_variable: p.unidadVariable, cantidad_variable: p.cantidadVariable })}`
-        : p.nombre,
-      cantidad: p.porPeso ? 1 : p.cantidad,
-      notas: p.notas,
-    })),
-    comanda.notas ?? '',
-    {
-      // DP-16 · «para llevar 3» o «mesa 4», del mismo rótulo que la pantalla.
-      rotulo: rotuloHablado(datosDelRotulo(comanda)),
-      notas_alergias: comanda.alergias,
-      celebracion: comanda.celebracion,
-      tipo_celebracion: comanda.tipoCelebracion,
-    },
-  );
-}
 
 /**
  * EL TELÉFONO DE UNA ESTACIÓN DE COCINA (DP-9.4, DP-16 · 2.3). Sin PIN: el token del QR. Arriba,
@@ -139,7 +111,9 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
     const frases = nuevas.map(fraseDeLaLlegada).join('. ');
     setAviso(frases);
     if (typeof navigator.vibrate === 'function') navigator.vibrate([250, 120, 250]);
-    speak(frases, { cocina: true });
+    // DP-21: «Esta pantalla anuncia las comandas» apagado, este teléfono no habla (la vibración y
+    // el aviso en pantalla siguen). «Repetir voz» es un toque a propósito: siempre suena.
+    if (leerAnuncioDelAparato(almacenDelAparato())) speak(frases, { cocina: true });
   }, [pantalla.data, comandas, sonidoActivo]);
 
   const hacer = useCallback(
@@ -147,7 +121,7 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
       if (comanda === null || enCurso !== null || !accionesPosibles(comanda.estado).has(accion))
         return;
       if (accion === 'repetir') {
-        speakSample(fraseDe(comanda));
+        speakSample(fraseDeLaComandaDelTelefono(comanda));
         return;
       }
       setEnCurso(accion);
@@ -227,7 +201,11 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
           <Volume2 aria-hidden />
         </Button>
       </div>
-      <DialogoDelSonido abierto={ajusteDelSonido} alCambiar={setAjusteDelSonido} />
+      <DialogoDelSonido
+        abierto={ajusteDelSonido}
+        alCambiar={setAjusteDelSonido}
+        conAnuncioDeComandas
+      />
       {pantalla.error === null ? null : <Aviso tono="atencion" titulo={pantalla.error.message} />}
       {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
       <TiraDeMesas chips={chips} vistaId={comanda?.id ?? null} alElegir={verIndice} />

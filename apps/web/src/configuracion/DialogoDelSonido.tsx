@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from '@morphiqpos/ui/primitivas/dialog';
 
+import { AnuncioDeComandasDelAparato } from './AnuncioDeComandasDelAparato';
 import { SonidoDelAparato } from './SonidoDelAparato';
 
 /**
@@ -24,9 +25,12 @@ import { SonidoDelAparato } from './SonidoDelAparato';
 export function DialogoDelSonido({
   abierto,
   alCambiar,
+  conAnuncioDeComandas = false,
 }: {
   readonly abierto: boolean;
   readonly alCambiar: (abierto: boolean) => void;
+  /** DP-21: el teléfono de cocina suma «Esta pantalla anuncia las comandas» (no hay Configuración). */
+  readonly conAnuncioDeComandas?: boolean;
 }) {
   return (
     <Dialog open={abierto} onOpenChange={alCambiar}>
@@ -38,6 +42,7 @@ export function DialogoDelSonido({
           </DialogDescription>
         </DialogHeader>
         <SonidoDelAparato />
+        {conAnuncioDeComandas ? <AnuncioDeComandasDelAparato /> : null}
       </DialogContent>
     </Dialog>
   );
