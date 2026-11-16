@@ -91,8 +91,10 @@ test.describe('el portal sin asignación de mesas', () => {
           mesero: null,
           pedidosDelComensal: true,
         });
-        expect(await configuracionDelNegocio(duena)).toMatchObject({
-          asignacion_mesas_activa: false,
+        const guardada = await configuracionDelNegocio(duena);
+        // Apagada es también «nunca se guardó» (todo lector la compara con `=== true`).
+        expect(guardada['asignacion_mesas_activa'] === true).toBe(false);
+        expect(guardada).toMatchObject({
           portal_qr_activo: true,
           portal_qr_permitir_pedidos_cliente: true,
         });
