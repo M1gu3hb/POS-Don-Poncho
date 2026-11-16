@@ -19,16 +19,12 @@ público).
 
 ## Cómo se abre en cada aparato
 
-- **Android (Chrome):** abrir el link del personal. Para dejarlo como app: menú ⋮ → «Agregar a la
-  pantalla principal» (o «Instalar app»). Queda con el ícono y el nombre «Don Poncho» y abre a
-  pantalla completa.
-- **iPhone (Safari):** abrir el link en Safari → botón Compartir → «Agregar a inicio». Queda con el
-  ícono de Don Poncho y el nombre «Don Poncho». **Ojo:** la app de «Agregar a inicio» tiene su propia
-  sesión, distinta de la de Safari: la primera vez que se abre desde el ícono hay que entrar otra vez
-  con el PIN (es del iPhone, no un error).
-- **La PC de la caja:** abrir el link en Chrome o Edge y guardarlo en favoritos (o «Instalar» desde la
-  barra de direcciones). Para imprimir el ticket: el botón «Imprimir» abre el diálogo del navegador;
-  elegir la impresora térmica y, la primera vez, quitar márgenes y encabezados del navegador.
+- **El personal (Android, Windows):** usa las apps de Morphiq (el .apk en el teléfono, el .exe en la
+  PC de la caja). El sitio ya no se instala desde el navegador: no hay «Instalar», «Agregar a la
+  pantalla principal» ni «Agregar a inicio». Para imprimir el ticket desde la app, ver la impresión
+  directa; desde el navegador, el botón «Imprimir» abre el diálogo y se elige la impresora térmica
+  (la primera vez, quitar márgenes y encabezados).
+- **Los comensales:** sólo el navegador del teléfono, al escanear el QR de la mesa. No instalan nada.
 - **El ancho del ticket** (58 u 80 mm) se elige una vez en Configuración → Datos del negocio → «Ancho
   del papel del ticket», según el rollo de la impresora.
 - **Varias personas a la vez:** cada aparato tiene su propia sesión. Un aparato compartido (la tableta
@@ -166,8 +162,8 @@ Lo que necesita un PIN real en producción no lo prueba nadie más que Miguel: l
 2. En la PC, entrar como «Cocina»; en una tableta (u otro teléfono), como «Dueño Don Poncho».
 3. En el teléfono, «Salir» y entrar como «Bebidas»: el otro aparato no se sale.
 4. Escanear el QR de una mesa con otro teléfono: abre el menú de esa mesa.
-5. En el teléfono y en el iPhone: «Agregar a la pantalla principal» / «Agregar a inicio»; el ícono
-   abre «Don Poncho» a pantalla completa.
+5. En el teléfono, abrir la app de Morphiq (el .apk) y comprobar que entra con su PIN; el navegador ya
+   no ofrece «Instalar».
 6. Salir de todos los aparatos. Si se abrió una mesa por error, avisar: hay un guion probado que la
    cancela y la purga (`scripts/limpiar-ventas-de-prueba.mjs`).
 

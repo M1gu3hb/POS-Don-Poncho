@@ -23,6 +23,8 @@ export interface LineaDelCarrito {
   readonly esMia: boolean;
   /** DP-12.2 · De qué teléfono es, numerados por orden de llegada. */
   readonly telefono?: number;
+  /** DP-21 · Cuándo la agregó ese teléfono (ISO). Falta en un servidor anterior. */
+  readonly agregadaEn?: string;
   /** `false`: el negocio ya no lo ofrece; al enviar se quita. Sin el campo, cuenta como sí. */
   readonly disponible?: boolean;
 }

@@ -4,6 +4,7 @@ import { ErrorDominio, PAQUETES_PORTAL } from '@morphiqpos/contracts';
 
 import { candadoDelCarrito } from '../restaurante/carrito-del-salon.ts';
 import { entradaDelTelefono, latir } from './carrito.ts';
+import { hayCupoParaAvisar, yaSeAvisoDeMas } from './cupo-de-avisos.ts';
 import { definirComandoPublico } from './definicion-publica.ts';
 import { exigirPedidosDesdeElTelefono } from './mesa.ts';
 import { notaDelPedidoListo, platillosDelCarrito } from './quien-envia.ts';
@@ -71,6 +72,18 @@ export const llamarAlMeseroParaConfirmar = definirComandoPublico<
       .where('estado', '=', 'pendiente')
       .forUpdate()
       .executeTakeFirst();
+
+    // DP-21 · Pasado el tope de avisos (por teléfono y por mesa) NO se renueva: al comensal se le
+    // dice que ya se avisó y la tableta del mesero no vuelve a sonar. Se cuenta antes de tocar nada.
+    const hayCupo = await ctx.paso('cupo_de_avisos', () => hayCupoParaAvisar(ctx, huella));
+    if (!hayCupo) {
+      if (pendiente === undefined) throw yaSeAvisoDeMas('ordenar');
+      ctx.auditar({
+        entidadId: pendiente.id,
+        payload: { platillos, yaAvisado: true, sinRenovar: true },
+      });
+      return { solicitudId: pendiente.id, platillos, yaAvisado: true };
+    }
 
     // DP-13.2 · «Volver a llamar» RENUEVA el aviso: el que esperaba se resuelve y llega uno nuevo,
     // con su nota al día. Las pantallas anuncian (y dicen en voz) cada aviso nuevo una vez; poner

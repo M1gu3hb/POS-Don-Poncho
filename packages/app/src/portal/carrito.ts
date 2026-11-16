@@ -149,6 +149,8 @@ export interface LineaDelCarrito {
   readonly esMia: boolean;
   /** De qué teléfono es, numerados por orden de llegada: «Teléfono 2» para el mesero. */
   readonly telefono: number;
+  /** DP-21 · Cuándo la agregó ese teléfono (ISO): el mesero lee «Teléfono 2 · 14:05». Del servidor. */
+  readonly agregadaEn: string;
   /**
    * `false`: el negocio la ocultó del menú o la desactivó después de que se agregara. Todos los
    * teléfonos la ven marcada; al enviar se quita y el pedido sale sin ella.
@@ -444,6 +446,7 @@ export async function estadoDelCarrito(
         : null,
       esMia: l.dispositivo_huella === huella,
       telefono: telefonos.get(l.dispositivo_huella) ?? 0,
+      agregadaEn: l.created_at.toISOString(),
       // DP-15 · Una línea de algo que se agotó hoy se queda en la lista, marcada: al enviar sale.
       disponible:
         l.activo && l.visible_en_menu_digital && !estaAgotado(l.agotado_hasta, new Date()),

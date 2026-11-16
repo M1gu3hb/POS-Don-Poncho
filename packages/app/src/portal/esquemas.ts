@@ -42,6 +42,12 @@ const notaCorta = z.string().trim().max(MAXIMO_NOTA).default('');
 /** Los tres del FAB de atención (`qrUtils.js:31-35`). */
 export const entradaCrearSolicitud = z.object({
   tipo: z.enum(['ordenar', 'cuenta', 'ayuda']),
+  /**
+   * DP-21 · El id del teléfono, sólo para contarle el tope de avisos (`cupo-de-avisos.ts`). Opcional:
+   * con el pedido desde el teléfono apagado no hay id, y el aviso sale igual (cae en el cubo «sin
+   * teléfono»). Que valga lo decide el servidor, no el navegador.
+   */
+  dispositivo: z.string().max(64).optional(),
 });
 
 export const entradaAbrirMesa = z.object({

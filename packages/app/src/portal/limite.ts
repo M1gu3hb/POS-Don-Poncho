@@ -89,6 +89,17 @@ export const LIMITES_PORTAL = {
    * tope de la mesa. Los comensales comparten la IP del WiFi, de ahí que no sea más bajo.
    */
   telefono_nuevo_mesa_ip: { intentos: 12, ventanaSegundos: 3 * CINCO_MINUTOS },
+  /**
+   * DP-21 · Los AVISOS al mesero («Llamar al mesero», «Ayuda», «Pedir la cuenta»): el QR está
+   * impreso, y quien le toma una foto podía hacer sonar la tableta del mesero sin parar (volver a
+   * llamar renueva el aviso, y cada aviso nuevo suena). Por TELÉFONO —el id que firma el servidor;
+   * uno inventado cae en el cubo «sin teléfono»— y por MESA. Una mesa de seis comensales avisa una
+   * vez cada uno y alguno repite: 3 por teléfono y 6 por mesa en un minuto sobran; no se cuenta por
+   * IP porque todos los comensales comparten el WiFi del local. Pasado el tope, al comensal se le
+   * dice «Ya avisamos a tu mesero» y el mesero no oye nada más.
+   */
+  aviso_telefono: { intentos: 3, ventanaSegundos: MINUTO },
+  aviso_mesa: { intentos: 6, ventanaSegundos: MINUTO },
   /** Preparar y Listo: una cocina con prisa no pasa de unos cuantos por minuto. */
   cocina_transicion: { intentos: 60, ventanaSegundos: CINCO_MINUTOS },
 } as const satisfies Readonly<Record<string, Limite>>;
