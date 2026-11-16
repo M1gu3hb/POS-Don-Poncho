@@ -6,7 +6,7 @@ import { claveDeContexto } from '~/cliente/contexto-de-consultas';
 import { mismaCocina } from '~/restaurante/alcance-de-la-cocina';
 import { almacenDelAparato } from '~/restaurante/vista-de-solicitudes';
 import { abrir as abrirElCandado } from '~/espera/candado-del-pin';
-import { almacenDeLaEjecucion, olvidarPin } from '~/espera/pin-de-esta-ejecucion';
+import { almacenDeLaEjecucion, marcarPin, olvidarPin } from '~/espera/pin-de-esta-ejecucion';
 import { sonarAntesDeIrse } from '~/sonidos/gestor';
 
 /** @typedef {{id: string, nombre: string, rol: string, etiqueta?: string, paquete?: string, organizacionId?: string, estacion_preparacion_id?: string | null, estacion_preparacion_nombre?: string | null, estacion_preparacion_color?: string | null, puede_ver_todas_estaciones?: boolean, es_plataforma?: boolean}} UsuarioDePOS */
@@ -180,6 +180,10 @@ export function POSAuthProvider({ children, conSesion = true }) {
   const login = (user) => {
     // DP-11.2: entrar con el PIN quita el candado del modo espera que hubiera en el aparato.
     abrirElCandado(almacenDelAparato());
+    // DP-21 · Bloque 2: aquí sólo se llega con el PIN recién comprobado en el servidor
+    // (`POSLogin`): esta ejecución ya no lo vuelve a pedir. Sin esta marca, el candado de la
+    // sesión se lo pediría otra vez al dueño y a la cajera en la pantalla siguiente.
+    if (typeof user?.id === 'string') marcarPin(almacenDeLaEjecucion(), user.id);
     version.current += 1;
     setSesion((n) => n + 1);
     setPosUser(user);
