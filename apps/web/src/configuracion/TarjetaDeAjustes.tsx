@@ -190,7 +190,7 @@ function CampoDeLaTarjeta({
   const idDelControl = campo.id ?? idBase;
   if (campo.tipo === 'interruptor') {
     return (
-      <div className="flex items-start justify-between gap-3 sm:col-span-2">
+      <div className="flex items-start justify-between gap-(--espacio-3) sm:col-span-2">
         <div className="flex-1">
           <Label htmlFor={idDelControl} className="text-sm font-medium">
             {campo.etiqueta}
@@ -217,7 +217,7 @@ function CampoDeLaTarjeta({
       {campo.tipo === 'seleccion' ? (
         <select
           id={idDelControl}
-          className="mt-1 h-(--altura-control) w-full rounded-md border border-borde-fuerte bg-superficie px-3 text-sm"
+          className="mt-1 h-(--altura-control) w-full rounded-md border border-borde-fuerte bg-superficie px-(--espacio-3) text-sm"
           value={typeof valor === 'number' ? valor : campo.porOmision}
           disabled={deshabilitado}
           onChange={(evento) => {
