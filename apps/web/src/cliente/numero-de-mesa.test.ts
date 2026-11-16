@@ -29,10 +29,10 @@ describe('DP-15 · el número de la mesa nueva', () => {
 
   it('«Nueva mesa» de Configuración lo usa', () => {
     const raiz = process.cwd().endsWith('web') ? process.cwd() : join(process.cwd(), 'apps', 'web');
-    const c = readFileSync(join(raiz, 'heredado', 'pages', 'Configuracion.jsx'), 'utf8').replace(
-      /\s+/g,
-      '',
-    );
+    const c = readFileSync(
+      join(raiz, 'heredado', 'components', 'configuracion', 'MapaDeMesasDeConfiguracion.jsx'),
+      'utf8',
+    ).replace(/\s+/g, '');
     expect(c).toContain('numero:siguienteNumeroLibre(mesas),');
   });
 });

@@ -281,6 +281,36 @@ export const SIN_ESTADO = [
       'Siempre está «Este aparato» (DP-21 · Bloque 5); la lista de los demás aparatos, si no hay ninguno, simplemente no se pinta: no es un vacío que haya que explicar.',
   },
   {
+    pantalla: 'configuracion/TarjetaDeAjustes',
+    estado: 'vacio',
+    razon:
+      'Campos fijos de la configuración (DP-21 · Bloque 21) con valores de omisión: no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/BarraLateralDelAparato',
+    estado: 'cargando',
+    razon:
+      'Lee el almacén del navegador, que responde al instante: no hay viaje al servidor (DP-21 · Bloque 21).',
+  },
+  {
+    pantalla: 'configuracion/BarraLateralDelAparato',
+    estado: 'error',
+    razon:
+      'No lee nada que pueda fallar: si el aparato no deja guardar, la elección vive en memoria (use-barra-lateral).',
+  },
+  {
+    pantalla: 'configuracion/TarjetaDeAjustes',
+    estado: 'cargando',
+    razon:
+      'Recibe la configuración que la pantalla ya leyó; mientras llega, sus campos van deshabilitados (DP-21 · Bloque 21).',
+  },
+  {
+    pantalla: 'configuracion/BarraLateralDelAparato',
+    estado: 'vacio',
+    razon:
+      'Dos opciones fijas (abierta o plegada) que se recuerdan en el aparato (DP-21 · Bloque 21): no tiene lista ni lectura al servidor.',
+  },
+  {
     pantalla: 'configuracion/FoliosDelNegocio',
     estado: 'vacio',
     razon:

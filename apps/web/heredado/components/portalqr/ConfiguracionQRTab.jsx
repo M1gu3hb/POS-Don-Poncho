@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useId, useRef } from 'react';
 import { api } from '@/api/cliente';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -17,12 +17,43 @@ import {
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import { useCambiosSinGuardar } from '~/configuracion/cambios-sin-guardar';
+
+/** DP-21 · Bloque 21: el portal se reparte en tres tarjetas; cada una guarda sólo estas claves. */
+const CLAVES_DEL_PORTAL = {
+  activacion: [
+    'portal_qr_activo',
+    'portal_qr_modo_menu',
+    'portal_qr_mostrar_precios',
+    'portal_qr_mostrar_sin_imagen',
+    'portal_qr_mensaje_bienvenida',
+  ],
+  pedidos: [
+    'portal_qr_envia_a_cocina',
+    'portal_qr_comensales_abren_mesa',
+    'portal_qr_permitir_pedidos_cliente',
+  ],
+  cuenta: [
+    'portal_qr_permitir_ordenar',
+    'portal_qr_permitir_cuenta',
+    'portal_qr_permitir_ayuda',
+    'portal_qr_cuenta_modo',
+    'portal_qr_mostrar_precuenta',
+    'portal_qr_permitir_propina_cliente',
+  ],
+};
+const TITULOS_DEL_PORTAL = {
+  activacion: 'Activación y menú',
+  pedidos: 'Pedidos desde el portal',
+  cuenta: 'Cuenta y propina desde QR',
+};
 
 /**
  * Pestaña "Configuración QR": activar portal, modo menú, qué botones se muestran, etc.
  */
-export default function ConfiguracionQRTab({ config }) {
+export default function ConfiguracionQRTab({ config, grupo = 'activacion', conMesas = true }) {
   const queryClient = useQueryClient();
+  const idDelTitulo = useId();
   const [form, setForm] = useState({
     portal_qr_activo: false,
     portal_qr_modo_menu: 'digital',
@@ -38,7 +69,9 @@ export default function ConfiguracionQRTab({ config }) {
     // DP-12.2: quién manda a cocina (por omisión el mesero) y si los comensales abren su mesa.
     portal_qr_envia_a_cocina: 'mesero',
     portal_qr_comensales_abren_mesa: false,
+    portal_qr_permitir_pedidos_cliente: false,
   });
+  const [guardado, setGuardado] = useState(false);
   const [saving, setSaving] = useState(false);
   // DP-18: lo que se leyó al llenar el formulario; al guardar sólo viaja lo que difiere de esto.
   const leido = useRef({});
@@ -62,11 +95,20 @@ export default function ConfiguracionQRTab({ config }) {
       portal_qr_envia_a_cocina:
         config.portal_qr_envia_a_cocina === 'comensales' ? 'comensales' : 'mesero',
       portal_qr_comensales_abren_mesa: config.portal_qr_comensales_abren_mesa === true,
+      portal_qr_permitir_pedidos_cliente: config.portal_qr_permitir_pedidos_cliente === true,
     };
     // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo guardado y no tocado, no.
     leido.current = leidoDe(config, Object.keys(desdeLaConfig));
     setForm(desdeLaConfig);
   }, [config]);
+
+  // DP-21 · Bloque 21: cada tarjeta del portal guarda SÓLO sus claves.
+  const clavesDelGrupo = CLAVES_DEL_PORTAL[grupo] ?? [];
+  const delGrupo = Object.fromEntries(
+    Object.entries(form).filter(([clave]) => clavesDelGrupo.includes(clave)),
+  );
+  const sucia = !!config?.id && hayCambios(parcheDeLaSeccion(delGrupo, leido.current));
+  useCambiosSinGuardar('portal:' + grupo, sucia);
 
   const guardar = async () => {
     if (!config?.id) {
@@ -74,8 +116,9 @@ export default function ConfiguracionQRTab({ config }) {
       return;
     }
     setSaving(true);
+    setGuardado(false);
     try {
-      const parche = parcheDeLaSeccion(form, leido.current);
+      const parche = parcheDeLaSeccion(delGrupo, leido.current);
       if (!hayCambios(parche)) {
         toast.info('No hay cambios que guardar');
         return;
@@ -84,7 +127,7 @@ export default function ConfiguracionQRTab({ config }) {
       // La configuración vive en ['config'] (ConfigContext): al volver a esta pestaña se rellena
       // con lo nuevo. Era ['config_remote'], que nadie lee (DP-18).
       await queryClient.invalidateQueries({ queryKey: ['config'] });
-      toast.success('Configuración guardada');
+      setGuardado(true);
     } catch (err) {
       console.error('[ConfiguracionQRTab] guardar:', err);
       toast.error('No se pudo guardar');
@@ -104,7 +147,12 @@ export default function ConfiguracionQRTab({ config }) {
   );
 
   return (
-    <div className="space-y-4 max-w-2xl">
+    <div role="region" aria-labelledby={idDelTitulo} className="space-y-4 max-w-2xl mt-4">
+      <h3 id={idDelTitulo} className="text-lg font-semibold">
+        {TITULOS_DEL_PORTAL[grupo]}
+      </h3>
+      {grupo === 'activacion' && (
+        <>
       {/* === BLOQUE DE AYUDA — explica qué hace cada switch del Portal QR === */}
       {/* No cambia comportamiento. Solo claridad visual para el administrador. */}
       <div className="rounded-xl border border-info/30 bg-info/10 p-3 text-xs text-info space-y-1">
@@ -132,6 +180,7 @@ export default function ConfiguracionQRTab({ config }) {
           </li>
         </ul>
       </div>
+
 
       <div className="rounded-xl border bg-superficie p-4">
         <Row
@@ -177,6 +226,22 @@ export default function ConfiguracionQRTab({ config }) {
       </div>
 
       {/* DP-12.2 · Pedidos desde el portal: el mesero confirma lo que arman los comensales. */}
+
+      <div className="rounded-xl border bg-superficie p-4 space-y-2">
+        <Label className="text-sm font-bold">Mensaje de bienvenida</Label>
+        <Textarea
+          value={form.portal_qr_mensaje_bienvenida}
+          onChange={(e) => setForm({ ...form, portal_qr_mensaje_bienvenida: e.target.value })}
+          rows={3}
+          placeholder="Mensaje que verá el cliente al escanear su QR."
+        />
+      </div>
+
+
+        </>
+      )}
+      {grupo === 'pedidos' && (
+        <>
       <div className="rounded-xl border bg-superficie p-4">
         <p className="text-sm font-bold mb-1">Pedidos desde el portal</p>
         <p className="text-xs text-muted-foreground mb-2">
@@ -214,8 +279,25 @@ export default function ConfiguracionQRTab({ config }) {
             onCheckedChange={(v) => setForm({ ...form, portal_qr_comensales_abren_mesa: v })}
           />
         </Row>
+        {conMesas && (
+          <Row
+            label="Permitir que el comensal envíe pedidos desde el QR"
+            hint="Si está activo, el comensal puede agregar productos a un carrito y enviar el pedido a cocina. El cobro siempre se realiza en caja. Funciona con y sin asignación de mesas."
+          >
+            <Switch
+              aria-label="Permitir que el comensal envíe pedidos desde el QR"
+              checked={form.portal_qr_permitir_pedidos_cliente}
+              onCheckedChange={(v) => setForm({ ...form, portal_qr_permitir_pedidos_cliente: v })}
+            />
+          </Row>
+        )}
       </div>
 
+
+        </>
+      )}
+      {grupo === 'cuenta' && (
+        <>
       <div className="rounded-xl border bg-superficie p-4">
         <p className="text-sm font-bold mb-1">Botones de atención del cliente</p>
         <p className="text-xs text-muted-foreground mb-2">
@@ -242,6 +324,7 @@ export default function ConfiguracionQRTab({ config }) {
       </div>
 
       {/* ===== Sección: cuenta y propina QR ===== */}
+
       {/* La sección de propina QR depende del switch GLOBAL de propinas
           (config.propinas_activas). Si está apagado, deshabilitamos los
           controles relacionados y mostramos el mensaje explicativo. El selector
@@ -307,19 +390,18 @@ export default function ConfiguracionQRTab({ config }) {
         );
       })()}
 
-      <div className="rounded-xl border bg-superficie p-4 space-y-2">
-        <Label className="text-sm font-bold">Mensaje de bienvenida</Label>
-        <Textarea
-          value={form.portal_qr_mensaje_bienvenida}
-          onChange={(e) => setForm({ ...form, portal_qr_mensaje_bienvenida: e.target.value })}
-          rows={3}
-          placeholder="Mensaje que verá el cliente al escanear su QR."
-        />
-      </div>
 
-      <div className="flex justify-end">
-        <Button onClick={guardar} disabled={saving} className="gap-2">
-          <Save className="w-4 h-4" /> {saving ? 'Guardando...' : 'Guardar configuración'}
+        </>
+      )}
+
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {guardado && (
+          <p role="status" className="text-sm font-medium">
+            ✓ Guardado
+          </p>
+        )}
+        <Button onClick={guardar} disabled={saving || !sucia} variant="outline" className="gap-2">
+          <Save className="w-4 h-4" /> {saving ? 'Guardando...' : 'Guardar'}
         </Button>
       </div>
     </div>

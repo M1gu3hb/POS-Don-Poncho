@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { SECCIONES, TARJETAS } from '~/configuracion/secciones';
+
 /**
  * DP-20 · LAS PANTALLAS DE IMPRESIÓN, COMO ESTÁN ESCRITAS (contrato estático).
  *
@@ -68,27 +70,20 @@ describe('el laboratorio y la contraseña del proveedor', () => {
 describe('Configuración monta las tres piezas', () => {
   const codigo = compacto(leer(CONFIGURACION));
 
-  it('la pestaña «Impresión», después de «Este aparato»', () => {
-    expect(codigo).toContain('<TabsTriggervalue="impresion"><PrinterclassName');
-    const aparato = codigo.indexOf('<TabsTriggervalue="aparato">');
-    const impresion = codigo.indexOf('<TabsTriggervalue="impresion">');
-    expect(impresion).toBeGreaterThan(aparato);
-    expect(codigo).toContain(
-      '<TabsContentvalue="impresion"><ImpresionDelAparatorol={posUser?.rol}/></TabsContent>',
-    );
+  // DP-21 · Bloque 21: la Configuración se ordenó en secciones (`~/configuracion/secciones`).
+  it('la impresora y el cajón están en «Este aparato», y las pinta la pantalla', () => {
+    const tarjeta = TARJETAS.find((t) => t.id === 'impresora-y-cajon');
+    expect(tarjeta?.seccion).toBe('este-aparato');
+    expect(codigo).toContain("'impresora-y-cajon':()=><ImpresionDelAparatorol={posUser?.rol}/>");
   });
 
-  it('las copias y la entrada al laboratorio van al final de «Operación», la entrada la última', () => {
-    const copias = codigo.indexOf('<CopiasDeImpresionpuedeCambiar={esDeMando(miPuesto)}/>');
-    const entrada = codigo.indexOf('<EntradaAlLaboratorio/>');
-    const cierre = codigo.indexOf('</TabsContent>', entrada);
-    expect(copias).toBeGreaterThan(-1);
-    expect(entrada).toBeGreaterThan(copias);
-    expect(codigo.slice(entrada, cierre)).toBe('<EntradaAlLaboratorio/>');
-    expect(codigo.lastIndexOf('<TabsContentvalue="negocio">', entrada)).toBeGreaterThan(-1);
-    expect(codigo.slice(codigo.lastIndexOf('<TabsContentvalue=', entrada), entrada)).toContain(
-      'value="negocio"',
-    );
+  it('las copias van en «Ticket y folios» y la entrada al laboratorio, discreta, casi al final', () => {
+    expect(TARJETAS.find((t) => t.id === 'copias')?.seccion).toBe('ticket-y-folios');
+    expect(codigo).toContain('copias:()=><CopiasDeImpresionpuedeCambiar={esDeMando(miPuesto)}/>');
+    expect(codigo).toContain('laboratorio:()=><EntradaAlLaboratorio/>');
+    const ids = SECCIONES.map((x) => x.id);
+    expect(ids.indexOf('laboratorio')).toBeGreaterThan(ids.indexOf('este-aparato'));
+    expect(ids.slice(-3)).toEqual(['laboratorio', 'mantenimiento', 'avanzado']);
   });
 
   it('se importan de ~/impresion/pantallas', () => {

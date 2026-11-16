@@ -83,8 +83,6 @@ export default function ReiniciarSistemaSection() {
       'propinas_pendientes',
       'menu_qr_secciones',
       'proveedores_activos',
-      'integration_sync_logs_pending',
-      'integration_sync_logs_failed',
     ];
     for (const k of keys) {
       try {

@@ -33,6 +33,23 @@ function suscribir(avisar: () => void): () => void {
 const instantanea = (): EleccionDeLaBarra | null => leerEleccion(almacenDeLaBarra()) ?? enMemoria;
 const delServidor = (): EleccionDeLaBarra | null => null;
 
+/** La elección que este aparato recuerda (`null`: nunca eligió y decide la omisión). */
+export function useEleccionDeLaBarra(): EleccionDeLaBarra | null {
+  return useSyncExternalStore(suscribir, instantanea, delServidor);
+}
+
+/**
+ * Fija la barra en plegada o abierta (Configuración → Este aparato, DP-21 · Bloque 21). Es lo mismo
+ * que hace el botón de la barra: se recuerda en el aparato y la barra se entera al instante.
+ */
+export function elegirLaBarra(eleccion: EleccionDeLaBarra): void {
+  enMemoria = eleccion;
+  guardarEleccion(almacenDeLaBarra(), eleccion);
+  oyentes.forEach((avisar) => {
+    avisar();
+  });
+}
+
 export function useBarraLateral({
   deModelo,
   secciones,

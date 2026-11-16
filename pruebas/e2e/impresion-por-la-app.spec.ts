@@ -48,7 +48,7 @@ function copias(page: Page): { seccion: Locator; delTicket: Locator; guardar: Lo
 }
 
 async function fijarCopiasDelTicket(page: Page, cuantas: 1 | 2): Promise<void> {
-  await page.goto('/configuracion?tab=negocio');
+  await page.goto('/configuracion?seccion=ticket-y-folios');
   const { delTicket, guardar } = copias(page);
   if ((await delTicket.inputValue()) === String(cuantas)) return;
   await delTicket.selectOption(String(cuantas));
