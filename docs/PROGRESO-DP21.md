@@ -23,10 +23,10 @@ el tiempo, se cae lo último.
 
 | Qué | Dónde |
 | --- | --- |
-| Mi árbol (la sesión principal) | `..\.work\dp20`, rama `dp-21-a` (salió de `main` en `faed6cc`) |
+| Mi árbol (la sesión principal) | `..\.work\dp20`: `dp-21-a` (PR A), `dp-21-pr-b` (PR B) y `dp-21-pr-c` (PR C) |
 | El agente 1 (lo táctil y lo visual) | `..\.work\dp20-lab`, rama `dp-21-ag1` |
 | El agente 2 (inventario del Bloque 20, Configuración, tablero, guías) | `..\.work\dp18-integrar`, rama `dp-21-ag2` |
-| El checkout principal | `POS Don Poncho`, en `main`: ahí corre el `verify` de línea base |
+| El checkout principal | `POS Don Poncho`: sólo git. Ahí construye el agente 2 el build que simula |
 | Guiones y registros de la etapa | `D:\mpos-tmp\dp21\` (fuera del repo) |
 | La base local de pruebas | clúster Postgres 18 en el 55433, base `dp21_pruebas` |
 | El mapa de la Configuración | `docs/CONFIGURACION-MAPA.md` |
@@ -84,7 +84,7 @@ el tiempo, se cae lo último.
 2 s: el mismo ruido ambiental de DP-18). La cadena se detuvo ahí; la CI de `faed6cc` estaba en
 verde (PR #31).
 
-## Estado por bloque (16-11, 04:10)
+## Estado por bloque (16-11, 10:20)
 
 | Bloque | Qué | PR | Estado |
 | --- | --- | --- | --- |
@@ -96,25 +96,27 @@ verde (PR #31).
 | 6 | Folios de verdad | A | hecho (`43ab909`, agente 2) · DP-D128 · e2e `folios-con-prefijo.spec.ts` |
 | 7 | El cajón | A | hecho (`8af0c71`, agente) · DP-D133 |
 | 8 | La voz de cocina | A | hecho (`c45370f`, agente 1) · DP-D133 |
-| 9 | Lo táctil | B | hecho por el agente 1 (`f9b8167`), en `dp-21-pr-b`; falta probar en aparato |
-| 10 | Cambiar de mesa | B | hecho (`a019fe3`) · 9 mutantes muertos · e2e `cambiar-de-mesa-en-el-mapa.spec.ts` |
-| 11 | Gastos de Caja = Compras y gastos | B | agente 2, en curso |
-| 12 | El ticket a tu gusto | B | hecho por el agente 2 (`511e441`) · `test:impresion` 20 de 20 |
-| 13 | El tablero | C | pendiente |
-| 14 | Configuración limpia | C | pendiente |
-| 15 | Colores del iMin | B | agente 1, en curso |
-| 16 | El barrido visual | C | pendiente |
-| 17 | Las guías | C | pendiente |
-| 18 | Los cortes en una carpeta (app 1.0.2) | C | pendiente |
-| 19 | Lo que quedó de DP-19 | C | pendiente |
-| 20 | Lo desconectado, roto o sin propósito | B y C | inventario hecho (`docs/reports/012-anexo-inventario.md`, 128 renglones) |
-| 21 | La Configuración, ordenada | B | mudanza hecha por el agente 2 (`097b6b9`): 16 secciones, 49 tarjetas; e2e `configuracion-secciones.spec.ts` |
+| 9 | Lo táctil | B | en producción (`f9b8167`, agente 1; `2be9aed`) · DP-D137 · **falta probar en aparato** |
+| 10 | Cambiar de mesa | B | en producción (`a019fe3`) · DP-D138 · 9 mutantes muertos · e2e `cambiar-de-mesa-en-el-mapa.spec.ts` |
+| 11 | Gastos de Caja = Compras y gastos | B | en producción (`9efe2da`, agente 2) · DP-D139 |
+| 12 | El ticket a tu gusto | B | en producción (`511e441`, agente 2) · DP-D140 · `test:impresion` 20 de 20 |
+| 13 | El tablero | C | hecho (`d88bb8f`, agente 2) · DP-D136 · en el PR #34 |
+| 14 | Configuración limpia | C | hecho (`d88bb8f`, agente 2) · DP-D135 · en el PR #34 |
+| 15 | Colores del iMin | B | en producción (`9cb3290`, agente 1; `8d483e4`) · DP-D142 · **falta ver el iMin** |
+| 16 | El barrido visual | C | agente 1, en curso (entrega 11:00) |
+| 17 | Las guías | C | hecho (`a4f9cee`, agente 2) · en el PR #34 |
+| 18 | Los cortes en una carpeta (app 1.0.2) | C | **no entra:** no alcanzó el tiempo antes del congelado |
+| 19 | Lo que quedó de DP-19 | C | **no entra:** era «sólo si sobra tiempo» |
+| 20 | Lo desconectado, roto o sin propósito | B y C | inventario (`docs/reports/012-anexo-inventario.md`); lo de dinero y seguridad, en producción (`50b42c7`) · DP-D143 |
+| 21 | La Configuración, ordenada | B | en producción (`097b6b9`, agente 2; `5e840c4`): 16 secciones; e2e `configuracion-secciones.spec.ts` · DP-D141 |
 
 ### Ramas
 
-- `dp-21-a` (árbol `.work\dp20`): el PR A completo, Bloques 1 a 8.
-- `dp-21-b` (árbol `.work\dp18-integrar`): `dp-21-a` + Bloque 9; ahí trabaja el agente 2 la mudanza.
-- `dp-21-ag1` (árbol `.work\dp20-lab`): el agente 1, Bloque 15.
+- `dp-21-a`: el PR A (#32), en `main` como `13e9d77`.
+- `dp-21-pr-b` (subida como `dp-21-prb`): el PR B (#33), en `main` como `bed26a5`.
+- `dp-21-pr-c`: el PR C (#34): Bloques 13, 14, 16 y 17.
+- `dp-21-ag1` (árbol `.work\dp20-lab`): el agente 1, Bloque 16. `dp-21-ag2` (árbol
+  `.work\dp18-integrar`): el agente 2, el simulador.
 
 ### Decisiones tomadas sin Miguel (opción por omisión, anotadas)
 
@@ -168,12 +170,85 @@ verde (PR #31).
   (`restaurante`, `dia-completo-restaurante`, `rastreo`), no sólo las del bloque. Variables del
   restaurante de prueba para correrlas en local: las del flujo `verificar.yml`.
 
+### El cierre del PR B (16-11, mañana)
+
+- **Qué lleva:** los Bloques 9 (táctil), 10 (cambiar de mesa), 11 (gastos), 12 (el ticket a tu
+  gusto) y 15 (colores del iMin); lo de dinero, seguridad y datos del Bloque 20; y la mudanza del
+  Bloque 21 (la Configuración en 16 secciones). Sin migraciones. Decisiones DP-D137 a DP-D143.
+- **Lo que encontró la revisión en el navegador, antes de subir** (las pantallas heredadas no pasan
+  por lint ni tipos; nada de esto lo habría visto `verify`):
+  - guardar una tarjeta de Configuración borraba en silencio lo tecleado en las otras tarjetas de la
+    sección (`ponerAlDia`);
+  - una tarjeta con ajustes nunca guardados nacía «con cambios» y preguntaba «¿Salir sin guardar?»
+    (`seToco`);
+  - un `useRef` sin declarar en dos tarjetas tumbaba la sección entera («This page couldn't load»):
+    lo metí yo con un `sed` por número de línea. Desde ahí, las inserciones van por patrón y antes de
+    cada commit corre el barrido de nombres sin declarar sobre `heredado/` (abajo).
+- **Lo que encontró la CI y no el `verify` local por partes** (cuatro vueltas):
+  1. la puerta de tokens y la de adopción en pantallas nuevas;
+  2. el día completo: con la barra «plegada de inicio» del mesero, el cajón del teléfono salía sólo
+     con iconos. Era un defecto de verdad (`SidebarContent` recibe `plegada`);
+  3. el rastreador: Playwright rechaza por omisión el aviso «¿Salir sin guardar?» y la navegación se
+     aborta (ahora lo acepta);
+  4. `restaurante-portal-qr` y `portal-sin-asignacion`: comparaban el valor CRUDO de la
+     configuración. Desde DP-21 una tarjeta sólo guarda lo que se tocó, así que «apagado» también
+     es «nunca se guardó»: las pruebas comparan lo EFECTIVO.
+- **Los retratos de la galería** se regeneran en la CI de Linux (`gh workflow run verificar.yml
+  --ref <rama> -f actualizar_galeria=true`, luego `gh run download <corrida> -n
+  galeria-restaurante`): 81 PNG nuevos por la barra y la Configuración.
+
+### Trampas del PR B
+
+- **`heredado/*.jsx` no pasa por lint ni tipos.** Barrido de nombres sin declarar, desde `apps/web`:
+  `pnpm exec tsc --ignoreConfig --noEmit --allowJs --checkJs --jsx preserve --skipLibCheck --target
+  es2022 --module esnext --moduleResolution bundler <archivos> | grep -E "TS2304|TS2552"` (tiene
+  que salir vacío; sin `--ignoreConfig` pasa en vacío). Queda pendiente volverlo una puerta.
+- **`verify` cambia archivos seguidos mientras corre** (los mutantes): nada de `git add -A` ni de
+  commits hasta que termine; se suben rutas explícitas.
+- **`count()` de Playwright no espera:** un recorrido que cuenta justo después de `goto` pasa en
+  vacío. El de Configuración exige al menos 13 secciones vistas.
+- **La CI corre más suites que «las del bloque».** El paso «Los cambios del cliente» de la Jornada
+  completa son 17 suites en hasta 3 aparatos; en local, `D:\mpos-tmp\dp21\e2e-cambios-del-cliente.sh`.
+  `D:\mpos-tmp\dp21\verify-todo.sh` corre todas las puertas sin detenerse en la primera que falla.
+- **La base desechable** puede colgarse al subir (`pg_ctl start` desde `spawnSync`): se mata ese
+  `node` y se repite `subir`.
+
+### PR B en producción (16-11, 10:14)
+
+- [PR #33](https://github.com/M1gu3hb/POS-Don-Poncho/pull/33) unido a `main` como `bed26a5`, con la
+  CI en 10 de 10 (a la quinta vuelta). Sin migraciones.
+- Despliegue de **Production** «Ready». **Humo sin sesión y sin cobrar: 27 de 27** (las 5 rutas
+  nuevas existen y exigen sesión; la Configuración no se enseña sin sesión). **0 errores de
+  ejecución en Vercel.**
+- Producción, sólo leyendo, después del despliegue: igual que al empezar (9 cuentas pagadas,
+  $3,050.80; 1 caja cerrada; 35 terminales «Caja N»; cupo 1; 0 almacenes).
+- Lo que cambia para Miguel: la Configuración ya son secciones; el mesero ve su barra plegada en
+  los POS; «Cambiar de mesa» abre ahí mismo; los gastos dicen de qué caja salen.
+- **Sin comprobar en aparato:** lo táctil y los colores del iMin.
+
+### Decisiones tomadas sin Miguel en los PR B y C (opción por omisión, anotadas)
+
+- **El día del simulador no cabe entero antes de las 14:00** (un día normal son ~4 h reales y sus
+  bots eran de las pantallas de DP-18): el agente 2 dejó las guías y adaptó los bots para un día
+  acortado y arbitrado. El informe 012 dice cuánto se simuló.
+- **Los Bloques 18 y 19 no entran.** La app de Windows sigue en la 1.0.1 y el POS descarga el PDF
+  del corte como hoy.
+- **«Salir» también con la barra plegada** (PR C): la barra del mesero nace plegada y los cuatro POS
+  tienen barra fija; sin esto, quien comparte el aparato tenía que abrir el menú para salir.
+- **El «Primer folio» (1001 y 101) lo guarda Miguel DESPUÉS de dejar en ceros** y antes del bloqueo
+  H1: el comando sólo lo deja cambiar con los folios en cero, y hoy hay 9 cuentas con folio.
+
 ## Lo que sigue
 
-1. PR B (11:00): está ensamblándose en `dp-21-pr-b` (árbol `.work\dp20`): el PR A + Bloque 9
-   (táctil) + Bloque 10 (cambiar de mesa) + Bloque 12 (el ticket a tu gusto) + Bloque 21 (la
-   mudanza). Faltan el Bloque 11 (agente 2, en curso), el Bloque 15 (agente 1, en curso) y lo de
-   dinero, seguridad y datos del Bloque 20. Luego: e2e, `verify`, integración completa, las suites
-   de la CI en local, retratos de la galería (`/configuracion` cambió entera), PR, CI, unir, humo.
-2. Vigilar los errores de Vercel del PR A hasta las 05:00.
-3. PR C y la Parte final (simulador, lista para Miguel a las 14:00, dejar en ceros con sus dos «sí»).
+1. PR C (congelado a las 14:00; en la CI hacia las 12:30): falta unir el Bloque 16 (agente 1), los
+   retratos de la galería (el tablero, la barra con «Salir», los botones «¿Cómo funciona?»), la CI,
+   unir, desplegar y el humo.
+2. Vigilar los errores de Vercel del PR B hasta las 11:15.
+3. El día del simulador (agente 2): `D:\mpos-tmp\dp21\` trae sus guiones y registros.
+4. La lista para Miguel a las 14:00: `D:\mpos-tmp\dp21\lista-14.md`.
+5. Dejar en ceros, sólo con sus dos «sí»: ensayo, en serio, Miguel guarda «Folios» (1001 y 101),
+   `scripts/renombrar-aparatos.mjs`, `scripts/operacion-real.mjs` (H1) y la verificación de sólo
+   lectura.
+6. El informe `docs/reports/012-cierre-antes-de-instalar.md` (borrador en
+   `D:\mpos-tmp\dp21
+-borrador.md`).
