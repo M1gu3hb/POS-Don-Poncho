@@ -20,6 +20,7 @@ export {
   CLAVE_LA_ELIGEN_LOS_COMENSALES,
   QUIEN_ELIGE_POR_OMISION,
   decidirPropina,
+  laEscribeElMesero,
   propinaDecidida,
   puedeElegir,
   quienLaDecidio,

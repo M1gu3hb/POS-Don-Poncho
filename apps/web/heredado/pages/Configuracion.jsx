@@ -91,6 +91,7 @@ import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos
 import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
 import { IvaDelNegocio } from '~/configuracion/IvaDelNegocio';
 import { CandadoDeMando } from '~/configuracion/CandadoDeMando';
+import { QuienEligeLaPropina } from '~/configuracion/QuienEligeLaPropina';
 import { ImpresionDelAparato } from '~/impresion/pantallas/ImpresionDelAparato';
 import { CopiasDeImpresion } from '~/impresion/pantallas/CopiasDeImpresion';
 import { EntradaAlLaboratorio } from '~/impresion/pantallas/EntradaAlLaboratorio';
@@ -745,6 +746,8 @@ export default function Configuracion() {
           {/* DP-21 · El IVA con el que se cobra: su tarjeta, su comando y su «Guardado». El campo
               de antes («IVA / Impuesto (%)») guardaba una clave que nadie leía. */}
           <IvaDelNegocio puedeCambiar={esDeMando(miPuesto)} />
+          {/* DP-21 (M12): comensales, mesero y Caja. La primera que se confirma gana. */}
+          <QuienEligeLaPropina puedeCambiar={esDeMando(miPuesto)} />
 
           {/* === ESTACIONES DE PREPARACIÓN (6A) ===
               UNA sola card que contiene:

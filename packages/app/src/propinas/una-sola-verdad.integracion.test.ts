@@ -362,6 +362,22 @@ describe('quién puede elegir la propina (M12)', () => {
     expect([pedida.tipo, pedida.puntosBase]).toEqual([null, 0]);
   });
 
+  it('un «la eligen los comensales» del mesero sí se escribe: no es una propina, es el aviso', async () => {
+    const { ordenId } = await mesaConCuenta();
+    exigirOk(
+      await comando(solicitarCuenta, {
+        entrada: { ordenId, propinaTipo: 'pendiente_cliente', propinaPuntosBase: 0 },
+        ambito,
+        idempotencyKey: clave(),
+      }),
+      'restaurante.solicitar_cuenta',
+    );
+    const pedida = await cuenta(ordenId);
+    expect(pedida.tipo).toBe('pendiente_cliente');
+    // Y la Caja puede elegirla después sin «Cambiarla»: nadie la había decidido.
+    exigirOk(await laCajaElige(ordenId, pedida.version, 1500), 'la caja elige');
+  });
+
   it('con la casilla del mesero, la escribe; y la Caja ya no la pisa sin «Cambiarla»', async () => {
     exigirOk(
       await comando(fijarQuienEligeLaPropina, {

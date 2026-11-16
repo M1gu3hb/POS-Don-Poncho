@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   QUIEN_ELIGE_POR_OMISION,
   decidirPropina,
+  laEscribeElMesero,
   propinaDecidida,
   puedeElegir,
   quienLaDecidio,
@@ -150,5 +151,36 @@ describe('quién puede elegir la propina (M12)', () => {
     expect(puedeElegir('caja', sinMesero)).toBe(true);
     expect(puedeElegir('portal_qr', sinMesero)).toBe(true);
     expect(puedeElegir('portal_qr', { ...sinMesero, comensales: false })).toBe(false);
+  });
+});
+
+describe('laEscribeElMesero (lo que «Pedir cuenta» deja escrito)', () => {
+  const sinMesero = { comensales: true, mesero: false, caja: true };
+  const conMesero = { comensales: true, mesero: true, caja: true };
+
+  it('sin la casilla del mesero, una propina elegida por él no se escribe', () => {
+    for (const tipo of ['porcentaje', 'monto_manual', 'sin_propina']) {
+      expect(laEscribeElMesero(tipo, SIN_ELEGIR, sinMesero)).toBe(false);
+    }
+  });
+
+  it('con la casilla, sí', () => {
+    expect(laEscribeElMesero('porcentaje', SIN_ELEGIR, conMesero)).toBe(true);
+  });
+
+  it('un «todavía no» se escribe siempre: es lo que hace que la Caja o el portal pregunten', () => {
+    for (const tipo of ['pendiente', 'pendiente_cliente', 'decidir_en_caja']) {
+      expect(laEscribeElMesero(tipo, SIN_ELEGIR, sinMesero)).toBe(true);
+    }
+  });
+
+  it('si ya la decidió la Caja o los comensales, el mesero no la toca (ni con un «pendiente»)', () => {
+    expect(laEscribeElMesero('porcentaje', DE_LA_CAJA, conMesero)).toBe(false);
+    expect(laEscribeElMesero('pendiente_cliente', DEL_PORTAL, conMesero)).toBe(false);
+    expect(laEscribeElMesero('pendiente', DE_LA_CAJA, sinMesero)).toBe(false);
+  });
+
+  it('el mesero sí puede corregir la que él mismo registró', () => {
+    expect(laEscribeElMesero('porcentaje', DEL_MESERO, conMesero)).toBe(true);
   });
 });

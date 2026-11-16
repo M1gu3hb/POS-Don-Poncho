@@ -690,6 +690,14 @@ function PortalCliente() {
                 setTimeout(() => setShowValoracion(true), 250);
               }
             }}
+            // DP-21: la caja ya eligió la propina; con la cuenta aún abierta, a la calificación.
+            onYaRegistrada={(ventaId) => {
+              setShowPedirCuenta(false);
+              if (ventaId) {
+                setValoracionVentaId(ventaId);
+                setTimeout(() => setShowValoracion(true), 250);
+              }
+            }}
             onConfirmed={() => {
               setEnviado({ tipo: 'cuenta' });
               // Capturar el venta_id real (no objeto stale) para la valoración.

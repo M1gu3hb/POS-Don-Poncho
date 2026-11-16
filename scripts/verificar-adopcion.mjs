@@ -211,6 +211,34 @@ export const SIN_ESTADO = [
       'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
   },
   {
+    pantalla: 'configuracion/QuienEligeLaPropina',
+    estado: 'vacio',
+    razon:
+      'Tres casillas fijas (comensales, mesero y Caja; DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/QuienEligeLaPropina',
+    estado: 'cargando',
+    razon:
+      'Lee la configuración del negocio que el armazón ya cargó (`useConfig`); mientras no llega pinta lo de omisión. No hace su propio viaje al servidor.',
+  },
+  {
+    pantalla: 'venta/AvisoDePropina',
+    estado: 'vacio',
+    razon: 'Un aviso con dos botones (DP-21): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'venta/AvisoDePropina',
+    estado: 'cargando',
+    razon: 'Pinta lo que la Caja ya leyó; no hace viajes al servidor.',
+  },
+  {
+    pantalla: 'venta/AvisoDePropina',
+    estado: 'error',
+    razon:
+      'No hace viajes al servidor: el error de guardar la propina o de cobrar lo dice la Caja, que es quien llama.',
+  },
+  {
     pantalla: 'configuracion/IvaDelNegocio',
     estado: 'vacio',
     razon:

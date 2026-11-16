@@ -7,7 +7,7 @@ import { aplicarPorcentaje, centavos } from '@morphiqpos/domain/dinero';
 import type { TotalesOrden } from '@morphiqpos/domain/venta';
 
 import { definirComando } from '../definicion.ts';
-import { decidirPropina, puedeElegir, quienPuedeElegirEn } from '../propinas/una-sola-verdad.ts';
+import { laEscribeElMesero, quienPuedeElegirEn } from '../propinas/una-sola-verdad.ts';
 import { cotizar, type LineaCotizada } from '../venta/cotizar.ts';
 import { mesaOperable, ordenDeMesa } from './datos.ts';
 import { entradaSolicitarCuenta } from './esquemas.ts';
@@ -101,10 +101,11 @@ export const solicitarCuenta = definirComando<
     // DP-21 · La propina del mesero (M11 y M12). Se escribe sólo si el negocio deja que el
     // mesero la elija y si nadie la decidió antes desde otra pantalla: la primera que se
     // confirma gana. Si no, la cuenta se pide igual y la propina se queda como estaba.
+    const tipoPedido = entrada.propinaTipo;
     const eligePropina =
-      entrada.propinaTipo !== undefined &&
+      tipoPedido !== undefined &&
       (await ctx.paso('propina_del_mesero', () =>
-        elMeseroPuedeElegir(ctx.tx, organizacionId, entrada.ordenId),
+        elMeseroPuedeElegir(ctx.tx, organizacionId, entrada.ordenId, tipoPedido),
       ));
 
     const codigoCaja = await ctx.paso('marcar_cuenta_solicitada', () =>
@@ -169,13 +170,13 @@ async function elMeseroPuedeElegir(
   tx: Transaccion,
   organizacionId: string,
   ordenId: string,
+  tipo: string,
 ): Promise<boolean> {
   const negocio = await tx
     .selectFrom('configuracion')
     .select('valores')
     .where('organizacion_id', '=', organizacionId)
     .executeTakeFirst();
-  if (!puedeElegir('mesero', quienPuedeElegirEn(negocio?.valores))) return false;
   const cuenta = await tx
     .selectFrom('ordenes')
     .select(['propina_tipo', 'propina_puntos_base', 'propina_origen'])
@@ -183,14 +184,15 @@ async function elMeseroPuedeElegir(
     .where('id', '=', ordenId)
     .executeTakeFirst();
   if (cuenta === undefined) return false;
-  return decidirPropina(
+  return laEscribeElMesero(
+    tipo,
     {
       tipo: cuenta.propina_tipo,
       puntosBase: cuenta.propina_puntos_base,
       origen: cuenta.propina_origen,
     },
-    { quien: 'mesero', cambiar: false },
-  ).aplicar;
+    quienPuedeElegirEn(negocio?.valores),
+  );
 }
 
 interface DatosDeCuenta {

@@ -1768,6 +1768,37 @@
         "- texto:Porcentaje de IVA o impuesto. Si no manejas impuesto desglosado, déjalo en 0.",
         "- placeholder:0"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/PedirCuentaQR.jsx",
+      "porque": "DP-21 (Bloque 4, M11): la propina se decide una sola vez. Si mientras el comensal tiene abierta su pantalla de propina la caja ya la eligió o la cuenta ya se cobró, la pantalla se cierra sola y lo dice («Tu propina ya quedó registrada en caja» o «Tu cuenta ya se pagó, ¡gracias!»). Ese aviso reusa el mismo velo y la misma hoja que la pantalla que sustituye: por eso sus clases aparecen una vez más. Nada de lo que se veía se quitó.",
+      "testigos": [
+        "+ clase:fixed",
+        "+ clase:inset-0",
+        "+ clase:z-50",
+        "+ clase:bg-velo/50",
+        "+ clase:flex",
+        "+ clase:items-end",
+        "+ clase:sm:items-center",
+        "+ clase:justify-center",
+        "+ clase:bg-card",
+        "+ clase:text-card-foreground",
+        "+ clase:w-full",
+        "+ clase:sm:max-w-md",
+        "+ clase:sm:rounded-2xl",
+        "+ clase:rounded-t-2xl",
+        "+ clase:shadow-2xl",
+        "+ clase:font-heading",
+        "+ clase:font-bold",
+        "+ clase:text-center",
+        "+ clase:text-lg",
+        "+ clase:p-6"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-21 (Bloque 4, M11 y O8): la propina que elige la Caja se guarda en el servidor en el momento (`cuenta.fijar_propina`), ya no hasta cobrar. Si ese guardado falla por algo que no es «otra pantalla la eligió antes» (eso sale en su propio aviso, con «Usar ésa» y «Cambiarla»), la Caja lo dice. Nada de lo que se veía se quitó.",
+      "testigos": ["+ aviso:No se pudo guardar la propina. Intenta de nuevo."]
     }
   ]
 }

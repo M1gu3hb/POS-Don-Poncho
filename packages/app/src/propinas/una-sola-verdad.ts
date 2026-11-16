@@ -125,3 +125,23 @@ export function puedeElegir(quien: QuienElige, permitidos: QuienPuedeElegir): bo
   if (quien === 'mesero') return permitidos.mesero;
   return permitidos.comensales;
 }
+
+/**
+ * ¿Se escribe lo que el mesero mandó al pedir la cuenta?
+ *
+ * - Si la propina ya la decidió otra pantalla (la Caja, los comensales): no, se queda la suya.
+ * - Si lo que manda es una DECISIÓN (un porcentaje, un monto, «sin propina»): sólo si el negocio
+ *   deja que el mesero la elija.
+ * - Si es un «todavía no» («pendiente», «la eligen los comensales», «se decide en caja»): sí,
+ *   siempre. No elige nada: es el aviso que hace que el portal y la Caja la pregunten.
+ */
+export function laEscribeElMesero(
+  tipo: string,
+  vigente: PropinaDeLaCuenta,
+  permitidos: QuienPuedeElegir,
+): boolean {
+  const autor = quienLaDecidio(vigente);
+  if (autor !== null && autor !== 'mesero') return false;
+  if (!DECISIONES.includes(tipo)) return true;
+  return permitidos.mesero;
+}

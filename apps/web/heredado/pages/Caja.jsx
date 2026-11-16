@@ -102,6 +102,13 @@ import { DescuentoAutorizado } from '~/restaurante/DescuentoAutorizado';
 import { cantidadParaMostrar } from '~/restaurante/peso';
 import { totalesDelPapel } from '~/venta/totales-del-papel';
 import { seMencionaElIva } from '~/venta/se-menciona-el-iva';
+import { AvisoDePropina } from '~/venta/AvisoDePropina';
+import {
+  entradaDeFijarPropina,
+  laCajaEligeLaPropina,
+  propinaDelConflicto,
+} from '~/venta/propina-en-la-caja';
+import { usePropinaAlDia } from '~/venta/use-propina-al-dia';
 
 const METODOS = [
   {
@@ -212,6 +219,16 @@ export default function Caja() {
   // que el siguiente cobro no herede la clave del anterior.
   const [claveCobro, setClaveCobro] = useState(null);
   const ventaEnCobroId = ventaSeleccionada?.id || null;
+  // DP-21: `true` mientras la Caja cambia a propósito la propina que eligió otra pantalla.
+  const cambiarPropinaRef = useRef(false);
+  // DP-21 (Bloque 4): con el cobro abierto, la cuenta se relee cada pocos segundos. Si los
+  // comensales (o el mesero) eligen la propina mientras tanto, sale un aviso que interrumpe.
+  const propinaAlDia = usePropinaAlDia({
+    cuenta: ventaSeleccionada,
+    pausada: procesando || showPropinaCaja,
+    leer: (ordenId) => api.entidades.Venta.get(ordenId),
+    alCambiar: (parche) => setVentaSeleccionada((prev) => (prev ? { ...prev, ...parche } : prev)),
+  });
   useEffect(() => {
     setClaveCobro(ventaEnCobroId === null ? null : nuevaClave());
   }, [ventaEnCobroId]);
@@ -516,7 +533,8 @@ export default function Caja() {
     //   - 'pendiente': mesero la dejó pendiente.
     //   - 'pendiente_cliente': cliente nunca entró al QR a elegir.
     //   - 'decidir_en_caja': cliente eligió explícitamente decidirla en caja.
-    if (tipsEnabled(config)) {
+    // DP-21: y sólo si en este negocio la Caja elige la propina (Configuración → Propinas).
+    if (tipsEnabled(config) && laCajaEligeLaPropina(config)) {
       const tipo = venta?.propina_tipo;
       if (tipo === 'pendiente' || tipo === 'pendiente_cliente' || tipo === 'decidir_en_caja') {
         setShowPropinaCaja(true);
@@ -574,7 +592,12 @@ export default function Caja() {
   // quedaba escrita y el cobro fallaba, y `ordenes` ni siquiera tiene columna de
   // importe de propina — precisamente para que `total` no se pueda inflar con
   // una (F1-04 §6.1). Aquí sólo se recuerda lo que el cajero eligió.
-  const aplicarPropinaCaja = (propinaData) => {
+  //
+  // DP-21 (Bloque 4): lo que SÍ viaja en el momento es CÓMO se decidió (tipo y puntos base, nunca
+  // un importe), por `cuenta.fijar_propina` y con la versión de la cuenta que esta pantalla leyó.
+  // Así la propina queda en el servidor cuando se elige y no hasta cobrar: el portal se entera y
+  // deja de ofrecerla, y si los comensales eligieron antes, el servidor contesta la suya.
+  const aplicarPropinaCaja = async (propinaData) => {
     if (!ventaSeleccionada?.id) {
       setShowPropinaCaja(false);
       return;
@@ -585,6 +608,28 @@ export default function Caja() {
       propina_tipo: propinaData?.propina_tipo || 'sin_propina',
       propina_origen: 'caja',
     };
+    if (typeof ventaSeleccionada.version === 'number' && laCajaEligeLaPropina(config)) {
+      try {
+        const fijada = await api.comandos.ejecutar(
+          '/api/venta/fijar-propina',
+          entradaDeFijarPropina(
+            ventaSeleccionada.id,
+            ventaSeleccionada.version,
+            payload,
+            cambiarPropinaRef.current,
+          ),
+        );
+        if (typeof fijada?.version === 'number') payload.version = fijada.version;
+      } catch (err) {
+        setShowPropinaCaja(false);
+        // Otra pantalla la decidió antes (o la cuenta cambió): se enseña la vigente.
+        const vigente = propinaDelConflicto(err?.datos, ventaSeleccionada.total);
+        if (vigente) propinaAlDia.avisar(vigente);
+        else toast.error(err?.message || 'No se pudo guardar la propina. Intenta de nuevo.');
+        return;
+      }
+    }
+    cambiarPropinaRef.current = false;
     setVentaSeleccionada((prev) => (prev ? { ...prev, ...payload } : prev));
     setShowPropinaCaja(false);
   };
@@ -800,6 +845,11 @@ export default function Caja() {
     if (ORIGENES_DE_PROPINA.includes(ventaSeleccionada.propina_origen)) {
       cuerpoCobro.propinaOrigen = ventaSeleccionada.propina_origen;
     }
+    // DP-21: la versión de la cuenta que está en pantalla. Si cambió después (los comensales
+    // eligieron su propina), el servidor rechaza el cobro con la vigente en vez de cobrar otra.
+    if (typeof ventaSeleccionada.version === 'number') {
+      cuerpoCobro.versionDeLaCuenta = ventaSeleccionada.version;
+    }
 
     // 🟡 HOTFIX bandera amarilla #2: bandera declarada FUERA del try para que
     // el catch final pueda leerla y diferenciar errores pre/post-cobro.
@@ -969,6 +1019,10 @@ export default function Caja() {
         );
       } else {
         toast.error(err?.message || 'No se pudo cobrar la venta. Intenta de nuevo.');
+        // DP-21: la cuenta cambió mientras se cobraba y el servidor mandó la propina vigente:
+        // se enseña con su aviso («Usar ésa» o «Cambiarla»), nunca se cobra otra en silencio.
+        const propinaVigente = propinaDelConflicto(err?.datos, ventaSeleccionada?.total);
+        if (propinaVigente) propinaAlDia.avisar(propinaVigente);
         // DP-14 (ronda 2, medio 3): otra caja ya la cobró (o se canceló o se dividió): aquí ya no se
         // cobra. El cobro se cierra y la lista se relee, en vez de dejar al cajero frente a una
         // cuenta que ya no está pendiente.
@@ -2074,6 +2128,17 @@ export default function Caja() {
           onCobrar={cobrarParaLlevar}
         />
       )}
+
+      {/* DP-21: «Los comensales eligieron 10 % de propina ($52.00)» · Usar ésa / Cambiarla. */}
+      <AvisoDePropina
+        aviso={propinaAlDia.aviso}
+        alUsarEsa={propinaAlDia.usarEsa}
+        alCambiarla={() => {
+          propinaAlDia.cambiarla();
+          cambiarPropinaRef.current = true;
+          setShowPropinaCaja(true);
+        }}
+      />
 
       {/* === MODAL DE PROPINA EN CAJA === */}
       <PropinaDialog

@@ -805,6 +805,14 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         conversion: 'texto',
         escribible: false,
       },
+      // DP-21 · La versión de la cuenta: la Caja la manda al fijar la propina y al cobrar, para
+      // que el servidor rechace lo que se decidió sobre una cuenta que ya cambió.
+      version: {
+        rolesLectura: [...CAJA],
+        columna: 'version',
+        conversion: 'entero',
+        escribible: false,
+      },
       propina_origen: {
         rolesLectura: [...CAJA],
         columna: 'propina_origen',
