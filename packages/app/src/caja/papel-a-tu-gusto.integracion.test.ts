@@ -51,7 +51,7 @@ const sinLogoEnLaPrecuenta = {
 
 const fijar = (ambito: Ambito, entrada: unknown) =>
   comando(fijarPapelATuGusto, {
-    entrada: entrada as typeof sinTelefonoNiFolio,
+    entrada: entrada,
     ambito,
     idempotencyKey: clave(),
   });

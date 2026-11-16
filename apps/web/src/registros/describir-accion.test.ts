@@ -193,4 +193,21 @@ describe('DP-21 · Bloque 6 · el folio en la auditoría, como se lee en el tick
       'Ticket a su gusto: sin cambios',
     );
   });
+
+  it('los ajustes del corte dicen qué cambió: costos al cajero y comisión de la terminal', () => {
+    expect(
+      describirAccion('caja.fijar_ajustes_del_corte', {
+        antes: { mostrarCostosACaja: false, comisionTerminalBp: null },
+        despues: { mostrarCostosACaja: true, comisionTerminalBp: 360 },
+      }),
+    ).toBe(
+      'Corte de la caja: el cajero ahora ve costos y utilidad en su corte; comisión de la terminal: sin tasa → 3.6 %',
+    );
+    expect(
+      describirAccion('caja.fijar_ajustes_del_corte', {
+        antes: { mostrarCostosACaja: true, comisionTerminalBp: 360 },
+        despues: { mostrarCostosACaja: false, comisionTerminalBp: 360 },
+      }),
+    ).toBe('Corte de la caja: el cajero ya no ve costos ni utilidad en su corte');
+  });
 });

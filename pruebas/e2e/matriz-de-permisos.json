@@ -99,6 +99,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/fijar-ajustes-del-corte",
+      "comando": "caja.fijar_ajustes_del_corte",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/fijar-cajas-simultaneas",
       "comando": "caja.fijar_cajas_simultaneas",
       "escribe": true,

@@ -9,6 +9,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { TIPO_SOLICITUD_VERBO } from '@/utils/qrUtils';
 import { sonar } from '~/sonidos/gestor';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { esDeMando } from '@/components/configuracion/puestos';
 
 const ESTADOS_LABEL = {
   pendiente: 'Pendiente',
@@ -53,6 +55,9 @@ export default function SolicitudesQRTab() {
   const queryClient = useQueryClient();
   const [filtroEstado, setFiltroEstado] = useState('todas');
   const [limpiando, setLimpiando] = useState(false);
+  // DP-21 · Bloque 20: «Vaciar todas» es de dueño y administrador (`restaurante.vaciar_solicitudes`);
+  // al gerente, que sí ve esta pestaña, no se le ofrece un botón que el servidor niega.
+  const puedeVaciar = esDeMando(usePuesto());
 
   const refrescarListas = () => {
     queryClient.invalidateQueries({ queryKey: ['solicitudes_qr_admin'] });
@@ -179,15 +184,17 @@ export default function SolicitudesQRTab() {
           >
             <Calendar className="w-3.5 h-3.5" /> Limpiar antiguas
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={limpiando}
-            onClick={vaciarDia}
-            className="h-8 gap-1.5 text-xs text-peligro hover:text-peligro"
-          >
-            <Trash2 className="w-3.5 h-3.5" /> Vaciar todas
-          </Button>
+          {puedeVaciar && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={limpiando}
+              onClick={vaciarDia}
+              className="h-8 gap-1.5 text-xs text-peligro hover:text-peligro"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Vaciar todas
+            </Button>
+          )}
         </div>
       </div>
 

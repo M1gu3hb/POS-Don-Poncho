@@ -105,6 +105,26 @@ const DESCRIPCIONES: Readonly<
     const despues = (p['despues'] ?? {}) as Payload;
     return `Copias de impresión: ticket ${texto(despues['ticket'])}, precuenta ${texto(despues['precuenta'])}, corte ${texto(despues['corte'])}`;
   },
+  'caja.fijar_ajustes_del_corte': (p) => {
+    const antes = (p['antes'] ?? {}) as Payload;
+    const despues = (p['despues'] ?? {}) as Payload;
+    const tasa = (bp: unknown): string =>
+      typeof bp === 'number' ? `${(bp / 100).toLocaleString('es-MX')} %` : 'sin tasa';
+    const partes: string[] = [];
+    if (antes['mostrarCostosACaja'] !== despues['mostrarCostosACaja']) {
+      partes.push(
+        despues['mostrarCostosACaja'] === true
+          ? 'el cajero ahora ve costos y utilidad en su corte'
+          : 'el cajero ya no ve costos ni utilidad en su corte',
+      );
+    }
+    if (antes['comisionTerminalBp'] !== despues['comisionTerminalBp']) {
+      partes.push(
+        `comisión de la terminal: ${tasa(antes['comisionTerminalBp'])} → ${tasa(despues['comisionTerminalBp'])}`,
+      );
+    }
+    return `Corte de la caja: ${partes.length === 0 ? 'sin cambios' : partes.join('; ')}`;
+  },
   'caja.fijar_papel_a_tu_gusto': (p) => {
     const apagados = renglonesDelPapel(p['apagados']);
     const encendidos = renglonesDelPapel(p['encendidos']);

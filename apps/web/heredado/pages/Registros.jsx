@@ -52,6 +52,7 @@ import { claves } from '~/cliente/claves-de-consulta';
 import { CancelacionesRegistradas } from '~/corte/CancelacionesRegistradas';
 import { AuditoriaReciente } from '~/registros/AuditoriaReciente';
 import { usePuesto } from '@/components/configuracion/usePuesto';
+import { puedeEliminarCortes } from '@/components/configuracion/puestos';
 import { esDeMando } from '@/components/configuracion/puestos';
 import { grupoDelCanal, referenciaParaLlevar } from '~/corte/canales';
 import { primeroElFolioExacto } from '~/registros/folio-exacto';
@@ -80,7 +81,9 @@ export default function Registros() {
   const showPropinas = tipsEnabled(config);
   const { posUser } = usePOSAuth();
   const miPuesto = usePuesto();
-  const isAdmin = posUser?.rol === 'administrador';
+  // DP-21 · Bloque 20: el botón «Eliminar corte» sale sólo a quien el comando deja (el dueño), con el
+  // puesto REAL; `posUser.rol` junta dueño, administrador y gerente en «administrador».
+  const puedeEliminar = puedeEliminarCortes(miPuesto);
   const queryClient = useQueryClient();
   const location = useLocation();
   const [search, setSearch] = useState('');
@@ -140,7 +143,7 @@ export default function Registros() {
     // QUEDA porque sirve para no enseñar un botón que va a fallar —es
     // presentación—, pero la que manda es la del comando: `caja.eliminar_corte`
     // es de DUEÑO, y el rol sale de la cookie de sesión, no de aquí.
-    if (!isAdmin) return;
+    if (!puedeEliminar) return;
     if (!confirm(`¿Eliminar corte ${folioVisible(c.serie, c.folio, config, 'numero')}? Esta acción no se puede deshacer.`)) return;
     try {
       await api.comandos.ejecutar('/api/caja/eliminar-corte', { corteId: c.id });
@@ -441,7 +444,7 @@ export default function Registros() {
                       key={c.id}
                       corte={c}
                       onView={setVerCorte}
-                      onDelete={isAdmin ? eliminarCorte : null}
+                      onDelete={puedeEliminar ? eliminarCorte : null}
                     />
                   ))}
                 </div>

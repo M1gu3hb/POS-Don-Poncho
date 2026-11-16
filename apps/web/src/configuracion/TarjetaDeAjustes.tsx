@@ -13,6 +13,8 @@ import { invocarComando } from '~/cliente/api';
 
 import {
   AJUSTES_DE_TARJETAS,
+  comoSeGuarda,
+  errorDelFormulario,
   formularioDe,
   parcheDe,
   type Campo,
@@ -82,11 +84,20 @@ export function TarjetaDeAjustes({
   function cambiar(clave: string, valor: string | number | boolean): void {
     setListo(false);
     setFallo(null);
-    setFormulario((actual) => ({ ...actual, [clave]: valor }));
+    const campo = ajustes?.campos.find((c) => c.clave === clave);
+    setFormulario((actual) => ({
+      ...actual,
+      [clave]: campo === undefined ? valor : comoSeGuarda(campo, valor),
+    }));
   }
 
   async function guardar(): Promise<void> {
     if (ajustes === undefined || configuracion === null || guardando) return;
+    const error = errorDelFormulario(ajustes, formulario);
+    if (error !== null) {
+      setFallo(error);
+      return;
+    }
     const parche = parcheDe(ajustes, formulario, configuracion);
     if (Object.keys(parche).length === 0) return;
     setGuardando(true);
@@ -190,7 +201,7 @@ function CampoDeLaTarjeta({
   const idDelControl = campo.id ?? idBase;
   if (campo.tipo === 'interruptor') {
     return (
-      <div className="flex items-start justify-between gap-3 sm:col-span-2">
+      <div className="flex items-start justify-between gap-(--espacio-3) sm:col-span-2">
         <div className="flex-1">
           <Label htmlFor={idDelControl} className="text-sm font-medium">
             {campo.etiqueta}
@@ -217,7 +228,7 @@ function CampoDeLaTarjeta({
       {campo.tipo === 'seleccion' ? (
         <select
           id={idDelControl}
-          className="mt-1 h-(--altura-control) w-full rounded-md border border-borde-fuerte bg-superficie px-3 text-sm"
+          className="mt-1 h-(--altura-control) w-full rounded-md border border-borde-fuerte bg-superficie px-(--espacio-3) text-sm"
           value={typeof valor === 'number' ? valor : campo.porOmision}
           disabled={deshabilitado}
           onChange={(evento) => {

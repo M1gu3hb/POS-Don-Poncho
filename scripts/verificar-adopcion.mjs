@@ -353,6 +353,12 @@ export const SIN_ESTADO = [
       'Pieza de los diálogos de gasto y compra, no pantalla: mientras la lectura del cajón no llega no pinta nada y el diálogo sigue usable (es un dato extra, nunca bloquea).',
   },
   {
+    pantalla: 'configuracion/CorteDeLaCaja',
+    estado: 'vacio',
+    razon:
+      'Un interruptor y un porcentaje (DP-21 · Bloque 20): no tiene lista que pueda llegar vacía.',
+  },
+  {
     pantalla: 'configuracion/CandadoDeMando',
     estado: 'vacio',
     razon:

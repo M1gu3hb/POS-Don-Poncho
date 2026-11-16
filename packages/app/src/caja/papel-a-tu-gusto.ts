@@ -49,7 +49,7 @@ export function papelATuGustoEn(valores: unknown): PapelATuGusto {
   if (typeof crudo !== 'object' || crudo === null || Array.isArray(crudo)) {
     return completarPapel(undefined);
   }
-  return completarPapel(crudo as Parameters<typeof completarPapel>[0]);
+  return completarPapel(crudo);
 }
 
 async function leerPapel(tx: Transaccion, organizacionId: string): Promise<PapelATuGusto> {

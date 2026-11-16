@@ -4,6 +4,7 @@ import { TITULO_DE_CANCELACIONES, TITULO_DE_PERDIDAS } from './cancelaciones.ts'
 import type { DescuentosLeidos } from '~/corte-heredado/descuentos-del-corte';
 
 import { documentoDelCorte } from './giros.ts';
+import { comisionDeTerminal } from './hoja.ts';
 import type { Celda, ExtrasDelServidor, HojaDelServidor, Seccion } from './hoja.ts';
 
 /**
@@ -883,5 +884,67 @@ describe('DP-21 · Bloque 11 · «Compras y gastos pagados de la caja» y la cas
       celda(doc.secciones, 'Apertura y fondo', 'Compras y gastos pagados de la caja'),
     ).toBeUndefined();
     expect(titulos(doc.secciones)).not.toContain('Compras y gastos pagados de la caja');
+  });
+});
+
+describe('DP-21 · Bloque 20 · el corte usa la comisión de la terminal que se escribe en Configuración', () => {
+  const conTarjeta = (tasa: number | null) => {
+    const base = hoja(RESTAURANTE);
+    return hoja(RESTAURANTE, {
+      negocio: { ...base.negocio, comisionTerminalBp: tasa },
+      metodos: [
+        { metodo: 'tarjeta', ventasCentavos: '100000', propinasCentavos: '10000', pagos: 3 },
+      ],
+    });
+  };
+
+  it('con tasa, la comisión estimada es tasa × (tarjeta + propina) más IVA sobre la comisión', () => {
+    // 3.6 % de $1,100.00 = $39.60; más 16 % de IVA = $45.936 → $45.94.
+    expect(comisionDeTerminal(conTarjeta(360))).toBe(4_594);
+    expect(comisionDeTerminal(conTarjeta(0))).toBe(0);
+  });
+
+  it('sin tasa, no hay comisión estimada (el corte dice «sin tasa»)', () => {
+    expect(comisionDeTerminal(conTarjeta(null))).toBeNull();
+  });
+});
+
+describe('DP-21 · Bloque 20 · la comisión de la terminal sale en el resumen del corte', () => {
+  const ETIQUETA = 'Comisión de la terminal, estimada (3.6 % + IVA)';
+  const conTasa = (tasa: number | null) => {
+    const base = hoja(RESTAURANTE);
+    return hoja(RESTAURANTE, {
+      negocio: { ...base.negocio, comisionTerminalBp: tasa },
+      metodos: [
+        { metodo: 'tarjeta', ventasCentavos: '100000', propinasCentavos: '10000', pagos: 3 },
+      ],
+    });
+  };
+  const resumen = (tasa: number | null) => {
+    const doc = documentoDelCorte(conTasa(tasa));
+    return doc.secciones.find(
+      (s) => s.tipo === 'celdas' && s.titulo.startsWith('Resumen financiero'),
+    );
+  };
+
+  it('con tasa, el renglón dice cuánto es y la utilidad neta la descuenta', () => {
+    const con = resumen(360);
+    const sin = resumen(null);
+    if (con?.tipo !== 'celdas' || sin?.tipo !== 'celdas') throw new Error('falta el resumen');
+    expect(con.celdas.find((c) => c.etiqueta === ETIQUETA)?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: 4_594,
+    });
+    const neta = (s: typeof con) => s.celdas.find((c) => c.etiqueta.startsWith('Utilidad neta'));
+    expect(neta(con)?.valor).toEqual({
+      tipo: 'dinero',
+      centavos: (neta(sin)?.valor as { centavos: number }).centavos - 4_594,
+    });
+  });
+
+  it('sin tasa, el renglón no sale', () => {
+    const sin = resumen(null);
+    if (sin?.tipo !== 'celdas') throw new Error('falta el resumen');
+    expect(sin.celdas.some((c) => c.etiqueta.startsWith('Comisión de la terminal'))).toBe(false);
   });
 });
