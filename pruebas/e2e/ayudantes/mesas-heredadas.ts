@@ -1010,10 +1010,9 @@ export async function prepararElPortalDelComensal(
   // `=== true`), y desde DP-21 una tarjeta sólo guarda lo que se tocó: dejarla como ya estaba no
   // escribe nada.
   await expect
-    .poll(
-      async () => (await configuracionDelNegocio(duena))['asignacion_mesas_activa'] === true,
-      { message: 'La asignación de mesas no quedó como se pidió en el servidor.' },
-    )
+    .poll(async () => (await configuracionDelNegocio(duena))['asignacion_mesas_activa'] === true, {
+      message: 'La asignación de mesas no quedó como se pidió en el servidor.',
+    })
     .toBe(conAsignacion);
   if (que.pedidosDelComensal === true) {
     // Configuración → Portal de comensales → Pedidos: «Permitir que el comensal envíe pedidos».

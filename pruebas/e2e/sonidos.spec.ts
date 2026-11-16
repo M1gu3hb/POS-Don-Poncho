@@ -102,10 +102,11 @@ test.describe('los sonidos de la interfaz', () => {
     const duena = await new Equipo(browser, SLUG).pagina(info, 'dueno');
     await perfil(duena, 'Apagado');
     await olvidarLoQueSono(duena);
+    // DP-21 · Bloque 21: la lista de secciones dice cuál está abierta con `aria-selected`.
     await duena.getByRole('tab', { name: 'Sonidos' }).click();
     await expect(duena.getByRole('tab', { name: 'Sonidos' })).toHaveAttribute(
-      'data-state',
-      'active',
+      'aria-selected',
+      'true',
     );
     await expect(duena.locator('html')).not.toHaveAttribute('data-ultimo-sonido', /.+/);
 
@@ -147,10 +148,10 @@ test.describe('los sonidos de la interfaz', () => {
     const mesera = await new Equipo(browser, SLUG).pagina(info, 'mesero');
     await mesera.goto('/mesero');
     // `isVisible()` no espera: primero, que la pantalla tenga su menú (el cajón en el teléfono, la
-    // barra en la PC).
+    // barra en la PC, que para la mesera nace plegada desde DP-21 y enseña «Mostrar menú»).
     await expect(
       mesera
-        .getByRole('button', { name: /^(Abrir menú|Salir)$/ })
+        .getByRole('button', { name: /^(Abrir menú|Mostrar menú|Salir)$/ })
         .filter({ visible: true })
         .first(),
     ).toBeVisible();
