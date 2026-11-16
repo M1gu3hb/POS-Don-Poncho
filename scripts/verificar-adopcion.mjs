@@ -317,6 +317,30 @@ export const SIN_ESTADO = [
       'Tres campos fijos (prefijo y los dos primeros folios) con valores de omisión (DP-21 · Bloque 6): no tiene lista que pueda llegar vacía.',
   },
   {
+    pantalla: 'configuracion/VistaPreviaDelPapel',
+    estado: 'vacio',
+    razon:
+      'Dibuja una cuenta de ejemplo fija (DP-21 · Bloque 12): no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/VistaPreviaDelPapel',
+    estado: 'cargando',
+    razon:
+      'Pieza de la tarjeta «El ticket a tu gusto», no pantalla: recibe ya leída la configuración que ésta cargó; el esqueleto de la espera lo pinta la tarjeta.',
+  },
+  {
+    pantalla: 'configuracion/VistaPreviaDelPapel',
+    estado: 'error',
+    razon:
+      'Pieza de la tarjeta «El ticket a tu gusto», no pantalla: no hace su propio viaje al servidor; el fallo de la lectura lo dice la tarjeta.',
+  },
+  {
+    pantalla: 'configuracion/PapelATuGusto',
+    estado: 'vacio',
+    razon:
+      'Dos columnas de interruptores fijos (DP-21 · Bloque 12): no tiene lista que pueda llegar vacía.',
+  },
+  {
     pantalla: 'configuracion/CandadoDeMando',
     estado: 'vacio',
     razon:

@@ -38,6 +38,7 @@ import { AparatosDeLaSucursal } from '~/configuracion/TerminalesDeLaSucursal';
 import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
 import { IvaDelNegocio } from '~/configuracion/IvaDelNegocio';
 import { FoliosDelNegocio } from '~/configuracion/FoliosDelNegocio';
+import { PapelATuGusto } from '~/configuracion/PapelATuGusto';
 import { CandadoDeMando } from '~/configuracion/CandadoDeMando';
 import { QuienEligeLaPropina } from '~/configuracion/QuienEligeLaPropina';
 import { TarjetaDeAjustes } from '~/configuracion/TarjetaDeAjustes';
@@ -170,6 +171,7 @@ export default function Configuracion() {
     'quien-elige-la-propina': () => <QuienEligeLaPropina puedeCambiar={esDeMando(miPuesto)} />,
     descuentos: () => <PermitirDescuentos />,
     ticket: () => <TarjetaDeAjustes id="ticket" configuracion={cfg} />,
+    'papel-a-tu-gusto': () => <PapelATuGusto puedeCambiar={esDeMando(miPuesto)} />,
     'logos-de-papel': () => <IdentidadNegocio cfg={cfg} grupo="logos-de-papel" />,
     'pdf-y-reportes': () => <TarjetaDeAjustes id="pdf-y-reportes" configuracion={cfg} />,
     folios: () => <FoliosDelNegocio puedeCambiar={miPuesto === 'dueno'} />,

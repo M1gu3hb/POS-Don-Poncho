@@ -282,7 +282,6 @@ export const TARJETAS: readonly Tarjeta[] = [
     con: 'configuracion.permitir_descuentos',
   },
 
-  // El hueco «Ticket» recibirá lo del Bloque 12 (qué sale en la precuenta y en el ticket).
   {
     id: 'ticket',
     seccion: 'ticket-y-folios',
@@ -292,6 +291,15 @@ export const TARJETAS: readonly Tarjeta[] = [
     visiblePara: 'todos',
     guarda: ['mensaje_ticket', 'ancho_papel_ticket', 'ticket_footer'],
     con: GENERICO,
+  },
+  {
+    id: 'papel-a-tu-gusto',
+    seccion: 'ticket-y-folios',
+    titulo: 'El ticket a tu gusto',
+    componente: 'PapelATuGusto',
+    visiblePara: 'todos',
+    guarda: ['papel_a_tu_gusto'],
+    con: 'caja.fijar_papel_a_tu_gusto',
   },
   {
     id: 'logos-de-papel',

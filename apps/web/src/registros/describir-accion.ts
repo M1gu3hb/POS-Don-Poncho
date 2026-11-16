@@ -4,7 +4,12 @@
  * («Movimiento de venta») y, si ni eso, «Otro cambio registrado»: nunca el nombre crudo del comando.
  */
 
-import { folioVisible, type ConFolios } from '@morphiqpos/domain/venta';
+import {
+  CAMPOS_DEL_PAPEL,
+  NOMBRE_DEL_PAPEL,
+  folioVisible,
+  type ConFolios,
+} from '@morphiqpos/domain/venta';
 
 type Payload = Readonly<Record<string, unknown>>;
 
@@ -22,6 +27,22 @@ function dinero(centavos: unknown): string {
   const valor =
     typeof centavos === 'string' || typeof centavos === 'number' ? Number(centavos) : NaN;
   return Number.isFinite(valor) ? PESOS.format(valor / 100) : 'un monto';
+}
+
+/** «folio del ticket de venta, logo de la precuenta» a partir de «ticket.folio», «precuenta.logo». */
+function renglonesDelPapel(lista: unknown): string {
+  if (!Array.isArray(lista)) return '';
+  return lista
+    .map((item) => {
+      const [papel = '', campo = ''] = texto(item).split('.');
+      const nombre = CAMPOS_DEL_PAPEL.find((c) => c.id === campo)?.nombre.toLowerCase();
+      const delPapel = (NOMBRE_DEL_PAPEL as Readonly<Record<string, string>>)[papel];
+      return nombre === undefined || delPapel === undefined
+        ? ''
+        : `${nombre} (${delPapel.toLowerCase()})`;
+    })
+    .filter((x) => x !== '')
+    .join(', ');
 }
 
 /** «: Cortesía» si el payload trae un motivo; nada si no. */
@@ -83,6 +104,15 @@ const DESCRIPCIONES: Readonly<
   'caja.fijar_copias_de_impresion': (p) => {
     const despues = (p['despues'] ?? {}) as Payload;
     return `Copias de impresión: ticket ${texto(despues['ticket'])}, precuenta ${texto(despues['precuenta'])}, corte ${texto(despues['corte'])}`;
+  },
+  'caja.fijar_papel_a_tu_gusto': (p) => {
+    const apagados = renglonesDelPapel(p['apagados']);
+    const encendidos = renglonesDelPapel(p['encendidos']);
+    const partes = [
+      apagados === '' ? '' : `quitó ${apagados}`,
+      encendidos === '' ? '' : `volvió a poner ${encendidos}`,
+    ].filter((parte) => parte !== '');
+    return `Ticket a su gusto: ${partes.length === 0 ? 'sin cambios' : partes.join('; ')}`;
   },
   'venta.registrar_impresion': (p, folios) =>
     `${p['reimpresion'] === true ? 'Reimprimió' : 'Imprimió'} el ticket${texto(p['folio']) === '' ? '' : ` ${folioVisible(null, texto(p['folio']), folios)}`}${p['reimpresion'] === true ? ` (salida ${texto(p['numero'])})` : ''}`,

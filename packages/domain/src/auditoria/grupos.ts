@@ -58,6 +58,7 @@ export const GRUPOS_DE_AUDITORIA = {
       'caja.fijar_cajas_simultaneas',
       'caja.fijar_umbral_de_retiro',
       'caja.fijar_copias_de_impresion',
+      'caja.fijar_papel_a_tu_gusto',
       'propinas.guardar_esquema',
     ],
   },

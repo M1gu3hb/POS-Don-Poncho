@@ -76,6 +76,10 @@ function configuracion(caso) {
     mostrar_logo_ticket: caso.conLogo,
     logo_ticket_url: caso.conLogo ? logoDePrueba() : '',
     logo_url: '',
+    // DP-21 · Bloque 12: los renglones que el dueño apagó en el ticket (`caso.ocultos`).
+    papel_a_tu_gusto: {
+      ticket: Object.fromEntries((caso.ocultos ?? []).map((campo) => [campo, false])),
+    },
   };
 }
 
@@ -167,6 +171,7 @@ async function montar(caso) {
     ancho: Math.round(caja.width),
     alto: Math.ceil(caja.height),
     anchoEnPantalla: marco.width,
+    texto: lienzo.textContent ?? '',
     logos: Array.from(lienzo.querySelectorAll('img'), (img) => {
       const r = img.getBoundingClientRect();
       return { x: r.left - caja.left, y: r.top - caja.top, ancho: r.width, alto: r.height };
