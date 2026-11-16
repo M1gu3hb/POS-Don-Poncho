@@ -37,6 +37,8 @@ import {
 } from '@/utils/tipsUtils';
 import LiquidarPropinasDialog from '@/components/propinas/LiquidarPropinasDialog';
 import { claves } from '~/cliente/claves-de-consulta';
+import { folioVisible } from '@morphiqpos/domain/venta';
+import { useConfig } from '@/lib/ConfigContext';
 
 const RANGOS = [
   { id: 'today', label: 'Hoy' },
@@ -53,6 +55,7 @@ const ESTADOS = [
 ];
 
 export default function PropinasRegistros() {
+  const { config } = useConfig();
   const [rango, setRango] = useState('week');
   const [desde, setDesde] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [hasta, setHasta] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -265,7 +268,7 @@ export default function PropinasRegistros() {
                   className="flex items-center gap-3 flex-wrap p-2.5 rounded-lg border bg-superficie"
                 >
                   <div className="flex-1 min-w-[180px]">
-                    <p className="font-mono font-bold text-xs">{l.folio}</p>
+                    <p className="font-mono font-bold text-xs">{folioVisible(l.serie, l.folio, config, 'numero')}</p>
                     <p className="text-[10px] text-muted-foreground">
                       {l.fecha_liquidacion
                         ? format(new Date(l.fecha_liquidacion), 'd MMM yyyy HH:mm', { locale: es })
@@ -332,7 +335,7 @@ export default function PropinasRegistros() {
                 className="px-4 py-2.5 flex items-center gap-3 flex-wrap text-sm hover:bg-muted/30"
               >
                 <div className="flex-1 min-w-[140px]">
-                  <p className="font-mono font-bold text-xs">{v.folio}</p>
+                  <p className="font-mono font-bold text-xs">{folioVisible(v.serie, v.folio, config, 'numero')}</p>
                   <p className="text-[10px] text-muted-foreground">
                     {v.fecha_cierre
                       ? format(new Date(v.fecha_cierre), 'd MMM HH:mm', { locale: es })

@@ -35,6 +35,8 @@ import {
 } from './corte-del-registro.ts';
 import { IconoDelTono, type TonoDelArqueo } from './semaforo-del-arqueo';
 import { esVentaCobrada } from './ventas-del-registro.ts';
+import { type ComoHoy, type ConFolios } from '@morphiqpos/domain/venta';
+import { useConfig } from '@/lib/ConfigContext';
 
 /**
  * PANTALLA · restaurante · registros
@@ -102,6 +104,8 @@ interface Columna {
   readonly tipo: 'texto' | 'dinero' | 'fecha' | 'diferencia';
   /** El campo de la SERIE, cuando el folio se lee con ella: `CC-1`, como lo dice el PDF. */
   readonly serie?: string;
+  /** Cómo decía el folio sin prefijo esta columna: «numero» (la de Ventas, «3») o con serie («CC-1»). */
+  readonly comoHoy?: ComoHoy;
   /** A cuántas cifras se rellena el consecutivo de un folio con serie: `LIQ-000001`. */
   readonly cifras?: number;
   /**
@@ -173,7 +177,7 @@ const PESTANAS = [
     campoFecha: 'fecha_cierre',
     incluye: esVentaCobrada,
     columnas: [
-      { campo: 'folio', rotulo: 'Folio', tipo: 'texto' },
+      { campo: 'folio', serie: 'serie', comoHoy: 'numero', rotulo: 'Folio', tipo: 'texto' },
       { campo: 'fecha_cierre', rotulo: 'Cobrada', tipo: 'fecha' },
       { campo: 'usuario_mesero_nombre', rotulo: 'Mesero', voz: 'responsable', tipo: 'texto' },
       { campo: 'total', rotulo: 'Total', tipo: 'dinero' },
@@ -316,7 +320,7 @@ function comoTexto(valor: unknown): string | null {
  * importe sale aquí sólo para que «1,250» encuentre su fila; en pantalla un
  * importe es `<Dinero>` (ver `pintarCelda`).
  */
-export function celda(fila: Registro, columna: Columna): string {
+export function celda(fila: Registro, columna: Columna, folios?: ConFolios | null): string {
   const valor = fila[columna.campo];
   if (columna.tipo === 'diferencia') {
     const diferencia = diferenciaDelCorte(valor);
@@ -334,7 +338,9 @@ export function celda(fila: Registro, columna: Columna): string {
   }
   // El folio con su serie, como lo dice el PDF del corte y el aviso de la liquidación.
   if (columna.serie !== undefined) {
-    return folioConSerie(fila[columna.serie], valor, columna.cifras) ?? '—';
+    return (
+      folioConSerie(fila[columna.serie], valor, columna.cifras, folios, columna.comoHoy) ?? '—'
+    );
   }
   const texto = comoTexto(valor);
   // Ni «[object Object]» ni una cadena vacía: la raya dice «aquí no hay nada
@@ -371,7 +377,7 @@ function DiferenciaDelCorteEnCelda({ diferencia }: { readonly diferencia: Difere
 }
 
 /** La celda en pantalla: el importe con `<Dinero>`, la fecha en cifras que no bailan. */
-function pintarCelda(fila: Registro, columna: Columna): ReactNode {
+function pintarCelda(fila: Registro, columna: Columna, folios: ConFolios | null): ReactNode {
   if (columna.tipo === 'diferencia') {
     const diferencia = diferenciaDelCorte(fila[columna.campo]);
     if (diferencia === null) return <span className="text-texto-sutil">No se guardó</span>;
@@ -383,10 +389,12 @@ function pintarCelda(fila: Registro, columna: Columna): ReactNode {
   }
   if (columna.tipo === 'fecha') {
     return (
-      <span className="font-numeros whitespace-nowrap tabular-nums">{celda(fila, columna)}</span>
+      <span className="font-numeros whitespace-nowrap tabular-nums">
+        {celda(fila, columna, folios)}
+      </span>
     );
   }
-  return celda(fila, columna);
+  return celda(fila, columna, folios);
 }
 
 /** Con qué se ordena una columna: el importe en centavos, la fecha en su instante. */
@@ -407,6 +415,7 @@ function columnasDe(
   voc: Vocabulario,
   esPc: boolean,
   detalle: (fila: FilaDeRegistro) => ReactNode,
+  folios: ConFolios | null,
 ): readonly ColumnaDeTabla<FilaDeRegistro>[] {
   const propias = pestana.columnas
     .filter((columna) => esPc || columna.secundaria !== true)
@@ -414,7 +423,7 @@ function columnasDe(
       clave: columna.campo,
       titulo: rotuloDe(columna, voc),
       numerica: columna.tipo === 'dinero',
-      celda: (fila) => pintarCelda(fila.registro, columna),
+      celda: (fila) => pintarCelda(fila.registro, columna, folios),
       ...(columna.tipo === 'texto'
         ? {}
         : { orden: (fila: FilaDeRegistro) => ordenDe(fila.registro, columna) }),
@@ -484,6 +493,8 @@ export interface RegistrosProps {
 
 export function Registros({ filasIniciales, pestanaInicial }: RegistrosProps) {
   const voc = useVocabulario();
+  // DP-21 · El prefijo de los folios: viene de la configuración del negocio.
+  const { config } = useConfig() as unknown as { readonly config: ConFolios };
   const esPc = useEsPc();
   const [pestana, setPestana] = useState(pestanaInicial ?? 'cortes');
   const [periodo, setPeriodo] = useState('hoy');
@@ -544,7 +555,7 @@ export function Registros({ filasIniciales, pestanaInicial }: RegistrosProps) {
       return false;
     if (aguja === '') return true;
     return actual.columnas
-      .map((columna) => celda(fila, columna))
+      .map((columna) => celda(fila, columna, config))
       .join(' ')
       .toLowerCase()
       .includes(aguja);
@@ -668,7 +679,7 @@ export function Registros({ filasIniciales, pestanaInicial }: RegistrosProps) {
     );
   };
 
-  const columnas = columnasDe(actual, voc, esPc, botonDeDetalle);
+  const columnas = columnasDe(actual, voc, esPc, botonDeDetalle, config);
   const pie =
     importe === null || suma === null || primera === undefined
       ? undefined
@@ -900,7 +911,7 @@ export function Registros({ filasIniciales, pestanaInicial }: RegistrosProps) {
           como="aside"
           id={HOJA}
           nivel={3}
-          aria-label={`${rotuloDe(primera, voc)} ${celda(filaAbierta.registro, primera)}`}
+          aria-label={`${rotuloDe(primera, voc)} ${celda(filaAbierta.registro, primera, config)}`}
           style={{ viewTransitionName: VIAJE.fila(filaAbierta.clave) }}
           // `Escape` la cierra, como cualquier hoja que se abre encima de lo que se mira.
           onKeyDown={(evento) => {
@@ -912,7 +923,7 @@ export function Registros({ filasIniciales, pestanaInicial }: RegistrosProps) {
             <div>
               <p className="text-xs text-texto-sutil uppercase">{rotuloDe(primera, voc)}</p>
               <h2 ref={tituloDeLaHoja} tabIndex={-1} className="text-xl font-semibold outline-none">
-                {pintarCelda(filaAbierta.registro, primera)}
+                {pintarCelda(filaAbierta.registro, primera, config)}
               </h2>
             </div>
             <Button size="icon-sm" variant="ghost" aria-label="Cerrar el detalle" onClick={cerrar}>
@@ -923,7 +934,7 @@ export function Registros({ filasIniciales, pestanaInicial }: RegistrosProps) {
             {resto.map((columna) => (
               <Fragment key={columna.campo}>
                 <dt className="text-texto-sutil">{rotuloDe(columna, voc)}</dt>
-                <dd className="text-right">{pintarCelda(filaAbierta.registro, columna)}</dd>
+                <dd className="text-right">{pintarCelda(filaAbierta.registro, columna, config)}</dd>
               </Fragment>
             ))}
           </dl>

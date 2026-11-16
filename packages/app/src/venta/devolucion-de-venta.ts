@@ -5,6 +5,7 @@ import { repoCaja, repoStock, repoVentaCatalogo, type Transaccion } from '@morph
 import { cantidad as diezmilesimas } from '@morphiqpos/domain/catalogo';
 import { centavos, redondear, repartirPorPesos } from '@morphiqpos/domain/dinero';
 import { calcularConsumo } from '@morphiqpos/domain/inventario';
+import { entenderElFolio } from '@morphiqpos/domain/venta';
 import { z } from 'zod';
 
 import {
@@ -13,6 +14,7 @@ import {
   documentoDeLaVenta,
   esACuenta,
 } from '../cartera/nota-de-credito.ts';
+import { leerFoliosDelNegocio } from '../configuracion/folios-leidos.ts';
 import { definirComando, type ContextoComando } from '../definicion.ts';
 
 import { cantidadAConsumir } from './presentacion.ts';
@@ -615,6 +617,8 @@ export interface LineaParaDevolver {
 
 export interface VentaParaDevolver {
   readonly ordenId: string;
+  /** DP-21 · La serie del folio (`A`): con ella la pantalla lo lee con el prefijo del negocio. */
+  readonly serie: string;
   readonly folio: string | null;
   readonly estado: string;
   readonly totalCentavos: string;
@@ -648,7 +652,7 @@ export const ventaParaDevolver = definirComando<
     const { organizacionId, sucursalId } = ctx.ambito;
     let consulta = ctx.tx
       .selectFrom('ordenes')
-      .select(['id', 'folio', 'estado', 'sucursal_id', 'total_centavos', 'cerrada_en'])
+      .select(['id', 'serie', 'folio', 'estado', 'sucursal_id', 'total_centavos', 'cerrada_en'])
       .where('organizacion_id', '=', organizacionId);
     if (entrada.ordenId !== undefined) {
       consulta = consulta.where('id', '=', entrada.ordenId);
@@ -657,15 +661,15 @@ export const ventaParaDevolver = definirComando<
       // viene, también cuenta. Se busca EN ESTA SUCURSAL: con dos sucursales el mismo número
       // existe dos veces, y tomar la primera que salga hacía decir «no hay una venta con ese
       // folio» con la venta de aquí en la base.
-      const partes = /^\s*(?:([A-Za-z]+)\s*-?\s*)?(\d+)\s*$/.exec(entrada.folio ?? '');
-      const numero = partes?.[2];
-      if (numero === undefined) {
+      // DP-21 · Con el prefijo del negocio, «1001», «01001» y «DP-01001» son la misma cuenta.
+      const folios = { folios: await leerFoliosDelNegocio(ctx.tx, organizacionId) };
+      const entendido = entenderElFolio(entrada.folio ?? '', folios);
+      if (entendido === null) {
         throw new ErrorDominio('ORDEN_NO_ENCONTRADA', 'Ese folio no tiene número.');
       }
-      consulta = consulta.where('folio', '=', BigInt(numero));
+      consulta = consulta.where('folio', '=', BigInt(entendido.numero));
       if (sucursalId !== null) consulta = consulta.where('sucursal_id', '=', sucursalId);
-      const serie = partes?.[1];
-      if (serie !== undefined) consulta = consulta.where('serie', '=', serie.toUpperCase());
+      if (entendido.serie !== null) consulta = consulta.where('serie', '=', entendido.serie);
     }
     const orden = await ctx.paso('leer_orden', () => consulta.executeTakeFirst());
     // De otra sucursal se contesta igual que si no existiera.
@@ -699,6 +703,7 @@ export const ventaParaDevolver = definirComando<
     const disponible = await ctx.paso('leer_pagos', () => disponiblePorMetodo(ctx, orden.id));
     return {
       ordenId: orden.id,
+      serie: orden.serie,
       folio: orden.folio === null ? null : orden.folio.toString(),
       estado: orden.estado,
       totalCentavos: orden.total_centavos.toString(),

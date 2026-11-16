@@ -12,6 +12,7 @@
  *       margen, y no se inventa un cero.
  */
 
+import { folioVisible } from '@morphiqpos/domain/venta';
 import { nombreVisibleDelNegocio } from '../marca/nombre-visible.ts';
 import { NOMBRE_DEL_CANAL } from './canales.ts';
 import { textoDeLaLinea } from './linea-de-venta.ts';
@@ -28,6 +29,11 @@ export interface SesionDeLaHoja {
   readonly id: string;
   readonly serie: string;
   readonly folio: string | null;
+  /**
+   * DP-21 · El folio ya como se lee, con el prefijo del negocio («CC-2» o «DPC-0102»): lo arma el
+   * servidor con `folioVisible`, igual que los folios de todas las filas de la hoja.
+   */
+  readonly folioVisible?: string | null;
   readonly estado: string;
   readonly turno: string | null;
   readonly abiertaEn: string;
@@ -435,7 +441,8 @@ const MOVIMIENTO: Readonly<Record<string, string>> = {
 // ── Las secciones comunes ───────────────────────────────────────────────────
 
 export function folioDe(sesion: SesionDeLaHoja): string {
-  return sesion.folio === null ? 'sin folio' : `${sesion.serie}-${sesion.folio}`;
+  if (sesion.folio === null) return 'sin folio';
+  return sesion.folioVisible ?? folioVisible(sesion.serie, sesion.folio, null);
 }
 
 export function datosDelCorte(hoja: HojaDelServidor, tipo: string): Seccion {

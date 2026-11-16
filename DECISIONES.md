@@ -2530,3 +2530,31 @@ la 1.0.0: misma firma, mismo paquete, mismos ajustes.
   canal ni al personal. La `release` no es depurable (lo comprueba una prueba de construcción).
 - **Sigue igual, a sabiendas:** el instalador de Windows sin firma de código; el puente confía en
   la página de producción.
+
+## DP-D128 · Folios de verdad: prefijo, primer folio y bloqueo después del arranque · 16-11-2026
+
+DP-21 · Bloque 6. Las cuentas se leen «DP-01001» y los cortes «DPC-0101»; el número sigue siendo el
+consecutivo atómico de siempre (`repos/folios.ts`, series `A` y `CC`): sin huecos y sin letras al azar.
+
+- **Un solo formateador** (`@morphiqpos/domain/venta`, `folioVisible(serie, folio, configuración)`):
+  cuentas `<PREFIJO>-<5 dígitos mínimo>` (100 000 → «DP-100000»), cortes `<PREFIJO>C-<4 mínimo>`.
+  **Sin prefijo, cada sitio dice lo que decía** (el ticket «3»; el documento del corte «A-3», «CC-2»):
+  por eso recibe cómo lo decía el sitio (`'numero'` o `'con-serie'`). REM, CR, LIQ y CT no cambian.
+  Un número sin serie conocida no se disfraza de cuenta. `coincideConElFolio` (búsqueda, el folio
+  exacto va primero, DP-D118) y `entenderElFolio` (lo tecleado en devoluciones) son sus inversas.
+- **Contrato** `venta/folio.contrato.test.ts`: todo `.folio` de `heredado/` y `src/` va dentro de un
+  formateador o se declara con su razón. El corte, sus cancelaciones, devoluciones y descuentos
+  arman el folio en SQL: el servidor lo viste al leer (`caja/corte/folios-vestidos.ts`).
+- **Ajustes** en `configuracion.valores.folios` (lector único `foliosEn`; sin migración) con
+  `configuracion.fijar_folios`, sólo el dueño, con antes y después en la auditoría. El prefijo (2 a 4
+  letras A–Z, mayúsculas) se cambia siempre; el «Primer folio» sólo con los folios en cero y sin H1.
+  Reubica el MISMO contador (`fijarSiguienteFolio`) de cada sucursal.
+- **`mantenimiento.reiniciar_folios`** deja cuentas y cortes en su «Primer folio» (la serie `CT`, en 1) y
+  se niega si hay folios en otra serie (REM, fiado, LIQ…). `dejar-en-ceros.mjs` comprueba y dice el
+  siguiente folio.
+- **H1** `operacion_desde` (hora del servidor): `mantenimiento.activar_operacion` (idempotente) y
+  `quitar_bloqueo_de_operacion` (dueño, con el nombre del negocio; la auditoría guarda la fecha). Con una
+  sola cuenta posterior se niegan las purgas de ventas y cortes, reiniciar pruebas/todo/folios, dejar en
+  ceros y el cambio de «Primer folio». **Falla cerrada:** una fecha ilegible bloquea. Guion:
+  `scripts/operacion-real.mjs`.
+- **Sigue igual, a sabiendas:** una sucursal creada después de fijar el primer folio arranca en 1.

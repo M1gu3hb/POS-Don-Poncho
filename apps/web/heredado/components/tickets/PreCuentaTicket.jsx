@@ -21,6 +21,7 @@ import {
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { esParaLlevar, rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 import { notaSinLasOpciones, renglonesDeLasOpciones } from '~/venta/opciones-del-renglon';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 /**
  * Ticket / pre-cuenta para impresora térmica, con el ESTILO TÉRMICO (DP-20 · refuerzo §1).
@@ -126,7 +127,7 @@ export default function PreCuentaTicket({
 
       {/* Datos */}
       <div style={{ fontSize: px(letra.chica), marginBottom: '10px' }}>
-        <Row label="Folio" value={venta.folio} bold />
+        <Row label="Folio" value={folioVisible(venta.serie, venta.folio, config, 'numero')} bold />
         {mesa && <Row label="Mesa" value={`#${mesa.numero}${sufijoDelNombreDeLaMesa(mesa)}`} />}
         {venta.personas > 0 && <Row label="Personas" value={venta.personas} />}
         {venta.cliente_nombre && <Row label="Cliente" value={venta.cliente_nombre} />}

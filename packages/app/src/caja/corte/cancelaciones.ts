@@ -5,6 +5,7 @@ import { etiquetaDelMotivoDeAnulacion } from '@morphiqpos/domain/venta';
 import { sql } from 'kysely';
 
 import type { AlcanceDelCorte } from './alcance-del-corte.ts';
+import { foliosParaVestir, vestirFolios } from './folios-vestidos.ts';
 
 /**
  * LAS CANCELACIONES, leídas del servidor para los DOS cortes y para Registros (DP-12.4).
@@ -212,7 +213,7 @@ export async function leerCancelaciones(
      order by 3 desc
      limit ${tope}
   `.execute(tx);
-  return conPalabras(rows);
+  return vestirFolios(conPalabras(rows), await foliosParaVestir(tx, organizacionId));
 }
 
 /**
@@ -260,7 +261,7 @@ export async function cancelacionesDelCorte(
      order by 3
      limit ${tope}
   `.execute(tx);
-  return conPalabras(rows);
+  return vestirFolios(conPalabras(rows), await foliosParaVestir(tx, organizacionId));
 }
 
 /** Cuántas son en TOTAL y cuánto suman, contado en SQL: la lista puede cortarse, esto no. */

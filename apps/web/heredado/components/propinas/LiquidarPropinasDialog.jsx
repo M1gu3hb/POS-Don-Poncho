@@ -34,6 +34,7 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/financialUtils';
 import { aPesos } from '@/components/caja/dinero';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 /**
  * Dialog de liquidación de propinas.
@@ -220,7 +221,7 @@ export default function LiquidarPropinasDialog({
       // Folio e importe son los del servidor: `LIQ-000042` del consecutivo
       // atómico, y el total sumado dentro de la transacción.
       toast.success(
-        `Liquidación ${liquidacion?.folio || ''} registrada · ${formatCurrency(aPesos(liquidacion?.totalCentavos))}`,
+        `Liquidación ${folioVisible(liquidacion?.serie, liquidacion?.folio, null, 'numero')} registrada · ${formatCurrency(aPesos(liquidacion?.totalCentavos))}`,
       );
       onClose?.();
     } catch (err) {

@@ -274,6 +274,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/configuracion/fijar-folios",
+      "comando": "configuracion.fijar_folios",
+      "escribe": true,
+      "roles": ["dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/configuracion/fijar-impuesto",
       "comando": "configuracion.fijar_impuesto",
       "escribe": true,

@@ -67,6 +67,8 @@ import {
   leerDelPeriodo,
   leerVentasDelPeriodo,
 } from '~/registros/lecturas-de-registros';
+import { folioVisible } from '@morphiqpos/domain/venta';
+import { columnasConFolio } from '~/exportacion/columnas-con-folio';
 
 // Tarjetas que se pintan a la vez (las demás siguen en la búsqueda y en el CSV).
 const TOPE_EN_PANTALLA = 200;
@@ -139,7 +141,7 @@ export default function Registros() {
     // presentación—, pero la que manda es la del comando: `caja.eliminar_corte`
     // es de DUEÑO, y el rol sale de la cookie de sesión, no de aquí.
     if (!isAdmin) return;
-    if (!confirm(`¿Eliminar corte ${c.folio}? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar corte ${folioVisible(c.serie, c.folio, config, 'numero')}? Esta acción no se puede deshacer.`)) return;
     try {
       await api.comandos.ejecutar('/api/caja/eliminar-corte', { corteId: c.id });
       queryClient.invalidateQueries({ queryKey: ['registros_cortes'] });
@@ -229,7 +231,7 @@ export default function Registros() {
       primeroElFolioExacto(ventas.filter(
         (v) =>
           (canal === 'todos' || grupoDelCanal(v.canal) === canal) &&
-          (filterFn(v.folio) ||
+          (filterFn(folioVisible(v.serie, v.folio, config, 'numero')) ||
           filterFn(v.codigo_caja) ||
           filterFn(v.cliente_nombre) ||
           filterFn(v.usuario_cajero_nombre) ||
@@ -240,15 +242,15 @@ export default function Registros() {
           filterFn(v.fecha_apertura?.slice(0, 10)) ||
           filterFn(v.fecha_cierre?.slice(0, 10)) ||
           filterFn(v.nombre_pedido)),
-      ), q),
-    [ventas, q, canal],
+      ), q, config),
+    [ventas, q, canal, config],
   );
 
   const cortesFiltrados = useMemo(
     () =>
       cortes.filter(
         (c) =>
-          filterFn(c.folio) ||
+          filterFn(folioVisible(c.serie, c.folio, config, 'numero')) ||
           filterFn(c.usuario_cajero_nombre) ||
           filterFn(c.estado) ||
           filterFn(c.fecha_cierre?.slice(0, 10)),
@@ -411,7 +413,7 @@ export default function Registros() {
           <div className="flex justify-end gap-2">
             <ExportarSeccionButton
               rows={(q ? cortesFiltrados : cortes).filter((c) => c.estado === 'cerrado')}
-              columns={COLUMNS_CORTES}
+              columns={columnasConFolio(COLUMNS_CORTES, config)}
               disabled={cortesFirstLoad}
               filename="cortes-caja"
             />
@@ -475,7 +477,7 @@ export default function Registros() {
             <div className="flex justify-end gap-2 flex-wrap">
             <ExportarSeccionButton
               rows={ventasFiltradas}
-              columns={sinColumnaDeIvaEnCeros(COLUMNS_VENTAS, ventasFiltradas)}
+              columns={columnasConFolio(sinColumnaDeIvaEnCeros(COLUMNS_VENTAS, ventasFiltradas), config)}
               disabled={ventasFirstLoad}
               filename="ventas"
             />
@@ -499,7 +501,7 @@ export default function Registros() {
                 >
                   <div className="flex-1 min-w-[180px]">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-mono font-bold text-sm">{v.folio}</p>
+                      <p className="font-mono font-bold text-sm">{folioVisible(v.serie, v.folio, config, 'numero')}</p>
                       {/* Valoración del comensal (Prompt 6C). Solo lectura. */}
                       {v.satisfaccion_score && v.satisfaccion_emoji && (
                         <span
@@ -708,6 +710,7 @@ function LoadingRow({ label = 'Cargando…' }) {
  * Para productos precio_fijo, las columnas variables salen vacías (no NaN).
  */
 function ExportarDetallesButton({ ventas, disabled = false }) {
+  const { config } = useConfig();
   const [busy, setBusy] = useState(false);
   const run = async () => {
     const lista = Array.isArray(ventas) ? ventas : [];
@@ -742,7 +745,7 @@ function ExportarDetallesButton({ ventas, disabled = false }) {
           (Array.isArray(arr) ? arr : []).forEach((d) => {
             detalles.push({
               ...d,
-              venta_id: venta?.folio || d?.venta_id, // mostramos folio en el CSV
+              venta_id: folioVisible(venta?.serie, venta?.folio, config, 'numero') || d?.venta_id, // mostramos folio en el CSV
             });
           });
         });
@@ -775,6 +778,7 @@ function ExportarDetallesButton({ ventas, disabled = false }) {
 }
 
 function CorteRow({ corte, onView, onDelete }) {
+  const { config } = useConfig();
   const tipo = corte?.tipo_corte === 'turno' ? 'turno' : 'cierre_diario';
   const esCierreDiario = tipo === 'cierre_diario';
   const tipoLabel = esCierreDiario ? 'Cierre diario' : 'Corte de turno';
@@ -785,7 +789,7 @@ function CorteRow({ corte, onView, onDelete }) {
     <Card className="p-3 flex items-center gap-3 flex-wrap bg-superficie/70 backdrop-blur-sm">
       <div className="flex-1 min-w-[180px]">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-heading font-bold text-sm">{corte.folio}</p>
+          <p className="font-heading font-bold text-sm">{folioVisible(corte.serie, corte.folio, config, 'numero')}</p>
           <span
             className={`px-1.5 py-0.5 rounded-full border text-[10px] font-semibold ${tipoCls}`}
           >

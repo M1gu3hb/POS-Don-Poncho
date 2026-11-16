@@ -36,6 +36,7 @@ import { consultaDeLasOpciones } from '~/restaurante/use-opciones-de-los-platill
 import { conSusOpciones, pideOpciones } from '~/restaurante/opciones-de-los-platillos';
 import { opcionesParaElComando, tieneGruposParaOfrecer } from '~/venta/opciones-en-pos';
 import { useEscanerDelDocumento } from '~/cliente/use-escaner-del-documento';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 /** Centavos del servidor (llegan como cadena) a los pesos que la interfaz pinta. */
 const centavosAPesos = (valor) => (Number(valor) || 0) / 100;
@@ -578,7 +579,9 @@ export default function POS() {
       );
 
       const ticket = await api.comandos.ejecutar('/api/venta/ticket', { ordenId: cobro.ordenId });
-      const folio = ticket?.folio ? `${ticket.serie}-${ticket.folio}` : ticket?.serie || '';
+      const folio = ticket?.folio
+        ? folioVisible(ticket.serie, ticket.folio, config)
+        : ticket?.serie || '';
 
       queryClient.invalidateQueries({ queryKey: ['venta_borrador'] });
       queryClient.invalidateQueries({ queryKey: ['ingredientes_all'] });
@@ -618,7 +621,7 @@ export default function POS() {
   const handlePrintTicket = () => {
     try {
       sonar('ticket');
-      printDocument({ mode: 'thermal', title: `Ticket-${ticketFinal?.venta?.folio || ''}` });
+      printDocument({ mode: 'thermal', title: `Ticket-${folioVisible(ticketFinal?.venta?.serie, ticketFinal?.venta?.folio, config, 'numero')}` });
     } catch (e) {
       console.error('[POS] Error al imprimir:', e);
       toast.error('No se pudo iniciar la impresión.');

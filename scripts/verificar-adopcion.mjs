@@ -263,6 +263,12 @@ export const SIN_ESTADO = [
       'Siempre está «Este aparato» (DP-21 · Bloque 5); la lista de los demás aparatos, si no hay ninguno, simplemente no se pinta: no es un vacío que haya que explicar.',
   },
   {
+    pantalla: 'configuracion/FoliosDelNegocio',
+    estado: 'vacio',
+    razon:
+      'Tres campos fijos (prefijo y los dos primeros folios) con valores de omisión (DP-21 · Bloque 6): no tiene lista que pueda llegar vacía.',
+  },
+  {
     pantalla: 'configuracion/CandadoDeMando',
     estado: 'vacio',
     razon:

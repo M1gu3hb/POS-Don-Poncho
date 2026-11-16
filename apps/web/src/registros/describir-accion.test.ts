@@ -129,7 +129,7 @@ describe('DP-15 · la pestaña «Auditoría» de Registros', () => {
     );
     const pestana = readFileSync(join(raiz, 'src', 'registros', 'AuditoriaReciente.tsx'), 'utf8');
     expect(pestana).toContain("'/api/reportes/auditoria-reciente'");
-    expect(pestana).toContain('describirAccion(r.accion, r.payload)');
+    expect(pestana).toContain('describirAccion(r.accion, r.payload, config)');
   });
 
   it('DP-15.1 · el filtro y las páginas van al servidor: la pantalla no filtra en el navegador', () => {
@@ -144,5 +144,39 @@ describe('DP-15 · la pestaña «Auditoría» de Registros', () => {
     // Ni el texto escrito ni el grupo se aplican sobre lo que llegó.
     expect(pestana).not.toMatch(/\.filter\(/);
     expect(pestana).not.toContain('limite:');
+  });
+});
+
+describe('DP-21 · Bloque 6 · el folio en la auditoría, como se lee en el ticket', () => {
+  const DP = { folios: { prefijo: 'DP' } };
+
+  it('la reimpresión dice «DP-01001» con prefijo, y «A-1001» sin él', () => {
+    const payload = { folio: 'A-1001', reimpresion: true, numero: 2 };
+    expect(describirAccion('venta.registrar_impresion', payload, DP)).toBe(
+      'Reimprimió el ticket DP-01001 (salida 2)',
+    );
+    expect(describirAccion('venta.registrar_impresion', payload)).toBe(
+      'Reimprimió el ticket A-1001 (salida 2)',
+    );
+  });
+
+  it('el cajón abierto al cobrar cita el ticket con su prefijo (la referencia es el número)', () => {
+    expect(describirAccion('caja.cajon_por_cobro', { referencia: '1001' }, DP)).toBe(
+      'Se abrió el cajón al cobrar el ticket DP-01001',
+    );
+    expect(describirAccion('caja.cajon_por_cobro', { referencia: '1001' })).toBe(
+      'Se abrió el cajón al cobrar el ticket 1001',
+    );
+  });
+
+  it('cambiar los folios dice qué cambió', () => {
+    expect(
+      describirAccion('configuracion.fijar_folios', {
+        antes: { prefijo: null, primerFolioDeCuentas: 1, primerFolioDeCortes: 1 },
+        despues: { prefijo: 'DP', primerFolioDeCuentas: 1001, primerFolioDeCortes: 101 },
+      }),
+    ).toBe(
+      'Folios: prefijo «DP», primer folio de las cuentas 1001 y de los cortes 101 (antes: sin prefijo, 1 y 1)',
+    );
   });
 });

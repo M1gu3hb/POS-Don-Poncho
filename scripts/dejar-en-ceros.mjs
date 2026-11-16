@@ -14,10 +14,16 @@
  *      cuentas, renglones, pagos, comandas, carritos del portal, movimientos de caja y de cuenta;
  *   3. borra las cajas y sus cortes (`mantenimiento.purgar_seccion` «cortes»): la caja de prueba que
  *      quedó abierta se va con ellas;
- *   4. reinicia los folios (`mantenimiento.reiniciar_folios`): el siguiente ticket es el 1. El número
- *      para llevar sale de las cuentas del día, así que vuelve a empezar en 1 solo;
+ *   4. reinicia los folios (`mantenimiento.reiniciar_folios`): las cuentas y los cortes vuelven a su
+ *      «Primer folio» de Configuración (1001 y 101 en Don Poncho; 1 si nadie lo cambió) y el guion
+ *      comprueba y dice cuál es el siguiente. Se niega si hay movimientos en otra serie (remisiones,
+ *      fiado, liquidaciones). El número para llevar sale de las cuentas del día, así que vuelve a
+ *      empezar en 1 solo;
  *   5. deja la auditoría como está (y le suma estos pasos, firmados por el dueño de `--persona`).
  * Las compras, los gastos, el catálogo, las personas, las mesas y la configuración no se tocan.
+ * Si el negocio ya opera de verdad (`operacion_desde`, DP-21 · H1: una sola cuenta creada después de
+ * esa fecha), el guion se niega desde la comprobación previa, también con `--ensayo`: lo cobrado ya
+ * no se borra.
  * `--ensayo` sólo dice lo que encontró y lo que haría.
  *
  * En producción se corre SÓLO cuando Miguel lo pide en el chat, primero con `--ensayo`, y por la
@@ -53,6 +59,9 @@ const { purgarVentas, purgarSeccionDelHistorico } =
   await import('../packages/app/src/mantenimiento/index.ts');
 const { reiniciarFolios, loQueHayParaDejarEnCeros, motivosParaNoDejarEnCeros } =
   await import('../packages/app/src/mantenimiento/en-ceros.ts');
+const { exigirQueNoHayaOperacionReal } =
+  await import('../packages/app/src/mantenimiento/operacion-real.ts');
+const { foliosEn } = await import('../packages/app/src/configuracion/folios-del-negocio.ts');
 
 const permitido = [...NEGOCIOS_REALES, ...NEGOCIOS_DE_PRUEBA].find((n) => n.slug === slug);
 if (negocioAjeno(slug) !== null || permitido === undefined) {
@@ -93,6 +102,17 @@ try {
     process.exit(1);
   }
 
+  // 0 · El negocio que ya opera no se deja en ceros (H1). También en el ensayo.
+  try {
+    await exigirQueNoHayaOperacionReal(db, org.id, new Date());
+  } catch (error) {
+    console.error(
+      `✗ ${error instanceof Error ? error.message : String(error)} No se escribe nada.`,
+    );
+    process.exit(1);
+  }
+  console.log('◦ El negocio todavía no opera de verdad (sin cuentas posteriores al arranque).');
+
   // 1 · Sólo datos de prueba.
   const hay = await loQueHayParaDejarEnCeros(db, org.id, desde);
   console.log(`«${org.nombre}» desde el ${desde} (CDMX):`);
@@ -105,7 +125,7 @@ try {
   if (ensayo) {
     console.log(
       `◦ Ensayo: purgaría ${String(hay.conteos.cuentas)} cuentas (revirtiendo inventario), ` +
-        `borraría ${String(hay.conteos.cajas)} cajas con sus cortes y reiniciaría los folios. La auditoría se queda.`,
+        `borraría ${String(hay.conteos.cajas)} cajas con sus cortes y reiniciaría los folios a su «Primer folio». La auditoría se queda.`,
     );
     process.exit(0);
   }
@@ -147,6 +167,31 @@ try {
   });
   if (!f.ok) throw new Error(`reiniciar folios: ${f.error.codigo} · ${f.error.mensaje}`);
   console.log(`✓ Folios reiniciados: ${JSON.stringify(f.datos.borrado)}`);
+  const configuracion = await db
+    .selectFrom('configuracion')
+    .select('valores')
+    .where('organizacion_id', '=', org.id)
+    .executeTakeFirst();
+  const primeros = foliosEn(configuracion?.valores);
+  const siguientes = await db
+    .selectFrom('folios')
+    .select(['serie', 'siguiente'])
+    .where('organizacion_id', '=', org.id)
+    .where('serie', 'in', ['A', 'CC'])
+    .execute();
+  const falta = [
+    ['A', 'cuentas', primeros.primerFolioDeCuentas],
+    ['CC', 'cortes', primeros.primerFolioDeCortes],
+  ].filter(([serie, , primero]) =>
+    siguientes.some((fila) => fila.serie === serie && fila.siguiente !== BigInt(primero)),
+  );
+  if (falta.length > 0) {
+    console.error(`✗ El siguiente folio no quedó en el «Primer folio»: ${JSON.stringify(falta)}`);
+    process.exit(1);
+  }
+  console.log(
+    `✓ El siguiente folio de las cuentas es el ${String(primeros.primerFolioDeCuentas)} y el de los cortes el ${String(primeros.primerFolioDeCortes)}.`,
+  );
 
   const despues = await loQueHayParaDejarEnCeros(db, org.id, desde);
   console.log(`✓ Hecho «${slug}»: ${JSON.stringify(despues.conteos)}`);

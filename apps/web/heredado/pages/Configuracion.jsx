@@ -91,6 +91,7 @@ import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos
 import { AparatosDeLaSucursal } from '~/configuracion/TerminalesDeLaSucursal';
 import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
 import { IvaDelNegocio } from '~/configuracion/IvaDelNegocio';
+import { FoliosDelNegocio } from '~/configuracion/FoliosDelNegocio';
 import { CandadoDeMando } from '~/configuracion/CandadoDeMando';
 import { QuienEligeLaPropina } from '~/configuracion/QuienEligeLaPropina';
 import { ImpresionDelAparato } from '~/impresion/pantallas/ImpresionDelAparato';
@@ -751,6 +752,7 @@ export default function Configuracion() {
           <IvaDelNegocio puedeCambiar={esDeMando(miPuesto)} />
           {/* DP-21 (M12): comensales, mesero y Caja. La primera que se confirma gana. */}
           <QuienEligeLaPropina puedeCambiar={esDeMando(miPuesto)} />
+          <FoliosDelNegocio puedeCambiar={miPuesto === 'dueno'} />
 
           {/* === ESTACIONES DE PREPARACIÓN (6A) ===
               UNA sola card que contiene:

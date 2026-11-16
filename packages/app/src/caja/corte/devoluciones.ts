@@ -3,6 +3,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import { sql } from 'kysely';
 
 import { TOPE_DE_FILAS } from './consultas.ts';
+import { foliosParaVestir, vestirFolios } from './folios-vestidos.ts';
 
 /**
  * LAS DEVOLUCIONES DEL CORTE (cierre de la 2.4).
@@ -79,7 +80,7 @@ export async function devolucionesDelCorte(
      order by d.created_at
      limit ${TOPE_DE_FILAS}
   `.execute(tx);
-  return rows;
+  return vestirFolios(rows, await foliosParaVestir(tx, organizacionId));
 }
 
 /** Lo devuelto en la sesión, por método: lo que el resumen resta de la venta. */

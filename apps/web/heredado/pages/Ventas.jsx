@@ -45,6 +45,7 @@ import {
   textoDelMargen,
   textoDelResumenDeVentas,
 } from '~/restaurante/margen-de-las-ventas';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 /** La lista de «todavía no llegó nada»: una sola, estable entre pintadas. */
 const SIN_FILAS = [];
@@ -116,7 +117,9 @@ export default function Ventas() {
     return safeVentas.filter((v) => {
       const matchSearch =
         !search ||
-        v.folio?.toLowerCase().includes(search.toLowerCase()) ||
+        folioVisible(v.serie, v.folio, config, 'numero')
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
         v.usuario_cajero_nombre?.toLowerCase().includes(search.toLowerCase());
       const matchEstado = filterEstado === 'all' || v.estado === filterEstado;
       return matchSearch && matchEstado;
@@ -240,7 +243,11 @@ export default function Ventas() {
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedVenta(v)}>
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* DP-12.6: sin folio (una cuenta abierta todavía no lo tiene) no se pinta nada. */}
-                    {v.folio ? <span className="font-heading font-bold">{v.folio}</span> : null}
+                    {v.folio ? (
+                      <span className="font-heading font-bold">
+                        {folioVisible(v.serie, v.folio, config, 'numero')}
+                      </span>
+                    ) : null}
                     <Badge
                       className={`${ESTADO_COLORS[v.estado] || 'bg-fondo-sutil text-texto-sutil'} text-[10px] border-0`}
                     >
@@ -373,7 +380,9 @@ export default function Ventas() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-heading">
-              {selectedVenta?.folio ? `Detalle: ${selectedVenta.folio}` : 'Detalle de la cuenta'}
+              {selectedVenta?.folio
+                ? `Detalle: ${folioVisible(selectedVenta.serie, selectedVenta.folio, config, 'numero')}`
+                : 'Detalle de la cuenta'}
             </DialogTitle>
           </DialogHeader>
           {selectedVenta && (

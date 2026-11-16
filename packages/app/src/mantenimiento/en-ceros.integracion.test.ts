@@ -1,6 +1,7 @@
-import { obtenerDb } from '@morphiqpos/data';
+import { conTransaccion, obtenerDb, repoFolios } from '@morphiqpos/data';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { fijarFolios } from '../configuracion/folios.ts';
 import { comando } from '../produccion.ts';
 import { clave, exigirOk } from '../pruebas/negocio-real.ts';
 import { purgarSeccionDelHistorico, purgarVentas } from './comandos.ts';
@@ -87,6 +88,15 @@ describe('DP-18 · 1.6 · dejar en ceros', () => {
       }),
       'mantenimiento.purgar_seccion',
     );
+    // DP-21 · Bloque 6: el negocio dice con qué número empieza cada serie (con los folios en cero).
+    exigirOk(
+      await comando(fijarFolios, {
+        ambito: dia.plataforma,
+        entrada: { prefijo: 'DP', primerFolioDeCuentas: 1001, primerFolioDeCortes: 101 },
+        idempotencyKey: clave(),
+      }),
+      'configuracion.fijar_folios',
+    );
     const r = exigirOk(
       await comando(reiniciarFolios, {
         ambito: dia.plataforma,
@@ -98,10 +108,16 @@ describe('DP-18 · 1.6 · dejar en ceros', () => {
     expect(r.borrado['folios']).toBeGreaterThan(0);
     const folios = await obtenerDb()
       .selectFrom('folios')
-      .select('siguiente')
+      .select(['serie', 'siguiente'])
       .where('organizacion_id', '=', org())
       .execute();
-    expect(folios.every((f) => f.siguiente === 1n)).toBe(true);
+    // Las cuentas arrancan en el «Primer folio» (1001), los cortes en el suyo (101), y la serie de
+    // los cortes de turno, que no se lee con prefijo, en 1.
+    const por = (serie: string) => folios.filter((f) => f.serie === serie).map((f) => f.siguiente);
+    expect(por('A')).toEqual([1001n]);
+    expect(por('CC')).toEqual([101n]);
+    expect(por('CT').every((siguiente) => siguiente === 1n)).toBe(true);
+    expect(folios.every((f) => ['A', 'CC', 'CT'].includes(f.serie))).toBe(true);
     const despues = await loQueHayParaDejarEnCeros(obtenerDb(), org(), hoyEnCdmx());
     expect(Object.values(despues.conteos).every((n) => n === 0)).toBe(true);
     const auditoriaDespues = await obtenerDb()
@@ -109,7 +125,31 @@ describe('DP-18 · 1.6 · dejar en ceros', () => {
       .select((eb) => eb.fn.countAll<string>().as('n'))
       .where('organizacion_id', '=', org())
       .executeTakeFirstOrThrow();
-    // Lo de antes sigue, y se le suman los tres pasos.
-    expect(Number(auditoriaDespues.n)).toBe(Number(auditoriaAntes.n) + 3);
+    // Lo de antes sigue, y se le suman los pasos.
+    // (los tres de purgar y reiniciar, más el de fijar los primeros folios.)
+    expect(Number(auditoriaDespues.n)).toBe(Number(auditoriaAntes.n) + 4);
+  });
+
+  it('con movimientos en otra serie (remisiones, fiado) o liquidaciones, se niega y dice cuál', async () => {
+    const sucursalId = dia.salon.sucursal.sucursalId;
+    await conTransaccion(async (tx) => {
+      await repoFolios.tomarFolio(tx, org(), sucursalId, 'REM');
+      await repoFolios.tomarFolio(tx, org(), sucursalId, 'REM');
+    });
+    const r = await comando(reiniciarFolios, {
+      ambito: dia.plataforma,
+      entrada: { confirmacionNombreNegocio: nombre },
+      idempotencyKey: clave(),
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error.mensaje).toMatch(/otras series de folios \(REM\)/);
+    // Y lo que no es suyo no se tocó: las cuentas siguen en su primer folio.
+    const cuentas = await obtenerDb()
+      .selectFrom('folios')
+      .select('siguiente')
+      .where('organizacion_id', '=', org())
+      .where('serie', '=', 'A')
+      .execute();
+    expect(cuentas.map((f) => f.siguiente)).toEqual([1001n]);
   });
 });

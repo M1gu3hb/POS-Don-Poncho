@@ -12,6 +12,8 @@ import { FileText, Eye, Calendar, DoorOpen, Scissors, Lock } from 'lucide-react'
 import CorteViewerDialog from './CorteViewerDialog';
 import { claves } from '~/cliente/claves-de-consulta';
 import { EsqueletoDeFilas } from '~/cliente/EstadosDeCarga';
+import { folioVisible } from '@morphiqpos/domain/venta';
+import { useConfig } from '@/lib/ConfigContext';
 
 /** Los cortes de «todavía no llegó nada»: una lista única, para que el `useMemo` no se invalide. */
 const SIN_CORTES = [];
@@ -49,6 +51,7 @@ export default function CorteHistorialList({
   showFilter = true,
   compact = false,
 }) {
+  const { config } = useConfig();
   // limit: cuánto trae de BD (para tener variedad si hay turnos vs cierres).
   // maxVisible: tope visual aplicado DESPUÉS del filtro (para Dashboard usar 7).
   //
@@ -144,7 +147,7 @@ export default function CorteHistorialList({
               >
                 <div className="flex-1 min-w-[180px]">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-heading font-bold text-sm">{c.folio}</p>
+                    <p className="font-heading font-bold text-sm">{folioVisible(c.serie, c.folio, config, 'numero')}</p>
                     <span
                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[10px] font-semibold ${cfg.cls}`}
                     >

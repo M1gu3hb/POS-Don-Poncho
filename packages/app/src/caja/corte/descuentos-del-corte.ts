@@ -9,6 +9,7 @@ import { definirComando } from '../../definicion.ts';
 import { COMANDOS_QUE_GASTAN_AUTORIZACION } from '../../venta/autorizacion-de-un-uso.ts';
 import { alcanceDelCorte, type AlcanceDelCorte } from './alcance-del-corte.ts';
 import { ORDEN_VENDIDA } from './consultas.ts';
+import { foliosParaVestir, vestirFolios } from './folios-vestidos.ts';
 
 /**
  * LOS DESCUENTOS DEL CORTE, uno por uno: cuánto, quién lo autorizó y por qué (DP-14.2, DP-D61).
@@ -103,7 +104,7 @@ export async function descuentosDelCorte(
       ${cobradasConDescuento(organizacionId, alcance)}
   `.execute(tx);
   return {
-    descuentos: rows,
+    descuentos: vestirFolios(rows, await foliosParaVestir(tx, organizacionId)),
     cuantos: totales[0]?.cuantos ?? 0,
     totalCentavos: totales[0]?.total ?? '0',
     alcance: alcance.cierraElDia ? 'dia' : 'caja',

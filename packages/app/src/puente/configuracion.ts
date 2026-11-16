@@ -11,6 +11,12 @@ import {
   impuestoEn,
 } from '../configuracion/impuesto-del-negocio.ts';
 import { CLAVE_DE_EXPERIENCIA, EXPERIENCIA } from '../configuracion/experiencia.ts';
+import {
+  CLAVE_DE_FOLIOS,
+  CLAVE_DE_OPERACION_DESDE,
+  esquemaDeFolios,
+  foliosEn,
+} from '../configuracion/folios-del-negocio.ts';
 import { BOTONES_DEL_MENU, CLAVE_DE_BOTONES } from '../portal/botones-del-menu.ts';
 import { CLAVE_DE_QR_DE_MESAS, QR_DE_MESAS } from '../portal/qr-de-mesas.ts';
 import { QUIEN_ENVIA } from '../portal/quien-envia.ts';
@@ -155,6 +161,11 @@ const SOLO_POR_COMANDO = new Set([
   'copias_de_impresion',
   // DP-21 · El IVA cambia el total de toda cuenta posterior: `configuracion.fijar_impuesto`.
   CLAVE_DEL_IMPUESTO,
+  // DP-21 · Bloque 6 · El prefijo y el primer folio: `configuracion.fijar_folios` (sólo el dueño).
+  CLAVE_DE_FOLIOS,
+  // DP-21 · Bloque 6 · Desde cuándo opera de verdad el negocio (H1): la escriben los comandos de
+  // `mantenimiento/operacion-real.ts`; ninguna pantalla la manda.
+  CLAVE_DE_OPERACION_DESDE,
   // DP-21 · A los cuántos minutos sin uso se cierra la pantalla del mando: sólo dueño o
   // administrador (`configuracion.fijar_candado_de_mando`).
   'candado_de_mando_min',
@@ -185,6 +196,8 @@ const CLAVES_EDITABLES = new Set([
   'retiro_pin_arriba_de_centavos',
   'copias_de_impresion',
   CLAVE_DEL_IMPUESTO,
+  CLAVE_DE_FOLIOS,
+  CLAVE_DE_OPERACION_DESDE,
   'candado_de_mando_min',
   'propina_la_elige_mesero',
   'propina_la_elige_caja',
@@ -428,6 +441,9 @@ export async function leerConfiguracion(
     // DP-21 · El IVA sale ya completo (tasa y si va incluido), con lo de un negocio nuevo donde
     // no haya nada guardado: la pantalla enseña lo MISMO con lo que el servidor cobra.
     [CLAVE_DEL_IMPUESTO]: impuestoEn(guardados),
+    // DP-21 · Bloque 6 · El prefijo y el primer folio, completos: sin escribir, un negocio lee su
+    // folio como siempre (sin prefijo, desde 1).
+    [CLAVE_DE_FOLIOS]: foliosEn(guardados),
     // Su `Configuracion.jsx` depende de `updated_date` para volver a hidratar
     // los formularios; sin él los interruptores se quedan con el valor viejo.
     id: fila.configId ?? organizacionId,
@@ -578,6 +594,20 @@ export async function guardarConfiguracionParcial(
       esquemaDelImpuesto,
       parche[CLAVE_DEL_IMPUESTO],
       'El IVA es sin IVA, 8 % o 16 %, y dice si va incluido en el precio.',
+    );
+  }
+  if (CLAVE_DE_FOLIOS in parche) {
+    exigirForma(
+      esquemaDeFolios,
+      parche[CLAVE_DE_FOLIOS],
+      'Los folios llevan un prefijo de 2 a 4 letras (o ninguno) y el primer folio de las cuentas y de los cortes.',
+    );
+  }
+  if (CLAVE_DE_OPERACION_DESDE in parche) {
+    exigirForma(
+      z.iso.datetime({ offset: true }),
+      parche[CLAVE_DE_OPERACION_DESDE],
+      'La fecha desde la que opera el negocio va en ISO 8601 con zona, o vacía.',
     );
   }
   if ('portal_qr_comensales_abren_mesa' in parche) {

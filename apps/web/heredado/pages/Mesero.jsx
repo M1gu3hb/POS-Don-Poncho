@@ -143,6 +143,7 @@ import {
 } from '~/restaurante/vista-de-solicitudes';
 import { frasePorSolicitud, getAlertConfig, speak } from '@/lib/voiceAlert';
 import { sonar, sonarAntesDeHablar } from '~/sonidos/gestor';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 const MAP_HEIGHT = 600;
 // Hook simple para detectar móvil
@@ -1305,7 +1306,7 @@ function Mesero() {
       return;
     }
     sonar('ticket');
-    printDocument({ mode: 'thermal', title: `PreCuenta-${preCuentaData?.venta?.folio || ''}` });
+    printDocument({ mode: 'thermal', title: `PreCuenta-${folioVisible(preCuentaData?.venta?.serie, preCuentaData?.venta?.folio, config, 'numero')}` });
   };
 
   // Liberar una mesa huérfana (sin venta_activa_id). NO borra ventas reales.

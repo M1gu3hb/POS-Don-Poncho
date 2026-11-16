@@ -20,6 +20,7 @@ import { leerCancelacionesSinTrabar } from '~/corte-heredado/cancelaciones-sin-t
 import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
 import { leerVentasDelDia } from '~/corte-heredado/ventas-del-dia';
 import { leerExtrasDelCorte } from '~/corte-heredado/extras-del-corte';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 /**
  * Renderiza el CorteTicket fuera de pantalla, genera el PDF y lo descarga.
@@ -200,7 +201,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
       const negocio = safeFileName(
         config?.nombre_negocio || NOMBRE_DEL_NEGOCIO,
       );
-      const folio = safeFileName(corte?.folio || 'corte');
+      const folio = safeFileName(folioVisible(corte?.serie, corte?.folio, config, 'numero') || 'corte');
       await downloadNodeAsPDF(ref.current, `Corte_${folio}_${fecha}_${negocio}.pdf`);
       setDone(true);
       toast.success('PDF del corte descargado');

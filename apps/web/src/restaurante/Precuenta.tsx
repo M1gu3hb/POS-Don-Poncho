@@ -36,6 +36,8 @@ import {
   type HojaImpresa,
   type TotalesDeLaHoja,
 } from './hoja-de-la-precuenta.ts';
+import { type ConFolios } from '@morphiqpos/domain/venta';
+import { useConfig } from '@/lib/ConfigContext';
 
 /**
  * PANTALLA · restaurante · precuenta
@@ -100,6 +102,8 @@ export interface CuentaPrecuenta {
   readonly id: string;
   /** Nulo hasta que la cuenta se cobra: el folio se lo pone el cobro. */
   readonly folio: string | null;
+  /** DP-21 · La serie del folio (`A`): con ella se lee con el prefijo del negocio. */
+  readonly serie?: string | null;
   /** Derivado de `mesas.numero`, con `conversion: 'entero'`: NÚMERO. */
   readonly mesa_numero: number | null;
   readonly personas: number | null;
@@ -163,6 +167,7 @@ function idDeLaUrl(): string | null {
 }
 
 export function Precuenta({ ordenId, cuentaInicial, filasIniciales, ancho }: PrecuentaProps) {
+  const { config } = useConfig() as unknown as { readonly config: ConFolios };
   const voc = useVocabulario();
   // DP-15 · Sin `ancho` explícito manda el rollo que el negocio eligió en Configuración.
   const delNegocio = useAnchoDelPapel();
@@ -280,7 +285,11 @@ export function Precuenta({ ordenId, cuentaInicial, filasIniciales, ancho }: Pre
     guardada,
     impresa,
   );
-  const codigo = totales.codigo ?? cuenta?.codigo_caja ?? cuenta?.folio ?? '';
+  const codigo =
+    totales.codigo ??
+    cuenta?.codigo_caja ??
+    folioDeLaHoja(cuenta?.folio, cuenta?.serie, config) ??
+    '';
   // Milímetros de verdad; el tope del 100 % evita el desborde a 320 px.
   const estilo = { width: `${anchoMm}mm`, maxWidth: '100%' };
 
@@ -422,9 +431,10 @@ interface HojaProps {
 /** La hoja térmica. Lo que se ve aquí es lo que sale del rollo. */
 function Hoja({ cuenta, lineas, estilo, copia, totales }: HojaProps) {
   const voc = useVocabulario();
+  const { config } = useConfig() as unknown as { readonly config: ConFolios };
   const mesa = cuenta.mesa_numero === null ? '—' : String(cuenta.mesa_numero);
   const { propina } = totales;
-  const folio = folioDeLaHoja(cuenta.folio);
+  const folio = folioDeLaHoja(cuenta.folio, cuenta.serie, config);
 
   const columnas: readonly ColumnaDeTabla<LineaPrecuenta>[] = [
     {
@@ -545,7 +555,7 @@ function Hoja({ cuenta, lineas, estilo, copia, totales }: HojaProps) {
       <section className="text-center" aria-label="Código para caja">
         <p className="text-texto-sutil">CÓDIGO PARA CAJA</p>
         <p className="mt-(--espacio-1) border border-dashed border-borde-fuerte px-(--espacio-2) py-(--espacio-2) text-xl font-bold tracking-widest">
-          {totales.codigo ?? cuenta.codigo_caja ?? cuenta.folio}
+          {totales.codigo ?? cuenta.codigo_caja ?? folio}
         </p>
       </section>
       <p className="text-center text-texto-sutil">Pasa a caja con este código.</p>
