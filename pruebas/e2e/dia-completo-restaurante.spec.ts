@@ -415,7 +415,15 @@ async function elMenuDe(page: Page): Promise<readonly string[]> {
   }
   const menu = page.getByRole('navigation', { name: 'Menú principal' }).filter({ visible: true });
   await expect(menu).toBeVisible();
-  const entradas = (await menu.getByRole('link').allInnerTexts())
+  // El NOMBRE de cada entrada: su texto o, con la barra fija plegada (el mesero en la PC, desde
+  // DP-21), su `aria-label`, que es lo que lee quien no ve el dibujo.
+  const entradas = (
+    await Promise.all(
+      (await menu.getByRole('link').all()).map(
+        async (enlace) => (await enlace.getAttribute('aria-label')) ?? (await enlace.innerText()),
+      ),
+    )
+  )
     .map((t) => t.trim())
     .filter((t) => t !== '');
   if (enTelefono) {

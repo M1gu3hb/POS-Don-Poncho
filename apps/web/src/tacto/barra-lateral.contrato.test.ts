@@ -76,3 +76,29 @@ describe('el armazón recuerda la elección y empieza plegada con pocas seccione
     expect(ARMAZON).toMatch(/navegacionParaRolYPlantilla\(/);
   });
 });
+
+/**
+ * La barra «plegada de inicio» (el mesero, con una o dos secciones) es de la barra FIJA de
+ * escritorio. El cajón del teléfono y de la tableta pinta el mismo contenido: si heredara el
+ * plegado, el menú saldría sólo con iconos, sin un solo nombre. Pasó en la primera corrida del día
+ * completo en la CI (la mesera abría su menú y no decía «Mesas y pedidos»).
+ */
+describe('el cajón del teléfono y de la tableta nunca sale plegado', () => {
+  const sinEspacios = BARRA.replace(/\s+/g, '');
+  const contenido = BARRA.slice(
+    BARRA.indexOf('const SidebarContent'),
+    BARRA.indexOf('  return (\n    <>'),
+  );
+
+  it('el contenido recibe si va plegado; no lo lee de la barra fija', () => {
+    expect(sinEspacios).toContain('constSidebarContent=({plegada})=>(');
+    expect(contenido.length).toBeGreaterThan(500);
+    expect(contenido).not.toMatch(/\bcollapsed\b/);
+  });
+
+  it('el cajón lo pide SIEMPRE con sus nombres; la barra fija, como la tenga la persona', () => {
+    expect(sinEspacios).toContain('<SidebarContentplegada={false}/>');
+    expect(sinEspacios).toContain('<SidebarContentplegada={collapsed}/>');
+    expect(sinEspacios.split('<SidebarContent').length - 1).toBe(2);
+  });
+});

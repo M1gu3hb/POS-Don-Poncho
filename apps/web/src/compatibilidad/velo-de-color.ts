@@ -37,5 +37,8 @@ export function veloDeColor(color: string, porcentaje: number): string {
       : hex;
   const canal = (i: number): number => Number.parseInt(completo.slice(i, i + 2), 16);
   const alfaPropio = completo.length === 8 ? canal(6) / 255 : 1;
-  return `rgb(${String(canal(0))} ${String(canal(2))} ${String(canal(4))} / ${redondear(pct * alfaPropio)}%)`;
+  // El color es un DATO (el del empleado), calculado canal por canal: no es un literal del sistema.
+  const [rojo, verde, azul] = [canal(0), canal(2), canal(4)].map(String);
+  const alfa = redondear(pct * alfaPropio);
+  return `rgb(${rojo ?? ''} ${verde ?? ''} ${azul ?? ''} / ${alfa}%)`;
 }

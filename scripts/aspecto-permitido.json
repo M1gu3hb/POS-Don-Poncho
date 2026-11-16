@@ -2328,6 +2328,16 @@
       "archivo": "apps/web/heredado/pages/Compras.jsx",
       "porque": "DP-21 · Bloque 11: el distintivo del pago de cada gasto y compra ya no dice «efectivo» (en minúscula, con `capitalize`) sino la frase del servidor, «Pagado en efectivo de Caja principal»: con `capitalize` se leería «Pagado En Efectivo De Caja Principal». Es la misma insignia, con la frase completa en su sitio.",
       "testigos": ["- clase:capitalize", "- clase:capitalize"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/Sidebar.jsx",
+      "porque": "DP-21 (Bloque 9): el contenido de la barra recibe si va plegado (`plegada`) en vez de leerlo de la barra fija (`collapsed`): la barra fija de escritorio se pinta como la tenga la persona y el cajón del teléfono y de la tableta SIEMPRE con sus nombres. Con la barra «plegada de inicio» del mesero, el cajón salía sólo con iconos. Son las mismas clases; sólo cambió el nombre de la variable que las elige.",
+      "testigos": [
+        "- clase:${collapsed",
+        "+ clase:${plegada",
+        "+ clase:${plegada",
+        "+ clase:${plegada"
+      ]
     }
   ]
 }

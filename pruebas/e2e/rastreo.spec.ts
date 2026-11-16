@@ -1009,6 +1009,14 @@ test.describe('rastreo · se toca cada botón de cada pantalla', () => {
       // el toque parecería no haber hecho nada.
       let dialogosNativos = 0;
       page.on('dialog', (dialogo) => {
+        // «¿Salir de la página?» (DP-21: Configuración avisa si hay cambios sin guardar) lo dispara
+        // el propio rastreador al volver a abrir la pantalla entre toque y toque. Se acepta —irse
+        // sin guardar es justo lo que quiere— y no cuenta como efecto de ningún toque. Descartarlo
+        // dejaba la navegación abortada y todas las pantallas siguientes sin abrir.
+        if (dialogo.type() === 'beforeunload') {
+          void dialogo.accept();
+          return;
+        }
         dialogosNativos += 1;
         void dialogo.dismiss();
       });
