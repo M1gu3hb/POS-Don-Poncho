@@ -140,6 +140,42 @@ async function sesionViva(request: APIRequestContext): Promise<boolean> {
   return respuesta.status() === 200;
 }
 
+/** La marca de `apps/web/src/espera/pin-de-esta-ejecucion.ts` (no se importa: es código de pantalla). */
+const CLAVE_DEL_PIN_DE_ESTA_EJECUCION = 'morphiqpos.pin-de-esta-ejecucion';
+
+/**
+ * DP-21 · Bloque 2 · LA PERSONA YA TECLEÓ SU PIN EN ESTA EJECUCIÓN.
+ *
+ * Desde DP-21 el dueño, el gerente, el cajero y el almacén teclean su PIN cada vez que se abre la
+ * app: una pantalla nueva sin la marca de `sessionStorage` arranca con el candado aunque la cookie
+ * siga viva. Estas pruebas reúsan la sesión guardada (`storageState`, que no guarda
+ * `sessionStorage`), así que cada página nacería cerrada. La persona de estas pruebas SÍ tecleó su
+ * PIN —así se creó la sesión guardada—: se deja la marca que deja la pantalla de acceso, con el
+ * empleo que el SERVIDOR dice que tiene la sesión, y sólo si la página no trae ya una.
+ *
+ * Lo que prueba el candado (`pin-al-abrir.spec.ts`) abre su navegador sin pasar por aquí.
+ */
+export async function conElPinTecleado(contexto: BrowserContext): Promise<BrowserContext> {
+  const respuesta = await contexto.request.get('/api/catalogo/sesion');
+  if (respuesta.status() !== 200) return contexto;
+  const cuerpo = (await respuesta.json()) as { readonly datos?: { readonly id?: unknown } };
+  const empleoId = cuerpo.datos?.id;
+  if (typeof empleoId !== 'string') return contexto;
+  await contexto.addInitScript(
+    ([clave, empleo]) => {
+      try {
+        if (window.sessionStorage.getItem(clave) === null) {
+          window.sessionStorage.setItem(clave, empleo);
+        }
+      } catch {
+        // Sin almacén no hay marca: la pantalla pedirá el PIN, como a cualquiera.
+      }
+    },
+    [CLAVE_DEL_PIN_DE_ESTA_EJECUCION, empleoId] as const,
+  );
+  return contexto;
+}
+
 /**
  * Un navegador con la sesión de esa persona abierta, en el dispositivo del proyecto.
  *
@@ -162,7 +198,7 @@ export async function contextoDe(
     const mismoAparato =
       dispositivo === undefined ||
       cookieDelDispositivo(await guardado.storageState()) === cookieDelDispositivo(dispositivo);
-    if (mismoAparato && (await sesionViva(guardado.request))) return guardado;
+    if (mismoAparato && (await sesionViva(guardado.request))) return conElPinTecleado(guardado);
     await guardado.close();
   }
 
@@ -184,7 +220,7 @@ export async function contextoDe(
   await entrar(page, persona);
   await page.close();
   await contexto.storageState({ path: archivo });
-  return contexto;
+  return conElPinTecleado(contexto);
 }
 
 type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>;

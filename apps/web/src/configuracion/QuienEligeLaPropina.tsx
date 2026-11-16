@@ -122,7 +122,10 @@ export function QuienEligeLaPropina({
       >
         <div className="flex flex-col gap-(--espacio-3)">
           {OPCIONES.map(({ clave, nombre, ayuda }) => (
-            <div key={clave} className="flex min-h-11 items-start gap-(--espacio-3)">
+            <div
+              key={clave}
+              className="flex min-h-(--altura-control) items-start gap-(--espacio-3)"
+            >
               <Checkbox
                 id={`${base}-${clave}`}
                 className="mt-0.5 size-5"

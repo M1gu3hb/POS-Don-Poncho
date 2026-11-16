@@ -13,6 +13,7 @@ import {
 
 import { abrirElQrDeLaMesa, type TelefonoDelComensal } from '../ayudantes/mesas-heredadas.ts';
 import { cabecerasDeEscrituraDePrueba, entrar } from '../ayudantes/sesion.ts';
+import { conElPinTecleado } from '../ayudantes/roles.ts';
 
 /**
  * QA-1 · LA JORNADA EN UNA COPIA DESECHABLE DE DON PONCHO (`morphiqpos_qa`, puerto 3210).
@@ -117,7 +118,7 @@ export class Jornada {
       const viva = await guardado.request.get('/api/catalogo/sesion');
       if (viva.status() === 200) {
         await espiarLaVoz(guardado);
-        return guardado;
+        return conElPinTecleado(guardado);
       }
       await guardado.close();
     }
@@ -131,7 +132,7 @@ export class Jornada {
     await entrada.close();
     await nuevo.storageState({ path: archivo });
     await espiarLaVoz(nuevo);
-    return nuevo;
+    return conElPinTecleado(nuevo);
   }
 
   /** Otro teléfono de comensal (sin sesión) que abre el QR de la mesa. */
