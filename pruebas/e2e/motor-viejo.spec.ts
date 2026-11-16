@@ -42,6 +42,12 @@ const CAPTURAS = process.env['MORPHIQPOS_CAPTURAS'] ?? '';
 /** Cuántos bloques lisos pueden diferir en una parada, de cada mil (lo tapado no cuenta). */
 const BLOQUES_DISTINTOS_POR_MIL = 1;
 const SLUG = 'prueba-restaurante';
+/** DP-21 · Bloque 15: sólo las paradas de los estados de las piezas (sin sesión). */
+const SOLO_PIEZAS = process.env['MORPHIQPOS_SOLO_PIEZAS'] !== undefined;
+const SIN_PIXELES = new Set<string>(['estados-seleccion']);
+const PARADAS_A_COMPARAR = PARADAS.filter(
+  (p) => !SOLO_PIEZAS || (p.startsWith('estados-') && p !== 'estados-globo-de-la-mesa'),
+);
 
 function erroresDe(motor: string, r: Resultado): string[] {
   return [...r.errores].flatMap(([parada, lista]) =>
@@ -75,7 +81,9 @@ async function compararParada(
 
   const problemas: string[] = [];
   const porMil = pixeles.proporcion * 1000;
-  if (porMil > BLOQUES_DISTINTOS_POR_MIL) {
+  // El color de la selección de TEXTO es el del navegador (no hay `::selection` en la hoja): cada motor
+  // lo pinta con su azul. Se compara el color calculado de `::selection`, no sus pixeles.
+  if (porMil > BLOQUES_DISTINTOS_POR_MIL && !SIN_PIXELES.has(parada)) {
     const donde = pixeles.peores.map((b) => `(${String(b.x)},${String(b.y)})`).join(' ');
     problemas.push(
       `${parada}: ${String(pixeles.distintos)} bloques lisos de otro color (${porMil.toFixed(2)} ‰) en ${donde}`,
@@ -126,7 +134,7 @@ test.describe('el modo compatible en un motor viejo', () => {
     const herramienta = await (await browser.newContext()).newPage();
     const filas: string[] = [];
     const problemas: string[] = [];
-    for (const parada of PARADAS) {
+    for (const parada of PARADAS_A_COMPARAR) {
       const comparada = await compararParada(herramienta, parada, viejo, moderno);
       filas.push(comparada.fila);
       problemas.push(...comparada.problemas);
@@ -155,6 +163,7 @@ test.describe('el modo compatible en un motor viejo', () => {
       'El motor viejo tuvo errores de consola o de página.',
     ).toEqual([]);
     expect(problemas, 'El motor viejo no pinta lo mismo que el moderno.').toEqual([]);
+    if (SOLO_PIEZAS) return;
     // «Probar compatibilidad», en el laboratorio: cada motor sabe en qué nivel trabaja.
     expect(viejo.paradas.get('laboratorio')?.nota, 'El nivel que se dice el motor viejo').toBe(
       'compatible',

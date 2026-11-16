@@ -50,6 +50,20 @@ export const PARADAS = [
   'configuracion',
   'configuracion-impresion',
   'laboratorio',
+  // DP-21 · Bloque 15: los estados abiertos y marcados.
+  'estados-globo-de-la-mesa',
+  'estados-reposo',
+  'estados-seleccion',
+  'estados-foco-sistema',
+  'estados-foco-heredado',
+  'estados-lista-sistema',
+  'estados-menu-sistema',
+  'estados-popover-sistema',
+  'estados-panel-sistema',
+  'estados-lista-heredado',
+  'estados-menu-heredado',
+  'estados-popover-heredado',
+  'estados-panel-heredado',
 ] as const;
 
 export type NombreDeParada = (typeof PARADAS)[number];

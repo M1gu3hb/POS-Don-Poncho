@@ -58,6 +58,8 @@ describe('el contrato sobre la hoja de producción', () => {
       animaciones: 1,
       dinamicas: 1,
       degradados: 1,
+      coloresNuevos: 0,
+      tiene: 0,
     });
   });
 
@@ -151,6 +153,40 @@ describe('el contrato sobre la hoja de producción', () => {
     const hoja =
       '.a{rotate:45deg}.b{rotate:90deg}' +
       '@supports not (translate:0){.a{transform:rotate(45deg)}.b,.c{transform:rotate(90deg)}}';
+    expect(problemasDe(hoja)).toEqual([]);
+  });
+});
+
+describe('los colores de espacios nuevos (DP-21 · Bloque 15)', () => {
+  const GRIS = ':root{--color-gray-100:lab(96.1596% -.082314 -1.13575)}';
+  const RESPALDO = '@supports not (color:lab(0% 0 0)){:root{--color-gray-100:rgb(243 244 246)}}';
+
+  it('un lab() sin su respaldo en rgb() no pasa, y lo dice', () => {
+    expect(problemasDe(`@layer theme{${GRIS}}`)).toEqual([
+      'color de espacio nuevo sin respaldo en rgb(): :root { --color-gray-100 }',
+    ]);
+  });
+
+  it('con su respaldo pasa, y se cuenta', () => {
+    const { problemas, cuentas } = revisar(postcss.parse(`@layer theme{${GRIS}${RESPALDO}}`));
+    expect(problemas).toEqual([]);
+    expect(cuentas.coloresNuevos).toBe(1);
+  });
+
+  it('un respaldo que sigue siendo lab() no cuenta como respaldo', () => {
+    const malo = '@supports not (color:lab(0% 0 0)){:root{--color-gray-100:lab(96% 0 0)}}';
+    expect(problemasDe(`@layer theme{${GRIS}${malo}}`)).toHaveLength(1);
+  });
+
+  it('una hoja sin colores de espacios nuevos no pide nada', () => {
+    expect(problemasDe('.a{color:#fff;background:hsl(var(--x))}')).toEqual([]);
+  });
+});
+
+describe('lo que el minificador de Next ya bajó (DP-21 · Bloque 15)', () => {
+  it('un lab() dentro de `@supports (color: lab(…))` con su hex delante está cubierto', () => {
+    const hoja =
+      ':root{--color-gray-100:#f3f4f6}@supports (color:lab(0% 0 0)){:root{--color-gray-100:lab(96.1596% -.082314 -1.13575)}}';
     expect(problemasDe(hoja)).toEqual([]);
   });
 });

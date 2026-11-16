@@ -20,6 +20,7 @@ import { ErrorApi, invocarComando, obtenerApi } from '~/cliente/api';
 import { negocioParaEntrar, rutaDeEmpleados } from '~/cliente/entrada';
 import { abrir as abrirElCandado } from '~/espera/candado-del-pin';
 import { almacenDeLaEjecucion, marcarPin } from '~/espera/pin-de-esta-ejecucion';
+import { veloDeColor } from '~/compatibilidad/velo-de-color';
 import { sonarAntesDeIrse } from '~/sonidos/gestor';
 
 import { almacenDelAparato } from './vista-de-solicitudes';
@@ -142,7 +143,7 @@ function Cara({
       {typeof empleado.foto === 'string' && <AvatarImage src={empleado.foto} alt="" />}
       <AvatarFallback
         className="font-bold text-texto"
-        style={{ backgroundColor: `color-mix(in oklab, ${empleado.color} 16%, transparent)` }}
+        style={{ backgroundColor: veloDeColor(empleado.color, 16) }}
       >
         {iniciales(empleado.nombre)}
       </AvatarFallback>

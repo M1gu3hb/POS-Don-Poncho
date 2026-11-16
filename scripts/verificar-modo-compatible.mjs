@@ -47,7 +47,15 @@ try {
   process.exit(1);
 }
 
-const total = { mezclas: 0, sueltas: 0, animaciones: 0, dinamicas: 0, degradados: 0 };
+const total = {
+  mezclas: 0,
+  sueltas: 0,
+  animaciones: 0,
+  dinamicas: 0,
+  degradados: 0,
+  coloresNuevos: 0,
+  tiene: 0,
+};
 const avisoDeAparatoViejo = { aspecto: false, decideLaHoja: false };
 const fallos = [];
 for (const archivo of archivos) {
@@ -105,6 +113,6 @@ if (fallos.length > 0) {
 console.log(
   `✓ modo compatible: ${total.mezclas} mezclas con respaldo transparente, ` +
     `${total.sueltas} reglas y ${total.animaciones} animaciones con su transform, ` +
-    `${total.dinamicas} alturas dinámicas con su vh, ${total.degradados} degradados sin «in oklab»; ` +
+    `${total.dinamicas} alturas dinámicas con su vh, ${total.degradados} degradados sin «in oklab», ${total.coloresNuevos} colores de espacios nuevos con su rgb(), ${total.tiene} :has() con su marca; ` +
     `${guiones.length} guiones revisados, con relleno para ${[...usadas].join(', ') || 'nada (no usa funciones nuevas)'}.`,
 );

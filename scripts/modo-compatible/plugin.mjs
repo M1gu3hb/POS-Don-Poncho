@@ -14,7 +14,9 @@
  * actualización de Tailwind o de Next cambia la forma del CSS, la CI lo dice.
  */
 import { respaldarColores } from './colores.mjs';
+import { respaldarColoresNuevos } from './colores-nuevos.mjs';
 import { respaldarDegradados } from './degradados.mjs';
+import { respaldarTiene } from './tiene.mjs';
 import { respaldarTransformaciones } from './transformaciones.mjs';
 import { respaldarUnidades } from './unidades.mjs';
 
@@ -27,7 +29,9 @@ export function aplicarModoCompatible(root, ayudas) {
   const unidades = respaldarUnidades(root, ayudas);
   const degradados = respaldarDegradados(root, ayudas);
   const transformaciones = respaldarTransformaciones(root, ayudas);
-  return { colores, unidades, degradados, transformaciones };
+  const coloresNuevos = respaldarColoresNuevos(root, ayudas);
+  const tiene = respaldarTiene(root, ayudas);
+  return { colores, unidades, degradados, transformaciones, coloresNuevos, tiene };
 }
 
 export default function modoCompatible() {
@@ -38,6 +42,8 @@ export default function modoCompatible() {
       // Lo que no se pudo respaldar no rompe el build: lo detiene el contrato, que sí lo explica.
       for (const { selector, prop } of informe.colores.sinRespaldo)
         ayudas.result.warn(`modo compatible: sin respaldo con alfa para ${prop} en ${selector}`);
+      for (const { selector, prop } of informe.coloresNuevos.sinRespaldo)
+        ayudas.result.warn(`modo compatible: sin respaldo en rgb() para ${prop} en ${selector}`);
       for (const { donde, que } of informe.transformaciones.sinCubrir)
         ayudas.result.warn(`modo compatible: sin transform de respaldo para ${que} en ${donde}`);
     },
