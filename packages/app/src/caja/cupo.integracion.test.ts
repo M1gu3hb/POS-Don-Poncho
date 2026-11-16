@@ -63,7 +63,7 @@ async function abiertasEn(sucursalId: string): Promise<{ terminal_id: string }[]
 describe('F-235 · cuántas cajas abre una sucursal, contra Postgres', () => {
   it('con el cupo en uno, la segunda terminal no abre y el mensaje nombra la que tiene la caja', async () => {
     const { sucursalId, terminales } = await sembrarSucursal(negocio, {
-      terminales: ['Caja 1', 'Barra 2'],
+      terminales: ['Tableta', 'Barra 2'],
     });
     const [caja1, barra2] = terminales as [string, string];
 
@@ -76,7 +76,8 @@ describe('F-235 · cuántas cajas abre una sucursal, contra Postgres', () => {
     // «Algo falló de nuestro lado». Y con el nombre de la terminal, que sale del `join`.
     expect(segunda.error.codigo).toBe('REGLA_DE_NEGOCIO');
     expect(segunda.error.datos?.['regla']).toBe('CAJA_YA_ABIERTA');
-    expect(segunda.error.mensaje).toContain('«Caja 1»');
+    // DP-21 · Bloque 5: dice la CAJA por su lugar («Caja 1») y en qué aparato está, no el aparato solo.
+    expect(segunda.error.mensaje).toContain('Caja 1 · Tableta');
     expect(await abiertasEn(sucursalId)).toEqual([{ terminal_id: caja1 }]);
   });
 
