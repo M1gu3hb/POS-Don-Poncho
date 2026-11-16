@@ -2823,3 +2823,28 @@ fila de distinto alto, campos desalineados y lo tapado.
   no corre en la CI (tarda y necesita su base): se corre a mano antes de un cambio visual.
 - **Sin probar en aparato:** el teclado del barrido es el alto reducido de Playwright, no el del
   iMin. Antes y después, en `qa/dp21/barrido/`.
+
+## DP-D145 · Sin piso global de 44 px: aplastaba las tarjetas del mesero · 16-11-2026
+
+DP-21 · arreglo urgente del Bloque 16 (corrige DP-D144). El piso global
+(`html[data-pos-tactil] :is(button, …) { min-height: 44px }`, sólo con dedo) estuvo en producción
+de las 11:18 a las ~14:30 del 16-11 y se quitó.
+
+- **Qué rompía:** con el dedo —el teléfono y también el iMin a 1280—, las tarjetas de platillos de
+  «Mesas y pedidos» quedaban de 44 px: sólo el nombre, con el precio encima del borde. Don Poncho
+  tiene 117 platillos; con los pocos del restaurante de prueba la rejilla no se llena y no pasa.
+- **Por qué:** un `min-height` explícito sustituye al mínimo automático (`min-height: auto`), que es
+  el que hace que un elemento de rejilla o de caja flexible nunca mida menos que su contenido. En
+  una rejilla con desplazamiento y filas automáticas, la fila toma entonces el mínimo explícito.
+  Medido con la hoja de producción: 88 px con ratón, 44 px con dedo; sin la regla, 88 px en los dos.
+- **Por qué no se vio:** con ratón no pasa (la galería y la CI de escritorio), el barrido corrió con
+  pocos platillos, y el simulador cubre lo que sus bots comprueban, no cómo se ve. Lo enseñó una
+  captura de un incidente del simulador, comparada con la del build anterior.
+- **Qué queda del Bloque 16:** las tarjetas del mismo alto, el corte sin desborde, los campos
+  alineados, los nombres en dos renglones, el área de toque de interruptores y casillas (un
+  pseudo-elemento, que no cambia tamaños) y el token `--altura-tactil`.
+- **La regla desde ahora:** un blanco de 44 px se da por componente, con su clase
+  (`any-pointer-coarse:min-h-(--altura-tactil)`), donde se sabe que el contenido cabe; nunca con un
+  selector global sobre `button`. El barrido sigue midiendo los blancos, pero ya no los exige.
+- **Pendiente:** dar los 44 px pantalla por pantalla, y medir con el dedo Y con el catálogo lleno
+  (un barrido con los 117 platillos de Don Poncho) antes de volver a tocar tamaños globales.
