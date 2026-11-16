@@ -349,7 +349,7 @@ async function trasladar(
   const nuevo = await abrirSesion(ctx, plan.persona, aparato);
   await irACaja(nuevo.pagina, ctx.entorno.appUrl);
   // En el aparato nuevo la pantalla ofrece «Trasladar aquí» o ya enseña la caja abierta: se espera a una de las dos.
-  const traer = nuevo.pagina.getByRole('button', { name: 'Trasladar aquí' });
+  const traer = nuevo.pagina.getByRole('button', { name: /^Traer .+ a este aparato$/ });
   const aqui = nuevo.pagina.getByText(/^Caja abierta desde/);
   const cual = await esperarAlguno(nuevo.pagina, [traer, aqui], 45_000);
   if (cual === 0) {

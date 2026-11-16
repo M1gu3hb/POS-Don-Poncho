@@ -83,10 +83,27 @@ export function crearDia0(entorno: Entorno, pagina: Page, salida = SALIDA_DIA0):
 
 export type PasoDelDia0 = (d: Dia0) => Promise<void>;
 
-/** Va a una pestaña de Configuración (`/configuracion`) y espera a que cargue. */
+/**
+ * DP-21 · La Configuración son 16 secciones (`/configuracion?seccion=<id>`), cada tarjeta con su
+ * «Guardar». Las pestañas de antes se nombran como las llamaba el día 0 y aquí se traducen a su sección.
+ */
+const SECCION_DE_LA_PESTANA: Readonly<Record<string, string>> = {
+  'Este aparato': 'este-aparato',
+  Caja: 'caja',
+  Descuentos: 'ventas-y-cobro',
+  Operación: 'cocina',
+  Mesas: 'salon',
+  'Usuarios POS': 'personas',
+  Productos: 'productos',
+};
+
+/** Va a una sección de Configuración (`/configuracion?seccion=…`) y espera a que cargue. */
 export async function irAConfiguracion(d: Dia0, pestana: string): Promise<void> {
-  await d.pagina.goto(`${d.entorno.appUrl}/configuracion`, { waitUntil: 'domcontentloaded' });
-  await d.pagina.getByRole('tab', { name: pestana, exact: true }).click();
+  const seccion = SECCION_DE_LA_PESTANA[pestana];
+  if (seccion === undefined) throw new Error(`Configuración: no sé a qué sección va «${pestana}».`);
+  await d.pagina.goto(`${d.entorno.appUrl}/configuracion?seccion=${seccion}`, {
+    waitUntil: 'domcontentloaded',
+  });
 }
 
 /** Va a una ruta de la app. */

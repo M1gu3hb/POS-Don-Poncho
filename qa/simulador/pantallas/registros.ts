@@ -114,6 +114,10 @@ export async function textoDelTicket(pagina: Page, folio: string): Promise<strin
   const dialogo = pagina.getByRole('dialog').filter({ hasText: /^Ticket ·/ });
   await expect(dialogo).toBeVisible();
   await expect(dialogo.getByText('Cargando ticket...')).toBeHidden({ timeout: 30_000 });
+  // El encabezado sale antes que los renglones: se lee hasta que el papel llega a su «TOTAL».
+  await expect(dialogo.getByText('TOTAL', { exact: true }).first()).toBeVisible({
+    timeout: 30_000,
+  });
   const texto = (await dialogo.innerText()).replace(/\s+/g, ' ').trim();
   await pagina.keyboard.press('Escape');
   await expect(dialogo).toBeHidden();

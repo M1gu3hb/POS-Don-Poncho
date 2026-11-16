@@ -124,35 +124,30 @@ export async function quitarPlatillo(
 }
 
 /** Cambia la cuenta de mesa por la pantalla de la mesa («Cambiar de mesa» → la mesa destino). */
-export async function cambiarDeMesa(
-  pagina: Page,
-  appUrl: string,
-  origen: number,
-  destino: number,
-): Promise<void> {
+export async function cambiarDeMesa(pagina: Page, origen: number, destino: number): Promise<void> {
   await entrarALaMesa(pagina, origen);
-  const enlace = await pagina
-    .locator('a[href^="/restaurante/mesa-activa"]')
-    .first()
-    .getAttribute('href', { timeout: ESPERA_MS });
-  if (enlace === null)
-    throw new Error('El diálogo de la mesa no trae el enlace de «Cambiar de mesa».');
-  await pagina.goto(`${appUrl}${enlace}`, { waitUntil: 'domcontentloaded', timeout: ESPERA_MS });
-  await pagina
-    .getByRole('button', { name: /^Cambiar de mesa/ })
+  // DP-21 · «Cambiar de mesa» abre un panel ahí mismo (sin salir del mapa): se elige la mesa, se
+  // confirma «¿Pasar la cuenta de la mesa N a la mesa M?» con «Pasar» y sale el aviso.
+  // El botón sale cuando la cuenta de la mesa ya cargó y la mesa es de quien la mira: se espera, no
+  // se pregunta de golpe (D1-004). Si no sale, es lo que vería el mesero: queda como incidente.
+  const abrir = pagina.getByRole('button', { name: /^Cambiar de mesa/ }).first();
+  try {
+    await abrir.waitFor({ state: 'visible', timeout: ESPERA_MS });
+  } catch {
+    throw new Error(`La mesa ${String(origen)} no ofrece «Cambiar de mesa» a quien la atiende.`);
+  }
+  await abrir.click({ timeout: ESPERA_MS });
+  const panel = pagina.getByRole('dialog').filter({ hasText: 'Cambiar de mesa' }).last();
+  await panel
+    .getByRole('button', { name: new RegExp(`^Mesa\\s*${String(destino)}\\b`) })
     .first()
     .click({ timeout: ESPERA_MS });
   const movida = pagina.waitForResponse(
     (r) =>
       new URL(r.url()).pathname.startsWith('/api/restaurante/') && r.request().method() === 'POST',
-    {
-      timeout: ESPERA_MS,
-    },
+    { timeout: ESPERA_MS },
   );
-  await pagina
-    .getByRole('button', { name: new RegExp(`^Mesa\\s*${String(destino)}\\b`) })
-    .first()
-    .click({ timeout: ESPERA_MS });
+  await panel.getByRole('button', { name: 'Pasar', exact: true }).click({ timeout: ESPERA_MS });
   const respuesta = await movida;
   if (!respuesta.ok()) throw new Error(`cambiar de mesa respondió ${String(respuesta.status())}`);
 }
