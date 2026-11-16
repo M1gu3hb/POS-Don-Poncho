@@ -2,7 +2,10 @@ import { seccionesExtraDelDia } from './del-dia.ts';
 import {
   ajustesDeCaja,
   arqueo,
+  cascada,
+  comprasYGastosPagadosDeLaCaja,
   centavos,
+  comisionDeTerminal,
   datosDelCorte,
   dinero,
   folioDe,
@@ -16,6 +19,7 @@ import {
   tituloDelResumen,
   ventasDelDia,
   tablaSiHay,
+  tasaEnPalabras,
   texto,
   totalDePropinas,
   type DocumentoDelCorte,
@@ -54,6 +58,22 @@ function documento(
     responsable: hoja.sesion.cerro,
     nombreDeArchivo: nombreDeArchivo(hoja.negocio.nombre, titulo, folio),
   };
+}
+
+/**
+ * DP-21 · Bloque 20 · La comisión de la terminal que se escribe en Configuración → Caja: con tasa
+ * y cobros con tarjeta, entra al resumen como gasto ESTIMADO y baja la utilidad neta; sin tasa o sin
+ * tarjeta, no sale (ninguna sección en cero).
+ */
+function comisionEstimada(
+  hoja: HojaDelServidor,
+): readonly { readonly etiqueta: string; readonly centavos: number }[] {
+  const tasa = hoja.negocio.comisionTerminalBp;
+  const comision = comisionDeTerminal(hoja);
+  if (tasa === null || comision === null || comision === 0) return [];
+  return [
+    { etiqueta: `Comisión de la terminal, estimada (${tasaEnPalabras(tasa)})`, centavos: comision },
+  ];
 }
 
 // ── Restaurante ─────────────────────────────────────────────────────────────
@@ -100,12 +120,14 @@ export function corteDeRestaurante(
   return documento(hoja, 'CORTE DE CAJA', [
     datosDelCorte(hoja, 'Cierre diario'),
     ...arqueo(hoja, 'Apertura y fondo'),
+    // DP-21 · Bloque 11: de dónde salió el efectivo esperado, y cuadra a la vista.
+    ...cascada(hoja),
     ...ajustesDeCaja(hoja),
     ...retirosConPin(hoja),
     ...ventasDelDia(hoja),
     // DP-17 · Las opciones y los retiros con PIN del día, de todas las cajas.
     ...seccionesExtraDelDia(hoja.ventasDelDia ?? null),
-    resumenFinanciero(hoja, tituloDelResumen(hoja)),
+    resumenFinanciero(hoja, tituloDelResumen(hoja), [], comisionEstimada(hoja)),
     ...metodosConPropina(hoja),
     ...seccionesDePropina,
     // DP-16 · Mesas y pedidos para llevar, por separado.
@@ -114,6 +136,7 @@ export function corteDeRestaurante(
     // DP-16 · De dónde salió lo que sumaron las opciones.
     ...opcionesVendidas(hoja),
     ...insumosConsumidos(hoja),
+    ...comprasYGastosPagadosDeLaCaja(hoja),
     ...gastos(hoja),
     ...inventarioBajo(hoja),
     ...cancelaciones(hoja),

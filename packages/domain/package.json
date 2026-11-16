@@ -10,6 +10,7 @@
     "./auditoria": "./src/auditoria/index.ts",
     "./dinero": "./src/dinero/index.ts",
     "./catalogo": "./src/catalogo/index.ts",
+    "./gastos": "./src/gastos/index.ts",
     "./inventario": "./src/inventario/index.ts",
     "./qr": "./src/qr/index.ts",
     "./sala": "./src/sala/index.ts",

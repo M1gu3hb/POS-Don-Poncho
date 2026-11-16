@@ -40,8 +40,3 @@ export function puedeMoverLaCuenta(datos: {
   if (puesto !== 'mesero') return false;
   return yoId != null && atiendeId != null && yoId === atiendeId;
 }
-
-/** Lo que dice el enlace: a cada quien, lo que puede hacer desde ahí. */
-export function textoDelEnlaceParaMoverLaCuenta(puesto: string | null): string {
-  return puesto === 'mesero' ? 'Cambiar de mesa' : 'Cambiar de mesa, unir o dividir';
-}

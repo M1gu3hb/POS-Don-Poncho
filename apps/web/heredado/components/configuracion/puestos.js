@@ -24,6 +24,17 @@ export const PUEDE_OTORGAR = {
 /** Quienes administran: editan la plantilla y cambian Caja y Descuentos. */
 export const PUESTOS_DE_MANDO = ['dueno', 'administrador'];
 
+/**
+ * DP-21 · Bloque 20 · Quien puede ELIMINAR un corte (`caja.eliminar_corte`): sólo el dueño. Es el
+ * espejo del comando para no enseñar un botón que el servidor niega; la matriz de permisos
+ * (`pruebas/e2e/matriz-de-permisos.json`) y `botones-segun-el-puesto.contrato.test.ts` vigilan que no se separen.
+ */
+export const PUESTOS_QUE_ELIMINAN_CORTES = ['dueno'];
+
+export function puedeEliminarCortes(puesto) {
+  return PUESTOS_QUE_ELIMINAN_CORTES.includes(puesto);
+}
+
 /** Quienes reparten las mesas entre los meseros. */
 export const PUESTOS_QUE_REPARTEN = ['dueno', 'administrador', 'gerente'];
 

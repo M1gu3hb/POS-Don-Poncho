@@ -1,102 +1,74 @@
 'use client';
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '@/api/cliente';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import PageHeader from '@/components/common/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { toast } from 'sonner';
-import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
-import {
-  Settings,
-  Users,
-  UtensilsCrossed,
-  Plus,
-  Trash2,
-  AlertTriangle,
-  Save,
-  Palette,
-  Cloud,
-  Sparkles,
-  ShieldAlert,
-  Database,
-  Tablet,
-  Volume2,
-  Printer,
-} from 'lucide-react';
-import IntegracionesRespaldos from '@/components/configuracion/IntegracionesRespaldos';
-import DatosSection from '@/components/datos/DatosSection';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowLeft, ChevronRight, Tablet } from 'lucide-react';
+import { useLocation, useNavigate } from '@/enrutado';
+import { canAccessModule } from '@/lib/packageConfig';
+import { useConfig } from '@/lib/ConfigContext';
+import { usePOSAuth } from '@/lib/POSAuthContext';
+import { esUsuarioDePlataforma, hasPermission } from '@/lib/permissions';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { esDeMando } from '@/components/configuracion/puestos';
+import IdentidadNegocio from '@/components/configuracion/IdentidadNegocio';
+import ColoresSistemaSection from '@/components/configuracion/ColoresSistemaSection';
 import ConfiguracionDeVoz from '@/components/configuracion/ConfiguracionDeVoz';
+import UsuariosPOSSection from '@/components/configuracion/UsuariosPOSSection';
+import ReiniciarSistemaSection from '@/components/configuracion/ReiniciarSistemaSection';
+import CategoriasProductoSection from '@/components/configuracion/CategoriasProductoSection';
+import UnidadesMedidaSection from '@/components/configuracion/UnidadesMedidaSection';
+import ProveedoresSection from '@/components/configuracion/ProveedoresSection';
+import EstacionesDeCocina from '@/components/configuracion/EstacionesDeCocina';
+import AlertasDeEsperaDeCocina from '@/components/configuracion/AlertasDeEsperaDeCocina';
+import MapaDeMesasDeConfiguracion from '@/components/configuracion/MapaDeMesasDeConfiguracion';
+import ExportarDatos from '@/components/datos/ExportarDatos';
+import ImportarDatos from '@/components/datos/ImportarDatos';
+import ConfiguracionQRTab from '@/components/portalqr/ConfiguracionQRTab';
 import { SelectorDeApariencia } from '~/configuracion/SelectorDeApariencia';
 import { ExperienciaDelNegocio } from '~/configuracion/ExperienciaDelNegocio';
 import { AnuncioDeComandasDelAparato } from '~/configuracion/AnuncioDeComandasDelAparato';
 import { ModoEsperaDelAparato } from '~/configuracion/ModoEsperaDelAparato';
-import { AlertasDeEspera } from '~/cocina/AlertasDeEspera';
 import { SonidoDelAparato } from '~/configuracion/SonidoDelAparato';
 import { SonidosDelNegocio } from '~/configuracion/SonidosDelNegocio';
-import { useLocation } from '@/enrutado';
-import { canAccessModule } from '@/lib/packageConfig';
-import ReiniciarSistemaSection from '@/components/configuracion/ReiniciarSistemaSection';
-import CategoriasProductoSection from '@/components/configuracion/CategoriasProductoSection';
-import EstacionesPreparacionSection from '@/components/configuracion/EstacionesPreparacionSection';
-import EstacionesAyuda from '@/components/configuracion/EstacionesAyuda';
-import UnidadesMedidaSection from '@/components/configuracion/UnidadesMedidaSection';
-import ProveedoresSection from '@/components/configuracion/ProveedoresSection';
-import { ZONAS_MESA } from '@/lib/constants';
-import { usePOSAuth } from '@/lib/POSAuthContext';
-import { esUsuarioDePlataforma, hasPermission } from '@/lib/permissions';
-import MesaMapEditor from '@/components/mesas/MesaMapEditor';
-import MesaListMobile from '@/components/mesas/MesaListMobile';
-import MesaEditDialog from '@/components/mesas/MesaEditDialog';
-import IdentidadNegocio from '@/components/configuracion/IdentidadNegocio';
-import UsuariosPOSSection from '@/components/configuracion/UsuariosPOSSection';
-import RepartirMesasDialog from '@/components/mesas/RepartirMesasDialog';
-import { usePuesto } from '@/components/configuracion/usePuesto';
-import { siguienteNumeroLibre } from '~/cliente/numero-de-mesa';
-import ZonasDelSalonDialog from '@/components/mesas/ZonasDelSalonDialog';
-
-/** DP-15 · Quien escribe zonas por el puente (la escritura genérica). */
-const PUEDEN_EDITAR_ZONAS = ['dueno', 'administrador', 'gerente'];
-import { esDeMando, puedeRepartirMesas } from '@/components/configuracion/puestos';
-import { useConfig } from '@/lib/ConfigContext';
-import { soloCamposEditablesMesa } from '@/utils/mesaConfigUtils';
-import { claves } from '~/cliente/claves-de-consulta';
-import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
-import {
-  mesasDelPlano,
-  siguientePosicionLibre,
-  soloMesasEnServicio,
-  zonasDelNegocio,
-} from '~/cliente/mesas-del-mapa';
-import { Calculator, BadgePercent } from 'lucide-react';
+import { PruebaDeLaVozDeComandas } from '~/configuracion/PruebaDeLaVozDeComandas';
 import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos';
 import { AparatosDeLaSucursal } from '~/configuracion/TerminalesDeLaSucursal';
 import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
 import { IvaDelNegocio } from '~/configuracion/IvaDelNegocio';
 import { FoliosDelNegocio } from '~/configuracion/FoliosDelNegocio';
+import { PapelATuGusto } from '~/configuracion/PapelATuGusto';
+import { CorteDeLaCaja } from '~/configuracion/CorteDeLaCaja';
 import { CandadoDeMando } from '~/configuracion/CandadoDeMando';
 import { QuienEligeLaPropina } from '~/configuracion/QuienEligeLaPropina';
+import { TarjetaDeAjustes } from '~/configuracion/TarjetaDeAjustes';
+import { BarraLateralDelAparato } from '~/configuracion/BarraLateralDelAparato';
 import { ImpresionDelAparato } from '~/impresion/pantallas/ImpresionDelAparato';
 import { CopiasDeImpresion } from '~/impresion/pantallas/CopiasDeImpresion';
 import { EntradaAlLaboratorio } from '~/impresion/pantallas/EntradaAlLaboratorio';
+import {
+  SECCIONES,
+  destinoDeLaUrl,
+  direccionDeLaSeccion,
+  seccionAMostrar,
+  seccionesVisibles,
+  tarjetasDe,
+} from '~/configuracion/secciones';
+import {
+  puedoSalir,
+  useAvisoAlCerrar,
+} from '~/configuracion/cambios-sin-guardar';
+
+/**
+ * CONFIGURACIÓN (DP-21 · Bloque 21: «ordenada, sin quitar nada»).
+ *
+ * Dieciséis secciones en una columna a la izquierda y su contenido a la derecha; en el teléfono,
+ * la lista de secciones y luego su página. Cada ajuste vive en UNA tarjeta, con su botón y su
+ * «✓ Guardado», y guarda sólo lo suyo (se acabó el «Guardar configuración» que mandaba todo el
+ * formulario). Salir con cambios sin guardar avisa. Los `?tab=` de antes siguen sirviendo
+ * (`secciones.ts`). El mapa —qué va dónde y quién lo ve— es `~/configuracion/secciones`.
+ */
 
 const useIsMobile = () => {
   const [m, setM] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
@@ -110,326 +82,59 @@ const useIsMobile = () => {
 
 export default function Configuracion() {
   const location = useLocation();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { posUser } = usePOSAuth();
   const { paquete_modo } = useConfig();
-  // La pestaña de mesas la gobierna el MÓDULO, no el nombre de la plantilla:
-  // con el renombre de D-01 ningún negocio se llama ya `restaurante_pro`.
-  const showMesasTab = canAccessModule('mesas', paquete_modo);
+  const tieneMesas = canAccessModule('mesas', paquete_modo);
   const puedeEliminarMesas =
     esUsuarioDePlataforma(posUser) && hasPermission(posUser?.rol, 'eliminar_mesas');
   const isMobile = useIsMobile();
   // DP-14 · El puesto REAL de quien tiene la sesión (`posUser.rol` junta dueño, administrador y
-  // gerente en «administrador»): decide quién ve Caja y Descuentos y quién reparte mesas.
+  // gerente en «administrador»): decide quién cambia cada cosa.
   const miPuesto = usePuesto();
-  const [showRepartir, setShowRepartir] = useState(false);
-  const [showEliminarMesas, setShowEliminarMesas] = useState(false);
-  const [eliminando, setEliminando] = useState(false);
-  const [zonaFiltro, setZonaFiltro] = useState('Interior');
-  const [editingMesa, setEditingMesa] = useState(null);
-  const [showMesaDialog, setShowMesaDialog] = useState(false);
-  const [showZonas, setShowZonas] = useState(false);
+  useAvisoAlCerrar();
 
-  // HOTFIX persistencia: sin initialData:[] para distinguir "primer fetch"
-  // de "vacío real". placeholderData mantiene el valor previo durante el
-  // refetch (evita flashes a {} entre invalidación y respuesta).
   const { data: config, isPending: configLoading } = useQuery({
     queryKey: ['config'],
     queryFn: () => api.entidades.ConfiguracionNegocio.list(),
     placeholderData: (prev) => prev,
     staleTime: 3000,
   });
-
-  // TODAS las mesas, también las dadas de baja (el editor ofrece «Reactivar»). Su clave lo dice:
-  // la del mapa del mesero es otra (`claves.mesas.activas()`).
-  //
-  // Sin `initialData: []`: con él, el editor se pintaba como «No hay mesas configuradas» —y con
-  // el botón «Crear primera mesa»— durante toda la lectura, que con red lenta se lee como si
-  // el negocio hubiera perdido su mapa. `cargandoMesas` distingue la primera lectura del vacío.
-  const { data: mesasLeidas, isPending: cargandoMesas } = useQuery({
-    queryKey: claves.mesas.todas(),
-    queryFn: () => api.entidades.Mesa.list('-created_date', 500),
-  });
-  const mesas = useMemo(() => (Array.isArray(mesasLeidas) ? mesasLeidas : []), [mesasLeidas]);
-  // Las zonas dadas de alta (DP-5): son las que el editor ofrece y en las que nace una mesa.
-  const { data: zonasLeidas = [] } = useQuery({
-    queryKey: ['zonas'],
-    queryFn: () => api.entidades.Zona.list(),
-  });
-
-  // HOTFIX: cfg seguro. Si la query aún no respondió, cfg queda null
-  // (no {} con defaults) para que los useEffects de los hijos NO se hidraten
-  // con valores fantasma y NO pisen el state real al regresar a la pantalla.
   const cfg = Array.isArray(config) && config[0] ? config[0] : null;
-  const cfgListo = !!cfg?.id;
 
-  // Datos de OPERACIÓN. NOTA: nombre_negocio NO está aquí — vive solo en Identidad.
-  // Inicializamos con defaults SEGUROS (no leemos cfg aquí porque cfg puede ser
-  // null en el primer render). La hidratación real ocurre en el useEffect.
-  // IMPORTANTE: usamos ?? donde el valor false es válido (switches), nunca ||.
-  // DP-18: lo que se leyó al llenar Operación; al guardar sólo viaja lo que difiere de esto.
-  const bizLeido = useRef({});
-  const [bizForm, setBizForm] = useState({
-    direccion: '',
-    telefono: '',
-    correo: '',
-    usa_mesas: true,
-    permitir_venta_sin_stock: false,
-    mensaje_ticket: '¡Gracias por tu visita!',
-    ancho_papel_ticket: 80,
-    descargar_pdf_corte_auto: true,
-    propinas_activas: true,
-    propina_porcentajes_sugeridos: '5,10,15,20',
-    asignacion_mesas_activa: false,
-    silenciar_notificaciones_admin: true,
-    portal_qr_permitir_pedidos_cliente: false,
-    estaciones_preparacion_activas: false,
-    cocina_alerta_ambar_min: 10,
-    cocina_alerta_roja_min: 20,
-  });
+  const quien = {
+    puesto: miPuesto ?? null,
+    tieneMesas,
+    rolAdministrador: posUser?.rol === 'administrador',
+    esPlataforma: esUsuarioDePlataforma(posUser),
+  };
+  const visibles = seccionesVisibles(quien);
+  const busqueda = location.search;
+  const hayDestino = new URLSearchParams(busqueda).has('seccion') || new URLSearchParams(busqueda).has('tab');
+  const destino = destinoDeLaUrl(busqueda);
+  const activa = hayDestino
+    ? seccionAMostrar(destino, visibles)
+    : isMobile
+      ? null
+      : (visibles[0]?.id ?? null);
 
-  // Resync cuando llega cfg del backend o cuando cambia (updated_date).
-  // ⛔ NO se ejecuta con cfg null/vacío → no pisa el form con strings vacíos.
-  // ✅ Se vuelve a ejecutar si el backend cambia (otro tab guarda) gracias a
-  //    incluir updated_date en la dependencia.
+  // Un `?tab=` de antes que apuntaba a una tarjeta concreta: se baja hasta ella.
+  const ancla = hayDestino ? destino.ancla : null;
   useEffect(() => {
-    if (!cfg?.id) return;
-    setBizForm((f) => {
-      const desdeLaConfig = {
-      ...f,
-      direccion: cfg.direccion ?? '',
-      telefono: cfg.telefono ?? '',
-      correo: cfg.correo ?? '',
-      usa_mesas: cfg.usa_mesas ?? true,
-      permitir_venta_sin_stock: cfg.permitir_venta_sin_stock ?? false,
-      mensaje_ticket: cfg.mensaje_ticket ?? '¡Gracias por tu visita!',
-      ancho_papel_ticket: Number(cfg.ancho_papel_ticket) === 58 ? 58 : 80,
-      descargar_pdf_corte_auto: cfg.descargar_pdf_corte_auto ?? true,
-      propinas_activas: cfg.propinas_activas ?? true,
-      propina_porcentajes_sugeridos: cfg.propina_porcentajes_sugeridos ?? '5,10,15,20',
-      asignacion_mesas_activa: cfg.asignacion_mesas_activa === true,
-      silenciar_notificaciones_admin: cfg.silenciar_notificaciones_admin ?? true,
-      portal_qr_permitir_pedidos_cliente: cfg.portal_qr_permitir_pedidos_cliente === true,
-      estaciones_preparacion_activas: cfg.estaciones_preparacion_activas === true,
-      cocina_alerta_ambar_min: cfg.cocina_alerta_ambar_min ?? 10,
-      cocina_alerta_roja_min: cfg.cocina_alerta_roja_min ?? 20,
-      };
-      // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo no tocado, no.
-      bizLeido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
-      return desdeLaConfig;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cfg?.id, cfg?.updated_date]);
+    if (ancla === null || activa === null) return;
+    document.getElementById(ancla)?.scrollIntoView({ block: 'start' });
+  }, [ancla, activa]);
 
-  const saveBiz = async () => {
-    // HOTFIX persistencia: bloquear guardar mientras cfg no haya llegado.
-    // Si guardamos antes, mandamos los defaults del useState (todos truthy)
-    // y pisamos el backend con valores fantasma. Esto causaba que el switch
-    // "vuelva a prenderse" al regresar a la pantalla.
-    if (!cfgListo && !configLoading) {
-      // Caso "primera vez" — backend vacío. Permitimos crear con bizForm + nombre mínimo.
-      try {
-        // `ConfiguracionNegocio` NO se crea: es un documento, no una fila, y
-        // `guardarConfiguracionParcial` INSERTA solo cuando el negocio todavía
-        // no tiene ninguno (`configuracion.ts:220`). `update` cubre las dos
-        // veces. La rama `create` que había aquí no sólo sobraba: el puente la
-        // rechaza —«sólo se actualiza, no se crea ni se borra»— así que este
-        // camino de «primera vez» fallaba siempre.
-        await api.entidades.ConfiguracionNegocio.update(cfg?.id, {
-          nombre_negocio: 'Mi Negocio',
-          ...parcheDeLaSeccion(bizForm, {}),
-        });
-        queryClient.invalidateQueries({ queryKey: ['config'] });
-        toast.success('Configuración guardada');
-      } catch (e) {
-        toast.error('No se pudo guardar: ' + (e?.message || ''));
-      }
-      return;
-    }
-    if (configLoading || !cfg?.id) {
-      toast.error('Espera a que cargue la configuración antes de guardar');
-      return;
-    }
-    try {
-      // Solo persistimos los campos de OPERACIÓN. Identidad maneja su propio save.
-      // Nunca tocamos campos de Identidad (nombre_negocio, logos, colores, etc.)
-      // desde acá para no pisar lo que la pestaña Identidad haya guardado.
-      const parche = parcheDeLaSeccion(bizForm, bizLeido.current);
-      if (!hayCambios(parche)) {
-        toast.info('No hay cambios que guardar');
-        return;
-      }
-      await api.entidades.ConfiguracionNegocio.update(cfg.id, parche);
-      queryClient.invalidateQueries({ queryKey: ['config'] });
-      toast.success('Configuración guardada');
-    } catch (e) {
-      toast.error('No se pudo guardar: ' + (e?.message || ''));
-    }
+  const elegir = (id) => {
+    if (id === activa) return;
+    if (!puedoSalir((texto) => window.confirm(texto))) return;
+    navigate(id === null ? '/configuracion' : direccionDeLaSeccion(id), { replace: true });
   };
 
-  const handleSaveMesa = async (data) => {
-    if (!data?.numero) {
-      toast.error('El número de mesa es obligatorio');
-      return;
-    }
-    // Crear, renombrar y mover una mesa siguen siendo escrituras directas del
-    // puente. Pero el diálogo reenvía LA FILA ENTERA (`{ ...empty, ...mesa }`),
-    // y esa fila trae de vuelta todo lo que la lectura añadió.
-    //
-    // ── Por qué una lista BLANCA y no una negra ─────────────────────────────
-    // Aquí hubo una lista negra de los ocho campos de ocupación, y no bastaba:
-    // el puente rechaza TODO campo que no sepa escribir, y lo hace lanzando, no
-    // ignorando. Además de los ocho, la fila leída trae los cinco DERIVADOS
-    // —`zona`, `mesero_asignado_nombre`, `mesero_asignado_color`,
-    // `atendido_por_nombre`, `atendido_por_color`, que salen de un left join— y
-    // las dos fechas de sólo lectura. Con la lista negra, guardar una mesa
-    // fallaba SIEMPRE con «"zona" se calcula al leer y no se guarda».
-    //
-    // Una lista blanca no tiene ese problema: lo que el servidor añada mañana
-    // simplemente no viaja. Son los doce campos que el mapa del puente declara
-    // escribibles para Mesa.
-    // Abrir, ocupar, pedir la cuenta y liberar son TRANSICIONES con su comando:
-    // que no quepan aquí es lo que impide «mesa libre con venta viva».
-
-    try {
-      // La zona se elige por nombre y se guarda por `zona_id` (ver `soloCamposEditablesMesa`).
-      const zonas = await api.entidades.Zona.list();
-      const { id, ...rest } = data;
-      const campos = soloCamposEditablesMesa(rest, zonas);
-      if (data.zona && !campos.zona_id) {
-        toast.error(`No se pudo guardar la mesa: la zona «${data.zona}» no existe en este negocio.`);
-        return;
-      }
-      if (id) {
-        await api.entidades.Mesa.update(id, campos);
-        toast.success(`Mesa ${data.numero} actualizada`);
-      } else {
-        await api.entidades.Mesa.create(campos);
-        toast.success(`Mesa ${data.numero} creada`);
-      }
-      queryClient.invalidateQueries({ queryKey: ['mesas'] });
-      setShowMesaDialog(false);
-      setEditingMesa(null);
-    } catch (e) {
-      toast.error('No se pudo guardar la mesa: ' + (e?.message || ''));
-    }
-  };
-
-  const handleDeleteMesa = async (id) => {
-    try {
-      // Validación defensiva en backend: revisar si tiene venta activa
-      const mesa = mesas.find((m) => m.id === id);
-      const ESTADOS_OCUPADA = [
-        'esperando_orden',
-        'pedido_enviado',
-        'en_preparacion',
-        'en_espera_entrega',
-        'ocupada',
-        'cuenta_solicitada',
-      ];
-      if (mesa && (mesa.venta_activa_id || ESTADOS_OCUPADA.includes(mesa.estado))) {
-        toast.error(
-          'No se puede eliminar una mesa con venta o pedido activo. Libera la mesa primero.',
-        );
-        return;
-      }
-      // El puente la DESACTIVA (borrado suave): su historial de ventas se conserva y puede
-      // volver. Antes decía «Mesa eliminada» y la mesa seguía en el mapa, igual que antes.
-      await api.entidades.Mesa.delete(id);
-      queryClient.invalidateQueries({ queryKey: ['mesas'] });
-      toast.success(
-        `Mesa ${mesa?.numero ?? ''} quitada del mapa. Su historial se conserva; puedes reactivarla en «Mesas desactivadas».`,
-      );
-      setShowMesaDialog(false);
-      setEditingMesa(null);
-    } catch (e) {
-      toast.error('Error al eliminar la mesa: ' + (e?.message || ''));
-    }
-  };
-
-  const handlePositionChange = async (id, x, y) => {
-    await api.entidades.Mesa.update(id, { posicion_x: x, posicion_y: y });
-    queryClient.invalidateQueries({ queryKey: ['mesas'] });
-  };
-
-  const handleReorder = async (id, nuevoOrden) => {
-    await api.entidades.Mesa.update(id, { orden: nuevoOrden });
-    queryClient.invalidateQueries({ queryKey: ['mesas'] });
-  };
-
-  const openNew = () => {
-    // Crear mesa en la zona activa (no mezclar zonas), en el primer hueco libre del lienzo: la
-    // posición ya no sale de CUÁNTAS mesas hay, sino de DÓNDE están (`siguientePosicionLibre`).
-    const posicion = siguientePosicionLibre(mesasDelPlano(mesas, zonaFiltro));
-    setEditingMesa({
-      // DP-15 · El menor número que ninguna mesa ACTIVA usa (reusa el de una mesa quitada).
-      numero: siguienteNumeroLibre(mesas),
-      nombre: '',
-      zona: zonaFiltro,
-      capacidad: 4,
-      forma: 'redonda',
-      tamano: 'mediana',
-      posicion_x: posicion.x,
-      posicion_y: posicion.y,
-      activo: true,
-      estado: 'libre',
-    });
-    setShowMesaDialog(true);
-  };
-
-  // El mapa y la lista son de las mesas ACTIVAS de la zona que se mira; las desactivadas van
-  // aparte, con «Reactivar». Comparten coordenadas con las activas: nunca al mismo lienzo.
-  const mesasActivas = soloMesasEnServicio(mesas);
-  const mesasDesactivadas = mesas.filter((m) => m.activo === false);
-  const mesasFiltradas = mesasDelPlano(mesas, zonaFiltro);
-  const zonasDelEditor = zonasDelNegocio(zonasLeidas, mesasActivas, ZONAS_MESA);
-  // Si la zona que se mira no es del negocio («Interior» en Don Poncho), la primera que sí.
-  const primeraZona = zonasDelEditor[0];
-  const zonaAjena = !zonasDelEditor.includes(zonaFiltro);
-  useEffect(() => {
-    if (primeraZona && zonaAjena) setZonaFiltro(primeraZona);
-  }, [primeraZona, zonaAjena]);
-
-  const reactivarMesa = async (mesa) => {
-    try {
-      await api.entidades.Mesa.update(mesa.id, { activo: true });
-      queryClient.invalidateQueries({ queryKey: ['mesas'] });
-      toast.success(`Mesa ${mesa.numero} reactivada: vuelve al mapa y a los meseros.`);
-    } catch (e) {
-      // El servidor dice por qué —por ejemplo, otra mesa activa ya tiene ese número—.
-      toast.error('No se pudo reactivar la mesa: ' + (e?.message || ''));
-    }
-  };
-
-  const eliminarMesasDemo = async () => {
-    setEliminando(true);
-    try {
-      // Ya no manda `rol`: lo decide la sesión en el servidor. Y ya no borra
-      // físicamente hasta 500 mesas sin mirar si tienen venta abierta — ahora
-      // es borrado suave y el comando SE NIEGA si alguna está ocupada, así que
-      // deja de producir ventas huérfanas.
-      const res = await api.comandos.ejecutar('/api/mantenimiento/vaciar-mesas', {});
-      queryClient.invalidateQueries({ queryKey: ['mesas'] });
-      const cuantas = res?.borrado?.mesas ?? 0;
-      toast.success(`${cuantas} mesas retiradas. Ahora puedes crear tu mapa desde cero.`);
-      setShowEliminarMesas(false);
-    } catch (e) {
-      // El error llega con su mensaje de dominio: si hay mesas con venta
-      // abierta, dice cuáles. Antes esto era un `ok:false` que la pantalla
-      // resumía como «Error al eliminar mesas».
-      toast.error(e?.message || 'No se pudieron retirar las mesas.');
-    }
-    setEliminando(false);
-  };
-
-  // HOTFIX: skeleton durante la primera carga de cfg para evitar que el usuario
-  // toque switches con valores default antes de que llegue el cfg real.
-  // Si cfg nunca cargó (primera vez del negocio), igual permitimos abrir las
-  // pestañas (cfgListo=false + !configLoading) — saveBiz lo trata como "create".
   if (configLoading && !cfg) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Configuración" description="Ajustes de Morphiq POS" />
+        <PageHeader title="Configuración" description="Ajustes de POS Don Poncho" />
         <Card>
           <CardContent className="py-12 flex flex-col items-center gap-3 text-muted-foreground">
             <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-primary rounded-full animate-spin" />
@@ -440,612 +145,195 @@ export default function Configuracion() {
     );
   }
 
+  /** El contenido de cada tarjeta. La clave es su `id` en `secciones.ts`. */
+  const CONTENIDO = {
+    'datos-del-negocio': () => <TarjetaDeAjustes id="datos-del-negocio" configuracion={cfg} />,
+    'logo-y-marca': () => <IdentidadNegocio cfg={cfg} grupo="marca" />,
+    estilo: () =>
+      miPuesto === 'dueno' ? (
+        <SelectorDeApariencia />
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          La apariencia del negocio (colores y estilo) la cambia el dueño.
+        </p>
+      ),
+    colores: () => (
+      <Card className="mt-4">
+        <CardContent className="pt-2">
+          <ColoresSistemaSection cfg={cfg} />
+        </CardContent>
+      </Card>
+    ),
+    fondo: () => <IdentidadNegocio cfg={cfg} grupo="fondo" />,
+    'importes-en-color': () => <IdentidadNegocio cfg={cfg} grupo="importes" />,
+    morfi: () => <ExperienciaDelNegocio grupo="morfi" />,
+    iva: () => <IvaDelNegocio puedeCambiar={esDeMando(miPuesto)} />,
+    propinas: () => <TarjetaDeAjustes id="propinas" configuracion={cfg} />,
+    'quien-elige-la-propina': () => <QuienEligeLaPropina puedeCambiar={esDeMando(miPuesto)} />,
+    descuentos: () => <PermitirDescuentos />,
+    ticket: () => <TarjetaDeAjustes id="ticket" configuracion={cfg} />,
+    'papel-a-tu-gusto': () => <PapelATuGusto puedeCambiar={esDeMando(miPuesto)} />,
+    'logos-de-papel': () => <IdentidadNegocio cfg={cfg} grupo="logos-de-papel" />,
+    'pdf-y-reportes': () => <TarjetaDeAjustes id="pdf-y-reportes" configuracion={cfg} />,
+    folios: () => <FoliosDelNegocio puedeCambiar={miPuesto === 'dueno'} />,
+    copias: () => <CopiasDeImpresion puedeCambiar={esDeMando(miPuesto)} />,
+    'las-cajas': () => <CajasALaVez />,
+    'pin-en-retiros': () => <UmbralDeRetiro />,
+    'corte-de-la-caja': () => <CorteDeLaCaja puedeCambiar={esDeMando(miPuesto)} />,
+    'pdf-al-cerrar': () => <TarjetaDeAjustes id="pdf-al-cerrar" configuracion={cfg} />,
+    'mapa-de-mesas': () => (
+      <MapaDeMesasDeConfiguracion
+        miPuesto={miPuesto}
+        cfg={cfg}
+        puedeEliminarMesas={puedeEliminarMesas}
+      />
+    ),
+    'asignacion-de-mesas': () => (
+      <TarjetaDeAjustes id="asignacion-de-mesas" configuracion={cfg} />
+    ),
+    estaciones: () => <EstacionesDeCocina cfg={cfg} />,
+    'alertas-de-espera': () => <AlertasDeEsperaDeCocina cfg={cfg} />,
+    'voz-de-las-comandas': () => <PruebaDeLaVozDeComandas />,
+    'portal-activacion': () => <ConfiguracionQRTab config={cfg} grupo="activacion" />,
+    'portal-pedidos': () => (
+      <ConfiguracionQRTab config={cfg} grupo="pedidos" conMesas={tieneMesas} />
+    ),
+    'portal-cuenta': () => <ConfiguracionQRTab config={cfg} grupo="cuenta" />,
+    categorias: () => (
+      <div className="mt-4">
+        <CategoriasProductoSection />
+      </div>
+    ),
+    unidades: () => (
+      <div className="mt-4">
+        <UnidadesMedidaSection />
+      </div>
+    ),
+    proveedores: () => (
+      <div className="mt-4">
+        <ProveedoresSection />
+      </div>
+    ),
+    'usuarios-pos': () => <UsuariosPOSSection cfg={cfg} />,
+    'pin-al-despertar': () => <ExperienciaDelNegocio grupo="pin" />,
+    'candado-de-mando': () => <CandadoDeMando puedeCambiar={esDeMando(miPuesto)} />,
+    'sonidos-de-cada-momento': () => <SonidosDelNegocio />,
+    'avisos-del-administrador': () => (
+      <TarjetaDeAjustes id="avisos-del-administrador" configuracion={cfg} />
+    ),
+    exportar: () => <ExportarDatos />,
+    importar: () => <ImportarDatos />,
+    'nombre-del-aparato': () => (
+      <AparatosDeLaSucursal puedeCambiar={miPuesto === 'dueno' || miPuesto === 'administrador'} />
+    ),
+    'impresora-y-cajon': () => <ImpresionDelAparato rol={posUser?.rol} />,
+    'sonido-del-aparato': () => <SonidoDelAparato />,
+    'modo-espera': () => <ModoEsperaDelAparato />,
+    'voz-del-aparato': () => <ConfiguracionDeVoz />,
+    'anuncio-de-comandas': () => <AnuncioDeComandasDelAparato />,
+    'barra-lateral': () => <BarraLateralDelAparato />,
+    laboratorio: () => <EntradaAlLaboratorio />,
+    'reiniciar-sistema': () => <ReiniciarSistemaSection />,
+    'usar-mesas': () => <TarjetaDeAjustes id="usar-mesas" configuracion={cfg} />,
+    'vender-sin-existencia': () => (
+      <TarjetaDeAjustes id="vender-sin-existencia" configuracion={cfg} />
+    ),
+    'texto-legal': () => <TarjetaDeAjustes id="texto-legal" configuracion={cfg} />,
+  };
+
+  const seccion = SECCIONES.find((s) => s.id === activa) ?? null;
+  const tarjetas = seccion === null ? [] : tarjetasDe(seccion.id, quien);
+
+  const lista = (
+    <nav aria-label="Secciones de la configuración">
+      <div
+        role="tablist"
+        aria-orientation="vertical"
+        aria-label="Secciones de la configuración"
+        className="flex flex-col gap-1"
+      >
+        {visibles.map((s, i) => {
+          const separar = i > 0 && visibles[i - 1].grupo !== s.grupo;
+          return (
+            <React.Fragment key={s.id}>
+              {separar && <div className="my-2 border-t" aria-hidden="true" />}
+              <button
+                type="button"
+                role="tab"
+                aria-selected={s.id === activa}
+                onClick={() => elegir(s.id)}
+                className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
+                  s.id === activa ? 'bg-primary text-primario-texto' : 'hover:bg-muted'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  {s.grupo === 'aparato' && <Tablet className="w-4 h-4" aria-hidden="true" />}
+                  {s.nombre}
+                </span>
+                <ChevronRight className="w-4 h-4 shrink-0 opacity-60 md:hidden" aria-hidden="true" />
+              </button>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </nav>
+  );
+
+  const pagina =
+    seccion === null ? null : (
+      <section role="tabpanel" aria-label={seccion.nombre} className="min-w-0 flex-1">
+        {isMobile && (
+          <button
+            type="button"
+            onClick={() => elegir(null)}
+            className="mb-3 inline-flex min-h-11 items-center gap-1 text-sm font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Secciones
+          </button>
+        )}
+        <h2 className="text-xl font-heading font-bold">{seccion.nombre}</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">{seccion.paraQue}</p>
+        {seccion.grupo === 'aparato' && (
+          <p className="mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold">
+            Sólo este aparato
+          </p>
+        )}
+        {tarjetas.map((t) => {
+          const pintar = CONTENIDO[t.id];
+          if (pintar === undefined) return null;
+          if (seccion.id === 'avanzado') {
+            return (
+              <details key={t.id} id={t.id} className="mt-4 rounded-xl border p-3">
+                <summary className="cursor-pointer text-sm font-semibold">{t.titulo}</summary>
+                <p className="mt-2 text-xs text-muted-foreground">Qué era: {t.queEra}</p>
+                {pintar()}
+              </details>
+            );
+          }
+          return (
+            <div key={t.id} id={t.id}>
+              {pintar()}
+            </div>
+          );
+        })}
+      </section>
+    );
+
   return (
     <div className="space-y-6">
-      <PageHeader title="Configuración" description="Ajustes de Morphiq POS" />
-
-      <Tabs defaultValue={new URLSearchParams(location.search).get('tab') || 'identidad'}>
-        <TabsList className="mb-4 flex-wrap h-auto">
-          <TabsTrigger value="identidad">
-            <Palette className="w-3 h-3 mr-1" />
-            Identidad
-          </TabsTrigger>
-          <TabsTrigger value="apariencia">Apariencia</TabsTrigger>
-          <TabsTrigger value="aparato">
-            <Tablet className="w-3 h-3 mr-1" />
-            Este aparato
-          </TabsTrigger>
-          <TabsTrigger value="impresion">
-            <Printer className="w-3 h-3 mr-1" />
-            Impresión
-          </TabsTrigger>
-          <TabsTrigger value="sonidos">
-            <Volume2 className="w-3 h-3 mr-1" />
-            Sonidos
-          </TabsTrigger>
-          <TabsTrigger value="negocio">
-            <Settings className="w-3 h-3 mr-1" />
-            Operación
-          </TabsTrigger>
-          <TabsTrigger value="usuarios">
-            <Users className="w-3 h-3 mr-1" />
-            Usuarios POS
-          </TabsTrigger>
-          {/* DP-14.2 · Lo que decidió Miguel: sólo el dueño o el administrador lo cambian. */}
-          {esDeMando(miPuesto) && (
-            <TabsTrigger value="caja">
-              <Calculator className="w-3 h-3 mr-1" />
-              Caja
-            </TabsTrigger>
-          )}
-          {esDeMando(miPuesto) && (
-            <TabsTrigger value="descuentos">
-              <BadgePercent className="w-3 h-3 mr-1" />
-              Descuentos
-            </TabsTrigger>
-          )}
-          {showMesasTab && (
-            <TabsTrigger value="mesas">
-              <UtensilsCrossed className="w-3 h-3 mr-1" />
-              Mesas
-            </TabsTrigger>
-          )}
-          {esDeMando(miPuesto) && (
-            <TabsTrigger value="datos">
-              <Database className="w-3 h-3 mr-1" />
-              Datos
-            </TabsTrigger>
-          )}
-          {esDeMando(miPuesto) && (
-            <TabsTrigger value="integraciones">
-              <Cloud className="w-3 h-3 mr-1" />
-              Integraciones
-            </TabsTrigger>
-          )}
-          {posUser?.rol === 'administrador' && esUsuarioDePlataforma(posUser) && (
-            <TabsTrigger value="mantenimiento">
-              <ShieldAlert className="w-3 h-3 mr-1" />
-              Mantenimiento
-            </TabsTrigger>
-          )}
-        </TabsList>
-
-        <TabsContent value="identidad">
-          <IdentidadNegocio cfg={cfg} />
-        </TabsContent>
-
-        <TabsContent value="apariencia">
-          <div className="space-y-6">
-            {/* DP-15 · La marca del negocio la guarda sólo el dueño (`configuracion.apariencia`):
-                a los demás no se les ofrece un botón que el servidor niega. */}
-            {miPuesto === 'dueno' ? (
-              <SelectorDeApariencia />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                La apariencia del negocio (colores y estilo) la cambia el dueño.
-              </p>
-            )}
-            {/* DP-11.1 y 11.2: «Mascota Morfi» y «Pedir PIN al despertar», por negocio. */}
-            <ExperienciaDelNegocio />
-            {/* La voz de los avisos es de ESTE dispositivo: la cocina o la tableta de la sala
-                eligen la suya entrando aquí desde ese equipo. */}
-            <ConfiguracionDeVoz />
-          </div>
-        </TabsContent>
-
-        {/* DP-11.2: lo que es de ESTE aparato y no del negocio (el modo espera). */}
-        <TabsContent value="aparato">
-          <div className="space-y-6">
-            {/* DP-21 · Bloque 5: el aparato tiene su nombre, aparte del de la caja. */}
-            <AparatosDeLaSucursal puedeCambiar={miPuesto === 'dueno' || miPuesto === 'administrador'} />
-            <ModoEsperaDelAparato />
-            {/* DP-11.3: cuánto suena ESTE aparato (Apagado, Suave, Normal). */}
-            <SonidoDelAparato />
-            {/* DP-21: con dos pantallas en una estación, sólo la principal anuncia las comandas. */}
-            <AnuncioDeComandasDelAparato />
-          </div>
-        </TabsContent>
-
-        {/* DP-20: la impresora de ESTE aparato, su prueba y el cajón (el personal no cambia el perfil). */}
-        <TabsContent value="impresion">
-          <ImpresionDelAparato rol={posUser?.rol} />
-        </TabsContent>
-
-        {/* DP-11.3: cada momento con su sonido, el del teclado y el portal (del negocio). */}
-        <TabsContent value="sonidos">
-          <SonidosDelNegocio />
-        </TabsContent>
-
-        <TabsContent value="negocio">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-heading">Datos del negocio</CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Estos datos aparecen en tickets, PDFs y Portal QR. El nombre del negocio se edita en
-                la pestaña <strong>Identidad</strong>.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <Label className="text-xs">Dirección</Label>
-                  <Input
-                    value={bizForm.direccion}
-                    onChange={(e) => setBizForm({ ...bizForm, direccion: e.target.value })}
-                    placeholder="Calle, número, colonia, ciudad"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Teléfono</Label>
-                  <Input
-                    value={bizForm.telefono}
-                    onChange={(e) => setBizForm({ ...bizForm, telefono: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Correo</Label>
-                  <Input
-                    value={bizForm.correo}
-                    onChange={(e) => setBizForm({ ...bizForm, correo: e.target.value })}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label className="text-xs">Mensaje en ticket</Label>
-                  <Input
-                    value={bizForm.mensaje_ticket}
-                    onChange={(e) => setBizForm({ ...bizForm, mensaje_ticket: e.target.value })}
-                  />
-                </div>
-                {/* DP-15 · El rollo de la impresora térmica: lo usan el ticket, la reimpresión y la precuenta. */}
-                <div className="sm:col-span-2">
-                  <Label className="text-xs" htmlFor="ancho-papel-ticket">
-                    Ancho del papel del ticket
-                  </Label>
-                  <select
-                    id="ancho-papel-ticket"
-                    className="mt-1 h-9 w-full rounded-md border bg-superficie px-3 text-sm"
-                    value={bizForm.ancho_papel_ticket}
-                    onChange={(e) =>
-                      setBizForm({ ...bizForm, ancho_papel_ticket: Number(e.target.value) })
-                    }
-                  >
-                    <option value={58}>58 mm</option>
-                    <option value={80}>80 mm</option>
-                  </select>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    El rollo de tu impresora térmica. En 58 mm el texto va más chico para que quepa.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Usar mesas</Label>
-                <Switch
-                  checked={bizForm.usa_mesas}
-                  onCheckedChange={(v) => setBizForm({ ...bizForm, usa_mesas: v })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Permitir venta sin stock</Label>
-                <Switch
-                  checked={bizForm.permitir_venta_sin_stock}
-                  onCheckedChange={(v) => setBizForm({ ...bizForm, permitir_venta_sin_stock: v })}
-                />
-              </div>
-
-              {/* === PROPINAS === */}
-              <div className="border-t pt-4 space-y-3">
-                <p className="text-sm font-semibold">Propinas</p>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <Label className="text-sm font-medium">Activar propinas</Label>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Si está apagado, no se preguntará propina en ningún flujo (POS, mesero, caja).
-                      Las ventas no se ven afectadas. Las propinas nunca se suman a las ventas
-                      reales ni a la utilidad.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={bizForm.propinas_activas !== false}
-                    onCheckedChange={(v) => setBizForm({ ...bizForm, propinas_activas: v })}
-                  />
-                </div>
-                {bizForm.propinas_activas !== false && (
-                  <div>
-                    <Label className="text-xs">Porcentajes sugeridos (separados por coma)</Label>
-                    <Input
-                      value={bizForm.propina_porcentajes_sugeridos}
-                      onChange={(e) =>
-                        setBizForm({ ...bizForm, propina_porcentajes_sugeridos: e.target.value })
-                      }
-                      placeholder="5,10,15,20"
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Hasta 6 valores. Estos aparecen como botones rápidos en el modal de propina.
-                    </p>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-xs">Abrir PDF automático al cerrar caja</Label>
-                  <p className="text-[10px] text-muted-foreground">
-                    Muestra el reporte para imprimir/descargar al cerrar el corte.
-                  </p>
-                </div>
-                <Switch
-                  checked={bizForm.descargar_pdf_corte_auto !== false}
-                  onCheckedChange={(v) => setBizForm({ ...bizForm, descargar_pdf_corte_auto: v })}
-                />
-              </div>
-
-              {/* === ASIGNACIÓN DE MESAS A MESEROS === */}
-              <div className="border-t pt-4 space-y-3">
-                <p className="text-sm font-semibold">Asignación de mesas y notificaciones</p>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <Label className="text-sm font-medium">
-                      Activar asignación de mesas a meseros
-                    </Label>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Si está apagado, todos los meseros ven todas las mesas y la mesa muestra
-                      "Atiende: …" cuando alguien la toma. Si está encendido, cada mesa tiene un
-                      mesero fijo y las solicitudes QR se rutean al mesero asignado.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={bizForm.asignacion_mesas_activa === true}
-                    onCheckedChange={(v) => setBizForm({ ...bizForm, asignacion_mesas_activa: v })}
-                  />
-                </div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <Label className="text-sm font-medium">
-                      Silenciar notificaciones del administrador
-                    </Label>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Recomendado: encendido. El administrador no escucha sonidos ni voz; sigue
-                      viendo los badges e indicadores visuales.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={bizForm.silenciar_notificaciones_admin !== false}
-                    onCheckedChange={(v) =>
-                      setBizForm({ ...bizForm, silenciar_notificaciones_admin: v })
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* === PEDIDOS DESDE PORTAL QR (Prompt 6C) ===
-                  Solo visible con módulo de mesas. Desde DP-9.2 no depende de la asignación de
-                  mesas: sin ella la cuenta es del mesero que la atiende. */}
-              {showMesasTab && (
-                <div className="border-t pt-4 space-y-3">
-                  <p className="text-sm font-semibold">Pedidos desde Portal QR</p>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <Label className="text-sm font-medium">
-                        Permitir que el comensal envíe pedidos desde el QR
-                      </Label>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Si está activo, el comensal puede agregar productos a un carrito y enviar el
-                        pedido a cocina. El cobro siempre se realiza en caja. Funciona con y sin
-                        asignación de mesas.
-                      </p>
-                    </div>
-                    <Switch
-                      checked={bizForm.portal_qr_permitir_pedidos_cliente === true}
-                      onCheckedChange={(v) =>
-                        setBizForm({ ...bizForm, portal_qr_permitir_pedidos_cliente: v })
-                      }
-                    />
-                  </div>
-                </div>
-              )}
-
-              <Button onClick={saveBiz}>Guardar configuración</Button>
-            </CardContent>
-          </Card>
-
-          {/* DP-21 · El IVA con el que se cobra: su tarjeta, su comando y su «Guardado». El campo
-              de antes («IVA / Impuesto (%)») guardaba una clave que nadie leía. */}
-          <IvaDelNegocio puedeCambiar={esDeMando(miPuesto)} />
-          {/* DP-21 (M12): comensales, mesero y Caja. La primera que se confirma gana. */}
-          <QuienEligeLaPropina puedeCambiar={esDeMando(miPuesto)} />
-          <FoliosDelNegocio puedeCambiar={miPuesto === 'dueno'} />
-
-          {/* === ESTACIONES DE PREPARACIÓN (6A) ===
-              UNA sola card que contiene:
-              - switch para activar
-              - explicación corta
-              - ayuda expandible
-              - CRUD de estaciones (solo si está activo)
-              No se duplica el título ni el card. */}
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle className="text-base font-heading flex items-center gap-2">
-                <UtensilsCrossed className="w-4 h-4 text-primary" />
-                Estaciones de preparación
-              </CardTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Permite separar pedidos por áreas como cocina, barra, postres, bebidas, etc.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <Label className="text-sm font-medium">Activar estaciones de preparación</Label>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Si está apagado, la cocina funciona como flujo normal. Si está encendido, cada
-                    categoría puede asignarse a una estación y cada usuario de cocina puede ver solo
-                    su estación.
-                  </p>
-                </div>
-                <Switch
-                  checked={bizForm.estaciones_preparacion_activas === true}
-                  onCheckedChange={(v) => {
-                    setBizForm({ ...bizForm, estaciones_preparacion_activas: v });
-                  }}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={saveBiz}>
-                  Guardar
-                </Button>
-              </div>
-
-              {/* Contenido expandible — solo se ve si el switch está encendido */}
-              {bizForm.estaciones_preparacion_activas === true && (
-                <div className="pt-3 border-t space-y-3">
-                  <EstacionesAyuda />
-                  <EstacionesPreparacionSection embedded />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* DP-16 · 2.2: desde cuántos minutos la pantalla de cocina pinta ámbar y rojo. */}
-          <div className="mt-4">
-            <AlertasDeEspera
-              ambar={bizForm.cocina_alerta_ambar_min}
-              roja={bizForm.cocina_alerta_roja_min}
-              onCambiar={(parche) => setBizForm({ ...bizForm, ...parche })}
-              onGuardar={saveBiz}
-            />
-          </div>
-
-          {/* Categorías de productos — fuente única para Recetas, Productos, Mesero y Portal QR */}
-          <div className="mt-4">
-            <CategoriasProductoSection />
-          </div>
-
-          {/* Unidades de medida — disponibles en Registrar compra y Registrar inventario existente */}
-          <div className="mt-4">
-            <UnidadesMedidaSection />
-          </div>
-
-          {/* Proveedores — administración CRUD básica para compras */}
-          <div className="mt-4">
-            <ProveedoresSection />
-          </div>
-
-          {/* DP-20: las copias de impresión y, discreta y última, la entrada al laboratorio del proveedor. */}
-          <CopiasDeImpresion puedeCambiar={esDeMando(miPuesto)} />
-          <EntradaAlLaboratorio />
-        </TabsContent>
-
-        {esDeMando(miPuesto) && (
-          <TabsContent value="caja">
-            <CajasALaVez />
-            <UmbralDeRetiro />
-            {/* DP-21: quién teclea su PIN al abrir y a los cuántos minutos se cierra el mando. */}
-            <CandadoDeMando puedeCambiar={esDeMando(miPuesto)} />
-          </TabsContent>
-        )}
-        {esDeMando(miPuesto) && (
-          <TabsContent value="descuentos">
-            <PermitirDescuentos />
-          </TabsContent>
-        )}
-
-        <TabsContent value="usuarios">
-          <UsuariosPOSSection cfg={cfg} />
-        </TabsContent>
-
-        {esDeMando(miPuesto) && (
-          <TabsContent value="datos">
-            <DatosSection />
-          </TabsContent>
-        )}
-
-        {esDeMando(miPuesto) && (
-          <TabsContent value="integraciones">
-            <IntegracionesRespaldos />
-          </TabsContent>
-        )}
-
-        {posUser?.rol === 'administrador' && esUsuarioDePlataforma(posUser) && (
-          <TabsContent value="mantenimiento">
-            <ReiniciarSistemaSection />
-          </TabsContent>
-        )}
-
-        {showMesasTab && (
-          <TabsContent value="mesas">
-            <Card>
-              <CardHeader className="flex flex-col gap-3">
-                <div className="flex flex-row items-center justify-between flex-wrap gap-2">
-                  <div>
-                    <CardTitle className="text-base font-heading">Mapa de mesas</CardTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Arrastra cada mesa para colocarla. Click para editar.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {puedeEliminarMesas && mesas.length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => setShowEliminarMesas(true)}
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Eliminar todas
-                      </Button>
-                    )}
-                    {puedeRepartirMesas(miPuesto) && mesasActivas.length > 0 && (
-                      <Button size="sm" variant="outline" onClick={() => setShowRepartir(true)}>
-                        <Users className="w-4 h-4 mr-1" />
-                        Repartir mesas
-                      </Button>
-                    )}
-                    {/* DP-15 · Dar de alta y renombrar zonas (antes no había pantalla). */}
-                    {PUEDEN_EDITAR_ZONAS.includes(miPuesto) && (
-                      <Button size="sm" variant="outline" onClick={() => setShowZonas(true)}>
-                        Zonas
-                      </Button>
-                    )}
-                    <Button size="sm" onClick={openNew}>
-                      <Plus className="w-4 h-4 mr-1" />
-                      Nueva mesa
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex gap-1.5 overflow-x-auto pb-1">
-                  {zonasDelEditor.map((z) => (
-                    <button
-                      key={z}
-                      onClick={() => setZonaFiltro(z)}
-                      className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${zonaFiltro === z ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'}`}
-                    >
-                      {z}{' '}
-                      <span className="opacity-60">
-                        ({cargandoMesas ? '…' : mesasDelPlano(mesasActivas, z).length})
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isMobile ? (
-                  <>
-                    <MesaListMobile
-                      mesas={mesasFiltradas}
-                      cargando={cargandoMesas}
-                      onEdit={(m) => {
-                        setEditingMesa(m);
-                        setShowMesaDialog(true);
-                      }}
-                      onReorder={handleReorder}
-                    />
-                    <p className="text-xs text-muted-foreground mt-3">
-                      En móvil puedes editar y reordenar las mesas. Para usar el mapa libre con drag
-                      & drop, abre la app en computadora o tablet.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <MesaMapEditor
-                      mesas={mesasFiltradas}
-                      cargando={cargandoMesas}
-                      selectedId={editingMesa?.id}
-                      onMesaClick={(m) => {
-                        setEditingMesa(m);
-                        setShowMesaDialog(true);
-                      }}
-                      onPositionChange={handlePositionChange}
-                      onCreateFirst={openNew}
-                    />
-                    <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-                      <Save className="w-3 h-3" />
-                      Las posiciones se guardan automáticamente al soltar.
-                    </p>
-                  </>
-                )}
-                {mesasDesactivadas.length > 0 && (
-                  <div className="mt-4 rounded-lg border p-3" aria-label="Mesas desactivadas">
-                    <p className="text-sm font-semibold">
-                      Mesas desactivadas ({mesasDesactivadas.length})
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      No aparecen en el mapa ni con los meseros. Su historial se conserva.
-                    </p>
-                    <ul className="flex flex-col gap-1.5">
-                      {mesasDesactivadas.map((m) => (
-                        <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
-                          <span>
-                            Mesa {m.numero}
-                            {sufijoDelNombreDeLaMesa(m)} · {m.zona || 'Interior'}
-                          </span>
-                          <Button size="sm" variant="outline" onClick={() => reactivarMesa(m)}>
-                            Reactivar
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-      </Tabs>
-
-      <RepartirMesasDialog
-        open={showRepartir}
-        mesas={mesasActivas}
-        asignacionActiva={cfg?.asignacion_mesas_activa === true}
-        onClose={() => setShowRepartir(false)}
-      />
-
-      {/* Eliminar mesas demo Dialog */}
-      <Dialog open={showEliminarMesas} onOpenChange={setShowEliminarMesas}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-heading flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-              Eliminar mesas demo
-            </DialogTitle>
-          </DialogHeader>
-          <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm">
-            <p className="font-semibold mb-2">
-              Esto eliminará las mesas actuales para que puedas crear el mapa desde cero. ¿Seguro?
-            </p>
-            <p className="text-xs text-muted-foreground">
-              No se borrarán: ventas, productos, recetas, inventario, usuarios ni configuración.
-              Solo las mesas.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEliminarMesas(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" disabled={eliminando} onClick={eliminarMesasDemo}>
-              {eliminando ? 'Eliminando...' : 'Sí, eliminar todas'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Mesa Edit Dialog (crear/editar) */}
-      <ZonasDelSalonDialog
-        open={showZonas}
-        onOpenChange={setShowZonas}
-        zonas={zonasLeidas}
-        alRenombrar={(antes, despues) => {
-          if (zonaFiltro === antes) setZonaFiltro(despues);
-        }}
-      />
-      <MesaEditDialog
-        open={showMesaDialog}
-        mesa={editingMesa}
-        zonas={zonasDelEditor}
-        onClose={() => {
-          setShowMesaDialog(false);
-          setEditingMesa(null);
-        }}
-        onSave={handleSaveMesa}
-        onDelete={handleDeleteMesa}
-      />
+      <PageHeader title="Configuración" description="Ajustes de POS Don Poncho" />
+      {isMobile ? (
+        seccion === null ? (
+          lista
+        ) : (
+          pagina
+        )
+      ) : (
+        <div className="flex items-start gap-6">
+          <div className="w-60 shrink-0">{lista}</div>
+          {pagina}
+        </div>
+      )}
     </div>
   );
 }

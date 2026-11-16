@@ -136,8 +136,7 @@ test.describe('la sala del mesero (DP-14.6)', () => {
       await exigirEstadoDeLaMesa(duena, MESA, 'libre', 'La mesa vacía cancelada no quedó libre.');
       sinFallos();
 
-      await duena.goto('/configuracion');
-      await duena.getByRole('tab', { name: 'Mesas' }).click();
+      await duena.goto('/configuracion?seccion=salon');
       await duena
         .getByRole('button', { name: /Nueva mesa|Agregar mesa/ })
         .first()

@@ -99,6 +99,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/caja/fijar-ajustes-del-corte",
+      "comando": "caja.fijar_ajustes_del_corte",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/caja/fijar-cajas-simultaneas",
       "comando": "caja.fijar_cajas_simultaneas",
       "escribe": true,
@@ -108,6 +115,13 @@
     {
       "ruta": "/api/caja/fijar-copias-de-impresion",
       "comando": "caja.fijar_copias_de_impresion",
+      "escribe": true,
+      "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/caja/fijar-papel-a-tu-gusto",
+      "comando": "caja.fijar_papel_a_tu_gusto",
       "escribe": true,
       "roles": ["administrador", "dueno"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
@@ -327,6 +341,20 @@
       "comando": "configuracion.fijar_termino",
       "escribe": true,
       "roles": ["administrador", "dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/gastos/cajon-para-pagar",
+      "comando": "gastos.cajon_para_pagar",
+      "escribe": false,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/gastos/pagos-de-la-caja",
+      "comando": "gastos.pagos_de_la_caja",
+      "escribe": false,
+      "roles": ["administrador", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {

@@ -3,15 +3,17 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { TARJETAS } from './secciones.ts';
+
 /**
- * DP-15 · «DATOS» E «INTEGRACIONES» SON DEL DUEÑO Y DEL ADMINISTRADOR, NO DEL GERENTE.
+ * DP-15 · «DATOS» ES DEL DUEÑO Y DEL ADMINISTRADOR, NO DEL GERENTE (DP-21 · Bloque 21: sus tarjetas).
  *
  * `posUser.rol` junta dueño, administrador y gerente en «administrador» (el vocabulario de cuatro
- * roles del frontend heredado), así que una pestaña condicionada a `posUser?.rol === 'administrador'`
- * la ve también la gerente. Las que deciden quién manda de verdad se condicionan al puesto REAL
- * (`esDeMando(miPuesto)`), como ya hacían «Caja» y «Descuentos» (DP-14). Este contrato ata las dos
- * pestañas y su contenido a esa regla. El servidor, aparte, no le deja leer la bitácora de
- * integraciones (`autorizacion.test.ts`).
+ * roles del frontend heredado), así que algo condicionado a `posUser?.rol === 'administrador'` lo ve
+ * también la gerente. Lo que decide quién manda de verdad se condiciona al puesto REAL
+ * (`esDeMando(miPuesto)`), como hacían «Caja», «Descuentos» y «Datos». Con la Configuración
+ * ordenada, esa regla vive en el mapa (`secciones.ts`, `visiblePara: 'mando'`) y este contrato la ata
+ * a las tarjetas de antes. («Integraciones» ya no existe: se quitó en el Bloque 21.)
  */
 
 const RAIZ_WEB = process.cwd().endsWith('web') ? process.cwd() : join(process.cwd(), 'apps', 'web');
@@ -27,20 +29,25 @@ function codigo(): string {
     .replace(/\s+/g, '');
 }
 
-describe('DP-15 · las pestañas de mando de Configuración', () => {
-  it.each(['datos', 'integraciones'])(
-    'la pestaña «%s» y su contenido se ven sólo con un puesto de mando',
-    (pestana) => {
-      const c = codigo();
-      expect(c).toContain(`{esDeMando(miPuesto)&&(<TabsTriggervalue="${pestana}">`);
-      expect(c).toContain(`{esDeMando(miPuesto)&&(<TabsContentvalue="${pestana}">`);
-      for (const etiqueta of ['TabsTrigger', 'TabsContent']) {
-        expect(c).not.toContain(`'administrador'&&(<${etiqueta}value="${pestana}">`);
-      }
-    },
-  );
+describe('DP-15 · lo de mando de la Configuración', () => {
+  it.each([
+    'exportar',
+    'importar',
+    'las-cajas',
+    'pin-en-retiros',
+    'candado-de-mando',
+    'descuentos',
+  ])('la tarjeta «%s» se ve sólo con un puesto de mando', (id) => {
+    expect(TARJETAS.find((t) => t.id === id)?.visiblePara).toBe('mando');
+  });
+
+  it('el mapa decide por el puesto REAL (`esDeMando`/`puesto`), nunca por `rol === administrador` a secas', () => {
+    const c = codigo();
+    expect(c).toContain('puesto:miPuesto??null');
+    expect(c).not.toContain("posUser?.rol==='administrador'&&(<");
+  });
 
   it('el selector de apariencia sólo lo ve el dueño (el servidor sólo a él le deja guardar)', () => {
-    expect(codigo()).toContain("{miPuesto==='dueno'?(<SelectorDeApariencia/>):(");
+    expect(codigo()).toContain("miPuesto==='dueno'?(<SelectorDeApariencia/>):(");
   });
 });

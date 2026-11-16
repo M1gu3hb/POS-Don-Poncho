@@ -1,11 +1,15 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import { Outlet, useLocation, useNavigate } from '@/enrutado';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { useConfig } from '@/lib/ConfigContext';
 import { hasPermission } from '@/lib/permissions';
 import { ROLES } from '@/lib/constants';
-import { inicioDeLaSesion, rutaPermitidaParaElPuesto } from '@/lib/packageConfig';
+import {
+  inicioDeLaSesion,
+  navegacionParaRolYPlantilla,
+  rutaPermitidaParaElPuesto,
+} from '@/lib/packageConfig';
 import Sidebar from './Sidebar';
 import BrandedBackground from './BrandedBackground';
 import BrandColorsApplier from './BrandColorsApplier';
@@ -18,6 +22,8 @@ import { MorfiCargando } from '~/morfi/MorfiCargando';
 import { textoDeCarga } from '~/morfi/textos-de-carga';
 import { ModoEspera } from '~/espera/ModoEspera';
 import { CandadoDeLaSesion } from '~/espera/CandadoDeLaSesion';
+import { ArmazonTactil } from '~/tacto/ArmazonTactil';
+import { useBarraLateral } from '~/tacto/use-barra-lateral';
 
 /**
  * `marco="modelo"` (bloque D de la 2.4): las pantallas de los cinco modelos no tenían
@@ -29,10 +35,6 @@ import { CandadoDeLaSesion } from '~/espera/CandadoDeLaSesion';
  */
 export default function AppLayout({ marco = 'interno' }) {
   const deModelo = marco === 'modelo';
-  // Plegada en las pantallas de modelo, como dice arriba. La fusión c1ada17 la dejó abierta
-  // (`useState(false)`): con 240 px de barra, la nota de entrada de la tienda no cabía en la
-  // tableta y su «Agregar canje» quedaba debajo de otros elementos.
-  const [collapsed, setCollapsed] = useState(deModelo);
   const { posUser, isLoading } = usePOSAuth();
   const navigate = useNavigate();
   // Libera body locks (overflow/pointer-events) si quedó algún portal pegado al cambiar de ruta.
@@ -59,6 +61,14 @@ export default function AppLayout({ marco = 'interno' }) {
   // Mientras la configuración carga, `paquete_modo` es el de omisión (`tienda`): decidir el
   // inicio con él mandaba a la mesera a la pantalla de mesas de la tienda. Se espera.
   const { paquete_modo, isLoading: cargandoConfig } = useConfig();
+  // DP-21 · Bloque 9 (O5): plegada o abierta, y el aparato se acuerda de lo que se eligió. Sin elegir,
+  // empieza plegada en las pantallas de modelo (con 240 px de barra, la nota de entrada de la tienda
+  // no cabía en la tableta: fusión c1ada17) y en los puestos de una o dos secciones (mesero, cocina:
+  // no tiene caso 240 px para enseñar sólo «Mesas»). Lo que el aparato elige manda.
+  const { plegada: collapsed, alternar } = useBarraLateral({
+    deModelo,
+    secciones: navegacionParaRolYPlantilla(posUser?.rol, paquete_modo, hasPermission).length,
+  });
   // Una vista del restaurante se decide con el menú de SU plantilla: mientras carga, se espera.
   const esperandoPlantilla = cargandoConfig && pathname.startsWith('/restaurante/');
   const rutaAjena =
@@ -92,7 +102,7 @@ export default function AppLayout({ marco = 'interno' }) {
     <div className="flex relative min-h-dvh">
       <BrandColorsApplier />
       <BrandedBackground />
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
+      <Sidebar collapsed={collapsed} onToggle={alternar} />
       <main
         // `min-w-0` (DP-11.1): un hijo de flex mide por omisión lo que su contenido más ancho, y en el
         // teléfono una fila que no se encoge estiraba la página a lo ancho (Configuración: 543 de 412).
@@ -117,6 +127,9 @@ export default function AppLayout({ marco = 'interno' }) {
       {/* DP-21: el mando, el cajero y el almacén teclean su PIN al abrir la app; el mando,
           además, a los minutos sin tocar la pantalla. Mesero y cocina entran directo. */}
       <CandadoDeLaSesion />
+      {/* DP-21 · Bloque 9: lo táctil del armazón (sin menú ni selección en la pulsación larga, el alto
+          visible con el teclado en pantalla y el campo enfocado al centro). Sólo el POS: el portal no. */}
+      <ArmazonTactil />
     </div>
   );
 }

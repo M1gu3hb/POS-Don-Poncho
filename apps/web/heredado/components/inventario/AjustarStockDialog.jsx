@@ -379,6 +379,7 @@ export default function AjustarStockDialog({ open, onClose, ingrediente }) {
             </Label>
             <Input
               type="number"
+              inputMode="decimal"
               value={cantidad}
               onChange={(e) => setCantidad(e.target.value)}
               placeholder="0"
@@ -417,6 +418,7 @@ export default function AjustarStockDialog({ open, onClose, ingrediente }) {
             </Label>
             <Input
               type="number"
+              inputMode="decimal"
               value={equivalencia}
               onChange={(e) => setEquivalencia(e.target.value)}
               placeholder={

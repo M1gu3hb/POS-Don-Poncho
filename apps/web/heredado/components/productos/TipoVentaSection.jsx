@@ -263,6 +263,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
               <Label className="text-xs">Precio por {v.unidad_variable || 'g'} *</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={v.precio_por_unidad_variable ?? ''}
@@ -279,6 +280,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
               <Label className="text-xs">Cantidad mínima ({v.unidad_variable || 'g'})</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={v.cantidad_minima_variable ?? ''}
@@ -295,6 +297,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
               <Label className="text-xs">Cantidad máxima ({v.unidad_variable || 'g'})</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={v.cantidad_maxima_variable ?? ''}
@@ -311,6 +314,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
               <Label className="text-xs">Incremento permitido ({v.unidad_variable || 'g'})</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={v.incremento_variable ?? ''}
@@ -402,6 +406,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
               <Label className="text-xs">Capacidad del contenedor (ml) *</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 step="1"
                 min="0"
                 value={v.capacidad_contenedor_ml ?? ''}
@@ -418,6 +423,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
               <Label className="text-xs">Porciones por contenedor *</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 step="1"
                 min="0"
                 value={v.porciones_por_contenedor ?? ''}
@@ -434,6 +440,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
               <Label className="text-xs">ml por porción (opcional)</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.1"
                 min="0"
                 value={v.ml_por_porcion ?? ''}
@@ -460,6 +467,7 @@ export default function TipoVentaSection({ value = {}, onChange, ingredientes = 
               <Label className="text-xs">Precio por porción *</Label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={v.precio_por_porcion ?? ''}

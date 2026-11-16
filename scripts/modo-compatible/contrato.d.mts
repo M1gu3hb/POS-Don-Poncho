@@ -8,6 +8,8 @@ export interface RevisionDelModoCompatible {
     readonly animaciones: number;
     readonly dinamicas: number;
     readonly degradados: number;
+    readonly coloresNuevos: number;
+    readonly tiene: number;
   };
   readonly aviso: { readonly aspecto: boolean; readonly decideLaHoja: boolean };
 }

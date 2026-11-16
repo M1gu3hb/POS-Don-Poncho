@@ -38,3 +38,48 @@ export function leidoDe(
 export function hayCambios(parche: Readonly<Record<string, unknown>>): boolean {
   return Object.keys(parche).length > 0;
 }
+
+/**
+ * DP-21 · Bloque 21 · ¿LA PERSONA CAMBIÓ ALGO EN ESTA TARJETA DESDE QUE SE LLENÓ?
+ *
+ * Es lo que enciende «Guardar» y lo que hace preguntar «¿Salir sin guardar?». NO es «¿difiere de
+ * lo guardado?»: un ajuste que nunca se guardó enseña su valor por omisión, y eso no es un cambio
+ * de nadie. (Al guardar sí viaja, con lo demás de la tarjeta: `parcheDeLaSeccion`.)
+ */
+export function seToco(enPantalla: ValoresDeSeccion, alLlenar: ValoresDeSeccion | null): boolean {
+  if (alLlenar === null) return false;
+  return Object.keys(enPantalla).some(
+    (campo) =>
+      campo in alLlenar && JSON.stringify(enPantalla[campo]) !== JSON.stringify(alLlenar[campo]),
+  );
+}
+
+/**
+ * DP-21 · Bloque 21 · AL LLEGAR UNA CONFIGURACIÓN NUEVA, LA TARJETA SE PONE AL DÍA SIN BORRAR LO
+ * TECLEADO.
+ *
+ * Con cada tarjeta guardando lo suyo, guardar una hace que la configuración se relea y que TODAS
+ * las tarjetas de la sección se vuelvan a llenar. Llenarlas a secas borraba, sin aviso, lo que la
+ * persona había cambiado en otra tarjeta y todavía no guardaba.
+ *
+ *   · `enPantalla`: el formulario de la tarjeta ahora;
+ *   · `alLlenar`: el formulario como quedó la última vez que se llenó (`null` la primera vez);
+ *   · `delServidor`: el formulario que sale de la configuración que acaba de llegar.
+ *
+ * Lo que difiere de `alLlenar` es lo que la persona tocó: eso se queda. Lo demás toma lo nuevo.
+ * Sólo existen los campos de `delServidor`.
+ */
+export function ponerAlDia<T extends ValoresDeSeccion>(
+  enPantalla: ValoresDeSeccion,
+  alLlenar: ValoresDeSeccion | null,
+  delServidor: T,
+): T {
+  if (alLlenar === null) return delServidor;
+  const resultado: Record<string, unknown> = { ...delServidor };
+  for (const campo of Object.keys(delServidor)) {
+    if (!(campo in enPantalla)) continue;
+    const tocado = JSON.stringify(enPantalla[campo]) !== JSON.stringify(alLlenar[campo]);
+    if (tocado) resultado[campo] = enPantalla[campo];
+  }
+  return resultado as T;
+}

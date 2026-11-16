@@ -16,6 +16,7 @@ import {
   DOCUMENTOS_CON_COPIAS,
   OPCIONES_DE_COPIAS,
 } from './copias-formulario.ts';
+import { useCambiosSinGuardar } from '~/configuracion/cambios-sin-guardar';
 
 /**
  * OPERACIÓN → «COPIAS DEL TICKET DE VENTA», «DE LA PRECUENTA» Y «DEL CORTE» (DP-20 · refuerzo §3).
@@ -51,6 +52,8 @@ export function CopiasDeImpresion({
     actuales !== undefined &&
     guardadas.data !== undefined &&
     !copiasIguales(actuales, guardadas.data);
+  // DP-21 · Bloque 21: salir con esto sin guardar avisa.
+  useCambiosSinGuardar('copias', hayCambios);
 
   async function guardar(): Promise<void> {
     if (guardando || actuales === undefined) return;

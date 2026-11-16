@@ -1,0 +1,31 @@
+/* DP-21 · Bloque 9 · M16 — Los diálogos y los paneles con el teclado en pantalla.
+
+   Con el teclado arriba, la ventana (`100vh`, `50%`) sigue midiendo lo de antes y el pie de un
+   diálogo —sus botones— queda DEBAJO del teclado. `ArmazonTactil` copia el alto que de verdad se
+   ve (el `visualViewport`) a `--alto-visible`, y pone `data-teclado` en `<html>` mientras el
+   teclado está arriba (`alto-visible.ts`). Sólo entonces:
+
+     · el diálogo se centra en lo que se ve y no mide más que eso: su contenido se desplaza por
+       dentro y los botones del pie quedan a la vista;
+     · el panel lateral mide lo visible, de arriba abajo.
+
+   Sin teclado no entra ninguna regla: un diálogo se ve exactamente como siempre (sus propias clases
+   de alto, `max-h-[90vh]`, mandan). Va SIN `@layer` a propósito: tiene que ganarle a esas clases
+   mientras el teclado está arriba, y sólo entonces. Los ejes de la ventana (`top`, `max-height`,
+   `height`) no son de las animaciones de apertura (`transform` y `opacity`). Se apunta por
+   `data-slot`, no por `role="dialog"`: un popover también lo tiene, y se coloca por su cuenta. */
+
+html[data-teclado]
+  :is([data-slot='dialog-content'], [data-slot='alert-dialog-content'])[data-state='open'] {
+  top: calc(var(--alto-visible) / 2);
+  max-height: calc(var(--alto-visible) - var(--espacio-4));
+  overflow-y: auto;
+}
+
+html[data-teclado] [data-slot='sheet-content'][data-state='open'] {
+  top: 0;
+  bottom: auto;
+  height: var(--alto-visible);
+  max-height: var(--alto-visible);
+  overflow-y: auto;
+}

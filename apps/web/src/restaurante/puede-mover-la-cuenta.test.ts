@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { puedeMoverLaCuenta, textoDelEnlaceParaMoverLaCuenta } from './puede-mover-la-cuenta.ts';
+import { puedeMoverLaCuenta } from './puede-mover-la-cuenta.ts';
 
 /**
  * DP-15.1 · Quién ve el enlace «Cambiar de mesa» en el panel de la mesa del mapa.
@@ -30,10 +30,5 @@ describe('quién puede mover la cuenta desde el mapa', () => {
 
   it.each(['cajero', 'cocina', 'almacen', null])('%s, nunca', (puesto) => {
     expect(puedeMoverLaCuenta({ puesto, yoId: 'u1', atiendeId: 'u1' })).toBe(false);
-  });
-
-  it('al mesero el enlace le dice sólo «Cambiar de mesa»: unir y dividir no son suyos desde ahí', () => {
-    expect(textoDelEnlaceParaMoverLaCuenta('mesero')).toBe('Cambiar de mesa');
-    expect(textoDelEnlaceParaMoverLaCuenta('gerente')).toBe('Cambiar de mesa, unir o dividir');
   });
 });

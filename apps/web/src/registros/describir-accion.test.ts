@@ -10,7 +10,7 @@ import { describirAccion } from './describir-accion.ts';
 describe('DP-15 · la auditoría en palabras', () => {
   it('el renombre de una caja, con el antes y el después', () => {
     expect(describirAccion('caja.nombrar_terminal', { antes: 'Caja 1', despues: 'Barra' })).toBe(
-      'Cambió el nombre de una caja: «Caja 1» → «Barra»',
+      'Cambió el nombre de un aparato: «Caja 1» → «Barra»',
     );
   });
 
@@ -38,7 +38,7 @@ describe('DP-15 · la auditoría en palabras', () => {
     expect(describirAccion('constructor', {})).toBe('Otro cambio registrado');
     expect(describirAccion('toString.x', {})).toBe('Otro cambio registrado');
     expect(describirAccion('caja.nombrar_terminal', null)).toBe(
-      'Cambió el nombre de una caja: «» → «»',
+      'Cambió el nombre de un aparato: «» → «»',
     );
   });
 });
@@ -178,5 +178,135 @@ describe('DP-21 · Bloque 6 · el folio en la auditoría, como se lee en el tick
     ).toBe(
       'Folios: prefijo «DP», primer folio de las cuentas 1001 y de los cortes 101 (antes: sin prefijo, 1 y 1)',
     );
+  });
+
+  it('el ticket a tu gusto dice qué se quitó y qué se volvió a poner, sin nombres de campo crudos', () => {
+    expect(
+      describirAccion('caja.fijar_papel_a_tu_gusto', {
+        apagados: ['ticket.folio', 'precuenta.mesero'],
+        encendidos: ['ticket.propina'],
+      }),
+    ).toBe(
+      'Ticket a su gusto: quitó folio (ticket de venta), mesero (precuenta); volvió a poner propina (ticket de venta)',
+    );
+    expect(describirAccion('caja.fijar_papel_a_tu_gusto', { apagados: [], encendidos: [] })).toBe(
+      'Ticket a su gusto: sin cambios',
+    );
+  });
+
+  it('los ajustes del corte dicen qué cambió: costos al cajero y comisión de la terminal', () => {
+    expect(
+      describirAccion('caja.fijar_ajustes_del_corte', {
+        antes: { mostrarCostosACaja: false, comisionTerminalBp: null },
+        despues: { mostrarCostosACaja: true, comisionTerminalBp: 360 },
+      }),
+    ).toBe(
+      'Corte de la caja: el cajero ahora ve costos y utilidad en su corte; comisión de la terminal: sin tasa → 3.6 %',
+    );
+    expect(
+      describirAccion('caja.fijar_ajustes_del_corte', {
+        antes: { mostrarCostosACaja: true, comisionTerminalBp: 360 },
+        despues: { mostrarCostosACaja: false, comisionTerminalBp: 360 },
+      }),
+    ).toBe('Corte de la caja: el cajero ya no ve costos ni utilidad en su corte');
+  });
+});
+
+describe('DP-21 · lo que cambió el cierre antes de instalar, en palabras', () => {
+  it('el IVA, con el antes y el después', () => {
+    expect(
+      describirAccion('configuracion.fijar_impuesto', {
+        antes: { puntosBase: 1600, incluidoEnPrecio: true },
+        despues: { puntosBase: 0, incluidoEnPrecio: true },
+      }),
+    ).toBe('Cambió el IVA: 16 % incluido en el precio → sin IVA');
+    expect(
+      describirAccion('configuracion.fijar_impuesto', {
+        antes: { puntosBase: 0, incluidoEnPrecio: true },
+        despues: { puntosBase: 800, incluidoEnPrecio: false },
+      }),
+    ).toBe('Cambió el IVA: sin IVA → 8 % sumado al precio');
+  });
+
+  it('el candado de los puestos de mando', () => {
+    expect(
+      describirAccion('configuracion.fijar_candado_de_mando', {
+        antes: { minutos: 10 },
+        despues: { minutos: 5 },
+      }),
+    ).toBe('Candado del mando sin uso: 10 min → 5 min');
+  });
+
+  it('quién puede elegir la propina', () => {
+    expect(
+      describirAccion('configuracion.fijar_quien_elige_la_propina', {
+        antes: { comensales: true, mesero: false, caja: true },
+        despues: { comensales: true, mesero: true, caja: false },
+      }),
+    ).toBe('Quién elige la propina: comensales y Caja → comensales y mesero');
+    expect(
+      describirAccion('configuracion.fijar_quien_elige_la_propina', {
+        antes: { comensales: true, mesero: true, caja: true },
+        despues: { comensales: false, mesero: false, caja: false },
+      }),
+    ).toBe('Quién elige la propina: comensales, mesero y Caja → nadie');
+  });
+
+  it('la propina que fija la Caja, y cuando cambia la que ya estaba', () => {
+    expect(
+      describirAccion('cuenta.fijar_propina', {
+        antes: null,
+        despues: { tipo: 'porcentaje', puntosBase: 1000, origen: 'caja' },
+        cambio: false,
+      }),
+    ).toBe('La Caja eligió la propina: 10 %');
+    expect(
+      describirAccion('cuenta.fijar_propina', {
+        antes: { tipo: 'porcentaje', puntosBase: 1500, origen: 'portal_qr' },
+        despues: { tipo: 'sin_propina', puntosBase: 0, origen: 'caja' },
+        cambio: true,
+      }),
+    ).toBe('La Caja CAMBIÓ la propina que ya estaba elegida: 15 % → sin propina');
+  });
+
+  it('el nombre de cada caja (el lugar, no el aparato)', () => {
+    expect(
+      describirAccion('caja.nombrar_cajas', {
+        antes: [null, null],
+        despues: ['Caja principal', null],
+      }),
+    ).toBe('Nombres de las cajas: «Caja 1», «Caja 2» → «Caja principal», «Caja 2»');
+  });
+
+  it('el nombre de un aparato ya no se dice como si fuera una caja', () => {
+    expect(
+      describirAccion('caja.nombrar_terminal', { antes: 'Aparato 3', despues: 'iMin mostrador' }),
+    ).toBe('Cambió el nombre de un aparato: «Aparato 3» → «iMin mostrador»');
+  });
+
+  it('los aparatos «Caja N» que pasaron a «Aparato N»', () => {
+    expect(
+      describirAccion('mantenimiento.renombrar_aparatos', { renombrados: 34, omitidos: 1 }),
+    ).toBe('Renombró 34 aparatos de «Caja N» a «Aparato N» (1 se quedó como estaba)');
+  });
+
+  it('el arranque de la operación real y su bloqueo', () => {
+    expect(
+      describirAccion('mantenimiento.activar_operacion', {
+        yaEstaba: false,
+        desde: '2026-11-16T22:30:00.000Z',
+      }),
+    ).toBe('Activó la operación real: desde aquí lo cobrado ya no se borra');
+    expect(
+      describirAccion('mantenimiento.activar_operacion', {
+        yaEstaba: true,
+        desde: '2026-11-16T22:30:00.000Z',
+      }),
+    ).toBe('Pidió activar la operación real: ya estaba activa');
+    expect(
+      describirAccion('mantenimiento.quitar_bloqueo_de_operacion', {
+        teniaDesde: '2026-11-16T22:30:00.000Z',
+      }),
+    ).toBe('QUITÓ el bloqueo de la operación real');
   });
 });

@@ -47,7 +47,7 @@ type Tasa = 'Sin IVA' | '8 %' | '16 %';
 
 /** Configuración → el IVA, por la pantalla: elegir, guardar y ver «✓ Guardado». */
 async function elegirElIva(duena: Page, tasa: Tasa): Promise<void> {
-  await duena.goto('/configuracion?tab=negocio');
+  await duena.goto('/configuracion?seccion=ventas-y-cobro');
   const tarjeta = duena.getByRole('region', { name: 'IVA', exact: true });
   const opcion = tarjeta.getByRole('radio', { name: tasa, exact: true });
   await expect(opcion).toBeVisible();

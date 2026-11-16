@@ -11,6 +11,7 @@ import { HandCoins } from 'lucide-react';
 import { useConfig } from '@/lib/ConfigContext';
 
 import { invocarComando } from '~/cliente/api';
+import { useCambiosSinGuardar } from '~/configuracion/cambios-sin-guardar';
 
 /**
  * CONFIGURACIÓN → VENTAS Y COBRO → PROPINAS · «¿Quién puede elegir la propina?» (DP-21 · M12).
@@ -75,6 +76,8 @@ export function QuienEligeLaPropina({
   const [listo, setListo] = useState(false);
   const casillas = elegidas ?? guardadas;
   const hayCambios = OPCIONES.some(({ clave }) => casillas[clave] !== guardadas[clave]);
+  // DP-21 · Bloque 21: salir con esto sin guardar avisa.
+  useCambiosSinGuardar('quien-elige-la-propina', hayCambios);
 
   async function guardar(): Promise<void> {
     if (guardando) return;

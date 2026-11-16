@@ -72,6 +72,7 @@ export default function AbrirMesaDialog({ open, onOpenChange, mesa, onConfirm, l
             </Label>
             <Input
               type="number"
+              inputMode="numeric"
               min="1"
               max="20"
               value={form.personas}

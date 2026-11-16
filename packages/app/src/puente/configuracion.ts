@@ -2,6 +2,7 @@ import 'server-only';
 
 import { ErrorDominio, plantillaDeOrganizacion } from '@morphiqpos/contracts';
 import { leyendoConReintento, obtenerDb, type Transaccion } from '@morphiqpos/data';
+import { esRfcValido } from '@morphiqpos/domain/venta';
 import { z } from 'zod';
 
 import { leerDocumentoConCandado } from '../configuracion/documento-con-candado.ts';
@@ -10,6 +11,11 @@ import {
   esquemaDelImpuesto,
   impuestoEn,
 } from '../configuracion/impuesto-del-negocio.ts';
+import {
+  CLAVE_PAPEL_A_TU_GUSTO,
+  esquemaPapelATuGusto,
+  papelATuGustoEn,
+} from '../caja/papel-a-tu-gusto.ts';
 import { CLAVE_DE_EXPERIENCIA, EXPERIENCIA } from '../configuracion/experiencia.ts';
 import {
   CLAVE_DE_FOLIOS,
@@ -159,6 +165,13 @@ const SOLO_POR_COMANDO = new Set([
   'retiro_pin_arriba_de_centavos',
   // DP-20 · Copias del ticket, la precuenta y el corte: sólo dueño o administrador.
   'copias_de_impresion',
+  // DP-21 · Bloque 20 · Si el cajero ve costos en su corte y la comisión de la terminal: sólo dueño o
+  // administrador (`caja.fijar_ajustes_del_corte`), no un gerente por el camino genérico.
+  'mostrar_costos_a_caja',
+  'comision_terminal_bp',
+  // DP-21 · Bloque 12 · Qué renglones salen en la precuenta y en el ticket: sólo dueño o administrador
+  // (`caja.fijar_papel_a_tu_gusto`).
+  CLAVE_PAPEL_A_TU_GUSTO,
   // DP-21 · El IVA cambia el total de toda cuenta posterior: `configuracion.fijar_impuesto`.
   CLAVE_DEL_IMPUESTO,
   // DP-21 · Bloque 6 · El prefijo y el primer folio: `configuracion.fijar_folios` (sólo el dueño).
@@ -195,6 +208,7 @@ const CLAVES_EDITABLES = new Set([
   'descuentos_permitidos',
   'retiro_pin_arriba_de_centavos',
   'copias_de_impresion',
+  CLAVE_PAPEL_A_TU_GUSTO,
   CLAVE_DEL_IMPUESTO,
   CLAVE_DE_FOLIOS,
   CLAVE_DE_OPERACION_DESDE,
@@ -235,6 +249,8 @@ const CLAVES_EDITABLES = new Set([
   'direccion',
   'telefono',
   'correo',
+  // DP-21 · Bloque 20 · El RFC que el corte imprime («RFC: …»): 12 o 13 caracteres, en mayúsculas.
+  'rfc',
   'propinas_activas',
   'propina_porcentajes_sugeridos',
   'asignacion_mesas_activa',
@@ -309,6 +325,17 @@ const BASCULA = z
  * La tasa de la terminal: entero de 0 a 1000 puntos base (0 a 10 %). El mercado va del 2 al
  * 4 %; un 36 tecleado donde iba 3.6 cobraría una comisión diez veces mayor en cada corte.
  */
+/** El RFC: vacío (o `null`) lo quita; si hay, 12 o 13 caracteres en mayúsculas (`@morphiqpos/domain/venta`). */
+function exigirRfc(valor: unknown): void {
+  if (valor === null || valor === '') return;
+  if (typeof valor !== 'string' || !esRfcValido(valor)) {
+    throw new ErrorDominio(
+      'PUENTE_CAMPO_INVALIDO',
+      'El RFC lleva 12 caracteres (persona moral) o 13 (persona física), en mayúsculas y sin espacios.',
+    );
+  }
+}
+
 function exigirTasaDeTerminal(valor: unknown): void {
   if (valor === null) return;
   if (typeof valor !== 'number' || !Number.isInteger(valor) || valor < 0 || valor > 1000) {
@@ -444,6 +471,8 @@ export async function leerConfiguracion(
     // DP-21 · Bloque 6 · El prefijo y el primer folio, completos: sin escribir, un negocio lee su
     // folio como siempre (sin prefijo, desde 1).
     [CLAVE_DE_FOLIOS]: foliosEn(guardados),
+    // DP-21 · Bloque 12 · Los renglones del papel, completos: sin escribir, sale todo (el de siempre).
+    [CLAVE_PAPEL_A_TU_GUSTO]: papelATuGustoEn(guardados),
     // Su `Configuracion.jsx` depende de `updated_date` para volver a hidratar
     // los formularios; sin él los interruptores se quedan con el valor viejo.
     id: fila.configId ?? organizacionId,
@@ -537,6 +566,7 @@ export async function guardarConfiguracionParcial(
     );
   }
   if ('comision_terminal_bp' in parche) exigirTasaDeTerminal(parche['comision_terminal_bp']);
+  if ('rfc' in parche) exigirRfc(parche['rfc']);
   if ('ancho_papel_ticket' in parche) {
     exigirForma(
       z.union([z.literal(58), z.literal(80)]),
@@ -587,6 +617,13 @@ export async function guardarConfiguracionParcial(
       z.number().int().min(5).max(30),
       parche['candado_de_mando_min'],
       'El candado de los puestos de mando va de 5 a 30 minutos.',
+    );
+  }
+  if (CLAVE_PAPEL_A_TU_GUSTO in parche) {
+    exigirForma(
+      esquemaPapelATuGusto,
+      parche[CLAVE_PAPEL_A_TU_GUSTO],
+      'El papel lleva los dos (precuenta y ticket) con todos sus renglones en sí o no.',
     );
   }
   if (CLAVE_DEL_IMPUESTO in parche) {

@@ -21,6 +21,7 @@ import {
   vistaPreviaDeLosFolios,
   type FoliosEditables,
 } from './folios-formulario.ts';
+import { useCambiosSinGuardar } from '~/configuracion/cambios-sin-guardar';
 
 /**
  * CONFIGURACIÓN → OPERACIÓN · «Prefijo del folio» y «Primer folio» (DP-21 · Bloque 6).
@@ -65,6 +66,8 @@ export function FoliosDelNegocio({
     actual !== undefined &&
     guardado.data !== undefined &&
     !foliosIgualesEnPantalla(actual, guardado.data);
+  // DP-21 · Bloque 21: salir con esto sin guardar avisa.
+  useCambiosSinGuardar('folios', hayCambios);
   const bloqueo = guardado.data
     ? porQueNoSeCambiaElPrimerFolio(guardado.data.operaDesde, guardado.data.hayFolios)
     : null;

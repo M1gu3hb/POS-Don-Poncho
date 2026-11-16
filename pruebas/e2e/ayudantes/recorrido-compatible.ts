@@ -11,6 +11,7 @@ import {
   pedirLaCuentaDeLaMesa,
 } from './recorrido-sala.ts';
 import type { AlFallar, AlLlegar, EnLaParada } from './recorrido-tipos.ts';
+import { recorrerElGloboDeLaMesa, recorrerLasPiezas } from './recorrido-estados.ts';
 import { entradaDe } from './sesion.ts';
 
 export {
@@ -122,20 +123,19 @@ async function entrarConElPin(
 /** Configuración, pestaña por pestaña, hasta el laboratorio del proveedor. */
 async function recorrerConfiguracion(page: Page, alLlegar: EnLaParada): Promise<void> {
   await page.goto('/configuracion');
-  await expect(page.getByRole('tab', { name: 'Impresión' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Este aparato' })).toBeVisible();
   await page.waitForLoadState('networkidle');
   await alLlegar({ nombre: 'configuracion', tapar: [] });
 
-  await page.getByRole('tab', { name: 'Impresión' }).click();
+  await page.getByRole('tab', { name: 'Este aparato' }).click();
   await expect(page.getByRole('region', { name: 'Impresora de este aparato' })).toBeVisible();
   await alLlegar({ nombre: 'configuracion-impresion', tapar: [] });
 }
 
-/** Configuración → Operación → «Hardware y pruebas de impresión», con la contraseña del proveedor. */
+/** Configuración → Laboratorio del proveedor → «Hardware y pruebas de impresión», con la contraseña del proveedor. */
 async function recorrerElLaboratorio(page: Page, alLlegar: EnLaParada): Promise<void> {
   expect(CLAVE_DEL_PROVEEDOR, 'falta MORPHIQPOS_E2E_CLAVE_PROVEEDOR').toBeTruthy();
-  await page.goto('/configuracion');
-  await page.getByRole('tab', { name: 'Operación' }).click();
+  await page.goto('/configuracion?seccion=laboratorio');
   await page.getByRole('button', { name: 'Hardware y pruebas de impresión' }).click();
   await page.getByLabel('Contraseña del proveedor').fill(CLAVE_DEL_PROVEEDOR ?? '');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -168,6 +168,12 @@ export async function recorrer(
       tapar: [...tapar, page.getByRole('region', { name: /Notifications/ })],
       ...(nota === undefined ? {} : { nota }),
     });
+  // `MORPHIQPOS_SOLO_PIEZAS=1`: sólo los estados de las piezas de Radix (sin sesión, sin caja, sin
+  // proveedor): para repasar rápido los colores del motor viejo.
+  if (process.env['MORPHIQPOS_SOLO_PIEZAS'] !== undefined) {
+    await tramo('estados de las piezas', alFallar, () => recorrerLasPiezas(page, enLaParada));
+    return;
+  }
   page = await entrarConElPin(pestana, enLaParada, alFallar);
   await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
   await page.waitForLoadState('networkidle');
@@ -183,6 +189,9 @@ export async function recorrer(
   } finally {
     await dejarLaSalaComoEstaba(page);
   }
+  await tramo('globo de la mesa', alFallar, () => recorrerElGloboDeLaMesa(page, enLaParada));
   await tramo('configuración', alFallar, () => recorrerConfiguracion(page, enLaParada));
   await tramo('laboratorio', alFallar, () => recorrerElLaboratorio(page, enLaParada));
+  // DP-21 · Bloque 15: las piezas de Radix en sus estados abiertos y marcados (sin sesión).
+  await tramo('estados de las piezas', alFallar, () => recorrerLasPiezas(page, enLaParada));
 }

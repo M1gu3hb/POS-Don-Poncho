@@ -115,7 +115,7 @@ test.describe('las estaciones de punta a punta (DP-12.5)', () => {
       });
 
       await test.step('en Configuración se crean cuatro estaciones y «Dulce» pasa a «Postres»', async () => {
-        await duena.goto('/configuracion?tab=negocio');
+        await duena.goto('/configuracion?seccion=cocina');
         for (const nombre of [NOMBRE.parrilla, NOMBRE.frios, NOMBRE.dulce, NOMBRE.temporal]) {
           await crearEstacion(duena, nombre);
         }

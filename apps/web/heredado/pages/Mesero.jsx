@@ -121,10 +121,10 @@ import { usePuesto } from '@/components/configuracion/usePuesto';
 
 import { VistaDeSolicitudes } from '~/restaurante/VistaDeSolicitudes';
 // DP-15.1 · Quién ve «Cambiar de mesa» en el panel de la mesa: dirección siempre; el mesero, en sus mesas.
-import {
-  puedeMoverLaCuenta,
-  textoDelEnlaceParaMoverLaCuenta,
-} from '~/restaurante/puede-mover-la-cuenta';
+import { puedeMoverLaCuenta } from '~/restaurante/puede-mover-la-cuenta';
+// DP-21 · Bloque 10 · «Cambiar de mesa» abre aquí mismo las mesas libres: no saca del mapa.
+import { CambiarDeMesaAqui } from '~/restaurante/CambiarDeMesaAqui';
+import { avisoDelCambio, puedeUnirODividir } from '~/restaurante/cambiar-de-mesa-aqui';
 // DP-12.2: el portal en modo mesero (escanear el QR, mantener presionada una mesa, el carrito).
 import BarcodeScanner from '@/components/barcode/BarcodeScanner';
 import { esPedidoListo } from '~/restaurante/globos-de-solicitud';
@@ -135,6 +135,9 @@ import { MenuDeLaMesa } from '~/restaurante/portal-mesero/MenuDeLaMesa';
 import { QrDeLaMesaEnPantalla } from '~/restaurante/portal-mesero/QrDeLaMesaEnPantalla';
 import { tokenDelQrEscaneado } from '~/restaurante/portal-mesero/qr-escaneado';
 import { usePulsacionLarga } from '~/restaurante/portal-mesero/use-pulsacion-larga';
+// DP-21 · Bloque 9 (O4/M2): el mapa se escala al espacio que hay.
+import { MapaDeMesas } from '~/tacto/MapaDeMesas';
+import { cajasDelMapa } from '~/tacto/escala-del-mapa';
 import { useEscanerDelDocumento } from '~/cliente/use-escaner-del-documento';
 import {
   almacenDelAparato,
@@ -145,7 +148,6 @@ import { frasePorSolicitud, getAlertConfig, speak } from '@/lib/voiceAlert';
 import { sonar, sonarAntesDeHablar } from '~/sonidos/gestor';
 import { folioVisible } from '@morphiqpos/domain/venta';
 
-const MAP_HEIGHT = 600;
 // Hook simple para detectar móvil
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(
@@ -229,6 +231,8 @@ function Mesero() {
 
   // Propina (RP — antes de pedir cuenta)
   const [showPropinaMesero, setShowPropinaMesero] = useState(false);
+  // DP-21 · Bloque 10: el panel de «Cambiar de mesa», abierto sobre el de la mesa.
+  const [cambiandoDeMesa, setCambiandoDeMesa] = useState(false);
 
   // Reparación de mesa huérfana (estado != libre pero sin venta_activa_id)
   const [mesaHuerfana, setMesaHuerfana] = useState(null);
@@ -1481,6 +1485,25 @@ function Mesero() {
         }}
       />
       <DialogoDelPortalModoMesero buscada={portalDeMesa} alCerrar={() => setPortalDeMesa(null)} />
+      {cambiandoDeMesa && ventaActiva?.id && mesaActiva?.id && (
+        <CambiarDeMesaAqui
+          mesa={{
+            id: mesaActiva.id,
+            numero: Number(mesaActiva.numero),
+            zona: mesaActiva.zona ?? null,
+          }}
+          ordenId={ventaActiva.id}
+          alCerrar={() => setCambiandoDeMesa(false)}
+          alPasar={(destino) => {
+            // La cuenta ya está en la otra mesa: se avisa, se cierra el panel de la que quedó
+            // libre y el mapa se relee. No se sale de /mesero.
+            setCambiandoDeMesa(false);
+            toast.success(avisoDelCambio(destino.numero));
+            cerrarDialog();
+            queryClient.invalidateQueries({ queryKey: ['mesas'] });
+          }}
+        />
+      )}
       <MenuDeLaMesa
         mesa={menuDeMesa}
         alCerrar={cerrarMenuDeMesa}
@@ -1548,19 +1571,50 @@ function Mesero() {
           />
         </div>
       ) : (
-        <div
-          {...pulsacionLarga}
-          className="relative rounded-2xl overflow-hidden border-2"
-          style={{
-            height: MAP_HEIGHT,
-            background: floor.bg,
-            backgroundImage: floor.dotPattern,
-            backgroundSize: '24px 24px',
-            borderColor: floor.border,
-            boxShadow: isDark
+        // DP-21 · Bloque 9 (O4/M2): el dibujo entero de la zona se escala al ancho y al alto que hay (con
+        // la barra abierta o cerrada), sin mover las posiciones guardadas; si ni a 56 px por mesa cabe,
+        // se desplaza con el dedo. Era un alto fijo de 600 con `overflow-hidden`: las mesas de la
+        // orilla se cortaban.
+        <MapaDeMesas
+          agarre={pulsacionLarga}
+          cajas={cajasDelMapa(mesasZona, (id) => {
+            const unida = cajaDeLaUnion(
+              mesasZona.find((m) => m.id === id),
+              mesasDeLaZona,
+            );
+            return unida ? { x: unida.x, y: unida.y, ancho: unida.ancho, alto: unida.alto } : null;
+          })}
+          fondo={{
+            color: floor.bg,
+            patron: floor.dotPattern,
+            borde: floor.border,
+            sombra: isDark
               ? 'inset 0 4px 14px rgba(0,0,0,0.6), inset 0 -2px 6px rgba(255,255,255,0.05)'
               : 'inset 0 4px 10px rgba(0,0,0,0.15), inset 0 -2px 6px rgba(255,255,255,0.5)',
           }}
+          superposicion={
+            <>
+              {mesasZona.length === 0 && !sinMesasAsignadas && !cargandoMesas && (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/60">
+                  <div className="text-center">
+                    <UtensilsCrossed className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">No hay mesas en {zonaActiva}.</p>
+                    <p className="text-xs">Configúralas en Configuración → Mapa de mesas.</p>
+                  </div>
+                </div>
+              )}
+              {cargandoMesas && (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/70">
+                  <div className="text-center">
+                    <div className="w-10 h-10 rounded-2xl bg-muted/60 mx-auto mb-2 flex items-center justify-center">
+                      <UtensilsCrossed className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <p className="text-sm">Cargando mapa de mesas…</p>
+                  </div>
+                </div>
+              )}
+            </>
+          }
         >
           {mesasZona.map((mesa) => {
             const resp = getResponsable(mesa);
@@ -1579,26 +1633,7 @@ function Mesero() {
               />
             );
           })}
-          {mesasZona.length === 0 && !sinMesasAsignadas && !cargandoMesas && (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/60">
-              <div className="text-center">
-                <UtensilsCrossed className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No hay mesas en {zonaActiva}.</p>
-                <p className="text-xs">Configúralas en Configuración → Mapa de mesas.</p>
-              </div>
-            </div>
-          )}
-          {cargandoMesas && (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/70">
-              <div className="text-center">
-                <div className="w-10 h-10 rounded-2xl bg-muted/60 mx-auto mb-2 flex items-center justify-center">
-                  <UtensilsCrossed className="w-5 h-5 animate-pulse" />
-                </div>
-                <p className="text-sm">Cargando mapa de mesas…</p>
-              </div>
-            </div>
-          )}
-        </div>
+        </MapaDeMesas>
       )}
 
       {/* Cards persistentes de solicitudes QR debajo del mapa */}
@@ -1945,14 +1980,27 @@ function Mesero() {
                       Boolean(mesaActiva.unida_a_mesa_id) ||
                       (mesas || []).some((m) => m.unida_a_mesa_id === mesaActiva.id),
                   }) && (
-                    // A15: un solo control. El `Button` con `asChild` se vuelve el enlace; antes era
-                    // un botón DENTRO de un enlace (dos controles anidados para el teclado).
-                    <Button asChild variant="outline" className="w-full">
-                      <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`}>
+                    // DP-21 · Bloque 10 (M24): «Cambiar de mesa» abre AQUÍ las mesas libres; ya no
+                    // saca del mapa. Unir y dividir siguen en «Mesa activa», con un enlace que dice
+                    // lo que hace y que sólo ve quien ahí puede hacerlo (la dirección).
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setCambiandoDeMesa(true)}
+                      >
                         <ArrowLeftRight className="w-4 h-4 mr-1" />
-                        {textoDelEnlaceParaMoverLaCuenta(miPuesto)}
-                      </Link>
-                    </Button>
+                        Cambiar de mesa
+                      </Button>
+                      {puedeUnirODividir(miPuesto) && (
+                        // A15: un solo control. El `Button` con `asChild` se vuelve el enlace.
+                        <Button asChild variant="link" className="w-full">
+                          <Link to={`/restaurante/mesa-activa?mesa=${mesaActiva.id}`}>
+                            Unir o dividir la cuenta
+                          </Link>
+                        </Button>
+                      )}
+                    </>
                   )}
               </div>
             </div>

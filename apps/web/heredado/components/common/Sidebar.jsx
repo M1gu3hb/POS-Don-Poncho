@@ -14,8 +14,6 @@ import {
   CalendarDays,
   CalendarPlus,
   ChefHat,
-  ChevronLeft,
-  ChevronRight,
   ClipboardCheck,
   Clock,
   Coffee,
@@ -35,6 +33,8 @@ import {
   Menu,
   NotebookPen,
   Package,
+  PanelLeftClose,
+  PanelLeftOpen,
   PlusCircle,
   QrCode,
   Receipt,
@@ -169,10 +169,14 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   const closeMobile = () => setMobileOpen(false);
 
-  const SidebarContent = () => (
+  // DP-21 · Bloque 9: `plegada` lo dice quien lo pinta. La barra fija de escritorio, como la
+  // tenga la persona; el cajón del teléfono y de la tableta, SIEMPRE con sus nombres.
+  const SidebarContent = ({ plegada }) => (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Header */}
-      <div className="flex items-center gap-3 px-3 py-4 border-b border-sidebar-border">
+      <div
+        className={`flex items-center gap-3 py-4 border-b border-sidebar-border ${plegada ? 'flex-col px-2' : 'px-3'}`}
+      >
         <div className="w-10 h-10 rounded-full overflow-hidden bg-superficie/10 flex items-center justify-center shrink-0 ring-2 ring-borde/10">
           {config.logo_url ? (
             <img
@@ -184,7 +188,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             <Sparkles className="w-5 h-5 text-info" />
           )}
         </div>
-        {!collapsed && (
+        {!plegada && (
           <div className="min-w-0">
             <p className="text-sm font-heading font-bold truncate tracking-wide">
               {nombreVisibleDelNegocio(config.nombre_negocio)}
@@ -194,12 +198,23 @@ export default function Sidebar({ collapsed, onToggle }) {
             </p>
           </div>
         )}
+        {/* DP-21 · Bloque 9 (O5/M3): un botón claro y grande, a la vista plegada y desplegada. Era un
+            chevron de 16 px al 50 % de opacidad. 44 × 44 como mínimo, con el icono Y la palabra. Plegada,
+            la palabra va debajo del icono (la barra mide 64 px). Abajo de `lg:` no hay barra fija: ahí
+            está el botón «Menú» del cajón (más abajo), del mismo tamaño. */}
         <button
+          type="button"
           onClick={onToggle}
-          className="ml-auto text-sidebar-foreground/50 hover:text-sidebar-foreground hidden lg:block"
-          aria-label={collapsed ? 'Expandir' : 'Colapsar'}
+          className={`hidden min-h-11 min-w-11 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80 lg:flex ${plegada ? 'w-full flex-col gap-0.5 px-0.5 text-[10px] leading-tight font-medium' : 'ml-auto gap-2 px-3 text-sm font-medium'}`}
+          aria-label={plegada ? 'Mostrar menú' : 'Ocultar menú'}
+          style={{ touchAction: 'manipulation' }}
         >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {plegada ? (
+            <PanelLeftOpen className="w-5 h-5" aria-hidden="true" />
+          ) : (
+            <PanelLeftClose className="w-5 h-5" aria-hidden="true" />
+          )}
+          <span>{plegada ? 'Mostrar' : 'Ocultar'}</span>
         </button>
       </div>
 
@@ -217,8 +232,8 @@ export default function Sidebar({ collapsed, onToggle }) {
               onClick={closeMobile}
               // Colapsada sólo queda el ícono: sin esto el enlace no tiene nombre y un
               // lector de pantalla —o quien no reconoce el dibujo— no sabe a dónde lleva.
-              aria-label={collapsed ? etiquetaDeNavegacion(item, vocabulario) : undefined}
-              title={collapsed ? etiquetaDeNavegacion(item, vocabulario) : undefined}
+              aria-label={plegada ? etiquetaDeNavegacion(item, vocabulario) : undefined}
+              title={plegada ? etiquetaDeNavegacion(item, vocabulario) : undefined}
               aria-current={active ? 'page' : undefined}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${active ? 'text-primario-texto font-semibold' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'}`}
               style={
@@ -266,7 +281,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                     : undefined
                 }
               />
-              {!collapsed && (
+              {!plegada && (
                 <span className="truncate">{etiquetaDeNavegacion(item, vocabulario)}</span>
               )}
             </Link>
@@ -276,7 +291,7 @@ export default function Sidebar({ collapsed, onToggle }) {
 
       {/* Theme toggle — visible en todas las páginas internas */}
       <div className="px-2 pb-1">
-        {collapsed ? (
+        {plegada ? (
           <div className="flex justify-center pb-1">
             <ThemeToggle
               variant="icon"
@@ -292,12 +307,12 @@ export default function Sidebar({ collapsed, onToggle }) {
       {posUser && (
         <div className="border-t border-sidebar-border p-3">
           <div
-            className={`flex items-center gap-3 ${collapsed ? 'flex-col justify-center' : ''}`}
+            className={`flex items-center gap-3 ${plegada ? 'flex-col justify-center' : ''}`}
           >
             <div className="w-8 h-8 bg-sidebar-accent rounded-full flex items-center justify-center text-xs font-bold shrink-0">
               {posUser.nombre?.charAt(0).toUpperCase()}
             </div>
-            {!collapsed && (
+            {!plegada && (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate">{posUser.nombre}</p>
                 <p className="text-[10px] text-sidebar-foreground/50">{posUser.etiqueta ?? ROLE_LABELS[posUser.rol]}</p>
@@ -316,7 +331,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             >
               <Volume2 className="w-4 h-4" />
             </button>
-            {!collapsed && (
+            {!plegada && (
               <button
                 onClick={logout}
                 className="text-sidebar-foreground/50 hover:text-peligro transition-colors p-1"
@@ -333,15 +348,17 @@ export default function Sidebar({ collapsed, onToggle }) {
 
   return (
     <>
-      {/* Hamburguesa móvil/tablet (oculto en lg+) */}
+      {/* El botón del cajón, móvil/tablet (oculto en lg+). DP-21 · Bloque 9: del mismo tamaño que el de
+          plegar de la barra fija (44 px como mínimo) y con la palabra «Menú», no sólo el dibujo. */}
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-3 left-3 z-[70] w-11 h-11 bg-sidebar rounded-xl flex items-center justify-center text-sidebar-foreground shadow-lg active:scale-95 transition-transform"
+        className="lg:hidden fixed top-3 left-3 z-[70] min-h-11 min-w-11 gap-2 px-3 bg-sidebar rounded-xl flex items-center justify-center text-sm font-medium text-sidebar-foreground shadow-lg active:scale-95 transition-transform"
         aria-label="Abrir menú"
         style={{ touchAction: 'manipulation' }}
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-5 h-5" aria-hidden="true" />
+        <span>Menú</span>
       </button>
 
       {/* Drawer móvil/tablet */}
@@ -365,7 +382,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             >
               <X className="w-5 h-5" />
             </button>
-            <SidebarContent />
+            <SidebarContent plegada={false} />
           </div>
         </div>
       )}
@@ -374,7 +391,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       <div
         className={`hidden lg:flex flex-col fixed left-0 top-0 bottom-0 z-30 transition-all duration-300 shadow-xl ${collapsed ? 'w-16' : 'w-60'}`}
       >
-        <SidebarContent />
+        <SidebarContent plegada={collapsed} />
       </div>
 
       <DialogoDelSonido abierto={sonidoAbierto} alCambiar={setSonidoAbierto} />

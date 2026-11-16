@@ -21,7 +21,7 @@ import {
 import { sufijoDelNombreDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { esParaLlevar, rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 import { notaSinLasOpciones, renglonesDeLasOpciones } from '~/venta/opciones-del-renglon';
-import { folioVisible } from '@morphiqpos/domain/venta';
+import { folioVisible, seEnsena } from '@morphiqpos/domain/venta';
 
 /**
  * Ticket / pre-cuenta para impresora térmica, con el ESTILO TÉRMICO (DP-20 · refuerzo §1).
@@ -54,6 +54,9 @@ export default function PreCuentaTicket({
   const letra = letraTermica(ancho);
   const logo = logoTermico(ancho);
   const px = (n) => `${n}px`;
+  // DP-21 · Bloque 12 · «El ticket a tu gusto»: qué renglones salen en ESTE papel. Sin elegir nada, todos.
+  const enseña = (campo) =>
+    seEnsena(config?.papel_a_tu_gusto, esFinal ? 'ticket' : 'precuenta', campo);
   const montoPropina = propinaDerivada(venta);
   const fecha =
     venta.fecha_cierre || venta.fecha_apertura
@@ -86,7 +89,9 @@ export default function PreCuentaTicket({
 
       {/* Encabezado con logo */}
       <div style={{ textAlign: 'center', paddingBottom: '10px', marginBottom: '10px', borderBottom: LINEA_TERMICA }}>
-        {(config?.logo_ticket_url || config?.logo_url) && config?.mostrar_logo_ticket !== false && (
+        {enseña('logo') &&
+          (config?.logo_ticket_url || config?.logo_url) &&
+          config?.mostrar_logo_ticket !== false && (
           <img
             src={config.logo_ticket_url || config.logo_url}
             alt=""
@@ -102,13 +107,15 @@ export default function PreCuentaTicket({
             }}
           />
         )}
-        <h1 style={{ fontWeight: 900, fontSize: px(letra.titulo), letterSpacing: '1px', lineHeight: 1.1, margin: 0 }}>
-          {config?.nombre_negocio || NOMBRE_DEL_NEGOCIO}
-        </h1>
-        {config?.direccion && (
+        {enseña('negocio') && (
+          <h1 style={{ fontWeight: 900, fontSize: px(letra.titulo), letterSpacing: '1px', lineHeight: 1.1, margin: 0 }}>
+            {config?.nombre_negocio || NOMBRE_DEL_NEGOCIO}
+          </h1>
+        )}
+        {enseña('direccion') && config?.direccion && (
           <p style={{ fontSize: px(letra.chica), margin: '4px 0 0' }}>{config.direccion}</p>
         )}
-        {config?.telefono && (
+        {enseña('telefono') && config?.telefono && (
           <p style={{ fontSize: px(letra.chica), margin: 0 }}>Tel: {config.telefono}</p>
         )}
         <p style={{ fontWeight: 900, marginTop: '8px', marginBottom: 0, fontSize: px(letra.fuerte) }}>
@@ -127,13 +134,15 @@ export default function PreCuentaTicket({
 
       {/* Datos */}
       <div style={{ fontSize: px(letra.chica), marginBottom: '10px' }}>
-        <Row label="Folio" value={folioVisible(venta.serie, venta.folio, config, 'numero')} bold />
-        {mesa && <Row label="Mesa" value={`#${mesa.numero}${sufijoDelNombreDeLaMesa(mesa)}`} />}
-        {venta.personas > 0 && <Row label="Personas" value={venta.personas} />}
-        {venta.cliente_nombre && <Row label="Cliente" value={venta.cliente_nombre} />}
-        {venta.usuario_mesero_nombre && <Row label="Mesero" value={venta.usuario_mesero_nombre} />}
-        {venta.usuario_cajero_nombre && <Row label="Cajero" value={venta.usuario_cajero_nombre} />}
-        <Row label="Fecha" value={fecha} />
+        {enseña('folio') && (
+          <Row label="Folio" value={folioVisible(venta.serie, venta.folio, config, 'numero')} bold />
+        )}
+        {enseña('mesa') && mesa && <Row label="Mesa" value={`#${mesa.numero}${sufijoDelNombreDeLaMesa(mesa)}`} />}
+        {enseña('personas') && venta.personas > 0 && <Row label="Personas" value={venta.personas} />}
+        {enseña('cliente') && venta.cliente_nombre && <Row label="Cliente" value={venta.cliente_nombre} />}
+        {enseña('mesero') && venta.usuario_mesero_nombre && <Row label="Mesero" value={venta.usuario_mesero_nombre} />}
+        {enseña('cajero') && venta.usuario_cajero_nombre && <Row label="Cajero" value={venta.usuario_cajero_nombre} />}
+        {enseña('fecha') && <Row label="Fecha" value={fecha} />}
       </div>
 
       {/* Productos — 6B: si la línea es variable, mostramos "500 g × Producto"
@@ -152,11 +161,13 @@ export default function PreCuentaTicket({
                 </span>
                 <span style={{ whiteSpace: 'nowrap' }}>{formatCurrency(d?.subtotal)}</span>
               </div>
-              {(d?.opciones_snapshot != null
-                ? renglonesDeLasOpciones(d.opciones_snapshot)
-                : String(d?.opciones_texto || '')
-                    .split(' · ')
-                    .filter(Boolean)
+              {(!enseña('opciones')
+                ? []
+                : d?.opciones_snapshot != null
+                  ? renglonesDeLasOpciones(d.opciones_snapshot)
+                  : String(d?.opciones_texto || '')
+                      .split(' · ')
+                      .filter(Boolean)
               ).map((texto) => (
                 <p
                   key={texto}
@@ -166,7 +177,7 @@ export default function PreCuentaTicket({
                   + {texto}
                 </p>
               ))}
-              {nota && (
+              {enseña('notas') && nota && (
                 <p style={{ fontSize: px(letra.chica), paddingLeft: '16px', margin: '2px 0 0' }}>
                   » {nota}
                 </p>
@@ -184,7 +195,7 @@ export default function PreCuentaTicket({
         return (
           <div style={{ borderTop: LINEA_TERMICA, paddingTop: '8px', marginBottom: '8px' }}>
             <Row label="Subtotal" value={formatCurrency(papel.renglones)} />
-            {papel.descuento > 0 && (
+            {enseña('descuento') && papel.descuento > 0 && (
               <Row label="Descuento" value={`-${formatCurrency(papel.descuento)}`} />
             )}
             {seMencionaElIva(papel.iva) && (
@@ -193,13 +204,13 @@ export default function PreCuentaTicket({
                 value={formatCurrency(papel.iva)}
               />
             )}
-            {montoPropina > 0 && (
+            {enseña('propina') && montoPropina > 0 && (
               <Row
                 label={`Propina${venta.propina_porcentaje > 0 ? ` (${venta.propina_porcentaje}%)` : ''}`}
                 value={formatCurrency(montoPropina)}
               />
             )}
-            {venta.propina_tipo === 'pendiente' && !esFinal && (
+            {enseña('propina') && venta.propina_tipo === 'pendiente' && !esFinal && (
               <Row label="Propina" value="A definir en caja" />
             )}
             <div
@@ -218,17 +229,19 @@ export default function PreCuentaTicket({
             </div>
             {esFinal && venta.metodo_pago && (
               <div style={{ marginTop: '8px', fontSize: px(letra.chica) }}>
-                <Row label="Pago" value={venta.metodo_pago} capitalize />
-                {venta.monto_efectivo > 0 && (
+                {enseña('forma_de_pago') && (
+                  <Row label="Pago" value={venta.metodo_pago} capitalize />
+                )}
+                {enseña('efectivo_recibido') && venta.monto_efectivo > 0 && (
                   <Row label="Efectivo" value={formatCurrency(venta.monto_efectivo)} />
                 )}
-                {venta.monto_tarjeta > 0 && (
+                {enseña('forma_de_pago') && venta.monto_tarjeta > 0 && (
                   <Row label="Tarjeta" value={formatCurrency(venta.monto_tarjeta)} />
                 )}
-                {venta.monto_transferencia > 0 && (
+                {enseña('forma_de_pago') && venta.monto_transferencia > 0 && (
                   <Row label="Transf." value={formatCurrency(venta.monto_transferencia)} />
                 )}
-                {venta.cambio > 0 && (
+                {enseña('cambio') && venta.cambio > 0 && (
                   <Row label="Cambio" value={formatCurrency(venta.cambio)} bold />
                 )}
               </div>
@@ -264,11 +277,13 @@ export default function PreCuentaTicket({
       )}
 
       {/* Footer */}
-      <div style={{ textAlign: 'center', borderTop: LINEA_TERMICA, paddingTop: '8px', fontSize: px(letra.chica) }}>
-        <p style={{ margin: 0 }}>{config?.mensaje_ticket || '¡Gracias por tu visita!'}</p>
-        {config?.ticket_footer && <p style={{ margin: '2px 0 0' }}>{config.ticket_footer}</p>}
-        {esFinal && <p style={{ margin: '2px 0 0' }}>Conserva este ticket</p>}
-      </div>
+      {enseña('mensaje') && (
+        <div style={{ textAlign: 'center', borderTop: LINEA_TERMICA, paddingTop: '8px', fontSize: px(letra.chica) }}>
+          <p style={{ margin: 0 }}>{config?.mensaje_ticket || '¡Gracias por tu visita!'}</p>
+          {config?.ticket_footer && <p style={{ margin: '2px 0 0' }}>{config.ticket_footer}</p>}
+          {esFinal && <p style={{ margin: '2px 0 0' }}>Conserva este ticket</p>}
+        </div>
+      )}
 
       {/* DP-20 · El pie de la copia: de quién es este papel. */}
       {pie && (

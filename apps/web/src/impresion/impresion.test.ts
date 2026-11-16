@@ -96,10 +96,11 @@ describe('el ticket y la configuración', () => {
   });
 
   it('Configuración ofrece 58 / 80 mm junto a los datos del ticket', () => {
-    const pagina = leer('heredado/pages/Configuracion.jsx');
-    expect(pagina).toMatch(/ancho_papel_ticket: Number\(e\.target\.value\)/);
-    expect(pagina).toContain('<option value={58}>58 mm</option>');
-    expect(pagina).toContain('<option value={80}>80 mm</option>');
+    // DP-21 · Bloque 21: el ancho vive en la tarjeta «Ticket» (Configuración → Ticket y folios).
+    const ajustes = leer('src/configuracion/ajustes-de-tarjetas.ts');
+    expect(ajustes).toContain("clave: 'ancho_papel_ticket'");
+    expect(ajustes).toMatch(/valor: 58, nombre: '58 mm'/);
+    expect(ajustes).toMatch(/valor: 80, nombre: '80 mm'/);
   });
 
   it('la precuenta usa el rollo del negocio si nadie le pasa otro', () => {

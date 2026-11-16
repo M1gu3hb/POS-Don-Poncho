@@ -58,7 +58,12 @@ function Interruptor({
  * instante. Se manda SÓLO el interruptor tocado: el servidor lo mezcla con lo guardado y no pisa
  * lo que otro aparato cambió. Si el servidor no lo guarda, vuelve como estaba y lo dice.
  */
-export function ExperienciaDelNegocio() {
+export function ExperienciaDelNegocio({
+  grupo,
+}: {
+  /** DP-21 · Bloque 21: «morfi» (Apariencia) o «pin» (Personas y seguridad): cada una es su tarjeta. */
+  readonly grupo: 'morfi' | 'pin';
+}) {
   const { experiencia, cambiar } = useExperiencia();
   const consultas = useQueryClient();
   const [guardando, setGuardando] = useState(false);
@@ -95,26 +100,29 @@ export function ExperienciaDelNegocio() {
       aria-label="Experiencia del negocio"
       className="flex flex-col gap-(--espacio-5) p-(--espacio-4) sm:p-(--espacio-6)"
     >
-      <Interruptor
-        icono={<Smile aria-hidden className="size-5 shrink-0 text-primario" />}
-        titulo="Mascota Morfi"
-        explicacion="Morfi acompaña las cargas largas, la página que no existe y el modo espera. Apagada, cada lugar usa su versión sin mascota. Es para todo el negocio."
-        encendido={experiencia.mascota}
-        ocupado={guardando}
-        alCambiar={(mascota) => {
-          void guardar({ mascota });
-        }}
-      />
-      <Interruptor
-        icono={<LockKeyhole aria-hidden className="size-5 shrink-0 text-primario" />}
-        titulo="Pedir PIN al despertar"
-        explicacion="Al volver del modo espera, quien tiene la sesión teclea su PIN. Para que nadie use la caja o el tablero de otro mientras no estaba."
-        encendido={experiencia.pin_al_despertar}
-        ocupado={guardando}
-        alCambiar={(pin_al_despertar) => {
-          void guardar({ pin_al_despertar });
-        }}
-      />
+      {grupo === 'morfi' ? (
+        <Interruptor
+          icono={<Smile aria-hidden className="size-5 shrink-0 text-primario" />}
+          titulo="Mascota Morfi"
+          explicacion="Morfi acompaña las cargas largas, la página que no existe y el modo espera. Apagada, cada lugar usa su versión sin mascota. Es para todo el negocio."
+          encendido={experiencia.mascota}
+          ocupado={guardando}
+          alCambiar={(mascota) => {
+            void guardar({ mascota });
+          }}
+        />
+      ) : (
+        <Interruptor
+          icono={<LockKeyhole aria-hidden className="size-5 shrink-0 text-primario" />}
+          titulo="Pedir PIN al despertar"
+          explicacion="Al volver del modo espera, quien tiene la sesión teclea su PIN. Para que nadie use la caja o el tablero de otro mientras no estaba."
+          encendido={experiencia.pin_al_despertar}
+          ocupado={guardando}
+          alCambiar={(pin_al_despertar) => {
+            void guardar({ pin_al_despertar });
+          }}
+        />
+      )}
       {fallo === null ? null : (
         <Aviso tono="peligro" titulo={fallo}>
           Se queda como estaba guardado para el negocio.

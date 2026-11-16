@@ -66,32 +66,52 @@ const LO_QUE_SALE = {
   compra: { pagar: 'esta compra', registrar: 'la compra' },
 } as const;
 
+export type CajaElegida<F> =
+  | { readonly caso: 'ninguna' }
+  | { readonly caso: 'varias' }
+  | { readonly caso: 'una'; readonly fila: F; readonly esDeEsteAparato: boolean };
+
 /**
  * LA REGLA DE LA CAJA DE LA QUE SALE EL DINERO, una sola vez para el gasto y para la
  * compra de contado (bloque D de la 2.4): la de esta terminal; si esta terminal no tiene,
  * la única abierta de la sucursal; ninguna, o varias sin la de aquí, no se adivina.
+ *
+ * Sin lanzar: la usan el comando que paga y la lectura que dice, antes de pagar, de qué caja sale
+ * (DP-21 · Bloque 11).
  */
+export function elegirLaCajaDeLaQueSale<F extends { readonly terminal_id: string | null }>(
+  filas: readonly F[],
+  terminalId: string | null,
+): CajaElegida<F> {
+  if (filas.length === 0) return { caso: 'ninguna' };
+  const deEstaTerminal = filas.find((f) => terminalId !== null && f.terminal_id === terminalId);
+  if (deEstaTerminal !== undefined) {
+    return { caso: 'una', fila: deEstaTerminal, esDeEsteAparato: true };
+  }
+  const unica = filas.length === 1 ? filas[0] : undefined;
+  return unica === undefined
+    ? { caso: 'varias' }
+    : { caso: 'una', fila: unica, esDeEsteAparato: false };
+}
+
 function laCajaDeLaQueSale<F extends { readonly terminal_id: string | null }>(
   filas: readonly F[],
   terminalId: string | null,
   que: (typeof LO_QUE_SALE)[keyof typeof LO_QUE_SALE],
 ): F {
-  if (filas.length === 0) {
+  const elegida = elegirLaCajaDeLaQueSale(filas, terminalId);
+  if (elegida.caso === 'una') return elegida.fila;
+  if (elegida.caso === 'ninguna') {
     throw new ErrorDominio(
       'CAJA_CERRADA',
       `No hay una caja abierta. Ábrela antes de pagar ${que.pagar} en efectivo, ` +
         'o regístralo con tarjeta o transferencia si no salió del cajón.',
     );
   }
-  const deEstaTerminal = filas.find((f) => terminalId !== null && f.terminal_id === terminalId);
-  const fila = deEstaTerminal ?? (filas.length === 1 ? filas[0] : undefined);
-  if (fila === undefined) {
-    throw new ErrorDominio(
-      'CAJA_CERRADA',
-      `Hay varias cajas abiertas: registra ${que.registrar} desde la terminal de la caja de la que salió el dinero.`,
-    );
-  }
-  return fila;
+  throw new ErrorDominio(
+    'CAJA_CERRADA',
+    `Hay varias cajas abiertas: registra ${que.registrar} desde la terminal de la caja de la que salió el dinero.`,
+  );
 }
 
 /**

@@ -1,0 +1,1382 @@
+{
+  "_comentario": "Fotografía de la Configuración ANTES de la mudanza del Bloque 21. No se regenera: la prueba mudanza.contrato.test.ts busca cada control en su lugar nuevo.",
+  "generadoDe": "HEAD",
+  "archivos": [
+    "apps/web/heredado/pages/Configuracion.jsx",
+    "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+    "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+    "apps/web/heredado/components/configuracion/ConfiguracionDeVoz.jsx",
+    "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx",
+    "apps/web/heredado/components/configuracion/IntegracionesRespaldos.jsx",
+    "apps/web/heredado/components/configuracion/ReiniciarSistemaSection.jsx",
+    "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
+    "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx",
+    "apps/web/heredado/components/configuracion/UnidadesMedidaSection.jsx",
+    "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+    "apps/web/heredado/components/datos/DatosSection.jsx",
+    "apps/web/heredado/components/datos/ExportarDatos.jsx",
+    "apps/web/heredado/components/datos/ImportarDatos.jsx",
+    "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+    "apps/web/src/configuracion/SelectorDeApariencia.tsx",
+    "apps/web/src/configuracion/ExperienciaDelNegocio.tsx",
+    "apps/web/src/configuracion/SonidosDelNegocio.tsx",
+    "apps/web/src/configuracion/PruebaDeLaVozDeComandas.tsx",
+    "apps/web/src/configuracion/SonidoDelAparato.tsx",
+    "apps/web/src/configuracion/ModoEsperaDelAparato.tsx",
+    "apps/web/src/configuracion/AnuncioDeComandasDelAparato.tsx",
+    "apps/web/src/configuracion/TerminalesDeLaSucursal.tsx",
+    "apps/web/src/configuracion/CajaYDescuentos.tsx",
+    "apps/web/src/configuracion/NombresDeLasCajas.tsx",
+    "apps/web/src/configuracion/UmbralDeRetiro.tsx",
+    "apps/web/src/configuracion/CandadoDeMando.tsx",
+    "apps/web/src/configuracion/QuienEligeLaPropina.tsx",
+    "apps/web/src/configuracion/IvaDelNegocio.tsx",
+    "apps/web/src/configuracion/FoliosDelNegocio.tsx",
+    "apps/web/src/impresion/pantallas/ImpresionDelAparato.tsx",
+    "apps/web/src/impresion/pantallas/CopiasDeImpresion.tsx",
+    "apps/web/src/impresion/pantallas/EntradaAlLaboratorio.tsx",
+    "apps/web/src/impresion/pantallas/AjustesDeLaApp.tsx",
+    "apps/web/src/impresion/pantallas/LabProbarCajon.tsx",
+    "apps/web/src/cocina/AlertasDeEspera.tsx"
+  ],
+  "controles": [
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Datos del negocio",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Dirección",
+      "fuente": "etiqueta",
+      "clave": "direccion"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Teléfono",
+      "fuente": "etiqueta",
+      "clave": "telefono"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Correo",
+      "fuente": "etiqueta",
+      "clave": "correo"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Mensaje en ticket",
+      "fuente": "etiqueta",
+      "clave": "mensaje_ticket"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Ancho del papel del ticket",
+      "fuente": "etiqueta",
+      "clave": "ancho_papel_ticket"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "58 mm",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "80 mm",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Usar mesas",
+      "fuente": "etiqueta",
+      "clave": "usa_mesas"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Permitir venta sin stock",
+      "fuente": "etiqueta",
+      "clave": "permitir_venta_sin_stock"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Propinas",
+      "fuente": "subtitulo",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Activar propinas",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Porcentajes sugeridos (separados por coma)",
+      "fuente": "etiqueta",
+      "clave": "propina_porcentajes_sugeridos"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Abrir PDF automático al cerrar caja",
+      "fuente": "etiqueta",
+      "clave": "descargar_pdf_corte_auto"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Asignación de mesas y notificaciones",
+      "fuente": "subtitulo",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Activar asignación de mesas a meseros",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Silenciar notificaciones del administrador",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Pedidos desde Portal QR",
+      "fuente": "subtitulo",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Permitir que el comensal envíe pedidos desde el QR",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Guardar configuración",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Estaciones de preparación",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Activar estaciones de preparación",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Guardar",
+      "fuente": "boton",
+      "clave": "estaciones_preparacion_activas"
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Mapa de mesas",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "setShowRepartir(true)}> Repartir mesas",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "setShowZonas(true)}> Zonas",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Nueva mesa",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Mesas desactivadas",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "Mesas desactivadas",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "reactivarMesa(m)}> Reactivar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Configuracion.jsx",
+      "texto": "setShowEliminarMesas(false)}> Cancelar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Nombre del negocio",
+      "fuente": "etiqueta",
+      "clave": "nombre_negocio"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Nombre del sistema",
+      "fuente": "etiqueta",
+      "clave": "nombre_sistema"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Plataforma (marca)",
+      "fuente": "etiqueta",
+      "clave": "platform_brand"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Logos del negocio",
+      "fuente": "subtitulo",
+      "clave": "logo_url"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Logo del negocio",
+      "fuente": "propiedad",
+      "clave": "logo_ticket_url"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Logo en tickets",
+      "fuente": "propiedad",
+      "clave": "logo_pdf_url"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Logo en PDFs",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Fondo del sistema",
+      "fuente": "subtitulo",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Fondo del sistema (imagen completa)",
+      "fuente": "propiedad",
+      "clave": "background_logo_url"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Logo de fondo (marca de agua)",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Opacidad del fondo: %",
+      "fuente": "etiqueta",
+      "clave": "background_opacity"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Ajuste del fondo",
+      "fuente": "etiqueta",
+      "clave": "background_fit"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Cubrir toda la pantalla (recomendado)",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Mostrar imagen completa",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Pie de tickets y PDFs",
+      "fuente": "subtitulo",
+      "clave": "ticket_footer"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Pie del ticket térmico",
+      "fuente": "etiqueta",
+      "clave": "ticket_footer"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Pie de los PDFs",
+      "fuente": "etiqueta",
+      "clave": "pdf_footer"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Texto legal o pie general",
+      "fuente": "etiqueta",
+      "clave": "footer_text"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Apariencia",
+      "fuente": "subtitulo",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx",
+      "texto": "Colorear importes monetarios",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+      "texto": "Colores del sistema",
+      "fuente": "subtitulo",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+      "texto": "Color primario (degradados / glow)",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+      "texto": "Color primario",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+      "texto": "Color primario",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+      "texto": "Color de acento (botones / sidebar)",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+      "texto": "Color acento",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+      "texto": "Color acento",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ColoresSistemaSection.jsx",
+      "texto": "Restaurar por defecto",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ConfiguracionDeVoz.jsx",
+      "texto": "Voz de los avisos",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ConfiguracionDeVoz.jsx",
+      "texto": "Automática (recomendada)",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ConfiguracionDeVoz.jsx",
+      "texto": "Velocidad de la voz",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ConfiguracionDeVoz.jsx",
+      "texto": "escuchar(hayElegida ? elegida : CLAVE_AUTOMATICA, 'La voz elegida')} className=\"gap-2\" > Probar voz",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx",
+      "texto": "Usuarios POS",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx",
+      "texto": "Usuarios desactivados",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx",
+      "texto": "Usuarios desactivados",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IntegracionesRespaldos.jsx",
+      "texto": "Integraciones en la nube Demo — pendiente de configurar",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/IntegracionesRespaldos.jsx",
+      "texto": "Cola de sincronización pendiente registros en espera )}",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ReiniciarSistemaSection.jsx",
+      "texto": "Mantenimiento",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ReiniciarSistemaSection.jsx",
+      "texto": "Reiniciar sistema para cliente",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ReiniciarSistemaSection.jsx",
+      "texto": "Para confirmar, escribe el nombre de tu negocio",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ReiniciarSistemaSection.jsx",
+      "texto": "Cancelar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
+      "texto": "Categorías de productos",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
+      "texto": "abrirEditar(c)} title=\"Editar categoría\" >",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
+      "texto": "Agregar categoría",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
+      "texto": "Agregar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
+      "texto": "Nombre *",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
+      "texto": "Estación de preparación",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
+      "texto": "Guardar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx",
+      "texto": "Crear Cocina general",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx",
+      "texto": "Nueva estación",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx",
+      "texto": "abrirEditar(e)} title=\"Editar estación\" >",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx",
+      "texto": "Nombre *",
+      "fuente": "etiqueta",
+      "clave": "nombre"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx",
+      "texto": "Descripción (opcional)",
+      "fuente": "etiqueta",
+      "clave": "descripcion"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx",
+      "texto": "Color",
+      "fuente": "etiqueta",
+      "clave": "color"
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/UnidadesMedidaSection.jsx",
+      "texto": "Unidades de medida",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/UnidadesMedidaSection.jsx",
+      "texto": "Unidades separadas por coma",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "texto": "Proveedores",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "texto": "Nuevo",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "texto": "openEdit(p)} title=\"Editar\">",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "texto": "Nombre *",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "texto": "Persona de contacto",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "texto": "Teléfono",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "texto": "Correo",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "texto": "Notas",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/ProveedoresSection.jsx",
+      "texto": "Cancelar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ExportarDatos.jsx",
+      "texto": "Inventario / Ingredientes",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ExportarDatos.jsx",
+      "texto": "Productos",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ExportarDatos.jsx",
+      "texto": "Recetas / Escandallos",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ExportarDatos.jsx",
+      "texto": "Proveedores",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ExportarDatos.jsx",
+      "texto": "Compras de insumos",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ExportarDatos.jsx",
+      "texto": "Gastos operativos",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ExportarDatos.jsx",
+      "texto": "Plantillas de gasto recurrentes",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ExportarDatos.jsx",
+      "texto": "Categorías de productos",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ExportarDatos.jsx",
+      "texto": "Exportar datos actuales",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ImportarDatos.jsx",
+      "texto": "Inventario / Ingredientes",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ImportarDatos.jsx",
+      "texto": "Productos",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ImportarDatos.jsx",
+      "texto": "Recetas",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ImportarDatos.jsx",
+      "texto": "Proveedores",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ImportarDatos.jsx",
+      "texto": "Gastos operativos",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ImportarDatos.jsx",
+      "texto": "Importar datos desde archivo",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/datos/ImportarDatos.jsx",
+      "texto": "setTipoActivo(t.key)} className=\"shrink-0\" > Importar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Activar Portal QR",
+      "fuente": "propiedad",
+      "clave": "portal_qr_activo"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Cómo se ve el menú",
+      "fuente": "propiedad",
+      "clave": "portal_qr_modo_menu"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Cómo se ve el menú",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Menú digital",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "A la carta",
+      "fuente": "opcion",
+      "clave": "portal_qr_mostra"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Páginas subidas",
+      "fuente": "opcion",
+      "clave": "portal_qr_mostrar_precios"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "A la carta y páginas",
+      "fuente": "opcion",
+      "clave": "portal_qr_mostrar_precios"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Mostrar precios",
+      "fuente": "propiedad",
+      "clave": "portal_qr_mostrar_precios"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Mostrar productos sin imagen",
+      "fuente": "propiedad",
+      "clave": "portal_qr_mostrar_sin_imagen"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Pedidos desde el portal",
+      "fuente": "subtitulo",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Quién manda a cocina",
+      "fuente": "propiedad",
+      "clave": "portal_qr_envia_a_cocina"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Quién manda a cocina",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Sólo el mesero confirma y envía",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "También los comensales",
+      "fuente": "opcion",
+      "clave": "portal_qr_e"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Los comensales pueden abrir su mesa",
+      "fuente": "propiedad",
+      "clave": "portal_qr_envia_a_cocina"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Los comensales pueden abrir su mesa",
+      "fuente": "aria",
+      "clave": "portal_qr_envia_a_cocina"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Botones de atención del cliente",
+      "fuente": "subtitulo",
+      "clave": "portal_qr_permitir_ordenar"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Quiero ordenar",
+      "fuente": "propiedad",
+      "clave": "portal_qr_permitir_ordenar"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Pedir cuenta",
+      "fuente": "propiedad",
+      "clave": "portal_qr_permitir_cuenta"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Necesito ayuda",
+      "fuente": "propiedad",
+      "clave": "portal_qr_permitir_ayuda"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Cuenta y propina desde QR",
+      "fuente": "subtitulo",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "¿Quién dispara la pantalla de propina del QR?",
+      "fuente": "propiedad",
+      "clave": "portal_qr_cuenta_modo"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Mesero dispara (recomendado)",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Cliente solicita",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Ambos",
+      "fuente": "opcion",
+      "clave": "portal_qr_mostrar_precuenta"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Mostrar precuenta al cliente",
+      "fuente": "propiedad",
+      "clave": "portal_qr_mostrar_precuenta"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Propina elegida por comensal desde QR",
+      "fuente": "propiedad",
+      "clave": "po"
+    },
+    {
+      "archivo": "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx",
+      "texto": "Mensaje de bienvenida",
+      "fuente": "etiqueta",
+      "clave": "portal_qr_mensaje_bienvenida"
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SelectorDeApariencia.tsx",
+      "texto": "Estilo visual",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SelectorDeApariencia.tsx",
+      "texto": "} className=\"h-(--altura-control) w-full rounded-md border border-borde-fuerte bg-superficie px-(--espacio-2) text-sm font-normal text-texto outline-none focus-visible:ring-[3px] focus-visible:ring-anillo/60\" > ))}",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ExperienciaDelNegocio.tsx",
+      "texto": "Experiencia del negocio",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ExperienciaDelNegocio.tsx",
+      "texto": "Experiencia del negocio",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ExperienciaDelNegocio.tsx",
+      "texto": "Mascota Morfi",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ExperienciaDelNegocio.tsx",
+      "texto": "Pedir PIN al despertar",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidosDelNegocio.tsx",
+      "texto": "Momento",
+      "fuente": "propiedad",
+      "clave": "sonido"
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidosDelNegocio.tsx",
+      "texto": "Sonido",
+      "fuente": "propiedad",
+      "clave": "nota"
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidosDelNegocio.tsx",
+      "texto": "Nota",
+      "fuente": "propiedad",
+      "clave": "oir"
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidosDelNegocio.tsx",
+      "texto": "Oír",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidosDelNegocio.tsx",
+      "texto": "El teclado y el portal",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidosDelNegocio.tsx",
+      "texto": "El teclado y el portal",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidosDelNegocio.tsx",
+      "texto": "El sonido del teclado",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidosDelNegocio.tsx",
+      "texto": "Sonidos en el portal del comensal",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/PruebaDeLaVozDeComandas.tsx",
+      "texto": "Así se oye una comanda",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/PruebaDeLaVozDeComandas.tsx",
+      "texto": "Este navegador no pudo hablar",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidoDelAparato.tsx",
+      "texto": "Sonidos de este aparato",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidoDelAparato.tsx",
+      "texto": "Volumen",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidoDelAparato.tsx",
+      "texto": "Probar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidoDelAparato.tsx",
+      "texto": "Este navegador no deja guardar ajustes",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/SonidoDelAparato.tsx",
+      "texto": "Este navegador no dejó sonar",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ModoEsperaDelAparato.tsx",
+      "texto": "Modo espera de este aparato",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ModoEsperaDelAparato.tsx",
+      "texto": "Modo espera de este aparato",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ModoEsperaDelAparato.tsx",
+      "texto": "Modo espera en este aparato",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ModoEsperaDelAparato.tsx",
+      "texto": "Minutos sin tocar ); }} className=\"h-(--altura-control) w-full rounded-md border border-borde-fuerte bg-superficie px-(--espacio-2) text-sm text-texto outline-none focus-visible:ring-[3px] focus-visible:ring-anillo/60 disabled:opacity-60\" > Los de cada pantalla ( en Caja y Tablero, en Cocina) minutos`} ))}",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ModoEsperaDelAparato.tsx",
+      "texto": "Los de cada pantalla ( en Caja y Tablero, en Cocina)",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ModoEsperaDelAparato.tsx",
+      "texto": "minutos`}",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/ModoEsperaDelAparato.tsx",
+      "texto": "Este navegador no deja guardar ajustes",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/AnuncioDeComandasDelAparato.tsx",
+      "texto": "Esta pantalla anuncia las comandas",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/AnuncioDeComandasDelAparato.tsx",
+      "texto": "Esta pantalla anuncia las comandas",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/AnuncioDeComandasDelAparato.tsx",
+      "texto": "Esta pantalla anuncia las comandas",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/AnuncioDeComandasDelAparato.tsx",
+      "texto": "Este navegador no deja guardar ajustes",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/TerminalesDeLaSucursal.tsx",
+      "texto": "· con una caja abierta` : etiqueta}",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/TerminalesDeLaSucursal.tsx",
+      "texto": "Nombre de este aparato",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/TerminalesDeLaSucursal.tsx",
+      "texto": "No se pudieron leer los aparatos.",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/TerminalesDeLaSucursal.tsx",
+      "texto": "void lectura.refetch()}> Reintentar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/CajaYDescuentos.tsx",
+      "texto": "Cajas abiertas a la vez",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/CajaYDescuentos.tsx",
+      "texto": "No se pudo leer cuántas cajas puede haber.",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/CajaYDescuentos.tsx",
+      "texto": "void lectura.refetch()}> Reintentar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/CajaYDescuentos.tsx",
+      "texto": "Permitir descuentos",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/CajaYDescuentos.tsx",
+      "texto": "No se pudieron leer los topes de cada puesto.",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/NombresDeLasCajas.tsx",
+      "texto": "Dos cajas no pueden llamarse igual.",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/UmbralDeRetiro.tsx",
+      "texto": "Pedir PIN de gerente en retiros mayores a",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/UmbralDeRetiro.tsx",
+      "texto": "Monto en pesos",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/UmbralDeRetiro.tsx",
+      "texto": "Guardar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/CandadoDeMando.tsx",
+      "texto": "Entrar con PIN",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/CandadoDeMando.tsx",
+      "texto": "Pedir el PIN al dueño, al administrador y al gerente si nadie toca la pantalla en } > minutos ))}",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/CandadoDeMando.tsx",
+      "texto": "minutos",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/CandadoDeMando.tsx",
+      "texto": "Guardar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/QuienEligeLaPropina.tsx",
+      "texto": "Comensales (portal)",
+      "fuente": "propiedad",
+      "clave": "mesero"
+    },
+    {
+      "archivo": "apps/web/src/configuracion/QuienEligeLaPropina.tsx",
+      "texto": "Mesero",
+      "fuente": "propiedad",
+      "clave": "caja"
+    },
+    {
+      "archivo": "apps/web/src/configuracion/QuienEligeLaPropina.tsx",
+      "texto": "Caja",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/QuienEligeLaPropina.tsx",
+      "texto": "¿Quién puede elegir la propina?",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/QuienEligeLaPropina.tsx",
+      "texto": "Así nadie podrá registrar una propina.",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/QuienEligeLaPropina.tsx",
+      "texto": "Guardar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/IvaDelNegocio.tsx",
+      "texto": "IVA",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/IvaDelNegocio.tsx",
+      "texto": "No se pudo leer el IVA guardado.",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/IvaDelNegocio.tsx",
+      "texto": "Los precios ya incluyen el IVA",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/IvaDelNegocio.tsx",
+      "texto": "Guardar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/FoliosDelNegocio.tsx",
+      "texto": "Folios",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/FoliosDelNegocio.tsx",
+      "texto": "No se pudieron leer los folios guardados.",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/FoliosDelNegocio.tsx",
+      "texto": "Prefijo del folio",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/FoliosDelNegocio.tsx",
+      "texto": "Primer folio de las cuentas",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/FoliosDelNegocio.tsx",
+      "texto": "Primer folio de los cortes",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/configuracion/FoliosDelNegocio.tsx",
+      "texto": "Guardar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/ImpresionDelAparato.tsx",
+      "texto": "Impresora de este aparato",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/ImpresionDelAparato.tsx",
+      "texto": "Para imprimir directo y abrir el cajón, instala la app de POS Don Poncho.",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/CopiasDeImpresion.tsx",
+      "texto": "Copias de impresión",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/CopiasDeImpresion.tsx",
+      "texto": "No se pudieron leer las copias guardadas.",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/CopiasDeImpresion.tsx",
+      "texto": "} > copias`} ))}",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/CopiasDeImpresion.tsx",
+      "texto": "copias`}",
+      "fuente": "opcion",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/CopiasDeImpresion.tsx",
+      "texto": "Guardar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/EntradaAlLaboratorio.tsx",
+      "texto": "Entrar",
+      "fuente": "boton",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/EntradaAlLaboratorio.tsx",
+      "texto": "No se pudo saber si tienes el permiso del proveedor",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/EntradaAlLaboratorio.tsx",
+      "texto": "Hardware y pruebas de impresión",
+      "fuente": "aria",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/EntradaAlLaboratorio.tsx",
+      "texto": "Hardware y pruebas de impresión",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/AjustesDeLaApp.tsx",
+      "texto": "Este aparato",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/impresion/pantallas/LabProbarCajon.tsx",
+      "texto": "El cajón no abrió: este aparato sigue SIN cajón",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/cocina/AlertasDeEspera.tsx",
+      "texto": "Alertas de espera de la cocina",
+      "fuente": "tarjeta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/cocina/AlertasDeEspera.tsx",
+      "texto": "Ámbar desde (minutos) ); }} className=\"h-(--altura-control) rounded-md border bg-fondo px-(--espacio-3) text-base\" />",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/cocina/AlertasDeEspera.tsx",
+      "texto": "Rojo desde (minutos) ); }} className=\"h-(--altura-control) rounded-md border bg-fondo px-(--espacio-3) text-base\" />",
+      "fuente": "etiqueta",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/cocina/AlertasDeEspera.tsx",
+      "texto": "Revisa los minutos",
+      "fuente": "propiedad",
+      "clave": null
+    },
+    {
+      "archivo": "apps/web/src/cocina/AlertasDeEspera.tsx",
+      "texto": "Guardar",
+      "fuente": "boton",
+      "clave": null
+    }
+  ]
+}

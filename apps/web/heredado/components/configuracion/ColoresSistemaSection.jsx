@@ -5,7 +5,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { hayCambios, leidoDe, parcheDeLaSeccion } from '~/configuracion/parche-de-la-seccion';
+import {
+  hayCambios,
+  leidoDe,
+  parcheDeLaSeccion,
+  ponerAlDia,
+} from '~/configuracion/parche-de-la-seccion';
 import { Save, RotateCcw, Palette } from 'lucide-react';
 import { BRAND_DEFAULTS, buildBrandPalette } from '@/lib/brandColors';
 
@@ -28,6 +33,7 @@ export default function ColoresSistemaSection({ cfg }) {
   const [saving, setSaving] = useState(false);
   // DP-18: los colores que se leyeron; al guardar sólo viaja el que cambió.
   const leido = useRef({});
+  const alLlenar = useRef(null);
 
   // HOTFIX persistencia: solo hidratar cuando cfg viene real del backend.
   // Antes con `cfg = {}` en el primer render se pisaban los colores con default.
@@ -40,8 +46,21 @@ export default function ColoresSistemaSection({ cfg }) {
     };
     // Contra lo GUARDADO (crudo): lo nunca guardado viaja la primera vez; lo no tocado, no.
     leido.current = leidoDe(cfg, Object.keys(desdeLaConfig));
-    setPrimario(desdeLaConfig.color_primario);
-    setAcento(desdeLaConfig.color_acento);
+    // DP-21 · Bloque 21: otra tarjeta que guarda no borra el color que aquí se está probando.
+    const antes = alLlenar.current;
+    alLlenar.current = desdeLaConfig;
+    setPrimario(
+      (enPantalla) =>
+        ponerAlDia({ color_primario: enPantalla }, antes, {
+          color_primario: desdeLaConfig.color_primario,
+        }).color_primario,
+    );
+    setAcento(
+      (enPantalla) =>
+        ponerAlDia({ color_acento: enPantalla }, antes, {
+          color_acento: desdeLaConfig.color_acento,
+        }).color_acento,
+    );
   }, [cfg?.id, cfg?.updated_date]);
 
   // Paleta derivada en vivo para la vista previa (sin guardar todavía).
