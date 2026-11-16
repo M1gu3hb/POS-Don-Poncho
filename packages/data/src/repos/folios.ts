@@ -67,3 +67,28 @@ export async function tomarFolio(
 
   return { serie, folio: fila.siguiente };
 }
+
+/**
+ * Deja el contador de una serie listo para que el SIGUIENTE folio sea `primero` (DP-21 · Bloque 6).
+ *
+ * Es el mismo contador de siempre —la fila de `folios` que `tomarFolio` incrementa—, no otro: se
+ * crea la fila de cada sucursal activa si no existe y se coloca en `primero`. El `on conflict`
+ * toma el candado de la fila, así que un cobro que va a mitad de camino termina antes de que esto
+ * lo reubique (y quien llama cuenta los folios dados DESPUÉS de esto, ya con el candado).
+ */
+export async function fijarSiguienteFolio(
+  tx: Transaccion,
+  organizacionId: string,
+  serie: string,
+  primero: bigint,
+): Promise<number> {
+  const resultado = await sql`
+    insert into folios (organizacion_id, sucursal_id, serie, siguiente)
+    select ${organizacionId}, s.id, ${serie}, ${primero}
+      from sucursales s
+     where s.organizacion_id = ${organizacionId}
+    on conflict (organizacion_id, sucursal_id, serie)
+    do update set siguiente = excluded.siguiente
+  `.execute(tx);
+  return Number(resultado.numAffectedRows ?? 0n);
+}

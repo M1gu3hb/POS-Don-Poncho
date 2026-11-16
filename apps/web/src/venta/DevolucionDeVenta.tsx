@@ -11,6 +11,8 @@ import { useState } from 'react';
 import { ErrorApi, invocarComando } from '~/cliente/api';
 
 import { importeDeLinea, pendienteDe, type LineaParaDevolver } from './devolucion.ts';
+import { folioVisible, type ConFolios } from '@morphiqpos/domain/venta';
+import { useConfig } from '@/lib/ConfigContext';
 
 /**
  * DEVOLVER UNA VENTA, entera o una parte (D-29 de la 2.4).
@@ -29,6 +31,7 @@ import { importeDeLinea, pendienteDe, type LineaParaDevolver } from './devolucio
 
 interface VentaParaDevolver {
   readonly ordenId: string;
+  readonly serie: string;
   readonly folio: string | null;
   readonly estado: string;
   readonly totalCentavos: string;
@@ -56,6 +59,7 @@ function mensajeDe(fallo: unknown, porDefecto: string): string {
 }
 
 export function DevolucionDeVenta({ alDevolver }: { readonly alDevolver: () => void }) {
+  const { config } = useConfig() as unknown as { readonly config: ConFolios };
   const [folio, setFolio] = useState('');
   const [venta, setVenta] = useState<VentaParaDevolver | null>(null);
   const [cantidades, setCantidades] = useState<Readonly<Record<string, string>>>({});
@@ -194,7 +198,9 @@ export function DevolucionDeVenta({ alDevolver }: { readonly alDevolver: () => v
       {venta === null || yaCompleta ? null : (
         <div className="flex flex-col gap-(--espacio-3)">
           <p className="flex items-baseline justify-between gap-(--espacio-2) text-sm">
-            <span className="font-medium">Venta {venta.folio ?? 'sin folio'}</span>
+            <span className="font-medium">
+              Venta {folioVisible(venta.serie, venta.folio, config, 'numero') || 'sin folio'}
+            </span>
             <span className="inline-flex items-baseline gap-(--espacio-1) text-texto-sutil">
               cobrada <Dinero centavos={Number(venta.totalCentavos)} tamano="sm" />
             </span>

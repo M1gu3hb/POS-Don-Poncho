@@ -8,6 +8,7 @@ import { Handshake } from 'lucide-react';
 import { useState } from 'react';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 /**
  * EL CORTE DE TURNO QUE NO CIERRA LA CAJA (F-233, bloque D de la 2.4).
@@ -23,6 +24,7 @@ import { ErrorApi, invocarComando } from '~/cliente/api';
  */
 
 interface ResultadoDelTurno {
+  readonly serie: string;
   readonly folio: string;
   readonly efectivoContadoCentavos: string;
   readonly efectivoEsperadoCentavos: string;
@@ -107,7 +109,7 @@ export function CorteDeTurno() {
       {hecho === null ? null : (
         <Aviso
           tono={diferencia === 0 ? 'exito' : 'atencion'}
-          titulo={`Turno ${hecho.folio} entregado: ${
+          titulo={`Turno ${folioVisible(hecho.serie, hecho.folio, null, 'numero')} entregado: ${
             diferencia === 0 ? 'cuadra exacto' : diferencia > 0 ? 'sobrante' : 'faltante'
           }`}
         >

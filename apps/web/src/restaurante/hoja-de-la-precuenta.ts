@@ -15,6 +15,7 @@ import {
   type PropinaDeLaHoja,
   type PrecuentaDeLaMesa,
 } from './precuenta-de-la-mesa.ts';
+import { folioVisible, type ConFolios } from '@morphiqpos/domain/venta';
 
 /** Lo que dice la hoja impresa por el servidor (`restaurante.imprimir_precuenta`). */
 export interface HojaImpresa {
@@ -150,7 +151,11 @@ export function totalesDeLaHoja(
  * QA1-7 (DP-13.5) · El folio que lleva la hoja. La cuenta recibe su folio al cobrarse: antes, el
  * puente lo manda nulo, y la hoja decía «Folio null».
  */
-export function folioDeLaHoja(folio: string | null | undefined): string | null {
-  const limpio = folio?.trim() ?? '';
-  return limpio === '' ? null : limpio;
+export function folioDeLaHoja(
+  folio: string | null | undefined,
+  serie?: string | null,
+  configuracion?: ConFolios | null,
+): string | null {
+  const visible = folioVisible(serie ?? null, folio ?? null, configuracion, 'numero');
+  return visible === '' ? null : visible;
 }

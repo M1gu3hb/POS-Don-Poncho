@@ -1,3 +1,5 @@
+import { folioVisible, type ComoHoy, type ConFolios } from '@morphiqpos/domain/venta';
+
 /**
  * LO QUE EL REGISTRO DE CORTES DICE DE CADA CORTE (día completo del restaurante, 2.4).
  *
@@ -57,11 +59,28 @@ export function diferenciaDelCorte(valor: unknown): DiferenciaDelCorte | null {
  * El folio como se LEE: la serie y el consecutivo, `CC-1` —así lo dice el PDF del corte— o
  * `LIQ-000001` —así lo dice el aviso de una liquidación—. Con `cifras` el consecutivo se
  * rellena de ceros. Sin consecutivo no hay folio que leer; sin serie, el número como viene.
+ * Es el `folioVisible` de las pantallas cuando se le da la configuración (`@morphiqpos/domain/venta`).
  */
-export function folioConSerie(serie: unknown, folio: unknown, cifras = 0): string | null {
+export function folioConSerie(
+  serie: unknown,
+  folio: unknown,
+  cifras = 0,
+  configuracion?: ConFolios | null,
+  comoHoy: ComoHoy = 'con-serie',
+): string | null {
   if (typeof folio !== 'string' && typeof folio !== 'number') return null;
   const consecutivo = String(folio).trim();
   if (consecutivo === '') return null;
+  // DP-21 · Bloque 6: con la configuración del negocio, las cuentas y los cortes se leen con su
+  // prefijo (`DP-01001`, `DPC-0101`); sin prefijo, y en las demás series, queda lo de siempre.
+  if (configuracion !== undefined && cifras === 0) {
+    return folioVisible(
+      typeof serie === 'string' ? serie : null,
+      consecutivo,
+      configuracion,
+      comoHoy,
+    );
+  }
   const relleno = consecutivo.padStart(cifras, '0');
   if (typeof serie !== 'string' || serie.trim() === '') return relleno;
   return `${serie.trim()}-${relleno}`;

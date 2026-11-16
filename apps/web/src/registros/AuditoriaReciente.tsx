@@ -1,12 +1,15 @@
 'use client';
 
 import { GRUPOS_DE_AUDITORIA, IDS_DE_GRUPOS_DE_AUDITORIA } from '@morphiqpos/domain/auditoria';
+import { type ConFolios } from '@morphiqpos/domain/venta';
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Input } from '@morphiqpos/ui/primitivas/input';
 import { Aviso, EsqueletoDeLista, Vacio } from '@morphiqpos/ui/sistema';
 import { useQuery } from '@tanstack/react-query';
 import { History } from 'lucide-react';
 import { useId, useState } from 'react';
+
+import { useConfig } from '@/lib/ConfigContext';
 
 import { invocarComando } from '~/cliente/api';
 
@@ -50,6 +53,8 @@ const CLASE_DE_CONTROL =
   'h-(--altura-control) rounded-md border border-borde-fuerte bg-superficie px-(--espacio-2) text-sm text-texto outline-none focus-visible:ring-[3px] focus-visible:ring-anillo/60';
 
 export function AuditoriaReciente() {
+  // DP-21 · El prefijo de los folios: la auditoría cita los tickets como se leen.
+  const { config } = useConfig() as unknown as { readonly config: ConFolios };
   const idGrupo = useId();
   const idFecha = useId();
   const [filtros, setFiltros] = useState({ grupo: '', fecha: '', pagina: 0 });
@@ -66,7 +71,7 @@ export function AuditoriaReciente() {
   };
   const renglones = (lectura.data?.renglones ?? []).map((r) => ({
     ...r,
-    dicho: describirAccion(r.accion, r.payload),
+    dicho: describirAccion(r.accion, r.payload, config),
   }));
 
   return (

@@ -37,7 +37,7 @@ describe('el historial de ventas', () => {
 
   it('no pinta pastillas vacías: ni el folio de una cuenta abierta ni un tipo que la venta no trae', () => {
     expect(ventas).toMatch(
-      /\{v\.folio \? <span className="font-heading font-bold">\{v\.folio\}<\/span> : null\}/,
+      /\{v\.folio \? \(\s*<span className="font-heading font-bold">\s*\{folioVisible\(v\.serie, v\.folio, config, 'numero'\)\}\s*<\/span>\s*\) : null\}/,
     );
     // El puente no mapea `tipo_venta` para Venta: la pastilla del tipo salía siempre, y vacía.
     expect(ventas).not.toMatch(/v\.tipo_venta/);

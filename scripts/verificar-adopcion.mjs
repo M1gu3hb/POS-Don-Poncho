@@ -217,6 +217,12 @@ export const SIN_ESTADO = [
       'Tres opciones fijas (sin IVA, 8 % y 16 %) y un interruptor (DP-21): no tiene lista que pueda llegar vacía.',
   },
   {
+    pantalla: 'configuracion/FoliosDelNegocio',
+    estado: 'vacio',
+    razon:
+      'Tres campos fijos (prefijo y los dos primeros folios) con valores de omisión (DP-21 · Bloque 6): no tiene lista que pueda llegar vacía.',
+  },
+  {
     pantalla: 'configuracion/CandadoDeMando',
     estado: 'vacio',
     razon:

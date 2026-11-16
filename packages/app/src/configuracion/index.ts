@@ -71,3 +71,16 @@ export {
   type ResultadoDeTermino,
   type TerminosDelNegocio,
 } from './vocabulario.ts';
+
+export { entradaFijarFolios, fijarFolios } from './folios.ts';
+export {
+  CLAVE_DE_FOLIOS,
+  CLAVE_DE_OPERACION_DESDE,
+  FOLIOS_DE_UN_NEGOCIO_NUEVO,
+  PRIMER_FOLIO_MAXIMO,
+  esquemaDeFolios,
+  foliosEn,
+  foliosIguales,
+  operacionDesdeEn,
+  type FoliosDelNegocio,
+} from './folios-del-negocio.ts';

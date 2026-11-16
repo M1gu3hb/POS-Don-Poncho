@@ -102,6 +102,7 @@ import { DescuentoAutorizado } from '~/restaurante/DescuentoAutorizado';
 import { cantidadParaMostrar } from '~/restaurante/peso';
 import { totalesDelPapel } from '~/venta/totales-del-papel';
 import { seMencionaElIva } from '~/venta/se-menciona-el-iva';
+import { coincideConElFolio, folioVisible } from '@morphiqpos/domain/venta';
 
 const METODOS = [
   {
@@ -430,8 +431,9 @@ export default function Caja() {
     const found = candidatas.find(
       (v) =>
         norm(v?.codigo_caja) === codigo ||
-        norm(v?.folio) === codigo ||
-        norm(v?.folio).includes(codigo) ||
+        // DP-21 · «1001», «01001» y «DP-01001» son el mismo folio (DP-D128).
+        coincideConElFolio(codigo, v?.serie, v?.folio, config) ||
+        norm(folioVisible(v?.serie, v?.folio, config, 'numero')).includes(codigo) ||
         norm(v?.notas).includes(codigo),
     );
 
@@ -599,7 +601,7 @@ export default function Caja() {
     }
     if (
       !confirm(
-        `¿Seguro que quieres borrar este ticket en cero (${venta.folio})?\nEsta acción no se puede deshacer.`,
+        `¿Seguro que quieres borrar este ticket en cero (${folioVisible(venta.serie, venta.folio, config, 'numero')})?\nEsta acción no se puede deshacer.`,
       )
     )
       return;
@@ -916,6 +918,8 @@ export default function Caja() {
           // secas —sin la serie— porque es lo que la misma venta enseña luego en
           // Ventas y en Registros, y es el número que el cliente va a citar.
           folio: cobro?.folio ? String(cobro.folio) : ventaSeleccionada?.folio,
+          // DP-21 · Con la serie el ticket sabe que es una cuenta y pinta el prefijo del negocio.
+          serie: cobro?.serie ?? ventaSeleccionada?.serie,
           // DP-16 · El número del pedido para llevar lo pone el servidor al cobrar.
           ...(typeof cobro?.numeroPedido === 'number'
             ? { canal: 'llevar', numero_pedido: cobro.numeroPedido }
@@ -1202,8 +1206,8 @@ export default function Caja() {
       // tiene folio.
       const folioDelCorte =
         arqueo?.serie && arqueo?.folio
-          ? `${arqueo.serie}-${arqueo.folio}`
-          : (cajaAbierta.folio ?? '');
+          ? folioVisible(arqueo.serie, arqueo.folio, config)
+          : folioVisible(cajaAbierta.serie, cajaAbierta.folio, config);
       const corteFinal = { ...data, id: corteId, folio: folioDelCorte };
       setCorteCerrado(corteFinal);
       setShowCierreDiario(false);
@@ -1417,7 +1421,7 @@ export default function Caja() {
           <span>
             Caja abierta desde{' '}
             {safeFormatDate(cajaAbierta.fecha_apertura || cajaAbierta.fecha_inicio, 'd MMM, HH:mm')}{' '}
-            · {cajaAbierta.folio}
+            · {folioVisible(cajaAbierta.serie, cajaAbierta.folio, config, 'numero')}
             {cajaAbierta.usuario_apertura_nombre && ` · por ${cajaAbierta.usuario_apertura_nombre}`}
           </span>
         </div>
@@ -1477,7 +1481,9 @@ export default function Caja() {
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <p className="font-heading font-bold text-base">{rotuloDeCaja(v)}</p>
-                          <p className="text-xs text-muted-foreground">{v.folio}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {folioVisible(v.serie, v.folio, config, 'numero')}
+                          </p>
                         </div>
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-semibold ${esCero ? 'bg-peligro/20 text-peligro' : 'bg-acento/20 text-acento'}`}
@@ -1622,7 +1628,7 @@ export default function Caja() {
                 ? `Para llevar${ventaSeleccionada?.nombre_pedido ? ` · ${ventaSeleccionada.nombre_pedido}` : ''}`
                 : ventaSeleccionada?.mesa_numero || ventaSeleccionada?.cliente_nombre
                   ? rotuloDeCaja(ventaSeleccionada)
-                  : ventaSeleccionada?.folio}
+                  : folioVisible(ventaSeleccionada?.serie, ventaSeleccionada?.folio, config, 'numero')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -2045,7 +2051,7 @@ export default function Caja() {
                   sonar('ticket');
                   printDocument({
                     mode: 'thermal',
-                    title: `Ticket-${ticketFinalData?.venta?.folio || ''}`,
+                    title: `Ticket-${folioVisible(ticketFinalData?.venta?.serie, ticketFinalData?.venta?.folio, config, 'numero')}`,
                   });
                 } catch (err) {
                   console.error('[Caja] imprimir ticket:', err);
@@ -2126,7 +2132,7 @@ export default function Caja() {
           <div className="space-y-3">
             <div className="p-4 rounded-xl bg-exito/10 border border-exito/30">
               <p className="text-xs text-muted-foreground">Folio del corte</p>
-              <p className="font-mono font-bold text-lg">{corteCerrado?.folio}</p>
+              <p className="font-mono font-bold text-lg">{folioVisible(corteCerrado?.serie, corteCerrado?.folio, config)}</p>
               <p className="text-xs text-muted-foreground mt-2">Total cerrado</p>
               <p
                 className={`font-heading font-black text-2xl ${config?.colorear_importes_monetarios !== false ? 'text-exito' : 'text-foreground'}`}

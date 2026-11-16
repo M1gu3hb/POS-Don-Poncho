@@ -448,14 +448,16 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Registros.jsx",
-      "porque": "DP-12.4: pestaña «Cancelaciones» de Registros (cuentas canceladas y platillos anulados, con quién, cuándo, motivo, importe y marca de pérdida), porque el mesero ya cancela desde su pantalla y una cuenta cancelada no podía distinguirse de una venta más.",
+      "porque": "DP-12.4: pestaña «Cancelaciones» de Registros (cuentas canceladas y platillos anulados, con quién, cuándo, motivo, importe y marca de pérdida), porque el mesero ya cancela desde su pantalla y una cuenta cancelada no podía distinguirse de una venta más. DP-21 (Bloque 6): el folio de este aviso se dice con `folioVisible` (prefijo del negocio: «DP-01001», «DPC-0101»; sin prefijo, lo de siempre). Sólo cambia el texto del folio dentro del aviso.",
       "testigos": [
         "+ clase:gap-1",
         "+ clase:w-3",
         "+ clase:h-3",
         "+ clase:mt-4",
         "+ clase:space-y-3",
-        "+ icono:Ban"
+        "+ icono:Ban",
+        "- aviso:¿Eliminar corte ${c.folio}? Esta acción no se puede deshacer.",
+        "+ aviso:¿Eliminar corte ${folioVisible(c.serie, c.folio, config, 'numero')}? Esta acción no se puede deshacer."
       ]
     },
     {
@@ -627,8 +629,12 @@
     },
     {
       "archivo": "apps/web/heredado/pages/Caja.jsx",
-      "porque": "DP-13.5 (QA1-5): la cuenta de una mesa se divide en su cobro; al dividir, el cobro se cierra y el aviso dice dónde quedan las partes.",
-      "testigos": ["+ aviso:Cuenta dividida: cobra cada parte en Pendientes."]
+      "porque": "DP-13.5 (QA1-5): la cuenta de una mesa se divide en su cobro; al dividir, el cobro se cierra y el aviso dice dónde quedan las partes. DP-21 (Bloque 6): el folio de este aviso se dice con `folioVisible` (prefijo del negocio: «DP-01001», «DPC-0101»; sin prefijo, lo de siempre). Sólo cambia el texto del folio dentro del aviso.",
+      "testigos": [
+        "+ aviso:Cuenta dividida: cobra cada parte en Pendientes.",
+        "- aviso:¿Seguro que quieres borrar este ticket en cero (${venta.folio})?\\nEsta acción no se puede deshacer.",
+        "+ aviso:¿Seguro que quieres borrar este ticket en cero (${folioVisible(venta.serie, venta.folio, config, 'numero')})?\\nEsta acción no se puede deshacer."
+      ]
     },
     {
       "archivo": "apps/web/heredado/pages/Mesero.jsx",
@@ -1767,6 +1773,14 @@
         "- texto:IVA / Impuesto (%)",
         "- texto:Porcentaje de IVA o impuesto. Si no manejas impuesto desglosado, déjalo en 0.",
         "- placeholder:0"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/propinas/LiquidarPropinasDialog.jsx",
+      "porque": "DP-21 (Bloque 6): el folio de este aviso se dice con `folioVisible` (prefijo del negocio: «DP-01001», «DPC-0101»; sin prefijo, lo de siempre). Sólo cambia el texto del folio dentro del aviso.",
+      "testigos": [
+        "- aviso:Liquidación ${liquidacion?.folio || ''} registrada · ${formatCurrency(aPesos(liquidacion?.totalCentavos))}",
+        "+ aviso:Liquidación ${folioVisible(liquidacion?.serie, liquidacion?.folio, null, 'numero')} registrada · ${formatCurrency(aPesos(liquidacion?.totalCentavos))}"
       ]
     }
   ]

@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { definirComando } from '../comando.ts';
 import { exigirNombreDelNegocio } from './confirmacion.ts';
+import { exigirQueNoHayaOperacionReal } from './operacion-real.ts';
 import { exigirPlataforma } from './plataforma.ts';
 import {
   contar,
@@ -65,6 +66,9 @@ const ADMINISTRACION = ['dueno', 'administrador'] as const;
  * 'BORRAR TODO'` no dice nada sobre qué se compara.
  */
 const confirmacion = z.string().trim().min(1).max(200);
+
+/** Las secciones que borran lo cobrado: las cuentas y los cortes de caja (H1, DP-21). */
+const SECCIONES_CON_LO_COBRADO: ReadonlySet<string> = new Set(['ventas', 'cortes']);
 
 const entradaVacia = z.object({});
 const entradaConfirmada = z.object({ confirmacionNombreNegocio: confirmacion });
@@ -178,6 +182,12 @@ export const purgarSeccionDelHistorico = definirComando<
   async ejecutar(ctx, entrada) {
     await exigirPlataforma(ctx.tx, ctx.ambito);
     const org = ctx.ambito.organizacionId;
+    // H1 (DP-21): las ventas y los cortes cobrados de un negocio que ya opera no se borran.
+    if (SECCIONES_CON_LO_COBRADO.has(entrada.seccion)) {
+      await ctx.paso('sin_operacion_real', () =>
+        exigirQueNoHayaOperacionReal(ctx.tx, org, ctx.ahora),
+      );
+    }
     const negocio = await exigirNombreDelNegocio(ctx.tx, org, entrada.confirmacionNombreNegocio);
     const borrado = await ctx.paso('purgar', () => purgarSeccion(ctx.tx, org, entrada.seccion));
     ctx.auditar({ entidadId: org, payload: { seccion: entrada.seccion, habia: borrado } });
@@ -205,6 +215,9 @@ export const purgarVentas = definirComando<
   async ejecutar(ctx, entrada) {
     await exigirPlataforma(ctx.tx, ctx.ambito);
     const org = ctx.ambito.organizacionId;
+    await ctx.paso('sin_operacion_real', () =>
+      exigirQueNoHayaOperacionReal(ctx.tx, org, ctx.ahora),
+    );
     const negocio = await exigirNombreDelNegocio(ctx.tx, org, entrada.confirmacionNombreNegocio);
 
     if (entrada.revertirInventario) {
@@ -261,6 +274,9 @@ export const reiniciarPruebas = definirComando<
   async ejecutar(ctx, entrada) {
     await exigirPlataforma(ctx.tx, ctx.ambito);
     const org = ctx.ambito.organizacionId;
+    await ctx.paso('sin_operacion_real', () =>
+      exigirQueNoHayaOperacionReal(ctx.tx, org, ctx.ahora),
+    );
     const negocio = await exigirNombreDelNegocio(ctx.tx, org, entrada.confirmacionNombreNegocio);
 
     const borrado: Record<string, number> = {};
@@ -303,6 +319,9 @@ export const reiniciarTodo = definirComando<
   async ejecutar(ctx, entrada) {
     await exigirPlataforma(ctx.tx, ctx.ambito);
     const org = ctx.ambito.organizacionId;
+    await ctx.paso('sin_operacion_real', () =>
+      exigirQueNoHayaOperacionReal(ctx.tx, org, ctx.ahora),
+    );
     const negocio = await exigirNombreDelNegocio(ctx.tx, org, entrada.confirmacionNombreNegocio);
 
     const borrado: Record<string, number> = {};

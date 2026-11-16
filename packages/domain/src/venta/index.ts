@@ -106,3 +106,20 @@ export {
   type ComponenteDeCombo,
   type LineaDeCombo,
 } from './combo.ts';
+
+export {
+  CIFRAS_DE_CORTES,
+  CIFRAS_DE_CUENTAS,
+  SERIE_DE_CORTES,
+  SERIE_DE_CUENTAS,
+  coincideConElFolio,
+  entenderElFolio,
+  folioVisible,
+  prefijoDeFolioValido,
+  prefijoDeLosFolios,
+  type AjusteDeFolios,
+  type ComoHoy,
+  type ConFolios,
+  type FolioEntendido,
+  type ResultadoDelPrefijo,
+} from './folio-visible.ts';

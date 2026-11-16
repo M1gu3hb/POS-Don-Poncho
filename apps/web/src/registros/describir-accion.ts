@@ -4,6 +4,8 @@
  * («Movimiento de venta») y, si ni eso, «Otro cambio registrado»: nunca el nombre crudo del comando.
  */
 
+import { folioVisible, type ConFolios } from '@morphiqpos/domain/venta';
+
 type Payload = Readonly<Record<string, unknown>>;
 
 const texto = (valor: unknown): string =>
@@ -62,7 +64,9 @@ const MOTIVOS_DEL_CAJON: Readonly<Record<string, string>> = {
   otro: 'otro motivo',
 };
 
-const DESCRIPCIONES: Readonly<Record<string, (p: Payload) => string>> = {
+const DESCRIPCIONES: Readonly<
+  Record<string, (p: Payload, folios: ConFolios | null | undefined) => string>
+> = {
   'caja.nombrar_terminal': (p) =>
     `Cambió el nombre de una caja: «${texto(p['antes'])}» → «${texto(p['despues'])}»`,
   'caja.fijar_cajas_simultaneas': (p) =>
@@ -73,14 +77,15 @@ const DESCRIPCIONES: Readonly<Record<string, (p: Payload) => string>> = {
       : `Pide PIN de gerente en retiros mayores a ${dinero(p['despues'])}`,
   'caja.abrir_cajon': (p) =>
     `Abrió el cajón sin venta${MOTIVOS_DEL_CAJON[texto(p['motivo'])] === undefined ? '' : ` (${MOTIVOS_DEL_CAJON[texto(p['motivo'])] ?? ''})`}`,
-  'caja.cajon_por_cobro': (p) =>
-    `Se abrió el cajón al cobrar${texto(p['referencia']) === '' ? '' : ` el ticket ${texto(p['referencia'])}`}`,
+  // La referencia es el número del ticket (una cuenta, serie `A`): se lee como el ticket.
+  'caja.cajon_por_cobro': (p, folios) =>
+    `Se abrió el cajón al cobrar${texto(p['referencia']) === '' ? '' : ` el ticket ${folioVisible('A', texto(p['referencia']), folios, 'numero')}`}`,
   'caja.fijar_copias_de_impresion': (p) => {
     const despues = (p['despues'] ?? {}) as Payload;
     return `Copias de impresión: ticket ${texto(despues['ticket'])}, precuenta ${texto(despues['precuenta'])}, corte ${texto(despues['corte'])}`;
   },
-  'venta.registrar_impresion': (p) =>
-    `${p['reimpresion'] === true ? 'Reimprimió' : 'Imprimió'} el ticket${texto(p['folio']) === '' ? '' : ` ${texto(p['folio'])}`}${p['reimpresion'] === true ? ` (salida ${texto(p['numero'])})` : ''}`,
+  'venta.registrar_impresion': (p, folios) =>
+    `${p['reimpresion'] === true ? 'Reimprimió' : 'Imprimió'} el ticket${texto(p['folio']) === '' ? '' : ` ${folioVisible(null, texto(p['folio']), folios)}`}${p['reimpresion'] === true ? ` (salida ${texto(p['numero'])})` : ''}`,
   'catalogo.marcar_agotado': (p) =>
     p['agotado'] === true
       ? `Marcó «${texto(p['nombre'])}» agotado por hoy`
@@ -105,6 +110,13 @@ const DESCRIPCIONES: Readonly<Record<string, (p: Payload) => string>> = {
     p['impuestoPuntosBase'] === undefined
       ? 'Guardó la configuración del negocio'
       : `Guardó la configuración del negocio (impuesto ${String(Number(p['impuestoPuntosBase']) / 100)} %)`,
+  'configuracion.fijar_folios': (p) => {
+    const antes = (p['antes'] ?? {}) as Payload;
+    const despues = (p['despues'] ?? {}) as Payload;
+    const prefijo = (f: Payload) =>
+      texto(f['prefijo']) === '' ? 'sin prefijo' : `prefijo «${texto(f['prefijo'])}»`;
+    return `Folios: ${prefijo(despues)}, primer folio de las cuentas ${texto(despues['primerFolioDeCuentas'])} y de los cortes ${texto(despues['primerFolioDeCortes'])} (antes: ${prefijo(antes)}, ${texto(antes['primerFolioDeCuentas'])} y ${texto(antes['primerFolioDeCortes'])})`;
+  },
   'configuracion.fijar_apariencia': () => 'Cambió la apariencia del sistema',
   'configuracion.fijar_modulo': (p) =>
     `${p['activo'] === false ? 'Apagó' : 'Encendió'} el módulo «${texto(p['modulo'])}»`,
@@ -129,21 +141,29 @@ const CAUSA_DEL_RECHAZO: Readonly<Record<string, string>> = {
   error: 'error',
 };
 
-function describirLoHecho(accion: string, p: Payload): string {
+function describirLoHecho(
+  accion: string,
+  p: Payload,
+  folios: ConFolios | null | undefined,
+): string {
   const describir = Object.hasOwn(DESCRIPCIONES, accion) ? DESCRIPCIONES[accion] : undefined;
-  if (describir !== undefined) return describir(p);
+  if (describir !== undefined) return describir(p, folios);
   const familia = accion.split('.')[0] ?? '';
   return (
     (Object.hasOwn(FAMILIAS, familia) ? FAMILIAS[familia] : undefined) ?? 'Otro cambio registrado'
   );
 }
 
-export function describirAccion(accion: string, payload: unknown): string {
+export function describirAccion(
+  accion: string,
+  payload: unknown,
+  folios?: ConFolios | null,
+): string {
   const p: Payload =
     typeof payload === 'object' && payload !== null && !Array.isArray(payload)
       ? (payload as Payload)
       : {};
-  const dicho = describirLoHecho(accion, p);
+  const dicho = describirLoHecho(accion, p, folios);
   const resultado = p['resultado'];
   const causa =
     typeof resultado === 'string' && Object.hasOwn(CAUSA_DEL_RECHAZO, resultado)

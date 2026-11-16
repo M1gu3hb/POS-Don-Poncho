@@ -57,7 +57,7 @@ export interface DiaSembrado {
   readonly posiciones: ReadonlyMap<string, readonly [number, number]>;
 }
 
-async function dueñoDePlataforma(salon: Salon): Promise<Ambito> {
+export async function dueñoDePlataforma(salon: Salon): Promise<Ambito> {
   const empleoId = await sembrarCompanero(salon.negocio, {
     nombre: PLATAFORMA_NOMBRE,
     rol: 'dueno',

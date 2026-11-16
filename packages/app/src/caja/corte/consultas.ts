@@ -5,6 +5,7 @@ import { sql } from 'kysely';
 
 import type { AlcanceDelCorte } from './alcance-del-corte.ts';
 import { estadoDelCostoDe, lineaSinCosto, lineaSinCostoCompleto } from './costo-conocido.ts';
+import { folioVisibleDeLaSesion, foliosParaVestir, vestirFolios } from './folios-vestidos.ts';
 
 /**
  * LO QUE TODO CORTE LLEVA, leído de la base en la transacción del documento (C.6 de la 2.4).
@@ -34,6 +35,8 @@ export interface SesionDelCorte {
   readonly sucursalId: string;
   readonly serie: string;
   readonly folio: string | null;
+  /** DP-21 · El folio como se lee (con el prefijo del negocio): «CC-2» o «DPC-0102». */
+  readonly folioVisible: string | null;
   readonly estado: string;
   readonly turno: string | null;
   readonly abiertaEn: Date;
@@ -65,7 +68,7 @@ export async function leerSesion(
   organizacionId: string,
   sesionCajaId: string,
 ): Promise<SesionDelCorte | null> {
-  const { rows } = await sql<SesionDelCorte>`
+  const { rows } = await sql<Omit<SesionDelCorte, 'folioVisible'>>`
     select s.id                                   as "id",
            s.sucursal_id                          as "sucursalId",
            s.serie                                as "serie",
@@ -102,7 +105,10 @@ export async function leerSesion(
      where s.organizacion_id = ${organizacionId}
        and s.id = ${sesionCajaId}
   `.execute(tx);
-  return rows[0] ?? null;
+  const fila = rows[0];
+  if (fila === undefined) return null;
+  const folios = await foliosParaVestir(tx, organizacionId);
+  return { ...fila, folioVisible: folioVisibleDeLaSesion(fila.serie, fila.folio, folios) };
 }
 
 export interface NegocioCrudo {
@@ -391,7 +397,7 @@ export async function detalleDeVentas(
      order by coalesce(o.cobrada_en, o.cerrada_en, o.updated_at)
      limit ${TOPE_DE_FILAS}
   `.execute(tx);
-  return rows;
+  return vestirFolios(rows, await foliosParaVestir(tx, organizacionId));
 }
 
 export interface ProductoVendido {

@@ -21,6 +21,7 @@ import { leerCancelacionesSinTrabar } from '~/corte-heredado/cancelaciones-sin-t
 import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
 import { leerVentasDelDia } from '~/corte-heredado/ventas-del-dia';
 import { leerExtrasDelCorte } from '~/corte-heredado/extras-del-corte';
+import { folioVisible } from '@morphiqpos/domain/venta';
 
 export default function CorteViewerDialog({ corte, open, onClose }) {
   const { config, paquete_modo } = useConfig();
@@ -208,7 +209,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
 
   // === Imprimir (sí abre diálogo del navegador) ===
   const handlePrintCashCut = () => {
-    printDocument({ mode: 'letter', title: `Corte-${corte?.folio || ''}` });
+    printDocument({ mode: 'letter', title: `Corte-${folioVisible(corte?.serie, corte?.folio, config, 'numero')}` });
   };
 
   // === Descargar PDF (NO abre imprimir) ===
@@ -225,7 +226,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
       const negocio = safeFileName(
         config?.nombre_negocio || NOMBRE_DEL_NEGOCIO,
       );
-      const folio = safeFileName(corte?.folio || 'corte');
+      const folio = safeFileName(folioVisible(corte?.serie, corte?.folio, config, 'numero') || 'corte');
       const filename = `Corte_${folio}_${fecha}_${negocio}.pdf`;
       await downloadNodeAsPDF(ticketRef.current, filename);
       toast.success('PDF descargado');
@@ -241,7 +242,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto p-0">
         <DialogHeader className="no-print px-6 pt-5 pb-3 border-b sticky top-0 bg-superficie z-10 flex-row items-center justify-between">
-          <DialogTitle className="font-heading">PDF de corte · {corte?.folio}</DialogTitle>
+          <DialogTitle className="font-heading">PDF de corte · {folioVisible(corte?.serie, corte?.folio, config, 'numero')}</DialogTitle>
           <div className="flex gap-2">
             <Button size="sm" onClick={handlePrintCashCut} disabled={loading}>
               <Printer className="w-4 h-4 mr-1" /> Imprimir / PDF

@@ -28,11 +28,14 @@ import {
   seVeElMargen,
   subtituloDelMargen,
 } from '~/restaurante/margen-de-las-ventas';
+import { folioVisible } from '@morphiqpos/domain/venta';
+import { useConfig } from '@/lib/ConfigContext';
 
 /** La lista de «todavía no llegó nada»: una sola, para que los `useMemo` no se invaliden. */
 const SIN_FILAS = [];
 
 export default function CorteCaja() {
+  const { config } = useConfig();
   const queryClient = useQueryClient();
   const [showCierre, setShowCierre] = useState(false);
   const [efectivoContado, setEfectivoContado] = useState('');
@@ -183,7 +186,7 @@ export default function CorteCaja() {
       {corteAbierto && (
         <div className="p-3 bg-exito/10 border border-exito/30 rounded-lg text-sm text-exito">
           Corte abierto desde {safeFormatDate(corteAbierto.fecha_inicio, 'd MMM, HH:mm')} · Folio:{' '}
-          {corteAbierto.folio}
+          {folioVisible(corteAbierto.serie, corteAbierto.folio, config, 'numero')}
         </div>
       )}
 
@@ -246,7 +249,9 @@ export default function CorteCaja() {
                   className="flex justify-between items-center gap-3 text-sm py-2 border-b last:border-0"
                 >
                   <div className="flex-1 min-w-0">
-                    <span className="font-medium">{c.folio}</span>
+                    <span className="font-medium">
+                      {folioVisible(c.serie, c.folio, config, 'numero')}
+                    </span>
                     <span className="text-xs text-muted-foreground ml-2">
                       {safeFormatDate(c.fecha_cierre, 'd MMM yyyy, HH:mm', '')}
                     </span>

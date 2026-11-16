@@ -90,6 +90,7 @@ import { Calculator, BadgePercent } from 'lucide-react';
 import { CajasALaVez, PermitirDescuentos } from '~/configuracion/CajaYDescuentos';
 import { UmbralDeRetiro } from '~/configuracion/UmbralDeRetiro';
 import { IvaDelNegocio } from '~/configuracion/IvaDelNegocio';
+import { FoliosDelNegocio } from '~/configuracion/FoliosDelNegocio';
 import { CandadoDeMando } from '~/configuracion/CandadoDeMando';
 import { ImpresionDelAparato } from '~/impresion/pantallas/ImpresionDelAparato';
 import { CopiasDeImpresion } from '~/impresion/pantallas/CopiasDeImpresion';
@@ -745,6 +746,7 @@ export default function Configuracion() {
           {/* DP-21 · El IVA con el que se cobra: su tarjeta, su comando y su «Guardado». El campo
               de antes («IVA / Impuesto (%)») guardaba una clave que nadie leía. */}
           <IvaDelNegocio puedeCambiar={esDeMando(miPuesto)} />
+          <FoliosDelNegocio puedeCambiar={miPuesto === 'dueno'} />
 
           {/* === ESTACIONES DE PREPARACIÓN (6A) ===
               UNA sola card que contiene:
