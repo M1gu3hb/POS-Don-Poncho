@@ -22,8 +22,11 @@ import {
   Trash2,
   Heart,
   Ban,
+  HardDriveDownload,
+  FolderOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { AYUDA_DE_LA_CARPETA, useCarpetaDeCortes } from '~/corte/carpeta/use-carpeta-de-cortes';
 import CorteViewerDialog from '@/components/cortes/CorteViewerDialog';
 import TicketViewerDialog from '@/components/tickets/TicketViewerDialog';
 import ResumenPeriodo from '@/components/registros/ResumenPeriodo';
@@ -100,6 +103,13 @@ export default function Registros() {
   // DP-16 · Ventas de las mesas, pedidos para llevar, o todas.
   const [canal, setCanal] = useState('todos');
   const [verCorte, setVerCorte] = useState(null);
+  // DP-D153: con la app 1.0.2, «Guardar en la carpeta» de una fila abre el visor y lo guarda solo.
+  const [guardarCorte, setGuardarCorte] = useState(null);
+  const { archivos: carpetaDeCortes, abrirCarpeta } = useCarpetaDeCortes();
+  const abrirLaCarpeta = async () => {
+    const r = await abrirCarpeta();
+    if (!r.ok) toast.error(r.mensaje);
+  };
   const [verVenta, setVerVenta] = useState(null);
   const [pdfData, setPdfData] = useState(null);
 
@@ -442,7 +452,13 @@ export default function Registros() {
               filename="cortes-caja"
             />
             <LimpiarSeccionButton seccion="cortes" />
+            {carpetaDeCortes && (
+              <Button size="sm" variant="outline" className="min-h-11" onClick={abrirLaCarpeta}>
+                <FolderOpen className="w-4 h-4 mr-1" /> Abrir carpeta
+              </Button>
+            )}
           </div>
+          {carpetaDeCortes && <p className="text-xs text-muted-foreground">{AYUDA_DE_LA_CARPETA}</p>}
           {cortesFirstLoad ? (
             <LoadingRow label="Cargando cortes…" />
           ) : (
@@ -465,6 +481,7 @@ export default function Registros() {
                       key={c.id}
                       corte={c}
                       onView={setVerCorte}
+                      onSave={carpetaDeCortes ? setGuardarCorte : null}
                       onDelete={puedeEliminar ? eliminarCorte : null}
                     />
                   ))}
@@ -691,6 +708,12 @@ export default function Registros() {
       </Tabs>
 
       <CorteViewerDialog corte={verCorte} open={!!verCorte} onClose={() => setVerCorte(null)} />
+      <CorteViewerDialog
+        corte={guardarCorte}
+        open={!!guardarCorte}
+        onClose={() => setGuardarCorte(null)}
+        guardarAlCargar
+      />
       <TicketViewerDialog venta={verVenta} open={!!verVenta} onClose={() => setVerVenta(null)} />
 
       {/* PDF de periodo (solo visible al imprimir) */}
@@ -807,7 +830,7 @@ function ExportarDetallesButton({ ventas, disabled = false }) {
   );
 }
 
-function CorteRow({ corte, onView, onDelete }) {
+function CorteRow({ corte, onView, onDelete, onSave }) {
   const { config } = useConfig();
   const tipo = corte?.tipo_corte === 'turno' ? 'turno' : 'cierre_diario';
   const esCierreDiario = tipo === 'cierre_diario';
@@ -843,6 +866,11 @@ function CorteRow({ corte, onView, onDelete }) {
       ) : (
         <Button size="sm" variant="ghost" onClick={() => onView(corte)}>
           Ver detalle
+        </Button>
+      )}
+      {onSave && (
+        <Button size="sm" variant="outline" className="min-h-11" onClick={() => onSave(corte)}>
+          <HardDriveDownload className="w-4 h-4 mr-1" /> Guardar en la carpeta
         </Button>
       )}
       {onDelete && (

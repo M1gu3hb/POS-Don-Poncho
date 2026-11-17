@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, X, Download, Loader2 } from 'lucide-react';
+import { Printer, X, Download, Loader2, HardDriveDownload, FolderOpen } from 'lucide-react';
 import { api } from '@/api/cliente';
 import { detallesDeVentas } from '@/lib/detallesDeVentas';
 import { useConfig } from '@/lib/ConfigContext';
@@ -11,7 +11,7 @@ import { hasPermission } from '@/lib/permissions';
 import { canAccessModule } from '@/lib/packageConfig';
 import { getStockStatus } from '@/utils/inventoryUtils';
 import { printDocument } from '@/lib/print';
-import { downloadNodeAsPDF, safeFileName } from '@/lib/pdfDownload';
+import { downloadNodeAsPDF, generatePDFBlobFromNode, safeFileName } from '@/lib/pdfDownload';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import CorteTicket from '@/components/tickets/CorteTicket';
@@ -22,8 +22,13 @@ import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
 import { leerVentasDelDia } from '~/corte-heredado/ventas-del-dia';
 import { leerExtrasDelCorte } from '~/corte-heredado/extras-del-corte';
 import { folioVisible } from '@morphiqpos/domain/venta';
+import { entregarElPdfDelCorte } from '~/corte/carpeta/entregar-el-pdf';
+import { fechaParaElArchivo, folioParaElArchivo } from '~/corte/carpeta/nombre-del-pdf';
+import { AYUDA_DE_LA_CARPETA, useCarpetaDeCortes } from '~/corte/carpeta/use-carpeta-de-cortes';
 
-export default function CorteViewerDialog({ corte, open, onClose }) {
+// `guardarAlCargar` (DP-D153): el «Guardar en la carpeta» de la fila de Registros abre el visor y, ya
+// cargado el corte, lo guarda solo y lo cierra; si falla, el visor se queda abierto con el botón.
+export default function CorteViewerDialog({ corte, open, onClose, guardarAlCargar = false }) {
   const { config, paquete_modo } = useConfig();
   // El corte enseña costo y utilidad si el negocio los lleva, y el desglose de
   // propinas por mesero si hay sala. Las dos cosas son módulos, no nombres de
@@ -48,10 +53,17 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
   });
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const { archivos, abrirCarpeta } = useCarpetaDeCortes();
+  const [guardando, setGuardando] = useState(false);
+  // Sólo con el corte LEÍDO entero se puede guardar: un PDF en ceros no es el corte.
+  const [cargadoBien, setCargadoBien] = useState(false);
+  const yaGuardoSolo = useRef(false);
 
   useEffect(() => {
     if (!open || !corte) return;
     let cancelled = false;
+    setCargadoBien(false);
+    yaGuardoSolo.current = false;
     (async () => {
       setLoading(true);
       // La caja se llama `fecha_apertura` en el puente (`CorteCaja`), no `fecha_inicio`: con el
@@ -194,6 +206,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
             alertas,
             extras,
           });
+          setCargadoBien(true);
           setLoading(false);
         }
       } catch (err) {
@@ -211,6 +224,44 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
   const handlePrintCashCut = () => {
     printDocument({ mode: 'letter', title: `Corte-${folioVisible(corte?.serie, corte?.folio, config, 'numero')}` });
   };
+
+  // === Guardar el PDF en la carpeta de cortes (sólo en la app 1.0.2) ===
+  const handleGuardarEnLaCarpeta = async () => {
+    if (!ticketRef.current || !archivos || !cargadoBien) {
+      toast.error('El corte todavía no se cargó. Espera un momento y vuelve a intentarlo.');
+      return;
+    }
+    setGuardando(true);
+    const entrega = await entregarElPdfDelCorte({
+      archivos,
+      datos: {
+        folio: folioParaElArchivo(folioVisible(corte?.serie, corte?.folio, config), String(corte?.id ?? '')),
+        fecha: fechaParaElArchivo(corte?.fecha_cierre),
+      },
+      generar: () => generatePDFBlobFromNode(ticketRef.current),
+      descargar: () => Promise.resolve(),
+    });
+    setGuardando(false);
+    if (entrega.ok === false) {
+      toast.error(`No se guardó el PDF en la carpeta. ${entrega.mensaje}`);
+      return;
+    }
+    toast.success('PDF guardado en tu carpeta de cortes');
+    if (guardarAlCargar) onClose();
+  };
+
+  const handleAbrirCarpeta = async () => {
+    const r = await abrirCarpeta();
+    if (!r.ok) toast.error(r.mensaje);
+  };
+
+  useEffect(() => {
+    if (!guardarAlCargar || !cargadoBien || loading || !archivos || yaGuardoSolo.current) return;
+    yaGuardoSolo.current = true;
+    const espera = setTimeout(handleGuardarEnLaCarpeta, 300);
+    return () => clearTimeout(espera);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guardarAlCargar, cargadoBien, loading, archivos]);
 
   // === Descargar PDF (NO abre imprimir) ===
   const handleDownloadCashCutPDF = async () => {
@@ -243,7 +294,7 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
       <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto p-0">
         <DialogHeader className="no-print px-6 pt-5 pb-3 border-b sticky top-0 bg-superficie z-10 flex-row items-center justify-between">
           <DialogTitle className="font-heading">PDF de corte · {folioVisible(corte?.serie, corte?.folio, config, 'numero')}</DialogTitle>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={handlePrintCashCut} disabled={loading}>
               <Printer className="w-4 h-4 mr-1" /> Imprimir / PDF
             </Button>
@@ -260,11 +311,34 @@ export default function CorteViewerDialog({ corte, open, onClose }) {
               )}
               Descargar
             </Button>
+            {archivos && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="min-h-11"
+                  onClick={handleGuardarEnLaCarpeta}
+                  disabled={loading || !cargadoBien || guardando}
+                >
+                  {guardando ? (
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  ) : (
+                    <HardDriveDownload className="w-4 h-4 mr-1" />
+                  )}
+                  Guardar en la carpeta
+                </Button>
+                <Button size="sm" variant="outline" className="min-h-11" onClick={handleAbrirCarpeta}>
+                  <FolderOpen className="w-4 h-4 mr-1" />
+                  Abrir carpeta
+                </Button>
+              </>
+            )}
             <Button size="sm" variant="outline" onClick={onClose}>
               <X className="w-4 h-4" />
             </Button>
           </div>
         </DialogHeader>
+        {archivos && <p className="no-print px-6 pt-2 text-xs text-muted-foreground">{AYUDA_DE_LA_CARPETA}</p>}
         <div className="p-4 bg-fondo-sutil">
           {loading ? (
             <p className="text-center py-12 text-muted-foreground">Cargando datos del corte...</p>

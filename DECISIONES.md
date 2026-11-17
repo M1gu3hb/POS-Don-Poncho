@@ -3045,6 +3045,39 @@ noche y una prueba del tablero falló: de día pasa.
 - **Descartado:** confiar en el huso del aparato (`format(new Date(), …)` de date-fns): una tableta
   con el huso mal puesto cambiaría de día antes o después que la caja.
 - **Sin migración.**
+## DP-D153 · Bloque 18 · Los PDF de los cortes quedan solos en una carpeta (app de Windows 1.0.2) · 17-11-2026
+
+Hasta la 1.0.1 el PDF del corte se descargaba como en un navegador (a «Descargas», con el nombre que
+armaba la página). Con la app de Windows 1.0.2 queda en `Documentos\POS Don Poncho\Cortes\AAAA-MM\`.
+
+- **La app da UNA excepción al «el puente no toca archivos»:** `MorphiqApp.archivos` con dos
+  funciones, `guardar({ folio, fecha, base64 })` y `abrirCarpeta()`, y la capacidad `'archivos'` en
+  `MorphiqApp.capacidades`. Tres cerrojos: sólo PDF (firma `%PDF-`, tope de 20 MiB), sólo esa carpeta
+  (la página NO da nombre ni ruta: la app valida folio y fecha con expresiones estrictas, arma
+  `Corte-<folio>-<AAAA-MM-DD>.pdf` y comprueba que el destino quede dentro) y sólo desde el origen
+  de producción (ni las pantallas internas de la app pueden llamarlas).
+- **La página sólo ofrece esto si la app lo anuncia.** `archivosDeLaApp` exige el puente del contrato
+  1, `capacidades` con `'archivos'` y las dos funciones. En un navegador, con la app 1.0.1 o en
+  Android: descarga de siempre (la MISMA función de antes) y ningún botón nuevo.
+- **Al sellar el cierre,** si la app lo anuncia y el ajuste `descargar_pdf_corte_auto` sigue
+  encendido (y el cajero no lo apagó en la pantalla del restaurante), el PDF se guarda solo en la
+  carpeta EN VEZ de descargarse. El cierre ya está sellado cuando eso empieza y no lo espera:
+  `entregarSinEsperar` vuelve al instante y el guardado tiene un plazo de 30 s. Si falla (archivo
+  abierto en otro programa, plazo, disco), la persona ve un aviso con el motivo y puede reintentar
+  con «Guardar en la carpeta» o desde Registros → Cortes. **No cae a una descarga a escondidas.**
+  Con el ajuste apagado no se guarda solo, como hoy.
+- **Registros → Cortes:** por corte, «Guardar en la carpeta» (abre el visor y lo guarda solo, sólo
+  con el corte leído entero: un PDF en ceros no es el corte) y un «Abrir carpeta» arriba; el visor
+  trae los mismos botones. Texto de ayuda breve con dónde quedan los PDF. Blancos de 44 px.
+- **Nombre:** folio como se lee (`DPC-0102`; sin folio o ilegible, `SF-<id de la sesión>`) y día del
+  NEGOCIO del cierre (DP-D152), no el del aparato. Guardar el mismo corte otra vez no duplica: igual
+  → «ya-estaba»; otro PDF del mismo corte → «reemplazado».
+- **El corte de turno no genera PDF hoy** (sólo el cierre). No se inventó uno: «Guardar en la
+  carpeta» sí sirve para un corte de turno ya registrado, desde Registros.
+- **Descartado:** dejar que la página elija el nombre o la subcarpeta (un solo error la sacaría de
+  la carpeta); una ruta configurable; un listado o borrado de archivos desde la página.
+- **Sin migración.** Lógica nueva en `apps/web/src/corte/carpeta/`; `heredado/` sólo la llama
+  (declarado en `scripts/aspecto-permitido.json`).
 
 ## DP-D155 · DP-22 · Fase D: el dinero combinado y los cambios a media operación · 17-11-2026
 
