@@ -29,8 +29,8 @@
      los 73 puntos de Configuración (`briefs\e-listo.md`; 5440 y 3240; DP-D163 y DP-D164).
    - D3 · `aabed89fa64c7d9bd` · `.work\dp20` · `dp-22-costo-exacto` (sobre `2bf42ae`): hallazgo 14,
      costo exacto, migración **195** (`briefs\d3-listo.md`; base `dp22_costo`; DP-D165).
-   Si se vuelven a cortar: SendMessage a su id pidiendo que digan dónde quedaron, terminen EN
-   PRIMER PLANO y entreguen informe.
+     Si se vuelven a cortar: SendMessage a su id pidiendo que digan dónde quedaron, terminen EN
+     PRIMER PLANO y entreguen informe.
 4. **Encargos listos para lanzar** (`D:\mpos-tmp\dp22\briefs\`; se rellenan con
    `node /d/mpos-tmp/dp22/rellenar.cjs <plantilla> <salida> CLAVE=valor…`):
    - `g-parte5-ventas-e-inventario.md`: el resto de la Parte 5 por pantallas y los hallazgos 13
