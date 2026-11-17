@@ -48,8 +48,9 @@ export function PreguntaDelAnuncio({ puesto }: { readonly puesto: QuienMira }) {
           <p className="font-semibold">¿Esta pantalla anuncia las comandas en voz?</p>
           <p className="max-w-prose text-sm text-texto-sutil">
             Si otra pantalla de esta estación ya las anuncia, elige No para que no se oigan doble.
-            Mientras no contestes, anuncia. Después lo cambia la gerencia en Configuración → Este
-            aparato.
+            Mientras no contestes, anuncia.{' '}
+            {/* En un solo renglón: el contrato de los textos lee el destino línea por línea. */}
+            {'Después lo cambia la gerencia en Configuración → Este aparato.'}
           </p>
         </div>
       </div>
