@@ -3,59 +3,68 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11, 15:10.
+Última puesta al día: 17-11, 17:55.
 
-## AHORA MISMO (17-11, 15:10) — retomar desde aquí
+## AHORA MISMO (17-11, 17:55) — retomar desde aquí
 
-1. **Lotes 1, 2 y 3 EN PRODUCCIÓN** (`ff03687`, `829b13d`, `e4c45f5`). El lote 3 (PR 39, con la
-   **migración 194** ya aplicada) quedó «READY» a las 15:05; humo `humo-produccion.sh 3` sin
-   fallas; lectura de producción idéntica salvo las migraciones (126, última la 194).
-   **Falta sólo la hora de Vercel del lote 3: revisar `get_runtime_errors` (proyecto
-   `pos-don-poncho`, equipo `mh-astral-systems`) a partir de las 16:05** y anotarlo en PROGRESO.
-   App de Windows 1.0.2 publicada y comprobada (DP-D162).
-2. **Lote 4 en armado** en el checkout principal, rama `dp-22-cuarto-lote` (desde `main`
-   `e4c45f5`; sin subir todavía). Ya lleva el hallazgo 12 (`4512d73`: la Caja relee la cuenta tras
-   «El total cambió…»; contrato y 6 mutantes; falta su prueba con el dedo, encargo G). Irá
-   recibiendo a A, E y D3.
-3. **Agentes corriendo (3), retomados a las 15:01 tras el corte por límite de uso:**
+1. **Lotes 1, 2 y 3 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`, `e4c45f5`; migraciones hasta
+   la 194; Vercel sin errores en la hora de cada uno). App de Windows 1.0.2 publicada (DP-D162).
+2. **Lote 4 en armado** en el checkout principal, rama `dp-22-cuarto-lote` (subida, sin PR). Lleva:
+   - el hallazgo 12 (`4512d73`: la Caja relee la cuenta tras «El total cambió…»);
+   - los efectos de Configuración del agente E, primera tanda (`e5abd30`: 77 «comprobado»; quedan
+     7 «por ver en navegador» y 8 «por comprobar»; DP-D163 y DP-D164);
+   - el costo exacto del agente D3 (`aa4d80e`: hallazgo 14, **migración 195**, DP-D165; 31
+     mutantes suyos y 3 míos en `/d/mpos-tmp/dp22/d3-mis-mutantes.json`);
+   - tres arreglos de tipos y lint en pruebas de E.
+     **Revisión local** (`/d/mpos-tmp/dp22/revision-lote4.log`): las 30 puertas, formato e
+     integración (restaurante, registros, inventario, qa-final, compras, caja, portal, venta, puente)
+     en 0; tipos y lint corregidos y comprobados aparte; **`test:unit` falló por 8 archivos que se
+     pasaron de tiempo con la máquina cargada (solos pasan): REPETIR `pnpm test:unit` completo con
+     la máquina tranquila antes del PR.**
+3. **Agentes corriendo (3):**
    - A · `a50dedf20b5388d67` · `.work\dp20-lab` · `dp-22-lote2` (base vieja `e4decc8`): barrido de
-     servicio y hallazgos 2 a 6 (DP-D154). 33 archivos cambiados y 7 nuevos, sin commit. Su diff ya
-     lo leí (blancos táctiles de 44 px con `any-pointer-coarse`, nombres accesibles, contraste,
-     `AvisoDeSilencio` en Cocina, colores de los avisos en `tacto/avisos.css`, y exenciones «a
-     propósito» en el arnés `tocables.ts`). Falta su informe, `revisar-rama.sh` y mutante propio.
-     Para unir: parche (`git diff` + archivos nuevos) y `git apply --3way` sobre el lote 4 (no
-     merge: su base es anterior a los squash). Ojo: toca `Caja.jsx` y `aspecto-permitido.json`.
-   - E · `afd62723a1816d4ea` · `.work\dp18-integrar` · `dp-22-ajustes-navegador` (sobre `829b13d`):
-     los 73 puntos de Configuración (`briefs\e-listo.md`; 5440 y 3240; DP-D163 y DP-D164).
-   - D3 · `aabed89fa64c7d9bd` · `.work\dp20` · `dp-22-costo-exacto` (sobre `2bf42ae`): hallazgo 14,
-     costo exacto, migración **195** (`briefs\d3-listo.md`; base `dp22_costo`; DP-D165).
-     Si se vuelven a cortar: SendMessage a su id pidiendo que digan dónde quedaron, terminen EN
-     PRIMER PLANO y entreguen informe.
-4. **Encargos listos para lanzar** (`D:\mpos-tmp\dp22\briefs\`; se rellenan con
+     servicio y hallazgos 2 a 6 (DP-D154). Terminó su tanda de 14 aparatos y está con sus mutantes
+     (recompila con cada uno). Falta su informe. Para unir: parche (`git add -A`,
+     `git diff --cached --binary e4decc8 -- . ':!docs' ':!DECISIONES.md'`) y
+     `git apply --3way --index` sobre el lote 4; toca `Caja.jsx` y `aspecto-permitido.json`.
+   - E · `afd62723a1816d4ea` · `.work\dp18-integrar` · `dp-22-ajustes-navegador` (su primera tanda
+     está confirmada ahí como `6b5803c` y unida al lote 4). **Segunda tanda:** el hallazgo 20
+     (ALTO: el cierre del día no cierra su diálogo en el iMin, Chromium 99: ¿app o prueba?; la
+     regla: el cierre nunca depende del PDF), el 19 (DP-D166), el 21, el 18, los dos estados en
+     sus pruebas de navegador y la misma corrección de la importación. Lo nuevo: parche desde
+     `6b5803c`.
+   - G · `a05a11e0c5003c300` · `.work\dp20` · `dp-22-parte5` (sobre `aa4d80e`): el resto de la
+     Parte 5 por pantallas y los hallazgos 13 (alto), 16, 17, 22, 23 y la prueba con el dedo del
+     12 (`briefs\g-listo.md`; clon `qa_dp22_p5`, 3230 y 54530; DP-D167 a DP-D170).
+     Si se cortan: SendMessage a su id pidiendo que digan dónde quedaron, terminen EN PRIMER PLANO
+     y entreguen informe.
+4. **Encargos listos para lanzar** cuando haya lugar (`D:\mpos-tmp\dp22\briefs\`; se rellenan con
    `node /d/mpos-tmp/dp22/rellenar.cjs <plantilla> <salida> CLAVE=valor…`):
-   - `g-parte5-ventas-e-inventario.md`: el resto de la Parte 5 por pantallas y los hallazgos 13
-     (alto), 16 (falta), 17 y la prueba con el dedo del 12. Va DESPUÉS de unir D3 (usa el costo
-     exacto), en el árbol que D3 deje libre.
-   - `f-dia-de-bots.md`: el perfil `dp22` del simulador y su lanzador (el molde es `qa_dp22_inv`
-     del clúster 5460; hay que migrar el clon a la 194 y la 195). En el árbol que A deje libre.
-5. **Al recibir a cada agente:** `bash /d/mpos-tmp/dp22/revisar-rama.sh <árbol> <url> <log>
-<carpetas de integración>` (todas las puertas de la CI, incluida `verify:cobertura`, y la suite
-   unitaria COMPLETA), leer el diff, mutante propio, PIN (`git add -A` y `revisar-pines.mjs`),
-   consolidar; lista COMPLETA de conflictos y `git grep -n -E "^(<<<<<<< |>>>>>>> )"` antes de
-   confirmar; si una pantalla gana imports, su etiqueta `PANTALLA ·` en las primeras 60 líneas;
-   `DECISIONES.md` en orden (`ordenar-decisiones.cjs DECISIONES.md 153`); `pnpm qa:matriz`.
-   Antes del PR del lote 4: correr en local «Jornada completa» y la galería si cambió el aspecto
-   (los cambios de A SÍ cambian retratos: regenerar con
-   `gh workflow run verificar.yml --ref <rama> -f actualizar_galeria=true` y mirar los PNG).
-6. **Despliegue del lote 4 (lleva la migración 195 si D3 la trae):** CI en verde →
-   `migrar-produccion.sh ensayo` → `aplicar` → `gh pr merge N --squash` → «READY» →
-   `humo-produccion.sh 4` → lectura (`revisar-produccion.mjs`) → la hora de Vercel.
+   `h-parte7-en-la-app.md` (los 12 puntos «¿debería poder…?» comprobados con el dedo) y
+   `f-dia-de-bots.md` (el perfil `dp22` del simulador; molde `qa_dp22_inv` del clúster 5460, hay
+   que migrar el clon a la 195).
+5. **Al recibir a cada agente:** leer el diff, mutante propio, PIN (`git add -A` y
+   `node /d/mpos-tmp/dp21/revisar-pines.mjs <árbol>`, MIRANDO su código de salida: un `| tail` lo
+   tapa), consolidar; lista COMPLETA de conflictos y `git grep -n -E "^(<<<<<<< |>>>>>>> )"`;
+   `DECISIONES.md` con `##` y en orden (`ordenar-decisiones.cjs DECISIONES.md 153`);
+   `pnpm qa:matriz`; `prettier --write` de los documentos; y al final
+   `bash /d/mpos-tmp/dp22/revisar-rama.sh <árbol> <url> <log> <carpetas>` (incluye
+   `verify:cobertura`).
+6. **Antes del PR del lote 4:** la suite unitaria completa con la máquina tranquila; «Jornada
+   completa» en local; la galería si cambió el aspecto (los cambios de A y los de D3 en Inventario
+   y Recetas SÍ cambian retratos: `gh workflow run verificar.yml --ref <rama> -f
+actualizar_galeria=true`, bajar `galeria-restaurante`, MIRAR los PNG y confirmarlos).
+   **Despliegue:** CI en verde → `migrar-produccion.sh ensayo` → `aplicar` (la 195) →
+   `gh pr merge N --squash` → «READY» → `humo-produccion.sh 4` → `revisar-produccion.mjs` → la
+   hora de Vercel.
 7. **Después:** el día de bots con la máquina sola (repetir con otra semilla hasta que salga
-   limpio); la Parte 11 (los guiones están en `scripts/`: `configurar-produccion.mjs` con
-   `--ensayo` y luego de verdad, `dejar-en-ceros.mjs`, `--primer-folio`, `renombrar-aparatos.mjs`,
-   `pnpm dia-cero`; el bloqueo H1 NO se activa); y el informe 013 con el veredicto, los números,
-   la calificación y la lista física de Miguel (incluye: tras el primer cierre real, ver el PDF en
-   `Documentos\POS Don Poncho\Cortes`).
+   limpio); la Parte 11 con `bash /d/mpos-tmp/dp22/parte11.sh` (ya ensayada sin escribir:
+   `configurar-ensayo` mandaría 5 comandos; `ceros-ensayo 9` encuentra sólo las 9 cuentas de
+   prueba y 1 caja cerrada; `aparatos-ensayo` 35 aparatos; orden: configurar → ceros 9 →
+   primer-folio → aparatos → `revisar-produccion.mjs` → `pnpm dia-cero`; el bloqueo H1 NO se
+   activa; el guion exige que `packages/` y `scripts/` sean los de `origin/main`); y el informe
+   013 con el veredicto, los números, la calificación y la lista física de Miguel (incluye: tras
+   el primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`).
 
 ## Dónde voy
 

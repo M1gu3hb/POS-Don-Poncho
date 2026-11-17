@@ -56,7 +56,7 @@ export async function guardarTarjeta(page: Page, region: Locator): Promise<void>
   if (!(await guardar.isEnabled())) return;
   const esLaEscritura = (r: Response): boolean =>
     r.request().method() === 'POST' &&
-    /\/api\//.test(r.url()) &&
+    r.url().includes('/api/') &&
     !/\/(consultar|estado|sesion)(\?|$)/.test(r.url());
   // Un toque que cae mientras la pantalla se vuelve a pintar se pierde: se repite una vez.
   for (let vez = 0; vez < 2; vez += 1) {

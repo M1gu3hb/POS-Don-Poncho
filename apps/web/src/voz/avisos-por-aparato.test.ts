@@ -88,7 +88,8 @@ describe('mh_mesero_alert_config · cómo se avisa al mesero en este aparato', (
 
   it('sin elegir nada, el mesero oye sonido y voz', async () => {
     const { modulo, dichas } = await cargar({});
-    expect(modulo.getAlertConfig().modo).toBe('sonido_voz');
+    const config = modulo.getAlertConfig() as { readonly modo?: string };
+    expect(config.modo).toBe('sonido_voz');
     modulo.speak('Mesa 2: pidió la cuenta');
     expect(dichas).toHaveLength(1);
   });

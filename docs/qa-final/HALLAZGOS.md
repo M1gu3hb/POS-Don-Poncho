@@ -16,14 +16,15 @@
 | Severidad | Encontrados | Arreglados | Abiertos |
 | --------- | ----------: | ---------: | -------: |
 | Crítico   |           0 |          0 |        0 |
-| Alto      |           4 |          2 |        2 |
-| Medio     |           8 |          4 |        4 |
-| Bajo      |           3 |          1 |        2 |
+| Alto      |           5 |          3 |        2 |
+| Medio     |          12 |          4 |        8 |
+| Bajo      |           4 |          1 |        3 |
 | Por ver   |           1 |          0 |        1 |
 | Falta     |           1 |          0 |        1 |
 
-(Los hallazgos 8, 9 y 10 están arreglados y en producción desde el lote 2, 17-11 07:55. Los altos
-abiertos son el 13 y el 14, los dos de inventario y recetas, que producción todavía no usa.)
+(Los hallazgos 8, 9 y 10 están en producción desde el lote 2 y el 7 y el 15 desde el lote 3. Los altos
+abiertos son el 13 (el «Tipo de venta» en tableta, de recetas) y el 20 (el cierre del día en el motor del
+iMin, sin diagnosticar). El 14 y el 12 están arreglados en el lote 4, por desplegar.)
 
 ## Lista
 
@@ -42,10 +43,16 @@ abiertos son el 13 y el 14, los dos de inventario y recetas, que producción tod
 | 11  | bajo    | Caja · cobro                                                     | El servidor acepta una propina al cobrar aunque en Configuración nadie pueda elegirla; la pantalla la esconde, el servidor no la exige                                                              | anotado: no se cambia antes de abrir (ver detalle)                                                                                |
 | 12  | bajo    | Caja · cobro                                                     | Cuando el total cambió desde la precuenta, el aviso dice «El total cambió…»: el servidor sí manda el total nuevo, falta ver si la Caja vuelve a leer la cuenta o se queda con el total viejo        | arreglado (lote 4, por desplegar): la Caja relee la cuenta tras el rechazo; contrato y 6 mutantes; la prueba con el dedo, en cola |
 | 13  | alto    | Recetas → Nueva receta · tableta 1024×768 con el dedo            | No se puede elegir el «Tipo de venta» («Variable por medida») al crear un platillo: el toque cae fuera de la pantalla. Con ratón sí se puede                                                        | abierto: causa sin confirmar                                                                                                      |
-| 14  | alto    | Inventario, recetas y márgenes · todos                           | El costo por gramo o mililitro se guarda en centavos enteros: leche a 2.4 ¢/ml queda en 2 ¢ (−16.7 %) y maíz a 4.5 ¢/g en 5 ¢ (+11 %); con $11,570.50 comprados, «Valor de inventario» dice $11,552 | abierto: se arregla (agente D3)                                                                                                   |
+| 14  | alto    | Inventario, recetas y márgenes · todos                           | El costo por gramo o mililitro se guarda en centavos enteros: leche a 2.4 ¢/ml queda en 2 ¢ (−16.7 %) y maíz a 4.5 ¢/g en 5 ¢ (+11 %); con $11,570.50 comprados, «Valor de inventario» dice $11,552 | arreglado (lote 4, por desplegar): costo exacto en diezmilésimas de centavo, migración 195 (DP-D165)                              |
 | 15  | medio   | Inventario · aviso de mínimos                                    | La regla de «por debajo del mínimo» reventaba con una existencia en negativo, que DP-D116 hace legal                                                                                                | arreglado · en producción (lote 3, `e4c45f5`)                                                                                     |
 | 16  | falta   | Recetas                                                          | No hay pantalla para darle receta a las OPCIONES de un platillo (el dominio y la base sí lo soportan: sustituir y escalar)                                                                          | abierto: por medir                                                                                                                |
 | 17  | bajo    | Configuración → Este aparato · tableta                           | El interruptor «Modo espera en este aparato» no trae nombre accesible                                                                                                                               | abierto                                                                                                                           |
+| 18  | bajo    | Configuración → Identidad · todos                                | El texto de los ajustes de color y de «nombre del sistema» promete que cambian «el acceso», y la pantalla de acceso (sin sesión) no los lee, a propósito: lo público es mínimo                      | abierto: se corrige el texto, no el comportamiento (DP-D164; agente E)                                                            |
+| 19  | medio   | Portal del cliente · teléfono                                    | «Mostrar productos sin imagen» apagada no hace nada en «Menú digital» (sólo vale en «A la carta»): un ajuste que no cumple lo que dice                                                              | abierto: valdrá en los dos modos (DP-D166; agente E)                                                                              |
+| 20  | alto    | Caja → Cerrar caja del día · iMin (Chromium 99)                  | En el motor del iMin, tras «Cerrar caja del día» el diálogo no se cierra en 60 s (visto con «Descargar el PDF del corte» encendido). Falta saber si es la app o la prueba                           | abierto: sin diagnosticar; es lo primero del agente E                                                                             |
+| 21  | medio   | Configuración → Datos del negocio · todos                        | Cambiar SÓLO el nombre y tocar Guardar no manda nada al servidor; con los cuatro campos sí guarda                                                                                                   | abierto: por confirmar (agente E)                                                                                                 |
+| 22  | medio   | Inventario · consumo interno                                     | `inventario.consumo_interno` nunca se había corrido contra Postgres y ahí falla: su salida exige un `motivo` que el movimiento no escribe                                                           | abierto (agente G)                                                                                                                |
+| 23  | medio   | Inventario → kardex y corte                                      | La merma manual, el traspaso y la devolución escriben el movimiento SIN costo: salen a $0 en el kardex y en el corte (la merma por cancelación, el ajuste y el cobro sí lo copian)                  | abierto (agente G)                                                                                                                |
 
 ## Detalle
 

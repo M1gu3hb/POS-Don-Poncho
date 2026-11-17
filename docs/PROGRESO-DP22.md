@@ -219,5 +219,5 @@ Rama `dp-22-tercer-lote` (checkout principal, sobre `main` ya con el lote 2). Ll
   `registros/lo-mas-vendido` contestan 403), una ruta inventada contesta 404. **0 fallas.**
 - **Lectura de producción después (15:06):** idéntica a la de antes salvo las migraciones (126
   aplicadas, la última la 194). Ninguna cuenta, caja ni ajuste cambió.
-- **Vercel:** 0 errores al desplegar. Falta la revisión de la hora siguiente (a partir de las
-  16:05).
+- **Vercel:** 0 errores al desplegar y **0 en la hora siguiente** (revisado a las 16:06, ventana
+  de 2 h). **Lote 3 cerrado.**

@@ -1,6 +1,5 @@
 import type { Page } from '@playwright/test';
 
-import { fraseDeLaComandaDeEjemplo } from '../../../apps/web/src/voz/comanda-de-ejemplo.ts';
 import { Equipo, type RolDePrueba } from '../ayudantes/roles.ts';
 import { exigirDemostracion } from '../ayudantes/sesion.ts';
 
@@ -8,6 +7,14 @@ import { irASeccion, tarjeta } from './arnes/configuracion.ts';
 import { navegadorDe, prepararContexto } from './arnes/ligero.ts';
 import { expect, exigirServidor, test } from './arnes/prueba.ts';
 import { toque } from './arnes/toque.ts';
+
+/**
+ * Lo que dice «Así se oye una comanda». Va LITERAL: importar `comanda-de-ejemplo.ts` arrastra
+ * módulos de la app con el alias `~/`, que el proyecto de TypeScript de `pruebas/` no conoce. La
+ * frase la fija `apps/web/src/voz/comanda-de-ejemplo.test.ts`: si cambia, cambian las dos.
+ */
+const FRASE_DE_EJEMPLO =
+  'Nuevo pedido mesa 4: tres Consomés de carnero; dos Mixiotes, Sin picante; medio kilo de Barbacoa de horno.';
 
 /**
  * DP-22 · «ESTE APARATO»: lo que se guarda en el navegador de CADA aparato, cambiado con el dedo.
@@ -212,9 +219,7 @@ test.describe('Este aparato, con el dedo', () => {
       await irASeccion(page, 'cocina');
       const antes = await page.evaluate(() => JSON.stringify(window.localStorage));
       await toque(page, page.getByRole('button', { name: 'Así se oye una comanda' }));
-      await expect
-        .poll(async () => (await dichas(page)).at(-1)?.text)
-        .toBe(fraseDeLaComandaDeEjemplo());
+      await expect.poll(async () => (await dichas(page)).at(-1)?.text).toBe(FRASE_DE_EJEMPLO);
       expect(await page.evaluate(() => JSON.stringify(window.localStorage))).toBe(antes);
     } finally {
       await equipo.cerrar();
