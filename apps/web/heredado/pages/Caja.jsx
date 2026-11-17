@@ -1247,15 +1247,6 @@ export default function Caja() {
         notas: form.notas,
       };
 
-      // Cola de sincronización (no bloqueante)
-      try {
-        await api.comandos.ejecutar('/api/caja/encolar-sincronizacion', { corteId });
-      } catch (err) {
-        // La caja YA está cerrada: esto es una cola externa, y no encolar un
-        // envío a Sheets no invalida el corte. Pero se dice, en vez de tragarlo.
-        toast.warning(err?.message || 'La caja se cerró; la cola de sincronización no se encoló.');
-      }
-
       invalidarCajaQueries();
       queryClient.invalidateQueries({ queryKey: ['ventas_pagadas_caja'] });
       queryClient.invalidateQueries({ queryKey: ['ventas_hoy'] });

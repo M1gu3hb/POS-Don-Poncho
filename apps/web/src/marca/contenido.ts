@@ -1,7 +1,7 @@
 import { MARCA_DE_PLATAFORMA } from './nombre-visible';
 
 /**
- * EL CRÉDITO DE LA PLATAFORMA · «Sistema por Morphiq», sólo en la pantalla de acceso.
+ * EL CRÉDITO DE LA PLATAFORMA · «Hecho por MORPHIQ», sólo en la pantalla de acceso.
  *
  * POS Don Poncho es el sistema DEL restaurante: su logo y su nombre van en todas partes, y
  * Morphiq firma una sola vez, discreto, bajo el teclado del acceso (encargo DP-3). Nada de
@@ -11,7 +11,7 @@ import { MARCA_DE_PLATAFORMA } from './nombre-visible';
  * Vive aparte del componente (`CreditoDeMorphiq.tsx`) para probarse: las pruebas de `apps/web`
  * no transforman JSX.
  */
-export const CREDITO_DE_LA_PLATAFORMA = `Sistema por ${MARCA_DE_PLATAFORMA}`;
+export const CREDITO_DE_LA_PLATAFORMA = `Hecho por ${MARCA_DE_PLATAFORMA.toUpperCase()}`;
 
 /**
  * Cómo se pinta: pequeño y apagado, sobre la barra oscura del acceso. Todo en tokens (ni un
