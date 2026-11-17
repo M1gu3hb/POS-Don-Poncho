@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@morphiqpos/ui/primitivas/dialog';
 import { Aviso, Esqueleto, Superficie, Vacio } from '@morphiqpos/ui/sistema';
-import { ArrowRightLeft, Combine, ReceiptText, Split } from 'lucide-react';
+import { ArrowRightLeft, Combine, ReceiptText, Split, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -17,6 +17,8 @@ import { ErrorApi, consultarPuente, invocarComando } from '~/cliente/api';
 import { useVocabulario } from '~/cliente/vocabulario';
 
 import { mesasElegibles, type MesaElegible } from './mesas-elegibles';
+import { type MeseroElegible } from './pasar-la-mesa';
+import { PasarLaMesaDialog } from './PasarLaMesaDialog';
 import { PedirLaCuentaDialog } from './PedirLaCuentaDialog';
 import { SepararMesasDialog } from './unir-mesas/SepararMesasDialog';
 
@@ -71,6 +73,17 @@ export interface AccionesDeLaMesaProps {
   readonly unionId: string | null;
   /** Se separó el grupo: la pantalla relee la mesa. */
   readonly alSeparar: () => void;
+  /**
+   * DP-D156 · Pasar esta mesa a otro mesero. Ausente (o `null`) = no se ofrece: lo manda la pantalla
+   * según quién es el usuario (`puedePasarLaMesa`) y si la mesa tiene a alguien que la atienda.
+   */
+  readonly pasarLaMesa?: {
+    readonly numeroDeMesa: number;
+    readonly atiendeId: string;
+    readonly atiendeNombre: string | null;
+    /** Ya pasó: la pantalla relee la mesa y avisa. */
+    readonly alHecho: (entra: MeseroElegible) => void;
+  } | null;
 }
 
 export function AccionesDeLaMesa(props: AccionesDeLaMesaProps) {
@@ -79,6 +92,8 @@ export function AccionesDeLaMesa(props: AccionesDeLaMesaProps) {
   const [cambiando, setCambiando] = useState(false);
   const [preguntandoLaPropina, setPreguntandoLaPropina] = useState(false);
   const [separando, setSeparando] = useState(false);
+  const [pasando, setPasando] = useState(false);
+  const pasar = props.pasarLaMesa ?? null;
 
   return (
     <div className="flex flex-col gap-(--espacio-2)">
@@ -118,6 +133,18 @@ export function AccionesDeLaMesa(props: AccionesDeLaMesaProps) {
           <Combine aria-hidden="true" />
           Unir {voc.plural('unidad_servicio')}
         </Button>
+        {pasar === null ? null : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setPasando(true);
+            }}
+          >
+            <Users aria-hidden="true" />
+            Pasar {voc.enFrase('unidad_servicio')} a otro {voc.singular('responsable')}
+          </Button>
+        )}
         {props.unionId === null ? null : (
           <Button
             size="sm"
@@ -140,6 +167,22 @@ export function AccionesDeLaMesa(props: AccionesDeLaMesaProps) {
           alHecho={() => {
             setSeparando(false);
             props.alSeparar();
+          }}
+        />
+      )}
+      {pasar === null || !pasando ? null : (
+        <PasarLaMesaDialog
+          mesaId={props.mesaId}
+          numeroDeMesa={pasar.numeroDeMesa}
+          ordenId={props.ordenId}
+          atiendeId={pasar.atiendeId}
+          atiendeNombre={pasar.atiendeNombre}
+          alCerrar={() => {
+            setPasando(false);
+          }}
+          alHecho={(entra) => {
+            setPasando(false);
+            pasar.alHecho(entra);
           }}
         />
       )}

@@ -610,6 +610,8 @@ export interface Ordenes {
   canal: Generated<string>;
   /** F-328 · La etiqueta que se grita. NO es cliente_nombre. */
   nombre_pedido: string | null;
+  /** DP-D157 · El teléfono OPCIONAL del pedido para llevar (migración 194). Etiqueta efímera, como el nombre. */
+  telefono_pedido: string | null;
   /** DP-16 · «Pedido para llevar N», por día del negocio (migración 191). Nulo en mesas. */
   numero_pedido: number | null;
   /** DP-16 · El día del negocio del número para llevar. Va con `numero_pedido`. */

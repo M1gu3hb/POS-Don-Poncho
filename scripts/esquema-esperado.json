@@ -12310,6 +12310,17 @@
       "generada": null
     },
     {
+      "clave": "public.ordenes.telefono_pedido",
+      "esquema": "public",
+      "tabla": "ordenes",
+      "columna": "telefono_pedido",
+      "tipo": "text",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.ordenes.terminal_id",
       "esquema": "public",
       "tabla": "ordenes",
@@ -29060,6 +29071,17 @@
       "nombre": "ordenes_sucursal_misma_org",
       "tipo": "foreign_key",
       "definicion": "FOREIGN KEY (sucursal_id, organizacion_id) REFERENCES sucursales(id, organizacion_id) ON DELETE RESTRICT",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.ordenes.ordenes_telefono_pedido_valido",
+      "esquema": "public",
+      "tabla": "ordenes",
+      "nombre": "ordenes_telefono_pedido_valido",
+      "tipo": "check",
+      "definicion": "CHECK (telefono_pedido IS NULL OR telefono_pedido ~ '^\\+?[0-9][0-9 -]*$'::text AND char_length(telefono_pedido) <= 20 AND char_length(regexp_replace(telefono_pedido, '[^0-9]'::text, ''::text, 'g'::text)) >= 7 AND char_length(regexp_replace(telefono_pedido, '[^0-9]'::text, ''::text, 'g'::text)) <= 15)",
       "validada": true,
       "diferible": false,
       "diferidaInicialmente": false

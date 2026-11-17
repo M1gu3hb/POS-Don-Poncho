@@ -16,6 +16,7 @@ import {
   recienListos,
   RUTA_ENTREGAR,
   RUTA_PARA_LLEVAR_DEL_DIA,
+  textoDelTelefono,
   tituloDelPedido,
   type EstadoParaLlevar,
   type PedidoParaLlevar,
@@ -119,6 +120,12 @@ export function ParaLlevarDeHoy() {
             <p className="text-2xl font-black leading-tight">{tituloDelPedido(pedido)}</p>
             <span className="text-sm font-bold uppercase">Listo</span>
           </div>
+          {/* DP-D157 · Para llamarle si no se acerca a la barra. Sólo se ve en la Caja. */}
+          {textoDelTelefono(pedido) === null ? null : (
+            <p className="font-numeros text-lg font-semibold tabular-nums">
+              {textoDelTelefono(pedido)}
+            </p>
+          )}
           <Button
             className="h-[calc(var(--altura-control)*1.5)] w-full text-lg"
             cargando={entregando === pedido.ordenId}
@@ -147,6 +154,12 @@ export function ParaLlevarDeHoy() {
                 {' · '}
                 {pedido.listas > 0 ? 'una parte lista, falta otra' : 'en cocina'}
               </span>
+              {textoDelTelefono(pedido) === null ? null : (
+                <span className="font-numeros tabular-nums text-texto-sutil">
+                  {' · '}
+                  {textoDelTelefono(pedido)}
+                </span>
+              )}
             </li>
           ))}
         </ul>

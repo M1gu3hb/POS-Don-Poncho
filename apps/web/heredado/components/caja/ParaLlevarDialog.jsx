@@ -16,6 +16,7 @@ import { formatCurrency } from '@/utils/financialUtils';
 import CatalogoDelPedido from '@/components/pedido/CatalogoDelPedido';
 import { useArmadoDelPedido } from '@/components/pedido/useArmadoDelPedido';
 import { Aviso } from '@morphiqpos/ui/sistema';
+import { normalizarTelefonoDelPedido } from '@morphiqpos/domain/venta';
 import { claveDelBorrador } from '~/restaurante/borrador-del-pedido';
 import { pedidoSinTerminar } from '~/restaurante/pedido-sin-terminar';
 import { conSusOpciones } from '~/restaurante/opciones-de-los-platillos';
@@ -129,12 +130,22 @@ export default function ParaLlevarDialog({
       }
       lineas.push(linea);
     }
+    // DP-D157 · El teléfono es opcional; si lo hay, se valida con la regla del servidor antes de enviar.
+    const telefono = normalizarTelefonoDelPedido(pedido.telefono);
+    if (!telefono.ok) {
+      toast.error(telefono.motivo);
+      return;
+    }
     setArmando(true);
     try {
       const nombre = pedido.nota.trim();
       const armado = await api.comandos.ejecutar(
         '/api/restaurante/armar-para-llevar',
-        { ...(nombre ? { nombrePedido: nombre } : {}), lineas },
+        {
+          ...(nombre ? { nombrePedido: nombre } : {}),
+          ...(telefono.telefono ? { telefonoPedido: telefono.telefono } : {}),
+          lineas,
+        },
         nuevaClave(),
       );
       await onCobrar(armado.ordenId);
@@ -199,7 +210,7 @@ export default function ParaLlevarDialog({
               <X className="w-5 h-5" />
             </Button>
           </header>
-          <div className="px-4 py-2 border-b shrink-0 flex items-center gap-2">
+          <div className="px-4 py-2 border-b shrink-0 flex flex-wrap items-center gap-2">
             <Label htmlFor="para-llevar-nombre" className="shrink-0 text-sm">
               Nombre
             </Label>
@@ -209,7 +220,19 @@ export default function ParaLlevarDialog({
               onChange={(e) => pedido.setNota(e.target.value.slice(0, 60))}
               placeholder="Opcional: ¿a nombre de quién?"
               autoComplete="off"
-              className="h-10"
+              className="h-10 min-w-40 flex-1"
+            />
+            <Label htmlFor="para-llevar-telefono" className="shrink-0 text-sm">
+              Teléfono
+            </Label>
+            <Input
+              id="para-llevar-telefono"
+              value={pedido.telefono}
+              onChange={(e) => pedido.setTelefono(e.target.value.slice(0, 40))}
+              placeholder="Opcional: para avisarle"
+              inputMode="tel"
+              autoComplete="off"
+              className="h-10 w-48"
             />
           </div>
 

@@ -265,9 +265,10 @@ describe('§7.5 · el estado de liquidación de la propina', () => {
       // cambia y esto se pone en rojo antes de que el panel mienta.
       // A23 · La pestaña de Registros ya no lee el campo del puente: `propinas.del_rango` (sólo
       // dueño, administrador y gerente) trae `liquidada` derivado en el servidor.
+      // DP-22 (lote 4) · La tarjeta del Dashboard tampoco: suma en el servidor con `propinas.del_rango`
+      // (mismo comando, mismos tres roles), así que ya no lee el campo del puente.
       expect(heredadosQueContienen('propina_liquidada')).toEqual([
         'components/propinas/LiquidarPropinasDialog.jsx',
-        'components/propinas/PropinasDashboardSection.jsx',
       ]);
       expect(heredadosQueContienen('propinas/PropinasDashboardSection')).toEqual([
         'pages/Dashboard.jsx',
