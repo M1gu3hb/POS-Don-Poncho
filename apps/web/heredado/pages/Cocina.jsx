@@ -17,6 +17,8 @@ import {
 import CocinaProductoDialog from '@/components/cocina/CocinaProductoDialog';
 import CocinaVozControl from '@/components/cocina/CocinaVozControl';
 import { TableroDeCocina } from '~/cocina/TableroDeCocina';
+import { PreguntaDelAnuncio } from '~/cocina/PreguntaDelAnuncio';
+import { usePuesto } from '@/components/configuracion/usePuesto';
 import { ConectarTelefono } from '~/telefono-de-cocina/ConectarTelefono';
 import { AgotadosDelDia } from '~/restaurante/AgotadosDelDia';
 import CocinaNuevoPedidoWatcher from '@/components/cocina/CocinaNuevoPedidoWatcher';
@@ -46,6 +48,8 @@ export default function Cocina() {
   const [fichaItem, setFichaItem] = useState(null);
   const [porQuitar, setPorQuitar] = useState(null);
   const { posUser, verificada } = usePOSAuth();
+  // El puesto REAL: `posUser.rol` junta dueño, administrador y gerente en «administrador».
+  const miPuesto = usePuesto();
   const { config } = useConfig();
   const estacionesActivas = config?.estaciones_preparacion_activas === true;
 
@@ -357,6 +361,10 @@ export default function Cocina() {
         <AgotadosDelDia />
         <CocinaVozControl />
       </div>
+
+      {/* DP-22 · La primera vez que la cocina abre esta pantalla sin haber elegido, se le pregunta
+          (una vez, sin tapar nada) si esta pantalla anuncia las comandas. */}
+      <PreguntaDelAnuncio puesto={miPuesto} />
 
       {/* Watcher local: reproduce voz/sonido SOLO para pedidos NUEVOS, nunca para "listo". */}
       {/* DP-10.1: por estación. La `key` lo vuelve a montar si cambia lo que se ve: lo que ya

@@ -7,7 +7,8 @@ import { despertarLaPantalla } from '~/espera/despertador';
 import { rotuloDeLaComanda } from '~/restaurante/rotulo-de-la-comanda';
 import { almacenDelAparato } from '~/restaurante/vista-de-solicitudes';
 import { comandasPorAnunciar, frasesAAnunciar } from '~/cocina/anuncio-de-comandas';
-import { leerAnuncioDelAparato } from '~/voz/anuncio-del-aparato';
+import { anunciaEsteAparato, leerEleccionDelAparato } from '~/voz/anuncio-del-aparato';
+import { usePuesto } from '@/components/configuracion/usePuesto';
 
 const NOTIFIED_KEY = 'mh_cocina_notified_nuevos';
 
@@ -61,6 +62,10 @@ const saveSet = (set) => {
 export default function CocinaNuevoPedidoWatcher({ pedidos = [], cargando = false }) {
   const firstLoadRef = useRef(true);
   const notifiedRef = useRef(loadSet());
+  // El puesto REAL (no el rol de cuatro de `posUser.rol`): decide si este aparato anuncia mientras
+  // nadie haya elegido. En un ref para que un cambio de puesto no vuelva a correr el efecto.
+  const puestoRef = useRef(null);
+  puestoRef.current = usePuesto();
 
   useEffect(() => {
     // Mientras la primera lectura no llega, `pedidos` es una lista vacía que NO es la de la
@@ -96,8 +101,12 @@ export default function CocinaNuevoPedidoWatcher({ pedidos = [], cargando = fals
     // 2) Voz. DP-21: sólo si ESTE aparato anuncia («Esta pantalla anuncia las comandas»: con dos
     //    pantallas en la misma estación se apaga en la secundaria) y con los renglones iguales
     //    ya juntos («tres Consomés de carnero»). Las alergias y la celebración van con prioridad
-    //    (HOTFIX bandera roja de auditoría).
-    const anuncia = leerAnuncioDelAparato(almacenDelAparato());
+    //    (HOTFIX bandera roja de auditoría). DP-22: sin haber elegido, anuncia quien entra con el
+    //    puesto de cocina; los demás puestos, no.
+    const anuncia = anunciaEsteAparato({
+      puesto: puestoRef.current,
+      elegido: leerEleccionDelAparato(almacenDelAparato()),
+    });
     if (!anuncia) return;
     const frasesAHablar = frasesAAnunciar(recien, {
       anuncia,

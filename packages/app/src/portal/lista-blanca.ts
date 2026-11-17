@@ -34,7 +34,7 @@ import type { GrupoPublico } from './opciones-publicas.ts';
 /**
  * Lo que el comensal ve del negocio.
  *
- * Tres campos de identidad —los únicos de `PUBLICOS` que `§36.3` autoriza para
+ * Tres campos de identidad —los que trae `PUBLICOS` y `§36.3` autoriza para
  * el portal— y el resto son interruptores ya resueltos en el servidor.
  *
  * `paquete_modo` NO está, a propósito: revela el plan comercial contratado.
@@ -76,11 +76,8 @@ function cadena(valor: unknown): string {
  * Arma el bloque `negocio` eligiendo campo por campo.
  *
  * `publica` es lo que devuelve `leerConfiguracion(org, {publica:true})`, que ya
- * recortó a `PUBLICOS`. De ahí se toman TRES campos: los otros doce que esa
- * lista deja salir —colores, IVA, moneda, `usa_mesas`, `mensaje_ticket`— están
- * en la lista de «no salen al portal público» de `§36.3` y el portal no los
- * lee. Se anota en el informe; no se resuelve borrándolos de `PUBLICOS`, que es
- * un archivo de otro módulo.
+ * recortó a `PUBLICOS`: justo estos TRES campos, nombre y dos logos. Lo que no se lee
+ * aquí no viaja; `puente/lo-publico.test.ts` ata las dos listas.
  */
 export function negocioPublico(
   publica: Readonly<Record<string, unknown>>,

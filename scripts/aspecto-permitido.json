@@ -2543,6 +2543,11 @@
         "+ texto:No se pudo calcular el resumen del periodo.",
         "+ texto:Reintentar"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-22 (lote 3): cerrar la caja ya no encola «la cola de sincronización» ni le enseña al cajero el aviso técnico «La caja se cerró; la cola de sincronización no se encoló.». Esa cola era de la integración de demostración (Google Sheets) que ya se quitó: nadie la consume y sus filas sólo crecían. El comando y su ruta se quedan en el servidor, sin pantalla.",
+      "testigos": ["- aviso:La caja se cerró; la cola de sincronización no se encoló."]
     }
   ]
 }

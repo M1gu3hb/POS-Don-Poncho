@@ -232,7 +232,7 @@ export default function Configuracion() {
     'sonido-del-aparato': () => <SonidoDelAparato />,
     'modo-espera': () => <ModoEsperaDelAparato />,
     'voz-del-aparato': () => <ConfiguracionDeVoz />,
-    'anuncio-de-comandas': () => <AnuncioDeComandasDelAparato />,
+    'anuncio-de-comandas': () => <AnuncioDeComandasDelAparato puesto={miPuesto} />,
     'barra-lateral': () => <BarraLateralDelAparato />,
     laboratorio: () => <EntradaAlLaboratorio />,
     'reiniciar-sistema': () => <ReiniciarSistemaSection />,

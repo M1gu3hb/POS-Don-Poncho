@@ -507,15 +507,15 @@ comprobarMutacion({
     ),
 });
 comprobarMutacion({
-  nombre: 'caja devuelta a escritura directa de sincronización',
+  nombre: 'caja devuelta a encolar la sincronización',
   origen: PAGINA_CAJA,
   archivoTemporal: 'Caja.jsx',
   variable: 'MORPHIQPOS_CAJA_LEGACY_SOURCE_PATH',
   prueba: PRUEBA_SINCRONIZACION_CAJA,
   transformar: (codigo) =>
     codigo.replace(
-      "api.comandos.ejecutar('/api/caja/encolar-sincronizacion', { corteId })",
-      "api.entidades.IntegrationSyncLog.create({ record_type: 'cash_cut', record_id: corteId })",
+      "      invalidarCajaQueries();\n      queryClient.invalidateQueries({ queryKey: ['ventas_pagadas_caja'] });",
+      "      await api.comandos.ejecutar('/api/caja/encolar-sincronizacion', { corteId });\n      invalidarCajaQueries();\n      queryClient.invalidateQueries({ queryKey: ['ventas_pagadas_caja'] });",
     ),
 });
 comprobarMutacion({
