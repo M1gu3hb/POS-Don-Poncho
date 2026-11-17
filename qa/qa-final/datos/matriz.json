@@ -1,34 +1,13 @@
 {
-  "commit": "63977e1",
+  "commit": "4f935e9",
   "puestos": [
-    {
-      "puesto": "dueno",
-      "nombre": "Dueño"
-    },
-    {
-      "puesto": "administrador",
-      "nombre": "Administrador"
-    },
-    {
-      "puesto": "gerente",
-      "nombre": "Gerente"
-    },
-    {
-      "puesto": "cajero",
-      "nombre": "Cajero"
-    },
-    {
-      "puesto": "mesero",
-      "nombre": "Mesero"
-    },
-    {
-      "puesto": "cocina",
-      "nombre": "Cocina"
-    },
-    {
-      "puesto": "almacen",
-      "nombre": "Almacén"
-    }
+    { "puesto": "dueno", "nombre": "Dueño" },
+    { "puesto": "administrador", "nombre": "Administrador" },
+    { "puesto": "gerente", "nombre": "Gerente" },
+    { "puesto": "cajero", "nombre": "Cajero" },
+    { "puesto": "mesero", "nombre": "Mesero" },
+    { "puesto": "cocina", "nombre": "Cocina" },
+    { "puesto": "almacen", "nombre": "Almacén" }
   ],
   "pantallas": [
     {
@@ -69,6 +48,7 @@
         "apps/web/heredado/utils/tipsUtils.js",
         "apps/web/src/cliente/EstadosDeCarga.tsx",
         "apps/web/src/cliente/IrAlInicioDelRol.tsx",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/configuracion/secciones.ts",
         "apps/web/src/corte-heredado/cancelaciones-sin-trabar.ts",
         "apps/web/src/corte-heredado/descuentos-del-corte.ts",
@@ -97,6 +77,7 @@
         "apps/web/src/restaurante/RecetasPendientes.tsx",
         "apps/web/src/restaurante/margen-de-las-ventas.ts",
         "apps/web/src/restaurante/receta-pendiente.ts",
+        "apps/web/src/restaurante/valor-de-inventario.ts",
         "apps/web/src/tablero/AvisoDelTopeDeVentas.tsx",
         "apps/web/src/tablero/ComoVaTuSemana.tsx",
         "apps/web/src/tablero/del-dia.ts",
@@ -118,13 +99,9 @@
           "titulo": ""
         }
       ],
-      "lineas": 9780,
+      "lineas": 9913,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -179,6 +156,7 @@
         "apps/web/heredado/utils/tipsUtils.js",
         "apps/web/heredado/utils/ventaTotales.js",
         "apps/web/src/cliente/EstadosDeCarga.tsx",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/corte-heredado/cancelaciones-sin-trabar.ts",
         "apps/web/src/corte-heredado/descuentos-del-corte.ts",
         "apps/web/src/corte-heredado/diferencia-del-corte.ts",
@@ -233,6 +211,7 @@
         "apps/web/src/restaurante/unir-mesas/liberar-tras-cobrar.ts",
         "apps/web/src/restaurante/unir-mesas/use-union-de-la-mesa.ts",
         "apps/web/src/restaurante/use-opciones-de-los-platillos.ts",
+        "apps/web/src/restaurante/valor-de-inventario.ts",
         "apps/web/src/venta/AvisoDePropina.tsx",
         "apps/web/src/venta/CampoDePesos.tsx",
         "apps/web/src/venta/CorteDeTurno.tsx",
@@ -246,6 +225,7 @@
         "apps/web/src/venta/cajon-para-pagar.ts",
         "apps/web/src/venta/devolucion.ts",
         "apps/web/src/venta/importe-tecleado.ts",
+        "apps/web/src/venta/lo-preparado.ts",
         "apps/web/src/venta/opciones-del-renglon.ts",
         "apps/web/src/venta/opciones-en-pos.ts",
         "apps/web/src/venta/pin-en-retiros.ts",
@@ -349,14 +329,9 @@
           "titulo": null
         }
       ],
-      "lineas": 18759,
+      "lineas": 18861,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
     },
     {
@@ -370,6 +345,7 @@
         "apps/web/heredado/components/cocina/CocinaProductoDialog.jsx",
         "apps/web/heredado/components/cocina/CocinaVozControl.jsx",
         "apps/web/heredado/components/common/RestrictedRoute.jsx",
+        "apps/web/heredado/components/configuracion/usePuesto.js",
         "apps/web/heredado/components/ui/alert-dialog.jsx",
         "apps/web/heredado/components/ui/button.jsx",
         "apps/web/heredado/components/ui/card.jsx",
@@ -379,6 +355,7 @@
         "apps/web/heredado/utils/tipoVentaUtils.js",
         "apps/web/src/cocina/ColumnasDeCocina.tsx",
         "apps/web/src/cocina/EsperaChip.tsx",
+        "apps/web/src/cocina/PreguntaDelAnuncio.tsx",
         "apps/web/src/cocina/RenglonDePlatillo.tsx",
         "apps/web/src/cocina/ResumenDeProduccion.tsx",
         "apps/web/src/cocina/TableroDeCocina.tsx",
@@ -424,14 +401,9 @@
           "titulo": "Conectar teléfono"
         }
       ],
-      "lineas": 3168,
+      "lineas": 3295,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cocina"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "cocina"],
       "cobertura": null
     },
     {
@@ -452,7 +424,7 @@
         "apps/web/src/telefono-de-cocina/telefono-de-cocina.ts"
       ],
       "ventanas": [],
-      "lineas": 1101,
+      "lineas": 1110,
       "conSesion": false,
       "puestos": [],
       "cobertura": null
@@ -472,6 +444,7 @@
         "apps/web/heredado/components/compras/RegistrarCompraDialog.jsx",
         "apps/web/heredado/components/compras/RegistrarGastoDialog.jsx",
         "apps/web/heredado/components/compras/RepetirCompraDialog.jsx",
+        "apps/web/heredado/components/configuracion/puestos.js",
         "apps/web/heredado/components/configuracion/usePuesto.js",
         "apps/web/heredado/components/inventario/StockMinCritInput.jsx",
         "apps/web/heredado/components/inventario/comandos.js",
@@ -488,6 +461,7 @@
         "apps/web/heredado/utils/financialUtils.js",
         "apps/web/heredado/utils/ingredienteMatcher.js",
         "apps/web/heredado/utils/unidadesMedida.js",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/inventario/FaltaElAlmacen.tsx",
@@ -533,14 +507,9 @@
           "titulo": null
         }
       ],
-      "lineas": 4393,
+      "lineas": 4590,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "almacen"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
     },
     {
@@ -607,6 +576,7 @@
         "apps/web/heredado/utils/tipsUtils.js",
         "apps/web/heredado/utils/unidadesMedida.js",
         "apps/web/src/cliente/EstadosDeCarga.tsx",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/cliente/mesas-del-mapa.ts",
         "apps/web/src/cliente/numero-de-mesa.ts",
         "apps/web/src/cliente/zonas-del-salon.ts",
@@ -798,13 +768,9 @@
           "titulo": "Zonas del salón"
         }
       ],
-      "lineas": 23659,
+      "lineas": 23752,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -812,21 +778,11 @@
       "grupo": "interno",
       "pagina": "apps/web/app/(interno)/corte-caja/page.tsx",
       "principal": "apps/web/app/(interno)/corte-caja/page.tsx",
-      "archivos": [
-        "apps/web/app/(interno)/corte-caja/page.tsx"
-      ],
+      "archivos": ["apps/web/app/(interno)/corte-caja/page.tsx"],
       "ventanas": [],
       "lineas": 11,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero",
-        "cocina",
-        "almacen"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina", "almacen"],
       "cobertura": null
     },
     {
@@ -865,9 +821,11 @@
         "apps/web/heredado/utils/tipoVentaUtils.js",
         "apps/web/heredado/utils/unidadesMedida.js",
         "apps/web/heredado/utils/unitConversions.js",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
-        "apps/web/src/inventario/ajuste-de-stock.ts"
+        "apps/web/src/inventario/ajuste-de-stock.ts",
+        "apps/web/src/restaurante/valor-de-inventario.ts"
       ],
       "ventanas": [
         {
@@ -901,14 +859,9 @@
           "titulo": null
         }
       ],
-      "lineas": 4865,
+      "lineas": 4988,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "almacen"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
     },
     {
@@ -934,20 +887,11 @@
       "grupo": "interno",
       "pagina": "apps/web/app/(interno)/mesas/page.tsx",
       "principal": "apps/web/heredado/pages/Mesas.jsx",
-      "archivos": [
-        "apps/web/app/(interno)/mesas/page.tsx",
-        "apps/web/heredado/pages/Mesas.jsx"
-      ],
+      "archivos": ["apps/web/app/(interno)/mesas/page.tsx", "apps/web/heredado/pages/Mesas.jsx"],
       "ventanas": [],
       "lineas": 21,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "cajero", "mesero"],
       "cobertura": null
     },
     {
@@ -996,6 +940,7 @@
         "apps/web/heredado/utils/financialUtils.js",
         "apps/web/heredado/utils/tipoVentaUtils.js",
         "apps/web/heredado/utils/tipsUtils.js",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/cliente/dinero-del-puente.ts",
         "apps/web/src/cliente/escaner-del-documento.ts",
         "apps/web/src/cliente/mesas-del-mapa.ts",
@@ -1069,6 +1014,7 @@
         "apps/web/src/tacto/escala-del-mapa.ts",
         "apps/web/src/venta/DescuentoDeVenta.tsx",
         "apps/web/src/venta/PinDeSupervisor.tsx",
+        "apps/web/src/venta/lo-preparado.ts",
         "apps/web/src/venta/opciones-del-renglon.ts",
         "apps/web/src/venta/opciones-en-pos.ts",
         "apps/web/src/venta/propina-en-la-caja.ts",
@@ -1193,14 +1139,9 @@
           "titulo": null
         }
       ],
-      "lineas": 17022,
+      "lineas": 17092,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
     },
     {
@@ -1208,9 +1149,7 @@
       "grupo": "público",
       "pagina": "apps/web/app/n/[negocio]/page.tsx",
       "principal": "apps/web/app/n/[negocio]/page.tsx",
-      "archivos": [
-        "apps/web/app/n/[negocio]/page.tsx"
-      ],
+      "archivos": ["apps/web/app/n/[negocio]/page.tsx"],
       "ventanas": [],
       "lineas": 13,
       "conSesion": false,
@@ -1329,13 +1268,9 @@
           "titulo": null
         }
       ],
-      "lineas": 6269,
+      "lineas": 6301,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -1371,6 +1306,7 @@
         "apps/web/heredado/utils/financialUtils.js",
         "apps/web/heredado/utils/tipoVentaUtils.js",
         "apps/web/heredado/utils/tipsUtils.js",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/cliente/escaner-del-documento.ts",
         "apps/web/src/cliente/use-escaner-del-documento.ts",
         "apps/web/src/impresion/aislar.ts",
@@ -1425,14 +1361,9 @@
           "titulo": "Venta cobrada"
         }
       ],
-      "lineas": 6205,
+      "lineas": 6264,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
     },
     {
@@ -1472,6 +1403,7 @@
         "apps/web/src/catalogo/opciones/OpcionesDelPlatilloDialog.tsx",
         "apps/web/src/catalogo/opciones/editor-de-grupos.ts",
         "apps/web/src/catalogo/opciones/piso-del-platillo.ts",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/impresion/aislar.ts",
@@ -1524,14 +1456,9 @@
           "titulo": "Agotados del día"
         }
       ],
-      "lineas": 7128,
+      "lineas": 7200,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "almacen"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
     },
     {
@@ -1553,6 +1480,7 @@
         "apps/web/heredado/utils/qrPedidoFlow.js",
         "apps/web/heredado/utils/tipoVentaUtils.js",
         "apps/web/heredado/utils/tipsUtils.js",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/morfi/HoyoEnLaTarjeta.tsx",
         "apps/web/src/morfi/MorfiNoEncontrada.tsx",
         "apps/web/src/portal/atencion-del-comensal.ts",
@@ -1597,7 +1525,7 @@
           "titulo": "El pedido de la mesa"
         }
       ],
-      "lineas": 6081,
+      "lineas": 6140,
       "conSesion": false,
       "puestos": [],
       "cobertura": null
@@ -1637,6 +1565,7 @@
         "apps/web/heredado/utils/ingredienteMatcher.js",
         "apps/web/heredado/utils/tipoVentaUtils.js",
         "apps/web/heredado/utils/unidadesMedida.js",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/inventario/costo-del-platillo.ts",
@@ -1664,14 +1593,9 @@
           "titulo": null
         }
       ],
-      "lineas": 5236,
+      "lineas": 5311,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "almacen"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
     },
     {
@@ -1717,6 +1641,7 @@
         "apps/web/heredado/utils/tipoVentaUtils.js",
         "apps/web/heredado/utils/tipsUtils.js",
         "apps/web/src/cliente/EstadosDeCarga.tsx",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/corte-heredado/cancelaciones-sin-trabar.ts",
         "apps/web/src/corte-heredado/descuentos-del-corte.ts",
         "apps/web/src/corte-heredado/diferencia-del-corte.ts",
@@ -1750,10 +1675,13 @@
         "apps/web/src/registros/folio-exacto.ts",
         "apps/web/src/registros/lecturas-de-registros.ts",
         "apps/web/src/registros/periodo-de-registros.ts",
+        "apps/web/src/registros/propinas-del-servidor.ts",
+        "apps/web/src/registros/resumen-del-servidor.ts",
         "apps/web/src/restaurante/margen-de-las-ventas.ts",
         "apps/web/src/restaurante/nombre-de-la-mesa.ts",
         "apps/web/src/restaurante/rotulo-de-la-comanda.ts",
         "apps/web/src/restaurante/toma-de-pedido/precio-de-las-opciones.ts",
+        "apps/web/src/restaurante/valor-de-inventario.ts",
         "apps/web/src/tablero/dia-del-negocio.ts",
         "apps/web/src/venta/opciones-del-renglon.ts",
         "apps/web/src/venta/se-menciona-el-iva.ts",
@@ -1785,13 +1713,9 @@
           "titulo": null
         }
       ],
-      "lineas": 11350,
+      "lineas": 11760,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -1807,15 +1731,7 @@
       "ventanas": [],
       "lineas": 659,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero",
-        "cocina",
-        "almacen"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina", "almacen"],
       "cobertura": null
     },
     {
@@ -1841,18 +1757,15 @@
         "apps/web/src/venta/cajon-para-pagar.ts",
         "apps/web/src/venta/devolucion.ts",
         "apps/web/src/venta/importe-tecleado.ts",
+        "apps/web/src/venta/lo-preparado.ts",
         "apps/web/src/venta/pin-en-retiros.ts",
         "apps/web/src/venta/tope-de-quien-autoriza.ts",
         "apps/web/src/venta/use-umbral-de-retiro.ts"
       ],
       "ventanas": [],
-      "lineas": 3091,
+      "lineas": 3103,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -1897,12 +1810,7 @@
       ],
       "lineas": 4236,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
     },
     {
@@ -1949,11 +1857,7 @@
       ],
       "lineas": 3568,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -1970,11 +1874,7 @@
       "ventanas": [],
       "lineas": 648,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -1993,13 +1893,9 @@
         "apps/web/src/restaurante/ajuste-de-inventario.ts"
       ],
       "ventanas": [],
-      "lineas": 1620,
+      "lineas": 1649,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -2016,11 +1912,7 @@
       "ventanas": [],
       "lineas": 937,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -2110,12 +2002,7 @@
       ],
       "lineas": 4243,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
     },
     {
@@ -2137,6 +2024,7 @@
         "apps/web/heredado/utils/qrPedidoFlow.js",
         "apps/web/heredado/utils/tipoVentaUtils.js",
         "apps/web/heredado/utils/tipsUtils.js",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/morfi/HoyoEnLaTarjeta.tsx",
         "apps/web/src/morfi/MorfiNoEncontrada.tsx",
         "apps/web/src/portal/atencion-del-comensal.ts",
@@ -2181,17 +2069,9 @@
           "titulo": "El pedido de la mesa"
         }
       ],
-      "lineas": 6091,
+      "lineas": 6150,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero",
-        "cocina",
-        "almacen"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina", "almacen"],
       "cobertura": null
     },
     {
@@ -2217,12 +2097,7 @@
       "ventanas": [],
       "lineas": 1656,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
     },
     {
@@ -2240,11 +2115,7 @@
       "ventanas": [],
       "lineas": 982,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -2262,11 +2133,7 @@
       "ventanas": [],
       "lineas": 1308,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -2284,11 +2151,7 @@
       "ventanas": [],
       "lineas": 1130,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
     },
     {
@@ -2349,6 +2212,7 @@
         "apps/web/heredado/utils/tipoVentaUtils.js",
         "apps/web/heredado/utils/tipsUtils.js",
         "apps/web/src/cliente/EstadosDeCarga.tsx",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/impresion/aislar.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
@@ -2381,14 +2245,9 @@
           "titulo": ""
         }
       ],
-      "lineas": 3945,
+      "lineas": 4004,
       "conSesion": true,
-      "puestos": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero"
-      ],
+      "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
     }
   ],
@@ -2425,9 +2284,7 @@
         "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
-        "escritores": [
-          "apps/web/src/configuracion/ajustes-de-tarjetas.ts:123"
-        ],
+        "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:123"],
         "lectores": [
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:52",
           "apps/web/heredado/pages/Mesero.jsx:1310",
@@ -2443,13 +2300,8 @@
         ],
         "efecto": {
           "efecto": "El ticket y la precuenta se dibujan a 58 u 80 mm (384 o 576 puntos).",
-          "valores": [
-            "58",
-            "80"
-          ],
-          "pruebas": [
-            "pruebas/impresion/ticket-identico.spec.ts"
-          ],
+          "valores": ["58", "80"],
+          "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -2473,7 +2325,7 @@
           "apps/web/heredado/pages/PortalCliente.jsx:213",
           "packages/app/src/portal/banderas.ts:136",
           "packages/app/src/portal/lista-blanca.ts:66",
-          "packages/app/src/portal/lista-blanca.ts:108"
+          "packages/app/src/portal/lista-blanca.ts:105"
         ],
         "pruebasQueLaNombran": [
           "apps/web/src/configuracion/parche-de-la-seccion.test.ts",
@@ -2493,13 +2345,8 @@
         ],
         "efecto": {
           "efecto": "Encendida: cada mesero ve y atiende sólo sus mesas y el portal avisa a su mesero. Apagada: todos ven todas.",
-          "valores": [
-            "true",
-            "false"
-          ],
-          "pruebas": [
-            "pruebas/e2e/portal-sin-asignacion.spec.ts"
-          ],
+          "valores": ["true", "false"],
+          "pruebas": ["pruebas/e2e/portal-sin-asignacion.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -2511,7 +2358,7 @@
         "visiblePara": "todos",
         "con": "puente: ConfiguracionNegocio.update",
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": [
@@ -2522,16 +2369,11 @@
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:356",
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:357"
         ],
-        "lectores": [
-          "apps/web/heredado/components/common/BrandedBackground.jsx:22"
-        ],
+        "lectores": ["apps/web/heredado/components/common/BrandedBackground.jsx:22"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Cómo se acomoda la imagen de fondo del sistema (cubrir o contener).",
-          "valores": [
-            "cover",
-            "contain"
-          ],
+          "valores": ["cover", "contain"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2544,7 +2386,7 @@
         "visiblePara": "todos",
         "con": "puente: ConfiguracionNegocio.update",
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": [
@@ -2558,15 +2400,10 @@
           "apps/web/heredado/components/common/BrandedBackground.jsx:20",
           "packages/app/src/archivos/referencias.ts:9"
         ],
-        "pruebasQueLaNombran": [
-          "packages/app/src/archivos/referencias.test.ts"
-        ],
+        "pruebasQueLaNombran": ["packages/app/src/archivos/referencias.test.ts"],
         "efecto": {
           "efecto": "La imagen de fondo de las pantallas internas.",
-          "valores": [
-            "vacío",
-            "una imagen"
-          ],
+          "valores": ["vacío", "una imagen"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2596,18 +2433,17 @@
           "apps/web/heredado/pages/PortalCliente.jsx:427",
           "packages/app/src/archivos/referencias.ts:9",
           "packages/app/src/portal/lista-blanca.ts:50",
-          "packages/app/src/portal/lista-blanca.ts:93"
+          "packages/app/src/portal/lista-blanca.ts:90"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/archivos/referencias.test.ts",
-          "packages/app/src/portal/portal.proyeccion.test.ts"
+          "packages/app/src/portal/portal.proyeccion.test.ts",
+          "packages/app/src/puente/lo-publico.test.ts",
+          "packages/app/src/puente/puente.test.ts"
         ],
         "efecto": {
           "efecto": "La marca de agua del fondo, del acceso y del portal.",
-          "valores": [
-            "vacío",
-            "una imagen"
-          ],
+          "valores": ["vacío", "una imagen"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2620,7 +2456,7 @@
         "visiblePara": "todos",
         "con": "puente: ConfiguracionNegocio.update",
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": [
@@ -2633,16 +2469,11 @@
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:343",
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:345"
         ],
-        "lectores": [
-          "apps/web/heredado/components/common/BrandedBackground.jsx:21"
-        ],
+        "lectores": ["apps/web/heredado/components/common/BrandedBackground.jsx:21"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Qué tan visible es el fondo (0 a 1).",
-          "valores": [
-            "0.05",
-            "0.5"
-          ],
+          "valores": ["0.05", "0.5"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2660,9 +2491,7 @@
         "conValorPorOmision": true,
         "escritores": [],
         "lectores": [],
-        "pruebasQueLaNombran": [
-          "packages/app/src/puente/configuracion-limites.test.ts"
-        ],
+        "pruebasQueLaNombran": ["packages/app/src/puente/configuracion-limites.test.ts"],
         "efecto": {
           "efecto": "Ninguno en un restaurante: es de una báscula de etiquetas de mostrador. Sin pantalla.",
           "valores": [],
@@ -2696,14 +2525,8 @@
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Minutos sin tocar la pantalla tras los que dueño, administrador y gerente vuelven a teclear su PIN (5 a 30).",
-          "valores": [
-            "5",
-            "10",
-            "30"
-          ],
-          "pruebas": [
-            "pruebas/e2e/pin-al-abrir.spec.ts"
-          ],
+          "valores": ["5", "10", "30"],
+          "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -2734,10 +2557,7 @@
         ],
         "efecto": {
           "efecto": "Minutos de espera a los que la comanda se pinta ámbar en cocina.",
-          "valores": [
-            "1",
-            "10"
-          ],
+          "valores": ["1", "10"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2769,10 +2589,7 @@
         ],
         "efecto": {
           "efecto": "Minutos de espera a los que la comanda se pinta roja en cocina (siempre después del ámbar).",
-          "valores": [
-            "2",
-            "20"
-          ],
+          "valores": ["2", "20"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2785,7 +2602,7 @@
         "visiblePara": "todos",
         "con": "puente: ConfiguracionNegocio.update",
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": [
@@ -2804,15 +2621,10 @@
           "apps/web/heredado/lib/brandColors.js:107",
           "apps/web/heredado/lib/brandColors.js:110"
         ],
-        "pruebasQueLaNombran": [
-          "pruebas/e2e/estilos-del-negocio.spec.ts"
-        ],
+        "pruebasQueLaNombran": ["pruebas/e2e/estilos-del-negocio.spec.ts"],
         "efecto": {
           "efecto": "El color de acento de todo el sistema interno y del acceso.",
-          "valores": [
-            "#ac8a5f",
-            "otro"
-          ],
+          "valores": ["#ac8a5f", "otro"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2825,7 +2637,7 @@
         "visiblePara": "todos",
         "con": "puente: ConfiguracionNegocio.update",
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": [
@@ -2845,15 +2657,12 @@
           "apps/web/heredado/lib/brandColors.js:109"
         ],
         "pruebasQueLaNombran": [
-          "packages/app/src/puente/puente.test.ts",
+          "packages/app/src/puente/lo-publico.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts"
         ],
         "efecto": {
           "efecto": "El color primario de todo el sistema interno y del acceso.",
-          "valores": [
-            "#83653f",
-            "otro"
-          ],
+          "valores": ["#83653f", "otro"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2866,16 +2675,12 @@
         "visiblePara": null,
         "con": null,
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": [],
-        "lectores": [
-          "apps/web/heredado/lib/brandColors.js:22"
-        ],
-        "pruebasQueLaNombran": [
-          "pruebas/e2e/estilos-del-negocio.spec.ts"
-        ],
+        "lectores": ["apps/web/heredado/lib/brandColors.js:22"],
+        "pruebasQueLaNombran": ["pruebas/e2e/estilos-del-negocio.spec.ts"],
         "efecto": {
           "efecto": "Ninguno: es herencia y no se enseña en pantalla.",
           "valores": [],
@@ -2909,28 +2714,25 @@
           "apps/web/heredado/components/pos/CartPanel.jsx:12",
           "apps/web/heredado/components/propinas/PropinasDashboardSection.jsx:33",
           "apps/web/heredado/components/recetas/RecetaAccordionRow.jsx:81",
-          "apps/web/heredado/components/registros/ResumenPeriodo.jsx:53",
+          "apps/web/heredado/components/registros/ResumenPeriodo.jsx:59",
           "apps/web/heredado/lib/moneyColors.js:15",
           "apps/web/heredado/lib/moneyColors.js:23",
-          "apps/web/heredado/pages/Caja.jsx:1589",
-          "apps/web/heredado/pages/Caja.jsx:1685",
-          "apps/web/heredado/pages/Caja.jsx:1843",
-          "apps/web/heredado/pages/Caja.jsx:2225",
-          "apps/web/heredado/pages/Caja.jsx:2243",
+          "apps/web/heredado/pages/Caja.jsx:1579",
+          "apps/web/heredado/pages/Caja.jsx:1675",
+          "apps/web/heredado/pages/Caja.jsx:1833",
+          "apps/web/heredado/pages/Caja.jsx:2215",
+          "apps/web/heredado/pages/Caja.jsx:2233",
           "apps/web/heredado/pages/Dashboard.jsx:622",
           "apps/web/heredado/pages/Mesero.jsx:1836",
           "apps/web/heredado/pages/Mesero.jsx:1942",
           "apps/web/heredado/pages/Productos.jsx:275",
-          "apps/web/heredado/pages/Registros.jsx:651",
+          "apps/web/heredado/pages/Registros.jsx:678",
           "apps/web/heredado/pages/Ventas.jsx:63"
         ],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Encendido: los importes se pintan en color (entradas, salidas); apagado: en el color del texto.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2967,10 +2769,7 @@
         ],
         "efecto": {
           "efecto": "El corte enseña «Comisión de la terminal, estimada» sobre lo cobrado con tarjeta y la resta de la utilidad neta estimada.",
-          "valores": [
-            "vacío",
-            "360"
-          ],
+          "valores": ["vacío", "360"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -2998,19 +2797,11 @@
           "packages/app/src/caja/copias-de-impresion.ts:73",
           "packages/app/src/caja/index.ts:120"
         ],
-        "pruebasQueLaNombran": [
-          "packages/app/src/venta/impresion-del-ticket.integracion.test.ts"
-        ],
+        "pruebasQueLaNombran": ["packages/app/src/venta/impresion-del-ticket.integracion.test.ts"],
         "efecto": {
           "efecto": "Cuántas copias salen del ticket, la precuenta y el corte (1 a 3), con «ORIGINAL — CLIENTE» y «COPIA — NEGOCIO».",
-          "valores": [
-            "1",
-            "2",
-            "3"
-          ],
-          "pruebas": [
-            "pruebas/e2e/impresion-por-la-app.spec.ts"
-          ],
+          "valores": ["1", "2", "3"],
+          "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3044,12 +2835,12 @@
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:75"
         ],
         "lectores": [
-          "apps/web/heredado/components/datos/ExportarDatos.jsx:102",
+          "apps/web/heredado/components/datos/ExportarDatos.jsx:103",
           "apps/web/heredado/components/datos/PlantillasDescargables.jsx:120",
           "apps/web/heredado/components/datos/PlantillasDescargables.jsx:129",
           "apps/web/heredado/components/tickets/CorteTicket.jsx:197",
           "apps/web/heredado/utils/importExecutors.js:380",
-          "apps/web/heredado/utils/importValidators.js:487",
+          "apps/web/heredado/utils/importValidators.js:488",
           "apps/web/src/corte/HojaDelCorte.tsx:198",
           "apps/web/src/corte/hoja.ts:66",
           "packages/app/src/caja/corte/documento.ts:51",
@@ -3075,10 +2866,7 @@
         ],
         "efecto": {
           "efecto": "El correo del negocio en el corte y los PDF.",
-          "valores": [
-            "vacío",
-            "un correo"
-          ],
+          "valores": ["vacío", "un correo"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -3094,20 +2882,15 @@
         "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
-        "escritores": [
-          "apps/web/src/configuracion/ajustes-de-tarjetas.ts:161"
-        ],
+        "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:161"],
         "lectores": [
-          "apps/web/heredado/pages/Caja.jsx:1277",
+          "apps/web/heredado/pages/Caja.jsx:1267",
           "packages/app/src/caja/corte/documento.ts:377"
         ],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Encendido: al cerrar la caja se abre o descarga el PDF del corte solo.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -3138,10 +2921,7 @@
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Apagado: nadie puede aplicar descuentos (la pantalla no los ofrece y el servidor los rechaza).",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -3236,13 +3016,8 @@
         ],
         "efecto": {
           "efecto": "La dirección del negocio en el ticket, la precuenta, el corte y los PDF.",
-          "valores": [
-            "vacío",
-            "una dirección"
-          ],
-          "pruebas": [
-            "pruebas/impresion/ticket-identico.spec.ts"
-          ],
+          "valores": ["vacío", "una dirección"],
+          "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3271,8 +3046,8 @@
           "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx:73"
         ],
         "lectores": [
-          "apps/web/heredado/pages/Cocina.jsx:50",
-          "apps/web/heredado/pages/Cocina.jsx:130"
+          "apps/web/heredado/pages/Cocina.jsx:54",
+          "apps/web/heredado/pages/Cocina.jsx:134"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/portal/portal.proyeccion.test.ts",
@@ -3282,13 +3057,8 @@
         ],
         "efecto": {
           "efecto": "Encendido: las comandas se reparten por estación (cocina, bebidas…); apagado: una sola lista.",
-          "valores": [
-            "true",
-            "false"
-          ],
-          "pruebas": [
-            "pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"
-          ],
+          "valores": ["true", "false"],
+          "pruebas": ["pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3335,13 +3105,8 @@
         ],
         "efecto": {
           "efecto": "Morfi aparece (o no) en las cargas, la pantalla de espera y la página no encontrada.",
-          "valores": [
-            "true",
-            "false"
-          ],
-          "pruebas": [
-            "pruebas/e2e/morfi.spec.ts"
-          ],
+          "valores": ["true", "false"],
+          "pruebas": ["pruebas/e2e/morfi.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3382,13 +3147,8 @@
         ],
         "efecto": {
           "efecto": "Al despertar del modo espera se pide el PIN.",
-          "valores": [
-            "true",
-            "false"
-          ],
-          "pruebas": [
-            "pruebas/e2e/modo-espera-pin.spec.ts"
-          ],
+          "valores": ["true", "false"],
+          "pruebas": ["pruebas/e2e/modo-espera-pin.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3424,13 +3184,8 @@
         ],
         "efecto": {
           "efecto": "El portal del comensal suena (o no) al tocar.",
-          "valores": [
-            "true",
-            "false"
-          ],
-          "pruebas": [
-            "pruebas/e2e/sonidos.spec.ts"
-          ],
+          "valores": ["true", "false"],
+          "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3518,13 +3273,8 @@
         ],
         "efecto": {
           "efecto": "El sonido del teclado del PIN y de los toques (nib, keycap, thock, clasp).",
-          "valores": [
-            "nib",
-            "thock"
-          ],
-          "pruebas": [
-            "pruebas/e2e/sonidos.spec.ts"
-          ],
+          "valores": ["nib", "thock"],
+          "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3585,9 +3335,9 @@
           "packages/app/src/caja/corte/folios-vestidos.ts:35",
           "packages/app/src/caja/corte/folios-vestidos.ts:42",
           "packages/app/src/caja/corte/folios-vestidos.ts:44",
-          "packages/app/src/caja/sesion.ts:434",
-          "packages/app/src/caja/sesion.ts:437",
-          "packages/app/src/caja/sesion.ts:438",
+          "packages/app/src/caja/sesion.ts:443",
+          "packages/app/src/caja/sesion.ts:446",
+          "packages/app/src/caja/sesion.ts:447",
           "packages/app/src/mantenimiento/en-ceros.ts:82",
           "packages/app/src/mantenimiento/en-ceros.ts:129",
           "packages/app/src/mantenimiento/en-ceros.ts:179",
@@ -3633,13 +3383,8 @@
         ],
         "efecto": {
           "efecto": "Prefijo y primer folio: las cuentas se leen «DP-01001» y los cortes «DPC-0101» en pantalla, papel, Registros y exportaciones.",
-          "valores": [
-            "sin prefijo",
-            "DP + 1001/101"
-          ],
-          "pruebas": [
-            "pruebas/e2e/folios-con-prefijo.spec.ts"
-          ],
+          "valores": ["sin prefijo", "DP + 1001/101"],
+          "pruebas": ["pruebas/e2e/folios-con-prefijo.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3659,18 +3404,11 @@
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:120",
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:216"
         ],
-        "lectores": [
-          "packages/app/src/caja/corte/documento.ts:374"
-        ],
-        "pruebasQueLaNombran": [
-          "packages/app/src/caja/corte/negocio.test.ts"
-        ],
+        "lectores": ["packages/app/src/caja/corte/documento.ts:374"],
+        "pruebasQueLaNombran": ["packages/app/src/caja/corte/negocio.test.ts"],
         "efecto": {
           "efecto": "Texto legal al pie del corte, antes del pie de los PDF.",
-          "valores": [
-            "vacío",
-            "un texto"
-          ],
+          "valores": ["vacío", "un texto"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -3753,16 +3491,8 @@
         ],
         "efecto": {
           "efecto": "La tasa de IVA con la que se cotiza cada cuenta (sin IVA, 8 % o 16 %; incluido o sumado). Con 0 el IVA no se menciona en ningún papel ni reporte.",
-          "valores": [
-            "0",
-            "800 incluido",
-            "800 sumado",
-            "1600 incluido",
-            "1600 sumado"
-          ],
-          "pruebas": [
-            "pruebas/e2e/sin-iva.spec.ts"
-          ],
+          "valores": ["0", "800 incluido", "800 sumado", "1600 incluido", "1600 sumado"],
+          "pruebas": ["pruebas/e2e/sin-iva.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3792,10 +3522,7 @@
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "El logo del corte y de los PDF.",
-          "valores": [
-            "por omisión",
-            "otra imagen"
-          ],
+          "valores": ["por omisión", "otra imagen"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -3828,13 +3555,8 @@
         ],
         "efecto": {
           "efecto": "El logo del ticket y de la precuenta.",
-          "valores": [
-            "por omisión",
-            "otra imagen"
-          ],
-          "pruebas": [
-            "pruebas/impresion/ticket-identico.spec.ts"
-          ],
+          "valores": ["por omisión", "otra imagen"],
+          "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3875,21 +3597,19 @@
           "packages/app/src/archivos/referencias.ts:9",
           "packages/app/src/caja/corte/documento.ts:369",
           "packages/app/src/portal/lista-blanca.ts:49",
-          "packages/app/src/portal/lista-blanca.ts:92"
+          "packages/app/src/portal/lista-blanca.ts:89"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/archivos/referencias.test.ts",
           "packages/app/src/portal/portal.proyeccion.test.ts",
+          "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "El logo del negocio en la barra, el acceso y la pantalla de espera.",
-          "valores": [
-            "por omisión",
-            "otra imagen"
-          ],
+          "valores": ["por omisión", "otra imagen"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -3902,28 +3622,20 @@
         "visiblePara": "todos",
         "con": "puente: ConfiguracionNegocio.update",
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
-        "escritores": [
-          "apps/web/src/configuracion/ajustes-de-tarjetas.ts:116"
-        ],
-        "lectores": [
-          "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:282"
-        ],
+        "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:116"],
+        "lectores": ["apps/web/heredado/components/tickets/PreCuentaTicket.jsx:282"],
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
+          "packages/app/src/puente/lo-publico.test.ts",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "El mensaje al final del ticket y de la precuenta.",
-          "valores": [
-            "vacío",
-            "un mensaje"
-          ],
-          "pruebas": [
-            "pruebas/impresion/ticket-identico.spec.ts"
-          ],
+          "valores": ["vacío", "un mensaje"],
+          "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -3959,7 +3671,7 @@
         "visiblePara": null,
         "con": null,
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": [],
@@ -3971,6 +3683,7 @@
           "packages/domain/src/dinero/formato.ts:75"
         ],
         "pruebasQueLaNombran": [
+          "packages/app/src/puente/lo-publico.test.ts",
           "packages/domain/src/dinero/cambio.test.ts",
           "packages/domain/src/dinero/dinero.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts"
@@ -4014,10 +3727,7 @@
         ],
         "efecto": {
           "efecto": "Encendido: el cajero ve costos y utilidad en su corte; apagado: no.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4038,15 +3748,10 @@
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:94",
           "apps/web/src/impresion/pantallas/ejemplos.jsx:44"
         ],
-        "pruebasQueLaNombran": [
-          "pruebas/impresion/arnes.jsx"
-        ],
+        "pruebasQueLaNombran": ["pruebas/impresion/arnes.jsx"],
         "efecto": {
           "efecto": "Si el ticket lleva logo. Hoy no tiene interruptor en pantalla.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4094,7 +3799,7 @@
           "packages/app/src/gestion.ts:24",
           "packages/app/src/gestion.ts:36",
           "packages/app/src/portal/lista-blanca.ts:48",
-          "packages/app/src/portal/lista-blanca.ts:91"
+          "packages/app/src/portal/lista-blanca.ts:88"
         ],
         "pruebasQueLaNombran": [
           "apps/web/src/configuracion/ajustes-de-tarjetas.test.ts",
@@ -4102,16 +3807,14 @@
           "packages/app/src/portal/portal.proyeccion.test.ts",
           "packages/app/src/puente/claves-del-servidor.integracion.test.ts",
           "packages/app/src/puente/configuracion-limites.test.ts",
+          "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "El nombre del negocio en la barra, el acceso, el ticket, el corte, el portal y los PDF.",
-          "valores": [
-            "Don Poncho",
-            "otro"
-          ],
+          "valores": ["Don Poncho", "otro"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4124,7 +3827,7 @@
         "visiblePara": "todos",
         "con": "puente: ConfiguracionNegocio.update",
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": [
@@ -4149,10 +3852,7 @@
         ],
         "efecto": {
           "efecto": "El nombre del sistema en el acceso y al pie de los PDF.",
-          "valores": [
-            "POS Don Poncho",
-            "otro"
-          ],
+          "valores": ["POS Don Poncho", "otro"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4179,18 +3879,11 @@
           "packages/app/src/caja/lugares.ts:40",
           "packages/app/src/caja/lugares.ts:147"
         ],
-        "pruebasQueLaNombran": [
-          "packages/app/src/caja/lugares.test.ts"
-        ],
+        "pruebasQueLaNombran": ["packages/app/src/caja/lugares.test.ts"],
         "efecto": {
           "efecto": "El nombre de cada caja (lugar) al abrirla, en el corte y en Registros.",
-          "valores": [
-            "por omisión",
-            "Caja 1 y Caja 2"
-          ],
-          "pruebas": [
-            "pruebas/e2e/cajas-del-negocio.spec.ts"
-          ],
+          "valores": ["por omisión", "Caja 1 y Caja 2"],
+          "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -4225,10 +3918,7 @@
         ],
         "efecto": {
           "efecto": "El bloqueo H1: desde esa fecha lo cobrado no se borra (purgas, reinicios y dejar en ceros se niegan).",
-          "valores": [
-            "vacío",
-            "una fecha"
-          ],
+          "valores": ["vacío", "una fecha"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4266,13 +3956,8 @@
         ],
         "efecto": {
           "efecto": "Qué renglones salen en la precuenta y en el ticket de venta (folio, mesa, personas, mesero, cajero, fecha…).",
-          "valores": [
-            "todo encendido",
-            "varios apagados"
-          ],
-          "pruebas": [
-            "pruebas/impresion/ticket-identico.spec.ts"
-          ],
+          "valores": ["todo encendido", "varios apagados"],
+          "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -4316,8 +4001,8 @@
           "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:27",
           "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:36",
           "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:37",
-          "apps/web/heredado/components/registros/ResumenPeriodo.jsx:52",
-          "apps/web/heredado/components/registros/ResumenPeriodo.jsx:54",
+          "apps/web/heredado/components/registros/ResumenPeriodo.jsx:58",
+          "apps/web/heredado/components/registros/ResumenPeriodo.jsx:60",
           "apps/web/heredado/lib/packageConfig.js:307",
           "apps/web/heredado/pages/Caja.jsx:164",
           "apps/web/heredado/pages/Caja.jsx:170",
@@ -4334,9 +4019,9 @@
           "apps/web/heredado/pages/Productos.jsx:58",
           "apps/web/heredado/pages/Productos.jsx:64",
           "apps/web/heredado/pages/Productos.jsx:66",
-          "apps/web/heredado/pages/Registros.jsx:78",
-          "apps/web/heredado/pages/Registros.jsx:79",
-          "apps/web/heredado/pages/Registros.jsx:80",
+          "apps/web/heredado/pages/Registros.jsx:81",
+          "apps/web/heredado/pages/Registros.jsx:82",
+          "apps/web/heredado/pages/Registros.jsx:83",
           "apps/web/src/cliente/IrAlInicioDelRol.tsx:16",
           "apps/web/src/cliente/IrAlInicioDelRol.tsx:33",
           "apps/web/src/cliente/package-config.ts:42",
@@ -4356,9 +4041,7 @@
         ],
         "efecto": {
           "efecto": "La plantilla del negocio (restaurante): qué pantallas y comandos existen. Sólo por comando de plataforma.",
-          "valores": [
-            "restaurante"
-          ],
+          "valores": ["restaurante"],
           "pruebas": [],
           "estado": "no se cambia en la operación"
         }
@@ -4390,10 +4073,7 @@
         ],
         "efecto": {
           "efecto": "El pie del corte y de los PDF.",
-          "valores": [
-            "vacío",
-            "un texto"
-          ],
+          "valores": ["vacío", "un texto"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4409,9 +4089,7 @@
         "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
-        "escritores": [
-          "apps/web/src/configuracion/ajustes-de-tarjetas.ts:203"
-        ],
+        "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:203"],
         "lectores": [],
         "pruebasQueLaNombran": [
           "apps/web/src/configuracion/cada-clave-tiene-quien-la-lee.contrato.test.ts",
@@ -4419,10 +4097,7 @@
         ],
         "efecto": {
           "efecto": "Ninguno hoy: manda la opción de cada producto y lo que pasó por cocina se cobra siempre (DP-D116, DP-D135). En Avanzado, con su explicación.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "escondido en Avanzado"
         }
@@ -4452,14 +4127,10 @@
           "apps/web/heredado/components/tickets/CorteTicket.jsx:765",
           "packages/app/src/caja/corte/documento.ts:370"
         ],
-        "pruebasQueLaNombran": [
-          "apps/web/src/marca/contenido.test.ts"
-        ],
+        "pruebasQueLaNombran": ["apps/web/src/marca/contenido.test.ts"],
         "efecto": {
           "efecto": "La marca de plataforma en la barra y el corte.",
-          "valores": [
-            "POS Don Poncho"
-          ],
+          "valores": ["POS Don Poncho"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4491,7 +4162,7 @@
           "apps/web/heredado/pages/Mesero.jsx:1193",
           "packages/app/src/portal/banderas.ts:119",
           "packages/app/src/portal/lista-blanca.ts:51",
-          "packages/app/src/portal/lista-blanca.ts:94",
+          "packages/app/src/portal/lista-blanca.ts:91",
           "packages/app/src/portal/pruebas.ts:235"
         ],
         "pruebasQueLaNombran": [
@@ -4518,13 +4189,8 @@
         ],
         "efecto": {
           "efecto": "Apagado: el QR de la mesa dice que el portal no está disponible y nadie recibe solicitudes.",
-          "valores": [
-            "true",
-            "false"
-          ],
-          "pruebas": [
-            "pruebas/e2e/restaurante-portal-qr.spec.ts"
-          ],
+          "valores": ["true", "false"],
+          "pruebas": ["pruebas/e2e/restaurante-portal-qr.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -4557,9 +4223,7 @@
         "efecto": {
           "efecto": "Las zonas tocables sobre las páginas subidas del menú (editor de botones del Portal QR).",
           "valores": [],
-          "pruebas": [
-            "pruebas/e2e/botones-del-menu-qr.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/botones-del-menu-qr.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -4581,9 +4245,7 @@
           "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx:290",
           "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx:292"
         ],
-        "lectores": [
-          "packages/app/src/portal/banderas.ts:140"
-        ],
+        "lectores": ["packages/app/src/portal/banderas.ts:140"],
         "pruebasQueLaNombran": [
           "packages/app/src/portal/banderas.test.ts",
           "packages/app/src/portal/carrera.integracion.test.ts",
@@ -4599,10 +4261,7 @@
         ],
         "efecto": {
           "efecto": "Encendido: un comensal que escanea una mesa libre la abre; apagado: espera a que el mesero la abra.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4630,7 +4289,7 @@
           "apps/web/heredado/pages/PortalCliente.jsx:140",
           "packages/app/src/portal/banderas.ts:122",
           "packages/app/src/portal/lista-blanca.ts:53",
-          "packages/app/src/portal/lista-blanca.ts:96"
+          "packages/app/src/portal/lista-blanca.ts:93"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/portal/carrera.integracion.test.ts",
@@ -4642,11 +4301,7 @@
         ],
         "efecto": {
           "efecto": "Quién pide la cuenta con propina: mesero, comensal o ambos.",
-          "valores": [
-            "mesero",
-            "cliente",
-            "ambos"
-          ],
+          "valores": ["mesero", "cliente", "ambos"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4672,9 +4327,7 @@
           "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx:287",
           "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx:289"
         ],
-        "lectores": [
-          "packages/app/src/portal/banderas.ts:139"
-        ],
+        "lectores": ["packages/app/src/portal/banderas.ts:139"],
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/carrera-de-escrituras.integracion.test.ts",
           "packages/app/src/portal/aviso-del-pedido.integracion.test.ts",
@@ -4692,13 +4345,8 @@
         ],
         "efecto": {
           "efecto": "El pedido del comensal va directo a cocina o lo confirma el mesero.",
-          "valores": [
-            "mesero",
-            "directo"
-          ],
-          "pruebas": [
-            "pruebas/e2e/portal-modo-mesero.spec.ts"
-          ],
+          "valores": ["mesero", "directo"],
+          "pruebas": ["pruebas/e2e/portal-modo-mesero.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -4729,17 +4377,12 @@
           "apps/web/src/restaurante/personalizar-menu/use-personalizar-menu.ts:108",
           "packages/app/src/portal/banderas.ts:133",
           "packages/app/src/portal/lista-blanca.ts:62",
-          "packages/app/src/portal/lista-blanca.ts:105"
+          "packages/app/src/portal/lista-blanca.ts:102"
         ],
-        "pruebasQueLaNombran": [
-          "packages/app/src/puente/configuracion-limites.test.ts"
-        ],
+        "pruebasQueLaNombran": ["packages/app/src/puente/configuracion-limites.test.ts"],
         "efecto": {
           "efecto": "El mensaje de bienvenida del portal.",
-          "valores": [
-            "vacío",
-            "un mensaje"
-          ],
+          "valores": ["vacío", "un mensaje"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4769,7 +4412,7 @@
           "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:189",
           "packages/app/src/portal/banderas.ts:121",
           "packages/app/src/portal/lista-blanca.ts:52",
-          "packages/app/src/portal/lista-blanca.ts:95"
+          "packages/app/src/portal/lista-blanca.ts:92"
         ],
         "pruebasQueLaNombran": [
           "apps/web/src/configuracion/parche-de-la-seccion.test.ts",
@@ -4781,15 +4424,8 @@
         ],
         "efecto": {
           "efecto": "Cómo se ve el menú del comensal: digital, a la carta, páginas subidas o mixto.",
-          "valores": [
-            "menu_digital",
-            "productos_pos",
-            "menu_subido",
-            "mixto"
-          ],
-          "pruebas": [
-            "pruebas/e2e/restaurante-menu-personalizado.spec.ts"
-          ],
+          "valores": ["menu_digital", "productos_pos", "menu_subido", "mixto"],
+          "pruebas": ["pruebas/e2e/restaurante-menu-personalizado.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -4815,7 +4451,7 @@
           "apps/web/heredado/pages/PortalCliente.jsx:414",
           "packages/app/src/portal/banderas.ts:123",
           "packages/app/src/portal/lista-blanca.ts:54",
-          "packages/app/src/portal/lista-blanca.ts:97"
+          "packages/app/src/portal/lista-blanca.ts:94"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/portal/carrito-sin-cuenta.integracion.test.ts",
@@ -4823,10 +4459,7 @@
         ],
         "efecto": {
           "efecto": "Apagado: el portal no enseña precios (el servidor ni los manda).",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4853,15 +4486,12 @@
           "apps/web/heredado/components/portalqr/PedirCuentaQR.jsx:60",
           "packages/app/src/portal/banderas.ts:132",
           "packages/app/src/portal/lista-blanca.ts:61",
-          "packages/app/src/portal/lista-blanca.ts:104"
+          "packages/app/src/portal/lista-blanca.ts:101"
         ],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Encendido: el comensal ve su precuenta al pedir la cuenta.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4888,15 +4518,12 @@
           "apps/web/heredado/pages/PortalCliente.jsx:415",
           "packages/app/src/portal/banderas.ts:124",
           "packages/app/src/portal/lista-blanca.ts:55",
-          "packages/app/src/portal/lista-blanca.ts:98"
+          "packages/app/src/portal/lista-blanca.ts:95"
         ],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Apagado: los platillos sin foto no salen en el portal.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4923,7 +4550,7 @@
           "apps/web/heredado/utils/qrUtils.js:44",
           "packages/app/src/portal/banderas.ts:127",
           "packages/app/src/portal/lista-blanca.ts:58",
-          "packages/app/src/portal/lista-blanca.ts:101"
+          "packages/app/src/portal/lista-blanca.ts:98"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/mantenimiento/pruebas/dia-completo.ts",
@@ -4933,10 +4560,7 @@
         ],
         "efecto": {
           "efecto": "El botón «Necesito ayuda» del portal existe o no (y el servidor acepta o rechaza la solicitud).",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4963,15 +4587,12 @@
           "apps/web/heredado/utils/qrUtils.js:43",
           "packages/app/src/portal/banderas.ts:126",
           "packages/app/src/portal/lista-blanca.ts:57",
-          "packages/app/src/portal/lista-blanca.ts:100"
+          "packages/app/src/portal/lista-blanca.ts:97"
         ],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "El botón «Pedir cuenta» del portal existe o no (y el servidor acepta o rechaza).",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -4998,15 +4619,12 @@
           "apps/web/heredado/utils/qrUtils.js:42",
           "packages/app/src/portal/banderas.ts:125",
           "packages/app/src/portal/lista-blanca.ts:56",
-          "packages/app/src/portal/lista-blanca.ts:99"
+          "packages/app/src/portal/lista-blanca.ts:96"
         ],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "El botón «Quiero ordenar» (llamar para ordenar) existe o no.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5032,7 +4650,7 @@
         "lectores": [
           "packages/app/src/portal/banderas.ts:130",
           "packages/app/src/portal/lista-blanca.ts:59",
-          "packages/app/src/portal/lista-blanca.ts:102"
+          "packages/app/src/portal/lista-blanca.ts:99"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/mantenimiento/pruebas/dia-completo.ts",
@@ -5050,10 +4668,7 @@
         ],
         "efecto": {
           "efecto": "Apagado: el comensal ve el menú pero no puede mandar pedidos.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5083,7 +4698,7 @@
           "apps/web/heredado/pages/Mesero.jsx:1193",
           "packages/app/src/portal/banderas.ts:131",
           "packages/app/src/portal/lista-blanca.ts:60",
-          "packages/app/src/portal/lista-blanca.ts:103",
+          "packages/app/src/portal/lista-blanca.ts:100",
           "packages/app/src/propinas/una-sola-verdad.ts:84",
           "packages/app/src/propinas/index.ts:20",
           "packages/app/src/propinas/quien-elige.ts:12",
@@ -5091,18 +4706,11 @@
           "packages/app/src/propinas/quien-elige.ts:80",
           "packages/app/src/propinas/una-sola-verdad.ts:116"
         ],
-        "pruebasQueLaNombran": [
-          "packages/app/src/propinas/una-sola-verdad.test.ts"
-        ],
+        "pruebasQueLaNombran": ["packages/app/src/propinas/una-sola-verdad.test.ts"],
         "efecto": {
           "efecto": "Encendido: el comensal elige su propina al pedir la cuenta.",
-          "valores": [
-            "true",
-            "false"
-          ],
-          "pruebas": [
-            "pruebas/e2e/propina-una-sola-verdad.spec.ts"
-          ],
+          "valores": ["true", "false"],
+          "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -5138,9 +4746,7 @@
         "efecto": {
           "efecto": "El aspecto del portal (fondo, estilo, tipografía).",
           "valores": [],
-          "pruebas": [
-            "pruebas/e2e/personalizar-menu.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/personalizar-menu.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -5196,13 +4802,8 @@
         ],
         "efecto": {
           "efecto": "La Caja puede elegir la propina al cobrar.",
-          "valores": [
-            "true",
-            "false"
-          ],
-          "pruebas": [
-            "pruebas/e2e/propina-una-sola-verdad.spec.ts"
-          ],
+          "valores": ["true", "false"],
+          "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -5238,13 +4839,8 @@
         ],
         "efecto": {
           "efecto": "El mesero puede elegir la propina al pedir la cuenta.",
-          "valores": [
-            "true",
-            "false"
-          ],
-          "pruebas": [
-            "pruebas/e2e/propina-una-sola-verdad.spec.ts"
-          ],
+          "valores": ["true", "false"],
+          "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -5259,14 +4855,12 @@
         "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": false,
-        "escritores": [
-          "apps/web/src/configuracion/ajustes-de-tarjetas.ts:101"
-        ],
+        "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:101"],
         "lectores": [
           "apps/web/heredado/utils/tipsUtils.js:35",
           "packages/app/src/portal/banderas.ts:135",
           "packages/app/src/portal/lista-blanca.ts:65",
-          "packages/app/src/portal/lista-blanca.ts:107"
+          "packages/app/src/portal/lista-blanca.ts:104"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/configuracion.test.ts",
@@ -5274,10 +4868,7 @@
         ],
         "efecto": {
           "efecto": "Los porcentajes de propina que se ofrecen (hasta seis) en la Caja, el mesero y el portal.",
-          "valores": [
-            "5,10,15,20",
-            "10,15"
-          ],
+          "valores": ["5,10,15,20", "10,15"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5304,18 +4895,13 @@
           "apps/web/heredado/utils/tipsUtils.js:15",
           "packages/app/src/portal/banderas.ts:134",
           "packages/app/src/portal/lista-blanca.ts:63",
-          "packages/app/src/portal/lista-blanca.ts:106",
+          "packages/app/src/portal/lista-blanca.ts:103",
           "packages/app/src/propinas/una-sola-verdad.ts:85"
         ],
-        "pruebasQueLaNombran": [
-          "packages/app/src/propinas/una-sola-verdad.test.ts"
-        ],
+        "pruebasQueLaNombran": ["packages/app/src/propinas/una-sola-verdad.test.ts"],
         "efecto": {
           "efecto": "Apagado: no se ofrece propina en ningún lado.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5348,9 +4934,7 @@
         "efecto": {
           "efecto": "El diseño de los QR imprimibles de las mesas.",
           "valores": [],
-          "pruebas": [
-            "pruebas/e2e/qr-de-mesas.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/qr-de-mesas.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -5381,10 +4965,7 @@
         ],
         "efecto": {
           "efecto": "Un retiro de la cajera mayor a ese monto pide el PIN de un gerente; vacío no lo pide.",
-          "valores": [
-            "vacío",
-            "50000"
-          ],
+          "valores": ["vacío", "50000"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5400,9 +4981,7 @@
         "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": false,
-        "escritores": [
-          "apps/web/src/configuracion/ajustes-de-tarjetas.ts:78"
-        ],
+        "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:78"],
         "lectores": [
           "apps/web/heredado/pages/Dashboard.jsx:227",
           "apps/web/src/corte/HojaDelCorte.tsx:195",
@@ -5428,10 +5007,7 @@
         ],
         "efecto": {
           "efecto": "El RFC del negocio en el corte (si existe).",
-          "valores": [
-            "vacío",
-            "un RFC válido"
-          ],
+          "valores": ["vacío", "un RFC válido"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5447,21 +5023,12 @@
         "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": false,
-        "escritores": [
-          "apps/web/src/configuracion/ajustes-de-tarjetas.ts:186"
-        ],
-        "lectores": [
-          "apps/web/heredado/lib/asignacionMesas.js:62"
-        ],
-        "pruebasQueLaNombran": [
-          "apps/web/src/marca/textos-del-bloque-14.contrato.test.ts"
-        ],
+        "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:186"],
+        "lectores": ["apps/web/heredado/lib/asignacionMesas.js:62"],
+        "pruebasQueLaNombran": ["apps/web/src/marca/textos-del-bloque-14.contrato.test.ts"],
         "efecto": {
           "efecto": "Encendido: quien entra como administrador no oye sonido ni voz de «pedido listo» ni de las solicitudes del portal; los meseros sí.",
-          "valores": [
-            "true",
-            "false"
-          ],
+          "valores": ["true", "false"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5474,16 +5041,12 @@
         "visiblePara": null,
         "con": null,
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": [],
-        "lectores": [
-          "apps/web/heredado/components/mesero/MesaActivaView.jsx:60"
-        ],
-        "pruebasQueLaNombran": [
-          "packages/app/src/puente/puente.test.ts"
-        ],
+        "lectores": ["apps/web/heredado/components/mesero/MesaActivaView.jsx:60"],
+        "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Ninguno útil: sólo lo lee un formateador viejo. Sin pantalla.",
           "valores": [],
@@ -5529,7 +5092,7 @@
           "packages/app/src/configuracion/configuracion.ts:216"
         ],
         "lectores": [
-          "apps/web/heredado/components/datos/ExportarDatos.jsx:101",
+          "apps/web/heredado/components/datos/ExportarDatos.jsx:102",
           "apps/web/heredado/components/datos/PlantillasDescargables.jsx:119",
           "apps/web/heredado/components/datos/PlantillasDescargables.jsx:128",
           "apps/web/heredado/components/tickets/CorteTicket.jsx:196",
@@ -5537,7 +5100,7 @@
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:119",
           "apps/web/heredado/pages/Dashboard.jsx:227",
           "apps/web/heredado/utils/importExecutors.js:379",
-          "apps/web/heredado/utils/importValidators.js:486",
+          "apps/web/heredado/utils/importValidators.js:487",
           "apps/web/src/corte/HojaDelCorte.tsx:197",
           "apps/web/src/corte/hoja.ts:65",
           "apps/web/src/portal/carrito-compartido/carrito-de-la-mesa.ts:25",
@@ -5617,6 +5180,7 @@
           "apps/web/src/configuracion/ajustes-de-tarjetas.test.ts",
           "apps/web/src/configuracion/papel-a-tu-gusto-formulario.test.ts",
           "apps/web/src/corte/corte.test.ts",
+          "apps/web/src/voz/anuncio-del-aparato.contrato.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.integracion.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.test.ts",
           "packages/app/src/caja/traer.integracion.test.ts",
@@ -5681,10 +5245,7 @@
         ],
         "efecto": {
           "efecto": "El teléfono del negocio en el ticket, el corte y los PDF.",
-          "valores": [
-            "vacío",
-            "un teléfono"
-          ],
+          "valores": ["vacío", "un teléfono"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5705,16 +5266,11 @@
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:118",
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:135"
         ],
-        "lectores": [
-          "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:283"
-        ],
+        "lectores": ["apps/web/heredado/components/tickets/PreCuentaTicket.jsx:283"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "El pie del ticket térmico.",
-          "valores": [
-            "vacío",
-            "un texto"
-          ],
+          "valores": ["vacío", "un texto"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5743,10 +5299,7 @@
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Las unidades que se ofrecen al crear insumos y recetas.",
-          "valores": [
-            "por omisión",
-            "una más"
-          ],
+          "valores": ["por omisión", "una más"],
           "pruebas": [],
           "estado": "por comprobar"
         }
@@ -5801,17 +5354,14 @@
         "visiblePara": "fuera-del-restaurante",
         "con": "puente: ConfiguracionNegocio.update",
         "editable": true,
-        "publica": true,
+        "publica": false,
         "soloPorComando": false,
         "conValorPorOmision": true,
-        "escritores": [
-          "apps/web/src/configuracion/ajustes-de-tarjetas.ts:196"
-        ],
-        "lectores": [
-          "apps/web/heredado/pages/Dashboard.jsx:230"
-        ],
+        "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:196"],
+        "lectores": ["apps/web/heredado/pages/Dashboard.jsx:230"],
         "pruebasQueLaNombran": [
-          "apps/web/src/configuracion/mudanza.contrato.test.ts"
+          "apps/web/src/configuracion/mudanza.contrato.test.ts",
+          "packages/app/src/puente/lo-publico.test.ts"
         ],
         "efecto": {
           "efecto": "Ninguno en el restaurante (siempre hay mesas): escondido con el paquete restaurante (DP-D135).",
@@ -5834,9 +5384,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/heredado/components/cocina/CocinaNuevoPedidoWatcher.jsx:12"
-        ],
+        "lectores": ["apps/web/heredado/components/cocina/CocinaNuevoPedidoWatcher.jsx:13"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Qué comandas ya anunció esta pantalla (para no repetirlas). No es un ajuste.",
@@ -5856,9 +5404,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/heredado/lib/voiceAlert.js:55"
-        ],
+        "lectores": ["apps/web/heredado/lib/voiceAlert.js:55"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Si la voz de cocina está activa en este aparato.",
@@ -5878,12 +5424,8 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/heredado/lib/voiceAlert.js:54"
-        ],
-        "pruebasQueLaNombran": [
-          "apps/web/src/voz/voiceAlert.test.ts"
-        ],
+        "lectores": ["apps/web/heredado/lib/voiceAlert.js:54"],
+        "pruebasQueLaNombran": ["apps/web/src/voz/voiceAlert.test.ts"],
         "efecto": {
           "efecto": "Cómo se avisa al mesero en este aparato (silencio, sonido, voz o ambos; decir el nombre).",
           "pruebas": [],
@@ -5902,9 +5444,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/heredado/components/common/PedidoListoWatcher.jsx:36"
-        ],
+        "lectores": ["apps/web/heredado/components/common/PedidoListoWatcher.jsx:36"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Qué «pedido listo» ya se avisó en este aparato. No es un ajuste.",
@@ -5924,9 +5464,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/heredado/components/common/SolicitudesQRWatcher.jsx:29"
-        ],
+        "lectores": ["apps/web/heredado/components/common/SolicitudesQRWatcher.jsx:29"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "Qué solicitudes del portal ya se avisaron en este aparato. No es un ajuste.",
@@ -6018,9 +5556,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/src/voz/preferencia-de-voz.ts:23"
-        ],
+        "lectores": ["apps/web/src/voz/preferencia-de-voz.ts:23"],
         "pruebasQueLaNombran": [
           "apps/web/src/voz/preferencia-de-voz.test.ts",
           "apps/web/src/voz/voiceAlert.test.ts"
@@ -6043,9 +5579,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/heredado/lib/voiceAlert.js:56"
-        ],
+        "lectores": ["apps/web/heredado/lib/voiceAlert.js:56"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "La voz que el aparato eligió sola. No es un ajuste.",
@@ -6065,12 +5599,8 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/src/voz/preferencia-de-voz.ts:26"
-        ],
-        "pruebasQueLaNombran": [
-          "apps/web/src/voz/voiceAlert.test.ts"
-        ],
+        "lectores": ["apps/web/src/voz/preferencia-de-voz.ts:26"],
+        "pruebasQueLaNombran": ["apps/web/src/voz/voiceAlert.test.ts"],
         "efecto": {
           "efecto": "La velocidad de la voz en este aparato.",
           "pruebas": [],
@@ -6089,9 +5619,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/src/restaurante/borrador-del-pedido.ts:43"
-        ],
+        "lectores": ["apps/web/src/restaurante/borrador-del-pedido.ts:43"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "El pedido a medio capturar de cada mesa, para no perderlo al recargar. No es un ajuste.",
@@ -6111,17 +5639,11 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/src/espera/candado-del-pin.ts:9"
-        ],
-        "pruebasQueLaNombran": [
-          "pruebas/e2e/modo-espera-pin.spec.ts"
-        ],
+        "lectores": ["apps/web/src/espera/candado-del-pin.ts:9"],
+        "pruebasQueLaNombran": ["pruebas/e2e/modo-espera-pin.spec.ts"],
         "efecto": {
           "efecto": "Si este aparato quedó con el candado del PIN puesto. No es un ajuste.",
-          "pruebas": [
-            "pruebas/e2e/pin-al-abrir.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],
           "estado": "memoria del aparato"
         }
       },
@@ -6137,9 +5659,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/src/voz/anuncio-del-aparato.ts:10"
-        ],
+        "lectores": ["apps/web/src/voz/anuncio-del-aparato.ts:19"],
         "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "«Esta pantalla anuncia las comandas» de este aparato.",
@@ -6159,17 +5679,11 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/src/espera/preferencia-del-aparato.ts:8"
-        ],
-        "pruebasQueLaNombran": [
-          "pruebas/e2e/modo-espera.spec.ts"
-        ],
+        "lectores": ["apps/web/src/espera/preferencia-del-aparato.ts:8"],
+        "pruebasQueLaNombran": ["pruebas/e2e/modo-espera.spec.ts"],
         "efecto": {
           "efecto": "El modo espera de este aparato (activo y minutos).",
-          "pruebas": [
-            "pruebas/e2e/modo-espera.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/modo-espera.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6185,18 +5699,11 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/src/espera/pin-de-esta-ejecucion.ts:20"
-        ],
-        "pruebasQueLaNombran": [
-          "pruebas/e2e/ayudantes/roles.ts",
-          "qa/simulador/sesion.ts"
-        ],
+        "lectores": ["apps/web/src/espera/pin-de-esta-ejecucion.ts:20"],
+        "pruebasQueLaNombran": ["pruebas/e2e/ayudantes/roles.ts", "qa/simulador/sesion.ts"],
         "efecto": {
           "efecto": "La marca de que en esta ejecución ya se tecleó el PIN. No es un ajuste.",
-          "pruebas": [
-            "pruebas/e2e/pin-al-abrir.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],
           "estado": "memoria del aparato"
         }
       },
@@ -6212,17 +5719,11 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/src/sonidos/perfil-del-aparato.ts:6"
-        ],
-        "pruebasQueLaNombran": [
-          "pruebas/e2e/sonidos.spec.ts"
-        ],
+        "lectores": ["apps/web/src/sonidos/perfil-del-aparato.ts:6"],
+        "pruebasQueLaNombran": ["pruebas/e2e/sonidos.spec.ts"],
         "efecto": {
           "efecto": "El perfil de sonido de este aparato.",
-          "pruebas": [
-            "pruebas/e2e/sonidos.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6238,9 +5739,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [],
-        "lectores": [
-          "apps/web/src/tacto/barra-lateral.ts:15"
-        ],
+        "lectores": ["apps/web/src/tacto/barra-lateral.ts:15"],
         "pruebasQueLaNombran": [
           "pruebas/e2e/barrido-visual.spec.ts",
           "pruebas/e2e/tactil-barra.spec.ts",
@@ -6248,9 +5747,7 @@
         ],
         "efecto": {
           "efecto": "La barra lateral abierta o plegada en este aparato.",
-          "pruebas": [
-            "pruebas/e2e/tactil-barra.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/tactil-barra.spec.ts"],
           "estado": "por comprobar"
         }
       }
@@ -6264,9 +5761,7 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "El estilo visual del negocio (nueve estilos, densidad, redondeo, elevación, movimiento) en todas las pantallas. Sólo el dueño.",
-          "pruebas": [
-            "pruebas/e2e/estilos-del-negocio.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/estilos-del-negocio.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6278,10 +5773,7 @@
         "visiblePara": "mesas",
         "efecto": {
           "efecto": "Mesas, zonas y su lugar en el mapa; el reparto a meseros.",
-          "pruebas": [
-            "pruebas/e2e/usuarios-y-mesas.spec.ts",
-            "pruebas/e2e/tactil-mapa.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts", "pruebas/e2e/tactil-mapa.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6305,9 +5797,7 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "Las categorías de productos y la estación de cada una.",
-          "pruebas": [
-            "pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6331,9 +5821,7 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "Las personas, su puesto, su PIN y si están activas.",
-          "pruebas": [
-            "pruebas/e2e/usuarios-y-mesas.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6369,9 +5857,7 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "El nombre de este aparato (terminal) en la Caja de otros aparatos y en la auditoría.",
-          "pruebas": [
-            "pruebas/e2e/cajas-del-negocio.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6383,9 +5869,7 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "Con qué impresora imprime este aparato y si tiene cajón (sólo dentro de la app).",
-          "pruebas": [
-            "pruebas/e2e/impresion-por-la-app.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6397,9 +5881,7 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "El volumen de los sonidos en este aparato (apagado, suave, normal).",
-          "pruebas": [
-            "pruebas/e2e/sonidos.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6411,9 +5893,7 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "Si este aparato entra en modo espera y a los cuántos minutos.",
-          "pruebas": [
-            "pruebas/e2e/modo-espera.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/modo-espera.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6449,9 +5929,7 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "Si la barra lateral nace abierta o plegada en este aparato.",
-          "pruebas": [
-            "pruebas/e2e/tactil-barra.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/tactil-barra.spec.ts"],
           "estado": "por comprobar"
         }
       },
@@ -6475,9 +5953,7 @@
         "visiblePara": "plataforma",
         "efecto": {
           "efecto": "Borra las pruebas o todo (sólo plataforma, con el nombre del negocio como confirmación).",
-          "pruebas": [
-            "pruebas/e2e/qa/qa1-07-purgas.spec.ts"
-          ],
+          "pruebas": ["pruebas/e2e/qa/qa1-07-purgas.spec.ts"],
           "estado": "por comprobar"
         }
       }
@@ -6489,38 +5965,28 @@
       "id": "entrar.pin",
       "area": "Entrar",
       "flujo": "Entrar con PIN",
-      "pruebas": [
-        "pruebas/e2e/pin-al-abrir.spec.ts",
-        "pruebas/e2e/restaurante.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts", "pruebas/e2e/restaurante.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "entrar.candado",
       "area": "Entrar",
       "flujo": "Candado por inactividad",
-      "pruebas": [
-        "pruebas/e2e/pin-al-abrir.spec.ts",
-        "pruebas/e2e/modo-espera-pin.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts", "pruebas/e2e/modo-espera-pin.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "entrar.pin-al-abrir",
       "area": "Entrar",
       "flujo": "PIN al abrir la app (mando y caja)",
-      "pruebas": [
-        "pruebas/e2e/pin-al-abrir.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "entrar.estacion-recordada",
       "area": "Entrar",
       "flujo": "La estación (mesero, cocina) se recuerda",
-      "pruebas": [
-        "pruebas/e2e/pin-al-abrir.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6558,18 +6024,14 @@
       "id": "salon.asignar-mesero",
       "area": "Salón",
       "flujo": "Asignar o cambiar de mesero",
-      "pruebas": [
-        "pruebas/e2e/usuarios-y-mesas.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "salon.cambiar-de-mesa",
       "area": "Salón",
       "flujo": "Cambiar de mesa",
-      "pruebas": [
-        "pruebas/e2e/cambiar-de-mesa-en-el-mapa.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/cambiar-de-mesa-en-el-mapa.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6586,9 +6048,7 @@
       "id": "salon.dividir-por-platillo",
       "area": "Salón",
       "flujo": "Dividir la cuenta por platillo",
-      "pruebas": [
-        "pruebas/e2e/dividir-en-la-caja.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/dividir-en-la-caja.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6619,9 +6079,7 @@
       "id": "salon.zonas",
       "area": "Salón",
       "flujo": "Zonas del salón",
-      "pruebas": [
-        "pruebas/e2e/usuarios-y-mesas.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6638,9 +6096,7 @@
       "id": "pedido.peso-o-porcion",
       "area": "Pedido",
       "flujo": "Platillos por peso o por porción",
-      "pruebas": [
-        "pruebas/e2e/barbacoa-por-kilo.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/barbacoa-por-kilo.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6661,36 +6117,28 @@
       "id": "pedido.quitar-despues-de-enviar",
       "area": "Pedido",
       "flujo": "Quitar un platillo después de enviar",
-      "pruebas": [
-        "pruebas/e2e/quitado-en-la-caja.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/quitado-en-la-caja.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "pedido.enviar-a-cocina",
       "area": "Pedido",
       "flujo": "Enviar a cocina",
-      "pruebas": [
-        "pruebas/e2e/restaurante.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/restaurante.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "pedido.cancelar-lo-preparado",
       "area": "Pedido",
       "flujo": "Cancelar lo ya preparado (no regresa al inventario)",
-      "pruebas": [
-        "pruebas/e2e/cancelar-con-la-cocina-detenida.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/cancelar-con-la-cocina-detenida.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "pedido.cancelar-lo-no-preparado",
       "area": "Pedido",
       "flujo": "Cancelar lo no preparado (regresa el insumo)",
-      "pruebas": [
-        "pruebas/e2e/cancelacion-del-mesero.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/cancelacion-del-mesero.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6745,9 +6193,7 @@
       "id": "cocina.preparar-listo-entregado",
       "area": "Cocina",
       "flujo": "Preparar, Listo y Entregado",
-      "pruebas": [
-        "pruebas/e2e/cocina-toques-en-camino.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/cocina-toques-en-camino.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6778,9 +6224,7 @@
       "id": "cocina.categorias-a-estaciones",
       "area": "Cocina",
       "flujo": "Categorías asignadas a estaciones",
-      "pruebas": [
-        "pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6804,36 +6248,28 @@
       "id": "portal.menu-de-paginas",
       "area": "Portal QR",
       "flujo": "Menú de páginas subidas",
-      "pruebas": [
-        "pruebas/e2e/botones-del-menu-qr.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/botones-del-menu-qr.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "portal.carrito",
       "area": "Portal QR",
       "flujo": "Carrito compartido de la mesa",
-      "pruebas": [
-        "pruebas/e2e/pedido-compartido.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/pedido-compartido.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "portal.pedido-que-confirma-el-mesero",
       "area": "Portal QR",
       "flujo": "Pedido del comensal que confirma el mesero",
-      "pruebas": [
-        "pruebas/e2e/portal-modo-mesero.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/portal-modo-mesero.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "portal.llamar-al-mesero",
       "area": "Portal QR",
       "flujo": "Llamar al mesero",
-      "pruebas": [
-        "pruebas/e2e/vista-de-solicitudes.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/vista-de-solicitudes.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6847,9 +6283,7 @@
       "id": "portal.pedir-la-cuenta",
       "area": "Portal QR",
       "flujo": "Pedir la cuenta",
-      "pruebas": [
-        "pruebas/e2e/restaurante-portal-qr.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/restaurante-portal-qr.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6863,9 +6297,7 @@
       "id": "portal.propina",
       "area": "Portal QR",
       "flujo": "Elegir la propina",
-      "pruebas": [
-        "pruebas/e2e/propina-una-sola-verdad.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6879,9 +6311,7 @@
       "id": "portal.sesion-termina-al-cobrar",
       "area": "Portal QR",
       "flujo": "La sesión del comensal termina al cobrar",
-      "pruebas": [
-        "pruebas/e2e/carrito-caducado-dp14-ronda2.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/carrito-caducado-dp14-ronda2.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6902,18 +6332,14 @@
       "id": "caja.abrir",
       "area": "Caja",
       "flujo": "Abrir caja (cupo 1 y 2, con nombres)",
-      "pruebas": [
-        "pruebas/e2e/cajas-del-negocio.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "caja.traer",
       "area": "Caja",
       "flujo": "Traer la caja a este aparato",
-      "pruebas": [
-        "pruebas/e2e/cajas-del-negocio.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6927,9 +6353,7 @@
       "id": "caja.cobrar-efectivo",
       "area": "Caja",
       "flujo": "Cobrar en efectivo con su cambio",
-      "pruebas": [
-        "pruebas/e2e/dia-completo-restaurante.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/dia-completo-restaurante.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6957,18 +6381,14 @@
       "id": "caja.propina-de-la-caja",
       "area": "Caja",
       "flujo": "Propina elegida en la Caja",
-      "pruebas": [
-        "pruebas/e2e/propina-una-sola-verdad.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "caja.propina-del-portal",
       "area": "Caja",
       "flujo": "Propina elegida en el portal",
-      "pruebas": [
-        "pruebas/e2e/propina-una-sola-verdad.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -6982,27 +6402,21 @@
       "id": "caja.descuentos",
       "area": "Caja",
       "flujo": "Descuentos en la Caja",
-      "pruebas": [
-        "pruebas/e2e/ticket-con-descuento.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/ticket-con-descuento.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "caja.cuenta-dividida",
       "area": "Caja",
       "flujo": "Cobrar una cuenta dividida",
-      "pruebas": [
-        "pruebas/e2e/dividir-en-la-caja.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/dividir-en-la-caja.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "caja.reimpresion-y-copias",
       "area": "Caja",
       "flujo": "Reimpresión y copias",
-      "pruebas": [
-        "pruebas/e2e/impresion-por-la-app.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -7044,19 +6458,14 @@
       "id": "caja.corte-a-ciegas",
       "area": "Caja",
       "flujo": "Corte a ciegas con diferencia y PDF",
-      "pruebas": [
-        "pruebas/e2e/tactil-corte.spec.ts",
-        "pruebas/e2e/sala-dp14c-cierre.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/tactil-corte.spec.ts", "pruebas/e2e/sala-dp14c-cierre.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "caja.cierre-diario",
       "area": "Caja",
       "flujo": "Cierre diario",
-      "pruebas": [
-        "pruebas/e2e/sala-dp14c-cierre.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/sala-dp14c-cierre.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -7098,9 +6507,7 @@
       "id": "inventario.catalogo",
       "area": "Inventario y recetas",
       "flujo": "Catálogo: categorías, productos de cada tipo, precio, imagen, orden",
-      "pruebas": [
-        "pruebas/e2e/recetas-area-y-visibilidad.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/recetas-area-y-visibilidad.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -7170,9 +6577,7 @@
       "id": "personas.crear",
       "area": "Personas",
       "flujo": "Crear usuario, puesto y PIN",
-      "pruebas": [
-        "pruebas/e2e/usuarios-y-mesas.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -7186,10 +6591,7 @@
       "id": "personas.permisos",
       "area": "Personas",
       "flujo": "Los permisos de cada puesto contra el servidor",
-      "pruebas": [
-        "pruebas/e2e/matriz-de-permisos.spec.ts",
-        "pruebas/e2e/aislamiento.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/matriz-de-permisos.spec.ts", "pruebas/e2e/aislamiento.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -7241,18 +6643,14 @@
       "id": "impresion.precuenta-y-ticket",
       "area": "Impresión",
       "flujo": "Precuenta y ticket por el emulador",
-      "pruebas": [
-        "pruebas/impresion/ticket-identico.spec.ts"
-      ],
+      "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "impresion.copias-y-reimpresion",
       "area": "Impresión",
       "flujo": "Copias y «REIMPRESIÓN»",
-      "pruebas": [
-        "pruebas/e2e/impresion-por-la-app.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -7266,27 +6664,21 @@
       "id": "impresion.campos-ocultos",
       "area": "Impresión",
       "flujo": "Campos del ticket ocultos (el ticket a tu gusto)",
-      "pruebas": [
-        "pruebas/impresion/ticket-identico.spec.ts"
-      ],
+      "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "aparato.nombre",
       "area": "Este aparato",
       "flujo": "Nombre del aparato",
-      "pruebas": [
-        "pruebas/e2e/cajas-del-negocio.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "aparato.impresora-y-cajon",
       "area": "Este aparato",
       "flujo": "Impresora y cajón",
-      "pruebas": [
-        "pruebas/e2e/impresion-por-la-app.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
@@ -7307,27 +6699,21 @@
       "id": "aparato.barra",
       "area": "Este aparato",
       "flujo": "Barra lateral abierta o plegada",
-      "pruebas": [
-        "pruebas/e2e/tactil-barra.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/tactil-barra.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "aparato.modo-espera",
       "area": "Este aparato",
       "flujo": "Modo espera",
-      "pruebas": [
-        "pruebas/e2e/modo-espera.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/modo-espera.spec.ts"],
       "pruebasQueFaltan": []
     },
     {
       "id": "aparato.sonido",
       "area": "Este aparato",
       "flujo": "Sonido de este aparato",
-      "pruebas": [
-        "pruebas/e2e/sonidos.spec.ts"
-      ],
+      "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
       "pruebasQueFaltan": []
     }
   ],
@@ -7336,12 +6722,7 @@
       "comando": "caja.abiertas",
       "ruta": "/api/caja/abiertas",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -7349,237 +6730,118 @@
       "comando": "caja.abrir",
       "ruta": "/api/caja/abrir",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1089",
-        "apps/web/heredado/pages/CorteCaja.jsx:123",
+        "apps/web/heredado/pages/Caja.jsx:1088",
+        "apps/web/heredado/pages/CorteCaja.jsx:124",
         "apps/web/src/restaurante/Caja.tsx:619"
       ],
-      "pantallas": [
-        "(armazón o compartido)",
-        "/caja",
-        "/restaurante/caja"
-      ]
+      "pantallas": ["(armazón o compartido)", "/caja", "/restaurante/caja"]
     },
     {
       "comando": "caja.abrir_cajon",
       "ruta": "/api/caja/cajon",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/impresion/cajon.ts:92"
-      ],
-      "pantallas": [
-        "/caja",
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/impresion/cajon.ts:92"],
+      "pantallas": ["/caja", "/configuracion"]
     },
     {
       "comando": "caja.cajas_simultaneas",
       "ruta": "/api/caja/cajas-simultaneas",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
         "apps/web/heredado/components/caja/CierreDiarioDialog.jsx:67",
         "apps/web/src/configuracion/CajaYDescuentos.tsx:50",
         "apps/web/src/restaurante/CierreDiario.tsx:467"
       ],
-      "pantallas": [
-        "/caja",
-        "/configuracion",
-        "/restaurante/cierre-diario-y-arqueo"
-      ]
+      "pantallas": ["/caja", "/configuracion", "/restaurante/cierre-diario-y-arqueo"]
     },
     {
       "comando": "caja.cajon_por_cobro",
       "ruta": "/api/caja/cajon-por-cobro",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/impresion/cajon.ts:79"
-      ],
-      "pantallas": [
-        "/caja",
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/impresion/cajon.ts:79"],
+      "pantallas": ["/caja", "/configuracion"]
     },
     {
       "comando": "caja.cancelaciones_del_corte",
       "ruta": "/api/caja/cancelaciones-del-corte",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/corte/cancelaciones-leidas.ts:49"
-      ],
-      "pantallas": [
-        "/",
-        "/caja",
-        "/registros"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/corte/cancelaciones-leidas.ts:49"],
+      "pantallas": ["/", "/caja", "/registros"]
     },
     {
       "comando": "caja.cancelaciones_registradas",
       "ruta": "/api/caja/cancelaciones-registradas",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/corte/cancelaciones-leidas.ts:75"
-      ],
-      "pantallas": [
-        "/",
-        "/caja",
-        "/registros"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/corte/cancelaciones-leidas.ts:75"],
+      "pantallas": ["/", "/caja", "/registros"]
     },
     {
       "comando": "caja.cerrar",
       "ruta": "/api/caja/cerrar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1210",
-        "apps/web/heredado/pages/CorteCaja.jsx:150",
+        "apps/web/heredado/pages/Caja.jsx:1209",
+        "apps/web/heredado/pages/CorteCaja.jsx:151",
         "apps/web/src/restaurante/CierreDiario.tsx:507"
       ],
-      "pantallas": [
-        "(armazón o compartido)",
-        "/caja",
-        "/restaurante/cierre-diario-y-arqueo"
-      ]
+      "pantallas": ["(armazón o compartido)", "/caja", "/restaurante/cierre-diario-y-arqueo"]
     },
     {
       "comando": "caja.corte_turno",
       "ruta": "/api/caja/corte-turno",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1128",
+        "apps/web/heredado/pages/Caja.jsx:1127",
         "apps/web/src/venta/CorteDeTurno.tsx:50"
       ],
-      "pantallas": [
-        "/caja",
-        "/restaurante/caja"
-      ]
+      "pantallas": ["/caja", "/restaurante/caja"]
     },
     {
       "comando": "caja.descuentos_del_corte",
       "ruta": "/api/caja/descuentos-del-corte",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/corte-heredado/descuentos-del-corte.ts:52"
-      ],
-      "pantallas": [
-        "/",
-        "/caja",
-        "/registros",
-        "/restaurante/cierre-diario-y-arqueo"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/corte-heredado/descuentos-del-corte.ts:52"],
+      "pantallas": ["/", "/caja", "/registros", "/restaurante/cierre-diario-y-arqueo"]
     },
     {
       "comando": "caja.eliminar_corte",
       "ruta": "/api/caja/eliminar-corte",
       "escribe": true,
-      "puestos": [
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/heredado/pages/Registros.jsx:149"
-      ],
-      "pantallas": [
-        "/registros"
-      ]
+      "puestos": ["dueno"],
+      "llamadas": ["apps/web/heredado/pages/Registros.jsx:152"],
+      "pantallas": ["/registros"]
     },
     {
       "comando": "caja.encolar_sincronizacion_corte",
       "ruta": "/api/caja/encolar-sincronizacion",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1252"
-      ],
-      "pantallas": [
-        "/caja"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": [],
+      "pantallas": []
     },
     {
       "comando": "caja.entrada_cambio",
       "ruta": "/api/caja/entrada-cambio",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/venta/EntradaDeCambio.tsx:28"
-      ],
-      "pantallas": [
-        "/caja",
-        "/restaurante/caja"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/venta/EntradaDeCambio.tsx:28"],
+      "pantallas": ["/caja", "/restaurante/caja"]
     },
     {
       "comando": "caja.estado",
       "ruta": "/api/caja/estado",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
         "apps/web/heredado/components/caja/CierreDiarioDialog.jsx:132",
         "apps/web/heredado/lib/useCajaAbierta.js:56",
@@ -7602,208 +6864,109 @@
       "comando": "caja.fijar_ajustes_del_corte",
       "ruta": "/api/caja/fijar-ajustes-del-corte",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/CorteDeLaCaja.tsx:75"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/CorteDeLaCaja.tsx:75"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "caja.fijar_cajas_simultaneas",
       "ruta": "/api/caja/fijar-cajas-simultaneas",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/CajaYDescuentos.tsx:58"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/CajaYDescuentos.tsx:58"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "caja.fijar_copias_de_impresion",
       "ruta": "/api/caja/fijar-copias-de-impresion",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/impresion/pantallas/CopiasDeImpresion.tsx:64"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/impresion/pantallas/CopiasDeImpresion.tsx:64"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "caja.fijar_papel_a_tu_gusto",
       "ruta": "/api/caja/fijar-papel-a-tu-gusto",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/PapelATuGusto.tsx:70"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/PapelATuGusto.tsx:70"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "caja.fijar_umbral_de_retiro",
       "ruta": "/api/caja/fijar-umbral-de-retiro",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/UmbralDeRetiro.tsx:53"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/UmbralDeRetiro.tsx:53"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "caja.hoja_del_corte",
       "ruta": "/api/caja/hoja-del-corte",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
         "apps/web/src/corte/CorteEnPdf.tsx:79",
         "apps/web/src/corte-heredado/extras-del-corte.ts:35"
       ],
-      "pantallas": [
-        "/",
-        "/caja",
-        "/registros",
-        "/restaurante/cierre-diario-y-arqueo"
-      ]
+      "pantallas": ["/", "/caja", "/registros", "/restaurante/cierre-diario-y-arqueo"]
     },
     {
       "comando": "caja.movimiento",
       "ruta": "/api/caja/movimiento",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/venta/RetiroDeCaja.tsx:31"
-      ],
-      "pantallas": [
-        "/caja",
-        "/restaurante/caja"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/venta/RetiroDeCaja.tsx:31"],
+      "pantallas": ["/caja", "/restaurante/caja"]
     },
     {
       "comando": "caja.nombrar_cajas",
       "ruta": "/api/caja/nombrar-cajas",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/NombresDeLasCajas.tsx:58"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/NombresDeLasCajas.tsx:58"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "caja.nombrar_terminal",
       "ruta": "/api/caja/nombrar-terminal",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/TerminalesDeLaSucursal.tsx:62"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/TerminalesDeLaSucursal.tsx:62"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "caja.terminales",
       "ruta": "/api/caja/terminales",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/TerminalesDeLaSucursal.tsx:116"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/TerminalesDeLaSucursal.tsx:116"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "caja.traer",
       "ruta": "/api/caja/traer",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
         "apps/web/heredado/components/caja/CajasEnOtrosAparatos.jsx:50",
         "apps/web/src/restaurante/Caja.tsx:637"
       ],
-      "pantallas": [
-        "/caja",
-        "/restaurante/caja"
-      ]
+      "pantallas": ["/caja", "/restaurante/caja"]
     },
     {
       "comando": "caja.ventas_del_dia",
       "ruta": "/api/caja/ventas-del-dia",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/corte-heredado/ventas-del-dia.ts:39"
-      ],
-      "pantallas": [
-        "/",
-        "/caja",
-        "/registros"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/corte-heredado/ventas-del-dia.ts:39"],
+      "pantallas": ["/", "/caja", "/registros"]
     },
     {
       "comando": "catalogo.aplicar_precio_sugerido",
       "ruta": "/api/precios/aplicar-sugerido",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -7811,11 +6974,7 @@
       "comando": "catalogo.archivar_producto",
       "ruta": "/api/catalogo/archivar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -7823,27 +6982,15 @@
       "comando": "catalogo.asignar_grupos_de_opciones",
       "ruta": "/api/catalogo/asignar-grupos-de-opciones",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/catalogo/opciones/OpcionesDelPlatilloDialog.tsx:48"
-      ],
-      "pantallas": [
-        "/productos"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/catalogo/opciones/OpcionesDelPlatilloDialog.tsx:48"],
+      "pantallas": ["/productos"]
     },
     {
       "comando": "catalogo.crear_modificador",
       "ruta": "/api/catalogo/modificador",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -7851,11 +6998,7 @@
       "comando": "catalogo.crear_producto",
       "ruta": "/api/catalogo/crear-producto",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -7863,11 +7006,7 @@
       "comando": "catalogo.fiscal_masivo",
       "ruta": "/api/catalogo/fiscal-masivo",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -7875,43 +7014,23 @@
       "comando": "catalogo.grupos_de_opciones",
       "ruta": "/api/catalogo/grupos-de-opciones",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/catalogo/opciones/OpcionesDelPlatilloDialog.tsx:46"
-      ],
-      "pantallas": [
-        "/productos"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/catalogo/opciones/OpcionesDelPlatilloDialog.tsx:46"],
+      "pantallas": ["/productos"]
     },
     {
       "comando": "catalogo.guardar_grupo_de_opciones",
       "ruta": "/api/catalogo/guardar-grupo-de-opciones",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/catalogo/opciones/OpcionesDelPlatilloDialog.tsx:47"
-      ],
-      "pantallas": [
-        "/productos"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/catalogo/opciones/OpcionesDelPlatilloDialog.tsx:47"],
+      "pantallas": ["/productos"]
     },
     {
       "comando": "catalogo.guardar_modificadores",
       "ruta": "/api/catalogo/modificadores",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -7919,30 +7038,15 @@
       "comando": "catalogo.marcar_agotado",
       "ruta": "/api/catalogo/marcar-agotado",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cocina",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/AgotadosDelDia.tsx:55"
-      ],
-      "pantallas": [
-        "/cocina",
-        "/productos"
-      ]
+      "puestos": ["administrador", "cocina", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/AgotadosDelDia.tsx:55"],
+      "pantallas": ["/cocina", "/productos"]
     },
     {
       "comando": "cliente.alta",
       "ruta": "/api/clientes",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -7950,28 +7054,15 @@
       "comando": "compras.guardar_plantilla",
       "ruta": "/api/compras/plantilla",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/components/compras/RegistrarCompraDialog.jsx:337"
-      ],
-      "pantallas": [
-        "/compras"
-      ]
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/components/compras/RegistrarCompraDialog.jsx:344"],
+      "pantallas": ["/compras"]
     },
     {
       "comando": "compras.importar_nota",
       "ruta": "/api/compras/importar-nota",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "almacen",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -7979,27 +7070,15 @@
       "comando": "compras.registrar",
       "ruta": "/api/compras/registrar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/components/compras/RegistrarCompraDialog.jsx:297"
-      ],
-      "pantallas": [
-        "/compras"
-      ]
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/components/compras/RegistrarCompraDialog.jsx:304"],
+      "pantallas": ["/compras"]
     },
     {
       "comando": "compras.usar_plantilla",
       "ruta": "/api/compras/plantilla/usar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8007,54 +7086,31 @@
       "comando": "configuracion.fijar_candado_de_mando",
       "ruta": "/api/configuracion/fijar-candado-de-mando",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/CandadoDeMando.tsx:47"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/CandadoDeMando.tsx:47"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "configuracion.fijar_folios",
       "ruta": "/api/configuracion/fijar-folios",
       "escribe": true,
-      "puestos": [
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/FoliosDelNegocio.tsx:93"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["dueno"],
+      "llamadas": ["apps/web/src/configuracion/FoliosDelNegocio.tsx:93"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "configuracion.fijar_impuesto",
       "ruta": "/api/configuracion/fijar-impuesto",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/IvaDelNegocio.tsx:76"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/IvaDelNegocio.tsx:76"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "configuracion.fijar_modulo",
       "ruta": "/api/configuracion/modulo",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
+      "puestos": ["administrador", "dueno"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8062,25 +7118,15 @@
       "comando": "configuracion.fijar_quien_elige_la_propina",
       "ruta": "/api/configuracion/quien-elige-la-propina",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/QuienEligeLaPropina.tsx:88"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/QuienEligeLaPropina.tsx:88"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "configuracion.fijar_termino",
       "ruta": "/api/configuracion/vocabulario",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
+      "puestos": ["administrador", "dueno"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8088,25 +7134,15 @@
       "comando": "configuracion.permitir_descuentos",
       "ruta": "/api/configuracion/permitir-descuentos",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/CajaYDescuentos.tsx:137"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/CajaYDescuentos.tsx:137"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "configuracion.restablecer_modulo",
       "ruta": "/api/configuracion/modulo-restablecer",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
+      "puestos": ["administrador", "dueno"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8114,10 +7150,7 @@
       "comando": "configuracion.restablecer_termino",
       "ruta": "/api/configuracion/vocabulario-restablecer",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
+      "puestos": ["administrador", "dueno"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8125,118 +7158,64 @@
       "comando": "cuenta.fijar_propina",
       "ruta": "/api/venta/fijar-propina",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:621"
-      ],
-      "pantallas": [
-        "/caja"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/pages/Caja.jsx:620"],
+      "pantallas": ["/caja"]
     },
     {
       "comando": "gastos.cajon_para_pagar",
       "ruta": "/api/gastos/cajon-para-pagar",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/venta/cajon-para-pagar.ts:39"
-      ],
-      "pantallas": [
-        "/caja",
-        "/compras",
-        "/restaurante/caja"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/venta/cajon-para-pagar.ts:39"],
+      "pantallas": ["/caja", "/compras", "/restaurante/caja"]
     },
     {
       "comando": "gastos.guardar_plantilla",
       "ruta": "/api/gastos/plantilla",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/components/compras/PlantillaGastoDialog.jsx:103"
-      ],
-      "pantallas": [
-        "/compras"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/components/compras/PlantillaGastoDialog.jsx:103"],
+      "pantallas": ["/compras"]
     },
     {
       "comando": "gastos.pagos_de_la_caja",
       "ruta": "/api/gastos/pagos-de-la-caja",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/pages/Compras.jsx:83"
-      ],
-      "pantallas": [
-        "/compras"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/pages/Compras.jsx:87"],
+      "pantallas": ["/compras"]
     },
     {
       "comando": "gastos.registrar",
       "ruta": "/api/gastos/registrar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/components/compras/PlantillasGastoSection.jsx:140",
-        "apps/web/heredado/components/compras/RegistrarGastoDialog.jsx:90",
+        "apps/web/heredado/components/compras/PlantillasGastoSection.jsx:141",
+        "apps/web/heredado/components/compras/RegistrarGastoDialog.jsx:91",
         "apps/web/heredado/utils/importExecutors.js:416",
         "apps/web/src/venta/GastoDeCaja.tsx:69"
       ],
-      "pantallas": [
-        "/caja",
-        "/compras",
-        "/configuracion",
-        "/restaurante/caja"
-      ]
+      "pantallas": ["/caja", "/compras", "/configuracion", "/restaurante/caja"]
     },
     {
       "comando": "identidad.guardar_empleado",
       "ruta": "/api/identidad/empleados",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
+      "puestos": ["administrador", "dueno"],
       "llamadas": [
         "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx:85",
         "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx:110",
         "apps/web/src/configuracion/secciones.ts:514"
       ],
-      "pantallas": [
-        "/",
-        "/configuracion"
-      ]
+      "pantallas": ["/", "/configuracion"]
     },
     {
       "comando": "inventario.consumo_interno",
       "ruta": "/api/inventario/consumo-interno",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8244,12 +7223,7 @@
       "comando": "inventario.enviar_traspaso",
       "ruta": "/api/inventario/traspaso",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "almacen",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8257,12 +7231,7 @@
       "comando": "inventario.kardex",
       "ruta": "/api/inventario/kardex",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "almacen",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8270,30 +7239,15 @@
       "comando": "inventario.motivos_de_merma",
       "ruta": "/api/inventario/motivos",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "almacen",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/QuePasoConLoQuitado.tsx:57"
-      ],
-      "pantallas": [
-        "/restaurante/inventario"
-      ]
+      "puestos": ["administrador", "almacen", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/QuePasoConLoQuitado.tsx:57"],
+      "pantallas": ["/restaurante/inventario"]
     },
     {
       "comando": "inventario.recibir_traspaso",
       "ruta": "/api/inventario/traspaso-recibir",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "almacen",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8301,28 +7255,15 @@
       "comando": "inventario.registrar_merma",
       "ruta": "/api/inventario/merma",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "almacen",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/ajuste-de-inventario.ts:28"
-      ],
-      "pantallas": [
-        "/restaurante/inventario"
-      ]
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/ajuste-de-inventario.ts:28"],
+      "pantallas": ["/restaurante/inventario"]
     },
     {
       "comando": "inventario.valuar",
       "ruta": "/api/inventario/valuacion",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8330,11 +7271,7 @@
       "comando": "por_pagar.pagar",
       "ruta": "/api/por-pagar/pagar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8342,11 +7279,7 @@
       "comando": "por_pagar.registrar",
       "ruta": "/api/por-pagar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8354,11 +7287,7 @@
       "comando": "por_pagar.resumen",
       "ruta": "/api/por-pagar/resumen",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8366,25 +7295,23 @@
       "comando": "propinas.anotar_pasivo",
       "ruta": "/api/propinas/pasivo",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
+    },
+    {
+      "comando": "propinas.del_rango",
+      "ruta": "/api/propinas/del-rango",
+      "escribe": false,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/components/propinas/PropinasRegistros.jsx:95"],
+      "pantallas": ["/registros"]
     },
     {
       "comando": "propinas.entregar",
       "ruta": "/api/propinas/entregar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8392,10 +7319,7 @@
       "comando": "propinas.guardar_esquema",
       "ruta": "/api/propinas/esquema",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
+      "puestos": ["administrador", "dueno"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8403,495 +7327,262 @@
       "comando": "propinas.liquidar",
       "ruta": "/api/propinas/liquidar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/components/propinas/LiquidarPropinasDialog.jsx:212"
-      ],
-      "pantallas": [
-        "/",
-        "/registros"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/components/propinas/LiquidarPropinasDialog.jsx:212"],
+      "pantallas": ["/", "/registros"]
     },
     {
       "comando": "propinas.pendientes",
       "ruta": "/api/propinas/pendientes",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/components/propinas/LiquidarPropinasDialog.jsx:125"
-      ],
-      "pantallas": [
-        "/",
-        "/registros"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/components/propinas/LiquidarPropinasDialog.jsx:125"],
+      "pantallas": ["/", "/registros"]
+    },
+    {
+      "comando": "registros.resumen",
+      "ruta": "/api/registros/resumen",
+      "escribe": false,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/pages/Registros.jsx:210"],
+      "pantallas": ["/registros"]
     },
     {
       "comando": "reportes.auditoria_reciente",
       "ruta": "/api/reportes/auditoria-reciente",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/registros/AuditoriaReciente.tsx:65"
-      ],
-      "pantallas": [
-        "/registros"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/registros/AuditoriaReciente.tsx:65"],
+      "pantallas": ["/registros"]
     },
     {
       "comando": "restaurante.abrir_mesa",
       "ruta": "/api/restaurante/abrir-mesa",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/pages/Mesero.jsx:647",
         "apps/web/src/restaurante/MesaActiva.tsx:297",
         "apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:100"
       ],
-      "pantallas": [
-        "/mesero",
-        "/restaurante/mesa-activa"
-      ]
+      "pantallas": ["/mesero", "/restaurante/mesa-activa"]
     },
     {
       "comando": "restaurante.anular_linea",
       "ruta": "/api/restaurante/anular-linea",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/AnularLineaDialog.tsx:127"
-      ],
-      "pantallas": [
-        "/mesero",
-        "/restaurante/mesa-activa"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/restaurante/AnularLineaDialog.tsx:127"],
+      "pantallas": ["/mesero", "/restaurante/mesa-activa"]
     },
     {
       "comando": "restaurante.armar_para_llevar",
       "ruta": "/api/restaurante/armar-para-llevar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/components/caja/ParaLlevarDialog.jsx:136"
-      ],
-      "pantallas": [
-        "/caja"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/components/caja/ParaLlevarDialog.jsx:136"],
+      "pantallas": ["/caja"]
     },
     {
       "comando": "restaurante.asignar_mesero",
       "ruta": "/api/restaurante/asignar-mesero",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/heredado/components/mesero/SolicitudesQRCardList.jsx:77"
-      ],
-      "pantallas": [
-        "/mesero"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/heredado/components/mesero/SolicitudesQRCardList.jsx:77"],
+      "pantallas": ["/mesero"]
     },
     {
       "comando": "restaurante.atender_solicitud",
       "ruta": "/api/restaurante/atender-solicitud",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/components/mesero/SolicitudesQRCardList.jsx:67",
         "apps/web/heredado/components/portalqr/SolicitudesQRTab.jsx:137",
         "apps/web/src/restaurante/atender-solicitud.ts:10"
       ],
-      "pantallas": [
-        "/mesero",
-        "/portal-qr"
-      ]
+      "pantallas": ["/mesero", "/portal-qr"]
     },
     {
       "comando": "restaurante.cambiar_mesa",
       "ruta": "/api/restaurante/cambiar-mesa",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/src/restaurante/AccionesDeLaMesa.tsx:220",
         "apps/web/src/restaurante/CambiarDeMesaAqui.tsx:120"
       ],
-      "pantallas": [
-        "/mesero",
-        "/restaurante/mesa-activa"
-      ]
+      "pantallas": ["/mesero", "/restaurante/mesa-activa"]
     },
     {
       "comando": "restaurante.cancelar_orden",
       "ruta": "/api/restaurante/cancelar-orden",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:676",
+        "apps/web/heredado/pages/Caja.jsx:675",
         "apps/web/src/restaurante/AjustesDeLaCuenta.tsx:200",
         "apps/web/src/restaurante/Caja.tsx:609"
       ],
-      "pantallas": [
-        "/caja",
-        "/mesero",
-        "/restaurante/caja",
-        "/restaurante/cobro"
-      ]
+      "pantallas": ["/caja", "/mesero", "/restaurante/caja", "/restaurante/cobro"]
     },
     {
       "comando": "restaurante.carrito_cambiar",
       "ruta": "/api/restaurante/carrito-cambiar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:62"
-      ],
-      "pantallas": [
-        "/mesero"
-      ]
+      "puestos": ["administrador", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:62"],
+      "pantallas": ["/mesero"]
     },
     {
       "comando": "restaurante.carrito_enviar",
       "ruta": "/api/restaurante/carrito-enviar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:89"
-      ],
-      "pantallas": [
-        "/mesero"
-      ]
+      "puestos": ["administrador", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:89"],
+      "pantallas": ["/mesero"]
     },
     {
       "comando": "restaurante.carrito_quitar",
       "ruta": "/api/restaurante/carrito-quitar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:70"
-      ],
-      "pantallas": [
-        "/mesero"
-      ]
+      "puestos": ["administrador", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:70"],
+      "pantallas": ["/mesero"]
     },
     {
       "comando": "restaurante.carrito_vaciar",
       "ruta": "/api/restaurante/carrito-vaciar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:74"
-      ],
-      "pantallas": [
-        "/mesero"
-      ]
+      "puestos": ["administrador", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:74"],
+      "pantallas": ["/mesero"]
     },
     {
       "comando": "restaurante.crear_estacion",
       "ruta": "/api/restaurante/crear-estacion",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [
         "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx:193",
         "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx:230"
       ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "restaurante.descartar_para_llevar",
       "ruta": "/api/restaurante/descartar-para-llevar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:274"
-      ],
-      "pantallas": [
-        "/caja"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/pages/Caja.jsx:274"],
+      "pantallas": ["/caja"]
     },
     {
       "comando": "restaurante.descontar_cuenta",
       "ruta": "/api/restaurante/descontar-cuenta",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/AjustesDeLaCuenta.tsx:85"
-      ],
-      "pantallas": [
-        "/caja",
-        "/mesero",
-        "/restaurante/cobro"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/AjustesDeLaCuenta.tsx:85"],
+      "pantallas": ["/caja", "/mesero", "/restaurante/cobro"]
     },
     {
       "comando": "restaurante.dividir_cuenta",
       "ruta": "/api/restaurante/dividir-cuenta",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/DividirCuentaDialog.tsx:389"
-      ],
-      "pantallas": [
-        "/caja",
-        "/restaurante/cobro",
-        "/restaurante/mesa-activa"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/DividirCuentaDialog.tsx:389"],
+      "pantallas": ["/caja", "/restaurante/cobro", "/restaurante/mesa-activa"]
     },
     {
       "comando": "restaurante.entregar_para_llevar",
       "ruta": "/api/restaurante/entregar-para-llevar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/para-llevar/pedidos-para-llevar.ts:27"
-      ],
-      "pantallas": [
-        "/caja"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/para-llevar/pedidos-para-llevar.ts:27"],
+      "pantallas": ["/caja"]
     },
     {
       "comando": "restaurante.entregar_pedidos",
       "ruta": "/api/restaurante/entregar-pedidos",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "cocina",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "cocina", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/utils/entregaPedidos.js:134",
         "apps/web/src/restaurante/ListosParaRecoger.tsx:119"
       ],
-      "pantallas": [
-        "/mesero",
-        "/restaurante/mesa-activa"
-      ]
+      "pantallas": ["/mesero", "/restaurante/mesa-activa"]
     },
     {
       "comando": "restaurante.enviar_pedido",
       "ruta": "/api/restaurante/enviar-pedido",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/pages/Mesero.jsx:1048",
         "apps/web/src/restaurante/MesaActiva.tsx:358"
       ],
-      "pantallas": [
-        "/mesero",
-        "/restaurante/mesa-activa"
-      ]
+      "pantallas": ["/mesero", "/restaurante/mesa-activa"]
     },
     {
       "comando": "restaurante.fijar_zona_activa",
       "ruta": "/api/restaurante/fijar-zona-activa",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/cliente/zonas-del-salon.ts:79"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/cliente/zonas-del-salon.ts:79"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "restaurante.imprimir_precuenta",
       "ruta": "/api/restaurante/imprimir-precuenta",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/pages/Mesero.jsx:1308",
         "apps/web/src/restaurante/Precuenta.tsx:261"
       ],
-      "pantallas": [
-        "/mesero",
-        "/restaurante/precuenta"
-      ]
+      "pantallas": ["/mesero", "/restaurante/precuenta"]
     },
     {
       "comando": "restaurante.liberar_mesa",
       "ruta": "/api/restaurante/liberar-mesa",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/components/caja/MesasPendientesCierreDialog.jsx:53",
-        "apps/web/heredado/pages/Caja.jsx:672",
-        "apps/web/heredado/pages/Caja.jsx:921",
+        "apps/web/heredado/pages/Caja.jsx:671",
+        "apps/web/heredado/pages/Caja.jsx:920",
         "apps/web/heredado/pages/Mesero.jsx:570",
         "apps/web/heredado/pages/Mesero.jsx:1335",
         "apps/web/src/restaurante/MesaActiva.tsx:329"
       ],
-      "pantallas": [
-        "/caja",
-        "/mesero",
-        "/restaurante/mesa-activa"
-      ]
+      "pantallas": ["/caja", "/mesero", "/restaurante/mesa-activa"]
     },
     {
       "comando": "restaurante.limpiar_solicitudes",
       "ruta": "/api/restaurante/limpiar-solicitudes",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/components/portalqr/SolicitudesQRTab.jsx:81",
         "apps/web/heredado/lib/asignacionMesas.js:197"
       ],
-      "pantallas": [
-        "(armazón o compartido)",
-        "/portal-qr"
-      ]
+      "pantallas": ["(armazón o compartido)", "/portal-qr"]
     },
     {
       "comando": "restaurante.marcar_estacion_general",
       "ruta": "/api/restaurante/marcar-estacion-general",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [
         "apps/web/heredado/components/configuracion/EstacionesPreparacionSection.jsx:252"
       ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "restaurante.marchar_tiempo",
       "ruta": "/api/restaurante/marchar-tiempo",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8899,13 +7590,7 @@
       "comando": "restaurante.mover_espera",
       "ruta": "/api/restaurante/espera/mover",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8913,30 +7598,15 @@
       "comando": "restaurante.para_llevar_del_dia",
       "ruta": "/api/restaurante/para-llevar-del-dia",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/para-llevar/pedidos-para-llevar.ts:26"
-      ],
-      "pantallas": [
-        "/caja"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/para-llevar/pedidos-para-llevar.ts:26"],
+      "pantallas": ["/caja"]
     },
     {
       "comando": "restaurante.registrar_espera",
       "ruta": "/api/restaurante/espera/registrar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8944,12 +7614,7 @@
       "comando": "restaurante.relevar_responsable",
       "ruta": "/api/restaurante/relevar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8957,27 +7622,15 @@
       "comando": "restaurante.repartir_mesas",
       "ruta": "/api/restaurante/repartir-mesas",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/components/mesas/RepartirMesasDialog.jsx:65"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/components/mesas/RepartirMesasDialog.jsx:65"],
+      "pantallas": ["/configuracion"]
     },
     {
       "comando": "restaurante.rotacion_de_mesas",
       "ruta": "/api/restaurante/rotacion",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -8985,29 +7638,15 @@
       "comando": "restaurante.rotar_qr",
       "ruta": "/api/restaurante/rotar-qr",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/heredado/utils/qrUtils.js:12"
-      ],
-      "pantallas": [
-        "(armazón o compartido)"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/heredado/utils/qrUtils.js:12"],
+      "pantallas": ["(armazón o compartido)"]
     },
     {
       "comando": "restaurante.sentar_espera",
       "ruta": "/api/restaurante/espera/sentar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [],
       "pantallas": []
     },
@@ -9015,51 +7654,26 @@
       "comando": "restaurante.separar_mesas",
       "ruta": "/api/restaurante/separar-mesas",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/unir-mesas/SepararMesasDialog.tsx:43"
-      ],
-      "pantallas": [
-        "/mesero",
-        "/restaurante/mesa-activa"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/restaurante/unir-mesas/SepararMesasDialog.tsx:43"],
+      "pantallas": ["/mesero", "/restaurante/mesa-activa"]
     },
     {
       "comando": "restaurante.solicitar_cuenta",
       "ruta": "/api/restaurante/solicitar-cuenta",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/pages/Mesero.jsx:1241",
         "apps/web/src/restaurante/PedirLaCuentaDialog.tsx:67"
       ],
-      "pantallas": [
-        "/mesero",
-        "/restaurante/mesa-activa"
-      ]
+      "pantallas": ["/mesero", "/restaurante/mesa-activa"]
     },
     {
       "comando": "restaurante.tiempos_de_preparacion",
       "ruta": "/api/restaurante/tiempos",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cocina",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cocina", "dueno", "gerente"],
       "llamadas": [],
       "pantallas": []
     },
@@ -9067,201 +7681,102 @@
       "comando": "restaurante.transicionar_pedido",
       "ruta": "/api/restaurante/transicionar-pedido",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "cocina",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "cocina", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/pages/Barra.jsx:50",
-        "apps/web/heredado/pages/Cocina.jsx:202",
+        "apps/web/heredado/pages/Cocina.jsx:206",
         "apps/web/heredado/utils/entregaPedidos.js:120",
         "apps/web/src/restaurante/Cocina.tsx:138"
       ],
-      "pantallas": [
-        "(armazón o compartido)",
-        "/cocina",
-        "/mesero",
-        "/restaurante/cocina"
-      ]
+      "pantallas": ["(armazón o compartido)", "/cocina", "/mesero", "/restaurante/cocina"]
     },
     {
       "comando": "restaurante.unir_mesas",
       "ruta": "/api/restaurante/unir-mesas",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/unir-mesas/UnirMesasEnElMapa.tsx:249"
-      ],
-      "pantallas": [
-        "/mesero"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/restaurante/unir-mesas/UnirMesasEnElMapa.tsx:249"],
+      "pantallas": ["/mesero"]
     },
     {
       "comando": "restaurante.vaciar_solicitudes",
       "ruta": "/api/restaurante/vaciar-solicitudes",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/heredado/components/portalqr/SolicitudesQRTab.jsx:103"
-      ],
-      "pantallas": [
-        "/portal-qr"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/heredado/components/portalqr/SolicitudesQRTab.jsx:103"],
+      "pantallas": ["/portal-qr"]
     },
     {
       "comando": "tablero.serie",
       "ruta": "/api/tablero/serie",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/tablero/ComoVaTuSemana.tsx:50"
-      ],
-      "pantallas": [
-        "/"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/tablero/ComoVaTuSemana.tsx:50"],
+      "pantallas": ["/"]
     },
     {
       "comando": "venta.agregar_linea",
       "ruta": "/api/venta/agregar-linea",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/pages/POS.jsx:326",
         "apps/web/heredado/pages/POS.jsx:374",
         "apps/web/heredado/pages/POS.jsx:409"
       ],
-      "pantallas": [
-        "/pos"
-      ]
+      "pantallas": ["/pos"]
     },
     {
       "comando": "venta.cambiar_cantidad",
       "ruta": "/api/venta/cambiar-cantidad",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/heredado/pages/POS.jsx:320",
-        "apps/web/heredado/pages/POS.jsx:441"
-      ],
-      "pantallas": [
-        "/pos"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/heredado/pages/POS.jsx:320", "apps/web/heredado/pages/POS.jsx:441"],
+      "pantallas": ["/pos"]
     },
     {
       "comando": "venta.cobrar",
       "ruta": "/api/venta/cobrar",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:890",
+        "apps/web/heredado/pages/Caja.jsx:889",
         "apps/web/heredado/pages/POS.jsx:554",
         "apps/web/src/restaurante/Cobro.tsx:350"
       ],
-      "pantallas": [
-        "/caja",
-        "/pos",
-        "/restaurante/cobro"
-      ]
+      "pantallas": ["/caja", "/pos", "/restaurante/cobro"]
     },
     {
       "comando": "venta.crear_orden",
       "ruta": "/api/venta/crear-orden",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/heredado/pages/POS.jsx:267"
-      ],
-      "pantallas": [
-        "/pos"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/heredado/pages/POS.jsx:267"],
+      "pantallas": ["/pos"]
     },
     {
       "comando": "venta.descuento_autorizado",
       "ruta": "/api/venta/descuento-autorizado",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/restaurante/DescuentoAutorizado.tsx:26"
-      ],
-      "pantallas": [
-        "/caja"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/DescuentoAutorizado.tsx:26"],
+      "pantallas": ["/caja"]
     },
     {
       "comando": "venta.devolver_venta",
       "ruta": "/api/venta/devolver-venta",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/venta/DevolucionDeVenta.tsx:124"
-      ],
-      "pantallas": [
-        "/caja",
-        "/restaurante/caja"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/venta/DevolucionDeVenta.tsx:125"],
+      "pantallas": ["/caja", "/restaurante/caja"]
     },
     {
       "comando": "venta.estado",
       "ruta": "/api/venta/estado",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:510",
+        "apps/web/heredado/pages/Caja.jsx:509",
         "apps/web/heredado/pages/POS.jsx:196",
         "apps/web/src/restaurante/lineas-vivas.ts:76",
         "apps/web/src/venta/DescuentoDeVenta.tsx:100"
@@ -9279,91 +7794,39 @@
       "comando": "venta.para_devolver",
       "ruta": "/api/venta/para-devolver",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno",
-        "gerente"
-      ],
-      "llamadas": [
-        "apps/web/src/venta/DevolucionDeVenta.tsx:82"
-      ],
-      "pantallas": [
-        "/caja",
-        "/restaurante/caja"
-      ]
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/venta/DevolucionDeVenta.tsx:83"],
+      "pantallas": ["/caja", "/restaurante/caja"]
     },
     {
       "comando": "venta.quitar_linea",
       "ruta": "/api/venta/quitar-linea",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/heredado/pages/POS.jsx:457",
-        "apps/web/heredado/pages/POS.jsx:478"
-      ],
-      "pantallas": [
-        "/pos"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/heredado/pages/POS.jsx:457", "apps/web/heredado/pages/POS.jsx:478"],
+      "pantallas": ["/pos"]
     },
     {
       "comando": "venta.registrar_impresion",
       "ruta": "/api/venta/registrar-impresion",
       "escribe": true,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/src/impresion/imprimir-documento.ts:56"
-      ],
-      "pantallas": [
-        "/",
-        "/caja",
-        "/mesero",
-        "/pos",
-        "/productos",
-        "/registros",
-        "/ventas"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/impresion/imprimir-documento.ts:56"],
+      "pantallas": ["/", "/caja", "/mesero", "/pos", "/productos", "/registros", "/ventas"]
     },
     {
       "comando": "venta.ticket",
       "ruta": "/api/venta/ticket",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
-      "llamadas": [
-        "apps/web/heredado/pages/POS.jsx:581"
-      ],
-      "pantallas": [
-        "/pos"
-      ]
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/heredado/pages/POS.jsx:581"],
+      "pantallas": ["/pos"]
     },
     {
       "comando": "venta.tope_de_descuento",
       "ruta": "/api/venta/tope-de-descuento",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "cajero",
-        "dueno",
-        "gerente",
-        "mesero"
-      ],
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/src/venta/DescuentoDeVenta.tsx:119",
         "apps/web/src/venta/PinDeSupervisor.tsx:96"
@@ -9381,47 +7844,23 @@
       "comando": "venta.topes_de_los_puestos",
       "ruta": "/api/venta/topes-de-los-puestos",
       "escribe": false,
-      "puestos": [
-        "administrador",
-        "dueno"
-      ],
-      "llamadas": [
-        "apps/web/src/configuracion/CajaYDescuentos.tsx:196"
-      ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "puestos": ["administrador", "dueno"],
+      "llamadas": ["apps/web/src/configuracion/CajaYDescuentos.tsx:196"],
+      "pantallas": ["/configuracion"]
     }
   ],
   "entidades": [
     {
       "entidad": "CategoriaIngrediente",
-      "operaciones": [
-        "filter"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cocina",
-        "almacen"
-      ],
+      "operaciones": ["filter"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cocina", "almacen"],
       "escritura": "directa",
-      "archivos": [
-        "apps/web/heredado/pages/Inventario.jsx"
-      ],
-      "pantallas": [
-        "/inventario"
-      ]
+      "archivos": ["apps/web/heredado/pages/Inventario.jsx"],
+      "pantallas": ["/inventario"]
     },
     {
       "entidad": "CategoriaProducto",
-      "operaciones": [
-        "create",
-        "filter",
-        "list",
-        "update"
-      ],
+      "operaciones": ["create", "filter", "list", "update"],
       "puestosQueLaLeen": [
         "dueno",
         "administrador",
@@ -9460,32 +7899,19 @@
     },
     {
       "entidad": "CompraInsumo",
-      "operaciones": [
-        "list"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "almacen"
-      ],
+      "operaciones": ["list"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "almacen"],
       "escritura": "comando",
       "archivos": [
         "apps/web/heredado/components/compras/RepetirCompraDialog.jsx",
         "apps/web/heredado/components/datos/ExportarDatos.jsx",
         "apps/web/heredado/pages/Compras.jsx"
       ],
-      "pantallas": [
-        "/compras",
-        "/configuracion"
-      ]
+      "pantallas": ["/compras", "/configuracion"]
     },
     {
       "entidad": "ConfiguracionNegocio",
-      "operaciones": [
-        "list",
-        "update"
-      ],
+      "operaciones": ["list", "update"],
       "puestosQueLaLeen": null,
       "escritura": null,
       "archivos": [
@@ -9499,23 +7925,12 @@
         "apps/web/heredado/lib/ConfigContext.jsx",
         "apps/web/heredado/pages/Configuracion.jsx"
       ],
-      "pantallas": [
-        "(armazón o compartido)",
-        "/configuracion"
-      ]
+      "pantallas": ["(armazón o compartido)", "/configuracion"]
     },
     {
       "entidad": "CorteCaja",
-      "operaciones": [
-        "list"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero"
-      ],
+      "operaciones": ["list"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cajero", "mesero"],
       "escritura": "comando",
       "archivos": [
         "apps/web/heredado/components/cortes/CorteHistorialList.jsx",
@@ -9524,19 +7939,11 @@
         "apps/web/heredado/pages/CorteCaja.jsx",
         "apps/web/heredado/pages/Dashboard.jsx"
       ],
-      "pantallas": [
-        "(armazón o compartido)",
-        "/",
-        "/caja",
-        "/mesero",
-        "/pos"
-      ]
+      "pantallas": ["(armazón o compartido)", "/", "/caja", "/mesero", "/pos"]
     },
     {
       "entidad": "DescuentoInventarioVenta",
-      "operaciones": [
-        "list"
-      ],
+      "operaciones": ["list"],
       "puestosQueLaLeen": null,
       "escritura": null,
       "archivos": [
@@ -9544,46 +7951,20 @@
         "apps/web/heredado/components/cortes/CorteViewerDialog.jsx",
         "apps/web/heredado/pages/Inventario.jsx"
       ],
-      "pantallas": [
-        "/",
-        "/caja",
-        "/inventario",
-        "/registros"
-      ]
+      "pantallas": ["/", "/caja", "/inventario", "/registros"]
     },
     {
       "entidad": "DetalleCompra",
-      "operaciones": [
-        "filter"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "almacen"
-      ],
+      "operaciones": ["filter"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "almacen"],
       "escritura": "comando",
-      "archivos": [
-        "apps/web/heredado/components/compras/RepetirCompraDialog.jsx"
-      ],
-      "pantallas": [
-        "/compras"
-      ]
+      "archivos": ["apps/web/heredado/components/compras/RepetirCompraDialog.jsx"],
+      "pantallas": ["/compras"]
     },
     {
       "entidad": "DetalleVenta",
-      "operaciones": [
-        "enRango",
-        "filter"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero",
-        "cocina"
-      ],
+      "operaciones": ["enRango", "filter"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina"],
       "escritura": "comando",
       "archivos": [
         "apps/web/heredado/components/tickets/TicketViewerDialog.jsx",
@@ -9593,27 +7974,12 @@
         "apps/web/heredado/pages/Registros.jsx",
         "apps/web/heredado/pages/Ventas.jsx"
       ],
-      "pantallas": [
-        "/",
-        "/caja",
-        "/mesero",
-        "/registros",
-        "/ventas"
-      ]
+      "pantallas": ["/", "/caja", "/mesero", "/registros", "/ventas"]
     },
     {
       "entidad": "EstacionPreparacion",
-      "operaciones": [
-        "filter",
-        "list",
-        "update"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cocina"
-      ],
+      "operaciones": ["filter", "list", "update"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cocina"],
       "escritura": "directa",
       "archivos": [
         "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
@@ -9621,23 +7987,12 @@
         "apps/web/heredado/components/configuracion/UsuarioPOSDialog.jsx",
         "apps/web/heredado/pages/Cocina.jsx"
       ],
-      "pantallas": [
-        "/cocina",
-        "/configuracion"
-      ]
+      "pantallas": ["/cocina", "/configuracion"]
     },
     {
       "entidad": "GastoOperativo",
-      "operaciones": [
-        "filter",
-        "list"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero"
-      ],
+      "operaciones": ["filter", "list"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cajero"],
       "escritura": "comando",
       "archivos": [
         "apps/web/heredado/components/compras/PlantillasGastoSection.jsx",
@@ -9660,20 +8015,8 @@
     },
     {
       "entidad": "Ingrediente",
-      "operaciones": [
-        "delete",
-        "filter",
-        "get",
-        "list",
-        "update"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cocina",
-        "almacen"
-      ],
+      "operaciones": ["delete", "filter", "get", "list", "update"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cocina", "almacen"],
       "escritura": "directa",
       "archivos": [
         "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx",
@@ -9704,30 +8047,15 @@
     },
     {
       "entidad": "LiquidacionPropina",
-      "operaciones": [
-        "list"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "operaciones": ["list"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente"],
       "escritura": "comando",
-      "archivos": [
-        "apps/web/heredado/components/propinas/PropinasRegistros.jsx"
-      ],
-      "pantallas": [
-        "/registros"
-      ]
+      "archivos": ["apps/web/heredado/components/propinas/PropinasRegistros.jsx"],
+      "pantallas": ["/registros"]
     },
     {
       "entidad": "MenuQRSeccion",
-      "operaciones": [
-        "create",
-        "delete",
-        "list",
-        "update"
-      ],
+      "operaciones": ["create", "delete", "list", "update"],
       "puestosQueLaLeen": [
         "dueno",
         "administrador",
@@ -9738,31 +8066,13 @@
         "almacen"
       ],
       "escritura": "directa",
-      "archivos": [
-        "apps/web/heredado/components/portalqr/MenuQRTab.jsx"
-      ],
-      "pantallas": [
-        "/portal-qr"
-      ]
+      "archivos": ["apps/web/heredado/components/portalqr/MenuQRTab.jsx"],
+      "pantallas": ["/portal-qr"]
     },
     {
       "entidad": "Mesa",
-      "operaciones": [
-        "create",
-        "delete",
-        "filter",
-        "get",
-        "list",
-        "update"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero",
-        "cocina"
-      ],
+      "operaciones": ["create", "delete", "filter", "get", "list", "update"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina"],
       "escritura": "directa",
       "archivos": [
         "apps/web/heredado/components/common/PedidoListoWatcher.jsx",
@@ -9788,36 +8098,16 @@
     },
     {
       "entidad": "MovimientoInventario",
-      "operaciones": [
-        "filter"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "almacen"
-      ],
+      "operaciones": ["filter"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "almacen"],
       "escritura": "comando",
-      "archivos": [
-        "apps/web/heredado/pages/Inventario.jsx"
-      ],
-      "pantallas": [
-        "/inventario"
-      ]
+      "archivos": ["apps/web/heredado/pages/Inventario.jsx"],
+      "pantallas": ["/inventario"]
     },
     {
       "entidad": "PedidoPreparacion",
-      "operaciones": [
-        "filter"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero",
-        "cocina"
-      ],
+      "operaciones": ["filter"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina"],
       "escritura": "comando",
       "archivos": [
         "apps/web/heredado/components/common/PedidoListoWatcher.jsx",
@@ -9825,62 +8115,30 @@
         "apps/web/heredado/pages/Barra.jsx",
         "apps/web/heredado/pages/Cocina.jsx"
       ],
-      "pantallas": [
-        "(armazón o compartido)",
-        "/cocina",
-        "/mesero"
-      ]
+      "pantallas": ["(armazón o compartido)", "/cocina", "/mesero"]
     },
     {
       "entidad": "PlantillaCompra",
-      "operaciones": [
-        "filter",
-        "update"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "almacen"
-      ],
+      "operaciones": ["filter", "update"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "almacen"],
       "escritura": "directa",
-      "archivos": [
-        "apps/web/heredado/components/compras/RepetirCompraDialog.jsx"
-      ],
-      "pantallas": [
-        "/compras"
-      ]
+      "archivos": ["apps/web/heredado/components/compras/RepetirCompraDialog.jsx"],
+      "pantallas": ["/compras"]
     },
     {
       "entidad": "PlantillaGasto",
-      "operaciones": [
-        "filter",
-        "update"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente"
-      ],
+      "operaciones": ["filter", "update"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente"],
       "escritura": "directa",
       "archivos": [
         "apps/web/heredado/components/compras/PlantillasGastoSection.jsx",
         "apps/web/heredado/components/datos/ExportarDatos.jsx"
       ],
-      "pantallas": [
-        "/compras",
-        "/configuracion"
-      ]
+      "pantallas": ["/compras", "/configuracion"]
     },
     {
       "entidad": "ProductoTerminado",
-      "operaciones": [
-        "create",
-        "filter",
-        "get",
-        "list",
-        "update"
-      ],
+      "operaciones": ["create", "filter", "get", "list", "update"],
       "puestosQueLaLeen": [
         "dueno",
         "administrador",
@@ -9921,18 +8179,8 @@
     },
     {
       "entidad": "Proveedor",
-      "operaciones": [
-        "create",
-        "filter",
-        "list",
-        "update"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "almacen"
-      ],
+      "operaciones": ["create", "filter", "list", "update"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "almacen"],
       "escritura": "directa",
       "archivos": [
         "apps/web/heredado/components/compras/RegistrarCompraDialog.jsx",
@@ -9941,24 +8189,12 @@
         "apps/web/heredado/components/datos/ImportarDatosDialog.jsx",
         "apps/web/heredado/utils/importExecutors.js"
       ],
-      "pantallas": [
-        "/compras",
-        "/configuracion"
-      ]
+      "pantallas": ["/compras", "/configuracion"]
     },
     {
       "entidad": "RecetaEscandallo",
-      "operaciones": [
-        "filter",
-        "list"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cocina",
-        "almacen"
-      ],
+      "operaciones": ["filter", "list"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cocina", "almacen"],
       "escritura": "comando",
       "archivos": [
         "apps/web/heredado/components/cocina/CocinaProductoDialog.jsx",
@@ -9985,37 +8221,16 @@
     },
     {
       "entidad": "RenglonQuitado",
-      "operaciones": [
-        "filter"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero",
-        "cocina"
-      ],
+      "operaciones": ["filter"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina"],
       "escritura": "comando",
-      "archivos": [
-        "apps/web/heredado/pages/Ventas.jsx"
-      ],
-      "pantallas": [
-        "/ventas"
-      ]
+      "archivos": ["apps/web/heredado/pages/Ventas.jsx"],
+      "pantallas": ["/ventas"]
     },
     {
       "entidad": "SolicitudQR",
-      "operaciones": [
-        "filter",
-        "list"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "mesero"
-      ],
+      "operaciones": ["filter", "list"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "mesero"],
       "escritura": "comando",
       "archivos": [
         "apps/web/heredado/components/common/SolicitudesQRWatcher.jsx",
@@ -10023,17 +8238,11 @@
         "apps/web/heredado/components/portalqr/SolicitudesQRTab.jsx",
         "apps/web/heredado/pages/Mesero.jsx"
       ],
-      "pantallas": [
-        "(armazón o compartido)",
-        "/mesero",
-        "/portal-qr"
-      ]
+      "pantallas": ["(armazón o compartido)", "/mesero", "/portal-qr"]
     },
     {
       "entidad": "UsuarioPOS",
-      "operaciones": [
-        "filter"
-      ],
+      "operaciones": ["filter"],
       "puestosQueLaLeen": null,
       "escritura": null,
       "archivos": [
@@ -10049,6 +8258,7 @@
       "pantallas": [
         "/",
         "/caja",
+        "/cocina",
         "/compras",
         "/configuracion",
         "/mesero",
@@ -10059,26 +8269,13 @@
     },
     {
       "entidad": "Venta",
-      "operaciones": [
-        "enRango",
-        "filter",
-        "get",
-        "list"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero",
-        "cocina"
-      ],
+      "operaciones": ["enRango", "filter", "get", "list"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina"],
       "escritura": "comando",
       "archivos": [
         "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx",
         "apps/web/heredado/components/cortes/CorteViewerDialog.jsx",
         "apps/web/heredado/components/propinas/PropinasDashboardSection.jsx",
-        "apps/web/heredado/components/propinas/PropinasRegistros.jsx",
         "apps/web/heredado/pages/Caja.jsx",
         "apps/web/heredado/pages/Cocina.jsx",
         "apps/web/heredado/pages/CorteCaja.jsx",
@@ -10099,27 +8296,14 @@
     },
     {
       "entidad": "Zona",
-      "operaciones": [
-        "create",
-        "list",
-        "update"
-      ],
-      "puestosQueLaLeen": [
-        "dueno",
-        "administrador",
-        "gerente",
-        "cajero",
-        "mesero",
-        "cocina"
-      ],
+      "operaciones": ["create", "list", "update"],
+      "puestosQueLaLeen": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina"],
       "escritura": "directa",
       "archivos": [
         "apps/web/heredado/components/configuracion/MapaDeMesasDeConfiguracion.jsx",
         "apps/web/heredado/components/mesas/ZonasDelSalonDialog.jsx"
       ],
-      "pantallas": [
-        "/configuracion"
-      ]
+      "pantallas": ["/configuracion"]
     }
   ]
 }

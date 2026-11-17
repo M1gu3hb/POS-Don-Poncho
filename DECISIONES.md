@@ -2885,6 +2885,74 @@ Cuatro pendientes del servidor, cada uno con su prueba antes del código y su mu
   siguientes no (una persona con sesión no puede llenar la tabla golpeando el 429).
 - **Sin migración.**
 
+## DP-D147 · DP-22 · Cómo se hace la auditoría final: el mapa se genera, el arnés se prueba contra sí mismo y el dinero tiene un oráculo aparte · 16-11-2026
+
+La última etapa antes de operar. No cambia la app: cambia con qué se le mide.
+
+- **El mapa total se genera del código** (`scripts/qa-final/generar-matriz.mjs` → `docs/qa-final/MATRIZ.md`
+  y `qa/qa-final/datos/matriz.json`): las pantallas salen de `apps/web/app`, quién abre cada una se
+  le pregunta a la MISMA función que usa el armazón (`rutaPermitidaParaElPuesto`), los ajustes de
+  las listas del puente y de `secciones.ts`, los comandos de la matriz de permisos y las lecturas
+  del mapa del puente. A mano sólo van dos archivos de datos: `efectos.json` (qué debe cambiar cada
+  ajuste y la prueba que lo demuestra) y `flujos.json`. `--verificar` falla si una clave del código
+  no tiene su renglón o si una prueba citada no existe.
+- **No es puerta de `verify`:** sus citas `archivo:línea` cambian con cada edición y la pondrían en
+  rojo sin que nada esté mal. Se regenera en cada lote.
+- **El oráculo del dinero** (`qa/qa-final/oraculo/dinero.ts`) no importa nada de `packages/`: las
+  reglas están escritas otra vez, con fracciones exactas, y se prueban contra cifras hechas a mano
+  y contra cuentas que producción ya cobró. Si reusara el código que cobra, sólo comprobaría que
+  el código es igual a sí mismo.
+- **Descartado:** escribir la matriz a mano (se queda vieja el primer día) y medir el dinero de las
+  combinaciones con las funciones del dominio (no detecta un error que comparten).
+
+## DP-D148 · DP-22 · La puerta de `heredado/`: los nombres sin declarar detienen `verify` y la CI · 16-11-2026
+
+Lo que DP-21 dejó pendiente (informe 012 §3). Las pantallas de `apps/web/heredado` no pasan por
+lint ni por tipos; un `useRef` sin importar tumbó una sección entera de Configuración y sólo se vio
+al abrirla.
+
+- **`pnpm verify:heredado`** (`scripts/verificar-heredado.mjs`), después de los tipos, en `verify` y
+  en la CI: el compilador lee los 248 archivos de `heredado/` como JavaScript y sólo cuentan
+  TS2304 y TS2552 («Cannot find name»). No es una revisión de tipos.
+- **Los tipos mal escritos en un comentario de documentación no cuentan** (con `checkJs` el
+  compilador también los lee): no corren y no truenan en el restaurante. Había uno en
+  `utils/unidadesMedida.js`.
+- **Se prueba contra sí misma en cada corrida:** un archivo en memoria con un `useRef` sin importar
+  y otro limpio; tiene que marcar el primero y sólo ése. Si no, la puerta falla diciendo que no se
+  puede fiar de sí misma.
+- **Descartado:** meter `heredado/` al lint y a los tipos de verdad (son miles de diagnósticos de
+  un código que no se va a reescribir; R30).
+- Destructiva que FALLA: quitar el `useRef` del `import` de `pages/Recetas.jsx`. Inocua que PASA:
+  el tipo mal escrito de `unidadesMedida.js`.
+
+## DP-D149 · DP-22 · Producción se configura y se deja en ceros por guion; el día cero es un solo comando · 16-11-2026
+
+Miguel pidió que producción quede lista sin teclear nada (Parte 11 del encargo).
+
+- **`scripts/configurar-produccion.mjs`**: los MISMOS comandos de las pantallas, firmados por el
+  dueño de plataforma como `dejar-en-ceros.mjs`, con su auditoría y sin PIN. Lee cómo está cada
+  cosa y sólo manda lo que difiere (una segunda corrida no escribe); `--ensayo` no escribe; termina
+  verificando. Valores: sin IVA, prefijo «DP», dos cajas («Caja 1» y «Caja 2»), el «Almacén
+  principal», la propina la eligen comensales y Caja, el ticket con todos sus renglones.
+- **El primer folio (1001 y 101) es un paso aparte** (`--primer-folio`), para DESPUÉS de dejar en
+  ceros: el comando sólo lo acepta con los folios en cero y antes del arranque (DP-D128).
+- **`pnpm dia-cero`** (`scripts/dia-cero.mjs`), para la víspera de abrir: comprueba, borra la prueba
+  física si la hay, repone la configuración y el primer folio, activa el bloqueo H1 y verifica. Por
+  omisión ENSAYA; `--en-serio` lo hace, y para borrar pide `--ventas <n>` igual al número que dijo
+  el ensayo (quien lo corre confirma que sabe cuántas cuentas son). Se niega, sin borrar nada, con
+  una caja abierta, con cuentas anteriores a `--desde`, con otro número de cuentas o si el negocio
+  ya opera.
+- **«Silenciar notificaciones del administrador» se queda encendido.** Las llamadas del portal las
+  atienden los meseros, y sus aparatos suenan siempre; el puesto de mando conserva el aviso en
+  pantalla. Se apaga en Configuración → Sonidos y avisos si la gerencia quiere oír el salón. El
+  guion lo comprueba; no lo escribe.
+- **El bloqueo H1 no se activa en DP-22:** la fecha de apertura no está definida y Miguel va a
+  probar en físico. Lo activa `pnpm dia-cero`.
+- **Ensayado en clones locales de la copia de producción** antes de tocar producción: configurar,
+  repetir, el primer folio negado con cuentas, ceros, primer folio, renombrar aparatos y el día cero
+  de un jalón; y los cuatro casos en que debe negarse.
+- **Sin migración.**
+
 ## DP-D150 · DP-22 · Seis pendientes: el resumen y las propinas salen del servidor; el almacén compra; el cierre no pide lo que no hay · 16-11-2026
 
 DP-22 · rama `dp-22-b19b`. Sin migración.
@@ -2920,3 +2988,55 @@ DP-22 · rama `dp-22-b19b`. Sin migración.
 - **Pruebas:** `resumen-del-periodo.integracion.test.ts`, `propinas-del-rango.integracion.test.ts`,
   `compras-del-almacen.integracion.test.ts`, `cerrar-con-fila-restaurante.integracion.test.ts` y los
   unitarios y contratos junto a cada pantalla.
+
+## DP-D151 · DP-22 · Lo que el anexo 012 y la auditoría del 16-11 dejaron por decidir · 16-11-2026
+
+Miguel pidió decidirlo con su criterio y anotarlo (encargo DP-22, Parte 9).
+
+- **`PUBLICOS` son tres claves:** `nombre_negocio`, `logo_url` y `background_logo_url`, lo único
+  que lee el portal del comensal (`portal/lista-blanca.ts`). Las otras once (colores, fondo, moneda,
+  mensaje del ticket…) y el `id` salían en la lectura pública sin que nadie las usara. Un contrato
+  mide qué lee `negocioPublico` y exige que la lista sea exactamente eso.
+- **Los 32 comandos sin pantalla se quedan sin pantalla,** salvo los que la revisión de «lo que
+  falta» (Parte 7) pida. No se borra ninguno.
+- **El crédito dice «Hecho por MORPHIQ»** y sigue saliendo sólo en la pantalla de acceso.
+- **Lo de «Avanzado» se queda plegado** (DP-D135 y DP-D141), sin cambios.
+- **La Caja deja de encolar «la cola de sincronización»** al cerrar: era de la integración de
+  demostración que se quitó en DP-21, nadie la consumía y sus filas sólo crecían; y el cajero deja
+  de ver su aviso técnico. El comando y su ruta se quedan, sin pantalla.
+- **Quién anuncia las comandas.** Sin haber elegido nada en el aparato: anuncia quien entra con el
+  puesto de cocina y el teléfono de cocina; los demás puestos (quien mira Cocina desde el aparato
+  del dueño o de la caja) no anuncian, salvo que lo enciendan en Configuración → Este aparato. A
+  una pantalla de cocina que nunca eligió se le pregunta UNA vez, sin estorbar: «¿Esta pantalla
+  anuncia las comandas en voz?»; mientras no conteste, anuncia. Mientras el aparato todavía no
+  sabe su puesto, anuncia: una cocina nunca se queda muda. Lo ya elegido se respeta.
+  - **Descartado:** llevar en el servidor qué aparato anuncia cada estación (comando, permiso y
+    estado nuevos para un caso que se resuelve con una pregunta en el aparato).
+  - **Cambia lo instalado:** el aparato de un puesto que no es de cocina y que hoy habla por
+    omisión deja de hacerlo hasta que lo enciendan.
+- **«Silenciar notificaciones del administrador» se queda encendido** (DP-D149).
+- **`/sistema`** (el catálogo de diseño, sin sesión y sin datos del negocio) se queda como está:
+  es la página con la que se comparan los colores del motor viejo (`motor-viejo.spec.ts`).
+- **Sin migración.**
+
+## DP-D152 · DP-22 · «Hoy» es el día del negocio, en el servidor y en las pantallas · 16-11-2026
+
+Hallazgo 1 de la auditoría final (`docs/qa-final/HALLAZGOS.md`). La línea base de `verify` corrió de
+noche y una prueba del tablero falló: de día pasa.
+
+- **El defecto:** las pantallas sacaban el día de `new Date().toISOString().slice(0, 10)`, que es
+  UTC. Desde las 18:00 de México «Registrar gasto», «Registrar compra» y los gastos fijos
+  proponían la fecha de MAÑANA; un gasto en efectivo con esa fecha lo rechazaba el servidor (el
+  cajón es el de hoy) y uno con tarjeta se guardaba en el día siguiente sin aviso. En el servidor,
+  un gasto o una compra sin fecha tomaba `current_date` de la base, también UTC.
+- **La regla:** el día de hoy es el del NEGOCIO, en su zona. En el navegador,
+  `apps/web/src/cliente/dia-del-negocio.ts` (`hoyDelNegocio`, con `Intl` y la zona de Don Poncho:
+  ni UTC ni el huso del aparato); en el servidor, `reportes/dia.ts` (la zona de la organización),
+  también cuando el gasto o la compra llegan sin fecha.
+- **Contrato:** ninguna pantalla de `heredado/` ni de `src/` corta un `toISOString()` a diez letras
+  para saber qué día es; el único permitido es la aritmética de días de Registros, declarado.
+- **`comandoConReloj`** (`produccion.ts`): el mismo envoltorio de comandos con el reloj de quien
+  llama, sólo para pruebas contra Postgres que dependen de la hora. Ninguna ruta lo usa.
+- **Descartado:** confiar en el huso del aparato (`format(new Date(), …)` de date-fns): una tableta
+  con el huso mal puesto cambiaría de día antes o después que la caja.
+- **Sin migración.**

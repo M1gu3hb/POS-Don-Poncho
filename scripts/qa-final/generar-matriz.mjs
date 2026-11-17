@@ -17,6 +17,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import * as prettier from 'prettier';
+
 import { ajustes } from './matriz/ajustes.mjs';
 import { comandos, entidades } from './matriz/comandos.mjs';
 import { RAIZ } from './matriz/fuentes.mjs';
@@ -122,7 +124,13 @@ if (process.argv.includes('--verificar')) {
   );
 } else {
   mkdirSync(dirname(join(RAIZ, SALIDA_JSON)), { recursive: true });
-  writeFileSync(join(RAIZ, SALIDA_JSON), `${JSON.stringify(mapa, null, 2)}\n`);
+  // Con el formato del repo, para que `format:check` no lo marque al regenerarlo.
+  const destinoJson = join(RAIZ, SALIDA_JSON);
+  const opciones = (await prettier.resolveConfig(destinoJson)) ?? {};
+  writeFileSync(
+    destinoJson,
+    await prettier.format(JSON.stringify(mapa), { ...opciones, filepath: destinoJson }),
+  );
   await escribirDocumento(mapa, faltantes, join(RAIZ, SALIDA_MD));
   console.log(
     `MATRIZ: ${String(mapa.pantallas.length)} pantallas, ` +
