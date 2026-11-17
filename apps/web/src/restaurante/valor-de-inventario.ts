@@ -24,7 +24,7 @@ export function valorDeLaExistencia(
 
 /** Cuántos ingredientes tienen la existencia por debajo de cero. */
 export function cuantosEnNegativo(ingredientes: readonly ExistenciaLeida[]): number {
-  return ingredientes.filter((i) => Number(i.stock_actual ?? 0) < 0).length;
+  return ingredientes.filter((i) => (i.stock_actual ?? 0) < 0).length;
 }
 
 /** Lo que la tarjeta dice debajo del valor cuando hay ingredientes en negativo; nada si no hay. */
