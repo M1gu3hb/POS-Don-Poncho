@@ -20,6 +20,9 @@ allowBuilds:
   # Decodifica y vuelve a codificar las imágenes subidas. Su instalación elige
   # el binario precompilado de libvips para la plataforma actual.
   sharp: true
+  # DP-22 · `pict-node` baja un `pict.exe` de GitHub en su postinstall. No se ejecuta sin que alguien
+  # lo decida: la fase de combinatoria lo aprueba (o instala PICT por su cuenta) cuando lo use.
+  pict-node: false
 
 # Fijadas por seguridad (auditoría de dependencias de la 2.4): `source-map-js` llega por
 # next > postcss y su versión vulnerable (< 1.2.2) permite colgar el proceso con un mapa
@@ -76,6 +79,10 @@ catalog:
   argon2: 0.45.1
   'kysely-codegen': 0.20.0
   dotenv: 17.4.2
+  # DP-22 · el arnés de QA final (`pruebas/e2e/qa-final`): accesibilidad, combinatoria y propiedades.
+  '@axe-core/playwright': 4.14.0
+  pict-node: 1.3.2
+  fast-check: 4.10.2
 
 minimumReleaseAgeExclude:
   - lucide-react@1.42.0

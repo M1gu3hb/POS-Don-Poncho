@@ -8,7 +8,7 @@ import { canAccessModule } from '@/lib/packageConfig';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { hasPermission } from '@/lib/permissions';
 import { getStockStatus } from '@/utils/inventoryUtils';
-import { downloadNodeAsPDF, safeFileName } from '@/lib/pdfDownload';
+import { downloadNodeAsPDF, generatePDFBlobFromNode, safeFileName } from '@/lib/pdfDownload';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -21,10 +21,15 @@ import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
 import { leerVentasDelDia } from '~/corte-heredado/ventas-del-dia';
 import { leerExtrasDelCorte } from '~/corte-heredado/extras-del-corte';
 import { folioVisible } from '@morphiqpos/domain/venta';
+import { entregarElPdfDelCorte } from '~/corte/carpeta/entregar-el-pdf';
+import { fechaParaElArchivo, folioParaElArchivo } from '~/corte/carpeta/nombre-del-pdf';
+import { useCarpetaDeCortes } from '~/corte/carpeta/use-carpeta-de-cortes';
 
 /**
  * Renderiza el CorteTicket fuera de pantalla, genera el PDF y lo descarga.
  * Si el navegador bloquea, expone un botón visible para reintentar.
+ * DP-D153: dentro de la app de Windows 1.0.2 el PDF se guarda en la carpeta de cortes (sin esperar al
+ * cierre: ya está sellado) y, si falla, avisa y deja el mismo botón para reintentar.
  */
 export default function CorteAutoDownloader({ corte, onDone }) {
   const { config, paquete_modo } = useConfig();
@@ -34,6 +39,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
   const sinCostos = !canAccessModule('costos_basicos', paquete_modo) || !veCostos;
   const haySala = canAccessModule('mesero', paquete_modo);
   const ref = useRef(null);
+  const { archivos } = useCarpetaDeCortes();
   const [data, setData] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [done, setDone] = useState(false);
@@ -202,9 +208,22 @@ export default function CorteAutoDownloader({ corte, onDone }) {
         config?.nombre_negocio || NOMBRE_DEL_NEGOCIO,
       );
       const folio = safeFileName(folioVisible(corte?.serie, corte?.folio, config, 'numero') || 'corte');
-      await downloadNodeAsPDF(ref.current, `Corte_${folio}_${fecha}_${negocio}.pdf`);
+      const entrega = await entregarElPdfDelCorte({
+        archivos,
+        datos: {
+          folio: folioParaElArchivo(folioVisible(corte?.serie, corte?.folio, config), String(corte?.id ?? '')),
+          fecha: fechaParaElArchivo(corte?.fecha_cierre),
+        },
+        generar: () => generatePDFBlobFromNode(ref.current),
+        descargar: () => downloadNodeAsPDF(ref.current, `Corte_${folio}_${fecha}_${negocio}.pdf`),
+      });
+      if (entrega.via === 'carpeta' && entrega.ok === false) {
+        setError(true);
+        toast.error(`No se guardó el PDF en la carpeta. ${entrega.mensaje} Reintenta con el botón o desde Registros → Cortes.`);
+        return;
+      }
       setDone(true);
-      toast.success('PDF del corte descargado');
+      toast.success(entrega.via === 'carpeta' ? 'PDF del corte guardado en tu carpeta de cortes' : 'PDF del corte descargado');
     } catch (err) {
       console.error('Error generando PDF auto:', err);
       setError(true);
@@ -236,7 +255,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
               </>
             ) : (
               <>
-                <Download className="w-4 h-4 mr-1" /> Descargar PDF del corte
+                <Download className="w-4 h-4 mr-1" /> {archivos ? 'Guardar PDF en la carpeta' : 'Descargar PDF del corte'}
               </>
             )}
           </Button>

@@ -14,6 +14,7 @@ import { emitirDocumento } from '../cartera/documento.ts';
 import { definirComando } from '../definicion.ts';
 import { comandarLineasPendientes } from '../restaurante/comandar-pendientes.ts';
 import { entregarLoListoDeLaCuenta } from '../restaurante/comandas-al-cobrar.ts';
+import { ajustarLaMadreASusPartes } from '../restaurante/division-escrituras.ts';
 import { pasarMesaCobradaALimpieza } from '../restaurante/mesas-escrituras.ts';
 import { marcarPropinaDeOrden, registrarPagoConPropina } from '../propinas/cobro.ts';
 import { entradaCobrarOrdenConPropina } from '../propinas/esquemas.ts';
@@ -323,6 +324,25 @@ export const cobrarOrden = definirComando<
       });
     }
 
+    // 7.9 · DP-22 · Una PARTE de una cuenta dividida vale lo que `cotizar` dice AL COBRAR. Si la regla
+    //       cambió desde que se dividió (el IVA que el dueño cambia a media operación), su total ya no
+    //       es el que la madre sumaba y la base lo cierra con `division_cuadra`: el cobro reventaba
+    //       como «Algo falló». Se lee antes de congelar para ajustar a la madre sólo cuando cambió.
+    const parteAntes = await ctx.paso('leer_la_parte', () =>
+      ctx.tx
+        .selectFrom('ordenes')
+        .select([
+          'orden_padre_id',
+          'subtotal_centavos',
+          'descuento_centavos',
+          'impuestos_centavos',
+          'total_centavos',
+        ])
+        .where('organizacion_id', '=', organizacionId)
+        .where('id', '=', entrada.ordenId)
+        .executeTakeFirst(),
+    );
+
     // 8 · Congelar la orden con sus totales y su folio.
     await ctx.paso('cerrar_orden', () =>
       repoOrdenes.marcarPagada(ctx.tx, {
@@ -340,6 +360,30 @@ export const cobrarOrden = definirComando<
         ahora: ctx.ahora,
       }),
     );
+
+    const madreId = parteAntes?.orden_padre_id ?? null;
+    // Cualquiera de los cuatro importes: con el IVA incluido en el precio, cambiar la tasa deja el
+    // total igual y mueve el impuesto; la madre tiene que sumar también eso.
+    const cambioLaParte =
+      parteAntes !== undefined &&
+      (parteAntes.subtotal_centavos !== totales.subtotalCentavos ||
+        parteAntes.descuento_centavos !== totales.descuentoCentavos ||
+        parteAntes.impuestos_centavos !== totales.impuestosCentavos ||
+        parteAntes.total_centavos !== totales.totalCentavos);
+    if (madreId !== null && cambioLaParte) {
+      await ctx.paso('ajustar_la_madre', async () => {
+        // El candado de la madre primero: dos partes que cambian a la vez se forman en fila y la
+        // segunda suma ya con la primera.
+        await ctx.tx
+          .selectFrom('ordenes')
+          .select('id')
+          .where('organizacion_id', '=', organizacionId)
+          .where('id', '=', madreId)
+          .forUpdate()
+          .executeTakeFirst();
+        await ajustarLaMadreASusPartes(ctx.tx, organizacionId, madreId, ctx.ahora);
+      });
+    }
 
     // 8.5 · LO FIADO, EN LA MISMA TRANSACCIÓN (C.10 de la 2.4).
     //       La venta ocurre al entregar, no al cobrar (`02-DINERO-Y-CAJA` §1 de abarrotes):

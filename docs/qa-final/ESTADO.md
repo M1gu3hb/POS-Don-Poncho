@@ -3,37 +3,39 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11-2026, 05:25.
+Última puesta al día: 17-11-2026, 06:30.
 
-## AHORA MISMO (17-11, 05:25) — retomar desde aquí
+## AHORA MISMO (17-11, 06:30) — retomar desde aquí
 
-La sesión se cortó dos veces por el límite de uso (16-11 23:55 y 17-11 00:10) y se reanudó a las
-05:10. Nada se ha desplegado todavía; producción sigue en `63977e1`, con 0 errores en Vercel.
-
-1. **PR #37: 9 de 10 en la CI sobre `7a51e29`.** Falló «Jornada completa · restaurante» en
-   `pruebas/e2e/sonidos.spec.ts:227` (registro: `/d/mpos-tmp/dp22/ci-jornada-1.log`). La prueba
-   entraba como DUEÑA a `/cocina` y esperaba el «Ping»; con DP-D151 un puesto que no es de cocina
-   no anuncia por omisión (y el vigilante, desde DP-21, corta antes del timbre). **Decidido:** la
-   regla se queda (el aparato de la dueña no suena ni habla hasta que lo encienda) y la prueba se
-   corrige: ahora escucha el puesto de COCINA, hay una prueba nueva («Cocina en el aparato de la
-   dueña: sin elegirlo no suena; encendido en este aparato, sí») y la de «la voz hablando» también
-   escucha desde la cocina (con la dueña pasaba sin probar nada). El cambio está SIN commit en
-   `pruebas/e2e/sonidos.spec.ts` del checkout principal.
-2. **Corriendo en el checkout principal:** `bash /d/mpos-tmp/dp22/e2e-tanda.sh lote1-ci construir
-sonidos:escritorio,tablet,telefono configuracion-que-no-se-regresa cajas-del-negocio
-personalizar-menu` → `/d/mpos-tmp/dp22/tanda-lote1-ci.log` (reconstruye, levanta el 3200 sobre
-   la desechable 5437 y corre la prueba arreglada más las tres suites que la CI no alcanzó). Si
-   sale en verde: revisar PIN, commit, `git push`, esperar la CI, unir, Production «Ready», humo
-   (`/d/mpos-tmp/dp22/humo-produccion.sh 1`) y la hora de Vercel.
-3. **Agentes:** B (Bloque 18) y C (Fase D) REANUDADOS a las 05:12 sobre lo que ya tenían. A
-   (barrido y hallazgos 2 a 6) sigue detenido para no cargar la máquina mientras corre la e2e del
-   lote 1: se reanuda en cuanto termine (su servidor 3210 y su Postgres 5438 siguen arriba). Lo
-   que A ya dejó: `pruebas/e2e/qa-final/barrido-servicio.spec.ts`, `arnes/barrido.ts`,
-   `fecha-del-negocio.spec.ts` y `pregunta-del-anuncio.spec.ts`.
-4. `verify-lote1` terminó (00:06) sobre `6ce290a`: todo en verde salvo `lint` y `test:unit`, ya
-   arregladas en `6ce290a` y `7a51e29`. Falta repetir `test:unit` sobre el commit final.
-5. Los documentos de `docs/qa-final/`, `PROGRESO-DP22.md` y `PLAN.md` siguen SIN commit en el
-   checkout principal; entran con el lote 2 (ya con formato de `prettier`).
+1. **Lote 1 EN PRODUCCIÓN** (PR #37 unido como `ff03687`, 05:59; producción lo sirve desde las
+   06:01). Humo sin sesión y sin cobrar: 38 revisiones, 0 fallas. Vercel: 0 errores al desplegar;
+   **falta la revisión de la hora (07:05)** y anotarla en `PROGRESO-DP22.md`.
+2. **Lote 2 en armado** en el checkout principal, rama `dp-22-lote2-pr` (sobre `main`): la
+   bitácora (`79db49c`) + la unión de `dp-22-ajustes` (`b0a7a9a`: el arnés táctil, la Fase D y los
+   arreglos de los hallazgos 8, 9 y 10) + la de `dp-22-b18` (`912c726`: el Bloque 18, lado POS).
+   Como el lote 1 se unió con squash, las uniones traen conflictos en documentos: la bitácora
+   (`ESTADO`, `HALLAZGOS`, `NUEVO`, `PLAN`, `PROGRESO`) se queda con LO NUESTRO; `MATRIZ.md`,
+   `efectos.json`, `matriz.json` y `.gitignore`, con LO SUYO; `DECISIONES.md` y
+   `scripts/aspecto-permitido.json` llevan los dos lados
+   (`node /d/mpos-tmp/dp22/unir-los-dos-lados.cjs <archivo>`). Después: `pnpm qa:matriz`,
+   `verify` completo (`bash /d/mpos-tmp/dp22/verify-todo.sh`), las suites de la CI que `verify` no
+   corre (`bash /d/mpos-tmp/dp22/e2e-tanda.sh …`), PR, CI, unir, Production «Ready», humo y la hora.
+3. **Bloque 18, la app:** consolidada en el repo de las apps, rama `exe-1.0.2` (`ebccf30`, en
+   `.work\apps-electron`), 125 de 125 y mutantes propios. **Falta:** construir
+   (`cd electron && npm run construir`), el humo de la app empaquetada (`--prueba-humo`), publicar
+   en `canal-don-poncho` (primero el `.exe` y su `.blockmap`, al final `latest.yml`) y comprobar
+   en la laptop que una 1.0.1 instalada la recibe. La 1.0.1 NO está instalada hoy en la laptop; su
+   instalador está en `.work\apps-electron\electron\salida\`. Los comandos están en el informe del
+   agente B (transcripción) y en `README.md` de las apps.
+4. **Agentes corriendo (3):** A en `.work\dp20-lab` (`dp-22-lote2`: barrido de servicio y
+   hallazgos 2 a 6; 5438 y 3210), D1 en `.work\dp20` (`dp-22-salon`: hallazgo 7, pasar la mesa a
+   otro mesero, teléfono en para llevar, H5 y dos sobras; 5439 y 3220; DP-D156 a DP-D158) y D2 en
+   `.work\dp18-integrar` (`dp-22-inventario`: la Parte 5 por pantallas sobre el clon
+   `qa_dp22_inv`, el aviso de insumo bajo y «lo más vendido»; 3230 y 54530; DP-D159 a DP-D161).
+   Sus encargos: `D:\mpos-tmp\dp22\briefs\d1-listo.md` y `d2-listo.md`.
+5. **Por decidir o hacer después de estos lotes:** los 51 ajustes «por ver en navegador» y los 5
+   por comprobar (lista en el informe del agente C y en `efectos.json`); el hallazgo 12; el día de
+   bots (la máquina sola); la Parte 11 (producción) y el informe 013.
 
 ## Dónde voy
 

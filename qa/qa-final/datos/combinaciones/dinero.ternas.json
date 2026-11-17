@@ -1,0 +1,898 @@
+[
+  {
+    "propina": "ninguna",
+    "descuento": "pasa_el_tope",
+    "division": "sin_dividir",
+    "pago": "efectivo_con_cambio",
+    "iva": "iva16_sumado",
+    "canal": "mesa"
+  },
+  {
+    "iva": "sin_iva",
+    "propina": "monto_caja",
+    "canal": "para_llevar",
+    "pago": "tarjeta",
+    "descuento": "gerente_dentro_del_tope",
+    "division": "sin_dividir"
+  },
+  {
+    "propina": "porcentaje_caja",
+    "division": "sin_dividir",
+    "pago": "efectivo_exacto",
+    "canal": "para_llevar",
+    "iva": "iva8_sumado",
+    "descuento": "dueno_arriba_del_gerente"
+  },
+  {
+    "descuento": "pasa_el_tope",
+    "pago": "tarjeta",
+    "canal": "mesa",
+    "iva": "iva8_incluido",
+    "propina": "porcentaje_caja",
+    "division": "por_platillo"
+  },
+  {
+    "propina": "porcentaje_caja",
+    "descuento": "ninguno",
+    "division": "sin_dividir",
+    "pago": "efectivo_con_cambio",
+    "iva": "sin_iva",
+    "canal": "mesa"
+  },
+  {
+    "propina": "ninguna",
+    "descuento": "gerente_dentro_del_tope",
+    "division": "por_platillo",
+    "canal": "mesa",
+    "pago": "mixto",
+    "iva": "iva16_incluido"
+  },
+  {
+    "propina": "porcentaje_mesero",
+    "division": "por_platillo",
+    "pago": "mixto",
+    "iva": "iva8_incluido",
+    "descuento": "ninguno",
+    "canal": "mesa"
+  },
+  {
+    "propina": "ninguna",
+    "pago": "efectivo_exacto",
+    "canal": "para_llevar",
+    "descuento": "pasa_el_tope",
+    "division": "sin_dividir",
+    "iva": "iva8_incluido"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "pasa_el_tope",
+    "division": "por_platillo",
+    "propina": "monto_caja",
+    "pago": "efectivo_exacto",
+    "canal": "mesa"
+  },
+  {
+    "propina": "porcentaje_mesero",
+    "descuento": "pasa_el_tope",
+    "pago": "efectivo_exacto",
+    "division": "por_unidades",
+    "iva": "sin_iva",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva16_incluido",
+    "propina": "porcentaje_caja",
+    "division": "por_platillo",
+    "pago": "efectivo_con_cambio",
+    "descuento": "dueno_arriba_del_gerente",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "porcentaje_mesero",
+    "descuento": "dueno_arriba_del_gerente",
+    "division": "por_unidades",
+    "pago": "efectivo_con_cambio",
+    "canal": "mesa"
+  },
+  {
+    "propina": "ninguna",
+    "pago": "tarjeta",
+    "canal": "mesa",
+    "descuento": "ninguno",
+    "division": "por_unidades",
+    "iva": "iva8_sumado"
+  },
+  {
+    "iva": "sin_iva",
+    "descuento": "dueno_arriba_del_gerente",
+    "pago": "efectivo_exacto",
+    "canal": "mesa",
+    "propina": "ninguna",
+    "division": "por_platillo"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "gerente_dentro_del_tope",
+    "pago": "efectivo_con_cambio",
+    "propina": "porcentaje_caja",
+    "canal": "para_llevar",
+    "division": "sin_dividir"
+  },
+  {
+    "descuento": "ninguno",
+    "pago": "efectivo_exacto",
+    "canal": "para_llevar",
+    "propina": "monto_caja",
+    "iva": "iva16_incluido",
+    "division": "sin_dividir"
+  },
+  {
+    "propina": "porcentaje_caja",
+    "pago": "mixto",
+    "canal": "para_llevar",
+    "iva": "iva16_incluido",
+    "descuento": "pasa_el_tope",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva8_sumado",
+    "descuento": "gerente_dentro_del_tope",
+    "division": "por_unidades",
+    "pago": "efectivo_con_cambio",
+    "propina": "monto_caja",
+    "canal": "mesa"
+  },
+  {
+    "propina": "ninguna",
+    "descuento": "pasa_el_tope",
+    "division": "por_unidades",
+    "canal": "mesa",
+    "pago": "mixto",
+    "iva": "iva16_sumado"
+  },
+  {
+    "propina": "monto_caja",
+    "division": "por_unidades",
+    "pago": "mixto",
+    "descuento": "dueno_arriba_del_gerente",
+    "canal": "mesa",
+    "iva": "sin_iva"
+  },
+  {
+    "iva": "sin_iva",
+    "propina": "porcentaje_caja",
+    "descuento": "dueno_arriba_del_gerente",
+    "division": "por_unidades",
+    "canal": "mesa",
+    "pago": "tarjeta"
+  },
+  {
+    "iva": "iva16_incluido",
+    "descuento": "pasa_el_tope",
+    "pago": "efectivo_con_cambio",
+    "division": "por_unidades",
+    "propina": "monto_caja",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "ninguno",
+    "division": "por_unidades",
+    "pago": "efectivo_con_cambio",
+    "propina": "monto_caja",
+    "canal": "mesa"
+  },
+  {
+    "iva": "sin_iva",
+    "pago": "efectivo_con_cambio",
+    "canal": "para_llevar",
+    "descuento": "dueno_arriba_del_gerente",
+    "propina": "ninguna",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "porcentaje_mesero",
+    "descuento": "gerente_dentro_del_tope",
+    "canal": "mesa",
+    "division": "sin_dividir",
+    "pago": "efectivo_exacto"
+  },
+  {
+    "propina": "ninguna",
+    "division": "sin_dividir",
+    "pago": "mixto",
+    "descuento": "ninguno",
+    "canal": "para_llevar",
+    "iva": "iva8_sumado"
+  },
+  {
+    "iva": "iva8_sumado",
+    "division": "sin_dividir",
+    "canal": "mesa",
+    "propina": "porcentaje_mesero",
+    "pago": "tarjeta",
+    "descuento": "dueno_arriba_del_gerente"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "porcentaje_caja",
+    "pago": "efectivo_con_cambio",
+    "division": "sin_dividir",
+    "canal": "para_llevar",
+    "descuento": "ninguno"
+  },
+  {
+    "iva": "iva8_sumado",
+    "propina": "ninguna",
+    "descuento": "pasa_el_tope",
+    "division": "por_platillo",
+    "pago": "efectivo_con_cambio",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva16_incluido",
+    "descuento": "dueno_arriba_del_gerente",
+    "pago": "efectivo_exacto",
+    "canal": "para_llevar",
+    "division": "sin_dividir",
+    "propina": "monto_caja"
+  },
+  {
+    "iva": "iva16_incluido",
+    "descuento": "ninguno",
+    "pago": "tarjeta",
+    "propina": "porcentaje_mesero",
+    "canal": "mesa",
+    "division": "por_unidades"
+  },
+  {
+    "iva": "iva16_incluido",
+    "pago": "tarjeta",
+    "canal": "para_llevar",
+    "descuento": "dueno_arriba_del_gerente",
+    "propina": "ninguna",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "gerente_dentro_del_tope",
+    "canal": "mesa",
+    "propina": "porcentaje_caja",
+    "pago": "tarjeta",
+    "division": "por_platillo"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "gerente_dentro_del_tope",
+    "division": "por_unidades",
+    "propina": "porcentaje_mesero",
+    "pago": "mixto",
+    "canal": "mesa"
+  },
+  {
+    "iva": "sin_iva",
+    "propina": "ninguna",
+    "descuento": "gerente_dentro_del_tope",
+    "pago": "mixto",
+    "canal": "para_llevar",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "sin_iva",
+    "descuento": "gerente_dentro_del_tope",
+    "division": "por_unidades",
+    "pago": "efectivo_exacto",
+    "canal": "mesa",
+    "propina": "porcentaje_caja"
+  },
+  {
+    "iva": "iva8_sumado",
+    "descuento": "pasa_el_tope",
+    "pago": "efectivo_exacto",
+    "canal": "para_llevar",
+    "division": "sin_dividir",
+    "propina": "monto_caja"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "ninguno",
+    "division": "sin_dividir",
+    "canal": "para_llevar",
+    "pago": "tarjeta",
+    "propina": "porcentaje_caja"
+  },
+  {
+    "iva": "iva8_sumado",
+    "descuento": "pasa_el_tope",
+    "pago": "tarjeta",
+    "propina": "porcentaje_mesero",
+    "canal": "mesa",
+    "division": "por_platillo"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "dueno_arriba_del_gerente",
+    "canal": "mesa",
+    "propina": "monto_caja",
+    "division": "sin_dividir",
+    "pago": "mixto"
+  },
+  {
+    "iva": "sin_iva",
+    "descuento": "ninguno",
+    "division": "por_unidades",
+    "propina": "ninguna",
+    "pago": "efectivo_exacto",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "ninguna",
+    "descuento": "ninguno",
+    "division": "por_platillo",
+    "pago": "tarjeta",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva16_incluido",
+    "propina": "monto_caja",
+    "pago": "tarjeta",
+    "descuento": "pasa_el_tope",
+    "canal": "para_llevar",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "monto_caja",
+    "pago": "efectivo_con_cambio",
+    "canal": "para_llevar",
+    "descuento": "dueno_arriba_del_gerente",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva8_sumado",
+    "propina": "porcentaje_caja",
+    "pago": "efectivo_con_cambio",
+    "canal": "mesa",
+    "division": "por_unidades",
+    "descuento": "pasa_el_tope"
+  },
+  {
+    "iva": "iva8_sumado",
+    "division": "por_platillo",
+    "pago": "efectivo_exacto",
+    "descuento": "ninguno",
+    "canal": "mesa",
+    "propina": "porcentaje_caja"
+  },
+  {
+    "propina": "monto_caja",
+    "pago": "mixto",
+    "canal": "para_llevar",
+    "iva": "iva8_incluido",
+    "division": "sin_dividir",
+    "descuento": "gerente_dentro_del_tope"
+  },
+  {
+    "iva": "iva8_sumado",
+    "descuento": "gerente_dentro_del_tope",
+    "canal": "para_llevar",
+    "propina": "ninguna",
+    "division": "sin_dividir",
+    "pago": "efectivo_exacto"
+  },
+  {
+    "iva": "iva8_sumado",
+    "propina": "porcentaje_mesero",
+    "pago": "mixto",
+    "descuento": "pasa_el_tope",
+    "canal": "mesa",
+    "division": "por_unidades"
+  },
+  {
+    "propina": "monto_caja",
+    "descuento": "ninguno",
+    "pago": "mixto",
+    "division": "por_platillo",
+    "canal": "mesa",
+    "iva": "sin_iva"
+  },
+  {
+    "iva": "sin_iva",
+    "descuento": "pasa_el_tope",
+    "canal": "para_llevar",
+    "pago": "efectivo_con_cambio",
+    "division": "sin_dividir",
+    "propina": "porcentaje_caja"
+  },
+  {
+    "iva": "sin_iva",
+    "division": "por_platillo",
+    "pago": "tarjeta",
+    "propina": "porcentaje_mesero",
+    "descuento": "gerente_dentro_del_tope",
+    "canal": "mesa"
+  },
+  {
+    "iva": "sin_iva",
+    "propina": "porcentaje_mesero",
+    "pago": "mixto",
+    "descuento": "dueno_arriba_del_gerente",
+    "division": "sin_dividir",
+    "canal": "mesa"
+  },
+  {
+    "iva": "sin_iva",
+    "propina": "monto_caja",
+    "pago": "efectivo_con_cambio",
+    "descuento": "gerente_dentro_del_tope",
+    "canal": "para_llevar",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "ninguno",
+    "division": "por_platillo",
+    "canal": "mesa",
+    "propina": "porcentaje_mesero",
+    "pago": "efectivo_con_cambio"
+  },
+  {
+    "iva": "iva16_incluido",
+    "propina": "porcentaje_mesero",
+    "division": "por_platillo",
+    "pago": "efectivo_exacto",
+    "descuento": "pasa_el_tope",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva16_sumado",
+    "propina": "porcentaje_caja",
+    "descuento": "pasa_el_tope",
+    "canal": "para_llevar",
+    "division": "sin_dividir",
+    "pago": "efectivo_exacto"
+  },
+  {
+    "propina": "porcentaje_mesero",
+    "descuento": "dueno_arriba_del_gerente",
+    "pago": "efectivo_exacto",
+    "iva": "iva16_sumado",
+    "canal": "mesa",
+    "division": "por_unidades"
+  },
+  {
+    "iva": "iva8_sumado",
+    "descuento": "gerente_dentro_del_tope",
+    "pago": "mixto",
+    "propina": "porcentaje_caja",
+    "division": "por_platillo",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva8_sumado",
+    "descuento": "ninguno",
+    "pago": "efectivo_con_cambio",
+    "propina": "porcentaje_mesero",
+    "division": "sin_dividir",
+    "canal": "mesa"
+  },
+  {
+    "propina": "monto_caja",
+    "division": "por_platillo",
+    "pago": "efectivo_con_cambio",
+    "descuento": "gerente_dentro_del_tope",
+    "canal": "mesa",
+    "iva": "iva8_incluido"
+  },
+  {
+    "iva": "iva16_incluido",
+    "division": "sin_dividir",
+    "canal": "mesa",
+    "pago": "efectivo_con_cambio",
+    "descuento": "gerente_dentro_del_tope",
+    "propina": "porcentaje_mesero"
+  },
+  {
+    "iva": "iva16_sumado",
+    "propina": "porcentaje_mesero",
+    "descuento": "pasa_el_tope",
+    "canal": "mesa",
+    "pago": "tarjeta",
+    "division": "por_unidades"
+  },
+  {
+    "iva": "iva16_incluido",
+    "descuento": "ninguno",
+    "pago": "mixto",
+    "propina": "porcentaje_caja",
+    "canal": "para_llevar",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva16_incluido",
+    "propina": "ninguna",
+    "descuento": "ninguno",
+    "division": "por_unidades",
+    "pago": "efectivo_con_cambio",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "porcentaje_mesero",
+    "pago": "tarjeta",
+    "canal": "mesa",
+    "division": "sin_dividir",
+    "descuento": "pasa_el_tope"
+  },
+  {
+    "iva": "iva16_incluido",
+    "descuento": "dueno_arriba_del_gerente",
+    "division": "por_unidades",
+    "pago": "mixto",
+    "canal": "mesa",
+    "propina": "porcentaje_caja"
+  },
+  {
+    "iva": "sin_iva",
+    "propina": "porcentaje_caja",
+    "pago": "mixto",
+    "division": "por_platillo",
+    "descuento": "pasa_el_tope",
+    "canal": "mesa"
+  },
+  {
+    "propina": "monto_caja",
+    "descuento": "pasa_el_tope",
+    "pago": "mixto",
+    "canal": "para_llevar",
+    "division": "sin_dividir",
+    "iva": "iva16_sumado"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "ninguna",
+    "division": "por_unidades",
+    "pago": "mixto",
+    "descuento": "dueno_arriba_del_gerente",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva16_sumado",
+    "propina": "porcentaje_mesero",
+    "division": "sin_dividir",
+    "canal": "mesa",
+    "descuento": "ninguno",
+    "pago": "efectivo_exacto"
+  },
+  {
+    "iva": "iva16_incluido",
+    "descuento": "gerente_dentro_del_tope",
+    "division": "por_unidades",
+    "pago": "efectivo_exacto",
+    "propina": "monto_caja",
+    "canal": "mesa"
+  },
+  {
+    "descuento": "gerente_dentro_del_tope",
+    "division": "por_unidades",
+    "pago": "tarjeta",
+    "canal": "mesa",
+    "propina": "monto_caja",
+    "iva": "iva8_incluido"
+  },
+  {
+    "propina": "monto_caja",
+    "descuento": "ninguno",
+    "pago": "tarjeta",
+    "iva": "iva8_sumado",
+    "division": "por_platillo",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva16_sumado",
+    "propina": "ninguna",
+    "descuento": "gerente_dentro_del_tope",
+    "canal": "para_llevar",
+    "division": "sin_dividir",
+    "pago": "efectivo_exacto"
+  },
+  {
+    "iva": "iva8_sumado",
+    "division": "por_unidades",
+    "pago": "efectivo_exacto",
+    "propina": "porcentaje_mesero",
+    "canal": "mesa",
+    "descuento": "dueno_arriba_del_gerente"
+  },
+  {
+    "iva": "iva16_sumado",
+    "propina": "ninguna",
+    "descuento": "ninguno",
+    "division": "por_platillo",
+    "canal": "mesa",
+    "pago": "mixto"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "dueno_arriba_del_gerente",
+    "division": "por_platillo",
+    "propina": "ninguna",
+    "canal": "mesa",
+    "pago": "tarjeta"
+  },
+  {
+    "iva": "iva16_sumado",
+    "descuento": "dueno_arriba_del_gerente",
+    "pago": "efectivo_con_cambio",
+    "division": "sin_dividir",
+    "propina": "porcentaje_caja",
+    "canal": "para_llevar"
+  },
+  {
+    "iva": "iva16_incluido",
+    "pago": "efectivo_con_cambio",
+    "canal": "para_llevar",
+    "propina": "monto_caja",
+    "division": "sin_dividir",
+    "descuento": "gerente_dentro_del_tope"
+  },
+  {
+    "propina": "ninguna",
+    "descuento": "gerente_dentro_del_tope",
+    "division": "por_unidades",
+    "pago": "tarjeta",
+    "iva": "iva16_incluido",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva8_incluido",
+    "descuento": "dueno_arriba_del_gerente",
+    "pago": "tarjeta",
+    "canal": "para_llevar",
+    "propina": "porcentaje_caja",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva8_sumado",
+    "propina": "ninguna",
+    "descuento": "dueno_arriba_del_gerente",
+    "canal": "mesa",
+    "division": "por_platillo",
+    "pago": "mixto"
+  },
+  {
+    "iva": "iva8_incluido",
+    "descuento": "dueno_arriba_del_gerente",
+    "pago": "efectivo_exacto",
+    "division": "por_platillo",
+    "propina": "monto_caja",
+    "canal": "mesa"
+  },
+  {
+    "iva": "sin_iva",
+    "division": "por_unidades",
+    "pago": "efectivo_con_cambio",
+    "propina": "porcentaje_mesero",
+    "descuento": "pasa_el_tope",
+    "canal": "mesa"
+  },
+  {
+    "iva": "sin_iva",
+    "propina": "monto_caja",
+    "descuento": "pasa_el_tope",
+    "pago": "efectivo_exacto",
+    "division": "sin_dividir",
+    "canal": "para_llevar"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "monto_caja",
+    "descuento": "pasa_el_tope",
+    "division": "por_unidades",
+    "pago": "efectivo_exacto",
+    "canal": "mesa"
+  },
+  {
+    "iva": "sin_iva",
+    "propina": "ninguna",
+    "pago": "tarjeta",
+    "descuento": "pasa_el_tope",
+    "canal": "para_llevar",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "porcentaje_caja",
+    "division": "por_unidades",
+    "pago": "efectivo_exacto",
+    "descuento": "ninguno",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "ninguna",
+    "pago": "efectivo_con_cambio",
+    "division": "por_unidades",
+    "descuento": "gerente_dentro_del_tope",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva8_incluido",
+    "descuento": "pasa_el_tope",
+    "pago": "mixto",
+    "division": "sin_dividir",
+    "canal": "para_llevar",
+    "propina": "porcentaje_caja"
+  },
+  {
+    "iva": "iva16_incluido",
+    "propina": "monto_caja",
+    "pago": "mixto",
+    "division": "por_platillo",
+    "canal": "mesa",
+    "descuento": "ninguno"
+  },
+  {
+    "iva": "sin_iva",
+    "division": "por_platillo",
+    "pago": "efectivo_con_cambio",
+    "propina": "ninguna",
+    "canal": "mesa",
+    "descuento": "gerente_dentro_del_tope"
+  },
+  {
+    "iva": "iva16_sumado",
+    "propina": "monto_caja",
+    "pago": "tarjeta",
+    "canal": "para_llevar",
+    "descuento": "dueno_arriba_del_gerente",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva8_sumado",
+    "propina": "monto_caja",
+    "pago": "mixto",
+    "division": "por_unidades",
+    "canal": "mesa",
+    "descuento": "dueno_arriba_del_gerente"
+  },
+  {
+    "iva": "iva8_sumado",
+    "propina": "porcentaje_caja",
+    "pago": "tarjeta",
+    "canal": "para_llevar",
+    "descuento": "gerente_dentro_del_tope",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "sin_iva",
+    "descuento": "ninguno",
+    "canal": "para_llevar",
+    "propina": "ninguna",
+    "division": "sin_dividir",
+    "pago": "tarjeta"
+  },
+  {
+    "iva": "iva16_incluido",
+    "propina": "porcentaje_caja",
+    "pago": "tarjeta",
+    "canal": "para_llevar",
+    "division": "sin_dividir",
+    "descuento": "gerente_dentro_del_tope"
+  },
+  {
+    "iva": "iva8_sumado",
+    "propina": "porcentaje_mesero",
+    "descuento": "gerente_dentro_del_tope",
+    "division": "por_platillo",
+    "pago": "efectivo_exacto",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva16_incluido",
+    "propina": "porcentaje_caja",
+    "pago": "efectivo_exacto",
+    "canal": "para_llevar",
+    "division": "sin_dividir",
+    "descuento": "ninguno"
+  },
+  {
+    "iva": "iva16_sumado",
+    "propina": "porcentaje_caja",
+    "pago": "mixto",
+    "division": "por_unidades",
+    "descuento": "ninguno",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva8_sumado",
+    "descuento": "dueno_arriba_del_gerente",
+    "pago": "efectivo_con_cambio",
+    "propina": "ninguna",
+    "canal": "para_llevar",
+    "division": "sin_dividir"
+  },
+  {
+    "propina": "porcentaje_mesero",
+    "descuento": "dueno_arriba_del_gerente",
+    "division": "por_platillo",
+    "pago": "efectivo_con_cambio",
+    "canal": "mesa",
+    "iva": "iva16_incluido"
+  },
+  {
+    "iva": "sin_iva",
+    "propina": "porcentaje_mesero",
+    "descuento": "ninguno",
+    "canal": "mesa",
+    "division": "por_platillo",
+    "pago": "efectivo_exacto"
+  },
+  {
+    "iva": "iva16_incluido",
+    "division": "por_platillo",
+    "pago": "tarjeta",
+    "propina": "monto_caja",
+    "canal": "mesa",
+    "descuento": "pasa_el_tope"
+  },
+  {
+    "iva": "iva16_sumado",
+    "propina": "monto_caja",
+    "descuento": "gerente_dentro_del_tope",
+    "pago": "tarjeta",
+    "canal": "para_llevar",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva16_incluido",
+    "propina": "ninguna",
+    "pago": "efectivo_exacto",
+    "descuento": "pasa_el_tope",
+    "canal": "mesa",
+    "division": "sin_dividir"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "monto_caja",
+    "descuento": "ninguno",
+    "canal": "para_llevar",
+    "division": "sin_dividir",
+    "pago": "efectivo_con_cambio"
+  },
+  {
+    "descuento": "dueno_arriba_del_gerente",
+    "pago": "mixto",
+    "canal": "para_llevar",
+    "propina": "ninguna",
+    "division": "sin_dividir",
+    "iva": "iva8_incluido"
+  },
+  {
+    "iva": "iva16_incluido",
+    "propina": "porcentaje_mesero",
+    "pago": "mixto",
+    "division": "por_unidades",
+    "descuento": "ninguno",
+    "canal": "mesa"
+  },
+  {
+    "iva": "iva8_incluido",
+    "propina": "porcentaje_caja",
+    "descuento": "gerente_dentro_del_tope",
+    "pago": "mixto",
+    "canal": "mesa",
+    "division": "por_unidades"
+  },
+  {
+    "iva": "iva8_incluido",
+    "descuento": "pasa_el_tope",
+    "pago": "efectivo_con_cambio",
+    "propina": "porcentaje_caja",
+    "division": "sin_dividir",
+    "canal": "para_llevar"
+  }
+]

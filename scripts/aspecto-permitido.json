@@ -2548,6 +2548,62 @@
       "archivo": "apps/web/heredado/pages/Caja.jsx",
       "porque": "DP-22 (lote 3): cerrar la caja ya no encola «la cola de sincronización» ni le enseña al cajero el aviso técnico «La caja se cerró; la cola de sincronización no se encoló.». Esa cola era de la integración de demostración (Google Sheets) que ya se quitó: nadie la consume y sus filas sólo crecían. El comando y su ruta se quedan en el servidor, sin pantalla.",
       "testigos": ["- aviso:La caja se cerró; la cola de sincronización no se encoló."]
+    },
+    {
+      "archivo": "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx",
+      "porque": "DP-D153 (Bloque 18): dentro de la app de Windows 1.0.2 el PDF del cierre se guarda solo en DocumentosPOS Don PonchoCortes en vez de descargarse; si no se puede guardar, un aviso dice por qué y el botón de siempre reintenta. En un navegador o con la app 1.0.1 llama a la misma descarga de antes y no cambia nada a la vista. Lo nuevo son tres avisos (guardado, fallo y la vía) y la etiqueta del botón de reintento, que dice «Guardar PDF en la carpeta» sólo dentro de la app.",
+      "testigos": [
+        "+ aviso:No se guardó el PDF en la carpeta. ${entrega.mensaje} Reintenta con el botón o desde Registros → Cortes.",
+        "+ aviso:carpeta",
+        "+ aviso:PDF del corte guardado en tu carpeta de cortes"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/cortes/CorteViewerDialog.jsx",
+      "porque": "DP-D153 (Bloque 18): el visor del corte trae, SÓLO dentro de la app de Windows 1.0.2, «Guardar en la carpeta» y «Abrir carpeta» (blancos de 44 px) con una línea de ayuda; el grupo de botones del encabezado puede bajar de renglón (flex-wrap). Guarda el PDF en DocumentosPOS Don PonchoCortesAAAA-MM y sólo con el corte leído entero (un PDF en ceros no es el corte). La fila de Registros lo abre en modo «guardar al cargar». En un navegador o con la 1.0.1 ninguno de los botones aparece y el resto queda igual.",
+      "testigos": [
+        "+ clase:w-4",
+        "+ clase:w-4",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:h-4",
+        "+ clase:h-4",
+        "+ clase:mr-1",
+        "+ clase:mr-1",
+        "+ clase:mr-1",
+        "+ clase:min-h-11",
+        "+ clase:min-h-11",
+        "+ clase:no-print",
+        "+ clase:px-6",
+        "+ clase:pt-2",
+        "+ clase:text-xs",
+        "+ clase:text-muted-foreground",
+        "+ clase:animate-spin",
+        "+ clase:flex-wrap",
+        "+ aviso:El corte todavía no se cargó. Espera un momento y vuelve a intentarlo.",
+        "+ aviso:No se guardó el PDF en la carpeta. ${entrega.mensaje}",
+        "+ aviso:PDF guardado en tu carpeta de cortes",
+        "+ icono:HardDriveDownload",
+        "+ icono:FolderOpen"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Registros.jsx",
+      "porque": "DP-D153 (Bloque 18): en Registros → Cortes, SÓLO dentro de la app de Windows 1.0.2, cada corte trae «Guardar en la carpeta» (abre el visor y lo guarda solo), arriba hay un «Abrir carpeta» y una línea de ayuda con dónde quedan los PDF. Los botones miden 44 px. En un navegador o con la app 1.0.1 no aparece nada de esto y la pantalla queda igual.",
+      "testigos": [
+        "+ clase:w-4",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:h-4",
+        "+ clase:mr-1",
+        "+ clase:mr-1",
+        "+ clase:min-h-11",
+        "+ clase:min-h-11",
+        "+ clase:text-xs",
+        "+ clase:text-muted-foreground",
+        "+ icono:HardDriveDownload",
+        "+ icono:FolderOpen"
+      ]
     }
   ]
 }

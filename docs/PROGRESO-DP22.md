@@ -109,10 +109,42 @@ siguiente.
     nueva de error en Vercel durante la hora siguiente.
   - Después: humo sin sesión y sin cobrar (`/d/mpos-tmp/dp22/humo-produccion.sh 1`), lectura de
     producción por la 5432 (nada cambió en los datos) y Vercel en la hora siguiente.
-- **CI, despliegue, humo y la hora de Vercel:** _(se llena al unir)_.
+- **La CI:** la primera corrida completa (`7a51e29`) quedó en 9 de 10: «Jornada completa» falló en
+  `pruebas/e2e/sonidos.spec.ts` por una suposición vieja de la prueba (la dueña en Cocina esperaba
+  el timbre; con DP-D151 sólo anuncia el puesto de cocina). Se corrigió la prueba (`64bb750`), se
+  corrió en local en los tres aparatos con su mutante, más las tres suites que la CI no alcanzó.
+  Segunda corrida: **10 de 10** (17-11, 05:59).
+- **Despliegue (17-11):** unido a `main` como `ff03687` a las 05:59; producción ya servía el lote a
+  las 06:01 (la ruta nueva `/api/registros/resumen` pasó de 404 a 403).
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 1`, 06:01): 38 revisiones, 0 fallas: las
+  entradas responden, sin sesión todo contesta 401 o 403, las rutas nuevas existen, las de siempre
+  siguen en pie, cabeceras de seguridad, el portal y «Hecho por MORPHIQ» en la entrada.
+- **Producción, sólo lectura (05:50):** las mismas 9 cuentas de prueba (A-1 a A-9), 1 caja cerrada,
+  0 abiertas, 10 mesas libres, migraciones hasta la 193. El lote no lleva migraciones.
+- **Vercel:** 0 errores de ejecución al desplegar y **0 en la hora siguiente** (revisado a las
+  07:12, ventana de 2 h). **Lote 1 cerrado.**
 
-### Lote 2 (en preparación) · el arnés táctil y lo que encuentre
+### Lote 2 · PR #38 (`dp-22-lote2-pr` → `main`) · sin migraciones
 
-Rama `dp-22-lote2`: el arnés (`dp-22-arnes`, 14 aparatos, toque real, revisiones automáticas, 45
-de 45 en tres perfiles, tres mutantes del arnés tumban su autoprueba) unido con el lote 1. Encima,
-el agente A barre las pantallas de servicio y arregla los hallazgos 2 a 6.
+Rama `dp-22-lote2-pr` (checkout principal, sobre `main` ya con el lote 1). Lleva:
+
+- **El arnés táctil** (`dp-22-arnes`: 14 aparatos, toque real, revisiones automáticas; 45 de 45 en
+  tres perfiles; tres mutantes del arnés tumban su autoprueba) y los tres agentes de prueba de
+  Playwright (`.claude/agents/`, `model: sonnet`) con su semilla en el arnés.
+- **La Fase D** (rama `dp-22-ajustes`, agente C, revisada): las ternas del dinero y los pares de
+  ajustes contra el oráculo, los 11 cambios a media operación, y tres arreglos que salieron de ahí
+  (hallazgos 8, 9 y 10).
+- **El Bloque 18, lado POS** (rama `dp-22-b18`, agente B, revisada): el PDF del corte se guarda en
+  la carpeta de la app de Windows 1.0.2.
+- **Lo que cazó la CI antes de unir** (nada llegó a `main`): (1) `verify:primitivas`: dos botones
+  del cierre con alto fijo (`min-h-11`) en vez del token (`1206b4c`); (2) dos contratos de la suite
+  unitaria completa: los ayudantes de las pruebas de la Fase D escribían en la base fuera de una
+  carpeta `pruebas/` (se movieron a `packages/app/src/qa-final/pruebas/`) y el folio que se vuelve
+  nombre de archivo no estaba declarado en `folio.contrato.test.ts`. Lección: antes de abrir un
+  PR se corren TODAS las puertas estáticas y la suite unitaria COMPLETA, no sólo las zonas.
+- **La app 1.0.2** (repo de las apps, rama `exe-1.0.2`, PR morphiq-pos-apps#2): construida; humo de
+  la app EMPAQUETADA 10 de 10 (carga el POS de producción, la capacidad `archivos` a la vista, un
+  no-PDF rechazado sin escribir nada). Sin publicar todavía.
+
+El barrido de servicio y los hallazgos 2 a 6 (agente A, rama `dp-22-lote2` en `.work\dp20-lab`) y
+lo de salón y cocina (agente D1, rama `dp-22-salon`) van en el lote siguiente.

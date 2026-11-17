@@ -208,6 +208,33 @@ const NO_PINTA: readonly { archivo: string; contiene: string; razon: string }[] 
     contiene: "key: 'folio'",
     razon: 'define la columna; Registros la pasa por columnasConFolio',
   },
+  // DP-D153 · Los cortes en la carpeta: el folio YA vestido se vuelve nombre de archivo; no se pinta.
+  {
+    archivo: 'heredado/components/cortes/CorteAutoDownloader.jsx',
+    contiene: 'folio: folioParaElArchivo(folioVisible(',
+    razon: 'el folio vestido por folioVisible, hecho nombre del PDF para la carpeta de cortes',
+  },
+  {
+    archivo: 'heredado/components/cortes/CorteViewerDialog.jsx',
+    contiene: 'folio: folioParaElArchivo(folioVisible(',
+    razon: 'ídem: el nombre del PDF que se guarda desde Registros',
+  },
+  {
+    archivo: 'src/corte/carpeta/entregar-el-pdf.ts',
+    contiene: 'readonly datos: { readonly folio: string',
+    razon: 'el tipo del pedido de entrega: el folio que ya es nombre de archivo',
+  },
+  {
+    archivo: 'src/corte/carpeta/guardar-en-la-carpeta.ts',
+    contiene: 'archivos.guardar({ folio: corte.folio',
+    razon:
+      'va a la app de Windows, que arma con él el nombre del PDF (ya pasó por folioParaElArchivo)',
+  },
+  {
+    archivo: 'src/corte/carpeta/nombre-del-pdf.ts',
+    contiene: 'export function folioParaElArchivo(folio:',
+    razon: 'es quien convierte el folio vestido en nombre de archivo',
+  },
 ];
 
 const pantallas = CARPETAS.flatMap((c) => archivos(join(WEB, c))).map((ruta) => ({
