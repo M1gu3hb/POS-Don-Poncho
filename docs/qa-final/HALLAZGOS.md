@@ -16,12 +16,14 @@
 | Severidad | Encontrados | Arreglados | Abiertos |
 | --------- | ----------: | ---------: | -------: |
 | Crítico   |           0 |          0 |        0 |
-| Alto      |           2 |          2 |        0 |
-| Medio     |           7 |          2 |        5 |
-| Bajo      |           2 |          0 |        2 |
+| Alto      |           4 |          2 |        2 |
+| Medio     |           8 |          3 |        5 |
+| Bajo      |           3 |          0 |        3 |
 | Por ver   |           1 |          0 |        1 |
+| Falta     |           1 |          0 |        1 |
 
-(Los hallazgos 8, 9 y 10 están arreglados y en producción desde el lote 2, 17-11 07:55.)
+(Los hallazgos 8, 9 y 10 están arreglados y en producción desde el lote 2, 17-11 07:55. Los altos
+abiertos son el 13 y el 14, los dos de inventario y recetas, que producción todavía no usa.)
 
 ## Lista
 
@@ -38,7 +40,12 @@
 | 9   | medio   | Propina en la Caja y en el portal                                | La propina por porcentaje salía un centavo abajo en los medios centavos ($28,771.50 al 15 % daba $4,315.72 y el servidor $4,315.73)                                                                 | arreglado · en producción (lote 2, `829b13d`)        |
 | 10  | medio   | Personas y seguridad                                             | Cambiarle el PIN a alguien no cierra la sesión que tenga abierta: sigue dentro hasta que venza (12 h)                                                                                               | arreglado · en producción (lote 2, `829b13d`)        |
 | 11  | bajo    | Caja · cobro                                                     | El servidor acepta una propina al cobrar aunque en Configuración nadie pueda elegirla; la pantalla la esconde, el servidor no la exige                                                              | anotado: no se cambia antes de abrir (ver detalle)   |
-| 12  | bajo    | Caja · cobro                                                     | Cuando el total cambió desde la precuenta, el aviso dice «El total cambió…» pero no trae el total nuevo                                                                                             | abierto                                              |
+| 12  | bajo    | Caja · cobro                                                     | Cuando el total cambió desde la precuenta, el aviso dice «El total cambió…»: el servidor sí manda el total nuevo, falta ver si la Caja vuelve a leer la cuenta o se queda con el total viejo        | abierto: por ver en el navegador                     |
+| 13  | alto    | Recetas → Nueva receta · tableta 1024×768 con el dedo            | No se puede elegir el «Tipo de venta» («Variable por medida») al crear un platillo: el toque cae fuera de la pantalla. Con ratón sí se puede                                                        | abierto: causa sin confirmar                         |
+| 14  | alto    | Inventario, recetas y márgenes · todos                           | El costo por gramo o mililitro se guarda en centavos enteros: leche a 2.4 ¢/ml queda en 2 ¢ (−16.7 %) y maíz a 4.5 ¢/g en 5 ¢ (+11 %); con $11,570.50 comprados, «Valor de inventario» dice $11,552 | abierto: se arregla (agente D3)                      |
+| 15  | medio   | Inventario · aviso de mínimos                                    | La regla de «por debajo del mínimo» reventaba con una existencia en negativo, que DP-D116 hace legal                                                                                                | arreglado (lote 3, por desplegar)                    |
+| 16  | falta   | Recetas                                                          | No hay pantalla para darle receta a las OPCIONES de un platillo (el dominio y la base sí lo soportan: sustituir y escalar)                                                                          | abierto: por medir                                   |
+| 17  | bajo    | Configuración → Este aparato · tableta                           | El interruptor «Modo espera en este aparato» no trae nombre accesible                                                                                                                               | abierto                                              |
 
 ## Detalle
 
@@ -156,6 +163,46 @@ tiene más riesgo de romper un cobro legítimo que beneficio. Queda en la lista 
 
 `TOTAL_DESACTUALIZADO` sólo lleva la regla; el comentario de `venta/cotizar.ts` promete el total
 vigente. La cajera tiene que volver a abrir la cuenta para verlo. Por ver en la Caja con el arnés.
+
+### 13 · alto · En la tableta no se puede elegir el «Tipo de venta» de un platillo
+
+- **Cómo se encontró:** la Parte 5 por pantallas y con el dedo (agente D2), tableta 1024×768.
+- **Pasos:** Recetas → «Nueva receta» → tocar «Variable por medida» en «Tipo de venta». El toque
+  falla («element is outside of the viewport»). Con ratón de PC la misma creación sale en 6 s.
+- **Causa:** sin confirmar (¿el desplegable se abre fuera del área visible del diálogo?). La
+  captura que hay (`salida/dia-0/fallo-productos.png`, en el árbol del agente) no lo enseña.
+- **Por qué es alto:** en un restaurante que vende barbacoa por kilo, dar de alta un platillo por
+  peso desde una tableta es un flujo real; tiene salida (hacerlo en la PC).
+
+### 14 · alto · El costo por gramo o mililitro se guarda en centavos enteros
+
+- **Cómo se encontró:** al comparar «Valor de inventario» con el libro del día 0 (agente D2): siete
+  compras por $12,000.00 y, tras las mermas, $11,570.50 esperados contra $11,552.00 en pantalla.
+- **Causa:** `packages/app/src/compras/costeo.ts` (`costoPorUnidad`, `costoPromedioPonderado`)
+  devuelve centavos enteros por UNIDAD BASE, y en el restaurante la unidad base es el gramo, el
+  mililitro o la pieza. Leche a $480 los 20 L (2.4 ¢/ml) queda en 2 ¢; maíz a $540 los 12 kg
+  (4.5 ¢/g) queda en 5 ¢. Lo leen la valuación, el costo de las recetas, la merma y el kardex.
+- **Qué NO toca:** precios, cuentas, cobros, cortes y propinas. Producción tiene hoy 0 insumos.
+- **Arreglo en curso (agente D3):** guardar además el costo exacto (diezmilésimas de centavo por
+  unidad base), multiplicar con el exacto y redondear una sola vez; el redondeado se queda para
+  lo que sólo lo muestra. Migración aditiva. Es una regla de dinero: va con su decisión.
+
+### 15 · medio · La regla del mínimo reventaba con existencia en negativo
+
+`packages/domain/src/inventario/pedido.ts` (`alertasDeMinimo`) lanzaba `CANTIDAD_INVALIDA` con una
+existencia por debajo de cero, que DP-D116 permite. Arreglado por el agente D2 (DP-D161) junto con
+el aviso de insumo bajo; por desplegar en el lote 3.
+
+### 16 · falta · Receta para las opciones de un platillo
+
+El dominio y la base soportan que una opción sustituya o escale la receta (F-027), pero ninguna
+pantalla lo ofrece: una «orden grande» descuenta lo mismo que una chica. Por medir: si cabe en medio
+día se construye; si no, va a la lista de Miguel.
+
+### 17 · bajo · «Modo espera en este aparato» sin nombre accesible en la tableta
+
+Visto en Configuración → Este aparato (`salida/explorar-este-aparato.png`). Entra al barrido de
+accesibilidad de Configuración.
 
 ## Lo que la verificación completa cazó antes de unir (no llegó a producción)
 
