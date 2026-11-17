@@ -3040,3 +3040,79 @@ noche y una prueba del tablero falló: de día pasa.
 - **Descartado:** confiar en el huso del aparato (`format(new Date(), …)` de date-fns): una tableta
   con el huso mal puesto cambiaría de día antes o después que la caja.
 - **Sin migración.**
+
+## DP-D156 · DP-22 · «Pasar la mesa a otro mesero»: una mesa, y la asignación viaja con ella · 17-11-2026
+
+`restaurante.relevar_responsable` (F-325) existía sin pantalla y relevaba TODAS las cuentas vivas del
+que se va. Lo que se decidió al darle su pantalla:
+
+- **Una mesa, no un turno.** El comando acepta un `ordenId` opcional: con él sólo pasa esa cuenta (y
+  su mesa); sin él sigue relevando todas las del que se va (el fin de turno, que sigue sin pantalla).
+  La cuenta tiene que ser de quien se va; si otra pantalla ya la pasó (o se cerró) se rechaza con
+  `ORDEN_NO_ENCONTRADA` y no escribe nada. La lectura de las cuentas toma su candado (`for update`,
+  por id): dos pantallas que pasan la misma mesa a la vez se esperan.
+- **La asignación de sala viaja con la mesa.** Con la asignación de mesas activa el plano y el panel
+  del mesero se filtran por `mesas.empleado_asignado_id`, no por quién atiende; relevar sólo cambiaba
+  lo segundo y la mesa seguía en el plano del que se fue y no aparecía en el de quien entró. Ahora la
+  mesa asignada al que se va queda asignada al que entra; una asignada a un tercero o a nadie no se
+  toca. También en el relevo de turno.
+- **Quién la ve: exactamente quien el comando deja** (gerente, administrador, dueño y cajero; en la
+  sesión, `administrador` y `caja`). No se inventó ningún permiso: un contrato compara los puestos
+  del botón con los del comando. El mesero no (relevar es de quien manda el turno).
+- **Dónde:** «Pasar la mesa a otro mesero» en las acciones de la mesa (`AccionesDeLaMesa`, de «Mesa
+  activa»), sólo si la mesa tiene a quien la atienda. Elige entre los meseros ACTIVOS (menos el
+  actual), confirma con la frase «¿Pasar la mesa 4 de Ana a Beto?», refresca el plano y la mesa y avisa.
+- **Auditoría:** el comando ya audita quién sale, quién entra, cuántas cuentas y el consumo
+  relevado; ahora también el `ordenId`. El corte queda en `relevos_atencion` (el tramo de quien se va
+  se cierra con el consumo de ese momento; el de quien entra se abre).
+- **Pruebas:** `relevo.integracion.test.ts` (13, contra Postgres), `pasar-la-mesa.test.ts` y
+  `pasar-la-mesa.contrato.test.ts`. Mutantes muertos: sin el filtro de la cuenta, sin la asignación,
+  con el mesero entre los roles, sin invalidar el plano, sin la guarda del botón.
+- **Sin migración.**
+
+## DP-D157 · DP-22 · El teléfono opcional del pedido para llevar · 17-11-2026
+
+La cajera puede teclear, junto al nombre, el teléfono del cliente del pedido para llevar, para
+llamarle cuando está listo.
+
+- **Dónde se guarda:** una columna nueva, `ordenes.telefono_pedido` (migración 194, aditiva, con su
+  `check` y su ficha `docs/para-el-maestro/40-telefono-del-pedido-para-llevar.md`), junto a
+  `nombre_pedido`. Descartado: `cliente_nombre`/el padrón de clientes (el mismo motivo de la 081:
+  nombres y números sueltos ensuciarían la base de la lealtad) y las notas de la orden (no se pueden
+  validar ni mostrar aparte).
+- **Qué se acepta** (`normalizarTelefonoDelPedido`, `packages/domain/src/venta`): sólo dígitos,
+  espacios, guiones y un «+» al inicio; de 7 a 15 dígitos y hasta 20 caracteres. Se limpia (espacios
+  de más) y vacío es «sin teléfono». El SERVIDOR valida (`armar_para_llevar`; rechazo
+  `ENTRADA_INVALIDA` con el motivo), la pantalla usa la misma regla para avisar antes de enviar y el
+  `check` de la base es la última red.
+- **Cada armado sella nombre y teléfono** (con o sin él) y descartar el pedido los borra: rearmar el
+  borrador sin teléfono no arrastra el del pedido anterior. En el aparato viaja con el borrador (como
+  el nombre) y se va con él al vaciar o al cobrar.
+- **Dónde se ve:** sólo en la lista de «Para llevar» de la Caja (`para_llevar_del_dia`, tarjetas de
+  lo listo y de lo que sigue en cocina). **NO sale en el ticket del cliente:** el ticket (`venta.ticket`)
+  trae el renglón «PARA LLEVAR · N · nombre» —el nombre sí sale—, y se decidió que el teléfono no: es un
+  dato para la caja, el papel lo puede dejar cualquiera en el mostrador. Tampoco en cocina, ni en el
+  puente de datos (`Venta`), ni en la auditoría (ésta sólo dice `conTelefono`).
+- **Pruebas:** `telefono-para-llevar.integracion.test.ts` (14, contra Postgres),
+  `telefono-del-pedido.test.ts` (dominio, 23) y `para-llevar/telefono-del-pedido.test.ts` (pantalla).
+
+## DP-D158 · DP-22 · La comanda se ajusta al quitar un platillo; el Dashboard y la prueba del laboratorio · 17-11-2026
+
+- **Hallazgo 7.** Quitar un platillo (`restaurante.anular_linea`) sólo cancelaba la comanda sin platos
+  vivos: con dos platos —uno ya «listo» y otro por preparar— y el segundo quitado, la comanda seguía
+  en «nuevo», la mesa no pasaba a «Esperando entrega» y el mesero no recibía el aviso. Ahora, tras
+  anular, cada comanda viva de esa línea se ajusta al mínimo de sus platos y, si cambió, sigue el MISMO
+  cierre que cuando la estación mueve un plato (`cerrarElMovimiento`: lo ya cobrado, las líneas y la
+  mesa). Si el estado no cambia (el vivo sigue pendiente, o sólo se redujo una cantidad) no escribe
+  nada. No toma candados nuevos: va con el orden de `candados-de-cocina.ts`. Prueba:
+  `anular-platillo-comanda-lista.integracion.test.ts`; `candados-de-cocina.integracion.test.ts` sigue
+  en verde con 0 reintentos.
+- **Propinas del Dashboard.** La tarjeta suma en el servidor (`propinas.del_rango`: hoy, los últimos
+  siete días y 364 días) y no en el navegador sobre las últimas 2 000 ventas. **Cambia lo que dicen
+  «Pendientes» y «Liquidadas»:** antes eran «de las últimas 2 000 ventas», ahora son las del último
+  año (364 días, que cabe en el tope del servidor aun con un cambio de horario). Si el servidor no
+  contesta la tarjeta lo dice en lugar de esconderse.
+- **Prueba de impresión del laboratorio** con plazo: el mismo `PLAZO_PARA_ENVIAR_MS` (20 s de silencio,
+  cada aviso de avance lo renueva) que los trabajos de la Caja; vencido, dice «La impresora no
+  contestó en 20 s…». Si la primera prueba llega tarde saldrá dos veces (cada prueba lleva su id).
+- **Migración:** la de DP-D157 (la 194); esto no añade ninguna.

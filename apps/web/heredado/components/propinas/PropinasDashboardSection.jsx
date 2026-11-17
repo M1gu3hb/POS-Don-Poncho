@@ -6,25 +6,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, Wallet, Award, ChevronRight, History } from 'lucide-react';
 import { formatCurrency } from '@/utils/financialUtils';
-import {
-  agruparPropinasPorMesero,
-  filtrarVentasConPropina,
-  filtrarVentasEnRango,
-  sumarPropinas,
-} from '@/utils/tipsUtils';
-import { startOfDay, endOfDay, subDays } from 'date-fns';
+import { Aviso } from '@morphiqpos/ui/sistema';
 import LiquidarPropinasDialog from '@/components/propinas/LiquidarPropinasDialog';
 import { Link } from '@/enrutado';
 import { useIsDark } from '@/lib/ThemeContext';
 import { useConfig } from '@/lib/ConfigContext';
 import { claves } from '~/cliente/claves-de-consulta';
+import { invocarComando } from '~/cliente/api';
+import {
+  peticionesDelDashboard,
+  resumenDelDashboard,
+} from '~/registros/propinas-del-dashboard';
 
 /**
  * Sección de propinas para el Dashboard.
+ *
+ * Las cifras las suma el SERVIDOR (`propinas.del_rango`, el mismo comando que Registros): antes se
+ * leían las últimas 2 000 ventas y se sumaba aquí, y pasado el tope las propinas viejas desaparecían
+ * sin aviso. Lo que se pide y cómo se arma cada cifra vive en `~/registros/propinas-del-dashboard`.
  * Dark-aware: en modo oscuro adopta paleta rosa profunda en lugar de bg claro.
  * Respeta colorear_importes_monetarios para importes en MetricMini.
- *
- * SIN cambios de lógica, solo estética.
  */
 export default function PropinasDashboardSection() {
   const [showLiquidar, setShowLiquidar] = useState(false);
@@ -32,10 +33,20 @@ export default function PropinasDashboardSection() {
   const { config } = useConfig();
   const colorize = config?.colorear_importes_monetarios !== false;
 
-  const { data: ventas = [] } = useQuery({
-    queryKey: ['propinas_dashboard_ventas'],
-    queryFn: () => api.entidades.Venta.filter({ estado: 'pagada' }, '-fecha_cierre', 2000),
-    initialData: [],
+  // La clave conserva su nombre: Caja y la liquidación la invalidan al cobrar y al liquidar.
+  const peticiones = peticionesDelDashboard();
+  const { data: respuestas, isError } = useQuery({
+    queryKey: ['propinas_dashboard_ventas', peticiones],
+    queryFn: async ({ signal }) => {
+      const [hoy, semana, anio] = await Promise.all([
+        invocarComando('/api/propinas/del-rango', peticiones.hoy, { signal }),
+        invocarComando('/api/propinas/del-rango', peticiones.semana, { signal }),
+        invocarComando('/api/propinas/del-rango', peticiones.anio, { signal }),
+      ]);
+      return { hoy, semana, anio };
+    },
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: meseros = [] } = useQuery({
@@ -44,43 +55,20 @@ export default function PropinasDashboardSection() {
     initialData: [],
   });
 
-  const stats = useMemo(() => {
-    const safe = Array.isArray(ventas) ? ventas : [];
-    const conPropina = filtrarVentasConPropina(safe);
+  const stats = useMemo(
+    () => (respuestas ? resumenDelDashboard(respuestas) : null),
+    [respuestas],
+  );
 
-    const hoyVentas = filtrarVentasEnRango(
-      conPropina,
-      startOfDay(new Date()),
-      endOfDay(new Date()),
+  if (isError && !stats) {
+    return (
+      <Aviso tono="atencion" titulo="No se pudieron leer las propinas">
+        Abre el Dashboard otra vez para reintentar. Las propinas siguen en Registros.
+      </Aviso>
     );
-    const semVentas = filtrarVentasEnRango(
-      conPropina,
-      startOfDay(subDays(new Date(), 6)),
-      endOfDay(new Date()),
-    );
+  }
+  if (!stats?.hayPropinas) return null;
 
-    const propinasHoy = sumarPropinas(hoyVentas);
-    const propinasSemana = sumarPropinas(semVentas);
-
-    const pendientes = conPropina.filter((v) => v?.propina_liquidada !== true);
-    const liquidadas = conPropina.filter((v) => v?.propina_liquidada === true);
-    const totalPendientes = sumarPropinas(pendientes);
-    const totalLiquidadas = sumarPropinas(liquidadas);
-
-    const grupos = agruparPropinasPorMesero(semVentas);
-    const topMesero = grupos[0] || null;
-
-    return {
-      hasTips: conPropina.length > 0,
-      propinasHoy,
-      propinasSemana,
-      totalPendientes,
-      totalLiquidadas,
-      topMesero,
-    };
-  }, [ventas]);
-
-  if (!stats.hasTips) return null;
 
   // Paleta principal de la card. En light: rosa pálido elegante.
   // En dark: rosa profundo legible.

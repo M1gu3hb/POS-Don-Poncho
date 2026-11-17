@@ -44,6 +44,9 @@ export interface MesaAbierta {
   readonly personas_actuales: number | null;
   readonly notas_alergias: string | null;
   readonly venta_activa_id: string | null;
+  /** DP-D156 · Quien la atiende hoy (`Mesa.atendido_por_id`) y su nombre; ausentes si nadie. */
+  readonly atendido_por_id?: string | null;
+  readonly atendido_por_nombre?: string | null;
 }
 export interface MesaActivaProps {
   /** Cuando llega, la pantalla no consulta: es lo que usan las pruebas. */

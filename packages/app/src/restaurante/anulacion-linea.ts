@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
 import { cotizar } from '../venta/cotizar.ts';
+import { ajustarComandasTrasAnular } from './ajustar-comandas-tras-anular.ts';
 import { tomarCandadosDeCocina } from './candados-de-cocina.ts';
 import { exigirPermisoParaCancelar } from './cancelar-con-permiso.ts';
 import { cancelarComandasSinPlatillos, moverLaMesaTrasCancelar } from './comandas-al-cobrar.ts';
@@ -217,6 +218,16 @@ export const anularLineaComando = definirComando<
         }),
       );
     }
+
+    // Hallazgo 7 · Las comandas que siguen vivas se ajustan a lo que les queda: si el plato que
+    // faltaba era el que se quitó y el otro ya estaba listo, la comanda queda lista y la mesa
+    // espera la entrega, igual que si la cocina hubiera marcado el último plato.
+    await ajustarComandasTrasAnular(ctx.tx, (nombre, fn) => ctx.paso(nombre, fn), {
+      organizacionId,
+      lineaId: entrada.lineaId,
+      empleoId,
+      ahora: ctx.ahora,
+    });
 
     // Los totales se recalculan desde las líneas VIVAS, con la misma `cotizar`
     // del cobro. Restarle el importe anulado al total guardado sería un segundo

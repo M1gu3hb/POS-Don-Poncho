@@ -36,6 +36,8 @@ export interface Borrador {
   readonly ordenId: string;
   readonly carrito: readonly LineaDelBorrador[];
   readonly nota: string;
+  /** DP-D157 · El teléfono del pedido para llevar, tecleado junto al nombre. Opcional. */
+  readonly telefono?: string;
 }
 
 export const VIGENCIA_DEL_BORRADOR_MS = 3 * 60 * 60 * 1000;
@@ -119,7 +121,9 @@ export function leerBorrador(
   const carrito = Array.isArray(b['carrito']) ? b['carrito'].filter(esLinea) : [];
   const nota = typeof b['nota'] === 'string' ? b['nota'] : '';
   if (carrito.length === 0 && nota.trim() === '') return null;
-  return { ordenId, carrito, nota };
+  // El campo sólo existe si había uno: un borrador de antes (o el del mesero) se lee como siempre.
+  const telefono = typeof b['telefono'] === 'string' ? b['telefono'] : '';
+  return { ordenId, carrito, nota, ...(telefono === '' ? {} : { telefono }) };
 }
 
 export function borrarBorrador(almacen: Almacen, clave: string): void {

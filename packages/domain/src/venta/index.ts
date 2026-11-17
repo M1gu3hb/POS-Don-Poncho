@@ -20,6 +20,13 @@ export {
 } from './division.ts';
 export { esRfcValido, normalizarRfc } from './rfc.ts';
 export {
+  DIGITOS_MAXIMOS_DEL_TELEFONO,
+  DIGITOS_MINIMOS_DEL_TELEFONO,
+  LARGO_MAXIMO_DEL_TELEFONO,
+  normalizarTelefonoDelPedido,
+  type TelefonoDelPedido,
+} from './telefono-del-pedido.ts';
+export {
   MOTIVOS_ANULACION,
   elConsumoSePerdio,
   etiquetaDelMotivoDeAnulacion,

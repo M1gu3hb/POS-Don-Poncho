@@ -956,10 +956,15 @@
       "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["restaurante"],
       "idRequerido": true,
-      "cuerpo": { "empleadoSaleId": "⟨empleos⟩", "empleadoEntraId": "⟨empleos⟩" },
+      "cuerpo": {
+        "empleadoSaleId": "⟨empleos⟩",
+        "empleadoEntraId": "⟨empleos⟩",
+        "ordenId": "⟨ordenes⟩"
+      },
       "ids": [
         { "camino": "empleadoSaleId", "tabla": "empleos" },
-        { "camino": "empleadoEntraId", "tabla": "empleos" }
+        { "camino": "empleadoEntraId", "tabla": "empleos" },
+        { "camino": "ordenId", "tabla": "ordenes" }
       ]
     },
     {

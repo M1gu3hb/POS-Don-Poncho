@@ -3,7 +3,7 @@ import 'server-only';
 import { ErrorDominio, PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 import { repoCaja, repoOrdenes } from '@morphiqpos/data';
-import type { TotalesOrden } from '@morphiqpos/domain/venta';
+import { normalizarTelefonoDelPedido, type TotalesOrden } from '@morphiqpos/domain/venta';
 import { z } from 'zod';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
@@ -38,6 +38,19 @@ const ROLES_DE_CAJA = ['cajero', 'gerente', 'administrador', 'dueno'] as const;
 export const entradaArmarParaLlevar = z.object({
   /** El nombre que se grita al entregar. Opcional; vacío es «sin nombre». */
   nombrePedido: z.string().trim().max(60).optional(),
+  /**
+   * DP-D157 · El teléfono OPCIONAL, para llamar al cliente cuando el pedido está listo. Sólo
+   * dígitos, espacios, guiones y un + al inicio; 7 a 15 dígitos. Vacío es «sin teléfono». El tope
+   * de 40 sólo evita procesar un texto enorme: la regla es la del dominio, que también limpia.
+   */
+  telefonoPedido: z
+    .string()
+    .max(40)
+    .optional()
+    .superRefine((crudo, ctx) => {
+      const r = normalizarTelefonoDelPedido(crudo);
+      if (!r.ok) ctx.addIssue({ code: 'custom', message: r.motivo });
+    }),
   lineas: entradaEnviarPedido.shape.lineas,
 });
 
@@ -87,10 +100,17 @@ export const armarParaLlevar = definirComando<
       entrada.nombrePedido === undefined || entrada.nombrePedido === ''
         ? null
         : entrada.nombrePedido;
+    // DP-D157 · Ya validado por el esquema; aquí sólo se limpia. Cada armado SELLA ambos datos
+    // (con o sin teléfono): rearmar el borrador sin él borra el del pedido anterior.
+    const telefono = normalizarTelefonoDelPedido(entrada.telefonoPedido);
     await ctx.paso('sellar_canal', () =>
       ctx.tx
         .updateTable('ordenes')
-        .set({ canal: 'llevar', nombre_pedido: nombre })
+        .set({
+          canal: 'llevar',
+          nombre_pedido: nombre,
+          telefono_pedido: telefono.ok ? telefono.telefono : null,
+        })
         .where('organizacion_id', '=', organizacionId)
         .where('id', '=', ordenId)
         .where('estado', '=', 'borrador')
@@ -130,6 +150,7 @@ export const armarParaLlevar = definirComando<
       payload: {
         lineas: preparadas.length,
         conNombre: nombre !== null,
+        conTelefono: telefono.ok && telefono.telefono !== null,
         totalCentavos: totales.totalCentavos.toString(),
       },
     });
@@ -191,6 +212,7 @@ export const descartarParaLlevar = definirComando<
         .set({
           canal: 'aqui',
           nombre_pedido: null,
+          telefono_pedido: null,
           subtotal_centavos: 0n,
           descuento_centavos: 0n,
           impuestos_centavos: 0n,
