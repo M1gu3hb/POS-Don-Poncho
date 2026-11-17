@@ -4,6 +4,7 @@ import { ErrorDominio, PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 
 import { definirComando } from '../definicion.ts';
+import { cuentaYSusAbsorbidas, tomarCandadosDeCocina } from './candados-de-cocina.ts';
 import { exigirPermisoParaCancelar, exigirQueSeCancele } from './cancelar-con-permiso.ts';
 import { mermaDeLaCuentaCancelada } from './merma-por-cancelacion.ts';
 import { mesaOperable, ordenParaCancelar } from './datos.ts';
@@ -108,6 +109,28 @@ export const cancelarOrden = definirComando<
         union: null,
       };
     }
+
+    // H2 · Los candados de la cocina, en el orden de siempre (`candados-de-cocina.ts`): la cuenta (y
+    // las que absorbió) → sus comandas → platos → líneas. Una parte de una cuenta dividida toma la
+    // MADRE, de la que cuelgan las comandas, y las comandas que llevan platos de la parte.
+    await ctx.paso('candados', async () =>
+      tomarCandadosDeCocina(
+        ctx.tx,
+        orden.madreId === null
+          ? {
+              organizacionId,
+              ordenIds: await cuentaYSusAbsorbidas(ctx.tx, organizacionId, orden.id),
+              comandas: { de: 'las-cuentas' },
+              lineasDeLasCuentas: [orden.id],
+            }
+          : {
+              organizacionId,
+              ordenIds: [orden.madreId],
+              comandas: { de: 'las-lineas-de-la-cuenta', ordenId: orden.id },
+              lineasDeLasCuentas: [orden.id],
+            },
+      ),
+    );
 
     // DP-13.2 · Ni pagada, ni con pagos, ni dividida, ni reembolsada, ni absorbida
     // (`cancelar-con-permiso.ts`); y el mesero sólo en sus mesas, con PIN si ya se pidió.
@@ -267,18 +290,7 @@ async function cancelarComandasVivas(
   // Las cuentas que esta absorbió al unir mesas. Sus LÍNEAS pasaron a esta cuenta, pero cada
   // comanda sigue colgada de la cuenta absorbida: cancelar sólo las de aquí dejaba el plato de la
   // mesa unida vivo en la cocina, para una mesa ya libre (D-7, cierre del 21-10).
-  const absorbidas = await tx
-    .selectFrom('union_mesa_miembros')
-    .innerJoin('uniones_mesa', 'uniones_mesa.id', 'union_mesa_miembros.union_id')
-    .select('union_mesa_miembros.orden_absorbida_id as ordenId')
-    .where('uniones_mesa.organizacion_id', '=', organizacionId)
-    .where('uniones_mesa.orden_id', '=', ordenId)
-    .where('union_mesa_miembros.orden_absorbida_id', 'is not', null)
-    .execute();
-  const ordenes = [
-    ordenId,
-    ...absorbidas.flatMap((fila) => (fila.ordenId === null ? [] : [fila.ordenId])),
-  ];
+  const ordenes = await cuentaYSusAbsorbidas(tx, organizacionId, ordenId);
 
   const filas = await tx
     .updateTable('comandas')

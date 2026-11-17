@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Link } from '@/enrutado';
 import { puedeAjustarStock } from '~/inventario/ajuste-de-stock';
+import { avisoDeNegativosEnElValor, cuantosEnNegativo } from '~/restaurante/valor-de-inventario';
 import { Search, Package, Trash2, PackagePlus, ShoppingBag, Sliders, Beaker } from 'lucide-react';
 import {
   AlertDialog,
@@ -177,6 +178,9 @@ export default function Inventario() {
   const totalValue = enriched.reduce((s, i) => s + i.valorInventario, 0);
   // Un insumo con existencias y SIN costo no vale cero: vale algo que no se sabe. El total
   // no lo incluye, y la tarjeta lo dice en lugar de presentarse como el valor completo.
+  // Una existencia en negativo no resta del valor (vale cero, como en la valuación del servidor): se
+  // dice cuántos son para que alguien los cuente (A24, DP-D116).
+  const enNegativo = cuantosEnNegativo(enriched);
   const sinCostoConExistencias = enriched.filter(
     (i) => !(Number(i.costo_por_unidad_base) > 0) && Number(i.stock_actual) > 0,
   ).length;
@@ -278,6 +282,11 @@ export default function Inventario() {
                 <p className="mt-0.5 text-[11px] leading-snug text-advertencia">
                   No incluye {sinCostoConExistencias}{' '}
                   {sinCostoConExistencias === 1 ? 'ingrediente' : 'ingredientes'} sin costo
+                </p>
+              )}
+              {enNegativo > 0 && (
+                <p className="mt-0.5 text-[11px] leading-snug text-advertencia">
+                  {avisoDeNegativosEnElValor(enNegativo)}
                 </p>
               )}
             </>

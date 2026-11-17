@@ -1,3 +1,4 @@
+import { LO_PREPARADO_NO_REGRESA } from '../venta/lo-preparado';
 import { cantidadParaMostrar, esPorPeso, type LineaConPeso } from './peso';
 
 /**
@@ -67,5 +68,5 @@ export function avisoDePerdidaAlCancelar(
     ),
   ];
   if (preparados.length === 0) return null;
-  return `La cocina ya preparó ${preparados.join(', ')}. Si cancelas, queda como pérdida en el corte, con tu nombre y el motivo.`;
+  return `La cocina ya preparó ${preparados.join(', ')}. Si cancelas, queda como pérdida en el corte, con tu nombre y el motivo. ${LO_PREPARADO_NO_REGRESA}`;
 }

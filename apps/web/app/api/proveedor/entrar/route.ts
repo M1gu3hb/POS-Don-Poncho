@@ -1,7 +1,8 @@
 import { validarEntorno } from '@morphiqpos/contracts';
-import { cookiesSeguras, devolver, permitir } from '@morphiqpos/app/http';
+import { cookiesSeguras, devolver, esElPrimerRechazo, permitir } from '@morphiqpos/app/http';
 import {
   comprobarClaveDelProveedor,
+  dejarRastroDelBloqueo,
   dejarRastroDelProveedor,
   firmarPermisoDelProveedor,
   VARIABLE_DEL_HASH_DEL_PROVEEDOR,
@@ -19,7 +20,8 @@ import { cookieDelProveedor } from '~/servidor/proveedor';
  * Sólo el proveedor (Morphiq) entra, con su contraseña. Se compara AQUÍ contra el hash del
  * despliegue; la contraseña no existe en el código ni viaja de vuelta. Cinco fallos desde el
  * mismo origen y hay que esperar 15 minutos (`LIMITES.proveedor`); la buena devuelve su intento.
- * Cada entrada y cada fallo quedan en la auditoría. Si acierta, el aparato recibe un permiso
+ * Cada entrada y cada fallo quedan en la auditoría, y el primer intento que el tope rechaza (429)
+ * también (`proveedor.bloquear`). Si acierta, el aparato recibe un permiso
  * firmado de 30 minutos en una cookie `httpOnly`.
  *
  * Nunca un 401: para el cliente es «tu sesión venció» y cerraría la sesión de quien está en caja.
@@ -61,13 +63,6 @@ export async function POST(peticion: Request): Promise<Response> {
     const validada = Entrada.safeParse(cuerpo);
     if (!validada.success) return negar(400, 'ENTRADA_INVALIDA', 'Falta la contraseña.');
 
-    const permiso = await permitir('proveedor', peticion.headers, entorno.PIN_PEPPER);
-    if (!permiso.ok) {
-      return negar(429, 'LIMITE_DE_TASA', 'Demasiados intentos. Espera 15 minutos.', {
-        esperaSegundos: permiso.esperaSegundos,
-      });
-    }
-
     const quien = {
       organizacionId: sesion.organizacionId,
       identidadId: sesion.identidadId,
@@ -79,6 +74,18 @@ export async function POST(peticion: Request): Promise<Response> {
           peticion.headers.get('x-morphiqpos-correlacion'),
       ),
     };
+
+    const permiso = await permitir('proveedor', peticion.headers, entorno.PIN_PEPPER);
+    if (!permiso.ok) {
+      // X4 · El rechazo del tope también queda en la auditoría, una vez por IP y ventana: así se
+      // sabe quién estaba golpeando la puerta, sin dejar que el 429 llene la tabla.
+      if (esElPrimerRechazo('proveedor', permiso)) {
+        await dejarRastroDelBloqueo(quien, permiso.esperaSegundos);
+      }
+      return negar(429, 'LIMITE_DE_TASA', 'Demasiados intentos. Espera 15 minutos.', {
+        esperaSegundos: permiso.esperaSegundos,
+      });
+    }
     const comprobada = await comprobarClaveDelProveedor(
       validada.data.clave,
       process.env[VARIABLE_DEL_HASH_DEL_PROVEEDOR],

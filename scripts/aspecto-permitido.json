@@ -2485,6 +2485,16 @@
       "archivo": "apps/web/heredado/pages/Mesero.jsx",
       "porque": "DP-21 (arreglo del Bloque 9): en el teléfono y la tableta el botón «Menú» flota arriba a la izquierda, por encima del panel de la mesa, y desde que dice «Menú» con letra tapaba el número de la mesa. El título del panel se recorre donde existe ese botón (`max-lg:`); en la PC no cambia nada.",
       "testigos": ["+ clase:max-lg:pl-28"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Inventario.jsx",
+      "porque": "DP-22 (A24, DP-D146): la tarjeta «Valor de inventario» dice cuántos ingredientes están en negativo (valen cero y no restan del valor), con el mismo renglón de aviso que ya usaba para los ingredientes sin costo.",
+      "testigos": [
+        "+ clase:mt-0.5",
+        "+ clase:text-[11px]",
+        "+ clase:leading-snug",
+        "+ clase:text-advertencia"
+      ]
     }
   ]
 }
