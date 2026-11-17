@@ -12,6 +12,11 @@ import type { LineaDeCompra } from './esquemas.ts';
 import { exigirUnidadesBaseDelGiro } from './insumos.ts';
 import { escribirLinea, resolverProveedor, type CabeceraDeCompra } from './linea.ts';
 import { lineasDePlantilla, marcarPlantillaUsada } from './plantillas.ts';
+import {
+  MENSAJE_COMPRA_EN_EFECTIVO_SIN_CAJA,
+  ROLES_QUE_REGISTRAN_COMPRAS,
+  puedePagarDelCajon,
+} from './quien-paga-del-cajon.ts';
 import { cajaDeLaCompra } from './sesion-de-caja.ts';
 
 /**
@@ -29,7 +34,7 @@ import { cajaDeLaCompra } from './sesion-de-caja.ts';
  * El total lo suma el servidor. El endpoint no acepta importes de cabecera.
  */
 
-const ROLES = ['dueno', 'administrador', 'gerente'] as const;
+const ROLES = ROLES_QUE_REGISTRAN_COMPRAS;
 
 export interface ResultadoCompra {
   readonly compraId: string;
@@ -106,6 +111,11 @@ async function escribirCompra(
       'COMPRA_INVALIDA',
       'Registra la compra desde una sucursal: la mercancía entra a un almacén concreto.',
     );
+  }
+
+  // A5 · El almacén registra la compra; pagarla del cajón es de quien lleva la caja.
+  if (cabecera.metodoPago === 'efectivo' && !puedePagarDelCajon(ctx.ambito.rol)) {
+    throw new ErrorDominio('COMPRA_INVALIDA', MENSAJE_COMPRA_EN_EFECTIVO_SIN_CAJA);
   }
 
   // Antes de escribir NADA: si la tercera línea crea un insumo en `kg` y la

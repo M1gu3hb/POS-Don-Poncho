@@ -90,9 +90,9 @@ describe('E4-5 · los comandos se declaran igual siempre', () => {
     }
   });
 
-  it('autoriza por rol, y ni caja ni mesero ni cocina registran compras', () => {
+  it('autoriza por rol: la gerencia y el almacén (A5); ni caja ni mesero ni cocina registran compras', () => {
     for (const comando of [registrarCompra, usarPlantillaCompra, guardarPlantillaCompra]) {
-      expect(comando.roles).toEqual(['dueno', 'administrador', 'gerente']);
+      expect(comando.roles).toEqual(['dueno', 'administrador', 'gerente', 'almacen']);
       expect(comando.roles).not.toContain('cajero');
       expect(comando.roles).not.toContain('mesero');
       expect(comando.roles).not.toContain('cocina');

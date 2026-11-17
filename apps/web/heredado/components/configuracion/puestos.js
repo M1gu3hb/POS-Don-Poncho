@@ -45,6 +45,38 @@ export function puedeVerLaSerieDelTablero(puesto) {
   return PUESTOS_QUE_VEN_LA_SERIE_DEL_TABLERO.includes(puesto);
 }
 
+/**
+ * A5 · Quien registra compras (`compras.registrar`, `compras.usar_plantilla` y `compras.guardar_plantilla`): la
+ * gerencia y el almacén, que es quien recibe la mercancía. Espejo del servidor; la matriz de permisos lo ata en
+ * `compras-del-almacen.contrato.test.ts`.
+ */
+export const PUESTOS_QUE_REGISTRAN_COMPRAS = ['dueno', 'administrador', 'gerente', 'almacen'];
+
+export function puedeRegistrarCompras(puesto) {
+  return PUESTOS_QUE_REGISTRAN_COMPRAS.includes(puesto);
+}
+
+/**
+ * A5 · Una compra en efectivo SALE DEL CAJÓN (DP-D115): sólo quien lleva la caja la paga así. El almacén la
+ * registra por transferencia o tarjeta. Espejo de `quien-paga-del-cajon.ts`.
+ */
+export const PUESTOS_QUE_PAGAN_COMPRAS_DEL_CAJON = ['dueno', 'administrador', 'gerente'];
+
+export function puedePagarComprasDelCajon(puesto) {
+  return PUESTOS_QUE_PAGAN_COMPRAS_DEL_CAJON.includes(puesto);
+}
+
+/**
+ * A5 · La forma de pago con la que arranca (y la que vale) una compra: la que se eligió, salvo que sea efectivo y
+ * el puesto no pague del cajón; sin elección, efectivo para quien lleva la caja y transferencia para el almacén.
+ * Mientras el puesto no llega (`null`) nadie arranca en efectivo: se corrige solo al llegar.
+ */
+export function metodoDeCompraPermitido(elegido, puesto) {
+  const paga = puedePagarComprasDelCajon(puesto);
+  if (elegido && (elegido !== 'efectivo' || paga)) return elegido;
+  return paga ? 'efectivo' : 'transferencia';
+}
+
 /** Quienes reparten las mesas entre los meseros. */
 export const PUESTOS_QUE_REPARTEN = ['dueno', 'administrador', 'gerente'];
 

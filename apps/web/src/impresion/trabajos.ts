@@ -80,6 +80,22 @@ export interface MesaDeTrabajos {
   readonly soltar: (clave: string) => void;
 }
 
+/**
+ * X5 · Cuánto espera la página una respuesta de la app antes de dar el trabajo por perdido.
+ *
+ * Es SILENCIO, no duración total: cada aviso de avance de la app lo renueva. Pasado el plazo la
+ * barra pasa a error con sus tres salidas, y el reintento lleva el mismo id (la app no imprime
+ * doble lo que sí entregó). Lo que la app conteste después de vencido ya no cuenta.
+ */
+export const PLAZO_PARA_ENVIAR_MS = 20_000;
+
+const FALLO_SIN_RESPUESTA: Fallo = {
+  codigo: 'SIN_RESPUESTA',
+  titulo: 'La impresora no contestó',
+  queHacer:
+    'Reintenta: no saldrá doble. Si sigue igual, imprime con el navegador o ve a Impresión.',
+};
+
 const FALLO_INESPERADO: Fallo = {
   codigo: 'DESCONOCIDO',
   titulo: 'No se pudo imprimir',
@@ -98,7 +114,7 @@ export function mensajeDe(error: unknown): string | null {
   return typeof mensaje === 'string' && mensaje !== '' ? mensaje : null;
 }
 
-export function crearMesaDeTrabajos(): MesaDeTrabajos {
+export function crearMesaDeTrabajos(plazoMs: number = PLAZO_PARA_ENVIAR_MS): MesaDeTrabajos {
   const estados = new Map<string, EstadoDelTrabajo>();
   const lanzados = new Map<
     string,
@@ -139,20 +155,43 @@ export function crearMesaDeTrabajos(): MesaDeTrabajos {
       const id =
         previo.fase === 'error' && previo.idPendiente !== null ? previo.idPendiente : nuevoId();
       poner(clave, { fase: 'enviando', avance: null, fallo: null, idPendiente: null });
+      // El plazo corre desde que se lanza y se renueva con cada aviso de avance de la app.
+      let cerrado = false;
+      let reloj: ReturnType<typeof setTimeout> | undefined;
+      let vencer: (fin: FinDelTrabajo) => void = () => undefined;
+      const sinRespuesta = new Promise<FinDelTrabajo>((resolver) => {
+        vencer = resolver;
+      });
+      const armarElPlazo = (): void => {
+        clearTimeout(reloj);
+        reloj = setTimeout(() => {
+          cerrado = true;
+          vencer({ ok: false, fallo: FALLO_SIN_RESPUESTA });
+        }, plazoMs);
+      };
+      armarElPlazo();
       let fin: FinDelTrabajo;
       try {
-        fin = await tarea({
-          id,
-          avanzar(avance) {
-            poner(clave, { fase: 'imprimiendo', avance, fallo: null, idPendiente: null });
-          },
-        });
+        fin = await Promise.race([
+          tarea({
+            id,
+            avanzar(avance) {
+              if (cerrado) return;
+              armarElPlazo();
+              poner(clave, { fase: 'imprimiendo', avance, fallo: null, idPendiente: null });
+            },
+          }),
+          sinRespuesta,
+        ]);
       } catch (error: unknown) {
         const detalle = mensajeDe(error);
         fin = {
           ok: false,
           fallo: detalle === null ? FALLO_INESPERADO : { ...FALLO_INESPERADO, titulo: detalle },
         };
+      } finally {
+        cerrado = true;
+        clearTimeout(reloj);
       }
       if (!fin.ok) poner(clave, { fase: 'error', avance: null, fallo: fin.fallo, idPendiente: id });
       else if (fin.estado === 'navegador') poner(clave, LIBRE);

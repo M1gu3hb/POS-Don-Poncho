@@ -2851,3 +2851,39 @@ de las 11:18 a las ~14:30 del 16-11 y se quitó.
   recorre donde existe ese botón (`max-lg:pl-28`).
 - **Pendiente:** dar los 44 px pantalla por pantalla, y medir con el dedo Y con el catálogo lleno
   (un barrido con los 117 platillos de Don Poncho) antes de volver a tocar tamaños globales.
+
+## DP-D150 · DP-22 · Seis pendientes: el resumen y las propinas salen del servidor; el almacén compra; el cierre no pide lo que no hay · 16-11-2026
+
+DP-22 · rama `dp-22-b19b`. Sin migración.
+
+- **H3 · Registros, «Este año»** (`registros.resumen`, dueño, administrador y gerente): el resumen
+  (ventas, costo, utilidad, propinas, compras, gastos y neto) lo suma el servidor sobre el periodo
+  ENTERO, en centavos enteros, con la misma consulta de la serie del tablero (extraída a
+  `tablero/sumas.ts`: reglas del corte y día del negocio) y no sobre las filas que baja el puente
+  (tope de 1 000 por petición). Las listas siguen por ventanas (DP-D118) y, si se truncan, el aviso
+  dice «Se muestran las N más recientes de M» (M sólo donde el servidor la sabe: compras y gastos) y
+  «el resumen de arriba sí cuenta todas» sólo en las pestañas que el resumen cuenta. **Cambio de
+  regla, dicho:** el resumen cuenta lo que el corte cuenta como venta (`ORDEN_VENDIDA`, también las
+  devueltas en parte), no sólo `estado = 'pagada'`. La propina es la de los pagos confirmados. Los
+  días viajan como fecha del calendario local del aparato y el servidor los lee en la zona del negocio.
+- **A23 · Propinas por mesero** (`propinas.del_rango`): total, pendiente, liquidado y total por
+  mesero del rango, sumados en el servidor sin tope; el detalle va topado a 300 y dice si hay más. Usa
+  el mismo predicado que `propinas.pendientes` y `propinas.liquidar` (`condicionDelPeriodo`). Queda
+  igual, y se anota: la tarjeta de propinas del Dashboard (`PropinasDashboardSection`) conserva su
+  lectura topada.
+- **A5 · El almacén registra compras** (`compras.registrar`, `usar_plantilla` y `guardar_plantilla`).
+  **Decidido:** el almacén registra la compra, pero pagarla del cajón sigue siendo de quien lleva la
+  caja (DP-D115): con «efectivo» el servidor la rechaza con su instrucción («regístrala con
+  transferencia o tarjeta, o pide que la registre la gerencia») y no escribe nada. El diálogo no le
+  ofrece «Efectivo» y arranca en transferencia. Los gastos siguen siendo de la gerencia.
+- **A6 · El cierre no pide «no recogido» en el restaurante:** «marcar como no recogido» es de la fila
+  de la barra. La regla no cambia (la caja no cierra con pedidos cobrados sin entregar); el mensaje
+  del restaurante dice sólo «entrégalos o devuélvelos». Los demás giros conservan su frase.
+- **A10 · «Editar receta»** (con «Imprimir ficha» y «Eliminar receta») sólo existe con el renglón
+  abierto: plegado seguía en la página, a la vista del lector de pantalla y del tabulador.
+- **X5 · Plazo de impresión del lado de la página:** `PLAZO_PARA_ENVIAR_MS` = 20 s de SILENCIO de la
+  app (cada aviso de avance lo renueva). Vencido, la barra pasa a error con sus tres salidas y el
+  reintento lleva el mismo id (la app no imprime doble); lo que la app conteste después ya no cuenta.
+- **Pruebas:** `resumen-del-periodo.integracion.test.ts`, `propinas-del-rango.integracion.test.ts`,
+  `compras-del-almacen.integracion.test.ts`, `cerrar-con-fila-restaurante.integracion.test.ts` y los
+  unitarios y contratos junto a cada pantalla.

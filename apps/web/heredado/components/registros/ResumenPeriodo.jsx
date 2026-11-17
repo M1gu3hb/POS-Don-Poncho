@@ -19,10 +19,10 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useConfig } from '@/lib/ConfigContext';
 import { canAccessModule } from '@/lib/packageConfig';
-import { sumarPropinas } from '@/utils/tipsUtils';
 import { EsqueletoDeBloque, EsqueletoDeCifras } from '~/cliente/EstadosDeCarga';
 import { fechaEnElPeriodo } from '~/registros/periodo-de-registros';
-import { economiaDelPeriodo, subtituloDelMargen } from '~/restaurante/margen-de-las-ventas';
+import { subtituloDelMargen } from '~/restaurante/margen-de-las-ventas';
+import { economiaDelResumen, totalesDelResumen } from '~/registros/resumen-del-servidor';
 
 const PERIODOS = [
   { id: 'today', label: 'Hoy' },
@@ -34,12 +34,18 @@ const PERIODOS = [
 ];
 
 export default function ResumenPeriodo({
+  // H3 · Los TOTALES salen de `resumen` (el servidor suma el periodo entero, sin tope). Las listas
+  // sólo sirven para el detalle del PDF.
+  resumen,
   ventas = [],
   compras = [],
   gastos = [],
   onPDF,
-  // Ventas, compras o gastos todavía no llegan: los importes serían los de un periodo vacío.
+  // El resumen todavía no llega: los importes serían los de un periodo vacío.
   cargando = false,
+  // El servidor no pudo calcularlo: se dice y se deja reintentar, nunca se enseñan ceros.
+  fallo = false,
+  onReintentar,
   // DP-18 · El periodo es de la PÁGINA: el resumen y las pestañas piden al servidor el mismo.
   periodo,
   desde,
@@ -54,6 +60,7 @@ export default function ResumenPeriodo({
   const sinCostos = !canAccessModule('costos_basicos', paquete_modo);
   const inRange = (fecha) => fechaEnElPeriodo(fecha, range);
 
+  // Las listas (pueden venir truncadas) sólo alimentan el detalle del PDF.
   const ventasP = ventas.filter(
     (v) => v.estado === 'pagada' && inRange(v.fecha_cierre || v.created_date),
   );
@@ -63,18 +70,13 @@ export default function ResumenPeriodo({
   // DP-12.6: la utilidad y el margen son los de las ventas con costo conocido. Las SIN RECETA
   // tienen el costo desconocido (no cero): no entran, y se dice cuántas son. Si ninguna tiene
   // costo, la utilidad y el margen son nulos y la tarjeta dice «sin receta».
-  const economia = economiaDelPeriodo(ventasP);
-  const totals = {
-    ingresos: ventasP.reduce((s, v) => s + (v.total || 0), 0),
-    utilidad: economia.utilidad,
-    nVentas: ventasP.length,
-    compras: comprasP.reduce((s, c) => s + (c.total_compra || 0), 0),
-    gastos: gastosP.reduce((s, g) => s + (g.monto || 0), 0),
-    propinas: sumarPropinas(ventasP),
-  };
+  // H3 · Todo esto lo suma el servidor (centavos enteros, el periodo entero); aquí sólo se lee.
+  const sinResumen = !resumen;
+  const economia = sinResumen ? null : economiaDelResumen(resumen);
+  const totals = sinResumen ? null : totalesDelResumen(resumen);
   // Neto NO incluye propinas (no son del restaurante).
-  const neto = totals.ingresos - totals.compras - totals.gastos;
-  const margen = economia.margen;
+  const neto = totals?.neto ?? 0;
+  const margen = economia?.margen ?? null;
 
   return (
     <Card className="p-4 bg-superficie/70 backdrop-blur-sm">
@@ -85,7 +87,7 @@ export default function ResumenPeriodo({
         </div>
         <Button
           size="sm"
-          disabled={cargando}
+          disabled={cargando || sinResumen}
           onClick={() =>
             onPDF?.({
               ...range,
@@ -96,7 +98,7 @@ export default function ResumenPeriodo({
               totals,
               margen,
               economia,
-              propinas: totals.propinas,
+              propinas: totals?.propinas ?? 0,
             })
           }
         >
@@ -139,9 +141,18 @@ export default function ResumenPeriodo({
         </div>
       )}
 
+      {fallo && !cargando && sinResumen && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-peligro/30 bg-peligro/10 p-3">
+          <p className="text-sm text-peligro">No se pudo calcular el resumen del periodo.</p>
+          <Button size="sm" variant="outline" onClick={() => onReintentar?.()}>
+            Reintentar
+          </Button>
+        </div>
+      )}
+
       {cargando ? (
         <EsqueletoDeCifras cantidad={sinCostos ? 3 : 5} />
-      ) : (
+      ) : sinResumen ? null : (
         <div className={`grid grid-cols-2 ${sinCostos ? 'lg:grid-cols-3' : 'lg:grid-cols-5'} gap-3`}>
           <Stat
             icon={DollarSign}
@@ -185,7 +196,7 @@ export default function ResumenPeriodo({
 
       {cargando && <EsqueletoDeBloque conSeparacion etiqueta="Cargando el neto del periodo" />}
 
-      {!cargando && !sinCostos && (
+      {!cargando && !sinResumen && !sinCostos && (
         <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 flex justify-between items-center">
           <div>
             <p className="text-xs text-muted-foreground">
@@ -204,7 +215,7 @@ export default function ResumenPeriodo({
           </p>
         </div>
       )}
-      {!cargando && sinCostos && (
+      {!cargando && !sinResumen && sinCostos && (
         <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 flex justify-between items-center">
           <div>
             <p className="text-xs text-muted-foreground">Total cobrado en el periodo</p>

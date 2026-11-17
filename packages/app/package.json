@@ -27,6 +27,7 @@
     "./abarrotes": "./src/abarrotes/index.ts",
     "./compras": "./src/compras/index.ts",
     "./tablero": "./src/tablero/index.ts",
+    "./registros": "./src/registros/index.ts",
     "./propinas": "./src/propinas/index.ts",
     "./portal": "./src/portal/index.ts",
     "./telefono-de-cocina": "./src/telefono-de-cocina/index.ts",

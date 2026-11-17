@@ -195,20 +195,32 @@ export function unirPorId<T extends { readonly id?: unknown }>(
   return [...mapa.values()];
 }
 
+/** Lo que el aviso sabe de la lista, además de cuántas se muestran. */
+export interface DatosDelAviso {
+  /** Cuántas hay en el periodo (si el servidor lo dice, como en compras y gastos). */
+  readonly total?: number;
+  /** El resumen de arriba suma ESTAS filas en el servidor, sin tope: se le dice a la persona. */
+  readonly resumenCuenta?: boolean;
+}
+
 /**
  * El aviso cuando quedó algo sin traer. `null` si todo el periodo está en pantalla.
- * El texto dice cuántas se muestran y qué hacer: un periodo más corto.
+ * Dice cuántas se muestran (y de cuántas, si se sabe), que el resumen sí cuenta todas cuando es
+ * cierto (H3: sale del servidor) y qué hacer: un periodo más corto.
  */
 export function avisoDelTopeDeRegistros(
   nombre: string,
   mostradas: number,
   truncada: boolean,
+  datos: DatosDelAviso = {},
 ): string | null {
   if (!truncada) return null;
+  const de = datos.total === undefined ? '' : ` de ${datos.total.toLocaleString('es-MX')}`;
+  const resumen = datos.resumenCuenta === true ? ' El resumen de arriba sí cuenta todas.' : '';
   return (
-    `Se muestran las ${mostradas.toLocaleString('es-MX')} ${nombre} más recientes del periodo; ` +
-    'hay más. Elige un periodo más corto para verlas todas: la búsqueda y lo que exportes ' +
-    'sólo incluyen lo que se muestra.'
+    `Se muestran las ${mostradas.toLocaleString('es-MX')} ${nombre} más recientes${de} del periodo; ` +
+    `hay más.${resumen} Elige un periodo más corto para verlas todas: la búsqueda y lo que ` +
+    'exportes sólo incluyen lo que se muestra.'
   );
 }
 

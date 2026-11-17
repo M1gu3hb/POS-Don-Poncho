@@ -72,7 +72,8 @@ describe('el tablero y sus análisis', () => {
 describe('los registros del periodo y su PDF', () => {
   it('la utilidad y el margen salen de la economía del periodo', () => {
     const resumen = fuente('heredado/components/registros/ResumenPeriodo.jsx');
-    expect(resumen).toMatch(/economiaDelPeriodo\(ventasP\)/);
+    // H3 · La economía del periodo la suma el servidor (`registros.resumen`); aquí sólo se lee.
+    expect(resumen).toMatch(/economiaDelResumen\(resumen\)/);
     expect(resumen).toMatch(/subtituloDelMargen\(economia\)/);
   });
 
