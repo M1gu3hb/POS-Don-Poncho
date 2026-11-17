@@ -526,8 +526,8 @@ comprobarMutacion({
   prueba: PRUEBA_AUTORIZACION_PUENTE,
   transformar: (codigo) =>
     codigo.replace(
-      "    costo_unitario_snapshot: {\n      rolesLectura: [...VE_COSTOS_DE_INSUMO],\n      columna: 'costo_unitario_centavos',",
-      "    costo_unitario_snapshot: {\n      columna: 'costo_unitario_centavos',",
+      "    costo_unitario_snapshot: {\n      rolesLectura: [...VE_COSTOS_DE_INSUMO],\n      columna: 'costo_exacto_dmc',",
+      "    costo_unitario_snapshot: {\n      columna: 'costo_exacto_dmc',",
     ),
 });
 comprobarMutacion({

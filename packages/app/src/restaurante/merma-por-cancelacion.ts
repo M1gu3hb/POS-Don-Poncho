@@ -137,11 +137,11 @@ async function registrar(
     await sql`
       insert into movimientos_stock (
         organizacion_id, almacen_id, insumo_id, tipo, cantidad, unidad, costo_unitario_centavos,
-        referencia_tipo, referencia_id, motivo, nota, empleado_id
+        costo_exacto_dmc, referencia_tipo, referencia_id, motivo, nota, empleado_id
       )
       select ${m.organizacionId}, ${m.almacenId}, ${m.insumoId}, 'merma',
              -(${m.cantidad}::numeric), ${m.unidad}, i.costo_unitario_centavos,
-             ${referencia.tipo}, ${referencia.id}, ${motivo}, ${nota}, ${ctx.empleoId}
+             i.costo_exacto_dmc, ${referencia.tipo}, ${referencia.id}, ${motivo}, ${nota}, ${ctx.empleoId}
         from insumos i
        where i.organizacion_id = ${m.organizacionId} and i.id = ${m.insumoId}
     `.execute(ctx.tx);

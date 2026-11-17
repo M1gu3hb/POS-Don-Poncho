@@ -372,6 +372,8 @@ export interface Insumos {
   nombre: string;
   unidad_base: Generated<string>;
   costo_unitario_centavos: Generated<bigint>;
+  /** DP-D165 · El costo por unidad base en DIEZMILÉSIMAS DE CENTAVO (2.4 ¢/ml = 24000), migración 195. Es el que MULTIPLICA; el de centavos es éste redondeado, para mostrar. */
+  costo_exacto_dmc: Generated<bigint>;
   stock_minimo: Generated<string>;
   activo: Generated<boolean>;
   created_at: Generated<Date>;
@@ -527,6 +529,8 @@ export interface MovimientosStock {
   cantidad: string;
   unidad: string;
   costo_unitario_centavos: Generated<bigint>;
+  /** DP-D165 · El costo por unidad base en DIEZMILÉSIMAS DE CENTAVO (2.4 ¢/ml = 24000), migración 195. Es el que MULTIPLICA; el de centavos es éste redondeado, para mostrar. */
+  costo_exacto_dmc: Generated<bigint>;
   referencia_tipo: string | null;
   referencia_id: string | null;
   empleado_id: string | null;
@@ -1528,6 +1532,8 @@ export interface ValuacionLineas {
   insumo_id: string;
   cantidad: string;
   costo_unitario_centavos: bigint;
+  /** DP-D165 · El costo por unidad base en DIEZMILÉSIMAS DE CENTAVO (2.4 ¢/ml = 24000), migración 195. Es el que MULTIPLICA; el de centavos es éste redondeado, para mostrar. */
+  costo_exacto_dmc: Generated<bigint>;
   valor_centavos: bigint;
 }
 

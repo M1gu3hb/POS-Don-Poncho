@@ -68,6 +68,7 @@ export const tomarValuacion = definirComando<Transaccion, typeof entradaValuar, 
             'existencias.insumo_id as insumo_id',
             'existencias.cantidad as cantidad',
             'insumos.costo_unitario_centavos as costo',
+            'insumos.costo_exacto_dmc as costo_exacto',
             'existencias.actualizado_en as actualizado_en',
           ])
           .where('existencias.organizacion_id', '=', organizacionId)
@@ -90,6 +91,8 @@ export const tomarValuacion = definirComando<Transaccion, typeof entradaValuar, 
         insumoId: f.insumo_id,
         existencia: f.cantidad,
         costoPromedioCentavos: f.costo,
+        // DP-D165 · Lo que se multiplica es el costo EXACTO; el de centavos sólo se enseña.
+        costoExactoDmc: f.costo_exacto,
         ultimoMovimiento: f.actualizado_en,
       }));
 
@@ -126,6 +129,7 @@ export const tomarValuacion = definirComando<Transaccion, typeof entradaValuar, 
               insumo_id: l.insumoId,
               cantidad: l.cantidad,
               costo_unitario_centavos: l.costoUnitarioCentavos,
+              costo_exacto_dmc: l.costoExactoDmc,
               valor_centavos: l.valorCentavos,
             })),
           )

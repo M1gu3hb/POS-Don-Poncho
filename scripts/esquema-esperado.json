@@ -7349,6 +7349,17 @@
       "generada": null
     },
     {
+      "clave": "public.insumos.costo_exacto_dmc",
+      "esquema": "public",
+      "tabla": "insumos",
+      "columna": "costo_exacto_dmc",
+      "tipo": "bigint",
+      "noNula": true,
+      "defaultSql": "0",
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.insumos.costo_unitario_centavos",
       "esquema": "public",
       "tabla": "insumos",
@@ -10392,6 +10403,17 @@
       "tipo": "numeric(14,4)",
       "noNula": true,
       "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
+      "clave": "public.movimientos_stock.costo_exacto_dmc",
+      "esquema": "public",
+      "tabla": "movimientos_stock",
+      "columna": "costo_exacto_dmc",
+      "tipo": "bigint",
+      "noNula": true,
+      "defaultSql": "0",
       "identidad": null,
       "generada": null
     },
@@ -18943,6 +18965,17 @@
       "generada": null
     },
     {
+      "clave": "public.valuacion_lineas.costo_exacto_dmc",
+      "esquema": "public",
+      "tabla": "valuacion_lineas",
+      "columna": "costo_exacto_dmc",
+      "tipo": "bigint",
+      "noNula": true,
+      "defaultSql": "0",
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.valuacion_lineas.costo_unitario_centavos",
       "esquema": "public",
       "tabla": "valuacion_lineas",
@@ -25160,6 +25193,28 @@
       "diferidaInicialmente": false
     },
     {
+      "clave": "public.insumos.insumos_costo_exacto_coherente",
+      "esquema": "public",
+      "tabla": "insumos",
+      "nombre": "insumos_costo_exacto_coherente",
+      "tipo": "check",
+      "definicion": "CHECK (costo_unitario_centavos = ((costo_exacto_dmc + 5000) / 10000))",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.insumos.insumos_costo_exacto_no_negativo",
+      "esquema": "public",
+      "tabla": "insumos",
+      "nombre": "insumos_costo_exacto_no_negativo",
+      "tipo": "check",
+      "definicion": "CHECK (costo_exacto_dmc >= 0)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
       "clave": "public.insumos.insumos_costo_unitario_centavos_check",
       "esquema": "public",
       "tabla": "insumos",
@@ -27553,6 +27608,28 @@
       "nombre": "movimientos_stock_cantidad_check",
       "tipo": "check",
       "definicion": "CHECK (cantidad <> 0::numeric)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.movimientos_stock.movimientos_stock_costo_exacto_coherente",
+      "esquema": "public",
+      "tabla": "movimientos_stock",
+      "nombre": "movimientos_stock_costo_exacto_coherente",
+      "tipo": "check",
+      "definicion": "CHECK (costo_unitario_centavos = ((costo_exacto_dmc + 5000) / 10000))",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.movimientos_stock.movimientos_stock_costo_exacto_no_negativo",
+      "esquema": "public",
+      "tabla": "movimientos_stock",
+      "nombre": "movimientos_stock_costo_exacto_no_negativo",
+      "tipo": "check",
+      "definicion": "CHECK (costo_exacto_dmc >= 0)",
       "validada": true,
       "diferible": false,
       "diferidaInicialmente": false
@@ -34329,6 +34406,28 @@
       "nombre": "uniones_mesa_sucursal_id_fkey",
       "tipo": "foreign_key",
       "definicion": "FOREIGN KEY (sucursal_id) REFERENCES sucursales(id)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.valuacion_lineas.valuacion_lineas_costo_exacto_coherente",
+      "esquema": "public",
+      "tabla": "valuacion_lineas",
+      "nombre": "valuacion_lineas_costo_exacto_coherente",
+      "tipo": "check",
+      "definicion": "CHECK (costo_unitario_centavos = ((costo_exacto_dmc + 5000) / 10000))",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
+      "clave": "public.valuacion_lineas.valuacion_lineas_costo_exacto_no_negativo",
+      "esquema": "public",
+      "tabla": "valuacion_lineas",
+      "nombre": "valuacion_lineas_costo_exacto_no_negativo",
+      "tipo": "check",
+      "definicion": "CHECK (costo_exacto_dmc >= 0)",
       "validada": true,
       "diferible": false,
       "diferidaInicialmente": false

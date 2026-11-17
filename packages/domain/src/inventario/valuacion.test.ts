@@ -65,6 +65,91 @@ describe('F-108 · valuación por promedio', () => {
   });
 });
 
+describe('DP-D165 · valuación con el costo EXACTO', () => {
+  it('la leche (2.4 ¢/ml) con 20 L vale $480.00: multiplica con el exacto, no con los 2 ¢ mostrados', () => {
+    const valuacion = valuarInventario(
+      [
+        articulo({
+          existencia: '20000.0000',
+          costoPromedioCentavos: 2n,
+          costoExactoDmc: 24_000n,
+        }),
+      ],
+      { metodo: 'promedio', ahora: AHORA },
+    );
+
+    expect(valuacion.valorCentavos).toBe(48_000n);
+    // El costo de centavos de la línea sigue siendo el exacto redondeado, para mostrarlo.
+    expect(valuacion.lineas[0]?.costoUnitarioCentavos).toBe(2n);
+    expect(valuacion.lineas[0]?.costoExactoDmc).toBe(24_000n);
+  });
+
+  it('redondea UNA sola vez, al final: 3 ml a 2.4 ¢ son 7.2 ¢ → 7, no 3 × 2 = 6', () => {
+    const valuacion = valuarInventario(
+      [articulo({ existencia: '3.0000', costoPromedioCentavos: 2n, costoExactoDmc: 24_000n })],
+      { metodo: 'promedio', ahora: AHORA },
+    );
+
+    expect(valuacion.valorCentavos).toBe(7n);
+  });
+
+  it('sin costo exacto parte del de centavos × 10 000: lo que ese costo siempre valió', () => {
+    const valuacion = valuarInventario(
+      [articulo({ existencia: '10.0000', costoPromedioCentavos: 1200n })],
+      { metodo: 'promedio', ahora: AHORA },
+    );
+
+    expect(valuacion.valorCentavos).toBe(12_000n);
+    expect(valuacion.lineas[0]?.costoExactoDmc).toBe(12_000_000n);
+  });
+
+  it('una existencia en negativo vale cero también con el costo exacto (DP-D146)', () => {
+    const valuacion = valuarInventario(
+      [articulo({ existencia: '-500.0000', costoPromedioCentavos: 2n, costoExactoDmc: 24_000n })],
+      { metodo: 'promedio', ahora: AHORA },
+    );
+
+    expect(valuacion.valorCentavos).toBe(0n);
+  });
+
+  it('PEPS: suma cantidad × costo exacto de cada capa y redondea UNA vez sobre la suma', () => {
+    const valuacion = valuarInventario(
+      [
+        articulo({
+          existencia: '3.0000',
+          costoPromedioCentavos: 2n,
+          costoExactoDmc: 24_000n,
+          capas: [
+            {
+              cantidad: '1.0000',
+              costoUnitarioCentavos: 2n,
+              costoExactoDmc: 24_000n,
+              cuando: HACE_UN_ANO,
+            },
+            {
+              cantidad: '1.0000',
+              costoUnitarioCentavos: 2n,
+              costoExactoDmc: 24_000n,
+              cuando: HACE_UN_ANO,
+            },
+            {
+              cantidad: '1.0000',
+              costoUnitarioCentavos: 2n,
+              costoExactoDmc: 24_000n,
+              cuando: ANTEAYER,
+            },
+          ],
+        }),
+      ],
+      { metodo: 'peps', ahora: AHORA },
+    );
+
+    // 3 × 2.4 ¢ = 7.2 ¢ → 7 (por capa y redondeando cada una serían 2 + 2 + 2 = 6).
+    expect(valuacion.valorCentavos).toBe(7n);
+    expect(valuacion.lineas[0]?.costoExactoDmc).toBe(24_000n);
+  });
+});
+
 describe('F-108 · lo que lleva dormido', () => {
   it('separa el valor de lo que no se mueve, con el umbral del giro', () => {
     const valuacion = valuarInventario(

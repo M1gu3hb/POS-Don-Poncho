@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Link, useLocation } from '@/enrutado';
 import { puedeAjustarStock } from '~/inventario/ajuste-de-stock';
+import { textoDelCostoPorUnidad } from '~/inventario/costo-por-unidad';
 import {
   ESTADO_POR_DEBAJO_DEL_MINIMO,
   estaPorDebajoDelMinimo,
@@ -418,7 +419,7 @@ export default function Inventario() {
                       <span>
                         Costo:{' '}
                         {conCosto ? (
-                          `${formatCurrency(ing.costo_por_unidad_base)}/${ing.unidad_base}`
+                          textoDelCostoPorUnidad(ing.costo_por_unidad_base, ing.unidad_base, formatCurrency)
                         ) : (
                           <span className="font-medium text-advertencia">Sin costo</span>
                         )}

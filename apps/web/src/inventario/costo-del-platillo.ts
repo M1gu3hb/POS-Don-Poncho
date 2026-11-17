@@ -31,7 +31,7 @@
  *
  * ── Qué cuenta como «sin costo» ──────────────────────────────────────────────────
  * Un insumo sin costo es el que llega con costo unitario NULO, ausente o CERO:
- * `insumos.costo_unitario_centavos` también es `not null default 0`, así que un
+ * `insumos.costo_exacto_dmc` también es `not null default 0`, así que un
  * insumo que se dio de alta y nunca se compró es cero, no «gratis». La excepción
  * real —el agua, el hielo— se resuelve poniéndole un costo simbólico, y la pista lo
  * dice. Una línea cuyo IMPORTE redondea a cero centavos (un gramo de sal) sí tiene
@@ -48,9 +48,9 @@ export interface LineaDeCosto {
   readonly cantidad_convertida_unidad_base?: number | null | undefined;
   /** La merma en PORCENTAJE (5 = 5 %), tal como la sirve el puente. */
   readonly merma_porcentaje?: number | null | undefined;
-  /** Pesos por unidad base. Nulo, ausente o cero: el insumo no tiene costo. */
+  /** Pesos por unidad base, EXACTO (0.024 el ml de leche). Nulo, ausente o cero: el insumo no tiene costo. */
   readonly costo_unitario_base_snapshot?: number | null | undefined;
-  /** El importe de la línea, redondeado al centavo por el servidor. */
+  /** El importe de la línea en pesos, con sus fracciones de centavo: el centavo se redondea una vez, en el total. */
   readonly costo_linea_calculado?: number | null | undefined;
 }
 
@@ -111,21 +111,31 @@ const esNumero = (valor: unknown): valor is number =>
 
 const aCentavos = (pesos: number): number => Math.round(pesos * CENTAVOS_POR_PESO);
 
+/** Cifras significativas que sobreviven a la coma flotante al sumar fracciones de centavo. */
+const CIFRAS_SIGNIFICATIVAS = 12;
+
+/** El total en centavos fraccionarios, redondeado UNA vez al centavo entero (la mitad se aleja del cero). */
+const aCentavosEnteros = (centavosFinos: number): number =>
+  Math.round(Number(centavosFinos.toPrecision(CIFRAS_SIGNIFICATIVAS)));
+
 /**
- * El importe de una línea en CENTAVOS, o nulo si no se puede saber.
+ * El importe de una línea en CENTAVOS —con sus fracciones—, o nulo si no se puede saber.
  *
  * Gana el que calculó el servidor (con la misma aritmética que guarda el producto);
- * si no llegó, se calcula con cantidad, merma y costo unitario.
+ * si no llegó, se calcula con cantidad, merma y costo unitario. DP-D165: NO se redondea por línea.
+ * El costo por unidad llega exacto (la leche a 0.024 pesos el ml) y dos líneas de 2.5 ¢ cuestan 5 ¢,
+ * no 6: el centavo entero se pone UNA vez, sobre el total del platillo (`economiaDelPlatillo`), igual
+ * que lo guarda `recalcularCostosRecetas`.
  */
 function centavosDeLaLinea(linea: LineaDeCosto): number | null {
   const unitario = linea.costo_unitario_base_snapshot;
   if (!esNumero(unitario) || unitario <= 0) return null;
-  if (esNumero(linea.costo_linea_calculado)) return aCentavos(linea.costo_linea_calculado);
+  if (esNumero(linea.costo_linea_calculado)) return linea.costo_linea_calculado * CENTAVOS_POR_PESO;
 
   const cantidad = linea.cantidad_convertida_unidad_base;
   if (!esNumero(cantidad)) return null;
   const merma = esNumero(linea.merma_porcentaje) ? linea.merma_porcentaje : 0;
-  return aCentavos(cantidad * (1 + merma / PORCIENTO) * unitario);
+  return cantidad * (1 + merma / PORCIENTO) * unitario * CENTAVOS_POR_PESO;
 }
 
 /** ¿Esta línea tiene costo? Es la pregunta que se hace cada renglón de la ficha. */
@@ -223,7 +233,7 @@ export function economiaDelPlatillo(
     const pista = `Falta el costo de ${sinCosto.join(', ')}. Regístralo en una compra para calcular el margen`;
     return sinCostoConocido('costo_incompleto', ETIQUETA_COSTO_DESCONOCIDO, pista, sinCosto);
   }
-  return conCostoConocido(precioVenta, totalCentavos, 'receta');
+  return conCostoConocido(precioVenta, aCentavosEnteros(totalCentavos), 'receta');
 }
 
 /**

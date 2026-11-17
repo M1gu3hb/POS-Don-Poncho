@@ -1,5 +1,12 @@
 import { ErrorDominio } from '@morphiqpos/contracts/errores';
 
+import { redondear } from '../dinero/redondeo.ts';
+import {
+  centavosDelCosto,
+  costoExactoDeCentavos,
+  valorDeLaCantidad,
+  valorDeLoAcumulado,
+} from './costo-exacto.ts';
 import { deEscalaCompleta, enEscalaCompleta } from './escala.ts';
 
 /**
@@ -25,6 +32,8 @@ export type MetodoDeValuacion = 'promedio' | 'peps';
 export interface CapaDeCosto {
   readonly cantidad: string;
   readonly costoUnitarioCentavos: bigint;
+  /** DP-D165 · El costo exacto, en diezmilésimas de centavo. Sin él, el de centavos × 10 000. */
+  readonly costoExactoDmc?: bigint;
   readonly cuando: Date;
 }
 
@@ -32,8 +41,13 @@ export interface ArticuloParaValuar {
   readonly insumoId: string;
   /** La existencia de hoy, tal cual está en la tabla. */
   readonly existencia: string;
-  /** El costo promedio ponderado que lleva el insumo. */
+  /** El costo promedio ponderado que lleva el insumo, en centavos (el exacto redondeado). */
   readonly costoPromedioCentavos: bigint;
+  /**
+   * DP-D165 · El mismo costo EXACTO, en diezmilésimas de centavo por unidad base. Es el que se
+   * MULTIPLICA: el de centavos sólo se muestra. Sin él, se parte del de centavos × 10 000.
+   */
+  readonly costoExactoDmc?: bigint;
   /** Las capas de entrada, de la más vieja a la más nueva. Sólo hacen falta en PEPS. */
   readonly capas?: readonly CapaDeCosto[];
   /** Cuándo se movió por última vez. `null` si nunca se ha movido. */
@@ -44,6 +58,8 @@ export interface LineaValuada {
   readonly insumoId: string;
   readonly cantidad: string;
   readonly costoUnitarioCentavos: bigint;
+  /** El costo exacto con el que se valuó, en diezmilésimas de centavo. */
+  readonly costoExactoDmc: bigint;
   readonly valorCentavos: bigint;
   /** Días sin moverse. Es la mitad de la respuesta, y la que nadie tiene hoy. */
   readonly diasSinMovimiento: number | null;
@@ -67,7 +83,6 @@ export interface OpcionesDeValuacion {
 
 const DIAS_DORMIDO = 180;
 const MS_POR_DIA = 86_400_000;
-const ESCALA = 10_000n;
 
 /**
  * Valúa el inventario en un instante.
@@ -91,16 +106,18 @@ export function valuarInventario(
     const existencia = deEscalaCompleta(articulo.existencia);
     const cantidad = existencia > 0n ? existencia : 0n;
 
-    const costo =
-      opciones.metodo === 'peps' ? costoPeps(cantidad, articulo) : articulo.costoPromedioCentavos;
-
-    const valor = valorDe(cantidad, costo);
+    // UN solo redondeo: cantidad × costo EXACTO, a centavos, al final.
+    const { costoExactoDmc, valor } =
+      opciones.metodo === 'peps'
+        ? valuarPeps(cantidad, articulo)
+        : valuarPromedio(cantidad, articulo);
     const dias = diasSinMoverse(articulo.ultimoMovimiento, opciones.ahora);
 
     lineas.push({
       insumoId: articulo.insumoId,
       cantidad: enEscalaCompleta(cantidad),
-      costoUnitarioCentavos: costo,
+      costoUnitarioCentavos: centavosDelCosto(costoExactoDmc),
+      costoExactoDmc,
       valorCentavos: valor,
       diasSinMovimiento: dias,
     });
@@ -118,19 +135,38 @@ export function valuarInventario(
   };
 }
 
+/** El costo exacto que lleva el artículo: el suyo, o el de centavos × 10 000 si no lo trae. */
+function exactoDelArticulo(articulo: ArticuloParaValuar): bigint {
+  return articulo.costoExactoDmc ?? costoExactoDeCentavos(articulo.costoPromedioCentavos);
+}
+
+function valuarPromedio(
+  cantidad: bigint,
+  articulo: ArticuloParaValuar,
+): { readonly costoExactoDmc: bigint; readonly valor: bigint } {
+  const costoExactoDmc = exactoDelArticulo(articulo);
+  return { costoExactoDmc, valor: valorDeLaCantidad(cantidad, costoExactoDmc) };
+}
+
 /**
- * El costo unitario PEPS: el promedio de las capas que cubren la existencia,
+ * El valor y el costo unitario PEPS: el promedio de las capas que cubren la existencia,
  * empezando por la MÁS NUEVA.
  *
  * Suena al revés y no lo es. «Primeras entradas, primeras salidas» significa que
  * lo que ya SALIÓ fue lo más viejo; por tanto **lo que queda en el estante son
  * las capas más nuevas**. Valuarlo con las viejas es el error clásico de PEPS y
  * subvalúa el inventario justo cuando los precios suben, que es siempre.
+ *
+ * El valor se redondea UNA vez sobre la suma de las capas (cantidad × costo exacto de cada una); el
+ * costo unitario que se enseña es ese mismo acumulado entre la existencia.
  */
-function costoPeps(cantidad: bigint, articulo: ArticuloParaValuar): bigint {
+function valuarPeps(
+  cantidad: bigint,
+  articulo: ArticuloParaValuar,
+): { readonly costoExactoDmc: bigint; readonly valor: bigint } {
+  const promedio = exactoDelArticulo(articulo);
   const capas = articulo.capas ?? [];
-  if (cantidad === 0n) return articulo.costoPromedioCentavos;
-  if (capas.length === 0) return articulo.costoPromedioCentavos;
+  if (cantidad === 0n || capas.length === 0) return valuarPromedio(cantidad, articulo);
 
   let porCubrir = cantidad;
   let acumulado = 0n;
@@ -141,7 +177,7 @@ function costoPeps(cantidad: bigint, articulo: ArticuloParaValuar): bigint {
     const disponible = deEscalaCompleta(capa.cantidad);
     if (disponible <= 0n) continue;
     const toma = disponible < porCubrir ? disponible : porCubrir;
-    acumulado += toma * capa.costoUnitarioCentavos;
+    acumulado += toma * (capa.costoExactoDmc ?? costoExactoDeCentavos(capa.costoUnitarioCentavos));
     porCubrir -= toma;
   }
 
@@ -150,10 +186,10 @@ function costoPeps(cantidad: bigint, articulo: ArticuloParaValuar): bigint {
     // Se completa con el promedio en vez de fallar, porque un almacén sin
     // histórico completo es lo normal el primer año y negarse a valuarlo sería
     // negarse a contestar la pregunta que importa.
-    acumulado += porCubrir * articulo.costoPromedioCentavos;
+    acumulado += porCubrir * promedio;
   }
 
-  return redondear(acumulado, cantidad);
+  return { costoExactoDmc: redondear(acumulado, cantidad), valor: valorDeLoAcumulado(acumulado) };
 }
 
 function diasSinMoverse(ultimo: Date | null, ahora: Date): number | null {
@@ -166,16 +202,4 @@ function diasSinMoverse(ultimo: Date | null, ahora: Date): number | null {
     );
   }
   return Math.floor(transcurrido / MS_POR_DIA);
-}
-
-/** `cantidad × costo`, desandando la escala una sola vez y redondeando al centavo. */
-function valorDe(cantidad: bigint, costoUnitario: bigint): bigint {
-  return redondear(cantidad * costoUnitario, ESCALA);
-}
-
-/** División con redondeo al entero más cercano. Nunca trunca hacia abajo. */
-function redondear(numerador: bigint, divisor: bigint): bigint {
-  if (divisor === 0n) return 0n;
-  const mitad = divisor / 2n;
-  return numerador < 0n ? -((-numerador + mitad) / divisor) : (numerador + mitad) / divisor;
 }

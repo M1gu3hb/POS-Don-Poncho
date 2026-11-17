@@ -142,9 +142,8 @@ describe('B-12 · SQL de costeo por receta', () => {
     ]);
     const actualizados = await recalcularCostosRecetas(ctx.tx, ctx.ambito.organizacionId);
     expect(actualizados).toBe(2);
-    expect(conexion.consultas[0]?.sql).toMatch(
-      /costo_unitario_centavos::numeric\s*\*\s*r\.cantidad/i,
-    );
+    // DP-D165: multiplica con el costo EXACTO (diezmilésimas de centavo), no con el de centavos.
+    expect(conexion.consultas[0]?.sql).toMatch(/costo_exacto_dmc::numeric\s*\*\s*r\.cantidad/i);
     expect(conexion.consultas[0]?.sql).toMatch(/10000\s*\+\s*r\.merma_bp/i);
     expect(conexion.consultas[0]?.sql).toMatch(
       /set\s+costo_unitario_centavos\s*=\s*costos\.costo/i,

@@ -2,6 +2,7 @@ import { ErrorDominio, PAQUETES_OPERATIVOS } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 import { cantidad, cantidadATexto } from '@morphiqpos/domain/catalogo';
 import { desdeTexto } from '@morphiqpos/domain/dinero';
+import { costoExactoDeCentavos } from '@morphiqpos/domain/inventario';
 import { sql } from 'kysely';
 import { z } from 'zod';
 
@@ -238,7 +239,11 @@ export const actualizarCostoInsumo = definirComando<
     const insumo = await ctx.paso('actualizar_costo_insumo', () =>
       ctx.tx
         .updateTable('insumos')
-        .set({ costo_unitario_centavos: desdeTexto(entrada.costoUnitario), updated_at: ctx.ahora })
+        .set({
+          costo_unitario_centavos: desdeTexto(entrada.costoUnitario),
+          costo_exacto_dmc: costoExactoDeCentavos(desdeTexto(entrada.costoUnitario)),
+          updated_at: ctx.ahora,
+        })
         .where('id', '=', entrada.insumoId)
         .where('organizacion_id', '=', ctx.ambito.organizacionId)
         .returning('id')
@@ -432,7 +437,10 @@ export async function recalcularCostosRecetas(
   const resultado = await sql<{ id: string }>`
     update productos p set costo_unitario_centavos = costos.costo, updated_at = now()
     from (
-      select r.producto_id, coalesce(sum(round(i.costo_unitario_centavos::numeric * r.cantidad * (10000 + r.merma_bp) / 10000)), 0)::bigint costo
+      select r.producto_id,
+             -- DP-D165: cantidad × merma × costo EXACTO (diezmilésimas de centavo), sumado y redondeado UNA
+             -- sola vez al centavo: el costo por pieza del platillo. Antes, un redondeo por línea.
+             coalesce(round(sum(i.costo_exacto_dmc::numeric * r.cantidad * (10000 + r.merma_bp)) / 100000000), 0)::bigint costo
       from recetas r join insumos i on i.id = r.insumo_id and i.organizacion_id = r.organizacion_id
       where r.organizacion_id = ${organizacionId} ${productoId === undefined ? sql`` : sql`and r.producto_id = ${productoId}`}
       group by r.producto_id

@@ -2,9 +2,10 @@ import 'server-only';
 
 import { ErrorDominio, PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
 import { repoStock, repoVentaCatalogo, type Transaccion } from '@morphiqpos/data';
-import { porCantidad } from '@morphiqpos/domain/dinero';
+import { aDiezmilesimas } from '@morphiqpos/domain/dinero';
 import {
   calcularConsumo,
+  valorDeLoAcumulado,
   type LineaParaConsumo,
   type MovimientoPlaneado,
 } from '@morphiqpos/domain/inventario';
@@ -160,16 +161,20 @@ export const registrarConsumoInterno = definirComando<
       const costos = await ctx.paso('costos_de_insumo', () =>
         ctx.tx
           .selectFrom('insumos')
-          .select(['id', 'costo_unitario_centavos as costo'])
+          .select(['id', 'costo_exacto_dmc as costo'])
           .where('organizacion_id', '=', organizacionId)
           .where('id', 'in', insumoIds)
           .execute(),
       );
       const porInsumo = new Map(costos.map((c) => [c.id, c.costo]));
 
+      // DP-D165 · cantidad × costo EXACTO de cada insumo, sumado y redondeado UNA sola vez a centavos.
+      let acumulado = 0n;
       for (const movimiento of movimientos) {
-        costoCentavos += porCantidad(porInsumo.get(movimiento.insumoId) ?? 0n, movimiento.cantidad);
+        acumulado +=
+          aDiezmilesimas(movimiento.cantidad) * (porInsumo.get(movimiento.insumoId) ?? 0n);
       }
+      costoCentavos = valorDeLoAcumulado(acumulado);
 
       await ctx.paso('descontar_stock', () =>
         repoStock.aplicarMovimientos(comoConsumoInterno(movimientos, consumo.id, empleoId), ctx.tx),

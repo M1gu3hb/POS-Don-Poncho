@@ -316,8 +316,8 @@ export const SECCIONES_DE_LA_GUIA: readonly SeccionDeLaGuia[] = [
     en_corto:
       'Es lo que vale lo que tienes: por cada ingrediente, su existencia por su costo, y todo sumado.',
     pasos: [
-      'Por cada ingrediente se multiplica lo que hay por lo que cuesta cada gramo, mililitro o pieza.',
-      'El costo sale de tus compras (el promedio de lo que has pagado).',
+      'Por cada ingrediente se multiplica lo que hay por lo que cuesta cada gramo, mililitro o pieza, y el resultado se redondea al centavo una sola vez.',
+      'El costo sale de tus compras (el promedio de lo que has pagado) y se guarda exacto, con sus fracciones de centavo: la leche a $24.00 el litro vale $480.00 con 20 litros, no los $400.00 de redondear cada mililitro a 2 centavos.',
       'Un ingrediente que tiene existencia pero no tiene costo no entra a la suma: la tarjeta avisa cuántos faltan.',
       'Una existencia en negativo no resta del valor (vale cero, igual que en la valuación): la tarjeta avisa cuántos son; corrígelos con un conteo.',
     ],
@@ -340,7 +340,7 @@ export const SECCIONES_DE_LA_GUIA: readonly SeccionDeLaGuia[] = [
         archivo: 'apps/web/src/restaurante/valor-de-inventario.ts',
         contiene: [
           'export function valorDeLaExistencia(',
-          'hay > 0 ? hay * (costoPorUnidad ?? 0) : 0',
+          'return aCentavosEnteros(hay * (costoPorUnidad ?? 0)) / CENTAVOS_POR_PESO;',
         ],
       },
       {

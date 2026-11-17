@@ -4,12 +4,14 @@ import { ErrorDominio } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 import { cantidad, cantidadATexto } from '@morphiqpos/domain/catalogo';
 import { desdeTexto } from '@morphiqpos/domain/dinero';
+import { centavosDelCosto } from '@morphiqpos/domain/inventario';
 import { sql } from 'kysely';
 
 import type { ContextoComando } from '../definicion.ts';
 import {
   cantidadConSigno,
   convertirAUnidadBase,
+  costoExactoPorUnidad,
   costoPorUnidad,
   costoPromedioPonderado,
   equivalenciaDeLinea,
@@ -82,6 +84,8 @@ export async function escribirLinea(
     })
     .execute();
 
+  const costoDeLaEntrada = costoExactoPorUnidad(costoTotal, cantidadBase);
+
   // Entrada: positiva. Lo impone `movimiento_stock_signo_coherente` (003:366),
   // así que el signo inconsistente de D-10 ya no se puede escribir.
   await ctx.tx
@@ -93,7 +97,9 @@ export async function escribirLinea(
       tipo: 'entrada_compra',
       cantidad: cantidadATexto(cantidadBase),
       unidad: insumo.unidadBase,
-      costo_unitario_centavos: costoPorUnidad(costoTotal, cantidadBase),
+      // El costo EXACTO de lo que entró, y su redondeo a centavos para quien sólo lo muestra.
+      costo_unitario_centavos: centavosDelCosto(costoDeLaEntrada),
+      costo_exacto_dmc: costoDeLaEntrada,
       referencia_tipo: 'compra',
       referencia_id: datos.compraId,
       empleado_id: empleoId,
@@ -120,15 +126,19 @@ export async function escribirLinea(
     );
   }
 
+  // El promedio ponderado se calcula sobre el exacto (una división, un redondeo); el de centavos es
+  // ese mismo costo redondeado, y la base exige que coincidan (`insumos_costo_exacto_coherente`).
+  const promedioExacto = costoPromedioPonderado({
+    existenciaAnterior: cantidadConSigno(nueva) - cantidadBase,
+    costoAnteriorExactoDmc: insumo.costoExactoDmc,
+    cantidadEntrante: cantidadBase,
+    costoTotalCentavos: costoTotal,
+  });
   await ctx.tx
     .updateTable('insumos')
     .set({
-      costo_unitario_centavos: costoPromedioPonderado({
-        existenciaAnterior: cantidadConSigno(nueva) - cantidadBase,
-        costoAnteriorCentavos: insumo.costoUnitarioCentavos,
-        cantidadEntrante: cantidadBase,
-        costoTotalCentavos: costoTotal,
-      }),
+      costo_unitario_centavos: centavosDelCosto(promedioExacto),
+      costo_exacto_dmc: promedioExacto,
       unidad_compra_default: linea.unidadCapturada,
       // La equivalencia, no la cantidad comprada. `RegistrarCompraDialog.jsx:301`
       // LEE esta columna como equivalencia y `:365` le escribe la cantidad, así

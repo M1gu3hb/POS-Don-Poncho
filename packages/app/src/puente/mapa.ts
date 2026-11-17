@@ -478,10 +478,13 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       // sobre el stock anterior y el que entra. Aceptarlo del cliente es el
       // defecto D-13: hoy `importExecutors.js:44` lo sobrescribe con el valor
       // del CSV, sin ponderar, y pisa el costo histórico.
+      // DP-D165: el costo EXACTO (diezmilésimas de centavo en la base, pesos con todos sus decimales
+      // aquí). Con el de centavos la leche (2.4 ¢/ml) llegaba como $0.02 y todo lo que multiplicaba
+      // —el valor, el costo de la receta— heredaba el error.
       costo_por_unidad_base: {
         rolesLectura: [...VE_COSTOS_DE_INSUMO],
-        columna: 'costo_unitario_centavos',
-        conversion: 'dinero',
+        columna: 'costo_exacto_dmc',
+        conversion: 'dinero_fino',
         escribible: false,
       },
       stock_minimo: { columna: 'stock_minimo', conversion: 'decimal' },
@@ -660,8 +663,8 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         rolesLectura: [...VE_COSTOS_DE_INSUMO],
         tabla: 'insumos',
         porColumna: 'insumo_id',
-        columna: 'costo_unitario_centavos',
-        conversion: 'dinero',
+        columna: 'costo_exacto_dmc',
+        conversion: 'dinero_fino',
       },
     },
     calculados: {
@@ -1192,8 +1195,8 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       unidad_base: { columna: 'unidad', conversion: 'texto', escribible: false },
       costo_unitario_en_momento: {
         rolesLectura: [...VE_COSTOS_DE_INSUMO],
-        columna: 'costo_unitario_centavos',
-        conversion: 'dinero',
+        columna: 'costo_exacto_dmc',
+        conversion: 'dinero_fino',
         escribible: false,
       },
       referencia_tipo: { columna: 'referencia_tipo', conversion: 'texto', escribible: false },
@@ -3767,8 +3770,8 @@ const DESCUENTO_INVENTARIO_VENTA: MapaEntidad = {
     unidad_base: { columna: 'unidad', conversion: 'texto', escribible: false },
     costo_unitario_snapshot: {
       rolesLectura: [...VE_COSTOS_DE_INSUMO],
-      columna: 'costo_unitario_centavos',
-      conversion: 'dinero',
+      columna: 'costo_exacto_dmc',
+      conversion: 'dinero_fino',
       escribible: false,
     },
   },

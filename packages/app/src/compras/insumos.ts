@@ -91,6 +91,8 @@ export interface InsumoDeCompra {
   readonly nombre: string;
   readonly unidadBase: string;
   readonly costoUnitarioCentavos: Centavos;
+  /** DP-D165 · El costo vigente exacto, en diezmilésimas de centavo por unidad base. */
+  readonly costoExactoDmc: bigint;
 }
 
 interface FilaInsumo {
@@ -98,6 +100,7 @@ interface FilaInsumo {
   readonly nombre: string;
   readonly unidad_base: string;
   readonly costo_unitario_centavos: bigint;
+  readonly costo_exacto_dmc: bigint;
   readonly activo: boolean;
 }
 
@@ -137,6 +140,7 @@ export async function resolverInsumoDeLinea(
       // El costo nace en cero y lo fija el promedio ponderado de esta misma
       // compra: ponerle el de la línea aquí sería contarlo dos veces.
       costo_unitario_centavos: 0n,
+      costo_exacto_dmc: 0n,
       ...(nuevo.stockMinimo === undefined
         ? {}
         : { stock_minimo: cantidadATexto(cantidad(nuevo.stockMinimo)) }),
@@ -144,7 +148,7 @@ export async function resolverInsumoDeLinea(
         ? {}
         : { stock_critico: cantidadATexto(cantidad(nuevo.stockCritico)) }),
     })
-    .returning(['id', 'nombre', 'unidad_base', 'costo_unitario_centavos'])
+    .returning(['id', 'nombre', 'unidad_base', 'costo_unitario_centavos', 'costo_exacto_dmc'])
     .executeTakeFirstOrThrow();
 
   return {
@@ -152,6 +156,7 @@ export async function resolverInsumoDeLinea(
     nombre: creado.nombre,
     unidadBase: creado.unidad_base,
     costoUnitarioCentavos: centavos(creado.costo_unitario_centavos),
+    costoExactoDmc: creado.costo_exacto_dmc,
   };
 }
 
@@ -176,6 +181,7 @@ function exigirActivo(fila: FilaInsumo): InsumoDeCompra {
     nombre: fila.nombre,
     unidadBase: fila.unidad_base,
     costoUnitarioCentavos: centavos(fila.costo_unitario_centavos),
+    costoExactoDmc: fila.costo_exacto_dmc,
   };
 }
 
@@ -186,7 +192,14 @@ function bloquearPorId(
 ): Promise<FilaInsumo | undefined> {
   return tx
     .selectFrom('insumos')
-    .select(['id', 'nombre', 'unidad_base', 'costo_unitario_centavos', 'activo'])
+    .select([
+      'id',
+      'nombre',
+      'unidad_base',
+      'costo_unitario_centavos',
+      'costo_exacto_dmc',
+      'activo',
+    ])
     .where('id', '=', insumoId)
     .where('organizacion_id', '=', organizacionId)
     .forUpdate()
@@ -200,7 +213,14 @@ function bloquearPorNombre(
 ): Promise<FilaInsumo | undefined> {
   return tx
     .selectFrom('insumos')
-    .select(['id', 'nombre', 'unidad_base', 'costo_unitario_centavos', 'activo'])
+    .select([
+      'id',
+      'nombre',
+      'unidad_base',
+      'costo_unitario_centavos',
+      'costo_exacto_dmc',
+      'activo',
+    ])
     .where('organizacion_id', '=', organizacionId)
     .where(sql<boolean>`clave_texto(nombre) = clave_texto(${nombre})`)
     .forUpdate()

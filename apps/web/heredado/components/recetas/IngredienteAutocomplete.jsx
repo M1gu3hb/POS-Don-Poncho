@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Search, Package } from 'lucide-react';
 import { formatCurrency } from '@/utils/financialUtils';
+import { textoDelCostoPorUnidad } from '~/inventario/costo-por-unidad';
 import { normalizarNombreIngrediente } from '@/utils/ingredienteMatcher';
 
 /**
@@ -89,7 +90,7 @@ export default function IngredienteAutocomplete({
                 <p className="text-[11px] text-muted-foreground">
                   Stock: {Number(ing.stock_actual || 0).toLocaleString()} {ing.unidad_base}
                   {' · '}
-                  {formatCurrency(ing.costo_por_unidad_base)}/{ing.unidad_base}
+                  {textoDelCostoPorUnidad(ing.costo_por_unidad_base, ing.unidad_base, formatCurrency)}
                 </p>
               </div>
             </button>

@@ -77,7 +77,6 @@ export const UNIDADES_DEL_PUENTE = {
   },
   Ingrediente: {
     costo_compra_default: 'pesos',
-    costo_por_unidad_base: 'pesos',
     valor_inventario: 'pesos',
   },
   Liquidacion: {
@@ -107,9 +106,6 @@ export const UNIDADES_DEL_PUENTE = {
   },
   MovimientoCaja: {
     monto_centavos: 'centavos',
-  },
-  MovimientoInventario: {
-    costo_unitario_en_momento: 'pesos',
   },
   NoShow: {
     valor_perdido: 'pesos',
@@ -155,7 +151,6 @@ export const UNIDADES_DEL_PUENTE = {
   },
   RecetaEscandallo: {
     costo_linea_calculado: 'pesos',
-    costo_unitario_base_snapshot: 'pesos',
   },
   Redondeo: {
     importe_centavos: 'pesos',

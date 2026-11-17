@@ -3287,6 +3287,7 @@ había visto; el aviso de insumo bajo (DP-D159) la usa. Ahora la existencia se l
   están probadas por separado (la app guarda, rechaza y no se sale de su carpeta; el POS detecta la
   capacidad, arma el nombre y no retrasa el cierre). Queda en la lista física de Miguel: tras el
   primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`.
+
 ## DP-D163 · Los ajustes de Configuración tienen que demostrar su efecto (DP-22, 17-nov-2026)
 
 - **Decisión:** cada ajuste de Configuración se da por comprobado sólo con una prueba que se haya visto
@@ -3306,3 +3307,73 @@ había visto; el aviso de insumo bajo (DP-D159) la usa. Ahora la existencia se l
   menú «A la carta»; en «Menú digital» (el de siempre) no hace nada. **Se queda así** hasta que Miguel
   decida: esconder la casilla en «Menú digital» o hacerla valer.
 - **Sin migración.**
+
+## DP-D165 · DP-22 · El costo de un insumo se guarda EXACTO y se redondea una sola vez · 17-11-2026
+
+**Es una regla de dinero** (hallazgo 14 de la auditoría, ALTO). El costo por unidad base —el gramo, el
+mililitro, la pieza— vivía en centavos ENTEROS (`insumos.costo_unitario_centavos`, copiado en cada
+movimiento del kardex). La leche a $480.00 los 20 L son 2.4 ¢/ml y quedaba en 2 (−16.7 %); el maíz a
+4.5 ¢/g, en 5 (+11 %); con siete compras que sumaban $11,570.50, «Valor de inventario» decía $11,552.00.
+Lo falseaban el valor del inventario, el costo de cada receta, la merma y el margen de cada platillo.
+
+- **Qué se guarda.** Una columna hermana, `costo_exacto_dmc`: el costo por unidad base en
+  DIEZMILÉSIMAS DE CENTAVO (`bigint` ≥ 0; 2.4 ¢/ml = 24 000, 4.5 ¢/g = 45 000), la misma escala de cuatro
+  decimales de las cantidades. En `insumos` (el vigente: el promedio ponderado), en `movimientos_stock`
+  (el que tenía el insumo al moverse) y en `valuacion_lineas` (con el que se valuó). **Migración 195**,
+  aditiva, con su ficha (`docs/para-el-maestro/41-costo-exacto-del-insumo.md`).
+- **Con qué precisión.** Una diezmilésima de centavo por unidad base. `costo_unitario_centavos` SE
+  QUEDA, no se quita de ningún sitio, y es el exacto redondeado al centavo (medio centavo hacia arriba):
+  un `check` por tabla lo exige y un disparador completa la columna que no se escribió (quien sólo
+  conoce los centavos deja el exacto en centavos × 10 000). Dos columnas que se contradicen no se pueden
+  guardar. El relleno de lo que ya existe es `centavos × 10 000` (lo que esas filas siempre valieron).
+- **Dónde se redondea: UNA sola vez, a centavos, al final.**
+  - Valor de cantidad × costo = `round(cantidad × exacto / 10 000)`: valuación (dominio
+    `valuarInventario`, comando `inventario.valuar`, que además guarda el exacto de cada renglón, y la
+    vista `existencias_por_insumo`), kardex, `descuentos_inventario_venta`, `merma_barra_turno`, el
+    corte (insumos consumidos y salidas sin venta), el consumo de la casa (suma sobre todos los insumos
+    y un redondeo) y la reposición sugerida.
+  - El costo de una receta es la SUMA de sus líneas (cantidad × merma × costo exacto) redondeada una vez
+    (`recalcularCostosRecetas`): dos líneas de 2.5 ¢ cuestan 5 ¢, no 6. El costo por pieza del
+    platillo sigue en centavos enteros. La pantalla (`economiaDelPlatillo`) suma las líneas sin
+    redondear cada una y redondea el total, y el puente sirve el importe de la línea sin redondear al
+    centavo.
+  - El costo promedio ponderado, sobre el exacto: `(existencia × exacto_anterior + total × 10⁸) /
+    (existencia + entrante)`, UNA división y UN redondeo (a la diezmilésima). Una existencia en negativo
+    cuenta como cero (DP-D116).
+- **La tolerancia (di cuál y por qué).** Guardar el promedio redondeado a una diezmilésima por unidad
+  deja un error de a lo más Q/20 000 ¢ con Q unidades en el almacén, que se arrastra de una compra a la
+  siguiente: `|valor − comprado| ≤ ⌊Σ Q_k/20 000 + ½⌋` ¢ (Q_k: la existencia tras la compra k).
+  Consecuencias: una compra de menos de 10 000 unidades base (10 kg, 10 L) vale EXACTAMENTE lo que costó;
+  la leche de 20 L y el maíz de 12 kg, también (2.4 y 4.5 son exactos); las siete compras de la prueba
+  suman al centavo. Con un mismo insumo comprado varias veces sin consumirse, el valor puede alejarse
+  unos centavos (simulación de 200 000 casos: ≤ 5 kg y hasta 6 compras, máximo 3 ¢; compras sueltas de
+  hasta 10 kg, 0 ¢). No se cierra más sin guardar el total de lo comprado: si algún día importa,
+  guardar el costo en millonésimas.
+- **La pantalla.** «Valor de inventario» y el costo del ingrediente salen de lo exacto: el puente lo sirve
+  con todos sus decimales (conversión nueva `dinero_fino`, `0.024` pesos el ml; no entra a `centavosDe`
+  porque redondearlo a centavos es el defecto) y la tarjeta redondea UNA vez el valor de cada
+  ingrediente. «$0.024/ml» confunde y «$0.02/ml» miente: Inventario, el selector de ingredientes y la
+  receta lo enseñan **por kilo y por litro** («$45.00/kg», «$24.00/L»), con sub-centavos sólo en piezas
+  («$0.998/pieza»). Un insumo de menos de medio centavo por unidad (la sal) ya no sale «sin costo».
+- **Dos cosas que cambian y se dicen.** (1) La vista `existencias_por_insumo` ya cuenta una existencia
+  en NEGATIVO como cero, como lo hacían la valuación guardada y la tarjeta (antes restaba, sólo la
+  leía el valor por renglón de Inventario). (2) La nota del proveedor compara el precio nuevo contra el
+  costo EXACTO del insumo (con el de centavos la leche salía 20 % «más cara» de lo que subió).
+- **Lo que NO cambia.** Los precios de venta, los totales de las cuentas, el corte (sus totales), las
+  propinas, el costo por pieza de un platillo como dato (centavos enteros), las unidades base del
+  restaurante y el costo capturado a mano (`crear_insumo`, `actualizar_costo`: centavos por unidad base;
+  el exacto sale de las compras).
+- **Lo que se dejó con el redondeado, a propósito:** los renglones del corte que sólo MUESTRAN un costo
+  unitario (alertas de insumo bajo), `costo_compra_default_centavos` (el costo por unidad de COMPRA: una
+  caja, un kilo, no se multiplica por gramos) y todo lo de `productos` y `orden_lineas` (costo por pieza
+  de venta).
+- **Pruebas.** Integración contra Postgres: `costo-exacto.integracion.test.ts` (8) y
+  `costo-exacto-migracion.integracion.test.ts` (6). Propiedad con `fast-check`:
+  `costo-exacto.propiedad.test.ts`. Mutantes (todos muertos) en el informe: costo redondeado antes de
+  multiplicar, redondeo doble, migración sin relleno y promedio sin ponderar.
+- **Encontrado, NO arreglado (fuera de esta decisión):** `inventario.consumo_interno` nunca se había
+  corrido contra Postgres y falla ahí: su salida `salida_consumo_interno` exige un `motivo` (el `check`
+  `movimiento_stock_salida_con_motivo` y la llave a `motivos_merma`) y `aplicarMovimientos` no lo escribe.
+  Y `inventario.registrar_merma`, el traspaso y la devolución escriben el movimiento SIN costo (queda en
+  su cero de omisión), así que esa merma sale a $0 en el kardex y en el corte; la que copia el costo es la
+  de cancelación, el ajuste y el cobro.

@@ -70,8 +70,9 @@ function baseDe(extra: Partial<TablasFalsas> = {}) {
         unidad_base: 'pieza',
         unidad_compra_default: 'caja',
         cantidad_por_compra_default: '100.0000',
-        // Por PIEZA: la unidad base.
+        // Por PIEZA: la unidad base. Exacto (DP-D165): 1 ¢ = 10 000 diezmilésimas.
         costo_unitario_centavos: 100n,
+        costo_exacto_dmc: 1_000_000n,
       },
       {
         id: INS_TUERCA,
@@ -81,6 +82,7 @@ function baseDe(extra: Partial<TablasFalsas> = {}) {
         unidad_compra_default: null,
         cantidad_por_compra_default: null,
         costo_unitario_centavos: 50n,
+        costo_exacto_dmc: 500_000n,
       },
     ],
     compras: [],
@@ -246,6 +248,35 @@ describe('F-631 · importar la nota', () => {
       variacionCostoBp: 0,
       precioSugeridoCentavos: null,
     });
+    expect(salida.subidasFuertes).toBe(0);
+  });
+
+  it('DP-D165 · compara contra el costo EXACTO del insumo: 2.4 ¢ la pieza no sube porque se guardó como 2', async () => {
+    // El insumo cuesta 2.4 ¢ la pieza (24 000 diezmilésimas), guardado entero como 2 ¢. La caja de 100 a
+    // $2.40 es el MISMO precio por pieza: contra los 2 ¢ salía una subida del 20 %.
+    const base = baseDe({
+      insumos: [
+        {
+          id: INS_TORNILLO,
+          organizacion_id: ORG,
+          producto_id: TORNILLO,
+          unidad_base: 'pieza',
+          unidad_compra_default: 'caja',
+          cantidad_por_compra_default: '100.0000',
+          costo_unitario_centavos: 2n,
+          costo_exacto_dmc: 24_000n,
+        },
+      ],
+    });
+    const { ctx } = contextoFalso(base.tx, ambitoDe('dueno'), AHORA);
+
+    const salida = await importarNotaDeProveedor.ejecutar(ctx, {
+      proveedorId: PROVEEDOR,
+      folioProveedor: 'N-9001',
+      renglones: [renglon({ codigoBarras: '7501111111111', costoUnitarioCentavos: 240 })],
+    });
+
+    expect(salida.renglones[0]).toMatchObject({ variacionCostoBp: 0, costoAnteriorCentavos: '2' });
     expect(salida.subidasFuertes).toBe(0);
   });
 

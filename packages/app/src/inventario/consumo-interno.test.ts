@@ -85,6 +85,8 @@ function almacen(extra: Partial<TablasFalsas> = {}): TablasFalsas {
         nombre: 'Enchiladas',
         unidad_base: 'pieza',
         costo_unitario_centavos: 4_000n,
+        // DP-D165 · El costo EXACTO (diezmilésimas de centavo): el que se multiplica.
+        costo_exacto_dmc: 40_000_000n,
       },
     ],
     existencias: [
@@ -140,6 +142,32 @@ describe('F-261 · registrar lo que se come el personal', () => {
     // Dos piezas a $40 de costo: $80.
     expect(salida.costoCentavos).toBe('8000');
     expect(base.campo('consumos_internos', 'costo_centavos')).toBe(8_000n);
+  });
+
+  it('DP-D165 · el costo se multiplica con el EXACTO y se redondea una vez: 2 piezas a 2.4 ¢ son 5 ¢', async () => {
+    // El insumo cuesta 2.4 ¢ la pieza (24 000 diezmilésimas): guardado entero serían 2 ¢ y daría 4 ¢.
+    const base = crearBaseFalsa(
+      almacen({
+        insumos: [
+          {
+            id: INSUMO,
+            organizacion_id: ORG,
+            producto_id: PRODUCTO,
+            nombre: 'Enchiladas',
+            unidad_base: 'pieza',
+            costo_unitario_centavos: 2n,
+            costo_exacto_dmc: 24_000n,
+          },
+        ],
+      }),
+      { filasCrudas: [{ cantidad: '8.0000' }] },
+    );
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'), AHORA);
+
+    const salida = await registrarConsumoInterno.ejecutar(ctx, DOS_PLATOS);
+
+    expect(salida.costoCentavos).toBe('5');
+    expect(base.campo('consumos_internos', 'costo_centavos')).toBe(5n);
   });
 
   it('EL CLIENTE NO MANDA EL COSTO: la entrada no lo acepta', () => {

@@ -1,10 +1,20 @@
-/** B-11/B-12: muta ledger, saldos y costeo; exige fallos y restaura. */
+/**
+ * B-11/B-12: muta ledger, saldos y costeo; exige fallos y restaura.
+ *
+ * DP-D165: además, el costo EXACTO del insumo (diezmilésimas de centavo por unidad base): volver a
+ * redondear el costo a centavos antes de multiplicar, redondear dos veces o promediar sin ponderar
+ * tiene que romper una prueba. Las que corren contra Postgres (valor del inventario, recetas, merma,
+ * kardex y la migración 195) se mutan a mano en el informe de la decisión.
+ */
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const pruebas = [
   'packages/app/src/inventario/inventario.test.ts',
   'packages/app/src/inventario/inventario.sql.test.ts',
+  'packages/app/src/inventario/consumo-interno.test.ts',
+  'packages/app/src/compras/compras.test.ts',
+  'packages/domain/src/inventario/valuacion.test.ts',
 ];
 
 const mutaciones = [
@@ -28,8 +38,8 @@ const mutaciones = [
   ],
   [
     'packages/app/src/inventario/recetas.ts',
-    'i.costo_unitario_centavos::numeric * r.cantidad',
-    'i.costo_unitario_centavos::numeric',
+    'i.costo_exacto_dmc::numeric * r.cantidad',
+    'i.costo_exacto_dmc::numeric',
     'costeo ignora cantidad',
   ],
   [
@@ -37,6 +47,36 @@ const mutaciones = [
     '(10000 + r.merma_bp)',
     '10000',
     'costeo ignora merma',
+  ],
+  [
+    'packages/domain/src/inventario/valuacion.ts',
+    'return articulo.costoExactoDmc ?? costoExactoDeCentavos(articulo.costoPromedioCentavos);',
+    'return costoExactoDeCentavos(articulo.costoPromedioCentavos);',
+    'valuación redondea el costo a centavos antes de multiplicar',
+  ],
+  [
+    'packages/domain/src/inventario/valuacion.ts',
+    'acumulado += toma * (capa.costoExactoDmc ?? costoExactoDeCentavos(capa.costoUnitarioCentavos));',
+    'acumulado += valorDeLoAcumulado(toma * (capa.costoExactoDmc ?? costoExactoDeCentavos(capa.costoUnitarioCentavos))) * 100_000_000n;',
+    'valuación PEPS redondea dos veces',
+  ],
+  [
+    'packages/app/src/compras/costeo.ts',
+    'const anterior = datos.existenciaAnterior > 0n ? datos.existenciaAnterior : 0n;',
+    'const anterior = datos.existenciaAnterior > 0n ? datos.cantidadEntrante : 0n;',
+    'promedio sin ponderar',
+  ],
+  [
+    'packages/app/src/compras/costeo.ts',
+    'return redondear(costoTotal * ESCALA_COSTO * ESCALA_CANTIDAD, cantidadBase);\n}',
+    'return redondear(costoTotal * ESCALA_CANTIDAD, cantidadBase) * ESCALA_COSTO;\n}',
+    'costo de la entrada redondeado a centavos antes de pasar a exacto',
+  ],
+  [
+    'packages/app/src/inventario/consumo-interno.ts',
+    ".select(['id', 'costo_exacto_dmc as costo'])",
+    ".select(['id', 'costo_unitario_centavos as costo'])",
+    'consumo interno costea con el costo redondeado',
   ],
 ];
 

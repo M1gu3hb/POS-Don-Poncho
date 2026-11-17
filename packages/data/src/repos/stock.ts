@@ -64,6 +64,9 @@ export async function aplicarMovimientos(
     ${movimiento.idempotencyKey},
     (select i.costo_unitario_centavos
        from insumos i
+      where i.organizacion_id = ${movimiento.organizacionId} and i.id = ${movimiento.insumoId}),
+    (select i.costo_exacto_dmc
+       from insumos i
       where i.organizacion_id = ${movimiento.organizacionId} and i.id = ${movimiento.insumoId})
   )`,
   );
@@ -82,7 +85,8 @@ export async function aplicarMovimientos(
       referencia_id,
       empleado_id,
       idempotency_key,
-      costo_unitario_centavos
+      costo_unitario_centavos,
+      costo_exacto_dmc
     ) values ${sql.join(filas)}
   `.execute(tx);
 }

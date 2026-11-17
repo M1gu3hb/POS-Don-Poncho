@@ -47,6 +47,14 @@ export {
 
 export { deEscalaCompleta, enEscalaCompleta } from './escala.ts';
 
+export {
+  ESCALA_COSTO,
+  centavosDelCosto,
+  costoExactoDeCentavos,
+  valorDeLaCantidad,
+  valorDeLoAcumulado,
+} from './costo-exacto.ts';
+
 export { resumirKardex, type RenglonKardex, type ResumenKardex } from './kardex.ts';
 
 export {

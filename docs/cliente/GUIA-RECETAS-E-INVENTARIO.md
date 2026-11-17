@@ -79,8 +79,8 @@ Quiere decir que se vendió más de lo que el sistema tenía anotado. Casi siemp
 
 Es lo que vale lo que tienes: por cada ingrediente, su existencia por su costo, y todo sumado.
 
-1. Por cada ingrediente se multiplica lo que hay por lo que cuesta cada gramo, mililitro o pieza.
-2. El costo sale de tus compras (el promedio de lo que has pagado).
+1. Por cada ingrediente se multiplica lo que hay por lo que cuesta cada gramo, mililitro o pieza, y el resultado se redondea al centavo una sola vez.
+2. El costo sale de tus compras (el promedio de lo que has pagado) y se guarda exacto, con sus fracciones de centavo: la leche a $24.00 el litro vale $480.00 con 20 litros, no los $400.00 de redondear cada mililitro a 2 centavos.
 3. Un ingrediente que tiene existencia pero no tiene costo no entra a la suma: la tarjeta avisa cuántos faltan.
 4. Una existencia en negativo no resta del valor (vale cero, igual que en la valuación): la tarjeta avisa cuántos son; corrígelos con un conteo.
 

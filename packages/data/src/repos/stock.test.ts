@@ -178,7 +178,9 @@ describe('INV-03 · repositorio de stock', () => {
     expect(conexion.consultas[0]!.parameters).toContain(segundo.insumoId);
     expect(conexion.consultas[1]!.parameters).toContain(movimiento.insumoId);
     expect(conexion.consultas[2]!.sql).toMatch(/insert\s+into\s+movimientos_stock/i);
-    expect(conexion.consultas[2]!.sql.match(/\),\s*\(/g)).toHaveLength(1);
+    // Un renglón por movimiento: «), (» que abre con un parámetro. (Los dos subselects del costo de
+    // cada renglón —el de centavos y el exacto, DP-D165— también se separan con «), (».)
+    expect(conexion.consultas[2]!.sql.match(/\),\s*\(\s*\$\d+/g)).toHaveLength(1);
   });
 
   it('propaga un fallo de base para que la transacción que recibió revierta', async () => {

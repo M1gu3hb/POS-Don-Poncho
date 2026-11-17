@@ -70,6 +70,46 @@ describe('valorDeLaExistencia (la tarjeta)', () => {
   });
 });
 
+describe('DP-D165 · la tarjeta multiplica con el costo EXACTO', () => {
+  it('la leche (2.4 ¢/ml, 0.024 pesos) con 20 L vale $480.00, no los $400.00 de 2 ¢', () => {
+    expect(valorDeLaExistencia(20_000, 0.024)).toBe(480);
+  });
+
+  it('el maíz (4.5 ¢/g) con 12 kg vale $540.00, no los $600.00 de 5 ¢', () => {
+    expect(valorDeLaExistencia(12_000, 0.045)).toBe(540);
+  });
+
+  it('redondea UNA vez al centavo, la mitad se aleja del cero y sin ruido de coma flotante', () => {
+    // 0.5 g a 5 ¢ = 2.5 ¢ → 3 ¢, igual que la valuación guardada del servidor.
+    expect(valorDeLaExistencia(0.5, 0.05)).toBe(0.03);
+    expect(valorDeLaExistencia(3, 0.029117)).toBe(0.09);
+  });
+
+  it('coincide con la valuación del servidor con el mismo costo exacto', () => {
+    const casos = [
+      { stock: 20_000, pesos: 0.024, exacto: 24_000n },
+      { stock: 12_000, pesos: 0.045, exacto: 45_000n },
+      { stock: 3_000, pesos: 0.029117, exacto: 29_117n },
+      { stock: 9_500, pesos: 0.310053, exacto: 310_053n },
+    ];
+    const valuacion = valuarInventario(
+      casos.map((c, i) => ({
+        insumoId: String(i),
+        existencia: c.stock.toFixed(4),
+        costoPromedioCentavos: 0n,
+        costoExactoDmc: c.exacto,
+        ultimoMovimiento: null,
+      })),
+      { metodo: 'promedio', ahora: new Date('2026-11-16T12:00:00Z') },
+    );
+    const tarjeta = casos.reduce(
+      (suma, c) => suma + Math.round(valorDeLaExistencia(c.stock, c.pesos) * 100),
+      0,
+    );
+    expect(valuacion.valorCentavos).toBe(BigInt(tarjeta));
+  });
+});
+
 describe('el aviso de la tarjeta', () => {
   it('cuenta los ingredientes en negativo y sólo ésos', () => {
     expect(cuantosEnNegativo(INSUMOS.map((i) => ({ stock_actual: i.stock })))).toBe(1);
