@@ -3114,3 +3114,29 @@ Lo que dejó probar cada combinación de ajustes (`packages/app/src/qa-final/`, 
      ni «partes iguales» de dinero (sólo por unidades de cada renglón). **Se queda así:** son
      reglas de dinero y no se cambian en la víspera; van a la lista de lo grande para después.
 - **Sin migración.**
+
+## DP-D162 · DP-22 · La app de Windows 1.0.2: cómo se publicó, qué se comprobó y qué no se puede probar aquí · 17-11-2026
+
+- **El orden de la publicación.** Primero el lado POS en producción (lote 2), después la app: release
+  `don-poncho-v1.0.2` con el instalador y su `SHA256SUMS.txt`; al canal `canal-don-poncho` el
+  instalador y su `.blockmap`, y AL FINAL `latest.yml`, que es lo que hace que las apps instaladas
+  la vean. Antes de publicar: las pruebas de la app, el instalador construido del commit unido y la
+  prueba de humo sobre la app YA EMPAQUETADA (con sus fuses), que carga el POS de producción.
+- **Sólo Windows.** Android sigue en la 1.0.1. `version.json` es compartido y ya dice 1.0.2: el
+  siguiente APK que se construya saldrá como 1.0.2 (versionCode 4) sin la capacidad de archivos, que
+  es sólo de Windows. La página de descargas resuelve cada plataforma por separado desde el canal
+  (`latest.yml` y `android.json`), así que el enlace del APK no se rompe.
+- **La actualización se comprobó en la laptop por los dos caminos**, con la 1.0.1 publicada (misma
+  suma) instalada y abierta desde el Explorador: «Reiniciar ahora» instala y vuelve a abrir la app
+  sola; «Al cerrar» instala al cerrar la app. El aviso dice la versión.
+- **El POS dentro de Electron contra el servidor local NO se prueba.** La app sólo le da el puente a
+  `https://` y al dominio exacto de producción (`origen.js`), y así se queda: abrirle la puerta a
+  `localhost` para probar sería debilitar justo el cerrojo que protege al cajón y a la impresora.
+  - **En su lugar:** el arnés táctil corre con Chrome 156, la misma versión mayor que trae Electron
+    45, y la app empaquetada pasa su humo contra producción.
+- **Guardar el PDF de un corte de punta a punta en la app instalada no se probó:** haría falta
+  cerrar una caja en producción con un PIN real, y eso no lo hace un agente. Las dos mitades sí
+  están probadas por separado (la app guarda, rechaza y no se sale de su carpeta; el POS detecta la
+  capacidad, arma el nombre y no retrasa el cierre). Queda en la lista física de Miguel: tras el
+  primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`.
+- **Sin migración.**

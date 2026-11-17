@@ -163,9 +163,18 @@ Rama `dp-22-lote2-pr` (checkout principal, sobre `main` ya con el lote 1). Lleva
   la laptop: la 1.0.1 publicada (misma suma) instalada y abierta a las 08:04:11; a las 08:04:44 ya
   había bajado la 1.0.2; salió el aviso «POS Don Poncho tiene una actualización · La versión 1.0.2
   ya está lista» (`D:\mpos-tmp\dp22\aviso-actualizacion.png`); «Reiniciar ahora» a las 08:06:14 y
-  a las 08:07:11 lo instalado era la 1.0.2. **Por ver:** tras «Reiniciar ahora» la app no se volvió
-  a abrir sola (visto una vez). Guardar un PDF de corte de punta a punta dentro de la app instalada
-  no se probó (haría falta cerrar una caja; en producción no se cobra).
+  a las 08:07:11 lo instalado era la 1.0.2. Esa primera vez la app no se volvió a abrir sola: la
+  había lanzado esta consola, no una persona.
+- **Los dos caminos de la actualización, repetidos abriendo la 1.0.1 desde el Explorador (10:03 a
+  10:14, `D:\mpos-tmp\dp22\prueba-actualizacion.sh`):** con «Reiniciar ahora», el aviso salió a
+  los 24 s de abrir y 22 s después estaba instalada la 1.0.2 y la app ABIERTA OTRA VEZ sola; con
+  «Al cerrar», al cerrar la app con normalidad quedó instalada la 1.0.2 en 25 s (y la app,
+  cerrada, como debe). No hay defecto.
+- **Lo que no se puede probar aquí** (DP-D162): el POS dentro de Electron contra el servidor local
+  (la app sólo acepta `https://` y el dominio exacto de producción, a propósito: se queda el
+  Chromium 156 del arnés más el humo de la app empaquetada) y guardar el PDF de un corte de punta
+  a punta en la app instalada (haría falta cerrar una caja en producción con un PIN real). Lo
+  segundo va a la lista física de Miguel.
 
 El barrido de servicio y los hallazgos 2 a 6 (agente A, rama `dp-22-lote2` en `.work\dp20-lab`) y
 lo de salón y cocina (agente D1, rama `dp-22-salon`) van en el lote siguiente.
