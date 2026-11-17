@@ -3287,4 +3287,22 @@ había visto; el aviso de insumo bajo (DP-D159) la usa. Ahora la existencia se l
   están probadas por separado (la app guarda, rechaza y no se sale de su carpeta; el POS detecta la
   capacidad, arma el nombre y no retrasa el cierre). Queda en la lista física de Miguel: tras el
   primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`.
+## DP-D163 · Los ajustes de Configuración tienen que demostrar su efecto (DP-22, 17-nov-2026)
+
+- **Decisión:** cada ajuste de Configuración se da por comprobado sólo con una prueba que se haya visto
+  fallar al romper su lector (mutante). El papel se prueba contra el componente real del ticket y del
+  corte (`pruebas/impresion/ajustes-del-papel.spec.ts`), las copias por el camino de producción con la
+  app falsa (`copias-por-la-app.spec.ts`), el portal en servidor (`ajustes-del-portal.integracion.test.ts`)
+  y en el teléfono, y lo de cada aparato con el dedo (`pruebas/e2e/qa-final/ajustes.*.spec.ts`).
+  `efectos.json` dice por cada clave su prueba y su estado; lo que no quedó, queda como «por ver».
+- **Sin migración.**
+
+## DP-D164 · Lo que el acceso y «Mostrar productos sin imagen» NO hacen (DP-22)
+
+- **Hallazgos que se declaran, no se cambian en la víspera:** (1) el acceso (pantalla del PIN, sin sesión)
+  no lee `color_primario`, `color_acento`, `nombre_sistema` ni los logos: la configuración exige sesión y
+  los colores no son públicos a propósito (`lo-publico.test.ts`); sólo el nombre sale de la lista de
+  personas. Los ajustes valen para el sistema interno. (2) `portal_qr_mostrar_sin_imagen` sólo gobierna el
+  menú «A la carta»; en «Menú digital» (el de siempre) no hace nada. **Se queda así** hasta que Miguel
+  decida: esconder la casilla en «Menú digital» o hacerla valer.
 - **Sin migración.**
