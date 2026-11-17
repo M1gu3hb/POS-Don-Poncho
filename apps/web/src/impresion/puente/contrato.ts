@@ -149,8 +149,48 @@ export interface CapacidadDeConexion {
 
 export type Evento = 'progreso' | 'actualizacion' | 'modo-ligero';
 
+/**
+ * DP-D153 · Lo que la app sabe hacer además del contrato base. Sólo existe desde la app de Windows
+ * 1.0.2: si falta (1.0.1, Android, navegador), la página no ofrece lo que dependa de ello.
+ */
+export type Capacidad = 'archivos';
+
+/** Lo ÚNICO que la página manda para guardar un corte: ni ruta ni nombre (los pone la app). */
+export interface CorteParaGuardar {
+  /** «DPC-0102», «CC-2»: letras y números, hasta 3 tramos con guion, 24 caracteres. */
+  readonly folio: string;
+  /** `AAAA-MM-DD`: de ella sale la carpeta del mes. */
+  readonly fecha: string;
+  /** El PDF en base64 (empieza con `%PDF-`). */
+  readonly base64: string;
+}
+
+export type ResultadoDeGuardado =
+  | {
+      readonly ok: true;
+      readonly estado: 'guardado' | 'ya-estaba' | 'reemplazado';
+      readonly ruta: string;
+      readonly bytes: number;
+    }
+  | { readonly ok: false; readonly codigo: string; readonly mensaje: string };
+
+export type ResultadoDeCarpeta =
+  | { readonly ok: true; readonly ruta: string }
+  | { readonly ok: false; readonly codigo: string; readonly mensaje: string };
+
+/** Windows 1.0.2. Ninguna función lanza por un fallo: el motivo viene en el resultado. */
+export interface ArchivosDeCortes {
+  guardar(corte: CorteParaGuardar): Promise<ResultadoDeGuardado>;
+  /** Sin parámetros: abre `Documentos\POS Don Poncho\Cortes` y ninguna otra carpeta. */
+  abrirCarpeta(): Promise<ResultadoDeCarpeta>;
+}
+
 export interface MorphiqApp {
   readonly contrato: 1;
+  /** Falta en la app 1.0.1 y en Android. */
+  readonly capacidades?: readonly Capacidad[];
+  /** Sólo si `capacidades` incluye `'archivos'`. */
+  readonly archivos?: ArchivosDeCortes;
   version(): Promise<string>;
   plataforma(): Promise<Plataforma>;
   diagnostico(): Promise<Diagnostico>;

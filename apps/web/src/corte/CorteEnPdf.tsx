@@ -2,7 +2,7 @@
 
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Aviso, Esqueleto, Superficie } from '@morphiqpos/ui/sistema';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, FolderOpen, HardDriveDownload } from 'lucide-react';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -10,6 +10,9 @@ import { ErrorApi, invocarComando } from '~/cliente/api';
 
 import { leerDescuentosDelCorte } from '~/corte-heredado/descuentos-del-corte';
 
+import { entregarSinEsperar } from './carpeta/entregar-el-pdf.ts';
+import { fechaParaElArchivo, folioParaElArchivo } from './carpeta/nombre-del-pdf.ts';
+import { AYUDA_DE_LA_CARPETA, useCarpetaDeCortes } from './carpeta/use-carpeta-de-cortes.ts';
 import { documentoDelCorte } from './giros.ts';
 import { HojaDelCorte } from './HojaDelCorte.tsx';
 import type { DocumentoDelCorte, HojaDelServidor } from './hoja.ts';
@@ -33,6 +36,8 @@ type Estado =
       readonly paso: 'listo';
       readonly documento: DocumentoDelCorte;
       readonly descargarSolo: boolean;
+      /** Cuándo se selló, para la carpeta del mes del PDF. */
+      readonly cerradaEn: string | null;
     }
   | { readonly paso: 'fallo'; readonly mensaje: string };
 
@@ -43,6 +48,18 @@ const FUERA_DE_PANTALLA = {
   width: '210mm',
   zIndex: -1,
 } as const;
+
+/** El PDF sin descargarlo: para guardarlo en la carpeta de cortes de la app (DP-D153). */
+async function armarElPdf(nodo: HTMLElement): Promise<Blob> {
+  const { generatePDFBlobFromNode } = (await import('@/lib/pdfDownload')) as {
+    generatePDFBlobFromNode: (nodo: HTMLElement) => Promise<Blob>;
+  };
+  return generatePDFBlobFromNode(nodo);
+}
+
+type SalidaDeLaCarpeta =
+  | { readonly paso: 'guardado'; readonly ruta: string }
+  | { readonly paso: 'fallo'; readonly mensaje: string };
 
 async function descargar(nodo: HTMLElement, nombre: string): Promise<void> {
   // Import dinámico: html2canvas y jsPDF pesan, y sólo hacen falta al descargar.
@@ -66,6 +83,10 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
   const [descargando, setDescargando] = useState(false);
   const [descargado, setDescargado] = useState(false);
   const [falloAlDescargar, setFalloAlDescargar] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [salidaDeLaCarpeta, setSalidaDeLaCarpeta] = useState<SalidaDeLaCarpeta | null>(null);
+  const carpeta = useCarpetaDeCortes();
+  const archivos = carpeta.archivos;
   const [generadoEn] = useState(() => new Date());
   const nodo = useRef<HTMLDivElement>(null);
   const yaSeBajoSolo = useRef(false);
@@ -88,6 +109,7 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
           paso: 'listo',
           documento: documentoDelCorte(hoja, descuentos),
           descargarSolo: hoja.negocio.descargarAlCerrar,
+          cerradaEn: hoja.sesion.cerradaEn,
         });
       })
       .catch((fallo: unknown) => {
@@ -116,8 +138,44 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
     }
   }
 
-  const bajarSolo = useEffectEvent((documento: DocumentoDelCorte) => {
-    void bajar(documento);
+  /**
+   * Con la app 1.0.2 el PDF va a la carpeta de cortes. SIN esperar: el corte ya está sellado y un
+   * guardado lento o roto no lo retrasa; si falla, se avisa aquí y se reintenta con el botón.
+   */
+  function guardarEnLaCarpeta(documento: DocumentoDelCorte, cerradaEn: string | null): void {
+    if (nodo.current === null || archivos === null) return;
+    const elNodo = nodo.current;
+    setGuardando(true);
+    setSalidaDeLaCarpeta(null);
+    entregarSinEsperar(
+      {
+        archivos,
+        datos: {
+          folio: folioParaElArchivo(documento.folio, sesionCajaId),
+          fecha: fechaParaElArchivo(cerradaEn),
+        },
+        generar: () => armarElPdf(elNodo),
+        descargar: () => Promise.resolve(),
+      },
+      (entrega) => {
+        setGuardando(false);
+        setSalidaDeLaCarpeta(
+          entrega.ok === false
+            ? { paso: 'fallo', mensaje: entrega.mensaje }
+            : { paso: 'guardado', ruta: 'ruta' in entrega ? entrega.ruta : '' },
+        );
+      },
+    );
+  }
+
+  async function abrirLaCarpeta(): Promise<void> {
+    const r = await carpeta.abrirCarpeta();
+    if (!r.ok) setSalidaDeLaCarpeta({ paso: 'fallo', mensaje: r.mensaje });
+  }
+
+  const bajarSolo = useEffectEvent((documento: DocumentoDelCorte, cerradaEn: string | null) => {
+    if (archivos === null) void bajar(documento);
+    else guardarEnLaCarpeta(documento, cerradaEn);
   });
 
   // La descarga sola, UNA vez, cuando la hoja ya está pintada fuera de pantalla.
@@ -126,8 +184,9 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
     if (yaSeBajoSolo.current) return;
     yaSeBajoSolo.current = true;
     const documento = estado.documento;
+    const cerradaEn = estado.cerradaEn;
     const espera = setTimeout(() => {
-      bajarSolo(documento);
+      bajarSolo(documento, cerradaEn);
     }, 300);
     return () => {
       clearTimeout(espera);
@@ -147,7 +206,7 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
       como="section"
       aria-label="PDF del corte"
       relleno={3}
-      className="flex flex-col gap-(--espacio-2) sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-(--espacio-2) sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
     >
       {estado.paso === 'leyendo' ? (
         // La forma de la línea que viene, no una rueda: al llegar la hoja nada salta.
@@ -162,9 +221,11 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
       ) : (
         <p className="flex items-center gap-(--espacio-2) text-sm">
           <FileText aria-hidden="true" className="text-texto-sutil" />
-          {descargado
-            ? `PDF del corte ${estado.documento.folio} descargado.`
-            : `PDF del corte ${estado.documento.folio} listo.`}
+          {salidaDeLaCarpeta?.paso === 'guardado'
+            ? `PDF del corte ${estado.documento.folio} guardado en tu carpeta de cortes.`
+            : descargado
+              ? `PDF del corte ${estado.documento.folio} descargado.`
+              : `PDF del corte ${estado.documento.folio} listo.`}
         </p>
       )}
       <Button
@@ -178,6 +239,39 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
         <Download aria-hidden="true" />
         Descargar el PDF del corte
       </Button>
+      {archivos !== null && estado.paso === 'listo' ? (
+        <>
+          <Button
+            variant="outline"
+            className="min-h-11"
+            disabled={guardando}
+            cargando={guardando}
+            onClick={() => {
+              guardarEnLaCarpeta(estado.documento, estado.cerradaEn);
+            }}
+          >
+            <HardDriveDownload aria-hidden="true" />
+            Guardar en la carpeta
+          </Button>
+          <Button
+            variant="outline"
+            className="min-h-11"
+            onClick={() => {
+              void abrirLaCarpeta();
+            }}
+          >
+            <FolderOpen aria-hidden="true" />
+            Abrir carpeta
+          </Button>
+          <p className="text-xs text-texto-sutil sm:basis-full">{AYUDA_DE_LA_CARPETA}</p>
+        </>
+      ) : null}
+      {salidaDeLaCarpeta?.paso === 'fallo' ? (
+        <Aviso tono="peligro" titulo="No se guardó el PDF en la carpeta">
+          {salidaDeLaCarpeta.mensaje} El corte ya quedó cerrado. Puedes reintentar aquí con «Guardar
+          en la carpeta» o después, desde Registros → Cortes.
+        </Aviso>
+      ) : null}
       {falloAlDescargar === null ? null : (
         <Aviso tono="peligro" titulo="No se descargó el PDF">
           {falloAlDescargar}
