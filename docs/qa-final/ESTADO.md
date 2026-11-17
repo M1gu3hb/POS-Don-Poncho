@@ -3,37 +3,33 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11-2026, 05:25.
+Última puesta al día: 17-11-2026, 05:45.
 
-## AHORA MISMO (17-11, 05:25) — retomar desde aquí
+## AHORA MISMO (17-11, 05:45) — retomar desde aquí
 
 La sesión se cortó dos veces por el límite de uso (16-11 23:55 y 17-11 00:10) y se reanudó a las
 05:10. Nada se ha desplegado todavía; producción sigue en `63977e1`, con 0 errores en Vercel.
 
-1. **PR #37: 9 de 10 en la CI sobre `7a51e29`.** Falló «Jornada completa · restaurante» en
-   `pruebas/e2e/sonidos.spec.ts:227` (registro: `/d/mpos-tmp/dp22/ci-jornada-1.log`). La prueba
-   entraba como DUEÑA a `/cocina` y esperaba el «Ping»; con DP-D151 un puesto que no es de cocina
-   no anuncia por omisión (y el vigilante, desde DP-21, corta antes del timbre). **Decidido:** la
-   regla se queda (el aparato de la dueña no suena ni habla hasta que lo encienda) y la prueba se
-   corrige: ahora escucha el puesto de COCINA, hay una prueba nueva («Cocina en el aparato de la
-   dueña: sin elegirlo no suena; encendido en este aparato, sí») y la de «la voz hablando» también
-   escucha desde la cocina (con la dueña pasaba sin probar nada). El cambio está SIN commit en
-   `pruebas/e2e/sonidos.spec.ts` del checkout principal.
-2. **Corriendo en el checkout principal:** `bash /d/mpos-tmp/dp22/e2e-tanda.sh lote1-ci construir
-sonidos:escritorio,tablet,telefono configuracion-que-no-se-regresa cajas-del-negocio
-personalizar-menu` → `/d/mpos-tmp/dp22/tanda-lote1-ci.log` (reconstruye, levanta el 3200 sobre
-   la desechable 5437 y corre la prueba arreglada más las tres suites que la CI no alcanzó). Si
-   sale en verde: revisar PIN, commit, `git push`, esperar la CI, unir, Production «Ready», humo
-   (`/d/mpos-tmp/dp22/humo-produccion.sh 1`) y la hora de Vercel.
-3. **Agentes:** B (Bloque 18) y C (Fase D) REANUDADOS a las 05:12 sobre lo que ya tenían. A
-   (barrido y hallazgos 2 a 6) sigue detenido para no cargar la máquina mientras corre la e2e del
-   lote 1: se reanuda en cuanto termine (su servidor 3210 y su Postgres 5438 siguen arriba). Lo
-   que A ya dejó: `pruebas/e2e/qa-final/barrido-servicio.spec.ts`, `arnes/barrido.ts`,
-   `fecha-del-negocio.spec.ts` y `pregunta-del-anuncio.spec.ts`.
+1. **PR #37, commit `64bb750`, con la CI corriendo.** La corrida anterior (`7a51e29`) quedó en 9 de
+   10: falló «Jornada completa» en `pruebas/e2e/sonidos.spec.ts` por una suposición vieja de la
+   prueba (entraba como dueña a Cocina y esperaba el timbre; con DP-D151 sólo anuncia el puesto de
+   cocina, y el timbre va con la voz). La regla se quedó y la prueba se corrigió (`64bb750`); en
+   local pasan las tres pruebas de Cocina en los tres aparatos, su mutante cae y también pasan las
+   tres suites que la CI no alcanzó. **Al quedar en verde:** unir (merge, nunca force) → fila
+   **Production «Ready»** → humo (`bash /d/mpos-tmp/dp22/humo-produccion.sh 1`) → lectura de
+   producción por la 5432 → Vercel sin errores nuevos en la hora siguiente → aviso en el chat y
+   llenar «CI, despliegue, humo» del lote 1 en `PROGRESO-DP22.md`.
+2. **Agentes (los tres REANUDADOS sobre lo que ya llevaban, sin commit):** A en `.work\dp20-lab`
+   (barrido de servicio y hallazgos 2 a 6; Postgres 5438, servidor 3210), B en `.work\dp20` y
+   `.work\apps-electron` (Bloque 18), C en `.work\dp18-integrar` (Fase D; base `dp22_ajustes`).
+   Al terminar cada uno: revisar el diff, correr yo sus pruebas y las unitarias COMPLETAS de la
+   zona, mutante propio, `verify:aspecto`, `verify:heredado`, revisar PIN y consolidar en su rama.
+3. El servidor de e2e del checkout principal quedó arriba en el 3200 (base desechable 5437). Para
+   correr e2e aquí: `bash /d/mpos-tmp/dp22/e2e-tanda.sh <nombre> <construir|sin-construir>
+<spec[:proyectos]>…` (deja el registro en `/d/mpos-tmp/dp22/tanda-<nombre>/`).
 4. `verify-lote1` terminó (00:06) sobre `6ce290a`: todo en verde salvo `lint` y `test:unit`, ya
-   arregladas en `6ce290a` y `7a51e29`. Falta repetir `test:unit` sobre el commit final.
-5. Los documentos de `docs/qa-final/`, `PROGRESO-DP22.md` y `PLAN.md` siguen SIN commit en el
-   checkout principal; entran con el lote 2 (ya con formato de `prettier`).
+   arregladas; la CI las volvió a pasar sobre `7a51e29`.
+5. La bitácora ya está en el repo (`64bb750`). El checkout principal está limpio.
 
 ## Dónde voy
 

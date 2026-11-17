@@ -16,10 +16,12 @@
 | Severidad | Encontrados | Arreglados | Abiertos |
 | --------- | ----------: | ---------: | -------: |
 | Crítico   |           0 |          0 |        0 |
-| Alto      |           1 |          1 |        0 |
-| Medio     |           5 |          0 |        5 |
-| Bajo      |           0 |          0 |        0 |
+| Alto      |           2 |          2 |        0 |
+| Medio     |           7 |          1 |        6 |
+| Bajo      |           2 |          0 |        2 |
 | Por ver   |           1 |          0 |        1 |
+
+(El alto 8 y el medio 9 están arreglados en la rama del lote 2, todavía sin desplegar.)
 
 ## Lista
 
@@ -31,7 +33,12 @@
 | 4   | medio   | Barra lateral, Caja y salón del mesero · táctiles                | Tocables por debajo de 44 px: los enlaces de la barra lateral (121×40), «Activar modo oscuro», «Sonido», «Salir», las pestañas de Caja y las fichas de zona del mesero (se arreglan por componente) | abierto (agente A, lote 2)                           |
 | 5   | medio   | Barra lateral · 1280×800 y 1366×768 a 125 % (1093×614)           | «Compras» queda encimado con «Activar modo oscuro»: en una pantalla baja el dedo puede caer en el botón equivocado                                                                                  | abierto (agente A, lote 2)                           |
 | 6   | por ver | Caja cerrada · todos                                             | «Abrir caja» aparece con `pointer-events: none`: falta saber si es un deshabilitado legítimo con su motivo a la vista o un botón muerto                                                             | por confirmar (agente A)                             |
-| 7   | medio   | Cocina y salón · todos                                           | Con un plato ya «listo», quitar el otro platillo de la comanda la deja en «nuevo»: la mesa no pasa a «Esperando entrega» y el mesero no recibe el aviso hasta que cocina la vuelve a tocar          | abierto: causa localizada, por arreglar              |
+| 7   | medio   | Cocina y salón · todos                                           | Con un plato ya «listo», quitar el otro platillo de la comanda la deja en «nuevo»: la mesa no pasa a «Esperando entrega» y el mesero no recibe el aviso hasta que cocina la vuelve a tocar          | abierto: causa localizada (agente D1)                |
+| 8   | alto    | Caja · cobro de una cuenta dividida                              | Si se cambia el IVA después de dividir una cuenta, cobrar una de sus partes da «Algo falló» y esa parte ya no se puede cobrar                                                                       | arreglado (lote 2, por desplegar)                    |
+| 9   | medio   | Propina en la Caja y en el portal                                | La propina por porcentaje salía un centavo abajo en los medios centavos ($28,771.50 al 15 % daba $4,315.72 y el servidor $4,315.73)                                                                 | arreglado (lote 2, por desplegar)                    |
+| 10  | medio   | Personas y seguridad                                             | Cambiarle el PIN a alguien no cierra la sesión que tenga abierta: sigue dentro hasta que venza (12 h)                                                                                               | abierto: se arregla (cerrar sus sesiones)            |
+| 11  | bajo    | Caja · cobro                                                     | El servidor acepta una propina al cobrar aunque en Configuración nadie pueda elegirla; la pantalla la esconde, el servidor no la exige                                                              | anotado: no se cambia antes de abrir (ver detalle)   |
+| 12  | bajo    | Caja · cobro                                                     | Cuando el total cambió desde la precuenta, el aviso dice «El total cambió…» pero no trae el total nuevo                                                                                             | abierto                                              |
 
 ## Detalle
 
@@ -99,6 +106,56 @@ Lo vio el agente 1 al probar los candados de la cocina: con dos platos en una co
   al mínimo de sus platos y, si quedan «listo», siguen el mismo cierre que cuando el último plato
   se marca listo (líneas, mesa, lo ya cobrado). Con su prueba de integración en rojo antes y su
   mutante. Falta verlo también en la pantalla de Cocina con el dedo.
+
+### 8 · alto · Con el IVA cambiado, una parte de una cuenta dividida no se podía cobrar
+
+- **Cómo se encontró:** el caso 4 de los cambios a media operación (Fase D), contra Postgres.
+- **Pasos:** dividir una cuenta por platillo → Configuración → cambiar el IVA (por ejemplo, de «sin
+  IVA» a 16 % sumado) → cobrar una de las partes con su total nuevo. El servidor contesta «Algo
+  falló» (`ERROR_INTERNO`, sqlstate 23514) y la parte queda sin poder cobrarse.
+- **Causa:** la cuenta toma la tasa vigente AL COBRAR (`venta/cotizar.ts`), así que el cobro
+  reescribe el total de la parte; la cuenta madre seguía sumando el total viejo y la base lo
+  rechaza al confirmar (`division_cuadra`, migración 070: la madre vale lo que suman sus partes).
+- **Arreglo:** `packages/app/src/venta/cobrar.ts` (pasos `leer_la_parte` y `ajustar_la_madre`): si
+  cualquiera de los cuatro importes de la parte cambió, la madre se vuelve a sumar con la misma
+  función que ya se usa al descontar o cancelar una parte (`ajustarLaMadreASusPartes`), con el
+  candado de la madre. La revisión añadió el caso del IVA INCLUIDO (el total no cambia y el
+  impuesto sí): comparar sólo el total dejaba a la madre diciendo «sin IVA».
+- **La regla, escrita (DP-D155):** la cuenta toma la tasa vigente al cobrar; la parte ya cobrada
+  conserva la suya; cobrar con el total de una precuenta vieja se rechaza y se vuelve a leer.
+- **Pruebas:** `packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts` (13 de
+  13). **Ataques:** I ✓ · M ✓ (sin el ajuste caen 2; comparando sólo el total cae el caso del IVA
+  incluido) · C (dos partes a la vez se forman en el candado de la madre) · G ✓ (unitarias de
+  `venta` y `restaurante`, y las 112 ternas del dinero) · **E pendiente** (verlo en la Caja).
+
+### 9 · medio · La propina por porcentaje, un centavo abajo
+
+- **Causa:** cuenta en pesos con punto flotante en `PropinaDialog.jsx` y `PedirCuentaQR.jsx`
+  (`Math.round(pesos * (pct / 100) * 100) / 100`): 4,315.725 se quedaba en 4,315.72.
+- **Arreglo:** `propinaPorPorcentaje` en `heredado/utils/tipsUtils.js`, en centavos enteros y con
+  el medio centavo hacia arriba, igual que el servidor.
+- **Pruebas:** `qa/qa-final/propiedades/propina-pantallas.contrato.test.ts` y la propiedad de
+  `fast-check` (contraejemplo fijado: 2,877,150 centavos al 15 %). **Ataques:** U ✓ · M ✓ · O ✓.
+
+### 10 · medio · Cambiar el PIN no cierra la sesión abierta
+
+`identidad/comandos.ts` rota la credencial pero no toca `sesiones`: quien ya estaba dentro sigue
+hasta que su sesión venza. Desactivar a la persona sí las cierra (`empleados.ts`,
+`revocarSesionesDeEmpleo`). **Decisión:** cambiar el PIN de OTRA persona cierra sus sesiones (si
+se lo cambian porque alguien lo vio, ese alguien no se queda dentro); cambiar el propio no cierra
+la sesión con la que se está cambiando. Por arreglar con su prueba y su mutante.
+
+### 11 · bajo · El servidor acepta la propina al cobrar sin mirar quién puede elegirla
+
+`venta.cobrar` no lee «quién elige la propina»; sólo `cuenta.fijar_propina` lo hace valer. La
+pantalla de la Caja esconde el selector cuando la Caja no puede. No se cambia antes de abrir: la
+propina que llega al cobro puede venir ya fijada por el comensal o el mesero, y endurecer el cobro
+tiene más riesgo de romper un cobro legítimo que beneficio. Queda en la lista de después.
+
+### 12 · bajo · «El total cambió…» sin decir el total nuevo
+
+`TOTAL_DESACTUALIZADO` sólo lleva la regla; el comentario de `venta/cotizar.ts` promete el total
+vigente. La cajera tiene que volver a abrir la cuenta para verlo. Por ver en la Caja con el arnés.
 
 ## Lo que la verificación completa cazó antes de unir (no llegó a producción)
 

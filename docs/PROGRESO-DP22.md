@@ -109,10 +109,31 @@ siguiente.
     nueva de error en Vercel durante la hora siguiente.
   - Después: humo sin sesión y sin cobrar (`/d/mpos-tmp/dp22/humo-produccion.sh 1`), lectura de
     producción por la 5432 (nada cambió en los datos) y Vercel en la hora siguiente.
-- **CI, despliegue, humo y la hora de Vercel:** _(se llena al unir)_.
+- **La CI:** la primera corrida completa (`7a51e29`) quedó en 9 de 10: «Jornada completa» falló en
+  `pruebas/e2e/sonidos.spec.ts` por una suposición vieja de la prueba (la dueña en Cocina esperaba
+  el timbre; con DP-D151 sólo anuncia el puesto de cocina). Se corrigió la prueba (`64bb750`), se
+  corrió en local en los tres aparatos con su mutante, más las tres suites que la CI no alcanzó.
+  Segunda corrida: **10 de 10** (17-11, 05:59).
+- **Despliegue (17-11):** unido a `main` como `ff03687` a las 05:59; producción ya servía el lote a
+  las 06:01 (la ruta nueva `/api/registros/resumen` pasó de 404 a 403).
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 1`, 06:01): 38 revisiones, 0 fallas: las
+  entradas responden, sin sesión todo contesta 401 o 403, las rutas nuevas existen, las de siempre
+  siguen en pie, cabeceras de seguridad, el portal y «Hecho por MORPHIQ» en la entrada.
+- **Producción, sólo lectura (05:50):** las mismas 9 cuentas de prueba (A-1 a A-9), 1 caja cerrada,
+  0 abiertas, 10 mesas libres, migraciones hasta la 193. El lote no lleva migraciones.
+- **Vercel:** 0 errores de ejecución al desplegar; la hora siguiente _(se llena a las 07:05)_.
 
-### Lote 2 (en preparación) · el arnés táctil y lo que encuentre
+### Lote 2 (en preparación) · el dinero combinado, los cortes en la carpeta y el arnés
 
-Rama `dp-22-lote2`: el arnés (`dp-22-arnes`, 14 aparatos, toque real, revisiones automáticas, 45
-de 45 en tres perfiles, tres mutantes del arnés tumban su autoprueba) unido con el lote 1. Encima,
-el agente A barre las pantallas de servicio y arregla los hallazgos 2 a 6.
+Rama `dp-22-lote2-pr` (checkout principal, sobre `main` ya con el lote 1). Lleva:
+
+- **El arnés táctil** (`dp-22-arnes`: 14 aparatos, toque real, revisiones automáticas; 45 de 45 en
+  tres perfiles; tres mutantes del arnés tumban su autoprueba).
+- **La Fase D** (rama `dp-22-ajustes`, agente C, revisada): las ternas del dinero y los pares de
+  ajustes contra el oráculo, los 11 cambios a media operación, y dos arreglos que salieron de ahí
+  (hallazgos 8 y 9).
+- **El Bloque 18, lado POS** (rama `dp-22-b18`, agente B, revisada): el PDF del corte se guarda en
+  la carpeta de la app de Windows 1.0.2.
+
+El barrido de servicio y los hallazgos 2 a 6 (agente A, rama `dp-22-lote2` en `.work\dp20-lab`) y
+lo de salón y cocina (agente D1, rama `dp-22-salon`) van en el lote siguiente.
