@@ -145,6 +145,27 @@ Rama `dp-22-lote2-pr` (checkout principal, sobre `main` ya con el lote 1). Lleva
 - **La app 1.0.2** (repo de las apps, rama `exe-1.0.2`, PR morphiq-pos-apps#2): construida; humo de
   la app EMPAQUETADA 10 de 10 (carga el POS de producción, la capacidad `archivos` a la vista, un
   no-PDF rechazado sin escribir nada). Sin publicar todavía.
+- **La CI:** tercera corrida (`9965fb8`), **10 de 10** (07:52), con la integración contra Postgres,
+  la construcción y las puertas de mutación.
+- **Despliegue (17-11):** unido a `main` como `829b13d` a las 07:53; el despliegue de producción
+  quedó «READY» a las 07:55 (`dpl_2W6ZV4…`). Regreso previsto: el despliegue del lote 1
+  (`dpl_3JDNeS…`); sin migraciones.
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 2`, 07:56): 38 revisiones, 0 fallas.
+- **Vercel:** 0 errores al desplegar y **0 en la hora siguiente** (revisado a las 09:00, ventana
+  de 2 h). **Lote 2 cerrado.**
+- **En local**, sobre la rama del lote: las puertas de mutación, la construcción, el modo
+  compatible, la cobertura y la integración completa contra Postgres en verde (08:47); la suite
+  unitaria completa (las 4 que se pasaron de tiempo con la máquina cargada pasan solas); tipos,
+  lint y formato de lo tocado. `verify:cabeceras` no alcanzó a arrancar su servidor en 30 s con la
+  máquina cargada (igual que en la línea base) y repetida sola pasa.
+- **La app 1.0.2, publicada y vista llegar (17-11, 08:03 a 08:07):** PR morphiq-pos-apps#2 unido
+  (`37ec070`); release `don-poncho-v1.0.2`; canal `canal-don-poncho` con `latest.yml` en 1.0.2. En
+  la laptop: la 1.0.1 publicada (misma suma) instalada y abierta a las 08:04:11; a las 08:04:44 ya
+  había bajado la 1.0.2; salió el aviso «POS Don Poncho tiene una actualización · La versión 1.0.2
+  ya está lista» (`D:\mpos-tmp\dp22\aviso-actualizacion.png`); «Reiniciar ahora» a las 08:06:14 y
+  a las 08:07:11 lo instalado era la 1.0.2. **Por ver:** tras «Reiniciar ahora» la app no se volvió
+  a abrir sola (visto una vez). Guardar un PDF de corte de punta a punta dentro de la app instalada
+  no se probó (haría falta cerrar una caja; en producción no se cobra).
 
 El barrido de servicio y los hallazgos 2 a 6 (agente A, rama `dp-22-lote2` en `.work\dp20-lab`) y
 lo de salón y cocina (agente D1, rama `dp-22-salon`) van en el lote siguiente.

@@ -3,39 +3,40 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11-2026, 06:30.
+Última puesta al día: 17-11-2026, 10:10.
 
-## AHORA MISMO (17-11, 06:30) — retomar desde aquí
+## AHORA MISMO (17-11, 10:10) — retomar desde aquí
 
-1. **Lote 1 EN PRODUCCIÓN** (PR #37 unido como `ff03687`, 05:59; producción lo sirve desde las
-   06:01). Humo sin sesión y sin cobrar: 38 revisiones, 0 fallas. Vercel: 0 errores al desplegar;
-   **falta la revisión de la hora (07:05)** y anotarla en `PROGRESO-DP22.md`.
-2. **Lote 2 en armado** en el checkout principal, rama `dp-22-lote2-pr` (sobre `main`): la
-   bitácora (`79db49c`) + la unión de `dp-22-ajustes` (`b0a7a9a`: el arnés táctil, la Fase D y los
-   arreglos de los hallazgos 8, 9 y 10) + la de `dp-22-b18` (`912c726`: el Bloque 18, lado POS).
-   Como el lote 1 se unió con squash, las uniones traen conflictos en documentos: la bitácora
-   (`ESTADO`, `HALLAZGOS`, `NUEVO`, `PLAN`, `PROGRESO`) se queda con LO NUESTRO; `MATRIZ.md`,
-   `efectos.json`, `matriz.json` y `.gitignore`, con LO SUYO; `DECISIONES.md` y
-   `scripts/aspecto-permitido.json` llevan los dos lados
-   (`node /d/mpos-tmp/dp22/unir-los-dos-lados.cjs <archivo>`). Después: `pnpm qa:matriz`,
-   `verify` completo (`bash /d/mpos-tmp/dp22/verify-todo.sh`), las suites de la CI que `verify` no
-   corre (`bash /d/mpos-tmp/dp22/e2e-tanda.sh …`), PR, CI, unir, Production «Ready», humo y la hora.
-3. **Bloque 18, la app:** consolidada en el repo de las apps, rama `exe-1.0.2` (`ebccf30`, en
-   `.work\apps-electron`), 125 de 125 y mutantes propios. **Falta:** construir
-   (`cd electron && npm run construir`), el humo de la app empaquetada (`--prueba-humo`), publicar
-   en `canal-don-poncho` (primero el `.exe` y su `.blockmap`, al final `latest.yml`) y comprobar
-   en la laptop que una 1.0.1 instalada la recibe. La 1.0.1 NO está instalada hoy en la laptop; su
-   instalador está en `.work\apps-electron\electron\salida\`. Los comandos están en el informe del
-   agente B (transcripción) y en `README.md` de las apps.
-4. **Agentes corriendo (3):** A en `.work\dp20-lab` (`dp-22-lote2`: barrido de servicio y
-   hallazgos 2 a 6; 5438 y 3210), D1 en `.work\dp20` (`dp-22-salon`: hallazgo 7, pasar la mesa a
-   otro mesero, teléfono en para llevar, H5 y dos sobras; 5439 y 3220; DP-D156 a DP-D158) y D2 en
+1. **Lotes 1 y 2 EN PRODUCCIÓN Y CERRADOS** (`ff03687` y `829b13d`): humo en verde y 0 errores en
+   Vercel en la hora de cada uno. Hallazgos 1, 8, 9 y 10 arreglados y desplegados.
+2. **App de Windows 1.0.2 PUBLICADA** (`canal-don-poncho`, release `don-poncho-v1.0.2`, apps
+   `37ec070`) y vista llegar a una 1.0.1 en la laptop (aviso, descarga e instalación). **En curso:**
+   `bash /d/mpos-tmp/dp22/prueba-actualizacion.sh "Reiniciar ahora"` →
+   `/d/mpos-tmp/dp22/prueba-actualizacion-reiniciar.log`: repite la actualización para saber si la
+   app se vuelve a abrir sola (la primera vez no lo hizo). Luego probar «Al cerrar». Si no reabre:
+   hallazgo de la app; decidir entre arreglarlo (otra versión) o dejarlo dicho en `INSTALAR.md`.
+   La app queda instalada en la laptop (`AppData\Local\Programs\morphiq-pos-electron`).
+3. **Checkout principal:** rama `dp-22-tercer-lote` (sobre `main` `829b13d`), con la bitácora al
+   día. Aquí se arma el lote 3 cuando lleguen los agentes.
+4. **Agentes corriendo (3, reanudados a las 10:02, trabajo SIN commit en sus árboles):**
+   A en `.work\dp20-lab` (`dp-22-lote2`: barrido de servicio y hallazgos 2 a 6; 5438 y 3210),
+   D1 en `.work\dp20` (`dp-22-salon`: hallazgo 7, pasar la mesa a otro mesero, teléfono en para
+   llevar, H5 y dos sobras; `briefs\d1-listo.md`; 5439 y 3220; DP-D156 a DP-D158) y D2 en
    `.work\dp18-integrar` (`dp-22-inventario`: la Parte 5 por pantallas sobre el clon
-   `qa_dp22_inv`, el aviso de insumo bajo y «lo más vendido»; 3230 y 54530; DP-D159 a DP-D161).
-   Sus encargos: `D:\mpos-tmp\dp22\briefs\d1-listo.md` y `d2-listo.md`.
-5. **Por decidir o hacer después de estos lotes:** los 51 ajustes «por ver en navegador» y los 5
-   por comprobar (lista en el informe del agente C y en `efectos.json`); el hallazgo 12; el día de
-   bots (la máquina sola); la Parte 11 (producción) y el informe 013.
+   `qa_dp22_inv`, el aviso de insumo bajo y «lo más vendido»; `briefs\d2-listo.md`; 3230 y 54530;
+   DP-D159 a DP-D161).
+5. **Al recibir a cada agente:** revisar el diff; correr yo TODAS las puertas estáticas `verify:*`
+   y la suite unitaria COMPLETA (`pnpm test:unit`); sus pruebas de integración; mutante propio;
+   PIN; consolidar en su rama. Sus ramas salen de `e4decc8` o `b0a7a9a` (antes del squash): al
+   unirlas a `dp-22-tercer-lote` la bitácora se queda con LO NUESTRO; `MATRIZ.md`, `efectos.json`,
+   `matriz.json` y `.gitignore` con LO SUYO (y `pnpm qa:matriz`); `DECISIONES.md` y
+   `scripts/aspecto-permitido.json` con los dos lados (`unir-los-dos-lados.cjs`,
+   `ordenar-decisiones.cjs DECISIONES.md 153`).
+6. **Después:** los 51 ajustes «por ver en navegador» y los 5 por comprobar (`efectos.json`); el
+   hallazgo 12; guardar un PDF de corte de punta a punta dentro de la app (en una copia local, no
+   en producción); el día de bots (la máquina sola); la Parte 11 (configurar producción, dejar en
+   ceros, primer folio, renombrar aparatos; el bloqueo H1 NO se activa) y el informe 013 con el
+   veredicto, los números, la calificación y la lista física de Miguel.
 
 ## Dónde voy
 

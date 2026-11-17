@@ -17,11 +17,11 @@
 | --------- | ----------: | ---------: | -------: |
 | Crítico   |           0 |          0 |        0 |
 | Alto      |           2 |          2 |        0 |
-| Medio     |           7 |          1 |        6 |
+| Medio     |           7 |          2 |        5 |
 | Bajo      |           2 |          0 |        2 |
 | Por ver   |           1 |          0 |        1 |
 
-(El alto 8 y el medio 9 están arreglados en la rama del lote 2, todavía sin desplegar.)
+(Los hallazgos 8, 9 y 10 están arreglados y en producción desde el lote 2, 17-11 07:55.)
 
 ## Lista
 
@@ -34,9 +34,9 @@
 | 5   | medio   | Barra lateral · 1280×800 y 1366×768 a 125 % (1093×614)           | «Compras» queda encimado con «Activar modo oscuro»: en una pantalla baja el dedo puede caer en el botón equivocado                                                                                  | abierto (agente A, lote 2)                           |
 | 6   | por ver | Caja cerrada · todos                                             | «Abrir caja» aparece con `pointer-events: none`: falta saber si es un deshabilitado legítimo con su motivo a la vista o un botón muerto                                                             | por confirmar (agente A)                             |
 | 7   | medio   | Cocina y salón · todos                                           | Con un plato ya «listo», quitar el otro platillo de la comanda la deja en «nuevo»: la mesa no pasa a «Esperando entrega» y el mesero no recibe el aviso hasta que cocina la vuelve a tocar          | abierto: causa localizada (agente D1)                |
-| 8   | alto    | Caja · cobro de una cuenta dividida                              | Si se cambia el IVA después de dividir una cuenta, cobrar una de sus partes da «Algo falló» y esa parte ya no se puede cobrar                                                                       | arreglado (lote 2, por desplegar)                    |
-| 9   | medio   | Propina en la Caja y en el portal                                | La propina por porcentaje salía un centavo abajo en los medios centavos ($28,771.50 al 15 % daba $4,315.72 y el servidor $4,315.73)                                                                 | arreglado (lote 2, por desplegar)                    |
-| 10  | medio   | Personas y seguridad                                             | Cambiarle el PIN a alguien no cierra la sesión que tenga abierta: sigue dentro hasta que venza (12 h)                                                                                               | abierto: se arregla (cerrar sus sesiones)            |
+| 8   | alto    | Caja · cobro de una cuenta dividida                              | Si se cambia el IVA después de dividir una cuenta, cobrar una de sus partes da «Algo falló» y esa parte ya no se puede cobrar                                                                       | arreglado · en producción (lote 2, `829b13d`)        |
+| 9   | medio   | Propina en la Caja y en el portal                                | La propina por porcentaje salía un centavo abajo en los medios centavos ($28,771.50 al 15 % daba $4,315.72 y el servidor $4,315.73)                                                                 | arreglado · en producción (lote 2, `829b13d`)        |
+| 10  | medio   | Personas y seguridad                                             | Cambiarle el PIN a alguien no cierra la sesión que tenga abierta: sigue dentro hasta que venza (12 h)                                                                                               | arreglado · en producción (lote 2, `829b13d`)        |
 | 11  | bajo    | Caja · cobro                                                     | El servidor acepta una propina al cobrar aunque en Configuración nadie pueda elegirla; la pantalla la esconde, el servidor no la exige                                                              | anotado: no se cambia antes de abrir (ver detalle)   |
 | 12  | bajo    | Caja · cobro                                                     | Cuando el total cambió desde la precuenta, el aviso dice «El total cambió…» pero no trae el total nuevo                                                                                             | abierto                                              |
 
@@ -182,25 +182,25 @@ vigente. La cajera tiene que volver a abrir la cuenta para verlo. Por ver en la 
 
 ## Pendientes conocidos que entran como hallazgos (Parte 9)
 
-| Clave | Qué                                                                                       | Lote | Estado                                                                   |
-| ----- | ----------------------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------ |
-| H2    | Los candados de Preparar, Listo y cancelar, en el mismo orden (200 cruces sin un 500)     | 1    | hecho · `6b580f5` · 200 cruces y 20 contra la cancelación, 0 reintentos  |
-| A24   | La merma con existencia negativa: nunca un error mudo                                     | 1    | hecho · `6b580f5`                                                        |
-| DEV   | La devolución de lo vendido por peso o porción                                            | 1    | hecho · `6b580f5` (lo preparado no regresa; la pantalla lo dice)         |
-| X4    | Tope por IP en la entrada del laboratorio                                                 | 1    | hecho · `6b580f5`                                                        |
-| H3    | Registros «Este año»: sin truncar, con agregados del servidor                             | 1    | hecho · `7921fd2` (`registros.resumen`); falta verlo con datos en la app |
-| A23   | Propinas por mesero, por rango, en el servidor                                            | 1    | hecho · `7921fd2` (`propinas.del_rango`); queda una lectura cortada (\*) |
-| A5    | El almacén registra compras desde Inventario                                              | 1    | hecho · `7921fd2`                                                        |
-| A6    | El Cierre no pide «no recogido»                                                           | 1    | hecho · `7921fd2`                                                        |
-| A10   | «Editar receta» sólo con el renglón abierto                                               | 1    | hecho · `7921fd2`                                                        |
-| X5    | Tiempo de espera del lado de la página al imprimir                                        | 1    | hecho · `7921fd2` (20 s); falta el plazo en «Imprimir prueba» (\*)       |
-| LINT  | La puerta de `heredado/*.jsx` (TS2304 y TS2552) en `verify` y en la CI                    | 1    | hecho · `586dcfc` (`pnpm verify:heredado`, se prueba contra sí misma)    |
-| P012  | Lo que el anexo 012 dejó para Miguel (PUBLICOS, comandos sin pantalla, crédito, Avanzado) | 1    | hecho · `6d5c22b` · DP-D151                                              |
-| COLA  | El aviso de «la cola de sincronización» al cajero                                         | 1    | hecho · `6d5c22b` (la Caja ya no la encola)                              |
-| VOZ   | Dos pantallas de la misma estación anuncian doble                                         | 1    | hecho · `6d5c22b` (se pregunta una vez); falta su e2e táctil (agente A)  |
-| SIL   | `silenciar_notificaciones_admin` en la operación de Don Poncho                            | 1    | decidido · DP-D149: se queda encendido; el guion lo comprueba            |
-| H5    | A7 y A9 con prueba de comportamiento en Playwright                                        | 2    | pendiente (con el arnés)                                                 |
-| B18   | Los cortes en una carpeta de Windows (app 1.0.2)                                          | 4    | en curso (agente B)                                                      |
+| Clave | Qué                                                                                       | Lote | Estado                                                                                           |
+| ----- | ----------------------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------ |
+| H2    | Los candados de Preparar, Listo y cancelar, en el mismo orden (200 cruces sin un 500)     | 1    | hecho · `6b580f5` · 200 cruces y 20 contra la cancelación, 0 reintentos                          |
+| A24   | La merma con existencia negativa: nunca un error mudo                                     | 1    | hecho · `6b580f5`                                                                                |
+| DEV   | La devolución de lo vendido por peso o porción                                            | 1    | hecho · `6b580f5` (lo preparado no regresa; la pantalla lo dice)                                 |
+| X4    | Tope por IP en la entrada del laboratorio                                                 | 1    | hecho · `6b580f5`                                                                                |
+| H3    | Registros «Este año»: sin truncar, con agregados del servidor                             | 1    | hecho · `7921fd2` (`registros.resumen`); falta verlo con datos en la app                         |
+| A23   | Propinas por mesero, por rango, en el servidor                                            | 1    | hecho · `7921fd2` (`propinas.del_rango`); queda una lectura cortada (\*)                         |
+| A5    | El almacén registra compras desde Inventario                                              | 1    | hecho · `7921fd2`                                                                                |
+| A6    | El Cierre no pide «no recogido»                                                           | 1    | hecho · `7921fd2`                                                                                |
+| A10   | «Editar receta» sólo con el renglón abierto                                               | 1    | hecho · `7921fd2`                                                                                |
+| X5    | Tiempo de espera del lado de la página al imprimir                                        | 1    | hecho · `7921fd2` (20 s); falta el plazo en «Imprimir prueba» (\*)                               |
+| LINT  | La puerta de `heredado/*.jsx` (TS2304 y TS2552) en `verify` y en la CI                    | 1    | hecho · `586dcfc` (`pnpm verify:heredado`, se prueba contra sí misma)                            |
+| P012  | Lo que el anexo 012 dejó para Miguel (PUBLICOS, comandos sin pantalla, crédito, Avanzado) | 1    | hecho · `6d5c22b` · DP-D151                                                                      |
+| COLA  | El aviso de «la cola de sincronización» al cajero                                         | 1    | hecho · `6d5c22b` (la Caja ya no la encola)                                                      |
+| VOZ   | Dos pantallas de la misma estación anuncian doble                                         | 1    | hecho · `6d5c22b` (se pregunta una vez); falta su e2e táctil (agente A)                          |
+| SIL   | `silenciar_notificaciones_admin` en la operación de Don Poncho                            | 1    | decidido · DP-D149: se queda encendido; el guion lo comprueba                                    |
+| H5    | A7 y A9 con prueba de comportamiento en Playwright                                        | 2    | pendiente (con el arnés)                                                                         |
+| B18   | Los cortes en una carpeta de Windows (app 1.0.2)                                          | 4    | hecho · POS en el lote 2 (`829b13d`); app 1.0.2 publicada (`37ec070`) y vista llegar a una 1.0.1 |
 
 (\*) Sobras del agente 2, para el lote siguiente: `PropinasDashboardSection.jsx` todavía lee una
 lista que puede venir cortada, y `impresion/pantallas/imprimir-prueba.ts` no tiene plazo.
