@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Receipt, X, Heart, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/financialUtils';
-import { tipsEnabled, getPorcentajesSugeridos } from '@/utils/tipsUtils';
+import { tipsEnabled, getPorcentajesSugeridos, propinaPorPorcentaje } from '@/utils/tipsUtils';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import { pedirCuentaQR } from '@/utils/qrPedidoFlow';
 import { toast } from 'sonner';
@@ -95,7 +95,7 @@ export default function PedirCuentaQR({
     if (decidirEnCaja) return 0;
     if (pctActivo === null) return 0;
     if (pctActivo > 0) {
-      return Math.round(subtotal * (pctActivo / 100) * 100) / 100;
+      return propinaPorPorcentaje(subtotal, pctActivo);
     }
     const manual = Number.parseFloat(montoManual);
     if (Number.isFinite(manual) && manual >= 0) return Math.round(manual * 100) / 100;
@@ -421,7 +421,7 @@ export default function PedirCuentaQR({
                       <PropinaBtn
                         key={p}
                         label={`${p}%`}
-                        sub={formatCurrency(Math.round(subtotal * (p / 100) * 100) / 100)}
+                        sub={formatCurrency(propinaPorPorcentaje(subtotal, p))}
                         active={pctActivo === p}
                         onClick={() => elegirPorcentaje(p)}
                       />

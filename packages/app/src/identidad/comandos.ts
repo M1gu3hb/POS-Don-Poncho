@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ErrorDominio, validarEntorno, PAQUETES_TODOS } from '@morphiqpos/contracts';
-import type { Transaccion } from '@morphiqpos/data';
+import { repoSesion, type Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
@@ -131,6 +131,15 @@ export const establecerPin = definirComando<
           })
           .where('id', '=', previa.id)
           .execute(),
+      );
+    }
+
+    // DP-22 (hallazgo 10) · Cambiarle el PIN a OTRA persona cierra las sesiones que tenga abiertas:
+    // si se lo cambian porque alguien lo vio, ese alguien no se queda dentro hasta que venza. El
+    // propio no: quien lo cambia lo hace desde su sesión y no se saca a sí mismo.
+    if (!propio && previa !== undefined) {
+      await ctx.paso('revocar_sesiones', () =>
+        repoSesion.revocarSesionesDeEmpleo(ctx.tx, organizacionId, entrada.empleado, ctx.ahora),
       );
     }
 

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Heart, X, Clock } from 'lucide-react';
 import { formatCurrency } from '@/utils/financialUtils';
+import { propinaPorPorcentaje } from '@/utils/tipsUtils';
 
 /**
  * Modal universal de propina (rediseño responsive — v2).
@@ -54,7 +55,7 @@ export default function PropinaDialog({
   const montoValido = montoManual !== '' && Number.isFinite(montoNum) && montoNum >= 0;
   const propinaCalculada =
     pctActivo !== null
-      ? Math.round(safeSubtotal * (pctActivo / 100) * 100) / 100
+      ? propinaPorPorcentaje(safeSubtotal, pctActivo)
       : montoValido
         ? montoNum
         : 0;
@@ -155,7 +156,7 @@ export default function PropinaDialog({
             <Label className="text-xs font-semibold mb-2 block">Porcentajes rápidos</Label>
             <div className={`grid ${gridCols} gap-2`}>
               {porcentajes.map((p) => {
-                const monto = Math.round(safeSubtotal * (p / 100) * 100) / 100;
+                const monto = propinaPorPorcentaje(safeSubtotal, p);
                 const activo = pctActivo === p;
                 return (
                   <button

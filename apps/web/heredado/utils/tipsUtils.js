@@ -43,6 +43,21 @@ export function getPorcentajesSugeridos(config) {
 }
 
 /**
+ * La propina por porcentaje de un importe, en pesos, AL CENTAVO EXACTO (DP-22, Fase D).
+ *
+ * Se calcula en centavos enteros y se redondea una sola vez, con el medio centavo hacia arriba, igual
+ * que el servidor (`aplicarPorcentaje`). Antes cada pantalla hacía `Math.round(pesos * (pct / 100) * 100)
+ * / 100` en punto flotante, y $28,771.50 al 15 % (4,315.725) daba $4,315.72 en vez de $4,315.73: un
+ * centavo de menos en el diálogo de la Caja y en el portal.
+ */
+export function propinaPorPorcentaje(importePesos, porcentaje) {
+  const base = aCentavos(importePesos);
+  const pct = Number(porcentaje);
+  if (!Number.isFinite(base) || !Number.isFinite(pct) || base <= 0 || pct <= 0) return 0;
+  return aPesos(Math.round((base * pct) / 100));
+}
+
+/**
  * Importe de propina en pesos.
  *
  * Una venta pagada lo recibe de la proyección exacta de `pagos`. Antes del
