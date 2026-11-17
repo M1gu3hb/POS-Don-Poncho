@@ -1,0 +1,40 @@
+{
+  "nombre": "ajustes",
+  "fuerza": 2,
+  "notas": [
+    "Un parámetro por cada ajuste que cambia el flujo; los valores salen de lo que el sistema acepta (banderas.ts, quien-elige.ts, cajas-a-la-vez.ts, copias-de-impresion.ts, impuesto.ts…).",
+    "El cupo de cajas sólo llega a 2 por comando (MAXIMO_DE_CAJAS); la base acepta hasta 4.",
+    "pin_al_despertar es memoria del aparato (no hay comando del servidor): la tabla lo cubre, su efecto queda «por ver en navegador».",
+    "Sin combinaciones prohibidas: el sistema deja guardar cualquiera (un portal apagado conserva sus demás ajustes)."
+  ],
+  "parametros": [
+    { "nombre": "portal_activo", "valores": ["si", "no"] },
+    { "nombre": "pedidos_de_comensales", "valores": ["si", "no"] },
+    { "nombre": "quien_manda_a_cocina", "valores": ["mesero", "comensales"] },
+    { "nombre": "comensales_abren_mesa", "valores": ["si", "no"] },
+    { "nombre": "modo_de_la_cuenta", "valores": ["mesero_dispara", "cliente_solicita", "ambos"] },
+    {
+      "nombre": "quien_elige_la_propina",
+      "valores": ["comensales_y_caja", "mesero_y_caja", "solo_caja", "nadie"]
+    },
+    { "nombre": "estaciones_activas", "valores": ["si", "no"] },
+    { "nombre": "asignacion_de_mesas", "valores": ["si", "no"] },
+    {
+      "nombre": "modo_del_menu_del_portal",
+      "valores": ["digital", "productos_pos", "menu_subido", "mixto"]
+    },
+    {
+      "nombre": "iva",
+      "valores": ["sin_iva", "iva8_incluido", "iva8_sumado", "iva16_incluido", "iva16_sumado"]
+    },
+    { "nombre": "descuentos_permitidos", "valores": ["si", "no"] },
+    { "nombre": "copias_de_impresion", "valores": ["1", "2", "3"] },
+    { "nombre": "campos_del_ticket", "valores": ["completo", "minimo"] },
+    { "nombre": "cupo_de_cajas", "valores": ["1", "2"] },
+    { "nombre": "pin_al_despertar", "valores": ["si", "no"] },
+    { "nombre": "minutos_del_candado", "valores": ["5", "30"] },
+    { "nombre": "comision_de_la_terminal", "valores": ["sin_comision", "comision_3_6"] },
+    { "nombre": "costos_a_la_caja", "valores": ["si", "no"] }
+  ],
+  "prohibidas": []
+}

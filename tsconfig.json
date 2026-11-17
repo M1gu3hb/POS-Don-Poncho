@@ -7,6 +7,7 @@
     "vitest.integracion.config.ts",
     "playwright.config.ts",
     "playwright.impresion.config.ts",
+    "playwright.qa-final.config.ts",
     "scripts/lib/adopcion.test.ts",
     "scripts/lib/buscar-secreto.test.ts",
     "scripts/lib/clases-de-color.test.ts",

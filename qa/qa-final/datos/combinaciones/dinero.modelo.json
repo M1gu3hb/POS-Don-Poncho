@@ -1,0 +1,36 @@
+{
+  "nombre": "dinero",
+  "fuerza": 3,
+  "notas": [
+    "Valores leídos del código: IVA = configuracion.fijar_impuesto (0, 800 o 1600 puntos base; incluido o sumado; sin IVA se guarda siempre como incluido).",
+    "Propina: la elige el mesero al pedir la cuenta (restaurante.solicitar_cuenta, sólo si propina_la_elige_mesero) o la Caja al cobrar (propina_la_elige_caja); porcentaje o monto a mano.",
+    "Descuento: sólo existe a la cuenta (restaurante.descontar_cuenta, con la firma de un supervisor); no hay descuento por renglón en el restaurante. El tope del gerente es 30 % y $2,000; el del dueño, la cuenta entera.",
+    "División: el sistema divide por unidades de cada renglón (restaurante.dividir_cuenta); «partes iguales» = cada renglón de varias unidades se reparte entre las partes.",
+    "Prohibidas: un pedido para llevar no se divide ni tiene mesero que elija la propina."
+  ],
+  "parametros": [
+    {
+      "nombre": "iva",
+      "valores": ["sin_iva", "iva8_incluido", "iva8_sumado", "iva16_incluido", "iva16_sumado"]
+    },
+    {
+      "nombre": "propina",
+      "valores": ["ninguna", "porcentaje_caja", "porcentaje_mesero", "monto_caja"]
+    },
+    {
+      "nombre": "descuento",
+      "valores": ["ninguno", "gerente_dentro_del_tope", "dueno_arriba_del_gerente", "pasa_el_tope"]
+    },
+    { "nombre": "division", "valores": ["sin_dividir", "por_platillo", "por_unidades"] },
+    {
+      "nombre": "pago",
+      "valores": ["efectivo_exacto", "efectivo_con_cambio", "tarjeta", "mixto"]
+    },
+    { "nombre": "canal", "valores": ["mesa", "para_llevar"] }
+  ],
+  "prohibidas": [
+    { "canal": "para_llevar", "division": "por_platillo" },
+    { "canal": "para_llevar", "division": "por_unidades" },
+    { "canal": "para_llevar", "propina": "porcentaje_mesero" }
+  ]
+}

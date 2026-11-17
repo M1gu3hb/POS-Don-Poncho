@@ -1,5 +1,5 @@
 {
-  "commit": "4f935e9",
+  "commit": "e4decc8",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -99,7 +99,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 9913,
+      "lineas": 9928,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -329,7 +329,7 @@
           "titulo": null
         }
       ],
-      "lineas": 18861,
+      "lineas": 18877,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -401,7 +401,7 @@
           "titulo": "Conectar teléfono"
         }
       ],
-      "lineas": 3295,
+      "lineas": 3296,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cocina"],
       "cobertura": null
@@ -768,7 +768,7 @@
           "titulo": "Zonas del salón"
         }
       ],
-      "lineas": 23752,
+      "lineas": 23767,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1139,7 +1139,7 @@
           "titulo": null
         }
       ],
-      "lineas": 17092,
+      "lineas": 17108,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -1361,7 +1361,7 @@
           "titulo": "Venta cobrada"
         }
       ],
-      "lineas": 6264,
+      "lineas": 6280,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -1525,7 +1525,7 @@
           "titulo": "El pedido de la mesa"
         }
       ],
-      "lineas": 6140,
+      "lineas": 6155,
       "conSesion": false,
       "puestos": [],
       "cobertura": null
@@ -1713,7 +1713,7 @@
           "titulo": null
         }
       ],
-      "lineas": 11760,
+      "lineas": 11775,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -2069,7 +2069,7 @@
           "titulo": "El pedido de la mesa"
         }
       ],
-      "lineas": 6150,
+      "lineas": 6165,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina", "almacen"],
       "cobertura": null
@@ -2245,7 +2245,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 4004,
+      "lineas": 4019,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -2296,13 +2296,15 @@
           "apps/web/src/impresion/impresion.test.ts",
           "apps/web/src/restaurante/precuenta-del-mesero.contrato.test.ts",
           "packages/app/src/puente/configuracion-limites.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "El ticket y la precuenta se dibujan a 58 u 80 mm (384 o 576 puntos).",
           "valores": ["58", "80"],
           "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -2336,6 +2338,7 @@
           "packages/app/src/portal/portal.test.ts",
           "packages/app/src/portal/pruebas/mesa-con-portal.ts",
           "packages/app/src/portal/sin-asignacion.integracion.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/restaurante/estacion-de-cada-comanda.integracion.test.ts",
           "packages/app/src/restaurante/union-puente-del-qr.integracion.test.ts",
           "pruebas/e2e/ayudantes/mesas-heredadas.ts",
@@ -2346,8 +2349,12 @@
         "efecto": {
           "efecto": "Encendida: cada mesero ve y atiende sólo sus mesas y el portal avisa a su mesero. Apagada: todos ven todas.",
           "valores": ["true", "false"],
-          "pruebas": ["pruebas/e2e/portal-sin-asignacion.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/sin-asignacion.integracion.test.ts#sin asignación de mesas",
+            "packages/app/src/portal/sin-asignacion.integracion.test.ts#con la asignación encendida"
+          ],
+          "estado": "comprobado",
+          "nota": "Lo del servidor y el portal. Que el mesero sólo VEA sus mesas es de la pantalla (`asignacionMesas.js`): por ver en navegador."
         }
       },
       {
@@ -2375,7 +2382,8 @@
           "efecto": "Cómo se acomoda la imagen de fondo del sistema (cubrir o contener).",
           "valores": ["cover", "contain"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2405,7 +2413,8 @@
           "efecto": "La imagen de fondo de las pantallas internas.",
           "valores": ["vacío", "una imagen"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2445,7 +2454,8 @@
           "efecto": "La marca de agua del fondo, del acceso y del portal.",
           "valores": ["vacío", "una imagen"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2475,7 +2485,8 @@
           "efecto": "Qué tan visible es el fondo (0 a 1).",
           "valores": ["0.05", "0.5"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2522,12 +2533,16 @@
           "apps/web/src/espera/CandadoDeLaSesion.tsx:50",
           "apps/web/src/espera/CandadoDeLaSesion.tsx:64"
         ],
-        "pruebasQueLaNombran": [],
+        "pruebasQueLaNombran": ["packages/app/src/qa-final/pares.integracion.test.ts"],
         "efecto": {
           "efecto": "Minutos sin tocar la pantalla tras los que dueño, administrador y gerente vuelven a teclear su PIN (5 a 30).",
           "valores": ["5", "10", "30"],
-          "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "pruebas/e2e/pin-al-abrir.spec.ts",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "por ver en navegador",
+          "nota": "El servidor lo guarda en 5 y en 30 (probado); el candado que se cierra es de la pantalla."
         }
       },
       {
@@ -2559,7 +2574,8 @@
           "efecto": "Minutos de espera a los que la comanda se pinta ámbar en cocina.",
           "valores": ["1", "10"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2591,7 +2607,8 @@
           "efecto": "Minutos de espera a los que la comanda se pinta roja en cocina (siempre después del ámbar).",
           "valores": ["2", "20"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2626,7 +2643,8 @@
           "efecto": "El color de acento de todo el sistema interno y del acceso.",
           "valores": ["#ac8a5f", "otro"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2664,7 +2682,8 @@
           "efecto": "El color primario de todo el sistema interno y del acceso.",
           "valores": ["#83653f", "otro"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2734,7 +2753,8 @@
           "efecto": "Encendido: los importes se pintan en color (entradas, salidas); apagado: en el color del texto.",
           "valores": ["true", "false"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2765,13 +2785,17 @@
           "packages/app/src/caja/corte/negocio.test.ts",
           "packages/app/src/caja/corte-de-la-caja.integracion.test.ts",
           "packages/app/src/caja/corte-de-la-caja.test.ts",
-          "packages/app/src/puente/configuracion-limites.test.ts"
+          "packages/app/src/puente/configuracion-limites.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts"
         ],
         "efecto": {
           "efecto": "El corte enseña «Comisión de la terminal, estimada» sobre lo cobrado con tarjeta y la resta de la utilidad neta estimada.",
           "valores": ["vacío", "360"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/caja/corte-de-la-caja.integracion.test.ts#el administrador lo enciende: el cajero ve costos y el corte trae la tasa",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -2797,12 +2821,19 @@
           "packages/app/src/caja/copias-de-impresion.ts:73",
           "packages/app/src/caja/index.ts:120"
         ],
-        "pruebasQueLaNombran": ["packages/app/src/venta/impresion-del-ticket.integracion.test.ts"],
+        "pruebasQueLaNombran": [
+          "packages/app/src/qa-final/pares.integracion.test.ts",
+          "packages/app/src/venta/impresion-del-ticket.integracion.test.ts"
+        ],
         "efecto": {
           "efecto": "Cuántas copias salen del ticket, la precuenta y el corte (1 a 3), con «ORIGINAL — CLIENTE» y «COPIA — NEGOCIO».",
           "valores": ["1", "2", "3"],
-          "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/venta/impresion-del-ticket.integracion.test.ts#caja.fijar_copias_de_impresion",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "por ver en navegador",
+          "nota": "El servidor lo guarda y lo lee (probado); cuántas copias salen del papel es del navegador."
         }
       },
       {
@@ -2868,7 +2899,8 @@
           "efecto": "El correo del negocio en el corte y los PDF.",
           "valores": ["vacío", "un correo"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2892,7 +2924,8 @@
           "efecto": "Encendido: al cerrar la caja se abre o descarga el PDF del corte solo.",
           "valores": ["true", "false"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -2918,12 +2951,16 @@
           "packages/app/src/venta/descuentos-permitidos.ts:77",
           "packages/app/src/venta/index.ts:12"
         ],
-        "pruebasQueLaNombran": [],
+        "pruebasQueLaNombran": ["packages/app/src/qa-final/pares.integracion.test.ts"],
         "efecto": {
           "efecto": "Apagado: nadie puede aplicar descuentos (la pantalla no los ofrece y el servidor los rechaza).",
           "valores": ["true", "false"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos",
+            "packages/app/src/restaurante/descuento-con-clave.integracion.test.ts#todo descuento pide la clave de quien autoriza"
+          ],
+          "estado": "comprobado",
+          "nota": "Mutante: `exigirDescuentosPermitidos` sin leer la bandera (17 de 27 pares caen)."
         }
       },
       {
@@ -3011,6 +3048,7 @@
           "packages/app/src/restaurante/pruebas/constructor-falso.ts",
           "packages/domain/src/venta/campos-del-papel.test.ts",
           "pruebas/e2e/qr-de-mesas.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts"
         ],
@@ -3018,7 +3056,8 @@
           "efecto": "La dirección del negocio en el ticket, la precuenta, el corte y los PDF.",
           "valores": ["vacío", "una dirección"],
           "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -3051,6 +3090,7 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/portal/portal.proyeccion.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/restaurante/estacion-de-cada-comanda.integracion.test.ts",
           "pruebas/e2e/estaciones-de-cocina.spec.ts",
           "pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"
@@ -3058,8 +3098,13 @@
         "efecto": {
           "efecto": "Encendido: las comandas se reparten por estación (cocina, bebidas…); apagado: una sola lista.",
           "valores": ["true", "false"],
-          "pruebas": ["pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/restaurante/estacion-de-cada-comanda.integracion.test.ts#el mesero: cada platillo a la estación de su categoría",
+            "pruebas/e2e/estaciones-de-cocina.spec.ts",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "por ver en navegador",
+          "nota": "Las comandas nacen con su estación con la bandera en cualquier valor (probado); lo que cambia es lo que Cocina DIBUJA."
         }
       },
       {
@@ -3107,7 +3152,8 @@
           "efecto": "Morfi aparece (o no) en las cargas, la pantalla de espera y la página no encontrada.",
           "valores": ["true", "false"],
           "pruebas": ["pruebas/e2e/morfi.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -3149,7 +3195,8 @@
           "efecto": "Al despertar del modo espera se pide el PIN.",
           "valores": ["true", "false"],
           "pruebas": ["pruebas/e2e/modo-espera-pin.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -3186,7 +3233,8 @@
           "efecto": "El portal del comensal suena (o no) al tocar.",
           "valores": ["true", "false"],
           "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -3275,7 +3323,8 @@
           "efecto": "El sonido del teclado del PIN y de los toques (nib, keycap, thock, clasp).",
           "valores": ["nib", "thock"],
           "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -3379,13 +3428,17 @@
           "packages/domain/src/venta/folio-visible.test.ts",
           "pruebas/e2e/folios-con-prefijo.spec.ts",
           "pruebas/e2e/restaurante-concurrencia.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "qa/simulador/bots/dueno-ventas.test.ts"
         ],
         "efecto": {
           "efecto": "Prefijo y primer folio: las cuentas se leen «DP-01001» y los cortes «DPC-0101» en pantalla, papel, Registros y exportaciones.",
           "valores": ["sin prefijo", "DP + 1001/101"],
-          "pruebas": ["pruebas/e2e/folios-con-prefijo.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/configuracion/folios.integracion.test.ts#el contador queda listo: la primera cuenta es la 1001 y el primer corte el 101, sin huecos",
+            "packages/app/src/configuracion/folios.integracion.test.ts#«1001», «01001», «DP-01001» y «A-1001» devuelven la misma cuenta; otro prefijo, no"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -3410,7 +3463,8 @@
           "efecto": "Texto legal al pie del corte, antes del pie de los PDF.",
           "valores": ["vacío", "un texto"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -3464,6 +3518,13 @@
         "lectores": [
           "apps/web/src/registros/describir-accion.ts:237",
           "packages/app/src/negocio-de-prueba/resetear.ts:58",
+          "packages/app/src/qa-final/mundo.ts:15",
+          "packages/app/src/qa-final/verificar-cuenta.ts:196",
+          "packages/app/src/qa-final/verificar-cuenta.ts:216",
+          "packages/app/src/qa-final/verificar-cuenta.ts:223",
+          "packages/app/src/qa-final/verificar-cuenta.ts:228",
+          "packages/app/src/qa-final/verificar-cuenta.ts:242",
+          "packages/app/src/qa-final/verificar-cuenta.ts:377",
           "packages/app/src/venta/cotizar.ts:96",
           "packages/app/src/venta/cotizar.ts:107",
           "packages/domain/src/venta/totales.ts:61",
@@ -3482,18 +3543,26 @@
           "packages/app/src/configuracion/documento.contrato.test.ts",
           "packages/app/src/configuracion/impuesto-del-negocio.test.ts",
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
+          "packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/restaurante/division-y-cobro.integracion.test.ts",
           "packages/domain/src/venta/totales.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
           "qa/qa-final/oraculo/dinero.test.ts",
           "qa/qa-final/oraculo/dinero.ts",
+          "qa/qa-final/propiedades/dinero.propiedades.test.ts",
           "qa/simulador/arbitro/invariantes-sql.ts"
         ],
         "efecto": {
           "efecto": "La tasa de IVA con la que se cotiza cada cuenta (sin IVA, 8 % o 16 %; incluido o sumado). Con 0 el IVA no se menciona en ningún papel ni reporte.",
           "valores": ["0", "800 incluido", "800 sumado", "1600 incluido", "1600 sumado"],
-          "pruebas": ["pruebas/e2e/sin-iva.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/qa-final/dinero-ternas.integracion.test.ts#cada combinación de dinero, de la mesa al corte",
+            "packages/app/src/configuracion/impuesto.integracion.test.ts#«Sin IVA»: la cuenta queda con impuestos en 0 y el total son los renglones",
+            "packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts#4 · cambiar el IVA con cuentas abiertas"
+          ],
+          "estado": "comprobado",
+          "nota": "Mutante: el total sin sumar el IVA (`totales.ts`) hace caer las combinaciones de IVA sumado."
         }
       },
       {
@@ -3524,7 +3593,8 @@
           "efecto": "El logo del corte y de los PDF.",
           "valores": ["por omisión", "otra imagen"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -3551,13 +3621,15 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/archivos/referencias.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "El logo del ticket y de la precuenta.",
           "valores": ["por omisión", "otra imagen"],
           "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -3605,13 +3677,15 @@
           "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "El logo del negocio en la barra, el acceso y la pantalla de espera.",
           "valores": ["por omisión", "otra imagen"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -3630,13 +3704,15 @@
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
           "packages/app/src/puente/lo-publico.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "El mensaje al final del ticket y de la precuenta.",
           "valores": ["vacío", "un mensaje"],
           "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -3723,13 +3799,18 @@
           "packages/app/src/caja/corte-de-la-caja.integracion.test.ts",
           "packages/app/src/caja/corte-de-la-caja.test.ts",
           "packages/app/src/portal/portal.proyeccion.test.ts",
-          "packages/app/src/puente/puente.test.ts"
+          "packages/app/src/puente/puente.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts"
         ],
         "efecto": {
           "efecto": "Encendido: el cajero ve costos y utilidad en su corte; apagado: no.",
           "valores": ["true", "false"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/caja/corte-de-la-caja.integracion.test.ts#apagarlo vuelve a esconder los costos al cajero",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "comprobado",
+          "nota": "Mutante: la cajera siempre ve costos (11 de 27 pares caen)."
         }
       },
       {
@@ -3748,12 +3829,13 @@
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:94",
           "apps/web/src/impresion/pantallas/ejemplos.jsx:44"
         ],
-        "pruebasQueLaNombran": ["pruebas/impresion/arnes.jsx"],
+        "pruebasQueLaNombran": ["pruebas/impresion/.arnes/arnes.js", "pruebas/impresion/arnes.jsx"],
         "efecto": {
           "efecto": "Si el ticket lleva logo. Hoy no tiene interruptor en pantalla.",
           "valores": ["true", "false"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -3810,13 +3892,15 @@
           "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "El nombre del negocio en la barra, el acceso, el ticket, el corte, el portal y los PDF.",
           "valores": ["Don Poncho", "otro"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -3854,7 +3938,8 @@
           "efecto": "El nombre del sistema en el acceso y al pie de los PDF.",
           "valores": ["POS Don Poncho", "otro"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -3883,8 +3968,12 @@
         "efecto": {
           "efecto": "El nombre de cada caja (lugar) al abrirla, en el corte y en Registros.",
           "valores": ["por omisión", "Caja 1 y Caja 2"],
-          "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/caja/lugares.integracion.test.ts#caja.nombrar_cajas",
+            "packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts#6 · cambiar el cupo o el nombre de las cajas con cajas abiertas",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -3919,8 +4008,10 @@
         "efecto": {
           "efecto": "El bloqueo H1: desde esa fecha lo cobrado no se borra (purgas, reinicios y dejar en ceros se niegan).",
           "valores": ["vacío", "una fecha"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/configuracion/folios.integracion.test.ts#con una sola cuenta posterior al arranque, aunque no tenga folio, se niega; el prefijo no"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -3952,13 +4043,18 @@
           "apps/web/src/impresion/papel-a-tu-gusto.contrato.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.integracion.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "Qué renglones salen en la precuenta y en el ticket de venta (folio, mesa, personas, mesero, cajero, fecha…).",
           "valores": ["todo encendido", "varios apagados"],
-          "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/caja/papel-a-tu-gusto.integracion.test.ts#caja.fijar_papel_a_tu_gusto",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "por ver en navegador",
+          "nota": "El servidor lo guarda completo o con la lista mínima (probado); qué renglones salen en el papel es del navegador."
         }
       },
       {
@@ -4075,7 +4171,8 @@
           "efecto": "El pie del corte y de los PDF.",
           "valores": ["vacío", "un texto"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -4132,7 +4229,8 @@
           "efecto": "La marca de plataforma en la barra y el corte.",
           "valores": ["POS Don Poncho"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -4178,6 +4276,8 @@
           "packages/app/src/portal/sin-asignacion.integracion.test.ts",
           "packages/app/src/portal/varios-negocios.integracion.test.ts",
           "packages/app/src/propinas/una-sola-verdad.integracion.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts",
+          "packages/app/src/qa-final/portal-apagado.integracion.test.ts",
           "packages/app/src/restaurante/estacion-de-cada-comanda.integracion.test.ts",
           "packages/app/src/restaurante/solicitudes-sin-caja.integracion.test.ts",
           "packages/app/src/restaurante/union-puente-del-qr.integracion.test.ts",
@@ -4190,8 +4290,12 @@
         "efecto": {
           "efecto": "Apagado: el QR de la mesa dice que el portal no está disponible y nadie recibe solicitudes.",
           "valores": ["true", "false"],
-          "pruebas": ["pruebas/e2e/restaurante-portal-qr.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/qa-final/portal-apagado.integracion.test.ts#apagar el portal con carritos abiertos",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "comprobado",
+          "nota": "Mutante: `exigirPortalAbierto` y `puedeOrdenarDesdeQR` sin la bandera."
         }
       },
       {
@@ -4223,8 +4327,11 @@
         "efecto": {
           "efecto": "Las zonas tocables sobre las páginas subidas del menú (editor de botones del Portal QR).",
           "valores": [],
-          "pruebas": ["pruebas/e2e/botones-del-menu-qr.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/botones.integracion.test.ts",
+            "pruebas/e2e/botones-del-menu-qr.spec.ts"
+          ],
+          "estado": "por ver en navegador"
         }
       },
       {
@@ -4254,6 +4361,7 @@
           "packages/app/src/portal/quien-envia.test.ts",
           "packages/app/src/portal/sin-asignacion.integracion.test.ts",
           "packages/app/src/propinas/una-sola-verdad.integracion.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/restaurante/estacion-de-cada-comanda.integracion.test.ts",
           "packages/app/src/restaurante/union-puente-del-qr.integracion.test.ts",
           "pruebas/e2e/ayudantes/mesas-heredadas.ts",
@@ -4262,8 +4370,11 @@
         "efecto": {
           "efecto": "Encendido: un comensal que escanea una mesa libre la abre; apagado: espera a que el mesero la abra.",
           "valores": ["true", "false"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/carrito-sin-cuenta.integracion.test.ts#también los comensales y pueden abrir: enviar abre la mesa y manda, con confirmación de 2+",
+            "packages/app/src/portal/carrito-sin-cuenta.integracion.test.ts#también los comensales, con la mesa cerrada y sin poder abrirla: piden que los atiendan"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -4296,14 +4407,19 @@
           "packages/app/src/portal/portal-desde-fuera.integracion.test.ts",
           "packages/app/src/portal/portal.comandos.test.ts",
           "packages/app/src/propinas/una-sola-verdad.integracion.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts",
           "pruebas/e2e/ayudantes/mesas-heredadas.ts",
           "pruebas/e2e/restaurante-portal-qr.spec.ts"
         ],
         "efecto": {
           "efecto": "Quién pide la cuenta con propina: mesero, comensal o ambos.",
           "valores": ["mesero", "cliente", "ambos"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/portal-desde-fuera.integracion.test.ts",
+            "pruebas/e2e/restaurante-portal-qr.spec.ts",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "por ver en navegador"
         }
       },
       {
@@ -4338,6 +4454,7 @@
           "packages/app/src/portal/quien-envia.test.ts",
           "packages/app/src/portal/sin-asignacion.integracion.test.ts",
           "packages/app/src/propinas/una-sola-verdad.integracion.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/restaurante/estacion-de-cada-comanda.integracion.test.ts",
           "packages/app/src/restaurante/union-puente-del-qr.integracion.test.ts",
           "pruebas/e2e/ayudantes/mesas-heredadas.ts",
@@ -4346,8 +4463,10 @@
         "efecto": {
           "efecto": "El pedido del comensal va directo a cocina o lo confirma el mesero.",
           "valores": ["mesero", "directo"],
-          "pruebas": ["pruebas/e2e/portal-modo-mesero.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/carrito-sin-cuenta.integracion.test.ts#quién manda a cocina (DP-12.2)"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -4384,7 +4503,8 @@
           "efecto": "El mensaje de bienvenida del portal.",
           "valores": ["vacío", "un mensaje"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Es sólo un texto del portal."
         }
       },
       {
@@ -4418,6 +4538,7 @@
           "apps/web/src/configuracion/parche-de-la-seccion.test.ts",
           "packages/app/src/portal/banderas.test.ts",
           "packages/app/src/portal/botones.integracion.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts",
           "pruebas/e2e/botones-del-menu-qr.spec.ts",
           "pruebas/e2e/pantallas-sin-estorbos.spec.ts",
           "pruebas/e2e/restaurante-menu-personalizado.spec.ts"
@@ -4425,8 +4546,13 @@
         "efecto": {
           "efecto": "Cómo se ve el menú del comensal: digital, a la carta, páginas subidas o mixto.",
           "valores": ["menu_digital", "productos_pos", "menu_subido", "mixto"],
-          "pruebas": ["pruebas/e2e/restaurante-menu-personalizado.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/botones.integracion.test.ts",
+            "pruebas/e2e/restaurante-menu-personalizado.spec.ts",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "por ver en navegador",
+          "nota": "Se guarda y se lee; el menú que se pinta es de la pantalla."
         }
       },
       {
@@ -4460,8 +4586,10 @@
         "efecto": {
           "efecto": "Apagado: el portal no enseña precios (el servidor ni los manda).",
           "valores": ["true", "false"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/carrito-sin-cuenta.integracion.test.ts#sin «Mostrar precios», la respuesta tampoco los trae"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -4493,7 +4621,8 @@
           "efecto": "Encendido: el comensal ve su precuenta al pedir la cuenta.",
           "valores": ["true", "false"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por comprobar",
+          "nota": "Sin prueba propia."
         }
       },
       {
@@ -4525,7 +4654,8 @@
           "efecto": "Apagado: los platillos sin foto no salen en el portal.",
           "valores": ["true", "false"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Es sólo de cómo se pinta el menú."
         }
       },
       {
@@ -4561,8 +4691,11 @@
         "efecto": {
           "efecto": "El botón «Necesito ayuda» del portal existe o no (y el servidor acepta o rechaza la solicitud).",
           "valores": ["true", "false"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/sin-asignacion.integracion.test.ts#llama al mesero, y el mesero que lo atiende se queda con la mesa y su cuenta"
+          ],
+          "estado": "por comprobar",
+          "nota": "La ayuda funciona encendida; falta la prueba con la casilla APAGADA."
         }
       },
       {
@@ -4594,7 +4727,8 @@
           "efecto": "El botón «Pedir cuenta» del portal existe o no (y el servidor acepta o rechaza).",
           "valores": ["true", "false"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por comprobar",
+          "nota": "Sin prueba propia: falta apagarla y ver que «Pedir cuenta» no se ofrece ni se acepta."
         }
       },
       {
@@ -4626,7 +4760,8 @@
           "efecto": "El botón «Quiero ordenar» (llamar para ordenar) existe o no.",
           "valores": ["true", "false"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por comprobar",
+          "nota": "Sin prueba propia."
         }
       },
       {
@@ -4661,6 +4796,7 @@
           "packages/app/src/portal/pruebas/mesa-con-portal.ts",
           "packages/app/src/portal/sin-asignacion.integracion.test.ts",
           "packages/app/src/propinas/una-sola-verdad.integracion.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/restaurante/estacion-de-cada-comanda.integracion.test.ts",
           "packages/app/src/restaurante/union-puente-del-qr.integracion.test.ts",
           "pruebas/e2e/ayudantes/mesas-heredadas.ts",
@@ -4669,8 +4805,11 @@
         "efecto": {
           "efecto": "Apagado: el comensal ve el menú pero no puede mandar pedidos.",
           "valores": ["true", "false"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/sin-asignacion.integracion.test.ts#pide, y su pedido sale a cocina",
+            "packages/app/src/portal/carrito-sin-cuenta.integracion.test.ts#quién manda a cocina (DP-12.2)"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -4706,12 +4845,18 @@
           "packages/app/src/propinas/quien-elige.ts:80",
           "packages/app/src/propinas/una-sola-verdad.ts:116"
         ],
-        "pruebasQueLaNombran": ["packages/app/src/propinas/una-sola-verdad.test.ts"],
+        "pruebasQueLaNombran": [
+          "packages/app/src/propinas/una-sola-verdad.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts"
+        ],
         "efecto": {
           "efecto": "Encendido: el comensal elige su propina al pedir la cuenta.",
           "valores": ["true", "false"],
-          "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/propinas/una-sola-verdad.integracion.test.ts#quién puede elegir la propina (M12)",
+            "packages/app/src/propinas/una-sola-verdad.integracion.test.ts#el portal elige primero: la Caja recibe 409 con la vigente; «Cambiarla» sí la cambia"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -4746,8 +4891,11 @@
         "efecto": {
           "efecto": "El aspecto del portal (fondo, estilo, tipografía).",
           "valores": [],
-          "pruebas": ["pruebas/e2e/personalizar-menu.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/botones.integracion.test.ts",
+            "pruebas/e2e/botones-del-menu-qr.spec.ts"
+          ],
+          "estado": "por ver en navegador"
         }
       },
       {
@@ -4798,13 +4946,18 @@
         ],
         "pruebasQueLaNombran": [
           "apps/web/src/venta/propina-en-la-caja.test.ts",
-          "packages/app/src/propinas/una-sola-verdad.test.ts"
+          "packages/app/src/propinas/una-sola-verdad.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts"
         ],
         "efecto": {
           "efecto": "La Caja puede elegir la propina al cobrar.",
           "valores": ["true", "false"],
-          "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/propinas/una-sola-verdad.integracion.test.ts#si la Caja no elige en este negocio, su comando se niega",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos",
+            "packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts#5 · cambiar quién elige la propina con cuentas pidiendo la cuenta"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -4835,13 +4988,18 @@
         ],
         "pruebasQueLaNombran": [
           "apps/web/src/venta/propina-en-la-caja.test.ts",
-          "packages/app/src/propinas/una-sola-verdad.test.ts"
+          "packages/app/src/propinas/una-sola-verdad.test.ts",
+          "packages/app/src/qa-final/pares.integracion.test.ts"
         ],
         "efecto": {
           "efecto": "El mesero puede elegir la propina al pedir la cuenta.",
           "valores": ["true", "false"],
-          "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/propinas/una-sola-verdad.integracion.test.ts#con la casilla del mesero, la escribe; y la Caja ya no la pisa sin «Cambiarla»",
+            "packages/app/src/qa-final/dinero-ternas.integracion.test.ts#cada combinación de dinero, de la mesa al corte",
+            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -4869,8 +5027,12 @@
         "efecto": {
           "efecto": "Los porcentajes de propina que se ofrecen (hasta seis) en la Caja, el mesero y el portal.",
           "valores": ["5,10,15,20", "10,15"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/configuracion/configuracion.test.ts",
+            "qa/qa-final/propiedades/dinero.propiedades.test.ts#la propina del diálogo de la Caja (pesos en punto flotante) = la del oráculo, al centavo"
+          ],
+          "estado": "por ver en navegador",
+          "nota": "Los porcentajes se ofrecen en la Caja y el portal; la cuenta de cada uno es exacta (hallazgo 3, arreglado)."
         }
       },
       {
@@ -4898,12 +5060,18 @@
           "packages/app/src/portal/lista-blanca.ts:103",
           "packages/app/src/propinas/una-sola-verdad.ts:85"
         ],
-        "pruebasQueLaNombran": ["packages/app/src/propinas/una-sola-verdad.test.ts"],
+        "pruebasQueLaNombran": [
+          "packages/app/src/propinas/una-sola-verdad.test.ts",
+          "packages/app/src/qa-final/ajustes-solos.integracion.test.ts"
+        ],
         "efecto": {
           "efecto": "Apagado: no se ofrece propina en ningún lado.",
           "valores": ["true", "false"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/qa-final/ajustes-solos.integracion.test.ts#propinas_activas"
+          ],
+          "estado": "comprobado",
+          "nota": "Mutante: `quienPuedeElegirEn` sin leer la bandera."
         }
       },
       {
@@ -4934,8 +5102,12 @@
         "efecto": {
           "efecto": "El diseño de los QR imprimibles de las mesas.",
           "valores": [],
-          "pruebas": ["pruebas/e2e/qr-de-mesas.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/portal/qr-de-mesas.integracion.test.ts#el dueño guarda un diseño general y uno propio de una mesa",
+            "pruebas/e2e/qr-de-mesas.spec.ts"
+          ],
+          "estado": "por ver en navegador",
+          "nota": "Se guarda y se valida en el servidor; el QR impreso es del navegador."
         }
       },
       {
@@ -4966,8 +5138,11 @@
         "efecto": {
           "efecto": "Un retiro de la cajera mayor a ese monto pide el PIN de un gerente; vacío no lo pide.",
           "valores": ["vacío", "50000"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/caja/retiro-con-pin.integracion.test.ts#hasta el umbral (inclusive) no pide PIN; arriba sin PIN se niega",
+            "packages/app/src/caja/retiro-con-pin.integracion.test.ts#apagar el umbral (null) vuelve a no pedir PIN"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -5008,8 +5183,10 @@
         "efecto": {
           "efecto": "El RFC del negocio en el corte (si existe).",
           "valores": ["vacío", "un RFC válido"],
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "packages/app/src/caja/corte-de-la-caja.integracion.test.ts#uno con la forma de RFC se guarda y el corte lo imprime"
+          ],
+          "estado": "comprobado"
         }
       },
       {
@@ -5030,7 +5207,8 @@
           "efecto": "Encendido: quien entra como administrador no oye sonido ni voz de «pedido listo» ni de las solicitudes del portal; los meseros sí.",
           "valores": ["true", "false"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -5201,6 +5379,7 @@
           "packages/app/src/portal/telefono-firmado.integracion.test.ts",
           "packages/app/src/portal/telefono.test.ts",
           "packages/app/src/puente/recorte-por-persona.test.ts",
+          "packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts",
           "packages/app/src/reportes/auditoria-sanea-al-leer.integracion.test.ts",
           "packages/app/src/restaurante/carrito-del-mesero.integracion.test.ts",
           "packages/app/src/restaurante/espera.test.ts",
@@ -5231,6 +5410,7 @@
           "pruebas/e2e/qa/qa1-01-servicio.spec.ts",
           "pruebas/e2e/qa/qa1-02-portal.spec.ts",
           "pruebas/e2e/qa/qa1-04-cancelar-y-reabrir.spec.ts",
+          "pruebas/e2e/qa-final/arnes/aparatos.ts",
           "pruebas/e2e/qr-de-mesa-unida.spec.ts",
           "pruebas/e2e/restaurante-menu-personalizado.spec.ts",
           "pruebas/e2e/restaurante-portal-qr.spec.ts",
@@ -5240,6 +5420,7 @@
           "pruebas/e2e/unir-mesas-en-el-mapa.spec.ts",
           "pruebas/e2e/usuarios-y-mesas.spec.ts",
           "pruebas/e2e/vista-de-solicitudes.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts"
         ],
@@ -5247,7 +5428,8 @@
           "efecto": "El teléfono del negocio en el ticket, el corte y los PDF.",
           "valores": ["vacío", "un teléfono"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -5267,12 +5449,13 @@
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:135"
         ],
         "lectores": ["apps/web/heredado/components/tickets/PreCuentaTicket.jsx:283"],
-        "pruebasQueLaNombran": [],
+        "pruebasQueLaNombran": ["pruebas/impresion/.arnes/arnes.js"],
         "efecto": {
           "efecto": "El pie del ticket térmico.",
           "valores": ["vacío", "un texto"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -5301,7 +5484,8 @@
           "efecto": "Las unidades que se ofrecen al crear insumos y recetas.",
           "valores": ["por omisión", "una más"],
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por comprobar",
+          "nota": "Sin prueba: sólo la lee la pantalla de insumos."
         }
       },
       {
@@ -5409,7 +5593,8 @@
         "efecto": {
           "efecto": "Si la voz de cocina está activa en este aparato.",
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -5429,7 +5614,8 @@
         "efecto": {
           "efecto": "Cómo se avisa al mesero en este aparato (silencio, sonido, voz o ambos; decir el nombre).",
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -5541,7 +5727,8 @@
         "efecto": {
           "efecto": "Tema claro u oscuro de este aparato.",
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -5564,7 +5751,8 @@
         "efecto": {
           "efecto": "La voz elegida a mano en este aparato.",
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -5604,7 +5792,8 @@
         "efecto": {
           "efecto": "La velocidad de la voz en este aparato.",
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -5664,7 +5853,8 @@
         "efecto": {
           "efecto": "«Esta pantalla anuncia las comandas» de este aparato.",
           "pruebas": [],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
         }
       },
       {
@@ -5684,7 +5874,8 @@
         "efecto": {
           "efecto": "El modo espera de este aparato (activo y minutos).",
           "pruebas": ["pruebas/e2e/modo-espera.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -5724,7 +5915,8 @@
         "efecto": {
           "efecto": "El perfil de sonido de este aparato.",
           "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       },
       {
@@ -5748,7 +5940,8 @@
         "efecto": {
           "efecto": "La barra lateral abierta o plegada en este aparato.",
           "pruebas": ["pruebas/e2e/tactil-barra.spec.ts"],
-          "estado": "por comprobar"
+          "estado": "por ver en navegador",
+          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
         }
       }
     ],

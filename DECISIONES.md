@@ -3045,3 +3045,39 @@ noche y una prueba del tablero falló: de día pasa.
 - **Descartado:** confiar en el huso del aparato (`format(new Date(), …)` de date-fns): una tableta
   con el huso mal puesto cambiaría de día antes o después que la caja.
 - **Sin migración.**
+
+## DP-D155 · DP-22 · Fase D: el dinero combinado y los cambios a media operación · 17-11-2026
+
+Lo que dejó probar cada combinación de ajustes (`packages/app/src/qa-final/`, tablas en
+`qa/qa-final/datos/combinaciones/`) contra el oráculo independiente del dinero.
+
+- **La parte de una cuenta dividida vale lo que `cotizar` dice AL COBRAR.** Si el dueño cambia el IVA
+  entre dividir y cobrar, el total de la parte ya no es el que la madre sumaba y la base lo cierra
+  con `division_cuadra`: el cobro reventaba como «Algo falló» y la parte no se podía cobrar. Ahora
+  `venta.cobrar` ajusta a la madre (con su candado) cuando cambió cualquiera de los cuatro importes
+  de la parte —con el IVA incluido en el precio el total queda igual y lo que se mueve es el
+  impuesto—; lo que se cobra son las partes (ya era la regla de DP-D129 para el redondeo del IVA
+  por parte).
+- **La regla del IVA a media operación, escrita:** la cuenta toma la tasa VIGENTE AL COBRAR. Cobrar
+  con el total de una precuenta vieja se rechaza (`TOTAL_DESACTUALIZADO`) y la Caja relee; una parte
+  ya cobrada conserva SU tasa y las que faltan toman la vigente (cada parte es una venta).
+- **La propina por porcentaje se calcula en centavos enteros** (`propinaPorPorcentaje`, medio centavo
+  hacia arriba, como el servidor) en el diálogo de la Caja y en el del portal. Antes era punto
+  flotante sobre pesos: $28,771.50 al 15 % daba $4,315.72 y el servidor $4,315.73.
+- **Un precio que cambia no toca lo ya pedido:** la línea guarda el precio con que se pidió; lo que se
+  pide después entra al nuevo.
+- **Lo que la Fase D dejó a la vista y cómo se decidió (el encargo pide decidir sin preguntar):**
+  1. El cambio de PIN de alguien con la sesión abierta NO revocaba esa sesión (vivía hasta vencer).
+     **Se arregla** (hallazgo 10): cambiarle el PIN a OTRA persona cierra sus sesiones; cambiar el
+     propio no cierra la sesión con la que se está cambiando.
+  2. `venta.cobrar` acepta la propina que le manden aunque nadie tenga permiso de elegirla (sólo
+     `cuenta.fijar_propina` lo hace valer). **No se cambia antes de abrir** (hallazgo 11): la
+     propina que llega al cobro puede venir fijada por el comensal o el mesero, y endurecer el
+     cobro arriesga más un cobro legítimo de lo que protege. Va a la lista de después.
+  3. El rechazo `TOTAL_DESACTUALIZADO` no trae el total vigente aunque su comentario lo promete
+     (hallazgo 12, bajo): se ve en la Caja con el arnés y se arregla si la cajera se queda sin
+     saber cuánto cobrar.
+  4. No hay descuento por renglón en el restaurante (sólo a la cuenta, repartido entre renglones)
+     ni «partes iguales» de dinero (sólo por unidades de cada renglón). **Se queda así:** son
+     reglas de dinero y no se cambian en la víspera; van a la lista de lo grande para después.
+- **Sin migración.**
