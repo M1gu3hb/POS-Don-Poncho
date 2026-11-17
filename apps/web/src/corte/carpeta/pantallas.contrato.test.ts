@@ -55,7 +55,8 @@ describe('el cierre de la caja (CorteEnPdf)', () => {
   it('los botones nuevos miden 44 px', () => {
     for (const texto of ['Guardar en la carpeta', 'Abrir carpeta']) {
       const [boton] = botonesCon(CIERRE, texto);
-      expect(boton, texto).toMatch(/\bmin-h-11\b/);
+      // 44 px con el token del sistema (2.75rem de piso): `verify:primitivas` no acepta altos fijos.
+      expect(boton, texto).toContain('min-h-[max(2.75rem,var(--altura-control))]');
     }
   });
 });

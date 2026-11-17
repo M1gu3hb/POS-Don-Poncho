@@ -243,7 +243,7 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
         <>
           <Button
             variant="outline"
-            className="min-h-11"
+            className="min-h-[max(2.75rem,var(--altura-control))]"
             disabled={guardando}
             cargando={guardando}
             onClick={() => {
@@ -255,7 +255,7 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
           </Button>
           <Button
             variant="outline"
-            className="min-h-11"
+            className="min-h-[max(2.75rem,var(--altura-control))]"
             onClick={() => {
               void abrirLaCarpeta();
             }}
