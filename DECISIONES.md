@@ -3114,3 +3114,23 @@ Lo que dejó probar cada combinación de ajustes (`packages/app/src/qa-final/`, 
      ni «partes iguales» de dinero (sólo por unidades de cada renglón). **Se queda así:** son
      reglas de dinero y no se cambian en la víspera; van a la lista de lo grande para después.
 - **Sin migración.**
+
+### DP-D163 · Los ajustes de Configuración tienen que demostrar su efecto (DP-22, 17-nov-2026)
+
+- **Decisión:** cada ajuste de Configuración se da por comprobado sólo con una prueba que se haya visto
+  fallar al romper su lector (mutante). El papel se prueba contra el componente real del ticket y del
+  corte (`pruebas/impresion/ajustes-del-papel.spec.ts`), las copias por el camino de producción con la
+  app falsa (`copias-por-la-app.spec.ts`), el portal en servidor (`ajustes-del-portal.integracion.test.ts`)
+  y en el teléfono, y lo de cada aparato con el dedo (`pruebas/e2e/qa-final/ajustes.*.spec.ts`).
+  `efectos.json` dice por cada clave su prueba y su estado; lo que no quedó, queda como «por ver».
+- **Sin migración.**
+
+### DP-D164 · Lo que el acceso y «Mostrar productos sin imagen» NO hacen (DP-22)
+
+- **Hallazgos que se declaran, no se cambian en la víspera:** (1) el acceso (pantalla del PIN, sin sesión)
+  no lee `color_primario`, `color_acento`, `nombre_sistema` ni los logos: la configuración exige sesión y
+  los colores no son públicos a propósito (`lo-publico.test.ts`); sólo el nombre sale de la lista de
+  personas. Los ajustes valen para el sistema interno. (2) `portal_qr_mostrar_sin_imagen` sólo gobierna el
+  menú «A la carta»; en «Menú digital» (el de siempre) no hace nada. **Se queda así** hasta que Miguel
+  decida: esconder la casilla en «Menú digital» o hacerla valer.
+- **Sin migración.**
