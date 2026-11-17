@@ -225,6 +225,8 @@ export interface InsumoDePrueba {
   readonly costoTotalPesos: number;
   /** Merma del día 0 en la unidad BASE. */
   readonly mermaBase: number;
+  /** DP-22 · Su mínimo, en la unidad de compra (alimenta el aviso de insumo bajo). */
+  readonly minimo?: number;
 }
 
 /** Cuántas unidades base trae una unidad de compra. */
@@ -266,6 +268,7 @@ export const INSUMOS: readonly InsumoDePrueba[] = [
     compra: 80,
     costoTotalPesos: 480,
     mermaBase: 3,
+    minimo: 78,
   },
   {
     nombre: 'Leche de prueba',
@@ -290,6 +293,7 @@ export const INSUMOS: readonly InsumoDePrueba[] = [
     compra: 3,
     costoTotalPesos: 1200,
     mermaBase: 100,
+    minimo: 3,
   },
 ];
 

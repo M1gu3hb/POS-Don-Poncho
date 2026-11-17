@@ -145,6 +145,36 @@ Rama `dp-22-lote2-pr` (checkout principal, sobre `main` ya con el lote 1). Lleva
 - **La app 1.0.2** (repo de las apps, rama `exe-1.0.2`, PR morphiq-pos-apps#2): construida; humo de
   la app EMPAQUETADA 10 de 10 (carga el POS de producción, la capacidad `archivos` a la vista, un
   no-PDF rechazado sin escribir nada). Sin publicar todavía.
+- **La CI:** tercera corrida (`9965fb8`), **10 de 10** (07:52), con la integración contra Postgres,
+  la construcción y las puertas de mutación.
+- **Despliegue (17-11):** unido a `main` como `829b13d` a las 07:53; el despliegue de producción
+  quedó «READY» a las 07:55 (`dpl_2W6ZV4…`). Regreso previsto: el despliegue del lote 1
+  (`dpl_3JDNeS…`); sin migraciones.
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 2`, 07:56): 38 revisiones, 0 fallas.
+- **Vercel:** 0 errores al desplegar y **0 en la hora siguiente** (revisado a las 09:00, ventana
+  de 2 h). **Lote 2 cerrado.**
+- **En local**, sobre la rama del lote: las puertas de mutación, la construcción, el modo
+  compatible, la cobertura y la integración completa contra Postgres en verde (08:47); la suite
+  unitaria completa (las 4 que se pasaron de tiempo con la máquina cargada pasan solas); tipos,
+  lint y formato de lo tocado. `verify:cabeceras` no alcanzó a arrancar su servidor en 30 s con la
+  máquina cargada (igual que en la línea base) y repetida sola pasa.
+- **La app 1.0.2, publicada y vista llegar (17-11, 08:03 a 08:07):** PR morphiq-pos-apps#2 unido
+  (`37ec070`); release `don-poncho-v1.0.2`; canal `canal-don-poncho` con `latest.yml` en 1.0.2. En
+  la laptop: la 1.0.1 publicada (misma suma) instalada y abierta a las 08:04:11; a las 08:04:44 ya
+  había bajado la 1.0.2; salió el aviso «POS Don Poncho tiene una actualización · La versión 1.0.2
+  ya está lista» (`D:\mpos-tmp\dp22\aviso-actualizacion.png`); «Reiniciar ahora» a las 08:06:14 y
+  a las 08:07:11 lo instalado era la 1.0.2. Esa primera vez la app no se volvió a abrir sola: la
+  había lanzado esta consola, no una persona.
+- **Los dos caminos de la actualización, repetidos abriendo la 1.0.1 desde el Explorador (10:03 a
+  10:14, `D:\mpos-tmp\dp22\prueba-actualizacion.sh`):** con «Reiniciar ahora», el aviso salió a
+  los 24 s de abrir y 22 s después estaba instalada la 1.0.2 y la app ABIERTA OTRA VEZ sola; con
+  «Al cerrar», al cerrar la app con normalidad quedó instalada la 1.0.2 en 25 s (y la app,
+  cerrada, como debe). No hay defecto.
+- **Lo que no se puede probar aquí** (DP-D162): el POS dentro de Electron contra el servidor local
+  (la app sólo acepta `https://` y el dominio exacto de producción, a propósito: se queda el
+  Chromium 156 del arnés más el humo de la app empaquetada) y guardar el PDF de un corte de punta
+  a punta en la app instalada (haría falta cerrar una caja en producción con un PIN real). Lo
+  segundo va a la lista física de Miguel.
 
 El barrido de servicio y los hallazgos 2 a 6 (agente A, rama `dp-22-lote2` en `.work\dp20-lab`) y
 lo de salón y cocina (agente D1, rama `dp-22-salon`) van en el lote siguiente.

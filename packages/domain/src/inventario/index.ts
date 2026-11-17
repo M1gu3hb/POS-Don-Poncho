@@ -25,6 +25,7 @@ export {
 export {
   alertasDeMinimo,
   diasHastaLaVisita,
+  existenciaConSigno,
   sugerirPedido,
   type Alerta,
   type ArticuloParaAlerta,

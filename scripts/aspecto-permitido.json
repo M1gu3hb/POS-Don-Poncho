@@ -2497,6 +2497,13 @@
       ]
     },
     {
+      "archivo": "apps/web/heredado/components/propinas/PropinasDashboardSection.jsx",
+      "porque": "DP-22 (lote 4) · La tarjeta de propinas del Dashboard suma en el servidor (`propinas.del_rango`: hoy, la semana y el último año) en vez de sumar en el navegador las últimas 2 000 ventas; si el servidor no contesta lo dice («No se pudieron leer las propinas») en lugar de esconder la tarjeta o enseñar ceros. Las tarjetas, los colores y el diseño son los mismos.",
+      "testigos": [
+        "+ texto:Abre el Dashboard otra vez para reintentar. Las propinas siguen en Registros."
+      ]
+    },
+    {
       "archivo": "apps/web/heredado/components/propinas/PropinasRegistros.jsx",
       "porque": "A23 · Registros › Propinas lee el rango del servidor (`propinas.del_rango`): el renglón de cada venta toma sus campos (`liquidada`, `meseroNombre`…) del servidor, la lista dice cuando viene topada («Se muestran las 300 propinas más recientes de N») y, si el servidor no contesta, lo dice con un «Reintentar» en lugar de enseñar ceros. Las tarjetas, los filtros y el diseño son los mismos.",
       "testigos": [
@@ -2604,6 +2611,16 @@
         "+ icono:HardDriveDownload",
         "+ icono:FolderOpen"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Dashboard.jsx",
+      "porque": "DP-22 · DP-D159: la tarjeta «Inventario crítico» (una cuenta del navegador que no llevaba a ningún lado) se sustituye por el aviso de insumo bajo, que cuenta en el servidor y lleva a Inventario filtrado.",
+      "testigos": ["- title:Inventario crítico"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Inventario.jsx",
+      "porque": "DP-22 · DP-D159: el filtro de estado gana «Por debajo del mínimo», que es la lista a la que lleva el aviso del Tablero (?estado=alerta).",
+      "testigos": ["+ texto:Por debajo del mínimo"]
     }
   ]
 }

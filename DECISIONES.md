@@ -3045,6 +3045,7 @@ noche y una prueba del tablero falló: de día pasa.
 - **Descartado:** confiar en el huso del aparato (`format(new Date(), …)` de date-fns): una tableta
   con el huso mal puesto cambiaría de día antes o después que la caja.
 - **Sin migración.**
+
 ## DP-D153 · Bloque 18 · Los PDF de los cortes quedan solos en una carpeta (app de Windows 1.0.2) · 17-11-2026
 
 Hasta la 1.0.1 el PDF del corte se descargaba como en un navegador (a «Descargas», con el nombre que
@@ -3113,4 +3114,177 @@ Lo que dejó probar cada combinación de ajustes (`packages/app/src/qa-final/`, 
   4. No hay descuento por renglón en el restaurante (sólo a la cuenta, repartido entre renglones)
      ni «partes iguales» de dinero (sólo por unidades de cada renglón). **Se queda así:** son
      reglas de dinero y no se cambian en la víspera; van a la lista de lo grande para después.
+- **Sin migración.**
+
+## DP-D156 · DP-22 · «Pasar la mesa a otro mesero»: una mesa, y la asignación viaja con ella · 17-11-2026
+
+`restaurante.relevar_responsable` (F-325) existía sin pantalla y relevaba TODAS las cuentas vivas del
+que se va. Lo que se decidió al darle su pantalla:
+
+- **Una mesa, no un turno.** El comando acepta un `ordenId` opcional: con él sólo pasa esa cuenta (y
+  su mesa); sin él sigue relevando todas las del que se va (el fin de turno, que sigue sin pantalla).
+  La cuenta tiene que ser de quien se va; si otra pantalla ya la pasó (o se cerró) se rechaza con
+  `ORDEN_NO_ENCONTRADA` y no escribe nada. La lectura de las cuentas toma su candado (`for update`,
+  por id): dos pantallas que pasan la misma mesa a la vez se esperan.
+- **La asignación de sala viaja con la mesa.** Con la asignación de mesas activa el plano y el panel
+  del mesero se filtran por `mesas.empleado_asignado_id`, no por quién atiende; relevar sólo cambiaba
+  lo segundo y la mesa seguía en el plano del que se fue y no aparecía en el de quien entró. Ahora la
+  mesa asignada al que se va queda asignada al que entra; una asignada a un tercero o a nadie no se
+  toca. También en el relevo de turno.
+- **Quién la ve: exactamente quien el comando deja** (gerente, administrador, dueño y cajero; en la
+  sesión, `administrador` y `caja`). No se inventó ningún permiso: un contrato compara los puestos
+  del botón con los del comando. El mesero no (relevar es de quien manda el turno).
+- **Dónde:** «Pasar la mesa a otro mesero» en las acciones de la mesa (`AccionesDeLaMesa`, de «Mesa
+  activa»), sólo si la mesa tiene a quien la atienda. Elige entre los meseros ACTIVOS (menos el
+  actual), confirma con la frase «¿Pasar la mesa 4 de Ana a Beto?», refresca el plano y la mesa y avisa.
+- **Auditoría:** el comando ya audita quién sale, quién entra, cuántas cuentas y el consumo
+  relevado; ahora también el `ordenId`. El corte queda en `relevos_atencion` (el tramo de quien se va
+  se cierra con el consumo de ese momento; el de quien entra se abre).
+- **Pruebas:** `relevo.integracion.test.ts` (13, contra Postgres), `pasar-la-mesa.test.ts` y
+  `pasar-la-mesa.contrato.test.ts`. Mutantes muertos: sin el filtro de la cuenta, sin la asignación,
+  con el mesero entre los roles, sin invalidar el plano, sin la guarda del botón.
+- **Sin migración.**
+
+## DP-D157 · DP-22 · El teléfono opcional del pedido para llevar · 17-11-2026
+
+La cajera puede teclear, junto al nombre, el teléfono del cliente del pedido para llevar, para
+llamarle cuando está listo.
+
+- **Dónde se guarda:** una columna nueva, `ordenes.telefono_pedido` (migración 194, aditiva, con su
+  `check` y su ficha `docs/para-el-maestro/40-telefono-del-pedido-para-llevar.md`), junto a
+  `nombre_pedido`. Descartado: `cliente_nombre`/el padrón de clientes (el mismo motivo de la 081:
+  nombres y números sueltos ensuciarían la base de la lealtad) y las notas de la orden (no se pueden
+  validar ni mostrar aparte).
+- **Qué se acepta** (`normalizarTelefonoDelPedido`, `packages/domain/src/venta`): sólo dígitos,
+  espacios, guiones y un «+» al inicio; de 7 a 15 dígitos y hasta 20 caracteres. Se limpia (espacios
+  de más) y vacío es «sin teléfono». El SERVIDOR valida (`armar_para_llevar`; rechazo
+  `ENTRADA_INVALIDA` con el motivo), la pantalla usa la misma regla para avisar antes de enviar y el
+  `check` de la base es la última red.
+- **Cada armado sella nombre y teléfono** (con o sin él) y descartar el pedido los borra: rearmar el
+  borrador sin teléfono no arrastra el del pedido anterior. En el aparato viaja con el borrador (como
+  el nombre) y se va con él al vaciar o al cobrar.
+- **Dónde se ve:** sólo en la lista de «Para llevar» de la Caja (`para_llevar_del_dia`, tarjetas de
+  lo listo y de lo que sigue en cocina). **NO sale en el ticket del cliente:** el ticket (`venta.ticket`)
+  trae el renglón «PARA LLEVAR · N · nombre» —el nombre sí sale—, y se decidió que el teléfono no: es un
+  dato para la caja, el papel lo puede dejar cualquiera en el mostrador. Tampoco en cocina, ni en el
+  puente de datos (`Venta`), ni en la auditoría (ésta sólo dice `conTelefono`).
+- **Pruebas:** `telefono-para-llevar.integracion.test.ts` (14, contra Postgres),
+  `telefono-del-pedido.test.ts` (dominio, 23) y `para-llevar/telefono-del-pedido.test.ts` (pantalla).
+
+## DP-D158 · DP-22 · La comanda se ajusta al quitar un platillo; el Dashboard y la prueba del laboratorio · 17-11-2026
+
+- **Hallazgo 7.** Quitar un platillo (`restaurante.anular_linea`) sólo cancelaba la comanda sin platos
+  vivos: con dos platos —uno ya «listo» y otro por preparar— y el segundo quitado, la comanda seguía
+  en «nuevo», la mesa no pasaba a «Esperando entrega» y el mesero no recibía el aviso. Ahora, tras
+  anular, cada comanda viva de esa línea se ajusta al mínimo de sus platos y, si cambió, sigue el MISMO
+  cierre que cuando la estación mueve un plato (`cerrarElMovimiento`: lo ya cobrado, las líneas y la
+  mesa). Si el estado no cambia (el vivo sigue pendiente, o sólo se redujo una cantidad) no escribe
+  nada. No toma candados nuevos: va con el orden de `candados-de-cocina.ts`. Prueba:
+  `anular-platillo-comanda-lista.integracion.test.ts`; `candados-de-cocina.integracion.test.ts` sigue
+  en verde con 0 reintentos.
+- **Propinas del Dashboard.** La tarjeta suma en el servidor (`propinas.del_rango`: hoy, los últimos
+  siete días y 364 días) y no en el navegador sobre las últimas 2 000 ventas. **Cambia lo que dicen
+  «Pendientes» y «Liquidadas»:** antes eran «de las últimas 2 000 ventas», ahora son las del último
+  año (364 días, que cabe en el tope del servidor aun con un cambio de horario). Si el servidor no
+  contesta la tarjeta lo dice en lugar de esconderse.
+- **Prueba de impresión del laboratorio** con plazo: el mismo `PLAZO_PARA_ENVIAR_MS` (20 s de silencio,
+  cada aviso de avance lo renueva) que los trabajos de la Caja; vencido, dice «La impresora no
+  contestó en 20 s…». Si la primera prueba llega tarde saldrá dos veces (cada prueba lleva su id).
+- **Migración:** la de DP-D157 (la 194); esto no añade ninguna.
+
+## DP-D159 · DP-22 · El aviso de insumo bajo: la cuenta sale del servidor y el toque lleva a Inventario filtrado · 17-11-2026
+
+**Contexto.** Inventario ordena por semáforo (agotado, crítico, bajo), pero fuera de esa pantalla nadie se
+enteraba: el Tablero tenía una tarjeta «Inventario crítico» que contaba una lista de ingredientes bajada
+al navegador (que el puente puede cortar) y no llevaba a ningún lado.
+
+**Decisión.**
+
+- **Comando de lectura `inventario.insumos_bajos`** (`packages/app/src/inventario/insumos-bajos.ts`, ruta
+  `POST /api/inventario/insumos-bajos`). Roles: los que leen Inventario (`dueno`, `administrador`,
+  `gerente`, `almacen`), paquetes operativos y módulo `inventario`. Cuenta sobre TODOS los insumos
+  activos con la existencia de la vista `existencias_por_insumo` (la suma de todos los almacenes) y
+  devuelve `{ total, primeros[3] }`: los primeros, del más urgente al menos (crítico antes que bajo; dentro
+  de cada nivel, la menor cobertura = existencia ÷ mínimo; a igualdad, el nombre).
+- **La regla es `alertasDeMinimo` del dominio** (la que ya existía, sin uso): un piso en cero es «no lo
+  vigiles»; con piso (o con piso crítico) cuenta lo que está EN el piso o por debajo, y lo agotado o en
+  negativo (DP-D116) cuenta siempre que tenga piso. Un insumo agotado SIN piso no cuenta como «por debajo
+  de su mínimo» (no tiene mínimo): sigue saliendo en el semáforo como «Agotado».
+- **Tarjeta en el Tablero** (`AvisoDeInsumosBajos`): «N insumos por debajo de su mínimo», los primeros
+  nombres («Carne, Crema, Pan y 4 más»), 44 px de alto, y un toque que lleva a
+  `/inventario?estado=alerta`. Sin insumos bajos no aparece; si no se pudo leer lo dice. Sustituye a la
+  tarjeta «Inventario crítico». Quién la ve: el Tablero sólo lo abren dueño, administrador y gerente
+  (el almacén entra directo a Inventario, donde ya ve el semáforo); el comando también lo lee el almacén.
+- **Inventario** entiende `?estado=alerta` y tiene el filtro «Por debajo del mínimo», con la MISMA regla
+  (`estaPorDebajoDelMinimo`, atada por una prueba de cuadrícula a `alertasDeMinimo`): la lista que se abre
+  es la que se contó.
+
+**Lo que el trabajo encontró (y quedó arreglado, DP-D161):** `alertasDeMinimo` lanzaba
+`CANTIDAD_INVALIDA` con una existencia en negativo (`cantidad()` no acepta signo) — justo el caso que
+DP-D116 vuelve legal.
+
+**Pruebas.** Integración contra Postgres (11): activos, suma de almacenes, piso en cero, en el piso,
+negativo, sin fila de existencias, más de mil insumos sin tope, otro negocio, permisos. Unitarias: el
+texto de la tarjeta, la cuadrícula contra el dominio y el filtro de la URL. Mutantes en el informe.
+
+## DP-D160 · DP-22 · «Lo más vendido» en Registros: por platillo y por mesero, sumado en el servidor · 17-11-2026
+
+**Decisión.** Las ventas por platillo sólo existían como exportación. Ahora Registros tiene, bajo el
+resumen del periodo, la sección «Lo más vendido» (Por platillo | Por mesero).
+
+- **Comando de lectura `registros.lo_mas_vendido`** (`packages/app/src/registros/lo-mas-vendido.ts`, ruta
+  `POST /api/registros/lo-mas-vendido`), al estilo de `registros.resumen`: mismos roles (`dueno`,
+  `administrador`, `gerente`) y paquetes, mismo periodo (`desde`/`hasta`), el día del NEGOCIO (la zona de
+  la organización), sin tope de filas, todo en centavos enteros.
+- **Qué cuenta:** líneas no anuladas de cuentas vendidas (`ORDEN_VENDIDA`: lo cancelado y la cuenta madre
+  de una división no cuentan; la devuelta entera sigue siendo venta de su día). Lo que se vende por peso
+  cuenta sus KILOS, no la pieza de la línea.
+- **Las devoluciones restan en el día en que se hicieron** (como el corte: «el histórico no se toca»). Cada
+  platillo trae lo vendido, lo devuelto y lo que dejó (neto); la lista va ordenada por el neto. Un platillo
+  vendido antes del periodo y devuelto dentro sale con venta cero y neto negativo.
+- **Cómo cuadra con el resumen:** `cuentas.ventasCentavos` es la venta del resumen, al centavo; la venta
+  por platillo (`vendidoCentavos`, SIN restar devoluciones) más lo que no es platillo
+  (`cuentas.ajusteCentavos`: el descuento y los impuestos de la CUENTA) es esa venta. La pantalla lo dice
+  en su pie. La venta de los meseros suma la del resumen y su propina suma la propina del resumen.
+- **Por mesero:** cuentas, venta (el total de la cuenta, sin propina) y propina confirmada, quien atendió
+  la cuenta; «Sin mesero» si no hay quien.
+- **Pantalla:** 44 px en los botones, los 10 primeros con «Ver los N», aviso si no se pudo leer. El
+  navegador no suma dinero: sólo lo dice (`lo-mas-vendido-del-servidor.ts`).
+
+**Pruebas.** Armado puro (7), integración contra Postgres (16: cuentas anuladas, canceladas, divididas,
+por peso, devueltas, día del negocio en el borde 23:59/00:00, más de mil líneas, otro negocio, permisos,
+entrada) y presentación (5). Mutantes en el informe.
+
+## DP-D161 · DP-22 · `alertasDeMinimo` ve la existencia en negativo · 17-11-2026
+
+`alertasDeMinimo` (dominio, F-107) usaba `cantidad()` para la existencia, que no acepta signo: una
+existencia en negativo —legal desde DP-D116— lanzaba `CANTIDAD_INVALIDA`. Nadie la llamaba, por eso no se
+había visto; el aviso de insumo bajo (DP-D159) la usa. Ahora la existencia se lee con signo
+(`existenciaConSigno`) y un negativo alerta (crítico si hay piso crítico, bajo si no). Prueba primero
+(falló con el error) y mutante (volver a `cantidad`).
+
+## DP-D162 · DP-22 · La app de Windows 1.0.2: cómo se publicó, qué se comprobó y qué no se puede probar aquí · 17-11-2026
+
+- **El orden de la publicación.** Primero el lado POS en producción (lote 2), después la app: release
+  `don-poncho-v1.0.2` con el instalador y su `SHA256SUMS.txt`; al canal `canal-don-poncho` el
+  instalador y su `.blockmap`, y AL FINAL `latest.yml`, que es lo que hace que las apps instaladas
+  la vean. Antes de publicar: las pruebas de la app, el instalador construido del commit unido y la
+  prueba de humo sobre la app YA EMPAQUETADA (con sus fuses), que carga el POS de producción.
+- **Sólo Windows.** Android sigue en la 1.0.1. `version.json` es compartido y ya dice 1.0.2: el
+  siguiente APK que se construya saldrá como 1.0.2 (versionCode 4) sin la capacidad de archivos, que
+  es sólo de Windows. La página de descargas resuelve cada plataforma por separado desde el canal
+  (`latest.yml` y `android.json`), así que el enlace del APK no se rompe.
+- **La actualización se comprobó en la laptop por los dos caminos**, con la 1.0.1 publicada (misma
+  suma) instalada y abierta desde el Explorador: «Reiniciar ahora» instala y vuelve a abrir la app
+  sola; «Al cerrar» instala al cerrar la app. El aviso dice la versión.
+- **El POS dentro de Electron contra el servidor local NO se prueba.** La app sólo le da el puente a
+  `https://` y al dominio exacto de producción (`origen.js`), y así se queda: abrirle la puerta a
+  `localhost` para probar sería debilitar justo el cerrojo que protege al cajón y a la impresora.
+  - **En su lugar:** el arnés táctil corre con Chrome 156, la misma versión mayor que trae Electron
+    45, y la app empaquetada pasa su humo contra producción.
+- **Guardar el PDF de un corte de punta a punta en la app instalada no se probó:** haría falta
+  cerrar una caja en producción con un PIN real, y eso no lo hace un agente. Las dos mitades sí
+  están probadas por separado (la app guarda, rechaza y no se sale de su carpeta; el POS detecta la
+  capacidad, arma el nombre y no retrasa el cierre). Queda en la lista física de Miguel: tras el
+  primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`.
 - **Sin migración.**

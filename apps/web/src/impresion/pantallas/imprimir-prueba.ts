@@ -12,6 +12,8 @@ import { imprimirEnLaApp, armarDocumento } from '../imprimir-en-la-app.ts';
 import type { MapaDeBits } from '../termico/mapa.ts';
 import type { PerfilDeImpresion } from '../termico/perfil.ts';
 import { aBase64, nuevoIdDeTrabajo } from '../termico/trabajo.ts';
+import { PLAZO_PARA_ENVIAR_MS } from '../trabajos.ts';
+import { RESULTADO_SIN_RESPUESTA, conPlazoDeSilencio } from './plazo-de-la-prueba.ts';
 import {
   resultadoDelFin,
   resultadoDelPuente,
@@ -46,13 +48,16 @@ export async function imprimirElementoDePrueba(
   const entrega = ahora();
   if (perfil.lenguaje === 'driver') {
     // Por el driver de Windows se manda la misma imagen de 1 bit, como página.
-    const fin = await imprimirEnLaApp(
-      app,
-      perfil,
-      { titulo, copias: [elemento] },
-      { id, avanzar: () => undefined },
+    // El MISMO plazo que los trabajos de la Caja (`PLAZO_PARA_ENVIAR_MS`): de silencio, y cada aviso
+    // de avance de la app lo renueva. Sin él, una app colgada dejaba el botón en «Enviando…».
+    const fin = await conPlazoDeSilencio(
+      (renovar) =>
+        imprimirEnLaApp(app, perfil, { titulo, copias: [elemento] }, { id, avanzar: renovar }),
+      PLAZO_PARA_ENVIAR_MS,
+      () => null,
     );
     const msDeEnvio = ahora() - entrega;
+    if (fin === null) return RESULTADO_SIN_RESPUESTA;
     alTenerElTrabajo({
       titulo,
       bytes: armado.bytes,
@@ -64,17 +69,23 @@ export async function imprimirElementoDePrueba(
     return resultadoDelFin(fin, { ms: msDeDibujo + msDeEnvio });
   }
 
-  const resultado = await app.imprimir({
-    id,
-    destino: perfil.destino,
-    documento: {
-      tipo: 'crudo',
-      base64: aBase64(armado.bytes),
-      bloqueBytes: perfil.bloqueBytes,
-      pausaMs: perfil.pausaMs,
-    },
-  });
+  const resultado = await conPlazoDeSilencio(
+    () =>
+      app.imprimir({
+        id,
+        destino: perfil.destino,
+        documento: {
+          tipo: 'crudo',
+          base64: aBase64(armado.bytes),
+          bloqueBytes: perfil.bloqueBytes,
+          pausaMs: perfil.pausaMs,
+        },
+      }),
+    PLAZO_PARA_ENVIAR_MS,
+    () => null,
+  );
   const msDeEnvio = ahora() - entrega;
+  if (resultado === null) return RESULTADO_SIN_RESPUESTA;
   alTenerElTrabajo({
     titulo,
     bytes: armado.bytes,

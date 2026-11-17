@@ -71,6 +71,8 @@ export function useArmadoDelPedido({ claveDelAparato, ordenDelBorrador, opciones
   const [carrito, setCarrito] = useState(() => (guardado ? [...guardado.carrito] : []));
   // La nota del pedido (en el pedido para llevar, el nombre del cliente) viaja con el borrador.
   const [nota, setNota] = useState(() => guardado?.nota ?? '');
+  // DP-D157 · Y su teléfono (opcional): viaja con el borrador y se va con él al vaciar.
+  const [telefono, setTelefono] = useState(() => guardado?.telefono ?? '');
   const [productoParaPersonalizar, setProductoParaPersonalizar] = useState(null);
   const [turnoDePersonalizar, setTurnoDePersonalizar] = useState(0);
   const [productoVariable, setProductoVariable] = useState(null);
@@ -83,10 +85,10 @@ export function useArmadoDelPedido({ claveDelAparato, ordenDelBorrador, opciones
     guardarBorrador(
       almacenDelBorrador(),
       claveDelAparato,
-      { ordenId: ordenDelBorrador, carrito, nota },
+      { ordenId: ordenDelBorrador, carrito, nota, telefono },
       Date.now(),
     );
-  }, [carrito, nota, claveDelAparato, ordenDelBorrador]);
+  }, [carrito, nota, telefono, claveDelAparato, ordenDelBorrador]);
 
   const total = useMemo(
     () => carrito.reduce((s, i) => s + (Number(i.precio_venta) || 0) * (Number(i.cantidad) || 0), 0),
@@ -243,6 +245,7 @@ export function useArmadoDelPedido({ claveDelAparato, ordenDelBorrador, opciones
   const vaciar = () => {
     setCarrito([]);
     setNota('');
+    setTelefono('');
     if (claveDelAparato) borrarBorrador(almacenDelBorrador(), claveDelAparato);
   };
 
@@ -252,6 +255,8 @@ export function useArmadoDelPedido({ claveDelAparato, ordenDelBorrador, opciones
     setCarrito,
     nota,
     setNota,
+    telefono,
+    setTelefono,
     total,
     agregar,
     cambiarCantidad,

@@ -203,6 +203,17 @@ describe('alertasDeMinimo', () => {
   it('lo que está por encima del piso no alerta', () => {
     expect(alertasDeMinimo([articulo({ existenciaBase: '80.0000' })])).toEqual([]);
   });
+
+  it('UNA EXISTENCIA EN NEGATIVO (DP-D116) ES LA MÁS URGENTE, NO UN ERROR', () => {
+    // Lo que pasó por cocina se cobra aunque el almacén dijera que no había: la existencia queda
+    // en negativo «para que el conteo la enseñe». La alerta tiene que verla, no lanzar.
+    expect(alertasDeMinimo([articulo({ insumoId: 'neg', existenciaBase: '-50.0000' })])).toEqual([
+      { insumoId: 'neg', nivel: 'critico' },
+    ]);
+    expect(
+      alertasDeMinimo([articulo({ insumoId: 'neg', existenciaBase: '-3', stockCritico: '0' })]),
+    ).toEqual([{ insumoId: 'neg', nivel: 'bajo' }]);
+  });
 });
 
 describe('diasHastaLaVisita', () => {

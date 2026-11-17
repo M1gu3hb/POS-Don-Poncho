@@ -20,6 +20,18 @@ import { definirComando } from '../definicion.ts';
  * adelante el trabajo lo hace otro. Sin ese corte, la propina de una mesa que
  * cambió de mesero a media noche no se puede repartir.
  *
+ * ── Una mesa, o todas (DP-D156) ────────────────────────────────────────────
+ * Sin `ordenId` se relevan todas las cuentas vivas del que se va (el fin de turno). Con él, sólo
+ * esa: es lo que hace la pantalla «Pasar la mesa a otro mesero», porque «le pasamos esta mesa a
+ * Beto» no es «Ana se fue». La cuenta tiene que ser de quien se va; si ya no lo es (otra pantalla
+ * la pasó antes) se rechaza sin escribir nada.
+ *
+ * ── La asignación de sala viaja con la mesa ────────────────────────────────
+ * Con la asignación de mesas activa, el plano y el panel del mesero se filtran por la asignación
+ * (`mesas.empleado_asignado_id`), no por quién atiende. Relevar sólo cambiaba lo segundo: la mesa
+ * seguía en el plano del que se fue y no aparecía en el de quien entró. Ahora la mesa asignada al
+ * que se va queda asignada al que entra; una sin asignación sigue sin asignación.
+ *
  * ── El primer tramo se abre AQUÍ, no al abrir la mesa ──────────────────────
  * Una cuenta que nunca cambió de mesero no necesita ledger: su propina es
  * entera de `ordenes.empleado_atiende_id`. Escribir un tramo por cada cuenta
@@ -33,6 +45,8 @@ export const entradaRelevarResponsable = z.object({
   empleadoSaleId: z.uuid(),
   /** Quién entra. Queda como responsable de todas ellas. */
   empleadoEntraId: z.uuid(),
+  /** DP-D156 · Sólo esta cuenta (la mesa que se pasa). Sin ella, todas las del que se va. */
+  ordenId: z.uuid().optional(),
 });
 
 export interface CuentaRelevada {
@@ -68,7 +82,7 @@ export const relevarResponsable = definirComando<
   escribe: true,
   roles: [...ROLES],
   paquetes: PAQUETES_RESTAURANTE,
-  sucursal: { empleadoSaleId: 'empleos', empleadoEntraId: 'empleos' },
+  sucursal: { empleadoSaleId: 'empleos', empleadoEntraId: 'empleos', ordenId: 'ordenes' },
   modulo: 'mesero',
   entrada: entradaRelevarResponsable,
   async ejecutar(ctx, entrada) {
@@ -109,8 +123,22 @@ export const relevarResponsable = definirComando<
     if (sucursalId !== null) {
       consulta = consulta.where('sucursal_id', '=', sucursalId);
     }
+    if (entrada.ordenId !== undefined) {
+      consulta = consulta.where('id', '=', entrada.ordenId);
+    }
 
-    const cuentas = await ctx.paso('cargar_cuentas', () => consulta.execute());
+    // El candado de las cuentas, por id: dos pantallas que pasan la misma mesa a la vez se esperan,
+    // y la segunda ya no la encuentra en manos de quien se va.
+    const cuentas = await ctx.paso('cargar_cuentas', () =>
+      consulta.orderBy('id').forUpdate().execute(),
+    );
+
+    if (entrada.ordenId !== undefined && cuentas.length === 0) {
+      throw new ErrorDominio(
+        'ORDEN_NO_ENCONTRADA',
+        'Esa mesa ya no la atiende quien se iba: otra pantalla la pasó antes o la cuenta se cerró. Revisa el plano.',
+      );
+    }
 
     if (cuentas.length === 0) {
       // No es un error: el mesero se va sin mesas abiertas, que es lo normal a
@@ -215,6 +243,17 @@ export const relevarResponsable = definirComando<
           .where('id', 'in', mesaIds)
           .execute(),
       );
+      // DP-D156 · La asignación de sala del que se va pasa con la mesa (ver arriba). Sólo las que
+      // eran SUYAS: una mesa asignada a un tercero o a nadie no se toca.
+      await ctx.paso('reapuntar_asignacion', () =>
+        ctx.tx
+          .updateTable('mesas')
+          .set({ empleado_asignado_id: entrada.empleadoEntraId, updated_at: ctx.ahora })
+          .where('organizacion_id', '=', organizacionId)
+          .where('id', 'in', mesaIds)
+          .where('empleado_asignado_id', '=', entrada.empleadoSaleId)
+          .execute(),
+      );
     }
 
     ctx.auditar({
@@ -222,6 +261,7 @@ export const relevarResponsable = definirComando<
       payload: {
         sale: entrada.empleadoSaleId,
         entra: entrada.empleadoEntraId,
+        ordenId: entrada.ordenId ?? null,
         cuentas: cuentas.length,
         consumoRelevadoCentavos: cuentas.reduce((a, c) => a + c.total_centavos, 0n).toString(),
       },

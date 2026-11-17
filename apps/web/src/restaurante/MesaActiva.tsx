@@ -1,63 +1,9 @@
 'use client';
 
-import { Badge } from '@morphiqpos/ui/primitivas/badge';
-import { Button } from '@morphiqpos/ui/primitivas/button';
-import { Dialog, DialogContent, DialogTitle } from '@morphiqpos/ui/primitivas/dialog';
-import { Input } from '@morphiqpos/ui/primitivas/input';
-import { Sheet, SheetContent, SheetTitle } from '@morphiqpos/ui/primitivas/sheet';
-import {
-  Aviso,
-  BarraFija,
-  Dinero,
-  ErrorDePantalla,
-  Superficie,
-  Tabla,
-  VIAJE,
-  Vacio,
-  dineroEnTexto,
-} from '@morphiqpos/ui/sistema';
-import {
-  ArrowLeft,
-  Minus,
-  Plus,
-  Search,
-  Send,
-  Split,
-  TriangleAlert,
-  Users,
-  UtensilsCrossed,
-} from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { ViewTransition, useEffect, useRef, useState, type ChangeEvent } from 'react';
-
-import { consultarPuente, invocarComando, nuevaClave } from '~/cliente/api';
-import { valorDelPuente } from '~/cliente/dinero-del-puente';
-import { AccionesDeLaMesa } from './AccionesDeLaMesa';
-import { puedeAjustarLaCuenta, puedeCancelarPedidos } from './ajustes-de-la-cuenta-por-rol.ts';
-import { AnularLineaDialog } from './AnularLineaDialog';
-import {
-  ESTADOS_DE_MESA,
-  EsqueletoDeLaComanda,
-  SIN_LINEAS,
-  columnasDeLoEnviado,
-  columnasDelBorrador,
-  importeDe,
-  leerLoEnviado,
-  precioDe,
-  type LineaEnviada,
-  type MesaAbierta,
-  type MesaActivaProps,
-  type ProductoDeComanda,
-} from './comanda-de-la-mesa';
-import { DividirCuentaDialog, paraDividir } from './DividirCuentaDialog';
-import { lineasDelEnvio } from './envio-a-cocina';
-import { ListosParaRecoger, useListosDeLaCuenta } from './ListosParaRecoger';
-import { useRolDeLaSesion } from './rol-de-la-sesion';
-import { liberarMesaConPregunta, useUnionDeLaMesa } from './unir-mesas';
-import { useVocabulario } from '~/cliente/vocabulario';
-import { sonar } from '~/sonidos/gestor';
-
-/** PANTALLA · restaurante · mesa-activa (en la primera línea: `verify:cobertura` lee 60)
+/** PANTALLA · restaurante · mesa-activa
+ *
+ * (La etiqueta va ANTES de los imports: `verify:cobertura` sólo lee las primeras 60 líneas, y dos
+ * imports más bastaron para dejarla fuera.)
  *
  * La comanda. 80-200 veces al día por mesero. No es una pantalla nueva: es la
  * mesa, abierta. Jerarquía (`04-INTERFAZ`): ENVIAR A COCINA, lo pedido, el
@@ -103,6 +49,65 @@ import { sonar } from '~/sonidos/gestor';
  * «Listos» entra por props hasta que el puente filtre la cocina por orden. Y no
  * van costos, márgenes, descuentos ni el cobro: esa separación es control interno.
  */
+
+import { Badge } from '@morphiqpos/ui/primitivas/badge';
+import { Button } from '@morphiqpos/ui/primitivas/button';
+import { Dialog, DialogContent, DialogTitle } from '@morphiqpos/ui/primitivas/dialog';
+import { Input } from '@morphiqpos/ui/primitivas/input';
+import { Sheet, SheetContent, SheetTitle } from '@morphiqpos/ui/primitivas/sheet';
+import {
+  Aviso,
+  BarraFija,
+  Dinero,
+  ErrorDePantalla,
+  Superficie,
+  Tabla,
+  VIAJE,
+  Vacio,
+  dineroEnTexto,
+} from '@morphiqpos/ui/sistema';
+import {
+  ArrowLeft,
+  Minus,
+  Plus,
+  Search,
+  Send,
+  Split,
+  TriangleAlert,
+  Users,
+  UtensilsCrossed,
+} from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ViewTransition, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { toast } from 'sonner';
+
+import { consultarPuente, invocarComando, nuevaClave } from '~/cliente/api';
+import { valorDelPuente } from '~/cliente/dinero-del-puente';
+import { AccionesDeLaMesa } from './AccionesDeLaMesa';
+import { puedeAjustarLaCuenta, puedeCancelarPedidos } from './ajustes-de-la-cuenta-por-rol.ts';
+import { AnularLineaDialog } from './AnularLineaDialog';
+import {
+  ESTADOS_DE_MESA,
+  EsqueletoDeLaComanda,
+  SIN_LINEAS,
+  columnasDeLoEnviado,
+  columnasDelBorrador,
+  importeDe,
+  leerLoEnviado,
+  precioDe,
+  type LineaEnviada,
+  type MesaAbierta,
+  type MesaActivaProps,
+  type ProductoDeComanda,
+} from './comanda-de-la-mesa';
+import { DividirCuentaDialog, paraDividir } from './DividirCuentaDialog';
+import { lineasDelEnvio } from './envio-a-cocina';
+import { ListosParaRecoger, useListosDeLaCuenta } from './ListosParaRecoger';
+import { avisoDelRelevo, puedePasarLaMesa, type MeseroElegible } from './pasar-la-mesa';
+import { useRolDeLaSesion } from './rol-de-la-sesion';
+import { liberarMesaConPregunta, useUnionDeLaMesa } from './unir-mesas';
+import { useVocabulario } from '~/cliente/vocabulario';
+import { sonar } from '~/sonidos/gestor';
 
 /** Para cuántas personas se puede abrir, como mucho. */
 const PERSONAS_MAXIMAS = 20;
@@ -447,6 +452,22 @@ export function MesaActiva(props: MesaActivaProps) {
   /** La cuenta se mudó: se abre la mesa de destino, que es donde ahora vive. */
   const alCambiarDeMesa = (destino: string): void => {
     router.replace(`/restaurante/mesa-activa?mesa=${encodeURIComponent(destino)}`);
+  };
+  /** DP-D156 · La mesa pasó a otro mesero: se relee quién la atiende y se avisa. */
+  const alPasarLaMesa = (entra: MeseroElegible): void => {
+    if (mesa === null) return;
+    toast.success(avisoDelRelevo({ mesa: mesa.numero, entra: entra.nombre }));
+    void consultarPuente<MesaAbierta>('Mesa', { filtro: { id: mesa.id }, limite: 1 })
+      .then((frescas) => {
+        if (frescas[0] !== undefined) setMesa(frescas[0]);
+      })
+      .catch((fallo: unknown) => {
+        setError(
+          fallo instanceof Error
+            ? fallo.message
+            : 'La mesa pasó, pero no se pudo releer. Refresca.',
+        );
+      });
   };
   /** Sin lo enviado no hay total: sumar sólo el borrador daría un total que no es. */
   const totalConocido = falloLineas === null;
@@ -860,6 +881,16 @@ export function MesaActiva(props: MesaActivaProps) {
               falloLineas === null ? enviadas.reduce((s, l) => s + importeDe(l), 0) : null
             }
             alCambiarDeMesa={alCambiarDeMesa}
+            pasarLaMesa={
+              puedePasarLaMesa(rol, mesa.atendido_por_id)
+                ? {
+                    numeroDeMesa: mesa.numero,
+                    atiendeId: mesa.atendido_por_id ?? '',
+                    atiendeNombre: mesa.atendido_por_nombre ?? null,
+                    alHecho: alPasarLaMesa,
+                  }
+                : null
+            }
             unionId={unionId}
             alSeparar={() => {
               setVersionDelGrupo((v) => v + 1);

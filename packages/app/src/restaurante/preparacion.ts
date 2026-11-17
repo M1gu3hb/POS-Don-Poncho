@@ -144,9 +144,9 @@ export const transicionarPedido = definirComando<
 });
 
 /** Cómo se nombra un paso: el del comando, o directo para quien no lleva bitácora de pasos. */
-type Paso = <T>(nombre: string, fn: () => Promise<T>) => Promise<T>;
+export type Paso = <T>(nombre: string, fn: () => Promise<T>) => Promise<T>;
 
-interface DatosDeLaComanda {
+export interface DatosDeLaComanda {
   readonly organizacionId: string;
   readonly comanda: ComandaViva;
   /** Quien la mueve; nulo desde el teléfono de una estación, que no tiene sesión (DP-9.4). */
@@ -177,8 +177,13 @@ async function moverToda(
   return destino;
 }
 
-/** Después de mover: las líneas de la venta siguen a sus platos y la mesa avanza si le toca. */
-async function cerrarElMovimiento(
+/**
+ * Después de mover: las líneas de la venta siguen a sus platos y la mesa avanza si le toca.
+ *
+ * Es EL cierre de una comanda que cambió de estado: lo usan mover un plato, mover la comanda
+ * entera y quitar el platillo que faltaba (`ajustar-comandas-tras-anular.ts`).
+ */
+export async function cerrarElMovimiento(
   tx: Transaccion,
   paso: Paso,
   datos: DatosDeLaComanda & { readonly estadoComanda: EstadoComanda },

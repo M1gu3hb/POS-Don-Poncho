@@ -5,7 +5,7 @@
  */
 import { expect, type Page } from '@playwright/test';
 
-import { cerrado, dialogoCon, elegir, tocarYEsperar } from './comun.ts';
+import { campoDe, cerrado, dialogoCon, elegir, tocarYEsperar } from './comun.ts';
 
 export interface CompraDeInsumo {
   readonly nombre: string;
@@ -15,18 +15,26 @@ export interface CompraDeInsumo {
   /** Sólo para un insumo NUEVO: g, ml o pieza. Si falta, la compra es de un insumo que ya existe. */
   readonly base?: 'g' | 'ml' | 'pieza';
   readonly pago?: 'Efectivo' | 'Tarjeta' | 'Transferencia';
+  /** DP-22 · El mínimo del insumo nuevo, en su unidad de compra (la tarjeta «Alertas de inventario»). */
+  readonly minimo?: number;
+  /** DP-22 · El proveedor (del selector); sin él, «Compra directa / Sin proveedor». */
+  readonly proveedor?: string;
 }
 
 const NOMBRE_DE_UNIDAD_BASE = { g: 'gramos (g)', ml: 'mililitros (ml)', pieza: 'pieza' } as const;
 
 export async function irACompras(pagina: Page, appUrl: string): Promise<void> {
   await pagina.goto(`${appUrl}/compras`, { waitUntil: 'domcontentloaded' });
-  await expect(pagina.getByRole('button', { name: /^Registrar compra/ })).toBeVisible();
+  await expect(pagina.getByRole('button', { name: /^Registrar compra/ })).toBeVisible({
+    timeout: 60_000,
+  });
 }
 
 export async function irAInventario(pagina: Page, appUrl: string): Promise<void> {
   await pagina.goto(`${appUrl}/inventario`, { waitUntil: 'domcontentloaded' });
-  await expect(pagina.getByText('Ingredientes e insumos', { exact: true })).toBeVisible();
+  await expect(pagina.getByText('Ingredientes e insumos', { exact: true })).toBeVisible({
+    timeout: 60_000,
+  });
   // La lista llega después del encabezado: sin esperarla, «no hay insumos» sería un falso vacío.
   await expect(
     pagina.getByText('Aún no tienes inventario').or(pagina.getByTitle(/^Ajustar stock/).first()),
@@ -50,11 +58,14 @@ export async function registrarCompra(pagina: Page, c: CompraDeInsumo): Promise<
       .click();
   } else {
     await dialogo.getByRole('button', { name: 'Nuevo', exact: true }).click();
-    await dialogo.getByPlaceholder('Ej: Café molido').fill(c.nombre);
+    await dialogo.getByPlaceholder(/^Ej: /).fill(c.nombre);
     await elegir(pagina, dialogo, 'Unidad base (cómo se usa)', NOMBRE_DE_UNIDAD_BASE[c.base]);
   }
   await dialogo.getByPlaceholder('0', { exact: true }).first().fill(String(c.cantidad));
   await elegir(pagina, dialogo, 'Unidad de compra', c.unidadDeCompra);
+  if (c.proveedor !== undefined) await elegir(pagina, dialogo, 'PROVEEDOR', c.proveedor);
+  if (c.minimo !== undefined)
+    await campoDe(dialogo, 'Stock mínimo').getByRole('spinbutton').fill(String(c.minimo));
   await dialogo.getByPlaceholder('$0').fill(String(c.costoTotalPesos));
   const r = await tocarYEsperar(
     pagina,

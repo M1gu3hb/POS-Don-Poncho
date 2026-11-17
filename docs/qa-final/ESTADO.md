@@ -3,39 +3,54 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11-2026, 06:30.
+Última puesta al día: 17-11-2026, 12:35.
 
-## AHORA MISMO (17-11, 06:30) — retomar desde aquí
+## AHORA MISMO (17-11, 12:35) — retomar desde aquí
 
-1. **Lote 1 EN PRODUCCIÓN** (PR #37 unido como `ff03687`, 05:59; producción lo sirve desde las
-   06:01). Humo sin sesión y sin cobrar: 38 revisiones, 0 fallas. Vercel: 0 errores al desplegar;
-   **falta la revisión de la hora (07:05)** y anotarla en `PROGRESO-DP22.md`.
-2. **Lote 2 en armado** en el checkout principal, rama `dp-22-lote2-pr` (sobre `main`): la
-   bitácora (`79db49c`) + la unión de `dp-22-ajustes` (`b0a7a9a`: el arnés táctil, la Fase D y los
-   arreglos de los hallazgos 8, 9 y 10) + la de `dp-22-b18` (`912c726`: el Bloque 18, lado POS).
-   Como el lote 1 se unió con squash, las uniones traen conflictos en documentos: la bitácora
-   (`ESTADO`, `HALLAZGOS`, `NUEVO`, `PLAN`, `PROGRESO`) se queda con LO NUESTRO; `MATRIZ.md`,
-   `efectos.json`, `matriz.json` y `.gitignore`, con LO SUYO; `DECISIONES.md` y
-   `scripts/aspecto-permitido.json` llevan los dos lados
-   (`node /d/mpos-tmp/dp22/unir-los-dos-lados.cjs <archivo>`). Después: `pnpm qa:matriz`,
-   `verify` completo (`bash /d/mpos-tmp/dp22/verify-todo.sh`), las suites de la CI que `verify` no
-   corre (`bash /d/mpos-tmp/dp22/e2e-tanda.sh …`), PR, CI, unir, Production «Ready», humo y la hora.
-3. **Bloque 18, la app:** consolidada en el repo de las apps, rama `exe-1.0.2` (`ebccf30`, en
-   `.work\apps-electron`), 125 de 125 y mutantes propios. **Falta:** construir
-   (`cd electron && npm run construir`), el humo de la app empaquetada (`--prueba-humo`), publicar
-   en `canal-don-poncho` (primero el `.exe` y su `.blockmap`, al final `latest.yml`) y comprobar
-   en la laptop que una 1.0.1 instalada la recibe. La 1.0.1 NO está instalada hoy en la laptop; su
-   instalador está en `.work\apps-electron\electron\salida\`. Los comandos están en el informe del
-   agente B (transcripción) y en `README.md` de las apps.
-4. **Agentes corriendo (3):** A en `.work\dp20-lab` (`dp-22-lote2`: barrido de servicio y
-   hallazgos 2 a 6; 5438 y 3210), D1 en `.work\dp20` (`dp-22-salon`: hallazgo 7, pasar la mesa a
-   otro mesero, teléfono en para llevar, H5 y dos sobras; 5439 y 3220; DP-D156 a DP-D158) y D2 en
-   `.work\dp18-integrar` (`dp-22-inventario`: la Parte 5 por pantallas sobre el clon
-   `qa_dp22_inv`, el aviso de insumo bajo y «lo más vendido»; 3230 y 54530; DP-D159 a DP-D161).
-   Sus encargos: `D:\mpos-tmp\dp22\briefs\d1-listo.md` y `d2-listo.md`.
-5. **Por decidir o hacer después de estos lotes:** los 51 ajustes «por ver en navegador» y los 5
-   por comprobar (lista en el informe del agente C y en `efectos.json`); el hallazgo 12; el día de
-   bots (la máquina sola); la Parte 11 (producción) y el informe 013.
+1. **Lotes 1 y 2 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`). App de Windows 1.0.2 publicada
+   y comprobada por los dos caminos de actualización (DP-D162).
+2. **Lote 3 en armado** en el checkout principal, rama `dp-22-tercer-lote` (`2bf42ae`, subida):
+   inventario (`dp-22-inventario` `a4c76db`: aviso de insumo bajo, «lo más vendido», hallazgo 15)
+   y salón y cocina (`dp-22-salon` `f0145b3`: hallazgo 7, «pasar la mesa a otro mesero», el
+   teléfono en para llevar con la **migración 194**, A7/A9 en el navegador y dos sobras).
+   **Corriendo:** (a) `bash /d/mpos-tmp/dp22/revisar-rama.sh …` → `/d/mpos-tmp/dp22/revision-lote3.log`
+   (todas las puertas, formato, tipos, unitarias completas, integración y lint sobre la rama);
+   (b) la corrida de la CI que REGENERA los retratos de la galería
+   (`gh run view 44147784956`; el Tablero cambió). **Al terminar:** bajar el artefacto
+   `galeria-restaurante` (`gh run download 44147784956 -n galeria-restaurante -D <carpeta>`), mirar
+   los PNG que cambiaron, copiarlos a `pruebas/e2e/galeria.spec.ts-snapshots/`, commit; poner al
+   día `HALLAZGOS.md` (7 y 15 arreglados, H5 hecho) y `NUEVO.md` (funciones 4 y 5; renglones 4 y
+   14 de la Parte 7), `pnpm qa:matriz`; abrir el PR; CI.
+   **Despliegue con migración:** con la CI en verde, `bash /d/mpos-tmp/dp22/migrar-produccion.sh
+ensayo` (aplica y revierte la 194 contra producción, por la 5432), luego `aplicar`, luego unir
+   el PR con squash, esperar el despliegue «READY», humo (`humo-produccion.sh 3`), lectura de
+   producción y la hora de Vercel.
+3. **Agentes corriendo (3):**
+   - A · `.work\dp20-lab` · `dp-22-lote2`: barrido de servicio y hallazgos 2 a 6 (5438 y 3210;
+     DP-D154). Va lento: su cadena de puertas, compilación y 14 aparatos.
+   - E · `.work\dp18-integrar` · `dp-22-ajustes-navegador` (sobre `main`): los 73 puntos de
+     Configuración por comprobar (`briefs\e-listo.md`; 5440 y 3240; DP-D163 y DP-D164).
+   - D3 · `.work\dp20` · `dp-22-costo-exacto` (sobre `dp-22-tercer-lote`): el hallazgo 14, el
+     costo exacto de los insumos, migración **195** (`briefs\d3-listo.md`; base `dp22_costo`;
+     DP-D165).
+4. **En cola (encargos escritos en `D:\mpos-tmp\dp22\briefs\`):** terminar la Parte 5 por
+   pantallas (vender por los cuatro canales con el inventario al gramo, cancelar y devolver,
+   conteo y merma en negativo, kardex, reportes, compras con proveedor o de la caja, unidades y
+   proveedores, costo de receta y margen), más los hallazgos 13 (tableta: «Tipo de venta»), 16
+   (receta para las opciones) y 17; y el día de bots (`f-dia-de-bots.md`; el molde será el clon
+   `qa_dp22_inv` del clúster 5460, con el día 0 completo).
+5. **Al recibir a cada agente:** `bash /d/mpos-tmp/dp22/revisar-rama.sh <árbol> <url> <log>
+<carpetas de integración>` (todas las puertas y la suite unitaria COMPLETA), leer el diff,
+   mutante propio, PIN (`git add -A` y `revisar-pines.mjs`; ojo con teléfonos y montos de ejemplo
+   que coincidan con un PIN), consolidar. Al unir ramas viejas: la bitácora con LO NUESTRO;
+   `MATRIZ.md` y `matriz.json` se regeneran; `DECISIONES.md` con los dos lados
+   (`unir-los-dos-lados.cjs` y `ordenar-decisiones.cjs DECISIONES.md 153`, que ya comprueba que
+   no se pierda ningún encabezado); y borrar los ayudantes que reaparezcan en
+   `packages/app/src/qa-final/` fuera de `pruebas/`.
+6. **Después:** el hallazgo 12; el día de bots con la máquina sola; la Parte 11 (configurar
+   producción, dejar en ceros, primer folio, renombrar aparatos; el bloqueo H1 NO se activa); y el
+   informe 013 con el veredicto, los números, la calificación y la lista física de Miguel (que
+   lleva un punto más: tras el primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`).
 
 ## Dónde voy
 

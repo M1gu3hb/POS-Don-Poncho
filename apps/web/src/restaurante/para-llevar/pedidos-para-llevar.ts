@@ -12,6 +12,8 @@ export interface PedidoParaLlevar {
   readonly ordenId: string;
   readonly numero: number;
   readonly nombre: string | null;
+  /** DP-D157 · El teléfono que dejó el cliente (un servidor viejo no lo manda). */
+  readonly telefono?: string | null;
   readonly folio: string;
   readonly totalCentavos: string;
   readonly cobradoEn: string | null;
@@ -33,6 +35,12 @@ export function tituloDelPedido(
   const nombre = (pedido.nombre ?? '').trim();
   const deAyer = pedido.deOtroDia === true ? ' · de ayer' : '';
   return `Pedido para llevar ${String(pedido.numero)}${nombre === '' ? '' : ` · ${nombre}`}${deAyer}`;
+}
+
+/** «Tel. 55 2468 5678», o nada si el cliente no dejó teléfono. Sólo se enseña en la Caja. */
+export function textoDelTelefono(pedido: { readonly telefono?: string | null }): string | null {
+  const telefono = (pedido.telefono ?? '').trim();
+  return telefono === '' ? null : `Tel. ${telefono}`;
 }
 
 /**

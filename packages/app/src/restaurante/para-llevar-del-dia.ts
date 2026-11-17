@@ -35,6 +35,11 @@ export interface PedidoParaLlevar {
   readonly ordenId: string;
   readonly numero: number;
   readonly nombre: string | null;
+  /**
+   * DP-D157 · El teléfono que dejó el cliente, para llamarle cuando esté listo; `null` si no lo dio.
+   * Es sólo de esta lista de la Caja: no sale en el ticket ni en la cocina.
+   */
+  readonly telefono: string | null;
   readonly folio: string;
   readonly totalCentavos: string;
   readonly cobradoEn: string | null;
@@ -54,6 +59,7 @@ interface Fila {
   ordenId: string;
   numero: number;
   nombre: string | null;
+  telefono: string | null;
   serie: string;
   folio: string | null;
   totalCentavos: string;
@@ -82,6 +88,7 @@ export async function leerParaLlevarDelDia(
     select o.id::text                                                         as "ordenId",
            o.numero_pedido                                                    as "numero",
            o.nombre_pedido                                                    as "nombre",
+           o.telefono_pedido                                                  as "telefono",
            o.serie                                                            as "serie",
            o.folio::text                                                      as "folio",
            o.total_centavos::text                                             as "totalCentavos",
@@ -112,6 +119,7 @@ export async function leerParaLlevarDelDia(
     ordenId: f.ordenId,
     numero: f.numero,
     nombre: f.nombre,
+    telefono: f.telefono,
     folio: f.folio === null ? '' : `${f.serie}-${f.folio}`,
     totalCentavos: f.totalCentavos,
     cobradoEn: f.cobradoEn === null ? null : new Date(f.cobradoEn).toISOString(),
