@@ -178,3 +178,46 @@ Rama `dp-22-lote2-pr` (checkout principal, sobre `main` ya con el lote 1). Lleva
 
 El barrido de servicio y los hallazgos 2 a 6 (agente A, rama `dp-22-lote2` en `.work\dp20-lab`) y
 lo de salón y cocina (agente D1, rama `dp-22-salon`) van en el lote siguiente.
+
+### Lote 3 · PR #39 (`dp-22-tercer-lote` → `main`) · migración 194 (aditiva)
+
+Rama `dp-22-tercer-lote` (checkout principal, sobre `main` ya con el lote 2). Lleva:
+
+- **Salón y cocina** (rama `dp-22-salon`, agente D1, revisada): el hallazgo 7 (la comanda que se
+  quedaba en «nuevo» al quitar el otro platillo), «Pasar la mesa a otro mesero» (DP-D156), el
+  teléfono opcional en para llevar (DP-D157, **migración 194**), A7 y A9 con el dedo en tableta
+  (H5), y dos sobras de DP-21 (la tarjeta de propinas del Tablero suma en el servidor; «Imprimir
+  prueba» con el plazo de 20 s de la Caja).
+- **Inventario** (rama `dp-22-inventario`, agente D2, revisada): el aviso de insumo bajo en el
+  Tablero (DP-D159), «Lo más vendido» en Registros (DP-D160) y el hallazgo 15 (la regla del mínimo
+  con existencia en negativo). De la Parte 5, lo hecho por pantallas está en `qa/simulador/parte5/`.
+- **Lo que cazó la CI antes de unir** (nada llegó a `main`): (1) al unir `dp-22-inventario` quedó
+  un conflicto sin resolver en `scripts/aspecto-permitido.json` (la lista de conflictos se cortó
+  con `head`); el JSON dejó de leerse y fallaron `format:check`, `verify:aspecto` y «Contratos y
+  mutaciones» (`e33e2d9`). (2) `verify:cobertura`: los dos imports de «Pasar la mesa» empujaron la
+  etiqueta `PANTALLA · restaurante · mesa-activa` de la línea 60 a la 62 y la puerta sólo lee 60;
+  el comentario de cabecera sube a justo debajo de `'use client'` (`6931ff1`). Lecciones: tras una
+  unión con conflictos, lista completa y `git grep` de marcas antes de confirmar; y
+  `revisar-rama.sh` ya corre `verify:cobertura`, `verify:tsconfig`, `verify:entorno`,
+  `verify:historico` y `verify:modo-compatible`, que antes no corría.
+- **En local**, sobre la rama: todas las puertas estáticas, formato, tipos, la suite unitaria
+  completa, la integración contra Postgres (restaurante, registros, inventario, qa-final, compras y
+  caja) y lint, en verde (`D:\mpos-tmp\dp22\revision-lote3.log`).
+- **La galería de la CI:** regenerada para esta rama (81 retratos); 8 difieren en ruido de
+  antialias y no se cambiaron: la comparación de la CI pasó con los retratos que ya estaban.
+- **La CI:** segunda corrida (`6931ff1`), **10 de 10**.
+- **La migración 194 en producción (17-11, 15:02):** lectura de antes igual a la línea base (9
+  cuentas de prueba A-1 a A-9, 1 caja cerrada, 0 abiertas, migraciones hasta la 193); ensayo
+  (`migrar-produccion.sh ensayo`: aplica y revierte) correcto; aplicada con `pnpm db:migrate` por
+  la conexión de sesión (5432). Es una columna nueva que admite nulo y su `check`: ninguna fila
+  cambia y el código anterior no la nombra.
+- **Despliegue (17-11):** unido a `main` como `e4c45f5` a las 15:03; el despliegue de producción
+  quedó «READY» a las 15:05 (`dpl_5tVaqE…`). Regreso previsto: el despliegue del lote 2
+  (`dpl_2W6ZV4…`); la columna nueva puede quedarse (el código anterior no la usa).
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 3`, 15:05): el humo de siempre 27 de 27,
+  las rutas de los lotes 1 y 3 existen y exigen sesión (`inventario/insumos-bajos` y
+  `registros/lo-mas-vendido` contestan 403), una ruta inventada contesta 404. **0 fallas.**
+- **Lectura de producción después (15:06):** idéntica a la de antes salvo las migraciones (126
+  aplicadas, la última la 194). Ninguna cuenta, caja ni ajuste cambió.
+- **Vercel:** 0 errores al desplegar. Falta la revisión de la hora siguiente (a partir de las
+  16:05).

@@ -3,54 +3,59 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11, 13:25.
+Última puesta al día: 17-11, 15:10.
 
-## AHORA MISMO (17-11, 13:25) — retomar desde aquí (se cortó por límite de uso)
+## AHORA MISMO (17-11, 15:10) — retomar desde aquí
 
-1. **Lotes 1 y 2 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`). App de Windows 1.0.2 publicada
-   y comprobada (DP-D162).
-2. **Lote 3 · PR 39 abierto, SIN UNIR** (`dp-22-tercer-lote` → `main`, cabeza `6931ff1`). Revisión
-   local completa en verde. CI a las 13:20: 8 de 10 en verde, 0 en rojo; faltaban «Jornada
-   completa» y «Rastreo» (Auto-fix de la app encendido para el PR 39). **La migración 194 NO se ha
-   ensayado ni aplicado en producción.** Falta, en este orden: CI en verde →
-   `bash /d/mpos-tmp/dp22/migrar-produccion.sh ensayo` → `aplicar` → `gh pr merge 39 --squash` →
-   despliegue de producción «READY» → `bash /d/mpos-tmp/dp22/humo-produccion.sh 3` → lectura de
-   producción → la hora de Vercel → PROGRESO y HALLAZGOS (7 y 15 «en producción»).
-3. **En el árbol principal, SIN CONFIRMAR (va al lote 4, no al PR 39):**
-   - Hallazgo 12 arreglado: `apps/web/heredado/pages/Caja.jsx` (relee la cuenta tras
-     `TOTAL_DESACTUALIZADO`) y `apps/web/src/venta/total-que-cambio.contrato.test.ts`; 6 mutantes
-     como se esperaba (`/d/mpos-tmp/dp22/h12-mutantes.json`); `verify:aspecto`, `verify:heredado`,
-     `verify:escrituras` y `verify:lecturas` en 0. Falta su prueba con el dedo (encargo G).
-   - `docs/qa-final/HALLAZGOS.md` (12 arreglado; Bajo 3/1/2) y este `ESTADO.md`.
-   Tras unir el PR 39: `git fetch`, `git checkout -b dp-22-cuarto-lote origin/main` (los cambios
-   sin confirmar viajan), PIN, commit.
-4. **Agentes: LOS TRES PARADOS por el límite de uso** (se retoman con SendMessage a su id):
+1. **Lotes 1, 2 y 3 EN PRODUCCIÓN** (`ff03687`, `829b13d`, `e4c45f5`). El lote 3 (PR 39, con la
+   **migración 194** ya aplicada) quedó «READY» a las 15:05; humo `humo-produccion.sh 3` sin
+   fallas; lectura de producción idéntica salvo las migraciones (126, última la 194).
+   **Falta sólo la hora de Vercel del lote 3: revisar `get_runtime_errors` (proyecto
+   `pos-don-poncho`, equipo `mh-astral-systems`) a partir de las 16:05** y anotarlo en PROGRESO.
+   App de Windows 1.0.2 publicada y comprobada (DP-D162).
+2. **Lote 4 en armado** en el checkout principal, rama `dp-22-cuarto-lote` (desde `main`
+   `e4c45f5`; sin subir todavía). Ya lleva el hallazgo 12 (`4512d73`: la Caja relee la cuenta tras
+   «El total cambió…»; contrato y 6 mutantes; falta su prueba con el dedo, encargo G). Irá
+   recibiendo a A, E y D3.
+3. **Agentes corriendo (3), retomados a las 15:01 tras el corte por límite de uso:**
    - A · `a50dedf20b5388d67` · `.work\dp20-lab` · `dp-22-lote2` (base vieja `e4decc8`): barrido de
-     servicio y hallazgos 2 a 6 (DP-D154). 33 archivos cambiados y 7 nuevos, sin commit; estaba
-     compilando su tanda final y NO entregó informe. Su diff ya lo leí: blancos táctiles de 44 px
-     (`any-pointer-coarse`), nombres accesibles, contraste, `AvisoDeSilencio` en Cocina y
-     exenciones «a propósito» en el arnés (`tocables.ts`): falta su informe, `revisar-rama.sh` y
-     mutante propio. Para unir: parche (`git diff` + nuevos) y `git apply --3way` sobre el lote 4
-     (no merge: su base es anterior al squash).
-   - E · `afd62723a1816d4ea` · `.work\dp18-integrar` · `dp-22-ajustes-navegador`: los 73 puntos de
-     Configuración (`briefs\e-listo.md`; DP-D163 y DP-D164). Sin informe.
+     servicio y hallazgos 2 a 6 (DP-D154). 33 archivos cambiados y 7 nuevos, sin commit. Su diff ya
+     lo leí (blancos táctiles de 44 px con `any-pointer-coarse`, nombres accesibles, contraste,
+     `AvisoDeSilencio` en Cocina, colores de los avisos en `tacto/avisos.css`, y exenciones «a
+     propósito» en el arnés `tocables.ts`). Falta su informe, `revisar-rama.sh` y mutante propio.
+     Para unir: parche (`git diff` + archivos nuevos) y `git apply --3way` sobre el lote 4 (no
+     merge: su base es anterior a los squash). Ojo: toca `Caja.jsx` y `aspecto-permitido.json`.
+   - E · `afd62723a1816d4ea` · `.work\dp18-integrar` · `dp-22-ajustes-navegador` (sobre `829b13d`):
+     los 73 puntos de Configuración (`briefs\e-listo.md`; 5440 y 3240; DP-D163 y DP-D164).
    - D3 · `aabed89fa64c7d9bd` · `.work\dp20` · `dp-22-costo-exacto` (sobre `2bf42ae`): hallazgo 14,
-     costo exacto, migración 195 (`briefs\d3-listo.md`; DP-D165). Sin informe.
-   Al retomar: pedir a cada uno que diga dónde quedó, termine y entregue su informe (sin dejar nada
-   en segundo plano) y que cierre sus servidores.
-5. **Encargos listos para lanzar** (`D:\mpos-tmp\dp22\briefs\`, se rellenan con
+     costo exacto, migración **195** (`briefs\d3-listo.md`; base `dp22_costo`; DP-D165).
+   Si se vuelven a cortar: SendMessage a su id pidiendo que digan dónde quedaron, terminen EN
+   PRIMER PLANO y entreguen informe.
+4. **Encargos listos para lanzar** (`D:\mpos-tmp\dp22\briefs\`; se rellenan con
    `node /d/mpos-tmp/dp22/rellenar.cjs <plantilla> <salida> CLAVE=valor…`):
-   `g-parte5-ventas-e-inventario.md` (el resto de la Parte 5 y los hallazgos 13, 16, 17 y la
-   prueba del 12; va DESPUÉS de unir D3) y `f-dia-de-bots.md` (el molde es `qa_dp22_inv` del
-   clúster 5460; hay que migrar el clon a la 194/195).
-6. **Al recibir a cada agente:** `bash /d/mpos-tmp/dp22/revisar-rama.sh <árbol> <url> <log>
-<carpetas de integración>` (ya incluye `verify:cobertura`, `tsconfig`, `entorno`, `historico` y
-   `modo-compatible`), leer el diff, mutante propio, PIN, consolidar; lista COMPLETA de conflictos
-   y `git grep` de marcas; si una pantalla gana imports, su etiqueta `PANTALLA ·` en las primeras
-   60 líneas.
-7. **Después:** el día de bots con la máquina sola; la Parte 11 (los guiones ya están en
-   `scripts/`: `configurar-produccion.mjs`, `dejar-en-ceros.mjs`, `renombrar-aparatos.mjs`,
-   `dia-cero.mjs`; H1 NO se activa); y el informe 013.
+   - `g-parte5-ventas-e-inventario.md`: el resto de la Parte 5 por pantallas y los hallazgos 13
+     (alto), 16 (falta), 17 y la prueba con el dedo del 12. Va DESPUÉS de unir D3 (usa el costo
+     exacto), en el árbol que D3 deje libre.
+   - `f-dia-de-bots.md`: el perfil `dp22` del simulador y su lanzador (el molde es `qa_dp22_inv`
+     del clúster 5460; hay que migrar el clon a la 194 y la 195). En el árbol que A deje libre.
+5. **Al recibir a cada agente:** `bash /d/mpos-tmp/dp22/revisar-rama.sh <árbol> <url> <log>
+<carpetas de integración>` (todas las puertas de la CI, incluida `verify:cobertura`, y la suite
+   unitaria COMPLETA), leer el diff, mutante propio, PIN (`git add -A` y `revisar-pines.mjs`),
+   consolidar; lista COMPLETA de conflictos y `git grep -n -E "^(<<<<<<< |>>>>>>> )"` antes de
+   confirmar; si una pantalla gana imports, su etiqueta `PANTALLA ·` en las primeras 60 líneas;
+   `DECISIONES.md` en orden (`ordenar-decisiones.cjs DECISIONES.md 153`); `pnpm qa:matriz`.
+   Antes del PR del lote 4: correr en local «Jornada completa» y la galería si cambió el aspecto
+   (los cambios de A SÍ cambian retratos: regenerar con
+   `gh workflow run verificar.yml --ref <rama> -f actualizar_galeria=true` y mirar los PNG).
+6. **Despliegue del lote 4 (lleva la migración 195 si D3 la trae):** CI en verde →
+   `migrar-produccion.sh ensayo` → `aplicar` → `gh pr merge N --squash` → «READY» →
+   `humo-produccion.sh 4` → lectura (`revisar-produccion.mjs`) → la hora de Vercel.
+7. **Después:** el día de bots con la máquina sola (repetir con otra semilla hasta que salga
+   limpio); la Parte 11 (los guiones están en `scripts/`: `configurar-produccion.mjs` con
+   `--ensayo` y luego de verdad, `dejar-en-ceros.mjs`, `--primer-folio`, `renombrar-aparatos.mjs`,
+   `pnpm dia-cero`; el bloqueo H1 NO se activa); y el informe 013 con el veredicto, los números,
+   la calificación y la lista física de Miguel (incluye: tras el primer cierre real, ver el PDF en
+   `Documentos\POS Don Poncho\Cortes`).
 
 ## Dónde voy
 
