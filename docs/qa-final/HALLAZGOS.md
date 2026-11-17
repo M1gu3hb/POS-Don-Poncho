@@ -17,7 +17,7 @@
 | --------- | ----------: | ---------: | -------: |
 | Crítico   |           0 |          0 |        0 |
 | Alto      |           4 |          2 |        2 |
-| Medio     |           8 |          3 |        5 |
+| Medio     |           8 |          4 |        4 |
 | Bajo      |           3 |          0 |        3 |
 | Por ver   |           1 |          0 |        1 |
 | Falta     |           1 |          0 |        1 |
@@ -35,7 +35,7 @@ abiertos son el 13 y el 14, los dos de inventario y recetas, que producción tod
 | 4   | medio   | Barra lateral, Caja y salón del mesero · táctiles                | Tocables por debajo de 44 px: los enlaces de la barra lateral (121×40), «Activar modo oscuro», «Sonido», «Salir», las pestañas de Caja y las fichas de zona del mesero (se arreglan por componente) | abierto (agente A, lote 2)                           |
 | 5   | medio   | Barra lateral · 1280×800 y 1366×768 a 125 % (1093×614)           | «Compras» queda encimado con «Activar modo oscuro»: en una pantalla baja el dedo puede caer en el botón equivocado                                                                                  | abierto (agente A, lote 2)                           |
 | 6   | por ver | Caja cerrada · todos                                             | «Abrir caja» aparece con `pointer-events: none`: falta saber si es un deshabilitado legítimo con su motivo a la vista o un botón muerto                                                             | por confirmar (agente A)                             |
-| 7   | medio   | Cocina y salón · todos                                           | Con un plato ya «listo», quitar el otro platillo de la comanda la deja en «nuevo»: la mesa no pasa a «Esperando entrega» y el mesero no recibe el aviso hasta que cocina la vuelve a tocar          | abierto: causa localizada (agente D1)                |
+| 7   | medio   | Cocina y salón · todos                                           | Con un plato ya «listo», quitar el otro platillo de la comanda la deja en «nuevo»: la mesa no pasa a «Esperando entrega» y el mesero no recibe el aviso hasta que cocina la vuelve a tocar          | arreglado (lote 3, por desplegar)                    |
 | 8   | alto    | Caja · cobro de una cuenta dividida                              | Si se cambia el IVA después de dividir una cuenta, cobrar una de sus partes da «Algo falló» y esa parte ya no se puede cobrar                                                                       | arreglado · en producción (lote 2, `829b13d`)        |
 | 9   | medio   | Propina en la Caja y en el portal                                | La propina por porcentaje salía un centavo abajo en los medios centavos ($28,771.50 al 15 % daba $4,315.72 y el servidor $4,315.73)                                                                 | arreglado · en producción (lote 2, `829b13d`)        |
 | 10  | medio   | Personas y seguridad                                             | Cambiarle el PIN a alguien no cierra la sesión que tenga abierta: sigue dentro hasta que venza (12 h)                                                                                               | arreglado · en producción (lote 2, `829b13d`)        |
@@ -246,7 +246,7 @@ accesibilidad de Configuración.
 | COLA  | El aviso de «la cola de sincronización» al cajero                                         | 1    | hecho · `6d5c22b` (la Caja ya no la encola)                                                      |
 | VOZ   | Dos pantallas de la misma estación anuncian doble                                         | 1    | hecho · `6d5c22b` (se pregunta una vez); falta su e2e táctil (agente A)                          |
 | SIL   | `silenciar_notificaciones_admin` en la operación de Don Poncho                            | 1    | decidido · DP-D149: se queda encendido; el guion lo comprueba                                    |
-| H5    | A7 y A9 con prueba de comportamiento en Playwright                                        | 2    | pendiente (con el arnés)                                                                         |
+| H5    | A7 y A9 con prueba de comportamiento en Playwright                                        | 2    | hecho · lote 3 (`f0145b3`): A7 y A9 con el dedo en tableta, con su mutante                       |
 | B18   | Los cortes en una carpeta de Windows (app 1.0.2)                                          | 4    | hecho · POS en el lote 2 (`829b13d`); app 1.0.2 publicada (`37ec070`) y vista llegar a una 1.0.1 |
 
 (\*) Sobras del agente 2, para el lote siguiente: `PropinasDashboardSection.jsx` todavía lee una
