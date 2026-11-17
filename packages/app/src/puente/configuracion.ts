@@ -100,32 +100,23 @@ export const CONFIG_POR_OMISION = {
 } as const;
 
 /**
- * Lo ÚNICO que puede ver quien escanea un QR sin haber entrado.
+ * Lo ÚNICO que puede ver quien escanea un QR sin haber entrado: lo que el portal del comensal
+ * de verdad lee (`negocioPublico`, portal/lista-blanca.ts), que es su único consumidor sin
+ * sesión. Nombre del negocio y sus dos logos. Nada más: ni colores, ni moneda, ni el IVA
+ * (DP-21), ni interruptores; los del portal se leen y se resuelven en el servidor.
  *
- * Nombre, logo y colores para que el menú se vea del negocio; la moneda para que
- * los precios cuadren; y los interruptores que cambian lo que el comensal puede
- * pedir. Nada más. El IVA no viaja (DP-21): lo que el comensal ve de su cuenta ya
- * trae los importes del servidor, y un renglón de IVA sale sólo si su importe no es 0.
- *
- * Fuera, explícitamente: `presentacion_password`, cualquier identificador de
+ * Una clave aquí que el portal no lee es una fuga esperando; `lo-publico.test.ts` ata las dos
+ * listas. Fuera, explícitamente: `presentacion_password`, cualquier identificador de
  * integración, `mostrar_costos_a_caja` y `paquete_modo`.
  */
-export const PUBLICOS = [
-  'nombre_negocio',
-  'nombre_sistema',
-  'logo_url',
-  'background_image_url',
-  'background_logo_url',
-  'background_fit',
-  'background_opacity',
-  'color_primario',
-  'color_secundario',
-  'color_acento',
-  'moneda',
-  'simbolo_moneda',
-  'mensaje_ticket',
-  'usa_mesas',
-] as const;
+export const PUBLICOS = ['nombre_negocio', 'logo_url', 'background_logo_url'] as const;
+
+/** Lo visible, recortado a `PUBLICOS`: esas claves y ninguna otra. */
+export function recortarALoPublico(visible: Readonly<Record<string, unknown>>): Registro {
+  const recortada: Registro = {};
+  for (const campo of PUBLICOS) recortada[campo] = visible[campo];
+  return recortada;
+}
 
 /**
  * Campos que NO salen nunca por ningún camino, ni siquiera con sesión.
@@ -509,9 +500,7 @@ export async function leerConfiguracion(
 
   if (opciones.publica !== true) return visible;
 
-  const recortada: Registro = { id: visible['id'] };
-  for (const campo of PUBLICOS) recortada[campo] = visible[campo];
-  return recortada;
+  return recortarALoPublico(visible);
 }
 
 /**

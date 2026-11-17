@@ -88,10 +88,10 @@ describe('caja.encolar_sincronizacion_corte', () => {
     }
   });
 
-  it('Caja usa el comando y ya no escribe directamente la bitácora', () => {
+  it('Caja ya no encola nada ni escribe directamente la bitácora (el comando se queda sin pantalla)', () => {
     const codigo = readFileSync(CAJA, 'utf8');
 
-    expect(codigo).toContain("api.comandos.ejecutar('/api/caja/encolar-sincronizacion'");
+    expect(codigo).not.toContain('/api/caja/encolar-sincronizacion');
     expect(codigo).not.toContain('api.entidades.IntegrationSyncLog.create');
   });
 });

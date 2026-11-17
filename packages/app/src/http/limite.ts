@@ -69,6 +69,20 @@ export type AccionLimitada = keyof typeof LIMITES;
 export interface Permiso {
   readonly ok: boolean;
   readonly esperaSegundos: number;
+  /**
+   * Cuántos intentos lleva el cubo en esta ventana, contando éste. `0` cuando la base no pudo
+   * contar (se deja pasar, ver `permitir`).
+   */
+  readonly intentos: number;
+}
+
+/**
+ * ¿Es éste el PRIMER intento rechazado de la ventana? Sirve para dejar rastro del bloqueo una sola
+ * vez por IP y ventana (X4): una fila por cada petición rechazada dejaría que quien tiene una sesión
+ * llene la auditoría golpeando el 429.
+ */
+export function esElPrimerRechazo(accion: AccionLimitada, permiso: Permiso): boolean {
+  return !permiso.ok && permiso.intentos === LIMITES[accion].intentos + 1;
 }
 
 /**
@@ -107,7 +121,7 @@ export async function permitir(
 
   try {
     const { intentos, esperaSegundos } = await repoLimite.contarIntento(clave, ventanaSegundos);
-    return { ok: intentos <= maximo, esperaSegundos };
+    return { ok: intentos <= maximo, esperaSegundos, intentos };
   } catch (error: unknown) {
     registrar({
       nivel: 'alerta',
@@ -118,7 +132,7 @@ export async function permitir(
       organizacionId: null,
       mensaje: `No se pudo contar el intento de ${accion}. ${claseDelFallo(error)}`,
     });
-    return { ok: true, esperaSegundos: 0 };
+    return { ok: true, esperaSegundos: 0, intentos: 0 };
   }
 }
 
@@ -175,7 +189,7 @@ export async function permitirOrganizacion(
     .digest('hex');
   try {
     const { intentos, esperaSegundos } = await repoLimite.contarIntento(clave, ventanaSegundos);
-    return { ok: intentos <= maximo, esperaSegundos };
+    return { ok: intentos <= maximo, esperaSegundos, intentos };
   } catch (error: unknown) {
     registrar({
       nivel: 'alerta',
@@ -184,6 +198,6 @@ export async function permitirOrganizacion(
       organizacionId,
       mensaje: `No se pudo contar el intento de ${accion}. ${claseDelFallo(error)}`,
     });
-    return { ok: true, esperaSegundos: 0 };
+    return { ok: true, esperaSegundos: 0, intentos: 0 };
   }
 }

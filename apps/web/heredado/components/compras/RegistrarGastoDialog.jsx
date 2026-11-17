@@ -23,6 +23,7 @@ import { Save } from 'lucide-react';
 import { CATEGORIAS_DE_GASTO } from '@morphiqpos/domain/gastos';
 import { avisoAntesDeGuardar, useCajonParaPagar } from '~/venta/cajon-para-pagar';
 import { PagoDeLaCaja } from '~/venta/PagoDeLaCaja';
+import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
 import { toast } from 'sonner';
 import { textoDecimal } from '@/components/inventario/comandos';
 
@@ -47,7 +48,7 @@ export default function RegistrarGastoDialog({ open, onClose }) {
       categoria: 'servicios',
       descripcion: '',
       monto: '',
-      fecha: new Date().toISOString().slice(0, 10),
+      fecha: hoyDelNegocio(),
       metodo_pago: 'efectivo',
       recurrente: false,
       notas: '',

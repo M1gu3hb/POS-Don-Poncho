@@ -1,5 +1,6 @@
 'use client';
 import { STOCK_STATUS } from '@/lib/constants';
+import { valorDeLaExistencia } from '~/restaurante/valor-de-inventario';
 
 /**
  * Get stock status for an ingredient
@@ -15,10 +16,13 @@ export function getStockStatus(ingredient) {
 }
 
 /**
- * Calculate inventory value for an ingredient
+ * Calculate inventory value for an ingredient.
+ *
+ * Una existencia en negativo vale cero (no resta del total): es la MISMA regla de la valuación
+ * del servidor, en un solo lugar (`~/restaurante/valor-de-inventario`).
  */
 export function calculateInventoryValue(ingredient) {
-  return (ingredient.stock_actual || 0) * (ingredient.costo_por_unidad_base || 0);
+  return valorDeLaExistencia(ingredient.stock_actual, ingredient.costo_por_unidad_base);
 }
 
 /**

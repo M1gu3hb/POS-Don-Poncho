@@ -8,6 +8,7 @@ import { sql } from 'kysely';
 import { definirComando } from '../definicion.ts';
 import { equivalenciaDeLinea } from './costeo.ts';
 import { entradaGuardarPlantillaCompra, type LineaDeCompra } from './esquemas.ts';
+import { ROLES_QUE_REGISTRAN_COMPRAS } from './quien-paga-del-cajon.ts';
 import {
   equivalenciaDeLineaGuardada,
   leerLineasGuardadas,
@@ -29,7 +30,7 @@ import {
  * formato no tiene y sin la cual repetir una compra en cajas es adivinar.
  */
 
-const ROLES = ['dueno', 'administrador', 'gerente'] as const;
+const ROLES = ROLES_QUE_REGISTRAN_COMPRAS;
 
 export const guardarPlantillaCompra = definirComando<
   Transaccion,

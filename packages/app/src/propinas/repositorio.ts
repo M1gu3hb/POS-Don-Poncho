@@ -68,18 +68,25 @@ export interface FiltroDePropinas {
  * arreglo correcto es que `marcarPagada` escriba `cerrada_en`, y ese archivo es
  * de otro módulo.
  */
-export function condicionPendiente(filtro: FiltroDePropinas) {
+export function condicionDelPeriodo(filtro: FiltroDePropinas) {
   return sql`
     o.organizacion_id = ${filtro.organizacionId}
     and o.sucursal_id = ${filtro.sucursalId}::uuid
     -- QA2-010 (DP-13.5): devolver no devuelve la propina (no es venta): la de una venta
     -- reembolsada, del todo o en parte, sigue en el cajón y sigue siendo del mesero.
     and o.estado in ('pagada', 'parcialmente_reembolsada', 'reembolsada')
-    and o.propina_liquidacion_id is null
     and coalesce(o.cerrada_en, o.created_at) >= ${filtro.inicio}
     and coalesce(o.cerrada_en, o.created_at) <= ${filtro.fin}
     and (${filtro.meseroId}::uuid is null or o.empleado_atiende_id = ${filtro.meseroId}::uuid)
   `;
+}
+
+/**
+ * Lo pendiente: el periodo, sin liquidar. A23 separó el periodo (`condicionDelPeriodo`) para que
+ * Registros pueda leer también lo liquidado con EXACTAMENTE el mismo predicado.
+ */
+export function condicionPendiente(filtro: FiltroDePropinas) {
+  return sql`${condicionDelPeriodo(filtro)} and o.propina_liquidacion_id is null`;
 }
 
 /**

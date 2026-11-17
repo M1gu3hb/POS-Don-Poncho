@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from '@morphiqpos/ui/primitivas/dialog';
 
+import { TELEFONO_DE_COCINA } from '~/voz/anuncio-del-aparato';
+
 import { AnuncioDeComandasDelAparato } from './AnuncioDeComandasDelAparato';
 import { SonidoDelAparato } from './SonidoDelAparato';
 
@@ -42,7 +44,7 @@ export function DialogoDelSonido({
           </DialogDescription>
         </DialogHeader>
         <SonidoDelAparato />
-        {conAnuncioDeComandas ? <AnuncioDeComandasDelAparato /> : null}
+        {conAnuncioDeComandas ? <AnuncioDeComandasDelAparato puesto={TELEFONO_DE_COCINA} /> : null}
       </DialogContent>
     </Dialog>
   );

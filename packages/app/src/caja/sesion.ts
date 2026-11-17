@@ -15,6 +15,7 @@ import {
   type AvisoDelCierre,
 } from './cuentas-vivas-al-cerrar.ts';
 import { entradaAbrirCaja, entradaCerrarCaja } from '../venta/esquemas.ts';
+import { avisoDePedidosSinEntregar } from './pedidos-sin-entregar.ts';
 import {
   avalarElRetiro,
   entradaMovimientoConAutorizacion,
@@ -390,9 +391,17 @@ export const cerrarCaja = definirComando<Transaccion, typeof entradaCerrarCaja, 
         .execute(),
     );
     if (enLaFila.length > 0) {
+      // «No recogido» es de la fila de la barra: el restaurante no la tiene y su cierre no lo pide.
+      const { paquete } = await ctx.paso('leer_paquete', () =>
+        ctx.tx
+          .selectFrom('organizaciones')
+          .select('paquete')
+          .where('id', '=', organizacionId)
+          .executeTakeFirstOrThrow(),
+      );
       throw new ErrorDominio(
         'TRANSICION_INVALIDA',
-        `Hay ${String(enLaFila.length)} pedido(s) cobrado(s) sin entregar: entrégalos, márcalos como no recogidos o devuélvelos antes de cerrar.`,
+        avisoDePedidosSinEntregar(enLaFila.length, paquete),
         { pedidosSinEntregar: enLaFila.length },
       );
     }

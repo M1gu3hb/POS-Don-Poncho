@@ -46,6 +46,8 @@ describe('S-8/S-9 · cuotas anónimas independientes y cerradas', () => {
     await expect(permitir('entrar', new Headers(), 'p'.repeat(32))).resolves.toEqual({
       ok: false,
       esperaSegundos: 120,
+      // X4 · El permiso dice en qué intento va el cubo (para rastrear sólo el primer rechazo).
+      intentos: LIMITES.entrar.intentos + 1,
     });
   });
 });

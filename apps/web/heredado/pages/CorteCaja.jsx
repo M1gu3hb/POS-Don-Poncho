@@ -22,6 +22,7 @@ import { DollarSign, Receipt, TrendingUp, Scissors, FileText } from 'lucide-reac
 import { safeFormatDate } from '@/lib/safeFormat';
 import CorteViewerDialog from '@/components/cortes/CorteViewerDialog';
 import { claves } from '~/cliente/claves-de-consulta';
+import { diaDelNegocioDeUnValor, hoyDelNegocio } from '~/cliente/dia-del-negocio';
 import {
   SIN_RECETA,
   economiaDelPeriodo,
@@ -43,7 +44,7 @@ export default function CorteCaja() {
   const [procesando, setProcesando] = useState(false);
   const [verCorte, setVerCorte] = useState(null);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = hoyDelNegocio();
 
   // La misma pregunta que el tablero y Caja hacen (`Venta.filter({ estado: 'pagada' })`): una
   // sola clave, una sola lectura. SIN `initialData: []`: sembraría `[]` como si ya hubiera
@@ -71,7 +72,7 @@ export default function CorteCaja() {
 
   const resumen = useMemo(() => {
     const ventas = ventasHoy.filter((v) => {
-      if (!corteAbierto) return v.created_date?.startsWith(today);
+      if (!corteAbierto) return diaDelNegocioDeUnValor(v.created_date) === today;
       return new Date(v.created_date) >= new Date(corteAbierto.fecha_inicio);
     });
     const gastosHoy = gastos.filter((g) => {

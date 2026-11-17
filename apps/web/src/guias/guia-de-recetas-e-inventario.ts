@@ -245,7 +245,7 @@ export const SECCIONES_DE_LA_GUIA: readonly SeccionDeLaGuia[] = [
       'Para un conteo físico, elige «Definir stock final (conteo físico)» y escribe lo que contaste: el sistema calcula la diferencia.',
       'Para algo que se tiró o se echó a perder, elige «Merma / producto perdido».',
       'Siempre se pide el motivo. Queda anotado quién lo hizo y cuándo.',
-      'Un ajuste manual nunca deja la existencia en negativo.',
+      'Un conteo o una corrección nunca deja la existencia en negativo. Una merma sí puede bajarla más cuando ya estaba en negativo: se registra, y el conteo físico la corrige.',
     ],
     anclas: [
       {
@@ -268,6 +268,10 @@ export const SECCIONES_DE_LA_GUIA: readonly SeccionDeLaGuia[] = [
           "tipo: 'ajuste'",
           'empleado_id: ctx.ambito.empleoId',
         ],
+      },
+      {
+        archivo: 'packages/app/src/inventario/merma.ts',
+        contiene: ['and (cantidad + ${delta} >= 0 or cantidad < 0)'],
       },
     ],
   },
@@ -315,12 +319,14 @@ export const SECCIONES_DE_LA_GUIA: readonly SeccionDeLaGuia[] = [
       'Por cada ingrediente se multiplica lo que hay por lo que cuesta cada gramo, mililitro o pieza.',
       'El costo sale de tus compras (el promedio de lo que has pagado).',
       'Un ingrediente que tiene existencia pero no tiene costo no entra a la suma: la tarjeta avisa cuántos faltan.',
-      'Una existencia en negativo resta del valor; corrígela con un conteo.',
+      'Una existencia en negativo no resta del valor (vale cero, igual que en la valuación): la tarjeta avisa cuántos son; corrígelos con un conteo.',
     ],
     anclas: [
       {
         archivo: 'apps/web/heredado/utils/inventoryUtils.js',
-        contiene: ['(ingredient.stock_actual || 0) * (ingredient.costo_por_unidad_base || 0)'],
+        contiene: [
+          'valorDeLaExistencia(ingredient.stock_actual, ingredient.costo_por_unidad_base)',
+        ],
       },
       {
         archivo: 'apps/web/heredado/pages/Inventario.jsx',
@@ -328,6 +334,13 @@ export const SECCIONES_DE_LA_GUIA: readonly SeccionDeLaGuia[] = [
           'Valor de inventario',
           'const totalValue = enriched.reduce((s, i) => s + i.valorInventario, 0);',
           'No incluye',
+        ],
+      },
+      {
+        archivo: 'apps/web/src/restaurante/valor-de-inventario.ts',
+        contiene: [
+          'export function valorDeLaExistencia(',
+          'hay > 0 ? hay * (costoPorUnidad ?? 0) : 0',
         ],
       },
       {

@@ -9,9 +9,12 @@ import { Megaphone } from 'lucide-react';
 import { avisarCambioDelAparato, useTextoDelAparato } from '~/cliente/texto-del-aparato';
 import { almacenDelAparato } from '~/restaurante/vista-de-solicitudes';
 import {
+  anunciaEsteAparato,
   CLAVE_DEL_ANUNCIO,
   guardarAnuncioDelAparato,
-  leerAnuncioDelAparato,
+  leerEleccionDelAparato,
+  type QuienMira,
+  reglaDeEsteAparato,
 } from '~/voz/anuncio-del-aparato';
 
 /**
@@ -19,10 +22,14 @@ import {
  * ajuste de sonido del teléfono de cocina. Vive en el aparato y no en el negocio: con dos
  * pantallas en la misma estación, la principal anuncia y la secundaria se queda callada. Se guarda
  * al tocar, sin botón.
+ *
+ * DP-22 · Dice la verdad de ESE aparato: si nunca eligió, lo que vale por el puesto de quien lo usa
+ * (`puesto`; el teléfono de cocina pasa el suyo), y una línea con la regla.
  */
-export function AnuncioDeComandasDelAparato() {
+export function AnuncioDeComandasDelAparato({ puesto }: { readonly puesto: QuienMira }) {
   const texto = useTextoDelAparato(CLAVE_DEL_ANUNCIO);
-  const anuncia = leerAnuncioDelAparato({ getItem: () => texto });
+  const elegido = leerEleccionDelAparato({ getItem: () => texto });
+  const anuncia = anunciaEsteAparato({ puesto, elegido });
   const [noGuardo, setNoGuardo] = useState(false);
   const titulo = useId();
 
@@ -43,6 +50,9 @@ export function AnuncioDeComandasDelAparato() {
             Encendido, esta pantalla dice cada comanda nueva de su estación en voz alta. Si hay dos
             pantallas en la misma estación, déjalo encendido en la principal y apágalo en la
             secundaria: así cada comanda se oye una sola vez. Las comandas se siguen viendo igual.
+          </p>
+          <p className="max-w-prose text-sm text-texto-sutil">
+            {reglaDeEsteAparato({ puesto, elegido })}
           </p>
         </div>
         <Switch

@@ -1,0 +1,647 @@
+{
+  "ancho_papel_ticket": {
+    "efecto": "El ticket y la precuenta se dibujan a 58 u 80 mm (384 o 576 puntos).",
+    "valores": ["58", "80"],
+    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "asignacion_mesas_activa": {
+    "efecto": "Encendida: cada mesero ve y atiende sólo sus mesas y el portal avisa a su mesero. Apagada: todos ven todas.",
+    "valores": ["true", "false"],
+    "pruebas": ["pruebas/e2e/portal-sin-asignacion.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "background_fit": {
+    "efecto": "Cómo se acomoda la imagen de fondo del sistema (cubrir o contener).",
+    "valores": ["cover", "contain"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "background_image_url": {
+    "efecto": "La imagen de fondo de las pantallas internas.",
+    "valores": ["vacío", "una imagen"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "background_logo_url": {
+    "efecto": "La marca de agua del fondo, del acceso y del portal.",
+    "valores": ["vacío", "una imagen"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "background_opacity": {
+    "efecto": "Qué tan visible es el fondo (0 a 1).",
+    "valores": ["0.05", "0.5"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "bascula_etiqueta": {
+    "efecto": "Ninguno en un restaurante: es de una báscula de etiquetas de mostrador. Sin pantalla.",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+  "candado_de_mando_min": {
+    "efecto": "Minutos sin tocar la pantalla tras los que dueño, administrador y gerente vuelven a teclear su PIN (5 a 30).",
+    "valores": ["5", "10", "30"],
+    "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "cocina_alerta_ambar_min": {
+    "efecto": "Minutos de espera a los que la comanda se pinta ámbar en cocina.",
+    "valores": ["1", "10"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "cocina_alerta_roja_min": {
+    "efecto": "Minutos de espera a los que la comanda se pinta roja en cocina (siempre después del ámbar).",
+    "valores": ["2", "20"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "color_acento": {
+    "efecto": "El color de acento de todo el sistema interno y del acceso.",
+    "valores": ["#ac8a5f", "otro"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "color_primario": {
+    "efecto": "El color primario de todo el sistema interno y del acceso.",
+    "valores": ["#83653f", "otro"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "color_secundario": {
+    "efecto": "Ninguno: es herencia y no se enseña en pantalla.",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+  "colorear_importes_monetarios": {
+    "efecto": "Encendido: los importes se pintan en color (entradas, salidas); apagado: en el color del texto.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "comision_terminal_bp": {
+    "efecto": "El corte enseña «Comisión de la terminal, estimada» sobre lo cobrado con tarjeta y la resta de la utilidad neta estimada.",
+    "valores": ["vacío", "360"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "copias_de_impresion": {
+    "efecto": "Cuántas copias salen del ticket, la precuenta y el corte (1 a 3), con «ORIGINAL — CLIENTE» y «COPIA — NEGOCIO».",
+    "valores": ["1", "2", "3"],
+    "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "correo": {
+    "efecto": "El correo del negocio en el corte y los PDF.",
+    "valores": ["vacío", "un correo"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "descargar_pdf_corte_auto": {
+    "efecto": "Encendido: al cerrar la caja se abre o descarga el PDF del corte solo.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "descuentos_permitidos": {
+    "efecto": "Apagado: nadie puede aplicar descuentos (la pantalla no los ofrece y el servidor los rechaza).",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "direccion": {
+    "efecto": "La dirección del negocio en el ticket, la precuenta, el corte y los PDF.",
+    "valores": ["vacío", "una dirección"],
+    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "estaciones_preparacion_activas": {
+    "efecto": "Encendido: las comandas se reparten por estación (cocina, bebidas…); apagado: una sola lista.",
+    "valores": ["true", "false"],
+    "pruebas": ["pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "experiencia.mascota": {
+    "efecto": "Morfi aparece (o no) en las cargas, la pantalla de espera y la página no encontrada.",
+    "valores": ["true", "false"],
+    "pruebas": ["pruebas/e2e/morfi.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "experiencia.pin_al_despertar": {
+    "efecto": "Al despertar del modo espera se pide el PIN.",
+    "valores": ["true", "false"],
+    "pruebas": ["pruebas/e2e/modo-espera-pin.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "experiencia.sonidos_en_el_portal": {
+    "efecto": "El portal del comensal suena (o no) al tocar.",
+    "valores": ["true", "false"],
+    "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "experiencia.tecla": {
+    "efecto": "El sonido del teclado del PIN y de los toques (nib, keycap, thock, clasp).",
+    "valores": ["nib", "thock"],
+    "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "folios": {
+    "efecto": "Prefijo y primer folio: las cuentas se leen «DP-01001» y los cortes «DPC-0101» en pantalla, papel, Registros y exportaciones.",
+    "valores": ["sin prefijo", "DP + 1001/101"],
+    "pruebas": ["pruebas/e2e/folios-con-prefijo.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "footer_text": {
+    "efecto": "Texto legal al pie del corte, antes del pie de los PDF.",
+    "valores": ["vacío", "un texto"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "formato_export_default": {
+    "efecto": "Ninguno: no hay formato que elegir al exportar. Sin pantalla.",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+  "impuesto": {
+    "efecto": "La tasa de IVA con la que se cotiza cada cuenta (sin IVA, 8 % o 16 %; incluido o sumado). Con 0 el IVA no se menciona en ningún papel ni reporte.",
+    "valores": ["0", "800 incluido", "800 sumado", "1600 incluido", "1600 sumado"],
+    "pruebas": ["pruebas/e2e/sin-iva.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "logo_pdf_url": {
+    "efecto": "El logo del corte y de los PDF.",
+    "valores": ["por omisión", "otra imagen"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "logo_ticket_url": {
+    "efecto": "El logo del ticket y de la precuenta.",
+    "valores": ["por omisión", "otra imagen"],
+    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "logo_url": {
+    "efecto": "El logo del negocio en la barra, el acceso y la pantalla de espera.",
+    "valores": ["por omisión", "otra imagen"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "mensaje_ticket": {
+    "efecto": "El mensaje al final del ticket y de la precuenta.",
+    "valores": ["vacío", "un mensaje"],
+    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "modo_presentacion_activo": {
+    "efecto": "Ninguno: resto del modo presentación retirado. Sin pantalla.",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+  "moneda": {
+    "efecto": "Ninguno: el sistema sólo maneja pesos. Sin pantalla.",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+  "mostrar_costos_a_caja": {
+    "efecto": "Encendido: el cajero ve costos y utilidad en su corte; apagado: no.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "mostrar_logo_ticket": {
+    "efecto": "Si el ticket lleva logo. Hoy no tiene interruptor en pantalla.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "nombre_negocio": {
+    "efecto": "El nombre del negocio en la barra, el acceso, el ticket, el corte, el portal y los PDF.",
+    "valores": ["Don Poncho", "otro"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "nombre_sistema": {
+    "efecto": "El nombre del sistema en el acceso y al pie de los PDF.",
+    "valores": ["POS Don Poncho", "otro"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "nombres_de_cajas": {
+    "efecto": "El nombre de cada caja (lugar) al abrirla, en el corte y en Registros.",
+    "valores": ["por omisión", "Caja 1 y Caja 2"],
+    "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "operacion_desde": {
+    "efecto": "El bloqueo H1: desde esa fecha lo cobrado no se borra (purgas, reinicios y dejar en ceros se niegan).",
+    "valores": ["vacío", "una fecha"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "papel_a_tu_gusto": {
+    "efecto": "Qué renglones salen en la precuenta y en el ticket de venta (folio, mesa, personas, mesero, cajero, fecha…).",
+    "valores": ["todo encendido", "varios apagados"],
+    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "paquete_modo": {
+    "efecto": "La plantilla del negocio (restaurante): qué pantallas y comandos existen. Sólo por comando de plataforma.",
+    "valores": ["restaurante"],
+    "pruebas": [],
+    "estado": "no se cambia en la operación"
+  },
+  "pdf_footer": {
+    "efecto": "El pie del corte y de los PDF.",
+    "valores": ["vacío", "un texto"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "permitir_venta_sin_stock": {
+    "efecto": "Ninguno hoy: manda la opción de cada producto y lo que pasó por cocina se cobra siempre (DP-D116, DP-D135). En Avanzado, con su explicación.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "escondido en Avanzado"
+  },
+  "platform_brand": {
+    "efecto": "La marca de plataforma en la barra y el corte.",
+    "valores": ["POS Don Poncho"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_activo": {
+    "efecto": "Apagado: el QR de la mesa dice que el portal no está disponible y nadie recibe solicitudes.",
+    "valores": ["true", "false"],
+    "pruebas": ["pruebas/e2e/restaurante-portal-qr.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "portal_qr_botones": {
+    "efecto": "Las zonas tocables sobre las páginas subidas del menú (editor de botones del Portal QR).",
+    "valores": [],
+    "pruebas": ["pruebas/e2e/botones-del-menu-qr.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "portal_qr_comensales_abren_mesa": {
+    "efecto": "Encendido: un comensal que escanea una mesa libre la abre; apagado: espera a que el mesero la abra.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_cuenta_modo": {
+    "efecto": "Quién pide la cuenta con propina: mesero, comensal o ambos.",
+    "valores": ["mesero", "cliente", "ambos"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_envia_a_cocina": {
+    "efecto": "El pedido del comensal va directo a cocina o lo confirma el mesero.",
+    "valores": ["mesero", "directo"],
+    "pruebas": ["pruebas/e2e/portal-modo-mesero.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "portal_qr_mensaje_bienvenida": {
+    "efecto": "El mensaje de bienvenida del portal.",
+    "valores": ["vacío", "un mensaje"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_modo_menu": {
+    "efecto": "Cómo se ve el menú del comensal: digital, a la carta, páginas subidas o mixto.",
+    "valores": ["menu_digital", "productos_pos", "menu_subido", "mixto"],
+    "pruebas": ["pruebas/e2e/restaurante-menu-personalizado.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "portal_qr_mostrar_precios": {
+    "efecto": "Apagado: el portal no enseña precios (el servidor ni los manda).",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_mostrar_precuenta": {
+    "efecto": "Encendido: el comensal ve su precuenta al pedir la cuenta.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_mostrar_sin_imagen": {
+    "efecto": "Apagado: los platillos sin foto no salen en el portal.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_permitir_ayuda": {
+    "efecto": "El botón «Necesito ayuda» del portal existe o no (y el servidor acepta o rechaza la solicitud).",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_permitir_cuenta": {
+    "efecto": "El botón «Pedir cuenta» del portal existe o no (y el servidor acepta o rechaza).",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_permitir_ordenar": {
+    "efecto": "El botón «Quiero ordenar» (llamar para ordenar) existe o no.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_permitir_pedidos_cliente": {
+    "efecto": "Apagado: el comensal ve el menú pero no puede mandar pedidos.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "portal_qr_permitir_propina_cliente": {
+    "efecto": "Encendido: el comensal elige su propina al pedir la cuenta.",
+    "valores": ["true", "false"],
+    "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "portal_qr_tema": {
+    "efecto": "El aspecto del portal (fondo, estilo, tipografía).",
+    "valores": [],
+    "pruebas": ["pruebas/e2e/personalizar-menu.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "presentacion_ultimo_acceso": {
+    "efecto": "Ninguno: resto del modo presentación retirado. Sin pantalla.",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+  "propina_la_elige_caja": {
+    "efecto": "La Caja puede elegir la propina al cobrar.",
+    "valores": ["true", "false"],
+    "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "propina_la_elige_mesero": {
+    "efecto": "El mesero puede elegir la propina al pedir la cuenta.",
+    "valores": ["true", "false"],
+    "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "propina_porcentajes_sugeridos": {
+    "efecto": "Los porcentajes de propina que se ofrecen (hasta seis) en la Caja, el mesero y el portal.",
+    "valores": ["5,10,15,20", "10,15"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "propinas_activas": {
+    "efecto": "Apagado: no se ofrece propina en ningún lado.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "qr_de_mesas": {
+    "efecto": "El diseño de los QR imprimibles de las mesas.",
+    "valores": [],
+    "pruebas": ["pruebas/e2e/qr-de-mesas.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "retiro_pin_arriba_de_centavos": {
+    "efecto": "Un retiro de la cajera mayor a ese monto pide el PIN de un gerente; vacío no lo pide.",
+    "valores": ["vacío", "50000"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "rfc": {
+    "efecto": "El RFC del negocio en el corte (si existe).",
+    "valores": ["vacío", "un RFC válido"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "silenciar_notificaciones_admin": {
+    "efecto": "Encendido: quien entra como administrador no oye sonido ni voz de «pedido listo» ni de las solicitudes del portal; los meseros sí.",
+    "valores": ["true", "false"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "simbolo_moneda": {
+    "efecto": "Ninguno útil: sólo lo lee un formateador viejo. Sin pantalla.",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+  "telefono": {
+    "efecto": "El teléfono del negocio en el ticket, el corte y los PDF.",
+    "valores": ["vacío", "un teléfono"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "ticket_footer": {
+    "efecto": "El pie del ticket térmico.",
+    "valores": ["vacío", "un texto"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "unidades_medida_lista": {
+    "efecto": "Las unidades que se ofrecen al crear insumos y recetas.",
+    "valores": ["por omisión", "una más"],
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "usa_barra": {
+    "efecto": "Ninguno: nadie lo lee ni lo escribe.",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+  "usa_cocina": {
+    "efecto": "Ninguno: nadie lo lee ni lo escribe.",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+  "usa_mesas": {
+    "efecto": "Ninguno en el restaurante (siempre hay mesas): escondido con el paquete restaurante (DP-D135).",
+    "valores": [],
+    "pruebas": [],
+    "estado": "sin propósito (escondido)"
+  },
+
+  "tarjeta:estilo": {
+    "efecto": "El estilo visual del negocio (nueve estilos, densidad, redondeo, elevación, movimiento) en todas las pantallas. Sólo el dueño.",
+    "pruebas": ["pruebas/e2e/estilos-del-negocio.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "tarjeta:mapa-de-mesas": {
+    "efecto": "Mesas, zonas y su lugar en el mapa; el reparto a meseros.",
+    "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts", "pruebas/e2e/tactil-mapa.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "tarjeta:voz-de-las-comandas": {
+    "efecto": "Sólo deja oír cómo suena una comanda; no guarda nada.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "tarjeta:categorias": {
+    "efecto": "Las categorías de productos y la estación de cada una.",
+    "pruebas": ["pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "tarjeta:proveedores": {
+    "efecto": "Los proveedores que se ofrecen al registrar una compra.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "tarjeta:usuarios-pos": {
+    "efecto": "Las personas, su puesto, su PIN y si están activas.",
+    "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "tarjeta:exportar": {
+    "efecto": "Descarga los datos del negocio (por sección y todo).",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "tarjeta:importar": {
+    "efecto": "Carga datos desde un archivo con las plantillas.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "tarjeta:nombre-del-aparato": {
+    "efecto": "El nombre de este aparato (terminal) en la Caja de otros aparatos y en la auditoría.",
+    "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "tarjeta:impresora-y-cajon": {
+    "efecto": "Con qué impresora imprime este aparato y si tiene cajón (sólo dentro de la app).",
+    "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "tarjeta:sonido-del-aparato": {
+    "efecto": "El volumen de los sonidos en este aparato (apagado, suave, normal).",
+    "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "tarjeta:modo-espera": {
+    "efecto": "Si este aparato entra en modo espera y a los cuántos minutos.",
+    "pruebas": ["pruebas/e2e/modo-espera.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "tarjeta:voz-del-aparato": {
+    "efecto": "La voz y la velocidad con que este aparato lee los avisos.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "tarjeta:anuncio-de-comandas": {
+    "efecto": "Si esta pantalla anuncia en voz las comandas nuevas.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "tarjeta:barra-lateral": {
+    "efecto": "Si la barra lateral nace abierta o plegada en este aparato.",
+    "pruebas": ["pruebas/e2e/tactil-barra.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "tarjeta:laboratorio": {
+    "efecto": "Entra al laboratorio de impresión con la clave del proveedor.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "tarjeta:reiniciar-sistema": {
+    "efecto": "Borra las pruebas o todo (sólo plataforma, con el nombre del negocio como confirmación).",
+    "pruebas": ["pruebas/e2e/qa/qa1-07-purgas.spec.ts"],
+    "estado": "por comprobar"
+  },
+
+  "mh_cocina_notified_nuevos": {
+    "efecto": "Qué comandas ya anunció esta pantalla (para no repetirlas). No es un ajuste.",
+    "pruebas": [],
+    "estado": "memoria del aparato"
+  },
+  "mh_cocina_voz_config": {
+    "efecto": "Si la voz de cocina está activa en este aparato.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "mh_mesero_alert_config": {
+    "efecto": "Cómo se avisa al mesero en este aparato (silencio, sonido, voz o ambos; decir el nombre).",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "mh_notified_pedidos_listos": {
+    "efecto": "Qué «pedido listo» ya se avisó en este aparato. No es un ajuste.",
+    "pruebas": [],
+    "estado": "memoria del aparato"
+  },
+  "mh_notified_solicitudes_qr": {
+    "efecto": "Qué solicitudes del portal ya se avisaron en este aparato. No es un ajuste.",
+    "pruebas": [],
+    "estado": "memoria del aparato"
+  },
+  "mh_primeros_pasos_completed": {
+    "efecto": "Los «Primeros pasos» ya terminados en este aparato. No es un ajuste.",
+    "pruebas": [],
+    "estado": "memoria del aparato"
+  },
+  "mh_primeros_pasos_dismissed": {
+    "efecto": "Si se cerró la tarjeta de «Primeros pasos» en este aparato. No es un ajuste.",
+    "pruebas": [],
+    "estado": "memoria del aparato"
+  },
+  "mh_theme": {
+    "efecto": "Tema claro u oscuro de este aparato.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "mh_voice_manual": {
+    "efecto": "La voz elegida a mano en este aparato.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "mh_voice_picked": {
+    "efecto": "La voz que el aparato eligió sola. No es un ajuste.",
+    "pruebas": [],
+    "estado": "memoria del aparato"
+  },
+  "mh_voice_rate": {
+    "efecto": "La velocidad de la voz en este aparato.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "morphiqpos.borrador-del-pedido.v1.": {
+    "efecto": "El pedido a medio capturar de cada mesa, para no perderlo al recargar. No es un ajuste.",
+    "pruebas": [],
+    "estado": "memoria del aparato"
+  },
+  "morphiqpos.candado-del-pin": {
+    "efecto": "Si este aparato quedó con el candado del PIN puesto. No es un ajuste.",
+    "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],
+    "estado": "memoria del aparato"
+  },
+  "morphiqpos.cocina-anuncia": {
+    "efecto": "«Esta pantalla anuncia las comandas» de este aparato.",
+    "pruebas": [],
+    "estado": "por comprobar"
+  },
+  "morphiqpos.modo-espera": {
+    "efecto": "El modo espera de este aparato (activo y minutos).",
+    "pruebas": ["pruebas/e2e/modo-espera.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "morphiqpos.pin-de-esta-ejecucion": {
+    "efecto": "La marca de que en esta ejecución ya se tecleó el PIN. No es un ajuste.",
+    "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],
+    "estado": "memoria del aparato"
+  },
+  "morphiqpos.sonidos": {
+    "efecto": "El perfil de sonido de este aparato.",
+    "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
+    "estado": "por comprobar"
+  },
+  "mpos.barra-lateral": {
+    "efecto": "La barra lateral abierta o plegada en este aparato.",
+    "pruebas": ["pruebas/e2e/tactil-barra.spec.ts"],
+    "estado": "por comprobar"
+  }
+}

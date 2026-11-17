@@ -36,6 +36,8 @@ export const VIGENCIA_DEL_PERMISO_SEGUNDOS = 30 * 60;
 
 export const ACCION_ENTRAR = 'proveedor.entrar';
 export const ACCION_FALLAR = 'proveedor.fallar';
+/** El intento que el tope por IP rechazó (429): sin contraseña que comparar, pero con rastro (X4). */
+export const ACCION_BLOQUEAR = 'proveedor.bloquear';
 
 /** Sólo Argon2id: es lo que se guarda (como los PIN). */
 const PREFIJO_DEL_HASH = '$argon2id$';
@@ -151,6 +153,35 @@ export async function dejarRastroDelProveedor(
         rol: quien.rol,
         empleoId: quien.empleoId,
         ...(entro && motor !== undefined ? { motor } : {}),
+      }),
+    }),
+  );
+}
+
+/**
+ * Deja en la auditoría el primer intento que el tope por IP rechazó (429), en su propia transacción
+ * (X4): quién tenía la sesión y cuánto le toca esperar. No lleva la contraseña —ni siquiera se
+ * comparó— ni la IP en claro.
+ */
+export async function dejarRastroDelBloqueo(
+  quien: QuienIntenta,
+  esperaSegundos: number,
+): Promise<void> {
+  await conTransaccion((tx) =>
+    repoComandos.escribirAuditoria(tx, {
+      organizacionId: quien.organizacionId,
+      identidadId: quien.identidadId,
+      terminalId: quien.terminalId,
+      accion: ACCION_BLOQUEAR,
+      entidad: 'laboratorio_de_impresion',
+      entidadId: null,
+      correlationId: quien.correlationId,
+      payload: payloadDeAuditoria({
+        v: 1,
+        comando: ACCION_BLOQUEAR,
+        rol: quien.rol,
+        empleoId: quien.empleoId,
+        esperaSegundos,
       }),
     }),
   );

@@ -15,6 +15,7 @@
 
 import { CLAVES_DE_CATEGORIA_DE_GASTO } from '@morphiqpos/domain/gastos';
 import { toNumber, toBool } from '@/utils/csvParser';
+import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
 import {
   normalizarNombreIngrediente,
   buscarIngredientePorNombre,
@@ -543,7 +544,7 @@ export function validarGastos(rows) {
     // Fecha: aceptar YYYY-MM-DD; si viene mal, usar hoy con advertencia
     let fechaIso = fechaRaw;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaRaw)) {
-      fechaIso = new Date().toISOString().slice(0, 10);
+      fechaIso = hoyDelNegocio();
       messages.push(`Fecha "${fechaRaw}" no es válida (AAAA-MM-DD). Se usará hoy: ${fechaIso}.`);
     }
     const catFinal = CATEGORIAS_GASTO_VALIDAS.includes(categoria) ? categoria : 'otro';

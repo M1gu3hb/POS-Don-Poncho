@@ -86,6 +86,16 @@ export {
 
 export { propinasPendientes, type PropinasPendientes } from './consultas.ts';
 
+export {
+  ESTADOS_DE_PROPINA,
+  MAXIMO_DE_VENTAS_LISTADAS,
+  entradaPropinasDelRango,
+  propinasDelRango,
+  type EstadoDePropina,
+  type PropinaDeVenta,
+  type PropinasDelRango,
+} from './del-rango.ts';
+
 export type { VentaConPropina } from './repositorio.ts';
 
 export {

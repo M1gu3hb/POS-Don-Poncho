@@ -159,6 +159,12 @@ jobs:
       - name: Tipos
         run: pnpm typecheck
 
+      # Las pantallas de `apps/web/heredado` no pasan por lint ni por tipos. Un nombre sin
+      # declarar ahí (un `useRef` sin importar) truena al ABRIR la pantalla, y ninguna otra
+      # puerta lo ve: pasó en DP-21 y tumbó una sección entera de Configuración.
+      - name: Los nombres sin declarar del heredado
+        run: pnpm verify:heredado
+
       # --- Pruebas ----------------------------------------------------------
       - name: Pruebas unitarias
         run: pnpm test:unit
