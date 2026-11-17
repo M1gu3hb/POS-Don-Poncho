@@ -2548,6 +2548,16 @@
       "archivo": "apps/web/heredado/pages/Caja.jsx",
       "porque": "DP-22 (lote 3): cerrar la caja ya no encola «la cola de sincronización» ni le enseña al cajero el aviso técnico «La caja se cerró; la cola de sincronización no se encoló.». Esa cola era de la integración de demostración (Google Sheets) que ya se quitó: nadie la consume y sus filas sólo crecían. El comando y su ruta se quedan en el servidor, sin pantalla.",
       "testigos": ["- aviso:La caja se cerró; la cola de sincronización no se encoló."]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Dashboard.jsx",
+      "porque": "DP-22 · DP-D159: la tarjeta «Inventario crítico» (una cuenta del navegador que no llevaba a ningún lado) se sustituye por el aviso de insumo bajo, que cuenta en el servidor y lleva a Inventario filtrado.",
+      "testigos": ["- title:Inventario crítico"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Inventario.jsx",
+      "porque": "DP-22 · DP-D159: el filtro de estado gana «Por debajo del mínimo», que es la lista a la que lleva el aviso del Tablero (?estado=alerta).",
+      "testigos": ["+ texto:Por debajo del mínimo"]
     }
   ]
 }

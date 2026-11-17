@@ -42,6 +42,7 @@ import { tipsEnabled } from '@/utils/tipsUtils';
 import LoadingState from '@/components/common/LoadingState';
 import PrimerosPasosCard, { primerosPasosVigente } from '@/components/dashboard/PrimerosPasosCard';
 import { ComoVaTuSemana } from '~/tablero/ComoVaTuSemana';
+import { AvisoDeInsumosBajos } from '~/inventario/AvisoDeInsumosBajos';
 import { RecetasPendientes } from '~/restaurante/RecetasPendientes';
 import { claves } from '~/cliente/claves-de-consulta';
 import {
@@ -427,16 +428,10 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Inventario crítico (compacto en su propia card) */}
-      {showInventario && alertIngredients.length > 0 && (
-        <ColoredStatCard
-          title="Inventario crítico"
-          value={`${alertIngredients.length} ingredientes`}
-          icon={AlertTriangle}
-          color="rose"
-          subtitle="Requieren atención"
-        />
-      )}
+      {/* DP-22 · DP-D159 · El aviso de insumo bajo: la cuenta sale del servidor (todos los insumos) y el
+          toque lleva a Inventario ya filtrado. Sustituye a la tarjeta «Inventario crítico», que contaba
+          una lista bajada al navegador y no llevaba a ningún lado. */}
+      {showInventario && <AvisoDeInsumosBajos />}
 
       {/* Análisis financiero — gráfica con filtros de período (solo Restaurante Pro) */}
       {/* DP-21 · Bloque 13: la gráfica sale agregada del servidor (`tablero.serie`), por día del negocio. */}

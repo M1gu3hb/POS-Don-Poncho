@@ -23,3 +23,12 @@ export {
 export { entradaValuar, tomarValuacion, type ResultadoValuacion } from './valuacion.ts';
 
 export { entradaRegistrarMerma, registrarMerma, type ResultadoMerma } from './merma.ts';
+
+export {
+  NOMBRES_DEL_AVISO,
+  entradaInsumosBajos,
+  insumosBajos,
+  insumosBajosEnLaBase,
+  type AvisoDeInsumosBajos,
+  type InsumoBajo,
+} from './insumos-bajos.ts';

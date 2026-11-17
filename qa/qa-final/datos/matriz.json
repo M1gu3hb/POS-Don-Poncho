@@ -1,5 +1,5 @@
 {
-  "commit": "e4decc8",
+  "commit": "b0a7a9a",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -74,6 +74,8 @@
         "apps/web/src/impresion/termico/dibujar-elemento.ts",
         "apps/web/src/impresion/termico/estilo.ts",
         "apps/web/src/impresion/termico/rasterizar.ts",
+        "apps/web/src/inventario/AvisoDeInsumosBajos.tsx",
+        "apps/web/src/inventario/aviso-de-insumos-bajos.ts",
         "apps/web/src/restaurante/RecetasPendientes.tsx",
         "apps/web/src/restaurante/margen-de-las-ventas.ts",
         "apps/web/src/restaurante/receta-pendiente.ts",
@@ -99,7 +101,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 9928,
+      "lineas": 10028,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -825,6 +827,7 @@
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/inventario/ajuste-de-stock.ts",
+        "apps/web/src/inventario/por-debajo-del-minimo.ts",
         "apps/web/src/restaurante/valor-de-inventario.ts"
       ],
       "ventanas": [
@@ -859,7 +862,7 @@
           "titulo": null
         }
       ],
-      "lineas": 4988,
+      "lineas": 5038,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -1670,10 +1673,12 @@
         "apps/web/src/impresion/termico/estilo.ts",
         "apps/web/src/impresion/termico/rasterizar.ts",
         "apps/web/src/registros/AuditoriaReciente.tsx",
+        "apps/web/src/registros/LoMasVendido.tsx",
         "apps/web/src/registros/describir-accion.ts",
         "apps/web/src/registros/filtros-de-auditoria.ts",
         "apps/web/src/registros/folio-exacto.ts",
         "apps/web/src/registros/lecturas-de-registros.ts",
+        "apps/web/src/registros/lo-mas-vendido-del-servidor.ts",
         "apps/web/src/registros/periodo-de-registros.ts",
         "apps/web/src/registros/propinas-del-servidor.ts",
         "apps/web/src/registros/resumen-del-servidor.ts",
@@ -1713,7 +1718,7 @@
           "titulo": null
         }
       ],
-      "lineas": 11775,
+      "lineas": 12054,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -2741,11 +2746,11 @@
           "apps/web/heredado/pages/Caja.jsx:1833",
           "apps/web/heredado/pages/Caja.jsx:2215",
           "apps/web/heredado/pages/Caja.jsx:2233",
-          "apps/web/heredado/pages/Dashboard.jsx:622",
+          "apps/web/heredado/pages/Dashboard.jsx:617",
           "apps/web/heredado/pages/Mesero.jsx:1836",
           "apps/web/heredado/pages/Mesero.jsx:1942",
           "apps/web/heredado/pages/Productos.jsx:275",
-          "apps/web/heredado/pages/Registros.jsx:678",
+          "apps/web/heredado/pages/Registros.jsx:682",
           "apps/web/heredado/pages/Ventas.jsx:63"
         ],
         "pruebasQueLaNombran": [],
@@ -2988,7 +2993,7 @@
           "apps/web/heredado/components/tickets/CorteTicket.jsx:195",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:115",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:116",
-          "apps/web/heredado/pages/Dashboard.jsx:227",
+          "apps/web/heredado/pages/Dashboard.jsx:228",
           "apps/web/src/corte/HojaDelCorte.tsx:196",
           "apps/web/src/corte/hoja.ts:64",
           "apps/web/src/impresion/pantallas/LabAparato.tsx:114",
@@ -3519,12 +3524,12 @@
           "apps/web/src/registros/describir-accion.ts:237",
           "packages/app/src/negocio-de-prueba/resetear.ts:58",
           "packages/app/src/qa-final/mundo.ts:15",
-          "packages/app/src/qa-final/verificar-cuenta.ts:196",
-          "packages/app/src/qa-final/verificar-cuenta.ts:216",
-          "packages/app/src/qa-final/verificar-cuenta.ts:223",
-          "packages/app/src/qa-final/verificar-cuenta.ts:228",
-          "packages/app/src/qa-final/verificar-cuenta.ts:242",
-          "packages/app/src/qa-final/verificar-cuenta.ts:377",
+          "packages/app/src/qa-final/verificar-cuenta.ts:210",
+          "packages/app/src/qa-final/verificar-cuenta.ts:230",
+          "packages/app/src/qa-final/verificar-cuenta.ts:238",
+          "packages/app/src/qa-final/verificar-cuenta.ts:245",
+          "packages/app/src/qa-final/verificar-cuenta.ts:261",
+          "packages/app/src/qa-final/verificar-cuenta.ts:407",
           "packages/app/src/venta/cotizar.ts:96",
           "packages/app/src/venta/cotizar.ts:107",
           "packages/domain/src/venta/totales.ts:61",
@@ -3869,7 +3874,7 @@
           "apps/web/heredado/components/tickets/CorteTicket.jsx:186",
           "apps/web/heredado/components/tickets/CorteTicket.jsx:193",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:112",
-          "apps/web/heredado/pages/Dashboard.jsx:263",
+          "apps/web/heredado/pages/Dashboard.jsx:264",
           "apps/web/heredado/pages/POSLogin.jsx:181",
           "apps/web/heredado/pages/PortalCliente.jsx:471",
           "apps/web/heredado/pages/PortalCliente.jsx:479",
@@ -4102,22 +4107,22 @@
           "apps/web/heredado/lib/packageConfig.js:307",
           "apps/web/heredado/pages/Caja.jsx:164",
           "apps/web/heredado/pages/Caja.jsx:170",
-          "apps/web/heredado/pages/Dashboard.jsx:67",
           "apps/web/heredado/pages/Dashboard.jsx:68",
           "apps/web/heredado/pages/Dashboard.jsx:69",
           "apps/web/heredado/pages/Dashboard.jsx:70",
-          "apps/web/heredado/pages/Dashboard.jsx:73",
-          "apps/web/heredado/pages/Dashboard.jsx:266",
-          "apps/web/heredado/pages/Dashboard.jsx:273",
+          "apps/web/heredado/pages/Dashboard.jsx:71",
+          "apps/web/heredado/pages/Dashboard.jsx:74",
+          "apps/web/heredado/pages/Dashboard.jsx:267",
+          "apps/web/heredado/pages/Dashboard.jsx:274",
           "apps/web/heredado/pages/POSLogin.jsx:44",
           "apps/web/heredado/pages/POSLogin.jsx:47",
           "apps/web/heredado/pages/POSLogin.jsx:129",
           "apps/web/heredado/pages/Productos.jsx:58",
           "apps/web/heredado/pages/Productos.jsx:64",
           "apps/web/heredado/pages/Productos.jsx:66",
-          "apps/web/heredado/pages/Registros.jsx:81",
           "apps/web/heredado/pages/Registros.jsx:82",
           "apps/web/heredado/pages/Registros.jsx:83",
+          "apps/web/heredado/pages/Registros.jsx:84",
           "apps/web/src/cliente/IrAlInicioDelRol.tsx:16",
           "apps/web/src/cliente/IrAlInicioDelRol.tsx:33",
           "apps/web/src/cliente/package-config.ts:42",
@@ -5158,7 +5163,7 @@
         "conValorPorOmision": false,
         "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:78"],
         "lectores": [
-          "apps/web/heredado/pages/Dashboard.jsx:227",
+          "apps/web/heredado/pages/Dashboard.jsx:228",
           "apps/web/src/corte/HojaDelCorte.tsx:195",
           "apps/web/src/corte/hoja.ts:67",
           "packages/app/src/caja/corte/documento.ts:52",
@@ -5276,7 +5281,7 @@
           "apps/web/heredado/components/tickets/CorteTicket.jsx:196",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:118",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:119",
-          "apps/web/heredado/pages/Dashboard.jsx:227",
+          "apps/web/heredado/pages/Dashboard.jsx:228",
           "apps/web/heredado/utils/importExecutors.js:379",
           "apps/web/heredado/utils/importValidators.js:487",
           "apps/web/src/corte/HojaDelCorte.tsx:197",
@@ -5476,7 +5481,7 @@
           "apps/web/heredado/components/configuracion/UnidadesMedidaSection.jsx:71"
         ],
         "lectores": [
-          "apps/web/heredado/pages/Dashboard.jsx:233",
+          "apps/web/heredado/pages/Dashboard.jsx:234",
           "apps/web/heredado/utils/unidadesMedida.js:194"
         ],
         "pruebasQueLaNombran": [],
@@ -5542,7 +5547,7 @@
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:196"],
-        "lectores": ["apps/web/heredado/pages/Dashboard.jsx:230"],
+        "lectores": ["apps/web/heredado/pages/Dashboard.jsx:231"],
         "pruebasQueLaNombran": [
           "apps/web/src/configuracion/mudanza.contrato.test.ts",
           "packages/app/src/puente/lo-publico.test.ts"
@@ -7011,7 +7016,7 @@
       "ruta": "/api/caja/eliminar-corte",
       "escribe": true,
       "puestos": ["dueno"],
-      "llamadas": ["apps/web/heredado/pages/Registros.jsx:152"],
+      "llamadas": ["apps/web/heredado/pages/Registros.jsx:153"],
       "pantallas": ["/registros"]
     },
     {
@@ -7421,6 +7426,14 @@
       "pantallas": []
     },
     {
+      "comando": "inventario.insumos_bajos",
+      "ruta": "/api/inventario/insumos-bajos",
+      "escribe": false,
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/inventario/AvisoDeInsumosBajos.tsx:22"],
+      "pantallas": ["/"]
+    },
+    {
       "comando": "inventario.kardex",
       "ruta": "/api/inventario/kardex",
       "escribe": false,
@@ -7533,11 +7546,19 @@
       "pantallas": ["/", "/registros"]
     },
     {
+      "comando": "registros.lo_mas_vendido",
+      "ruta": "/api/registros/lo-mas-vendido",
+      "escribe": false,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/registros/LoMasVendido.tsx:47"],
+      "pantallas": ["/registros"]
+    },
+    {
       "comando": "registros.resumen",
       "ruta": "/api/registros/resumen",
       "escribe": false,
       "puestos": ["administrador", "dueno", "gerente"],
-      "llamadas": ["apps/web/heredado/pages/Registros.jsx:210"],
+      "llamadas": ["apps/web/heredado/pages/Registros.jsx:211"],
       "pantallas": ["/registros"]
     },
     {
