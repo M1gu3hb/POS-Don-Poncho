@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "commit": "1206b4c",
+=======
+  "commit": "b0a7a9a",
+>>>>>>> dp-22-inventario
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -60,11 +64,14 @@
         "apps/web/src/corte/canales.ts",
         "apps/web/src/corte/cancelaciones-leidas.ts",
         "apps/web/src/corte/cancelaciones.ts",
+<<<<<<< HEAD
         "apps/web/src/corte/carpeta/archivos-de-la-app.ts",
         "apps/web/src/corte/carpeta/entregar-el-pdf.ts",
         "apps/web/src/corte/carpeta/guardar-en-la-carpeta.ts",
         "apps/web/src/corte/carpeta/nombre-del-pdf.ts",
         "apps/web/src/corte/carpeta/use-carpeta-de-cortes.ts",
+=======
+>>>>>>> dp-22-inventario
         "apps/web/src/corte/del-dia.ts",
         "apps/web/src/corte/hoja.ts",
         "apps/web/src/corte/linea-de-venta.ts",
@@ -79,6 +86,11 @@
         "apps/web/src/impresion/termico/dibujar-elemento.ts",
         "apps/web/src/impresion/termico/estilo.ts",
         "apps/web/src/impresion/termico/rasterizar.ts",
+<<<<<<< HEAD
+=======
+        "apps/web/src/inventario/AvisoDeInsumosBajos.tsx",
+        "apps/web/src/inventario/aviso-de-insumos-bajos.ts",
+>>>>>>> dp-22-inventario
         "apps/web/src/restaurante/RecetasPendientes.tsx",
         "apps/web/src/restaurante/margen-de-las-ventas.ts",
         "apps/web/src/restaurante/receta-pendiente.ts",
@@ -104,7 +116,11 @@
           "titulo": ""
         }
       ],
+<<<<<<< HEAD
       "lineas": 10273,
+=======
+      "lineas": 10028,
+>>>>>>> dp-22-inventario
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -172,11 +188,14 @@
         "apps/web/src/corte/canales.ts",
         "apps/web/src/corte/cancelaciones-leidas.ts",
         "apps/web/src/corte/cancelaciones.ts",
+<<<<<<< HEAD
         "apps/web/src/corte/carpeta/archivos-de-la-app.ts",
         "apps/web/src/corte/carpeta/entregar-el-pdf.ts",
         "apps/web/src/corte/carpeta/guardar-en-la-carpeta.ts",
         "apps/web/src/corte/carpeta/nombre-del-pdf.ts",
         "apps/web/src/corte/carpeta/use-carpeta-de-cortes.ts",
+=======
+>>>>>>> dp-22-inventario
         "apps/web/src/corte/del-dia.ts",
         "apps/web/src/corte/hoja.ts",
         "apps/web/src/corte/linea-de-venta.ts",
@@ -339,7 +358,11 @@
           "titulo": null
         }
       ],
+<<<<<<< HEAD
       "lineas": 19241,
+=======
+      "lineas": 18877,
+>>>>>>> dp-22-inventario
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -835,6 +858,10 @@
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/inventario/ajuste-de-stock.ts",
+<<<<<<< HEAD
+=======
+        "apps/web/src/inventario/por-debajo-del-minimo.ts",
+>>>>>>> dp-22-inventario
         "apps/web/src/restaurante/valor-de-inventario.ts"
       ],
       "ventanas": [
@@ -869,7 +896,11 @@
           "titulo": null
         }
       ],
+<<<<<<< HEAD
       "lineas": 4988,
+=======
+      "lineas": 5038,
+>>>>>>> dp-22-inventario
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -1663,11 +1694,14 @@
         "apps/web/src/corte/canales.ts",
         "apps/web/src/corte/cancelaciones-leidas.ts",
         "apps/web/src/corte/cancelaciones.ts",
+<<<<<<< HEAD
         "apps/web/src/corte/carpeta/archivos-de-la-app.ts",
         "apps/web/src/corte/carpeta/entregar-el-pdf.ts",
         "apps/web/src/corte/carpeta/guardar-en-la-carpeta.ts",
         "apps/web/src/corte/carpeta/nombre-del-pdf.ts",
         "apps/web/src/corte/carpeta/use-carpeta-de-cortes.ts",
+=======
+>>>>>>> dp-22-inventario
         "apps/web/src/corte/del-dia.ts",
         "apps/web/src/corte/filtrar-cancelaciones.ts",
         "apps/web/src/corte/hoja.ts",
@@ -1685,10 +1719,18 @@
         "apps/web/src/impresion/termico/estilo.ts",
         "apps/web/src/impresion/termico/rasterizar.ts",
         "apps/web/src/registros/AuditoriaReciente.tsx",
+<<<<<<< HEAD
+=======
+        "apps/web/src/registros/LoMasVendido.tsx",
+>>>>>>> dp-22-inventario
         "apps/web/src/registros/describir-accion.ts",
         "apps/web/src/registros/filtros-de-auditoria.ts",
         "apps/web/src/registros/folio-exacto.ts",
         "apps/web/src/registros/lecturas-de-registros.ts",
+<<<<<<< HEAD
+=======
+        "apps/web/src/registros/lo-mas-vendido-del-servidor.ts",
+>>>>>>> dp-22-inventario
         "apps/web/src/registros/periodo-de-registros.ts",
         "apps/web/src/registros/propinas-del-servidor.ts",
         "apps/web/src/registros/resumen-del-servidor.ts",
@@ -1728,7 +1770,11 @@
           "titulo": null
         }
       ],
+<<<<<<< HEAD
       "lineas": 12148,
+=======
+      "lineas": 12054,
+>>>>>>> dp-22-inventario
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1792,7 +1838,10 @@
         "apps/web/app/(modelos)/restaurante/cierre-diario-y-arqueo/page.tsx",
         "apps/web/heredado/lib/pdfDownload.js",
         "apps/web/src/cliente/caja-de-la-terminal.ts",
+<<<<<<< HEAD
         "apps/web/src/cliente/dia-del-negocio.ts",
+=======
+>>>>>>> dp-22-inventario
         "apps/web/src/cliente/dinero-del-puente.ts",
         "apps/web/src/cliente/unidades-del-puente.ts",
         "apps/web/src/corte-heredado/descuentos-del-corte.ts",
@@ -1800,11 +1849,14 @@
         "apps/web/src/corte/HojaDelCorte.tsx",
         "apps/web/src/corte/canales.ts",
         "apps/web/src/corte/cancelaciones.ts",
+<<<<<<< HEAD
         "apps/web/src/corte/carpeta/archivos-de-la-app.ts",
         "apps/web/src/corte/carpeta/entregar-el-pdf.ts",
         "apps/web/src/corte/carpeta/guardar-en-la-carpeta.ts",
         "apps/web/src/corte/carpeta/nombre-del-pdf.ts",
         "apps/web/src/corte/carpeta/use-carpeta-de-cortes.ts",
+=======
+>>>>>>> dp-22-inventario
         "apps/web/src/corte/del-dia.ts",
         "apps/web/src/corte/descuentos.ts",
         "apps/web/src/corte/devoluciones.ts",
@@ -1829,7 +1881,11 @@
           "titulo": null
         }
       ],
+<<<<<<< HEAD
       "lineas": 4659,
+=======
+      "lineas": 4236,
+>>>>>>> dp-22-inventario
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -2317,6 +2373,10 @@
           "apps/web/src/impresion/impresion.test.ts",
           "apps/web/src/restaurante/precuenta-del-mesero.contrato.test.ts",
           "packages/app/src/puente/configuracion-limites.test.ts",
+<<<<<<< HEAD
+=======
+          "pruebas/impresion/.arnes/arnes.js",
+>>>>>>> dp-22-inventario
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -2761,11 +2821,19 @@
           "apps/web/heredado/pages/Caja.jsx:1833",
           "apps/web/heredado/pages/Caja.jsx:2215",
           "apps/web/heredado/pages/Caja.jsx:2233",
+<<<<<<< HEAD
           "apps/web/heredado/pages/Dashboard.jsx:622",
           "apps/web/heredado/pages/Mesero.jsx:1836",
           "apps/web/heredado/pages/Mesero.jsx:1942",
           "apps/web/heredado/pages/Productos.jsx:275",
           "apps/web/heredado/pages/Registros.jsx:695",
+=======
+          "apps/web/heredado/pages/Dashboard.jsx:617",
+          "apps/web/heredado/pages/Mesero.jsx:1836",
+          "apps/web/heredado/pages/Mesero.jsx:1942",
+          "apps/web/heredado/pages/Productos.jsx:275",
+          "apps/web/heredado/pages/Registros.jsx:682",
+>>>>>>> dp-22-inventario
           "apps/web/heredado/pages/Ventas.jsx:63"
         ],
         "pruebasQueLaNombran": [],
@@ -3008,7 +3076,11 @@
           "apps/web/heredado/components/tickets/CorteTicket.jsx:195",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:115",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:116",
+<<<<<<< HEAD
           "apps/web/heredado/pages/Dashboard.jsx:227",
+=======
+          "apps/web/heredado/pages/Dashboard.jsx:228",
+>>>>>>> dp-22-inventario
           "apps/web/src/corte/HojaDelCorte.tsx:196",
           "apps/web/src/corte/hoja.ts:64",
           "apps/web/src/impresion/pantallas/LabAparato.tsx:114",
@@ -3068,6 +3140,10 @@
           "packages/app/src/restaurante/pruebas/constructor-falso.ts",
           "packages/domain/src/venta/campos-del-papel.test.ts",
           "pruebas/e2e/qr-de-mesas.spec.ts",
+<<<<<<< HEAD
+=======
+          "pruebas/impresion/.arnes/arnes.js",
+>>>>>>> dp-22-inventario
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts"
         ],
@@ -3447,6 +3523,10 @@
           "packages/domain/src/venta/folio-visible.test.ts",
           "pruebas/e2e/folios-con-prefijo.spec.ts",
           "pruebas/e2e/restaurante-concurrencia.spec.ts",
+<<<<<<< HEAD
+=======
+          "pruebas/impresion/.arnes/arnes.js",
+>>>>>>> dp-22-inventario
           "qa/simulador/bots/dueno-ventas.test.ts"
         ],
         "efecto": {
@@ -3536,6 +3616,16 @@
         "lectores": [
           "apps/web/src/registros/describir-accion.ts:237",
           "packages/app/src/negocio-de-prueba/resetear.ts:58",
+<<<<<<< HEAD
+=======
+          "packages/app/src/qa-final/mundo.ts:15",
+          "packages/app/src/qa-final/verificar-cuenta.ts:210",
+          "packages/app/src/qa-final/verificar-cuenta.ts:230",
+          "packages/app/src/qa-final/verificar-cuenta.ts:238",
+          "packages/app/src/qa-final/verificar-cuenta.ts:245",
+          "packages/app/src/qa-final/verificar-cuenta.ts:261",
+          "packages/app/src/qa-final/verificar-cuenta.ts:407",
+>>>>>>> dp-22-inventario
           "packages/app/src/venta/cotizar.ts:96",
           "packages/app/src/venta/cotizar.ts:107",
           "packages/domain/src/venta/totales.ts:61",
@@ -3556,8 +3646,11 @@
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
           "packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts",
           "packages/app/src/qa-final/pares.integracion.test.ts",
+<<<<<<< HEAD
           "packages/app/src/qa-final/pruebas/mundo.ts",
           "packages/app/src/qa-final/pruebas/verificar-cuenta.ts",
+=======
+>>>>>>> dp-22-inventario
           "packages/app/src/restaurante/division-y-cobro.integracion.test.ts",
           "packages/domain/src/venta/totales.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
@@ -3634,6 +3727,10 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/archivos/referencias.test.ts",
+<<<<<<< HEAD
+=======
+          "pruebas/impresion/.arnes/arnes.js",
+>>>>>>> dp-22-inventario
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -3689,6 +3786,10 @@
           "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
+<<<<<<< HEAD
+=======
+          "pruebas/impresion/.arnes/arnes.js",
+>>>>>>> dp-22-inventario
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -3715,6 +3816,10 @@
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
           "packages/app/src/puente/lo-publico.test.ts",
+<<<<<<< HEAD
+=======
+          "pruebas/impresion/.arnes/arnes.js",
+>>>>>>> dp-22-inventario
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -3839,7 +3944,11 @@
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:94",
           "apps/web/src/impresion/pantallas/ejemplos.jsx:44"
         ],
+<<<<<<< HEAD
         "pruebasQueLaNombran": ["pruebas/impresion/arnes.jsx"],
+=======
+        "pruebasQueLaNombran": ["pruebas/impresion/.arnes/arnes.js", "pruebas/impresion/arnes.jsx"],
+>>>>>>> dp-22-inventario
         "efecto": {
           "efecto": "Si el ticket lleva logo. Hoy no tiene interruptor en pantalla.",
           "valores": ["true", "false"],
@@ -3871,15 +3980,24 @@
         "lectores": [
           "apps/web/heredado/components/common/Sidebar.jsx:184",
           "apps/web/heredado/components/common/Sidebar.jsx:194",
+<<<<<<< HEAD
           "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:208",
           "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:278",
+=======
+          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:202",
+          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:227",
+>>>>>>> dp-22-inventario
           "apps/web/heredado/components/productos/ProductoDesglose.jsx:61",
           "apps/web/heredado/components/productos/ProductoDesglose.jsx:249",
           "apps/web/heredado/components/registros/PeriodoPDF.jsx:57",
           "apps/web/heredado/components/tickets/CorteTicket.jsx:186",
           "apps/web/heredado/components/tickets/CorteTicket.jsx:193",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:112",
+<<<<<<< HEAD
           "apps/web/heredado/pages/Dashboard.jsx:263",
+=======
+          "apps/web/heredado/pages/Dashboard.jsx:264",
+>>>>>>> dp-22-inventario
           "apps/web/heredado/pages/POSLogin.jsx:181",
           "apps/web/heredado/pages/PortalCliente.jsx:471",
           "apps/web/heredado/pages/PortalCliente.jsx:479",
@@ -3902,6 +4020,10 @@
           "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
+<<<<<<< HEAD
+=======
+          "pruebas/impresion/.arnes/arnes.js",
+>>>>>>> dp-22-inventario
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -4052,6 +4174,10 @@
           "apps/web/src/impresion/papel-a-tu-gusto.contrato.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.integracion.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.test.ts",
+<<<<<<< HEAD
+=======
+          "pruebas/impresion/.arnes/arnes.js",
+>>>>>>> dp-22-inventario
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -4099,17 +4225,27 @@
           "apps/web/heredado/components/common/Sidebar.jsx:157",
           "apps/web/heredado/components/common/SolicitudesQRWatcher.jsx:49",
           "apps/web/heredado/components/common/SolicitudesQRWatcher.jsx:55",
+<<<<<<< HEAD
           "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:35",
           "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:39",
           "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:40",
           "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:32",
           "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:41",
           "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:42",
+=======
+          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:30",
+          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:34",
+          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:35",
+          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:27",
+          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:36",
+          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:37",
+>>>>>>> dp-22-inventario
           "apps/web/heredado/components/registros/ResumenPeriodo.jsx:58",
           "apps/web/heredado/components/registros/ResumenPeriodo.jsx:60",
           "apps/web/heredado/lib/packageConfig.js:307",
           "apps/web/heredado/pages/Caja.jsx:164",
           "apps/web/heredado/pages/Caja.jsx:170",
+<<<<<<< HEAD
           "apps/web/heredado/pages/Dashboard.jsx:67",
           "apps/web/heredado/pages/Dashboard.jsx:68",
           "apps/web/heredado/pages/Dashboard.jsx:69",
@@ -4117,15 +4253,30 @@
           "apps/web/heredado/pages/Dashboard.jsx:73",
           "apps/web/heredado/pages/Dashboard.jsx:266",
           "apps/web/heredado/pages/Dashboard.jsx:273",
+=======
+          "apps/web/heredado/pages/Dashboard.jsx:68",
+          "apps/web/heredado/pages/Dashboard.jsx:69",
+          "apps/web/heredado/pages/Dashboard.jsx:70",
+          "apps/web/heredado/pages/Dashboard.jsx:71",
+          "apps/web/heredado/pages/Dashboard.jsx:74",
+          "apps/web/heredado/pages/Dashboard.jsx:267",
+          "apps/web/heredado/pages/Dashboard.jsx:274",
+>>>>>>> dp-22-inventario
           "apps/web/heredado/pages/POSLogin.jsx:44",
           "apps/web/heredado/pages/POSLogin.jsx:47",
           "apps/web/heredado/pages/POSLogin.jsx:129",
           "apps/web/heredado/pages/Productos.jsx:58",
           "apps/web/heredado/pages/Productos.jsx:64",
           "apps/web/heredado/pages/Productos.jsx:66",
+<<<<<<< HEAD
           "apps/web/heredado/pages/Registros.jsx:84",
           "apps/web/heredado/pages/Registros.jsx:85",
           "apps/web/heredado/pages/Registros.jsx:86",
+=======
+          "apps/web/heredado/pages/Registros.jsx:82",
+          "apps/web/heredado/pages/Registros.jsx:83",
+          "apps/web/heredado/pages/Registros.jsx:84",
+>>>>>>> dp-22-inventario
           "apps/web/src/cliente/IrAlInicioDelRol.tsx:16",
           "apps/web/src/cliente/IrAlInicioDelRol.tsx:33",
           "apps/web/src/cliente/package-config.ts:42",
@@ -5166,7 +5317,11 @@
         "conValorPorOmision": false,
         "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:78"],
         "lectores": [
+<<<<<<< HEAD
           "apps/web/heredado/pages/Dashboard.jsx:227",
+=======
+          "apps/web/heredado/pages/Dashboard.jsx:228",
+>>>>>>> dp-22-inventario
           "apps/web/src/corte/HojaDelCorte.tsx:195",
           "apps/web/src/corte/hoja.ts:67",
           "packages/app/src/caja/corte/documento.ts:52",
@@ -5284,7 +5439,11 @@
           "apps/web/heredado/components/tickets/CorteTicket.jsx:196",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:118",
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:119",
+<<<<<<< HEAD
           "apps/web/heredado/pages/Dashboard.jsx:227",
+=======
+          "apps/web/heredado/pages/Dashboard.jsx:228",
+>>>>>>> dp-22-inventario
           "apps/web/heredado/utils/importExecutors.js:379",
           "apps/web/heredado/utils/importValidators.js:487",
           "apps/web/src/corte/HojaDelCorte.tsx:197",
@@ -5428,6 +5587,10 @@
           "pruebas/e2e/unir-mesas-en-el-mapa.spec.ts",
           "pruebas/e2e/usuarios-y-mesas.spec.ts",
           "pruebas/e2e/vista-de-solicitudes.spec.ts",
+<<<<<<< HEAD
+=======
+          "pruebas/impresion/.arnes/arnes.js",
+>>>>>>> dp-22-inventario
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts"
         ],
@@ -5456,7 +5619,11 @@
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:135"
         ],
         "lectores": ["apps/web/heredado/components/tickets/PreCuentaTicket.jsx:283"],
+<<<<<<< HEAD
         "pruebasQueLaNombran": [],
+=======
+        "pruebasQueLaNombran": ["pruebas/impresion/.arnes/arnes.js"],
+>>>>>>> dp-22-inventario
         "efecto": {
           "efecto": "El pie del ticket térmico.",
           "valores": ["vacío", "un texto"],
@@ -5483,7 +5650,11 @@
           "apps/web/heredado/components/configuracion/UnidadesMedidaSection.jsx:71"
         ],
         "lectores": [
+<<<<<<< HEAD
           "apps/web/heredado/pages/Dashboard.jsx:233",
+=======
+          "apps/web/heredado/pages/Dashboard.jsx:234",
+>>>>>>> dp-22-inventario
           "apps/web/heredado/utils/unidadesMedida.js:194"
         ],
         "pruebasQueLaNombran": [],
@@ -5549,7 +5720,11 @@
         "soloPorComando": false,
         "conValorPorOmision": true,
         "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:196"],
+<<<<<<< HEAD
         "lectores": ["apps/web/heredado/pages/Dashboard.jsx:230"],
+=======
+        "lectores": ["apps/web/heredado/pages/Dashboard.jsx:231"],
+>>>>>>> dp-22-inventario
         "pruebasQueLaNombran": [
           "apps/web/src/configuracion/mudanza.contrato.test.ts",
           "packages/app/src/puente/lo-publico.test.ts"
@@ -5856,7 +6031,11 @@
         "conValorPorOmision": false,
         "escritores": [],
         "lectores": ["apps/web/src/voz/anuncio-del-aparato.ts:19"],
+<<<<<<< HEAD
         "pruebasQueLaNombran": ["pruebas/e2e/sonidos.spec.ts"],
+=======
+        "pruebasQueLaNombran": [],
+>>>>>>> dp-22-inventario
         "efecto": {
           "efecto": "«Esta pantalla anuncia las comandas» de este aparato.",
           "pruebas": [],
@@ -7018,7 +7197,11 @@
       "ruta": "/api/caja/eliminar-corte",
       "escribe": true,
       "puestos": ["dueno"],
+<<<<<<< HEAD
       "llamadas": ["apps/web/heredado/pages/Registros.jsx:162"],
+=======
+      "llamadas": ["apps/web/heredado/pages/Registros.jsx:153"],
+>>>>>>> dp-22-inventario
       "pantallas": ["/registros"]
     },
     {
@@ -7106,7 +7289,11 @@
       "escribe": false,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
+<<<<<<< HEAD
         "apps/web/src/corte/CorteEnPdf.tsx:100",
+=======
+        "apps/web/src/corte/CorteEnPdf.tsx:79",
+>>>>>>> dp-22-inventario
         "apps/web/src/corte-heredado/extras-del-corte.ts:35"
       ],
       "pantallas": ["/", "/caja", "/registros", "/restaurante/cierre-diario-y-arqueo"]
@@ -7428,6 +7615,17 @@
       "pantallas": []
     },
     {
+<<<<<<< HEAD
+=======
+      "comando": "inventario.insumos_bajos",
+      "ruta": "/api/inventario/insumos-bajos",
+      "escribe": false,
+      "puestos": ["administrador", "almacen", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/inventario/AvisoDeInsumosBajos.tsx:22"],
+      "pantallas": ["/"]
+    },
+    {
+>>>>>>> dp-22-inventario
       "comando": "inventario.kardex",
       "ruta": "/api/inventario/kardex",
       "escribe": false,
@@ -7540,11 +7738,26 @@
       "pantallas": ["/", "/registros"]
     },
     {
+<<<<<<< HEAD
+=======
+      "comando": "registros.lo_mas_vendido",
+      "ruta": "/api/registros/lo-mas-vendido",
+      "escribe": false,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/registros/LoMasVendido.tsx:47"],
+      "pantallas": ["/registros"]
+    },
+    {
+>>>>>>> dp-22-inventario
       "comando": "registros.resumen",
       "ruta": "/api/registros/resumen",
       "escribe": false,
       "puestos": ["administrador", "dueno", "gerente"],
+<<<<<<< HEAD
       "llamadas": ["apps/web/heredado/pages/Registros.jsx:220"],
+=======
+      "llamadas": ["apps/web/heredado/pages/Registros.jsx:211"],
+>>>>>>> dp-22-inventario
       "pantallas": ["/registros"]
     },
     {

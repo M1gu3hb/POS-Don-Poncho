@@ -2550,6 +2550,7 @@
       "testigos": ["- aviso:La caja se cerró; la cola de sincronización no se encoló."]
     },
     {
+<<<<<<< HEAD
       "archivo": "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx",
       "porque": "DP-D153 (Bloque 18): dentro de la app de Windows 1.0.2 el PDF del cierre se guarda solo en DocumentosPOS Don PonchoCortes en vez de descargarse; si no se puede guardar, un aviso dice por qué y el botón de siempre reintenta. En un navegador o con la app 1.0.1 llama a la misma descarga de antes y no cambia nada a la vista. Lo nuevo son tres avisos (guardado, fallo y la vía) y la etiqueta del botón de reintento, que dice «Guardar PDF en la carpeta» sólo dentro de la app.",
       "testigos": [
@@ -2604,6 +2605,16 @@
         "+ icono:HardDriveDownload",
         "+ icono:FolderOpen"
       ]
+=======
+      "archivo": "apps/web/heredado/pages/Dashboard.jsx",
+      "porque": "DP-22 · DP-D159: la tarjeta «Inventario crítico» (una cuenta del navegador que no llevaba a ningún lado) se sustituye por el aviso de insumo bajo, que cuenta en el servidor y lleva a Inventario filtrado.",
+      "testigos": ["- title:Inventario crítico"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Inventario.jsx",
+      "porque": "DP-22 · DP-D159: el filtro de estado gana «Por debajo del mínimo», que es la lista a la que lleva el aviso del Tablero (?estado=alerta).",
+      "testigos": ["+ texto:Por debajo del mínimo"]
+>>>>>>> dp-22-inventario
     }
   ]
 }

@@ -894,6 +894,12 @@ export const SIN_ESTADO = [
     razon: 'No lee nada: recibe el estado que el portal ya sondea.',
   },
   {
+    pantalla: 'inventario/AvisoDeInsumosBajos',
+    estado: 'vacio',
+    razon:
+      'DP-22 · DP-D159 · Pieza del Tablero, no pantalla: el aviso de insumo bajo SIN insumos bajos no se pinta (esa es la regla: no hay nada que avisar); lo que falla al leer lo dice con su Aviso.',
+  },
+  {
     pantalla: 'telefono-de-cocina/ComandaEnElTelefono',
     estado: 'vacio',
     razon:

@@ -56,6 +56,7 @@ import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
 import { invocarComando } from '~/cliente/api';
 import { CancelacionesRegistradas } from '~/corte/CancelacionesRegistradas';
 import { AuditoriaReciente } from '~/registros/AuditoriaReciente';
+import { LoMasVendido } from '~/registros/LoMasVendido';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 import { puedeEliminarCortes } from '@/components/configuracion/puestos';
 import { esDeMando } from '@/components/configuracion/puestos';
@@ -363,6 +364,9 @@ export default function Registros() {
         Las listas de abajo muestran el periodo de arriba:{' '}
         {format(range.from, 'd MMM', { locale: es })} – {format(range.to, 'd MMM yyyy', { locale: es })}.
       </p>
+
+      {/* DP-22 · Lo más vendido del periodo (por platillo y por mesero), sumado en el servidor. */}
+      <LoMasVendido peticion={peticion} />
 
       {/* Buscador universal */}
       <div className="relative">

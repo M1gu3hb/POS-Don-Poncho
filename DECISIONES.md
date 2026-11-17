@@ -3044,8 +3044,7 @@ noche y una prueba del tablero falló: de día pasa.
   llama, sólo para pruebas contra Postgres que dependen de la hora. Ninguna ruta lo usa.
 - **Descartado:** confiar en el huso del aparato (`format(new Date(), …)` de date-fns): una tableta
   con el huso mal puesto cambiaría de día antes o después que la caja.
-- **Sin migración.**
-## DP-D153 · Bloque 18 · Los PDF de los cortes quedan solos en una carpeta (app de Windows 1.0.2) · 17-11-2026
+- **Sin migración.**## DP-D153 · Bloque 18 · Los PDF de los cortes quedan solos en una carpeta (app de Windows 1.0.2) · 17-11-2026
 
 Hasta la 1.0.1 el PDF del corte se descargaba como en un navegador (a «Descargas», con el nombre que
 armaba la página). Con la app de Windows 1.0.2 queda en `Documentos\POS Don Poncho\Cortes\AAAA-MM\`.
@@ -3114,6 +3113,77 @@ Lo que dejó probar cada combinación de ajustes (`packages/app/src/qa-final/`, 
      ni «partes iguales» de dinero (sólo por unidades de cada renglón). **Se queda así:** son
      reglas de dinero y no se cambian en la víspera; van a la lista de lo grande para después.
 - **Sin migración.**
+
+## DP-D159 · DP-22 · El aviso de insumo bajo: la cuenta sale del servidor y el toque lleva a Inventario filtrado · 17-11-2026
+
+**Contexto.** Inventario ordena por semáforo (agotado, crítico, bajo), pero fuera de esa pantalla nadie se
+enteraba: el Tablero tenía una tarjeta «Inventario crítico» que contaba una lista de ingredientes bajada
+al navegador (que el puente puede cortar) y no llevaba a ningún lado.
+
+**Decisión.**
+
+- **Comando de lectura `inventario.insumos_bajos`** (`packages/app/src/inventario/insumos-bajos.ts`, ruta
+  `POST /api/inventario/insumos-bajos`). Roles: los que leen Inventario (`dueno`, `administrador`,
+  `gerente`, `almacen`), paquetes operativos y módulo `inventario`. Cuenta sobre TODOS los insumos
+  activos con la existencia de la vista `existencias_por_insumo` (la suma de todos los almacenes) y
+  devuelve `{ total, primeros[3] }`: los primeros, del más urgente al menos (crítico antes que bajo; dentro
+  de cada nivel, la menor cobertura = existencia ÷ mínimo; a igualdad, el nombre).
+- **La regla es `alertasDeMinimo` del dominio** (la que ya existía, sin uso): un piso en cero es «no lo
+  vigiles»; con piso (o con piso crítico) cuenta lo que está EN el piso o por debajo, y lo agotado o en
+  negativo (DP-D116) cuenta siempre que tenga piso. Un insumo agotado SIN piso no cuenta como «por debajo
+  de su mínimo» (no tiene mínimo): sigue saliendo en el semáforo como «Agotado».
+- **Tarjeta en el Tablero** (`AvisoDeInsumosBajos`): «N insumos por debajo de su mínimo», los primeros
+  nombres («Carne, Crema, Pan y 4 más»), 44 px de alto, y un toque que lleva a
+  `/inventario?estado=alerta`. Sin insumos bajos no aparece; si no se pudo leer lo dice. Sustituye a la
+  tarjeta «Inventario crítico». Quién la ve: el Tablero sólo lo abren dueño, administrador y gerente
+  (el almacén entra directo a Inventario, donde ya ve el semáforo); el comando también lo lee el almacén.
+- **Inventario** entiende `?estado=alerta` y tiene el filtro «Por debajo del mínimo», con la MISMA regla
+  (`estaPorDebajoDelMinimo`, atada por una prueba de cuadrícula a `alertasDeMinimo`): la lista que se abre
+  es la que se contó.
+
+**Lo que el trabajo encontró (y quedó arreglado, DP-D161):** `alertasDeMinimo` lanzaba
+`CANTIDAD_INVALIDA` con una existencia en negativo (`cantidad()` no acepta signo) — justo el caso que
+DP-D116 vuelve legal.
+
+**Pruebas.** Integración contra Postgres (11): activos, suma de almacenes, piso en cero, en el piso,
+negativo, sin fila de existencias, más de mil insumos sin tope, otro negocio, permisos. Unitarias: el
+texto de la tarjeta, la cuadrícula contra el dominio y el filtro de la URL. Mutantes en el informe.
+
+## DP-D160 · DP-22 · «Lo más vendido» en Registros: por platillo y por mesero, sumado en el servidor · 17-11-2026
+
+**Decisión.** Las ventas por platillo sólo existían como exportación. Ahora Registros tiene, bajo el
+resumen del periodo, la sección «Lo más vendido» (Por platillo | Por mesero).
+
+- **Comando de lectura `registros.lo_mas_vendido`** (`packages/app/src/registros/lo-mas-vendido.ts`, ruta
+  `POST /api/registros/lo-mas-vendido`), al estilo de `registros.resumen`: mismos roles (`dueno`,
+  `administrador`, `gerente`) y paquetes, mismo periodo (`desde`/`hasta`), el día del NEGOCIO (la zona de
+  la organización), sin tope de filas, todo en centavos enteros.
+- **Qué cuenta:** líneas no anuladas de cuentas vendidas (`ORDEN_VENDIDA`: lo cancelado y la cuenta madre
+  de una división no cuentan; la devuelta entera sigue siendo venta de su día). Lo que se vende por peso
+  cuenta sus KILOS, no la pieza de la línea.
+- **Las devoluciones restan en el día en que se hicieron** (como el corte: «el histórico no se toca»). Cada
+  platillo trae lo vendido, lo devuelto y lo que dejó (neto); la lista va ordenada por el neto. Un platillo
+  vendido antes del periodo y devuelto dentro sale con venta cero y neto negativo.
+- **Cómo cuadra con el resumen:** `cuentas.ventasCentavos` es la venta del resumen, al centavo; la venta
+  por platillo (`vendidoCentavos`, SIN restar devoluciones) más lo que no es platillo
+  (`cuentas.ajusteCentavos`: el descuento y los impuestos de la CUENTA) es esa venta. La pantalla lo dice
+  en su pie. La venta de los meseros suma la del resumen y su propina suma la propina del resumen.
+- **Por mesero:** cuentas, venta (el total de la cuenta, sin propina) y propina confirmada, quien atendió
+  la cuenta; «Sin mesero» si no hay quien.
+- **Pantalla:** 44 px en los botones, los 10 primeros con «Ver los N», aviso si no se pudo leer. El
+  navegador no suma dinero: sólo lo dice (`lo-mas-vendido-del-servidor.ts`).
+
+**Pruebas.** Armado puro (7), integración contra Postgres (16: cuentas anuladas, canceladas, divididas,
+por peso, devueltas, día del negocio en el borde 23:59/00:00, más de mil líneas, otro negocio, permisos,
+entrada) y presentación (5). Mutantes en el informe.
+
+## DP-D161 · DP-22 · `alertasDeMinimo` ve la existencia en negativo · 17-11-2026
+
+`alertasDeMinimo` (dominio, F-107) usaba `cantidad()` para la existencia, que no acepta signo: una
+existencia en negativo —legal desde DP-D116— lanzaba `CANTIDAD_INVALIDA`. Nadie la llamaba, por eso no se
+había visto; el aviso de insumo bajo (DP-D159) la usa. Ahora la existencia se lee con signo
+(`existenciaConSigno`) y un negativo alerta (crítico si hay piso crítico, bajo si no). Prueba primero
+(falló con el error) y mutante (volver a `cantidad`).
 
 ## DP-D162 · DP-22 · La app de Windows 1.0.2: cómo se publicó, qué se comprobó y qué no se puede probar aquí · 17-11-2026
 

@@ -110,6 +110,16 @@ export function sugerirPedido(datos: DatosDeSugerencia): Sugerencia {
   };
 }
 
+/**
+ * La existencia CON SIGNO, en diezmilésimas. `cantidad` no acepta negativos (una compra o una receta
+ * nunca lo son), pero una existencia sí: DP-D116 deja cobrar lo que pasó por cocina aunque el almacén
+ * dijera que no había, y queda en negativo para que el conteo la enseñe. La alerta tiene que verla.
+ */
+export function existenciaConSigno(texto: string): bigint {
+  const limpio = texto.trim();
+  return limpio.startsWith('-') ? -BigInt(cantidad(limpio.slice(1))) : BigInt(cantidad(limpio));
+}
+
 export type NivelDeAlerta = 'critico' | 'bajo' | 'normal';
 
 export interface ArticuloParaAlerta {
@@ -137,7 +147,7 @@ export function alertasDeMinimo(articulos: readonly ArticuloParaAlerta[]): reado
   const alertas: Alerta[] = [];
 
   for (const articulo of articulos) {
-    const existencia = cantidad(articulo.existenciaBase);
+    const existencia = existenciaConSigno(articulo.existenciaBase);
     const minimo = cantidad(articulo.stockMinimo);
     const critico = cantidad(articulo.stockCritico);
 

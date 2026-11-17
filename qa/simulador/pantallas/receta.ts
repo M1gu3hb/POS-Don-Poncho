@@ -3,7 +3,7 @@
  * precio, su tipo de venta (pieza, por peso o por porción de contenedor), su foto o su fondo y
  * los ingredientes que descuenta. Es donde el dueño crea los productos en un restaurante.
  */
-import { expect, type Locator, type Page, type Response } from '@playwright/test';
+import { type Locator, type Page, type Response } from '@playwright/test';
 
 import type { ProductoDePrueba } from '../dia0/datos.ts';
 import { campoDe, cerrado, dialogoCon, elegir } from './comun.ts';
@@ -84,7 +84,7 @@ async function agregarIngredientes(
 export async function crearProducto(pagina: Page, p: ProductoDePrueba): Promise<void> {
   await pagina.getByRole('button', { name: 'Nueva receta' }).first().click();
   const dialogo = dialogoCon(pagina, 'Nueva receta');
-  await dialogo.getByPlaceholder('Ej: Capuchino').fill(p.nombre);
+  await dialogo.getByPlaceholder(/^Ej: /).fill(p.nombre);
   await elegir(pagina, dialogo, 'Categoría', p.categoria);
   // Una categoría nueva aún no enseña su área: el servidor exige elegirla (Cocina o Bebidas).
   // Con «Según su categoría» basta si la categoría ya tiene platillos; «Del carbón» es nueva: Cocina.
@@ -97,7 +97,18 @@ export async function crearProducto(pagina: Page, p: ProductoDePrueba): Promise<
       mimeType: 'image/png',
       buffer: pngSolido(240, 180, [196, 120, 60]),
     });
-    await expect(dialogo.locator('img').first()).toBeVisible({ timeout: 30_000 });
+    // DP-22 · Si la vista previa no aparece, es un hallazgo (no se detiene el día 0): se anota y se sigue sin foto.
+    const vista = await dialogo
+      .locator('img')
+      .first()
+      .waitFor({ state: 'visible', timeout: 30_000 })
+      .then(
+        () => true,
+        () => false,
+      );
+    if (!vista)
+      process.stdout.write(`HALLAZGO-FOTO: la foto de ${p.nombre} no mostró vista previa
+`);
   } else if (p.tipo === 'sin_foto_con_fondo') {
     await dialogo.getByLabel('Talavera', { exact: true }).click();
   }

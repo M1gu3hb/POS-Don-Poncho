@@ -8,6 +8,7 @@ import { join } from 'node:path';
 
 import { expect } from '@playwright/test';
 
+import { aparatoPedido, CUENTA_DE_TOQUES, ponerElDedo } from '../dedo.ts';
 import { leerEntorno } from '../entorno.ts';
 import { abrirNavegador, sesionDe } from '../sesion.ts';
 
@@ -51,7 +52,10 @@ async function principal(): Promise<void> {
   const navegador = await abrirNavegador();
   let fallo: unknown = null;
   try {
-    const { pagina } = await sesionDe(navegador, entorno, 'Dueño Don Poncho', 'pc-1920');
+    // DP-22 · Con `--aparato tableta-1024` el día 0 se recorre con el DEDO (toques, no clics de ratón).
+    const aparato = aparatoPedido();
+    const { pagina } = await sesionDe(navegador, entorno, 'Dueño Don Poncho', aparato);
+    if (aparato !== 'pc-1920') ponerElDedo(pagina);
     const d = crearDia0(entorno, pagina, join(entorno.salida, 'dia-0'));
     await apagarLaEspera(d);
     for (const paso of PASOS) {
@@ -68,6 +72,10 @@ async function principal(): Promise<void> {
       }
     }
   } finally {
+    process.stdout.write(
+      `dedo: ${String(CUENTA_DE_TOQUES.toques)} toques, ${String(CUENTA_DE_TOQUES.clicsQueSeQuedaron)} clics que no podían ser toque
+`,
+    );
     await navegador.close();
   }
   if (fallo !== null)

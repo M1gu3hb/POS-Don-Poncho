@@ -22,8 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Link } from '@/enrutado';
+import { Link, useLocation } from '@/enrutado';
 import { puedeAjustarStock } from '~/inventario/ajuste-de-stock';
+import {
+  ESTADO_POR_DEBAJO_DEL_MINIMO,
+  estaPorDebajoDelMinimo,
+  filtroDeLaUrl,
+} from '~/inventario/por-debajo-del-minimo';
 import { diaDelNegocioDeUnValor, hoyDelNegocio } from '~/cliente/dia-del-negocio';
 import { avisoDeNegativosEnElValor, cuantosEnNegativo } from '~/restaurante/valor-de-inventario';
 import { Search, Package, Trash2, PackagePlus, ShoppingBag, Sliders, Beaker } from 'lucide-react';
@@ -101,7 +106,11 @@ export default function Inventario() {
   // el anaquel tiene que poder corregirlo.
   const puedeAjustar = puedeAjustarStock(posUser?.rol);
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  // DP-22 · El aviso del Tablero lleva aquí con `?estado=alerta`: la lista ya viene filtrada.
+  const { search: laUrl } = useLocation();
+  const [filterStatus, setFilterStatus] = useState(() =>
+    filtroDeLaUrl(new URLSearchParams(laUrl).get('estado')),
+  );
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [showInvInicial, setShowInvInicial] = useState(false);
   const [ajustarIng, setAjustarIng] = useState(null);
@@ -171,7 +180,11 @@ export default function Inventario() {
   const filtered = useMemo(() => {
     return enriched.filter((i) => {
       const matchSearch = !search || i.nombre.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = filterStatus === 'all' || i.stockStatus === filterStatus;
+      const matchStatus =
+        filterStatus === 'all' ||
+        (filterStatus === ESTADO_POR_DEBAJO_DEL_MINIMO
+          ? estaPorDebajoDelMinimo(i)
+          : i.stockStatus === filterStatus);
       return matchSearch && matchStatus;
     });
   }, [enriched, search, filterStatus]);
@@ -321,6 +334,7 @@ export default function Inventario() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value={ESTADO_POR_DEBAJO_DEL_MINIMO}>Por debajo del mínimo</SelectItem>
             <SelectItem value="suficiente">Suficiente</SelectItem>
             <SelectItem value="medio">Medio</SelectItem>
             <SelectItem value="bajo">Bajo</SelectItem>
