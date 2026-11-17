@@ -18,7 +18,7 @@
 | Crítico   |           0 |          0 |        0 |
 | Alto      |           4 |          2 |        2 |
 | Medio     |           8 |          4 |        4 |
-| Bajo      |           3 |          0 |        3 |
+| Bajo      |           3 |          1 |        2 |
 | Por ver   |           1 |          0 |        1 |
 | Falta     |           1 |          0 |        1 |
 
@@ -40,7 +40,7 @@ abiertos son el 13 y el 14, los dos de inventario y recetas, que producción tod
 | 9   | medio   | Propina en la Caja y en el portal                                | La propina por porcentaje salía un centavo abajo en los medios centavos ($28,771.50 al 15 % daba $4,315.72 y el servidor $4,315.73)                                                                 | arreglado · en producción (lote 2, `829b13d`)        |
 | 10  | medio   | Personas y seguridad                                             | Cambiarle el PIN a alguien no cierra la sesión que tenga abierta: sigue dentro hasta que venza (12 h)                                                                                               | arreglado · en producción (lote 2, `829b13d`)        |
 | 11  | bajo    | Caja · cobro                                                     | El servidor acepta una propina al cobrar aunque en Configuración nadie pueda elegirla; la pantalla la esconde, el servidor no la exige                                                              | anotado: no se cambia antes de abrir (ver detalle)   |
-| 12  | bajo    | Caja · cobro                                                     | Cuando el total cambió desde la precuenta, el aviso dice «El total cambió…»: el servidor sí manda el total nuevo, falta ver si la Caja vuelve a leer la cuenta o se queda con el total viejo        | abierto: por ver en el navegador                     |
+| 12  | bajo    | Caja · cobro                                                     | Cuando el total cambió desde la precuenta, el aviso dice «El total cambió…»: el servidor sí manda el total nuevo, falta ver si la Caja vuelve a leer la cuenta o se queda con el total viejo        | arreglado (lote 4, por desplegar): la Caja relee la cuenta tras el rechazo; contrato y 6 mutantes; la prueba con el dedo, en cola |
 | 13  | alto    | Recetas → Nueva receta · tableta 1024×768 con el dedo            | No se puede elegir el «Tipo de venta» («Variable por medida») al crear un platillo: el toque cae fuera de la pantalla. Con ratón sí se puede                                                        | abierto: causa sin confirmar                         |
 | 14  | alto    | Inventario, recetas y márgenes · todos                           | El costo por gramo o mililitro se guarda en centavos enteros: leche a 2.4 ¢/ml queda en 2 ¢ (−16.7 %) y maíz a 4.5 ¢/g en 5 ¢ (+11 %); con $11,570.50 comprados, «Valor de inventario» dice $11,552 | abierto: se arregla (agente D3)                      |
 | 15  | medio   | Inventario · aviso de mínimos                                    | La regla de «por debajo del mínimo» reventaba con una existencia en negativo, que DP-D116 hace legal                                                                                                | arreglado (lote 3, por desplegar)                    |
