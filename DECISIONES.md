@@ -3014,6 +3014,11 @@ Miguel pidió decidirlo con su criterio y anotarlo (encargo DP-22, Parte 9).
     estado nuevos para un caso que se resuelve con una pregunta en el aparato).
   - **Cambia lo instalado:** el aparato de un puesto que no es de cocina y que hoy habla por
     omisión deja de hacerlo hasta que lo enciendan.
+  - **El timbre va con la voz** (como desde DP-21): un aparato que no anuncia tampoco suena el
+    «Ping» de la comanda nueva; el aviso en pantalla sí sale. Si el timbre sonara siempre, dos
+    pantallas de la misma estación seguirían oyéndose doble, que es justo lo que se quiso quitar.
+    La e2e `sonidos.spec.ts` lo fija por los dos lados: la cocina suena sin elegir nada, y el
+    aparato de la dueña calla hasta que lo enciende en Este aparato.
 - **«Silenciar notificaciones del administrador» se queda encendido** (DP-D149).
 - **`/sistema`** (el catálogo de diseño, sin sesión y sin datos del negocio) se queda como está:
   es la página con la que se comparan los colores del motor viejo (`motor-viejo.spec.ts`).

@@ -48,6 +48,17 @@ async function abrirSeccion(page: Page, nombre: string): Promise<void> {
   await enLaLista.click();
 }
 
+/** Lo que guarda «Esta pantalla anuncia las comandas» (`apps/web/src/voz/anuncio-del-aparato.ts`). */
+const CLAVE_DEL_ANUNCIO = 'morphiqpos.cocina-anuncia';
+
+/** Abre Cocina y da el primer toque, que es el gesto con el que el navegador deja sonar. */
+async function abrirCocina(page: Page): Promise<void> {
+  await page.goto('/cocina');
+  const titulo = page.getByRole('heading', { level: 1, name: /^Cocina/ });
+  await expect(titulo).toBeVisible();
+  await titulo.click();
+}
+
 async function perfil(page: Page, nombre: 'Apagado' | 'Suave' | 'Normal'): Promise<void> {
   await page.goto('/configuracion?tab=aparato');
   await page.getByRole('radio', { name: nombre }).click();
@@ -228,15 +239,58 @@ test.describe('los sonidos de la interfaz', () => {
     browser,
   }, info) => {
     // DP-12.6 · Un solo sistema de sonido: el timbre de la comanda nueva es del gestor.
+    // DP-22 · Quien lo oye es la COCINA: sin haberlo elegido en el aparato, sólo quien entra con
+    // el puesto de cocina anuncia las comandas (DP-D151). La dueña sólo arma el pedido.
     test.setTimeout(3 * 60_000);
+    const equipo = new Equipo(browser, SLUG);
+    const duena = await equipo.pagina(info, 'dueno');
+    await resetearLaDemo(duena);
+    const cocina = await equipo.pagina(info, 'cocina');
+    try {
+      await abrirCocina(cocina);
+      await expect(cocina.getByRole('button', { name: /Activar sonidos/ })).toHaveCount(0);
+      await olvidarLoQueSono(cocina);
+
+      await comandaNueva(duena);
+
+      await expect(cocina.locator('html')).toHaveAttribute('data-ultimo-sonido', 'ping', {
+        timeout: 30_000,
+      });
+    } finally {
+      await cancelarLaCuentaDeLaMesa(duena);
+    }
+  });
+
+  test('Cocina en el aparato de la dueña: sin elegirlo no suena; encendido en este aparato, sí', async ({
+    browser,
+  }, info) => {
+    // DP-22 (DP-D151) · Si la dueña abre «Cocina» en su aparato, la cocina no debe oír cada
+    // comanda dos veces: su aparato enseña el aviso y se queda callado hasta que lo encienda.
+    test.setTimeout(4 * 60_000);
     const duena = await new Equipo(browser, SLUG).pagina(info, 'dueno');
     await resetearLaDemo(duena);
     try {
-      await duena.goto('/cocina');
-      await expect(duena.getByRole('heading', { level: 1, name: /^Cocina/ })).toBeVisible();
-      await expect(duena.getByRole('button', { name: /Activar sonidos/ })).toHaveCount(0);
-      // El primer toque desbloquea el sonido (el mismo gesto que lo pide el navegador).
-      await duena.getByRole('heading', { level: 1, name: /^Cocina/ }).click();
+      await abrirCocina(duena);
+      await duena.evaluate((clave) => {
+        window.localStorage.removeItem(clave);
+      }, CLAVE_DEL_ANUNCIO);
+      await olvidarLoQueSono(duena);
+
+      await comandaNueva(duena);
+
+      // El aviso visual sí llega; el timbre (280 ms después) no suena en este aparato.
+      await expect(duena.getByText('Nuevo pedido recibido').first()).toBeVisible({
+        timeout: 30_000,
+      });
+      await duena.waitForTimeout(1_000);
+      await expect(duena.locator('html')).not.toHaveAttribute('data-ultimo-sonido', /.+/);
+
+      // Lo enciende en ESTE aparato (lo que guarda «Esta pantalla anuncia las comandas»).
+      await cancelarLaCuentaDeLaMesa(duena);
+      await duena.evaluate((clave) => {
+        window.localStorage.setItem(clave, JSON.stringify({ anuncia: true }));
+      }, CLAVE_DEL_ANUNCIO);
+      await abrirCocina(duena);
       await olvidarLoQueSono(duena);
 
       await comandaNueva(duena);
@@ -245,35 +299,40 @@ test.describe('los sonidos de la interfaz', () => {
         timeout: 30_000,
       });
     } finally {
+      await duena.evaluate((clave) => {
+        window.localStorage.removeItem(clave);
+      }, CLAVE_DEL_ANUNCIO);
       await cancelarLaCuentaDeLaMesa(duena);
     }
   });
 
   test('Cocina: con la voz hablando, el timbre NO se le encima', async ({ browser }, info) => {
     test.setTimeout(3 * 60_000);
-    const duena = await new Equipo(browser, SLUG).pagina(info, 'dueno');
+    const equipo = new Equipo(browser, SLUG);
+    const duena = await equipo.pagina(info, 'dueno');
     await resetearLaDemo(duena);
+    // DP-22 · En la pantalla de la cocina, que es la que anuncia: en la de la dueña el timbre no
+    // suena nunca por omisión y esta prueba pasaría sin probar nada.
+    const cocina = await equipo.pagina(info, 'cocina');
     try {
-      await duena.goto('/cocina');
-      await expect(duena.getByRole('heading', { level: 1, name: /^Cocina/ })).toBeVisible();
-      await duena.getByRole('heading', { level: 1, name: /^Cocina/ }).click();
+      await abrirCocina(cocina);
       // Una voz de Cocina hablando: lo que `speechSynthesis` dice cuando hay una frase en curso.
-      await duena.evaluate(() => {
+      await cocina.evaluate(() => {
         Object.defineProperty(window.speechSynthesis, 'speaking', {
           configurable: true,
           get: () => true,
         });
       });
-      await olvidarLoQueSono(duena);
+      await olvidarLoQueSono(cocina);
 
       await comandaNueva(duena);
 
       // El aviso visual llega primero; el timbre (con 280 ms de pausa) ya tuvo su turno y se calló.
-      await expect(duena.getByText('Nuevo pedido recibido').first()).toBeVisible({
+      await expect(cocina.getByText('Nuevo pedido recibido').first()).toBeVisible({
         timeout: 30_000,
       });
-      await duena.waitForTimeout(1_000);
-      await expect(duena.locator('html')).not.toHaveAttribute('data-ultimo-sonido', /.+/);
+      await cocina.waitForTimeout(1_000);
+      await expect(cocina.locator('html')).not.toHaveAttribute('data-ultimo-sonido', /.+/);
     } finally {
       await cancelarLaCuentaDeLaMesa(duena);
     }

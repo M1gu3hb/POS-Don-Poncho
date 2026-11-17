@@ -79,6 +79,29 @@ el mapa quedó viejo:
    un cálculo independiente del dinero (`fast-check` para las propiedades) y el inventario al gramo.
 3. A media operación: los 11 casos del encargo, cada uno con su regla escrita y su prueba.
 
+**Los parámetros de la tabla de pares** (uno por ajuste que cambia el flujo): portal activo; pedidos
+de los comensales; quién manda a cocina (mesero o directo); los comensales abren mesa; modo de la
+cuenta; quién elige la propina; estaciones activas; asignación de mesas; el modo del menú del
+portal (productos o páginas); IVA (sin IVA, 8 % y 16 %, incluido y sumado); descuentos permitidos;
+copias de impresión; los campos del ticket; el cupo de cajas (1 y 2); PIN al despertar y minutos
+del candado; la comisión de la terminal; mostrar costos al cajero. **Ternas para el dinero:** IVA ×
+propina × descuento × división × forma de pago. **El flujo de cada combinación:** abrir mesa →
+pedir → cocina → listo → cuenta → propina → cobrar → corte. **Invariantes:** el dinero al centavo
+contra el oráculo, el inventario al gramo, 0 errores 5xx, el papel dice lo mismo que la pantalla.
+
+**Los 11 cambios a media operación** (para cada uno: la regla y su prueba): (1) apagar el portal
+con carritos abiertos; (2) reasignar categorías a otra estación con comandas abiertas; (3) crear
+una categoría y una estación nuevas en pleno servicio; (4) cambiar el IVA con cuentas abiertas: qué
+tasa toma la cuenta al cobrar, y que el papel la respete; (5) cambiar quién elige la propina con
+cuentas pidiendo la cuenta; (6) cambiar el cupo o el nombre de las cajas con cajas abiertas; (7)
+cambiar un precio con la cuenta abierta; (8) marcar un platillo como no disponible; (9) mover mesas
+en el editor con cuentas abiertas; (10) desactivar a un mesero con mesas abiertas; (11) cambiar el
+PIN de alguien que tiene la sesión abierta.
+
+**Regla para cada ajuste solo:** si no tiene efecto, se conecta; si su efecto es el equivocado, se
+arregla; si no tiene propósito en un restaurante, se esconde para el restaurante y se anota (nada
+se borra).
+
 ### Fase E · Catálogo, inventario y recetas de cero (Parte 5)
 
 Sobre una copia con el catálogo real, por pantallas y con toque: catálogo → inventario → compras →
@@ -90,6 +113,27 @@ recetas → vender por los cuatro canales → alertas → conteo y merma → val
 Barrido completo (pantalla × puesto × aparato × estado) con las revisiones automáticas; las capturas
 se miran. Empieza por lo de servicio. La lista de la Parte 7 se revisa contra el código y la app;
 lo chico o mediano se construye (decisión, prueba, mutante, ayuda); lo grande va a la lista.
+
+**El orden del barrido:** el mapa del mesero y el panel de la mesa; el pedido; la cocina; el cobro
+en la Caja; Caja → Movimientos; el corte; el portal en el teléfono; la Configuración. **Lo que una
+medida no ve** (se mira en la captura): jerarquía confusa, botones que no parecen botones, textos
+que dicen otra cosa, colores fuera del estilo, y una pantalla que en 1280×720 (Windows al 150 %)
+obliga a desplazar para lo principal.
+
+**La lista mínima de la Parte 7** («¿aquí debería poder…?»): (1) marcar un platillo agotado al
+vuelo, y que el mesero y el portal lo vean; (2) reimprimir o volver a mandar una comanda; (3) pasar
+un platillo de una cuenta a otra; (4) transferir una mesa a otro mesero; (5) cancelar con motivo y
+con quién autorizó; (6) descuento o cortesía con PIN de gerencia; (7) las propinas por mesero en el
+corte o en un reporte; (8) un corte parcial (X) contra el corte final; (9) el arqueo por
+denominación; (10) ventas por platillo, por hora y por mesero, y lo más vendido; (11) buscar un
+producto en el pedido; (12) el tiempo de cada mesa abierta y un aviso de mesa sin atender; (13) el
+aviso de insumo bajo; (14) el teléfono y el nombre en los pedidos para llevar; (15) la nota por
+comensal; (16) exportar el día; y lo que se encuentre. Se construye lo claramente útil, que quepa
+en el patrón del repo y sea de medio día o menos; cada función con su DP-D, prueba antes del
+código y mutante, texto de ayuda y el ataque de la Parte 8; nunca se cambia una regla de dinero en
+silencio; lo grande va a la lista de Miguel con su tamaño; la cuenta se lleva en `NUEVO.md`.
+
+**El texto completo del encargo** quedó guardado fuera del repo en `D:\mpos-tmp\dp22\encargo.md`.
 
 ### Fase G · Pendientes conocidos (Parte 9), en paralelo desde el principio
 
