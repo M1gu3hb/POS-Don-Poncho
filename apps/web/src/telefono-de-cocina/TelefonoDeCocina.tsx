@@ -9,7 +9,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DialogoDelSonido } from '~/configuracion/DialogoDelSonido';
 import { speak, speakSample } from '@/lib/voiceAlert';
 import { almacenDelAparato } from '~/restaurante/vista-de-solicitudes';
-import { leerAnuncioDelAparato } from '~/voz/anuncio-del-aparato';
+import {
+  anunciaEsteAparato,
+  leerEleccionDelAparato,
+  TELEFONO_DE_COCINA,
+} from '~/voz/anuncio-del-aparato';
 
 import { CarruselDeComandas } from './CarruselDeComandas';
 import {
@@ -112,8 +116,13 @@ export function TelefonoDeCocina({ token }: { readonly token: string }) {
     setAviso(frases);
     if (typeof navigator.vibrate === 'function') navigator.vibrate([250, 120, 250]);
     // DP-21: «Esta pantalla anuncia las comandas» apagado, este teléfono no habla (la vibración y
-    // el aviso en pantalla siguen). «Repetir voz» es un toque a propósito: siempre suena.
-    if (leerAnuncioDelAparato(almacenDelAparato())) speak(frases, { cocina: true });
+    // el aviso en pantalla siguen). Sin haber elegido, el teléfono de cocina anuncia (DP-22).
+    // «Repetir voz» es un toque a propósito: siempre suena.
+    const anuncia = anunciaEsteAparato({
+      puesto: TELEFONO_DE_COCINA,
+      elegido: leerEleccionDelAparato(almacenDelAparato()),
+    });
+    if (anuncia) speak(frases, { cocina: true });
   }, [pantalla.data, comandas, sonidoActivo]);
 
   const hacer = useCallback(

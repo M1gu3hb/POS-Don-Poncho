@@ -100,7 +100,7 @@ describe('marcaVisibleDePlataforma', () => {
   });
 
   it('Morphiq no firma documentos: su marca y su nombre de código se leen POS Don Poncho', () => {
-    // Morphiq firma una sola vez, en el acceso («Sistema por Morphiq», `./contenido.ts`).
+    // Morphiq firma una sola vez, en el acceso («Hecho por MORPHIQ», `./contenido.ts`).
     for (const morphiq of ['Morphiq', 'MorphiqPOS', 'Morphiq POS']) {
       expect(marcaVisibleDePlataforma(morphiq), morphiq).toBe('POS Don Poncho');
     }

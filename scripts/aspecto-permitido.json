@@ -2485,6 +2485,69 @@
       "archivo": "apps/web/heredado/pages/Mesero.jsx",
       "porque": "DP-21 (arreglo del Bloque 9): en el teléfono y la tableta el botón «Menú» flota arriba a la izquierda, por encima del panel de la mesa, y desde que dice «Menú» con letra tapaba el número de la mesa. El título del panel se recorre donde existe ese botón (`max-lg:`); en la PC no cambia nada.",
       "testigos": ["+ clase:max-lg:pl-28"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Inventario.jsx",
+      "porque": "DP-22 (A24, DP-D146): la tarjeta «Valor de inventario» dice cuántos ingredientes están en negativo (valen cero y no restan del valor), con el mismo renglón de aviso que ya usaba para los ingredientes sin costo.",
+      "testigos": [
+        "+ clase:mt-0.5",
+        "+ clase:text-[11px]",
+        "+ clase:leading-snug",
+        "+ clase:text-advertencia"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/propinas/PropinasRegistros.jsx",
+      "porque": "A23 · Registros › Propinas lee el rango del servidor (`propinas.del_rango`): el renglón de cada venta toma sus campos (`liquidada`, `meseroNombre`…) del servidor, la lista dice cuando viene topada («Se muestran las 300 propinas más recientes de N») y, si el servidor no contesta, lo dice con un «Reintentar» en lugar de enseñar ceros. Las tarjetas, los filtros y el diseño son los mismos.",
+      "testigos": [
+        "- clase:${v.propina_liquidada",
+        "+ clase:p-4",
+        "+ clase:bg-superficie/80",
+        "+ clase:flex",
+        "+ clase:items-center",
+        "+ clase:flex-wrap",
+        "+ clase:text-sm",
+        "+ clase:text-sm",
+        "+ clase:text-xs",
+        "+ clase:gap-3",
+        "+ clase:text-muted-foreground",
+        "+ clase:text-center",
+        "+ clase:text-peligro",
+        "+ clase:px-4",
+        "+ clase:border-b",
+        "+ clase:py-8",
+        "+ clase:text-advertencia",
+        "+ clase:py-2",
+        "+ clase:${v.liquidada",
+        "+ texto:Reintentar",
+        "+ texto:Cargando propinas…",
+        "+ texto:) : ventasFiltradas.length === 0 ? ("
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/registros/ResumenPeriodo.jsx",
+      "porque": "H3 · El resumen de Registros lo suma el servidor (`registros.resumen`): si no pudo calcularlo se dice «No se pudo calcular el resumen del periodo» con un «Reintentar», en lugar de enseñar ceros. Las tarjetas y el neto son los mismos.",
+      "testigos": [
+        "+ clase:flex",
+        "+ clase:items-center",
+        "+ clase:mb-3",
+        "+ clase:flex-wrap",
+        "+ clase:gap-3",
+        "+ clase:p-3",
+        "+ clase:rounded-lg",
+        "+ clase:border",
+        "+ clase:border-peligro/30",
+        "+ clase:bg-peligro/10",
+        "+ clase:text-sm",
+        "+ clase:text-peligro",
+        "+ texto:No se pudo calcular el resumen del periodo.",
+        "+ texto:Reintentar"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-22 (lote 3): cerrar la caja ya no encola «la cola de sincronización» ni le enseña al cajero el aviso técnico «La caja se cerró; la cola de sincronización no se encoló.». Esa cola era de la integración de demostración (Google Sheets) que ya se quitó: nadie la consume y sus filas sólo crecían. El comando y su ruta se quedan en el servidor, sin pantalla.",
+      "testigos": ["- aviso:La caja se cerró; la cola de sincronización no se encoló."]
     }
   ]
 }

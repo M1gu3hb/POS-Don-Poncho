@@ -79,3 +79,6 @@ supabase/.temp/
 
 # Los worktrees aislados de los agentes de desarrollo: nunca son parte de la entrega.
 .claude/worktrees/
+
+# --- Skills de terceros para las sesiones de QA (DP-22): se instalan en cada máquina, no se versionan ---
+.claude/skills/

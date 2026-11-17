@@ -169,6 +169,30 @@ describe('DP-18 · A21 · el aviso del tope', () => {
     expect(texto).toContain('ventas más recientes');
     expect(texto).toContain('periodo más corto');
   });
+
+  it('H3 · con el total del servidor dice «N más recientes de M»', () => {
+    const texto = avisoDelTopeDeRegistros('compras', 1000, true, { total: 1500 }) ?? '';
+    expect(texto).toContain('Se muestran las 1,000 compras más recientes de 1,500 del periodo');
+  });
+
+  it('H3 · si el resumen cuenta esas filas, lo dice: el resumen sí cuenta todas', () => {
+    const texto = avisoDelTopeDeRegistros('gastos', 1000, true, { resumenCuenta: true }) ?? '';
+    expect(texto).toContain('El resumen de arriba sí cuenta todas.');
+  });
+
+  it('H3 · si el resumen NO cuenta esas filas (cortes, movimientos), no lo promete', () => {
+    const texto = avisoDelTopeDeRegistros('movimientos', 1000, true) ?? '';
+    expect(texto).not.toContain('resumen');
+    expect(
+      avisoDelTopeDeRegistros('cortes', 200, true, { resumenCuenta: false }) ?? '',
+    ).not.toContain('resumen');
+  });
+
+  it('H3 · el aviso sigue sin aparecer cuando nada quedó fuera, aunque se pase el total', () => {
+    expect(
+      avisoDelTopeDeRegistros('ventas', 120, false, { total: 120, resumenCuenta: true }),
+    ).toBeNull();
+  });
 });
 
 describe('DP-18 · rango del periodo y unión por id', () => {

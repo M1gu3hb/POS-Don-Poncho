@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { ErrorApi, invocarComando } from '~/cliente/api';
 
 import { importeDeLinea, pendienteDe, type LineaParaDevolver } from './devolucion.ts';
+import { LO_PREPARADO_NO_REGRESA } from './lo-preparado.ts';
 import { folioVisible, type ConFolios } from '@morphiqpos/domain/venta';
 import { useConfig } from '@/lib/ConfigContext';
 
@@ -301,6 +302,7 @@ export function DevolucionDeVenta({ alDevolver }: { readonly alDevolver: () => v
             />
             <Label htmlFor="devolucion-regresa">La mercancía regresa al anaquel</Label>
           </div>
+          <p className="text-xs text-texto-sutil">{LO_PREPARADO_NO_REGRESA}</p>
 
           <p className="flex items-baseline justify-between gap-(--espacio-2)" aria-live="polite">
             <span className="text-sm text-texto-sutil">Se devuelven</span>

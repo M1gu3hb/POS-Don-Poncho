@@ -330,6 +330,11 @@ const COMPARADOR: ConstructorComparacion = Object.assign(
   },
 );
 
+function estaEnLaLista(valor: unknown, lista: unknown): boolean {
+  const valores: readonly unknown[] = Array.isArray(lista) ? lista : [];
+  return valores.some((uno) => igual(valor, uno));
+}
+
 function cumpleComparacion(fila: Fila, comparacion: Comparacion): boolean {
   if (comparacion.tipo === 'grupo') {
     return comparacion.union === 'or'
@@ -358,6 +363,12 @@ function cumpleComparacion(fila: Fila, comparacion: Comparacion): boolean {
     case '<>':
     case '!=':
       return !igual(izquierda, derecha);
+    // `in` dentro de un `or`: lo pide el candado de cocina (`id in (…) or orden_id in (…)`).
+    // Igual que el filtro simple de arriba: una lista vacía o algo que no es lista no casa con nada.
+    case 'in':
+      return estaEnLaLista(izquierda, derecha);
+    case 'not in':
+      return !estaEnLaLista(izquierda, derecha);
     case '>':
     case '>=':
     case '<':

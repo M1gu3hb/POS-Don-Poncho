@@ -5,11 +5,12 @@ import { describe, expect, it } from 'vitest';
 
 import { CREDITO_DE_LA_PLATAFORMA, ESTILO_DEL_CREDITO } from './contenido';
 import { LOGO_POR_OMISION, RUTA_DEL_LOGO, RUTA_DEL_LOGO_IMPRIMIBLE } from './logo';
+import { MARCA_DE_PLATAFORMA } from './nombre-visible';
 
 /**
  * LA MARCA DE POS DON PONCHO (DP-3).
  *
- * El logo de la casa en todas partes, y Morphiq UNA vez: «Sistema por Morphiq», discreto, en
+ * El logo de la casa en todas partes, y Morphiq UNA vez: «Hecho por MORPHIQ», discreto, en
  * la pantalla de acceso. Nada de Morphiq en el ticket del comensal, el corte ni el portal QR.
  *
  * Se prueba contra los archivos reales: el componente del crédito no se transforma aquí (las
@@ -59,8 +60,30 @@ describe('el logo de la casa', () => {
 });
 
 describe('el crédito de la plataforma', () => {
-  it('dice «Sistema por Morphiq» y nada más', () => {
-    expect(CREDITO_DE_LA_PLATAFORMA).toBe('Sistema por Morphiq');
+  it('dice «Hecho por MORPHIQ» y nada más (MORPHIQ en mayúsculas)', () => {
+    expect(CREDITO_DE_LA_PLATAFORMA).toBe('Hecho por MORPHIQ');
+  });
+
+  it('la marca de la plataforma no cambia: de ella dependen los nombres visibles', () => {
+    expect(MARCA_DE_PLATAFORMA).toBe('Morphiq');
+  });
+
+  it('la frase vieja «Sistema por» ya no está en ningún archivo de la aplicación', () => {
+    expect(TODAS.filter((ruta) => leer(ruta).includes('Sistema por')).map(relativa)).toEqual([]);
+  });
+
+  it('sólo el crédito usa el texto: nadie más importa la frase ni la marca de la plataforma', () => {
+    // `IdentidadNegocio` guarda `platform_brand: MARCA_DE_PLATAFORMA`: por eso su valor no cambia.
+    const permitidos = [
+      'heredado/components/configuracion/IdentidadNegocio.jsx',
+      'src/marca/CreditoDeMorphiq.tsx',
+      'src/marca/contenido.ts',
+      'src/marca/nombre-visible.ts',
+    ];
+    const quienes = TODAS.filter((ruta) =>
+      /CREDITO_DE_LA_PLATAFORMA|MARCA_DE_PLATAFORMA|Hecho por MORPHIQ/.test(leer(ruta)),
+    ).map(relativa);
+    expect(quienes.filter((ruta) => !permitidos.includes(ruta))).toEqual([]);
   });
 
   it('se pinta con tokens del sistema, sin color ni tamaño literal', () => {
@@ -77,6 +100,19 @@ describe('el crédito de la plataforma', () => {
 
   it('ninguna pantalla importa ya la firma vieja de Morphiq', () => {
     expect(TODAS.filter((ruta) => /\bMarcaMorphiq\b/.test(leer(ruta))).map(relativa)).toEqual([]);
+  });
+});
+
+describe('el ticket, el corte, el portal y los PDF no firman por Morphiq', () => {
+  it('ningún archivo de ticket, corte, portal o PDF lleva el crédito ni la marca', () => {
+    const quienes = TODAS.filter(
+      (ruta) =>
+        /ticket|corte|portal|pdf/i.test(relativa(ruta)) &&
+        /CREDITO_DE_LA_PLATAFORMA|CreditoDeMorphiq|MARCA_DE_PLATAFORMA|Hecho por MORPHIQ/.test(
+          leer(ruta),
+        ),
+    ).map(relativa);
+    expect(quienes).toEqual([]);
   });
 });
 

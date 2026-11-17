@@ -616,8 +616,8 @@ describe('la lista blanca del portal QR cierra la fuga D-14', () => {
     }
   });
 
-  it('deja salir lo justo para que el menú se vea del negocio', () => {
-    for (const necesario of ['nombre_negocio', 'logo_url', 'color_primario', 'simbolo_moneda']) {
+  it('deja salir lo que el portal lee: el nombre y los dos logos', () => {
+    for (const necesario of ['nombre_negocio', 'logo_url', 'background_logo_url']) {
       expect(PUBLICOS as readonly string[], necesario).toContain(necesario);
     }
   });

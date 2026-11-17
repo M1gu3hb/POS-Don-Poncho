@@ -62,7 +62,7 @@ Cuando cuentas lo que hay en el estante o tiras algo, lo anotas en Inventario co
 2. Para un conteo físico, elige «Definir stock final (conteo físico)» y escribe lo que contaste: el sistema calcula la diferencia.
 3. Para algo que se tiró o se echó a perder, elige «Merma / producto perdido».
 4. Siempre se pide el motivo. Queda anotado quién lo hizo y cuándo.
-5. Un ajuste manual nunca deja la existencia en negativo.
+5. Un conteo o una corrección nunca deja la existencia en negativo. Una merma sí puede bajarla más cuando ya estaba en negativo: se registra, y el conteo físico la corrige.
 
 ## 7. Qué significa una existencia en negativo
 
@@ -82,7 +82,7 @@ Es lo que vale lo que tienes: por cada ingrediente, su existencia por su costo, 
 1. Por cada ingrediente se multiplica lo que hay por lo que cuesta cada gramo, mililitro o pieza.
 2. El costo sale de tus compras (el promedio de lo que has pagado).
 3. Un ingrediente que tiene existencia pero no tiene costo no entra a la suma: la tarjeta avisa cuántos faltan.
-4. Una existencia en negativo resta del valor; corrígela con un conteo.
+4. Una existencia en negativo no resta del valor (vale cero, igual que en la valuación): la tarjeta avisa cuántos son; corrígelos con un conteo.
 
 ---
 

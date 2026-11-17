@@ -263,10 +263,11 @@ describe('§7.5 · el estado de liquidación de la propina', () => {
       // El contraste que hace honesta a la prueba anterior: si mañana alguien
       // mete la pestaña de propinas en Caja —que el cajero SÍ abre—, la premisa
       // cambia y esto se pone en rojo antes de que el panel mienta.
+      // A23 · La pestaña de Registros ya no lee el campo del puente: `propinas.del_rango` (sólo
+      // dueño, administrador y gerente) trae `liquidada` derivado en el servidor.
       expect(heredadosQueContienen('propina_liquidada')).toEqual([
         'components/propinas/LiquidarPropinasDialog.jsx',
         'components/propinas/PropinasDashboardSection.jsx',
-        'components/propinas/PropinasRegistros.jsx',
       ]);
       expect(heredadosQueContienen('propinas/PropinasDashboardSection')).toEqual([
         'pages/Dashboard.jsx',

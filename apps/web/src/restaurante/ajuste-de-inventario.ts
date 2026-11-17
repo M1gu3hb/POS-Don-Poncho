@@ -128,3 +128,18 @@ export function ordenDelAjuste(ajuste: AjusteParaGuardar): OrdenDeEscritura {
     },
   };
 }
+
+/**
+ * Lo que se le dice a quien baja un ingrediente cuya existencia YA está en negativo (A24). La merma
+ * se registra igual —lo que el cocinero tiró, tirado está— y la existencia baja más; el conteo
+ * físico la corrige. Sin esta línea la persona no sabe por qué la cifra sigue siendo negativa.
+ * Con existencia, en cero o sin leer, no se dice nada.
+ */
+export function avisoDeExistenciaEnNegativo(
+  existencia: number | null,
+  unidad: string | null,
+): string | null {
+  if (existencia === null || existencia >= 0) return null;
+  const cantidad = `−${String(Math.abs(Number(existencia.toFixed(4))))}${unidad === null ? '' : ` ${unidad}`}`;
+  return `Este ingrediente está en negativo (${cantidad}): ya se usó más de lo que se había anotado. La merma se registra igual; haz un conteo físico para corregir la existencia.`;
+}

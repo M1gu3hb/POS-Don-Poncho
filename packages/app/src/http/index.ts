@@ -12,6 +12,7 @@ export { cookieDeCierre, cookieDeSesion, cookiesSeguras, type OpcionesCookie } f
 
 export {
   devolver,
+  esElPrimerRechazo,
   LIMITES,
   origenDe,
   permitir,

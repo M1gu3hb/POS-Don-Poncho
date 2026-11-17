@@ -318,7 +318,6 @@ export default function Caja() {
 
   // corteAbierto = alias del cierre_diario abierto (single source of truth)
   const corteAbierto = cajaAbierta;
-  const today = new Date().toISOString().slice(0, 10);
 
   // El resumen operativo se basa en la caja abierta actual.
   // Incluye ventas con corte_caja_id == cajaAbierta.id O ventas pagadas DESPUÉS
@@ -1246,15 +1245,6 @@ export default function Caja() {
         utilidad_neta_estimada: form.utilidad_neta_estimada,
         notas: form.notas,
       };
-
-      // Cola de sincronización (no bloqueante)
-      try {
-        await api.comandos.ejecutar('/api/caja/encolar-sincronizacion', { corteId });
-      } catch (err) {
-        // La caja YA está cerrada: esto es una cola externa, y no encolar un
-        // envío a Sheets no invalida el corte. Pero se dice, en vez de tragarlo.
-        toast.warning(err?.message || 'La caja se cerró; la cola de sincronización no se encoló.');
-      }
 
       invalidarCajaQueries();
       queryClient.invalidateQueries({ queryKey: ['ventas_pagadas_caja'] });

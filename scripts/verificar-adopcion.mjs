@@ -442,6 +442,18 @@ export const SIN_ESTADO = [
       'Lee el almacén del navegador, que responde al instante; sin almacén pinta lo de omisión. No hay viaje al servidor.',
   },
   {
+    pantalla: 'cocina/PreguntaDelAnuncio',
+    estado: 'vacio',
+    razon:
+      'Es una pregunta de una sola vez (DP-22), no una lista: si no hay nada que preguntar, no se pinta.',
+  },
+  {
+    pantalla: 'cocina/PreguntaDelAnuncio',
+    estado: 'cargando',
+    razon:
+      'Lee el almacén del navegador, que responde al instante; sin almacén no hay elección y se pregunta igual. No hay viaje al servidor.',
+  },
+  {
     pantalla: 'configuracion/PruebaDeLaVozDeComandas',
     estado: 'vacio',
     razon:
@@ -1007,7 +1019,7 @@ export const SIN_ESTADO = [
     pantalla: 'marca/CreditoDeMorphiq',
     estado: 'vacio',
     razon:
-      'No es una pantalla: es el crédito «Sistema por Morphiq» bajo el teclado del acceso (DP-3). No lista nada que pueda llegar vacío.',
+      'No es una pantalla: es el crédito «Hecho por MORPHIQ» bajo el teclado del acceso (DP-3). No lista nada que pueda llegar vacío.',
   },
   {
     pantalla: 'marca/CreditoDeMorphiq',

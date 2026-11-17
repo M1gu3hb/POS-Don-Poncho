@@ -47,6 +47,7 @@ export {
 // DP-20 · La contraseña del proveedor: sólo su hash en el despliegue, y un permiso firmado de 30 minutos.
 export {
   comprobarClaveDelProveedor,
+  dejarRastroDelBloqueo,
   dejarRastroDelProveedor,
   firmarPermisoDelProveedor,
   VARIABLE_DEL_HASH_DEL_PROVEEDOR,

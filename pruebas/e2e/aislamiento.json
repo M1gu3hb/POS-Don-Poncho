@@ -304,7 +304,7 @@
       "ruta": "/api/compras/plantilla",
       "comando": "compras.guardar_plantilla",
       "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
+      "roles": ["administrador", "almacen", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
       "idRequerido": true,
       "cuerpo": {
@@ -329,7 +329,7 @@
       "ruta": "/api/compras/plantilla/usar",
       "comando": "compras.usar_plantilla",
       "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
+      "roles": ["administrador", "almacen", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
       "idRequerido": true,
       "cuerpo": { "proveedorId": "⟨proveedores⟩", "plantillaId": "⟨plantillas_compra⟩" },
@@ -342,7 +342,7 @@
       "ruta": "/api/compras/registrar",
       "comando": "compras.registrar",
       "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
+      "roles": ["administrador", "almacen", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
       "idRequerido": true,
       "cuerpo": {
@@ -579,6 +579,20 @@
       "idRequerido": true,
       "cuerpo": { "materialId": "⟨materiales_mostrador⟩", "precioCentavos": 1 },
       "ids": [{ "camino": "materialId", "tabla": "materiales_mostrador" }]
+    },
+    {
+      "ruta": "/api/propinas/del-rango",
+      "comando": "propinas.del_rango",
+      "escribe": false,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": false,
+      "cuerpo": {
+        "desde": "prueba de aislamiento",
+        "hasta": "prueba de aislamiento",
+        "meseroId": "⟨empleos⟩"
+      },
+      "ids": [{ "camino": "meseroId", "tabla": "empleos" }]
     },
     {
       "ruta": "/api/propinas/entregar",

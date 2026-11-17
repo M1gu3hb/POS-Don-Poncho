@@ -24,8 +24,8 @@
  */
 
 /**
- * La marca de la PLATAFORMA. En POS Don Poncho firma una sola vez: el crédito «Sistema por
- * Morphiq» de la pantalla de acceso (`./contenido.ts`). Ningún documento la imprime.
+ * La marca de la PLATAFORMA. En POS Don Poncho firma una sola vez: el crédito «Hecho por
+ * MORPHIQ» de la pantalla de acceso (`./contenido.ts`). Ningún documento la imprime.
  */
 export const MARCA_DE_PLATAFORMA = 'Morphiq';
 

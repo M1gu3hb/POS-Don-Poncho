@@ -10,6 +10,7 @@ import {
 import { Download, FileSpreadsheet, FileText, ChevronDown } from 'lucide-react';
 import { exportToCSV, exportToXLSX } from '@/lib/exportUtils';
 import { toast } from 'sonner';
+import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
 
 /**
  * Botón reutilizable que exporta una sección a CSV o XLSX.
@@ -33,7 +34,7 @@ export default function ExportarSeccionButton({
     }
     setBusy(true);
     try {
-      const stamp = new Date().toISOString().slice(0, 10);
+      const stamp = hoyDelNegocio();
       const fname = `${filename}-${stamp}`;
       if (fmt === 'xlsx') exportToXLSX(rows, columns, fname);
       else exportToCSV(rows, columns, fname);

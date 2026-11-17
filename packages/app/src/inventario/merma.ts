@@ -183,8 +183,15 @@ async function cargarMotivo(
   };
 }
 
-/** Descuenta con guarda atómica. `delta` viene NEGATIVO del dominio. */
-/** Baja la existencia sin dejarla negativa: lo que no hay no se merma ni se devuelve. */
+/**
+ * Descuenta con guarda atómica. `delta` viene NEGATIVO del dominio.
+ *
+ * La guarda impide mermar MÁS DE LO QUE HAY (una cantidad mal tecleada), no registrar una pérdida
+ * real: si la existencia ya está en negativo —DP-D116 lo permite al cobrar lo que pasó por cocina,
+ * y DP-D57 al cancelarlo— la merma se registra igual y baja más la existencia. Lo que el sistema
+ * dice que hay ya estaba mal; el conteo físico la corrige. Rechazarla dejaba al cocinero con un
+ * «no puedes mermar más de lo que hay» sobre un insumo que el sistema ni siquiera tenía.
+ */
 export async function descontarExistencia(
   ctx: ContextoComando<Transaccion>,
   almacenId: string,
@@ -198,7 +205,7 @@ export async function descontarExistencia(
        where organizacion_id = ${ctx.ambito.organizacionId}
          and almacen_id = ${almacenId}
          and insumo_id = ${insumoId}
-         and cantidad + ${delta} >= 0
+         and (cantidad + ${delta} >= 0 or cantidad < 0)
       returning cantidad
     `.execute(ctx.tx),
   );

@@ -110,3 +110,11 @@ const repositorio: RepositorioComandos<Transaccion> = {
 
 /** El envoltorio listo para usar desde una ruta. */
 export const comando = crearComando<Transaccion>({ repositorio, conTransaccion });
+
+/**
+ * El mismo envoltorio, con el reloj de quien llama. Sólo para pruebas contra Postgres que
+ * dependen de la hora (DP-22: lo que pasa a las 18:30, cuando en UTC ya es mañana): con el reloj
+ * de verdad dirían una cosa de día y otra de noche. Ninguna ruta lo usa.
+ */
+export const comandoConReloj = (ahora: () => Date) =>
+  crearComando<Transaccion>({ repositorio, conTransaccion, ahora });

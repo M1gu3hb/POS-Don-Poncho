@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
 import { cotizar } from '../venta/cotizar.ts';
+import { tomarCandadosDeCocina } from './candados-de-cocina.ts';
 import { exigirPermisoParaCancelar } from './cancelar-con-permiso.ts';
 import { cancelarComandasSinPlatillos, moverLaMesaTrasCancelar } from './comandas-al-cobrar.ts';
 import { mermaDelPlatilloAnulado } from './merma-por-cancelacion.ts';
@@ -120,6 +121,18 @@ export const anularLineaComando = definirComando<
         { estado: orden.estado },
       );
     }
+
+    // H2 · El resto de los candados, en el orden de siempre (`candados-de-cocina.ts`): cuenta (ya
+    // tomada) → comandas del platillo → platos → líneas. Lo mismo que toma «Preparar», en la misma
+    // dirección, para que dos toques cruzados se esperen en vez de interbloquearse.
+    await ctx.paso('candados', () =>
+      tomarCandadosDeCocina(ctx.tx, {
+        organizacionId,
+        ordenIds: [orden.id],
+        comandas: { de: 'las-lineas', lineaIds: [entrada.lineaId] },
+        lineaIds: [entrada.lineaId],
+      }),
+    );
 
     // DP-13.2 · El mesero, sólo en sus mesas; con la cuenta pedida o impresa, con PIN.
     const autorizadoPor = await ctx.paso('permiso', () =>

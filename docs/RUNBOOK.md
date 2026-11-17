@@ -295,3 +295,56 @@ antes de una migración que transforme o elimine columnas.
   `node scripts/credencial-db.mjs`, que escribe el `.env` y escupe el SQL con el
   verificador SCRAM — la contraseña no viaja. Falta actualizarla también en
   Vercel, y eso hoy es un paso manual.
+
+---
+
+## 8 · Dejar Don Poncho listo para abrir (DP-22)
+
+Tres guiones, todos por los comandos de la aplicación (cada paso queda en la auditoría, firmado por
+el dueño de plataforma) y por la conexión de **sesión** (5432), nunca por el pooler de transacción.
+Ninguno pide ni teclea un PIN. Los tres ensayan antes de escribir.
+
+### 8.1 · La configuración de arranque
+
+```bash
+node --conditions=react-server scripts/configurar-produccion.mjs --org don-poncho --persona "Miguel · Morphiq" --ensayo
+```
+
+Sin `--ensayo` lo aplica: sin IVA, el prefijo de folio «DP», dos cajas («Caja 1» y «Caja 2»), el
+«Almacén principal», la propina la eligen comensales y Caja, y el ticket con todos sus renglones.
+Lee cómo está cada cosa y sólo manda lo que difiere: una segunda corrida no escribe nada.
+`--primer-folio` pone el primer folio en 1001 (cuentas) y 101 (cortes); el servidor sólo lo acepta
+con los folios en cero, así que va DESPUÉS de dejar en ceros.
+
+### 8.2 · La víspera de abrir: `pnpm dia-cero`
+
+Después de la prueba física en los POS, un solo comando deja el negocio listo para el primer día
+de verdad. Se puede correr las veces que haga falta: la segunda vez no cambia nada.
+
+```bash
+pnpm dia-cero
+```
+
+Así, sin nada más, **ensaya**: dice cuántas cuentas de prueba hay y lo que haría. Para hacerlo:
+
+```bash
+pnpm dia-cero -- --en-serio --ventas <n>
+```
+
+`<n>` es el número de cuentas cobradas que dijo el ensayo (si no hay ninguna, basta `--en-serio`).
+En este orden: comprueba que no haya cajas abiertas ni operación real; borra las cuentas de la
+prueba (con su inventario de vuelta), las cajas y sus cortes; repone la configuración de arranque y
+el primer folio (1001 y 101); deja los aparatos como «Aparato N»; **activa el bloqueo del arranque**
+con la hora del servidor (desde ese momento lo cobrado ya no se borra); y verifica leyendo: 0
+cuentas, 0 cajas, 0 comandas, 0 carritos, las mesas libres y el siguiente folio «DP-01001».
+
+Se niega, **sin borrar nada**, si hay una caja abierta (se cierra en el POS y se vuelve a correr),
+si el número de cuentas no es el de `--ventas`, si hay cuentas anteriores a `--desde` (por omisión
+2026-11-16, el día en que producción quedó en ceros) o si el negocio ya opera (hay cuentas
+posteriores al bloqueo). Toma la conexión de `..\_PRIVADO\fase-b.env` (`POSTGRES_URL_SESION`); con
+`DATABASE_URL` en el entorno va a esa base (así se ensaya sobre una copia).
+
+### 8.3 · Si hay que deshacer el bloqueo
+
+Sólo cuando Miguel lo pide: `node --conditions=react-server scripts/operacion-real.mjs --org
+don-poncho --persona "Miguel · Morphiq" --quitar`. La auditoría guarda la fecha que tenía.

@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/financialUtils';
 import PlantillaGastoDialog from '@/components/compras/PlantillaGastoDialog';
 import { textoDecimal } from '@/components/inventario/comandos';
+import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
 
 const PERIODICIDAD_LABEL = {
   mensual: 'Mensual',
@@ -102,7 +103,7 @@ export default function PlantillasGastoSection() {
     setRegistrando(true);
     try {
       const hoy = new Date();
-      const fechaIso = hoy.toISOString().slice(0, 10);
+      const fechaIso = hoyDelNegocio(hoy);
       const mesActual = fechaIso.slice(0, 7); // YYYY-MM
 
       // Solo verificamos duplicado para periódicos (no para "único").
