@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "playwright-test": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "pnpm",
+        "exec",
+        "playwright",
+        "run-test-mcp-server",
+        "-c",
+        "playwright.qa-final.config.ts"
+      ]
+    }
+  }
+}

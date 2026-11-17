@@ -1,5 +1,5 @@
 {
-  "commit": "e4decc8",
+  "commit": "b1dbb61",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -60,6 +60,11 @@
         "apps/web/src/corte/canales.ts",
         "apps/web/src/corte/cancelaciones-leidas.ts",
         "apps/web/src/corte/cancelaciones.ts",
+        "apps/web/src/corte/carpeta/archivos-de-la-app.ts",
+        "apps/web/src/corte/carpeta/entregar-el-pdf.ts",
+        "apps/web/src/corte/carpeta/guardar-en-la-carpeta.ts",
+        "apps/web/src/corte/carpeta/nombre-del-pdf.ts",
+        "apps/web/src/corte/carpeta/use-carpeta-de-cortes.ts",
         "apps/web/src/corte/del-dia.ts",
         "apps/web/src/corte/hoja.ts",
         "apps/web/src/corte/linea-de-venta.ts",
@@ -99,7 +104,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 9928,
+      "lineas": 10273,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -167,6 +172,11 @@
         "apps/web/src/corte/canales.ts",
         "apps/web/src/corte/cancelaciones-leidas.ts",
         "apps/web/src/corte/cancelaciones.ts",
+        "apps/web/src/corte/carpeta/archivos-de-la-app.ts",
+        "apps/web/src/corte/carpeta/entregar-el-pdf.ts",
+        "apps/web/src/corte/carpeta/guardar-en-la-carpeta.ts",
+        "apps/web/src/corte/carpeta/nombre-del-pdf.ts",
+        "apps/web/src/corte/carpeta/use-carpeta-de-cortes.ts",
         "apps/web/src/corte/del-dia.ts",
         "apps/web/src/corte/hoja.ts",
         "apps/web/src/corte/linea-de-venta.ts",
@@ -329,7 +339,7 @@
           "titulo": null
         }
       ],
-      "lineas": 18877,
+      "lineas": 19241,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -1653,6 +1663,11 @@
         "apps/web/src/corte/canales.ts",
         "apps/web/src/corte/cancelaciones-leidas.ts",
         "apps/web/src/corte/cancelaciones.ts",
+        "apps/web/src/corte/carpeta/archivos-de-la-app.ts",
+        "apps/web/src/corte/carpeta/entregar-el-pdf.ts",
+        "apps/web/src/corte/carpeta/guardar-en-la-carpeta.ts",
+        "apps/web/src/corte/carpeta/nombre-del-pdf.ts",
+        "apps/web/src/corte/carpeta/use-carpeta-de-cortes.ts",
         "apps/web/src/corte/del-dia.ts",
         "apps/web/src/corte/filtrar-cancelaciones.ts",
         "apps/web/src/corte/hoja.ts",
@@ -1713,7 +1728,7 @@
           "titulo": null
         }
       ],
-      "lineas": 11775,
+      "lineas": 12148,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1777,6 +1792,7 @@
         "apps/web/app/(modelos)/restaurante/cierre-diario-y-arqueo/page.tsx",
         "apps/web/heredado/lib/pdfDownload.js",
         "apps/web/src/cliente/caja-de-la-terminal.ts",
+        "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/cliente/dinero-del-puente.ts",
         "apps/web/src/cliente/unidades-del-puente.ts",
         "apps/web/src/corte-heredado/descuentos-del-corte.ts",
@@ -1784,6 +1800,11 @@
         "apps/web/src/corte/HojaDelCorte.tsx",
         "apps/web/src/corte/canales.ts",
         "apps/web/src/corte/cancelaciones.ts",
+        "apps/web/src/corte/carpeta/archivos-de-la-app.ts",
+        "apps/web/src/corte/carpeta/entregar-el-pdf.ts",
+        "apps/web/src/corte/carpeta/guardar-en-la-carpeta.ts",
+        "apps/web/src/corte/carpeta/nombre-del-pdf.ts",
+        "apps/web/src/corte/carpeta/use-carpeta-de-cortes.ts",
         "apps/web/src/corte/del-dia.ts",
         "apps/web/src/corte/descuentos.ts",
         "apps/web/src/corte/devoluciones.ts",
@@ -1808,7 +1829,7 @@
           "titulo": null
         }
       ],
-      "lineas": 4236,
+      "lineas": 4659,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -2296,7 +2317,6 @@
           "apps/web/src/impresion/impresion.test.ts",
           "apps/web/src/restaurante/precuenta-del-mesero.contrato.test.ts",
           "packages/app/src/puente/configuracion-limites.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -2745,7 +2765,7 @@
           "apps/web/heredado/pages/Mesero.jsx:1836",
           "apps/web/heredado/pages/Mesero.jsx:1942",
           "apps/web/heredado/pages/Productos.jsx:275",
-          "apps/web/heredado/pages/Registros.jsx:678",
+          "apps/web/heredado/pages/Registros.jsx:695",
           "apps/web/heredado/pages/Ventas.jsx:63"
         ],
         "pruebasQueLaNombran": [],
@@ -3048,7 +3068,6 @@
           "packages/app/src/restaurante/pruebas/constructor-falso.ts",
           "packages/domain/src/venta/campos-del-papel.test.ts",
           "pruebas/e2e/qr-de-mesas.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts"
         ],
@@ -3428,7 +3447,6 @@
           "packages/domain/src/venta/folio-visible.test.ts",
           "pruebas/e2e/folios-con-prefijo.spec.ts",
           "pruebas/e2e/restaurante-concurrencia.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "qa/simulador/bots/dueno-ventas.test.ts"
         ],
         "efecto": {
@@ -3519,12 +3537,12 @@
           "apps/web/src/registros/describir-accion.ts:237",
           "packages/app/src/negocio-de-prueba/resetear.ts:58",
           "packages/app/src/qa-final/mundo.ts:15",
-          "packages/app/src/qa-final/verificar-cuenta.ts:196",
-          "packages/app/src/qa-final/verificar-cuenta.ts:216",
-          "packages/app/src/qa-final/verificar-cuenta.ts:223",
-          "packages/app/src/qa-final/verificar-cuenta.ts:228",
-          "packages/app/src/qa-final/verificar-cuenta.ts:242",
-          "packages/app/src/qa-final/verificar-cuenta.ts:377",
+          "packages/app/src/qa-final/verificar-cuenta.ts:210",
+          "packages/app/src/qa-final/verificar-cuenta.ts:230",
+          "packages/app/src/qa-final/verificar-cuenta.ts:238",
+          "packages/app/src/qa-final/verificar-cuenta.ts:245",
+          "packages/app/src/qa-final/verificar-cuenta.ts:261",
+          "packages/app/src/qa-final/verificar-cuenta.ts:407",
           "packages/app/src/venta/cotizar.ts:96",
           "packages/app/src/venta/cotizar.ts:107",
           "packages/domain/src/venta/totales.ts:61",
@@ -3621,7 +3639,6 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/archivos/referencias.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -3677,7 +3694,6 @@
           "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -3704,7 +3720,6 @@
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
           "packages/app/src/puente/lo-publico.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -3829,7 +3844,7 @@
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:94",
           "apps/web/src/impresion/pantallas/ejemplos.jsx:44"
         ],
-        "pruebasQueLaNombran": ["pruebas/impresion/.arnes/arnes.js", "pruebas/impresion/arnes.jsx"],
+        "pruebasQueLaNombran": ["pruebas/impresion/arnes.jsx"],
         "efecto": {
           "efecto": "Si el ticket lleva logo. Hoy no tiene interruptor en pantalla.",
           "valores": ["true", "false"],
@@ -3861,8 +3876,8 @@
         "lectores": [
           "apps/web/heredado/components/common/Sidebar.jsx:184",
           "apps/web/heredado/components/common/Sidebar.jsx:194",
-          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:202",
-          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:227",
+          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:208",
+          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:278",
           "apps/web/heredado/components/productos/ProductoDesglose.jsx:61",
           "apps/web/heredado/components/productos/ProductoDesglose.jsx:249",
           "apps/web/heredado/components/registros/PeriodoPDF.jsx:57",
@@ -3892,7 +3907,6 @@
           "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -4043,7 +4057,6 @@
           "apps/web/src/impresion/papel-a-tu-gusto.contrato.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.integracion.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -4091,12 +4104,12 @@
           "apps/web/heredado/components/common/Sidebar.jsx:157",
           "apps/web/heredado/components/common/SolicitudesQRWatcher.jsx:49",
           "apps/web/heredado/components/common/SolicitudesQRWatcher.jsx:55",
-          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:30",
-          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:34",
           "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:35",
-          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:27",
-          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:36",
-          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:37",
+          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:39",
+          "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:40",
+          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:32",
+          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:41",
+          "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:42",
           "apps/web/heredado/components/registros/ResumenPeriodo.jsx:58",
           "apps/web/heredado/components/registros/ResumenPeriodo.jsx:60",
           "apps/web/heredado/lib/packageConfig.js:307",
@@ -4115,9 +4128,9 @@
           "apps/web/heredado/pages/Productos.jsx:58",
           "apps/web/heredado/pages/Productos.jsx:64",
           "apps/web/heredado/pages/Productos.jsx:66",
-          "apps/web/heredado/pages/Registros.jsx:81",
-          "apps/web/heredado/pages/Registros.jsx:82",
-          "apps/web/heredado/pages/Registros.jsx:83",
+          "apps/web/heredado/pages/Registros.jsx:84",
+          "apps/web/heredado/pages/Registros.jsx:85",
+          "apps/web/heredado/pages/Registros.jsx:86",
           "apps/web/src/cliente/IrAlInicioDelRol.tsx:16",
           "apps/web/src/cliente/IrAlInicioDelRol.tsx:33",
           "apps/web/src/cliente/package-config.ts:42",
@@ -5420,7 +5433,6 @@
           "pruebas/e2e/unir-mesas-en-el-mapa.spec.ts",
           "pruebas/e2e/usuarios-y-mesas.spec.ts",
           "pruebas/e2e/vista-de-solicitudes.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts"
         ],
@@ -5449,7 +5461,7 @@
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:135"
         ],
         "lectores": ["apps/web/heredado/components/tickets/PreCuentaTicket.jsx:283"],
-        "pruebasQueLaNombran": ["pruebas/impresion/.arnes/arnes.js"],
+        "pruebasQueLaNombran": [],
         "efecto": {
           "efecto": "El pie del ticket térmico.",
           "valores": ["vacío", "un texto"],
@@ -5849,7 +5861,7 @@
         "conValorPorOmision": false,
         "escritores": [],
         "lectores": ["apps/web/src/voz/anuncio-del-aparato.ts:19"],
-        "pruebasQueLaNombran": [],
+        "pruebasQueLaNombran": ["pruebas/e2e/sonidos.spec.ts"],
         "efecto": {
           "efecto": "«Esta pantalla anuncia las comandas» de este aparato.",
           "pruebas": [],
@@ -7011,7 +7023,7 @@
       "ruta": "/api/caja/eliminar-corte",
       "escribe": true,
       "puestos": ["dueno"],
-      "llamadas": ["apps/web/heredado/pages/Registros.jsx:152"],
+      "llamadas": ["apps/web/heredado/pages/Registros.jsx:162"],
       "pantallas": ["/registros"]
     },
     {
@@ -7099,7 +7111,7 @@
       "escribe": false,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/src/corte/CorteEnPdf.tsx:79",
+        "apps/web/src/corte/CorteEnPdf.tsx:100",
         "apps/web/src/corte-heredado/extras-del-corte.ts:35"
       ],
       "pantallas": ["/", "/caja", "/registros", "/restaurante/cierre-diario-y-arqueo"]
@@ -7537,7 +7549,7 @@
       "ruta": "/api/registros/resumen",
       "escribe": false,
       "puestos": ["administrador", "dueno", "gerente"],
-      "llamadas": ["apps/web/heredado/pages/Registros.jsx:210"],
+      "llamadas": ["apps/web/heredado/pages/Registros.jsx:220"],
       "pantallas": ["/registros"]
     },
     {

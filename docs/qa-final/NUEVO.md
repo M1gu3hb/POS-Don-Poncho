@@ -6,10 +6,11 @@
 
 ## Funciones nuevas
 
-| #   | Qué | Dónde se usa | Decisión | Prueba | Commit |
-| --- | --- | ------------ | -------- | ------ | ------ |
+| #   | Qué                                                                                                                                                           | Dónde se usa                                                                                                                                                                                                                | Decisión | Prueba                                                                                                                                                       | Commit                             |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| 1   | **Los cortes en una carpeta.** Con la app de Windows 1.0.2 el PDF del corte se guarda solo en `Documentos\POS Don Poncho\Cortes\AAAA-MM\` (ya no se descarga) | Al cerrar la caja se guarda solo (sin retrasar el cierre). En Registros → Cortes: «Guardar en la carpeta» por corte y «Abrir carpeta». En un navegador o con la app 1.0.1 todo sigue igual y los botones nuevos no aparecen | DP-D153  | `apps/web/src/corte/carpeta/*.test.ts` (4 suites y el contrato de las pantallas) y, en la app, `electron/pruebas/archivos.test.js` (17); mutantes en los dos | `912c726` (POS) · `ebccf30` (apps) |
 
-**Total: 0.**
+**Total: 1.** (Falta publicar la app 1.0.2 en `canal-don-poncho` y verla llegar a una 1.0.1.)
 
 ## Lo que la revisión de «lo que falta» encontró (Parte 7)
 
