@@ -318,7 +318,6 @@ export default function Caja() {
 
   // corteAbierto = alias del cierre_diario abierto (single source of truth)
   const corteAbierto = cajaAbierta;
-  const today = new Date().toISOString().slice(0, 10);
 
   // El resumen operativo se basa en la caja abierta actual.
   // Incluye ventas con corte_caja_id == cajaAbierta.id O ventas pagadas DESPUÉS

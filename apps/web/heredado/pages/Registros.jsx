@@ -49,6 +49,7 @@ import PropinasRegistros from '@/components/propinas/PropinasRegistros';
 import { tipsEnabled } from '@/utils/tipsUtils';
 import { useLocation } from '@/enrutado';
 import { claves } from '~/cliente/claves-de-consulta';
+import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
 import { CancelacionesRegistradas } from '~/corte/CancelacionesRegistradas';
 import { AuditoriaReciente } from '~/registros/AuditoriaReciente';
 import { usePuesto } from '@/components/configuracion/usePuesto';
@@ -758,7 +759,7 @@ function ExportarDetallesButton({ ventas, disabled = false }) {
         setBusy(false);
         return;
       }
-      const stamp = new Date().toISOString().slice(0, 10);
+      const stamp = hoyDelNegocio();
       exportToCSV(detalles, COLUMNS_DETALLES_VENTA, `productos-vendidos-${stamp}`);
       toast.success(`Exportadas ${detalles.length} líneas de venta`);
     } catch (err) {

@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Link } from '@/enrutado';
 import { puedeAjustarStock } from '~/inventario/ajuste-de-stock';
+import { diaDelNegocioDeUnValor, hoyDelNegocio } from '~/cliente/dia-del-negocio';
 import { Search, Package, Trash2, PackagePlus, ShoppingBag, Sliders, Beaker } from 'lucide-react';
 import {
   AlertDialog,
@@ -144,10 +145,10 @@ export default function Inventario() {
   });
 
   const consumoHoyMap = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = hoyDelNegocio();
     const map = {};
     descuentosHoy.forEach((d) => {
-      const f = (d.fecha || d.created_date || '').slice(0, 10);
+      const f = diaDelNegocioDeUnValor(d.fecha || d.created_date);
       if (f !== today) return;
       map[d.ingrediente_id] = (map[d.ingrediente_id] || 0) + (d.cantidad_total_descontada || 0);
     });

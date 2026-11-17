@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Database, Loader2 } from 'lucide-react';
 import { exportToCSV } from '@/lib/exportUtils';
 import { toast } from 'sonner';
+import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
 
 /**
  * Exportación de datos actuales en CSV compatible con Excel.
@@ -13,7 +14,7 @@ import { toast } from 'sonner';
  * Cada botón es independiente para minimizar el riesgo si alguno falla.
  */
 
-const hoy = () => new Date().toISOString().slice(0, 10);
+const hoy = () => hoyDelNegocio();
 
 const BLOQUES = [
   {

@@ -1,5 +1,6 @@
 'use client';
 import { MARGIN_THRESHOLDS } from '@/lib/constants';
+import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
 
 /**
  * Calculate gross profit
@@ -59,7 +60,7 @@ export function calculateRecipeCost(recipeLines) {
  */
 export function generateFolio(prefix = 'V') {
   const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const dateStr = hoyDelNegocio(now).replace(/-/g, '');
   const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `${prefix}-${dateStr}-${rand}`;

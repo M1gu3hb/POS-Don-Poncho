@@ -7,6 +7,7 @@ import { desdeTexto, sumar, type Centavos } from '@morphiqpos/domain/dinero';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
 import { recalcularCostosRecetas } from '../inventario/recetas.ts';
+import { diaDelNegocio } from '../reportes/dia.ts';
 import { entradaRegistrarCompra, entradaUsarPlantillaCompra } from './esquemas.ts';
 import type { LineaDeCompra } from './esquemas.ts';
 import { exigirUnidadesBaseDelGiro } from './insumos.ts';
@@ -142,6 +143,13 @@ async function escribirCompra(
         )
       : null;
 
+  // Sin fecha, la compra es de HOY: el día del NEGOCIO, no el de la base (`current_date` es UTC
+  // y desde las 18:00 de México ya es mañana; DP-22, hallazgo 1).
+  const fecha =
+    cabecera.fecha ??
+    (await ctx.paso('dia_del_negocio', () => diaDelNegocio(ctx.tx, organizacionId, ctx.ahora)))
+      .fecha;
+
   const compra = await ctx.paso('crear_compra', () =>
     ctx.tx
       .insertInto('compras')
@@ -155,7 +163,7 @@ async function escribirCompra(
         factura_folio: cabecera.facturaFolio ?? null,
         notas: cabecera.notas ?? null,
         empleado_id: empleoId,
-        ...(cabecera.fecha === undefined ? {} : { fecha: cabecera.fecha }),
+        fecha,
       })
       .returning('id')
       .executeTakeFirstOrThrow(),

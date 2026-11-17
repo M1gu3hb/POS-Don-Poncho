@@ -1,0 +1,586 @@
+[
+  {
+    "id": "entrar.pin",
+    "area": "Entrar",
+    "flujo": "Entrar con PIN",
+    "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts", "pruebas/e2e/restaurante.spec.ts"]
+  },
+  {
+    "id": "entrar.candado",
+    "area": "Entrar",
+    "flujo": "Candado por inactividad",
+    "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts", "pruebas/e2e/modo-espera-pin.spec.ts"]
+  },
+  {
+    "id": "entrar.pin-al-abrir",
+    "area": "Entrar",
+    "flujo": "PIN al abrir la app (mando y caja)",
+    "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"]
+  },
+  {
+    "id": "entrar.estacion-recordada",
+    "area": "Entrar",
+    "flujo": "La estación (mesero, cocina) se recuerda",
+    "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"]
+  },
+  {
+    "id": "entrar.cambiar-de-persona",
+    "area": "Entrar",
+    "flujo": "Cambiar de persona en el mismo aparato",
+    "pruebas": []
+  },
+  {
+    "id": "entrar.salir",
+    "area": "Entrar",
+    "flujo": "Salir (también con la barra plegada)",
+    "pruebas": []
+  },
+  {
+    "id": "entrar.sesion-vencida",
+    "area": "Entrar",
+    "flujo": "Sesión vencida a media operación",
+    "pruebas": []
+  },
+
+  {
+    "id": "salon.abrir-mesa",
+    "area": "Salón",
+    "flujo": "Abrir mesa con personas",
+    "pruebas": ["pruebas/e2e/restaurante.spec.ts", "pruebas/e2e/dia-completo-restaurante.spec.ts"]
+  },
+  {
+    "id": "salon.asignar-mesero",
+    "area": "Salón",
+    "flujo": "Asignar o cambiar de mesero",
+    "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"]
+  },
+  {
+    "id": "salon.cambiar-de-mesa",
+    "area": "Salón",
+    "flujo": "Cambiar de mesa",
+    "pruebas": ["pruebas/e2e/cambiar-de-mesa-en-el-mapa.spec.ts"]
+  },
+  {
+    "id": "salon.unir-y-separar",
+    "area": "Salón",
+    "flujo": "Unir y separar mesas",
+    "pruebas": [
+      "pruebas/e2e/unir-mesas-en-el-mapa.spec.ts",
+      "pruebas/e2e/unir-mesas-al-tacto.spec.ts"
+    ]
+  },
+  {
+    "id": "salon.dividir-por-platillo",
+    "area": "Salón",
+    "flujo": "Dividir la cuenta por platillo",
+    "pruebas": ["pruebas/e2e/dividir-en-la-caja.spec.ts"]
+  },
+  {
+    "id": "salon.dividir-en-partes-iguales",
+    "area": "Salón",
+    "flujo": "Dividir la cuenta en partes iguales",
+    "pruebas": []
+  },
+  {
+    "id": "salon.dividir-por-peso",
+    "area": "Salón",
+    "flujo": "Dividir una cuenta con platillos por peso",
+    "pruebas": []
+  },
+  {
+    "id": "salon.editor-del-mapa",
+    "area": "Salón",
+    "flujo": "Mover las mesas de lugar en el editor del mapa",
+    "pruebas": ["pruebas/e2e/tactil-mapa.spec.ts", "pruebas/e2e/mesas-tres-y-veinticinco.spec.ts"]
+  },
+  {
+    "id": "salon.zonas",
+    "area": "Salón",
+    "flujo": "Zonas del salón",
+    "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"]
+  },
+
+  {
+    "id": "pedido.opciones-y-notas",
+    "area": "Pedido",
+    "flujo": "Platillos con opciones, modificadores y notas",
+    "pruebas": [
+      "pruebas/e2e/pos-opciones-obligatorias.spec.ts",
+      "pruebas/e2e/opciones-sin-red.spec.ts"
+    ]
+  },
+  {
+    "id": "pedido.peso-o-porcion",
+    "area": "Pedido",
+    "flujo": "Platillos por peso o por porción",
+    "pruebas": ["pruebas/e2e/barbacoa-por-kilo.spec.ts"]
+  },
+  {
+    "id": "pedido.cantidades",
+    "area": "Pedido",
+    "flujo": "Cantidades (más, menos, muchas)",
+    "pruebas": []
+  },
+  {
+    "id": "pedido.quitar-antes-de-enviar",
+    "area": "Pedido",
+    "flujo": "Quitar un platillo antes de enviar",
+    "pruebas": []
+  },
+  {
+    "id": "pedido.quitar-despues-de-enviar",
+    "area": "Pedido",
+    "flujo": "Quitar un platillo después de enviar",
+    "pruebas": ["pruebas/e2e/quitado-en-la-caja.spec.ts"]
+  },
+  {
+    "id": "pedido.enviar-a-cocina",
+    "area": "Pedido",
+    "flujo": "Enviar a cocina",
+    "pruebas": ["pruebas/e2e/restaurante.spec.ts"]
+  },
+  {
+    "id": "pedido.cancelar-lo-preparado",
+    "area": "Pedido",
+    "flujo": "Cancelar lo ya preparado (no regresa al inventario)",
+    "pruebas": ["pruebas/e2e/cancelar-con-la-cocina-detenida.spec.ts"]
+  },
+  {
+    "id": "pedido.cancelar-lo-no-preparado",
+    "area": "Pedido",
+    "flujo": "Cancelar lo no preparado (regresa el insumo)",
+    "pruebas": ["pruebas/e2e/cancelacion-del-mesero.spec.ts"]
+  },
+  { "id": "pedido.cortesia", "area": "Pedido", "flujo": "Cortesía", "pruebas": [] },
+  {
+    "id": "pedido.descuento-por-renglon",
+    "area": "Pedido",
+    "flujo": "Descuento por renglón",
+    "pruebas": []
+  },
+  {
+    "id": "pedido.descuento-por-cuenta",
+    "area": "Pedido",
+    "flujo": "Descuento por cuenta",
+    "pruebas": [
+      "pruebas/e2e/ticket-con-descuento.spec.ts",
+      "pruebas/e2e/descuento-y-cancelar-dp14-ronda2.spec.ts"
+    ]
+  },
+  {
+    "id": "pedido.para-llevar-desde-la-mesa",
+    "area": "Pedido",
+    "flujo": "Para llevar desde la mesa",
+    "pruebas": []
+  },
+  {
+    "id": "pedido.para-llevar-desde-la-caja",
+    "area": "Pedido",
+    "flujo": "Para llevar desde la Caja, con nombre y número del día",
+    "pruebas": []
+  },
+
+  {
+    "id": "cocina.comandas-por-estacion",
+    "area": "Cocina",
+    "flujo": "Comandas por estación",
+    "pruebas": [
+      "pruebas/e2e/estaciones-de-cocina.spec.ts",
+      "pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"
+    ]
+  },
+  {
+    "id": "cocina.preparar-listo-entregado",
+    "area": "Cocina",
+    "flujo": "Preparar, Listo y Entregado",
+    "pruebas": ["pruebas/e2e/cocina-toques-en-camino.spec.ts"]
+  },
+  {
+    "id": "cocina.alertas",
+    "area": "Cocina",
+    "flujo": "Alertas ámbar y roja de espera",
+    "pruebas": []
+  },
+  { "id": "cocina.voz", "area": "Cocina", "flujo": "La voz anuncia las comandas", "pruebas": [] },
+  {
+    "id": "cocina.telefono",
+    "area": "Cocina",
+    "flujo": "El teléfono de cocina",
+    "pruebas": ["pruebas/e2e/telefono-de-cocina.spec.ts", "pruebas/e2e/sala-dp14c-telefono.spec.ts"]
+  },
+  {
+    "id": "cocina.categorias-a-estaciones",
+    "area": "Cocina",
+    "flujo": "Categorías asignadas a estaciones",
+    "pruebas": ["pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"]
+  },
+  {
+    "id": "cocina.reasignar-con-comandas-abiertas",
+    "area": "Cocina",
+    "flujo": "Reasignar una categoría con comandas abiertas",
+    "pruebas": []
+  },
+
+  {
+    "id": "portal.menu-de-productos",
+    "area": "Portal QR",
+    "flujo": "Menú con los productos del POS",
+    "pruebas": [
+      "pruebas/e2e/restaurante-portal-qr.spec.ts",
+      "pruebas/e2e/restaurante-menu-personalizado.spec.ts"
+    ]
+  },
+  {
+    "id": "portal.menu-de-paginas",
+    "area": "Portal QR",
+    "flujo": "Menú de páginas subidas",
+    "pruebas": ["pruebas/e2e/botones-del-menu-qr.spec.ts"]
+  },
+  {
+    "id": "portal.carrito",
+    "area": "Portal QR",
+    "flujo": "Carrito compartido de la mesa",
+    "pruebas": ["pruebas/e2e/pedido-compartido.spec.ts"]
+  },
+  {
+    "id": "portal.pedido-que-confirma-el-mesero",
+    "area": "Portal QR",
+    "flujo": "Pedido del comensal que confirma el mesero",
+    "pruebas": ["pruebas/e2e/portal-modo-mesero.spec.ts"]
+  },
+  {
+    "id": "portal.llamar-al-mesero",
+    "area": "Portal QR",
+    "flujo": "Llamar al mesero",
+    "pruebas": ["pruebas/e2e/vista-de-solicitudes.spec.ts"]
+  },
+  { "id": "portal.ayuda", "area": "Portal QR", "flujo": "Necesito ayuda", "pruebas": [] },
+  {
+    "id": "portal.pedir-la-cuenta",
+    "area": "Portal QR",
+    "flujo": "Pedir la cuenta",
+    "pruebas": ["pruebas/e2e/restaurante-portal-qr.spec.ts"]
+  },
+  { "id": "portal.precuenta", "area": "Portal QR", "flujo": "Ver la precuenta", "pruebas": [] },
+  {
+    "id": "portal.propina",
+    "area": "Portal QR",
+    "flujo": "Elegir la propina",
+    "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"]
+  },
+  {
+    "id": "portal.calificacion",
+    "area": "Portal QR",
+    "flujo": "Calificar la visita",
+    "pruebas": []
+  },
+  {
+    "id": "portal.sesion-termina-al-cobrar",
+    "area": "Portal QR",
+    "flujo": "La sesión del comensal termina al cobrar",
+    "pruebas": ["pruebas/e2e/carrito-caducado-dp14-ronda2.spec.ts"]
+  },
+  {
+    "id": "portal.topes",
+    "area": "Portal QR",
+    "flujo": "Topes de avisos y de teléfonos",
+    "pruebas": []
+  },
+  { "id": "portal.apagado", "area": "Portal QR", "flujo": "El portal apagado", "pruebas": [] },
+
+  {
+    "id": "caja.abrir",
+    "area": "Caja",
+    "flujo": "Abrir caja (cupo 1 y 2, con nombres)",
+    "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"]
+  },
+  {
+    "id": "caja.traer",
+    "area": "Caja",
+    "flujo": "Traer la caja a este aparato",
+    "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"]
+  },
+  { "id": "caja.fondo", "area": "Caja", "flujo": "Fondo de la caja", "pruebas": [] },
+  {
+    "id": "caja.cobrar-efectivo",
+    "area": "Caja",
+    "flujo": "Cobrar en efectivo con su cambio",
+    "pruebas": ["pruebas/e2e/dia-completo-restaurante.spec.ts"]
+  },
+  { "id": "caja.cobrar-tarjeta", "area": "Caja", "flujo": "Cobrar con tarjeta", "pruebas": [] },
+  {
+    "id": "caja.cobrar-transferencia",
+    "area": "Caja",
+    "flujo": "Cobrar por transferencia",
+    "pruebas": []
+  },
+  { "id": "caja.cobrar-mixto", "area": "Caja", "flujo": "Cobro mixto", "pruebas": [] },
+  {
+    "id": "caja.propina-de-la-caja",
+    "area": "Caja",
+    "flujo": "Propina elegida en la Caja",
+    "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"]
+  },
+  {
+    "id": "caja.propina-del-portal",
+    "area": "Caja",
+    "flujo": "Propina elegida en el portal",
+    "pruebas": ["pruebas/e2e/propina-una-sola-verdad.spec.ts"]
+  },
+  {
+    "id": "caja.propina-del-mesero",
+    "area": "Caja",
+    "flujo": "Propina elegida por el mesero",
+    "pruebas": []
+  },
+  {
+    "id": "caja.descuentos",
+    "area": "Caja",
+    "flujo": "Descuentos en la Caja",
+    "pruebas": ["pruebas/e2e/ticket-con-descuento.spec.ts"]
+  },
+  {
+    "id": "caja.cuenta-dividida",
+    "area": "Caja",
+    "flujo": "Cobrar una cuenta dividida",
+    "pruebas": ["pruebas/e2e/dividir-en-la-caja.spec.ts"]
+  },
+  {
+    "id": "caja.reimpresion-y-copias",
+    "area": "Caja",
+    "flujo": "Reimpresión y copias",
+    "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"]
+  },
+  {
+    "id": "caja.cajon-al-cobrar",
+    "area": "Caja",
+    "flujo": "El cajón se abre al cobrar en efectivo",
+    "pruebas": []
+  },
+  {
+    "id": "caja.cajon-a-mano",
+    "area": "Caja",
+    "flujo": "Abrir el cajón a mano con PIN",
+    "pruebas": []
+  },
+  { "id": "caja.retiros", "area": "Caja", "flujo": "Retiros con PIN de gerente", "pruebas": [] },
+  {
+    "id": "caja.depositos",
+    "area": "Caja",
+    "flujo": "Depósitos (entradas de efectivo)",
+    "pruebas": []
+  },
+  { "id": "caja.gastos", "area": "Caja", "flujo": "Gastos de caja", "pruebas": [] },
+  {
+    "id": "caja.corte-a-ciegas",
+    "area": "Caja",
+    "flujo": "Corte a ciegas con diferencia y PDF",
+    "pruebas": ["pruebas/e2e/tactil-corte.spec.ts", "pruebas/e2e/sala-dp14c-cierre.spec.ts"]
+  },
+  {
+    "id": "caja.cierre-diario",
+    "area": "Caja",
+    "flujo": "Cierre diario",
+    "pruebas": ["pruebas/e2e/sala-dp14c-cierre.spec.ts"]
+  },
+
+  {
+    "id": "compras.con-proveedor",
+    "area": "Compras y gastos",
+    "flujo": "Compra con proveedor que entra al almacén",
+    "pruebas": []
+  },
+  {
+    "id": "compras.pagada-de-la-caja",
+    "area": "Compras y gastos",
+    "flujo": "Compra pagada de la caja",
+    "pruebas": []
+  },
+  {
+    "id": "compras.por-transferencia",
+    "area": "Compras y gastos",
+    "flujo": "Compra pagada por transferencia",
+    "pruebas": []
+  },
+  {
+    "id": "compras.gastos-por-categoria",
+    "area": "Compras y gastos",
+    "flujo": "Gastos por categoría",
+    "pruebas": []
+  },
+  {
+    "id": "compras.el-corte-cuadra",
+    "area": "Compras y gastos",
+    "flujo": "El corte cuadra con compras y gastos",
+    "pruebas": []
+  },
+
+  {
+    "id": "inventario.catalogo",
+    "area": "Inventario y recetas",
+    "flujo": "Catálogo: categorías, productos de cada tipo, precio, imagen, orden",
+    "pruebas": ["pruebas/e2e/recetas-area-y-visibilidad.spec.ts"]
+  },
+  {
+    "id": "inventario.ocultar-y-no-disponible",
+    "area": "Inventario y recetas",
+    "flujo": "Ocultar del portal y marcar no disponible",
+    "pruebas": []
+  },
+  {
+    "id": "inventario.unidades-proveedores-almacen",
+    "area": "Inventario y recetas",
+    "flujo": "Unidades, proveedores y el almacén principal",
+    "pruebas": []
+  },
+  {
+    "id": "inventario.insumos",
+    "area": "Inventario y recetas",
+    "flujo": "Insumos con su unidad y su existencia mínima",
+    "pruebas": []
+  },
+  {
+    "id": "inventario.recetas",
+    "area": "Inventario y recetas",
+    "flujo": "Recetas: crear, asignar a platillos y opciones, costo y margen",
+    "pruebas": []
+  },
+  {
+    "id": "inventario.descuento-al-vender",
+    "area": "Inventario y recetas",
+    "flujo": "Vender descuenta los insumos exactos, en su momento",
+    "pruebas": []
+  },
+  {
+    "id": "inventario.cancelar-y-devolver",
+    "area": "Inventario y recetas",
+    "flujo": "Cancelar lo no preparado regresa el insumo; lo preparado no; la devolución",
+    "pruebas": []
+  },
+  {
+    "id": "inventario.alertas-de-minimo",
+    "area": "Inventario y recetas",
+    "flujo": "Aviso de insumo bajo de su mínimo",
+    "pruebas": []
+  },
+  {
+    "id": "inventario.conteo-y-merma",
+    "area": "Inventario y recetas",
+    "flujo": "Conteo físico y merma, también con existencia negativa",
+    "pruebas": []
+  },
+  {
+    "id": "inventario.valor-y-reportes",
+    "area": "Inventario y recetas",
+    "flujo": "Valor de inventario, movimientos y reportes contra el árbitro",
+    "pruebas": []
+  },
+
+  {
+    "id": "personas.crear",
+    "area": "Personas",
+    "flujo": "Crear usuario, puesto y PIN",
+    "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"]
+  },
+  {
+    "id": "personas.desactivar-con-mesas",
+    "area": "Personas",
+    "flujo": "Desactivar a alguien con mesas abiertas",
+    "pruebas": []
+  },
+  {
+    "id": "personas.permisos",
+    "area": "Personas",
+    "flujo": "Los permisos de cada puesto contra el servidor",
+    "pruebas": ["pruebas/e2e/matriz-de-permisos.spec.ts", "pruebas/e2e/aislamiento.spec.ts"]
+  },
+
+  { "id": "reportes.tablero", "area": "Reportes", "flujo": "Tablero del dueño", "pruebas": [] },
+  {
+    "id": "reportes.registros",
+    "area": "Reportes",
+    "flujo": "Registros (ventas, cortes, compras, movimientos, gastos)",
+    "pruebas": []
+  },
+  { "id": "reportes.ventas", "area": "Reportes", "flujo": "Ventas", "pruebas": [] },
+  {
+    "id": "reportes.propinas-por-mesero",
+    "area": "Reportes",
+    "flujo": "Propinas por mesero",
+    "pruebas": []
+  },
+  {
+    "id": "reportes.exportaciones-y-pdf",
+    "area": "Reportes",
+    "flujo": "Exportaciones y PDF",
+    "pruebas": []
+  },
+
+  {
+    "id": "configuracion.cada-seccion",
+    "area": "Configuración",
+    "flujo": "Cada sección abre y guarda lo suyo",
+    "pruebas": [
+      "pruebas/e2e/configuracion-secciones.spec.ts",
+      "pruebas/e2e/configuracion-que-no-se-regresa.spec.ts"
+    ]
+  },
+
+  {
+    "id": "impresion.precuenta-y-ticket",
+    "area": "Impresión",
+    "flujo": "Precuenta y ticket por el emulador",
+    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"]
+  },
+  {
+    "id": "impresion.copias-y-reimpresion",
+    "area": "Impresión",
+    "flujo": "Copias y «REIMPRESIÓN»",
+    "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"]
+  },
+  { "id": "impresion.corte", "area": "Impresión", "flujo": "El corte en papel", "pruebas": [] },
+  {
+    "id": "impresion.campos-ocultos",
+    "area": "Impresión",
+    "flujo": "Campos del ticket ocultos (el ticket a tu gusto)",
+    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"]
+  },
+
+  {
+    "id": "aparato.nombre",
+    "area": "Este aparato",
+    "flujo": "Nombre del aparato",
+    "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"]
+  },
+  {
+    "id": "aparato.impresora-y-cajon",
+    "area": "Este aparato",
+    "flujo": "Impresora y cajón",
+    "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"]
+  },
+  { "id": "aparato.voz", "area": "Este aparato", "flujo": "Voz de este aparato", "pruebas": [] },
+  {
+    "id": "aparato.anuncia-comandas",
+    "area": "Este aparato",
+    "flujo": "Esta pantalla anuncia las comandas",
+    "pruebas": []
+  },
+  {
+    "id": "aparato.barra",
+    "area": "Este aparato",
+    "flujo": "Barra lateral abierta o plegada",
+    "pruebas": ["pruebas/e2e/tactil-barra.spec.ts"]
+  },
+  {
+    "id": "aparato.modo-espera",
+    "area": "Este aparato",
+    "flujo": "Modo espera",
+    "pruebas": ["pruebas/e2e/modo-espera.spec.ts"]
+  },
+  {
+    "id": "aparato.sonido",
+    "area": "Este aparato",
+    "flujo": "Sonido de este aparato",
+    "pruebas": ["pruebas/e2e/sonidos.spec.ts"]
+  }
+]

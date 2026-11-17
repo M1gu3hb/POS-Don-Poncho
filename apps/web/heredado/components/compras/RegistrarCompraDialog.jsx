@@ -38,6 +38,7 @@ import StockMinCritInput from '@/components/inventario/StockMinCritInput';
 import { textoDecimal } from '@/components/inventario/comandos';
 import { avisoAntesDeGuardar, useCajonParaPagar } from '~/venta/cajon-para-pagar';
 import { PagoDeLaCaja } from '~/venta/PagoDeLaCaja';
+import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
 
 /** Cada línea: ingrediente existente o nuevo; cantidad/unidad/costo. */
 export default function RegistrarCompraDialog({ open, onClose, ingredientes = [] }) {
@@ -49,7 +50,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
   // Unidades disponibles — combinan las del admin (Configuración) + defaults inalterables.
   const UNIDADES = getUnidadesCompra(config);
   const [lines, setLines] = useState([emptyLine()]);
-  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [fecha, setFecha] = useState(hoyDelNegocio());
   const [metodoPago, setMetodoPago] = useState('efectivo');
   // proveedor: 'directa' (sin proveedor), o el ID del Proveedor seleccionado, o '__libre__' (texto manual).
   const [proveedorMode, setProveedorMode] = useState('directa');
@@ -107,7 +108,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
     setProveedor('');
     setNotas('');
     setMetodoPago('efectivo');
-    setFecha(new Date().toISOString().slice(0, 10));
+    setFecha(hoyDelNegocio());
     setGuardarPlantilla(false);
     setNombrePlantilla('');
     claveDelDialogo.current = null;

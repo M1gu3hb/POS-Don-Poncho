@@ -7,6 +7,7 @@ import { sql } from 'kysely';
 
 import { definirComando } from '../definicion.ts';
 import { entradaGuardarPlantillaGasto, entradaRegistrarGasto } from './esquemas.ts';
+import { diaDelNegocio } from '../reportes/dia.ts';
 import { reconocerNotasHeredadas } from './notas.ts';
 import { fechaDelGastoEnEfectivo, sesionAbierta } from './sesion-de-caja.ts';
 
@@ -86,7 +87,19 @@ export const registrarGasto = definirComando<
     // el cliente: si no, el movimiento de caja cuelga de la sesión de hoy y el
     // gasto aparece en el reporte de otro día (§25.2). Un gasto con tarjeta no
     // toca la caja, así que ahí la fecha de la factura sigue siendo del cliente.
-    const fecha = sesion === null ? entrada.fecha : fechaDelGastoEnEfectivo(entrada.fecha, sesion);
+    //
+    // Sin fecha, es de HOY: el día del NEGOCIO (su zona), no el de la base. La columna caía en
+    // `current_date`, que es UTC: desde las 18:00 de México el gasto quedaba fechado mañana
+    // (DP-22, hallazgo 1).
+    const fecha =
+      sesion !== null
+        ? fechaDelGastoEnEfectivo(entrada.fecha, sesion)
+        : (entrada.fecha ??
+          (
+            await ctx.paso('dia_del_negocio', () =>
+              diaDelNegocio(ctx.tx, organizacionId, ctx.ahora),
+            )
+          ).fecha);
 
     const gasto = await ctx.paso('crear_gasto', () =>
       ctx.tx
@@ -103,7 +116,7 @@ export const registrarGasto = definirComando<
           es_recurrente: esRecurrente,
           empleado_id: empleoId,
           notas: heredado.notas,
-          ...(fecha === undefined ? {} : { fecha }),
+          fecha,
         })
         .returning('id')
         .executeTakeFirstOrThrow(),
@@ -144,7 +157,7 @@ export const registrarGasto = definirComando<
         esRecurrente,
         plantillaGastoId: plantillaId,
         sesionCajaId,
-        fecha: fecha ?? null,
+        fecha,
       },
     });
 
