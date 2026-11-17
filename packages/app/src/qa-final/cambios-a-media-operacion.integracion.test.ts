@@ -23,7 +23,7 @@ import { mesaDe, PRECIO_ARRACHERA } from '../restaurante/pruebas/salon-real.ts';
 import { resolverSesion } from '../sesion/resolver.ts';
 import { cobrarOrden } from '../venta/cobrar.ts';
 
-import { abrirYPedir, dividir, type FilaDeDinero } from './flujo-de-dinero.ts';
+import { abrirYPedir, dividir, type FilaDeDinero } from './pruebas/flujo-de-dinero.ts';
 import {
   IVAS,
   SECRETO,
@@ -31,8 +31,8 @@ import {
   fijarQuienEligeLaPropinaEnElMundo,
   sembrarMundo,
   type Mundo,
-} from './mundo.ts';
-import { renglonesDelPedido } from './verificar-cuenta.ts';
+} from './pruebas/mundo.ts';
+import { renglonesDelPedido } from './pruebas/verificar-cuenta.ts';
 
 /**
  * DP-22 · FASE D · LOS CAMBIOS DE CONFIGURACIÓN A MEDIA OPERACIÓN.

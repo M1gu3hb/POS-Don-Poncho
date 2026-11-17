@@ -5,8 +5,8 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { Fila, Modelo } from '../../../../qa/qa-final/combinaciones/nucleo.ts';
 import { revisarTabla, tablaCompleta } from '../../../../qa/qa-final/combinaciones/nucleo.ts';
-import { correrFila, type FilaDeDinero } from './flujo-de-dinero.ts';
-import { SECRETO, sembrarMundo, type Mundo } from './mundo.ts';
+import { correrFila, type FilaDeDinero } from './pruebas/flujo-de-dinero.ts';
+import { SECRETO, sembrarMundo, type Mundo } from './pruebas/mundo.ts';
 
 /**
  * DP-22 · FASE D · EL DINERO, COMBINADO DE A TRES, de punta a punta y contra Postgres.

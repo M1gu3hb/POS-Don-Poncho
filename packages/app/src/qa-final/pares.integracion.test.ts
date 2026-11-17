@@ -20,7 +20,7 @@ import { guardarConfiguracionParcial } from '../puente/configuracion.ts';
 import { fijarPropina } from '../propinas/fijar-propina.ts';
 import { permitirDescuentos } from '../venta/descuentos-permitidos.ts';
 
-import { correrFila, type FilaDeDinero } from './flujo-de-dinero.ts';
+import { correrFila, type FilaDeDinero } from './pruebas/flujo-de-dinero.ts';
 import {
   IVAS,
   SECRETO,
@@ -29,7 +29,7 @@ import {
   sembrarMundo,
   type IvaDelModelo,
   type Mundo,
-} from './mundo.ts';
+} from './pruebas/mundo.ts';
 
 /**
  * DP-22 · FASE D · LA TABLA DE PARES: los ajustes que cambian el flujo, de dos en dos.
@@ -237,7 +237,7 @@ describe('cada par de ajustes, con su flujo corto y lo que el servidor hace con 
         antesDeCobrar: async (ordenId) => {
           // Descuentos: apagados el servidor los niega aunque haya firma.
           if (!si(fila, 'descuentos_permitidos')) {
-            const { descontarLaCuenta } = await import('./mundo.ts');
+            const { descontarLaCuenta } = await import('./pruebas/mundo.ts');
             const r = await descontarLaCuenta(mundo, 0, ordenId, q.gerente, 1_000);
             if (r.ok || !JSON.stringify(r.error).includes('DESCUENTOS_APAGADOS')) {
               sondeos.push('descuentos apagados: el servidor no los negó con DESCUENTOS_APAGADOS');

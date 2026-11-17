@@ -9,15 +9,15 @@
 import type { Ambito, Resultado } from '@morphiqpos/contracts';
 import { obtenerDb } from '@morphiqpos/data';
 
-import { firmarAutorizacion, type CargaDeAutorizacion } from '../identidad/supervisor.ts';
-import { comando } from '../produccion.ts';
-import { clave, exigirOk, sembrarCompanero } from '../pruebas/negocio-real.ts';
-import { fijarImpuesto } from '../configuracion/impuesto.ts';
-import { fijarQuienEligeLaPropina } from '../propinas/quien-elige.ts';
+import { firmarAutorizacion, type CargaDeAutorizacion } from '../../identidad/supervisor.ts';
+import { comando } from '../../produccion.ts';
+import { clave, exigirOk, sembrarCompanero } from '../../pruebas/negocio-real.ts';
+import { fijarImpuesto } from '../../configuracion/impuesto.ts';
+import { fijarQuienEligeLaPropina } from '../../propinas/quien-elige.ts';
 import {
   descontarCuenta,
   type ResultadoDescuentoDeCuenta,
-} from '../restaurante/descuento-de-cuenta.ts';
+} from '../../restaurante/descuento-de-cuenta.ts';
 import {
   PRECIO_ARRACHERA,
   PRECIO_CERVEZA,
@@ -25,7 +25,7 @@ import {
   ambitoDeCaja,
   sembrarSalon,
   type Salon,
-} from '../restaurante/pruebas/salon-real.ts';
+} from '../../restaurante/pruebas/salon-real.ts';
 
 /** El secreto con que se firman las autorizaciones en esta suite (se sustituye `validarEntorno`). */
 export const SECRETO = 'secreto_de_integracion_de_las_combinaciones_de_dinero_2026';

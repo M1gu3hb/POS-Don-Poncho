@@ -7,8 +7,8 @@ import { guardarConfiguracionParcial } from '../puente/configuracion.ts';
 import { fijarPropina } from '../propinas/fijar-propina.ts';
 import { quienPuedeElegirEn } from '../propinas/una-sola-verdad.ts';
 
-import { abrirYPedir, type FilaDeDinero } from './flujo-de-dinero.ts';
-import { SECRETO, sembrarMundo, type Mundo } from './mundo.ts';
+import { abrirYPedir, type FilaDeDinero } from './pruebas/flujo-de-dinero.ts';
+import { SECRETO, sembrarMundo, type Mundo } from './pruebas/mundo.ts';
 
 /**
  * DP-22 · FASE D · AJUSTES QUE SE PRUEBAN SOLOS (los que no tenían quién los demostrara).

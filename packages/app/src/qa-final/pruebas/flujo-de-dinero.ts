@@ -12,24 +12,24 @@
 import type { Ambito, Resultado } from '@morphiqpos/contracts';
 import { obtenerDb } from '@morphiqpos/data';
 
-import { cerrarCaja } from '../caja/sesion.ts';
-import { hojaDelCorte } from '../caja/corte/documento.ts';
-import { comando } from '../produccion.ts';
-import { clave, abrirCajaReal } from '../pruebas/negocio-real.ts';
-import { solicitarCuenta } from '../restaurante/cuenta.ts';
-import { dividirCuentaComando } from '../restaurante/division.ts';
-import { abrirMesa } from '../restaurante/mesas.ts';
-import { armarParaLlevar } from '../restaurante/para-llevar.ts';
-import { entregarParaLlevar } from '../restaurante/para-llevar-entregar.ts';
-import { enviarPedido } from '../restaurante/pedido.ts';
-import { entregarPedidos, transicionarPedido } from '../restaurante/preparacion.ts';
+import { cerrarCaja } from '../../caja/sesion.ts';
+import { hojaDelCorte } from '../../caja/corte/documento.ts';
+import { comando } from '../../produccion.ts';
+import { clave, abrirCajaReal } from '../../pruebas/negocio-real.ts';
+import { solicitarCuenta } from '../../restaurante/cuenta.ts';
+import { dividirCuentaComando } from '../../restaurante/division.ts';
+import { abrirMesa } from '../../restaurante/mesas.ts';
+import { armarParaLlevar } from '../../restaurante/para-llevar.ts';
+import { entregarParaLlevar } from '../../restaurante/para-llevar-entregar.ts';
+import { enviarPedido } from '../../restaurante/pedido.ts';
+import { entregarPedidos, transicionarPedido } from '../../restaurante/preparacion.ts';
 import {
   consumoEsperado,
   existenciasDelSalon,
   lineasDe,
   mesaDe,
-} from '../restaurante/pruebas/salon-real.ts';
-import { cobrarOrden } from '../venta/cobrar.ts';
+} from '../../restaurante/pruebas/salon-real.ts';
+import { cobrarOrden } from '../../venta/cobrar.ts';
 
 import { IVAS, descontarLaCuenta, fijarElIva, fijarQuienEligeLaPropinaEnElMundo } from './mundo.ts';
 import type { IvaDelModelo, Mundo } from './mundo.ts';

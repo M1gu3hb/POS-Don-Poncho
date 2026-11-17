@@ -1,5 +1,5 @@
 {
-  "commit": "b1dbb61",
+  "commit": "1206b4c",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -3536,13 +3536,6 @@
         "lectores": [
           "apps/web/src/registros/describir-accion.ts:237",
           "packages/app/src/negocio-de-prueba/resetear.ts:58",
-          "packages/app/src/qa-final/mundo.ts:15",
-          "packages/app/src/qa-final/verificar-cuenta.ts:210",
-          "packages/app/src/qa-final/verificar-cuenta.ts:230",
-          "packages/app/src/qa-final/verificar-cuenta.ts:238",
-          "packages/app/src/qa-final/verificar-cuenta.ts:245",
-          "packages/app/src/qa-final/verificar-cuenta.ts:261",
-          "packages/app/src/qa-final/verificar-cuenta.ts:407",
           "packages/app/src/venta/cotizar.ts:96",
           "packages/app/src/venta/cotizar.ts:107",
           "packages/domain/src/venta/totales.ts:61",
@@ -3563,6 +3556,8 @@
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
           "packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts",
           "packages/app/src/qa-final/pares.integracion.test.ts",
+          "packages/app/src/qa-final/pruebas/mundo.ts",
+          "packages/app/src/qa-final/pruebas/verificar-cuenta.ts",
           "packages/app/src/restaurante/division-y-cobro.integracion.test.ts",
           "packages/domain/src/venta/totales.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",

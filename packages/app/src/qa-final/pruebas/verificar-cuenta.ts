@@ -9,10 +9,10 @@
  */
 import { obtenerDb } from '@morphiqpos/data';
 
-import { comando } from '../produccion.ts';
-import { clave } from '../pruebas/negocio-real.ts';
-import { consultar } from '../puente/consultar.ts';
-import { ticketDeOrden } from '../venta/consultas.ts';
+import { comando } from '../../produccion.ts';
+import { clave } from '../../pruebas/negocio-real.ts';
+import { consultar } from '../../puente/consultar.ts';
+import { ticketDeOrden } from '../../venta/consultas.ts';
 
 import {
   calcularCuenta,
@@ -21,7 +21,7 @@ import {
   type PropinaDelOraculo,
   type RenglonDelOraculo,
   type ResultadoDelOraculo,
-} from '../../../../qa/qa-final/oraculo/dinero.ts';
+} from '../../../../../qa/qa-final/oraculo/dinero.ts';
 import {
   propinaDelDialogo,
   propinaDeLaVentaEnPantalla,

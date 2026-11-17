@@ -5,12 +5,12 @@
  *   · `propinaDelDialogo`: la propina por porcentaje del diálogo de la Caja y del portal
  *     (`propinaPorPorcentaje`, de `tipsUtils.js`), en centavos.
  */
-import { totalesDelPapel } from '../../../../apps/web/src/venta/totales-del-papel.ts';
-import { aCentavos, aPesos } from '../../../../apps/web/heredado/components/caja/dinero.js';
+import { totalesDelPapel } from '../../../../../apps/web/src/venta/totales-del-papel.ts';
+import { aCentavos, aPesos } from '../../../../../apps/web/heredado/components/caja/dinero.js';
 import {
   propinaDerivada,
   propinaPorPorcentaje,
-} from '../../../../apps/web/heredado/utils/tipsUtils.js';
+} from '../../../../../apps/web/heredado/utils/tipsUtils.js';
 
 /** La propina por porcentaje que el diálogo de la Caja le pone a una cuenta, en centavos. */
 export function propinaDelDialogo(totalCentavos: bigint, porcentaje: number): bigint {

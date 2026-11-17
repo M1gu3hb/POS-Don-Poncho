@@ -5,8 +5,8 @@
  * con la propina que se dejó en efectivo); lo que cuenta cada forma de pago en la hoja del corte es
  * lo que se cobró con ella. Todo se compara contra el oráculo de cada cuenta.
  */
-import type { ResultadoCorte } from '../caja/sesion.ts';
-import type { HojaDelCorte } from '../caja/corte/documento.ts';
+import type { ResultadoCorte } from '../../caja/sesion.ts';
+import type { HojaDelCorte } from '../../caja/corte/documento.ts';
 
 import type { Mundo } from './mundo.ts';
 import type { CuentaCobrada } from './verificar-cuenta.ts';
