@@ -106,7 +106,8 @@ export default defineConfig({
   testDir: './pruebas/e2e',
   // DP-13.5 · La jornada de QA (`qa/`) corre sobre una COPIA de producción con sus PIN de prueba
   // (fuera del repositorio, en `QA1_PINES`): sin esa variable no hay copia y no se corre.
-  testIgnore: process.env['QA1_PINES'] === undefined ? ['**/qa/**'] : [],
+  // DP-22 · el QA final (`qa-final/`) tiene su propio config y sus motores: la CI de hoy no lo recoge.
+  testIgnore: ['**/qa-final/**', ...(process.env['QA1_PINES'] === undefined ? ['**/qa/**'] : [])],
   outputDir: './pruebas/e2e/.resultados',
 
   // Sin reintentos en local: un reintento esconde una prueba inestable, y una

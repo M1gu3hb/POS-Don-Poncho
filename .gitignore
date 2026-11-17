@@ -79,3 +79,8 @@ supabase/.temp/
 
 # Los worktrees aislados de los agentes de desarrollo: nunca son parte de la entrega.
 .claude/worktrees/
+
+# DP-22 · el QA final: capturas, informes y resultados de cada corrida.
+qa/qa-final/capturas/
+qa/qa-final/informes/
+qa/qa-final/resultados/

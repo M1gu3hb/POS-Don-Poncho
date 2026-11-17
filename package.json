@@ -76,6 +76,7 @@
     "verify:matriz": "node --conditions=react-server scripts/generar-matriz-de-permisos.mjs --verificar && node --conditions=react-server scripts/generar-rutas-de-aislamiento.mjs --verificar"
   },
   "devDependencies": {
+    "@axe-core/playwright": "catalog:",
     "@electric-sql/pglite": "^0.5.8",
     "@eslint/js": "^10.0.1",
     "@morphiqpos/testing": "workspace:*",
@@ -84,10 +85,12 @@
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "eslint": "catalog:",
+    "fast-check": "catalog:",
     "eslint-config-prettier": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",
     "globals": "catalog:",
     "jsqr": "^1.4.0",
+    "pict-node": "catalog:",
     "postcss": "catalog:",
     "prettier": "catalog:",
     "turbo": "2.10.12",
