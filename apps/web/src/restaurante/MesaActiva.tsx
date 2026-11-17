@@ -1,5 +1,55 @@
 'use client';
 
+/** PANTALLA · restaurante · mesa-activa
+ *
+ * (La etiqueta va ANTES de los imports: `verify:cobertura` sólo lee las primeras 60 líneas, y dos
+ * imports más bastaron para dejarla fuera.)
+ *
+ * La comanda. 80-200 veces al día por mesero. No es una pantalla nueva: es la
+ * mesa, abierta. Jerarquía (`04-INTERFAZ`): ENVIAR A COCINA, lo pedido, el
+ * catálogo y, al final, el total — el mesero no cobra.
+ *
+ * ── La mesa se expande a la cuenta ───────────────────────────────────────
+ * La cabecera lleva `<ViewTransition>` con `VIAJE.mesa(id)`, el MISMO nombre que
+ * la tesela de `MapaDeMesas`: la tesela crece hasta ser esta barra. Por eso se
+ * pinta desde el primer instante, con el id de la dirección y antes de que llegue
+ * la mesa: si naciera después, el navegador no tendría con quién emparejarla.
+ *
+ * ── «Cuenta actual» y «Agregar a la cuenta» son DOS bloques ──────────────
+ * Lo mandado a cocina no se puede confundir con lo que está por mandarse: en una
+ * sola lista el mesero reenvía platillos —el error más caro del turno—. Por eso
+ * son dos tablas: la línea del borrador se quita, la enviada sólo se ANULA.
+ *
+ * ── «Listos para recoger» va arriba de todo ──────────────────────────────
+ * Es información que CADUCA, y el catálogo no. Lleva el acento, el tinte con el
+ * que el mapa pinta la mesa con la comida lista. La pantalla LEE las comandas de su
+ * cuenta cada pocos segundos —cocina marca desde otra pantalla— y ofrece entregarlas
+ * (`ListosParaRecoger`); antes lo recibía por props que ninguna página pasaba, y el
+ * bloque no se pintaba nunca. En tableta es una franja sobre el catálogo, sin abrir
+ * la hoja; en PC, lo primero del panel.
+ *
+ * ── Lo que quita dinero no se le ofrece al mesero ───────────────────────
+ * «Dividir» es de caja y de dirección: al mesero se le enseñaba y el servidor la negaba. Ahora
+ * sólo la ve quien puede (`puedeAjustarLaCuenta`). «Anular» (DP-12.4) es también del mesero
+ * (`puedeCancelarPedidos`).
+ *
+ * ── En tablet el pedido es una HOJA, no un panel lateral ─────────────────
+ * El mesero sostiene la tablet con la izquierda y opera con el pulgar derecho:
+ * el botón flotante vive en el borde inferior derecho. Y como con la hoja
+ * cerrada no se ve el borrador, cada tesela lleva su cuenta en la esquina.
+ *
+ * ── Idempotencia y dinero ────────────────────────────────────────────────
+ * Una clave por envío, que sólo se renueva cuando el envío triunfa: dos toques
+ * no mandan dos comandas. El puente entrega pesos; se pasan a centavos por
+ * `centavosDe` —la unidad la decide la conversión del campo— y se suma en centavos.
+ *
+ * ── Recortado, y queda dicho ─────────────────────────────────────────────
+ * Fuera: las pestañas de categoría, la nota de la comanda, «Solicitar cuenta»
+ * (pantalla propia: Precuenta), la mesa huérfana y el tiempo de servicio.
+ * «Listos» entra por props hasta que el puente filtre la cocina por orden. Y no
+ * van costos, márgenes, descuentos ni el cobro: esa separación es control interno.
+ */
+
 import { Badge } from '@morphiqpos/ui/primitivas/badge';
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Dialog, DialogContent, DialogTitle } from '@morphiqpos/ui/primitivas/dialog';
@@ -58,53 +108,6 @@ import { useRolDeLaSesion } from './rol-de-la-sesion';
 import { liberarMesaConPregunta, useUnionDeLaMesa } from './unir-mesas';
 import { useVocabulario } from '~/cliente/vocabulario';
 import { sonar } from '~/sonidos/gestor';
-
-/** PANTALLA · restaurante · mesa-activa (en la primera línea: `verify:cobertura` lee 60)
- *
- * La comanda. 80-200 veces al día por mesero. No es una pantalla nueva: es la
- * mesa, abierta. Jerarquía (`04-INTERFAZ`): ENVIAR A COCINA, lo pedido, el
- * catálogo y, al final, el total — el mesero no cobra.
- *
- * ── La mesa se expande a la cuenta ───────────────────────────────────────
- * La cabecera lleva `<ViewTransition>` con `VIAJE.mesa(id)`, el MISMO nombre que
- * la tesela de `MapaDeMesas`: la tesela crece hasta ser esta barra. Por eso se
- * pinta desde el primer instante, con el id de la dirección y antes de que llegue
- * la mesa: si naciera después, el navegador no tendría con quién emparejarla.
- *
- * ── «Cuenta actual» y «Agregar a la cuenta» son DOS bloques ──────────────
- * Lo mandado a cocina no se puede confundir con lo que está por mandarse: en una
- * sola lista el mesero reenvía platillos —el error más caro del turno—. Por eso
- * son dos tablas: la línea del borrador se quita, la enviada sólo se ANULA.
- *
- * ── «Listos para recoger» va arriba de todo ──────────────────────────────
- * Es información que CADUCA, y el catálogo no. Lleva el acento, el tinte con el
- * que el mapa pinta la mesa con la comida lista. La pantalla LEE las comandas de su
- * cuenta cada pocos segundos —cocina marca desde otra pantalla— y ofrece entregarlas
- * (`ListosParaRecoger`); antes lo recibía por props que ninguna página pasaba, y el
- * bloque no se pintaba nunca. En tableta es una franja sobre el catálogo, sin abrir
- * la hoja; en PC, lo primero del panel.
- *
- * ── Lo que quita dinero no se le ofrece al mesero ───────────────────────
- * «Dividir» es de caja y de dirección: al mesero se le enseñaba y el servidor la negaba. Ahora
- * sólo la ve quien puede (`puedeAjustarLaCuenta`). «Anular» (DP-12.4) es también del mesero
- * (`puedeCancelarPedidos`).
- *
- * ── En tablet el pedido es una HOJA, no un panel lateral ─────────────────
- * El mesero sostiene la tablet con la izquierda y opera con el pulgar derecho:
- * el botón flotante vive en el borde inferior derecho. Y como con la hoja
- * cerrada no se ve el borrador, cada tesela lleva su cuenta en la esquina.
- *
- * ── Idempotencia y dinero ────────────────────────────────────────────────
- * Una clave por envío, que sólo se renueva cuando el envío triunfa: dos toques
- * no mandan dos comandas. El puente entrega pesos; se pasan a centavos por
- * `centavosDe` —la unidad la decide la conversión del campo— y se suma en centavos.
- *
- * ── Recortado, y queda dicho ─────────────────────────────────────────────
- * Fuera: las pestañas de categoría, la nota de la comanda, «Solicitar cuenta»
- * (pantalla propia: Precuenta), la mesa huérfana y el tiempo de servicio.
- * «Listos» entra por props hasta que el puente filtre la cocina por orden. Y no
- * van costos, márgenes, descuentos ni el cobro: esa separación es control interno.
- */
 
 /** Para cuántas personas se puede abrir, como mucho. */
 const PERSONAS_MAXIMAS = 20;
