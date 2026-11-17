@@ -4,6 +4,7 @@ import { PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
+import { tomarCandadosDeCocina } from './candados-de-cocina.ts';
 import { comandaPorId, ordenDeMesa, type ComandaViva } from './datos.ts';
 import { entregarLoListoYaCobrado } from './comandas-al-cobrar.ts';
 import { entradaEntregarPedidos, entradaTransicionarPedido } from './esquemas.ts';
@@ -60,6 +61,19 @@ export const transicionarPedido = definirComando<
   async ejecutar(ctx, entrada) {
     const { organizacionId, empleoId } = ctx.ambito;
 
+    // H2 · Los candados primero y siempre en el mismo orden (`candados-de-cocina.ts`): cuenta →
+    // comanda → platos → líneas. La primera lectura sólo dice de qué cuenta es la comanda; la que
+    // vale es la de después del candado, con el estado que la otra pantalla ya dejó.
+    const ubicada = await ctx.paso('ubicar_comanda', () =>
+      comandaPorId(ctx.tx, organizacionId, entrada.comandaId),
+    );
+    await ctx.paso('candados', () =>
+      tomarCandadosDeCocina(ctx.tx, {
+        organizacionId,
+        ordenIds: [ubicada.ordenId],
+        comandas: { de: 'ids', ids: [ubicada.id] },
+      }),
+    );
     const comanda = await ctx.paso('cargar_comanda', () =>
       comandaPorId(ctx.tx, organizacionId, entrada.comandaId),
     );
@@ -200,11 +214,23 @@ export async function moverLaComandaEntera(
   datos: DatosDeLaComanda & { readonly destino: EstadoComanda },
   paso: Paso = (_nombre, fn) => fn(),
 ): Promise<{ readonly estado: EstadoComanda; readonly sinCambio: boolean }> {
-  if (evaluarTransicion(datos.comanda.estado, datos.destino).tipo === 'sin_cambio') {
-    return { estado: datos.comanda.estado, sinCambio: true };
+  // H2 · Mismo orden de candados que `transicionar_pedido`; el estado que vale es el de después.
+  await paso('candados', () =>
+    tomarCandadosDeCocina(tx, {
+      organizacionId: datos.organizacionId,
+      ordenIds: [datos.comanda.ordenId],
+      comandas: { de: 'ids', ids: [datos.comanda.id] },
+    }),
+  );
+  const comanda = await paso('cargar_comanda', () =>
+    comandaPorId(tx, datos.organizacionId, datos.comanda.id),
+  );
+  const vigentes = { ...datos, comanda };
+  if (evaluarTransicion(comanda.estado, datos.destino).tipo === 'sin_cambio') {
+    return { estado: comanda.estado, sinCambio: true };
   }
-  const estadoComanda = await moverToda(tx, paso, datos);
-  await cerrarElMovimiento(tx, paso, { ...datos, estadoComanda });
+  const estadoComanda = await moverToda(tx, paso, vigentes);
+  await cerrarElMovimiento(tx, paso, { ...vigentes, estadoComanda });
   return { estado: estadoComanda, sinCambio: false };
 }
 
@@ -261,6 +287,14 @@ export const entregarPedidos = definirComando<
 
     const orden = await ctx.paso('cargar_orden', () =>
       ordenDeMesa(ctx.tx, organizacionId, entrada.ordenId),
+    );
+    // H2 · La cuenta ya está tomada; faltan sus comandas, platos y líneas, en el orden de siempre.
+    await ctx.paso('candados', () =>
+      tomarCandadosDeCocina(ctx.tx, {
+        organizacionId,
+        ordenIds: [orden.id],
+        comandas: { de: 'las-cuentas' },
+      }),
     );
 
     const listas = await ctx.paso('buscar_listas', () =>

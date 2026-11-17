@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   MOTIVO_DEL_CONTEO,
+  avisoDeExistenciaEnNegativo,
   RUTA_DE_AJUSTE,
   RUTA_DE_MERMA,
   cantidadEnTexto,
@@ -119,5 +120,26 @@ describe('ordenDelAjuste', () => {
     expect(
       ordenDelAjuste({ ...base, nota: larga, delta: -1, motivoClave: 'roto' }).cuerpo['nota'],
     ).toHaveLength(200);
+  });
+});
+
+describe('A24 · lo que se le dice a quien merma un ingrediente que está en negativo', () => {
+  it('con la existencia en negativo explica qué pasó y qué hacer, con la cantidad y la unidad', () => {
+    const aviso = avisoDeExistenciaEnNegativo(-500, 'g');
+    expect(aviso).toContain('en negativo');
+    expect(aviso).toContain('−500 g');
+    expect(aviso).toMatch(/conteo físico/);
+    expect(aviso).toMatch(/merma/);
+  });
+
+  it('con existencia, en cero o sin leer no se dice nada: un aviso que siempre sale deja de leerse', () => {
+    expect(avisoDeExistenciaEnNegativo(120, 'g')).toBeNull();
+    expect(avisoDeExistenciaEnNegativo(0, 'g')).toBeNull();
+    expect(avisoDeExistenciaEnNegativo(null, 'g')).toBeNull();
+  });
+
+  it('una pieza se dice «pieza(s)», no una unidad inventada', () => {
+    expect(avisoDeExistenciaEnNegativo(-2, 'pieza')).toContain('−2 pieza');
+    expect(avisoDeExistenciaEnNegativo(-1.5, null)).toContain('−1.5');
   });
 });

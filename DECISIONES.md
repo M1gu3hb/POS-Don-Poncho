@@ -2851,3 +2851,36 @@ de las 11:18 a las ~14:30 del 16-11 y se quitó.
   recorre donde existe ese botón (`max-lg:pl-28`).
 - **Pendiente:** dar los 44 px pantalla por pantalla, y medir con el dedo Y con el catálogo lleno
   (un barrido con los 117 platillos de Don Poncho) antes de volver a tocar tamaños globales.
+
+## DP-D146 · DP-22 · Los candados de la cocina en un solo orden, la merma en negativo y el tope por IP · 16-11-2026
+
+Cuatro pendientes del servidor, cada uno con su prueba antes del código y su mutante muerto.
+
+- **H2 · Candados en el mismo orden** (A12 de la semana simulada, que se había parchado con un
+  reintento). «Preparar», «Listo», «Entregado» (cuenta y para llevar), el teléfono de estación,
+  quitar un platillo y cancelar la cuenta toman AHORA lo mismo y en la misma dirección
+  (`restaurante/candados-de-cocina.ts`): cuenta → comandas → platos → líneas de venta, cada tramo
+  por id ascendente (`order by id for update`); lo demás (`mesas`, `existencias`) después. Antes,
+  «Preparar» no tomaba la cuenta y escribía comanda → platos → líneas, y quitar un platillo
+  escribía línea → platos → comanda: se cruzaban. El reintento de `comando.ts` se queda como red de
+  seguridad y ahora se cuenta (`reintentosPorConcurrencia()`); la prueba de 200 vueltas cruzadas
+  exige cero. Descartado: quitar el reintento (un cruce con otro comando fuera de este orden
+  seguiría dando 500).
+- **A24 · Merma con la existencia en negativo.** Se registra (la existencia baja más y el conteo
+  físico la corrige): es la misma regla que al cobrar (D116) y al cancelar (D57), y lo tirado
+  tirado está. Rechazarla era un error que no ayudaba. La guarda `STOCK_INSUFICIENTE` se queda
+  para una merma mayor a una existencia POSITIVA (un tecleo). La pantalla avisa por qué sigue en
+  negativo. Un conteo o corrección (`inventario.ajustar`) sigue sin dejar la existencia en negativo.
+- **A24 · «Valor de inventario» y valuación, la misma regla:** una existencia en negativo vale cero
+  y no resta. La valuación del servidor ya lo hacía; la tarjeta restaba. Cambia la CIFRA de la
+  tarjeta cuando hay negativos (sube); la tarjeta dice cuántos son. La regla vive en
+  `apps/web/src/restaurante/valor-de-inventario.ts`.
+- **Lo preparado no regresa; lo no preparado nunca salió.** Comprobado con Postgres para un
+  producto por peso y uno por porción: cancelar sin preparar deja el almacén igual, cancelar lo
+  preparado lo saca como merma «Por cancelación», y devolver una venta cobrada no repone el
+  ingrediente base. El servidor ya cumplía; faltaba decirlo en pantalla (cancelar y devolver).
+- **X4 · Tope por IP del laboratorio del proveedor.** Ya contaba por IP (5 intentos, 15 minutos,
+  sin mirar negocio ni sesión): ahora hay prueba contra Postgres. Nuevo: el PRIMER intento que el
+  tope rechaza (429) de cada ventana deja su fila `proveedor.bloquear` en la auditoría; los
+  siguientes no (una persona con sesión no puede llenar la tabla golpeando el 429).
+- **Sin migración.**

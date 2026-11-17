@@ -91,6 +91,17 @@ function esConflictoDeConcurrencia(error: unknown): boolean {
   );
 }
 
+/**
+ * Cuántas veces este proceso repitió un comando porque Postgres lo abortó por concurrencia. Con los
+ * candados en un solo orden (`restaurante/candados-de-cocina.ts`) un cruce ya no debe ocurrir: este
+ * número es la red de seguridad hecha visible, y las pruebas de H2 exigen que valga 0 con el orden
+ * bueno. Sólo cuenta; no cambia lo que hace el reintento.
+ */
+let reintentosHechos = 0;
+export function reintentosPorConcurrencia(): number {
+  return reintentosHechos;
+}
+
 /** Corre `fn` y la repite (hasta 3 veces en total) si Postgres la abortó por concurrencia. */
 async function conReintentoAnteConcurrencia<T>(fn: () => Promise<T>): Promise<T> {
   for (let intento = 1; ; intento += 1) {
@@ -98,6 +109,7 @@ async function conReintentoAnteConcurrencia<T>(fn: () => Promise<T>): Promise<T>
       return await fn();
     } catch (error) {
       if (intento >= INTENTOS_ANTE_CONCURRENCIA || !esConflictoDeConcurrencia(error)) throw error;
+      reintentosHechos += 1;
       // Una espera corta y desigual: si las dos se repitieran al mismo tiempo, se volverían a cruzar.
       await new Promise((listo) =>
         setTimeout(listo, 15 * intento + Math.floor(Math.random() * 25)),

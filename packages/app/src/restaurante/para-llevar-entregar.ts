@@ -5,6 +5,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
+import { tomarCandadosDeCocina } from './candados-de-cocina.ts';
 import { marcarEntregadas } from './preparacion-escrituras.ts';
 import { propagarAItems, recalcularEstadoDeLineas } from './propagacion.ts';
 
@@ -52,6 +53,14 @@ export const entregarParaLlevar = definirComando<
         'Ese no es un pedido para llevar. Si es de una mesa, lo entrega su mesero.',
       );
     }
+    // H2 · Los candados de la cocina, en el mismo orden que los demás comandos (la cuenta primero).
+    await ctx.paso('candados', () =>
+      tomarCandadosDeCocina(ctx.tx, {
+        organizacionId,
+        ordenIds: [entrada.ordenId],
+        comandas: { de: 'las-cuentas' },
+      }),
+    );
     const listas = await ctx.paso('buscar_listas', () =>
       ctx.tx
         .selectFrom('comandas')

@@ -39,7 +39,12 @@ import { almacenPrincipal, leerAlmacenes } from '~/inventario/almacen-de-la-sucu
 import { FaltaElAlmacen } from '~/inventario/FaltaElAlmacen';
 import { centavosDe } from '~/cliente/dinero-del-puente';
 
-import { MOTIVO_DEL_CONTEO, motivoVigente, ordenDelAjuste } from './ajuste-de-inventario.ts';
+import {
+  MOTIVO_DEL_CONTEO,
+  avisoDeExistenciaEnNegativo,
+  motivoVigente,
+  ordenDelAjuste,
+} from './ajuste-de-inventario.ts';
 import {
   QuePasoConLoQuitado,
   useMotivosDeMerma,
@@ -407,6 +412,10 @@ function Motivo(props: MotivoProps) {
   const despues = (fila.stock_actual ?? 0) + ajuste.delta;
   const clave = motivoVigente(ajuste.delta, ajuste.clave, props.motivos.motivos);
   const esMerma = ajuste.delta < 0 && clave !== MOTIVO_DEL_CONTEO;
+  // A24 · Ya en negativo: la merma se registra igual y el conteo la corrige; se dice por qué.
+  const avisoDeNegativo = esMerma
+    ? avisoDeExistenciaEnNegativo(fila.stock_actual, fila.unidad_base)
+    : null;
   return (
     <span className="flex flex-col gap-(--espacio-2) border-t border-borde pt-(--espacio-2) text-base font-normal">
       <span className="flex items-baseline justify-between gap-(--espacio-2) text-sm">
@@ -429,6 +438,11 @@ function Motivo(props: MotivoProps) {
           onElegir={props.onClave}
         />
       ) : null}
+      {avisoDeNegativo === null ? null : (
+        <Aviso tono="atencion" titulo="Existencia en negativo">
+          {avisoDeNegativo}
+        </Aviso>
+      )}
       <Label htmlFor={`motivo-${fila.id}`} className="text-xs">
         Motivo del ajuste
       </Label>

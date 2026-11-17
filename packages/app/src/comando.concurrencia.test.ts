@@ -2,7 +2,7 @@ import { ErrorDominio } from '@morphiqpos/contracts';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { crearComando, definirComando } from './comando.ts';
+import { crearComando, definirComando, reintentosPorConcurrencia } from './comando.ts';
 import { ambitoDeCajero, crearFabrica, type TxFalsa } from './pruebas/dobles.ts';
 
 /**
@@ -62,6 +62,16 @@ describe('comando() · conflictos de concurrencia de Postgres', () => {
     expect(llamadas.n).toBe(2);
     expect(fabrica.base.transacciones.filter((t) => t.confirmada)).toHaveLength(1);
     expect(fabrica.base.transacciones.filter((t) => !t.confirmada)).toHaveLength(1);
+  });
+
+  it('cada repetición por concurrencia se cuenta (la red de seguridad se hace visible)', async () => {
+    const antes = reintentosPorConcurrencia();
+    await fallaPrimero(2, () => deLaBase('40P01'));
+    expect(reintentosPorConcurrencia() - antes).toBe(2);
+
+    const intermedio = reintentosPorConcurrencia();
+    await fallaPrimero(99, () => deLaBase('23505'));
+    expect(reintentosPorConcurrencia() - intermedio).toBe(0);
   });
 
   it('un conflicto de serialización (40001) también se repite', async () => {
