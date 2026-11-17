@@ -263,21 +263,21 @@
       "ruta": "/api/compras/plantilla",
       "comando": "compras.guardar_plantilla",
       "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
+      "roles": ["administrador", "almacen", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
       "ruta": "/api/compras/plantilla/usar",
       "comando": "compras.usar_plantilla",
       "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
+      "roles": ["administrador", "almacen", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
       "ruta": "/api/compras/registrar",
       "comando": "compras.registrar",
       "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
+      "roles": ["administrador", "almacen", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
@@ -456,6 +456,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/propinas/del-rango",
+      "comando": "propinas.del_rango",
+      "escribe": false,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["restaurante"]
+    },
+    {
       "ruta": "/api/propinas/entregar",
       "comando": "propinas.entregar",
       "escribe": true,
@@ -489,6 +496,13 @@
       "escribe": false,
       "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/registros/resumen",
+      "comando": "registros.resumen",
+      "escribe": false,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
       "ruta": "/api/reportes/auditoria-reciente",

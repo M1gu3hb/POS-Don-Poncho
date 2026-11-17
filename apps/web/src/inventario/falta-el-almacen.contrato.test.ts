@@ -37,6 +37,7 @@ describe('DP-18 · falta el almacén', () => {
   it('Compras lo ofrece a quien registra compras', () => {
     const c = plano('heredado/pages/Compras.jsx');
     expect(c).toContain('leerAlmacenes(');
-    expect(c).toMatch(/registra&&sinAlmacen&&\(?<FaltaElAlmacen/);
+    // A5 · Quien registra COMPRAS (también el almacén): sin almacén no hay a dónde entrar la mercancía.
+    expect(c).toMatch(/registraCompras&&sinAlmacen&&\(?<FaltaElAlmacen/);
   });
 });

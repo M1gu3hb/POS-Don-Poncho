@@ -123,7 +123,7 @@ describe('DP-18 · A21 · Registros usa el periodo y avisa del tope (contrato)',
 
   it('el aviso del tope sale en cada pestaña con datos del servidor', () => {
     for (const lectura of ['cortesRaw', 'ventasRaw', 'comprasRaw', 'movimientosRaw', 'gastosRaw']) {
-      expect(fuente).toMatch(new RegExp(`avisoDe\\('[a-z]+',${lectura}\\)`));
+      expect(fuente).toMatch(new RegExp(`avisoDe\\('[a-z]+',${lectura}[,)]`));
     }
     expect(fuente).toContain('<Avisotono="atencion"titulo={texto}/>');
   });

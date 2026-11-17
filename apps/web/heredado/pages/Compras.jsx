@@ -19,18 +19,22 @@ import { claves } from '~/cliente/claves-de-consulta';
 import { almacenPrincipal, leerAlmacenes } from '~/inventario/almacen-de-la-sucursal';
 import { FaltaElAlmacen } from '~/inventario/FaltaElAlmacen';
 import { usePuesto } from '@/components/configuracion/usePuesto';
+import { puedeRegistrarCompras } from '@/components/configuracion/puestos';
 import { frasePagado } from '@morphiqpos/domain/gastos';
 
 /**
  * DP-15 · Quien registra compras y gastos (los `roles` de `compras.registrar` y `gastos.registrar`).
- * El almacén ve el historial de compras, pero no se le ofrecen botones que el servidor le niega.
+ * El almacén ve el historial de compras y las REGISTRA (A5: es quien recibe la mercancía), pero los gastos no
+ * son suyos y no se le ofrecen botones que el servidor le niega.
  */
 const PUEDEN_REGISTRAR = ['dueno', 'administrador', 'gerente'];
 
 export default function Compras() {
   const [openCompra, setOpenCompra] = useState(false);
   const [openGasto, setOpenGasto] = useState(false);
-  const registra = PUEDEN_REGISTRAR.includes(usePuesto());
+  const puesto = usePuesto();
+  const registra = PUEDEN_REGISTRAR.includes(puesto);
+  const registraCompras = puedeRegistrarCompras(puesto);
 
   // Sin initialData:[] — distinguir "primer fetch" de "vacío real".
   const { data: ingredientes } = useQuery({
@@ -62,7 +66,7 @@ export default function Compras() {
     queryKey: ['almacenes_de_la_sucursal'],
     queryFn: ({ signal }) => leerAlmacenes(signal),
     staleTime: 30000,
-    enabled: registra,
+    enabled: registraCompras,
   });
   const sinAlmacen = Array.isArray(almacenes) && almacenPrincipal(almacenes) === null;
 
@@ -98,15 +102,18 @@ export default function Compras() {
 
       {!registra && (
         <p className="text-sm text-muted-foreground">
-          Las compras y los gastos los registra la gerencia. Aquí ves las compras recientes.
+          {registraCompras
+            ? 'Los gastos los registra la gerencia. Aquí registras las compras y ves las recientes.'
+            : 'Las compras y los gastos los registra la gerencia. Aquí ves las compras recientes.'}
         </p>
       )}
 
-      {registra && sinAlmacen && <FaltaElAlmacen onCreado={() => releerAlmacenes()} />}
+      {registraCompras && sinAlmacen && <FaltaElAlmacen onCreado={() => releerAlmacenes()} />}
 
       {/* Acciones grandes */}
-      {registra && (
+      {registraCompras && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {registraCompras && (
         <button
           onClick={() => setOpenCompra(true)}
           className="premium-sheen group text-left p-6 rounded-2xl bg-superficie/70 backdrop-blur-xl border border-borde/60 shadow-md hover:shadow-xl transition-all hover:-translate-y-0.5"
@@ -126,7 +133,9 @@ export default function Compras() {
             stock y los costos.
           </p>
         </button>
+        )}
 
+        {registra && (
         <button
           onClick={() => setOpenGasto(true)}
           className="premium-sheen group text-left p-6 rounded-2xl bg-superficie/70 backdrop-blur-xl border border-borde/60 shadow-md hover:shadow-xl transition-all hover:-translate-y-0.5"
@@ -145,6 +154,7 @@ export default function Compras() {
             Luz, agua, internet, gas, limpieza. Marca como recurrente para gastos fijos mensuales.
           </p>
         </button>
+        )}
       </div>
       )}
 

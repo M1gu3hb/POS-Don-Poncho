@@ -145,7 +145,7 @@ export default function PeriodoPDF({ data, config = {}, sinCostos = false }) {
 
       {/* Ventas */}
       <h3 className="text-sm font-bold uppercase tracking-wide mb-2 mt-4">
-        Ventas ({ventas.length})
+        Ventas ({totals.nVentas ?? ventas.length})
       </h3>
       {ventas.length > 0 ? (
         <table className="w-full text-[10px] border mb-4">
@@ -192,7 +192,7 @@ export default function PeriodoPDF({ data, config = {}, sinCostos = false }) {
       {!sinCostos && (
         <>
           <h3 className="text-sm font-bold uppercase tracking-wide mb-2 mt-4">
-            Compras ({compras.length})
+            Compras ({totals.nCompras ?? compras.length})
           </h3>
           {compras.length > 0 ? (
             <table className="w-full text-[10px] border mb-4">
@@ -223,7 +223,7 @@ export default function PeriodoPDF({ data, config = {}, sinCostos = false }) {
 
           {/* Gastos */}
           <h3 className="text-sm font-bold uppercase tracking-wide mb-2 mt-4">
-            Gastos operativos ({gastos.length})
+            Gastos operativos ({totals.nGastos ?? gastos.length})
           </h3>
           {gastos.length > 0 ? (
             <table className="w-full text-[10px] border mb-4">

@@ -2495,6 +2495,54 @@
         "+ clase:leading-snug",
         "+ clase:text-advertencia"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/propinas/PropinasRegistros.jsx",
+      "porque": "A23 · Registros › Propinas lee el rango del servidor (`propinas.del_rango`): el renglón de cada venta toma sus campos (`liquidada`, `meseroNombre`…) del servidor, la lista dice cuando viene topada («Se muestran las 300 propinas más recientes de N») y, si el servidor no contesta, lo dice con un «Reintentar» en lugar de enseñar ceros. Las tarjetas, los filtros y el diseño son los mismos.",
+      "testigos": [
+        "- clase:${v.propina_liquidada",
+        "+ clase:p-4",
+        "+ clase:bg-superficie/80",
+        "+ clase:flex",
+        "+ clase:items-center",
+        "+ clase:flex-wrap",
+        "+ clase:text-sm",
+        "+ clase:text-sm",
+        "+ clase:text-xs",
+        "+ clase:gap-3",
+        "+ clase:text-muted-foreground",
+        "+ clase:text-center",
+        "+ clase:text-peligro",
+        "+ clase:px-4",
+        "+ clase:border-b",
+        "+ clase:py-8",
+        "+ clase:text-advertencia",
+        "+ clase:py-2",
+        "+ clase:${v.liquidada",
+        "+ texto:Reintentar",
+        "+ texto:Cargando propinas…",
+        "+ texto:) : ventasFiltradas.length === 0 ? ("
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/registros/ResumenPeriodo.jsx",
+      "porque": "H3 · El resumen de Registros lo suma el servidor (`registros.resumen`): si no pudo calcularlo se dice «No se pudo calcular el resumen del periodo» con un «Reintentar», en lugar de enseñar ceros. Las tarjetas y el neto son los mismos.",
+      "testigos": [
+        "+ clase:flex",
+        "+ clase:items-center",
+        "+ clase:mb-3",
+        "+ clase:flex-wrap",
+        "+ clase:gap-3",
+        "+ clase:p-3",
+        "+ clase:rounded-lg",
+        "+ clase:border",
+        "+ clase:border-peligro/30",
+        "+ clase:bg-peligro/10",
+        "+ clase:text-sm",
+        "+ clase:text-peligro",
+        "+ texto:No se pudo calcular el resumen del periodo.",
+        "+ texto:Reintentar"
+      ]
     }
   ]
 }

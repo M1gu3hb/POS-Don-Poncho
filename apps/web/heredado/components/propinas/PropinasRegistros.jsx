@@ -16,27 +16,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Wallet, Heart, Calendar, Filter, History } from 'lucide-react';
-import {
-  format,
-  startOfDay,
-  endOfDay,
-  subDays,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-} from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/financialUtils';
-import {
-  agruparPropinasPorMesero,
-  filtrarVentasConPropina,
-  filtrarVentasEnRango,
-  propinaDerivada,
-  sumarPropinas,
-} from '@/utils/tipsUtils';
 import LiquidarPropinasDialog from '@/components/propinas/LiquidarPropinasDialog';
 import { claves } from '~/cliente/claves-de-consulta';
+import { invocarComando } from '~/cliente/api';
+import {
+  avisoDeLasPropinas,
+  desgloseDeLasPropinas,
+  peticionDeLasPropinas,
+  rangoDeLasPropinas,
+  totalesDeLasPropinas,
+} from '~/registros/propinas-del-servidor';
 import { folioVisible } from '@morphiqpos/domain/venta';
 import { useConfig } from '@/lib/ConfigContext';
 
@@ -64,14 +56,6 @@ export default function PropinasRegistros() {
   const [showLiquidar, setShowLiquidar] = useState(false);
   const [verHistorial, setVerHistorial] = useState(false);
 
-  // El orden y el límite son parte de la pregunta: Registros pide 1 000 por fecha de creación
-  // bajo la misma raíz, y con la clave sola esta pestaña recibía SU lista.
-  const { data: ventas = [] } = useQuery({
-    queryKey: claves.registrosVentas.porOrden('-fecha_cierre', 2000),
-    queryFn: () => api.entidades.Venta.list('-fecha_cierre', 2000),
-    initialData: [],
-  });
-
   const { data: meseros = [] } = useQuery({
     queryKey: claves.usuarios.activos(),
     queryFn: () => api.entidades.UsuarioPOS.filter({ activo: true }),
@@ -94,41 +78,31 @@ export default function PropinasRegistros() {
     }
   }, [liquidacionesFallaron]);
 
-  const range = useMemo(() => {
-    const now = new Date();
-    if (rango === 'today') return { from: startOfDay(now), to: endOfDay(now) };
-    if (rango === 'week')
-      return {
-        from: startOfWeek(now, { weekStartsOn: 1 }),
-        to: endOfWeek(now, { weekStartsOn: 1 }),
-      };
-    if (rango === 'quincena') return { from: startOfDay(subDays(now, 14)), to: endOfDay(now) };
-    if (rango === 'month') return { from: startOfMonth(now), to: endOfMonth(now) };
-    try {
-      return { from: startOfDay(new Date(desde)), to: endOfDay(new Date(hasta)) };
-    } catch {
-      return { from: startOfDay(now), to: endOfDay(now) };
-    }
-  }, [rango, desde, hasta]);
+  // Los días se leen en hora local (`new Date('2026-11-10')` era el día anterior en México).
+  const range = useMemo(() => rangoDeLasPropinas(rango, desde, hasta), [rango, desde, hasta]);
 
-  const ventasFiltradas = useMemo(() => {
-    const safe = Array.isArray(ventas) ? ventas : [];
-    let res = filtrarVentasEnRango(
-      filtrarVentasConPropina(safe),
-      range.from,
-      range.to,
-    );
-    if (estado === 'pendientes') res = res.filter((v) => v?.propina_liquidada !== true);
-    if (estado === 'liquidadas') res = res.filter((v) => v?.propina_liquidada === true);
-    if (meseroId && meseroId !== '__all__')
-      res = res.filter((v) => v?.usuario_mesero_id === meseroId);
-    return res;
-  }, [ventas, range, estado, meseroId]);
+  // A23 · El servidor suma el rango ENTERO por mesero (centavos enteros, sin el tope de filas del
+  // puente) y dice si la lista de detalle viene topada. Aquí sólo se pide y se pinta.
+  const peticion = peticionDeLasPropinas(range, estado, meseroId);
+  const {
+    data: propinas,
+    isPending: propinasCargando,
+    isError: propinasFallaron,
+    error,
+    refetch: releerPropinas,
+  } = useQuery({
+    queryKey: ['registros_propinas', peticion],
+    queryFn: ({ signal }) => invocarComando('/api/propinas/del-rango', peticion, { signal }),
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
 
-  const total = sumarPropinas(ventasFiltradas);
-  const pendientes = ventasFiltradas.filter((v) => v?.propina_liquidada !== true);
-  const totalPendientes = sumarPropinas(pendientes);
-  const desglose = useMemo(() => agruparPropinasPorMesero(ventasFiltradas), [ventasFiltradas]);
+  const totales = propinas ? totalesDeLasPropinas(propinas) : null;
+  const desglose = propinas ? desgloseDeLasPropinas(propinas) : [];
+  const ventasFiltradas = propinas?.ventas ?? [];
+  const total = totales?.total ?? 0;
+  const totalPendientes = totales?.pendientes ?? 0;
+  const avisoDelDetalle = propinas ? avisoDeLasPropinas(propinas) : null;
 
   return (
     <div className="space-y-4">
@@ -241,14 +215,25 @@ export default function PropinasRegistros() {
           color="amber"
           highlight={totalPendientes > 0}
         />
-        <SummaryCard label="Liquidadas" value={total - totalPendientes} color="emerald" />
+        <SummaryCard label="Liquidadas" value={totales?.liquidadas ?? 0} color="emerald" />
         <SummaryCard
           label="Ventas con propina"
-          value={ventasFiltradas.length}
+          value={totales?.nVentas ?? 0}
           isCount
           color="slate"
         />
       </div>
+
+      {propinasFallaron && (
+        <Card className="p-4 bg-superficie/80 flex flex-wrap items-center gap-3">
+          <p className="text-sm text-peligro">
+            {error?.message || 'No se pudieron leer las propinas del periodo.'}
+          </p>
+          <Button size="sm" variant="outline" onClick={() => releerPropinas()}>
+            Reintentar
+          </Button>
+        </Card>
+      )}
 
       {/* Historial de liquidaciones */}
       {verHistorial && (
@@ -316,50 +301,53 @@ export default function PropinasRegistros() {
         <div className="px-4 py-3 border-b flex items-center justify-between flex-wrap gap-2">
           <h3 className="font-heading font-bold text-sm flex items-center gap-2">
             <Heart className="w-4 h-4 text-peligro" />
-            Propinas ({ventasFiltradas.length})
+            Propinas ({totales?.nVentas ?? 0})
           </h3>
           <p className="text-[10px] text-muted-foreground">
             {format(range.from, 'd MMM', { locale: es })} –{' '}
             {format(range.to, 'd MMM yyyy', { locale: es })}
           </p>
         </div>
-        {ventasFiltradas.length === 0 ? (
+        {avisoDelDetalle && (
+          <p className="px-4 py-2 text-xs text-advertencia border-b">{avisoDelDetalle}</p>
+        )}
+        {propinasCargando ? (
+          <p className="text-sm text-muted-foreground text-center py-8">Cargando propinas…</p>
+        ) : ventasFiltradas.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">
             Sin propinas en el periodo
           </p>
         ) : (
           <div className="divide-y max-h-[60vh] overflow-y-auto">
-            {ventasFiltradas.slice(0, 300).map((v) => (
+            {ventasFiltradas.map((v) => (
               <div
-                key={v.id}
+                key={v.ordenId}
                 className="px-4 py-2.5 flex items-center gap-3 flex-wrap text-sm hover:bg-muted/30"
               >
                 <div className="flex-1 min-w-[140px]">
                   <p className="font-mono font-bold text-xs">{folioVisible(v.serie, v.folio, config, 'numero')}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {v.fecha_cierre
-                      ? format(new Date(v.fecha_cierre), 'd MMM HH:mm', { locale: es })
-                      : ''}
-                    {v.mesa_numero ? ` · Mesa ${v.mesa_numero}` : ''}
+                    {v.cerradaEn ? format(new Date(v.cerradaEn), 'd MMM HH:mm', { locale: es }) : ''}
+                    {v.mesaNumero ? ` · Mesa ${v.mesaNumero}` : ''}
                   </p>
                 </div>
                 <div className="min-w-[120px] text-xs text-muted-foreground truncate">
-                  {v.usuario_mesero_nombre || 'Sin mesero'}
+                  {v.meseroNombre || 'Sin mesero'}
                 </div>
                 <Badge variant="outline" className="text-[10px] capitalize">
-                  {v.metodo_pago || '—'}
+                  {v.metodoPago || '—'}
                 </Badge>
                 <Badge
-                  className={`text-[10px] ${v.propina_liquidada ? 'bg-exito/15 text-exito border-exito/30' : 'bg-advertencia/15 text-advertencia border-advertencia/30'}`}
+                  className={`text-[10px] ${v.liquidada ? 'bg-exito/15 text-exito border-exito/30' : 'bg-advertencia/15 text-advertencia border-advertencia/30'}`}
                   variant="outline"
                 >
-                  {v.propina_liquidada ? 'Liquidada' : 'Pendiente'}
+                  {v.liquidada ? 'Liquidada' : 'Pendiente'}
                 </Badge>
                 <Badge variant="secondary" className="text-[10px] capitalize">
-                  {v.propina_origen || '—'}
+                  {v.origen || '—'}
                 </Badge>
                 <p className="font-heading font-black min-w-[80px] text-right text-peligro">
-                  {formatCurrency(propinaDerivada(v))}
+                  {formatCurrency(Number(v.propinaCentavos) / 100)}
                 </p>
               </div>
             ))}

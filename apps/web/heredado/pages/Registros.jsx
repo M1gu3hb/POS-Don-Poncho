@@ -50,6 +50,7 @@ import { tipsEnabled } from '@/utils/tipsUtils';
 import { useLocation } from '@/enrutado';
 import { claves } from '~/cliente/claves-de-consulta';
 import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
+import { invocarComando } from '~/cliente/api';
 import { CancelacionesRegistradas } from '~/corte/CancelacionesRegistradas';
 import { AuditoriaReciente } from '~/registros/AuditoriaReciente';
 import { usePuesto } from '@/components/configuracion/usePuesto';
@@ -57,6 +58,7 @@ import { puedeEliminarCortes } from '@/components/configuracion/puestos';
 import { esDeMando } from '@/components/configuracion/puestos';
 import { grupoDelCanal, referenciaParaLlevar } from '~/corte/canales';
 import { primeroElFolioExacto } from '~/registros/folio-exacto';
+import { peticionDelResumen } from '~/registros/resumen-del-servidor';
 import { Aviso } from '@morphiqpos/ui/sistema';
 import {
   avisoDelTopeDeRegistros,
@@ -195,6 +197,19 @@ export default function Registros() {
     queryKey: ['registros_gastos', delPeriodo],
     ...lectura('GastoOperativo', CAMPO_DEL_PERIODO.gastos),
   });
+  // H3 · El RESUMEN no sale de sumar las filas de arriba (el puente topa cada lectura): lo suma el
+  // servidor sobre el periodo entero, en centavos enteros, con los mismos días que las listas.
+  const peticion = peticionDelResumen(range);
+  const {
+    data: resumenDelServidor,
+    isPending: resumenLoading,
+    isError: resumenFallo,
+    refetch: releerElResumen,
+  } = useQuery({
+    queryKey: ['registros_resumen', peticion],
+    queryFn: ({ signal }) => invocarComando('/api/registros/resumen', peticion, { signal }),
+    ...OPCIONES_DE_LECTURA,
+  });
 
   // Normalización defensiva (nunca undefined a .filter/.map).
   const filasDe = (lecturaDe) => (Array.isArray(lecturaDe?.filas) ? lecturaDe.filas : []);
@@ -210,11 +225,13 @@ export default function Registros() {
     return <Aviso tono="info" titulo={texto} />;
   };
   // DP-18 · Si una lectura llegó al techo, lo que falta se AVISA (antes desaparecía sin decir).
-  const avisoDe = (nombre, lecturaDe) => {
+  // H3 · `datos.resumenCuenta`: el resumen de arriba suma ESTAS filas en el servidor, sin tope.
+  const avisoDe = (nombre, lecturaDe, datos) => {
     const texto = avisoDelTopeDeRegistros(
       nombre,
       filasDe(lecturaDe).length,
       lecturaDe?.truncada === true,
+      datos,
     );
     return texto === null ? null : <Aviso tono="atencion" titulo={texto} />;
   };
@@ -322,11 +339,14 @@ export default function Registros() {
         onPeriodo={setPeriodo}
         onDesde={setDesde}
         onHasta={setHasta}
+        resumen={resumenDelServidor}
         ventas={ventas}
         compras={compras}
         gastos={gastos}
         onPDF={handlePDF}
-        cargando={ventasFirstLoad || (showOperativos && (comprasFirstLoad || gastosFirstLoad))}
+        cargando={resumenLoading && !resumenDelServidor}
+        fallo={resumenFallo}
+        onReintentar={() => releerElResumen()}
       />
 
       <p className="text-xs text-muted-foreground">
@@ -456,7 +476,7 @@ export default function Registros() {
 
         {/* VENTAS */}
         <TabsContent value="ventas" className="mt-4 space-y-3">
-          {avisoDe('ventas', ventasRaw)}
+          {avisoDe('ventas', ventasRaw, { resumenCuenta: true })}
           {avisoDeLoListado(ventasFiltradas.length)}
           <div className="flex justify-between gap-2 flex-wrap">
             <div className="flex gap-1.5" role="group" aria-label="Filtrar por canal">
@@ -553,7 +573,10 @@ export default function Registros() {
 
         {/* COMPRAS */}
         <TabsContent value="compras" className="mt-4 space-y-3">
-          {avisoDe('compras', comprasRaw)}
+          {avisoDe('compras', comprasRaw, {
+            resumenCuenta: true,
+            total: resumenDelServidor?.compras.cantidad,
+          })}
           <div className="flex justify-end gap-2">
             <ExportarSeccionButton
               rows={comprasFiltradas}
@@ -616,7 +639,10 @@ export default function Registros() {
 
         {/* GASTOS */}
         <TabsContent value="gastos" className="mt-4 space-y-3">
-          {avisoDe('gastos', gastosRaw)}
+          {avisoDe('gastos', gastosRaw, {
+            resumenCuenta: true,
+            total: resumenDelServidor?.gastos.cantidad,
+          })}
           <div className="flex justify-end gap-2">
             <ExportarSeccionButton
               rows={gastosFiltrados}

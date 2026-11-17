@@ -216,6 +216,7 @@ export default function LiquidarPropinasDialog({
 
       queryClient.invalidateQueries({ queryKey: ['ventas_hoy'] });
       queryClient.invalidateQueries({ queryKey: ['registros_ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['registros_propinas'] });
       queryClient.invalidateQueries({ queryKey: ['liquidaciones_propinas'] });
       queryClient.invalidateQueries({ queryKey: ['propinas_dashboard_ventas'] });
       // Folio e importe son los del servidor: `LIQ-000042` del consecutivo

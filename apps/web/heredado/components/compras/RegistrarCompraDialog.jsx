@@ -39,6 +39,8 @@ import { textoDecimal } from '@/components/inventario/comandos';
 import { avisoAntesDeGuardar, useCajonParaPagar } from '~/venta/cajon-para-pagar';
 import { PagoDeLaCaja } from '~/venta/PagoDeLaCaja';
 import { hoyDelNegocio } from '~/cliente/dia-del-negocio';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { metodoDeCompraPermitido, puedePagarComprasDelCajon } from '@/components/configuracion/puestos';
 
 /** Cada línea: ingrediente existente o nuevo; cantidad/unidad/costo. */
 export default function RegistrarCompraDialog({ open, onClose, ingredientes = [] }) {
@@ -51,7 +53,11 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
   const UNIDADES = getUnidadesCompra(config);
   const [lines, setLines] = useState([emptyLine()]);
   const [fecha, setFecha] = useState(hoyDelNegocio());
-  const [metodoPago, setMetodoPago] = useState('efectivo');
+  // A5 · Una compra en efectivo sale del cajón: el almacén la registra por transferencia o tarjeta.
+  const puesto = usePuesto();
+  const pagaDelCajon = puedePagarComprasDelCajon(puesto);
+  const [metodoElegido, setMetodoPago] = useState(null);
+  const metodoPago = metodoDeCompraPermitido(metodoElegido, puesto);
   // proveedor: 'directa' (sin proveedor), o el ID del Proveedor seleccionado, o '__libre__' (texto manual).
   const [proveedorMode, setProveedorMode] = useState('directa');
   const [proveedor, setProveedor] = useState(''); // texto libre cuando proveedorMode === '__libre__'
@@ -107,7 +113,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
     setProveedorMode('directa');
     setProveedor('');
     setNotas('');
-    setMetodoPago('efectivo');
+    setMetodoPago(null);
     setFecha(hoyDelNegocio());
     setGuardarPlantilla(false);
     setNombrePlantilla('');
@@ -415,7 +421,7 @@ export default function RegistrarCompraDialog({ open, onClose, ingredientes = []
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="efectivo">Efectivo</SelectItem>
+                  {pagaDelCajon && <SelectItem value="efectivo">Efectivo</SelectItem>}
                   <SelectItem value="tarjeta">Tarjeta</SelectItem>
                   <SelectItem value="transferencia">Transferencia</SelectItem>
                 </SelectContent>

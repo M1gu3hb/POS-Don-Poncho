@@ -348,31 +348,34 @@ export default function RecetaAccordionRow({
               </>
             )}
 
-            <div className="flex flex-col gap-2 pt-1 @md:flex-row @md:justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full @md:w-auto"
-                onClick={() => onPrint?.(producto)}
-              >
-                <Printer className="mr-1 h-4 w-4" /> Imprimir ficha
-              </Button>
-              {!readOnly && onEdit && (
-                <Button size="sm" className="w-full @md:w-auto" onClick={() => onEdit?.(producto)}>
-                  <Pencil className="mr-1 h-4 w-4" /> Editar receta
-                </Button>
-              )}
-              {!readOnly && onDelete && (
+            {/* A10 · Los botones sólo existen con el renglón abierto (no se oyen ni se tabulan plegados). */}
+            {open && (
+              <div className="flex flex-col gap-2 pt-1 @md:flex-row @md:justify-end">
                 <Button
+                  variant="outline"
                   size="sm"
-                  variant="destructive"
                   className="w-full @md:w-auto"
-                  onClick={() => setConfirmOpen(true)}
+                  onClick={() => onPrint?.(producto)}
                 >
-                  <Trash2 className="mr-1 h-4 w-4" /> Eliminar receta
+                  <Printer className="mr-1 h-4 w-4" /> Imprimir ficha
                 </Button>
-              )}
-            </div>
+                {!readOnly && onEdit && (
+                  <Button size="sm" className="w-full @md:w-auto" onClick={() => onEdit?.(producto)}>
+                    <Pencil className="mr-1 h-4 w-4" /> Editar receta
+                  </Button>
+                )}
+                {!readOnly && onDelete && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="w-full @md:w-auto"
+                    onClick={() => setConfirmOpen(true)}
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" /> Eliminar receta
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
