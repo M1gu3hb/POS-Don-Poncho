@@ -192,7 +192,7 @@ async function arbitrarElStock(
       const kardex = Math.round(Number(f.entradas) / 10_000);
       const cota =
         Math.floor((compras.length * Math.max(Number(f.existencia), 0)) / 20_000 + 0.5) + 1;
-      const diferencia = Math.abs(Number(kardex) - pagado);
+      const diferencia = Math.abs(kardex - pagado);
       c.comparar(
         'inventario',
         `${f.nombre}: lo que costaron las compras del día contra el kardex valuado (¢, tolerancia ${String(cota)})`,

@@ -16,6 +16,13 @@
 /** La clave de `motivos_merma` de un ajuste por conteo (062). */
 export const MOTIVO_DEL_AJUSTE = 'ajuste_conteo';
 
+/**
+ * DP-D171 · La clave de `motivos_merma` con que se anota «Merma / producto perdido»: «Dañado en
+ * almacén». El catálogo no trae una clave de «perdido» o «desperdicio» y no se inventan claves.
+ */
+export const MOTIVO_DE_LA_MERMA = 'dañado';
+export const ETIQUETA_DE_LA_MERMA = 'Dañado en almacén';
+
 /** El largo de `nota` en `inventario.ajustar`. */
 const MAXIMO_DE_LA_NOTA = 300;
 
@@ -25,6 +32,8 @@ export interface AjusteAEnviar {
   readonly cantidad: string;
   readonly motivo: string;
   readonly nota: string;
+  /** DP-D171 · `merma` se anota como MERMA (sale en el corte); sin él, es un ajuste de conteo. */
+  readonly tipo?: 'merma';
 }
 
 export function cuerpoDelAjuste(ajuste: {
@@ -35,7 +44,19 @@ export function cuerpoDelAjuste(ajuste: {
   /** «Corrección de conteo», «Merma»…: el tipo que eligió, que no es una clave. */
   readonly tipoLegible: string;
   readonly texto: string;
+  /** DP-D171 · «Merma / producto perdido» que RESTA: se manda como merma, con su motivo del catálogo. */
+  readonly esMerma?: boolean;
 }): AjusteAEnviar {
+  if (ajuste.esMerma === true && ajuste.cantidad.startsWith('-')) {
+    return {
+      almacenId: ajuste.almacenId,
+      insumoId: ajuste.insumoId,
+      cantidad: ajuste.cantidad,
+      motivo: MOTIVO_DE_LA_MERMA,
+      nota: `${ajuste.tipoLegible}: ${ajuste.texto.trim()}`.slice(0, MAXIMO_DE_LA_NOTA),
+      tipo: 'merma',
+    };
+  }
   return {
     almacenId: ajuste.almacenId,
     insumoId: ajuste.insumoId,

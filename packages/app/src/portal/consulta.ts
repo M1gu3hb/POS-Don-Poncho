@@ -265,6 +265,8 @@ async function productosVisibles(
     // El interruptor por producto. Un producto del POS que Miguel no quiso en
     // el menú digital no aparece aquí ni aunque esté activo.
     .where('p.visible_en_menu_digital', '=', true)
+    // DP-D174: lo que se oculta del POS («Visible en POS» apagado en Recetas) tampoco sale en el portal.
+    .where('p.visible_en_pos', '=', true)
     .orderBy('p.nombre')
     .limit(TOPE_CATALOGO)
     .execute();

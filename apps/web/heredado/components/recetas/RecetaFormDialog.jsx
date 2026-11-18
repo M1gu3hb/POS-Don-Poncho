@@ -509,6 +509,7 @@ export default function RecetaFormDialog({
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <Switch
+                      aria-label="Activo"
                       checked={producto.activo}
                       onCheckedChange={(v) => setProducto({ ...producto, activo: v })}
                     />
@@ -516,6 +517,7 @@ export default function RecetaFormDialog({
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
+                      aria-label="Visible en POS"
                       checked={producto.visible_en_pos}
                       onCheckedChange={(v) => setProducto({ ...producto, visible_en_pos: v })}
                     />

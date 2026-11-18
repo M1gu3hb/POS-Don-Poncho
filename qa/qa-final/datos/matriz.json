@@ -1,5 +1,5 @@
 {
-  "commit": "a73c69f",
+  "commit": "383de1d",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -344,7 +344,7 @@
           "titulo": null
         }
       ],
-      "lineas": 19344,
+      "lineas": 19347,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -879,7 +879,7 @@
           "titulo": null
         }
       ],
-      "lineas": 5113,
+      "lineas": 5151,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -1614,7 +1614,7 @@
           "titulo": null
         }
       ],
-      "lineas": 5383,
+      "lineas": 5385,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -2806,11 +2806,11 @@
           "apps/web/heredado/components/registros/ResumenPeriodo.jsx:59",
           "apps/web/heredado/lib/moneyColors.js:15",
           "apps/web/heredado/lib/moneyColors.js:23",
-          "apps/web/heredado/pages/Caja.jsx:1596",
-          "apps/web/heredado/pages/Caja.jsx:1693",
-          "apps/web/heredado/pages/Caja.jsx:1851",
-          "apps/web/heredado/pages/Caja.jsx:2237",
-          "apps/web/heredado/pages/Caja.jsx:2255",
+          "apps/web/heredado/pages/Caja.jsx:1599",
+          "apps/web/heredado/pages/Caja.jsx:1696",
+          "apps/web/heredado/pages/Caja.jsx:1854",
+          "apps/web/heredado/pages/Caja.jsx:2240",
+          "apps/web/heredado/pages/Caja.jsx:2258",
           "apps/web/heredado/pages/Dashboard.jsx:617",
           "apps/web/heredado/pages/Mesero.jsx:1836",
           "apps/web/heredado/pages/Mesero.jsx:1942",
@@ -2999,7 +2999,7 @@
         "conValorPorOmision": true,
         "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:161"],
         "lectores": [
-          "apps/web/heredado/pages/Caja.jsx:1282",
+          "apps/web/heredado/pages/Caja.jsx:1285",
           "packages/app/src/caja/corte/documento.ts:377"
         ],
         "pruebasQueLaNombran": [
@@ -3638,6 +3638,7 @@
           "qa/qa-final/oraculo/dinero.test.ts",
           "qa/qa-final/oraculo/dinero.ts",
           "qa/qa-final/propiedades/dinero.propiedades.test.ts",
+          "qa/simulador/arbitro/hora.ts",
           "qa/simulador/arbitro/invariantes-sql.ts"
         ],
         "efecto": {
@@ -5615,7 +5616,9 @@
           "pruebas/e2e/vista-de-solicitudes.spec.ts",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx",
-          "pruebas/impresion/ticket-identico.spec.ts"
+          "pruebas/impresion/ticket-identico.spec.ts",
+          "qa/simulador/parte5/pasos-compras.ts",
+          "qa/simulador/parte5/pasos-extra.ts"
         ],
         "efecto": {
           "efecto": "El teléfono del negocio en el ticket, el corte y los PDF.",
@@ -7168,7 +7171,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1103",
+        "apps/web/heredado/pages/Caja.jsx:1106",
         "apps/web/heredado/pages/CorteCaja.jsx:124",
         "apps/web/src/restaurante/Caja.tsx:619"
       ],
@@ -7224,7 +7227,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1224",
+        "apps/web/heredado/pages/Caja.jsx:1227",
         "apps/web/heredado/pages/CorteCaja.jsx:151",
         "apps/web/src/restaurante/CierreDiario.tsx:507"
       ],
@@ -7236,7 +7239,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1142",
+        "apps/web/heredado/pages/Caja.jsx:1145",
         "apps/web/src/venta/CorteDeTurno.tsx:50"
       ],
       "pantallas": ["/caja", "/restaurante/caja"]

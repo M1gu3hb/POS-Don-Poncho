@@ -270,5 +270,5 @@ leída y con mutantes propios encima de los del agente que la hizo:
   los lotes anteriores en pie. **0 fallas.**
 - **Lectura de producción después:** idéntica a la de antes salvo las migraciones (127 aplicadas,
   la última la 195). Ninguna cuenta, caja ni ajuste cambió.
-- **Vercel:** 0 errores al desplegar. Falta la revisión de la hora siguiente (a partir de las
-  21:43).
+- **Vercel:** 0 errores al desplegar y **0 en la hora siguiente** (revisado a las 21:43, ventana
+  de 2 h). **Lote 4 cerrado.**

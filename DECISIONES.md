@@ -3501,6 +3501,64 @@ guardar (hoy una configuración incompatible se ignora en silencio al cobrar).
   pierda, con la lista de todos los interruptores de Configuración. Lo que SÍ es real y queda abierto: el
   interruptor mide 32×18 px (blanco táctil de 44 px incumplido, en la primitiva compartida `Switch`).
 
+## DP-D171 · DP-22 · «Merma / producto perdido» de Inventario → Ajustar graba una MERMA, con su motivo del catálogo · 17-11-2026
+
+Hallazgo A de la Parte 5. La pantalla mandaba la merma a `inventario.ajustar` con `ajuste_conteo` y el
+movimiento quedaba como `ajuste`: el corte (que sólo cuenta `merma` y `salida_consumo_interno`) y los
+reportes de merma no la veían. Ahora `inventario.ajustar` acepta `tipo: 'ajuste' | 'merma'` (por omisión
+`ajuste`, así que el conteo físico y lo ya escrito no cambian) y con `merma` graba un movimiento de MERMA
+(referencia `merma`, costo exacto al moverse, DP-D165) por el mismo camino de `registrar_merma`: sólo resta,
+y con la existencia ya en negativo se registra igual (DP-D116, DP-D146).
+- **El motivo.** La pantalla no lo captura; el catálogo no trae «perdido» ni «desperdicio» y no se inventan
+  claves: se usa `dañado` («Dañado en almacén», no imputable) y la pantalla lo dice bajo el selector: «Se
+  anota como merma «Dañado en almacén» y sale en la merma del corte». Lo que la persona escribe va en la nota.
+- **Lo ya escrito como ajuste no se reescribe** (es historia: las mermas de prueba del día 0 siguen como
+  `ajuste`).
+- **Pruebas.** Integración `merma-desde-ajustar.integracion.test.ts` (4: sale en la merma del corte con su
+  importe al centavo, 2 000 g × 3.4567 ¢ = 6 913 ¢; el conteo sigue siendo ajuste; sobre un negativo se
+  registra; una merma que suma se rechaza), fallaba antes (3 de 4). Unitarias en `ajuste-de-stock.test.ts`.
+  Mutantes muertos: sin leer el `tipo`, anotar `ajuste`, sin costo exacto, el diálogo sin `esMerma`, el
+  motivo del conteo; la mutación inocua pasa.
+
+## DP-D172 · DP-22 · La Caja se relee por `datos.regla`, no por `codigo` (corrige DP-D168) · 17-11-2026
+
+La prueba en el navegador (`total-que-cambio.ts`) mostró que el arreglo del hallazgo 12 nunca corría: el
+servidor contesta `codigo: 'REGLA_DE_NEGOCIO'` y la regla en `datos.regla`; `Caja.jsx` comparaba
+`err.codigo === 'TOTAL_DESACTUALIZADO'`, que no coincide jamás (el contrato leía el texto y pasaba). Con el
+cobro abierto, el mesero quita un platillo con el PIN del gerente y la cajera toca «Cobrar»: HTTP 422
+`TOTAL_DESACTUALIZADO` (o 409 `PROPINA_VIGENTE` si la caja ya había elegido la propina) y la pantalla se
+quedaba con el renglón quitado, el total viejo y lo tecleado. Ahora se relee con las dos reglas, leídas de
+`err.datos.regla`. Con el build nuevo: `H12-BIEN` (el total pasa de 315.00 a 140.00, lo tecleado se
+limpia y el segundo cobro cobra el total nuevo). El contrato exige además que NO vuelva a compararse
+`err.codigo`. Mutantes: el viejo `err.codigo`, sin la regla del total y la mutación inocua.
+
+## DP-D173 · DP-22 · La pantalla de Ajustar ya no frena una merma sobre una existencia que ya estaba en negativo · 17-11-2026
+
+DP-D116 deja que lo que pasó por cocina se cobre aunque el almacén diga que no había, y DP-D146 que la merma
+de ese insumo se registre igual. El servidor ya lo hacía, pero `AjustarStockDialog.jsx` frenaba CUALQUIER
+ajuste que dejara el stock en negativo («El ajuste dejaría el stock en negativo»). Ahora una merma
+(`tipoAjuste === 'merma'`) que resta sobre una existencia que ya es negativa se deja pasar y la pantalla lo
+dice («La existencia ya estaba en negativo: la merma se registra y el conteo físico la corrige»); lo demás se
+sigue frenando. Verificado en el navegador (pan: −2 → −3 → conteo en 10). Contrato en `ajuste-de-stock.test.ts`
+con dos mutantes (sin la excepción y la excepción a toda resta) y uno inocuo.
+
+## DP-D174 · DP-22 · Un platillo oculto del POS tampoco sale en el portal del comensal ni se puede pedir desde él · 17-11-2026
+
+Parte 5, «ocultar del portal». «Visible en POS» apagado (Recetas → Editar receta) ocultaba el platillo del
+POS (mesero y cajas), pero el portal sólo miraba `activo` y `visible_en_menu_digital`, una columna que NINGUNA
+pantalla cambia (sólo la toca archivar un platillo): el platillo oculto seguía en el menú del QR y un teléfono
+podía pedirlo. Se midió por pantallas (el Flan oculto: 0 fichas en la mesa y en Para llevar, 1 en el portal).
+Ahora el menú del portal (`payloadDelPortal`) y lo que el portal acepta pedir (`cargarProductosDelMenu`) piden
+también `visible_en_pos = true`. Es visibilidad, no dinero ni inventario. Integración
+`portal-oculto-del-pos.integracion.test.ts` (2, fallaban antes) con dos mutantes (sin el filtro en el menú y
+sin el filtro al pedir) y uno inocuo; en el navegador, con el build nuevo, el Flan oculto sale 0 veces en el
+portal, en la mesa y en Para llevar, y vuelve al mostrarlo. Además los dos interruptores del editor de la
+receta («Activo» y «Visible en POS») no traían nombre accesible: ahora sí, con contrato y mutantes.
+**Encontrado, no arreglado:** «Utilidad bruta» de Registros (Hoy) dice $774.20 con 72.4 % de margen, una base de
+$1,070.00 de $1,974.50 cobrados: no cuenta lo vendido POR PESO (barbacoa, costillar y arrachera, $904.50), que
+no trae costo de receta; el margen del reporte ignora lo vendido por kilo. Es una decisión de producto (¿el
+costo del kilo es el del insumo base?) y toca el margen de lo más caro del menú.
+
 ## DP-D175 · DP-22 · El día de bots: un día completo con aparatos táctiles, caos programado y árbitro cada hora · 17-11-2026
 
 Perfil `dp22` del simulador (`qa/simulador/perfil-dp22.ts`, lanzador `correr-dp22.ts`). No cambia la app ni
@@ -3541,3 +3599,7 @@ ninguna regla de dinero o de inventario: lo que no cuadre es un hallazgo, no un 
   había fijado la Caja). El día completo, con la máquina sola, es lo que lo confirma o lo descarta.
 - **Del clon, no de la app:** las fotos del molde apuntan al almacén de otra corrida (puerto 3230) y el CSP
   las bloquea: el árbitro lo declara explicado.
+  pierda, con la lista de todos los interruptores de Configuración. El blanco táctil del
+  interruptor (32×18 px a la vista) SÍ está cubierto: con el dedo, `blancos-tactiles.css` le da un
+  pseudo-elemento de 44×44 px (medido en el navegador: un toque a 20 px del centro cae en el interruptor, a
+  30 px no); `qa/simulador/parte5/interruptores.ts` lo mide. No se cambió nada.

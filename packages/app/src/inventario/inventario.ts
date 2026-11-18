@@ -6,7 +6,8 @@ import { costoExactoDeCentavos } from '@morphiqpos/domain/inventario';
 import { sql } from 'kysely';
 import { z } from 'zod';
 
-import { definirComando } from '../comando.ts';
+import { definirComando, type ContextoComando } from '../comando.ts';
+import { descontarExistencia } from './merma.ts';
 import { exigirMotivoDeMerma } from './motivos.ts';
 
 const ROLES = ['dueno', 'administrador', 'gerente', 'almacen'] as const;
@@ -49,6 +50,13 @@ export const entradaAjustarStock = z.object({
    */
   motivo: z.string().trim().min(3).max(60).default('ajuste_conteo'),
   nota: z.string().trim().max(300).nullable().default(null),
+  /**
+   * DP-D171 · Qué es lo que se anota. `ajuste` (por omisión) es la corrección de conteo y se queda
+   * como movimiento `ajuste`. `merma` es lo que la pantalla manda con «Merma / producto perdido»: se
+   * anota como MERMA, con su motivo del catálogo, para que salga en la merma del corte y en los
+   * reportes; sólo resta, y con la existencia ya en negativo se registra igual (DP-D116, DP-D146).
+   */
+  tipo: z.enum(['ajuste', 'merma']).default('ajuste'),
 });
 
 export const crearAlmacen = definirComando<
@@ -225,6 +233,8 @@ export const ajustarStock = definirComando<
     // con un `23503` que el operador lee como «algo falló de nuestro lado».
     const motivo = await exigirMotivoDeMerma(ctx, entrada.motivo);
     const delta = normalizarSigno(entrada.cantidad);
+    if (entrada.tipo === 'merma')
+      return mermarDesdeElAjuste(ctx, entrada, referencias, motivo, delta);
     await sql`insert into existencias (organizacion_id, almacen_id, insumo_id, cantidad) values (${ctx.ambito.organizacionId}, ${entrada.almacenId}, ${entrada.insumoId}, 0) on conflict (almacen_id, insumo_id) do nothing`.execute(
       ctx.tx,
     );
@@ -269,6 +279,58 @@ export const ajustarStock = definirComando<
     return { cantidad: cantidadFinal };
   },
 });
+
+/** DP-D171 · La merma que llega por `inventario.ajustar`: movimiento de MERMA con el costo exacto. */
+async function mermarDesdeElAjuste(
+  ctx: ContextoComando<Transaccion>,
+  entrada: z.infer<typeof entradaAjustarStock>,
+  referencias: {
+    readonly unidad_base: string;
+    readonly costo_unitario_centavos: bigint;
+    readonly costo_exacto_dmc: bigint;
+  },
+  motivo: string | null,
+  delta: string,
+): Promise<{ readonly cantidad: string }> {
+  if (!delta.startsWith('-'))
+    throw new ErrorDominio(
+      'INVENTARIO_INVALIDO',
+      'Una merma sólo resta: para sumar usa una entrada o un conteo.',
+    );
+  if (motivo === null) throw new ErrorDominio('INVENTARIO_INVALIDO', 'Una merma lleva su motivo.');
+  await descontarExistencia(ctx, entrada.almacenId, entrada.insumoId, delta);
+  await ctx.paso('registrar_merma', () =>
+    ctx.tx
+      .insertInto('movimientos_stock')
+      .values({
+        organizacion_id: ctx.ambito.organizacionId,
+        almacen_id: entrada.almacenId,
+        insumo_id: entrada.insumoId,
+        tipo: 'merma',
+        cantidad: delta,
+        unidad: referencias.unidad_base,
+        costo_unitario_centavos: referencias.costo_unitario_centavos,
+        costo_exacto_dmc: referencias.costo_exacto_dmc,
+        referencia_tipo: 'merma',
+        empleado_id: ctx.ambito.empleoId,
+        motivo,
+        nota: entrada.nota,
+      })
+      .execute(),
+  );
+  ctx.auditar({
+    entidadId: entrada.insumoId,
+    payload: { almacenId: entrada.almacenId, delta, motivo, nota: entrada.nota, tipo: 'merma' },
+  });
+  const saldo = await ctx.tx
+    .selectFrom('existencias')
+    .select('cantidad')
+    .where('organizacion_id', '=', ctx.ambito.organizacionId)
+    .where('almacen_id', '=', entrada.almacenId)
+    .where('insumo_id', '=', entrada.insumoId)
+    .executeTakeFirstOrThrow();
+  return { cantidad: saldo.cantidad };
+}
 
 async function verificarReferencias(
   tx: Transaccion,

@@ -41,8 +41,11 @@ describe('la Caja cuando el total cambió con el cobro abierto (hallazgo 12)', (
 
   it('tras «El total cambió…», la cuenta se relee del servidor', () => {
     expect(alFallarElCobro()).toMatch(
-      /\(err\?\.codigo === 'TOTAL_DESACTUALIZADO' \|\| err\?\.datos\?\.regla === 'PROPINA_VIGENTE'\) &&\s*ventaSeleccionada\?\.id\s*\) \{\s*await releerLaCuentaDelCobro\(ventaSeleccionada\.id\);\s*\}/,
+      /\(err\?\.datos\?\.regla === 'TOTAL_DESACTUALIZADO' \|\|\s*err\?\.datos\?\.regla === 'PROPINA_VIGENTE'\) &&\s*ventaSeleccionada\?\.id\s*\) \{\s*await releerLaCuentaDelCobro\(ventaSeleccionada\.id\);\s*\}/,
     );
+    // DP-D172 · el servidor manda `codigo: 'REGLA_DE_NEGOCIO'`; la regla va en `datos.regla`. Comparar
+    // `err.codigo` con la regla nunca coincide y la pantalla se queda con el total viejo.
+    expect(alFallarElCobro()).not.toMatch(/err\?\.codigo === 'TOTAL_DESACTUALIZADO'/);
   });
 
   it('también se relee cuando la caja ya había elegido la propina y la cuenta cambió (DP-D168)', () => {

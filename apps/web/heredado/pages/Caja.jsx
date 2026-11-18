@@ -1048,8 +1048,11 @@ export default function Caja() {
         // DP-D168: lo mismo cuando la cuenta cambió y la caja ya había elegido la propina
         // (`PROPINA_VIGENTE`: el mesero quitó un platillo con el PIN del gerente): el servidor
         // rechaza igual y la pantalla se quedaba con los renglones y el total de antes.
+        // DP-D172: el servidor manda `codigo: 'REGLA_DE_NEGOCIO'` y la regla en `datos.regla`; comparar
+        // el `codigo` con 'TOTAL_DESACTUALIZADO' nunca coincidía y la relectura de DP-D168 no corría.
         if (
-          (err?.codigo === 'TOTAL_DESACTUALIZADO' || err?.datos?.regla === 'PROPINA_VIGENTE') &&
+          (err?.datos?.regla === 'TOTAL_DESACTUALIZADO' ||
+            err?.datos?.regla === 'PROPINA_VIGENTE') &&
           ventaSeleccionada?.id
         ) {
           await releerLaCuentaDelCobro(ventaSeleccionada.id);
