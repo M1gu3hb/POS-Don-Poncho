@@ -126,6 +126,8 @@ export interface Mundo {
   adopcionAbierta: boolean;
   /** DP-22 · Aparatos que se apagan: persona → minuto del día en que el aparato vuelve a encender. */
   apagones: Map<string, number>;
+  /** DP-22 · Mesa → mesero al que la dueña se la repartió (vacío hasta el primer reparto). */
+  repartoDeMesas: Map<number, string>;
 }
 
 export function mundoVacio(): Mundo {
@@ -144,6 +146,7 @@ export function mundoVacio(): Mundo {
     cuentasSinMesero: [],
     adopcionAbierta: false,
     apagones: new Map(),
+    repartoDeMesas: new Map(),
   };
 }
 

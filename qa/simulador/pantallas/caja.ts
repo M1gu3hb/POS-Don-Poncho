@@ -169,12 +169,28 @@ export async function abrirLaCuenta(
   /** Si el diálogo no se titula «Cobrar — <titulo>» (las partes de una cuenta dividida), cómo se reconoce. */
   tituloDelDialogo?: string | RegExp,
   alOcultarse?: () => void,
+  /** Cuánto tardó la pantalla en responder al toque (sin contar lo que tardan los toques del bot). */
+  alMedir?: (medidas: { readonly apareceMs: number }) => void,
 ): Promise<Locator> {
+  // Cuánto tarda cada paso (la espera de la app y lo que tarda el dedo del bot): el día 2211 midió ~2.9 s
+  // en total y no se sabía cuánto era de cada cosa. Va al registro de la corrida, no es un incidente.
+  const t0 = Date.now();
   await pagina.getByRole('tab', { name: /^Pendientes/ }).click();
+  const t1 = Date.now();
   await pagina.getByRole('button', { name: rotulo }).first().click();
+  const t2 = Date.now();
   const dialogo = dialogoCon(pagina, tituloDelDialogo ?? `Cobrar — ${titulo}`);
+  await expect(dialogo.or(pagina.getByText('¿Desean agregar propina?')).first()).toBeVisible({
+    timeout: 30_000,
+  });
+  const t3 = Date.now();
   await decidirLaPropina(pagina, dialogo, propina, alOcultarse);
   await expect(dialogo).toBeVisible({ timeout: 30_000 });
+  const t4 = Date.now();
+  alMedir?.({ apareceMs: t3 - t2 });
+  console.log(
+    `[abrir-cuenta] ${titulo}: pestaña ${String(t1 - t0)} ms · tocar ${String(t2 - t1)} ms · aparece ${String(t3 - t2)} ms · propina ${String(t4 - t3)} ms`,
+  );
   return dialogo;
 }
 

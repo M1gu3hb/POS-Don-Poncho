@@ -330,12 +330,17 @@ async function arbitrarElEfectivo(
   );
 }
 
-const COMANDAS = `
+// El corte es el de la COMANDA (cuándo se mandó a cocina), no el de cada fila: al dividir una cuenta, una
+// línea de 2 piezas se parte en 1 + 1 y la pieza nueva entra a la MISMA comanda con la hora de la división
+// (D22-058 y D22-059 del día 2212: la división cayó después del corte, la fila vieja ya traía 1 y la nueva
+// quedaba fuera, y el árbitro veía una pieza menos). Las piezas siguen siendo las que se mandaron.
+export const COMANDAS = `
 select split_part(ci.producto_nombre, ' · ', 1) as nombre,
        coalesce(sum(ci.cantidad) filter (where ci.estado <> 'cancelado'), 0)::text as piezas,
        count(*) filter (where ci.estado <> 'cancelado')::int as filas
   from comanda_items ci
- where ci.organizacion_id = ${ORGANIZACION} and ci.created_at >= $1::timestamptz and ci.created_at <= $2::timestamptz
+  join comandas c on c.id = ci.comanda_id and c.organizacion_id = ci.organizacion_id
+ where ci.organizacion_id = ${ORGANIZACION} and c.created_at >= $1::timestamptz and c.created_at <= $2::timestamptz
  group by 1`;
 
 const TIPOS_DE_VENTA = `select split_part(nombre, ' · ', 1) as nombre, bool_or(tipo_venta = 'precio_fijo') as por_pieza from productos group by 1`;

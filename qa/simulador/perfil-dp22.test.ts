@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { IDS_QUE_SABE_HACER } from './bots/caos-dp22.ts';
 import { generarHorario } from './horario.ts';
 import {
+  CAJA_DOS,
   CAOS_DEL_DIA,
+  ENTRA_LA_CAJA_DOS,
   ESTACIONES_DEL_DIA,
   LLEGADAS_DEL_DIA_DE_BOTS,
   MESEROS_DEL_DIA,
@@ -80,5 +82,13 @@ describe('el perfil dp22 (el día de bots)', () => {
     const entre = (a: number, b: number): number =>
       l.filter((x) => x.horaSim >= a * 60 && x.horaSim < b * 60).length;
     expect(entre(13, 16)).toBeGreaterThan(entre(8, 11) * 1.5);
+  });
+
+  it('el traslado de la Caja 2 cae cuando dice R1 (15:00), contando desde que ELLA abre y no desde las 8:00', () => {
+    // El bot de la caja cuenta sus minutos desde su apertura: la Caja 2 abre a las 12:40, y con el 420 del
+    // día el traslado caía a las 19:40 y no pasaba nunca (R1 «no ejecutado» en los días 2212 y 2213).
+    const r1 = CAOS_DEL_DIA.find((p) => p.id === 'R1');
+    expect(CAJA_DOS.traslado?.enMinuto).toBeDefined();
+    expect(ENTRA_LA_CAJA_DOS + (CAJA_DOS.traslado?.enMinuto ?? 0)).toBe(r1?.enMinuto);
   });
 });

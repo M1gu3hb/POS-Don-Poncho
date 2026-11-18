@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { clasificarLaVigilancia, valorExacto } from './hora.ts';
+import { clasificarLaVigilancia, COMANDAS, valorExacto } from './hora.ts';
 
 describe('el valor del inventario con un solo redondeo del costo exacto', () => {
   it('19 000 ml de leche a 2.4 ¢/ml valen $456.00 exactos', () => {
@@ -47,5 +47,15 @@ describe('lo que vieron los navegadores', () => {
   it('sólo mira lo posterior a «desde»', () => {
     const r = clasificarLaVigilancia([h('5xx', '500 GET /x', 5), h('5xx', '500 GET /y', 50)], 20);
     expect(r.cincoXX).toBe(1);
+  });
+});
+
+describe('el corte de las comandas es el de la comanda, no el de cada fila (D22-058 y D22-059)', () => {
+  it('al dividir una cuenta la pieza nueva entra a la misma comanda con otra hora: se cuenta por la comanda', () => {
+    expect(COMANDAS).toContain('join comandas c');
+    expect(COMANDAS).toContain(
+      'c.created_at >= $1::timestamptz and c.created_at <= $2::timestamptz',
+    );
+    expect(COMANDAS).not.toContain('ci.created_at');
   });
 });

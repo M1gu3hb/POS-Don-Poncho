@@ -13,6 +13,8 @@ import type { NombreDeAparato } from '../aparatos.ts';
 import { estanciaAlSentarse, minutoDelDia } from '../horario.ts';
 import { contar, type Llegada } from '../mundo.ts';
 import { planearRonda } from '../pedido.ts';
+import { esDeQuien, preferirLasMias } from './reparto-de-mesas.ts';
+import { elegirMesaDeLaMismaZona } from './zonas.ts';
 import { asegurarSesion, despertar, entrarOFallar } from '../sesion.ts';
 import { ESPERA_MS, intentar, recuperar, traza, vigilarServidor } from './ayudas.ts';
 import {
@@ -86,7 +88,8 @@ class Mesero {
     if (this.cuentas.length >= MAX_CUENTAS) return;
     const libres = mesas.filter((m) => m.estado === 'Libre' && !ctx.mundo.atendidas.has(m.numero));
     const idx = ctx.mundo.llegadas.findIndex((l) => !l.usaQr && l.horaSim <= ahoraMin);
-    const mesa = libres[0];
+    // Con el reparto puesto el mesero sienta primero en SUS mesas (sólo en ésas se le ofrece mover la cuenta).
+    const mesa = preferirLasMias(libres, ctx.mundo.repartoDeMesas, this.cfg.persona)[0];
     if (idx === -1 || mesa === undefined) return;
     const [llegada] = ctx.mundo.llegadas.splice(idx, 1) as [Llegada];
     ctx.mundo.atendidas.set(mesa.numero, llegada.id);
@@ -291,7 +294,11 @@ class Mesero {
       // Desde 4 personas y con 0.7: con 5+ y 0.5 el día 1 dejó 3 uniones y el mínimo es 10.
       (c) => c.personas >= 4 && c.ronda >= 1 && c.fase === 'abierta' && !c.unida,
     );
-    const otra = mesas.find((m) => m.estado === 'Libre' && !ctx.mundo.atendidas.has(m.numero));
+    // Las dos en la MISMA zona: el plano de «Unir mesas» enseña una zona a la vez.
+    const otra =
+      grande === undefined
+        ? undefined
+        : elegirMesaDeLaMismaZona(mesas, grande.mesa, ctx.mundo.atendidas);
     if (grande === undefined || otra === undefined || !ctx.azar.probabilidad(0.7)) return;
     ctx.mundo.atendidas.set(otra.numero, `${grande.cuenta}+`);
     grande.unida = true;
@@ -313,7 +320,14 @@ class Mesero {
   async cambiarUnaMesa(mesas: readonly MesaEnPantalla[]): Promise<void> {
     const { ctx } = this;
     const c = this.cuentas.find(
-      (x) => x.fase === 'abierta' && x.ronda >= 1 && !x.llegoEnPortal && !x.movida,
+      (x) =>
+        x.fase === 'abierta' &&
+        x.ronda >= 1 &&
+        !x.llegoEnPortal &&
+        !x.movida &&
+        // Una cuenta de mesas UNIDAS no se mueve ("sepáralas antes"): la app no ofrece el botón (D22-012).
+        !x.unida &&
+        esDeQuien(ctx.mundo.repartoDeMesas, x.mesa, this.cfg.persona),
     );
     const destino = mesas.find((m) => m.estado === 'Libre' && !ctx.mundo.atendidas.has(m.numero));
     if (c === undefined || destino === undefined || !ctx.azar.probabilidad(0.05)) return;

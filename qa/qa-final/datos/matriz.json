@@ -1,5 +1,5 @@
 {
-  "commit": "fd39a42",
+  "commit": "e4e0a70",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -1174,7 +1174,7 @@
           "titulo": null
         }
       ],
-      "lineas": 17369,
+      "lineas": 17397,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -2816,7 +2816,7 @@
         "lectores": [
           "apps/web/heredado/components/dashboard/ColoredStatCard.jsx:26",
           "apps/web/heredado/components/mesero/MesaActivaView.jsx:63",
-          "apps/web/heredado/components/mesero/MeseroCartFAB.jsx:217",
+          "apps/web/heredado/components/mesero/MeseroCartFAB.jsx:221",
           "apps/web/heredado/components/pos/CartPanel.jsx:12",
           "apps/web/heredado/components/propinas/PropinasDashboardSection.jsx:34",
           "apps/web/heredado/components/recetas/RecetaAccordionRow.jsx:81",
@@ -2829,8 +2829,8 @@
           "apps/web/heredado/pages/Caja.jsx:2242",
           "apps/web/heredado/pages/Caja.jsx:2260",
           "apps/web/heredado/pages/Dashboard.jsx:617",
-          "apps/web/heredado/pages/Mesero.jsx:1835",
-          "apps/web/heredado/pages/Mesero.jsx:1941",
+          "apps/web/heredado/pages/Mesero.jsx:1850",
+          "apps/web/heredado/pages/Mesero.jsx:1956",
           "apps/web/heredado/pages/Productos.jsx:275",
           "apps/web/heredado/pages/Registros.jsx:699",
           "apps/web/heredado/pages/Ventas.jsx:63"

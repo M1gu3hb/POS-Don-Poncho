@@ -114,15 +114,18 @@ async function disputar(ctx: ContextoDelBot, bot: Bot): Promise<void> {
       );
     } else {
       const ganador = buenos[0]?.json.datos;
-      const avisoDelOtro =
-        cuerpos.find((c) => c.estado !== 200)?.json.error?.mensaje ?? '(sin mensaje)';
-      if (avisoDelOtro === '(sin mensaje)') {
+      // La que perdió: cualquiera que no sea un cobro aceptado (la respuesta puede ser 200 con `ok: false`).
+      const perdedora = cuerpos.find((c) => !(c.estado === 200 && c.json.ok !== false));
+      const avisoDelOtro = perdedora?.json.error?.mensaje ?? '(sin mensaje)';
+      // Sin perdedora la otra caja no llegó a mandar su cobro (la pantalla ya la había frenado): no hay respuesta
+      // que juzgar (D22-068 del día 2212, con un solo POST y su ticket a la vista).
+      if (perdedora !== undefined && avisoDelOtro === '(sin mensaje)') {
         await ctx.incidente(
           {
             pantalla: lugar.pantalla,
             hizo: `Las dos cajas tocaron «Cobrar» a la vez en la cuenta de la ${titulo}`,
             esperaba: 'La caja que no cobró recibe un aviso claro (por qué no se cobró)',
-            paso: 'El servidor la rechazó sin ningún mensaje',
+            paso: `El servidor la rechazó sin ningún mensaje (HTTP ${String(perdedora.estado)}: ${JSON.stringify(perdedora.json).slice(0, 200)})`,
             gravedad: 'medio',
             clase: 'ux',
             reproducido: 'no intentado',

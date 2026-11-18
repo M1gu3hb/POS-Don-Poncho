@@ -62,7 +62,7 @@ export function dialogoDeMesa(pagina: Page, numero: number): Locator {
  * la 11 en la Terraza: sin cambiar de pestaña, la 9 y la 10 se quedaron todo el día 1 sin mesero
  * (sus grupos del portal nunca se confirmaron y las mesas no volvieron a usarse).
  */
-function pestanasDeZona(pagina: Page): Locator {
+export function pestanasDeZona(pagina: Page): Locator {
   return pagina
     .getByRole('button', { name: /^(?!Solicitudes)[^\d$]+ \(\d+\)$/ })
     .filter({ visible: true });
@@ -138,12 +138,48 @@ export async function abrirMesa(
   await dialogoDeMesa(pagina, numero).waitFor({ timeout: ESPERA_MS });
 }
 
+/** Cuánto se intenta tocar una mesa antes de buscarla en otra zona. */
+const ESPERA_ANTES_DE_CAMBIAR_DE_ZONA_MS = 8_000;
+
 /** Abre una mesa que ya tiene cuenta (toca su botón en la lista). */
 export async function entrarALaMesa(pagina: Page, numero: number): Promise<void> {
   if ((await dialogoDeMesa(pagina, numero).count()) > 0) return;
+  // El diálogo de OTRA mesa que se quedó abierto tapa el plano: se cierra antes (D22-036).
+  if ((await pagina.getByRole('dialog').count()) > 0) await alMapa(pagina);
   await aLaZonaDe(pagina, numero);
-  await botonDeMesa(pagina, numero).click({ timeout: ESPERA_MS });
+  await tocarLaMesa(pagina, numero);
   await dialogoDeMesa(pagina, numero).waitFor({ timeout: ESPERA_MS });
+}
+
+/**
+ * Toca la mesa en la zona a la vista; si no se deja tocar pronto (el texto de otra mesa pudo hacerla
+ * pasar por la buscada y `aLaZonaDe` no cambió de pestaña: D22-056, el Mesero 2 no tocó la 3 en 45 s),
+ * prueba en cada pestaña de zona.
+ */
+async function tocarLaMesa(pagina: Page, numero: number): Promise<void> {
+  const tocar = (ms: number) => botonDeMesa(pagina, numero).click({ timeout: ms });
+  try {
+    await tocar(ESPERA_ANTES_DE_CAMBIAR_DE_ZONA_MS);
+    return;
+  } catch (error) {
+    const pestanas = pestanasDeZona(pagina);
+    const cuantas = await pestanas.count();
+    if (cuantas < 2) {
+      await tocar(ESPERA_MS);
+      return;
+    }
+    for (let i = 0; i < cuantas; i += 1) {
+      await pestanas.nth(i).click({ timeout: ESPERA_MS });
+      await pagina.waitForTimeout(300);
+      try {
+        await tocar(ESPERA_ANTES_DE_CAMBIAR_DE_ZONA_MS);
+        return;
+      } catch {
+        // se sigue con la zona que sigue
+      }
+    }
+    throw error;
+  }
 }
 
 function fichaDePlatillo(mesa: Locator, nombre: string): Locator {
@@ -285,12 +321,30 @@ export async function hayListoParaRecoger(pagina: Page, numero: number): Promise
   return texto.includes('Esperando entrega');
 }
 
+/** Cuánto se espera el botón antes de comprobar en el plano si otro mesero ya entregó. */
+const ESPERA_ANTES_DE_MIRAR_EL_PLANO_MS = 12_000;
+
 /** «Marcar entregado» / «Entregar listos» hasta que no quede botón; devuelve cuántos toques hizo. */
 export async function entregarListos(pagina: Page, numero: number): Promise<number> {
   await entrarALaMesa(pagina, numero);
   const mesa = dialogoDeMesa(pagina, numero);
   const botones = mesa.getByRole('button', { name: /^(Entregar listos|Marcar entregado)$/ });
-  await botones.first().waitFor({ timeout: ESPERA_MS });
+  // Otro mesero pudo recoger la mesa entre la vuelta y este toque (los dos recorren todo el plano):
+  // el encabezado del diálogo conserva la foto de cuando se abrió, así que se mira el plano. Si ya no
+  // dice «Esperando entrega», no había nada que entregar; si lo sigue diciendo, se espera el botón.
+  const aparecio = await botones
+    .first()
+    .waitFor({ timeout: ESPERA_ANTES_DE_MIRAR_EL_PLANO_MS })
+    .then(
+      () => true,
+      () => false,
+    );
+  if (!aparecio) {
+    await alMapa(pagina);
+    if (!(await hayListoParaRecoger(pagina, numero))) return 0;
+    await entrarALaMesa(pagina, numero);
+    await botones.first().waitFor({ timeout: ESPERA_MS });
+  }
   let toques = 0;
   while ((await botones.count()) > 0 && toques < 10) {
     const entregada = pagina.waitForResponse(

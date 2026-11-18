@@ -1,6 +1,6 @@
 # MATRIZ · DP-22 · El mapa total
 
-> Generado por `node scripts/qa-final/generar-matriz.mjs` sobre `fd39a42`. **No se edita a mano**: lo que cambia se cambia en el código o en `qa/qa-final/datos/` (`efectos.json`, `flujos.json`) y se vuelve a generar. Las listas completas (todas las citas `archivo:línea`) están en `qa/qa-final/datos/matriz.json`.
+> Generado por `node scripts/qa-final/generar-matriz.mjs` sobre `e4e0a70`. **No se edita a mano**: lo que cambia se cambia en el código o en `qa/qa-final/datos/` (`efectos.json`, `flujos.json`) y se vuelve a generar. Las listas completas (todas las citas `archivo:línea`) están en `qa/qa-final/datos/matriz.json`.
 
 ## Resumen
 

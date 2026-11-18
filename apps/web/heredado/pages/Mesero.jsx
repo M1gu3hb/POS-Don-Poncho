@@ -1345,6 +1345,21 @@ function Mesero() {
     }
   };
 
+  // DP-15.1 · Quién ve «Cambiar de mesa»: dirección siempre; el mesero, en SUS mesas. DP-22 · La misma
+  // regla para el panel de la tableta y para la hoja del teléfono (`MeseroCartFAB`).
+  const puedeCambiarDeMesaAqui = Boolean(
+    ventaActiva &&
+      mesaActiva?.id &&
+      puedeMoverLaCuenta({
+        puesto: miPuesto,
+        yoId: posUser?.id,
+        atiendeId: resolverMeseroResponsable(mesaActiva, config)?.id,
+        unida:
+          Boolean(mesaActiva.unida_a_mesa_id) ||
+          (mesas || []).some((m) => m.unida_a_mesa_id === mesaActiva.id),
+      }),
+  );
+
   return (
     <div className="space-y-4">
       {/* Header — flex-wrap para que en móvil no se desborde la fila de botones
@@ -1975,16 +1990,7 @@ function Mesero() {
                   )}
                 {/* DP-15 · Cambiar de mesa, unir o dividir vivían sólo tecleando la dirección.
                     DP-15.1 · Y el mesero, que es quien dice «nos pasamos a la terraza», lo tiene en SUS mesas. */}
-                {ventaActiva &&
-                  mesaActiva?.id &&
-                  puedeMoverLaCuenta({
-                    puesto: miPuesto,
-                    yoId: posUser?.id,
-                    atiendeId: resolverMeseroResponsable(mesaActiva, config)?.id,
-                    unida:
-                      Boolean(mesaActiva.unida_a_mesa_id) ||
-                      (mesas || []).some((m) => m.unida_a_mesa_id === mesaActiva.id),
-                  }) && (
+                {puedeCambiarDeMesaAqui && (
                     // DP-21 · Bloque 10 (M24): «Cambiar de mesa» abre AQUÍ las mesas libres; ya no
                     // saca del mapa. Unir y dividir siguen en «Mesa activa», con un enlace que dice
                     // lo que hace y que sólo ve quien ahí puede hacerlo (la dirección).
@@ -2030,6 +2036,8 @@ function Mesero() {
             config={config}
             onUpdateNotas={actualizarNotasItem}
             onUpdateExclusiones={actualizarExclusionesItem}
+            puedeCambiarDeMesa={puedeCambiarDeMesaAqui}
+            alCambiarDeMesa={() => setCambiandoDeMesa(true)}
           />
         </DialogContent>
       </Dialog>
