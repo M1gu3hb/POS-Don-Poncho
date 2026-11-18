@@ -1226,6 +1226,8 @@ export default function Caja() {
       // en el cajón, y eso es lo que viaja.
       const arqueo = await api.comandos.ejecutar('/api/caja/cerrar', {
         efectivoContadoCentavos: aCentavos(form.efectivo_contado),
+        // DP-D178 · El conteo por billetes y monedas, si se capturó (suma exactamente lo contado).
+        ...(form.denominaciones?.length ? { denominaciones: form.denominaciones } : {}),
         ...(form.notas ? { notas: form.notas } : {}),
       });
       // DP-10.2: cerró con cuentas de mesa vivas porque queda otra caja abierta; el servidor

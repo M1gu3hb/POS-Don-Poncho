@@ -28,6 +28,8 @@ import { formatCurrency, formatPercent } from '@/utils/financialUtils';
 import { api } from '@/api/cliente';
 import { textoDelCierre } from '~/restaurante/otras-cajas-al-cerrar';
 import { aCentavos, aPesos } from '@/components/caja/dinero';
+import { ConteoPorDenominacion } from '~/caja/ConteoPorDenominacion';
+import { denominacionesParaEnviar, sumaDelConteo } from '~/caja/conteo-por-denominacion';
 import {
   SIN_RECETA,
   rotuloDeLaUtilidadNeta,
@@ -55,6 +57,11 @@ export default function CierreDiarioDialog({
   const tone = colorearImportes;
   const [efectivoContado, setEfectivoContado] = useState('');
   const [dineroDejado, setDineroDejado] = useState('');
+  // DP-D178 · El conteo por billetes y monedas: si se usa, ÉL es el efectivo contado.
+  const [contandoPorPiezas, setContandoPorPiezas] = useState(false);
+  const [piezas, setPiezas] = useState({});
+  const totalDelConteo = sumaDelConteo(piezas);
+  const conteoUsado = contandoPorPiezas && totalDelConteo > 0;
   const [notas, setNotas] = useState('');
   const [arqueoServidor, setArqueoServidor] = useState(null);
   // DP-15 · Cuántas cajas siguen abiertas: si hay otra, este cierre cierra sólo la de este aparato.
@@ -114,8 +121,8 @@ export default function CierreDiarioDialog({
   const taTotal = totalTarjeta + taPropinas;
   const trTotal = totalTransferencia + trPropinas;
 
-  const efNum = Number.parseFloat(efectivoContado);
-  const efValido = efectivoContado !== '' && Number.isFinite(efNum);
+  const efNum = conteoUsado ? totalDelConteo / 100 : Number.parseFloat(efectivoContado);
+  const efValido = conteoUsado || (efectivoContado !== '' && Number.isFinite(efNum));
   const dejadoNum = Number.parseFloat(dineroDejado);
   const dejadoValido = dineroDejado === '' || Number.isFinite(dejadoNum);
 
@@ -163,6 +170,7 @@ export default function CierreDiarioDialog({
     if (!efValido || !dejadoValido) return;
     onConfirm?.({
       efectivo_contado: efValido ? efNum : 0,
+      ...(conteoUsado ? { denominaciones: denominacionesParaEnviar(piezas) } : {}),
       diferencia_efectivo: diferencia,
       dinero_dejado_en_caja: dineroDejado === '' ? 0 : Number.isFinite(dejadoNum) ? dejadoNum : 0,
       utilidad_neta_estimada: utilidadNeta,
@@ -342,7 +350,8 @@ export default function CierreDiarioDialog({
                   <Banknote className="w-3.5 h-3.5" /> Efectivo contado físicamente *
                 </Label>
                 <NumericInput
-                  value={efectivoContado}
+                  value={conteoUsado ? String(totalDelConteo / 100) : efectivoContado}
+                  readOnly={conteoUsado}
                   onChange={(e) => setEfectivoContado(e.target.value)}
                   placeholder="0.00"
                   className="text-2xl font-black h-14 mt-1"
@@ -350,6 +359,16 @@ export default function CierreDiarioDialog({
                 <p className="text-[10px] text-muted-foreground mt-1">
                   Captura ÚNICAMENTE el efectivo físico contado en caja. No el total cobrado.
                 </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 any-pointer-coarse:min-h-(--altura-tactil)"
+                  aria-expanded={contandoPorPiezas}
+                  onClick={() => setContandoPorPiezas((v) => !v)}
+                >
+                  {contandoPorPiezas ? 'Teclear el total' : 'Contar por billetes y monedas'}
+                </Button>
               </div>
               <div>
                 <Label className="text-xs font-semibold">
@@ -366,6 +385,8 @@ export default function CierreDiarioDialog({
                 </p>
               </div>
             </div>
+
+            {contandoPorPiezas && <ConteoPorDenominacion piezas={piezas} onCambiar={setPiezas} />}
 
             {efValido && arqueoServidor && (
               <div

@@ -3603,3 +3603,52 @@ ninguna regla de dinero o de inventario: lo que no cuadre es un hallazgo, no un 
   interruptor (32×18 px a la vista) SÍ está cubierto: con el dedo, `blancos-tactiles.css` le da un
   pseudo-elemento de 44×44 px (medido en el navegador: un toque a 20 px del centro cae en el interruptor, a
   30 px no); `qa/simulador/parte5/interruptores.ts` lo mide. No se cambió nada.
+
+## DP-D177 · DP-22 · Parte 7 · El plano del mesero dice cuánto lleva abierta cada mesa · 17-11-2026
+
+Comprobado en la app (teléfono 360×800 y tableta 800×1280): el plano del mesero NO decía nada del
+tiempo; el «tiempo de servicio» sólo existía dentro de la mesa. Se agrega, en chico: en la tesela de
+una mesa CON cuenta («35 min», «1 h 5 min», «< 1 min»), con su reloj y el nombre accesible «Abierta hace
+35 min». En el teléfono es un renglón de la tarjeta; en el plano de tableta y PC, una pastilla chica que
+cuelga bajo el borde de la mesa y no tapa nada (va dentro de la mesa-botón: tocarla abre la mesa). Una
+mesa libre, en limpieza, pagada o cancelada no lleva tiempo. La hora es la de la cuenta activa
+(`ordenes.created_at`), que el puente sirve ahora como `Mesa.abierta_desde` (derivado de sólo lectura, no
+público); el «ahora» es el reloj de la pantalla (`useAhora`, el mismo de la cocina): el servidor no manda
+su hora en las lecturas, y una tableta con la hora mal pondría minutos mal (se anota, no se inventa). No
+hay aviso sonoro ni regla nueva: «mesa sin atender» ya es el color y la palabra del estado («Esperando
+entrega», «Cuenta solicitada») más el tiempo. Archivos: `restaurante/tiempo-de-la-mesa.ts` (la cuenta,
+6 pruebas), `TiempoDeLaMesa.tsx`, `MesaGridMobile.jsx`, `MesaShape.jsx` y el derivado en `puente/mapa.ts`.
+Con el dedo: `qa-final/parte7-mesero.spec.ts` (9). Cambian de aspecto: el plano del mesero (tarjeta del
+teléfono y mesa del plano).
+
+## DP-D178 · DP-22 · Parte 7 · Buscar sin acentos y el arqueo por billetes y monedas · 17-11-2026
+
+- **Buscar un producto.** «limón» (con acento) no encontraba «Limonada»: el filtro del pedido sólo pasaba a
+  minúsculas. Ahora busca sin acentos ni mayúsculas (`restaurante/buscar-producto.ts`), en la mesa del
+  mesero y en el catálogo del pedido de la Caja. La prueba con el dedo (`parte7-mesero.spec.ts`, 8) falló
+  primero en la app.
+- **El arqueo por denominación.** El servidor ya recibía el conteo por billetes y monedas en el cierre
+  (`caja.cerrar`: `denominaciones`, que debe sumar el efectivo contado) y el papel ya lo imprime
+  («Conteo por denominación»), pero el diálogo de cierre sólo tenía un campo de total: nadie podía
+  capturarlo. Ahora «Contar por billetes y monedas» abre once filas (de $1,000 a 50 centavos) con «−»,
+  «+» de 44 px y las piezas tecleables; el total sale de las piezas, es el efectivo contado y viaja con
+  el conteo (no puede no sumar). No cambia ninguna regla de dinero: sin usarlo, el cierre es el de siempre. Con el teclado en pantalla, el campo de piezas que se toca se trae al centro (`scrollIntoView`): la primera prueba con el dedo lo encontró debajo del teclado.
+  `caja/conteo-por-denominacion.ts` (10 pruebas), `ConteoPorDenominacion.tsx`, `CierreDiarioDialog.jsx` y
+  `Caja.jsx`.
+
+## DP-D179 · DP-22 · Parte 7 · Quién autorizó una cancelación sale en el corte y en Registros; lo que no se construye · 17-11-2026
+
+- **Quién autorizó.** Con la cuenta pedida (o su precuenta impresa) cancelar o quitar un platillo lleva el
+  PIN de gerencia y la auditoría guardaba quién, pero el corte y Registros sólo decían quién canceló y por
+  qué. La lectura (`caja/corte/cancelaciones.ts`) trae ahora `autorizo` (de la auditoría, nulo si no
+  hizo falta) y el motivo lo dice así: «Se fueron sin pagar · Autorizó Beatriz»
+  (`corte/motivo-de-la-cancelacion.ts`), en la hoja del corte (la misma sección pinta el corte de la
+  Caja) y en la lista de Cancelaciones. Prueba contra Postgres:
+  `restaurante/cancelaciones-con-autorizacion.integracion.test.ts` (3).
+- **Comanda: «volver a mandar» no aplica.** La cocina es por pantalla y la comanda vive en el servidor: la
+  cocina recargada, o sin red un momento, la vuelve a ver, y la que se manda mientras no hay red llega al
+  volver (`parte7-agotado-y-papel.spec.ts`, 2). No hay comanda impresa que reimprimir.
+- **Nota por comensal: no se construye.** Con la nota por platillo («sin cebolla, para el niño») la cocina
+  la ve en ese platillo y no en otro (`parte7-mesero.spec.ts`, 10); un comensal es una nota en su platillo.
+- **Pasar un platillo de una cuenta a otra:** no se construye; el diseño y el tamaño están en el informe
+  de la Parte 7.

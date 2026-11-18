@@ -1757,6 +1757,42 @@ export const SIN_ESTADO = [
     razon:
       'Se ve justo donde el sistema de diseño NO llegó (un motor sin `@layer` descarta toda la hoja de Tailwind): un `Aviso` del sistema saldría sin estilos. Su aspecto va en `app/globals.css`, fuera de las capas.',
   },
+  {
+    pantalla: 'restaurante/TiempoDeLaMesa',
+    estado: 'vacio',
+    razon:
+      'Pieza de la tesela de una mesa (DP-D177), no pantalla: dice «35 min» con lo que ya leyó el plano del mesero; sin cuenta, sin fecha o sin reloj no pinta nada. El vacío, la carga y el fallo de la lectura los dice el plano.',
+  },
+  {
+    pantalla: 'restaurante/TiempoDeLaMesa',
+    estado: 'cargando',
+    razon:
+      'Pieza de la tesela de una mesa (DP-D177), no pantalla: dice «35 min» con lo que ya leyó el plano del mesero; sin cuenta, sin fecha o sin reloj no pinta nada. El vacío, la carga y el fallo de la lectura los dice el plano.',
+  },
+  {
+    pantalla: 'restaurante/TiempoDeLaMesa',
+    estado: 'error',
+    razon:
+      'Pieza de la tesela de una mesa (DP-D177), no pantalla: dice «35 min» con lo que ya leyó el plano del mesero; sin cuenta, sin fecha o sin reloj no pinta nada. El vacío, la carga y el fallo de la lectura los dice el plano.',
+  },
+  {
+    pantalla: 'caja/ConteoPorDenominacion',
+    estado: 'vacio',
+    razon:
+      'Pieza del cierre de la caja (DP-D178), no pantalla: once filas de piezas que teclea quien cuenta; no lee nada. Sus estados (cargando y error del cierre) los pinta el diálogo que la monta.',
+  },
+  {
+    pantalla: 'caja/ConteoPorDenominacion',
+    estado: 'cargando',
+    razon:
+      'Pieza del cierre de la caja (DP-D178), no pantalla: once filas de piezas que teclea quien cuenta; no lee nada. Sus estados (cargando y error del cierre) los pinta el diálogo que la monta.',
+  },
+  {
+    pantalla: 'caja/ConteoPorDenominacion',
+    estado: 'error',
+    razon:
+      'Pieza del cierre de la caja (DP-D178), no pantalla: once filas de piezas que teclea quien cuenta; no lee nada. Sus estados (cargando y error del cierre) los pinta el diálogo que la monta.',
+  },
 ];
 
 const argumentos = process.argv.slice(2);

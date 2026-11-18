@@ -53,6 +53,7 @@ import MesaShape from '@/components/mesas/MesaShape';
 import MesaGridMobile from '@/components/mesero/MesaGridMobile';
 import MeseroCartFAB from '@/components/mesero/MeseroCartFAB';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
+import { coincideConLaBusqueda } from '~/restaurante/buscar-producto';
 import PropinaDialog from '@/components/propinas/PropinaDialog';
 import { elMeseroEligeLaPropina } from '~/venta/propina-en-la-caja';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
@@ -444,10 +445,8 @@ function Mesero() {
   const productosFiltrados = useMemo(() => {
     let list = productosArr;
     if (categoriaFiltro !== 'todas') list = list.filter((p) => p?.categoria_id === categoriaFiltro);
-    if (busquedaProducto) {
-      const q = busquedaProducto.toLowerCase();
-      list = list.filter((p) => (p?.nombre || '').toLowerCase().includes(q));
-    }
+    // DP-D178 · Con acentos o sin ellos, encuentra igual («limon» encuentra «Limón»).
+    if (busquedaProducto) list = list.filter((p) => coincideConLaBusqueda(p?.nombre, busquedaProducto));
     return list;
   }, [productosArr, categoriaFiltro, busquedaProducto]);
 

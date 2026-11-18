@@ -4,6 +4,7 @@ import { MESA_STATUS_CONFIG, TAMANOS_MESA } from '@/lib/constants';
 import { MESA_STATUS_DARK } from '@/lib/darkPalettes';
 import { useIsDark } from '@/lib/ThemeContext';
 import { Users } from 'lucide-react';
+import { TiempoDeLaMesa } from '~/restaurante/TiempoDeLaMesa';
 
 export default function MesaShape({
   mesa,
@@ -238,6 +239,8 @@ export default function MesaShape({
           </span>
         );
       })()}
+      {/* DP-D177: cuánto lleva abierta la cuenta, colgando bajo el borde de la mesa. */}
+      <TiempoDeLaMesa mesa={mesa} forma="plano" />
       </div>
     </div>
   );
