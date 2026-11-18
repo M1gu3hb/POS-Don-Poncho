@@ -1039,12 +1039,19 @@ export default function Caja() {
           setDetallesSeleccionados([]);
           queryClient.invalidateQueries({ queryKey: ['ventas_pendientes_caja'] });
         }
-        // DP-22 (hallazgo 12): el total cambió con el cobro abierto (el mesero agregó algo, o se
-        // descontó desde otro aparato). El aviso de arriba ya lo dijo; aquí la cuenta se RELEE
+        // DP-22 (hallazgo 12): el total cambió con el cobro abierto (se quitó un platillo con la
+        // clave de gerencia, o se descontó desde otro aparato; agregar ya no se puede: la cuenta
+        // pedida no se edita). El aviso de arriba ya lo dijo; aquí la cuenta se RELEE
         // para que la cajera vea el total nuevo y teclee los pagos otra vez. Sin esto la pantalla
         // se quedaba con el total viejo y «Cobrar» fallaba igual cada vez, hasta cerrar la cuenta
         // y volver a abrirla.
-        if (err?.codigo === 'TOTAL_DESACTUALIZADO' && ventaSeleccionada?.id) {
+        // DP-D168: lo mismo cuando la cuenta cambió y la caja ya había elegido la propina
+        // (`PROPINA_VIGENTE`: el mesero quitó un platillo con el PIN del gerente): el servidor
+        // rechaza igual y la pantalla se quedaba con los renglones y el total de antes.
+        if (
+          (err?.codigo === 'TOTAL_DESACTUALIZADO' || err?.datos?.regla === 'PROPINA_VIGENTE') &&
+          ventaSeleccionada?.id
+        ) {
           await releerLaCuentaDelCobro(ventaSeleccionada.id);
         }
       }

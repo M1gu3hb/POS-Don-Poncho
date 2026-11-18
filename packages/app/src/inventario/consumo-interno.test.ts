@@ -11,6 +11,7 @@ import { ambitoDe, ORG, PRODUCTO, SUCURSAL } from '../restaurante/pruebas/sala.t
 import { calcularConsumo } from '@morphiqpos/domain/inventario';
 
 import {
+  MOTIVO_DE_CATALOGO,
   comoConsumoInterno,
   planearConsumoInterno,
   registrarConsumoInterno,
@@ -292,6 +293,15 @@ describe('F-261 · registrar lo que se come el personal', () => {
     ).toBe(true);
   });
 
+  it('cada tipo de consumo tiene su clave del catálogo de motivos (DP-D167)', () => {
+    expect(MOTIVO_DE_CATALOGO).toEqual({
+      personal: 'consumo_personal',
+      cortesia: 'muestra',
+      reposicion: 'platillo_rehecho',
+      degustacion: 'muestra',
+    });
+  });
+
   it('SALE DEL STOCK como movimiento de consumo interno, NO de venta', () => {
     // Si esto dijera `salida_venta`, el costo de ventas incluiría lo que nadie
     // pagó, que es exactamente lo que F-261 viene a separar.
@@ -313,9 +323,14 @@ describe('F-261 · registrar lo que se come el personal', () => {
       ],
       'consumo-1',
       'empleo-1',
+      { tipo: 'personal', motivo: 'Comida del personal' },
     );
 
     expect(movimiento?.tipo).toBe('salida_consumo_interno');
+    // DP-D167 · el `check` de la base exige motivo en toda salida de consumo interno, y la llave lo
+    // quiere del catálogo: la clave por tipo y la explicación en la nota.
+    expect(movimiento?.motivo).toBe('consumo_personal');
+    expect(movimiento?.nota).toBe('Comida del personal');
     expect(movimiento?.referenciaTipo).toBe('consumo_interno');
     expect(movimiento?.referenciaId).toBe('consumo-1');
     expect(movimiento?.empleadoId).toBe('empleo-1');

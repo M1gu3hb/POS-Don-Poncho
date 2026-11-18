@@ -88,6 +88,13 @@ export interface MovimientoPlaneado {
   readonly referenciaTipo: 'orden' | 'consumo_interno';
   readonly referenciaId: string;
   readonly empleadoId?: string;
+  /**
+   * DP-D167 · La clave de `motivos_merma` con que se anota la salida. Sólo la pide el consumo
+   * interno (el `check` `movimiento_stock_salida_con_motivo`): una salida de venta no lleva motivo.
+   */
+  readonly motivo?: string;
+  /** DP-D167 · El texto libre que el gerente escribió (va en la nota del movimiento). */
+  readonly nota?: string;
   readonly idempotencyKey: string;
   readonly origenes: readonly string[];
 }

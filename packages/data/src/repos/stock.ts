@@ -5,6 +5,21 @@ import { sql } from 'kysely';
 
 import type { Transaccion } from '../cliente.ts';
 
+/**
+ * DP-D167 · El costo que el insumo tiene AL MOVERSE, para copiarlo al movimiento: el redondeado a
+ * centavos y el EXACTO en diezmilésimas de centavo (DP-D165). Quien escribe un movimiento de
+ * `movimientos_stock` sin pasar por `aplicarMovimientos` (la merma manual, el traspaso) lo pide
+ * aquí: sin él la columna se queda en su cero de omisión y el kardex y el corte lo valen a $0.
+ */
+export function costoDelInsumo(organizacionId: string, insumoId: string) {
+  return {
+    costo_unitario_centavos: sql<bigint>`(select i.costo_unitario_centavos from insumos i
+      where i.organizacion_id = ${organizacionId} and i.id = ${insumoId})`,
+    costo_exacto_dmc: sql<bigint>`(select i.costo_exacto_dmc from insumos i
+      where i.organizacion_id = ${organizacionId} and i.id = ${insumoId})`,
+  };
+}
+
 interface MovimientoValidado {
   readonly movimiento: MovimientoPlaneado;
   readonly cantidad: string;
@@ -62,6 +77,8 @@ export async function aplicarMovimientos(
     ${movimiento.referenciaId},
     ${movimiento.empleadoId ?? null},
     ${movimiento.idempotencyKey},
+    ${movimiento.motivo ?? null},
+    ${movimiento.nota ?? null},
     (select i.costo_unitario_centavos
        from insumos i
       where i.organizacion_id = ${movimiento.organizacionId} and i.id = ${movimiento.insumoId}),
@@ -85,6 +102,8 @@ export async function aplicarMovimientos(
       referencia_id,
       empleado_id,
       idempotency_key,
+      motivo,
+      nota,
       costo_unitario_centavos,
       costo_exacto_dmc
     ) values ${sql.join(filas)}
@@ -155,13 +174,19 @@ export async function regresarAlInventario(
     ${regreso.unidad},
     ${'devolucion'},
     ${regreso.devolucionId},
-    ${regreso.empleadoId}
+    ${regreso.empleadoId},
+    (select i.costo_unitario_centavos
+       from insumos i
+      where i.organizacion_id = ${regreso.organizacionId} and i.id = ${regreso.insumoId}),
+    (select i.costo_exacto_dmc
+       from insumos i
+      where i.organizacion_id = ${regreso.organizacionId} and i.id = ${regreso.insumoId})
   )`,
   );
   await sql`
     insert into movimientos_stock (
       organizacion_id, almacen_id, insumo_id, tipo, cantidad, unidad,
-      referencia_tipo, referencia_id, empleado_id
+      referencia_tipo, referencia_id, empleado_id, costo_unitario_centavos, costo_exacto_dmc
     ) values ${sql.join(filas)}
   `.execute(tx);
 }

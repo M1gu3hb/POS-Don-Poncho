@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ErrorDominio, PAQUETES_TODOS } from '@morphiqpos/contracts';
-import type { Transaccion } from '@morphiqpos/data';
+import { repoStock, type Transaccion } from '@morphiqpos/data';
 import { planearMerma, type MotivoDeMerma } from '@morphiqpos/domain/inventario';
 import { sql } from 'kysely';
 import { z } from 'zod';
@@ -127,6 +127,8 @@ export const registrarMerma = definirComando<
           motivo: plan.motivo,
           nota: entrada.nota ?? null,
           empleado_id: empleoId,
+          // DP-D167 · lo que se tira vale lo que cuesta AL TIRARSE (el exacto: DP-D165).
+          ...repoStock.costoDelInsumo(organizacionId, entrada.insumoId),
         })
         .returning('id')
         .executeTakeFirstOrThrow(),

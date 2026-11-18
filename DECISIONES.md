@@ -3386,3 +3386,76 @@ Lo falseaban el valor del inventario, el costo de cada receta, la merma y el mar
 - **Aclaración a DP-D164:** el acceso (sin sesión) sigue sin leer colores, nombre del sistema ni logos, a
   propósito; el texto de efecto y la ayuda en pantalla ahora lo dicen (se aplican dentro, con sesión).
 - **Sin migración.**
+
+## DP-D167 · DP-22 · Cada movimiento del kardex lleva el costo exacto del insumo al moverse; el consumo de la casa por fin escribe su motivo · 17-11-2026
+
+**Es una regla de dinero** (los dos defectos que dejó anotados DP-D165, ahora arreglados).
+
+- **Qué estaba mal.** `inventario.registrar_merma` (la merma manual), `inventario.enviar_traspaso` y
+  `recibir_traspaso`, y la devolución de una venta (`regresarAlInventario`) escribían el movimiento SIN
+  costo: la columna se quedaba en su cero de omisión y la merma de 2 kg de barbacoa salía a $0 en el
+  kardex y en el corte. La merma por cancelación, el ajuste y el cobro ya copiaban el costo.
+  `inventario.consumo_interno` nunca se había corrido contra Postgres y ahí fallaba siempre: su salida
+  exige un `motivo` (`movimiento_stock_salida_con_motivo` y la llave a `motivos_merma`) y
+  `aplicarMovimientos` no lo escribía.
+- **Qué se hace.** Cada uno copia, AL MOVERSE, `costo_unitario_centavos` y `costo_exacto_dmc` del insumo
+  (`repoStock.costoDelInsumo`; `regresarAlInventario` lo hace en su propio `insert`). El importe del
+  kardex y del corte sale de `cantidad × costo exacto`, redondeado UNA vez a centavos (DP-D165). 2 kg de
+  un insumo a 3.4567 ¢/g valen 6 913 ¢, no $0.
+- **El consumo de la casa y su motivo.** `MovimientoPlaneado` gana `motivo` y `nota` opcionales y
+  `aplicarMovimientos` los escribe. `motivos_merma` es un catálogo GLOBAL (no se siembra una clave por
+  negocio, como ya dijo la cancelación), así que cada tipo usa una clave que ya existe:
+  `personal` → `consumo_personal`, `cortesia` y `degustacion` → `muestra`, `reposicion` →
+  `platillo_rehecho`. Lo que el gerente escribió va en la nota del movimiento. Ninguna pantalla de Don
+  Poncho llama a este comando (sólo existe su ruta `/api/inventario/consumo-interno`): queda arreglado y
+  sin pantalla, que es una decisión de producto aparte.
+- **Lo que NO se reescribe.** Los movimientos que ya existen sin costo son historia y se quedan como
+  están (sólo hay algo así en copias de QA; producción tenía 0 insumos cuando se escribió DP-D165). Un
+  traspaso valúa la entrada con el costo del insumo al RECIBIR, no al enviar; la devolución, con el costo
+  de HOY (no con el de la venta): la diferencia, cuando hay, es del tamaño de un cambio de costo entre
+  los dos días.
+- **Pruebas.** `costo-de-los-movimientos.integracion.test.ts` (4, contra Postgres: la merma, el traspaso
+  de salida y entrada, la devolución y el consumo interno), y la unitaria de `consumo-interno.test.ts`.
+  Mutantes muertos: merma sin costo, la entrada del traspaso sin costo, el regreso de la devolución con
+  costo 0 y el consumo sin motivo; mutación inocua (la nota a 199 caracteres) que pasa.
+
+## DP-D168 · DP-22 · Con el cobro abierto, la Caja también se relee cuando la caja ya había elegido la propina y la cuenta cambió · 17-11-2026
+
+Hallazgo 12 (la prueba en el navegador). Con el cobro de una mesa abierto, el mesero NO puede agregar
+platillos (`ORDEN_NO_EDITABLE`: la cuenta pedida ya no es editable, a propósito); lo que sí puede, con el
+PIN de un gerente, es quitar uno. Con la propina decidida por la caja («Sin propina») el servidor rechaza
+el cobro con `CONFLICTO_ESTADO` / `PROPINA_VIGENTE`, no con `TOTAL_DESACTUALIZADO`, y la Caja sólo releía
+con el segundo: el aviso salía pero la pantalla seguía con el renglón quitado, el total viejo y lo
+tecleado, y «Cobrar» fallaba igual cada vez. Ahora se relee con cualquiera de los dos (`Caja.jsx`).
+Contrato: `total-que-cambio.contrato.test.ts` (4) con tres mutantes. Prueba en el navegador:
+`qa/simulador/parte5/total-que-cambio.ts`.
+
+## DP-D169 · DP-22 · Hallazgo 16 (la receta de las opciones de un platillo): NO se construye en este lote; el diseño · 17-11-2026
+
+El dominio (`recetaConOpciones`) y la base (084: `recetas.sustituible_por_grupo_id`,
+`modificador_opciones.insumo_sustituto_id` y `factor_cantidad`) ya soportan que una opción sustituya un
+insumo o escale la receta, y `cobrar` los usa (`efectosDeOpcionesPorLinea`). Lo que falta es capturarlo, y
+son DOS pantallas y dos comandos: (1) el editor de opciones del platillo
+(`OpcionesDelPlatilloDialog.tsx` + `grupos-de-opciones.ts`, que hoy no acepta ni el sustituto ni el
+factor) y (2) el editor de la receta (`RecetaFormDialog.jsx`, heredada: cada renglón necesita «un grupo
+de opciones lo puede cambiar», que `guardarReceta` ya acepta). Es más de una pantalla y toca el
+contrato de dos comandos: se reporta, no se construye. Diseño: en cada opción, «Cambia la receta» con
+(a) «Cambia un insumo por otro» (insumo, de la misma dimensión: el dominio no inventa conversiones) y
+(b) «Cambia las cantidades» (factor, con la vista previa de «1.44× lo que lleva»); en cada renglón de la
+receta, «Lo puede cambiar el grupo…». Ayuda breve en pantalla, blancos de 44 px, prueba de integración
+(vender la opción baja lo que dice su receta, al gramo) y con el dedo, y la validación de dimensiones al
+guardar (hoy una configuración incompatible se ignora en silencio al cobrar).
+
+## DP-D170 · DP-22 · Hallazgos 13 y 17: lo que se encontró · 17-11-2026
+
+- **13 (no se pudo reproducir).** Con el dedo (`tap` de Playwright y el `Input.dispatchTouchEvent` del
+  arnés), en tableta 800×1280, Windows 1366×768 al 125 % y 1024×768 (y con la ventana a 1093×614), todos
+  los desplegables de «Nueva receta» (categoría, tipo de venta y los tres de «Variable por medida») y de
+  «Registrar compra → Nuevo» se abren y eligen, con la opción dentro de la ventana. La guarda queda como
+  `qa/simulador/parte5/desplegables-con-dedo.ts`. No se cambió código: no hay defecto que reproducir en
+  esta versión.
+- **17 (falso positivo de la exploración).** El interruptor «Modo espera en este aparato» SÍ tiene nombre
+  accesible (`aria-labelledby` al título de su tarjeta; `getByRole('switch', { name })` lo encuentra): la
+  exploración sólo leía `aria-label`. Queda `interruptores-con-nombre.contrato.test.ts` para que no se
+  pierda, con la lista de todos los interruptores de Configuración. Lo que SÍ es real y queda abierto: el
+  interruptor mide 32×18 px (blanco táctil de 44 px incumplido, en la primitiva compartida `Switch`).

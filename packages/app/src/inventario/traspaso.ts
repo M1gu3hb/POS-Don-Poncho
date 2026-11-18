@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ErrorDominio, PAQUETES_TODOS } from '@morphiqpos/contracts';
-import { repoTraspasos, type Transaccion } from '@morphiqpos/data';
+import { repoStock, repoTraspasos, type Transaccion } from '@morphiqpos/data';
 import { deEscalaCompleta, enEscalaCompleta } from '@morphiqpos/domain/inventario';
 import { sql } from 'kysely';
 import { z } from 'zod';
@@ -128,6 +128,8 @@ export const enviarTraspaso = definirComando<
             // que el operador escribe es una explicación, no una clave.
             motivo: null,
             nota: entrada.motivo ?? null,
+            // DP-D167 · el costo exacto del insumo al moverse (DP-D165).
+            ...repoStock.costoDelInsumo(organizacionId, linea.insumoId),
           })
           .returning('id')
           .executeTakeFirstOrThrow(),
@@ -228,6 +230,7 @@ export const recibirTraspaso = definirComando<
             empleado_id: empleoId,
             motivo: null,
             nota: entrada.motivoDiferencia ?? null,
+            ...repoStock.costoDelInsumo(organizacionId, linea.insumoId),
           })
           .returning('id')
           .executeTakeFirstOrThrow(),

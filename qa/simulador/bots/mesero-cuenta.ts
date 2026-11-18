@@ -86,10 +86,12 @@ export async function quitarPlatillo(
   await mesa.getByRole('button', { name: 'Quitar un platillo' }).click({ timeout: ESPERA_MS });
   const lista = pagina.getByRole('dialog', { name: 'Quitar un platillo' });
   await lista
-    .getByRole('button', { name: new RegExp(`^Quitar ${escapar(producto)}`) })
+    .getByRole('button', { name: new RegExp(String.raw`^Quitar (?:\d+ × )?` + escapar(producto)) })
     .first()
     .click({ timeout: ESPERA_MS });
-  const anular = pagina.getByRole('dialog', { name: new RegExp(`^Quitar ${escapar(producto)}`) });
+  const anular = pagina.getByRole('dialog', {
+    name: new RegExp(String.raw`^Quitar (?:\d+ × )?` + escapar(producto)),
+  });
   await anular.waitFor({ timeout: ESPERA_MS });
   const radio = anular.getByRole('radio', { name: motivo });
   await ((await radio.count()) > 0 ? radio : anular.getByRole('radio')).first().click();

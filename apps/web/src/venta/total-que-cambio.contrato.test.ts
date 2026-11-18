@@ -6,8 +6,9 @@ import { describe, expect, it } from 'vitest';
 /**
  * DP-22 · hallazgo 12 · EL TOTAL CAMBIÓ CON EL COBRO ABIERTO.
  *
- * La cajera tiene la cuenta abierta para cobrar y, mientras tanto, el mesero agrega un refresco (o
- * alguien descuenta desde otro aparato). Al tocar «Cobrar», el servidor rechaza —«El total cambió
+ * La cajera tiene la cuenta abierta para cobrar y, mientras tanto, el mesero quita un platillo con
+ * la clave de gerencia (o alguien descuenta desde otro aparato; agregar ya no se puede: la cuenta
+ * pedida no se edita). Al tocar «Cobrar», el servidor rechaza —«El total cambió
  * desde que se mostró en pantalla. Revísalo con el cliente.»— y hace bien: no cobra un número que
  * nadie le dijo al cliente. Pero la pantalla se quedaba con el total VIEJO: tocar «Cobrar» otra vez
  * fallaba igual, una y otra vez, hasta cerrar la cuenta y volver a abrirla.
@@ -40,8 +41,14 @@ describe('la Caja cuando el total cambió con el cobro abierto (hallazgo 12)', (
 
   it('tras «El total cambió…», la cuenta se relee del servidor', () => {
     expect(alFallarElCobro()).toMatch(
-      /if \(err\?\.codigo === 'TOTAL_DESACTUALIZADO' && ventaSeleccionada\?\.id\) \{\s*await releerLaCuentaDelCobro\(ventaSeleccionada\.id\);\s*\}/,
+      /\(err\?\.codigo === 'TOTAL_DESACTUALIZADO' \|\| err\?\.datos\?\.regla === 'PROPINA_VIGENTE'\) &&\s*ventaSeleccionada\?\.id\s*\) \{\s*await releerLaCuentaDelCobro\(ventaSeleccionada\.id\);\s*\}/,
     );
+  });
+
+  it('también se relee cuando la caja ya había elegido la propina y la cuenta cambió (DP-D168)', () => {
+    // El mesero quita un platillo con el PIN del gerente con el cobro abierto: el servidor contesta
+    // CONFLICTO_ESTADO / PROPINA_VIGENTE y, sin releer, la pantalla repetía el rechazo sin fin.
+    expect(alFallarElCobro()).toMatch(/err\?\.datos\?\.regla === 'PROPINA_VIGENTE'/);
   });
 
   it('releer la cuenta trae total y renglones del servidor y limpia los pagos tecleados', () => {
