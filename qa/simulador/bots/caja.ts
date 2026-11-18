@@ -113,6 +113,7 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeCaja): Promise
       await irACaja(pagina, ctx.entorno.appUrl);
       hechos.cuentas += 1;
       const tipo = caosParaLaCuenta(plan.caos ?? [], hechos.cuentas);
+      if (tipo !== undefined) contar(ctx.mundo, `caos_de_caja:${tipo}`);
       const hecho = await cobrarLaCuenta(
         ctx,
         bot,

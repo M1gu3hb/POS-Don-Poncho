@@ -43,13 +43,15 @@ export async function arbitrarInvariantes(
   baseUrl: string,
   salida: string,
   c: Comparador,
+  /** Invariantes que el llamador revisa a su manera (C02 con el IVA que cambia en el día de bots). */
+  omitir: readonly string[] = [],
 ): Promise<void> {
   const archivo = join(salida, 'invariantes-base.json');
   const base: ConteoDeInvariantes = existsSync(archivo)
     ? (JSON.parse(readFileSync(archivo, 'utf8')) as ConteoDeInvariantes)
     : {};
   const { conteos, primera } = await contarInvariantes(baseUrl);
-  for (const inv of INVARIANTES) {
+  for (const inv of INVARIANTES.filter((x) => !omitir.includes(x.id))) {
     const ahora = conteos[inv.id] ?? 0;
     if (ahora < 0) {
       c.violacion(

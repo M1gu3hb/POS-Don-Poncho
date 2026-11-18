@@ -6,6 +6,7 @@
  */
 import type { Page } from '@playwright/test';
 
+import type { NombreDeAparato } from '../aparatos.ts';
 import type { Bot, ContextoDelBot } from '../bot.ts';
 import { minutoDelDia } from '../horario.ts';
 import { contar } from '../mundo.ts';
@@ -19,6 +20,8 @@ export interface ConfigDeEstacion {
   readonly estacion: string;
   /** Si esta estación marca agotados a media jornada (la Cocina). */
   readonly marcaAgotados: boolean;
+  /** El aparato de la pantalla (por omisión la PC 1920; el día de bots, el iMin). */
+  readonly aparato?: NombreDeAparato;
 }
 
 /** Cuánto tarda un platillo, en minutos simulados: casi siempre poco, a veces cruza ámbar o rojo. */
@@ -215,9 +218,9 @@ export function crearEstacion(cfg: ConfigDeEstacion): Bot {
   return {
     nombre: `${cfg.persona} (${cfg.estacion})`,
     rol: 'estacion',
-    aparato: 'pc-1920',
+    aparato: cfg.aparato ?? 'pc-1920',
     async correr(ctx) {
-      const { contexto, pagina } = await ctx.nuevoContexto('pc-1920');
+      const { contexto, pagina } = await ctx.nuevoContexto(cfg.aparato ?? 'pc-1920');
       pagina.setDefaultTimeout(ESPERA_MS);
       vigilarServidor(ctx, pagina, () => `Estación ${cfg.estacion}`);
       const estacion = new Estacion(ctx, cfg, pagina);

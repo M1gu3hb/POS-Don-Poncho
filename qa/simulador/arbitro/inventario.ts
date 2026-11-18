@@ -15,28 +15,35 @@ import { leerSql, num, ORGANIZACION, type Comparador } from './base.ts';
  */
 const NETO_DEL_DIA = `
 select i.nombre, coalesce(sum(m.cantidad), 0)::text as cantidad
-  from insumos i left join movimientos_stock m on m.insumo_id = i.id and m.created_at >= $2::timestamptz
+  from insumos i left join movimientos_stock m on m.insumo_id = i.id and m.created_at >= $2::timestamptz and m.created_at <= $3::timestamptz
  where i.organizacion_id = ${ORGANIZACION} and i.nombre = any($1::text[]) group by i.nombre`;
 
 const SALIDAS = `
 select i.nombre, abs(coalesce(sum(m.cantidad), 0))::text as cantidad
   from movimientos_stock m join insumos i on i.id = m.insumo_id
- where m.organizacion_id = ${ORGANIZACION} and m.tipo = 'salida_venta' and m.created_at >= $2::timestamptz and i.nombre = any($1::text[])
+ where m.organizacion_id = ${ORGANIZACION} and m.tipo = 'salida_venta' and m.created_at >= $2::timestamptz and m.created_at <= $3::timestamptz and i.nombre = any($1::text[])
  group by i.nombre`;
 
 const COMPRAS_Y_GASTOS = `
-select (select coalesce(sum(total_centavos), 0) from compras where organizacion_id = ${ORGANIZACION} and created_at >= $1::timestamptz)::text as compras,
-       (select coalesce(sum(monto_centavos), 0) from gastos where organizacion_id = ${ORGANIZACION} and created_at >= $1::timestamptz)::text as gastos`;
+select (select coalesce(sum(total_centavos), 0) from compras where organizacion_id = ${ORGANIZACION} and created_at >= $1::timestamptz and created_at <= $2::timestamptz)::text as compras,
+       (select coalesce(sum(monto_centavos), 0) from gastos where organizacion_id = ${ORGANIZACION} and created_at >= $1::timestamptz and created_at <= $2::timestamptz)::text as gastos`;
 
 /** Cuánto insumo gasta UNA unidad vendida de un producto de prueba (en unidad base). */
-export function consumoPorUnidad(producto: string): Readonly<Record<string, number>> {
+export function consumoPorUnidad(
+  producto: string,
+  /** Lo que el producto por porción de un contenedor gasta por porción (750 ml ÷ 16 = 46.875 ml), leído de la base. */
+  mlPorPorcion?: ReadonlyMap<string, number>,
+): Readonly<Record<string, number>> {
   const p = PRODUCTOS_DE_PRUEBA.find((x) => x.nombre === producto);
   if (p === undefined) return {};
   // Por peso, el renglón va en kg o l: 1 000 de la unidad base por unidad. Por porción, desde DP-18
   // (A3, en producción) también baja su ingrediente base: la porción (45 ml el shot). Antes la app
   // no la bajaba y el libro tampoco; el día 3 el sistema bajó 1 710 ml de tequila que el libro no esperaba.
   if (p.ingredienteBase !== undefined)
-    return { [p.ingredienteBase]: p.tipo === 'porcion' ? (p.presentaciones?.[0] ?? 0) : 1000 };
+    return {
+      [p.ingredienteBase]:
+        p.tipo === 'porcion' ? (mlPorPorcion?.get(p.nombre) ?? p.presentaciones?.[0] ?? 0) : 1000,
+    };
   return p.receta ?? {};
 }
 
@@ -47,7 +54,10 @@ const UN_ARMADO_MS = 60_000;
  * Lo que el libro dice que se movió por insumo: compras − mermas − consumo de lo cobrado. Con el
  * libro de un día es el movimiento neto que se espera ese día.
  */
-export function existenciaEsperada(libro: readonly AsientoFechado[]): {
+export function existenciaEsperada(
+  libro: readonly AsientoFechado[],
+  mlPorPorcion?: ReadonlyMap<string, number>,
+): {
   existencia: Map<string, number>;
   consumo: Map<string, number>;
 } {
@@ -98,7 +108,9 @@ export function existenciaEsperada(libro: readonly AsientoFechado[]): {
       vigente(f) &&
       !quitado(asiento)
     ) {
-      for (const [insumo, cantidad] of Object.entries(consumoPorUnidad(asiento.producto))) {
+      for (const [insumo, cantidad] of Object.entries(
+        consumoPorUnidad(asiento.producto, mlPorPorcion),
+      )) {
         mover(existencia, insumo, -cantidad * asiento.cantidad);
         mover(consumo, insumo, cantidad * asiento.cantidad);
       }
@@ -114,18 +126,32 @@ export async function arbitrarInventario(
   libro: readonly AsientoFechado[],
   desde: string,
   c: Comparador,
+  /** El árbitro de cada hora mira sólo lo que pasó hasta esa hora (ISO); al cierre, todo. */
+  hasta = 'infinity',
 ): Promise<void> {
   const nombres = INSUMOS.map((i) => i.nombre);
-  const { existencia, consumo } = existenciaEsperada(libro);
+  const porciones = new Map(
+    (
+      await leerSql<{ nombre: string; ml: string }>(
+        baseUrl,
+        `select nombre, ml_por_porcion::text as ml from productos where tipo_venta = 'porcion_contenedor' and ml_por_porcion is not null`,
+      )
+    ).map((f) => [f.nombre, Number(f.ml)]),
+  );
+  const { existencia, consumo } = existenciaEsperada(libro, porciones);
   const reales = new Map(
     (
-      await leerSql<{ nombre: string; cantidad: string }>(baseUrl, NETO_DEL_DIA, [nombres, desde])
+      await leerSql<{ nombre: string; cantidad: string }>(baseUrl, NETO_DEL_DIA, [
+        nombres,
+        desde,
+        hasta,
+      ])
     ).map((f) => [f.nombre, num(f.cantidad)]),
   );
   const salidas = new Map(
-    (await leerSql<{ nombre: string; cantidad: string }>(baseUrl, SALIDAS, [nombres, desde])).map(
-      (f) => [f.nombre, num(f.cantidad)],
-    ),
+    (
+      await leerSql<{ nombre: string; cantidad: string }>(baseUrl, SALIDAS, [nombres, desde, hasta])
+    ).map((f) => [f.nombre, num(f.cantidad)]),
   );
   for (const i of INSUMOS) {
     const unidad = i.base;
@@ -148,6 +174,7 @@ export async function arbitrarInventario(
   }
   const [fila] = await leerSql<{ compras: string; gastos: string }>(baseUrl, COMPRAS_Y_GASTOS, [
     desde,
+    hasta,
   ]);
   // Las compras y los gastos se comparan en la MISMA ventana que la base (desde el inicio del día):
   // el libro trae todos los días (el inventario sí es acumulado) y sumaba también los del día 0.

@@ -33,6 +33,13 @@ select o.id as orden_id, o.folio::text as folio, o.estado, o.total_centavos::tex
  where o.organizacion_id = ${ORGANIZACION} and o.folio is not null and o.created_at >= $1::timestamptz
  group by o.id`;
 
+/** Lo mismo con la hora de cobro: las cuentas pagadas hasta cierta hora (el árbitro de cada hora). */
+const HORA_DE_COBRO = `
+select o.folio::text as folio, o.cerrada_en as cerrada
+  from ordenes o
+ where o.organizacion_id = ${ORGANIZACION} and o.folio is not null and o.estado = 'pagada'
+   and o.created_at >= $1::timestamptz`;
+
 const MOVIMIENTOS = `
 select sesion_caja_id::text as sesion, tipo, sum(monto_centavos)::text as suma, count(*)::int as n
   from movimientos_caja where organizacion_id = ${ORGANIZACION} and sesion_caja_id = any($1::uuid[])
@@ -52,6 +59,12 @@ export async function arbitrarCajas(
   libro: readonly AsientoFechado[],
   desde: string,
   c: Comparador,
+  /**
+   * El árbitro de cada hora (sólo lectura, con las cajas abiertas): mira lo cobrado hasta esa hora. Los
+   * cobros del sistema que el libro todavía no anotó (el bot tarda unos segundos en anotar) sólo cuentan
+   * si se cobraron ANTES de esa hora, y no se compara el corte (la caja sigue abierta).
+   */
+  hasta?: string,
 ): Promise<void> {
   const delLibro = cobros(libro);
   const filas = await leerSql<FilaDeCobro>(baseUrl, COBROS, [desde]);
@@ -82,9 +95,21 @@ export async function arbitrarCajas(
     );
     c.comparar('cajas', `${quien}: cambio`, x.cambioCentavos, num(f.cambio));
   }
-  const fantasmas = filas.filter((f) => f.estado === 'pagada' && !cuentasDelLibro.has(f.folio));
+  let pagadas = filas.filter((f) => f.estado === 'pagada');
+  if (hasta !== undefined) {
+    const hora = new Map(
+      (
+        await leerSql<{ folio: string; cerrada: Date | string | null }>(baseUrl, HORA_DE_COBRO, [
+          desde,
+        ])
+      ).map((f) => [f.folio, f.cerrada === null ? Infinity : new Date(f.cerrada).getTime()]),
+    );
+    const corte = new Date(hasta).getTime();
+    pagadas = pagadas.filter((f) => (hora.get(f.folio) ?? Infinity) <= corte);
+  }
+  const fantasmas = pagadas.filter((f) => !cuentasDelLibro.has(f.folio));
   c.comparar('cajas', 'Cobros en la base que ningún bot anotó', 0, fantasmas.length);
-  await cortes(baseUrl, libro, delLibro, porFolio, c);
+  if (hasta === undefined) await cortes(baseUrl, libro, delLibro, porFolio, c);
 }
 
 async function cortes(

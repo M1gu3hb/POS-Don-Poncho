@@ -3500,3 +3500,44 @@ guardar (hoy una configuración incompatible se ignora en silencio al cobrar).
   exploración sólo leía `aria-label`. Queda `interruptores-con-nombre.contrato.test.ts` para que no se
   pierda, con la lista de todos los interruptores de Configuración. Lo que SÍ es real y queda abierto: el
   interruptor mide 32×18 px (blanco táctil de 44 px incumplido, en la primitiva compartida `Switch`).
+
+## DP-D175 · DP-22 · El día de bots: un día completo con aparatos táctiles, caos programado y árbitro cada hora · 17-11-2026
+
+Perfil `dp22` del simulador (`qa/simulador/perfil-dp22.ts`, lanzador `correr-dp22.ts`). No cambia la app ni
+ninguna regla de dinero o de inventario: lo que no cuadre es un hallazgo, no un ajuste.
+
+- **Aparatos.** Los perfiles táctiles del arnés (`hasTouch`, sin ratón; `Locator.click` se vuelve `tap`):
+  Caja en Windows 1366×768 al 125 %, mesero en teléfono 360×800 y en tableta 800×1280, las cinco estaciones
+  de Cocina en el iMin (Chromium 99, modo ligero), comensales en teléfono 390×844 y dueña/gerente en Windows
+  1920×1080. Un navegador por motor (`navegadores.ts`); si falta un motor el informe lo dice.
+- **Volumen y reloj.** 64 grupos de mesa y ×4: con 2 y luego 3 meseros, no los 6 de la semana (a ×6 no
+  alcanzaban 130 grupos). La semilla manda; la hora pondera las llegadas (comida fuerte de 13:00 a 16:00).
+- **Caos con id** (`CAOS_DEL_DIA`): IVA de 16 % a 8 % y de vuelta; quién elige la propina; cupo y nombre
+  de las cajas; portal apagado con carritos; estación y categoría nuevas a las 11:00 y reasignar una
+  categoría a las 14:00; mover mesas en el editor con el dedo; un mesero nuevo; otro desactivado con mesas
+  abiertas (sus cuentas las adopta otro tras repartir las mesas); una tableta que se apaga; la gerente agota
+  un platillo y cambia un precio (que ahora regresa). El informe cuenta, por id, lo ejecutado, lo
+  rechazado, lo fallido y lo que quedó fuera de un ensayo.
+- **El árbitro de cada hora** (`arbitro/hora.ts`) sólo lee y mira un corte asentado (4 min simulados atrás)
+  que confirma con un segundo corte: sólo lo que persiste cuenta; lo transitorio se cuenta aparte. Compara
+  cobros al centavo, propinas por mesero, retiros y entradas, compras y gastos, inventario al gramo, su
+  valor con UN redondeo del costo exacto (`costo_exacto_dmc`, DP-D165), la existencia contra el kardex,
+  las comandas (ninguna perdida ni atorada), las invariantes, los 5xx y los errores de consola.
+- **Dos oráculos que estaban viejos y ya no:** el consumo de un producto por porción de contenedor es
+  750 ml ÷ 16 = 46.875 ml (no 45), y C02 se revisa con la tasa de CADA cuenta cuando el IVA cambia en el día
+  (la invariante general lee la tasa de ahora).
+- **Cómo repetirlo:** `bash D:/mpos-tmp/dp22/bots/dia-de-bots.sh repetir <semilla>` (ver el README del simulador).
+
+## DP-D176 · DP-22 · Lo que el primer ensayo del día de bots enseñó (del guion, y lo que queda por mirar) · 17-11-2026
+
+- **Del guion, ya arreglado:** la espera de 5 s de `expect` no alcanza con la máquina cargada (el cobro con
+  propina fallaba y el reintento veía una propina ya fijada); el doble toque ahora son dos toques;
+  «Cerrar» está dos veces en los diálogos heredados (`.first()`); el árbitro contaba filas de comanda y no
+  piezas, ni quitaba la presentación del nombre («· medio litro»).
+- **Para mirar (no se tapó):** «Cambiar de mesa» no se le ofrece al mesero que atiende la mesa (tres
+  veces en el ensayo); «Marcar entregado» y «Pedir cuenta» del mesero a veces no encuentran su botón en
+  45 s; los cobros tardan más de 3 s al abrir una cuenta pendiente (con la máquina cargada); un crítico
+  de «la pantalla dice $X» después de un intento de cobro abortado, que parece del guion (la propina ya la
+  había fijado la Caja). El día completo, con la máquina sola, es lo que lo confirma o lo descarta.
+- **Del clon, no de la app:** las fotos del molde apuntan al almacén de otra corrida (puerto 3230) y el CSP
+  las bloquea: el árbitro lo declara explicado.

@@ -30,6 +30,7 @@ export async function arbitrar(
   salida: string,
   dia: number,
   desde: string,
+  omitirInvariantes: readonly string[] = [],
 ): Promise<ResultadoDelArbitro> {
   const c = crearComparador();
   const dias = Array.from({ length: dia + 1 }, (_, i) => i);
@@ -51,7 +52,7 @@ export async function arbitrar(
     [desde],
   );
   arbitrarAlDueno(carpeta, delDia, c, num(pagadas?.n));
-  await arbitrarInvariantes(baseUrl, salida, c);
+  await arbitrarInvariantes(baseUrl, salida, c, omitirInvariantes);
   const resultado = c.resultado(dia);
   writeFileSync(join(carpeta, 'arbitro.json'), JSON.stringify(resultado, null, 2));
   const registro = abrirRegistro(salida);

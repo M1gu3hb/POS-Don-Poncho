@@ -168,3 +168,33 @@ dice cuánto hubo de cada cosa.
 | `dia0/`                                                              | el día 0 y su verificación                                                            |
 | `libro.ts`, `arbitro/`, `incidentes.ts`, `tiempos.ts`, `informe*.ts` | lo esperado, la comparación y los informes                                            |
 | `perfiles.ts`, `correr-dia.ts`                                       | los siete días y el lanzador                                                          |
+
+## El día de bots (perfil `dp22`, DP-22)
+
+Un día completo (8:00 a 19:00) con pocos aparatos TÁCTILES a la vez, para el ensayo general antes de abrir:
+la Caja en Windows 1366×768 al 125 %, un mesero en teléfono 360×800 y otro en tableta 800×1280, la
+Cocina en el iMin (1920×1080, Chromium 99, modo ligero), el comensal en teléfono 390×844 y el dueño o la
+gerente en Windows 1920×1080 (perfiles de `pruebas/e2e/qa-final/arnes/aparatos.ts`, cada uno en el motor
+que dice el arnés; si falta el Chrome 156 lo dice el informe). Los bots TOCAN (`tap`, `dedo.ts`: no hay
+clics de ratón) y sólo el árbitro lee la base.
+
+- `perfil-dp22.ts`: los aparatos, los planes de cada bot, el calendario del caos (con id) y el volumen
+  (64 grupos, reloj ×4). `correr-dp22.ts`: el lanzador. `navegadores.ts`: un navegador por motor.
+- `bots/caos-dp22.ts` + `pantallas/salon-y-ajustes.ts`: lo que la dueña cambia a media operación (IVA,
+  quién elige la propina, cupo y nombre de las cajas, portal apagado con carritos, estación y categoría
+  nuevas, reasignar una categoría, mover mesas en el editor, un mesero nuevo, otro desactivado con mesas
+  abiertas, una tableta que se apaga). Las cajas, la gerente y los meseros hacen el resto (red, recargas,
+  traslado, agotado, precio).
+- `arbitro/hora.ts`: el árbitro de CADA HORA (cajas, propinas por mesero, retiros, compras, inventario al
+  gramo y su valor con el costo exacto, kardex, comandas, invariantes, 5xx y consola). Sólo lee y mira un
+  corte asentado (4 min antes de «ahora») y confirma con un segundo corte: ver su cabecera.
+- Salida: `<salida>/dia-22/DIA-dp22-<semilla>.md` (volumen, caos ejecutado y no, horas del árbitro,
+  incidentes y tiempos), `horas.json`, `caos-dp22.json` y `INCIDENTES.md`.
+
+```bash
+# Con la máquina sola (un clon nuevo por semilla; el molde qa_dp22_inv no se toca):
+bash D:/mpos-tmp/dp22/bots/dia-de-bots.sh repetir 2211                      # el día completo
+bash D:/mpos-tmp/dp22/bots/dia-de-bots.sh repetir 2212                      # otra semilla
+bash D:/mpos-tmp/dp22/bots/dia-de-bots.sh repetir 2211 --hasta 60 --arbitro-cada 20   # ensayo corto
+bash D:/mpos-tmp/dp22/bots/dia-de-bots.sh parar                             # para mis servidores
+```

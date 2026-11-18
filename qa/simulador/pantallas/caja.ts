@@ -156,7 +156,8 @@ export async function decidirLaPropina(
     await deLaPregunta.getByText(`${String(propina)}%`, { exact: true }).click();
     await aplicar.click();
   }
-  await expect(pregunta).toBeHidden();
+  // Con la máquina cargada el servidor tarda más de los 5 s que `expect` espera por omisión.
+  await expect(pregunta).toBeHidden({ timeout: 30_000 });
 }
 
 /** Abre una cuenta de «Pendientes» (por el nombre del botón) y deja el diálogo de cobro listo. */
@@ -173,7 +174,7 @@ export async function abrirLaCuenta(
   await pagina.getByRole('button', { name: rotulo }).first().click();
   const dialogo = dialogoCon(pagina, tituloDelDialogo ?? `Cobrar — ${titulo}`);
   await decidirLaPropina(pagina, dialogo, propina, alOcultarse);
-  await expect(dialogo).toBeVisible();
+  await expect(dialogo).toBeVisible({ timeout: 30_000 });
   return dialogo;
 }
 
@@ -294,7 +295,9 @@ export async function cobrar(
     await expect(boton).toBeVisible();
     await boton.click();
   } else if (variacion.doble === true) {
-    await boton.dblclick();
+    // Doble toque con el dedo: el segundo llega cuando el primero ya está en vuelo (si el diálogo ya se fue, no hay a quién tocar).
+    await boton.tap();
+    await boton.tap({ timeout: 2_000 }).catch(() => undefined);
   } else {
     await boton.click();
   }
@@ -316,6 +319,7 @@ export async function cobrar(
   if (await separar.isVisible())
     await pagina.getByRole('button', { name: 'Separar mesas' }).click();
   await expect(ticket).toBeVisible({ timeout: 30_000 });
+  // El diálogo trae dos botones «Cerrar» (la equis y el del pie): se toca el primero (la equis y el del pie se llaman igual).
   await ticket.getByRole('button', { name: 'Cerrar' }).first().click();
   await expect(ticket).toBeHidden();
   return {
