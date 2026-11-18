@@ -25,9 +25,12 @@ describe('DP-15 · mover la cuenta desde el mapa', () => {
     // DP-15.1: la lista fija de tres puestos se fue; ahora decide la función pura, que además
     // abre el enlace al mesero en las mesas que él atiende.
     expect(c).not.toContain('PUEDEN_MOVER_LA_CUENTA');
+    // DP-22: la regla se calcula UNA vez (`puedeCambiarDeMesaAqui`) y la usan el panel de la tableta y la
+    // hoja del teléfono (`MeseroCartFAB`).
     expect(c).toContain(
-      '{ventaActiva&&mesaActiva?.id&&puedeMoverLaCuenta({puesto:miPuesto,yoId:posUser?.id,atiendeId:resolverMeseroResponsable(mesaActiva,config)?.id,unida:Boolean(mesaActiva.unida_a_mesa_id)||(mesas||[]).some((m)=>m.unida_a_mesa_id===mesaActiva.id),})&&(',
+      'constpuedeCambiarDeMesaAqui=Boolean(ventaActiva&&mesaActiva?.id&&puedeMoverLaCuenta({puesto:miPuesto,yoId:posUser?.id,atiendeId:resolverMeseroResponsable(mesaActiva,config)?.id,unida:Boolean(mesaActiva.unida_a_mesa_id)||(mesas||[]).some((m)=>m.unida_a_mesa_id===mesaActiva.id),}),);',
     );
+    expect(c).toContain('{puedeCambiarDeMesaAqui&&(');
     // DP-21 · Bloque 10: el botón abre el panel AQUÍ; no es un enlace a otra pantalla.
     expect(c).toContain(
       '<Buttonvariant="outline"className="w-full"onClick={()=>setCambiandoDeMesa(true)}><ArrowLeftRightclassName="w-4h-4mr-1"/>Cambiardemesa</Button>',

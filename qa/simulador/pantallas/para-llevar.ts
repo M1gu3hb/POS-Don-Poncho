@@ -115,7 +115,12 @@ export async function entregarLoListo(pagina: Page): Promise<number> {
     entregados += 1;
     // La tarjeta entregada tarda en irse: sin esperarla, la vuelta siguiente tocaba un botón que ya
     // se estaba yendo.
-    await expect.poll(() => entregar.count(), { timeout: 15_000 }).toBeLessThan(antes);
+    // Si en ese rato la cocina deja otro pedido listo la cuenta de botones no baja (D22-007 del día 2212:
+    // «Expected: < 1» con el pedido ya entregado y 200 de respuesta): se sigue tras una pausa, no es falla.
+    await expect
+      .poll(() => entregar.count(), { timeout: 15_000 })
+      .toBeLessThan(antes)
+      .catch(() => pagina.waitForTimeout(1_500));
   }
   return entregados;
 }

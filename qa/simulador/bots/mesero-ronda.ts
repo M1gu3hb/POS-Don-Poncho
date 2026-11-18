@@ -98,6 +98,12 @@ export async function pedirRonda(
   );
   if (!limpio) return false;
   for (const l of lineas) {
+    // Un platillo que la cocina o la gerente marcaron agotado DESPUÉS de planear la ronda: la pantalla no deja
+    // pedirlo (y tiene razón). Se suelta la ronda y se planea otra con lo que hay (D22-008 del día 2213).
+    if (ctx.mundo.agotados.has(l.producto.nombre) || ctx.mundo.agotados.has(l.producto.id)) {
+      await vaciarCarrito(pagina).catch(() => undefined);
+      return false;
+    }
     const ok = await intentar(
       ctx,
       pagina,

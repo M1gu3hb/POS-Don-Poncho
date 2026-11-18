@@ -40,6 +40,7 @@ import {
   repartirLasMesas,
 } from '../pantallas/salon-y-ajustes.ts';
 import { asegurarSesion } from '../sesion.ts';
+import { anotarReparto } from './reparto-de-mesas.ts';
 import { abrirSesion } from './comun.ts';
 
 export type EstadoDelPaso = 'hecho' | 'rechazado' | 'fallo';
@@ -101,8 +102,9 @@ const PASOS: Readonly<Record<string, Paso>> = {
     const r = await fijarElCupoDeCajas(pagina, url, 1);
     return r.aceptado ? hecho('cupo de 1 caja') : { estado: 'rechazado', detalle: r.aviso };
   },
-  P3: async ({ pagina, url }) => {
+  P3: async ({ ctx, pagina, url }) => {
     await repartirLasMesas(pagina, url, REPARTO_DE_DOS);
+    anotarReparto(ctx.mundo.repartoDeMesas, REPARTO_DE_DOS);
     return hecho('mesas 1 a 10 con Mesero 1 y 11 a 20 con Mesero 2');
   },
   C1: async ({ ctx, pagina, url }) => {
@@ -151,10 +153,11 @@ const PASOS: Readonly<Record<string, Paso>> = {
     cambio(ctx, 'portal del comensal', 'apagado', 'encendido');
     return hecho('portal encendido');
   },
+  // Hacia ABAJO (no de lado): a la derecha la 3 caía sobre la 4 y «Unir» juntaba tres mesas, no dos.
   S1: async ({ pagina, url }) => {
     const movimientos: string[] = [];
     for (const numero of PERSONAL_DEL_CAOS.mesasQueSeMueven) {
-      const m = await moverLaMesa(pagina, url, numero, 110, 70);
+      const m = await moverLaMesa(pagina, url, numero, 0, 90);
       movimientos.push(
         `mesa ${String(numero)} de (${String(m.antes.x)}, ${String(m.antes.y)}) a (${String(m.despues.x)}, ${String(m.despues.y)})`,
       );
@@ -164,7 +167,7 @@ const PASOS: Readonly<Record<string, Paso>> = {
   S1r: async ({ pagina, url }) => {
     const movimientos: string[] = [];
     for (const numero of PERSONAL_DEL_CAOS.mesasQueSeMueven) {
-      const m = await moverLaMesa(pagina, url, numero, -110, -70);
+      const m = await moverLaMesa(pagina, url, numero, 0, -90);
       movimientos.push(`mesa ${String(numero)} a (${String(m.despues.x)}, ${String(m.despues.y)})`);
     }
     return hecho(movimientos.join('; '));
@@ -229,8 +232,9 @@ const PASOS: Readonly<Record<string, Paso>> = {
     cambio(ctx, 'personal', '', `alta de ${PERSONAL_DEL_CAOS.meseroNuevo}`);
     return hecho(`${PERSONAL_DEL_CAOS.meseroNuevo} dado de alta`);
   },
-  M2: async ({ pagina, url }) => {
+  M2: async ({ ctx, pagina, url }) => {
     await repartirLasMesas(pagina, url, REPARTO_DE_TRES);
+    anotarReparto(ctx.mundo.repartoDeMesas, REPARTO_DE_TRES);
     return hecho('mesas repartidas entre Mesero 1, Mesero 2 y Mesero 7');
   },
   M3: async ({ ctx, pagina, url }) => {
@@ -248,6 +252,7 @@ const PASOS: Readonly<Record<string, Paso>> = {
     await desactivarAlUsuario(pagina, url, quien);
     cambio(ctx, 'personal', quien, `${quien} desactivado con ${String(abiertas)} cuentas abiertas`);
     await repartirLasMesas(pagina, url, REPARTO_SIN_EL_QUE_SE_FUE);
+    anotarReparto(ctx.mundo.repartoDeMesas, REPARTO_SIN_EL_QUE_SE_FUE);
     ctx.mundo.adopcionAbierta = true;
     return hecho(
       `${quien} desactivado con ${String(abiertas)} cuentas abiertas; sus mesas pasan a Mesero 1 y Mesero 7`,

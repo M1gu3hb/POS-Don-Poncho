@@ -120,7 +120,8 @@ export const CAJA_DOS: PlanDeCaja = {
   caja: 'Caja 2',
   persona: 'Caja 2',
   aparato: APARATOS_DEL_DIA.caja,
-  traslado: { aparato: APARATOS_DEL_DIA.dueno, enMinuto: 420 },
+  // Desde que la Caja 2 abre (12:40), no desde las 8:00: así cae a las 15:00, el minuto 420 del día de R1.
+  traslado: { aparato: APARATOS_DEL_DIA.dueno, enMinuto: 420 - ENTRA_LA_CAJA_DOS },
   fondoCentavos: 100_000,
   retiros: [
     { enMinuto: 340, centavos: 25_000, aDondeVa: 'pago a proveedor' },

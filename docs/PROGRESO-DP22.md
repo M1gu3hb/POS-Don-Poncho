@@ -272,3 +272,98 @@ leída y con mutantes propios encima de los del agente que la hizo:
   la última la 195). Ninguna cuenta, caja ni ajuste cambió.
 - **Vercel:** 0 errores al desplegar y **0 en la hora siguiente** (revisado a las 21:43, ventana
   de 2 h). **Lote 4 cerrado.**
+
+### Lote 5 · PR #41 (`dp-22-quinto-lote` → `main`) · sin migraciones
+
+Rama `dp-22-quinto-lote` (checkout principal, sobre `main` ya con el lote 4). Lo armó y lo llevó
+hasta la CI en verde el agente de entrega; el costo por medida lo hizo el agente I y el de entrega
+lo auditó con mutantes propios. Lleva:
+
+- **El día de bots** (DP-D175 y DP-D176).
+- **La Parte 5 completa por pantallas**, 62 de 62 contra el libro, con sus arreglos: el hallazgo 12
+  (corregido de verdad, DP-D172), el 24 (la merma de Ajustar se anota como merma, DP-D171), el 29
+  (el portal ya no enseña lo oculto del POS, DP-D174), el 30 (la merma con existencia negativa se
+  registra, DP-D173) y el 36 (nombre accesible en el editor de receta).
+- **La Parte 7 en la app:** el hallazgo 31 (arqueo por billetes y monedas, DP-D178), el 32 (quién
+  autorizó una cancelación, DP-D179), el 33 (búsqueda sin acentos, DP-D178) y el tiempo de la mesa
+  (DP-D177).
+- **El costo de lo vendido por medida** (hallazgo 27, DP-D180) y el botón y el aviso de compras
+  (hallazgo 28, DP-D181).
+- **Lo que cazó la CI o la auditoría antes de unir** (nada llegó a `main`): (1) `verify:aspecto`
+  falló porque dos archivos heredados (Ajustar stock y el editor de receta) habían cambiado sin
+  declararse: se declararon (`66fe3c9`). (2) En la auditoría del costo por medida, uno de los
+  cuatro mutantes propios SOBREVIVÍA: la prueba de «receta igual» era vacía porque los insumos de
+  la receta tenían costo 0; se reforzó dándoles costo exacto y el mutante murió (4 de 4 como se
+  esperaba). (3) Una línea sin formato de `scripts/venta/mutaciones.mjs` (prettier). (4) La
+  galería: 9 de 81 retratos regenerados y mirados (Compras, Inicio, Inventario y Platillos), sin
+  texto cortado, encimado ni desbordado.
+- **La CI:** 10 de 10 en el commit `0f107d1`, con «Jornada completa» y los rastreos.
+- **Despliegue (17-11):** unido a `main` como `e4e0a70` a las 23:45; el despliegue de producción
+  quedó «READY» (`dpl_CdXRHVCo…`) hacia las 23:48. Regreso previsto: el del lote 4 (`dpl_H1Z697…`).
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 5`, 23:49): **0 fallas.**
+- **Lectura de producción después:** idéntica a la del lote 4 (no hubo migración).
+- **Vercel:** 0 errores al desplegar; la hora siguiente se revisó a las 00:50 del 18-11 (ventana
+  de 2 h, que cubre también las escrituras de la Parte 11): 0 errores. **Lote 5 cerrado.**
+
+## Parte 11 · Producción configurada y en ceros (17-11)
+
+De las 23:50 a las 23:58, con `bash /d/mpos-tmp/dp22/parte11.sh`:
+
+- **Antes:** 9 cuentas de prueba (A-1 a A-9, del 11 al 15-11, todas cobradas), 1 caja cerrada, 0
+  abiertas.
+- **`configurar`** (ensayo y luego de verdad; 5 comandos firmados, con auditoría): IVA «Sin IVA»;
+  prefijo de folio «DP»; dos cajas a la vez, «Caja 1» y «Caja 2»; «Almacén principal». Ya estaban:
+  la propina la eligen comensales y Caja; el ticket y la precuenta con todos sus renglones;
+  «silenciar notificaciones del administrador» encendido.
+- **`ceros 9`** (el ensayo confirmó que sólo había lo de prueba): 9 cuentas purgadas, 16 comandas, 2
+  carritos, 5 solicitudes del portal, 1 caja con sus movimientos; folios reiniciados. La auditoría
+  se queda.
+- **`primer-folio`:** 1001 (cuentas) y 101 (cortes). **`aparatos`:** 35 «Caja N» → «Aparato N».
+- **Verificación de sólo lectura** (`produccion-final.txt`): 0 cuentas, 0 cajas, 0 comandas, 0
+  carritos, 0 pagos, 10 mesas libres, siguiente folio DP-01001 (A=1001, CC=101), 35 aparatos sin
+  ningún «Caja N», «Almacén principal», impuesto 0 puntos base, migraciones hasta la 195.
+- **`pnpm dia-cero`** (ensayo, no escribe): «nada que borrar». Lo único que falta es el bloqueo
+  del arranque (H1), que **no** se activó en esa sesión a propósito: lo activa
+  `pnpm dia-cero -- --en-serio` después de la prueba física de Miguel.
+
+## El día de bots (Parte 10)
+
+Tres días de 8:00 a 19:00 (×4, árbitro cada hora) sobre el commit `b1d630d` (más los arreglos que se le fueron sumando), con la máquina sola
+(informe: `D:\mpos-tmp\dp22\informes\b-dia.md`). Entre medias hubo dos arranques cortados a propósito
+(2212 a las 10:30 y a las 9:30) para arreglar y recompilar; no cuentan.
+
+| Semilla | Duración | Cobros                    | Importe    | Lo que dijo el árbitro                                                                         | Incidentes                              |
+| ------- | -------: | ------------------------- | ---------- | ---------------------------------------------------------------------------------------------- | --------------------------------------- |
+| 2211    |  188 min | 171 (50 mesa, 121 llevar) | $64,878.10 | 0 diferencias en 11 horas y cierre (1,533 comparaciones), 0 5xx, 0 consola                     | 289 (2 «críticos» de dinero, del guion) |
+| 2212    |  169 min | 154 (62 mesa)             | $84,528.20 | 0 en el cierre; 2 «críticos» a las 14:00 (guion del árbitro)                                   | 139                                     |
+| 2213    |  168 min | 174 (68 mesa, 106 llevar) | $69,641.50 | 0 diferencias en las 11 horas y el cierre (1,562 comparaciones), 0 5xx, 0 consola sin explicar | 76: 0 críticos, 0 altos, 0 «dinero»     |
+
+- **2211** (código sin arreglos): 33 mesas, 17 portal, 6 unidas, 7 cambios de mesa, 1 dividida, 8
+  cancelaciones; 9,277 toques, 0 clics. **2212** (tras DP-D182): 36 mesas, 8 unidas, 21 cambios, 3
+  divididas, 13 cancelaciones; 10,644 toques. **2213** (con todos los arreglos de guion): 44 mesas,
+  13 pedidas por portal (32 pedidos), 10 unidas, 27 cambios de mesa, 8 divididas, 17 cancelaciones,
+  3 cortes; 11,036 toques, 0 clics. En la 2213 el árbitro comparó dinero al centavo, inventario al
+  gramo, propinas por mesero y comandas (ninguna perdida o atorada).
+- **Lo juzgado.** De la app, uno: «Cambiar de mesa» no se ofrecía al mesero en el teléfono (la hoja
+  del pedido sólo traía «Solicitar cuenta»; en la tableta, siempre): arreglado (hallazgo 37,
+  DP-D182, lote 6). Del guion: «Marcar entregado» (13 de 13 casos fueron una entrega ajena de
+  segundos antes), zonas y selectores del teléfono, la pregunta «¿Separar mesas o dejarlas
+  unidas?» sin contestar (encadenó ~200 fallos) y tres «críticos» de dinero (la propina que la Caja
+  eligió quedaba fijada tras red caída o recarga y el libro no la sabía). Del árbitro (sin relajar
+  el oráculo): al dividir una cuenta la pieza nueva entra a la misma comanda con otra hora y el
+  corte por fila contaba una menos; ahora corta por la hora de la comanda (DP-D183). De medición:
+  la Caja «abre la cuenta pendiente» medía 2.9 s, de los cuales ~1.5 s eran toques del bot.
+- **Caos.** En la 2213 se ejecutaron todos menos R1 (traslado de la Caja 2): el plan lo ponía al
+  minuto 420 desde que abre la Caja 2 y caía a las 19:40; sólo corrió en la 2211. Se arregló el
+  perfil (`perfil-dp22.ts`, con prueba) y **no** se verificó en un día completo.
+- **Veredicto, tal cual lo da el informe:** ¿hay un día limpio? **No, estrictamente.** La 2213 es
+  limpia en dinero, inventario, propinas, comandas, 5xx y consola, y sin incidentes críticos ni
+  altos, pero no ejecutó todo el caos (R1) y deja unos 15 incidentes medios, de guion o de
+  medición (agotado que gana a la ronda planeada ×5, modo espera tapando un cobro ×2, portal ×4,
+  medidas de merma, retiro y cierre de caja, «Registrar compra» ajeno). Ningún día corrió con los
+  últimos arreglos de guion. **Un cuarto día (semilla 2214) está corriendo;** su informe será
+  `D:\mpos-tmp\dp22\informes\b-dia-4.md`.
+- **Sin arreglar y anotado:** el modo espera durante el cobro; la lentitud de formularios (merma,
+  retiro, compra y cierre de caja de 10.9 s en la 2213, sin causa demostrada); la barra del
+  teléfono no aparece con la cuenta ya pedida (hallazgo 38); la sesión de la Caja de 12 h fijas
+  (por diseño).

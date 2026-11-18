@@ -3,52 +3,23 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11, 22:15.
+Última puesta al día: 18-11, 09:45.
 
-## AHORA MISMO (17-11, 22:15) — retomar desde aquí
+## AHORA MISMO (18-11, 09:45) — retomar desde aquí
 
-1. **Lotes 1, 2, 3 y 4 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`, `e4c45f5`, `6b76050`;
-   migraciones hasta la 195; Vercel sin errores en la hora de cada uno).
-2. **Lote 5 armado** en el checkout principal, rama `dp-22-quinto-lote` (subida, SIN PR todavía;
-   sin migraciones). Lleva, revisado y con mutantes propios: el día de bots (agente F, DP-D175 y
-   176), la Parte 5 completa y sus arreglos (agente G: hallazgos 12 corregido de verdad, 24, 29,
-   30 y 36; DP-D171 a 174) y la Parte 7 en la app (agente H: hallazgos 31, 32 y 33, y el tiempo
-   de la mesa; DP-D177 a 179). Comprobado con `bash /d/mpos-tmp/dp22/comprobar-lote5.sh <log>`
-   (tipos de los tres proyectos, formato, 9 puertas, unitarias de zona, integración contra
-   `dp22_lote4`, typecheck y lint): todo en 0.
-   **Corriendo:** (a) la CI que REGENERA la galería sobre `3b9fd20`:
-   `gh run view 44234811702` → bajar `galeria-restaurante`
-   (`gh run download 44234811702 -n galeria-restaurante -D /d/mpos-tmp/dp22/galeria-lote5`),
-   MIRAR los PNG que cambian, copiarlos a `pruebas/e2e/galeria.spec.ts-snapshots/` y confirmar;
-   (b) el agente I · `a937b1199fc106d86` · `.work\dp20` · `dp-22-costo-por-medida` (sale de
-   `72b5997`): el hallazgo 27 (el margen ignora lo vendido por kilo: el costo del renglón por
-   medida queda en cero; DP-D180) y el 28 (el botón «Registrar compra» del almacenista).
-   Recibirlo con parche desde `72b5997` y `git apply --3way --index`, `comprobar-lote5.sh`,
-   mutante propio.
-   **Después:** abrir el PR del lote 5 (`gh pr create --base main --head dp-22-quinto-lote`),
-   Auto-fix, CI en verde, `gh pr merge N --squash`, «READY», `humo-produccion.sh 5`,
-   `revisar-produccion.mjs` (no hay migración: la lectura debe salir idéntica), la hora de Vercel.
-3. **El día de bots (Parte 10), con la máquina SOLA, cuando el lote 5 tenga su contenido final:**
-   en `.work\dp20-lab` poner el código final (`git checkout --detach origin/dp-22-quinto-lote` o
-   `main` si ya se unió), `pnpm build`, y
-   `bash D:/mpos-tmp/dp22/bots/dia-de-bots.sh repetir 2211 > /d/mpos-tmp/dp22/bots/dia-2211.log 2>&1`
-   (clona `qa_dp22_inv` a `qa_dp22_bots_2211`, migra, levanta 3210 y 54511; 8:00 a 19:00 a ×4:
-   unas 2 h 45 min). Salida: `D:\mpos-tmp\dp22\bots\salida-2211\dia-22\DIA-dp22-2211.md`,
-   `horas.json`, `caos-dp22.json`, `INCIDENTES.md`. Leer el informe y los incidentes; lo que sea de
-   la app se arregla o se anota; repetir con otra semilla (2212…) hasta que salga limpio. Del
-   ensayo quedaron por confirmar con la máquina sola: «Cambiar de mesa» que no se le ofrece al
-   mesero que atiende (D22-020: ¿el reparto de mesas del caos le quitó la mesa?), botones que no
-   aparecen en 45 s (carga) y el caos que nunca corrió (C4 a C8, S1, K1, K2, M1 a M3, R1, A1).
-4. **Parte 11** con `bash /d/mpos-tmp/dp22/parte11.sh` (ya ensayada sin escribir: configurar
-   mandaría 5 comandos; `ceros-ensayo 9` encuentra sólo las 9 cuentas de prueba y 1 caja cerrada;
-   35 aparatos; orden: configurar → ceros 9 → primer-folio → aparatos → `revisar-produccion.mjs`
-   → `pnpm dia-cero`; H1 NO se activa; exige que `packages/` y `scripts/` sean los de
-   `origin/main`).
-5. **Informe 013** (`docs/reports/013-auditoria-final.md`): veredicto, números, calificación, la
-   lista física de Miguel (en la tableta, crear una receta eligiendo «Variable por medida»; tras
-   el primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`; el arqueo por billetes
-   en el iMin; el tiempo de la mesa con la hora del aparato bien puesta) y lo grande para después
-   (está en `NUEVO.md`).
+1. **Lotes 1 a 5 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`, `e4c45f5`, `6b76050`, `e4e0a70`;
+   migraciones hasta la 195; Vercel sin errores en la hora de cada uno). El lote 5 se unió el 17-11
+   a las 23:45 y su humo salió con 0 fallas.
+2. **Parte 11 hecha** (17-11, 23:50 a 23:58): producción configurada y en ceros (0 cuentas, 0 cajas,
+   siguiente folio DP-01001, 35 aparatos «Aparato N»). **H1 sin activar a propósito:** el bloqueo
+   del arranque lo activa `pnpm dia-cero -- --en-serio` después de la prueba física de Miguel.
+3. **Lote 6 en PR #42** (rama `dp-22-sexto-lote`, sin migraciones, SIN unir): «Cambiar de mesa» en
+   la hoja del pedido del teléfono (hallazgo 37, DP-D182), los arreglos del simulador que dejó el
+   día de bots (DP-D183) y la bitácora del lote 5, la Parte 11 y el día de bots.
+4. **El cuarto día de bots está corriendo** (semilla 2214); su informe quedará en
+   `D:\mpos-tmp\dp22\informes\b-dia-4.md`. Hasta ahora no hay un día limpio estricto (el 2213 no
+   ejecutó R1).
+5. **Falta** el informe 013.
 
 ## Dónde voy
 

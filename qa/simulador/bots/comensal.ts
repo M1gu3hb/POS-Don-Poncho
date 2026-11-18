@@ -120,6 +120,9 @@ async function atenderGrupo(
     for (let ronda = 1; ronda <= llegada.rondas && !ctx.terminado(); ronda += 1) {
       const lineas = planearRonda(ctx.azar, ctx.mundo, llegada.personas, 4);
       for (const l of lineas) {
+        // Agotado después de planear la ronda: el menú ya no deja pedirlo (D22-009 del día 2213).
+        if (ctx.mundo.agotados.has(l.producto.nombre) || ctx.mundo.agotados.has(l.producto.id))
+          continue;
         const t = ctx.azar.elegir(telefonos);
         const ok = await intentar(
           ctx,

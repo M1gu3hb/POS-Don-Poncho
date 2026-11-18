@@ -3,10 +3,17 @@
  * platillo (con el PIN de quien autoriza si la cuenta ya se pidió), cambiar de mesa, unir y
  * separar mesas, atender solicitudes del portal y «Llamar a mi mesero», y dejar limpia una mesa.
  */
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import { ESPERA_MS, escapar } from './ayudas.ts';
-import { aLaZonaDe, alMapa, botonDeMesa, dialogoDeMesa, entrarALaMesa } from './mesero-ui.ts';
+import {
+  aLaZonaDe,
+  alMapa,
+  botonDeMesa,
+  dialogoDeMesa,
+  entrarALaMesa,
+  pestanasDeZona,
+} from './mesero-ui.ts';
 import { pinDe, type Entorno } from '../entorno.ts';
 
 export type Propina = 'caja' | 'sin' | 10 | 15;
@@ -20,6 +27,24 @@ export interface PrecuentaLeida {
 
 const aCentavos = (texto: string): number => Math.round(Number(texto.replaceAll(',', '')) * 100);
 
+/**
+ * El botón que se busca (`Solicitar cuenta`, `Cambiar de mesa`) vive en el panel de la cuenta: a un
+ * lado en la tableta y detrás de la barra «Mesa abierta … Abrir» en el teléfono. Se ESPERA a que
+ * aparezca uno de los dos caminos (la cuenta tarda en hidratar: preguntar de golpe daba «no hay botón»
+ * y esperar sólo la barra costaba 45 s en la tableta, donde no existe) y, si sólo salió la barra, se
+ * toca para abrir el panel.
+ */
+export async function abrirElPanelDeLaCuenta(pagina: Page, boton: string | RegExp): Promise<void> {
+  const objetivo = pagina
+    .getByRole('button', typeof boton === 'string' ? { name: boton, exact: true } : { name: boton })
+    .filter({ visible: true });
+  const barra = pagina.getByRole('button', { name: /^Mesa abierta\b/ }).filter({ visible: true });
+  await objetivo.or(barra).first().waitFor({ state: 'visible', timeout: ESPERA_MS });
+  if ((await objetivo.count()) > 0) return;
+  await barra.last().click({ timeout: ESPERA_MS });
+  await objetivo.first().waitFor({ state: 'visible', timeout: ESPERA_MS });
+}
+
 /** Pide la cuenta con la propina que acordó la mesa y lee la pre-cuenta (código de caja y total). */
 export async function pedirLaCuenta(
   pagina: Page,
@@ -27,17 +52,7 @@ export async function pedirLaCuenta(
   propina: Propina,
 ): Promise<PrecuentaLeida> {
   await entrarALaMesa(pagina, numero);
-  const mesa = dialogoDeMesa(pagina, numero);
-  const solicitar = mesa
-    .getByRole('button', { name: 'Solicitar cuenta', exact: true })
-    .filter({ visible: true });
-  if ((await solicitar.count()) === 0) {
-    await pagina
-      .getByRole('button', { name: /^Mesa abierta\b/ })
-      .filter({ visible: true })
-      .last()
-      .click({ timeout: ESPERA_MS });
-  }
+  await abrirElPanelDeLaCuenta(pagina, 'Solicitar cuenta');
   await pagina
     .getByRole('button', { name: 'Solicitar cuenta', exact: true })
     .filter({ visible: true })
@@ -132,18 +147,23 @@ export async function cambiarDeMesa(pagina: Page, origen: number, destino: numbe
   // confirma «¿Pasar la cuenta de la mesa N a la mesa M?» con «Pasar» y sale el aviso.
   // El botón sale cuando la cuenta de la mesa ya cargó y la mesa es de quien la mira: se espera, no
   // se pregunta de golpe (D1-004). Si no sale, es lo que vería el mesero: queda como incidente.
-  const abrir = pagina.getByRole('button', { name: /^Cambiar de mesa/ }).first();
+  const abrir = pagina
+    .getByRole('button', { name: /^Cambiar de mesa/ })
+    .filter({ visible: true })
+    .first();
   try {
-    await abrir.waitFor({ state: 'visible', timeout: ESPERA_MS });
+    await abrirElPanelDeLaCuenta(pagina, /^Cambiar de mesa/);
   } catch {
     throw new Error(`La mesa ${String(origen)} no ofrece «Cambiar de mesa» a quien la atiende.`);
   }
   await abrir.click({ timeout: ESPERA_MS });
   const panel = pagina.getByRole('dialog').filter({ hasText: 'Cambiar de mesa' }).last();
-  await panel
-    .getByRole('button', { name: new RegExp(`^Mesa\\s*${String(destino)}\\b`) })
-    .first()
-    .click({ timeout: ESPERA_MS });
+  const laMesa = panel.getByRole('button', { name: new RegExp(`^Mesa\\s*${String(destino)}\\b`) });
+  // El panel enseña primero las libres de SU zona; las demás están tras «Ver mesas de otras zonas».
+  const otrasZonas = panel.getByRole('button', { name: /^Ver mesas de otras zonas/ });
+  await laMesa.or(otrasZonas).first().waitFor({ state: 'visible', timeout: ESPERA_MS });
+  if ((await laMesa.count()) === 0) await otrasZonas.click({ timeout: ESPERA_MS });
+  await laMesa.first().click({ timeout: ESPERA_MS });
   const movida = pagina.waitForResponse(
     (r) =>
       new URL(r.url()).pathname.startsWith('/api/restaurante/') && r.request().method() === 'POST',
@@ -175,12 +195,26 @@ export async function unirMesas(pagina: Page, principal: number, otra: number): 
   await sinTemblor(pagina, () => unirEnElPlano(pagina, principal, otra));
 }
 
+/** El plano de «Unir mesas» enseña UNA zona a la vez: se busca la mesa en las pestañas de zona. */
+async function aLaZonaDelPlano(pagina: Page, mesa: Locator): Promise<void> {
+  if ((await mesa.count()) > 0) return;
+  const pestanas = pestanasDeZona(pagina);
+  const cuantas = await pestanas.count();
+  for (let i = 0; i < cuantas; i += 1) {
+    await pestanas.nth(i).click({ timeout: ESPERA_MS });
+    await pagina.waitForTimeout(300);
+    if ((await mesa.count()) > 0) return;
+  }
+}
+
 async function unirEnElPlano(pagina: Page, principal: number, otra: number): Promise<void> {
   await pagina.getByRole('button', { name: 'Unir mesas' }).click({ timeout: ESPERA_MS });
   const plano = pagina.getByRole('region', { name: 'Unir mesas' });
   const enElPlano = (n: number) =>
     plano.getByRole('button', { name: `Mesa ${String(n)}`, exact: true });
+  await aLaZonaDelPlano(pagina, enElPlano(principal));
   await enElPlano(principal).click();
+  await aLaZonaDelPlano(pagina, enElPlano(otra));
   await enElPlano(otra).click();
   await plano.getByRole('button', { name: /^Unir 2 mesas/ }).click();
   const numero = pagina.getByRole('alertdialog', { name: '¿Qué número queda?' });
@@ -206,7 +240,9 @@ export async function separarMesas(pagina: Page, principal: number): Promise<voi
 async function separarEnElPlano(pagina: Page, principal: number): Promise<void> {
   await pagina.getByRole('button', { name: 'Unir mesas' }).click({ timeout: ESPERA_MS });
   const plano = pagina.getByRole('region', { name: 'Unir mesas' });
-  await plano.getByRole('button', { name: `Mesa ${String(principal)}`, exact: true }).click();
+  const laPrincipal = plano.getByRole('button', { name: `Mesa ${String(principal)}`, exact: true });
+  await aLaZonaDelPlano(pagina, laPrincipal);
+  await laPrincipal.click();
   await plano.getByRole('button', { name: 'Separar mesas' }).click();
   const pregunta = pagina.getByRole('alertdialog', { name: '¿Separar las mesas?' });
   await pregunta.getByRole('button', { name: 'Separar mesas' }).click();
@@ -296,4 +332,22 @@ export async function dejarLimpia(pagina: Page, numero: number): Promise<void> {
   });
   await aLaZonaDe(pagina, numero);
   await botonDeMesa(pagina, numero).click({ timeout: ESPERA_MS });
+  // Al limpiar la principal de mesas unidas la app pregunta «¿Separar mesas o dejarlas unidas?» (DP-9.6):
+  // sin contestarla el diálogo tapaba el plano y todos los toques siguientes fallaban (D22-231 y otros).
+  const pregunta = pagina
+    .locator('[role="alertdialog"], [role="dialog"]')
+    .filter({ hasText: '¿Separar mesas o dejarlas unidas?' });
+  const salio = await pregunta
+    .first()
+    .waitFor({ state: 'visible', timeout: ESPERA_DE_LA_PREGUNTA_MS })
+    .then(
+      () => true,
+      () => false,
+    );
+  if (!salio) return;
+  await pregunta.first().getByRole('button', { name: 'Separar mesas', exact: true }).click();
+  await pregunta.first().waitFor({ state: 'hidden', timeout: ESPERA_MS });
 }
+
+/** Cuánto se espera la pregunta de las mesas unidas tras limpiar la principal. */
+const ESPERA_DE_LA_PREGUNTA_MS = 2_500;

@@ -2852,6 +2852,18 @@
         "+ aria-label:Activo",
         "+ aria-label:Visible en POS"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/MeseroCartFAB.jsx",
+      "porque": "DP-22 (DP-D182, día de bots): «Cambiar de mesa» también en la hoja del pedido del teléfono. El botón sólo estaba en el panel de la tableta y el escritorio (`md:` en adelante); en el teléfono, donde trabaja el mesero, la hoja sólo ofrecía «Solicitar cuenta». Es un botón más, con el icono de flechas, del mismo estilo que «Solicitar cuenta»; lo pinta la página sólo a quien `puedeMoverLaCuenta` deja. Nada de lo que se veía se quitó.",
+      "testigos": [
+        "+ clase:w-full",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:h-12",
+        "+ clase:mr-1.5",
+        "+ icono:ArrowLeftRight"
+      ]
     }
   ]
 }

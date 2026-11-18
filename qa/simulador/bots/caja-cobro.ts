@@ -34,6 +34,7 @@ import {
 } from '../pantallas/para-llevar.ts';
 import { medido } from './comun.ts';
 import { descuentosDelCobro, type RitmoDeCaja } from './caja-descuento.ts';
+import { UMBRAL_ACCION_MS } from '../tiempos.ts';
 import { propinaDe } from './division-reparto.ts';
 
 /** Lo que el libro SABE que entró y salió del cajón de esta caja (para el corte). */
@@ -254,6 +255,9 @@ export async function cobrarEnElDialogo(
  * Cobra una cuenta de mesa que el mesero ya pidió, con o sin caos. Devuelve el efectivo neto que dejó
  * en el cajón y la página con la que se siguió (cerrar la pestaña obliga a abrir otra).
  */
+/** La propina que la caja eligió al abrir cada cuenta de mesa (por cuenta), para reabrirla sin que la pregunte. */
+const propinasQueLaCajaFijo = new Map<string, Propina>();
+
 export async function cobrarLaCuenta(
   ctx: ContextoDelBot,
   bot: Bot,
@@ -269,7 +273,13 @@ export async function cobrarLaCuenta(
     readonly reanudar: (propina: Propina) => Promise<number | null>;
   },
 ): Promise<{ efectivo: number; pagina: Page }> {
-  const propina = ctx.azar.elegir(PROPINAS);
+  // Si un intento anterior (red caída, recarga, pestaña cerrada) ya le preguntó la propina a la caja, la
+  // respuesta quedó FIJADA en la cuenta y esta vez la pantalla no la pregunta: se sigue con la misma.
+  const sorteada = ctx.azar.elegir(PROPINAS);
+  const propina = propinasQueLaCajaFijo.get(cuenta.cuenta) ?? sorteada;
+  const recordarSiLaPregunto = (): void => {
+    if (laCajaDecidioLaPropina(actual)) propinasQueLaCajaFijo.set(cuenta.cuenta, propina);
+  };
   const titulo = `Mesa ${String(cuenta.mesa)}`;
   const rotulo = new RegExp(`Mesa ${String(cuenta.mesa)}\\b`);
   let actual = pagina;
@@ -279,15 +289,37 @@ export async function cobrarLaCuenta(
   }
   if (caos?.tipo === 'recargar' || caos?.tipo === 'cerrar-pestana') {
     await abrirLaCuenta(actual, rotulo, titulo, propina);
+    recordarSiLaPregunto();
     actual = await interrumpirElCobro(ctx, actual, caos, cuenta);
   }
-  const cobro = await medido(
-    ctx,
-    { bot, pantalla: 'Caja → Pendientes' },
-    actual,
-    'abrir la cuenta pendiente',
-    () => abrirLaCuenta(actual, rotulo, titulo, propina),
+  // Se mide lo que tarda la PANTALLA en responder al toque (el diálogo o la pregunta de la propina). El
+  // total, con los toques del bot (la pestaña, el botón y la propina: ~1.5 s sólo en que Playwright espera
+  // a que el botón de la lista se quede quieto), se anota aparte y no es incidente: el día 2212 midió 2.9 s
+  // en total y 80 ms de la pantalla.
+  let apareceMs = 0;
+  const cobro = await ctx.tiempos.medir(
+    'caja:abrir la cuenta pendiente (con los toques del bot)',
+    () =>
+      abrirLaCuenta(actual, rotulo, titulo, propina, undefined, undefined, (m) => {
+        apareceMs = m.apareceMs;
+      }),
   );
+  ctx.tiempos.anotar('caja:abrir la cuenta pendiente', apareceMs);
+  if (apareceMs > UMBRAL_ACCION_MS) {
+    await ctx.incidente(
+      {
+        pantalla: 'Caja → Pendientes',
+        hizo: 'abrir la cuenta pendiente',
+        esperaba: `Responder en menos de ${String(UMBRAL_ACCION_MS / 1000)} s`,
+        paso: `Tardó ${String(apareceMs)} ms`,
+        gravedad: 'medio',
+        clase: 'rendimiento',
+        reproducido: 'no intentado',
+      },
+      actual,
+    );
+  }
+  recordarSiLaPregunto();
   // Una cuenta que ya trae descuento (de un intento anterior) no se divide: la app reparte el
   // descuento entre las partes y lo que la cajera espera de cada una ya no sale del libro (D1-057 a
   // D1-060, críticos falsos: la app lo repartió bien, $7.96 y $7.04 de $15).
@@ -301,6 +333,9 @@ export async function cobrarLaCuenta(
     const porPartes = await dividir.alAbrir(cobro, propina);
     if (porPartes !== null) return { efectivo: porPartes, pagina: actual };
   }
+  // D22-032, D22-057 y D22-098 («críticos» del guion): la pantalla traía la propina de un intento
+  // anterior y el libro creía que nadie la había decidido.
+  const laCajaDecidio = propinasQueLaCajaFijo.has(cuenta.cuenta);
   const efectivo = await cobrarEnElDialogo(
     ctx,
     bot,
@@ -316,11 +351,11 @@ export async function cobrarLaCuenta(
       // porcentaje, porque el servidor la recalcula si hay descuento.
       propinaAcordadaCentavos:
         (cuenta.propinaCentavos ?? 0) +
-        (laCajaDecidioLaPropina(actual) ? propinaDe(cuenta.esperadoCentavos, propina) : 0),
+        (laCajaDecidio ? propinaDe(cuenta.esperadoCentavos, propina) : 0),
       propinaPorcentaje:
         (cuenta.propinaPorcentaje ?? 0) > 0
           ? (cuenta.propinaPorcentaje ?? 0)
-          : laCajaDecidioLaPropina(actual) && propina !== 'Sin propina'
+          : laCajaDecidio && propina !== 'Sin propina'
             ? propina
             : 0,
     },

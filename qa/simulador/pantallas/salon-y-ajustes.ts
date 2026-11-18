@@ -195,7 +195,10 @@ export async function asignarLaCategoria(
   await fila.getByTitle('Editar categoría').click();
   const dialogo = pagina.getByRole('dialog').filter({ hasText: 'Editar categoría' });
   await dialogo.getByRole('combobox').click();
-  await pagina.getByRole('option', { name: estacion }).click();
+  // Al principio del nombre: «Cocina» se llama «Cocina (general)» y «— Sin estación (Cocina general) —» también la
+  // nombra (D22-060, strict mode con el nombre suelto y ninguna coincidencia con el exacto).
+  const nombre = new RegExp(`^${estacion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`);
+  await pagina.getByRole('option', { name: nombre }).click();
   const r = await guardarYEsperar(
     pagina,
     dialogo.getByRole('button', { name: 'Guardar' }),
@@ -203,6 +206,20 @@ export async function asignarLaCategoria(
   );
   expect(r.estado, `asignar categoría: ${r.cuerpo.slice(0, 200)}`).toBe(200);
   await expect(dialogo).toBeHidden({ timeout: 20_000 });
+}
+
+/**
+ * El editor muestra UNA zona a la vez («Salón (10)», «Terraza (10)»): si la mesa no está en la zona a
+ * la vista, se prueban las demás pestañas hasta que aparece (la 14 vive en la terraza).
+ */
+async function ponerLaZonaDeLaMesa(pagina: Page, mesa: Locator): Promise<void> {
+  if ((await mesa.count()) > 0) return;
+  const zonas = pagina.getByRole('button', { name: /^\D+\(\d+\)$/ });
+  const cuantas = await zonas.count();
+  for (let i = 0; i < cuantas; i += 1) {
+    await zonas.nth(i).click();
+    if ((await mesa.count()) > 0) return;
+  }
 }
 
 /** Configuración → Mesas: arrastra con el dedo la mesa `numero` (el editor es un mapa). Devuelve cuánto se movió. */
@@ -217,6 +234,7 @@ export async function moverLaMesa(
   await expect(pagina.getByRole('button', { name: 'Nueva mesa' })).toBeVisible({ timeout: 45_000 });
   // En el mapa cada mesa es un botón cuyo nombre empieza con su número («3 Libre»).
   const mesa = pagina.getByRole('button', { name: new RegExp(`^${String(numero)}\\s`) }).first();
+  await ponerLaZonaDeLaMesa(pagina, mesa);
   await mesa.scrollIntoViewIfNeeded();
   const caja = await mesa.boundingBox();
   if (caja === null) throw new Error(`La mesa ${String(numero)} no está a la vista en el editor.`);

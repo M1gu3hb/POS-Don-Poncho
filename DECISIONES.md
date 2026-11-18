@@ -3715,3 +3715,72 @@ entrara, sin mirar el puesto, y lo mandaba a Compras.
   `registraCompras &&`). Mutantes muertos: un botón sin guarda, la guarda comentada, Compras sin la comprobación
   del puesto; inocua (un comentario) que pasa.
 - **Sin migración.**
+## DP-D182 · DP-22 · El día de bots, semilla 2211: «Cambiar de mesa» no estaba en el teléfono · 18-11-2026
+
+El primer día completo (8:00 a 19:00, semilla 2211, la máquina sola) dejó 289 incidentes y 0 diferencias del
+árbitro (1,533 comparaciones, dinero al centavo, inventario al gramo, 0 errores 5xx, 0 de consola sin
+explicar). De los incidentes, UNO era de la app y los demás del guion.
+
+- **De la app: «Cambiar de mesa» no se ofrecía al mesero en el teléfono.** DP-15.1 se lo dio al mesero en SUS
+  mesas, pero el botón sólo estaba en el panel de la tableta y del escritorio (`md:` en adelante); en el
+  teléfono el pedido de la mesa vive en la hoja de `MeseroCartFAB`, que sólo ofrecía «Solicitar cuenta».
+  Mesero 1 y Mesero 7 (teléfono) no lo encontraron nunca; Mesero 2 (tableta), siempre. Era lo que el
+  ensayo (D22-020, 028, 043) dejó por confirmar: el reparto de mesas no tenía la culpa. Ahora la página calcula
+  UNA vez `puedeCambiarDeMesaAqui` (la misma `puedeMoverLaCuenta`) y se la pasa a la hoja, que pinta el botón,
+  se cierra y abre el panel de las mesas libres. Prueba: `cambiar-de-mesa-en-el-telefono.contrato.test.ts`
+  (fallaba 3 de 3; ahora 3/3). Mutantes muertos: botón siempre visible (2 fallan), sin cerrar la hoja (1),
+  abrir antes de cerrar (1), regla sustituida por `true` (1, tras reforzar la prueba: el primero sobrevivía) y
+  manejador vacío (1). Se declaró en `scripts/aspecto-permitido.json` (`MeseroCartFAB.jsx`, un botón más).
+  Límite: la barra del teléfono sólo aparece con pedido o con «Solicitar cuenta» posible; con la cuenta ya
+  pedida el mesero del teléfono sigue sin el botón (el panel de la tableta sí lo trae siempre).
+- **Del guion, arreglado** (`qa/simulador`): (1) «Marcar entregado»: dos meseros recorren todo el plano y el
+  otro entrega primero; el diálogo conserva la foto del encabezado, así que se mira el plano y no es falla si
+  ya no dice «Esperando entrega» (8 de los 9 casos coincidían con una entrega ajena de segundos antes). (2) El
+  teléfono abre la hoja «Mesa abierta» antes de buscar «Solicitar cuenta» o «Cambiar de mesa», y la tableta ya
+  no espera una barra que no existe. (3) El panel de «Cambiar de mesa» enseña primero la zona propia: las demás
+  están tras «Ver mesas de otras zonas». (4) El editor del salón, el plano de «Unir mesas» y el mapa del mesero
+  muestran una zona a la vez: se busca la mesa en las pestañas; para unir se elige una de la misma zona
+  (`zonas.ts`). (5) Al limpiar la principal de mesas unidas la app pregunta «¿Separar mesas o dejarlas
+  unidas?» (DP-9.6) y el guion no la contestaba: el diálogo tapaba el plano y se encadenaron decenas de fallos.
+  (6) La pestaña se llama «Ajustes del portal» desde DP-21 y su botón «Guardar»; «Editar receta» sólo existe
+  con el renglón abierto (A10). (7) S1 movía la mesa 3 hacia la derecha, sobre la 4: ahora hacia abajo.
+  (8) K2: la opción «Cocina» debe pedirse exacta. (9) Los dos «críticos» de dinero (D22-057 y D22-098, y el
+  D22-032 del ensayo) eran del guion: tras una red caída o una recarga la propina que la Caja había elegido
+  quedaba fijada en la cuenta, al reabrirla la pantalla ya no la preguntaba y el libro creía que nadie la
+  había decidido; ahora se recuerda por cuenta. (10) La disputa de dos cajas buscaba a la perdedora sólo entre
+  las respuestas que no eran 200. (11) Los meseros sientan primero en SUS mesas y sólo mueven la cuenta de
+  una mesa que les repartió la dueña (`reparto-de-mesas.ts`): la app sólo se la ofrece al mesero de esa mesa.
+  Pruebas unitarias nuevas: `zonas.test.ts` y `reparto-de-mesas.test.ts`.
+- **No es de la app, por diseño:** la sesión de la caja vive 12 h fijas desde el PIN (`politica.ts`): un día
+  que pasa de las 20:00 la vence (D22-273). Que el día pase de las 20:00 fue consecuencia del encadenamiento.
+- **Sin demostrar:** «abrir la cuenta pendiente» tarda ~2.9 s en la Caja (p50), pero casi todo es el toque
+  del bot (1.9 s) y no la app (la pantalla responde en 70 ms): el guion ahora mide cada paso.
+
+## DP-D183 · DP-22 · El día de bots, semillas 2212 y 2213: el árbitro y el guion afinados, y lo que queda · 18-11-2026
+
+Con «Cambiar de mesa» en el teléfono (DP-D182) y el guion arreglado, la semilla 2213 cerró con **0
+diferencias del árbitro en las 11 horas y en el cierre** (1,562 comparaciones: dinero al centavo, inventario
+al gramo, propinas por mesero, ninguna comanda perdida ni atorada), 0 errores 5xx, 0 de consola sin
+explicar, 0 incidentes críticos o altos y 174 cobros por $69,641.50. Lo que se aprendió en el camino:
+
+- **El árbitro de las comandas cortaba por la hora de cada fila (D22-058 y D22-059, «críticos» de la 2212).**
+  Al dividir una cuenta, una línea de 2 piezas se parte en 1 + 1 y la pieza nueva entra a la MISMA comanda
+  con la hora de la división: con la división después del corte, la fila vieja ya traía 1 y la nueva quedaba
+  fuera. Las piezas eran las que se mandaron (con el corte por la hora de la COMANDA salen 5 y 5, como el
+  libro). Ahora `COMANDAS` une `comandas` y corta por `c.created_at`; su prueba (`hora.test.ts`) falla si
+  vuelve `ci.created_at`. No se relajó nada: el árbitro sigue exigiendo todas las piezas.
+- **R1 (el traslado de la Caja 2) no se ejecutaba:** el bot de la caja cuenta sus minutos desde que ELLA abre
+  (12:40) y el plan decía 420, que son del día; caía a las 19:40. Ahora es `420 - ENTRA_LA_CAJA_DOS` (15:00);
+  `perfil-dp22.test.ts` lo comprueba. Sólo corrió en la 2211, que se alargó hasta las 20:30.
+- **Más del guion:** «Cómo se ve el menú» está en Configuración → Portal de comensales (la pestaña de Portal
+  QR sólo manda allá); la opción «Cocina» se llama «Cocina (general)»; el platillo que la cocina agota después
+  de planear una ronda se salta (la pantalla no deja pedirlo); la disputa de dos cajas no juzga una perdedora
+  que no llegó a mandar su cobro; el mesero no mueve la cuenta de una cuenta de mesas unidas; la Caja mide lo
+  que tarda la PANTALLA en abrir una cuenta (80 ms) y no los toques del bot (1.5 s), que sumaban 2.9 s.
+- **Sin arreglar, a la vista:** (1) «Registrar compra» desde Inventario para el almacén (hallazgo 28, lo arregla
+  otro agente). (2) El modo espera de la Caja tapa el cobro abierto y se traga el toque («Cobrar $…» de
+  D22-038 y D22-042): del guion (no despierta dentro del cobro) y, por diseño, de la app. (3) El encabezado
+  del diálogo de la mesa del mesero conserva el estado de cuando se abrió («Esperando entrega» tres minutos
+  después de entregar): cosmético, de la app. (4) La barra del teléfono no aparece con la cuenta ya pedida,
+  y entonces el mesero del teléfono sigue sin «Cambiar de mesa». (5) Registrar una merma, un retiro o una
+  compra tarda 3 a 8 s medidos con todos los toques del formulario: no se pudo separar lo de la app.

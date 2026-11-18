@@ -1,7 +1,7 @@
 /**
  * LO QUE HACE LA GERENCIA POR PANTALLA: gastos operativos (Compras), agotados del día (Platillos),
  * cambiar el precio de un platillo (Recetas → Editar receta) y el modo del menú del comensal
- * (Portal QR → Configuración). Cada uno devuelve cuando el servidor contestó 200.
+ * (Configuración → Portal de comensales). Cada uno devuelve cuando el servidor contestó 200.
  */
 import { expect, type Page } from '@playwright/test';
 
@@ -69,14 +69,15 @@ export async function cambiarPrecio(
   });
   const tarjeta = pagina
     .getByText(platillo, { exact: true })
-    .locator('xpath=ancestor::div[.//button[normalize-space()="Editar receta"]][1]')
+    .locator('xpath=ancestor::div[.//button[@aria-expanded]][1]')
     .first();
   const editar = tarjeta.getByRole('button', { name: 'Editar receta' });
   // Cada platillo es un acordeón: «Editar receta» sólo se toca con el renglón abierto. Se mira el
   // estado del encabezado (`aria-expanded`), no si el botón «se ve»: cerrado también «se ve».
   const encabezado = tarjeta.locator('button[aria-expanded]').first();
   const estabaCerrado = (await encabezado.getAttribute('aria-expanded')) === 'false';
-  const editarExpuestoConElRenglonCerrado = estabaCerrado && (await editar.isVisible());
+  // A10: plegado, «Editar receta» ni existe (sólo se pinta con el renglón abierto).
+  const editarExpuestoConElRenglonCerrado = estabaCerrado && (await editar.count()) > 0;
   if (estabaCerrado) {
     await encabezado.click();
     await expect(encabezado).toHaveAttribute('aria-expanded', 'true');
@@ -89,20 +90,24 @@ export async function cambiarPrecio(
   return { editarExpuestoConElRenglonCerrado };
 }
 
-/** El modo del menú del comensal (Portal QR → Configuración → «Cómo se ve el menú»). */
+/** El modo del menú del comensal (Configuración → Portal de comensales → «Cómo se ve el menú»; hasta DP-21 estaba en Portal QR). */
 export async function cambiarElModoDelMenu(
   pagina: Page,
   appUrl: string,
   modo: 'Menú digital' | 'A la carta',
 ): Promise<void> {
-  await pagina.goto(`${appUrl}/portal-qr`, { waitUntil: 'domcontentloaded' });
-  await pagina.getByRole('tab', { name: 'Configuración', exact: true }).click();
+  // Desde DP-21 «Ajustes del portal» (Portal QR) sólo manda a Configuración → Portal de comensales: ahí
+  // está «Cómo se ve el menú» con su «Guardar».
+  await pagina.goto(`${appUrl}/configuracion?seccion=portal`, { waitUntil: 'domcontentloaded' });
   const selector = pagina.getByRole('combobox', { name: 'Cómo se ve el menú' });
-  await expect(selector).toBeVisible();
+  await expect(selector).toBeVisible({ timeout: 45_000 });
   if ((await selector.innerText()).includes(modo)) return;
   await selector.click();
   await pagina.getByRole('option', { name: modo, exact: true }).click();
+  const guardar = selector
+    .locator('xpath=ancestor::*[.//button[normalize-space()="Guardar"]][1]')
+    .getByRole('button', { name: 'Guardar', exact: true });
   const envio = esperarPost(pagina, '/api/datos/escribir');
-  await pagina.getByRole('button', { name: 'Guardar configuración' }).click();
+  await guardar.click();
   expect((await envio).status()).toBe(200);
 }

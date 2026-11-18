@@ -1,6 +1,6 @@
 'use client';
 import React, { forwardRef, useImperativeHandle, useState } from 'react';
-import { ShoppingCart, Send, X, Receipt } from 'lucide-react';
+import { ArrowLeftRight, ShoppingCart, Send, X, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +30,10 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
     config,
     onUpdateNotas,
     onUpdateExclusiones,
+    // DP-22 · «Cambiar de mesa» también aquí: en el teléfono el pedido de la mesa vive en esta hoja
+    // y el panel de la tableta (donde estaba el botón) no se pinta. La regla la decide la página.
+    puedeCambiarDeMesa = false,
+    alCambiarDeMesa,
   },
   ref,
 ) {
@@ -261,6 +265,22 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
                   >
                     <Receipt className="w-4 h-4 mr-1.5" />
                     Solicitar cuenta
+                  </Button>
+                )}
+                {puedeCambiarDeMesa && (
+                  <Button
+                    onClick={() => {
+                      // Primero se cierra la hoja (como al enviar o pedir la cuenta) y luego el padre
+                      // abre el panel de las mesas libres.
+                      setOpen(false);
+                      alCambiarDeMesa?.();
+                    }}
+                    disabled={loading}
+                    variant="outline"
+                    className="w-full h-12"
+                  >
+                    <ArrowLeftRight className="w-4 h-4 mr-1.5" />
+                    Cambiar de mesa
                   </Button>
                 )}
               </div>
