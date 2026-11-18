@@ -1,5 +1,5 @@
 {
-  "commit": "9abdcdb",
+  "commit": "a73c69f",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -109,7 +109,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 10853,
+      "lineas": 10858,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -344,7 +344,7 @@
           "titulo": null
         }
       ],
-      "lineas": 19320,
+      "lineas": 19344,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -368,6 +368,7 @@
         "apps/web/heredado/pages/Cocina.jsx",
         "apps/web/heredado/utils/estacionUtils.js",
         "apps/web/heredado/utils/tipoVentaUtils.js",
+        "apps/web/src/cocina/AvisoDeSilencio.tsx",
         "apps/web/src/cocina/ColumnasDeCocina.tsx",
         "apps/web/src/cocina/EsperaChip.tsx",
         "apps/web/src/cocina/PreguntaDelAnuncio.tsx",
@@ -416,7 +417,7 @@
           "titulo": "Conectar teléfono"
         }
       ],
-      "lineas": 3296,
+      "lineas": 3341,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cocina"],
       "cobertura": null
@@ -896,7 +897,7 @@
         "apps/web/src/marca/contenido.ts"
       ],
       "ventanas": [],
-      "lineas": 490,
+      "lineas": 491,
       "conSesion": false,
       "puestos": [],
       "cobertura": null
@@ -1158,7 +1159,7 @@
           "titulo": null
         }
       ],
-      "lineas": 17107,
+      "lineas": 17112,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -1190,7 +1191,7 @@
         "apps/web/src/servidor/entrada.ts"
       ],
       "ventanas": [],
-      "lineas": 655,
+      "lineas": 656,
       "conSesion": false,
       "puestos": [],
       "cobertura": null
@@ -1475,7 +1476,7 @@
           "titulo": "Agotados del día"
         }
       ],
-      "lineas": 7210,
+      "lineas": 7211,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -2805,11 +2806,11 @@
           "apps/web/heredado/components/registros/ResumenPeriodo.jsx:59",
           "apps/web/heredado/lib/moneyColors.js:15",
           "apps/web/heredado/lib/moneyColors.js:23",
-          "apps/web/heredado/pages/Caja.jsx:1587",
-          "apps/web/heredado/pages/Caja.jsx:1683",
-          "apps/web/heredado/pages/Caja.jsx:1841",
-          "apps/web/heredado/pages/Caja.jsx:2223",
-          "apps/web/heredado/pages/Caja.jsx:2241",
+          "apps/web/heredado/pages/Caja.jsx:1596",
+          "apps/web/heredado/pages/Caja.jsx:1693",
+          "apps/web/heredado/pages/Caja.jsx:1851",
+          "apps/web/heredado/pages/Caja.jsx:2237",
+          "apps/web/heredado/pages/Caja.jsx:2255",
           "apps/web/heredado/pages/Dashboard.jsx:617",
           "apps/web/heredado/pages/Mesero.jsx:1836",
           "apps/web/heredado/pages/Mesero.jsx:1942",
@@ -2998,7 +2999,7 @@
         "conValorPorOmision": true,
         "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:161"],
         "lectores": [
-          "apps/web/heredado/pages/Caja.jsx:1275",
+          "apps/web/heredado/pages/Caja.jsx:1282",
           "packages/app/src/caja/corte/documento.ts:377"
         ],
         "pruebasQueLaNombran": [
@@ -3108,8 +3109,8 @@
           "apps/web/src/telefono-de-cocina/ConectarTelefono.tsx:47",
           "apps/web/src/telefono-de-cocina/ConectarTelefono.tsx:69",
           "apps/web/src/telefono-de-cocina/ConectarTelefono.tsx:71",
-          "apps/web/src/telefono-de-cocina/ConectarTelefono.tsx:152",
           "apps/web/src/telefono-de-cocina/ConectarTelefono.tsx:153",
+          "apps/web/src/telefono-de-cocina/ConectarTelefono.tsx:154",
           "packages/app/src/caja/corte/consultas.ts:104",
           "packages/app/src/caja/corte/documento.ts:49",
           "packages/app/src/caja/corte/documento.ts:365",
@@ -3178,8 +3179,8 @@
           "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx:73"
         ],
         "lectores": [
-          "apps/web/heredado/pages/Cocina.jsx:54",
-          "apps/web/heredado/pages/Cocina.jsx:134"
+          "apps/web/heredado/pages/Cocina.jsx:55",
+          "apps/web/heredado/pages/Cocina.jsx:135"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/portal/portal.proyeccion.test.ts",
@@ -7167,7 +7168,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1096",
+        "apps/web/heredado/pages/Caja.jsx:1103",
         "apps/web/heredado/pages/CorteCaja.jsx:124",
         "apps/web/src/restaurante/Caja.tsx:619"
       ],
@@ -7223,7 +7224,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1217",
+        "apps/web/heredado/pages/Caja.jsx:1224",
         "apps/web/heredado/pages/CorteCaja.jsx:151",
         "apps/web/src/restaurante/CierreDiario.tsx:507"
       ],
@@ -7235,7 +7236,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1135",
+        "apps/web/heredado/pages/Caja.jsx:1142",
         "apps/web/src/venta/CorteDeTurno.tsx:50"
       ],
       "pantallas": ["/caja", "/restaurante/caja"]
@@ -8140,7 +8141,7 @@
       "puestos": ["administrador", "cajero", "cocina", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/pages/Barra.jsx:50",
-        "apps/web/heredado/pages/Cocina.jsx:206",
+        "apps/web/heredado/pages/Cocina.jsx:207",
         "apps/web/heredado/utils/entregaPedidos.js:120",
         "apps/web/src/restaurante/Cocina.tsx:138"
       ],

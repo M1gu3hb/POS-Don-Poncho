@@ -363,7 +363,7 @@ export default function CocinaPedidoCardPremium({
                     <button
                       type="button"
                       onClick={(e) => handleProductoClick(e, item)}
-                      className="w-full flex items-start gap-2 text-left px-2.5 py-2 hover:bg-superficie/70 transition-colors group"
+                      className="w-full flex items-start gap-2 text-left px-2.5 py-2 any-pointer-coarse:min-h-(--altura-tactil) hover:bg-superficie/70 transition-colors group"
                       title="Ver ficha interna del producto"
                     >
                       {esVariable ? (

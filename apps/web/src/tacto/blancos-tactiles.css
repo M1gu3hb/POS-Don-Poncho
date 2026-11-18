@@ -36,5 +36,17 @@
       height: max(100%, var(--altura-tactil));
       transform: translate(-50%, -50%);
     }
+
+    /* El botón de cerrar de los avisos (sonner) mide 20 px: su blanco crece con un pseudo-elemento,
+       sin cambiar su tamaño ni el del aviso. */
+    html[data-pos-tactil] [data-sonner-toast] [data-close-button]::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: calc(var(--altura-tactil) + 2px);
+      height: calc(var(--altura-tactil) + 2px);
+      transform: translate(-50%, -50%);
+    }
   }
 }

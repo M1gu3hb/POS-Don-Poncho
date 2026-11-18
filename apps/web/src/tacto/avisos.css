@@ -1,0 +1,21 @@
+/* DP-22 · Los avisos (sonner) se leen y se cierran.
+
+   Medido por el barrido de servicio (`pruebas/e2e/qa-final/barrido-servicio.spec.ts`):
+
+   · los colores de `richColors` en claro dan 4.25:1 (verde) y 4.3:1 (azul, ámbar) sobre su propio
+     tinte: bajo el 4.5:1 de AA. Se oscurece el TEXTO de cada tono, no el fondo;
+   · el botón de cerrar mide 20 px: bajo los 24 px de WCAG 2.2 (criterio 2.5.8) aun con ratón. Con el
+     dedo, además, su blanco crece a 44 px (`blancos-tactiles.css`).
+
+   No toca la posición, el tamaño ni el tiempo del aviso. */
+html [data-sonner-toaster][data-sonner-theme='light'] {
+  --success-text: hsl(140, 100%, 18%);
+  --info-text: hsl(210, 92%, 32%);
+  --warning-text: hsl(31, 92%, 28%);
+  --error-text: hsl(360, 100%, 35%);
+}
+
+html [data-sonner-toaster] [data-sonner-toast][data-styled='true'] [data-close-button] {
+  width: 24px;
+  height: 24px;
+}

@@ -28,7 +28,7 @@ export default function ThemeToggle({ variant = 'icon', className = '', label })
         onClick={toggle}
         aria-label={aria}
         title={aria}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground ${className}`}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 any-pointer-coarse:min-h-(--altura-tactil) rounded-lg text-sm transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground ${className}`}
       >
         <Icon
           className="w-5 h-5 shrink-0 transition-transform duration-300"
@@ -46,7 +46,7 @@ export default function ThemeToggle({ variant = 'icon', className = '', label })
         onClick={toggle}
         aria-label={aria}
         title={aria}
-        className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-xs font-medium border bg-card text-foreground hover:bg-accent transition-colors active:scale-95 ${className}`}
+        className={`inline-flex items-center gap-1.5 h-9 any-pointer-coarse:min-h-(--altura-tactil) px-3 rounded-full text-xs font-medium border bg-card text-foreground hover:bg-accent transition-colors active:scale-95 ${className}`}
       >
         <Icon className="w-4 h-4" />
         <span>{text}</span>

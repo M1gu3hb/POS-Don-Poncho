@@ -30,7 +30,7 @@ export default function CatalogoDelPedido({
   }, [lista, categoria, busqueda]);
 
   const chip = (activo) =>
-    `shrink-0 min-h-9 px-3 py-1 rounded-full text-sm font-medium ${
+    `shrink-0 min-h-9 any-pointer-coarse:min-h-(--altura-tactil) px-3 py-1 rounded-full text-sm font-medium ${
       activo ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'
     }`;
 
@@ -90,7 +90,7 @@ export default function CatalogoDelPedido({
                     </span>
                     <VariableBadge producto={p} />
                     {tieneGrupos(p) && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/5 text-primary">
                         Opciones
                       </span>
                     )}

@@ -49,7 +49,13 @@ export async function armarEspia(page: Page): Promise<void> {
       );
     }
     w.__arnesEspia.menus.length = 0;
-    window.getSelection()?.removeAllRanges();
+    // Sólo si hay texto SELECCIONADO: quitar el rango de un cursor (la entrada con PIN deja uno en su
+    // campo oculto) hace que el motor recoloque el desplazamiento en el siguiente toque, y el dedo
+    // caía donde el blanco ya no estaba.
+    const seleccion = window.getSelection();
+    if (seleccion !== null && seleccion.rangeCount > 0 && !seleccion.isCollapsed) {
+      seleccion.removeAllRanges();
+    }
   });
 }
 

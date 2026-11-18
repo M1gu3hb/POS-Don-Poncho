@@ -170,7 +170,7 @@ export default function CocinaKanbanCard({
                   <button
                     type="button"
                     onClick={(e) => handleProductoClick(e, item)}
-                    className="w-full flex items-start gap-1.5 text-sm text-left hover:bg-superficie rounded px-1 py-0.5 transition-colors group"
+                    className="w-full flex items-start gap-1.5 text-sm text-left hover:bg-superficie rounded px-1 py-0.5 any-pointer-coarse:min-h-(--altura-tactil) transition-colors group"
                     title="Ver ficha interna del producto"
                   >
                     {esVariable ? (

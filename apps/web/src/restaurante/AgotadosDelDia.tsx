@@ -69,6 +69,7 @@ export function AgotadosDelDia() {
         type="button"
         size="sm"
         variant="outline"
+        className="any-pointer-coarse:min-h-(--altura-tactil)"
         onClick={() => {
           setBusqueda('');
           setFallo(null);

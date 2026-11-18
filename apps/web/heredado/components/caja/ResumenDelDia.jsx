@@ -187,7 +187,12 @@ export default function ResumenDelDia({
             Ventas y propinas exactas por método (no proporcional).
           </p>
         </div>
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto"
+          tabIndex={0}
+          role="region"
+          aria-label="Métodos de pago (se desplaza de lado)"
+        >
           <div className="min-w-[480px] divide-y">
             <div className="grid grid-cols-4 px-4 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
               <span>Método</span>

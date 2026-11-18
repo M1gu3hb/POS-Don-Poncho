@@ -75,7 +75,7 @@ export default function CocinaVozControl() {
         size="sm"
         variant={cfg.voz_activa ? 'default' : 'outline'}
         onClick={toggle}
-        className="h-8 gap-1.5"
+        className="h-8 gap-1.5 any-pointer-coarse:min-w-(--altura-tactil)"
         title={cfg.voz_activa ? 'Voz cocina activa' : 'Voz cocina desactivada'}
       >
         {cfg.voz_activa ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
@@ -85,7 +85,7 @@ export default function CocinaVozControl() {
         size="sm"
         variant="outline"
         onClick={probar}
-        className="h-8 gap-1.5"
+        className="h-8 gap-1.5 any-pointer-coarse:min-w-(--altura-tactil)"
         title="Probar voz"
       >
         <PlayCircle className="w-4 h-4" />
@@ -95,7 +95,7 @@ export default function CocinaVozControl() {
         size="sm"
         variant="outline"
         onClick={recalc}
-        className="h-8 gap-1.5"
+        className="h-8 gap-1.5 any-pointer-coarse:min-w-(--altura-tactil)"
         title="Elegir mejor voz en español disponible"
       >
         <RefreshCw className="w-4 h-4" />

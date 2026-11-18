@@ -60,7 +60,7 @@ export function RenglonDePlatillo({ item, compacto, onVerFicha }: RenglonDePlati
             onVerFicha(item);
           }}
           title="Ver ficha interna del platillo"
-          className={`grid ${compacto ? '' : 'w-full'} grid-cols-[minmax(3ch,auto)_minmax(0,1fr)] items-baseline gap-x-(--espacio-2) rounded-md text-left outline-none focus-visible:ring-[3px] focus-visible:ring-anillo/60`}
+          className={`grid ${compacto ? '' : 'w-full'} grid-cols-[minmax(3ch,auto)_minmax(0,1fr)] items-baseline gap-x-(--espacio-2) any-pointer-coarse:min-h-(--altura-tactil) rounded-md text-left outline-none focus-visible:ring-[3px] focus-visible:ring-anillo/60`}
         >
           {contenido}
         </button>

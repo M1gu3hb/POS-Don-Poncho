@@ -454,6 +454,17 @@ export const SIN_ESTADO = [
       'Lee el almacén del navegador, que responde al instante; sin almacén no hay elección y se pregunta igual. No hay viaje al servidor.',
   },
   {
+    pantalla: 'cocina/AvisoDeSilencio',
+    estado: 'vacio',
+    razon:
+      'Es una línea que explica por qué el aparato no suena (DP-22), no una lista: si el aparato anuncia, no se pinta nada.',
+  },
+  {
+    pantalla: 'cocina/AvisoDeSilencio',
+    estado: 'cargando',
+    razon: 'Lee el almacén del navegador, que responde al instante; no hay viaje al servidor.',
+  },
+  {
     pantalla: 'configuracion/PruebaDeLaVozDeComandas',
     estado: 'vacio',
     razon:

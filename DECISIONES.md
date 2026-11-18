@@ -3080,6 +3080,47 @@ armaba la página). Con la app de Windows 1.0.2 queda en `Documentos\POS Don Pon
 - **Sin migración.** Lógica nueva en `apps/web/src/corte/carpeta/`; `heredado/` sólo la llama
   (declarado en `scripts/aspecto-permitido.json`).
 
+## DP-D154 · DP-22 · El barrido de servicio: los 44 px por componente, lo que el arnés no cuenta, y el aviso de por qué Cocina no suena · 17-11-2026
+
+DP-22 · barrido táctil de las pantallas de servicio (entrada con PIN, Caja, Para llevar, mesero,
+Cocina, corte y cierre) en los 14 aparatos, con `pruebas/e2e/qa-final/barrido-servicio.spec.ts`.
+Arrancó con ~290 hallazgos por aparato de escritorio y ~95 en el teléfono (con el flujo cortado).
+
+- **Los 44 px siguen dándose POR COMPONENTE (DP-D145).** Clase `any-pointer-coarse:min-h-(--altura-tactil)`
+  (o `any-pointer-coarse:size-11` en cantidades y cierres) en: `Button`, `Input`, pestañas y su lista,
+  la «X» del diálogo, los enlaces de la barra, «Sonido» y «Salir», el modo oscuro, las fichas de zona y
+  de categoría, el − / + de la cuenta, los renglones de la comanda y los botones de Cocina. Con ratón
+  nada cambia de tamaño. Ningún selector global sobre `button`: el contrato
+  `apps/web/src/tacto/blancos-por-componente.contrato.test.ts` ata cada clase a su uso.
+- **El botón de cerrar de los avisos** (`sonner`) gana su área de 44 px con un pseudo-elemento
+  (`blancos-tactiles.css`) y mide 24 px (WCAG 2.2, 2.5.8); el texto de cada tono se oscurece
+  (`avisos.css`) para pasar 4.5:1. No cambia posición, tamaño ni tiempo del aviso.
+- **«Abrir caja» con `pointer-events: none` era un estado legítimo:** con la caja ya abierta el botón
+  está desactivado y el motivo se ve debajo («Caja abierta desde …»). No se cambia.
+- **Cocina vista desde el aparato de la dueña:** DP-D151 deja el aparato sin voz, pero la cabecera
+  decía «Voz: ON». Un aviso chico (`src/cocina/AvisoDeSilencio.tsx`) lo dice y apunta a Configuración
+  → Este aparato; no sale si el aparato anuncia.
+- **Lo que el arnés ya no cuenta (documentado en `tocables.ts` y probado en
+  `arnes.exenciones.spec.ts`, cada exención con su caso que SÍ es defecto):** (1) lo cubierto por un aviso
+  transitorio (`[data-sonner-toast]`); (2) lo cubierto por una barra o botón `position: fixed` cuando lo
+  de abajo está en una lista con desplazamiento o en una página que se desplaza (el carrito del teléfono,
+  el botón del administrador); (3) un blanco que el desplazamiento deja ver a medias (no mide menos: se
+  ve recortado). Se mide a layout (`offsetHeight`), no a transformación (`active:scale-95` aplastaba la
+  tarjeta tocada), y después de que terminan las animaciones.
+- **Dos defectos del arnés, no de la app:** quitar el rango del cursor (`removeAllRanges`) recolocaba el
+  desplazamiento en el siguiente toque, y el dedo caía donde el blanco ya no estaba (el «7» del teclado);
+  y el barrido se detenía en el primer fallo de la prueba, ahora junta la lista completa (`Barrido`).
+- **Conocido y sin arreglar (bajo):** en Caja → Movimientos «Entregar el turno» y «Retirar» son dos
+  tarjetas lado a lado con descripciones de distinto largo y campos de distinta altura
+  (`CorteDeTurno.tsx`, `RetiroDeCaja.tsx`): sus campos no se alinean. Pide `subgrid` o igualar textos.
+  El barrido lo lista como `[conocido]` y no lo da por bueno.
+- **Cambia el aspecto (para los retratos de la galería de CI):** el pie del cobro de Caja (Cancelar y
+  Cobrar, de alto igual al de Descuento), «Caja abierta desde…» (sin el punto medio doble), el pie de
+  «Personalizar producto» (separación en el teléfono), el contador de las fichas de zona y la etiqueta
+  «Opciones» (contraste), la tabla «Métodos de pago» (enfocable), Historial («Desde»/«Hasta» alineados)
+  y el aviso de Cocina. Con el dedo, todo lo táctil crece a 44 px.
+- **Sin migración.**
+
 ## DP-D155 · DP-22 · Fase D: el dinero combinado y los cambios a media operación · 17-11-2026
 
 Lo que dejó probar cada combinación de ajustes (`packages/app/src/qa-final/`, tablas en

@@ -272,7 +272,7 @@ export default function SeleccionModificadoresDialog({
           )}
         </div>
 
-        <DialogFooter className="px-4 pb-4 pt-2 border-t">
+        <DialogFooter className="px-4 pb-4 pt-2 border-t gap-2 sm:gap-0">
           <Button variant="outline" onClick={onClose} className="flex-1">
             Cancelar
           </Button>

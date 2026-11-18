@@ -92,6 +92,7 @@ export function ConectarTelefono({ estacionFijaId }: { readonly estacionFijaId: 
         type="button"
         size="sm"
         variant="outline"
+        className="any-pointer-coarse:min-h-(--altura-tactil)"
         onClick={() => {
           setConectado(null);
           setAbierto(true);

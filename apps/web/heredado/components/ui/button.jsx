@@ -19,10 +19,10 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: 'h-9 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        lg: 'h-10 rounded-md px-8',
-        icon: 'h-9 w-9',
+        default: 'h-9 px-4 py-2 any-pointer-coarse:min-h-(--altura-tactil)',
+        sm: 'h-8 rounded-md px-3 text-xs any-pointer-coarse:min-h-(--altura-tactil)',
+        lg: 'h-10 rounded-md px-8 any-pointer-coarse:min-h-(--altura-tactil)',
+        icon: 'h-9 w-9 any-pointer-coarse:min-h-(--altura-tactil) any-pointer-coarse:min-w-(--altura-tactil)',
       },
     },
     defaultVariants: {

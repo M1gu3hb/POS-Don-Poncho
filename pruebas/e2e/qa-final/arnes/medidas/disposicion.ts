@@ -51,7 +51,7 @@ export async function medirDisposicion(page: Page): Promise<Hallazgo[]> {
       }
       for (const fila of filas) {
         if (fila.cajas.length < 2) continue;
-        const altos = fila.cajas.map((c) => c.height);
+        const altos = fila.hijas.map((h) => (h as HTMLElement).offsetHeight);
         if (Math.max(...altos) - Math.min(...altos) > tolerancia) {
           hallazgos.push({
             tipo: 'fila-desigual',
