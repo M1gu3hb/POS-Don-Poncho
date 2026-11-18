@@ -152,7 +152,7 @@ export async function cobrarEnCaja(
       datos: { tipo: 'ticket_dudoso' },
     });
   }
-  await ticket.getByRole('button', { name: 'Cerrar' }).click();
+  await ticket.getByRole('button', { name: 'Cerrar' }).first().click();
   await expect(ticket).toBeHidden();
   page.off('response', alLiberar);
   return {
@@ -247,7 +247,7 @@ export async function pedirLaCuentaQa(
   await yaAbierto(precuenta);
   const codigo = /M\d{2}-\d{4}/.exec(await precuenta.innerText())?.[0] ?? '';
   expect(codigo, 'La precuenta no trae el código para caja.').not.toBe('');
-  await precuenta.getByRole('button', { name: 'Cerrar' }).click();
+  await precuenta.getByRole('button', { name: 'Cerrar' }).first().click();
   await expect(precuenta).toBeHidden();
   return { codigo, preguntoPropina };
 }

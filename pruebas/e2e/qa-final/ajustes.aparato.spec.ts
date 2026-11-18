@@ -26,10 +26,6 @@ const FRASE_DE_EJEMPLO =
  * comandas— ya lo prueban `modo-espera.spec.ts`, `sonidos.spec.ts` y `tactil-barra.spec.ts`.
  */
 
-// La frase de ejemplo de la comanda, literal: la fija apps/web/src/voz/comanda-de-ejemplo.test.ts.
-const FRASE_DE_EJEMPLO =
-  'Nuevo pedido mesa 4: tres Consomés de carnero; dos Mixiotes, Sin picante; medio kilo de Barbacoa de horno.';
-
 const SLUG = 'prueba-restaurante';
 
 /** Una voz de mentira: lo que dice cada `speak()` queda en `window.__voz`. */

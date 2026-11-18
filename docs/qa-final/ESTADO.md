@@ -3,65 +3,49 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11, 19:10.
+Última puesta al día: 17-11, 19:25.
 
-## AHORA MISMO (17-11, 19:10) — retomar desde aquí
+## AHORA MISMO (17-11, 19:25) — retomar desde aquí (se cortó por límite de uso)
 
 1. **Lotes 1, 2 y 3 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`, `e4c45f5`; migraciones hasta
-   la 194; Vercel sin errores en la hora de cada uno). App de Windows 1.0.2 publicada (DP-D162).
-2. **Lote 4 armado** en el checkout principal, rama `dp-22-cuarto-lote` (subida, SIN PR todavía).
-   Lleva, ya revisado, con mutantes propios y confirmado:
-   - el hallazgo 12 (la Caja relee tras «El total cambió…» y tras `PROPINA_VIGENTE`, DP-D168);
-   - Configuración, las dos tandas del agente E (77 puntos «comprobado»; los hallazgos 18 y 19
-     arreglados, DP-D163, DP-D164 y DP-D166; el 20 y el 21 descartados);
-   - el costo exacto (hallazgo 14, **migración 195**, DP-D165);
-   - inventario (hallazgos 22 y 23, DP-D167; el 13 no se reproduce; el 16 no se construye, DP-D169;
-     el 17 descartado);
-   - el barrido de servicio del agente A en 14 aparatos (hallazgos 2 a 4 arreglados; 5 y 6
-     descartados; DP-D154).
-     **Corriendo:** (a) `bash /d/mpos-tmp/dp22/revisar-rama.sh …` →
-     `/d/mpos-tmp/dp22/revision-lote4b.log` (todo, sobre la rama completa); (b) la corrida de la CI
-     que REGENERA la galería: `gh run view 44205978661` → al terminar,
-     `gh run download 44205978661 -n galeria-restaurante -D /d/mpos-tmp/dp22/galeria-lote4`, MIRAR
-     los PNG que cambian (Caja, Personalizar producto, Mesero, la entrada con PIN, Inventario,
-     Recetas), copiarlos a `pruebas/e2e/galeria.spec.ts-snapshots/` y confirmarlos.
-     **Falta antes del PR:** la revisión en verde (lo que se pase de tiempo por carga, repetido
-     solo), la galería, y `ESTADO`/`PROGRESO`. El PR del lote 4 puede abrirse sin esperar a los
-     agentes de abajo: lo suyo irá en el lote 5.
-     **Despliegue:** CI en verde → `migrar-produccion.sh ensayo` → `aplicar` (la 195) →
-     `gh pr merge N --squash` → «READY» → `humo-produccion.sh 4` → `revisar-produccion.mjs` → la
-     hora de Vercel.
-3. **Agentes corriendo (3), todos sobre `ad9c162` (la rama del lote 4):**
-   - G · `a05a11e0c5003c300` · `.work\dp20` · `dp-22-parte5-b` (segunda tanda): H12 en el
-     navegador con la compilación nueva; el hallazgo 24 (la merma desde Inventario → Ajustar se
-     graba como ajuste: DP-D171); lo que faltó de la Parte 5 (portal, devolución, negativo,
-     compras, unidades y proveedores, ocultar y no disponible, costo y margen, valor y kardex
-     contra el libro); y el 25 (el interruptor de 32×18).
-   - H · `a42a50c9ee1f3c737` · `.work\dp18-integrar` · `dp-22-parte7`: los 12 puntos «¿debería
-     poder…?» comprobados en la app con el dedo (`briefs\h-listo.md`; 5440 y 3240; DP-D172 a 174).
+   la 194).
+2. **Lote 4 · PR 40 abierto, SIN UNIR** (`dp-22-cuarto-lote`; Auto-fix encendido). La **migración
+   195 NO se ha ensayado ni aplicado en producción.** La CI en `ae66054` falló en dos cosas, ya
+   corregidas en el commit siguiente: (a) tipos: `FRASE_DE_EJEMPLO` quedó declarada dos veces en
+   `pruebas/e2e/qa-final/ajustes.aparato.spec.ts` al unir; (b) «Jornada completa»: el localizador
+   `getByRole('button', { name: 'Cerrar' })` de las pruebas viejas encuentra dos botones desde que
+   la «X» de los diálogos heredados se llama «Cerrar» (antes «Close»): ahora llevan `.first()` (7
+   sitios). **OJO: «Jornada completa» se paró en su primer paso; las 17 suites de «Los cambios
+   del cliente» no llegaron a correr y pueden traer más choques con los cambios táctiles y de
+   nombres del barrido (agente A). Mirar la CI siguiente; si vuelve a fallar, correr esas suites
+   en local con `bash /d/mpos-tmp/dp22/e2e-tanda.sh`.**
+   También: la migración 195 se corrigió para correr desde cero (`ae66054`); base nueva de
+   integración `dp22_lote4` (`/d/mpos-tmp/dp22-dp22_lote4-url.txt`).
+   Falta: CI en verde → galería (`gh run view 44212861815`; si esa corrida falló por lo mismo,
+   volver a pedirla: `gh workflow run verificar.yml --ref dp-22-cuarto-lote -f
+actualizar_galeria=true`; bajar `galeria-restaurante`, MIRAR los PNG, copiarlos a
+   `pruebas/e2e/galeria.spec.ts-snapshots/`) → `migrar-produccion.sh ensayo` → `aplicar` →
+   `gh pr merge 40 --squash` → «READY» → `humo-produccion.sh 4` → `revisar-produccion.mjs` → la
+   hora de Vercel → PROGRESO y HALLAZGOS.
+3. **Agentes: LOS TRES PARADOS por el límite de uso** (se retoman con SendMessage a su id; todos
+   salieron de `ad9c162`, sin commit):
+   - G · `a05a11e0c5003c300` · `.work\dp20` · `dp-22-parte5-b`: segunda tanda de la Parte 5 (H12
+     en el navegador; hallazgo 24, DP-D171; portal, devolución, negativo, compras, unidades,
+     ocultar, costo y margen, valor contra el libro; hallazgo 25). Estaba compilando. Tiene un
+     aviso en cola con los 8 arreglos de lint que debe repetir en su árbol.
+   - H · `a42a50c9ee1f3c737` · `.work\dp18-integrar` · `dp-22-parte7`: los 12 puntos de la Parte 7
+     en la app (`briefs\h-listo.md`).
    - F · `ae7be0fa51f65b97b` · `.work\dp20-lab` · `dp-22-dia-de-bots`: el perfil `dp22` del
-     simulador y su lanzador (`briefs\f-listo.md`; molde `qa_dp22_inv`; 3210 y 54510; DP-D175 y
-     176; semilla 2211).
-     Al recibirlos: parche desde `ad9c162` (`git add -A`, PIN mirando el código de salida,
-     `git diff --cached --binary ad9c162 > x.patch`, commit en su rama) y `git apply --3way --index`
-     sobre la rama del lote en curso; `DECISIONES.md` con `##` y en orden; `pnpm qa:matriz`;
-     prettier; mutante propio.
-4. **Observación sin resolver (no es de la app):** el agente A vio `next build` terminar con
-   código 1 por un aviso de seguridad de Next que llega por red y pide correr
-   `next upgrade --agent=security`. NO se corre un comando que pide una salida de herramienta.
-   Los otros agentes compilaron hoy sin eso y la CI compila en cada PR. Si la CI lo marca, se
-   investiga con la documentación de Next (`node_modules/next/dist/docs/`).
-5. **Después:** el lote 5 (lo de G, H y F); el día de bots con la máquina SOLA (repetir con otra
-   semilla hasta que salga limpio); la Parte 11 con `bash /d/mpos-tmp/dp22/parte11.sh` (ya
-   ensayada sin escribir: `configurar-ensayo` mandaría 5 comandos; `ceros-ensayo 9` encuentra
-   sólo las 9 cuentas de prueba y 1 caja cerrada; `aparatos-ensayo` 35 aparatos; orden:
-   configurar → ceros 9 → primer-folio → aparatos → `revisar-produccion.mjs` → `pnpm dia-cero`;
-   el bloqueo H1 NO se activa; el guion exige que `packages/` y `scripts/` sean los de
-   `origin/main`); y el informe 013 con el veredicto, los números, la calificación, la lista
-   física de Miguel (incluye: en la tableta, crear una receta eligiendo «Variable por medida»;
-   tras el primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`) y lo grande para
-   después (la receta de las opciones, DP-D169; pasar un platillo entre cuentas; el descuento
-   por renglón).
+     simulador y su lanzador (`briefs\f-listo.md`).
+     Al retomar: pedir a cada uno que diga dónde quedó, que compruebe que no dejó procesos ni
+     mutantes puestos, que termine EN PRIMER PLANO y entregue informe. Recibirlos con parche desde
+     `ad9c162` y `git apply --3way --index`; después de unir, correr SIEMPRE
+     `pnpm exec tsc --noEmit -p pruebas/tsconfig.json`, `-p qa/simulador/tsconfig.json` y eslint de
+     lo tocado (las dos caídas de hoy en la CI fueron por no hacerlo).
+4. **Después:** el lote 5 (lo de G, H y F); el día de bots con la máquina sola; la Parte 11 con
+   `bash /d/mpos-tmp/dp22/parte11.sh` (ya ensayada sin escribir; orden: configurar → ceros 9 →
+   primer-folio → aparatos → `revisar-produccion.mjs` → `pnpm dia-cero`; H1 NO se activa); y el
+   informe 013.
 
 ## Dónde voy
 
