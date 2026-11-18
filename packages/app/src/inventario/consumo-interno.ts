@@ -2,9 +2,10 @@ import 'server-only';
 
 import { ErrorDominio, PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
 import { repoStock, repoVentaCatalogo, type Transaccion } from '@morphiqpos/data';
-import { porCantidad } from '@morphiqpos/domain/dinero';
+import { aDiezmilesimas } from '@morphiqpos/domain/dinero';
 import {
   calcularConsumo,
+  valorDeLoAcumulado,
   type LineaParaConsumo,
   type MovimientoPlaneado,
 } from '@morphiqpos/domain/inventario';
@@ -46,6 +47,22 @@ export const entradaConsumoInterno = z.object({
   /** Sólo en cortesía y reposición: es el platillo de una cuenta concreta. */
   ordenId: z.uuid().optional(),
 });
+
+/**
+ * DP-D167 · La clave de `motivos_merma` con que se anota cada tipo de consumo en el kardex.
+ *
+ * `movimiento_stock_salida_con_motivo` exige un motivo en toda salida de consumo interno y la llave
+ * `movimientos_stock_motivo_conocido` lo quiere del catálogo: el comando no lo escribía y fallaba
+ * siempre contra Postgres. `motivos_merma` es un catálogo GLOBAL (no se siembra clave por negocio):
+ * se usan las ya existentes y NO imputables, salvo la reposición, que es el platillo que hubo que
+ * rehacer. Lo que el gerente escribió va en la nota del movimiento.
+ */
+export const MOTIVO_DE_CATALOGO: Readonly<Record<(typeof TIPOS_DE_CONSUMO)[number], string>> = {
+  personal: 'consumo_personal',
+  cortesia: 'muestra',
+  reposicion: 'platillo_rehecho',
+  degustacion: 'muestra',
+};
 
 export interface ResultadoConsumoInterno {
   readonly consumoId: string;
@@ -160,19 +177,29 @@ export const registrarConsumoInterno = definirComando<
       const costos = await ctx.paso('costos_de_insumo', () =>
         ctx.tx
           .selectFrom('insumos')
-          .select(['id', 'costo_unitario_centavos as costo'])
+          .select(['id', 'costo_exacto_dmc as costo'])
           .where('organizacion_id', '=', organizacionId)
           .where('id', 'in', insumoIds)
           .execute(),
       );
       const porInsumo = new Map(costos.map((c) => [c.id, c.costo]));
 
+      // DP-D165 · cantidad × costo EXACTO de cada insumo, sumado y redondeado UNA sola vez a centavos.
+      let acumulado = 0n;
       for (const movimiento of movimientos) {
-        costoCentavos += porCantidad(porInsumo.get(movimiento.insumoId) ?? 0n, movimiento.cantidad);
+        acumulado +=
+          aDiezmilesimas(movimiento.cantidad) * (porInsumo.get(movimiento.insumoId) ?? 0n);
       }
+      costoCentavos = valorDeLoAcumulado(acumulado);
 
       await ctx.paso('descontar_stock', () =>
-        repoStock.aplicarMovimientos(comoConsumoInterno(movimientos, consumo.id, empleoId), ctx.tx),
+        repoStock.aplicarMovimientos(
+          comoConsumoInterno(movimientos, consumo.id, empleoId, {
+            tipo: entrada.tipo,
+            motivo: entrada.motivo,
+          }),
+          ctx.tx,
+        ),
       );
     }
 
@@ -220,6 +247,7 @@ export function comoConsumoInterno(
   movimientos: readonly MovimientoPlaneado[],
   consumoId: string,
   empleoId: string,
+  porque: { readonly tipo: (typeof TIPOS_DE_CONSUMO)[number]; readonly motivo: string },
 ): MovimientoPlaneado[] {
   return movimientos.map((m) => ({
     ...m,
@@ -230,6 +258,9 @@ export function comoConsumoInterno(
     referenciaId: consumoId,
     idempotencyKey: `consumo_interno:${consumoId}:${m.insumoId}`,
     empleadoId: empleoId,
+    // DP-D167 · la salida sin venta lleva motivo (la clave del catálogo) y la explicación en la nota.
+    motivo: MOTIVO_DE_CATALOGO[porque.tipo],
+    nota: porque.motivo.slice(0, 200),
   }));
 }
 

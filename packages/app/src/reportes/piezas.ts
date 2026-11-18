@@ -157,9 +157,9 @@ export async function leerPorPedir(
            p.nombre                                                         as proveedor,
            p.dia_visita                                                     as dia_visita,
            count(*)                                                         as claves,
-           coalesce(sum(round(
-             (i.stock_minimo::numeric - coalesce(x.cantidad, 0)) * i.costo_unitario_centavos
-           )), 0)                                                           as importe
+           coalesce(round(sum(
+             (i.stock_minimo::numeric - coalesce(x.cantidad, 0)) * i.costo_exacto_dmc
+           ) / 10000), 0)                                                   as importe
       from insumos i
       left join existencia x on x.insumo_id = i.id
       left join movido v on v.insumo_id = i.id

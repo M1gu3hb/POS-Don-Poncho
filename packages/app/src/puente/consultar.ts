@@ -685,6 +685,10 @@ function traducirFila(fila: Fila, mapa: MapaEntidad, rol: string): Fila {
 
 const PUNTOS_BASE = 10_000n;
 const CENTAVOS_POR_PESO = 100;
+/** Diezmilésimas de centavo en un peso: 100 centavos × 10 000. */
+const DIEZMILESIMAS_DE_CENTAVO_POR_PESO = 1_000_000n;
+/** El importe de una línea de receta se sirve con ocho decimales de peso. */
+const PRECISION_DE_LA_LINEA = 100_000_000n;
 /** Cuatro decimales: es la escala de `numeric(14,4)` en `recetas.cantidad`. */
 const ESCALA_CANTIDAD = 10_000n;
 
@@ -706,16 +710,20 @@ const ESCALA_CANTIDAD = 10_000n;
  */
 const FORMULAS: Readonly<Record<Calculo, (fila: Fila) => unknown>> = {
   costoDeLineaDeReceta(fila) {
-    const centavos = enteroDe(fila['costo_unitario_base_snapshot']);
+    // DP-D165 · El costo del insumo llega EXACTO, en diezmilésimas de centavo por unidad base.
+    const exacto = enteroDe(fila['costo_unitario_base_snapshot']);
     const cantidad = escalarDe(fila['cantidad_convertida_unidad_base']);
     const mermaBp = enteroDe(fila['merma_porcentaje']) ?? 0n;
-    if (centavos === null || cantidad === null) return null;
+    if (exacto === null || cantidad === null) return null;
 
-    const bruto = centavos * cantidad * (PUNTOS_BASE + mermaBp);
-    const divisor = ESCALA_CANTIDAD * PUNTOS_BASE;
-    // Redondeo al centavo más cercano, UNA sola vez y al final.
-    const redondeado = (bruto + divisor / 2n) / divisor;
-    return Number(redondeado) / CENTAVOS_POR_PESO;
+    // El importe de la línea en PESOS, SIN redondear al centavo: se redondea a 1e-8 de peso (error
+    // de a lo más 5e-9 pesos por línea) y el redondeo al centavo se hace UNA sola
+    // vez, sobre el total del platillo —lo mismo que guarda `recalcularCostosRecetas`—. Redondear aquí
+    // por línea hacía que dos líneas de 2.5 ¢ sumaran 6 ¢ en la pantalla y 5 ¢ en el producto.
+    const bruto = exacto * cantidad * (PUNTOS_BASE + mermaBp);
+    const divisor = ESCALA_CANTIDAD * PUNTOS_BASE * DIEZMILESIMAS_DE_CENTAVO_POR_PESO;
+    const cienMillonesimas = (bruto * PRECISION_DE_LA_LINEA + divisor / 2n) / divisor;
+    return Number(cienMillonesimas) / Number(PRECISION_DE_LA_LINEA);
   },
   propinaLiquidada(fila) {
     const id = fila['propina_liquidacion_id'];

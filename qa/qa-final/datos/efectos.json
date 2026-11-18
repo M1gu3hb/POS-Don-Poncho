@@ -2,9 +2,12 @@
   "ancho_papel_ticket": {
     "efecto": "El ticket y la precuenta se dibujan a 58 u 80 mm (384 o 576 puntos).",
     "valores": ["58", "80"],
-    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "pruebas/impresion/ticket-identico.spec.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "asignacion_mesas_activa": {
     "efecto": "Encendida: cada mesero ve y atiende sólo sus mesas y el portal avisa a su mesero. Apagada: todos ven todas.",
@@ -31,7 +34,7 @@
     "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
   },
   "background_logo_url": {
-    "efecto": "La marca de agua del fondo, del acceso y del portal.",
+    "efecto": "La marca de agua del fondo de las pantallas internas y del portal (el acceso, sin sesión, no la lee).",
     "valores": ["vacío", "una imagen"],
     "pruebas": [],
     "estado": "por ver en navegador",
@@ -54,39 +57,51 @@
     "efecto": "Minutos sin tocar la pantalla tras los que dueño, administrador y gerente vuelven a teclear su PIN (5 a 30).",
     "valores": ["5", "10", "30"],
     "pruebas": [
-      "pruebas/e2e/pin-al-abrir.spec.ts",
-      "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+      "pruebas/e2e/qa-final/ajustes.operacion.spec.ts",
+      "pruebas/e2e/pin-al-abrir.spec.ts"
     ],
-    "estado": "por ver en navegador",
-    "nota": "El servidor lo guarda en 5 y en 30 (probado); el candado que se cierra es de la pantalla."
+    "estado": "comprobado",
+    "nota": "Con el dedo, 5 y 30 minutos, en Windows y teléfono. iMin: sin el reloj de Playwright (Chromium 99), sin verificar."
   },
   "cocina_alerta_ambar_min": {
     "efecto": "Minutos de espera a los que la comanda se pinta ámbar en cocina.",
     "valores": ["1", "10"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.cocina.spec.ts",
+      "apps/web/src/cocina/espera.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Con el dedo y el reloj adelantado, en Windows y teléfono; sin mutante de navegador."
   },
   "cocina_alerta_roja_min": {
     "efecto": "Minutos de espera a los que la comanda se pinta roja en cocina (siempre después del ámbar).",
     "valores": ["2", "20"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.cocina.spec.ts",
+      "apps/web/src/cocina/espera.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Con el dedo y el reloj adelantado, en Windows y teléfono; sin mutante de navegador."
   },
   "color_acento": {
-    "efecto": "El color de acento de todo el sistema interno y del acceso.",
+    "efecto": "El color de acento de todo el sistema interno, con sesión (el acceso lleva el de la casa).",
     "valores": ["#ac8a5f", "otro"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
+      "apps/web/src/configuracion/efectos-de-los-ajustes.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Barra interna pintada con el color; HALLAZGO: el acceso (sin sesión) no lo lee."
   },
   "color_primario": {
-    "efecto": "El color primario de todo el sistema interno y del acceso.",
+    "efecto": "El color primario de todo el sistema interno, con sesión (el acceso lleva el de la casa).",
     "valores": ["#83653f", "otro"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
+      "apps/web/src/configuracion/efectos-de-los-ajustes.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Barra interna pintada con el color; HALLAZGO: el acceso (sin sesión) no lo lee."
   },
   "color_secundario": {
     "efecto": "Ninguno: es herencia y no se enseña en pantalla.",
@@ -97,9 +112,12 @@
   "colorear_importes_monetarios": {
     "efecto": "Encendido: los importes se pintan en color (entradas, salidas); apagado: en el color del texto.",
     "valores": ["true", "false"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
+      "apps/web/src/configuracion/efectos-de-los-ajustes.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Tablero con el color apagado y encendido."
   },
   "comision_terminal_bp": {
     "efecto": "El corte enseña «Comisión de la terminal, estimada» sobre lo cobrado con tarjeta y la resta de la utilidad neta estimada.",
@@ -114,25 +132,31 @@
     "efecto": "Cuántas copias salen del ticket, la precuenta y el corte (1 a 3), con «ORIGINAL — CLIENTE» y «COPIA — NEGOCIO».",
     "valores": ["1", "2", "3"],
     "pruebas": [
-      "packages/app/src/venta/impresion-del-ticket.integracion.test.ts#caja.fijar_copias_de_impresion",
-      "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+      "pruebas/impresion/copias-por-la-app.spec.ts",
+      "packages/app/src/venta/impresion-del-ticket.integracion.test.ts"
     ],
-    "estado": "por ver en navegador",
-    "nota": "El servidor lo guarda y lo lee (probado); cuántas copias salen del papel es del navegador."
+    "estado": "comprobado",
+    "nota": "Una copia, un corte, por el camino de producción (imprimirDirecto con la app falsa); mutantes en imprimir-documento.ts y copias.ts."
   },
   "correo": {
     "efecto": "El correo del negocio en el corte y los PDF.",
     "valores": ["vacío", "un correo"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "packages/app/src/caja/corte/negocio.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Corte en hoja (CorteTicket) y composición del servidor (negocioDe); mutante en cada lector."
   },
   "descargar_pdf_corte_auto": {
     "efecto": "Encendido: al cerrar la caja se abre o descarga el PDF del corte solo.",
     "valores": ["true", "false"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "packages/app/src/caja/corte/negocio.test.ts",
+      "pruebas/e2e/qa-final/ajustes.operacion.spec.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Prueba en Windows, iMin (Chromium 99) y teléfono, con la casilla encendida y apagada; el cierre no depende del PDF (el aviso dice «La caja se cerró. No se pudo guardar el PDF…»)."
   },
   "descuentos_permitidos": {
     "efecto": "Apagado: nadie puede aplicar descuentos (la pantalla no los ofrece y el servidor los rechaza).",
@@ -147,34 +171,36 @@
   "direccion": {
     "efecto": "La dirección del negocio en el ticket, la precuenta, el corte y los PDF.",
     "valores": ["vacío", "una dirección"],
-    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "pruebas/impresion/ticket-identico.spec.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "estaciones_preparacion_activas": {
     "efecto": "Encendido: las comandas se reparten por estación (cocina, bebidas…); apagado: una sola lista.",
     "valores": ["true", "false"],
     "pruebas": [
-      "packages/app/src/restaurante/estacion-de-cada-comanda.integracion.test.ts#el mesero: cada platillo a la estación de su categoría",
       "pruebas/e2e/estaciones-de-cocina.spec.ts",
-      "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+      "pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"
     ],
-    "estado": "por ver en navegador",
-    "nota": "Las comandas nacen con su estación con la bandera en cualquier valor (probado); lo que cambia es lo que Cocina DIBUJA."
+    "estado": "comprobado",
+    "nota": "Existentes; corridas en verde."
   },
   "experiencia.mascota": {
     "efecto": "Morfi aparece (o no) en las cargas, la pantalla de espera y la página no encontrada.",
     "valores": ["true", "false"],
     "pruebas": ["pruebas/e2e/morfi.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "experiencia.pin_al_despertar": {
     "efecto": "Al despertar del modo espera se pide el PIN.",
     "valores": ["true", "false"],
     "pruebas": ["pruebas/e2e/modo-espera-pin.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "experiencia.sonidos_en_el_portal": {
     "efecto": "El portal del comensal suena (o no) al tocar.",
@@ -187,8 +213,8 @@
     "efecto": "El sonido del teclado del PIN y de los toques (nib, keycap, thock, clasp).",
     "valores": ["nib", "thock"],
     "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "folios": {
     "efecto": "Prefijo y primer folio: las cuentas se leen «DP-01001» y los cortes «DPC-0101» en pantalla, papel, Registros y exportaciones.",
@@ -202,9 +228,9 @@
   "footer_text": {
     "efecto": "Texto legal al pie del corte, antes del pie de los PDF.",
     "valores": ["vacío", "un texto"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["packages/app/src/caja/corte/negocio.test.ts"],
+    "estado": "comprobado",
+    "nota": "Existente (el texto legal sale junto al pie de los PDF); corrida en verde."
   },
   "formato_export_default": {
     "efecto": "Ninguno: no hay formato que elegir al exportar. Sin pantalla.",
@@ -226,19 +252,25 @@
   "logo_pdf_url": {
     "efecto": "El logo del corte y de los PDF.",
     "valores": ["por omisión", "otra imagen"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "packages/app/src/caja/corte/negocio.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Corte en hoja (CorteTicket) y composición del servidor (negocioDe); mutante en cada lector."
   },
   "logo_ticket_url": {
     "efecto": "El logo del ticket y de la precuenta.",
     "valores": ["por omisión", "otra imagen"],
-    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "pruebas/impresion/ticket-identico.spec.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "logo_url": {
-    "efecto": "El logo del negocio en la barra, el acceso y la pantalla de espera.",
+    "efecto": "El logo del negocio en la barra y la pantalla de espera (el acceso, sin sesión, lleva el de la casa).",
     "valores": ["por omisión", "otra imagen"],
     "pruebas": [],
     "estado": "por ver en navegador",
@@ -247,9 +279,12 @@
   "mensaje_ticket": {
     "efecto": "El mensaje al final del ticket y de la precuenta.",
     "valores": ["vacío", "un mensaje"],
-    "pruebas": ["pruebas/impresion/ticket-identico.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "pruebas/impresion/ticket-identico.spec.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "modo_presentacion_activo": {
     "efecto": "Ninguno: resto del modo presentación retirado. Sin pantalla.",
@@ -276,23 +311,26 @@
   "mostrar_logo_ticket": {
     "efecto": "Si el ticket lleva logo. Hoy no tiene interruptor en pantalla.",
     "valores": ["true", "false"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/impresion/ajustes-del-papel.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "nombre_negocio": {
-    "efecto": "El nombre del negocio en la barra, el acceso, el ticket, el corte, el portal y los PDF.",
+    "efecto": "El nombre del negocio en la barra, el ticket, el corte, el portal y los PDF (el acceso lo toma de la lista de personas).",
     "valores": ["Don Poncho", "otro"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/impresion/ajustes-del-papel.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "nombre_sistema": {
-    "efecto": "El nombre del sistema en el acceso y al pie de los PDF.",
+    "efecto": "El nombre del sistema al pie de los PDF (el acceso, sin sesión, lleva el de la casa).",
     "valores": ["POS Don Poncho", "otro"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "packages/app/src/caja/corte/negocio.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Corte en hoja (CorteTicket) y composición del servidor (negocioDe); mutante en cada lector."
   },
   "nombres_de_cajas": {
     "efecto": "El nombre de cada caja (lugar) al abrirla, en el corte y en Registros.",
@@ -316,11 +354,11 @@
     "efecto": "Qué renglones salen en la precuenta y en el ticket de venta (folio, mesa, personas, mesero, cajero, fecha…).",
     "valores": ["todo encendido", "varios apagados"],
     "pruebas": [
-      "packages/app/src/caja/papel-a-tu-gusto.integracion.test.ts#caja.fijar_papel_a_tu_gusto",
-      "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+      "pruebas/impresion/ticket-identico.spec.ts",
+      "packages/app/src/caja/papel-a-tu-gusto.integracion.test.ts"
     ],
-    "estado": "por ver en navegador",
-    "nota": "El servidor lo guarda completo o con la lista mínima (probado); qué renglones salen en el papel es del navegador."
+    "estado": "comprobado",
+    "nota": "Corridas en verde; mutante en seEnsena y en el lector del servidor (caen)."
   },
   "paquete_modo": {
     "efecto": "La plantilla del negocio (restaurante): qué pantallas y comandos existen. Sólo por comando de plataforma.",
@@ -331,9 +369,12 @@
   "pdf_footer": {
     "efecto": "El pie del corte y de los PDF.",
     "valores": ["vacío", "un texto"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "packages/app/src/caja/corte/negocio.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Corte en hoja (CorteTicket) y composición del servidor (negocioDe); mutante en cada lector."
   },
   "permitir_venta_sin_stock": {
     "efecto": "Ninguno hoy: manda la opción de cada producto y lo que pasó por cocina se cobra siempre (DP-D116, DP-D135). En Avanzado, con su explicación.",
@@ -344,9 +385,12 @@
   "platform_brand": {
     "efecto": "La marca de plataforma en la barra y el corte.",
     "valores": ["POS Don Poncho"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "packages/app/src/caja/corte/negocio.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Corte en hoja (CorteTicket) y composición del servidor (negocioDe); mutante en cada lector."
   },
   "portal_qr_activo": {
     "efecto": "Apagado: el QR de la mesa dice que el portal no está disponible y nadie recibe solicitudes.",
@@ -365,7 +409,8 @@
       "packages/app/src/portal/botones.integracion.test.ts",
       "pruebas/e2e/botones-del-menu-qr.spec.ts"
     ],
-    "estado": "por ver en navegador"
+    "estado": "comprobado",
+    "nota": "Corrida en verde (existente)."
   },
   "portal_qr_comensales_abren_mesa": {
     "efecto": "Encendido: un comensal que escanea una mesa libre la abre; apagado: espera a que el mesero la abra.",
@@ -397,9 +442,12 @@
   "portal_qr_mensaje_bienvenida": {
     "efecto": "El mensaje de bienvenida del portal.",
     "valores": ["vacío", "un mensaje"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Es sólo un texto del portal."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
+      "packages/app/src/portal/ajustes-del-portal.integracion.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Con el dedo en Configuración y el teléfono del comensal; servidor con mutante."
   },
   "portal_qr_modo_menu": {
     "efecto": "Cómo se ve el menú del comensal: digital, a la carta, páginas subidas o mixto.",
@@ -407,10 +455,11 @@
     "pruebas": [
       "packages/app/src/portal/botones.integracion.test.ts",
       "pruebas/e2e/restaurante-menu-personalizado.spec.ts",
-      "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
+      "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos",
+      "pruebas/e2e/botones-del-menu-qr.spec.ts"
     ],
-    "estado": "por ver en navegador",
-    "nota": "Se guarda y se lee; el menú que se pinta es de la pantalla."
+    "estado": "comprobado",
+    "nota": "Corrida en verde (existente)."
   },
   "portal_qr_mostrar_precios": {
     "efecto": "Apagado: el portal no enseña precios (el servidor ni los manda).",
@@ -423,39 +472,50 @@
   "portal_qr_mostrar_precuenta": {
     "efecto": "Encendido: el comensal ve su precuenta al pedir la cuenta.",
     "valores": ["true", "false"],
-    "pruebas": [],
-    "estado": "por comprobar",
-    "nota": "Sin prueba propia."
+    "pruebas": ["packages/app/src/portal/ajustes-del-portal.integracion.test.ts"],
+    "estado": "comprobado",
+    "nota": "Servidor con mutante; la pantalla del comensal, sin prueba de navegador."
   },
   "portal_qr_mostrar_sin_imagen": {
     "efecto": "Apagado: los platillos sin foto no salen en el portal.",
     "valores": ["true", "false"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Es sólo de cómo se pinta el menú."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
+      "packages/app/src/portal/ajustes-del-portal.integracion.test.ts",
+      "apps/web/src/portal/menu-digital/menu-digital.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Vale en «A la carta» y en «Menú digital» (DP-D166), encendida y apagada, en el teléfono; unitaria de productosSegunLaFoto."
   },
   "portal_qr_permitir_ayuda": {
     "efecto": "El botón «Necesito ayuda» del portal existe o no (y el servidor acepta o rechaza la solicitud).",
     "valores": ["true", "false"],
     "pruebas": [
-      "packages/app/src/portal/sin-asignacion.integracion.test.ts#llama al mesero, y el mesero que lo atiende se queda con la mesa y su cuenta"
+      "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
+      "packages/app/src/portal/ajustes-del-portal.integracion.test.ts"
     ],
-    "estado": "por comprobar",
-    "nota": "La ayuda funciona encendida; falta la prueba con la casilla APAGADA."
+    "estado": "comprobado",
+    "nota": "Con el dedo en Configuración y el teléfono del comensal; servidor con mutante."
   },
   "portal_qr_permitir_cuenta": {
     "efecto": "El botón «Pedir cuenta» del portal existe o no (y el servidor acepta o rechaza).",
     "valores": ["true", "false"],
-    "pruebas": [],
-    "estado": "por comprobar",
-    "nota": "Sin prueba propia: falta apagarla y ver que «Pedir cuenta» no se ofrece ni se acepta."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
+      "packages/app/src/portal/ajustes-del-portal.integracion.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Con el dedo en Configuración y el teléfono del comensal; servidor con mutante."
   },
   "portal_qr_permitir_ordenar": {
     "efecto": "El botón «Quiero ordenar» (llamar para ordenar) existe o no.",
     "valores": ["true", "false"],
-    "pruebas": [],
-    "estado": "por comprobar",
-    "nota": "Sin prueba propia."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
+      "packages/app/src/portal/ajustes-del-portal.integracion.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Con el dedo en Configuración y el teléfono del comensal; servidor con mutante."
   },
   "portal_qr_permitir_pedidos_cliente": {
     "efecto": "Apagado: el comensal ve el menú pero no puede mandar pedidos.",
@@ -482,7 +542,8 @@
       "packages/app/src/portal/botones.integracion.test.ts",
       "pruebas/e2e/botones-del-menu-qr.spec.ts"
     ],
-    "estado": "por ver en navegador"
+    "estado": "comprobado",
+    "nota": "Corrida en verde (existente)."
   },
   "presentacion_ultimo_acceso": {
     "efecto": "Ninguno: resto del modo presentación retirado. Sin pantalla.",
@@ -513,12 +574,9 @@
   "propina_porcentajes_sugeridos": {
     "efecto": "Los porcentajes de propina que se ofrecen (hasta seis) en la Caja, el mesero y el portal.",
     "valores": ["5,10,15,20", "10,15"],
-    "pruebas": [
-      "packages/app/src/configuracion/configuracion.test.ts",
-      "qa/qa-final/propiedades/dinero.propiedades.test.ts#la propina del diálogo de la Caja (pesos en punto flotante) = la del oráculo, al centavo"
-    ],
-    "estado": "por ver en navegador",
-    "nota": "Los porcentajes se ofrecen en la Caja y el portal; la cuenta de cada uno es exacta (hallazgo 3, arreglado)."
+    "pruebas": ["apps/web/src/configuracion/efectos-de-los-ajustes.test.ts"],
+    "estado": "comprobado",
+    "nota": "Lógica con mutante. Que el diálogo de la Caja y el portal llamen a getPorcentajesSugeridos con la configuración: sin prueba de navegador."
   },
   "propinas_activas": {
     "efecto": "Apagado: no se ofrece propina en ningún lado.",
@@ -534,8 +592,8 @@
       "packages/app/src/portal/qr-de-mesas.integracion.test.ts#el dueño guarda un diseño general y uno propio de una mesa",
       "pruebas/e2e/qr-de-mesas.spec.ts"
     ],
-    "estado": "por ver en navegador",
-    "nota": "Se guarda y se valida en el servidor; el QR impreso es del navegador."
+    "estado": "comprobado",
+    "nota": "Corrida en verde (existente)."
   },
   "retiro_pin_arriba_de_centavos": {
     "efecto": "Un retiro de la cajera mayor a ese monto pide el PIN de un gerente; vacío no lo pide.",
@@ -557,9 +615,9 @@
   "silenciar_notificaciones_admin": {
     "efecto": "Encendido: quien entra como administrador no oye sonido ni voz de «pedido listo» ni de las solicitudes del portal; los meseros sí.",
     "valores": ["true", "false"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["apps/web/src/configuracion/efectos-de-los-ajustes.test.ts"],
+    "estado": "comprobado",
+    "nota": "Decisión (debeEscucharAudio) con mutante; el vigilante de pedido listo que la llama no tiene prueba de navegador."
   },
   "simbolo_moneda": {
     "efecto": "Ninguno útil: sólo lo lee un formateador viejo. Sin pantalla.",
@@ -570,23 +628,23 @@
   "telefono": {
     "efecto": "El teléfono del negocio en el ticket, el corte y los PDF.",
     "valores": ["vacío", "un teléfono"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/impresion/ajustes-del-papel.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "ticket_footer": {
     "efecto": "El pie del ticket térmico.",
     "valores": ["vacío", "un texto"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/impresion/ajustes-del-papel.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "unidades_medida_lista": {
     "efecto": "Las unidades que se ofrecen al crear insumos y recetas.",
     "valores": ["por omisión", "una más"],
-    "pruebas": [],
-    "estado": "por comprobar",
-    "nota": "Sin prueba: sólo la lee la pantalla de insumos."
+    "pruebas": ["apps/web/src/configuracion/efectos-de-los-ajustes.test.ts"],
+    "estado": "comprobado",
+    "nota": "Lista que ofrece getUnidadesCompra, con mutante; la pantalla de insumos que la usa, sin prueba de navegador."
   },
   "usa_barra": {
     "efecto": "Ninguno: nadie lo lee ni lo escribe.",
@@ -609,7 +667,8 @@
   "tarjeta:estilo": {
     "efecto": "El estilo visual del negocio (nueve estilos, densidad, redondeo, elevación, movimiento) en todas las pantallas. Sólo el dueño.",
     "pruebas": ["pruebas/e2e/estilos-del-negocio.spec.ts"],
-    "estado": "por comprobar"
+    "estado": "comprobado",
+    "nota": "Corrida en verde."
   },
   "tarjeta:mapa-de-mesas": {
     "efecto": "Mesas, zonas y su lugar en el mapa; el reparto a meseros.",
@@ -618,13 +677,15 @@
   },
   "tarjeta:voz-de-las-comandas": {
     "efecto": "Sólo deja oír cómo suena una comanda; no guarda nada.",
-    "pruebas": [],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes.aparato.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Corrida en verde."
   },
   "tarjeta:categorias": {
     "efecto": "Las categorías de productos y la estación de cada una.",
     "pruebas": ["pruebas/e2e/estaciones-de-punta-a-punta.spec.ts"],
-    "estado": "por comprobar"
+    "estado": "comprobado",
+    "nota": "Corrida en verde."
   },
   "tarjeta:proveedores": {
     "efecto": "Los proveedores que se ofrecen al registrar una compra.",
@@ -649,7 +710,8 @@
   "tarjeta:nombre-del-aparato": {
     "efecto": "El nombre de este aparato (terminal) en la Caja de otros aparatos y en la auditoría.",
     "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"],
-    "estado": "por comprobar"
+    "estado": "comprobado",
+    "nota": "Corrida en verde."
   },
   "tarjeta:impresora-y-cajon": {
     "efecto": "Con qué impresora imprime este aparato y si tiene cajón (sólo dentro de la app).",
@@ -659,27 +721,32 @@
   "tarjeta:sonido-del-aparato": {
     "efecto": "El volumen de los sonidos en este aparato (apagado, suave, normal).",
     "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
-    "estado": "por comprobar"
+    "estado": "comprobado",
+    "nota": "Corrida en verde."
   },
   "tarjeta:modo-espera": {
     "efecto": "Si este aparato entra en modo espera y a los cuántos minutos.",
     "pruebas": ["pruebas/e2e/modo-espera.spec.ts"],
-    "estado": "por comprobar"
+    "estado": "comprobado",
+    "nota": "Corrida en verde."
   },
   "tarjeta:voz-del-aparato": {
     "efecto": "La voz y la velocidad con que este aparato lee los avisos.",
-    "pruebas": [],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes.aparato.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Corrida en verde."
   },
   "tarjeta:anuncio-de-comandas": {
     "efecto": "Si esta pantalla anuncia en voz las comandas nuevas.",
-    "pruebas": [],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes.aparato.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Corrida en verde."
   },
   "tarjeta:barra-lateral": {
     "efecto": "Si la barra lateral nace abierta o plegada en este aparato.",
-    "pruebas": ["pruebas/e2e/tactil-barra.spec.ts"],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes.aparato.spec.ts", "pruebas/e2e/tactil-barra.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Corrida en verde."
   },
   "tarjeta:laboratorio": {
     "efecto": "Entra al laboratorio de impresión con la clave del proveedor.",
@@ -698,15 +765,21 @@
   },
   "mh_cocina_voz_config": {
     "efecto": "Si la voz de cocina está activa en este aparato.",
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.aparato.spec.ts",
+      "apps/web/src/voz/avisos-por-aparato.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "mh_mesero_alert_config": {
     "efecto": "Cómo se avisa al mesero en este aparato (silencio, sonido, voz o ambos; decir el nombre).",
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.aparato.spec.ts",
+      "apps/web/src/voz/avisos-por-aparato.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "mh_notified_pedidos_listos": {
     "efecto": "Qué «pedido listo» ya se avisó en este aparato. No es un ajuste.",
@@ -730,15 +803,18 @@
   },
   "mh_theme": {
     "efecto": "Tema claro u oscuro de este aparato.",
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/e2e/qa-final/ajustes.aparato.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "mh_voice_manual": {
     "efecto": "La voz elegida a mano en este aparato.",
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.aparato.spec.ts",
+      "apps/web/src/voz/voiceAlert.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "mh_voice_picked": {
     "efecto": "La voz que el aparato eligió sola. No es un ajuste.",
@@ -747,9 +823,12 @@
   },
   "mh_voice_rate": {
     "efecto": "La velocidad de la voz en este aparato.",
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.aparato.spec.ts",
+      "apps/web/src/voz/voiceAlert.test.ts"
+    ],
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "morphiqpos.borrador-del-pedido.v1.": {
     "efecto": "El pedido a medio capturar de cada mesa, para no perderlo al recargar. No es un ajuste.",
@@ -763,15 +842,15 @@
   },
   "morphiqpos.cocina-anuncia": {
     "efecto": "«Esta pantalla anuncia las comandas» de este aparato.",
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/e2e/qa-final/ajustes.aparato.spec.ts", "pruebas/e2e/sonidos.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "morphiqpos.modo-espera": {
     "efecto": "El modo espera de este aparato (activo y minutos).",
     "pruebas": ["pruebas/e2e/modo-espera.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "morphiqpos.pin-de-esta-ejecucion": {
     "efecto": "La marca de que en esta ejecución ya se tecleó el PIN. No es un ajuste.",
@@ -781,13 +860,13 @@
   "morphiqpos.sonidos": {
     "efecto": "El perfil de sonido de este aparato.",
     "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   },
   "mpos.barra-lateral": {
     "efecto": "La barra lateral abierta o plegada en este aparato.",
-    "pruebas": ["pruebas/e2e/tactil-barra.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "pruebas": ["pruebas/e2e/qa-final/ajustes.aparato.spec.ts", "pruebas/e2e/tactil-barra.spec.ts"],
+    "estado": "comprobado",
+    "nota": "Corridas en verde (las nuevas en iMin, Windows y teléfono; las existentes en Windows)."
   }
 }

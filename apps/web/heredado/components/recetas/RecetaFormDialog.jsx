@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { Plus, Trash2, Save } from 'lucide-react';
 import { formatCurrency, formatPercent } from '@/utils/financialUtils';
 import { economiaDelPlatillo } from '~/inventario/costo-del-platillo';
+import { textoDelCostoPorUnidad } from '~/inventario/costo-por-unidad';
 import IngredienteAutocomplete from './IngredienteAutocomplete';
 import CategoriaSelect from '@/components/productos/CategoriaSelect';
 import ImageUploader from '@/components/common/ImageUploader';
@@ -574,8 +575,11 @@ export default function RecetaFormDialog({
                           Stock: {Number(l.ingrediente.stock_actual || 0).toLocaleString()}{' '}
                           {l.ingrediente.unidad_base}
                           {' · '}
-                          {formatCurrency(l.ingrediente.costo_por_unidad_base)}/
-                          {l.ingrediente.unidad_base}
+                          {textoDelCostoPorUnidad(
+                            l.ingrediente.costo_por_unidad_base,
+                            l.ingrediente.unidad_base,
+                            formatCurrency,
+                          )}
                         </p>
                       )}
                     </div>

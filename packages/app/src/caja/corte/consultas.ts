@@ -729,9 +729,9 @@ export async function insumosConsumidos(
     select i.nombre                                                             as "nombre",
            trim_scale(sum(-m.cantidad::numeric))::text          as "cantidad",
            max(m.unidad)                                                        as "unidad",
-           round(sum(-m.cantidad::numeric * m.costo_unitario_centavos)
+           round(sum(-m.cantidad::numeric * m.costo_exacto_dmc) / 10000
                  / nullif(sum(-m.cantidad::numeric), 0))::bigint::text         as "costoUnitarioCentavos",
-           round(sum(-m.cantidad::numeric * m.costo_unitario_centavos))::bigint::text as "costoCentavos",
+           round(sum(-m.cantidad::numeric * m.costo_exacto_dmc) / 10000)::bigint::text as "costoCentavos",
            max(i.tipo_insumo)                                                   as "tipoInsumo"
       from movimientos_stock m
       join ordenes o on o.id = m.referencia_id and o.organizacion_id = m.organizacion_id
@@ -741,7 +741,7 @@ export async function insumosConsumidos(
        and m.referencia_tipo = 'orden'
        and o.sesion_caja_id = ${sesionCajaId}
      group by i.id, i.nombre
-     order by sum(-m.cantidad::numeric * m.costo_unitario_centavos) desc
+     order by sum(-m.cantidad::numeric * m.costo_exacto_dmc) desc
      limit ${TOPE_DE_FILAS}
   `.execute(tx);
   return rows;
@@ -785,7 +785,7 @@ export async function salidasSinVenta(
            i.nombre                                                          as "nombre",
            trim_scale(sum(-m.cantidad::numeric))::text       as "cantidad",
            max(m.unidad)                                                     as "unidad",
-           round(sum(-m.cantidad::numeric * m.costo_unitario_centavos))::bigint::text as "costoCentavos",
+           round(sum(-m.cantidad::numeric * m.costo_exacto_dmc) / 10000)::bigint::text as "costoCentavos",
            max(ev.nombre)                                                    as "quien"
       from movimientos_stock m
       join almacenes a on a.id = m.almacen_id and a.organizacion_id = m.organizacion_id
@@ -798,7 +798,7 @@ export async function salidasSinVenta(
        and m.created_at <= ${hasta}
        and (${cierraElDia}::boolean or m.empleado_id = ${abreId})
      group by m.tipo, ${motivoDeLaSalida}, i.id, i.nombre
-     order by m.tipo, sum(-m.cantidad::numeric * m.costo_unitario_centavos) desc
+     order by m.tipo, sum(-m.cantidad::numeric * m.costo_exacto_dmc) desc
      limit ${TOPE_DE_FILAS}
   `.execute(tx);
   return rows;

@@ -6,12 +6,14 @@ import {
 } from '@morphiqpos/contracts';
 import { cantidad, cantidadATexto } from '@morphiqpos/domain/catalogo';
 import { centavos } from '@morphiqpos/domain/dinero';
+import { centavosDelCosto } from '@morphiqpos/domain/inventario';
 import { describe, expect, it } from 'vitest';
 import type { ZodType } from 'zod';
 
 import { registrarCompra, totalDeLineas, usarPlantillaCompra } from './compras.ts';
 import {
   convertirAUnidadBase,
+  costoExactoPorUnidad,
   costoPromedioPonderado,
   equivalenciaCanonica,
   equivalenciaDeLinea,
@@ -230,40 +232,54 @@ describe('§23.1 · la equivalencia convierte la compra, y sin ella no se guarda
 });
 
 describe('§14.2 · costo promedio ponderado — D-13', () => {
+  // DP-D165: el promedio se calcula sobre el costo EXACTO (diezmilésimas de centavo por unidad base)
+  // y devuelve diezmilésimas: 1 ¢ = 10 000.
   it('con existencia en cero el promedio es el costo de esta compra', () => {
     // Una pieza por $1234.995: el promedio ingenuo se queda en $1234.99.
     expect(
       costoPromedioPonderado({
         existenciaAnterior: 0n,
-        costoAnteriorCentavos: centavos(0n),
+        costoAnteriorExactoDmc: 0n,
         cantidadEntrante: cantidad('1'),
         costoTotalCentavos: centavos(123_500n),
       }),
-    ).toBe(123_500n);
+    ).toBe(1_235_000_000n);
   });
 
   it('pondera contra la existencia anterior con aritmética exacta', () => {
-    // 1000 g a 7 c/g + 1000 g por $45.55 → (7 000 000 + 455 500)/2000 g
+    // 1000 g a 7 ¢/g (70 000) + 1000 g por $45.55 → (1000 × 70 000 + 4 555 × 10 000) / 2000 g.
+    // Con centavos enteros este caso daba 6 ¢/g y perdía 0.2225 ¢ en cada gramo.
     expect(
       costoPromedioPonderado({
         existenciaAnterior: cantidad('1000'),
-        costoAnteriorCentavos: centavos(7n),
+        costoAnteriorExactoDmc: 70_000n,
         cantidadEntrante: cantidad('1000'),
         costoTotalCentavos: centavos(4555n),
       }),
-    ).toBe(6n);
+    ).toBe(57_775n);
+  });
+
+  it('pondera: 10 kg a 2.5 ¢/g y 5 kg a 3 ¢/g dan 2.6667 ¢/g, no el 2.75 del promedio simple', () => {
+    expect(
+      costoPromedioPonderado({
+        existenciaAnterior: cantidad('10000'),
+        costoAnteriorExactoDmc: 25_000n,
+        cantidadEntrante: cantidad('5000'),
+        costoTotalCentavos: centavos(15_000n),
+      }),
+    ).toBe(26_667n);
   });
 
   it('redondea la mitad alejándose del cero, no hacia abajo', () => {
-    // (3 + 4) / 2 = 3.5 → 4. Truncar daría 3 y el margen saldría inflado.
+    // (1 + 0) / 2 = 0.5 diezmilésimas → 1. Truncar daría 0 y el costo saldría subvaluado.
     expect(
       costoPromedioPonderado({
         existenciaAnterior: cantidad('1'),
-        costoAnteriorCentavos: centavos(3n),
+        costoAnteriorExactoDmc: 1n,
         cantidadEntrante: cantidad('1'),
-        costoTotalCentavos: centavos(4n),
+        costoTotalCentavos: centavos(0n),
       }),
-    ).toBe(4n);
+    ).toBe(1n);
   });
 
   it('una existencia negativa no envenena el promedio', () => {
@@ -272,11 +288,11 @@ describe('§14.2 · costo promedio ponderado — D-13', () => {
     expect(
       costoPromedioPonderado({
         existenciaAnterior: -(cantidad('5') as bigint),
-        costoAnteriorCentavos: centavos(1000n),
+        costoAnteriorExactoDmc: 10_000_000n,
         cantidadEntrante: cantidad('1'),
         costoTotalCentavos: centavos(700n),
       }),
-    ).toBe(700n);
+    ).toBe(7_000_000n);
   });
 
   it('no acepta una compra sin cantidad', () => {
@@ -284,12 +300,39 @@ describe('§14.2 · costo promedio ponderado — D-13', () => {
       codigoDe(() =>
         costoPromedioPonderado({
           existenciaAnterior: 0n,
-          costoAnteriorCentavos: centavos(0n),
+          costoAnteriorExactoDmc: 0n,
           cantidadEntrante: cantidad('0'),
           costoTotalCentavos: centavos(100n),
         }),
       ),
     ).toBe('COMPRA_INVALIDA');
+  });
+});
+
+describe('DP-D165 · costo exacto por unidad base', () => {
+  it('la leche: $480.00 por 20 000 ml son 2.4 ¢/ml = 24 000 diezmilésimas', () => {
+    expect(costoExactoPorUnidad(centavos(48_000n), cantidad('20000'))).toBe(24_000n);
+  });
+
+  it('el maíz: $540.00 por 12 000 g son 4.5 ¢/g = 45 000 diezmilésimas', () => {
+    expect(costoExactoPorUnidad(centavos(54_000n), cantidad('12000'))).toBe(45_000n);
+  });
+
+  it('una sola división y un solo redondeo, a la diezmilésima', () => {
+    // 87.35 / 3 000 g = 2.911666… ¢/g → 29 117.
+    expect(costoExactoPorUnidad(centavos(8_735n), cantidad('3000'))).toBe(29_117n);
+  });
+
+  it('el costo de centavos que se muestra es el exacto redondeado', () => {
+    expect(centavosDelCosto(24_000n)).toBe(2n);
+    expect(centavosDelCosto(45_000n)).toBe(5n);
+    expect(centavosDelCosto(44_999n)).toBe(4n);
+  });
+
+  it('una línea sin cantidad no tiene costo unitario', () => {
+    expect(codigoDe(() => costoExactoPorUnidad(centavos(100n), cantidad('0')))).toBe(
+      'COMPRA_INVALIDA',
+    );
   });
 });
 

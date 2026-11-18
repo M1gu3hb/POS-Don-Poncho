@@ -29,6 +29,13 @@ export type Conversion =
    * Nunca se hace aritmética del lado de él: el servidor recalcula siempre.
    */
   | 'dinero'
+  /**
+   * DP-D165 · DINERO FINO: un costo por UNIDAD BASE (el gramo, el mililitro). En la base es `bigint` de
+   * DIEZMILÉSIMAS DE CENTAVO (2.4 ¢/ml = 24000); él lo lee en pesos con todos sus decimales
+   * (0.024). Sólo de lectura. No es `'dinero'` ni entra a `centavosDe`: pasarlo a centavos enteros es
+   * justo el defecto que esto corrige.
+   */
+  | 'dinero_fino'
   /** `numeric` de Postgres, que Kysely entrega como cadena. Él espera número. */
   | 'decimal'
   /** Puntos base en la base (1600 = 16 %); él lo lee en por ciento. */
@@ -373,6 +380,8 @@ export const LIMITE_MAXIMO = 1000;
 export const LIMITE_POR_OMISION = 200;
 
 const CENTAVOS_POR_PESO = 100;
+/** 100 centavos × 10 000 diezmilésimas de centavo cada uno. */
+const DIEZMILESIMAS_DE_CENTAVO_POR_PESO = 1_000_000;
 
 /**
  * Un `unknown` a texto, sin `[object Object]`.
@@ -395,6 +404,8 @@ export function haciaEl(valor: unknown, conversion: Conversion): unknown {
   switch (conversion) {
     case 'dinero':
       return Number(valor) / CENTAVOS_POR_PESO;
+    case 'dinero_fino':
+      return Number(valor) / DIEZMILESIMAS_DE_CENTAVO_POR_PESO;
     case 'decimal':
       return Number(valor);
     case 'entero':
@@ -439,6 +450,8 @@ export function haciaLaBase(valor: unknown, conversion: Conversion): unknown {
       return desdeTexto(aTexto(valor));
     case 'puntos_base':
       return Math.round(Number(valor) * CENTAVOS_POR_PESO);
+    case 'dinero_fino':
+      return BigInt(Math.round(Number(valor) * DIEZMILESIMAS_DE_CENTAVO_POR_PESO));
     case 'decimal':
       return Number(valor).toString();
     case 'entero':

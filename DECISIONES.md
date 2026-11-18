@@ -3080,6 +3080,47 @@ armaba la página). Con la app de Windows 1.0.2 queda en `Documentos\POS Don Pon
 - **Sin migración.** Lógica nueva en `apps/web/src/corte/carpeta/`; `heredado/` sólo la llama
   (declarado en `scripts/aspecto-permitido.json`).
 
+## DP-D154 · DP-22 · El barrido de servicio: los 44 px por componente, lo que el arnés no cuenta, y el aviso de por qué Cocina no suena · 17-11-2026
+
+DP-22 · barrido táctil de las pantallas de servicio (entrada con PIN, Caja, Para llevar, mesero,
+Cocina, corte y cierre) en los 14 aparatos, con `pruebas/e2e/qa-final/barrido-servicio.spec.ts`.
+Arrancó con ~290 hallazgos por aparato de escritorio y ~95 en el teléfono (con el flujo cortado).
+
+- **Los 44 px siguen dándose POR COMPONENTE (DP-D145).** Clase `any-pointer-coarse:min-h-(--altura-tactil)`
+  (o `any-pointer-coarse:size-11` en cantidades y cierres) en: `Button`, `Input`, pestañas y su lista,
+  la «X» del diálogo, los enlaces de la barra, «Sonido» y «Salir», el modo oscuro, las fichas de zona y
+  de categoría, el − / + de la cuenta, los renglones de la comanda y los botones de Cocina. Con ratón
+  nada cambia de tamaño. Ningún selector global sobre `button`: el contrato
+  `apps/web/src/tacto/blancos-por-componente.contrato.test.ts` ata cada clase a su uso.
+- **El botón de cerrar de los avisos** (`sonner`) gana su área de 44 px con un pseudo-elemento
+  (`blancos-tactiles.css`) y mide 24 px (WCAG 2.2, 2.5.8); el texto de cada tono se oscurece
+  (`avisos.css`) para pasar 4.5:1. No cambia posición, tamaño ni tiempo del aviso.
+- **«Abrir caja» con `pointer-events: none` era un estado legítimo:** con la caja ya abierta el botón
+  está desactivado y el motivo se ve debajo («Caja abierta desde …»). No se cambia.
+- **Cocina vista desde el aparato de la dueña:** DP-D151 deja el aparato sin voz, pero la cabecera
+  decía «Voz: ON». Un aviso chico (`src/cocina/AvisoDeSilencio.tsx`) lo dice y apunta a Configuración
+  → Este aparato; no sale si el aparato anuncia.
+- **Lo que el arnés ya no cuenta (documentado en `tocables.ts` y probado en
+  `arnes.exenciones.spec.ts`, cada exención con su caso que SÍ es defecto):** (1) lo cubierto por un aviso
+  transitorio (`[data-sonner-toast]`); (2) lo cubierto por una barra o botón `position: fixed` cuando lo
+  de abajo está en una lista con desplazamiento o en una página que se desplaza (el carrito del teléfono,
+  el botón del administrador); (3) un blanco que el desplazamiento deja ver a medias (no mide menos: se
+  ve recortado). Se mide a layout (`offsetHeight`), no a transformación (`active:scale-95` aplastaba la
+  tarjeta tocada), y después de que terminan las animaciones.
+- **Dos defectos del arnés, no de la app:** quitar el rango del cursor (`removeAllRanges`) recolocaba el
+  desplazamiento en el siguiente toque, y el dedo caía donde el blanco ya no estaba (el «7» del teclado);
+  y el barrido se detenía en el primer fallo de la prueba, ahora junta la lista completa (`Barrido`).
+- **Conocido y sin arreglar (bajo):** en Caja → Movimientos «Entregar el turno» y «Retirar» son dos
+  tarjetas lado a lado con descripciones de distinto largo y campos de distinta altura
+  (`CorteDeTurno.tsx`, `RetiroDeCaja.tsx`): sus campos no se alinean. Pide `subgrid` o igualar textos.
+  El barrido lo lista como `[conocido]` y no lo da por bueno.
+- **Cambia el aspecto (para los retratos de la galería de CI):** el pie del cobro de Caja (Cancelar y
+  Cobrar, de alto igual al de Descuento), «Caja abierta desde…» (sin el punto medio doble), el pie de
+  «Personalizar producto» (separación en el teléfono), el contador de las fichas de zona y la etiqueta
+  «Opciones» (contraste), la tabla «Métodos de pago» (enfocable), Historial («Desde»/«Hasta» alineados)
+  y el aviso de Cocina. Con el dedo, todo lo táctil crece a 44 px.
+- **Sin migración.**
+
 ## DP-D155 · DP-22 · Fase D: el dinero combinado y los cambios a media operación · 17-11-2026
 
 Lo que dejó probar cada combinación de ajustes (`packages/app/src/qa-final/`, tablas en
@@ -3287,4 +3328,175 @@ había visto; el aviso de insumo bajo (DP-D159) la usa. Ahora la existencia se l
   están probadas por separado (la app guarda, rechaza y no se sale de su carpeta; el POS detecta la
   capacidad, arma el nombre y no retrasa el cierre). Queda en la lista física de Miguel: tras el
   primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`.
+
+## DP-D163 · Los ajustes de Configuración tienen que demostrar su efecto (DP-22, 17-nov-2026)
+
+- **Decisión:** cada ajuste de Configuración se da por comprobado sólo con una prueba que se haya visto
+  fallar al romper su lector (mutante). El papel se prueba contra el componente real del ticket y del
+  corte (`pruebas/impresion/ajustes-del-papel.spec.ts`), las copias por el camino de producción con la
+  app falsa (`copias-por-la-app.spec.ts`), el portal en servidor (`ajustes-del-portal.integracion.test.ts`)
+  y en el teléfono, y lo de cada aparato con el dedo (`pruebas/e2e/qa-final/ajustes.*.spec.ts`).
+  `efectos.json` dice por cada clave su prueba y su estado; lo que no quedó, queda como «por ver».
 - **Sin migración.**
+
+## DP-D164 · Lo que el acceso y «Mostrar productos sin imagen» NO hacen (DP-22)
+
+- **Hallazgos que se declaran, no se cambian en la víspera:** (1) el acceso (pantalla del PIN, sin sesión)
+  no lee `color_primario`, `color_acento`, `nombre_sistema` ni los logos: la configuración exige sesión y
+  los colores no son públicos a propósito (`lo-publico.test.ts`); sólo el nombre sale de la lista de
+  personas. Los ajustes valen para el sistema interno. (2) `portal_qr_mostrar_sin_imagen` sólo gobierna el
+  menú «A la carta»; en «Menú digital» (el de siempre) no hace nada. **Se queda así** hasta que Miguel
+  decida: esconder la casilla en «Menú digital» o hacerla valer.
+- **Sin migración.**
+
+## DP-D165 · DP-22 · El costo de un insumo se guarda EXACTO y se redondea una sola vez · 17-11-2026
+
+**Es una regla de dinero** (hallazgo 14 de la auditoría, ALTO). El costo por unidad base —el gramo, el
+mililitro, la pieza— vivía en centavos ENTEROS (`insumos.costo_unitario_centavos`, copiado en cada
+movimiento del kardex). La leche a $480.00 los 20 L son 2.4 ¢/ml y quedaba en 2 (−16.7 %); el maíz a
+4.5 ¢/g, en 5 (+11 %); con siete compras que sumaban $11,570.50, «Valor de inventario» decía $11,552.00.
+Lo falseaban el valor del inventario, el costo de cada receta, la merma y el margen de cada platillo.
+
+- **Qué se guarda.** Una columna hermana, `costo_exacto_dmc`: el costo por unidad base en
+  DIEZMILÉSIMAS DE CENTAVO (`bigint` ≥ 0; 2.4 ¢/ml = 24 000, 4.5 ¢/g = 45 000), la misma escala de cuatro
+  decimales de las cantidades. En `insumos` (el vigente: el promedio ponderado), en `movimientos_stock`
+  (el que tenía el insumo al moverse) y en `valuacion_lineas` (con el que se valuó). **Migración 195**,
+  aditiva, con su ficha (`docs/para-el-maestro/41-costo-exacto-del-insumo.md`).
+- **Con qué precisión.** Una diezmilésima de centavo por unidad base. `costo_unitario_centavos` SE
+  QUEDA, no se quita de ningún sitio, y es el exacto redondeado al centavo (medio centavo hacia arriba):
+  un `check` por tabla lo exige y un disparador completa la columna que no se escribió (quien sólo
+  conoce los centavos deja el exacto en centavos × 10 000). Dos columnas que se contradicen no se pueden
+  guardar. El relleno de lo que ya existe es `centavos × 10 000` (lo que esas filas siempre valieron).
+- **Dónde se redondea: UNA sola vez, a centavos, al final.**
+  - Valor de cantidad × costo = `round(cantidad × exacto / 10 000)`: valuación (dominio
+    `valuarInventario`, comando `inventario.valuar`, que además guarda el exacto de cada renglón, y la
+    vista `existencias_por_insumo`), kardex, `descuentos_inventario_venta`, `merma_barra_turno`, el
+    corte (insumos consumidos y salidas sin venta), el consumo de la casa (suma sobre todos los insumos
+    y un redondeo) y la reposición sugerida.
+  - El costo de una receta es la SUMA de sus líneas (cantidad × merma × costo exacto) redondeada una vez
+    (`recalcularCostosRecetas`): dos líneas de 2.5 ¢ cuestan 5 ¢, no 6. El costo por pieza del
+    platillo sigue en centavos enteros. La pantalla (`economiaDelPlatillo`) suma las líneas sin
+    redondear cada una y redondea el total, y el puente sirve el importe de la línea sin redondear al
+    centavo.
+  - El costo promedio ponderado, sobre el exacto: `(existencia × exacto_anterior + total × 10⁸) /
+    (existencia + entrante)`, UNA división y UN redondeo (a la diezmilésima). Una existencia en negativo
+    cuenta como cero (DP-D116).
+- **La tolerancia (di cuál y por qué).** Guardar el promedio redondeado a una diezmilésima por unidad
+  deja un error de a lo más Q/20 000 ¢ con Q unidades en el almacén, que se arrastra de una compra a la
+  siguiente: `|valor − comprado| ≤ ⌊Σ Q_k/20 000 + ½⌋` ¢ (Q_k: la existencia tras la compra k).
+  Consecuencias: una compra de menos de 10 000 unidades base (10 kg, 10 L) vale EXACTAMENTE lo que costó;
+  la leche de 20 L y el maíz de 12 kg, también (2.4 y 4.5 son exactos); las siete compras de la prueba
+  suman al centavo. Con un mismo insumo comprado varias veces sin consumirse, el valor puede alejarse
+  unos centavos (simulación de 200 000 casos: ≤ 5 kg y hasta 6 compras, máximo 3 ¢; compras sueltas de
+  hasta 10 kg, 0 ¢). No se cierra más sin guardar el total de lo comprado: si algún día importa,
+  guardar el costo en millonésimas.
+- **La pantalla.** «Valor de inventario» y el costo del ingrediente salen de lo exacto: el puente lo sirve
+  con todos sus decimales (conversión nueva `dinero_fino`, `0.024` pesos el ml; no entra a `centavosDe`
+  porque redondearlo a centavos es el defecto) y la tarjeta redondea UNA vez el valor de cada
+  ingrediente. «$0.024/ml» confunde y «$0.02/ml» miente: Inventario, el selector de ingredientes y la
+  receta lo enseñan **por kilo y por litro** («$45.00/kg», «$24.00/L»), con sub-centavos sólo en piezas
+  («$0.998/pieza»). Un insumo de menos de medio centavo por unidad (la sal) ya no sale «sin costo».
+- **Dos cosas que cambian y se dicen.** (1) La vista `existencias_por_insumo` ya cuenta una existencia
+  en NEGATIVO como cero, como lo hacían la valuación guardada y la tarjeta (antes restaba, sólo la
+  leía el valor por renglón de Inventario). (2) La nota del proveedor compara el precio nuevo contra el
+  costo EXACTO del insumo (con el de centavos la leche salía 20 % «más cara» de lo que subió).
+- **Lo que NO cambia.** Los precios de venta, los totales de las cuentas, el corte (sus totales), las
+  propinas, el costo por pieza de un platillo como dato (centavos enteros), las unidades base del
+  restaurante y el costo capturado a mano (`crear_insumo`, `actualizar_costo`: centavos por unidad base;
+  el exacto sale de las compras).
+- **Lo que se dejó con el redondeado, a propósito:** los renglones del corte que sólo MUESTRAN un costo
+  unitario (alertas de insumo bajo), `costo_compra_default_centavos` (el costo por unidad de COMPRA: una
+  caja, un kilo, no se multiplica por gramos) y todo lo de `productos` y `orden_lineas` (costo por pieza
+  de venta).
+- **Pruebas.** Integración contra Postgres: `costo-exacto.integracion.test.ts` (8) y
+  `costo-exacto-migracion.integracion.test.ts` (6). Propiedad con `fast-check`:
+  `costo-exacto.propiedad.test.ts`. Mutantes (todos muertos) en el informe: costo redondeado antes de
+  multiplicar, redondeo doble, migración sin relleno y promedio sin ponderar.
+- **Encontrado, NO arreglado (fuera de esta decisión):** `inventario.consumo_interno` nunca se había
+  corrido contra Postgres y falla ahí: su salida `salida_consumo_interno` exige un `motivo` (el `check`
+  `movimiento_stock_salida_con_motivo` y la llave a `motivos_merma`) y `aplicarMovimientos` no lo escribe.
+  Y `inventario.registrar_merma`, el traspaso y la devolución escriben el movimiento SIN costo (queda en
+  su cero de omisión), así que esa merma sale a $0 en el kardex y en el corte; la que copia el costo es la
+  de cancelación, el ajuste y el cobro.
+
+## DP-D166 · «Mostrar productos sin imagen» vale en los dos menús (DP-22, tanda 2)
+
+- **Decisión:** `portal_qr_mostrar_sin_imagen` gobierna el menú digital y el menú «A la carta»: apagada, los
+  platillos sin foto no salen en el portal en ninguno; encendida (o sin elegir, como la tiene Don Poncho), salen
+  todos y nada cambia. Una sola función (`productosSegunLaFoto`, `menu-digital.ts`) la aplica en los dos.
+- **Aclaración a DP-D164:** el acceso (sin sesión) sigue sin leer colores, nombre del sistema ni logos, a
+  propósito; el texto de efecto y la ayuda en pantalla ahora lo dicen (se aplican dentro, con sesión).
+- **Sin migración.**
+
+## DP-D167 · DP-22 · Cada movimiento del kardex lleva el costo exacto del insumo al moverse; el consumo de la casa por fin escribe su motivo · 17-11-2026
+
+**Es una regla de dinero** (los dos defectos que dejó anotados DP-D165, ahora arreglados).
+
+- **Qué estaba mal.** `inventario.registrar_merma` (la merma manual), `inventario.enviar_traspaso` y
+  `recibir_traspaso`, y la devolución de una venta (`regresarAlInventario`) escribían el movimiento SIN
+  costo: la columna se quedaba en su cero de omisión y la merma de 2 kg de barbacoa salía a $0 en el
+  kardex y en el corte. La merma por cancelación, el ajuste y el cobro ya copiaban el costo.
+  `inventario.consumo_interno` nunca se había corrido contra Postgres y ahí fallaba siempre: su salida
+  exige un `motivo` (`movimiento_stock_salida_con_motivo` y la llave a `motivos_merma`) y
+  `aplicarMovimientos` no lo escribía.
+- **Qué se hace.** Cada uno copia, AL MOVERSE, `costo_unitario_centavos` y `costo_exacto_dmc` del insumo
+  (`repoStock.costoDelInsumo`; `regresarAlInventario` lo hace en su propio `insert`). El importe del
+  kardex y del corte sale de `cantidad × costo exacto`, redondeado UNA vez a centavos (DP-D165). 2 kg de
+  un insumo a 3.4567 ¢/g valen 6 913 ¢, no $0.
+- **El consumo de la casa y su motivo.** `MovimientoPlaneado` gana `motivo` y `nota` opcionales y
+  `aplicarMovimientos` los escribe. `motivos_merma` es un catálogo GLOBAL (no se siembra una clave por
+  negocio, como ya dijo la cancelación), así que cada tipo usa una clave que ya existe:
+  `personal` → `consumo_personal`, `cortesia` y `degustacion` → `muestra`, `reposicion` →
+  `platillo_rehecho`. Lo que el gerente escribió va en la nota del movimiento. Ninguna pantalla de Don
+  Poncho llama a este comando (sólo existe su ruta `/api/inventario/consumo-interno`): queda arreglado y
+  sin pantalla, que es una decisión de producto aparte.
+- **Lo que NO se reescribe.** Los movimientos que ya existen sin costo son historia y se quedan como
+  están (sólo hay algo así en copias de QA; producción tenía 0 insumos cuando se escribió DP-D165). Un
+  traspaso valúa la entrada con el costo del insumo al RECIBIR, no al enviar; la devolución, con el costo
+  de HOY (no con el de la venta): la diferencia, cuando hay, es del tamaño de un cambio de costo entre
+  los dos días.
+- **Pruebas.** `costo-de-los-movimientos.integracion.test.ts` (4, contra Postgres: la merma, el traspaso
+  de salida y entrada, la devolución y el consumo interno), y la unitaria de `consumo-interno.test.ts`.
+  Mutantes muertos: merma sin costo, la entrada del traspaso sin costo, el regreso de la devolución con
+  costo 0 y el consumo sin motivo; mutación inocua (la nota a 199 caracteres) que pasa.
+
+## DP-D168 · DP-22 · Con el cobro abierto, la Caja también se relee cuando la caja ya había elegido la propina y la cuenta cambió · 17-11-2026
+
+Hallazgo 12 (la prueba en el navegador). Con el cobro de una mesa abierto, el mesero NO puede agregar
+platillos (`ORDEN_NO_EDITABLE`: la cuenta pedida ya no es editable, a propósito); lo que sí puede, con el
+PIN de un gerente, es quitar uno. Con la propina decidida por la caja («Sin propina») el servidor rechaza
+el cobro con `CONFLICTO_ESTADO` / `PROPINA_VIGENTE`, no con `TOTAL_DESACTUALIZADO`, y la Caja sólo releía
+con el segundo: el aviso salía pero la pantalla seguía con el renglón quitado, el total viejo y lo
+tecleado, y «Cobrar» fallaba igual cada vez. Ahora se relee con cualquiera de los dos (`Caja.jsx`).
+Contrato: `total-que-cambio.contrato.test.ts` (4) con tres mutantes. Prueba en el navegador:
+`qa/simulador/parte5/total-que-cambio.ts`.
+
+## DP-D169 · DP-22 · Hallazgo 16 (la receta de las opciones de un platillo): NO se construye en este lote; el diseño · 17-11-2026
+
+El dominio (`recetaConOpciones`) y la base (084: `recetas.sustituible_por_grupo_id`,
+`modificador_opciones.insumo_sustituto_id` y `factor_cantidad`) ya soportan que una opción sustituya un
+insumo o escale la receta, y `cobrar` los usa (`efectosDeOpcionesPorLinea`). Lo que falta es capturarlo, y
+son DOS pantallas y dos comandos: (1) el editor de opciones del platillo
+(`OpcionesDelPlatilloDialog.tsx` + `grupos-de-opciones.ts`, que hoy no acepta ni el sustituto ni el
+factor) y (2) el editor de la receta (`RecetaFormDialog.jsx`, heredada: cada renglón necesita «un grupo
+de opciones lo puede cambiar», que `guardarReceta` ya acepta). Es más de una pantalla y toca el
+contrato de dos comandos: se reporta, no se construye. Diseño: en cada opción, «Cambia la receta» con
+(a) «Cambia un insumo por otro» (insumo, de la misma dimensión: el dominio no inventa conversiones) y
+(b) «Cambia las cantidades» (factor, con la vista previa de «1.44× lo que lleva»); en cada renglón de la
+receta, «Lo puede cambiar el grupo…». Ayuda breve en pantalla, blancos de 44 px, prueba de integración
+(vender la opción baja lo que dice su receta, al gramo) y con el dedo, y la validación de dimensiones al
+guardar (hoy una configuración incompatible se ignora en silencio al cobrar).
+
+## DP-D170 · DP-22 · Hallazgos 13 y 17: lo que se encontró · 17-11-2026
+
+- **13 (no se pudo reproducir).** Con el dedo (`tap` de Playwright y el `Input.dispatchTouchEvent` del
+  arnés), en tableta 800×1280, Windows 1366×768 al 125 % y 1024×768 (y con la ventana a 1093×614), todos
+  los desplegables de «Nueva receta» (categoría, tipo de venta y los tres de «Variable por medida») y de
+  «Registrar compra → Nuevo» se abren y eligen, con la opción dentro de la ventana. La guarda queda como
+  `qa/simulador/parte5/desplegables-con-dedo.ts`. No se cambió código: no hay defecto que reproducir en
+  esta versión.
+- **17 (falso positivo de la exploración).** El interruptor «Modo espera en este aparato» SÍ tiene nombre
+  accesible (`aria-labelledby` al título de su tarjeta; `getByRole('switch', { name })` lo encuentra): la
+  exploración sólo leía `aria-label`. Queda `interruptores-con-nombre.contrato.test.ts` para que no se
+  pierda, con la lista de todos los interruptores de Configuración. Lo que SÍ es real y queda abierto: el
+  interruptor mide 32×18 px (blanco táctil de 44 px incumplido, en la primitiva compartida `Switch`).

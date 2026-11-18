@@ -316,7 +316,7 @@ export async function cobrar(
   if (await separar.isVisible())
     await pagina.getByRole('button', { name: 'Separar mesas' }).click();
   await expect(ticket).toBeVisible({ timeout: 30_000 });
-  await ticket.getByRole('button', { name: 'Cerrar' }).click();
+  await ticket.getByRole('button', { name: 'Cerrar' }).first().click();
   await expect(ticket).toBeHidden();
   return {
     folio: primero.folio,

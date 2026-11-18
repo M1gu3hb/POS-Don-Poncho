@@ -25,6 +25,8 @@ const { MAPA } = await import('../packages/app/src/puente/mapa.ts');
 
 function unidadDe(nombre, conversion) {
   if (conversion === 'dinero') return 'pesos';
+  // 'dinero_fino' (DP-D165: un costo por gramo o por mililitro, con sub-centavos) NO entra: pasarlo
+  // por `centavosDe` lo redondearía a centavos enteros, que es el defecto que corrige.
   // Sin distinguir mayúsculas: `totalCentavos` (camelCase, en NotaDeCaja) también es dinero.
   if (conversion === 'entero' && /centavos/i.test(nombre)) return 'centavos';
   return null;

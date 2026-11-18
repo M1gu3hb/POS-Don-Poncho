@@ -37,6 +37,8 @@ export function ResumenDeProduccion({ renglones, compacto, onCompacto }: Resumen
         <p className="min-w-0 flex-1 py-1 text-sm text-texto-sutil">Nada pendiente por preparar.</p>
       ) : (
         <ul
+          tabIndex={0}
+          aria-label="Piezas por preparar"
           className={`flex min-w-0 flex-1 gap-1.5 py-0.5 ${compacto ? 'overflow-x-auto' : 'max-h-[4.75rem] flex-wrap overflow-y-auto'}`}
         >
           {renglones.map((renglon) => (
@@ -55,6 +57,7 @@ export function ResumenDeProduccion({ renglones, compacto, onCompacto }: Resumen
       )}
       <Button
         size="sm"
+        className="any-pointer-coarse:min-h-(--altura-tactil)"
         variant={compacto ? 'default' : 'outline'}
         aria-pressed={compacto}
         title="Más comandas a la vez en la pantalla"

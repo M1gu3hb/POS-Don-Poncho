@@ -40,6 +40,7 @@ export {
 export {
   cantidadConSigno,
   convertirAUnidadBase,
+  costoExactoPorUnidad,
   costoPorUnidad,
   costoPromedioPonderado,
   equivalenciaCanonica,

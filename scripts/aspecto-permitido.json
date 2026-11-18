@@ -2558,11 +2558,16 @@
     },
     {
       "archivo": "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx",
-      "porque": "DP-D153 (Bloque 18): dentro de la app de Windows 1.0.2 el PDF del cierre se guarda solo en DocumentosPOS Don PonchoCortes en vez de descargarse; si no se puede guardar, un aviso dice por qué y el botón de siempre reintenta. En un navegador o con la app 1.0.1 llama a la misma descarga de antes y no cambia nada a la vista. Lo nuevo son tres avisos (guardado, fallo y la vía) y la etiqueta del botón de reintento, que dice «Guardar PDF en la carpeta» sólo dentro de la app.",
+      "porque": "DP-D153 (Bloque 18): dentro de la app de Windows 1.0.2 el PDF del cierre se guarda solo en DocumentosPOS Don PonchoCortes en vez de descargarse; si no se puede guardar, un aviso dice por qué y el botón de siempre reintenta. En un navegador o con la app 1.0.1 llama a la misma descarga de antes y no cambia nada a la vista. Lo nuevo son tres avisos (guardado, fallo y la vía) y la etiqueta del botón de reintento, que dice «Guardar PDF en la carpeta» sólo dentro de la app. DP-22 (tanda 2): el cierre nunca depende del PDF; cuando el PDF del corte falla, los tres avisos dicen primero que «La caja se cerró» y luego por qué no se pudo guardar el PDF, en vez de «No se pudo descargar automáticamente». Sólo cambia el texto de esos avisos.",
       "testigos": [
         "+ aviso:No se guardó el PDF en la carpeta. ${entrega.mensaje} Reintenta con el botón o desde Registros → Cortes.",
         "+ aviso:carpeta",
-        "+ aviso:PDF del corte guardado en tu carpeta de cortes"
+        "+ aviso:PDF del corte guardado en tu carpeta de cortes",
+        "- aviso:No se pudo cargar el corte para generar el PDF.",
+        "- aviso:No se pudo descargar automáticamente. Usa el botón.",
+        "+ aviso:La caja se cerró. No se pudo guardar el PDF: ${err?.message || 'no se pudo cargar el corte'}. Búscalo en Registros → Cortes.",
+        "+ aviso:La caja se cerró. No se pudo guardar el PDF: ${entrega.mensaje} Reintenta con el botón o desde Registros → Cortes.",
+        "+ aviso:La caja se cerró. No se pudo guardar el PDF: ${err?.message || 'el navegador no lo dejó generar'}. Usa el botón o búscalo en Registros → Cortes."
       ]
     },
     {
@@ -2621,6 +2626,204 @@
       "archivo": "apps/web/heredado/pages/Inventario.jsx",
       "porque": "DP-22 · DP-D159: el filtro de estado gana «Por debajo del mínimo», que es la lista a la que lleva el aviso del Tablero (?estado=alerta).",
       "testigos": ["+ texto:Por debajo del mínimo"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/caja/CierreDiarioDialog.jsx",
+      "porque": "DP-22 (barrido de servicio): el aviso del cierre del día era texto ámbar sobre su tinte ámbar, 1.9:1: pasa a texto normal.",
+      "testigos": ["+ clase:text-texto"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/caja/CorteTurnoDialog.jsx",
+      "porque": "DP-22 (barrido de servicio): el aviso del corte de turno era texto ámbar (#f59f0a) sobre su tinte ámbar, 1.9:1: pasa a texto normal; el icono sigue ámbar.",
+      "testigos": ["- clase:text-advertencia", "+ clase:text-texto"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/Sidebar.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. Los enlaces de la barra, «Sonido de este aparato» (24 px) y «Salir» (24 px).",
+      "testigos": [
+        "+ clase:items-center",
+        "+ clase:items-center",
+        "+ clase:justify-center",
+        "+ clase:justify-center",
+        "+ clase:inline-flex",
+        "+ clase:inline-flex",
+        "+ clase:any-pointer-coarse:size-11",
+        "+ clase:any-pointer-coarse:size-11",
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/ThemeToggle.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. «Activar modo oscuro».",
+      "testigos": [
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)",
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/cortes/CorteHistorialList.jsx",
+      "porque": "DP-22 (barrido de servicio): los campos «Desde» y «Hasta» del Historial no tenían nombre para el lector de pantalla (axe) y su fila no se alineaba (sólo «Desde» llevaba el icono del calendario): los dos lo llevan y cada campo dice su nombre.",
+      "testigos": [
+        "- texto:Hasta",
+        "+ clase:flex",
+        "+ clase:items-center",
+        "+ clase:gap-1",
+        "+ clase:w-3",
+        "+ clase:h-3",
+        "+ label:Desde",
+        "+ label:Hasta",
+        "+ aria-label:Desde",
+        "+ aria-label:Hasta"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/AbrirMesaDialog.jsx",
+      "porque": "DP-22 (barrido de servicio): «Número de personas», «Nombre del cliente», «Alergias» y «Notas generales» eran etiquetas sueltas (axe «Form elements must have labels»): ahora van ligadas a su campo; y el interruptor de celebración, que no tenía nombre, lo tiene.",
+      "testigos": [
+        "+ label:Cumpleaños o celebración especial",
+        "+ aria-label:Cumpleaños o celebración especial"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/MesaActivaView.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. Las fichas de categoría de la cuenta y el − / + de cada renglón.",
+      "testigos": [
+        "+ clase:any-pointer-coarse:size-11",
+        "+ clase:any-pointer-coarse:size-11",
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)",
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/ProductoFichaExpandible.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. El − / + de cada renglón del pedido.",
+      "testigos": [
+        "+ clase:any-pointer-coarse:size-11",
+        "+ clase:any-pointer-coarse:size-11",
+        "+ clase:any-pointer-coarse:size-11"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/SeleccionModificadoresDialog.jsx",
+      "porque": "DP-22 (barrido de servicio): en el teléfono «Agregar» y «Cancelar» del diálogo «Personalizar producto» quedaban pegados, sin espacio entre sí: el pie lleva `gap-2` (en pantalla ancha, donde van en fila, `sm:gap-0`).",
+      "testigos": ["+ clase:gap-2", "+ clase:sm:gap-0"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/ui/dialog.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. La «X» del diálogo (16 px) mide 44 y su nombre accesible, que decía «Close», dice «Cerrar».",
+      "testigos": [
+        "- texto:Close",
+        "+ clase:any-pointer-coarse:size-11",
+        "+ clase:any-pointer-coarse:right-2",
+        "+ clase:any-pointer-coarse:top-2",
+        "+ texto:Cerrar"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/ui/input.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. Los campos de texto.",
+      "testigos": ["+ clase:any-pointer-coarse:min-h-(--altura-tactil)"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/ui/tabs.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. Las pestañas (Caja: Pendientes, Buscar, Resumen, Historial, Movimientos); la lista crece con ellas (`any-pointer-coarse:h-auto`).",
+      "testigos": [
+        "+ clase:any-pointer-coarse:h-auto",
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-22 (barrido de servicio): el botón de buscar por folio era sólo una lupa, sin nombre (axe crítico): dice «Buscar», y su campo «Código o folio». · «Caja abierta desde 17 nov, 06:06 · · por Rosa»: la sesión abierta aún no tiene folio y el texto dejaba dos puntos medios seguidos; el folio sólo se escribe si existe. · El método «Efectivo» elegido (texto verde sobre su tinte al 10 %) se leía a 4.4:1: el tinte baja al 5 %.",
+      "testigos": [
+        "+ label:Código o folio",
+        "+ label:Buscar",
+        "+ aria-label:Código o folio",
+        "+ aria-label:Buscar"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. Las fichas de zona (Interior, Terraza, Barra). · DP-22: el contador «(6)» de la ficha activa se leía a 3:1 sobre el primario (#ccc0ad sobre #83653f): de `opacity-60` a `opacity-90`, 4.6:1.",
+      "testigos": [
+        "- clase:opacity-60",
+        "+ clase:opacity-90",
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/POSLogin.jsx",
+      "porque": "DP-22 (barrido de servicio): el botón de borrar del teclado de PIN no tenía nombre (axe «Buttons must have discernible text», crítico): dice «Borrar un dígito». «Selecciona tu nombre e ingresa tu PIN» (11 px al 40 %, 3.5:1) sube al 60 %.",
+      "testigos": [
+        "+ clase:text-lateral-texto/60",
+        "+ label:Borrar un dígito",
+        "+ aria-label:Borrar un dígito"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/caja/MesasPendientesCierreDialog.jsx",
+      "porque": "DP-22 (barrido de servicio): el aviso de «No puedes cerrar caja» era texto ámbar sobre su tinte ámbar, 1.9:1: pasa a texto normal.",
+      "testigos": ["- clase:text-advertencia", "+ clase:text-texto"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/ProductoFichaExpandible.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. El − / + de cada renglón del pedido.",
+      "testigos": ["+ clase:any-pointer-coarse:min-h-(--altura-tactil)"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. Las fichas de zona (Interior, Terraza, Barra) y de categoría del diálogo de la mesa. · La etiqueta «Opciones» de 9 px (tinte al 15 %, 4.3:1) baja el tinte al 5 %. · DP-22: el contador «(6)» de la ficha activa se leía a 3:1 sobre el primario (#ccc0ad sobre #83653f): de `opacity-60` a `opacity-90`, 4.6:1.",
+      "testigos": [
+        "- clase:bg-primary/15",
+        "+ clase:bg-primary/5",
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)",
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/POSLogin.jsx",
+      "porque": "DP-22 (barrido de servicio): el botón de borrar del teclado de PIN no tenía nombre (axe «Buttons must have discernible text», crítico): dice «Borrar un dígito». «Selecciona tu nombre e ingresa tu PIN» (11 px al 40 %, 3.5:1) sube al 60 %, y el puesto de cada tarjeta (10 px al 50 %) al 70 %.",
+      "testigos": ["+ clase:text-lateral-texto/70"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/cocina/CocinaVozControl.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. Los botones de la voz de Cocina (Voz, Probar, Mejor voz): con la etiqueta oculta en pantalla chica quedaban de 40 px de ancho; también ganan ancho mínimo.",
+      "testigos": [
+        "+ clase:any-pointer-coarse:min-w-(--altura-tactil)",
+        "+ clase:any-pointer-coarse:min-w-(--altura-tactil)",
+        "+ clase:any-pointer-coarse:min-w-(--altura-tactil)"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-22 (barrido de servicio): el botón de buscar por folio era sólo una lupa, sin nombre (axe crítico): dice «Buscar», y su campo «Código o folio». · «Caja abierta desde 17 nov, 06:06 · · por Rosa»: la sesión abierta aún no tiene folio y el texto dejaba dos puntos medios seguidos; el folio sólo se escribe si existe. · El método «Efectivo» elegido (texto verde sobre su tinte al 10 %) se leía a 4.4:1: el tinte baja al 5 %. · El pie del cobro: «Cancelar» y «Cobrar» (36 px) y «Descuento» (48 px, del sistema) quedaban de distinta altura; los dos del heredado llevan `h-auto`, la altura de «Descuento».",
+      "testigos": [
+        "+ clase:min-h-[max(2.75rem,var(--altura-control))]",
+        "+ clase:min-h-[max(2.75rem,var(--altura-control))]"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/caja/ResumenDelDia.jsx",
+      "porque": "DP-22 (barrido de servicio): la tabla «Métodos de pago» se desplaza de lado en el teléfono y no se podía alcanzar con el teclado (axe «Scrollable region must have keyboard access»): la región es enfocable y lleva nombre.",
+      "testigos": [
+        "+ label:Métodos de pago (se desplaza de lado)",
+        "+ aria-label:Métodos de pago (se desplaza de lado)"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/cocina/CocinaKanbanCard.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. El renglón de cada platillo de la comanda (Kanban), que abre su ficha (28 px de alto).",
+      "testigos": ["+ clase:any-pointer-coarse:min-h-(--altura-tactil)"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/cocina/CocinaPedidoCardPremium.jsx",
+      "porque": "DP-22 (barrido de servicio): el blanco de 44 px con el dedo, dado POR COMPONENTE (DP-D145) con `any-pointer-coarse:min-h-(--altura-tactil)` o `any-pointer-coarse:size-11`; con ratón mide y se ve igual. El renglón de cada platillo de la comanda (tarjeta), que abre su ficha.",
+      "testigos": ["+ clase:any-pointer-coarse:min-h-(--altura-tactil)"]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Caja.jsx",
+      "porque": "DP-22 (barrido de servicio): el botón de buscar por folio era sólo una lupa, sin nombre (axe crítico): dice «Buscar», y su campo «Código o folio». · «Caja abierta desde 17 nov, 06:06 · · por Rosa»: la sesión abierta aún no tiene folio y el texto dejaba dos puntos medios seguidos; el folio sólo se escribe si existe. · El método «Efectivo» elegido (texto verde sobre su tinte al 10 %) se leía a 4.4:1: el tinte baja al 5 %. · El pie del cobro: «Cancelar» y «Cobrar» (36 px) y «Descuento» (48 px, del sistema) quedaban de distinta altura; los dos del heredado llevan `min-h-[max(2.75rem,var(--altura-control))]`, el mismo piso por token del sistema.",
+      "testigos": ["+ clase:h-auto", "+ clase:h-auto"]
     }
   ]
 }

@@ -10,7 +10,10 @@ import React from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
+import CorteTicket from '@/components/tickets/CorteTicket';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
+import { copiasLeidas, recordarCopias } from '~/impresion/copias';
+import { imprimirDirecto } from '~/impresion/imprimir-documento';
 import { marcarReimpresion, ponerPie } from '~/impresion/termico/decorar';
 import { dibujarPieza } from '~/impresion/termico/dibujar-elemento';
 import { aMonocromo } from '~/impresion/termico/monocromo';
@@ -80,6 +83,8 @@ function configuracion(caso) {
     papel_a_tu_gusto: {
       ticket: Object.fromEntries((caso.ocultos ?? []).map((campo) => [campo, false])),
     },
+    // DP-22 · Los ajustes que la prueba de «efectos» cambia uno por uno (pruebas/impresion/ajustes-del-papel.spec.ts).
+    ...(caso.config ?? {}),
   };
 }
 
@@ -90,7 +95,7 @@ function ticket(caso, soloLienzo) {
       detalles={DETALLES}
       mesa={{ numero: 4, nombre: 'Terraza' }}
       config={configuracion(caso)}
-      esFinal
+      esFinal={caso.precuenta !== true}
       soloLienzo={soloLienzo}
     />
   );
@@ -221,4 +226,63 @@ function ponerElPapel(papel) {
   document.body.appendChild(lienzo);
 }
 
-window.arnes = { imprimir, montar, capturaEnUnBit, ponerElPapel };
+/**
+ * DP-22 · El corte de caja en hoja (`CorteTicket`, el de los PDF) con la configuración que se le dé:
+ * devuelve su texto y los logos que pintó, para ver qué ajuste llega al papel.
+ */
+function montarCorte(config) {
+  if (raiz !== null) raiz.unmount();
+  document.body.innerHTML = '<div id="corte"></div>';
+  const corte = createRoot(document.getElementById('corte'));
+  flushSync(() => {
+    corte.render(<CorteTicket corte={{ folio: 7 }} config={config} />);
+  });
+  raiz = { unmount: () => corte.unmount() };
+  const documento = document.getElementById('cash-cut-pdf-document');
+  return {
+    texto: documento?.textContent ?? '',
+    logos: Array.from(documento?.querySelectorAll('img') ?? [], (img) => img.getAttribute('src')),
+  };
+}
+
+/** Los logos (su `src`) y los puntos de ancho del ticket ya montado. */
+function ticketMontado() {
+  const marco = document.querySelector('#en-pantalla .ticket-printable');
+  return {
+    puntos: Number(marco?.getAttribute('data-puntos') ?? 0),
+    logos: Array.from(document.querySelectorAll('#en-pantalla img'), (img) =>
+      img.getAttribute('src'),
+    ),
+  };
+}
+
+/**
+ * DP-22 · La precuenta que sale por LA APP, por el camino de producción: lo que hace
+ * `BarraDeImpresion` con la configuración del negocio (`copiasLeidas` → `recordarCopias`) y lo que
+ * hace `printDocument` (`imprimirDirecto`) con el documento que está en pantalla. La app es la
+ * falsa de `pruebas/e2e/ayudantes/app-falsa.ts`; sus trabajos se leen en `window.__appFalsa`.
+ */
+async function imprimirPorLaApp(caso) {
+  recordarCopias(copiasLeidas(caso.configuracion ?? {}));
+  await montar({ ...caso, precuenta: true });
+  window.__alNavegador = 0;
+  const objetivo = document.querySelector('#en-pantalla .ticket-printable');
+  const seFueALaApp = imprimirDirecto({
+    objetivo,
+    titulo: 'Precuenta de prueba',
+    alNavegador: () => {
+      window.__alNavegador += 1;
+    },
+  });
+  return { seFueALaApp };
+}
+
+window.arnes = {
+  imprimir,
+  imprimirPorLaApp,
+  montar,
+  montarCorte,
+  ticketMontado,
+  capturaEnUnBit,
+  ponerElPapel,
+};

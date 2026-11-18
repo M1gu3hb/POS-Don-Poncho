@@ -234,7 +234,7 @@ async function pedirLaCuenta(
   );
   const codigo = /M\d{2}-\d{4}/.exec(await precuenta.innerText())?.[0] ?? '';
   expect(codigo, 'La precuenta no trae el código para caja.').not.toBe('');
-  await precuenta.getByRole('button', { name: 'Cerrar' }).click();
+  await precuenta.getByRole('button', { name: 'Cerrar' }).first().click();
   await expect(precuenta).toBeHidden();
   return codigo;
 }
@@ -311,7 +311,7 @@ async function cobrar(
   // teléfono, y el cobro siguiente ya no encontraba las pestañas detrás del ticket.
   const ticket = page.getByRole('dialog').filter({ hasText: 'TICKET DE PAGO' });
   await yaAbierto(ticket);
-  await ticket.getByRole('button', { name: 'Cerrar' }).click();
+  await ticket.getByRole('button', { name: 'Cerrar' }).first().click();
   await expect(ticket).toBeHidden();
   return {
     ventaId: datos.ordenId,

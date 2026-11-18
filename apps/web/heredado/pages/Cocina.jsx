@@ -18,6 +18,7 @@ import CocinaProductoDialog from '@/components/cocina/CocinaProductoDialog';
 import CocinaVozControl from '@/components/cocina/CocinaVozControl';
 import { TableroDeCocina } from '~/cocina/TableroDeCocina';
 import { PreguntaDelAnuncio } from '~/cocina/PreguntaDelAnuncio';
+import { AvisoDeSilencio } from '~/cocina/AvisoDeSilencio';
 import { usePuesto } from '@/components/configuracion/usePuesto';
 import { ConectarTelefono } from '~/telefono-de-cocina/ConectarTelefono';
 import { AgotadosDelDia } from '~/restaurante/AgotadosDelDia';
@@ -365,6 +366,7 @@ export default function Cocina() {
       {/* DP-22 · La primera vez que la cocina abre esta pantalla sin haber elegido, se le pregunta
           (una vez, sin tapar nada) si esta pantalla anuncia las comandas. */}
       <PreguntaDelAnuncio puesto={miPuesto} />
+      <AvisoDeSilencio puesto={miPuesto} />
 
       {/* Watcher local: reproduce voz/sonido SOLO para pedidos NUEVOS, nunca para "listo". */}
       {/* DP-10.1: por estación. La `key` lo vuelve a montar si cambia lo que se ve: lo que ya

@@ -289,6 +289,7 @@ export default function POSLogin() {
               <button
                 key={idx}
                 onClick={() => setPin((p) => p.slice(0, -1))}
+                aria-label="Borrar un dígito"
                 disabled={loading}
                 className="keypad-btn h-14 sm:h-16 rounded-xl bg-lateral-texto/5 border border-lateral-texto/10 text-lateral-texto active:scale-95 transition-all flex items-center justify-center"
               >
@@ -314,7 +315,7 @@ export default function POSLogin() {
           }
         `}</style>
 
-        <p className="text-center text-lateral-texto/40 text-[11px] mt-4">
+        <p className="text-center text-lateral-texto/60 text-[11px] mt-4">
           Selecciona tu nombre e ingresa tu PIN
         </p>
 
@@ -397,7 +398,7 @@ export default function POSLogin() {
                     </div>
                     <div className="min-w-0 w-full text-center">
                       <p className="text-lateral-texto text-xs font-medium truncate">{u.nombre}</p>
-                      <p className="text-lateral-texto/50 text-[10px] truncate">
+                      <p className="text-lateral-texto/70 text-[10px] truncate">
                         {/* El rol como lo llama SU giro —la estilista no es «Mesero»—;
                             lo rotula el servidor con el vocabulario del negocio. */}
                         {u.etiqueta || ROLE_LABELS[u.rol]}

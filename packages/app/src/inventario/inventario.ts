@@ -2,6 +2,7 @@ import { PAQUETES_OPERATIVOS, ErrorDominio } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 import { cantidad, cantidadATexto } from '@morphiqpos/domain/catalogo';
 import { desdeTexto } from '@morphiqpos/domain/dinero';
+import { costoExactoDeCentavos } from '@morphiqpos/domain/inventario';
 import { sql } from 'kysely';
 import { z } from 'zod';
 
@@ -128,7 +129,9 @@ export const crearInsumo = definirComando<
           organizacion_id: ctx.ambito.organizacionId,
           nombre: entrada.nombre,
           unidad_base: entrada.unidad,
+          // Lo que se teclea es un costo en centavos enteros: su exacto es ése mismo (× 10 000).
           costo_unitario_centavos: desdeTexto(entrada.costoUnitario),
+          costo_exacto_dmc: costoExactoDeCentavos(desdeTexto(entrada.costoUnitario)),
           stock_minimo: cantidadATexto(cantidad(entrada.stockMinimo)),
         })
         .returning('id')
@@ -183,6 +186,7 @@ export const inventarioInicial = definirComando<
           cantidad: normalizada,
           unidad: referencias.unidad_base,
           costo_unitario_centavos: referencias.costo_unitario_centavos,
+          costo_exacto_dmc: referencias.costo_exacto_dmc,
           referencia_tipo: 'manual',
           empleado_id: ctx.ambito.empleoId,
         })
@@ -245,6 +249,7 @@ export const ajustarStock = definirComando<
           cantidad: delta,
           unidad: referencias.unidad_base,
           costo_unitario_centavos: referencias.costo_unitario_centavos,
+          costo_exacto_dmc: referencias.costo_exacto_dmc,
           referencia_tipo: 'manual',
           empleado_id: ctx.ambito.empleoId,
           motivo,
@@ -274,7 +279,7 @@ async function verificarReferencias(
   const fila = await tx
     .selectFrom('insumos as i')
     .innerJoin('almacenes as a', 'a.organizacion_id', 'i.organizacion_id')
-    .select(['i.unidad_base', 'i.costo_unitario_centavos'])
+    .select(['i.unidad_base', 'i.costo_unitario_centavos', 'i.costo_exacto_dmc'])
     .where('i.id', '=', insumoId)
     .where('a.id', '=', almacenId)
     .where('i.organizacion_id', '=', organizacionId)

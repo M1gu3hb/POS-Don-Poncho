@@ -26,6 +26,8 @@ const MUESTRAS: Readonly<Record<Exclude<Conversion, 'opciones_de_cocina'>, reado
   entero: [0, 1, 42, -7],
   // Los que más duelen si el redondeo falla.
   dinero: [0, 1, 45.5, 45.55, 0.01, 115, 1234.99, 99999.99],
+  // DP-D165 · El costo por gramo o por mililitro, con sub-centavos: diezmilésimas de centavo ↔ pesos.
+  dinero_fino: [0, 0.024, 0.045, 0.003, 0.029117, 12.5],
   decimal: [0, 0.5, 1.25, 250, 1000.125],
   puntos_base: [0, 8, 16, 16.5, 35],
   booleano: [true, false],
@@ -34,6 +36,40 @@ const MUESTRAS: Readonly<Record<Exclude<Conversion, 'opciones_de_cocina'>, reado
   json: [{ a: 1 }, [1, 2, 3]],
   jsonb: [{ a: 1 }, [0.25, 0.5, 1], [{ insumo: 'Carnero', kg: 20 }]],
 };
+
+describe('DP-D165 · el costo por unidad base sale EXACTO por el puente', () => {
+  it('las diezmilésimas de centavo llegan como pesos con todos sus decimales', () => {
+    // 2.4 ¢/ml = 24 000 diezmilésimas = 0.024 pesos; 4.5 ¢/g = 45 000 = 0.045.
+    expect(haciaEl(24_000n, 'dinero_fino')).toBe(0.024);
+    expect(haciaEl('45000', 'dinero_fino')).toBe(0.045);
+    expect(haciaEl(null, 'dinero_fino')).toBeNull();
+  });
+
+  it('los cuatro campos de costo por unidad base leen la columna EXACTA, no la de centavos', () => {
+    const campos: readonly (readonly [
+      string,
+      { columna: string; conversion: string } | undefined,
+    ])[] = [
+      ['Ingrediente.costo_por_unidad_base', MAPA['Ingrediente']?.campos['costo_por_unidad_base']],
+      [
+        'RecetaEscandallo.costo_unitario_base_snapshot',
+        MAPA['RecetaEscandallo']?.derivados?.['costo_unitario_base_snapshot'],
+      ],
+      [
+        'MovimientoInventario.costo_unitario_en_momento',
+        MAPA['MovimientoInventario']?.campos['costo_unitario_en_momento'],
+      ],
+      [
+        'DescuentoInventarioVenta.costo_unitario_snapshot',
+        entidadMapeada('DescuentoInventarioVenta')?.campos['costo_unitario_snapshot'],
+      ],
+    ];
+    for (const [nombre, campo] of campos) {
+      expect(campo?.columna, nombre).toBe('costo_exacto_dmc');
+      expect(campo?.conversion, nombre).toBe('dinero_fino');
+    }
+  });
+});
 
 describe('el puente traduce sin perder nada', () => {
   for (const [conversion, valores] of Object.entries(MUESTRAS) as [Conversion, unknown[]][]) {
@@ -553,37 +589,52 @@ describe('los campos derivados', () => {
  * ganaría porque es la que se ve.
  */
 describe('el costo de una línea de receta', () => {
-  const linea = (costoCentavos: string, cantidad: string, mermaBp: string) =>
+  // DP-D165: el costo del insumo llega EXACTO, en diezmilésimas de centavo por unidad base
+  // (1 ¢ = 10 000), y el importe de la línea sale en pesos SIN redondear al centavo: el redondeo es
+  // uno solo, sobre el total del platillo.
+  const DMC_POR_CENTAVO = 10_000;
+  const linea = (costoCentavos: number, cantidad: string, mermaBp: string) =>
     calcular('costoDeLineaDeReceta', {
-      costo_unitario_base_snapshot: costoCentavos,
+      costo_unitario_base_snapshot: String(costoCentavos * DMC_POR_CENTAVO),
       cantidad_convertida_unidad_base: cantidad,
       merma_porcentaje: mermaBp,
     });
 
   it('multiplica costo por cantidad y suma la merma', () => {
     // 8.10 el gramo × 100 g × 1.05 = 850.50 → 850.50 pesos.
-    expect(linea('810', '100.0000', '500')).toBe(850.5);
+    expect(linea(810, '100.0000', '500')).toBe(850.5);
     // Sin merma.
-    expect(linea('2100', '1.0000', '0')).toBe(21);
+    expect(linea(2100, '1.0000', '0')).toBe(21);
   });
 
-  it('redondea UNA vez y al final, no en cada paso', () => {
-    // 0.07 × 3 × 1.05 = 0.2205 → 0.22. Redondeando por pasos daría 0.24.
-    expect(linea('7', '3.0000', '500')).toBe(0.22);
+  it('no redondea al centavo por línea: lo hace una sola vez el total del platillo', () => {
+    // 0.07 × 3 × 1.05 = 0.2205 pesos. Redondeado por línea daría 0.22 (y dos líneas de 2.5 ¢,
+    // 6 ¢ en la pantalla contra los 5 ¢ del producto guardado).
+    expect(linea(7, '3.0000', '500')).toBe(0.2205);
+    expect(linea(2.5, '1.0000', '0')).toBe(0.025);
     // El caso que rompe la coma flotante: 1234.995 en centavos.
-    expect(linea('123500', '1.0000', '0')).toBe(1235);
+    expect(linea(123_500, '1.0000', '0')).toBe(1235);
+  });
+
+  it('con el costo EXACTO de la leche (2.4 ¢/ml) 250 ml valen $6.00, no los $5.00 de 2 ¢', () => {
+    const exacto = calcular('costoDeLineaDeReceta', {
+      costo_unitario_base_snapshot: '24000',
+      cantidad_convertida_unidad_base: '250.0000',
+      merma_porcentaje: '0',
+    });
+    expect(exacto).toBe(6);
   });
 
   it('la cantidad admite los cuatro decimales de `numeric(14,4)`', () => {
-    // 1000 centavos × 0.0001 = 0.1 centavos → 0 tras redondear.
-    expect(linea('1000', '0.0001', '0')).toBe(0);
-    expect(linea('1000', '0.5000', '0')).toBe(5);
+    // 1000 centavos × 0.0001 = 0.1 centavos = 0.001 pesos: sin redondear a cero.
+    expect(linea(1000, '0.0001', '0')).toBe(0.001);
+    expect(linea(1000, '0.5000', '0')).toBe(5);
   });
 
   it('sin costo o sin cantidad devuelve nulo, no cero', () => {
     // Cero y «no sé» son cosas distintas: un cero se suma en la pantalla y
     // hace creer que el ingrediente es gratis.
-    expect(linea('810', '', '0')).toBeNull();
+    expect(linea(810, '', '0')).toBeNull();
     expect(
       calcular('costoDeLineaDeReceta', { cantidad_convertida_unidad_base: '1.0000' }),
     ).toBeNull();

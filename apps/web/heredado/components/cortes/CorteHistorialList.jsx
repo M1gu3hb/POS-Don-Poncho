@@ -99,15 +99,20 @@ export default function CorteHistorialList({
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
+              aria-label="Desde"
               className="h-9 w-40"
             />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground">Hasta</label>
+            <label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              Hasta
+            </label>
             <Input
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
+              aria-label="Hasta"
               className="h-9 w-40"
             />
           </div>

@@ -1411,9 +1411,9 @@ function Mesero() {
             <button
               key={zona}
               onClick={() => setZonaActiva(zona)}
-              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${zonaActiva === zona ? 'bg-primary text-primario-texto shadow-md' : 'bg-superficie border text-muted-foreground'}`}
+              className={`shrink-0 px-3 py-1.5 any-pointer-coarse:min-h-(--altura-tactil) rounded-lg text-xs font-semibold transition-all ${zonaActiva === zona ? 'bg-primary text-primario-texto shadow-md' : 'bg-superficie border text-muted-foreground'}`}
             >
-              {zona} <span className="opacity-60">({count})</span>
+              {zona} <span className="opacity-90">({count})</span>
             </button>
           ))}
         </div>
@@ -1806,7 +1806,7 @@ function Mesero() {
                 <div className="flex gap-1.5 overflow-x-auto pb-1">
                   <button
                     onClick={() => setCategoriaFiltro('todas')}
-                    className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${categoriaFiltro === 'todas' ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'}`}
+                    className={`shrink-0 px-3 py-1 any-pointer-coarse:min-h-(--altura-tactil) rounded-full text-xs font-medium ${categoriaFiltro === 'todas' ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'}`}
                   >
                     Todas
                   </button>
@@ -1814,7 +1814,7 @@ function Mesero() {
                     <button
                       key={c.id}
                       onClick={() => setCategoriaFiltro(c.id)}
-                      className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${categoriaFiltro === c.id ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'}`}
+                      className={`shrink-0 px-3 py-1 any-pointer-coarse:min-h-(--altura-tactil) rounded-full text-xs font-medium ${categoriaFiltro === c.id ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'}`}
                     >
                       {c.nombre}
                     </button>
@@ -1855,7 +1855,7 @@ function Mesero() {
                             </span>
                             <VariableBadge producto={p} />
                             {tieneOpc && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/15 text-primary">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/5 text-primary">
                                 Opciones
                               </span>
                             )}

@@ -187,7 +187,7 @@ export default function CierreDiarioDialog({
 
         <div className="space-y-5">
           {textoDeCierre.aviso && (
-            <div className="p-3 rounded-xl bg-advertencia/15 border border-advertencia/40 text-sm text-advertencia flex items-start gap-2 font-semibold">
+            <div className="p-3 rounded-xl bg-advertencia/15 border border-advertencia/40 text-sm text-texto flex items-start gap-2 font-semibold">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <p>{textoDeCierre.aviso}</p>
             </div>

@@ -66,11 +66,12 @@ export default function AbrirMesaDialog({ open, onOpenChange, mesa, onConfirm, l
         <div className="space-y-3">
           {/* Personas */}
           <div>
-            <Label className="text-xs flex items-center gap-1">
+            <Label htmlFor="abrir-mesa-personas" className="text-xs flex items-center gap-1">
               <Users className="w-3 h-3" />
               Número de personas *
             </Label>
             <Input
+              id="abrir-mesa-personas"
               type="number"
               inputMode="numeric"
               min="1"
@@ -83,10 +84,11 @@ export default function AbrirMesaDialog({ open, onOpenChange, mesa, onConfirm, l
 
           {/* Nombre del cliente */}
           <div>
-            <Label className="text-xs">
+            <Label htmlFor="abrir-mesa-cliente" className="text-xs">
               Nombre del cliente <span className="text-muted-foreground">(opcional)</span>
             </Label>
             <Input
+              id="abrir-mesa-cliente"
               value={form.cliente_nombre}
               onChange={(e) => setForm({ ...form, cliente_nombre: e.target.value })}
               placeholder="Nombre del cliente o reservación"
@@ -98,12 +100,13 @@ export default function AbrirMesaDialog({ open, onOpenChange, mesa, onConfirm, l
 
           {/* Alergias */}
           <div>
-            <Label className="text-xs flex items-center gap-1">
+            <Label htmlFor="abrir-mesa-alergias" className="text-xs flex items-center gap-1">
               <AlertTriangle className="w-3 h-3 text-advertencia" />
               Alergias o indicaciones críticas{' '}
               <span className="text-muted-foreground">(opcional)</span>
             </Label>
             <Input
+              id="abrir-mesa-alergias"
               value={form.notas_alergias}
               onChange={(e) => setForm({ ...form, notas_alergias: e.target.value })}
               placeholder="Ej. alérgico a maíz, sin nuez, intolerante a lactosa"
@@ -126,6 +129,7 @@ export default function AbrirMesaDialog({ open, onOpenChange, mesa, onConfirm, l
                 </p>
               </div>
               <Switch
+                aria-label="Cumpleaños o celebración especial"
                 checked={form.celebracion_especial === true}
                 onCheckedChange={(v) =>
                   setForm({
@@ -150,10 +154,11 @@ export default function AbrirMesaDialog({ open, onOpenChange, mesa, onConfirm, l
 
           {/* Notas generales */}
           <div>
-            <Label className="text-xs">
+            <Label htmlFor="abrir-mesa-notas" className="text-xs">
               Notas generales <span className="text-muted-foreground">(opcional)</span>
             </Label>
             <Input
+              id="abrir-mesa-notas"
               value={form.notas}
               onChange={(e) => setForm({ ...form, notas: e.target.value })}
               placeholder="Indicaciones generales para el servicio"

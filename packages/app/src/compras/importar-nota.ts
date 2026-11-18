@@ -318,7 +318,7 @@ export const importarNotaDeProveedor = definirComando<
                 'unidad_base',
                 'unidad_compra_default',
                 'cantidad_por_compra_default',
-                'costo_unitario_centavos',
+                'costo_exacto_dmc',
               ])
               .where('organizacion_id', '=', organizacionId)
               .where('id', 'in', idsDeInsumo)
@@ -335,8 +335,10 @@ export const importarNotaDeProveedor = definirComando<
       const conPresentacion =
         insumo.unidad_compra_default !== null && insumo.cantidad_por_compra_default !== null;
       const equivalencia = conPresentacion ? (insumo.cantidad_por_compra_default ?? '1') : '1';
+      // DP-D165 · Contra el costo EXACTO del insumo: con el de centavos, la leche (2.4 ¢/ml, guardada
+      // como 2) salía 20 % más cara de lo que subió.
       const costo = costoPorUnidadBase(
-        insumo.costo_unitario_centavos,
+        insumo.costo_exacto_dmc,
         Number(renglon.costoUnitarioCentavos),
         equivalencia,
       );
@@ -353,7 +355,7 @@ export const importarNotaDeProveedor = definirComando<
         precioSugeridoCentavos:
           precio === undefined || costo.variacionBp === null || costo.variacionBp <= 0
             ? null
-            : precioConElMismoMargen(precio, insumo.costo_unitario_centavos, costo.nuevoExacto),
+            : precioConElMismoMargen(precio, insumo.costo_exacto_dmc, costo.nuevoExacto),
       };
     });
 
@@ -428,7 +430,8 @@ function diezmilesimasDe(cantidad: string): bigint {
  * fuerte» de miles por ciento y el aviso dejaba de servir. Enteros, sin flotantes.
  */
 export function costoPorUnidadBase(
-  anterior: bigint,
+  /** El costo vigente del insumo, EXACTO: diezmilésimas de centavo por unidad base. */
+  anteriorExactoDmc: bigint,
   costoUnitarioCentavos: number,
   equivalencia: string,
 ): {
@@ -441,16 +444,17 @@ export function costoPorUnidadBase(
   const equiv = diezmilesimasDe(equivalencia);
   const nuevoExacto = equiv === 0n ? 0n : (BigInt(costoUnitarioCentavos) * 100_000_000n) / equiv;
   const nuevo = ((nuevoExacto + 5_000n) / 10_000n).toString();
-  if (anterior <= 0n || equiv === 0n) {
+  const anterior = ((anteriorExactoDmc + 5_000n) / 10_000n).toString();
+  if (anteriorExactoDmc <= 0n || equiv === 0n) {
     return {
       variacionBp: null,
-      anterior: anterior > 0n ? anterior.toString() : null,
+      anterior: anteriorExactoDmc > 0n ? anterior : null,
       nuevo,
       nuevoExacto,
     };
   }
-  const variacionBp = Number((nuevoExacto - anterior * 10_000n) / anterior);
-  return { variacionBp, anterior: anterior.toString(), nuevo, nuevoExacto };
+  const variacionBp = Number(((nuevoExacto - anteriorExactoDmc) * 10_000n) / anteriorExactoDmc);
+  return { variacionBp, anterior, nuevo, nuevoExacto };
 }
 
 /**
@@ -460,10 +464,10 @@ export function costoPorUnidadBase(
  */
 export function precioConElMismoMargen(
   precio: bigint,
-  anterior: bigint,
+  anteriorExactoDmc: bigint,
   nuevoExacto: bigint,
 ): string {
-  const divisor = anterior * 10_000n;
+  const divisor = anteriorExactoDmc;
   return ((precio * nuevoExacto + divisor / 2n) / divisor).toString();
 }
 

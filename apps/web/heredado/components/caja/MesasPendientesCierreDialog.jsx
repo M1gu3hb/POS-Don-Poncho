@@ -97,7 +97,7 @@ export default function MesasPendientesCierreDialog({ open, onClose, mesas = [] 
         </DialogHeader>
 
         <div className="space-y-3">
-          <div className="rounded-xl border-2 border-advertencia/30 bg-advertencia/10 p-3 text-sm text-advertencia">
+          <div className="rounded-xl border-2 border-advertencia/30 bg-advertencia/10 p-3 text-sm text-texto">
             <p className="font-semibold">Hay mesas pendientes.</p>
             <p className="text-xs mt-0.5">
               Cierra, cobra o libera estas mesas antes de hacer el corte.

@@ -44,7 +44,7 @@ const TITULOS_DEL_GRUPO = {
   importes: 'Importes en color',
 };
 const AYUDA_DEL_GRUPO = {
-  marca: 'Los nombres y el logo con los que se ve el sistema en pantallas, tickets y PDFs.',
+  marca: 'Los nombres y el logo con los que se ve el sistema por dentro (con sesión), en tickets y PDFs. La pantalla de acceso lleva siempre los de la casa.',
   'logos-de-papel': 'El logo que sale en el ticket térmico y el que sale en cortes y reportes.',
   fondo: 'La imagen o marca de agua de fondo de las pantallas.',
   importes: 'Si los importes de dinero llevan color o se ven sobrios.',
@@ -286,7 +286,7 @@ export default function IdentidadNegocio({ cfg, grupo = 'marca' }) {
             <ImageField
               field="logo_url"
               label="Logo del negocio"
-              helper="Se usa en sidebar, login y como fallback de los demás"
+              helper="Se usa en la barra lateral y como respaldo de los demás logos (el acceso, sin sesión, lleva el de la casa)"
               uploadKey="logo"
             />
           </>

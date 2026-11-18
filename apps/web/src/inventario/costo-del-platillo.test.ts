@@ -54,6 +54,34 @@ describe('un platillo con receta y todos los costos', () => {
     expect(economia.utilidad).toBe(0.7);
   });
 
+  it('DP-D165 · redondea UNA vez, en el total: dos líneas de 2.5 ¢ cuestan 5 ¢, no 6', () => {
+    const economia = economiaDelPlatillo(1, [
+      linea({ costo_unitario_base_snapshot: 0.025, costo_linea_calculado: 0.025 }),
+      linea({
+        ingrediente_nombre: 'Sal',
+        costo_unitario_base_snapshot: 0.025,
+        costo_linea_calculado: 0.025,
+      }),
+    ]);
+
+    expect(economia.costo).toBe(0.05);
+  });
+
+  it('DP-D165 · un insumo de menos de medio centavo por unidad ya no es «sin costo»', () => {
+    // La sal a 0.3 ¢/g: guardada entera era 0 ¢ y la receta decía «falta el costo».
+    const economia = economiaDelPlatillo(30, [
+      linea({
+        ingrediente_nombre: 'Sal',
+        cantidad_convertida_unidad_base: 50,
+        costo_unitario_base_snapshot: 0.003,
+        costo_linea_calculado: 0.15,
+      }),
+    ]);
+
+    expect(economia.estado).toBe('conocido');
+    expect(economia.costo).toBe(0.15);
+  });
+
   it('un platillo que cuesta más de lo que se vende tiene utilidad y margen negativos', () => {
     const economia = economiaDelPlatillo(50, [linea({ costo_linea_calculado: 80 })]);
 

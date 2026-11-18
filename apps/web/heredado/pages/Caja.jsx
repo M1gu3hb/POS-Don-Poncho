@@ -117,7 +117,7 @@ const METODOS = [
     key: 'efectivo',
     label: 'Efectivo',
     Icon: Banknote,
-    color: 'border-exito bg-exito/10 text-exito',
+    color: 'border-exito bg-exito/5 text-exito',
   },
   {
     key: 'tarjeta',
@@ -1039,6 +1039,21 @@ export default function Caja() {
           setDetallesSeleccionados([]);
           queryClient.invalidateQueries({ queryKey: ['ventas_pendientes_caja'] });
         }
+        // DP-22 (hallazgo 12): el total cambió con el cobro abierto (se quitó un platillo con la
+        // clave de gerencia, o se descontó desde otro aparato; agregar ya no se puede: la cuenta
+        // pedida no se edita). El aviso de arriba ya lo dijo; aquí la cuenta se RELEE
+        // para que la cajera vea el total nuevo y teclee los pagos otra vez. Sin esto la pantalla
+        // se quedaba con el total viejo y «Cobrar» fallaba igual cada vez, hasta cerrar la cuenta
+        // y volver a abrirla.
+        // DP-D168: lo mismo cuando la cuenta cambió y la caja ya había elegido la propina
+        // (`PROPINA_VIGENTE`: el mesero quitó un platillo con el PIN del gerente): el servidor
+        // rechaza igual y la pantalla se quedaba con los renglones y el total de antes.
+        if (
+          (err?.codigo === 'TOTAL_DESACTUALIZADO' || err?.datos?.regla === 'PROPINA_VIGENTE') &&
+          ventaSeleccionada?.id
+        ) {
+          await releerLaCuentaDelCobro(ventaSeleccionada.id);
+        }
       }
     } finally {
       setProcesando(false);
@@ -1504,8 +1519,10 @@ export default function Caja() {
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>
             Caja abierta desde{' '}
-            {safeFormatDate(cajaAbierta.fecha_apertura || cajaAbierta.fecha_inicio, 'd MMM, HH:mm')}{' '}
-            · {folioVisible(cajaAbierta.serie, cajaAbierta.folio, config, 'numero')}
+            {safeFormatDate(cajaAbierta.fecha_apertura || cajaAbierta.fecha_inicio, 'd MMM, HH:mm')}
+            {folioVisible(cajaAbierta.serie, cajaAbierta.folio, config, 'numero')
+              ? ` · ${folioVisible(cajaAbierta.serie, cajaAbierta.folio, config, 'numero')}`
+              : null}
             {cajaAbierta.usuario_apertura_nombre && ` · por ${cajaAbierta.usuario_apertura_nombre}`}
           </span>
         </div>
@@ -1653,9 +1670,10 @@ export default function Caja() {
                   onChange={(e) => setCodigoBusqueda(e.target.value.toUpperCase())}
                   onKeyDown={(e) => e.key === 'Enter' && buscarVenta()}
                   placeholder="Ej: M03-5821"
+                  aria-label="Código o folio"
                   className="font-mono text-lg h-12 tracking-wider"
                 />
-                <Button onClick={buscarVenta} className="h-12 px-4">
+                <Button onClick={buscarVenta} className="h-12 px-4" aria-label="Buscar">
                   <Search className="w-5 h-5" />
                 </Button>
               </div>
@@ -2018,7 +2036,11 @@ export default function Caja() {
             )}
           </div>
           <DialogFooter className="flex-wrap gap-2 sm:space-x-0">
-            <Button variant="outline" onClick={() => setVentaSeleccionada(null)}>
+            <Button
+              variant="outline"
+              className="h-auto"
+              onClick={() => setVentaSeleccionada(null)}
+            >
               Cancelar
             </Button>
             {/* DP-14.1 (punto 2): el descuento —con la clave de quien lo autoriza— y la
@@ -2078,7 +2100,7 @@ export default function Caja() {
               <Button
                 onClick={handleCobrar}
                 disabled={procesando}
-                className="min-w-[140px]"
+                className="min-w-[140px] h-auto"
                 style={{
                   background: 'linear-gradient(135deg, hsl(4,72%,46%) 0%, hsl(4,72%,36%) 100%)',
                 }}

@@ -188,7 +188,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
         // `setError(true)` corta el auto-disparo y deja visible el botón de
         // descarga que este componente ya tenía como respaldo.
         setError(true);
-        toast.error(err?.message || 'No se pudo cargar el corte para generar el PDF.');
+        toast.error(`La caja se cerró. No se pudo guardar el PDF: ${err?.message || 'no se pudo cargar el corte'}. Búscalo en Registros → Cortes.`);
       }
     })();
     return () => {
@@ -219,7 +219,7 @@ export default function CorteAutoDownloader({ corte, onDone }) {
       });
       if (entrega.via === 'carpeta' && entrega.ok === false) {
         setError(true);
-        toast.error(`No se guardó el PDF en la carpeta. ${entrega.mensaje} Reintenta con el botón o desde Registros → Cortes.`);
+        toast.error(`La caja se cerró. No se pudo guardar el PDF: ${entrega.mensaje} Reintenta con el botón o desde Registros → Cortes.`);
         return;
       }
       setDone(true);
@@ -227,7 +227,9 @@ export default function CorteAutoDownloader({ corte, onDone }) {
     } catch (err) {
       console.error('Error generando PDF auto:', err);
       setError(true);
-      toast.error('No se pudo descargar automáticamente. Usa el botón.');
+      toast.error(
+        `La caja se cerró. No se pudo guardar el PDF: ${err?.message || 'el navegador no lo dejó generar'}. Usa el botón o búscalo en Registros → Cortes.`,
+      );
     } finally {
       setDownloading(false);
     }

@@ -79,7 +79,7 @@ export default function CorteTurnoDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="p-2 rounded-lg bg-advertencia/10 border border-advertencia/30 text-xs text-advertencia">
+          <div className="p-2 rounded-lg bg-advertencia/10 border border-advertencia/30 text-xs text-texto">
             Es un corte parcial. NO cierra la caja, NO genera PDF, NO reinicia el dashboard.
           </div>
 

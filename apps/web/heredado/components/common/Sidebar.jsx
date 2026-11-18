@@ -235,7 +235,7 @@ export default function Sidebar({ collapsed, onToggle }) {
               aria-label={plegada ? etiquetaDeNavegacion(item, vocabulario) : undefined}
               title={plegada ? etiquetaDeNavegacion(item, vocabulario) : undefined}
               aria-current={active ? 'page' : undefined}
-              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${active ? 'text-primario-texto font-semibold' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'}`}
+              className={`relative flex items-center gap-3 px-3 py-2.5 any-pointer-coarse:min-h-(--altura-tactil) rounded-lg text-sm transition-all ${active ? 'text-primario-texto font-semibold' : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'}`}
               style={
                 active
                   ? {
@@ -326,7 +326,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 setMobileOpen(false);
                 setSonidoAbierto(true);
               }}
-              className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1"
+              className="inline-flex items-center justify-center any-pointer-coarse:size-11 text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors p-1"
               aria-label="Sonido de este aparato"
             >
               <Volume2 className="w-4 h-4" />
@@ -335,7 +335,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                 quien comparte el aparato sale sin tener que abrir el menú. */}
             <button
               onClick={logout}
-              className="text-sidebar-foreground/50 hover:text-peligro transition-colors p-1"
+              className="inline-flex items-center justify-center any-pointer-coarse:size-11 text-sidebar-foreground/50 hover:text-peligro transition-colors p-1"
               aria-label="Salir"
             >
               <LogOut className="w-4 h-4" />

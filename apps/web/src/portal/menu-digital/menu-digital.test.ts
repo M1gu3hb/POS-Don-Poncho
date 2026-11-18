@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   fondoDeLaTarjeta,
   inicialDelPlatillo,
+  productosSegunLaFoto,
   precioDeLaTarjeta,
   SECCION_SIN_CATEGORIA,
   seccionALaVista,
@@ -110,5 +111,19 @@ describe('seccionALaVista', () => {
     expect(seccionALaVista(posiciones, 650)).toBe('b');
     expect(seccionALaVista(posiciones, 2000)).toBe('c');
     expect(seccionALaVista([], 0)).toBeNull();
+  });
+});
+
+describe('productosSegunLaFoto (portal_qr_mostrar_sin_imagen, DP-D166)', () => {
+  const con = { id: 'a', nombre: 'Con foto', imagen_url: 'https://x.example/a.webp' };
+  const sin = { id: 'b', nombre: 'Sin foto', imagen_url: '' };
+  const nula = { id: 'c', nombre: 'Sin foto 2', imagen_url: null };
+
+  it('encendida: salen todos, con o sin foto', () => {
+    expect(productosSegunLaFoto([con, sin, nula], true).map((p) => p.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('apagada: no salen los platillos sin foto', () => {
+    expect(productosSegunLaFoto([con, sin, nula], false).map((p) => p.id)).toEqual(['a']);
   });
 });

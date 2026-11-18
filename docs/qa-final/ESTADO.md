@@ -3,54 +3,49 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11-2026, 12:35.
+Última puesta al día: 17-11, 19:25.
 
-## AHORA MISMO (17-11, 12:35) — retomar desde aquí
+## AHORA MISMO (17-11, 19:25) — retomar desde aquí (se cortó por límite de uso)
 
-1. **Lotes 1 y 2 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`). App de Windows 1.0.2 publicada
-   y comprobada por los dos caminos de actualización (DP-D162).
-2. **Lote 3 en armado** en el checkout principal, rama `dp-22-tercer-lote` (`2bf42ae`, subida):
-   inventario (`dp-22-inventario` `a4c76db`: aviso de insumo bajo, «lo más vendido», hallazgo 15)
-   y salón y cocina (`dp-22-salon` `f0145b3`: hallazgo 7, «pasar la mesa a otro mesero», el
-   teléfono en para llevar con la **migración 194**, A7/A9 en el navegador y dos sobras).
-   **Corriendo:** (a) `bash /d/mpos-tmp/dp22/revisar-rama.sh …` → `/d/mpos-tmp/dp22/revision-lote3.log`
-   (todas las puertas, formato, tipos, unitarias completas, integración y lint sobre la rama);
-   (b) la corrida de la CI que REGENERA los retratos de la galería
-   (`gh run view 44147784956`; el Tablero cambió). **Al terminar:** bajar el artefacto
-   `galeria-restaurante` (`gh run download 44147784956 -n galeria-restaurante -D <carpeta>`), mirar
-   los PNG que cambiaron, copiarlos a `pruebas/e2e/galeria.spec.ts-snapshots/`, commit; poner al
-   día `HALLAZGOS.md` (7 y 15 arreglados, H5 hecho) y `NUEVO.md` (funciones 4 y 5; renglones 4 y
-   14 de la Parte 7), `pnpm qa:matriz`; abrir el PR; CI.
-   **Despliegue con migración:** con la CI en verde, `bash /d/mpos-tmp/dp22/migrar-produccion.sh
-ensayo` (aplica y revierte la 194 contra producción, por la 5432), luego `aplicar`, luego unir
-   el PR con squash, esperar el despliegue «READY», humo (`humo-produccion.sh 3`), lectura de
-   producción y la hora de Vercel.
-3. **Agentes corriendo (3):**
-   - A · `.work\dp20-lab` · `dp-22-lote2`: barrido de servicio y hallazgos 2 a 6 (5438 y 3210;
-     DP-D154). Va lento: su cadena de puertas, compilación y 14 aparatos.
-   - E · `.work\dp18-integrar` · `dp-22-ajustes-navegador` (sobre `main`): los 73 puntos de
-     Configuración por comprobar (`briefs\e-listo.md`; 5440 y 3240; DP-D163 y DP-D164).
-   - D3 · `.work\dp20` · `dp-22-costo-exacto` (sobre `dp-22-tercer-lote`): el hallazgo 14, el
-     costo exacto de los insumos, migración **195** (`briefs\d3-listo.md`; base `dp22_costo`;
-     DP-D165).
-4. **En cola (encargos escritos en `D:\mpos-tmp\dp22\briefs\`):** terminar la Parte 5 por
-   pantallas (vender por los cuatro canales con el inventario al gramo, cancelar y devolver,
-   conteo y merma en negativo, kardex, reportes, compras con proveedor o de la caja, unidades y
-   proveedores, costo de receta y margen), más los hallazgos 13 (tableta: «Tipo de venta»), 16
-   (receta para las opciones) y 17; y el día de bots (`f-dia-de-bots.md`; el molde será el clon
-   `qa_dp22_inv` del clúster 5460, con el día 0 completo).
-5. **Al recibir a cada agente:** `bash /d/mpos-tmp/dp22/revisar-rama.sh <árbol> <url> <log>
-<carpetas de integración>` (todas las puertas y la suite unitaria COMPLETA), leer el diff,
-   mutante propio, PIN (`git add -A` y `revisar-pines.mjs`; ojo con teléfonos y montos de ejemplo
-   que coincidan con un PIN), consolidar. Al unir ramas viejas: la bitácora con LO NUESTRO;
-   `MATRIZ.md` y `matriz.json` se regeneran; `DECISIONES.md` con los dos lados
-   (`unir-los-dos-lados.cjs` y `ordenar-decisiones.cjs DECISIONES.md 153`, que ya comprueba que
-   no se pierda ningún encabezado); y borrar los ayudantes que reaparezcan en
-   `packages/app/src/qa-final/` fuera de `pruebas/`.
-6. **Después:** el hallazgo 12; el día de bots con la máquina sola; la Parte 11 (configurar
-   producción, dejar en ceros, primer folio, renombrar aparatos; el bloqueo H1 NO se activa); y el
-   informe 013 con el veredicto, los números, la calificación y la lista física de Miguel (que
-   lleva un punto más: tras el primer cierre real, ver el PDF en `Documentos\POS Don Poncho\Cortes`).
+1. **Lotes 1, 2 y 3 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`, `e4c45f5`; migraciones hasta
+   la 194).
+2. **Lote 4 · PR 40 abierto, SIN UNIR** (`dp-22-cuarto-lote`; Auto-fix encendido). La **migración
+   195 NO se ha ensayado ni aplicado en producción.** La CI en `ae66054` falló en dos cosas, ya
+   corregidas en el commit siguiente: (a) tipos: `FRASE_DE_EJEMPLO` quedó declarada dos veces en
+   `pruebas/e2e/qa-final/ajustes.aparato.spec.ts` al unir; (b) «Jornada completa»: el localizador
+   `getByRole('button', { name: 'Cerrar' })` de las pruebas viejas encuentra dos botones desde que
+   la «X» de los diálogos heredados se llama «Cerrar» (antes «Close»): ahora llevan `.first()` (7
+   sitios). **OJO: «Jornada completa» se paró en su primer paso; las 17 suites de «Los cambios
+   del cliente» no llegaron a correr y pueden traer más choques con los cambios táctiles y de
+   nombres del barrido (agente A). Mirar la CI siguiente; si vuelve a fallar, correr esas suites
+   en local con `bash /d/mpos-tmp/dp22/e2e-tanda.sh`.**
+   También: la migración 195 se corrigió para correr desde cero (`ae66054`); base nueva de
+   integración `dp22_lote4` (`/d/mpos-tmp/dp22-dp22_lote4-url.txt`).
+   Falta: CI en verde → galería (`gh run view 44212861815`; si esa corrida falló por lo mismo,
+   volver a pedirla: `gh workflow run verificar.yml --ref dp-22-cuarto-lote -f
+actualizar_galeria=true`; bajar `galeria-restaurante`, MIRAR los PNG, copiarlos a
+   `pruebas/e2e/galeria.spec.ts-snapshots/`) → `migrar-produccion.sh ensayo` → `aplicar` →
+   `gh pr merge 40 --squash` → «READY» → `humo-produccion.sh 4` → `revisar-produccion.mjs` → la
+   hora de Vercel → PROGRESO y HALLAZGOS.
+3. **Agentes: LOS TRES PARADOS por el límite de uso** (se retoman con SendMessage a su id; todos
+   salieron de `ad9c162`, sin commit):
+   - G · `a05a11e0c5003c300` · `.work\dp20` · `dp-22-parte5-b`: segunda tanda de la Parte 5 (H12
+     en el navegador; hallazgo 24, DP-D171; portal, devolución, negativo, compras, unidades,
+     ocultar, costo y margen, valor contra el libro; hallazgo 25). Estaba compilando. Tiene un
+     aviso en cola con los 8 arreglos de lint que debe repetir en su árbol.
+   - H · `a42a50c9ee1f3c737` · `.work\dp18-integrar` · `dp-22-parte7`: los 12 puntos de la Parte 7
+     en la app (`briefs\h-listo.md`).
+   - F · `ae7be0fa51f65b97b` · `.work\dp20-lab` · `dp-22-dia-de-bots`: el perfil `dp22` del
+     simulador y su lanzador (`briefs\f-listo.md`).
+     Al retomar: pedir a cada uno que diga dónde quedó, que compruebe que no dejó procesos ni
+     mutantes puestos, que termine EN PRIMER PLANO y entregue informe. Recibirlos con parche desde
+     `ad9c162` y `git apply --3way --index`; después de unir, correr SIEMPRE
+     `pnpm exec tsc --noEmit -p pruebas/tsconfig.json`, `-p qa/simulador/tsconfig.json` y eslint de
+     lo tocado (las dos caídas de hoy en la CI fueron por no hacerlo).
+4. **Después:** el lote 5 (lo de G, H y F); el día de bots con la máquina sola; la Parte 11 con
+   `bash /d/mpos-tmp/dp22/parte11.sh` (ya ensayada sin escribir; orden: configurar → ceros 9 →
+   primer-folio → aparatos → `revisar-produccion.mjs` → `pnpm dia-cero`; H1 NO se activa); y el
+   informe 013.
 
 ## Dónde voy
 

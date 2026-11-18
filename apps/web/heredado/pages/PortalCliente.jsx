@@ -38,6 +38,7 @@ import { useCarritoDeLaMesa } from '~/portal/carrito-compartido/use-carrito-de-l
 import { SONDEO_DEL_PORTAL_MS } from '~/portal/sondeo-del-portal';
 import { MenuDigital } from '~/portal/menu-digital/MenuDigital';
 import { MenuALaCarta } from '~/portal/menu-digital/MenuALaCarta';
+import { productosSegunLaFoto } from '~/portal/menu-digital/menu-digital';
 
 /**
  * Vista pública del comensal (sin sidebar, sin POS).
@@ -529,7 +530,7 @@ function PortalCliente() {
         {/* DP-16 · EL MENÚ DIGITAL: tarjetas en dos columnas, con foto o con su fondo. */}
         {usarDigital && (
           <MenuDigital
-            productos={productos}
+            productos={productosSegunLaFoto(productos, mostrarSinImagen)}
             categorias={categorias}
             mostrarPrecios={mostrarPrecios}
             puedePedir={pedidosQRActivos && !cuentaYaSolicitada}

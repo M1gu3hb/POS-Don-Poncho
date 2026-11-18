@@ -146,7 +146,7 @@ export default function MesaActivaView({
               <button
                 type="button"
                 onClick={() => setCategoriaFiltro?.('todas')}
-                className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
+                className={`shrink-0 px-3 py-1 any-pointer-coarse:min-h-(--altura-tactil) rounded-full text-xs font-medium ${
                   categoriaFiltro === 'todas'
                     ? 'bg-primary text-primario-texto'
                     : 'bg-superficie border text-muted-foreground'
@@ -159,7 +159,7 @@ export default function MesaActivaView({
                   key={c?.id || c?.nombre}
                   type="button"
                   onClick={() => setCategoriaFiltro?.(c?.id)}
-                  className={`shrink-0 px-3 py-1 rounded-full text-xs font-medium ${
+                  className={`shrink-0 px-3 py-1 any-pointer-coarse:min-h-(--altura-tactil) rounded-full text-xs font-medium ${
                     categoriaFiltro === c?.id
                       ? 'bg-primary text-primario-texto'
                       : 'bg-superficie border text-muted-foreground'
@@ -261,7 +261,7 @@ export default function MesaActivaView({
                       <button
                         type="button"
                         onClick={() => cambiarCantidad?.(item?.id, -1)}
-                        className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
+                        className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
                         aria-label={`Quitar uno de ${item?.nombre || 'este platillo'}`}
                       >
                         <Minus className="w-3 h-3" />
@@ -272,7 +272,7 @@ export default function MesaActivaView({
                       <button
                         type="button"
                         onClick={() => cambiarCantidad?.(item?.id, 1)}
-                        className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
+                        className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
                         aria-label={`Agregar uno de ${item?.nombre || 'este platillo'}`}
                       >
                         <Plus className="w-3 h-3" />

@@ -56,6 +56,8 @@ export async function empaquetarArnes(): Promise<string> {
     configFile: false,
     root: WEB,
     logLevel: 'error',
+    // El tsconfig de la app deja el JSX «preserve» (lo compila Next): para el arnés, el tiempo de ejecución automático.
+    oxc: { jsx: { runtime: 'automatic' } },
     define: { 'process.env.NODE_ENV': JSON.stringify('production') },
     resolve: {
       // El arnés vive fuera de `apps/web`: React es el de la app, uno solo.

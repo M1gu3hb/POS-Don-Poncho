@@ -119,7 +119,7 @@ export default function ProductoFichaExpandible({
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="flex items-center gap-1 text-left w-full"
+            className="flex items-center gap-1 text-left w-full any-pointer-coarse:min-h-(--altura-tactil)"
           >
             <span className="text-xs font-medium truncate">{item?.nombre || '—'}</span>
             <ChevronDown
@@ -142,7 +142,7 @@ export default function ProductoFichaExpandible({
             </span>
             <button
               onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
-              className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
+              className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
               title="Quitar línea"
               aria-label={`Quitar ${item?.nombre || 'la línea'} del carrito`}
             >
@@ -154,7 +154,7 @@ export default function ProductoFichaExpandible({
             {/* DP-18 · A13: sin nombre accesible el lector de pantalla sólo oía «botón». */}
             <button
               onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
-              className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
+              className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
               aria-label={`Quitar uno de ${item?.nombre || 'este platillo'}`}
             >
               <Minus className="w-3 h-3" />
@@ -162,7 +162,7 @@ export default function ProductoFichaExpandible({
             <span className="w-6 text-center text-xs font-bold">{item?.cantidad || 0}</span>
             <button
               onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, 1)}
-              className="w-6 h-6 rounded-full bg-superficie border flex items-center justify-center"
+              className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
               aria-label={`Agregar uno de ${item?.nombre || 'este platillo'}`}
             >
               <Plus className="w-3 h-3" />

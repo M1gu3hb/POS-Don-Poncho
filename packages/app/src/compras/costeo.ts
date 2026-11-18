@@ -7,6 +7,7 @@ import {
   type Cantidad,
 } from '@morphiqpos/domain/catalogo';
 import { redondear, type Centavos } from '@morphiqpos/domain/dinero';
+import { ESCALA_COSTO } from '@morphiqpos/domain/inventario';
 
 /**
  * La aritmética de una compra: conversión y costo promedio ponderado.
@@ -173,18 +174,40 @@ export function costoPorUnidad(costoTotal: Centavos, cantidadDeLaUnidad: Cantida
   return redondear(costoTotal * ESCALA_CANTIDAD, cantidadDeLaUnidad);
 }
 
+/**
+ * DP-D165 · Lo que costó UNA unidad base, EXACTO: en diezmilésimas de centavo.
+ *
+ * $480.00 por 20 L son 2.4 ¢/ml: 24 000. En centavos enteros eran 2 (−16.7 %), y de ahí colgaban el
+ * valor del inventario, el costo de cada receta y la merma. Una sola división y un solo redondeo
+ * (a la diezmilésima de centavo); el de centavos que se muestra es este mismo redondeado
+ * (`centavosDelCosto`).
+ */
+export function costoExactoPorUnidad(costoTotal: Centavos, cantidadBase: Cantidad): bigint {
+  if (cantidadBase <= 0n) {
+    throw new ErrorDominio(
+      'COMPRA_INVALIDA',
+      'Una línea de compra sin cantidad no tiene costo unitario.',
+    );
+  }
+  return redondear(costoTotal * ESCALA_COSTO * ESCALA_CANTIDAD, cantidadBase);
+}
+
 export interface EntradaDePromedio {
   /** Existencia ANTES de esta compra, en diezmilésimas y con signo. */
   readonly existenciaAnterior: bigint;
-  readonly costoAnteriorCentavos: Centavos;
+  /** El costo vigente EXACTO, en diezmilésimas de centavo por unidad base. */
+  readonly costoAnteriorExactoDmc: bigint;
   readonly cantidadEntrante: Cantidad;
   readonly costoTotalCentavos: Centavos;
 }
 
 /**
- * Costo promedio ponderado, en una sola división y un solo redondeo.
+ * Costo promedio ponderado SOBRE EL EXACTO, en una sola división y un solo redondeo.
  *
- *     nuevo = (existencia * costo_anterior + costo_total) / (existencia + entrante)
+ *     nuevo = (existencia * costo_anterior_exacto + costo_total) / (existencia + entrante)
+ *
+ * Devuelve diezmilésimas de centavo por unidad base (DP-D165). El promedio de centavos enteros
+ * perdía hasta medio centavo POR UNIDAD en cada compra, y esa pérdida se heredaba a la siguiente.
  *
  * El cliente pasa por `costPerBase = cost / qtyBase` y luego multiplica otra vez
  * por `qtyBase`: matemáticamente se cancela, en punto flotante no. Aquí el
@@ -192,9 +215,9 @@ export interface EntradaDePromedio {
  *
  * Una existencia negativa cuenta como cero. No es una existencia con costo: es
  * lo que se debe al conteo físico, y ponderar contra ella daría un promedio
- * negativo que la base rechaza (`check costo_unitario_centavos >= 0`).
+ * negativo que la base rechaza (`check costo_exacto_dmc >= 0`).
  */
-export function costoPromedioPonderado(datos: EntradaDePromedio): Centavos {
+export function costoPromedioPonderado(datos: EntradaDePromedio): bigint {
   if (datos.cantidadEntrante <= 0n) {
     throw new ErrorDominio(
       'COMPRA_INVALIDA',
@@ -203,6 +226,7 @@ export function costoPromedioPonderado(datos: EntradaDePromedio): Centavos {
   }
   const anterior = datos.existenciaAnterior > 0n ? datos.existenciaAnterior : 0n;
   const numerador =
-    anterior * datos.costoAnteriorCentavos + datos.costoTotalCentavos * ESCALA_CANTIDAD;
+    anterior * datos.costoAnteriorExactoDmc +
+    datos.costoTotalCentavos * ESCALA_COSTO * ESCALA_CANTIDAD;
   return redondear(numerador, anterior + datos.cantidadEntrante);
 }
