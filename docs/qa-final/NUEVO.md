@@ -42,5 +42,7 @@ arnés; lo que diga «falta» se construye si es chico o mediano, y si no va a l
 
 ## Lo grande que queda para después (para Miguel, con su tamaño estimado)
 
-| Qué | Por qué no entra aquí | Tamaño estimado |
-| --- | --------------------- | --------------- |
+| Qué                                                                                                                            | Por qué no entra aquí                                                                                                                                                                                                                                                         | Tamaño estimado |
+| ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| La receta de las OPCIONES de un platillo (hallazgo 16): que «con doble carne» o «sin queso» cambien lo que baja del inventario | El dominio, la base y el cobro ya lo soportan; falta capturarlo, y son dos pantallas (el editor de opciones y el de la receta) y el contrato de dos comandos. Diseño escrito en DP-D169. Mientras tanto, una opción no cambia el inventario: baja la receta base del platillo | 1.5 a 2 días    |
+| El descuento por renglón (hoy el descuento es a la cuenta entera) y las partes de una cuenta dividida en dinero igual          | Cambia reglas de dinero (prorrateo, impuestos por renglón, el papel): no se toca antes de abrir                                                                                                                                                                               | 2 a 3 días      |

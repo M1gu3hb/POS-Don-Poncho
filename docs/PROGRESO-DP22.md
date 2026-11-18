@@ -221,3 +221,54 @@ Rama `dp-22-tercer-lote` (checkout principal, sobre `main` ya con el lote 2). Ll
   aplicadas, la última la 194). Ninguna cuenta, caja ni ajuste cambió.
 - **Vercel:** 0 errores al desplegar y **0 en la hora siguiente** (revisado a las 16:06, ventana
   de 2 h). **Lote 3 cerrado.**
+
+### Lote 4 · PR #40 (`dp-22-cuarto-lote` → `main`) · migración 195 (aditiva)
+
+Rama `dp-22-cuarto-lote` (checkout principal, sobre `main` ya con el lote 3). Lleva, cada cosa
+leída y con mutantes propios encima de los del agente que la hizo:
+
+- **El costo exacto de los insumos** (agente D3; hallazgo 14, DP-D165, **migración 195**): el costo
+  por gramo, mililitro o pieza en diezmilésimas de centavo, con un solo redondeo. Siete compras de
+  $12,000.00 valían $11,948.50 en «Valor de inventario»; ahora, $12,000.00.
+- **El barrido de servicio en 14 aparatos** (agente A; DP-D154): 29 revisiones por aparato; los
+  hallazgos 2, 3 y 4 arreglados (nombres accesibles, contraste, 44 px con el dedo por componente),
+  el 5 y el 6 descartados; el aviso de Cocina para quien no la anuncia.
+- **Configuración comprobada** (agente E, dos tandas; DP-D163, DP-D164 y DP-D166): 77 puntos con su
+  prueba; los hallazgos 18 y 19 arreglados; el 20 (el cierre en el iMin) y el 21 descartados al
+  reproducirlos; el aviso del PDF del corte dice que la caja sí se cerró.
+- **Inventario** (agente G, primera tanda; DP-D167 a DP-D170): la merma manual, el traspaso y la
+  devolución copian el costo (hallazgo 23); el consumo interno funciona (22); la Caja relee
+  también con `PROPINA_VIGENTE` (12); el 13 no se reproduce; el 16 no se construye; el 17
+  descartado.
+- **Lo que cazó la CI antes de unir** (nada llegó a `main`): (1) **la migración 195 no corría en
+  una base nueva:** ahí todas las migraciones van en una transacción y su `update` tocaba las
+  filas de demostración de la 042 y la 043, que llevan un motivo escrito a mano; Postgres vuelve a
+  comprobar la llave `movimientos_stock_motivo_conocido` y rechaza. Ahora `movimientos_stock` se
+  rellena reescribiendo la columna (`ae66054`); en producción no habría fallado (no tiene esas
+  filas y la 195 se aplica sola), pero la CI migra desde cero. (2) 8 errores de lint en guiones
+  nuevos de la Parte 5 (uno escondía una expresión que no distinguía «Mesa 4» de «Mesa 41»).
+  (3) Una constante declarada dos veces al unir las dos tandas de Configuración. (4) Las pruebas
+  viejas encontraban dos botones «Cerrar» en la precuenta y el ticket desde que la «X» de los
+  diálogos heredados dejó de llamarse «Close» (`04c3875`). (5) La galería: 18 retratos
+  regenerados y mirados (`1023576`). Lecciones: tras unir un parche, `tsc` de `pruebas/` y del
+  simulador y lint de lo tocado, mirando el código de salida; y una migración con relleno se
+  prueba TAMBIÉN desde cero (`node /d/mpos-tmp/dp22/crear-base.mjs dp22_<algo> --recrear` y
+  `migrate`).
+- **En local:** las 30 puertas estáticas, formato e integración contra Postgres (restaurante,
+  registros, inventario, qa-final, compras, caja, portal, venta, puente) en verde; las 127
+  migraciones desde cero; la suite unitaria completa se pasó de tiempo en 8 archivos con la
+  máquina cargada (solos pasan) y en la CI pasa entera.
+- **La CI:** quinta corrida (`1023576`), **10 de 10**, con «Jornada completa» entera y la galería.
+- **La migración 195 en producción (17-11, 20:35):** lectura de antes idéntica a la del cierre del
+  lote 3; ensayo (`migrar-produccion.sh ensayo`: aplica y revierte) correcto; aplicada con
+  `pnpm db:migrate` por la conexión de sesión (5432). Con la migración puesta y el código
+  ANTERIOR todavía desplegado, el humo siguió en 0 fallas (lo aditivo primero).
+- **Despliegue (17-11):** unido a `main` como `6b76050` a las 20:37; el despliegue de producción
+  quedó «READY» (`dpl_H1Z697…`). Regreso previsto: el despliegue del lote 3 (`dpl_5tVaqE…`); las
+  columnas nuevas pueden quedarse (el código anterior no las nombra y el disparador las completa).
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 4`): el de siempre 27 de 27 y las rutas de
+  los lotes anteriores en pie. **0 fallas.**
+- **Lectura de producción después:** idéntica a la de antes salvo las migraciones (127 aplicadas,
+  la última la 195). Ninguna cuenta, caja ni ajuste cambió.
+- **Vercel:** 0 errores al desplegar. Falta la revisión de la hora siguiente (a partir de las
+  21:43).

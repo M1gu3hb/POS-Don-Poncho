@@ -3,49 +3,45 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 17-11, 19:25.
+Última puesta al día: 17-11, 20:45.
 
-## AHORA MISMO (17-11, 19:25) — retomar desde aquí (se cortó por límite de uso)
+## AHORA MISMO (17-11, 20:45) — retomar desde aquí
 
-1. **Lotes 1, 2 y 3 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`, `e4c45f5`; migraciones hasta
-   la 194).
-2. **Lote 4 · PR 40 abierto, SIN UNIR** (`dp-22-cuarto-lote`; Auto-fix encendido). La **migración
-   195 NO se ha ensayado ni aplicado en producción.** La CI en `ae66054` falló en dos cosas, ya
-   corregidas en el commit siguiente: (a) tipos: `FRASE_DE_EJEMPLO` quedó declarada dos veces en
-   `pruebas/e2e/qa-final/ajustes.aparato.spec.ts` al unir; (b) «Jornada completa»: el localizador
-   `getByRole('button', { name: 'Cerrar' })` de las pruebas viejas encuentra dos botones desde que
-   la «X» de los diálogos heredados se llama «Cerrar» (antes «Close»): ahora llevan `.first()` (7
-   sitios). **OJO: «Jornada completa» se paró en su primer paso; las 17 suites de «Los cambios
-   del cliente» no llegaron a correr y pueden traer más choques con los cambios táctiles y de
-   nombres del barrido (agente A). Mirar la CI siguiente; si vuelve a fallar, correr esas suites
-   en local con `bash /d/mpos-tmp/dp22/e2e-tanda.sh`.**
-   También: la migración 195 se corrigió para correr desde cero (`ae66054`); base nueva de
-   integración `dp22_lote4` (`/d/mpos-tmp/dp22-dp22_lote4-url.txt`).
-   Falta: CI en verde → galería (`gh run view 44212861815`; si esa corrida falló por lo mismo,
-   volver a pedirla: `gh workflow run verificar.yml --ref dp-22-cuarto-lote -f
-actualizar_galeria=true`; bajar `galeria-restaurante`, MIRAR los PNG, copiarlos a
-   `pruebas/e2e/galeria.spec.ts-snapshots/`) → `migrar-produccion.sh ensayo` → `aplicar` →
-   `gh pr merge 40 --squash` → «READY» → `humo-produccion.sh 4` → `revisar-produccion.mjs` → la
-   hora de Vercel → PROGRESO y HALLAZGOS.
-3. **Agentes: LOS TRES PARADOS por el límite de uso** (se retoman con SendMessage a su id; todos
-   salieron de `ad9c162`, sin commit):
+1. **Lotes 1, 2, 3 y 4 EN PRODUCCIÓN** (`ff03687`, `829b13d`, `e4c45f5`, `6b76050`; migraciones
+   hasta la 195). El lote 4 (PR 40) quedó «READY» a las 20:38; humo `humo-produccion.sh 4` sin
+   fallas; lectura idéntica salvo las migraciones (127, última la 195). **Falta sólo su hora de
+   Vercel: `get_runtime_errors` (proyecto `pos-don-poncho`, equipo `mh-astral-systems`) a partir
+   de las 21:43**, y anotarlo en PROGRESO.
+2. **Lote 5 en armado** en el checkout principal, rama `dp-22-quinto-lote` (desde `main`
+   `6b76050`). Por ahora sólo bitácora. Recibirá a G, H y F.
+3. **Agentes corriendo (3), reanudados a las 20:01; todos salieron de `ad9c162`, sin commit:**
    - G · `a05a11e0c5003c300` · `.work\dp20` · `dp-22-parte5-b`: segunda tanda de la Parte 5 (H12
      en el navegador; hallazgo 24, DP-D171; portal, devolución, negativo, compras, unidades,
-     ocultar, costo y margen, valor contra el libro; hallazgo 25). Estaba compilando. Tiene un
-     aviso en cola con los 8 arreglos de lint que debe repetir en su árbol.
+     ocultar, costo y margen, valor contra el libro; hallazgo 25).
    - H · `a42a50c9ee1f3c737` · `.work\dp18-integrar` · `dp-22-parte7`: los 12 puntos de la Parte 7
-     en la app (`briefs\h-listo.md`).
+     en la app (`briefs\h-listo.md`; DP-D172 a DP-D174).
    - F · `ae7be0fa51f65b97b` · `.work\dp20-lab` · `dp-22-dia-de-bots`: el perfil `dp22` del
-     simulador y su lanzador (`briefs\f-listo.md`).
-     Al retomar: pedir a cada uno que diga dónde quedó, que compruebe que no dejó procesos ni
-     mutantes puestos, que termine EN PRIMER PLANO y entregue informe. Recibirlos con parche desde
-     `ad9c162` y `git apply --3way --index`; después de unir, correr SIEMPRE
-     `pnpm exec tsc --noEmit -p pruebas/tsconfig.json`, `-p qa/simulador/tsconfig.json` y eslint de
-     lo tocado (las dos caídas de hoy en la CI fueron por no hacerlo).
-4. **Después:** el lote 5 (lo de G, H y F); el día de bots con la máquina sola; la Parte 11 con
-   `bash /d/mpos-tmp/dp22/parte11.sh` (ya ensayada sin escribir; orden: configurar → ceros 9 →
-   primer-folio → aparatos → `revisar-produccion.mjs` → `pnpm dia-cero`; H1 NO se activa); y el
-   informe 013.
+     simulador y su lanzador (`briefs\f-listo.md`; DP-D175 y DP-D176; semilla 2211).
+     Al recibirlos: `git add -A`, PIN mirando el código de salida,
+     `git diff --cached --binary ad9c162 > x.patch` (commit en su rama) y
+     `git apply --3way --index` sobre `dp-22-quinto-lote`. En los archivos que ya corregí en el
+     lote 4 (`qa/simulador/parte5/*`, `pruebas/e2e/ayudantes/mesas-heredadas.ts`,
+     `dia-completo-restaurante.spec.ts`, `qa/flujos-qa.ts`, `qa/simulador/pantallas/caja.ts`,
+     la migración 195) puede haber conflicto: de la 195 gana SIEMPRE la de `main`. Después de unir:
+     `pnpm exec tsc --noEmit -p pruebas/tsconfig.json`, `-p qa/simulador/tsconfig.json`,
+     `-p qa/qa-final/tsconfig.json`, `pnpm typecheck`, eslint de lo tocado (código de salida),
+     `DECISIONES.md` con `##` y en orden, `pnpm qa:matriz`, prettier, mutante propio. Antes del PR:
+     si cambia el aspecto, la galería (`gh workflow run verificar.yml --ref <rama> -f
+actualizar_galeria=true`); y si hay migración, probarla desde cero
+     (`node /d/mpos-tmp/dp22/crear-base.mjs dp22_<algo> --recrear` y `migrate`).
+4. **Después:** desplegar el lote 5; el día de bots con la máquina SOLA (clon nuevo del molde
+   `qa_dp22_inv`, migrado con lo de `main`; repetir con otra semilla hasta que salga limpio); la
+   Parte 11 con `bash /d/mpos-tmp/dp22/parte11.sh` (ya ensayada sin escribir; orden: configurar →
+   ceros 9 → primer-folio → aparatos → `revisar-produccion.mjs` → `pnpm dia-cero`; H1 NO se
+   activa; exige que `packages/` y `scripts/` sean los de `origin/main`); y el informe 013 con el
+   veredicto, los números, la calificación, la lista física de Miguel (en la tableta, crear una
+   receta eligiendo «Variable por medida»; tras el primer cierre real, ver el PDF en
+   `Documentos\POS Don Poncho\Cortes`) y lo grande para después (está en `NUEVO.md`).
 
 ## Dónde voy
 
