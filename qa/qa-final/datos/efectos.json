@@ -34,7 +34,7 @@
     "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
   },
   "background_logo_url": {
-    "efecto": "La marca de agua del fondo, del acceso y del portal.",
+    "efecto": "La marca de agua del fondo de las pantallas internas y del portal (el acceso, sin sesión, no la lee).",
     "valores": ["vacío", "una imagen"],
     "pruebas": [],
     "estado": "por ver en navegador",
@@ -61,7 +61,7 @@
       "pruebas/e2e/pin-al-abrir.spec.ts"
     ],
     "estado": "comprobado",
-    "nota": "Windows: 5 y 30 minutos con el dedo. iMin (sin reloj de Playwright) y teléfono: sin verificar."
+    "nota": "Con el dedo, 5 y 30 minutos, en Windows y teléfono. iMin: sin el reloj de Playwright (Chromium 99), sin verificar."
   },
   "cocina_alerta_ambar_min": {
     "efecto": "Minutos de espera a los que la comanda se pinta ámbar en cocina.",
@@ -84,7 +84,7 @@
     "nota": "Con el dedo y el reloj adelantado, en Windows y teléfono; sin mutante de navegador."
   },
   "color_acento": {
-    "efecto": "El color de acento de todo el sistema interno y del acceso.",
+    "efecto": "El color de acento de todo el sistema interno, con sesión (el acceso lleva el de la casa).",
     "valores": ["#ac8a5f", "otro"],
     "pruebas": [
       "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
@@ -94,7 +94,7 @@
     "nota": "Barra interna pintada con el color; HALLAZGO: el acceso (sin sesión) no lo lee."
   },
   "color_primario": {
-    "efecto": "El color primario de todo el sistema interno y del acceso.",
+    "efecto": "El color primario de todo el sistema interno, con sesión (el acceso lleva el de la casa).",
     "valores": ["#83653f", "otro"],
     "pruebas": [
       "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
@@ -156,7 +156,7 @@
       "pruebas/e2e/qa-final/ajustes.operacion.spec.ts"
     ],
     "estado": "comprobado",
-    "nota": "En el navegador, en Windows. iMin (Chromium 99): hallazgo abierto, el diálogo de cierre no se cierra; teléfono: sin verificar."
+    "nota": "Prueba en Windows, iMin (Chromium 99) y teléfono, con la casilla encendida y apagada; el cierre no depende del PDF (el aviso dice «La caja se cerró. No se pudo guardar el PDF…»)."
   },
   "descuentos_permitidos": {
     "efecto": "Apagado: nadie puede aplicar descuentos (la pantalla no los ofrece y el servidor los rechaza).",
@@ -270,7 +270,7 @@
     "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "logo_url": {
-    "efecto": "El logo del negocio en la barra, el acceso y la pantalla de espera.",
+    "efecto": "El logo del negocio en la barra y la pantalla de espera (el acceso, sin sesión, lleva el de la casa).",
     "valores": ["por omisión", "otra imagen"],
     "pruebas": [],
     "estado": "por ver en navegador",
@@ -316,14 +316,14 @@
     "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "nombre_negocio": {
-    "efecto": "El nombre del negocio en la barra, el acceso, el ticket, el corte, el portal y los PDF.",
+    "efecto": "El nombre del negocio en la barra, el ticket, el corte, el portal y los PDF (el acceso lo toma de la lista de personas).",
     "valores": ["Don Poncho", "otro"],
     "pruebas": ["pruebas/impresion/ajustes-del-papel.spec.ts"],
     "estado": "comprobado",
     "nota": "Probado contra el componente del ticket y el corte (arnés de impresión), con su mutante."
   },
   "nombre_sistema": {
-    "efecto": "El nombre del sistema en el acceso y al pie de los PDF.",
+    "efecto": "El nombre del sistema al pie de los PDF (el acceso, sin sesión, lleva el de la casa).",
     "valores": ["POS Don Poncho", "otro"],
     "pruebas": [
       "pruebas/impresion/ajustes-del-papel.spec.ts",
@@ -481,10 +481,11 @@
     "valores": ["true", "false"],
     "pruebas": [
       "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
-      "packages/app/src/portal/ajustes-del-portal.integracion.test.ts"
+      "packages/app/src/portal/ajustes-del-portal.integracion.test.ts",
+      "apps/web/src/portal/menu-digital/menu-digital.test.ts"
     ],
     "estado": "comprobado",
-    "nota": "HALLAZGO: sólo gobierna «A la carta»; en «Menú digital» (por omisión) no hace nada."
+    "nota": "Vale en «A la carta» y en «Menú digital» (DP-D166), encendida y apagada, en el teléfono; unitaria de productosSegunLaFoto."
   },
   "portal_qr_permitir_ayuda": {
     "efecto": "El botón «Necesito ayuda» del portal existe o no (y el servidor acepta o rechaza la solicitud).",

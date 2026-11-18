@@ -117,6 +117,16 @@ test.describe('identidad y apariencia', () => {
       await expect(page.getByText('Barbacoa La Güera').first()).toBeVisible();
       await expect(page.getByText('Cocina de Doña Lupe').first()).toBeVisible();
 
+      // 3b · Y de vuelta al nombre de antes: la barra deja de decir el nuevo (valor A → A, valor B → B).
+      await irASeccion(page, 'el-negocio');
+      const mismos = tarjeta(page, 'Datos del negocio');
+      await escribirEnCampo(page, mismos.getByLabel('Nombre del negocio'), 'Restaurante de prueba');
+      await guardarTarjeta(page, mismos);
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      if (await abrirMenu.isVisible()) await toque(page, abrirMenu);
+      await expect(page.getByText('Restaurante de prueba').first()).toBeVisible();
+      await expect(page.getByText('Barbacoa La Güera')).toHaveCount(0);
+
       // 4 · El acceso (público, sin sesión): lo que dice, para el informe.
       await acceso.page.reload();
       await acceso.page.waitForLoadState('networkidle');
@@ -177,6 +187,9 @@ test.describe('identidad y apariencia', () => {
         operacion: 'update',
         datos: { color_primario: '#83653f', color_acento: '#ac8a5f' },
       });
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      await expect.poll(() => variable(page, '--brand-primary')).toBe('#83653f');
+      await expect.poll(() => variable(page, '--brand-accent')).toBe('#ac8a5f');
     } finally {
       await aparatos.cerrar();
     }
@@ -236,6 +249,38 @@ test.describe('identidad y apariencia', () => {
         operacion: 'update',
         datos: { colorear_importes_monetarios: true },
       });
+    } finally {
+      await aparatos.cerrar();
+    }
+  });
+
+  test('Datos del negocio: cambiar SÓLO el nombre y guardar lo deja guardado al recargar', async ({
+    aparato,
+  }, info) => {
+    test.setTimeout(6 * 60_000);
+    const aparatos = new VariosAparatos(info, SLUG);
+    try {
+      const duena = await aparatos.abrir({
+        puesto: 'ajustes-identidad-solo-nombre',
+        aparato: aparato.id,
+        rol: 'dueno',
+        ruta: '/',
+      });
+      const page = duena.page;
+      await resetearLaDemo(page);
+      for (const nombre of ['Fonda del Rosal', 'Fonda del Sauce']) {
+        await irASeccion(page, 'el-negocio');
+        const datos = tarjeta(page, 'Datos del negocio');
+        await escribirEnCampo(page, datos.getByLabel('Nombre del negocio'), nombre);
+        await guardarTarjeta(page, datos);
+        await page.reload();
+        await expect(
+          tarjeta(page, 'Datos del negocio').getByLabel('Nombre del negocio'),
+        ).toHaveValue(nombre);
+        await expect
+          .poll(async () => (await configuracionDelNegocio(page))['nombre_negocio'])
+          .toBe(nombre);
+      }
     } finally {
       await aparatos.cerrar();
     }

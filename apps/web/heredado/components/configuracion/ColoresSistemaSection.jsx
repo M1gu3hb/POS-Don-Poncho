@@ -124,8 +124,9 @@ export default function ColoresSistemaSection({ cfg }) {
         <p className="text-sm font-semibold">Colores del sistema</p>
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Personaliza la marca visual del POS. El primario afecta degradados y glow del login; el
-        acento afecta botones, sidebar activo y highlights.
+        Personaliza la marca visual del POS dentro del sistema (con sesión). El primario afecta
+        degradados y brillos; el acento afecta botones, barra activa y destacados. La pantalla de
+        acceso, que aún no tiene sesión, usa siempre los colores de la casa.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

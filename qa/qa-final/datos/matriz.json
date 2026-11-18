@@ -1,5 +1,5 @@
 {
-  "commit": "95e80c1",
+  "commit": "9abdcdb",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -109,7 +109,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 10837,
+      "lineas": 10853,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -344,7 +344,7 @@
           "titulo": null
         }
       ],
-      "lineas": 19302,
+      "lineas": 19320,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -481,6 +481,7 @@
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/inventario/FaltaElAlmacen.tsx",
         "apps/web/src/inventario/almacen-de-la-sucursal.ts",
+        "apps/web/src/inventario/costo-por-unidad.ts",
         "apps/web/src/venta/PagoDeLaCaja.tsx",
         "apps/web/src/venta/cajon-para-pagar.ts"
       ],
@@ -522,7 +523,7 @@
           "titulo": null
         }
       ],
-      "lineas": 4590,
+      "lineas": 4648,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -784,7 +785,7 @@
           "titulo": "Zonas del salón"
         }
       ],
-      "lineas": 23829,
+      "lineas": 23830,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -841,6 +842,7 @@
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/inventario/ajuste-de-stock.ts",
+        "apps/web/src/inventario/costo-por-unidad.ts",
         "apps/web/src/inventario/por-debajo-del-minimo.ts",
         "apps/web/src/restaurante/valor-de-inventario.ts"
       ],
@@ -876,7 +878,7 @@
           "titulo": null
         }
       ],
-      "lineas": 5038,
+      "lineas": 5113,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -1156,7 +1158,7 @@
           "titulo": null
         }
       ],
-      "lineas": 17112,
+      "lineas": 17107,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -1285,7 +1287,7 @@
           "titulo": null
         }
       ],
-      "lineas": 6301,
+      "lineas": 6312,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1473,7 +1475,7 @@
           "titulo": "Agotados del día"
         }
       ],
-      "lineas": 7200,
+      "lineas": 7210,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -1542,7 +1544,7 @@
           "titulo": "El pedido de la mesa"
         }
       ],
-      "lineas": 6155,
+      "lineas": 6167,
       "conSesion": false,
       "puestos": [],
       "cobertura": null
@@ -1586,6 +1588,7 @@
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/inventario/costo-del-platillo.ts",
+        "apps/web/src/inventario/costo-por-unidad.ts",
         "apps/web/src/portal/menu-digital/SelectorDeFondo.tsx",
         "apps/web/src/restaurante/AreaDePreparacionSelect.tsx",
         "apps/web/src/restaurante/area-de-preparacion.ts"
@@ -1610,7 +1613,7 @@
           "titulo": null
         }
       ],
-      "lineas": 5311,
+      "lineas": 5383,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -1737,7 +1740,7 @@
           "titulo": null
         }
       ],
-      "lineas": 12427,
+      "lineas": 12443,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1787,7 +1790,7 @@
         "apps/web/src/venta/use-umbral-de-retiro.ts"
       ],
       "ventanas": [],
-      "lineas": 3103,
+      "lineas": 3098,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1838,7 +1841,7 @@
           "titulo": null
         }
       ],
-      "lineas": 4659,
+      "lineas": 4656,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -1885,7 +1888,7 @@
           "titulo": null
         }
       ],
-      "lineas": 3568,
+      "lineas": 3563,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1923,7 +1926,7 @@
         "apps/web/src/restaurante/ajuste-de-inventario.ts"
       ],
       "ventanas": [],
-      "lineas": 1649,
+      "lineas": 1644,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -2038,7 +2041,7 @@
           "titulo": null
         }
       ],
-      "lineas": 4612,
+      "lineas": 4607,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -2107,7 +2110,7 @@
           "titulo": "El pedido de la mesa"
         }
       ],
-      "lineas": 6165,
+      "lineas": 6177,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina", "almacen"],
       "cobertura": null
@@ -2133,7 +2136,7 @@
         "apps/web/src/venta/se-menciona-el-iva.ts"
       ],
       "ventanas": [],
-      "lineas": 1656,
+      "lineas": 1651,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -2151,7 +2154,7 @@
         "apps/web/src/restaurante/receta-pendiente.ts"
       ],
       "ventanas": [],
-      "lineas": 982,
+      "lineas": 977,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -2169,7 +2172,7 @@
         "apps/web/src/restaurante/receta-pendiente.ts"
       ],
       "ventanas": [],
-      "lineas": 1308,
+      "lineas": 1303,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -2365,7 +2368,7 @@
         ],
         "lectores": [
           "apps/web/heredado/lib/asignacionMesas.js:54",
-          "apps/web/heredado/pages/PortalCliente.jsx:213",
+          "apps/web/heredado/pages/PortalCliente.jsx:214",
           "packages/app/src/portal/banderas.ts:136",
           "packages/app/src/portal/lista-blanca.ts:66",
           "packages/app/src/portal/lista-blanca.ts:105"
@@ -2482,7 +2485,7 @@
           "apps/web/heredado/components/common/BrandedBackground.jsx:20",
           "apps/web/heredado/pages/POSLogin.jsx:192",
           "apps/web/heredado/pages/POSLogin.jsx:197",
-          "apps/web/heredado/pages/PortalCliente.jsx:427",
+          "apps/web/heredado/pages/PortalCliente.jsx:428",
           "packages/app/src/archivos/referencias.ts:9",
           "packages/app/src/portal/lista-blanca.ts:50",
           "packages/app/src/portal/lista-blanca.ts:90"
@@ -2494,7 +2497,7 @@
           "packages/app/src/puente/puente.test.ts"
         ],
         "efecto": {
-          "efecto": "La marca de agua del fondo, del acceso y del portal.",
+          "efecto": "La marca de agua del fondo de las pantallas internas y del portal (el acceso, sin sesión, no la lee).",
           "valores": ["vacío", "una imagen"],
           "pruebas": [],
           "estado": "por ver en navegador",
@@ -2588,7 +2591,7 @@
             "pruebas/e2e/pin-al-abrir.spec.ts"
           ],
           "estado": "comprobado",
-          "nota": "Windows: 5 y 30 minutos con el dedo. iMin (sin reloj de Playwright) y teléfono: sin verificar."
+          "nota": "Con el dedo, 5 y 30 minutos, en Windows y teléfono. iMin: sin el reloj de Playwright (Chromium 99), sin verificar."
         }
       },
       {
@@ -2698,7 +2701,7 @@
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts"
         ],
         "efecto": {
-          "efecto": "El color de acento de todo el sistema interno y del acceso.",
+          "efecto": "El color de acento de todo el sistema interno, con sesión (el acceso lleva el de la casa).",
           "valores": ["#ac8a5f", "otro"],
           "pruebas": [
             "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
@@ -2742,7 +2745,7 @@
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts"
         ],
         "efecto": {
-          "efecto": "El color primario de todo el sistema interno y del acceso.",
+          "efecto": "El color primario de todo el sistema interno, con sesión (el acceso lleva el de la casa).",
           "valores": ["#83653f", "otro"],
           "pruebas": [
             "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
@@ -2953,9 +2956,9 @@
           "packages/app/src/clientes/ficha.ts:81",
           "packages/app/src/clientes/ficha.ts:159",
           "packages/app/src/clientes/ficha.ts:218",
-          "packages/app/src/puente/mapa.ts:1632",
-          "packages/app/src/puente/mapa.ts:1633",
-          "packages/app/src/puente/mapa.ts:3573",
+          "packages/app/src/puente/mapa.ts:1635",
+          "packages/app/src/puente/mapa.ts:1636",
+          "packages/app/src/puente/mapa.ts:3576",
           "packages/app/src/saneado.ts:94"
         ],
         "pruebasQueLaNombran": [
@@ -3010,7 +3013,7 @@
             "pruebas/e2e/qa-final/ajustes.operacion.spec.ts"
           ],
           "estado": "comprobado",
-          "nota": "En el navegador, en Windows. iMin (Chromium 99): hallazgo abierto, el diálogo de cierre no se cierra; teléfono: sin verificar."
+          "nota": "Prueba en Windows, iMin (Chromium 99) y teléfono, con la casilla encendida y apagada; el cierre no depende del PDF (el aviso dice «La caja se cerró. No se pudo guardar el PDF…»)."
         }
       },
       {
@@ -3115,8 +3118,8 @@
           "packages/app/src/clientes/ficha.ts:162",
           "packages/app/src/clientes/ficha.ts:220",
           "packages/app/src/puente/consultar.ts:103",
-          "packages/app/src/puente/mapa.ts:2030",
-          "packages/app/src/puente/mapa.ts:3574",
+          "packages/app/src/puente/mapa.ts:2033",
+          "packages/app/src/puente/mapa.ts:3577",
           "packages/domain/src/venta/campos-del-papel.ts:39"
         ],
         "pruebasQueLaNombran": [
@@ -3753,7 +3756,7 @@
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:96",
           "apps/web/heredado/pages/POSLogin.jsx:227",
           "apps/web/heredado/pages/POSLogin.jsx:229",
-          "apps/web/heredado/pages/PortalCliente.jsx:427",
+          "apps/web/heredado/pages/PortalCliente.jsx:428",
           "apps/web/src/espera/ModoEspera.tsx:31",
           "apps/web/src/espera/ModoEspera.tsx:104",
           "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:27",
@@ -3774,7 +3777,7 @@
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
-          "efecto": "El logo del negocio en la barra, el acceso y la pantalla de espera.",
+          "efecto": "El logo del negocio en la barra y la pantalla de espera (el acceso, sin sesión, lleva el de la casa).",
           "valores": ["por omisión", "otra imagen"],
           "pruebas": [],
           "estado": "por ver en navegador",
@@ -3970,8 +3973,8 @@
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:112",
           "apps/web/heredado/pages/Dashboard.jsx:264",
           "apps/web/heredado/pages/POSLogin.jsx:181",
-          "apps/web/heredado/pages/PortalCliente.jsx:471",
-          "apps/web/heredado/pages/PortalCliente.jsx:479",
+          "apps/web/heredado/pages/PortalCliente.jsx:472",
+          "apps/web/heredado/pages/PortalCliente.jsx:480",
           "apps/web/src/espera/ModoEspera.tsx:32",
           "apps/web/src/espera/ModoEspera.tsx:105",
           "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:26",
@@ -3996,7 +3999,7 @@
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
-          "efecto": "El nombre del negocio en la barra, el acceso, el ticket, el corte, el portal y los PDF.",
+          "efecto": "El nombre del negocio en la barra, el ticket, el corte, el portal y los PDF (el acceso lo toma de la lista de personas).",
           "valores": ["Don Poncho", "otro"],
           "pruebas": ["pruebas/impresion/ajustes-del-papel.spec.ts"],
           "estado": "comprobado",
@@ -4037,7 +4040,7 @@
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
-          "efecto": "El nombre del sistema en el acceso y al pie de los PDF.",
+          "efecto": "El nombre del sistema al pie de los PDF (el acceso, sin sesión, lleva el de la casa).",
           "valores": ["POS Don Poncho", "otro"],
           "pruebas": [
             "pruebas/impresion/ajustes-del-papel.spec.ts",
@@ -4517,7 +4520,7 @@
         ],
         "lectores": [
           "apps/web/heredado/pages/Mesero.jsx:1191",
-          "apps/web/heredado/pages/PortalCliente.jsx:140",
+          "apps/web/heredado/pages/PortalCliente.jsx:141",
           "packages/app/src/portal/banderas.ts:122",
           "packages/app/src/portal/lista-blanca.ts:53",
           "packages/app/src/portal/lista-blanca.ts:93"
@@ -4611,8 +4614,8 @@
           "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx:247"
         ],
         "lectores": [
-          "apps/web/heredado/pages/PortalCliente.jsx:520",
-          "apps/web/heredado/pages/PortalCliente.jsx:525",
+          "apps/web/heredado/pages/PortalCliente.jsx:521",
+          "apps/web/heredado/pages/PortalCliente.jsx:526",
           "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:28",
           "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:74",
           "apps/web/src/restaurante/personalizar-menu/use-personalizar-menu.ts:108",
@@ -4655,7 +4658,7 @@
           "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx:214"
         ],
         "lectores": [
-          "apps/web/heredado/pages/PortalCliente.jsx:135",
+          "apps/web/heredado/pages/PortalCliente.jsx:136",
           "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:29",
           "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:101",
           "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:189",
@@ -4704,7 +4707,7 @@
           "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx:230"
         ],
         "lectores": [
-          "apps/web/heredado/pages/PortalCliente.jsx:414",
+          "apps/web/heredado/pages/PortalCliente.jsx:415",
           "packages/app/src/portal/banderas.ts:123",
           "packages/app/src/portal/lista-blanca.ts:54",
           "packages/app/src/portal/lista-blanca.ts:94"
@@ -4774,12 +4777,13 @@
           "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx:236"
         ],
         "lectores": [
-          "apps/web/heredado/pages/PortalCliente.jsx:415",
+          "apps/web/heredado/pages/PortalCliente.jsx:416",
           "packages/app/src/portal/banderas.ts:124",
           "packages/app/src/portal/lista-blanca.ts:55",
           "packages/app/src/portal/lista-blanca.ts:95"
         ],
         "pruebasQueLaNombran": [
+          "apps/web/src/portal/menu-digital/menu-digital.test.ts",
           "packages/app/src/portal/ajustes-del-portal.integracion.test.ts",
           "pruebas/e2e/qa-final/ajustes.portal.spec.ts"
         ],
@@ -4788,10 +4792,11 @@
           "valores": ["true", "false"],
           "pruebas": [
             "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
-            "packages/app/src/portal/ajustes-del-portal.integracion.test.ts"
+            "packages/app/src/portal/ajustes-del-portal.integracion.test.ts",
+            "apps/web/src/portal/menu-digital/menu-digital.test.ts"
           ],
           "estado": "comprobado",
-          "nota": "HALLAZGO: sólo gobierna «A la carta»; en «Menú digital» (por omisión) no hace nada."
+          "nota": "Vale en «A la carta» y en «Menú digital» (DP-D166), encendida y apagada, en el teléfono; unitaria de productosSegunLaFoto."
         }
       },
       {
@@ -5320,7 +5325,7 @@
           "packages/app/src/clientes/ficha.ts:98",
           "packages/app/src/clientes/ficha.ts:130",
           "packages/app/src/clientes/ficha.ts:163",
-          "packages/app/src/puente/mapa.ts:1616",
+          "packages/app/src/puente/mapa.ts:1619",
           "packages/domain/src/venta/index.ts:21"
         ],
         "pruebasQueLaNombran": [
@@ -5488,17 +5493,17 @@
           "packages/app/src/portal/carrito.ts:448",
           "packages/app/src/portal/solicitudes.ts:10",
           "packages/app/src/portal/telefono.ts:32",
-          "packages/app/src/puente/mapa.ts:1626",
-          "packages/app/src/puente/mapa.ts:1627",
-          "packages/app/src/puente/mapa.ts:2051",
-          "packages/app/src/puente/mapa.ts:2561",
-          "packages/app/src/puente/mapa.ts:2592",
-          "packages/app/src/puente/mapa.ts:2753",
-          "packages/app/src/puente/mapa.ts:2967",
-          "packages/app/src/puente/mapa.ts:2969",
-          "packages/app/src/puente/mapa.ts:3061",
-          "packages/app/src/puente/mapa.ts:3063",
-          "packages/app/src/puente/mapa.ts:3571",
+          "packages/app/src/puente/mapa.ts:1629",
+          "packages/app/src/puente/mapa.ts:1630",
+          "packages/app/src/puente/mapa.ts:2054",
+          "packages/app/src/puente/mapa.ts:2564",
+          "packages/app/src/puente/mapa.ts:2595",
+          "packages/app/src/puente/mapa.ts:2756",
+          "packages/app/src/puente/mapa.ts:2970",
+          "packages/app/src/puente/mapa.ts:2972",
+          "packages/app/src/puente/mapa.ts:3064",
+          "packages/app/src/puente/mapa.ts:3066",
+          "packages/app/src/puente/mapa.ts:3574",
           "packages/app/src/puente/usuarios.ts:42",
           "packages/app/src/puente/usuarios.ts:71",
           "packages/app/src/restaurante/espera.ts:40",
@@ -6108,7 +6113,11 @@
         "conValorPorOmision": false,
         "escritores": [],
         "lectores": ["apps/web/src/espera/pin-de-esta-ejecucion.ts:20"],
-        "pruebasQueLaNombran": ["pruebas/e2e/ayudantes/roles.ts", "qa/simulador/sesion.ts"],
+        "pruebasQueLaNombran": [
+          "pruebas/e2e/ayudantes/roles.ts",
+          "pruebas/e2e/qa-final/ajustes.operacion.spec.ts",
+          "qa/simulador/sesion.ts"
+        ],
         "efecto": {
           "efecto": "La marca de que en esta ejecución ya se tecleó el PIN. No es un ajuste.",
           "pruebas": ["pruebas/e2e/pin-al-abrir.spec.ts"],

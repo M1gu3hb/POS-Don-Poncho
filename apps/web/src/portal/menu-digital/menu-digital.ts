@@ -36,6 +36,18 @@ export interface SeccionDelMenu<P extends ProductoDelMenu> {
   readonly productos: readonly P[];
 }
 
+/**
+ * DP-D166 · `portal_qr_mostrar_sin_imagen` vale en los DOS modos de menú (digital y a la carta):
+ * apagada, los platillos sin foto no salen; encendida (o sin elegir), salen todos.
+ */
+export function productosSegunLaFoto<P extends ProductoDelMenu>(
+  productos: readonly P[],
+  mostrarSinImagen: boolean,
+): readonly P[] {
+  if (mostrarSinImagen) return productos;
+  return productos.filter((p) => typeof p.imagen_url === 'string' && p.imagen_url !== '');
+}
+
 export const SECCION_SIN_CATEGORIA = 'sin-categoria';
 
 /**

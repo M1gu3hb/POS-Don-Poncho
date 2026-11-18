@@ -6,6 +6,7 @@ import { Plus, UtensilsCrossed } from 'lucide-react';
 import { BarraDeSecciones } from './BarraDeSecciones';
 import {
   precioDeLaTarjeta,
+  productosSegunLaFoto,
   seccionesDelMenu,
   type CategoriaDelMenu,
   type ProductoDelMenu,
@@ -36,9 +37,7 @@ export function MenuALaCarta<P extends ProductoDelMenu>({
   /** Mientras llega el menú (la primera lectura del portal). */
   readonly cargando?: boolean;
 }) {
-  const visibles = mostrarSinImagen
-    ? productos
-    : productos.filter((p) => typeof p.imagen_url === 'string' && p.imagen_url !== '');
+  const visibles = productosSegunLaFoto(productos, mostrarSinImagen);
   const secciones = seccionesDelMenu(visibles, categorias);
   if (cargando) return <EsqueletoDeLista filas={4} />;
   if (secciones.length === 0) {

@@ -120,9 +120,8 @@ test.describe('el portal del comensal', () => {
       await telefono.reload();
       await expect(enElPortal('Bienvenidos a la barbacoa de Don Poncho')).toBeVisible();
 
-      // 1b · «Mostrar productos sin imagen». Sólo gobierna el menú «A la carta» (en «Menú digital» cada
-      // tarjeta lleva su propio fondo: hallazgo del informe). El catálogo de prueba no trae fotos, así
-      // que apagada la casilla el comensal no ve ni un platillo; encendida, los ve todos.
+      // 1b · «Mostrar productos sin imagen» vale en los DOS menús (DP-D166). El catálogo de prueba no
+      // trae fotos, así que apagada la casilla el comensal no ve ni un platillo; encendida, los ve todos.
       async function elMenuSeVe(como: 'A la carta' | 'Menú digital'): Promise<void> {
         await page.goto('/configuracion?seccion=portal', { waitUntil: 'domcontentloaded' });
         const modo = page.getByRole('combobox', { name: 'Cómo se ve el menú' });
@@ -160,6 +159,18 @@ test.describe('el portal del comensal', () => {
       await expect(sinPlatillos).toHaveCount(0);
       await expect(telefono.getByRole('listitem').first()).toBeVisible();
       await elMenuSeVe('Menú digital');
+      // Menú digital: los mismos dos estados.
+      const tarjetas = (): Promise<number> =>
+        telefono.getByRole('button', { name: /Ver y agregar/ }).count();
+      await telefono.reload();
+      await expect.poll(tarjetas).toBeGreaterThan(0);
+      await cambiar('Mostrar productos sin imagen', false);
+      await telefono.reload();
+      await expect(enElPortal('Bienvenidos a la barbacoa de Don Poncho')).toBeVisible();
+      await expect.poll(tarjetas).toBe(0);
+      await cambiar('Mostrar productos sin imagen', true);
+      await telefono.reload();
+      await expect.poll(tarjetas).toBeGreaterThan(0);
 
       /** Lo que el comensal encuentra al tocar «Atención» (el portal recargado, como lo vería al volver). */
       async function avisosDelComensal(): Promise<string[]> {
@@ -199,6 +210,26 @@ test.describe('el portal del comensal', () => {
         await expect.poll(async () => (await configuracionDelNegocio(page))[clave]).toBe(true);
         expect(await avisosDelComensal(), `con «${fila}» otra vez`).toEqual([...AVISOS]);
       }
+      // 3 · El mensaje borrado: el comensal ya no lo ve.
+      await page.goto('/configuracion?seccion=portal', { waitUntil: 'domcontentloaded' });
+      await escribirEnCampo(
+        page,
+        page.getByPlaceholder('Mensaje que verá el cliente al escanear su QR.'),
+        '',
+      );
+      const borrado = page.waitForResponse(
+        (r) => r.request().method() === 'POST' && r.url().includes('/api/datos/escribir'),
+      );
+      await toque(
+        page,
+        grupoConFila(page, 'Mostrar productos sin imagen')
+          .getByRole('button', { name: 'Guardar', exact: true })
+          .last(),
+      );
+      expect((await borrado).ok()).toBe(true);
+      await telefono.reload();
+      await expect(telefono.getByRole('button', { name: 'Atención' })).toBeVisible();
+      await expect(enElPortal('Bienvenidos a la barbacoa de Don Poncho')).toHaveCount(0);
     } finally {
       await aparatos.cerrar();
     }

@@ -132,7 +132,9 @@ export function CorteEnPdf({ sesionCajaId, descargarAlCerrar = true }: CorteEnPd
       await descargar(nodo.current, documento.nombreDeArchivo);
       setDescargado(true);
     } catch {
-      setFalloAlDescargar('El navegador no dejó generar el PDF. Vuelve a intentarlo con el botón.');
+      setFalloAlDescargar(
+        'La caja se cerró. No se pudo guardar el PDF: el navegador no dejó generarlo. Vuelve a intentarlo con el botón.',
+      );
     } finally {
       setDescargando(false);
     }

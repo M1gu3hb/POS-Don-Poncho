@@ -2558,11 +2558,16 @@
     },
     {
       "archivo": "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx",
-      "porque": "DP-D153 (Bloque 18): dentro de la app de Windows 1.0.2 el PDF del cierre se guarda solo en DocumentosPOS Don PonchoCortes en vez de descargarse; si no se puede guardar, un aviso dice por qué y el botón de siempre reintenta. En un navegador o con la app 1.0.1 llama a la misma descarga de antes y no cambia nada a la vista. Lo nuevo son tres avisos (guardado, fallo y la vía) y la etiqueta del botón de reintento, que dice «Guardar PDF en la carpeta» sólo dentro de la app.",
+      "porque": "DP-D153 (Bloque 18): dentro de la app de Windows 1.0.2 el PDF del cierre se guarda solo en DocumentosPOS Don PonchoCortes en vez de descargarse; si no se puede guardar, un aviso dice por qué y el botón de siempre reintenta. En un navegador o con la app 1.0.1 llama a la misma descarga de antes y no cambia nada a la vista. Lo nuevo son tres avisos (guardado, fallo y la vía) y la etiqueta del botón de reintento, que dice «Guardar PDF en la carpeta» sólo dentro de la app. DP-22 (tanda 2): el cierre nunca depende del PDF; cuando el PDF del corte falla, los tres avisos dicen primero que «La caja se cerró» y luego por qué no se pudo guardar el PDF, en vez de «No se pudo descargar automáticamente». Sólo cambia el texto de esos avisos.",
       "testigos": [
         "+ aviso:No se guardó el PDF en la carpeta. ${entrega.mensaje} Reintenta con el botón o desde Registros → Cortes.",
         "+ aviso:carpeta",
-        "+ aviso:PDF del corte guardado en tu carpeta de cortes"
+        "+ aviso:PDF del corte guardado en tu carpeta de cortes",
+        "- aviso:No se pudo cargar el corte para generar el PDF.",
+        "- aviso:No se pudo descargar automáticamente. Usa el botón.",
+        "+ aviso:La caja se cerró. No se pudo guardar el PDF: ${err?.message || 'no se pudo cargar el corte'}. Búscalo en Registros → Cortes.",
+        "+ aviso:La caja se cerró. No se pudo guardar el PDF: ${entrega.mensaje} Reintenta con el botón o desde Registros → Cortes.",
+        "+ aviso:La caja se cerró. No se pudo guardar el PDF: ${err?.message || 'el navegador no lo dejó generar'}. Usa el botón o búscalo en Registros → Cortes."
       ]
     },
     {

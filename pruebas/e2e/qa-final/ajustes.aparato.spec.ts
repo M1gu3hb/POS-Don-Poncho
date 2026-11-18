@@ -26,6 +26,10 @@ const FRASE_DE_EJEMPLO =
  * comandas— ya lo prueban `modo-espera.spec.ts`, `sonidos.spec.ts` y `tactil-barra.spec.ts`.
  */
 
+// La frase de ejemplo de la comanda, literal: la fija apps/web/src/voz/comanda-de-ejemplo.test.ts.
+const FRASE_DE_EJEMPLO =
+  'Nuevo pedido mesa 4: tres Consomés de carnero; dos Mixiotes, Sin picante; medio kilo de Barbacoa de horno.';
+
 const SLUG = 'prueba-restaurante';
 
 /** Una voz de mentira: lo que dice cada `speak()` queda en `window.__voz`. */
@@ -114,7 +118,11 @@ test.describe('Este aparato, con el dedo', () => {
       /** En el teléfono el botón del tema vive dentro del menú (cajón): se abre si hace falta. */
       const conElMenuAbierto = async (): Promise<void> => {
         const abrir = page.getByRole('button', { name: 'Abrir menú' });
-        if (await abrir.isVisible()) await toque(page, abrir);
+        const tema = page.getByRole('button', { name: /modo (oscuro|claro)/i }).first();
+        for (let vez = 0; vez < 3 && !(await tema.isVisible()); vez += 1) {
+          if (await abrir.isVisible()) await toque(page, abrir);
+          await page.waitForTimeout(700);
+        }
       };
       await conElMenuAbierto();
       const aOscuro = page.getByRole('button', { name: /modo oscuro/i }).first();
@@ -200,6 +208,12 @@ test.describe('Este aparato, con el dedo', () => {
       // Volver a «Automática» borra la voz elegida a mano.
       await toque(page, region.getByRole('radio', { name: /Automática/ }).first());
       await expect.poll(() => guardado(page, 'mh_voice_manual')).toBeNull();
+
+      // Y la velocidad de vuelta a la normal: se borra la clave y la voz suena a 1.
+      await velocidad.fill('1');
+      await expect.poll(() => guardado(page, 'mh_voice_rate')).toBeNull();
+      await toque(page, region.getByRole('button', { name: /Probar voz/ }));
+      await expect.poll(async () => (await dichas(page)).at(-1)?.rate).toBe(1);
     } finally {
       await page.evaluate(() => {
         window.localStorage.removeItem('mh_voice_rate');

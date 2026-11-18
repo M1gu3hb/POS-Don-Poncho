@@ -3377,3 +3377,12 @@ Lo falseaban el valor del inventario, el costo de cada receta, la merma y el mar
   Y `inventario.registrar_merma`, el traspaso y la devolución escriben el movimiento SIN costo (queda en
   su cero de omisión), así que esa merma sale a $0 en el kardex y en el corte; la que copia el costo es la
   de cancelación, el ajuste y el cobro.
+
+## DP-D166 · «Mostrar productos sin imagen» vale en los dos menús (DP-22, tanda 2)
+
+- **Decisión:** `portal_qr_mostrar_sin_imagen` gobierna el menú digital y el menú «A la carta»: apagada, los
+  platillos sin foto no salen en el portal en ninguno; encendida (o sin elegir, como la tiene Don Poncho), salen
+  todos y nada cambia. Una sola función (`productosSegunLaFoto`, `menu-digital.ts`) la aplica en los dos.
+- **Aclaración a DP-D164:** el acceso (sin sesión) sigue sin leer colores, nombre del sistema ni logos, a
+  propósito; el texto de efecto y la ayuda en pantalla ahora lo dicen (se aplican dentro, con sesión).
+- **Sin migración.**

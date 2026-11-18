@@ -9,7 +9,7 @@ import {
   exigirDemostracion,
 } from '../ayudantes/sesion.ts';
 
-import { guardarTarjeta, irASeccion, tarjeta } from './arnes/configuracion.ts';
+import { guardarTarjeta, irASeccion, tarjeta, traerAlDedo } from './arnes/configuracion.ts';
 import { expect, exigirServidor, test } from './arnes/prueba.ts';
 import { toque } from './arnes/toque.ts';
 import { VariosAparatos } from './arnes/varios-aparatos.ts';
@@ -42,10 +42,6 @@ test.describe('la operación', () => {
   }, info) => {
     test.setTimeout(6 * 60_000);
     test.skip(
-      aparato.id.startsWith('telefono-'),
-      'PENDIENTE en 360 px (informe DP-22): el PIN ya está puesto al abrir la pantalla del teléfono / el botón de cierre no cabe; no verificado ahí.',
-    );
-    test.skip(
       aparato.id.includes('-c99'),
       'El reloj de Playwright (`page.clock`) no corre en el Chromium 99 del iMin: se prueba en Windows y en el teléfono.',
     );
@@ -57,6 +53,15 @@ test.describe('la operación', () => {
       contextos.push(contexto);
       const pagina = await contexto.newPage();
       await entrar(pagina, personaDe(SLUG, 'dueno'));
+      // La marca de «PIN tecleado» se escribe al terminar de entrar: navegar antes (en un teléfono
+      // lento) deja la pantalla nueva sin ella y el candado la cerraría al abrir.
+      await expect
+        .poll(() =>
+          pagina.evaluate(() =>
+            Object.keys(window.sessionStorage).includes('morphiqpos.pin-de-esta-ejecucion'),
+          ),
+        )
+        .toBe(true);
       return pagina;
     }
     try {
@@ -69,6 +74,7 @@ test.describe('la operación', () => {
         const elegir = region.getByLabel(/Pedir el PIN al dueño, al administrador y al gerente/);
         await elegir.selectOption(minutos);
         const guardar = region.getByRole('button', { name: 'Guardar', exact: true });
+        await traerAlDedo(ajustes, guardar);
         const respuesta = ajustes.waitForResponse((r) =>
           r.url().includes('/api/configuracion/fijar-candado-de-mando'),
         );
@@ -84,7 +90,7 @@ test.describe('la operación', () => {
       }
 
       /** Una pantalla de la dueña con el reloj de Playwright y su configuración ya entregada. */
-      async function conReloj(): Promise<Page> {
+      async function conReloj(intento = 1): Promise<Page> {
         const pagina = await laDuenaEntra();
         const laConfiguracion = pagina.waitForResponse(
           (r) =>
@@ -92,6 +98,13 @@ test.describe('la operación', () => {
             (r.request().postData() ?? '').includes('ConfiguracionNegocio'),
         );
         await abrirConReloj(pagina, '/configuracion');
+        await pagina.waitForTimeout(2_000);
+        // Una entrada que nació ya con el candado cerrado (carrera de la entrada, no del candado que se
+        // prueba) se repite una vez; la segunda se exige.
+        if (intento === 1 && (await pinDe(pagina).count()) > 0) {
+          await pagina.context().close();
+          return conReloj(2);
+        }
         await expect(pinDe(pagina)).toHaveCount(0);
         // Con el reloj de mentira, la configuración llega por la red pero react-query la entrega con
         // sus propios temporizadores: se espera a la respuesta y se deja correr un segundo, para que
@@ -129,14 +142,6 @@ test.describe('la operación', () => {
     aparato,
   }, info) => {
     test.setTimeout(8 * 60_000);
-    test.skip(
-      aparato.id.includes('-c99'),
-      'HALLAZGO abierto (informe DP-22): en el Chromium 99 del iMin el diálogo «Cierre de caja diario» no se cierra tras «Cerrar caja del día»; sin diagnosticar.',
-    );
-    test.skip(
-      aparato.id.startsWith('telefono-'),
-      'PENDIENTE en 360 px (informe DP-22): el PIN ya está puesto al abrir la pantalla del teléfono / el botón de cierre no cabe; no verificado ahí.',
-    );
     const aparatos = new VariosAparatos(info, SLUG);
     try {
       const duena = await aparatos.abrir({
@@ -172,16 +177,16 @@ test.describe('la operación', () => {
       }
 
       /** Abre la caja y hace el cierre del día; devuelve el PDF si bajó alguno. */
-      async function cerrarElDia(): Promise<string | null> {
+      async function cerrarElDia(esperaDelPdfMs: number): Promise<string | null> {
         await abrirCajaPorLaRuta(page, 100_000);
         await page.goto('/caja', { waitUntil: 'domcontentloaded' });
-        await toque(page, page.getByRole('button', { name: /Cierre diario/ }));
+        await toque(page, page.getByRole('button', { name: /^Cierre/ }).first());
         const cierre = page.getByRole('dialog').filter({ hasText: 'Cierre de caja diario' });
         await expect(cierre).toBeVisible();
         await cierre.getByPlaceholder('0.00').nth(0).fill('1000.00');
         await cierre.getByPlaceholder('0.00').nth(1).fill('0');
         const descarga = page
-          .waitForEvent('download', { timeout: 20_000 })
+          .waitForEvent('download', { timeout: esperaDelPdfMs })
           .then((d) => d.suggestedFilename())
           .catch(() => null);
         await toque(page, cierre.getByRole('button', { name: 'Cerrar caja del día' }));
@@ -191,13 +196,73 @@ test.describe('la operación', () => {
 
       try {
         await fijarDescarga(false);
-        expect(await cerrarElDia(), 'con la casilla apagada no baja ningún PDF').toBeNull();
+        expect(await cerrarElDia(15_000), 'con la casilla apagada no baja ningún PDF').toBeNull();
 
         await fijarDescarga(true);
-        expect(await cerrarElDia()).toMatch(/^Corte_.+\.pdf$/);
+        expect(await cerrarElDia(90_000)).toMatch(/^Corte_.+\.pdf$/);
       } finally {
         await fijarDescarga(true);
       }
+    } finally {
+      await aparatos.cerrar();
+    }
+  });
+
+  test('el cierre del día NUNCA depende del PDF: si el PDF no se puede generar, la caja se cierra y el aviso lo dice', async ({
+    aparato,
+  }, info) => {
+    test.setTimeout(8 * 60_000);
+    const aparatos = new VariosAparatos(info, SLUG);
+    try {
+      const duena = await aparatos.abrir({
+        puesto: 'ajustes-operacion-pdf-roto',
+        aparato: aparato.id,
+        rol: 'dueno',
+        ruta: '/',
+      });
+      const page = duena.page;
+      await resetearLaDemo(page);
+      await escribir(page, '/api/datos/escribir', {
+        entidad: 'ConfiguracionNegocio',
+        operacion: 'update',
+        datos: { descargar_pdf_corte_auto: true },
+      });
+      // El motor no puede dibujar el PDF (como un Chromium al que le falta una API).
+      await page.context().addInitScript(() => {
+        HTMLCanvasElement.prototype.getContext = () => {
+          throw new Error('canvas roto (prueba)');
+        };
+      });
+      await abrirCajaPorLaRuta(page, 100_000);
+      await page.goto('/caja', { waitUntil: 'domcontentloaded' });
+      await toque(page, page.getByRole('button', { name: /^Cierre/ }).first());
+      const cierre = page.getByRole('dialog').filter({ hasText: 'Cierre de caja diario' });
+      await expect(cierre).toBeVisible();
+      await cierre.getByPlaceholder('0.00').nth(0).fill('1000.00');
+      await cierre.getByPlaceholder('0.00').nth(1).fill('0');
+      const descarga = page
+        .waitForEvent('download', { timeout: 8_000 })
+        .then(() => true)
+        .catch(() => false);
+      // El aviso dura unos segundos: se vigila desde antes de tocar.
+      const aviso = page
+        .getByText(/La caja se cerró. No se pudo guardar el PDF/)
+        .first()
+        .waitFor({ state: 'visible', timeout: 60_000 })
+        .then(() => true)
+        .catch(() => false);
+      await toque(page, cierre.getByRole('button', { name: 'Cerrar caja del día' }));
+      // El diálogo se cierra aunque el PDF falle...
+      await expect(cierre).toBeHidden({ timeout: 60_000 });
+      // ...la caja quedó cerrada en el servidor...
+      await expect
+        .poll(async () => (await escribir(page, '/api/caja/estado', {})).datos?.['abierta'], {
+          timeout: 20_000,
+        })
+        .toBe(false);
+      // ...no bajó ningún PDF y el aviso lo dice, sin error mudo.
+      expect(await descarga).toBe(false);
+      expect(await aviso, 'el aviso «La caja se cerró. No se pudo guardar el PDF…»').toBe(true);
     } finally {
       await aparatos.cerrar();
     }

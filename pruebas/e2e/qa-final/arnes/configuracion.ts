@@ -54,6 +54,9 @@ export async function guardarTarjeta(page: Page, region: Locator): Promise<void>
   const guardar = region.getByRole('button', { name: 'Guardar', exact: true });
   await expect(guardar).toBeVisible();
   if (!(await guardar.isEnabled())) return;
+  // El botón puede estar bajo el pliegue: se trae a la vista y se espera a que el desplazamiento
+  // termine, o el dedo cae donde el botón ya no está.
+  await traerAlDedo(page, guardar);
   const esLaEscritura = (r: Response): boolean =>
     r.request().method() === 'POST' &&
     r.url().includes('/api/') &&
@@ -74,4 +77,17 @@ export async function guardarTarjeta(page: Page, region: Locator): Promise<void>
   throw new Error(
     `«Guardar» no mandó nada al servidor después de dos toques. La tarjeta dice: ${lo}`,
   );
+}
+
+/** Baja el contenido con la rueda hasta que el blanco quede dentro de la pantalla, y espera a que se quede quieto. */
+export async function traerAlDedo(page: Page, blanco: Locator): Promise<void> {
+  for (let vuelta = 0; vuelta < 10; vuelta += 1) {
+    const caja = await blanco.boundingBox();
+    const alto = await page.evaluate(() => window.innerHeight);
+    if (caja !== null && caja.y >= 0 && caja.y + caja.height <= alto - 8) break;
+    await page.mouse.move((await page.evaluate(() => window.innerWidth)) / 2, 300);
+    await page.mouse.wheel(0, 250);
+    await page.waitForTimeout(250);
+  }
+  await page.waitForTimeout(500);
 }
