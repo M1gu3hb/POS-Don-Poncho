@@ -46,17 +46,26 @@ import {
   importeDelKardex,
   lineaDe,
 } from './ayudas-p5.ts';
+import { leerSql, ORGANIZACION } from '../arbitro/base.ts';
+import { LibroDeInventario } from './libro-de-inventario.ts';
+import { existenciaYCosto, pasoCompras, pasoConfiguracion } from './pasos-compras.ts';
+import { pasoDisponibilidad } from './pasos-disponibilidad.ts';
+import { leerRegistros, pasoCostos, pasoReportes, type Kpi } from './pasos-reportes.ts';
+import { pasoDevolver, pasoNegativo, pasoPortal, type Contexto } from './pasos-extra.ts';
 
 const entorno = leerEntorno();
 const salida = join(entorno.salida, 'parte5');
 const informe = abrirInforme(salida);
-const solo = (process.argv[process.argv.indexOf('--solo') + 1] ?? '')
+const indiceSolo = process.argv.indexOf('--solo');
+const solo = (indiceSolo === -1 ? '' : (process.argv[indiceSolo + 1] ?? ''))
   .split(',')
   .filter((x) => x !== '');
 const quiere = (paso: string): boolean => solo.length === 0 || solo.includes(paso);
 const mundo = mundoVacio();
 await leerCatalogo(mundo, entorno.baseUrl);
 const catalogo = mundo.catalogo;
+const libro = new LibroDeInventario();
+const dinero = { cobrado: 0, devuelto: 0 };
 
 interface Puestos {
   readonly mesero: Page;
@@ -74,6 +83,7 @@ async function compararConsumo(
   pagina: Page,
 ): Promise<void> {
   const esperado = esperadoPorVentas(lineas);
+  for (const [insumo, delta] of esperado) libro.mover(insumo, delta);
   const claves = [...new Set([...esperado.keys(), ...antes.keys()])].sort();
   const e = Object.fromEntries(claves.map((k) => [k, esperado.get(k) ?? 0]));
   const o = Object.fromEntries(claves.map((k) => [k, antes.get(k) ?? 0]));
@@ -117,6 +127,7 @@ async function ventaDeMesa(
     metodo: 'Efectivo',
     recibidoCentavos: total + 10_000,
   });
+  dinero.cobrado += cobrado.totalCentavos;
   informe.punto(
     paso,
     `total cobrado de la mesa ${String(mesa)} (centavos)`,
@@ -190,6 +201,7 @@ async function pasoLlevar(p: Puestos): Promise<void> {
     metodo: 'Efectivo',
     recibidoCentavos: total + 5_000,
   });
+  dinero.cobrado += cobrado.totalCentavos;
   informe.punto('llevar', 'total cobrado del para llevar (centavos)', total, cobrado.totalCentavos);
   const despues = await fotoDeExistencias(entorno.baseUrl);
   await compararConsumo(
@@ -207,8 +219,11 @@ async function tocarEnLaCocina(
   boton: 'Preparar' | 'Listo',
   mesa: number,
 ): Promise<void> {
+  // La mesa se reusa entre pasos: en la cocina quedan tarjetas viejas de «Mesa N» (ya cobradas, nunca
+  // marcadas). Se atienden TODAS las de esa mesa; así la de ahora también.
   const limite = Date.now() + 90_000;
   let primera = true;
+  let tocadas = 0;
   while (Date.now() < limite) {
     if (primera)
       await cocina
@@ -231,9 +246,13 @@ async function tocarEnLaCocina(
         );
         await botones.nth(i).click();
         if ((await r).status() !== 200) throw new Error(`transicionar-pedido rechazó «${boton}»`);
-        return;
+        tocadas += 1;
+        await cocina.waitForTimeout(800);
+        break;
       }
+      if (i === n - 1 && tocadas > 0) return;
     }
+    if (n === 0 && tocadas > 0) return;
     await cocina.waitForTimeout(2_000);
   }
   await captura(cocina, salida, `cocina-sin-${boton}-mesa-${String(mesa)}`);
@@ -279,6 +298,7 @@ async function pasoCancelar(p: Puestos): Promise<void> {
   const despues = await fotoDeExistencias(entorno.baseUrl);
   // El libro: 2 tacos preparados que se pierden = su receta completa sale como merma (no es una venta).
   const esperado = esperadoPorVentas([{ producto: 'Taco de prueba', cantidad: 2 }]);
+  for (const [insumo, delta] of esperado) libro.mover(insumo, delta);
   const real = cambio(antes, despues);
   informe.punto(
     'cancelar',
@@ -299,6 +319,7 @@ async function pasoCancelar(p: Puestos): Promise<void> {
 async function pasoInventario(p: Puestos): Promise<void> {
   const desde = await ahoraDeLaBase(entorno.baseUrl);
   const antes = await fotoDeExistencias(entorno.baseUrl);
+  const ajustesAntes = Math.abs(await importeDelKardex(entorno.baseUrl, 'ajuste', desde));
   await irAInventario(p.dueno, entorno.appUrl);
   // Merma de 2 kg de carne (a 18 ¢ el gramo: $7,200 los 40 kg del día 0).
   await ajustarStock(p.dueno, 'Carne de prueba', {
@@ -310,6 +331,7 @@ async function pasoInventario(p: Puestos): Promise<void> {
     motivo: 'Parte 5: merma de 2 kg',
   });
   const trasMerma = await fotoDeExistencias(entorno.baseUrl);
+  libro.mover('Carne de prueba', -2000);
   informe.punto(
     'inventario',
     'merma manual de 2 000 g de carne baja 2 000 g',
@@ -317,19 +339,18 @@ async function pasoInventario(p: Puestos): Promise<void> {
     Object.fromEntries(cambio(antes, trasMerma)),
     await captura(p.dueno, salida, 'inventario-merma'),
   );
-  // HALLAZGO: «Merma / producto perdido» de Inventario → Ajustar se anota como `ajuste` con motivo
-  // `ajuste_conteo`, no como `merma`: el corte (sólo mira `merma` y `salida_consumo_interno`) no la cuenta.
+  // DP-D171: «Merma / producto perdido» se anota como MERMA (sale en el corte), con su costo exacto.
   informe.punto(
     'inventario',
-    'la merma de la pantalla vale lo que cuesta en el kardex como ajuste (2 000 g × 18 ¢, centavos)',
+    'la merma de la pantalla queda como movimiento «merma» y vale 2 000 g × 18 ¢ (centavos)',
     36000,
-    Math.abs(await importeDelKardex(entorno.baseUrl, 'ajuste', desde)),
+    Math.abs(await importeDelKardex(entorno.baseUrl, 'merma', desde)),
   );
   informe.punto(
     'inventario',
-    'la merma de la pantalla queda como movimiento «merma» (el corte la cuenta) — importe en centavos',
-    36000,
-    Math.abs(await importeDelKardex(entorno.baseUrl, 'merma', desde)),
+    'esa merma NO queda como «ajuste» (los ajustes no cambian con la merma, centavos)',
+    ajustesAntes,
+    Math.abs(await importeDelKardex(entorno.baseUrl, 'ajuste', desde)),
   );
   // Conteo físico: el pan se cuenta en 70 piezas (corrección de conteo, stock final).
   await irAInventario(p.dueno, entorno.appUrl);
@@ -341,6 +362,7 @@ async function pasoInventario(p: Puestos): Promise<void> {
     motivo: 'Parte 5: conteo físico',
   });
   const trasConteo = await fotoDeExistencias(entorno.baseUrl);
+  libro.contar('Pan de prueba', 70);
   informe.punto(
     'inventario',
     'tras el conteo físico el pan queda en 70',
@@ -349,6 +371,19 @@ async function pasoInventario(p: Puestos): Promise<void> {
     await captura(p.dueno, salida, 'inventario-conteo'),
   );
 }
+
+const navegador = await abrirNavegador();
+const contexto: Contexto = {
+  entorno,
+  salida,
+  informe,
+  catalogo,
+  mesas: mundo.mesas,
+  navegador,
+  compararConsumo,
+  libro,
+  dinero,
+};
 
 const PASOS: readonly {
   readonly nombre: string;
@@ -359,10 +394,28 @@ const PASOS: readonly {
   { nombre: 'llevar', correr: pasoLlevar },
   { nombre: 'cancelar', correr: pasoCancelar },
   { nombre: 'inventario', correr: pasoInventario },
+  { nombre: 'portal', correr: (p) => pasoPortal(contexto, p) },
+  { nombre: 'devolver', correr: (p) => pasoDevolver(contexto, p) },
+  { nombre: 'negativo', correr: (p) => pasoNegativo(contexto, p) },
+  { nombre: 'configuracion', correr: (p) => pasoConfiguracion(contexto, p) },
+  { nombre: 'compras', correr: (p) => pasoCompras(contexto, p) },
+  { nombre: 'disponibilidad', correr: (p) => pasoDisponibilidad(contexto, p) },
+  { nombre: 'costos', correr: (p) => pasoCostos(contexto, p) },
+  {
+    nombre: 'reportes',
+    correr: (p) =>
+      pasoReportes(
+        contexto,
+        p,
+        registrosAntes ?? { ingresos: 0, compras: 0, utilidad: 0, margen: null },
+        dinero.cobrado,
+        dinero.devuelto,
+      ),
+  },
 ];
 
-const navegador = await abrirNavegador();
 let salidaDelProceso = 0;
+let registrosAntes: Kpi | undefined;
 try {
   const mesero = (await sesionDe(navegador, entorno, 'Mesero 1', 'android-412')).pagina;
   const caja = (await sesionDe(navegador, entorno, 'Caja', 'tableta-1024')).pagina;
@@ -373,6 +426,16 @@ try {
   ponerElDedo(caja);
   ponerElDedo(cocina);
   await cajaLista(caja);
+  // El punto de partida del libro: lo que hay en el almacén ANTES de operar (se lee una vez).
+  const todos = await leerSql<{ nombre: string }>(
+    entorno.baseUrl,
+    `select nombre from insumos where organizacion_id = ${ORGANIZACION} and activo`,
+  );
+  for (const { nombre } of todos) {
+    const base = await existenciaYCosto(contexto, nombre);
+    libro.fijar(nombre, base.existencia, base.dmc);
+  }
+  registrosAntes = await leerRegistros(contexto, dueno);
   for (const paso of PASOS) {
     if (!quiere(paso.nombre)) continue;
     try {

@@ -6,7 +6,7 @@
  *
  * Todo lo que sabe que hizo queda en el libro; lo que sale mal, en incidentes.
  */
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 
 import type { Bot, ContextoDelBot } from '../bot.ts';
 import type { NombreDeAparato } from '../aparatos.ts';
@@ -62,7 +62,8 @@ class Mesero {
   readonly cuentas: CuentaDelMesero[] = [];
   readonly ctx: ContextoDelBot;
   readonly cfg: ConfigDelMesero;
-  readonly pagina: Page;
+  /** Cambia si el aparato se apaga y vuelve (DP-22): el contexto nuevo trae otra página. */
+  pagina: Page;
   constructor(ctx: ContextoDelBot, cfg: ConfigDelMesero, pagina: Page) {
     this.ctx = ctx;
     this.cfg = cfg;
@@ -399,20 +400,87 @@ async function vuelta(ctx: ContextoDelBot, m: Mesero): Promise<void> {
   await m.cambiarUnaMesa(mesas);
 }
 
+/** Las cuentas que dejó un mesero dado de baja pasan a quien las adopte (se anotan en el mundo). */
+function entregarLasCuentas(ctx: ContextoDelBot, m: Mesero): void {
+  const dejadas = m.cuentas.splice(0);
+  for (const c of dejadas) ctx.mundo.cuentasSinMesero.push(c);
+  contar(ctx.mundo, 'cuentas_dejadas_por_un_mesero_dado_de_baja', dejadas.length);
+}
+
+/** Toma las cuentas sin mesero, si ya se abrió la adopción (la dueña pasó las mesas en pantalla). */
+function adoptarCuentas(ctx: ContextoDelBot, m: Mesero): void {
+  if (!ctx.mundo.adopcionAbierta) return;
+  while (ctx.mundo.cuentasSinMesero.length > 0) {
+    const c = ctx.mundo.cuentasSinMesero.shift() as CuentaDelMesero;
+    m.cuentas.push(c);
+    ctx.libro.anotar(m.cfg.persona, {
+      tipo: 'cambio_en_vivo',
+      que: 'cuenta adoptada',
+      antes: 'sin mesero',
+      despues: c.cuenta,
+    });
+    contar(ctx.mundo, 'cuentas_adoptadas');
+  }
+}
+
+/** DP-22 · El aparato se apaga (se cierra el contexto) y vuelve a encender a ese minuto del día; entra otra vez con su PIN. */
+async function apagarYVolver(
+  ctx: ContextoDelBot,
+  m: Mesero,
+  contexto: BrowserContext,
+  vuelveEn: number,
+): Promise<BrowserContext> {
+  await contexto.close();
+  while (!ctx.terminado() && minutoDelDia(ctx.ahoraSim()) < vuelveEn) await ctx.esperarSim(0.5);
+  const nuevo = await ctx.nuevoContexto(m.cfg.aparato);
+  nuevo.pagina.setDefaultTimeout(ESPERA_MS);
+  m.pagina = nuevo.pagina;
+  vigilarServidor(ctx, nuevo.pagina, () => 'Mesero');
+  await entrarOFallar(nuevo.pagina, ctx.entorno, m.cfg.persona);
+  contar(ctx.mundo, 'aparatos_que_se_apagaron_y_volvieron');
+  return nuevo.contexto;
+}
+
 export function crearMesero(cfg: ConfigDelMesero): Bot {
   return {
     nombre: cfg.persona,
     rol: 'mesero',
     aparato: cfg.aparato,
     async correr(ctx) {
-      const { contexto, pagina } = await ctx.nuevoContexto(cfg.aparato);
+      const abierto = await ctx.nuevoContexto(cfg.aparato);
+      let contexto = abierto.contexto;
+      const { pagina } = abierto;
       pagina.setDefaultTimeout(ESPERA_MS);
       const mesero = new Mesero(ctx, cfg, pagina);
       vigilarServidor(ctx, pagina, () => 'Mesero');
       try {
         await entrarOFallar(pagina, ctx.entorno, cfg.persona);
         while (!ctx.terminado()) {
+          if (ctx.mundo.meserosFuera.has(cfg.persona)) {
+            entregarLasCuentas(ctx, mesero);
+            break;
+          }
+          const vuelveEn = ctx.mundo.apagones.get(cfg.persona);
+          if (vuelveEn !== undefined) {
+            ctx.mundo.apagones.delete(cfg.persona);
+            contexto = await apagarYVolver(ctx, mesero, contexto, vuelveEn).catch(
+              async (error: unknown) => {
+                await ctx.incidente({
+                  pantalla: 'Mesero',
+                  hizo: 'Encender otra vez el aparato y entrar con el PIN',
+                  esperaba: 'El aparato vuelve y la persona entra',
+                  paso: String(error).slice(0, 300),
+                  reproducido: 'no intentado',
+                  gravedad: 'alto',
+                  clase: 'ux',
+                });
+                return contexto;
+              },
+            );
+          }
+          adoptarCuentas(ctx, mesero);
           await vuelta(ctx, mesero).catch(async (error: unknown) => {
+            const actual = mesero.pagina;
             await ctx.incidente(
               {
                 pantalla: 'Mesero',
@@ -424,9 +492,9 @@ export function crearMesero(cfg: ConfigDelMesero): Bot {
                 clase: 'prueba',
                 evidencia: { consola: [String(error).slice(0, 300)] },
               },
-              pagina,
+              actual,
             );
-            await recuperar(pagina, ctx.entorno.appUrl, '/mesero');
+            await recuperar(actual, ctx.entorno.appUrl, '/mesero');
           });
           await ctx.esperarSim(1);
         }

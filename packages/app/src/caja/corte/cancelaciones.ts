@@ -57,6 +57,8 @@ export interface Cancelacion {
   readonly perdidaCentavos: string;
   /** `true` si hay pérdida (`perdidaCentavos > 0`). */
   readonly perdida: boolean;
+  /** DP-D179 · Quién la autorizó con su PIN (gerente, administrador o dueño); nulo si no hizo falta. */
+  readonly autorizo: string | null;
 }
 
 /** Hasta dónde mirar: una sucursal (o todas, sin `sucursalId`) entre dos instantes. */
@@ -135,6 +137,34 @@ const perdidaDeLaLinea = sql`case
     else 0
   end`;
 
+/**
+ * DP-D179 · Quién AUTORIZÓ la cancelación (el PIN de un gerente o del dueño, cuando la cuenta ya estaba
+ * pedida o su precuenta impresa): vive en la auditoría del comando (`autorizadoPor`), no en la cuenta.
+ * Sin autorización (no hizo falta), nulo.
+ */
+const autorizoLaCuenta = sql`(
+    select ea.nombre
+      from auditoria au
+      join empleados_visibles ea on ea.id::text = au.payload ->> 'autorizadoPor'
+     where au.organizacion_id = o.organizacion_id
+       and au.entidad = 'orden'
+       and au.entidad_id = o.id
+       and au.accion = 'restaurante.cancelar_orden'
+     order by au.created_at desc
+     limit 1)`;
+
+const autorizoElPlatillo = sql`(
+    select ea.nombre
+      from auditoria au
+      join empleados_visibles ea on ea.id::text = au.payload ->> 'autorizadoPor'
+     where au.organizacion_id = o.organizacion_id
+       and au.entidad = 'orden'
+       and au.entidad_id = o.id
+       and au.accion = 'restaurante.anular_linea'
+       and au.payload ->> 'lineaId' = l.id::text
+     order by au.created_at desc
+     limit 1)`;
+
 const folio = sql`case when o.folio is null then null else o.serie || '-' || o.folio::text end`;
 /** La mesa; la de una PARTE de una cuenta dividida es la de su madre (las partes nacen sin mesa). */
 const mesa = sql`coalesce(m.nombre, 'Mesa ' || m.numero::text)`;
@@ -151,7 +181,8 @@ const deLaCuenta = sql`
            null::text                    as "producto",
            o.total_centavos::text        as "montoCentavos",
            ${mesa}                       as "mesa",
-           ${perdidaDeLaCuenta}::text    as "perdidaCentavos"
+           ${perdidaDeLaCuenta}::text    as "perdidaCentavos",
+           ${autorizoLaCuenta}           as "autorizo"
       from ordenes o
       left join empleados_visibles ev on ev.id = o.cancelada_por
       left join ordenes madre on madre.id = o.orden_padre_id
@@ -173,7 +204,8 @@ const delPlatillo = sql`
            l.producto_nombre,
            l.total_centavos::text,
            ${mesa},
-           (${perdidaDeLaLinea})::text
+           (${perdidaDeLaLinea})::text,
+           ${autorizoElPlatillo}
       from orden_lineas l
       join ordenes o on o.id = l.orden_id and o.organizacion_id = l.organizacion_id
       left join empleados_visibles ev on ev.id = l.empleado_anula_id

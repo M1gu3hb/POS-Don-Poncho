@@ -16,6 +16,7 @@ import { useState } from 'react';
 import type { CancelacionDelCorte } from './cancelaciones.ts';
 import { cancelacionesRegistradas } from './cancelaciones-leidas.ts';
 import { filtrarCancelaciones } from './filtrar-cancelaciones.ts';
+import { motivoDeLaCancelacion } from './motivo-de-la-cancelacion.ts';
 
 /**
  * REGISTROS · LAS CUENTAS CANCELADAS Y LOS PLATILLOS ANULADOS (DP-12.4).
@@ -54,7 +55,7 @@ const COLUMNAS: readonly ColumnaDeTabla<CancelacionDelCorte>[] = [
     celda: (c) => (c.tipo === 'orden' ? 'Cuenta completa' : (c.producto ?? 'Platillo')),
   },
   { clave: 'quien', titulo: 'Quién canceló', celda: (c) => c.usuario ?? '—' },
-  { clave: 'motivo', titulo: 'Motivo', celda: (c) => c.motivo ?? '—' },
+  { clave: 'motivo', titulo: 'Motivo', celda: (c) => motivoDeLaCancelacion(c) ?? '—' },
   {
     clave: 'importe',
     titulo: 'Importe',

@@ -59,9 +59,29 @@ export type NuevoIncidente = Omit<Incidente, 'id' | 'repeticion' | 'evidencia'> 
 /** Lo último que dijo la consola y la red de cada página (lo llena `vigilar`). */
 const recientes = new WeakMap<Page, { consola: string[]; red: string[] }>();
 
-export function vigilar(pagina: Page): void {
+/** Un hecho que la vigilancia vio en el navegador de algún bot (el árbitro de cada hora lo cuenta). */
+export interface HechoVigilado {
+  /** Reloj real (ms) en que ocurrió. */
+  readonly cuando: number;
+  /** Quién lo vio: «bot · aparato». */
+  readonly donde: string;
+  readonly tipo: 'consola' | '5xx' | 'red';
+  readonly texto: string;
+}
+
+const HECHOS: HechoVigilado[] = [];
+
+/** Todo error de consola, 5xx y petición caída que vieron los navegadores desde que arrancó el proceso. */
+export function hechosVigilados(): readonly HechoVigilado[] {
+  return HECHOS;
+}
+
+export function vigilar(pagina: Page, donde = 'sin nombre'): void {
   const r = { consola: [] as string[], red: [] as string[] };
   recientes.set(pagina, r);
+  const hecho = (tipo: HechoVigilado['tipo'], texto: string): void => {
+    HECHOS.push({ cuando: Date.now(), donde, tipo, texto: texto.slice(0, 300) });
+  };
   const guardar = (lista: string[], linea: string) => {
     lista.push(linea.slice(0, 500));
     if (lista.length > 40) lista.shift();
@@ -69,8 +89,17 @@ export function vigilar(pagina: Page): void {
   pagina.on('console', (m) => {
     if (m.type() === 'error' || m.type() === 'warning')
       guardar(r.consola, `${m.type()}: ${m.text()}`);
+    if (m.type() === 'error') hecho('consola', m.text());
+  });
+  pagina.on('pageerror', (error) => {
+    hecho('consola', `excepción de la página: ${error.message}`);
   });
   pagina.on('response', (resp) => {
+    if (resp.status() >= 500)
+      hecho(
+        '5xx',
+        `${String(resp.status())} ${resp.request().method()} ${new URL(resp.url()).pathname}`,
+      );
     if (resp.status() >= 400) {
       const cid = resp.headers()['x-correlation-id'] ?? '';
       guardar(
@@ -80,6 +109,10 @@ export function vigilar(pagina: Page): void {
     }
   });
   pagina.on('requestfailed', (req) => {
+    hecho(
+      'red',
+      `${req.method()} ${new URL(req.url()).pathname}: ${req.failure()?.errorText ?? ''}`,
+    );
     guardar(
       r.red,
       `FALLÓ ${req.method()} ${new URL(req.url()).pathname}: ${req.failure()?.errorText ?? ''}`,

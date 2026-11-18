@@ -5,6 +5,7 @@ import { Users, UtensilsCrossed, Loader2 } from 'lucide-react';
 import { useIsDark } from '@/lib/ThemeContext';
 import { MESA_STATUS_DARK } from '@/lib/darkPalettes';
 import { nombreDistintivoDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
+import { TiempoDeLaMesa } from '~/restaurante/TiempoDeLaMesa';
 
 /**
  * Grid de mesas para móvil. Reemplaza el canvas posicional.
@@ -179,6 +180,8 @@ export default function MesaGridMobile({
                 </span>
               );
             })()}
+            {/* DP-D177: cuánto lleva abierta la cuenta («35 min»). */}
+            <TiempoDeLaMesa mesa={mesa} forma="tarjeta" color={cfg.text} />
             {respNombre && (
               // Badge del mesero — premium con highlight superior + textshadow
               // para que se lea claro sobre cualquier color.

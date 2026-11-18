@@ -208,6 +208,8 @@ export interface HojaDelServidor {
     mesa: string | null;
     perdidaCentavos: string;
     perdida: boolean;
+    /** DP-D179 · Quién la autorizó con su PIN; nulo si no hizo falta (o un servidor viejo). */
+    autorizo?: string | null;
   }[];
   /**
    * DP-14.6 · TODAS las cancelaciones del corte, contadas y sumadas en SQL. La lista de arriba tiene

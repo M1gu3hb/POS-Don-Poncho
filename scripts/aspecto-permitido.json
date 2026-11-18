@@ -2824,6 +2824,34 @@
       "archivo": "apps/web/heredado/pages/Caja.jsx",
       "porque": "DP-22 (barrido de servicio): el botón de buscar por folio era sólo una lupa, sin nombre (axe crítico): dice «Buscar», y su campo «Código o folio». · «Caja abierta desde 17 nov, 06:06 · · por Rosa»: la sesión abierta aún no tiene folio y el texto dejaba dos puntos medios seguidos; el folio sólo se escribe si existe. · El método «Efectivo» elegido (texto verde sobre su tinte al 10 %) se leía a 4.4:1: el tinte baja al 5 %. · El pie del cobro: «Cancelar» y «Cobrar» (36 px) y «Descuento» (48 px, del sistema) quedaban de distinta altura; los dos del heredado llevan `min-h-[max(2.75rem,var(--altura-control))]`, el mismo piso por token del sistema.",
       "testigos": ["+ clase:h-auto", "+ clase:h-auto"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/caja/CierreDiarioDialog.jsx",
+      "porque": "DP-22 · DP-D178 (arqueo por billetes y monedas): bajo «Efectivo contado físicamente» va el botón «Contar por billetes y monedas» (de 44 px con el dedo), que abre once filas de piezas (ConteoPorDenominacion, del sistema); con el conteo, el campo de total pasa a sólo lectura y es la suma.",
+      "testigos": ["+ clase:mt-2", "+ clase:any-pointer-coarse:min-h-(--altura-tactil)"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/inventario/AjustarStockDialog.jsx",
+      "porque": "DP-22 · DP-D171 y DP-D173 (Inventario, Ajustar): con «Merma / producto perdido» elegido, una línea bajo «Tipo de ajuste» dice que se anota como merma y que sale en la merma del corte; y cuando la existencia ya estaba en negativo, otra línea dice que la merma se registra igual y que el conteo físico la corrige (antes el botón se quedaba apagado sin decir por qué). Nada se quita ni cambia de lugar.",
+      "testigos": [
+        "+ clase:text-muted-foreground",
+        "+ clase:text-advertencia",
+        "+ clase:mt-1",
+        "+ clase:text-[11px]",
+        "+ clase:text-[11px]",
+        "+ clase:pt-1",
+        "+ texto:La existencia ya estaba en negativo: la merma se registra y el conteo físico la corrige."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/recetas/RecetaFormDialog.jsx",
+      "porque": "DP-22 (hallazgo 36): los interruptores «Activo» y «Visible en POS» del editor de receta no tenían nombre accesible; un lector de pantalla decía «interruptor» y nada más. Sólo ganan su nombre: no cambia nada a la vista.",
+      "testigos": [
+        "+ label:Activo",
+        "+ label:Visible en POS",
+        "+ aria-label:Activo",
+        "+ aria-label:Visible en POS"
+      ]
     }
   ]
 }

@@ -3164,6 +3164,15 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         conversion: 'texto',
         respaldo: 'colorDePersona',
       },
+      // DP-D177 · Desde cuándo está abierta la cuenta de la mesa: el plano del mesero dice «35 min».
+      // Es la hora de la cuenta activa, no un campo de la mesa: una mesa libre no tiene cuenta y el
+      // `left join` devuelve nulo.
+      abierta_desde: {
+        tabla: 'ordenes',
+        porColumna: 'orden_activa_id',
+        columna: 'created_at',
+        conversion: 'fecha',
+      },
       atendido_por_nombre: {
         tabla: 'empleados_visibles',
         porColumna: 'empleado_atiende_id',

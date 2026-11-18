@@ -7,11 +7,15 @@ import { readFileSync } from 'node:fs';
 
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 
-import { opcionesDe, type NombreDeAparato } from './aparatos.ts';
+import { prepararContexto } from '../../pruebas/e2e/qa-final/arnes/ligero.ts';
+
+import { esDelArnes, opcionesDe, perfilDelArnes, type NombreDeAparato } from './aparatos.ts';
 import type { Bot, ContextoDelBot } from './bot.ts';
+import { ponerElDedo } from './dedo.ts';
 import type { Entorno } from './entorno.ts';
 import { vigilar, type Registro } from './incidentes.ts';
 import type { Libro } from './libro.ts';
+import type { Navegadores } from './navegadores.ts';
 import {
   guionDelNavegador,
   horaSimulada,
@@ -32,6 +36,12 @@ export interface BaseDelDia {
   readonly navegador: Browser;
   /** El día se acaba cuando esto devuelve `true` (19:00 simuladas o la orden de parar). */
   readonly terminado: () => boolean;
+  /** DP-22: un navegador por motor (Chrome 156, Chromium 99…). Sin esto, todos van en `navegador`. */
+  readonly navegadores?: Navegadores;
+  /** DP-22: el aparato que de verdad se usa cuando un bot pide uno de la semana (todo táctil). */
+  readonly sustitutos?: Readonly<Partial<Record<NombreDeAparato, NombreDeAparato>>>;
+  /** DP-22: todo «clic» de las pantallas es un TOQUE (`tap`), con el dedo y sin ratón. */
+  readonly conDedo?: boolean;
 }
 
 /** Lee los parámetros del reloj (el mismo archivo que lee el servidor), con un respiro de medio segundo. */
@@ -73,16 +83,21 @@ export function contextoPara(base: BaseDelDia, bot: Bot): ContextoDelBot {
     },
     terminado: base.terminado,
     async nuevoContexto(
-      aparato: NombreDeAparato,
+      pedido: NombreDeAparato,
     ): Promise<{ contexto: BrowserContext; pagina: Page }> {
-      const contexto = await base.navegador.newContext({
+      const aparato = base.sustitutos?.[pedido] ?? pedido;
+      const navegador =
+        base.navegadores === undefined ? base.navegador : await base.navegadores.de(aparato);
+      const contexto = await navegador.newContext({
         ...opcionesDe(aparato),
         baseURL: base.entorno.appUrl,
         acceptDownloads: true,
       });
+      if (esDelArnes(aparato)) await prepararContexto(contexto, perfilDelArnes(aparato));
       await contexto.addInitScript(guionDelNavegador(leerReloj()));
       const pagina = await contexto.newPage();
-      vigilar(pagina);
+      vigilar(pagina, `${bot.nombre} · ${aparato}`);
+      if (base.conDedo === true) ponerElDedo(pagina);
       return { contexto, pagina };
     },
     async incidente(i, pagina) {

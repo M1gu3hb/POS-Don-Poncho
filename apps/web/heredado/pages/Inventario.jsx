@@ -24,6 +24,8 @@ import {
 } from '@/components/ui/select';
 import { Link, useLocation } from '@/enrutado';
 import { puedeAjustarStock } from '~/inventario/ajuste-de-stock';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { puedeRegistrarCompras } from '@/components/configuracion/puestos';
 import { textoDelCostoPorUnidad } from '~/inventario/costo-por-unidad';
 import {
   ESTADO_POR_DEBAJO_DEL_MINIMO,
@@ -106,6 +108,9 @@ export default function Inventario() {
   // Ajustar lo puede tambien el almacen, como el servidor (D.1 de la 2.4): quien cuenta
   // el anaquel tiene que poder corregirlo.
   const puedeAjustar = puedeAjustarStock(posUser?.rol);
+  // DP-D181 · «Registrar compra» sólo se ofrece a quien el servidor deja registrarla (`compras.registrar`):
+  // el puesto REAL, y mientras no llega no se enseña (Compras hace lo mismo).
+  const registraCompras = puedeRegistrarCompras(usePuesto());
   const [search, setSearch] = useState('');
   // DP-22 · El aviso del Tablero lleva aquí con `?estado=alerta`: la lista ya viene filtrada.
   const { search: laUrl } = useLocation();
@@ -260,12 +265,14 @@ export default function Inventario() {
               <span className="hidden sm:inline">Registrar inventario existente</span>
               <span className="sm:hidden">Inv. inicial</span>
             </Button>
-            <Link to="/compras">
-              <Button size="sm" className="gap-1.5">
-                <ShoppingBag className="w-4 h-4" />
-                Registrar compra
-              </Button>
-            </Link>
+            {registraCompras && (
+              <Link to="/compras">
+                <Button size="sm" className="gap-1.5">
+                  <ShoppingBag className="w-4 h-4" />
+                  Registrar compra
+                </Button>
+              </Link>
+            )}
           </div>
         }
       />
@@ -367,11 +374,13 @@ export default function Inventario() {
               <Button onClick={() => setShowInvInicial(true)} variant="default" className="gap-1.5">
                 <PackagePlus className="w-4 h-4" /> Registrar inventario existente
               </Button>
-              <Link to="/compras">
-                <Button variant="outline" className="gap-1.5">
-                  <ShoppingBag className="w-4 h-4" /> Registrar compra
-                </Button>
-              </Link>
+              {registraCompras && (
+                <Link to="/compras">
+                  <Button variant="outline" className="gap-1.5">
+                    <ShoppingBag className="w-4 h-4" /> Registrar compra
+                  </Button>
+                </Link>
+              )}
             </div>
           }
         />

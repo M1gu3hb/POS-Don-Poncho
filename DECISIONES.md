@@ -3500,3 +3500,218 @@ guardar (hoy una configuración incompatible se ignora en silencio al cobrar).
   exploración sólo leía `aria-label`. Queda `interruptores-con-nombre.contrato.test.ts` para que no se
   pierda, con la lista de todos los interruptores de Configuración. Lo que SÍ es real y queda abierto: el
   interruptor mide 32×18 px (blanco táctil de 44 px incumplido, en la primitiva compartida `Switch`).
+
+## DP-D171 · DP-22 · «Merma / producto perdido» de Inventario → Ajustar graba una MERMA, con su motivo del catálogo · 17-11-2026
+
+Hallazgo A de la Parte 5. La pantalla mandaba la merma a `inventario.ajustar` con `ajuste_conteo` y el
+movimiento quedaba como `ajuste`: el corte (que sólo cuenta `merma` y `salida_consumo_interno`) y los
+reportes de merma no la veían. Ahora `inventario.ajustar` acepta `tipo: 'ajuste' | 'merma'` (por omisión
+`ajuste`, así que el conteo físico y lo ya escrito no cambian) y con `merma` graba un movimiento de MERMA
+(referencia `merma`, costo exacto al moverse, DP-D165) por el mismo camino de `registrar_merma`: sólo resta,
+y con la existencia ya en negativo se registra igual (DP-D116, DP-D146).
+- **El motivo.** La pantalla no lo captura; el catálogo no trae «perdido» ni «desperdicio» y no se inventan
+  claves: se usa `dañado` («Dañado en almacén», no imputable) y la pantalla lo dice bajo el selector: «Se
+  anota como merma «Dañado en almacén» y sale en la merma del corte». Lo que la persona escribe va en la nota.
+- **Lo ya escrito como ajuste no se reescribe** (es historia: las mermas de prueba del día 0 siguen como
+  `ajuste`).
+- **Pruebas.** Integración `merma-desde-ajustar.integracion.test.ts` (4: sale en la merma del corte con su
+  importe al centavo, 2 000 g × 3.4567 ¢ = 6 913 ¢; el conteo sigue siendo ajuste; sobre un negativo se
+  registra; una merma que suma se rechaza), fallaba antes (3 de 4). Unitarias en `ajuste-de-stock.test.ts`.
+  Mutantes muertos: sin leer el `tipo`, anotar `ajuste`, sin costo exacto, el diálogo sin `esMerma`, el
+  motivo del conteo; la mutación inocua pasa.
+
+## DP-D172 · DP-22 · La Caja se relee por `datos.regla`, no por `codigo` (corrige DP-D168) · 17-11-2026
+
+La prueba en el navegador (`total-que-cambio.ts`) mostró que el arreglo del hallazgo 12 nunca corría: el
+servidor contesta `codigo: 'REGLA_DE_NEGOCIO'` y la regla en `datos.regla`; `Caja.jsx` comparaba
+`err.codigo === 'TOTAL_DESACTUALIZADO'`, que no coincide jamás (el contrato leía el texto y pasaba). Con el
+cobro abierto, el mesero quita un platillo con el PIN del gerente y la cajera toca «Cobrar»: HTTP 422
+`TOTAL_DESACTUALIZADO` (o 409 `PROPINA_VIGENTE` si la caja ya había elegido la propina) y la pantalla se
+quedaba con el renglón quitado, el total viejo y lo tecleado. Ahora se relee con las dos reglas, leídas de
+`err.datos.regla`. Con el build nuevo: `H12-BIEN` (el total pasa de 315.00 a 140.00, lo tecleado se
+limpia y el segundo cobro cobra el total nuevo). El contrato exige además que NO vuelva a compararse
+`err.codigo`. Mutantes: el viejo `err.codigo`, sin la regla del total y la mutación inocua.
+
+## DP-D173 · DP-22 · La pantalla de Ajustar ya no frena una merma sobre una existencia que ya estaba en negativo · 17-11-2026
+
+DP-D116 deja que lo que pasó por cocina se cobre aunque el almacén diga que no había, y DP-D146 que la merma
+de ese insumo se registre igual. El servidor ya lo hacía, pero `AjustarStockDialog.jsx` frenaba CUALQUIER
+ajuste que dejara el stock en negativo («El ajuste dejaría el stock en negativo»). Ahora una merma
+(`tipoAjuste === 'merma'`) que resta sobre una existencia que ya es negativa se deja pasar y la pantalla lo
+dice («La existencia ya estaba en negativo: la merma se registra y el conteo físico la corrige»); lo demás se
+sigue frenando. Verificado en el navegador (pan: −2 → −3 → conteo en 10). Contrato en `ajuste-de-stock.test.ts`
+con dos mutantes (sin la excepción y la excepción a toda resta) y uno inocuo.
+
+## DP-D174 · DP-22 · Un platillo oculto del POS tampoco sale en el portal del comensal ni se puede pedir desde él · 17-11-2026
+
+Parte 5, «ocultar del portal». «Visible en POS» apagado (Recetas → Editar receta) ocultaba el platillo del
+POS (mesero y cajas), pero el portal sólo miraba `activo` y `visible_en_menu_digital`, una columna que NINGUNA
+pantalla cambia (sólo la toca archivar un platillo): el platillo oculto seguía en el menú del QR y un teléfono
+podía pedirlo. Se midió por pantallas (el Flan oculto: 0 fichas en la mesa y en Para llevar, 1 en el portal).
+Ahora el menú del portal (`payloadDelPortal`) y lo que el portal acepta pedir (`cargarProductosDelMenu`) piden
+también `visible_en_pos = true`. Es visibilidad, no dinero ni inventario. Integración
+`portal-oculto-del-pos.integracion.test.ts` (2, fallaban antes) con dos mutantes (sin el filtro en el menú y
+sin el filtro al pedir) y uno inocuo; en el navegador, con el build nuevo, el Flan oculto sale 0 veces en el
+portal, en la mesa y en Para llevar, y vuelve al mostrarlo. Además los dos interruptores del editor de la
+receta («Activo» y «Visible en POS») no traían nombre accesible: ahora sí, con contrato y mutantes.
+**Encontrado, no arreglado:** «Utilidad bruta» de Registros (Hoy) dice $774.20 con 72.4 % de margen, una base de
+$1,070.00 de $1,974.50 cobrados: no cuenta lo vendido POR PESO (barbacoa, costillar y arrachera, $904.50), que
+no trae costo de receta; el margen del reporte ignora lo vendido por kilo. Es una decisión de producto (¿el
+costo del kilo es el del insumo base?) y toca el margen de lo más caro del menú.
+
+## DP-D175 · DP-22 · El día de bots: un día completo con aparatos táctiles, caos programado y árbitro cada hora · 17-11-2026
+
+Perfil `dp22` del simulador (`qa/simulador/perfil-dp22.ts`, lanzador `correr-dp22.ts`). No cambia la app ni
+ninguna regla de dinero o de inventario: lo que no cuadre es un hallazgo, no un ajuste.
+
+- **Aparatos.** Los perfiles táctiles del arnés (`hasTouch`, sin ratón; `Locator.click` se vuelve `tap`):
+  Caja en Windows 1366×768 al 125 %, mesero en teléfono 360×800 y en tableta 800×1280, las cinco estaciones
+  de Cocina en el iMin (Chromium 99, modo ligero), comensales en teléfono 390×844 y dueña/gerente en Windows
+  1920×1080. Un navegador por motor (`navegadores.ts`); si falta un motor el informe lo dice.
+- **Volumen y reloj.** 64 grupos de mesa y ×4: con 2 y luego 3 meseros, no los 6 de la semana (a ×6 no
+  alcanzaban 130 grupos). La semilla manda; la hora pondera las llegadas (comida fuerte de 13:00 a 16:00).
+- **Caos con id** (`CAOS_DEL_DIA`): IVA de 16 % a 8 % y de vuelta; quién elige la propina; cupo y nombre
+  de las cajas; portal apagado con carritos; estación y categoría nuevas a las 11:00 y reasignar una
+  categoría a las 14:00; mover mesas en el editor con el dedo; un mesero nuevo; otro desactivado con mesas
+  abiertas (sus cuentas las adopta otro tras repartir las mesas); una tableta que se apaga; la gerente agota
+  un platillo y cambia un precio (que ahora regresa). El informe cuenta, por id, lo ejecutado, lo
+  rechazado, lo fallido y lo que quedó fuera de un ensayo.
+- **El árbitro de cada hora** (`arbitro/hora.ts`) sólo lee y mira un corte asentado (4 min simulados atrás)
+  que confirma con un segundo corte: sólo lo que persiste cuenta; lo transitorio se cuenta aparte. Compara
+  cobros al centavo, propinas por mesero, retiros y entradas, compras y gastos, inventario al gramo, su
+  valor con UN redondeo del costo exacto (`costo_exacto_dmc`, DP-D165), la existencia contra el kardex,
+  las comandas (ninguna perdida ni atorada), las invariantes, los 5xx y los errores de consola.
+- **Dos oráculos que estaban viejos y ya no:** el consumo de un producto por porción de contenedor es
+  750 ml ÷ 16 = 46.875 ml (no 45), y C02 se revisa con la tasa de CADA cuenta cuando el IVA cambia en el día
+  (la invariante general lee la tasa de ahora).
+- **Cómo repetirlo:** `bash D:/mpos-tmp/dp22/bots/dia-de-bots.sh repetir <semilla>` (ver el README del simulador).
+
+## DP-D176 · DP-22 · Lo que el primer ensayo del día de bots enseñó (del guion, y lo que queda por mirar) · 17-11-2026
+
+- **Del guion, ya arreglado:** la espera de 5 s de `expect` no alcanza con la máquina cargada (el cobro con
+  propina fallaba y el reintento veía una propina ya fijada); el doble toque ahora son dos toques;
+  «Cerrar» está dos veces en los diálogos heredados (`.first()`); el árbitro contaba filas de comanda y no
+  piezas, ni quitaba la presentación del nombre («· medio litro»).
+- **Para mirar (no se tapó):** «Cambiar de mesa» no se le ofrece al mesero que atiende la mesa (tres
+  veces en el ensayo); «Marcar entregado» y «Pedir cuenta» del mesero a veces no encuentran su botón en
+  45 s; los cobros tardan más de 3 s al abrir una cuenta pendiente (con la máquina cargada); un crítico
+  de «la pantalla dice $X» después de un intento de cobro abortado, que parece del guion (la propina ya la
+  había fijado la Caja). El día completo, con la máquina sola, es lo que lo confirma o lo descarta.
+- **Del clon, no de la app:** las fotos del molde apuntan al almacén de otra corrida (puerto 3230) y el CSP
+  las bloquea: el árbitro lo declara explicado.
+  pierda, con la lista de todos los interruptores de Configuración. El blanco táctil del
+  interruptor (32×18 px a la vista) SÍ está cubierto: con el dedo, `blancos-tactiles.css` le da un
+  pseudo-elemento de 44×44 px (medido en el navegador: un toque a 20 px del centro cae en el interruptor, a
+  30 px no); `qa/simulador/parte5/interruptores.ts` lo mide. No se cambió nada.
+
+## DP-D177 · DP-22 · Parte 7 · El plano del mesero dice cuánto lleva abierta cada mesa · 17-11-2026
+
+Comprobado en la app (teléfono 360×800 y tableta 800×1280): el plano del mesero NO decía nada del
+tiempo; el «tiempo de servicio» sólo existía dentro de la mesa. Se agrega, en chico: en la tesela de
+una mesa CON cuenta («35 min», «1 h 5 min», «< 1 min»), con su reloj y el nombre accesible «Abierta hace
+35 min». En el teléfono es un renglón de la tarjeta; en el plano de tableta y PC, una pastilla chica que
+cuelga bajo el borde de la mesa y no tapa nada (va dentro de la mesa-botón: tocarla abre la mesa). Una
+mesa libre, en limpieza, pagada o cancelada no lleva tiempo. La hora es la de la cuenta activa
+(`ordenes.created_at`), que el puente sirve ahora como `Mesa.abierta_desde` (derivado de sólo lectura, no
+público); el «ahora» es el reloj de la pantalla (`useAhora`, el mismo de la cocina): el servidor no manda
+su hora en las lecturas, y una tableta con la hora mal pondría minutos mal (se anota, no se inventa). No
+hay aviso sonoro ni regla nueva: «mesa sin atender» ya es el color y la palabra del estado («Esperando
+entrega», «Cuenta solicitada») más el tiempo. Archivos: `restaurante/tiempo-de-la-mesa.ts` (la cuenta,
+6 pruebas), `TiempoDeLaMesa.tsx`, `MesaGridMobile.jsx`, `MesaShape.jsx` y el derivado en `puente/mapa.ts`.
+Con el dedo: `qa-final/parte7-mesero.spec.ts` (9). Cambian de aspecto: el plano del mesero (tarjeta del
+teléfono y mesa del plano).
+
+## DP-D178 · DP-22 · Parte 7 · Buscar sin acentos y el arqueo por billetes y monedas · 17-11-2026
+
+- **Buscar un producto.** «limón» (con acento) no encontraba «Limonada»: el filtro del pedido sólo pasaba a
+  minúsculas. Ahora busca sin acentos ni mayúsculas (`restaurante/buscar-producto.ts`), en la mesa del
+  mesero y en el catálogo del pedido de la Caja. La prueba con el dedo (`parte7-mesero.spec.ts`, 8) falló
+  primero en la app.
+- **El arqueo por denominación.** El servidor ya recibía el conteo por billetes y monedas en el cierre
+  (`caja.cerrar`: `denominaciones`, que debe sumar el efectivo contado) y el papel ya lo imprime
+  («Conteo por denominación»), pero el diálogo de cierre sólo tenía un campo de total: nadie podía
+  capturarlo. Ahora «Contar por billetes y monedas» abre once filas (de $1,000 a 50 centavos) con «−»,
+  «+» de 44 px y las piezas tecleables; el total sale de las piezas, es el efectivo contado y viaja con
+  el conteo (no puede no sumar). No cambia ninguna regla de dinero: sin usarlo, el cierre es el de siempre. Con el teclado en pantalla, el campo de piezas que se toca se trae al centro (`scrollIntoView`): la primera prueba con el dedo lo encontró debajo del teclado.
+  `caja/conteo-por-denominacion.ts` (10 pruebas), `ConteoPorDenominacion.tsx`, `CierreDiarioDialog.jsx` y
+  `Caja.jsx`.
+
+## DP-D179 · DP-22 · Parte 7 · Quién autorizó una cancelación sale en el corte y en Registros; lo que no se construye · 17-11-2026
+
+- **Quién autorizó.** Con la cuenta pedida (o su precuenta impresa) cancelar o quitar un platillo lleva el
+  PIN de gerencia y la auditoría guardaba quién, pero el corte y Registros sólo decían quién canceló y por
+  qué. La lectura (`caja/corte/cancelaciones.ts`) trae ahora `autorizo` (de la auditoría, nulo si no
+  hizo falta) y el motivo lo dice así: «Se fueron sin pagar · Autorizó Beatriz»
+  (`corte/motivo-de-la-cancelacion.ts`), en la hoja del corte (la misma sección pinta el corte de la
+  Caja) y en la lista de Cancelaciones. Prueba contra Postgres:
+  `restaurante/cancelaciones-con-autorizacion.integracion.test.ts` (3).
+- **Comanda: «volver a mandar» no aplica.** La cocina es por pantalla y la comanda vive en el servidor: la
+  cocina recargada, o sin red un momento, la vuelve a ver, y la que se manda mientras no hay red llega al
+  volver (`parte7-agotado-y-papel.spec.ts`, 2). No hay comanda impresa que reimprimir.
+- **Nota por comensal: no se construye.** Con la nota por platillo («sin cebolla, para el niño») la cocina
+  la ve en ese platillo y no en otro (`parte7-mesero.spec.ts`, 10); un comensal es una nota en su platillo.
+- **Pasar un platillo de una cuenta a otra:** no se construye; el diseño y el tamaño están en el informe
+  de la Parte 7.
+
+## DP-D180 · DP-22 · El costo de lo que se vende por kilo o por porción sale de lo que baja del almacén × el costo exacto del insumo · 17-11-2026
+
+**Es una regla de dinero** (hallazgo 27, medio). En Registros, «Utilidad bruta» decía $774.20 con 72.4 % «sobre una base de $1,070» y dejaba fuera $904.50 de barbacoa, costillar y arrachera vendidos por kilo.
+
+- **La causa.** El renglón de una venta copia su costo de `productos.costo_unitario_centavos` al crearse
+  (`restaurante/lineas.ts`, `filaDeLinea`), y esa columna sólo la llena `recalcularCostosRecetas` para los
+  platillos con RECETA. Un platillo `estrategia_consumo = 'insumo_base'` (por medida o por porción de un
+  contenedor) baja su insumo base pero su costo se quedaba en cero: costo «desconocido» (DP-12.6/13.2), y
+  `estadoDelCostoDe` lo contaba «sin receta» y lo sacaba de la base del margen.
+- **Dónde se arregla.** Al COBRAR, en la transacción del cobro y antes de cotizar
+  (`venta/costo-por-medida.ts`, llamado desde `cobrar.ts`). El costo del renglón sale del MISMO cálculo que
+  el consumo: `planearConsumo` (la única que decide qué baja) para esa línea sola × `insumos.costo_exacto_dmc`
+  al momento de cobrar (DP-D165), `valorDeLaCantidad`: UN redondeo, a centavos, por renglón. Es el costo con
+  que el kardex valúa esa misma salida. No en el alta del renglón: ahí el costo del insumo aún puede cambiar
+  y el renglón puede quitarse o cancelarse; al cobrar es el que de verdad salió. No en `productos`: una foto
+  vieja por platillo no sabe cuántos gramos se vendieron.
+- **Qué se escribe.** `orden_lineas.utilidad_centavos` = total − costo (invariante de F1-04 §7.3, que lee el
+  corte y «Lo más vendido»); `costo_unitario_centavos` = el costo por unidad vendida (por kg, por copa),
+  redondeado UNA vez desde lo exacto (es lo que leen `costo × cantidad` y `estadoDelCostoDe`); y `cotizar`
+  recibe el costo exacto de esos renglones para que `ordenes.costo_total_centavos` sea su suma, sin pasar
+  por el redondeo por unidad. Con ello el resumen de Registros, el corte, «Lo más vendido» y el costo
+  «conocido / sin receta / receta incompleta» (`costo-conocido.ts`, sin tocarlo) cuentan lo mismo: un
+  platillo por kilo con insumo base y costo ya NO es «sin receta».
+- **Lo que NO cambia.** Lo que se cobra (`cotizar` sigue calculando el total igual) y lo que baja del
+  inventario (`planearConsumo`, sin tocar y llamada con su `soloLoHecho`). Los platillos con receta, `sku` y
+  presentación: no entran (la consulta es sólo de `insumo_base`) y sus números son los de siempre. Un insumo
+  base SIN costo no inventa uno: el renglón queda como estaba (desconocido, y se dice así).
+- **Lo ya cobrado con costo cero NO se reescribe** (es historia, como en DP-D165 y DP-D167): sólo las ventas
+  desde este cambio llevan el costo. Si quien dirige quiere el margen de lo anterior, es una decisión aparte.
+- **Dos límites a la vista.** (1) Dos renglones del mismo insumo en una cuenta redondean cada uno su costo
+  (dos redondeos, ≤ 1 ¢ de diferencia con el kardex, que suma las salidas del insumo y redondea una vez).
+  (2) `costo_unitario_centavos` es entero por unidad vendida: un reporte que lo multiplique por la cantidad
+  (`reportes/piezas.ts`) puede diferir centavos del costo guardado de la cuenta; el corte y Registros usan lo
+  exacto.
+- **No cubierto:** la remisión de crédito de ferretería (`ferreteria/credito.ts`) y la merma por cancelación
+  usan `planearConsumo` pero no el cobro; sus renglones `insumo_base` siguen su camino anterior.
+- **Pruebas.** `venta/costo-por-medida.integracion.test.ts` (7, contra Postgres): ½ kg y 0.35 kg de un insumo a
+  34.567 ¢/g cuestan 17 284 y 12 098 ¢ (con centavos enteros serían 17 500 y 12 250); 3 copas de 750 ml ÷ 16 =
+  46.875 ml a 2.7345 ¢/ml cuestan 385 ¢ (384 redondeando por copa, 422 con centavos). Mutantes muertos: costo
+  en cero, costo con centavos redondeados, redondeo por pieza; mutación inocua (orden explícito) que pasa.
+- **Sin migración.**
+
+## DP-D181 · DP-22 · «Registrar compra» desde Inventario sólo se ofrece a quien puede registrarla · 17-11-2026
+
+Hallazgo 28 (bajo). Inventario pintaba «Registrar compra» (el encabezado y la pantalla vacía) a cualquiera que
+entrara, sin mirar el puesto, y lo mandaba a Compras.
+
+- **Qué se encontró.** El permiso NO se toca: `compras.registrar` lo tienen dueño, administrador, gerente y
+  ALMACÉN (A5: el almacén recibe la mercancía; el efectivo del cajón no, DP-D115), y `puestos.js`
+  (`puedeRegistrarCompras`) es su espejo, atado a la matriz por `compras-del-almacen.contrato.test.ts`. Con el
+  almacén ya dentro de los que registran, el botón del almacén SÍ lleva a algo (la captura de bot lo muestra: la
+  tarjeta «Registrar compra» de Compras). Lo que el bot leyó fue el aviso «las compras y los gastos los registra
+  la gerencia»: Compras lo pintaba mientras la plantilla aún no llegaba (`usePuesto()` es `null` hasta entonces)
+  y lo sigue pintando para quien de verdad no registra.
+- **Qué cambió.** (1) Inventario pinta el botón sólo si `puedeRegistrarCompras(usePuesto())`, en sus dos
+  sitios; sin puesto leído no se enseña (como en Compras). (2) Compras no dice «lo registra la gerencia» mientras
+  no sabe el puesto (`puesto !== null`). Ni clases, ni textos, ni iconos nuevos: sólo cuándo se pinta.
+- **Contrato.** `apps/web/src/inventario/registrar-compra-desde-inventario.contrato.test.ts` lee Inventario y
+  Compras SIN comentarios y afirma sobre el trozo que pinta cada enlace a Compras (dos, cada uno detrás de
+  `registraCompras &&`). Mutantes muertos: un botón sin guarda, la guarda comentada, Compras sin la comprobación
+  del puesto; inocua (un comentario) que pasa.
+- **Sin migración.**

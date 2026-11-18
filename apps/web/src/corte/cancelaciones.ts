@@ -8,6 +8,7 @@ import {
   type HojaDelServidor,
   type Seccion,
 } from './hoja.ts';
+import { motivoDeLaCancelacion } from './motivo-de-la-cancelacion.ts';
 
 /**
  * LAS CANCELACIONES del corte (DP-12.4): las que no costaron comida, y APARTE, resaltadas, las que
@@ -68,7 +69,7 @@ const filaDe = (parte: Parte, enLaPerdida: boolean) => [
   hora(parte.c.hora),
   texto(queDe(parte, enLaPerdida)),
   texto(parte.c.usuario),
-  texto(parte.c.motivo),
+  texto(motivoDeLaCancelacion(parte.c)),
   dinero(parte.centavos),
 ];
 

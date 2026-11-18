@@ -33,7 +33,7 @@ import {
 } from '@/utils/unidadesMedida';
 import StockMinCritInput from '@/components/inventario/StockMinCritInput';
 import { obtenerAlmacenPrincipalId, textoDecimal } from '@/components/inventario/comandos';
-import { cuerpoDelAjuste } from '~/inventario/ajuste-de-stock';
+import { cuerpoDelAjuste, ETIQUETA_DE_LA_MERMA } from '~/inventario/ajuste-de-stock';
 
 /**
  * AjustarStockDialog
@@ -147,7 +147,11 @@ export default function AjustarStockDialog({ open, onClose, ingrediente }) {
     }
   }
 
-  const stockQuedariaNegativo = stockNuevo < 0;
+  // DP-D173: una merma sobre una existencia que YA está en negativo se registra (DP-D116: lo que pasó
+  // por cocina se cobró aunque el almacén dijera que no había; DP-D146: la merma se registra igual y el
+  // conteo corrige). Sólo se frena lo que dejaría en negativo un stock que no lo estaba.
+  const esMermaSobreNegativo = tipoAjuste === 'merma' && cambio < 0 && stockActual < 0;
+  const stockQuedariaNegativo = stockNuevo < 0 && !esMermaSobreNegativo;
   const stockNoCambia = cantValida && cambio === 0;
 
   const close = () => {
@@ -262,6 +266,8 @@ export default function AjustarStockDialog({ open, onClose, ingrediente }) {
           cantidad: textoDecimal(cambio),
           tipoLegible,
           texto: motivo,
+          // DP-D171: lo perdido se anota como MERMA (sale en el corte y en los reportes).
+          esMerma: tipoAjuste === 'merma',
         }),
         claveDelDialogo.current,
       );
@@ -341,6 +347,11 @@ export default function AjustarStockDialog({ open, onClose, ingrediente }) {
               <SelectItem value="otro">Otro</SelectItem>
             </SelectContent>
           </Select>
+          {tipoAjuste === 'merma' && (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Se anota como merma «{ETIQUETA_DE_LA_MERMA}» y sale en la merma del corte.
+            </p>
+          )}
         </div>
 
         {/* Método de ajuste */}
@@ -499,6 +510,12 @@ export default function AjustarStockDialog({ open, onClose, ingrediente }) {
                   {stockNuevo.toLocaleString()} {unidadBase}
                 </strong>
               </div>
+              {esMermaSobreNegativo && (
+                <p className="text-[11px] text-advertencia pt-1">
+                  La existencia ya estaba en negativo: la merma se registra y el conteo físico la
+                  corrige.
+                </p>
+              )}
               {stockQuedariaNegativo && (
                 <p className="text-[11px] text-peligro pt-1">
                   ⚠ El ajuste dejaría el stock en negativo. No se permite.

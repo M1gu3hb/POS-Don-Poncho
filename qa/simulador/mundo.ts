@@ -116,6 +116,16 @@ export interface Mundo {
   portal: Map<number, GrupoDePortal>;
   /** Contadores del día por tipo, para el volumen del informe. */
   volumen: Map<string, number>;
+  /** DP-22 · Los meseros que dejaron el turno (dados de baja con mesas abiertas): ya no operan. */
+  meserosFuera: Set<string>;
+  /**
+   * DP-22 · Las cuentas que dejó abiertas un mesero dado de baja (cada una es la `CuentaDelMesero` de
+   * su bot). Otro mesero las adopta cuando `adopcionAbierta` (después de pasarle las mesas en pantalla).
+   */
+  cuentasSinMesero: unknown[];
+  adopcionAbierta: boolean;
+  /** DP-22 · Aparatos que se apagan: persona → minuto del día en que el aparato vuelve a encender. */
+  apagones: Map<string, number>;
 }
 
 export function mundoVacio(): Mundo {
@@ -130,6 +140,10 @@ export function mundoVacio(): Mundo {
     cambiosDePrecio: new Map(),
     portal: new Map(),
     volumen: new Map(),
+    meserosFuera: new Set(),
+    cuentasSinMesero: [],
+    adopcionAbierta: false,
+    apagones: new Map(),
   };
 }
 

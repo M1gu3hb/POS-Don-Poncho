@@ -49,6 +49,8 @@ export interface PlanDeGerente {
     readonly enMinuto: number;
     readonly antesPesos: number;
     readonly despuesPesos: number;
+    /** DP-22: el precio vuelve a su valor de antes a este minuto (lo ya pedido conserva el suyo). */
+    readonly vuelveEnMinuto?: number;
   };
   readonly modoDelMenu?: { readonly enMinuto: number; readonly vuelveEnMinuto: number };
 }
@@ -220,6 +222,33 @@ async function jornada(ctx: ContextoDelBot, bot: Bot, plan: PlanDeGerente): Prom
         },
         `cambiar el precio de ${p.producto}`,
       );
+      if (p.vuelveEnMinuto !== undefined) {
+        await paso(
+          'precio-vuelve',
+          p.vuelveEnMinuto,
+          minutos,
+          async () => {
+            await cambiarPrecio(pagina, url, p.producto, p.antesPesos);
+            const id = ctx.mundo.catalogo.find((c) => c.nombre === p.producto)?.id ?? p.producto;
+            const antes = Math.round(p.antesPesos * 100);
+            ctx.mundo.cambiosDePrecio.set(id, {
+              antes: Math.round(p.despuesPesos * 100),
+              despues: antes,
+              horaSim: ctx.ahoraSim().getTime(),
+            });
+            ctx.mundo.catalogo = ctx.mundo.catalogo.map((c) =>
+              c.id === id ? { ...c, precioCentavos: antes } : c,
+            );
+            ctx.libro.anotar(bot.nombre, {
+              tipo: 'cambio_en_vivo',
+              que: `precio: ${p.producto}`,
+              antes: String(p.despuesPesos),
+              despues: String(p.antesPesos),
+            });
+          },
+          `devolver el precio de ${p.producto} a ${String(p.antesPesos)}`,
+        );
+      }
     }
     const o = plan.opciones;
     if (o !== undefined) {

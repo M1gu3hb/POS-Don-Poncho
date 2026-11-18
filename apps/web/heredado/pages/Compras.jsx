@@ -100,7 +100,8 @@ export default function Compras() {
         actions={<BotonComoFunciona />}
       />
 
-      {!registra && (
+      {/* Sin puesto todavía (la plantilla aún no llega) no se dice quién registra: sería afirmar algo falso. */}
+      {!registra && puesto !== null && (
         <p className="text-sm text-muted-foreground">
           {registraCompras
             ? 'Los gastos los registra la gerencia. Aquí registras las compras y ves las recientes.'

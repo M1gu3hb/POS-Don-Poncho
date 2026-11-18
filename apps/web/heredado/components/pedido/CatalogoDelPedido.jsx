@@ -4,6 +4,7 @@ import { ChefHat, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import PrecioProductoMesero, { VariableBadge } from '@/components/mesero/PrecioProductoMesero';
 import { tieneGrupos } from './useArmadoDelPedido';
+import { coincideConLaBusqueda } from '~/restaurante/buscar-producto';
 
 /**
  * DP-16 · EL MENÚ PARA TOMAR UN PEDIDO: búsqueda, categorías y platillos, como en la mesa del
@@ -24,8 +25,8 @@ export default function CatalogoDelPedido({
   const filtrados = useMemo(() => {
     let l = lista;
     if (categoria !== 'todas') l = l.filter((p) => p?.categoria_id === categoria);
-    const q = busqueda.trim().toLowerCase();
-    if (q) l = l.filter((p) => (p?.nombre || '').toLowerCase().includes(q));
+    // DP-D178 · Con acentos o sin ellos, encuentra igual.
+    if (busqueda.trim()) l = l.filter((p) => coincideConLaBusqueda(p?.nombre, busqueda));
     return l;
   }, [lista, categoria, busqueda]);
 

@@ -244,7 +244,7 @@ export async function vaciarCarrito(pagina: Page): Promise<number> {
   // En el teléfono la hoja del carrito queda abierta y vacía; su velo tapa la mesa: un toque fuera.
   const hojaVacia = pagina.getByText('Aún no agregas productos').filter({ visible: true });
   if ((await hojaVacia.count()) > 0) {
-    await pagina.mouse.click(8, 8);
+    await pagina.touchscreen.tap(8, 8);
     await hojaVacia.waitFor({ state: 'hidden', timeout: ESPERA_MS });
   }
   if (await hayAlgoEnElCarrito(pagina)) throw new Error('El carrito no quedó vacío.');
