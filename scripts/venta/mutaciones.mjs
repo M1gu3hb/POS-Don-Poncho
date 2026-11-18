@@ -39,7 +39,8 @@ export const contraContratos = [
     ruta: COBRAR,
     contrato: 'cotiza_dentro_de_la_transaccion',
     antes: 'cotizar(ctx.tx, organizacionId, entrada.ordenId, undefined, costosPorMedida)',
-    despues: 'cotizar(await obtenerDb(), organizacionId, entrada.ordenId, undefined, costosPorMedida)',
+    despues:
+      'cotizar(await obtenerDb(), organizacionId, entrada.ordenId, undefined, costosPorMedida)',
   },
   {
     nombre: 'cobrar sin comprobar que el total sigue vigente',

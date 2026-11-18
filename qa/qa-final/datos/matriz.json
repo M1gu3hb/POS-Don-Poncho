@@ -1,5 +1,5 @@
 {
-  "commit": "72b5997",
+  "commit": "fd39a42",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -529,7 +529,7 @@
           "titulo": null
         }
       ],
-      "lineas": 4648,
+      "lineas": 4649,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -822,6 +822,8 @@
         "apps/web/heredado/components/common/PageHeader.jsx",
         "apps/web/heredado/components/common/RestrictedRoute.jsx",
         "apps/web/heredado/components/common/StatusBadge.jsx",
+        "apps/web/heredado/components/configuracion/puestos.js",
+        "apps/web/heredado/components/configuracion/usePuesto.js",
         "apps/web/heredado/components/inventario/AjustarStockDialog.jsx",
         "apps/web/heredado/components/inventario/EsqueletoDeInventario.jsx",
         "apps/web/heredado/components/inventario/IngredienteContenedorDialog.jsx",
@@ -887,7 +889,7 @@
           "titulo": null
         }
       ],
-      "lineas": 5151,
+      "lineas": 5289,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -3626,8 +3628,8 @@
         "lectores": [
           "apps/web/src/registros/describir-accion.ts:237",
           "packages/app/src/negocio-de-prueba/resetear.ts:58",
-          "packages/app/src/venta/cotizar.ts:96",
-          "packages/app/src/venta/cotizar.ts:107",
+          "packages/app/src/venta/cotizar.ts:113",
+          "packages/app/src/venta/cotizar.ts:124",
           "packages/domain/src/venta/totales.ts:61",
           "packages/domain/src/venta/totales.ts:63",
           "packages/domain/src/venta/totales.ts:66",
@@ -8745,6 +8747,7 @@
         "/cocina",
         "/compras",
         "/configuracion",
+        "/inventario",
         "/mesero",
         "/portal-qr",
         "/productos",
