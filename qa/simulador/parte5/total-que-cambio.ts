@@ -16,7 +16,6 @@ import {
   abrirMesa,
   agregarLinea,
   alMapa,
-  entrarALaMesa,
   enviarACocina,
   mesasEnPantalla,
 } from '../bots/mesero-ui.ts';
@@ -49,7 +48,7 @@ if (primero === undefined || segundo === undefined)
   throw new Error('El catálogo no trae dos platillos sencillos.');
 
 const navegador = await abrirNavegador();
-let codigoDeSalida = 0;
+let codigoDeSalida: number;
 let paginaDeLaCaja: import('@playwright/test').Page | undefined;
 let paginaDelMesero: import('@playwright/test').Page | undefined;
 try {

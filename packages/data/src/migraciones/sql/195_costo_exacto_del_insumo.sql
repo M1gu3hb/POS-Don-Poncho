@@ -80,13 +80,25 @@ comment on column valuacion_lineas.costo_exacto_dmc is
   'DP-D165 · El costo por unidad base con el que se valuó el renglón, en diezmilésimas de centavo. valor_centavos = cantidad × este costo, redondeado una vez.';
 
 -- ── El relleno de lo que ya existe ─────────────────────────────────────────────────────────────────────────
+-- `movimientos_stock` se rellena PRIMERO y SIN `update`: reescribiendo la columna. En una base NUEVA todas las
+-- migraciones corren en una sola transacción, y ahí viven las filas de demostración de la 042 y la 043, con un motivo
+-- escrito a mano («Carga inicial de demostración») que la llave `movimientos_stock_motivo_conocido` (062, `not valid` a
+-- propósito) no conoce. Un `update` sobre una fila insertada en la MISMA transacción vuelve a comprobar esa llave aunque
+-- no toque `motivo`, y la migración entera fallaba (así lo cazó la CI). `alter column … type … using` reescribe la
+-- tabla sin disparar esa comprobación y deja cada fila con centavos × 10 000. En una base que ya existía hace lo mismo.
+alter table movimientos_stock
+  alter column costo_exacto_dmc type bigint using (costo_unitario_centavos * 10000);
+
+-- El `update` de `movimientos_stock` que sigue ya no encuentra nada que cambiar (por eso lleva su `<>`): se queda como
+-- segundo cerrojo y porque la prueba del relleno lo corre sobre filas preparadas a mano.
 -- ▼ RELLENO ▼  (la prueba de la migración extrae y corre este tramo; que nadie lo mueva de lugar)
 update insumos
    set costo_exacto_dmc = costo_unitario_centavos * 10000
  where costo_unitario_centavos > 0;
 update movimientos_stock
    set costo_exacto_dmc = costo_unitario_centavos * 10000
- where costo_unitario_centavos > 0;
+ where costo_unitario_centavos > 0
+   and costo_exacto_dmc <> costo_unitario_centavos * 10000;
 update valuacion_lineas
    set costo_exacto_dmc = costo_unitario_centavos * 10000
  where costo_unitario_centavos > 0;

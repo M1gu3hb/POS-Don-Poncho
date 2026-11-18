@@ -14,7 +14,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { aparatoPorId } from '../../../pruebas/e2e/qa-final/arnes/aparatos.ts';
 import { toque } from '../../../pruebas/e2e/qa-final/arnes/toque.ts';
-import { dialogoCon, elegir } from '../pantallas/comun.ts';
+import { dialogoCon } from '../pantallas/comun.ts';
 import { leerEntorno } from '../entorno.ts';
 import { abrirNavegador, entrarConDespertador } from '../sesion.ts';
 
@@ -30,7 +30,6 @@ async function tocar(pagina: Page, destino: Locator): Promise<void> {
 async function probarDesplegable(
   pagina: Page,
   perfil: string,
-  dialogo: Locator,
   combo: Locator,
   etiqueta: string,
 ): Promise<void> {
@@ -60,7 +59,7 @@ async function probarDesplegable(
     await pagina.waitForTimeout(400);
     if (await pagina.getByRole('listbox').isVisible())
       throw new Error('el toque no eligió: la lista sigue abierta');
-    const valor = ((await combo.innerText()) ?? '').trim().replace(/\s+/g, ' ');
+    const valor = (await combo.innerText()).trim().replace(/\s+/g, ' ');
     if (!valor.includes(texto.slice(0, 12)))
       throw new Error(`eligió «${valor}» y se pidió «${texto}»`);
     process.stdout.write(
@@ -75,7 +74,6 @@ async function probarDesplegable(
     });
     await pagina.keyboard.press('Escape');
   }
-  void dialogo;
 }
 
 const navegador = await abrirNavegador();
@@ -103,20 +101,8 @@ try {
     let dialogo = dialogoCon(pagina, 'Nueva receta');
     await dialogo.getByPlaceholder(/^Ej: /).fill('Prueba trece');
     const seccion = dialogo.locator('section').filter({ hasText: 'Tipo de venta' }).last();
-    await probarDesplegable(
-      pagina,
-      id,
-      dialogo,
-      dialogo.getByRole('combobox').first(),
-      'categoría',
-    );
-    await probarDesplegable(
-      pagina,
-      id,
-      dialogo,
-      seccion.getByRole('combobox').first(),
-      'tipo de venta',
-    );
+    await probarDesplegable(pagina, id, dialogo.getByRole('combobox').first(), 'categoría');
+    await probarDesplegable(pagina, id, seccion.getByRole('combobox').first(), 'tipo de venta');
     // Con «Variable por medida» salen más desplegables: se prueban todos.
     const combos = seccion.getByRole('combobox');
     const cuantos = await combos.count();
@@ -124,11 +110,9 @@ try {
       await probarDesplegable(
         pagina,
         id,
-        dialogo,
         combos.nth(i),
         `tipo de venta, desplegable ${String(i + 1)}`,
       );
-    void elegir;
     await pagina.keyboard.press('Escape');
 
     // 2 · Compras → Registrar compra → «Nuevo» (el alta de un insumo) y sus desplegables
@@ -145,7 +129,6 @@ try {
       await probarDesplegable(
         pagina,
         id,
-        dialogo,
         combosInsumo.nth(i),
         `nuevo insumo, desplegable ${String(i + 1)}`,
       );

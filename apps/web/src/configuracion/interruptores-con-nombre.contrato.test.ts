@@ -52,7 +52,7 @@ describe('los interruptores de Configuración tienen nombre accesible', () => {
   it.each(todos.map((t, i) => [`${t.archivo} #${String(i)}`, t] as const))(
     '%s trae aria-label, aria-labelledby o un id con su label',
     (_nombre, t) => {
-      const conEtiqueta = /aria-label=/.test(t.propiedades);
+      const conEtiqueta = t.propiedades.includes('aria-label=');
       const conReferencia = /aria-labelledby=\{?([A-Za-z_]\w*)\}?/.exec(t.propiedades);
       const conId = /\bid=\{([A-Za-z_]\w*)\}/.exec(t.propiedades);
       expect(conEtiqueta || conReferencia !== null || conId !== null).toBe(true);

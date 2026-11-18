@@ -45,7 +45,6 @@ import {
   fotoDeExistencias,
   importeDelKardex,
   lineaDe,
-  type Informe,
 } from './ayudas-p5.ts';
 
 const entorno = leerEntorno();
@@ -225,7 +224,7 @@ async function tocarEnLaCocina(
           'xpath=ancestor::*[contains(normalize-space(.), "Mesa") or contains(normalize-space(.), "PARA LLEVAR")][1]',
         );
       const texto = await tarjeta.innerText();
-      if (new RegExp(`Mesa ${String(mesa)}(?!\d)`).test(texto)) {
+      if (new RegExp(`Mesa ${String(mesa)}(?!\\d)`).test(texto)) {
         const r = cocina.waitForResponse(
           (x) => new URL(x.url()).pathname === '/api/restaurante/transicionar-pedido',
           { timeout: 45_000 },
