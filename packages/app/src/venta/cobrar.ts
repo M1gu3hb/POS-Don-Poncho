@@ -18,6 +18,7 @@ import { ajustarLaMadreASusPartes } from '../restaurante/division-escrituras.ts'
 import { pasarMesaCobradaALimpieza } from '../restaurante/mesas-escrituras.ts';
 import { marcarPropinaDeOrden, registrarPagoConPropina } from '../propinas/cobro.ts';
 import { entradaCobrarOrdenConPropina } from '../propinas/esquemas.ts';
+import { congelarElCostoPorMedida } from './costo-por-medida.ts';
 import { cotizar, exigirTotalVigente } from './cotizar.ts';
 import { repartirPagos } from './pagos.ts';
 import { porQueYaNoSeCobra } from './ya-cobrada.ts';
@@ -197,8 +198,22 @@ export const cobrarOrden = definirComando<
 
     // 2 · El total se recalcula DENTRO de esta transacción, sobre las líneas
     //     que se están congelando. Nunca se usa un importe del cliente (P0-07).
+    //     DP-D180 · Antes, el costo de lo que se vende por kilo o por porción (su insumo base): sale
+    //     de lo que ESE renglón baja del almacén × el costo exacto del insumo. Ver `costo-por-medida.ts`.
+    const costosPorMedida = await ctx.paso('costo_por_medida', () =>
+      congelarElCostoPorMedida(ctx.tx, organizacionId, entrada.ordenId, (lineaId, cantidad) =>
+        planearConsumo(
+          ctx.tx,
+          organizacionId,
+          sucursalId,
+          entrada.ordenId,
+          canal,
+          new Map([[lineaId, cantidad]]),
+        ),
+      ),
+    );
     const { cotizacion, totales } = await ctx.paso('cotizar', () =>
-      cotizar(ctx.tx, organizacionId, entrada.ordenId),
+      cotizar(ctx.tx, organizacionId, entrada.ordenId, undefined, costosPorMedida),
     );
     if (cotizacion.lineas.length === 0) {
       throw new ErrorDominio('ORDEN_VACIA', 'No se puede cobrar una venta sin productos.');

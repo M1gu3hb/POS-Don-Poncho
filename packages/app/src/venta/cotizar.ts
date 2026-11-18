@@ -9,6 +9,7 @@ import { calcularTotales, type ReglaImpuesto, type TotalesOrden } from '@morphiq
 import type { Kysely } from 'kysely';
 import type { Esquema, Transaccion } from '@morphiqpos/data';
 import { repoOrdenes } from '@morphiqpos/data';
+import type { CostosPorLinea } from './costo-por-medida.ts';
 
 /**
  * Cotización de la orden, siempre en el servidor (F1.1-A-07).
@@ -57,6 +58,17 @@ export async function impuestoDe(
   return reglaDeImpuestoEn(fila?.valores);
 }
 
+/** El costo de un renglón: el exacto que congeló el cobro (por medida) o costo por unidad × cantidad. */
+function costoDeLaLinea(
+  linea: { readonly id: string; readonly costoUnitarioCentavos: bigint; readonly cantidad: string },
+  costosExactos: CostosPorLinea | undefined,
+) {
+  const exacto = costosExactos?.get(linea.id);
+  return exacto === undefined
+    ? porCantidad(linea.costoUnitarioCentavos, linea.cantidad)
+    : centavos(exacto);
+}
+
 export interface LineaCotizada {
   readonly id: string;
   readonly productoId: string | null;
@@ -86,12 +98,17 @@ export interface Cotizacion {
  * Acepta transacción o conexión suelta: el cobro le pasa SU transacción, para
  * que el total que cobra sea el de las líneas que está a punto de congelar y no
  * el de una lectura anterior.
+ *
+ * DP-D180 · `costosExactos`: el costo EXACTO de los renglones por medida o por porción que el cobro acaba
+ * de congelar (centavos, un solo redondeo). Con él la cuenta suma ese costo y no `costo por unidad ×
+ * cantidad`, que redondea dos veces.
  */
 export async function cotizar(
   db: Kysely<Esquema> | Transaccion,
   organizacionId: string,
   ordenId: string,
   impuestoDado?: ReglaImpuesto,
+  costosExactos?: CostosPorLinea,
 ): Promise<{ readonly cotizacion: Cotizacion; readonly totales: TotalesOrden }> {
   const [lineas, impuesto] = await Promise.all([
     repoOrdenes.lineasDeOrden(db, organizacionId, ordenId),
@@ -102,7 +119,7 @@ export async function cotizar(
     lineas.map((l) => ({
       subtotalCentavos: centavos(l.subtotalCentavos),
       descuentoCentavos: centavos(l.descuentoCentavos),
-      costoCentavos: porCantidad(l.costoUnitarioCentavos, l.cantidad),
+      costoCentavos: costoDeLaLinea(l, costosExactos),
     })),
     impuesto,
   );

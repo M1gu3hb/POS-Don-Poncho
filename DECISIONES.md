@@ -3652,3 +3652,66 @@ teléfono y mesa del plano).
   la ve en ese platillo y no en otro (`parte7-mesero.spec.ts`, 10); un comensal es una nota en su platillo.
 - **Pasar un platillo de una cuenta a otra:** no se construye; el diseño y el tamaño están en el informe
   de la Parte 7.
+
+## DP-D180 · DP-22 · El costo de lo que se vende por kilo o por porción sale de lo que baja del almacén × el costo exacto del insumo · 17-11-2026
+
+**Es una regla de dinero** (hallazgo 27, medio). En Registros, «Utilidad bruta» decía $774.20 con 72.4 % «sobre una base de $1,070» y dejaba fuera $904.50 de barbacoa, costillar y arrachera vendidos por kilo.
+
+- **La causa.** El renglón de una venta copia su costo de `productos.costo_unitario_centavos` al crearse
+  (`restaurante/lineas.ts`, `filaDeLinea`), y esa columna sólo la llena `recalcularCostosRecetas` para los
+  platillos con RECETA. Un platillo `estrategia_consumo = 'insumo_base'` (por medida o por porción de un
+  contenedor) baja su insumo base pero su costo se quedaba en cero: costo «desconocido» (DP-12.6/13.2), y
+  `estadoDelCostoDe` lo contaba «sin receta» y lo sacaba de la base del margen.
+- **Dónde se arregla.** Al COBRAR, en la transacción del cobro y antes de cotizar
+  (`venta/costo-por-medida.ts`, llamado desde `cobrar.ts`). El costo del renglón sale del MISMO cálculo que
+  el consumo: `planearConsumo` (la única que decide qué baja) para esa línea sola × `insumos.costo_exacto_dmc`
+  al momento de cobrar (DP-D165), `valorDeLaCantidad`: UN redondeo, a centavos, por renglón. Es el costo con
+  que el kardex valúa esa misma salida. No en el alta del renglón: ahí el costo del insumo aún puede cambiar
+  y el renglón puede quitarse o cancelarse; al cobrar es el que de verdad salió. No en `productos`: una foto
+  vieja por platillo no sabe cuántos gramos se vendieron.
+- **Qué se escribe.** `orden_lineas.utilidad_centavos` = total − costo (invariante de F1-04 §7.3, que lee el
+  corte y «Lo más vendido»); `costo_unitario_centavos` = el costo por unidad vendida (por kg, por copa),
+  redondeado UNA vez desde lo exacto (es lo que leen `costo × cantidad` y `estadoDelCostoDe`); y `cotizar`
+  recibe el costo exacto de esos renglones para que `ordenes.costo_total_centavos` sea su suma, sin pasar
+  por el redondeo por unidad. Con ello el resumen de Registros, el corte, «Lo más vendido» y el costo
+  «conocido / sin receta / receta incompleta» (`costo-conocido.ts`, sin tocarlo) cuentan lo mismo: un
+  platillo por kilo con insumo base y costo ya NO es «sin receta».
+- **Lo que NO cambia.** Lo que se cobra (`cotizar` sigue calculando el total igual) y lo que baja del
+  inventario (`planearConsumo`, sin tocar y llamada con su `soloLoHecho`). Los platillos con receta, `sku` y
+  presentación: no entran (la consulta es sólo de `insumo_base`) y sus números son los de siempre. Un insumo
+  base SIN costo no inventa uno: el renglón queda como estaba (desconocido, y se dice así).
+- **Lo ya cobrado con costo cero NO se reescribe** (es historia, como en DP-D165 y DP-D167): sólo las ventas
+  desde este cambio llevan el costo. Si quien dirige quiere el margen de lo anterior, es una decisión aparte.
+- **Dos límites a la vista.** (1) Dos renglones del mismo insumo en una cuenta redondean cada uno su costo
+  (dos redondeos, ≤ 1 ¢ de diferencia con el kardex, que suma las salidas del insumo y redondea una vez).
+  (2) `costo_unitario_centavos` es entero por unidad vendida: un reporte que lo multiplique por la cantidad
+  (`reportes/piezas.ts`) puede diferir centavos del costo guardado de la cuenta; el corte y Registros usan lo
+  exacto.
+- **No cubierto:** la remisión de crédito de ferretería (`ferreteria/credito.ts`) y la merma por cancelación
+  usan `planearConsumo` pero no el cobro; sus renglones `insumo_base` siguen su camino anterior.
+- **Pruebas.** `venta/costo-por-medida.integracion.test.ts` (7, contra Postgres): ½ kg y 0.35 kg de un insumo a
+  34.567 ¢/g cuestan 17 284 y 12 098 ¢ (con centavos enteros serían 17 500 y 12 250); 3 copas de 750 ml ÷ 16 =
+  46.875 ml a 2.7345 ¢/ml cuestan 385 ¢ (384 redondeando por copa, 422 con centavos). Mutantes muertos: costo
+  en cero, costo con centavos redondeados, redondeo por pieza; mutación inocua (orden explícito) que pasa.
+- **Sin migración.**
+
+## DP-D181 · DP-22 · «Registrar compra» desde Inventario sólo se ofrece a quien puede registrarla · 17-11-2026
+
+Hallazgo 28 (bajo). Inventario pintaba «Registrar compra» (el encabezado y la pantalla vacía) a cualquiera que
+entrara, sin mirar el puesto, y lo mandaba a Compras.
+
+- **Qué se encontró.** El permiso NO se toca: `compras.registrar` lo tienen dueño, administrador, gerente y
+  ALMACÉN (A5: el almacén recibe la mercancía; el efectivo del cajón no, DP-D115), y `puestos.js`
+  (`puedeRegistrarCompras`) es su espejo, atado a la matriz por `compras-del-almacen.contrato.test.ts`. Con el
+  almacén ya dentro de los que registran, el botón del almacén SÍ lleva a algo (la captura de bot lo muestra: la
+  tarjeta «Registrar compra» de Compras). Lo que el bot leyó fue el aviso «las compras y los gastos los registra
+  la gerencia»: Compras lo pintaba mientras la plantilla aún no llegaba (`usePuesto()` es `null` hasta entonces)
+  y lo sigue pintando para quien de verdad no registra.
+- **Qué cambió.** (1) Inventario pinta el botón sólo si `puedeRegistrarCompras(usePuesto())`, en sus dos
+  sitios; sin puesto leído no se enseña (como en Compras). (2) Compras no dice «lo registra la gerencia» mientras
+  no sabe el puesto (`puesto !== null`). Ni clases, ni textos, ni iconos nuevos: sólo cuándo se pinta.
+- **Contrato.** `apps/web/src/inventario/registrar-compra-desde-inventario.contrato.test.ts` lee Inventario y
+  Compras SIN comentarios y afirma sobre el trozo que pinta cada enlace a Compras (dos, cada uno detrás de
+  `registraCompras &&`). Mutantes muertos: un botón sin guarda, la guarda comentada, Compras sin la comprobación
+  del puesto; inocua (un comentario) que pasa.
+- **Sin migración.**
