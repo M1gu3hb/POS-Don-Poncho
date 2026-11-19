@@ -3,7 +3,7 @@
 - **Fechas:** lunes 16-11-2026 (hacia las 20:50, hora de CDMX) → miércoles 18-11-2026. Pruebas físicas de
   Miguel: la noche del 18-11. Entrega al restaurante: jueves 19-11.
 - **Dónde:** sesión local de Claude Code en la laptop de Miguel; agentes Sonnet en árboles propios,
-  cada uno sin commit y revisado por la sesión principal. Siete PR (#37 a #42 y el del lote 7), cada
+  cada uno sin commit y revisado por la sesión principal. Siete PR (#37 a #43), cada
   uno con su CI y, en los seis primeros, su humo y su revisión de Vercel. El lote 7 (el último) está en
   PR, **por desplegar**.
 - **Producción no se usó para probar.** Todo se probó en local o sobre una copia. En producción sólo
@@ -239,7 +239,7 @@ cuentan. **Son cinco días corridos, 2211 a 2215.**
 | 4    | #40  | `6b76050`  | 17-11, 20:37   | 195       | 10 de 10 (5ª corrida, `1023576`)  | 27 de 27, 0 fallas         | 0 errores (revisado 21:43)         |
 | 5    | #41  | `e4e0a70`  | 17-11, 23:45   | ninguna   | 10 de 10 (`0f107d1`)              | 0 fallas                   | 0 errores (revisado 00:50, 18-11)  |
 | 6    | #42  | `ca7e6f1`  | 18-11, 10:48   | ninguna   | 10 de 10 (`3a102d4`)              | 10:53, 0 fallas            | 0 errores (revisado 11:55)         |
-| 7    | #PR7 | por unir   | por desplegar  | ninguna   | #CI7                              | por hacer                  | por hacer                          |
+| 7    | #43  | por unir   | por desplegar  | ninguna   | en curso                          | por hacer                  | por hacer                          |
 
 - Migraciones en producción: hasta la **195** (127 aplicadas). Las dos de esta auditoría (194 y 195)
   son aditivas y se ensayaron antes (aplicar y revertir) con el código anterior aún desplegado.

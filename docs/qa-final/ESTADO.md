@@ -13,7 +13,7 @@
 2. **Parte 11 hecha:** producción configurada y en ceros (0 cuentas, 0 cajas, siguiente folio
    DP-01001). **H1 sin activar a propósito:** lo activa `pnpm dia-cero -- --en-serio` después de la
    prueba física de Miguel.
-3. **Lote 7 en PR (SIN unir)**, rama `dp-22-septimo-lote`, sin migraciones: lo visual (34, 38, 35 en
+3. **Lote 7 en PR #43 (SIN unir)**, rama `dp-22-septimo-lote`, sin migraciones: lo visual (34, 38, 35 en
    parte, 26, resto del 5), Configuración comprobada, la matriz con 0 flujos sin prueba, el simulador,
    el informe 013 y la bitácora. Hallazgos nuevos 39 (medio: mapa de mesas cortado en Windows
    1366×768 al 125 %) a 43, sin arreglar.

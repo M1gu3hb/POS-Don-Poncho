@@ -328,7 +328,7 @@ Rama `dp-22-sexto-lote`, sobre `main` ya con el lote 5. Lo llevó el agente de e
 - **Vercel:** 0 errores al desplegar y 0 en la hora siguiente (revisado a las 11:55, ventana de 2 h).
   **Lote 6 cerrado.**
 
-### Lote 7 · PR por abrir (`dp-22-septimo-lote` → `main`) · sin migraciones
+### Lote 7 · PR #43 (`dp-22-septimo-lote` → `main`) · sin migraciones
 
 Rama `dp-22-septimo-lote`, sobre `main` con el lote 6 (`ca7e6f1`). Lo armó el agente de entrega con
 el trabajo de cuatro agentes y el informe 013. Lleva:
@@ -347,6 +347,11 @@ el trabajo de cuatro agentes y el informe 013. Lleva:
 - **Hallazgos nuevos** (39 a 43), anotados y sin arreglar.
 - **Auditoría de la entrega:** 2 mutantes propios sobre lo visual del mesero sobrevivían a la prueba de
   contrato; se reforzó y mueren.
+- **Galería (corrida 44432190548, success):** los 81 retratos de Linux difieren, y **sólo en la barra
+  lateral** (nada cambia fuera de sus 250 px de la izquierda): el degradado y la flecha al pie del menú
+  porque en 1280×720 «Portal QR» queda cortado. Abiertos Portal QR (bloque) y mesero (don-poncho),
+  nuevo contra guardado: el último elemento se desvanece bajo una flecha y se lee «hay más»; nada
+  cortado ni encimado. Se copiaron los 81.
 - **Comprobado en local (códigos reales):** `comprobar-lote5.sh` todo `=0` y `eslint-errores=0`;
   `test:unit` 680 archivos y 7,307 pruebas (3 omitidas); `verify:residuos`, `estructura`, `venta`,
   `estilos` y `adopcion` en 0; `qa:matriz` y `--verificar` en 0; prettier en 0.
