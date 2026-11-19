@@ -4003,3 +4003,15 @@ desplazar, al cambiar el alto de la lista y en cada pintada. Prueba con el dedo:
   necesita el servidor de la demo y los motores del laboratorio; se corre en local con `pw.sh <aparato> toque-seguro-del-mesero`.
 - No se probó con un panel táctil de Windows real ni con el WebView de la iMin en el aparato; sí con el Chromium de Electron 156
   y, ver informe, con Chromium 99 del laboratorio.
+
+## DP-D205 · DP-23 · Configuración → Apariencia: las tarjetas siguen el ancho del panel, no el de la ventana · 19-11-2026
+- **Qué se vio (el dueño, en el restaurante):** en los POS de pantalla casi cuadrada (1024×768, 800×600) las tarjetas de
+  «Estilo visual» salían apretadas y deformes: 87 px de ancho cada una, el importe de la vista previa («$439.00») se
+  salía de su tarjeta, los nombres se partían letra a letra y la página desbordaba en horizontal (1030 px en una
+  ventana de 1024). La causa: `grid-cols-2 sm:grid-cols-4` cambia de columnas con la VENTANA, pero el panel de
+  Configuración pierde la barra lateral y el índice de secciones y queda mucho más angosto que ella.
+- **Decisión:** las dos rejillas de `SelectorDeApariencia.tsx` (los ocho estilos y las cuatro perillas) usan
+  `repeat(auto-fill, minmax(…, 1fr))`: 10,5 rem mínimo por tarjeta de estilo y 8 rem por perilla, y `max(…, 22 %)` para que nunca pasen de cuatro columnas (a 1366 con la barra plegada salían cinco y quedaba una fila de 5 + 3). Las columnas salen del
+  ancho del panel, sin container queries (que no existen antes de Chromium 105) ni respaldo. A ancho de escritorio
+  (panel de unos 730 px o más) siguen siendo cuatro columnas, de los mismos tamaños de antes.
+- **Sin migración. No toca dinero ni inventario.**
