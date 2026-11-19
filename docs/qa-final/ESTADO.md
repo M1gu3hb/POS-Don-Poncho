@@ -3,30 +3,36 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 18-11, noche (lote 8).
+Última puesta al día: 19-11, madrugada (veredicto escrito).
 
-## AHORA MISMO (18-11, noche) — retomar desde aquí
+## AHORA MISMO (19-11, madrugada, con el veredicto escrito) — retomar desde aquí
 
-1. **Lotes 1 a 6 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`, `e4c45f5`, `6b76050`, `e4e0a70`,
-   `ca7e6f1`; migraciones hasta la 195; Vercel sin errores en la hora de cada uno; humo del lote 6:
-   0 fallas, lectura idéntica).
-2. **Parte 11 hecha:** producción configurada y en ceros (0 cuentas, 0 cajas, siguiente folio
-   DP-01001). **H1 sin activar a propósito:** lo activa `pnpm dia-cero -- --en-serio` después de la
-   prueba física de Miguel.
-3. **Lote 7 UNIDO en `main` (PR #43, `409623e`)**, rama `dp-22-septimo-lote`, sin migraciones, su despliegue y su humo los confirma el director: lo visual (34, 38, 35 en
-   parte, 26, resto del 5), Configuración comprobada, la matriz con 0 flujos sin prueba, el simulador,
-   el informe 013 y la bitácora.
-4. **Lote 8 en PR #44 (SIN unir)**, rama `dp-22-octavo-lote`, sin migraciones, sobre `main` con el lote 7:
-   el mapa de mesas a 125 % (39), la hoja del carrito (40), el aviso del portal (41), los sonidos del
-   portal y «Borrar todos los datos» demostrados, y el texto de «Reiniciar» corregido (44). Efectos: 90
-   comprobados, 2 por comprobar (impresora y cajón, laboratorio: aparato real).
-5. **El informe 013 está escrito: veredicto «NO todavía»** (condiciones sin cumplir: el día de bots
-   limpio, lo visual y cada ajuste comprobado). Calificación propuesta 89/100; la fija el director.
-6. **El sexto día de bots corre esta noche** sobre el código final (`origin/dp-22-octavo-lote`); su
-   informe quedará en `D:\mpos-tmp\dp22\informes\b-dia-6.md`. Si sale limpio, el director actualiza el
-   veredicto del 013 a SÍ en una nota fechada al principio.
-7. **Le toca al director:** confirmar el despliegue del lote 7 y unir el 8 (tras su CI) → esperar la fila Production
-   «Ready» → humo → lectura de producción → la hora de Vercel; y actualizar el veredicto con el sexto día.
+1. **Los 8 lotes EN PRODUCCIÓN** (`ff03687`, `829b13d`, `e4c45f5`, `6b76050`, `e4e0a70`, `ca7e6f1`, `409623e`
+   y `1c450ec`; migraciones hasta la 195: la 194 del lote 3 y la 195 del lote 4; los lotes 5 a 8 sin migraciones).
+   Lotes 1 a 7 cerrados: «READY», humo sin cobrar con 0 fallas (el 7 y el 8: 13 bien, 0 mal), lectura de
+   producción idéntica a la de la Parte 11 y 0 errores de Vercel en la hora siguiente. **El lote 8** (PR #44,
+   unido a las 21:52, `1c450ec`): «READY», humo 13 y 0, lectura idéntica; Vercel, 0 errores a las 22:56
+   (ventana de 2 h). **Lote 8 cerrado.**
+2. **Parte 11 hecha:** producción configurada y en ceros (0 cuentas, 0 cajas, siguiente folio DP-01001).
+   **H1 sin activar a propósito:** lo activa `pnpm dia-cero -- --en-serio` después de la prueba física de
+   Miguel.
+3. **Hallazgos:** 45 encontrados, 33 arreglados, 7 descartados, 5 abiertos (11, 16, 42, 43 y 45; todos bajos
+   salvo el 16, que es una función grande). 0 críticos y 0 altos abiertos. El 39, el 40 y el 41 (lo visual
+   abierto) y el 44 ya están en producción.
+4. **Ajustes:** `efectos.json` en 90 comprobados, 0 por ver, 2 por comprobar (impresora y cajón, laboratorio
+   del proveedor: exigen aparato real, van a la lista física del dueño). Matriz: 104 flujos, 0 sin prueba,
+   2 «no aplica».
+5. **El informe 013 está escrito con el veredicto «SÍ, con tres reservas declaradas» y 93/100** (nota
+   fechada al principio). Reservas: (a) impresora y cajón, y laboratorio sólo se comprueban con aparato real;
+   (b) el día de bots no se repitió con otra semilla y «dos meseros a la vez sobre la misma solicitud del
+   portal» no se reprodujo; (c) nada visto en aparatos reales.
+6. **Ya hecho:** el sexto día de bots (2216: 166 cobros, $75,264.90, 0 diferencias en todas las horas y en el
+   cierre, los 30 eventos del caos, 0 críticos y 0 altos); el resumen de axe y desbordes (14 de 14 aparatos
+   limpios, 29 pantallas cada uno); y cuatro pruebas directas (4 de 4 demostradas, 0 defectos de la app; en
+   `pruebas/e2e/qa-final/directas/`, que la CI no corre).
+7. **Falta:** unir el PR de cierre (lo une el director) y que Miguel haga su **prueba física** (informe 013,
+   §8.0: primero impresora y cajón y laboratorio; al final, activar H1 con `pnpm dia-cero -- --en-serio`).
+   Lo que no se pudo verificar está en el §4 y el §10 del informe; lo grande para después, en su §12.
 
 ## Dónde voy
 
