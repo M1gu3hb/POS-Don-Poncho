@@ -355,6 +355,15 @@ el trabajo de cuatro agentes y el informe 013. Lleva:
 - **Comprobado en local (códigos reales):** `comprobar-lote5.sh` todo `=0` y `eslint-errores=0`;
   `test:unit` 680 archivos y 7,307 pruebas (3 omitidas); `verify:residuos`, `estructura`, `venta`,
   `estilos` y `adopcion` en 0; `qa:matriz` y `--verificar` en 0; prettier en 0.
+- **La CI del PR:** 10 de 10 en `54f1bc8` y también en la cabeza `dd3064c` (un renglón de documentación de
+  diferencia).
+- **Despliegue (18-11):** unido a `main` con squash como `409623e` a las 20:10; producción «READY»
+  (`dpl_6LfFoJLC…`) hacia las 20:11. Regreso previsto: el del lote 6 (`dpl_C3cYV8xD…`).
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 7`, 20:12): **13 bien, 0 mal**; repetido a las 20:15:
+  13 bien, 0 mal.
+- **Lectura de producción después** (20:13): idéntica a la de después de la Parte 11 (111 líneas, sin
+  diferencias).
+- **Vercel:** 0 errores en la hora siguiente (revisado a las 21:15, ventana de 2 h). **Lote 7 cerrado.**
 
 ### Lote 8 · PR #44 (`dp-22-octavo-lote` → `main`) · sin migraciones
 
@@ -376,6 +385,26 @@ prueba que fallaba antes y pasa después:
 - **Revisión independiente y su reserva (DP-D199):** el texto de «Borrar todos los datos» ya dice la verdad de zonas (vuelven a las 5 de fábrica) y estaciones (se conservan); contrato recortado al texto, y el del mapa ahora falla si se quita `observador.disconnect()`; se anota el hallazgo 45 (bajo, abierto: mesas chicas en el editor del mapa).
 - **Mutantes:** 5 de contrato mueren y 1 inocuo pasa (`lote8-mapa-carrito-aviso.contrato.test.ts`); el código anterior
   es el mutante de las pruebas e2e (fallan sobre la compilación sin los arreglos).
+- **Puertas locales** (`comprobar-lote8.sh`, todo `=0`, `eslint-errores=0`): `test:unit` 681 archivos y 7,314
+  pruebas (3 omitidas) e integración 89 archivos y 564 pruebas, antes de corregir el texto de «Reiniciar»;
+  de ese texto sólo se corrió su contrato (13 pruebas, con sus mutantes). Barrido de servicio: Windows
+  1366×768 al 125 % y teléfono 360×800, 8 de 8 cada uno, 0 faltas.
+- **La CI del PR:** 10 de 10 en `704cae5` y en la cabeza `df71be2` (con «Jornada completa» y «Rastreo»).
+- **Revisión independiente de sólo lectura:** aprobado con reservas, sin críticos ni altos. Medio 1: el texto
+  de «Borrar todos los datos» prometía de más (zonas y estaciones); se corrigió en `df71be2` (el revisor
+  también se equivocó en un punto: dijo que sólo sobrevive la estación general, y el comando conserva todas).
+  Medio 2: el registro de las puertas es anterior al último commit de código y al merge de `main`; lo cubre la
+  CI de la cabeza. Bajo: mesas chicas en el editor del mapa en tableta (hallazgo 45).
+- **Cuál código corre cada cosa:** el sexto día de bots (semilla 2216) corre sobre `9469e5c`. De `9469e5c`
+  a `df71be2`, en `apps/`, `packages/` y `scripts/` sólo cambian el texto de la pantalla de «Reiniciar», su
+  contrato y `aspecto-permitido.json`; los bots no usan «Reiniciar». Sin migraciones.
+- **Despliegue (18-11):** unido a `main` con squash como `1c450ec` a las 21:52; producción «READY»
+  (`dpl_BVK3R56a…`) antes de las 21:54. Regreso previsto: el del lote 7 (`dpl_6LfFoJLC…`).
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 8`, 21:54): **13 bien, 0 mal.**
+- **Lectura de producción después** (21:55): idéntica a la de después de la Parte 11 (111 líneas, sin
+  diferencias).
+- **Vercel, la hora siguiente:** **pendiente al redactar** (se revisa hacia las 22:56, ventana de 2 h; el
+  resultado se anota aquí cuando exista). El lote 8 no se da por cerrado hasta entonces.
 
 ## Parte 11 · Producción configurada y en ceros (17-11)
 
@@ -448,7 +477,9 @@ del árbitro. Informes en `D:\mpos-tmp\dp22\informes\`: `b-dia.md` (los tres pri
   cuadraron en el cierre (0 diferencias del árbitro en el cierre de los cinco), 0 5xx y 0 consola, y todo
   el caos se ejecutó entre el 2214 y el 2215, **pero ningún día reunió todo a la vez**: el 2214 tuvo la
   diferencia por hora del árbitro y la cuenta sin cobrar del guion; el 2215 no ejecutó S1r. **Un sexto día
-  sobre el código final corre la noche del 18-11** (informe previsto: `b-dia-6.md`).
+  sobre el código final corre la noche del 18-11** (informe previsto: `b-dia-6.md`; semilla 2216, el último
+  día: si no sale limpio se arregla y se prueba el caso directo, sin más días de operación; resultado
+  pendiente al redactar).
 - **Sin arreglar y anotado:** el modo espera durante el cobro; la lentitud de formularios sin causa
   demostrada; la sesión de la Caja de 12 h fijas (por diseño). El hallazgo 38 (la barra del teléfono con
   la cuenta pedida) lo cierra el lote 7.

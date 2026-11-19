@@ -3,24 +3,31 @@
 - **Fechas:** lunes 16-11-2026 (hacia las 20:50, hora de CDMX) → miércoles 18-11-2026. Pruebas físicas de
   Miguel: la noche del 18-11. Entrega al restaurante: jueves 19-11.
 - **Dónde:** sesión local de Claude Code en la laptop de Miguel; agentes Sonnet en árboles propios,
-  cada uno sin commit y revisado por la sesión principal. Siete PR (#37 a #43), cada
-  uno con su CI y, en los seis primeros, su humo y su revisión de Vercel. El lote 7 (el último) está en
-  PR, **por desplegar**.
+  cada uno sin commit y revisado por la sesión principal. Ocho PR (#37 a #44), cada
+  uno con su CI, su humo y su revisión de Vercel. **Los ocho lotes están en producción** (el último,
+  el 8, en `1c450ec`); de la revisión de Vercel del lote 8 sólo falta la hora (ver §2.6).
 - **Producción no se usó para probar.** Todo se probó en local o sobre una copia. En producción sólo
   se leyó (conexión de sesión, 5432, transacciones de sólo lectura), se aplicaron las migraciones 194 y
   195 (aditivas) y se hizo la Parte 11 (configurar y dejar en ceros).
 - **Sin secretos ni PIN en este documento.** Ningún PIN real lo tecleó un agente.
-- **Quién escribió esto:** el agente redactor y, para el lote 7, el agente de entrega, sólo con lo que
+- **Quién escribió esto:** el agente redactor y, para los lotes 7 y 8, los agentes de entrega, sólo con lo que
   dicen las fuentes del §11. **El veredicto (§1) lo fijó el director: «NO todavía».** La calificación
   (§7) sigue siendo una **propuesta**: el director la confirma o la cambia.
 - Bitácora: `docs/PROGRESO-DP22.md`. Hallazgos: `docs/qa-final/HALLAZGOS.md`. Lo nuevo:
-  `docs/qa-final/NUEVO.md`. Decisiones: DP-D146 a DP-D194 (con huecos: los números 184, 185, 189 y
+  `docs/qa-final/NUEVO.md`. Decisiones: DP-D146 a DP-D199 (con huecos: los números 184, 185, 189 y
   191 a 193 no se usaron).
 
 ## Actualizaciones fechadas del veredicto
 
+- **18-11, noche · los lotes 7 y 8 están en producción; el veredicto NO cambia todavía (sigue «NO todavía») ni la
+  calificación (89, propuesta).** Lote 7 (#43): `main` = `409623e` desde las 20:10, humo 13 bien y 0 mal, lectura
+  de producción idéntica a la de la Parte 11, 0 errores de Vercel en la hora siguiente. Lote 8 (#44): `main` =
+  `1c450ec` desde las 21:52, humo 13 bien y 0 mal, lectura idéntica; **los errores de Vercel de su hora siguiente:
+  pendientes al redactar**. Producción ya trae todo el código de la auditoría. Siguen sin resultado, al redactar:
+  el sexto día de bots (semilla 2216) y el resumen final de axe y de desbordes. El veredicto se fija cuando existan
+  los dos, en una nota fechada **encima de ésta**.
 - **Lote 8 (18-11, noche): el veredicto NO cambia (sigue «NO todavía») ni la calificación.** Los fija el director tras el
-  sexto día de bots. Lo que cerró el lote 8 (rama `dp-22-octavo-lote`, sin migraciones, **por desplegar**):
+  sexto día de bots. Lo que cerró el lote 8 (rama `dp-22-octavo-lote`, sin migraciones, **hoy en producción**):
   **lo visual abierto** (39, 40 y 41: el mapa de mesas a 1366×768 al 125 % ya cabe entero, la hoja del
   carrito se cierra sola al quedar vacía, el aviso ya no tapa el texto de gracias; cada uno con su prueba
   que fallaba antes y pasa después en los aparatos que tocan, sin faltas nuevas en el barrido de servicio de
@@ -31,16 +38,18 @@
   pantalla prometía resetear la configuración y el comando no lo hace; se corrigió el texto y queda para
   Miguel decidir si debe resetearla. `efectos.json`: **90 comprobados, 0 por ver en navegador, 2 por
   comprobar** (impresora y cajón, laboratorio: aparato real). **Lo que NO cierra:** nada se vio en un
-  aparato real, no hay un resumen final de axe, el día de bots limpio sigue pendiente, y «Importar» con fila
+  aparato real, no hay un resumen final de axe (al redactar), el día de bots limpio sigue pendiente, y «Importar» con fila
   repetida (42) y dos usuarios con el mismo nombre (43) siguen abiertos.
 - **Lote 8 (18-11, noche) · revisión independiente:** una revisión independiente de sólo lectura aprobó el lote con una
   reserva (el texto de «Borrar todos los datos» prometía de más sobre zonas y estaciones); su informe vive fuera del
   repositorio.
 - **Lote 8 (18-11, noche) · arreglo de la reserva (DP-D199):** el texto dice ahora que las zonas vuelven a las de
-  fábrica (las propias se pierden) y que se conservan las estaciones de cocina; el comando no cambia, y un contrato
-  recortado al texto lo ata. Se anota el hallazgo 45 (bajo, sin arreglo: mesas chicas en el editor del mapa).
-- **18-11 (redacción de este documento): NO todavía.** Un sexto día de bots corre esta noche sobre el
-  código final (informe previsto: `b-dia-6.md`, en la carpeta de informes de la orquesta). Si sale limpio, el
+  fábrica (las propias se pierden) y que se conservan las estaciones de cocina (todas: el revisor creyó que sólo
+  la general, y el comando no toca ninguna); el comando no cambia, y un contrato recortado al texto lo ata. Se
+  anota el hallazgo 45 (bajo, sin arreglo: mesas chicas en el editor del mapa).
+- **18-11 (redacción de este documento): NO todavía.** Un sexto día de bots (semilla 2216) corre esta noche
+  sobre `9469e5c`, el código del lote 8 antes de corregir un texto (informe previsto: `b-dia-6.md`, en la
+  carpeta de informes de la orquesta). Si sale limpio, el
   director cambia el veredicto a SÍ **en una nota fechada aquí, encima de ésta**. Mientras no exista
   esa nota, el veredicto vigente es el de abajo. Ver también qué otras condiciones no se cumplen (§1):
   un sexto día limpio **no basta** por sí solo.
@@ -55,21 +64,22 @@
 2. **Lo que dice la lectura honesta:** no hay ningún defecto conocido de dinero, de inventario ni de
    datos, ni crítico ni alto, abierto. Lo que impide el SÍ es de otra clase: ningún día de bots
    reunió «limpio» al pie de la letra (en los cinco el dinero y el inventario cuadran en el cierre,
-   pero cada uno tuvo algo: un error del árbitro, un fallo del guion), un hallazgo **medio** nuevo y
-   abierto en lo visual (el mapa de mesas de Configuración corta mesas a 1366×768 al 125 %), 4 bajos
-   nuevos, y 3 tarjetas y 1 ajuste de Configuración sin comprobar en el navegador.
+   pero cada uno tuvo algo: un error del árbitro, un fallo del guion), que al redactar no hay un
+   resumen final de axe, y que 2 tarjetas de Configuración (impresora y cajón, laboratorio del proveedor)
+   piden un aparato real. El hallazgo **medio** de lo visual (el mapa de mesas de Configuración cortaba mesas a
+   1366×768 al 125 %, el 39) quedó **arreglado y en producción** con el lote 8; abiertos hoy, 4 bajos
+   y 1 «falta» (§5.1).
 3. **Nada de esto se ha visto en un aparato de verdad.** Esa es la prueba de esta noche (§8).
 4. **Qué significa para la prueba física de esta noche:** la app **puede probarse**. Está en producción
-   (lotes 1 a 6, `ca7e6f1`), configurada y en ceros. Lo que no se cumple (arriba) es lo que decide
-   «operar todos los días», no lo que impide probar. El lote 7 (lo visual de V, Configuración, la
-   matriz) **no está en producción** hasta que el director lo una; esta noche se prueba sin él salvo
-   que lo una antes.
-5. **El sexto día de bots corre esta noche sobre el código final:** si sale limpio, el veredicto se
+   (los ocho lotes, `1c450ec`), configurada y en ceros. Lo que no se cumple (arriba) es lo que decide
+   «operar todos los días», no lo que impide probar. Los lotes 7 y 8 (lo visual, Configuración
+   comprobada, la matriz, el mapa de mesas) **ya están en producción**: la prueba física los incluye.
+5. **El sexto día de bots corre esta noche (sobre `9469e5c`; ver §2.5):** si sale limpio, el veredicto se
    actualiza a SÍ en una nota fechada al principio de este informe (§ «Actualizaciones fechadas»); pero
    un día limpio no cierra, por sí solo, las condiciones 3 y 6.
 6. **Calificación propuesta: 89 / 100** (el 012 dio 86; la propuesta anterior de este informe, 87).
    Desglose en §7. Sigue siendo una propuesta.
-7. **Producción:** en ceros (0 cuentas, 0 cajas), configurada, siguiente folio «DP-01001». El bloqueo
+7. **Producción:** con los ocho lotes, en ceros (0 cuentas, 0 cajas), configurada, siguiente folio «DP-01001». El bloqueo
    del arranque (H1) **no está activo a propósito**: se activa con `pnpm dia-cero -- --en-serio`
    después de la prueba física (§9).
 8. **Cinco días de bots (semillas 2211 a 2215):** en los cinco, 0 diferencias del árbitro en el cierre
@@ -77,25 +87,28 @@
    0 errores 5xx y 0 de consola en los cinco. Todo el caos se ejecutó entre el 2214 y el 2215. Ningún
    día reunió todo a la vez (§2.5).
 9. **La matriz:** 104 flujos, 0 sin prueba, 2 «no aplica» con su razón. Hay enlaces menos fuertes que
-   el agente M declaró (§10, punto 1).
+   el agente M declaró (§10, punto 1). Ajustes: 90 de 113 puntos comprobados, 0 por ver, 2 por comprobar.
 10. **Lo que no se pudo verificar** está en el §4 y el §10: entre otras cosas, dos líneas que el agente
     de Configuración cambió por eslint después de su última corrida verde, sin mutantes en sus pruebas,
-    y la falta de capturas «antes» del agente de lo visual.
+    la falta de capturas «antes» del agente de lo visual, y que el mapa de mesas no se probó en el iMin
+    real.
 
 ## 1 · El veredicto: cada condición del encargo, una por una
 
-**VEREDICTO: NO todavía** (fijado por el director). Cuatro condiciones se cumplen y tres no. El SÍ
-exige las siete; un sexto día de bots limpio resolvería la 5, no la 3 ni la 6.
+**VEREDICTO: NO todavía** (fijado por el director). Cuatro condiciones se cumplen y tres no (las
+etiquetas de la tabla son las de la redacción; la evidencia de la columna derecha está al día con los
+lotes 7 y 8 en producción, y la evaluación de cada condición se rehace en la nota fechada del veredicto).
+El SÍ exige las siete; un sexto día de bots limpio resolvería la 5, no la 3 ni la 6.
 
 | #   | Condición del encargo (Parte 12)                                                                    | Evaluación                       | Evidencia                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | --- | --------------------------------------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 0 hallazgos críticos o altos abiertos                                                               | **Se cumple**                    | `HALLAZGOS.md`: críticos 0; altos 6 encontrados, 4 arreglados (1, 8, 14, 31) y 2 descartados al reproducirlos (13, 20); abiertos 0. Reserva: el hallazgo 1 (la fecha después de las 18:00) quedó arreglado «falta su e2e táctil con el arnés» y su detalle dice «E y V pendientes»; el hallazgo 8 dice «E pendiente» (verlo en la Caja). El arreglo está probado contra Postgres y con mutantes. Abierto hoy: 1 medio (39) y 5 bajos (11, 40, 41, 42, 43), más el 16 («falta»).                                                |
+| 1   | 0 hallazgos críticos o altos abiertos                                                               | **Se cumple**                    | `HALLAZGOS.md`: críticos 0; altos 6 encontrados, 4 arreglados (1, 8, 14, 31) y 2 descartados al reproducirlos (13, 20); abiertos 0. Reserva: el hallazgo 1 (la fecha después de las 18:00) quedó arreglado «falta su e2e táctil con el arnés» y su detalle dice «E y V pendientes»; el hallazgo 8 dice «E pendiente» (verlo en la Caja). El arreglo está probado contra Postgres y con mutantes. Abiertos hoy: 4 bajos (11, 42, 43, 45), más el 16 («falta»); ninguno medio (el 39, medio, lo cerró el lote 8).                                                |
 | 2   | La matriz completa en verde (o con su «no aplica» justificado)                                      | **Se cumple, con reservas**      | `MATRIZ.md`: 0 huecos del mapa (`--verificar`); 104 flujos, **0 sin prueba** (eran 52), 2 «no aplica» con su razón (descuento por renglón y para llevar desde la mesa; el generador ganó ese estado, DP-D194). Reservas: enlaces menos fuertes que declaró M (§10, punto 1); «Para llevar desde la mesa» está declarado «no aplica» sin que el dueño lo haya confirmado; el resto se llama «con prueba, por recorrer con el arnés»: tener prueba no es haberla corrido hoy.                                                |
-| 3   | Cada ajuste con su efecto comprobado y las combinaciones en verde                                   | **No se cumple del todo**        | `efectos.json` (113 puntos): **90 comprobados** (lote 8: `sonidos_en_el_portal` demostrado en sus dos estados y `reiniciar-sistema` demostrado contando filas), **0 por ver en navegador**, **2 por comprobar** (`impresora-y-cajon` y `laboratorio`: lo que exige aparato real va a la lista física), 12 sin propósito en un restaurante o fuera de la operación y 9 que son memoria del aparato. Combinaciones: 27 filas de pares de ajustes y 112 ternas del dinero contra el oráculo, en la integración que pasó la CI (10 de 10). |
+| 3   | Cada ajuste con su efecto comprobado y las combinaciones en verde                                   | **No se cumple del todo**        | `efectos.json` (113 puntos): **90 comprobados** (lote 8, en producción: `sonidos_en_el_portal` demostrado en sus dos estados y `reiniciar-sistema` demostrado contando filas), **0 por ver en navegador**, **2 por comprobar** (`impresora-y-cajon` y `laboratorio`: lo que exige aparato real va a la lista física), 12 sin propósito en un restaurante o fuera de la operación y 9 que son memoria del aparato. Combinaciones: 27 filas de pares de ajustes y 112 ternas del dinero contra el oráculo, en la integración que pasó la CI (10 de 10). |
 | 4   | El dinero al centavo y el inventario al gramo en todas las pruebas y en el día de bots              | **Se cumple**                    | Cinco días: 0 diferencias del árbitro en el cierre de los cinco (1,533 · 2211; 1,562 · 2213; 1,640 · 2214; 1,523 · 2215 comparaciones; el 2212, 0 en el cierre). Las diferencias por hora fueron del árbitro o del guion y ya están explicadas y arregladas (§2.5). Pruebas: ternas del dinero, Parte 5 (62 de 62 contra el libro).                                                                                                                                       |
 | 5   | El día de bots limpio                                                                               | **No se cumple**                 | `b-dia.md` y `b-dia-4.md`. El 2214 ejecutó los 30 eventos del caos (R1 incluido) pero el árbitro dio 1 diferencia «crítica» por hora (error del árbitro, arreglado) y una cuenta quedó sin cobrar (error del guion, arreglado). El 2215 cuadró en las 11 horas y el cierre, con 0 críticos y 0 altos, pero ejecutó 29 de 30 eventos (S1r falló: guion, arreglado sin verificar). **Ningún día reunió todo a la vez.** Falta uno con el código final.                                                                                      |
-| 6   | En lo visual: 0 desbordes, recortes ni encimados abiertos, y axe sin violaciones graves ni críticas | **No se cumple**                 | Cerrados hoy en el lote 7 (por desplegar): 34, 38, 26 y el resto del 5; el 35, cerrado en parte (la hoja trae «Imprimir otra hoja de la precuenta»; el «—» del total se queda porque el total es de rol caja). **Cerrados en el lote 8 (por desplegar):** el 39 (el mapa de mesas de Configuración se escala y cabe entero a 1366×768 al 125 %, en el iMin y en la tableta), el 40 (la hoja del carrito se cierra sola al quedar vacía) y el 41 (el aviso «Solicitud enviada» ya no tapa el texto de gracias), cada uno con su prueba e2e; el barrido de servicio de Windows y del teléfono, 8 de 8 sin faltas. **Abiertos en lo visual:** ninguno conocido. Axe: **no hay un resumen final** en las fuentes. |
-| 7   | Producción desplegada, configurada, en ceros, con `pnpm dia-cero` listo y 0 errores en Vercel      | **Se cumple**                    | Lotes 1 a 6: «READY», humo 0 fallas, 0 errores de Vercel en la hora siguiente de cada uno (el lote 6: humo 10:53, 0 fallas; Vercel revisado a las 11:55, 0 errores; lectura de producción idéntica a la de la Parte 11). Parte 11 hecha. `pnpm dia-cero` (ensayo): «nada que borrar». El lote 7 está en PR y no es parte de esta condición hasta que se despliegue.                                                                       |
+| 6   | En lo visual: 0 desbordes, recortes ni encimados abiertos, y axe sin violaciones graves ni críticas | **No se cumple**                 | Cerrados en el lote 7 (en producción, `409623e`): 34, 38, 26 y el resto del 5; el 35, cerrado en parte (la hoja trae «Imprimir otra hoja de la precuenta»; el «—» del total se queda porque el total es de rol caja). **Cerrados en el lote 8 (en producción, `1c450ec`):** el 39 (el mapa de mesas de Configuración se escala y cabe entero a 1366×768 al 125 %, en el iMin y en la tableta), el 40 (la hoja del carrito se cierra sola al quedar vacía) y el 41 (el aviso «Solicitud enviada» ya no tapa el texto de gracias), cada uno con su prueba e2e; el barrido de servicio de Windows y del teléfono, 8 de 8 sin faltas. **Abiertos en lo visual:** ninguno conocido, salvo el 45 (bajo, anotado: las mesas del editor del mapa quedan chicas cuando el lienzo se reduce; es de Configuración, no de la operación). Axe: **no hay un resumen final** en las fuentes (al redactar). |
+| 7   | Producción desplegada, configurada, en ceros, con `pnpm dia-cero` listo y 0 errores en Vercel      | **Se cumple**                    | Lotes 1 a 7: «READY», humo 0 fallas, 0 errores de Vercel en la hora siguiente de cada uno (el lote 7: humo 13 bien y 0 mal a las 20:12; Vercel revisado a las 21:15, 0 errores; lectura de producción idéntica a la de la Parte 11). Lote 8 (`1c450ec`, 21:52): «READY», humo 13 bien y 0 mal, lectura idéntica; **la hora siguiente de Vercel: pendiente al redactar**. Parte 11 hecha. `pnpm dia-cero` (ensayo): «nada que borrar».                                                                       |
 
 ### Lo que falta para un SÍ, dicho exactamente
 
@@ -103,13 +116,14 @@ exige las siete; un sexto día de bots limpio resolvería la 5, no la 3 ni la 6.
    arreglos finales del guion y del árbitro. Es el sexto día, que corre esta noche sobre el código final;
    su informe será `b-dia-6.md`.
 2. **Lo visual** (condición 6): el mapa de mesas de Configuración (39) y los bajos 40 y 41 quedaron
-   arreglados en el lote 8 (por desplegar); falta un resumen final de axe de las pantallas de operación.
+   arreglados en el lote 8 y ya están en producción; falta un resumen final de axe y de desbordes de las
+   pantallas de operación.
 3. **Ajustes** (condición 3): la prueba de sonidos del portal y «Borrar todos los datos» quedaron
    demostrados en el lote 8; falta pasar a la prueba física lo que exige aparato real (impresora, cajón,
    contraseña del proveedor).
 4. **Confirmar con el dueño** que «Para llevar desde la mesa» no existe (condición 2).
-5. **Desplegar el lote 7** (humo, lectura y la hora de Vercel), para que lo visual cerrado hoy llegue
-   a producción.
+5. **La hora de Vercel del lote 8** (condición 7): los lotes 7 y 8 ya están desplegados, con su humo y su
+   lectura; falta anotar los errores de Vercel de la hora siguiente del 8.
 
 ## 2 · Los números
 
@@ -123,8 +137,8 @@ Fuente: `docs/qa-final/MATRIZ.md` (regenerada en el lote 7 con `pnpm qa:matriz`:
 | Pantallas (rutas)             | 34 (28 con sesión) y 108 ventanas (diálogos, confirmaciones y paneles)                                |
 | Aparatos del arnés            | 14 perfiles, todos con dedo; 29 revisiones por aparato en el barrido de servicio                      |
 | Ajustes                       | 96: 78 del negocio y 18 de este aparato                                                               |
-| Ajustes con su efecto comprobado | 74 de los 96 (65 del negocio y 9 de este aparato); 88 de los 113 puntos de `efectos.json` si se cuentan también las 14 tarjetas comprobadas |
-| Tarjetas de Configuración     | 17: 14 comprobadas, 3 por comprobar (impresora y cajón, laboratorio, reiniciar sistema)               |
+| Ajustes con su efecto comprobado | 75 de los 96 (66 del negocio y 9 de este aparato); 90 de los 113 puntos de `efectos.json` si se cuentan también las 15 tarjetas comprobadas |
+| Tarjetas de Configuración     | 17: 15 comprobadas, 2 por comprobar (impresora y cajón, laboratorio: aparato real)               |
 | Combinaciones                 | 27 filas de pares de ajustes; 112 ternas del dinero (IVA × propina × descuento × división × pago)     |
 | Cambios a media operación     | 11 casos; `cambios-a-media-operacion.integracion.test.ts` pasa 13 de 13                               |
 | Flujos                        | 104 en la matriz: 0 «sin prueba», 2 «no aplica» con su razón y 102 con prueba (ver §10, punto 1)       |
@@ -133,32 +147,33 @@ Fuente: `docs/qa-final/MATRIZ.md` (regenerada en el lote 7 con `pnpm qa:matriz`:
 | Parte 5 por pantallas         | 62 de 62 contra el libro                                                                              |
 | Huecos del mapa               | 0                                                                                                     |
 
-### 2.2 · Hallazgos por severidad (43)
+### 2.2 · Hallazgos por severidad (45)
 
-> **Lote 8 (18-11, noche):** el 39, el 40 y el 41 quedaron arreglados (por desplegar) y se halló el 44 (bajo, arreglado: el texto de «Reiniciar sistema») y se anotó el 45 (bajo, abierto: mesas chicas en el editor del mapa). Con eso: 45 encontrados, 33 arreglados, 7 descartados y 5 abiertos (11, 16, 42, 43 y 45); medio, 20 encontrados y 18 arreglados; bajo, 17 encontrados y 11 arreglados. La tabla de abajo es la de la redacción.
+Contados fila por fila en `HALLAZGOS.md` (45 filas). Con los lotes 7 y 8 en producción.
 
 | Severidad | Encontrados | Arreglados | Descartados | Abiertos |
 | --------- | ----------: | ---------: | ----------: | -------: |
 | Crítico   |           0 |          0 |           0 |        0 |
 | Alto      |           6 |          4 |           2 |        0 |
-| Medio     |          20 |         17 |           2 |        1 |
-| Bajo      |          15 |          8 |           2 |        5 |
+| Medio     |          20 |         18 |           2 |        0 |
+| Bajo      |          17 |         11 |           2 |        4 |
 | Por ver   |           1 |          0 |           1 |        0 |
 | Falta     |           1 |          0 |           0 |        1 |
-| **Total** |      **43** |     **29** |       **7** |    **7** |
+| **Total** |      **45** |     **33** |       **7** |    **5** |
 
-- **Arreglados (29):** 1, 2, 3, 4, 7, 8, 9, 10, 14, 15, 18, 19, 22 y 23 (lotes 1 a 4); 12, 24, 27, 28,
-  29, 30, 31, 32, 33 y 36 (lote 5); 37 (lote 6): éstos 25, todos en producción. Y **26, 34, 35 y 38
-  (lote 7, por desplegar)**: el 35 «en parte» (la hoja ofrece otra precuenta; el «—» del total se
-  queda, es de rol caja y ahora la pantalla lo explica). Del 5 («Compras» cortado en una pantalla
-  baja) se cerró también lo que quedaba (un degradado y una flecha avisan que hay más), pero el 5 ya
-  contaba como descartado (falso positivo del arnés).
+- **Arreglados (33), todos en producción:** 1, 2, 3, 4, 7, 8, 9, 10, 14, 15, 18, 19, 22 y 23 (lotes 1 a 4);
+  12, 24, 27, 28, 29, 30, 31, 32, 33 y 36 (lote 5); 37 (lote 6); **26, 34, 35 y 38 (lote 7)**, el 35 «en
+  parte» (la hoja ofrece otra precuenta; el «—» del total se queda, es de rol caja y ahora la pantalla lo
+  explica); y **39, 40, 41 y 44 (lote 8)**. Del 5 («Compras» cortado en una pantalla baja) se cerró también
+  lo que quedaba (un degradado y una flecha avisan que hay más), pero el 5 ya contaba como descartado
+  (falso positivo del arnés).
 - **Descartados (7)** al reproducirlos (no eran defectos de la app): 5, 6, 13, 17, 20, 21 y 25.
-- **Abiertos (7), nuevos de hoy marcados:** el 11 (bajo, anotado); el **39 (medio, nuevo): el mapa de
-  mesas de Configuración no escala y corta las mesas 3 y 6 de «Interior» a 1366×768 al 125 %**;
-  el **40, 41, 42 y 43 (bajos, nuevos)**: el velo de la hoja del carrito en el teléfono, el aviso que
-  tapa el texto de gracias, «Importar» sin bloquear una fila repetida y dos usuarios con el mismo
-  nombre; y el 16 («falta»: función grande, §12). Ninguno toca dinero ni inventario.
+- **Abiertos (5):** el 11 (bajo, anotado); el 42 y el 43 (bajos, de la víspera del lote 7: «Importar» sin
+  bloquear una fila repetida y dos usuarios con el mismo nombre); el 45 (bajo, anotado: las mesas del
+  editor del mapa quedan chicas cuando el lienzo se reduce); y el 16 («falta»: función grande, §12).
+  Ninguno toca dinero ni inventario.
+- **Cuentas que se cruzan:** el informe del lote 8 al entregarse decía 44 encontrados y 4 abiertos; el
+  hallazgo 45 se anotó al corregir la reserva de la revisión independiente, y de ahí 45 y 5.
 
 ### 2.3 · Funciones nuevas (7, de `NUEVO.md`)
 
@@ -174,7 +189,7 @@ Fuente: `docs/qa-final/MATRIZ.md` (regenerada en el lote 7 con `pnpm qa:matriz`:
 
 Además, de la revisión «¿aquí debería poder…?» (16 preguntas, tabla completa en `NUEVO.md`): 8 ya
 funcionaban y se comprobaron (1, 2, 5, 6, 7, 8, 11 y 16; con reparos en la 2, la 11 y la 16, que son
-los hallazgos 35 y 34, cerrados hoy en el lote 7, y el de «Registros abre en Cortes»), 6 se construyeron (4, 9, 10, 12, 13 y 14,
+los hallazgos 35 y 34, cerrados en el lote 7, y el de «Registros abre en Cortes»), 6 se construyeron (4, 9, 10, 12, 13 y 14,
 que son las funciones 4, 6, 3, 7, 2 y 5), 1 no se construye por diseño (15, la nota por comensal) y 1
 es grande y va a §12 (3, pasar un platillo de una cuenta a otra). El aviso de mesa sin atender (parte
 de la 12) tampoco se construye: sería una regla nueva.
@@ -186,6 +201,10 @@ de la 12) tampoco se construye: sería una regla nueva.
   28 son `.spec.ts` (e2e, impresión y arnés). El cambio total: 507 archivos, 6 commits (uno por lote).
   **El lote 7 añade 13 archivos de prueba más** (5 `.test.ts`, dos de ellos de integración contra
   Postgres, y 8 `.spec.ts`: el arnés táctil de Configuración, los flujos sin prueba y lo visual).
+  **El lote 8 añade** el contrato `lote8-mapa-carrito-aviso.contrato.test.ts` (13 pruebas tras corregir el
+  texto de «Reiniciar») y toca las e2e de las tarjetas de personas (mapa), del portal y de los flujos sin
+  prueba, y `reiniciar.spec.ts` (la de «Borrar todos los datos», que cuenta filas); no conté sus archivos
+  nuevos aparte.
 - **Suite unitaria completa, lote 6:** 677 archivos y 7,285 pruebas (3 omitidas), todas en verde
   (`r-lote6.md`). En el lote 5: 674 archivos y 7,274 pruebas; integración (venta, registros, caja,
   inventario, restaurante, portal): 121 archivos y 680 pruebas (`r-lote5.md`).
@@ -198,6 +217,13 @@ de la 12) tampoco se construye: sería una regla nueva.
 - **Suite unitaria completa, lote 7:** 680 archivos y 7,307 pruebas (3 omitidas), todas en verde; la
   integración de las zonas del lote (inventario, portal, restaurante, compras) en verde; tipos, lint y
   las puertas `verify:` en 0.
+- **Suite unitaria completa, lote 8** (antes de corregir el texto de «Reiniciar»): 681 archivos y 7,314
+  pruebas (3 omitidas) y la integración, 89 archivos y 564 pruebas, todas en verde; tipos, lint y las
+  puertas en 0. Del texto corregido se corrió su contrato (13 pruebas, con sus mutantes: el texto viejo y
+  quitar `disconnect` fallan, lo inocuo pasa); la suite completa de la cabeza `df71be2` la cubrió la CI
+  (10 de 10).
+- **Mutantes del lote 8:** 5 de contrato mueren y 1 inocuo pasa; las e2e nuevas fallan sobre la
+  compilación sin los arreglos y pasan con ellos (no se hicieron mutantes e2e con otra compilación).
 - **El arnés se prueba contra sí mismo:** 45 de 45 en tres perfiles y tres mutantes del arnés
   tumban su autoprueba.
 - **No tengo la cuenta total de «pruebas» (casos) nuevas** por lote; sólo la de archivos y las
@@ -249,7 +275,10 @@ cuentan. **Son cinco días corridos, 2211 a 2215.**
   el indicio es que se mide el bot, sin demostrar.
 - **Veredicto del árbitro, honesto:** ¿hay un día limpio? **No, estrictamente.** Cada día de los cinco
   cuadró en el cierre, pero ninguno reunió a la vez: cierre en cero, 0 diferencias por hora, 0 críticos,
-  0 altos, 0 5xx, 0 consola y **todo** el caos. Un sexto día, sobre el código final, corre esta noche.
+  0 altos, 0 5xx, 0 consola y **todo** el caos. Un sexto día (semilla 2216), sobre `9469e5c`, corre esta noche: es el código del lote 8 antes de corregir el
+  texto de «Reiniciar»; hasta la cabeza desplegada (`df71be2`, en `1c450ec`) sólo cambian, en `apps/`,
+  `packages/` y `scripts/`, ese texto, su contrato y `aspecto-permitido.json`, y los bots no usan «Reiniciar».
+  Su resultado: **pendiente al redactar**.
 
 ### 2.6 · Los lotes y la producción
 
@@ -261,18 +290,24 @@ cuentan. **Son cinco días corridos, 2211 a 2215.**
 | 4    | #40  | `6b76050`  | 17-11, 20:37   | 195       | 10 de 10 (5ª corrida, `1023576`)  | 27 de 27, 0 fallas         | 0 errores (revisado 21:43)         |
 | 5    | #41  | `e4e0a70`  | 17-11, 23:45   | ninguna   | 10 de 10 (`0f107d1`)              | 0 fallas                   | 0 errores (revisado 00:50, 18-11)  |
 | 6    | #42  | `ca7e6f1`  | 18-11, 10:48   | ninguna   | 10 de 10 (`3a102d4`)              | 10:53, 0 fallas            | 0 errores (revisado 11:55)         |
-| 7    | #43  | por unir   | por desplegar  | ninguna   | 10 de 10 (`54f1bc8`)             | por hacer                  | por hacer                          |
+| 7    | #43  | `409623e`  | 18-11, 20:10   | ninguna   | 10 de 10 (`dd3064c`)             | 20:12, 13 bien y 0 mal     | 0 errores (revisado 21:15)         |
+| 8    | #44  | `1c450ec`  | 18-11, 21:52   | ninguna   | 10 de 10 (`df71be2`)             | 21:54, 13 bien y 0 mal     | pendiente al redactar (~22:56)     |
 
-- Migraciones en producción: hasta la **195** (127 aplicadas). Las dos de esta auditoría (194 y 195)
+- Migraciones en producción: hasta la **195** (127 aplicadas); los lotes 5 a 8 no traen migraciones. Las dos de esta auditoría (194 y 195)
   son aditivas y se ensayaron antes (aplicar y revertir) con el código anterior aún desplegado.
 - **Producción hoy** (`produccion-final.txt`, 17-11 23:58): 0 cuentas, 0 cajas, 0 comandas, 0 carritos, 0
   pagos, 10 mesas libres, siguiente folio «DP-01001» (cuentas 1001, cortes 101), 35 aparatos sin
   ningún «Caja N», «Almacén principal», IVA «Sin IVA», prefijo «DP», dos cajas («Caja 1» y «Caja
-  2»), «silenciar notificaciones del administrador» encendido. La lectura posterior al lote 6 se
-  comparó con esa: **idéntica**.
-- **El lote 7 (el último)** no toca dinero, inventario ni migraciones (`git diff` de `migraciones/sql`
+  2»), «silenciar notificaciones del administrador» encendido. La lectura posterior a cada uno de los
+  lotes 6, 7 y 8 (111 líneas) se comparó con esa: **idéntica** en los tres.
+- **El lote 7** no toca dinero, inventario ni migraciones (`git diff` de `migraciones/sql`
   vacío): lo visual del mesero y de la Caja, las pruebas de Configuración y de los flujos, el simulador
-  y los documentos. **Por desplegar** hasta que el director lo una.
+  y los documentos. **En producción** desde el 18-11 (`409623e`).
+- **El lote 8 (el último)** tampoco toca dinero, inventario ni migraciones: el mapa de mesas a 125 %, la
+  hoja del carrito, el aviso del portal, la demostración de dos ajustes de Configuración y el texto de
+  «Reiniciar sistema». **En producción** desde el 18-11 (`1c450ec`), pendiente sólo la hora de Vercel.
+- Dos fuentes difieren por un minuto en la hora de «READY»: la del lote 7 (20:11 contra 20:12) y la del
+  lote 8 (antes de las 21:54 contra 21:55). Uso la de los hechos del lote y lo dejo dicho.
 - La **app de Windows 1.0.2** está publicada en `canal-don-poncho` y se vio llegar a una 1.0.1 instalada
   en la laptop por los dos caminos («Reiniciar ahora»: instalada y reabierta sola a los 22 s del
   aviso; «Al cerrar»: instalada en 25 s).
@@ -325,6 +360,12 @@ sólo lo nuevo».
    pruebas (DP-D194). Y el agente de Configuración cambió dos líneas por eslint (un BOM en
    `tarjetas-datos.spec.ts` y `parseFloat` por `Number` en `tarjetas-personas.spec.ts`) **después de su
    última corrida verde** sin volver a correrlas: ver §4.
+10. **Lote 8: un texto que prometía de más, en una acción destructiva.** La pantalla de «Borrar todos los
+   datos» decía que conserva «las zonas» y el comando las borra y vuelve a sembrar las 5 de fábrica; lo
+   halló la revisión independiente de sólo lectura. Se corrigió el texto antes de desplegar (DP-D199), no
+   el comando. La misma revisión se equivocó en un punto: dijo que de las estaciones sólo sobrevive la
+   general, y el comando no toca ninguna. Y el rojo de la prueba de «Borrar todos los datos» del lote 7
+   era del límite de tasa (tres intentos por hora, y un nombre mal escrito cuenta), no de la app.
 
 ## 4 · Lo que NO se pudo probar aquí
 
@@ -349,12 +390,12 @@ Todo esto va a la lista física (§8). Nada de lo de abajo se ha visto en un apa
 
 **Lo que tampoco se pudo verificar del lote 7** (dicho sin adornos):
 
-- **Configuración (agente C).** Cambió dos líneas por eslint **después de su última corrida verde**
+- **Configuración (agente C), según el informe del lote 7.** Cambió dos líneas por eslint **después de su última corrida verde**
   (`pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts` y `tarjetas-personas.spec.ts`) y no
   volvió a correr esas pruebas. **No hizo mutantes de sus pruebas nuevas** (DP-D163 los pide). Su
-  prueba `reiniciar.spec.ts` está **en rojo**: «Borrar todos los datos» no quedó demostrado (no se vio
-  el borrado ni rastro de `reiniciar_todo` en la auditoría; causa sin investigar, puede ser el guion).
-  La de sonidos del portal está escrita y **no corrida**. La marca de agua del fondo en el portal no
+  prueba `reiniciar.spec.ts` estaba **en rojo** y la de sonidos del portal **no corrida**; **ambas las
+  resolvió el lote 8** (ver abajo). Lo que sigue sin resolver de C: los dos renglones de eslint y los
+  mutantes de sus pruebas. La marca de agua del fondo en el portal no
   se probó. El selector de archivos del sistema operativo no se abrió con el toque: se entrega el
   archivo al campo. Impresora, cajón, papel y contraseña del proveedor: lista física.
 - **Lo visual (agente V).** **No tiene capturas «antes»**: la compilación de referencia falló por red
@@ -365,32 +406,45 @@ Todo esto va a la lista física (§8). Nada de lo de abajo se ha visto en un apa
   no cubre la hoja impresa. «Para llevar desde la mesa» como «no aplica» no lo confirmó el dueño.
 - **El simulador (agente B4).** El arreglo del guion de S1r y el del rótulo de la cuenta dividida **no
   se verificaron en un día completo**; la duración por petición del servidor no se pudo sacar.
-- **Mapa de mesas de Configuración** (hallazgo 39): visto con una captura, sin arreglar.
+- **Mapa de mesas de Configuración** (hallazgo 39): arreglado en el lote 8 (ver abajo).
+
+**Lo que tampoco se pudo verificar del lote 8** (dicho sin adornos):
+
+- **Nada se vio en un aparato real.** El mapa de mesas no se probó en el iMin real, sólo en Chromium 99; en
+  tableta las mesas chicas quedan de unos 32 a 43 px (hallazgo 45, anotado).
+- **Mutantes e2e:** no se hicieron (las e2e nuevas se vieron fallar sobre la compilación sin los arreglos y
+  pasar con ellos; los mutantes son de contrato).
+- **El texto corregido de «Reiniciar»** no se vio pintado en un navegador; que las zonas se resiembren
+  «sólo en el giro restaurante» se lee del SQL y no se probó con otro giro; de ese cambio sólo se corrió su
+  contrato en local y lo demás lo cubrió la CI de la cabeza.
+- **Las puertas locales del lote 8** corrieron antes del último commit de código y del merge de `main`
+  (lo hizo notar la revisión independiente); la CI de la cabeza (10 de 10) lo cubre.
+- **«Importar» con fila repetida (42) y usuarios duplicados (43)** siguen abiertos.
+- **El sexto día de bots** y **el resumen de axe**: sin resultado al redactar.
 
 ## 5 · Lo abierto
 
 ### 5.1 · Hallazgos abiertos
 
-> **Lote 8 (18-11, noche):** el 39, el 40 y el 41 de esta tabla ya están arreglados (por desplegar); quedan abiertos el 11, el 16, el 42 y el 43.
+> **Lote 8 (18-11, noche):** el 39, el 40 y el 41 se arreglaron y ya están en producción; por eso no están en esta tabla. Abiertos: el 11, el 16, el 42, el 43 y el 45 (nuevo).
 
 | #   | Sev.  | Qué                                                                                                                                                  | Por qué no se cambió                                                                                                                                  |
 | --- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 11  | bajo  | El servidor acepta una propina al cobrar aunque nadie pueda elegirla en Configuración                                                                | Endurecer el cobro arriesga romper un cobro legítimo (la propina puede venir fijada por el comensal o el mesero). A la lista de después.             |
-| 39  | medio | **Nuevo.** Configuración → Salón → Mapa de mesas, Windows 1366×768 al 125 %: el lienzo no escala (unos 470 px de CSS) y corta las mesas 3 y 6 de «Interior» (`MesaMapEditor.jsx`) | Lo halló el agente C en la víspera: tiene captura y causa (lienzo fijo con `overflow-hidden`); no se arregló hoy. Es lo que más pesa en la condición 6. |
-| 40  | bajo  | **Nuevo.** Pedido del mesero, teléfono: al quitar el último renglón del carrito la hoja no se cierra sola y el velo tapa los platillos               | Lo halló el agente T; no toca dinero. Sin arreglar.                                                                                                   |
-| 41  | bajo  | **Nuevo.** Portal, teléfono 360×800: al calificar la visita el aviso «Solicitud enviada» tapa el texto de gracias (el texto existe)                  | Lo halló el agente T; sin arreglar.                                                                                                                   |
 | 42  | bajo  | **Nuevo.** Configuración → «Importar»: no bloquea un archivo con una fila repetida; la marca como error y confirma sólo lo bueno                     | Lo halló el agente C; comportamiento aceptable, anotado. Sin arreglar.                                                                                |
 | 43  | bajo  | **Nuevo.** Configuración → Usuarios POS: se pueden crear dos usuarios con el mismo nombre (aparecieron 4 «Rubén Ochoa»)                              | Lo halló el agente C; sin arreglar.                                                                                                                   |
+| 45  | bajo  | **Nuevo (lote 8).** Configuración → Salón → Mapa de mesas: al reducirse el lienzo para que el mapa quepa entero, las mesas quedan chicas para el dedo (en tableta ≈32 px la redonda chica y ≈43 px la mediana; nunca menos de 24 px) | Es el costo de que el mapa quepa entero (39); la operación (mesero y Caja) no usa ese editor. Anotado, sin arreglo. |
 | 16  | falta | No hay pantalla para darle receta a las OPCIONES de un platillo                                                                                      | Es una función grande (§12). Mientras tanto una opción no cambia el inventario: baja la receta base.                                                  |
 
-Los que se cerraron hoy, en el lote 7 (**por desplegar**): 26, 34, 35 (en parte) y 38, y el resto del 5 (§2.2).
+Los que se cerraron en el lote 7 (**en producción**): 26, 34, 35 (en parte) y 38, y el resto del 5; y en el lote 8 (**en producción**): 39, 40, 41 y 44 (§2.2).
 
 ### 5.2 · El día de bots sin un día LIMPIO estricto
 
 Ver §2.5 y la condición 5. Los cinco días cuadraron en el cierre, pero ninguno reunió todo a la vez:
 el 2214 ejecutó los 30 eventos del caos pero el árbitro dio una diferencia por hora (error suyo,
 arreglado) y una cuenta quedó sin cobrar por el guion (arreglado); el 2215 cuadró en todo pero ejecutó
-29 de 30 eventos (S1r, del guion, arreglado sin verificar). Quedaron **sin arreglar y anotados:** el
+29 de 30 eventos (S1r, del guion, arreglado sin verificar). El sexto día (semilla 2216) corre esta noche y
+su resultado está **pendiente al redactar**. Quedaron **sin arreglar y anotados:** el
 modo espera durante el cobro (por diseño; no se probó con un cobro a medio teclear); la lentitud de los
 formularios (merma, retiro, compra y cierre de caja, de 3 a 11 s, sin causa demostrada: el servidor
 no guarda la duración por petición); y la sesión de la Caja de 12 h fijas (por diseño). El hallazgo 38
@@ -398,33 +452,44 @@ ya no está en esta lista: lo cierra el lote 7.
 
 ### 5.3 · Los ajustes de Configuración sin comprobar en el navegador
 
-> **Lote 8 (18-11, noche):** `sonidos_en_el_portal` y «Reiniciar sistema para cliente» quedaron demostrados (90 comprobados, 0 por ver en navegador, 2 por comprobar: impresora y cajón, laboratorio). Lo de abajo es lo de la redacción.
+> **Lote 8 (18-11, noche, en producción):** `sonidos_en_el_portal` y «Reiniciar sistema para cliente» quedaron demostrados (90 comprobados, 0 por ver en navegador, 2 por comprobar: impresora y cajón, laboratorio). Abajo, la sección con esas cifras al día; donde dice «lote 7» es lo que se dijo al redactar.
 
 Fuente: `qa/qa-final/datos/efectos.json` (113 puntos: 78 ajustes del negocio, 17 tarjetas y 18 de este
-aparato) y `MATRIZ.md`. Hoy: **88 comprobados, 1 por ver en navegador, 3 por comprobar**, 12 sin
-propósito o fuera de la operación y 9 que son memoria del aparato. De los 78 ajustes del negocio:
+aparato) y `MATRIZ.md`. Hoy: **90 comprobados, 0 por ver en navegador, 2 por comprobar**, 12 sin
+propósito o fuera de la operación y 9 que son memoria del aparato (90 + 2 + 12 + 9 = 113). De los 78
+ajustes del negocio:
 
-- **65 comprobados** (hoy se sumaron `background_fit`, `background_image_url`, `background_logo_url`,
+- **66 comprobados** (en el lote 7 se sumaron `background_fit`, `background_image_url`, `background_logo_url`,
   `background_opacity`, `logo_url` y `portal_qr_cuenta_modo`, con el arnés táctil; del
   `background_logo_url` falta la marca de agua del portal, no probada).
-- **1 «por ver en navegador»:** `experiencia.sonidos_en_el_portal` (la prueba está escrita y no se
-  corrió).
+- **0 «por ver en navegador».** `experiencia.sonidos_en_el_portal`, el último, quedó demostrado en el lote 8:
+  apagado calla, encendido suena, apagado calla (Windows y teléfono; la prueba necesita el servidor con
+  `ORGANIZACION=<negocio>`, porque con varios negocios el portal pinta la experiencia de fábrica).
 - **12 sin comprobar a propósito:** 10 «sin propósito en un restaurante» y escondidos (`bascula_etiqueta`,
   `color_secundario`, `formato_export_default`, `modo_presentacion_activo`, `moneda`,
   `presentacion_ultimo_acceso`, `simbolo_moneda`, `usa_barra`, `usa_cocina`, `usa_mesas`), `paquete_modo`
   («no se cambia en la operación», sólo por comando de plataforma) y `permitir_venta_sin_stock`
   («escondido en Avanzado», nadie lo lee hoy: manda la opción de cada producto).
 
-De las 17 tarjetas que no guardan una clave, **14 comprobadas** (hoy: Mapa de mesas, Proveedores, Usuarios
-POS, Exportar datos actuales e Importar datos desde archivo) y **3 «por comprobar»:**
+De las 17 tarjetas que no guardan una clave, **15 comprobadas** (en el lote 7: Mapa de mesas, Proveedores,
+Usuarios POS, Exportar datos actuales e Importar datos desde archivo; en el 8, Reiniciar sistema) y **2 «por
+comprobar»:**
 
 - **Impresora de este aparato** y **Laboratorio del proveedor:** lo de pantalla pasa (sin app, con app
   sin perfil, contraseña mala y buena, perfil guardado, «Impresora lista», página de prueba a la app
   falsa), pero el pulso del cajón, el papel real, la impresora del local y la contraseña real del
   proveedor **van a la lista física** (§8).
-- **Reiniciar sistema para cliente:** «Borrar solo ventas y pruebas» funcionó (nombre malo no borra; con
-  el bueno se van las cuentas; productos, mesas, gente y configuración se quedan; el otro negocio no se
-  toca); **«Borrar todos los datos» no quedó demostrado** (la prueba falló; causa sin investigar).
+
+**Reiniciar sistema para cliente** (comprobada en el lote 8): «Borrar solo ventas y pruebas» funcionó
+(nombre malo no borra; con el bueno se van las cuentas; productos, mesas, gente y configuración se quedan;
+el otro negocio no se toca). **«Borrar todos los datos» quedó demostrado contando filas**, en una base
+desechable: 27 productos, 57 recetas, 33 insumos y existencias, 6 categorías, el proveedor y 12 mesas
+quedan en 0; se quedan la sucursal, las 11 personas, las 3 estaciones de cocina y la configuración; las
+zonas se resiembran a las 5 de fábrica; el otro negocio queda intacto; el salón vacío ofrece «Crear primera
+mesa» y la app queda usable. La falla del lote 7 era del límite de tasa de la prueba (§3, punto 10). **No
+se probó en producción, a propósito.** Si «para un cliente nuevo» debe también resetear la configuración
+(hoy la conserva, y el texto de la pantalla ya lo dice: hallazgo 44) es decisión del dueño y queda para
+después.
 
 De este aparato: 9 comprobados y 9 que son memoria del navegador (no ajustes).
 
@@ -441,7 +506,10 @@ esté activo, **lo cobrado se puede borrar** con los guiones de mantenimiento. L
 - Dos renglones del mismo insumo en una cuenta redondean cada uno (hasta 1 ¢ contra el kardex).
 - `PropinasDashboardSection.jsx` todavía lee una lista que puede venir cortada (sobra del agente 2).
 - El encabezado del diálogo de la mesa conserva «Esperando entrega» unos minutos (cosmético).
-- La galería de la CI del lote 6: 12 de 81 retratos difieren sólo por ruido de dibujo y no se copiaron.
+- La galería de la CI del lote 6: 12 de 81 retratos difieren sólo por ruido de dibujo y no se copiaron. En el
+  lote 7 difirieron los 81, sólo en la barra lateral (el aviso de «hay más» al pie): se miraron y se copiaron.
+  En el lote 8, 9 de 81 por ruido (de 11 a 120 píxeles, hasta 17 niveles) en pantallas que no toca: no se
+  copiaron.
 
 ## 6 · Lo que se comprobó, para que se sepa dónde sí hay evidencia
 
@@ -456,17 +524,24 @@ esté activo, **lo cobrado se puede borrar** con los guiones de mantenimiento. L
   Caja, Para llevar, mesero, Cocina, corte y cierre).
 - **Seguridad de la operación:** cambiar el PIN de otra persona cierra sus sesiones (hallazgo 10);
   los candados de la cocina (200 cruces sin un 500); el tope por IP del laboratorio.
-- **Configuración:** 88 de los 113 puntos con su prueba (los 77 de antes, cada uno visto fallar al
-  romper su lector, DP-D163; los 11 de hoy con el arnés táctil, **sin mutantes**: §4).
-- **Flujos:** 102 con prueba y 2 «no aplica»; hoy se escribieron las de las cantidades del carrito (con
-  el dedo, en teléfono y tableta), la calificación de la visita (integración y e2e) y la cortesía de la
+- **Configuración:** 90 de los 113 puntos con su prueba (los 77 de antes, cada uno visto fallar al
+  romper su lector, DP-D163; los 11 del lote 7 con el arnés táctil, **sin mutantes**: §4; y los 2 del lote 8,
+  sonidos del portal y «Borrar todos los datos», con su prueba e2e).
+- **Flujos:** 102 con prueba y 2 «no aplica»; en el lote 7 se escribieron las de las cantidades del carrito
+  (con el dedo, en teléfono y tableta), la calificación de la visita (integración y e2e) y la cortesía de la
   casa (integración, con la clave de gerencia y el corte).
+- **Lo visual del lote 8:** el mapa de mesas (Windows 1366×768 al 125 %, iMin y tableta: ninguna mesa
+  cortada), la hoja del carrito y el aviso del portal, cada uno con una prueba e2e que falla sobre la
+  compilación sin el arreglo y pasa con él; barrido de servicio de Windows y del teléfono, 8 de 8 sin
+  faltas. Capturas vistas del mapa en Windows y en tableta.
 
 ## 7 · Calificación del POS en la nube
 
 **PROPUESTA: 89 / 100** (en DP-21: 86; la propuesta anterior de este informe, 87). Es un juicio, no un
 cálculo; el desglose sirve para discutirlo. El director la confirma o la cambia. Sube dos puntos por la
-matriz y los ajustes; el veredicto «NO todavía» no cambia con ella.
+matriz y los ajustes; el veredicto «NO todavía» no cambia con ella. *El desglose de abajo es el de la
+redacción (lote 7); no se ha vuelto a puntuar con los hechos de los lotes 7 y 8 en producción: eso lo hace la
+nota fechada del veredicto.*
 
 | Eje                                     | Puntos | De  | Por qué                                                                                                                                                                                                                                                                                  |
 | --------------------------------------- | -----: | --: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -531,17 +606,17 @@ En cada aparato, al abrir la app por primera vez:
 
 Lo que veas distinto a la columna de la derecha, anótalo con la hora y una foto: es un hallazgo nuevo.
 
-### 8.3 · Lo que Configuración y lo visual dejaron para el aparato real (lote 7)
+### 8.3 · Lo que Configuración y lo visual dejaron para el aparato real (lotes 7 y 8, ya en producción)
 
 | #   | Qué hacer                                                                                                                      | Qué debe ver                                                                                                                                                                                   |
 | --- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Configuración → «Impresora de este aparato»: probar el cajón (pulso, «¿se abrió?») y quitar el cajón                            | El cajón de verdad salta; «¿se abrió?» se contesta; al quitarlo, «No tiene cajón». (En el arnés sólo se probó lo de pantalla contra una app falsa.)                                          |
 | 2   | La misma tarjeta: imprimir la página de prueba en la impresora del local, con papel real                                       | Sale en el papel y a 58 u 80 mm según el aparato.                                                                                                                                              |
 | 3   | «Laboratorio del proveedor»: entrar con la contraseña real (la tecleas tú)                                                      | Entra con la buena y se vacía el campo con la mala. (En el arnés se usó un hash de usar y tirar.)                                                                                              |
-| 4   | Configuración → Salón → Mapa de mesas, en la PC de Windows (1366×768 al 125 %)                                                  | **Hallazgo 39 abierto:** probablemente se vean cortadas las mesas 3 y 6 de «Interior». Anota si ves lo mismo y cuántas mesas pierdes.                                                          |
-| 5   | El sonido del portal (`sonidos_en_el_portal`) en un teléfono real                                                               | Con el ajuste encendido el portal del comensal suena al tocar; apagado, no. (La prueba está escrita y no se corrió.)                                                                            |
-| 6   | **No** probar «Reiniciar sistema para cliente → Borrar todos los datos» en producción                                           | Sólo se probó «Borrar solo ventas y pruebas» en una base desechable; «todos los datos» no quedó demostrado. Si se quiere probar, que sea en una copia.                                         |
-| 7   | Sólo si el director une el lote 7 antes de la prueba: Caja → Movimientos; el menú lateral en la PC baja; la hoja del mesero con la cuenta pedida | «Entregar el turno» y «Retirar» a la misma altura; una flecha al pie del menú mientras haya más por desplazar; en el teléfono la barra dice «Cuenta pedida» y trae «Imprimir otra hoja de la precuenta» y «Cambiar de mesa»; con el teclado abierto la barra se esconde. |
+| 4   | Configuración → Salón → Mapa de mesas, en la PC de Windows (1366×768 al 125 %) y en la tableta | **Hallazgo 39, arreglado en el lote 8:** el mapa debe verse entero (las 6 mesas de «Interior»), más chico que antes; en la tableta las mesas chicas quedan de unos 32 a 43 px (hallazgo 45). Arrastrar una mesa debe dejarla donde la sueltas. Anota si ves alguna cortada. |
+| 5   | El sonido del portal (`sonidos_en_el_portal`) en un teléfono real | Con el ajuste encendido el portal del comensal suena al tocar; apagado, no. (En el arnés ya se demostró en sus dos estados; falta oírlo en un teléfono real.) |
+| 6   | **No** probar «Reiniciar sistema para cliente → Borrar todos los datos» en producción | Se demostró contando filas en una base desechable; en producción borraría el catálogo. Si se quiere ver con los ojos, que sea en una copia. |
+| 7   | Lo visual de los lotes 7 y 8: Caja → Movimientos; el menú lateral en la PC baja; la hoja del mesero con la cuenta pedida; la hoja del carrito al quitar el último platillo; el aviso al calificar la visita en el portal | «Entregar el turno» y «Retirar» a la misma altura; una flecha al pie del menú mientras haya más por desplazar; en el teléfono la barra dice «Cuenta pedida» y trae «Imprimir otra hoja de la precuenta» y «Cambiar de mesa»; con el teclado abierto la barra se esconde; al vaciar el carrito la hoja se cierra sola y no deja velo; el aviso «Solicitud enviada» no tapa el texto de gracias. |
 
 Lo que veas distinto, con la hora y una foto.
 
@@ -581,36 +656,48 @@ Para que el director lo vea antes de firmar:
    no que haya pasado hoy. M no corrió nada. **Y «Para llevar desde la mesa» está declarado «no
    aplica» sin que el dueño lo haya confirmado.** Además, «con prueba» no es «corrida hoy»: la matriz
    los llama «por recorrer con el arnés».
-2. **Números de ajustes comprobados.** La matriz resume «74 con su efecto comprobado» (65 del negocio y
-   9 de este aparato) y `efectos.json` dice «88 comprobados» (ahí entran también las 14 tarjetas
+2. **Números de ajustes comprobados.** La matriz resume «75 con su efecto comprobado» (66 del negocio y
+   9 de este aparato) y `efectos.json` dice «90 comprobados» (ahí entran también las 15 tarjetas
    comprobadas). Uso ambos y digo qué cuenta cada uno.
-3. **Texto viejo en `HALLAZGOS.md`.** Se puso al día en el lote 7 (12 y 37 en producción; 26, 34, 35,
-   38 «lote 7, por desplegar»; hallazgos 39 a 43 nuevos).
+3. **Texto viejo en `HALLAZGOS.md`.** Se puso al día en el lote 7 (12 y 37 en producción; hallazgos 39 a 43
+   nuevos), en el 8 (44 y 45) y al cerrar (todo lo del 7 y el 8 «en producción», con su commit).
 4. **Número de comandos.** La bitácora de arranque dice 124 y `ESTADO.md` dice 126; la matriz
    regenerada dice 128. Uso el de la matriz (el más reciente).
-5. **Sexto día de bots** (`b-dia-6.md`): corre esta noche; no existe al redactar. Un día limpio
-   resolvería la condición 5, no la 3 ni la 6 (§1).
+5. **Sexto día de bots** (`b-dia-6.md`, semilla 2216): corre esta noche; su resultado no existe al
+   redactar. Un día limpio resolvería la condición 5, no la 3 ni la 6 (§1).
 6. **Lote 6 (cerrado):** humo 0 fallas (10:53), lectura de producción idéntica y Vercel sin errores
    a las 11:55 (`hechos-lote5-y-parte11.md`). Antes de hoy esto no constaba.
 7. **Comprobaciones del lote 5 con «0» por un error del guion:** lo tomo del encargo; no encontré el
    detalle en los archivos.
 8. **Resumen final de axe** y de «desbordes, recortes y encimados» de todas las pantallas de operación:
-   no existe en las fuentes; sólo el barrido de servicio (DP-D154), los hallazgos anotados y el
-   barrido de V (8 de 8 pruebas en cuatro aparatos).
+   no existe en las fuentes al redactar; sólo el barrido de servicio (DP-D154), los hallazgos anotados, el
+   barrido de V (8 de 8 pruebas en cuatro aparatos) y el del lote 8 (Windows y teléfono, 8 de 8). El arnés ya
+   mide axe y desbordes, pero la CI no corre esa carpeta: se corre aparte y su resumen se anota cuando exista.
 9. **Número total de pruebas nuevas (casos):** sólo archivos (122) y las cifras de las suites.
 10. **Dos informes con cifras que no cuadran del todo:** V dice 13 pruebas de contrato y la suite trae
     12; no afecta lo demás.
 11. **Huecos en los números de decisión** (184, 185, 189, 191 a 193): no se usaron; no se encontró
     quién los reservó.
+12. **Cifras de los lotes 7 y 8 que no cuadraban entre fuentes, y cómo se resolvieron:** (a) el informe del
+    lote 7 dice que la CI dio 10 de 10 en `54f1bc8` y también en la cabeza `dd3064c`: cito la cabeza; (b) la
+    hora de «READY» difiere por un minuto entre dos fuentes (lote 7: 20:11 y 20:12; lote 8: antes de las
+    21:54 y 21:55): uso la de los hechos del lote; (c) el informe del lote 8 al entregarse dice 44
+    hallazgos y 4 abiertos, y el cierre dice 45 y 5 (el 45 se anotó después, al corregir la reserva de la
+    revisión); (d) `efectos.json` suma 90 comprobados y la matriz, 75 ajustes con efecto comprobado: la
+    diferencia son las 15 tarjetas comprobadas, que no son ajustes; (e) la revisión independiente del lote 8
+    dijo que de las estaciones de cocina sólo sobrevive la general y el comando conserva todas (se comprobó
+    en el código); (f) el lote 7 dejó «Borrar todos
+    los datos» sin demostrar y el 8 lo demostró: vale el del 8.
 
 ## 11 · Fuentes
 
 `docs/qa-final/HALLAZGOS.md`, `NUEVO.md`, `ESTADO.md`, `PLAN.md`, `MATRIZ.md`;
 `qa/qa-final/datos/efectos.json`, `flujos.json` y `combinaciones/`; `docs/PROGRESO-DP22.md`;
-`DECISIONES.md` (DP-D146 a DP-D194); `docs/RUNBOOK.md` §8; `docs/reports/012-cierre-antes-de-instalar.md`
-(estilo y calificación anterior); y, fuera del repo, `D:\mpos-tmp\dp22\encargo.md` (Parte 12),
-`ORQUESTA.md` y `informes\` (`hechos-lote5-y-parte11.md`, `r-lote5.md`, `r-lote6.md`, `i-informe.md`,
-`b-dia.md`, `b-dia-4.md`, `v-visual.md`, `c-ajustes.md`, `t-flujos.md`, `m-matriz.md`). Los archivos de
+`DECISIONES.md` (DP-D146 a DP-D199); `docs/RUNBOOK.md` §8; `docs/reports/012-cierre-antes-de-instalar.md`
+(estilo y calificación anterior); y, fuera del repo, el encargo de la auditoría (su Parte 12), el cuaderno de
+la orquesta y la carpeta de informes de los agentes (los hechos de los lotes 5 a 8, los informes de entrega
+de los lotes 5, 6, 7 y 8, el del arreglo de texto del lote 8 y la revisión independiente de sólo lectura del
+lote 8, los de los días de bots, de lo visual, de ajustes, de flujos y de la matriz). Los archivos de
 prueba nuevos se contaron con `git diff --name-status 63977e1..HEAD` (109 hasta el lote 6, más 13 del
 lote 7).
 
@@ -625,6 +712,7 @@ Nada de esto se toca antes de abrir. Tamaños de `NUEVO.md`.
 | Pasar un platillo de una cuenta a otra (entre dos mesas)                                                                  | Hay que mover el renglón y su plato de cocina, recalcular totales, propina y descuento de las dos, re-sincronizar las dos mesas y tomar los candados en orden: toca cocina, dinero y comandas.                                      | 3 a 4 días      |
 
 De lo menor que queda: el hallazgo 11 (que el servidor no acepte propina si nadie puede elegirla), el
-mapa de mesas de Configuración (39, medio) y los bajos 40, 41, 42 y 43, la lentitud de los formularios
-sin explicar, el modo espera durante el cobro, el aviso de mesa sin atender (sería una regla nueva), y
-las 3 tarjetas y el ajuste por comprobar (§5.3).
+mapa de mesas de Configuración cuando se reduce (45, bajo) y los bajos 42 y 43, la lentitud de los formularios
+sin explicar, el modo espera durante el cobro, el aviso de mesa sin atender (sería una regla nueva), si
+«Borrar todos los datos» debe también resetear la configuración (hallazgo 44), y las 2 tarjetas por
+comprobar con aparato real (§5.3).
