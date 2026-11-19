@@ -13,10 +13,10 @@
 2. **Parte 11 hecha:** producción configurada y en ceros (0 cuentas, 0 cajas, siguiente folio
    DP-01001). **H1 sin activar a propósito:** lo activa `pnpm dia-cero -- --en-serio` después de la
    prueba física de Miguel.
-3. **Lote 7 en PR (SIN unir)**, rama `dp-22-septimo-lote`, sin migraciones: lo visual (34, 38, 35 en
+3. **Lote 7 UNIDO en `main` (PR #43, `409623e`)**, rama `dp-22-septimo-lote`, sin migraciones, su despliegue y su humo los confirma el director: lo visual (34, 38, 35 en
    parte, 26, resto del 5), Configuración comprobada, la matriz con 0 flujos sin prueba, el simulador,
    el informe 013 y la bitácora.
-4. **Lote 8 en PR (SIN unir)**, rama `dp-22-octavo-lote`, sin migraciones, necesita el lote 7 en `main`:
+4. **Lote 8 en PR (SIN unir)**, rama `dp-22-octavo-lote`, sin migraciones, sobre `main` con el lote 7:
    el mapa de mesas a 125 % (39), la hoja del carrito (40), el aviso del portal (41), los sonidos del
    portal y «Borrar todos los datos» demostrados, y el texto de «Reiniciar» corregido (44). Efectos: 90
    comprobados, 2 por comprobar (impresora y cajón, laboratorio: aparato real).
@@ -25,7 +25,7 @@
 6. **El sexto día de bots corre esta noche** sobre el código final (`origin/dp-22-octavo-lote`); su
    informe quedará en `D:\mpos-tmp\dp22\informes\b-dia-6.md`. Si sale limpio, el director actualiza el
    veredicto del 013 a SÍ en una nota fechada al principio.
-7. **Le toca al director:** unir el lote 7 y luego el 8 (tras su CI) → esperar la fila Production
+7. **Le toca al director:** confirmar el despliegue del lote 7 y unir el 8 (tras su CI) → esperar la fila Production
    «Ready» → humo → lectura de producción → la hora de Vercel; y actualizar el veredicto con el sexto día.
 
 ## Dónde voy
