@@ -16,7 +16,7 @@
 3. **Lote 7 UNIDO en `main` (PR #43, `409623e`)**, rama `dp-22-septimo-lote`, sin migraciones, su despliegue y su humo los confirma el director: lo visual (34, 38, 35 en
    parte, 26, resto del 5), Configuración comprobada, la matriz con 0 flujos sin prueba, el simulador,
    el informe 013 y la bitácora.
-4. **Lote 8 en PR (SIN unir)**, rama `dp-22-octavo-lote`, sin migraciones, sobre `main` con el lote 7:
+4. **Lote 8 en PR #44 (SIN unir)**, rama `dp-22-octavo-lote`, sin migraciones, sobre `main` con el lote 7:
    el mapa de mesas a 125 % (39), la hoja del carrito (40), el aviso del portal (41), los sonidos del
    portal y «Borrar todos los datos» demostrados, y el texto de «Reiniciar» corregido (44). Efectos: 90
    comprobados, 2 por comprobar (impresora y cajón, laboratorio: aparato real).
