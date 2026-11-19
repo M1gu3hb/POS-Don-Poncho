@@ -27,19 +27,23 @@
     "id": "entrar.cambiar-de-persona",
     "area": "Entrar",
     "flujo": "Cambiar de persona en el mismo aparato",
-    "pruebas": []
+    "pruebas": ["pruebas/e2e/modo-espera-pin.spec.ts", "qa/simulador/bots/caos.ts"]
   },
   {
     "id": "entrar.salir",
     "area": "Entrar",
     "flujo": "Salir (también con la barra plegada)",
-    "pruebas": []
+    "pruebas": ["apps/web/src/tacto/barra-lateral.contrato.test.ts", "qa/simulador/bots/caos.ts"]
   },
   {
     "id": "entrar.sesion-vencida",
     "area": "Entrar",
     "flujo": "Sesión vencida a media operación",
-    "pruebas": []
+    "pruebas": [
+      "pruebas/e2e/pin-al-abrir.spec.ts",
+      "packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts",
+      "qa/simulador/bots/caos.ts"
+    ]
   },
 
   {
@@ -79,13 +83,20 @@
     "id": "salon.dividir-en-partes-iguales",
     "area": "Salón",
     "flujo": "Dividir la cuenta en partes iguales",
-    "pruebas": []
+    "pruebas": [
+      "pruebas/e2e/restaurante-operaciones.spec.ts",
+      "qa/qa-final/propiedades/dinero.propiedades.test.ts"
+    ]
   },
   {
     "id": "salon.dividir-por-peso",
     "area": "Salón",
     "flujo": "Dividir una cuenta con platillos por peso",
-    "pruebas": []
+    "pruebas": [
+      "pruebas/e2e/barbacoa-por-kilo.spec.ts",
+      "packages/app/src/restaurante/barbacoa-por-kilo.integracion.test.ts",
+      "packages/app/src/restaurante/division-por-peso.test.ts"
+    ]
   },
   {
     "id": "salon.editor-del-mapa",
@@ -119,13 +130,13 @@
     "id": "pedido.cantidades",
     "area": "Pedido",
     "flujo": "Cantidades (más, menos, muchas)",
-    "pruebas": []
+    "pruebas": ["pruebas/e2e/qa-final/flujos-sin-prueba.spec.ts"]
   },
   {
     "id": "pedido.quitar-antes-de-enviar",
     "area": "Pedido",
     "flujo": "Quitar un platillo antes de enviar",
-    "pruebas": []
+    "pruebas": ["pruebas/e2e/qa/qa1-02-portal.spec.ts"]
   },
   {
     "id": "pedido.quitar-despues-de-enviar",
@@ -151,12 +162,19 @@
     "flujo": "Cancelar lo no preparado (regresa el insumo)",
     "pruebas": ["pruebas/e2e/cancelacion-del-mesero.spec.ts"]
   },
-  { "id": "pedido.cortesia", "area": "Pedido", "flujo": "Cortesía", "pruebas": [] },
+  {
+    "id": "pedido.cortesia",
+    "area": "Pedido",
+    "flujo": "Cortesía",
+    "pruebas": ["packages/app/src/restaurante/cortesia-de-la-casa.integracion.test.ts"]
+  },
   {
     "id": "pedido.descuento-por-renglon",
     "area": "Pedido",
     "flujo": "Descuento por renglón",
-    "pruebas": []
+    "pruebas": [],
+    "estado": "no aplica",
+    "razon": "El descuento del restaurante es a la cuenta entera (con la clave de gerencia); la función por renglón no existe en la app y no se construye (la lista «para después» de NUEVO.md). El de mostrador por línea es otro flujo y ya tiene su prueba."
   },
   {
     "id": "pedido.descuento-por-cuenta",
@@ -171,13 +189,20 @@
     "id": "pedido.para-llevar-desde-la-mesa",
     "area": "Pedido",
     "flujo": "Para llevar desde la mesa",
-    "pruebas": []
+    "pruebas": [],
+    "estado": "no aplica",
+    "razon": "El para llevar sólo se arma desde la Caja (flujo vecino, con sus pruebas); el mesero no tiene entrada de para llevar en la mesa activa y no se construye."
   },
   {
     "id": "pedido.para-llevar-desde-la-caja",
     "area": "Pedido",
     "flujo": "Para llevar desde la Caja, con nombre y número del día",
-    "pruebas": []
+    "pruebas": [
+      "pruebas/e2e/qa-final/a7-para-llevar-a-medias.spec.ts",
+      "pruebas/e2e/qa-final/telefono-para-llevar.spec.ts",
+      "packages/app/src/restaurante/para-llevar.integracion.test.ts",
+      "qa/simulador/parte5/correr.ts"
+    ]
   },
 
   {
@@ -199,9 +224,18 @@
     "id": "cocina.alertas",
     "area": "Cocina",
     "flujo": "Alertas ámbar y roja de espera",
-    "pruebas": []
+    "pruebas": ["pruebas/e2e/qa-final/ajustes.cocina.spec.ts", "apps/web/src/cocina/espera.test.ts"]
   },
-  { "id": "cocina.voz", "area": "Cocina", "flujo": "La voz anuncia las comandas", "pruebas": [] },
+  {
+    "id": "cocina.voz",
+    "area": "Cocina",
+    "flujo": "La voz anuncia las comandas",
+    "pruebas": [
+      "apps/web/src/cocina/anuncio-de-comandas.test.ts",
+      "apps/web/src/voz/frase-de-la-comanda.test.ts",
+      "pruebas/e2e/qa-final/ajustes.aparato.spec.ts"
+    ]
+  },
   {
     "id": "cocina.telefono",
     "area": "Cocina",
@@ -218,7 +252,7 @@
     "id": "cocina.reasignar-con-comandas-abiertas",
     "area": "Cocina",
     "flujo": "Reasignar una categoría con comandas abiertas",
-    "pruebas": []
+    "pruebas": ["packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts"]
   },
 
   {
@@ -254,14 +288,30 @@
     "flujo": "Llamar al mesero",
     "pruebas": ["pruebas/e2e/vista-de-solicitudes.spec.ts"]
   },
-  { "id": "portal.ayuda", "area": "Portal QR", "flujo": "Necesito ayuda", "pruebas": [] },
+  {
+    "id": "portal.ayuda",
+    "area": "Portal QR",
+    "flujo": "Necesito ayuda",
+    "pruebas": [
+      "pruebas/e2e/portal-sin-asignacion.spec.ts",
+      "packages/app/src/portal/portal-desde-fuera.integracion.test.ts"
+    ]
+  },
   {
     "id": "portal.pedir-la-cuenta",
     "area": "Portal QR",
     "flujo": "Pedir la cuenta",
     "pruebas": ["pruebas/e2e/restaurante-portal-qr.spec.ts"]
   },
-  { "id": "portal.precuenta", "area": "Portal QR", "flujo": "Ver la precuenta", "pruebas": [] },
+  {
+    "id": "portal.precuenta",
+    "area": "Portal QR",
+    "flujo": "Ver la precuenta",
+    "pruebas": [
+      "pruebas/e2e/restaurante-portal-qr.spec.ts",
+      "packages/app/src/portal/ajustes-del-portal.integracion.test.ts"
+    ]
+  },
   {
     "id": "portal.propina",
     "area": "Portal QR",
@@ -272,7 +322,10 @@
     "id": "portal.calificacion",
     "area": "Portal QR",
     "flujo": "Calificar la visita",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/portal/valorar-la-visita.integracion.test.ts",
+      "pruebas/e2e/qa-final/flujos-sin-prueba.spec.ts"
+    ]
   },
   {
     "id": "portal.sesion-termina-al-cobrar",
@@ -284,9 +337,17 @@
     "id": "portal.topes",
     "area": "Portal QR",
     "flujo": "Topes de avisos y de teléfonos",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/portal/portal-desde-fuera.integracion.test.ts",
+      "packages/app/src/portal/carrito-doce-telefonos.integracion.test.ts"
+    ]
   },
-  { "id": "portal.apagado", "area": "Portal QR", "flujo": "El portal apagado", "pruebas": [] },
+  {
+    "id": "portal.apagado",
+    "area": "Portal QR",
+    "flujo": "El portal apagado",
+    "pruebas": ["packages/app/src/qa-final/portal-apagado.integracion.test.ts"]
+  },
 
   {
     "id": "caja.abrir",
@@ -300,21 +361,45 @@
     "flujo": "Traer la caja a este aparato",
     "pruebas": ["pruebas/e2e/cajas-del-negocio.spec.ts"]
   },
-  { "id": "caja.fondo", "area": "Caja", "flujo": "Fondo de la caja", "pruebas": [] },
+  {
+    "id": "caja.fondo",
+    "area": "Caja",
+    "flujo": "Fondo de la caja",
+    "pruebas": [
+      "pruebas/e2e/dia-completo-restaurante.spec.ts",
+      "pruebas/e2e/qa-final/parte7-arqueo.spec.ts"
+    ]
+  },
   {
     "id": "caja.cobrar-efectivo",
     "area": "Caja",
     "flujo": "Cobrar en efectivo con su cambio",
     "pruebas": ["pruebas/e2e/dia-completo-restaurante.spec.ts"]
   },
-  { "id": "caja.cobrar-tarjeta", "area": "Caja", "flujo": "Cobrar con tarjeta", "pruebas": [] },
+  {
+    "id": "caja.cobrar-tarjeta",
+    "area": "Caja",
+    "flujo": "Cobrar con tarjeta",
+    "pruebas": [
+      "pruebas/e2e/dia-completo-restaurante.spec.ts",
+      "packages/app/src/qa-final/dinero-ternas.integracion.test.ts"
+    ]
+  },
   {
     "id": "caja.cobrar-transferencia",
     "area": "Caja",
     "flujo": "Cobrar por transferencia",
-    "pruebas": []
+    "pruebas": ["pruebas/e2e/dia-completo-restaurante.spec.ts"]
   },
-  { "id": "caja.cobrar-mixto", "area": "Caja", "flujo": "Cobro mixto", "pruebas": [] },
+  {
+    "id": "caja.cobrar-mixto",
+    "area": "Caja",
+    "flujo": "Cobro mixto",
+    "pruebas": [
+      "pruebas/e2e/dia-completo-restaurante.spec.ts",
+      "packages/app/src/qa-final/dinero-ternas.integracion.test.ts"
+    ]
+  },
   {
     "id": "caja.propina-de-la-caja",
     "area": "Caja",
@@ -331,7 +416,10 @@
     "id": "caja.propina-del-mesero",
     "area": "Caja",
     "flujo": "Propina elegida por el mesero",
-    "pruebas": []
+    "pruebas": [
+      "pruebas/e2e/dia-completo-restaurante.spec.ts",
+      "packages/app/src/propinas/una-sola-verdad.integracion.test.ts"
+    ]
   },
   {
     "id": "caja.descuentos",
@@ -355,22 +443,38 @@
     "id": "caja.cajon-al-cobrar",
     "area": "Caja",
     "flujo": "El cajón se abre al cobrar en efectivo",
-    "pruebas": []
+    "pruebas": ["packages/app/src/caja/cajon-por-cobro.integracion.test.ts"]
   },
   {
     "id": "caja.cajon-a-mano",
     "area": "Caja",
     "flujo": "Abrir el cajón a mano con PIN",
-    "pruebas": []
+    "pruebas": ["packages/app/src/caja/abrir-cajon-con-pin.integracion.test.ts"]
   },
-  { "id": "caja.retiros", "area": "Caja", "flujo": "Retiros con PIN de gerente", "pruebas": [] },
+  {
+    "id": "caja.retiros",
+    "area": "Caja",
+    "flujo": "Retiros con PIN de gerente",
+    "pruebas": [
+      "packages/app/src/caja/retiro-con-pin.integracion.test.ts",
+      "packages/app/src/caja/movimientos-de-la-cajera.integracion.test.ts"
+    ]
+  },
   {
     "id": "caja.depositos",
     "area": "Caja",
     "flujo": "Depósitos (entradas de efectivo)",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/caja/entrada-cambio.integracion.test.ts",
+      "packages/app/src/caja/movimientos-de-la-cajera.integracion.test.ts"
+    ]
   },
-  { "id": "caja.gastos", "area": "Caja", "flujo": "Gastos de caja", "pruebas": [] },
+  {
+    "id": "caja.gastos",
+    "area": "Caja",
+    "flujo": "Gastos de caja",
+    "pruebas": ["packages/app/src/compras/gastos-de-la-caja.integracion.test.ts"]
+  },
   {
     "id": "caja.corte-a-ciegas",
     "area": "Caja",
@@ -388,31 +492,44 @@
     "id": "compras.con-proveedor",
     "area": "Compras y gastos",
     "flujo": "Compra con proveedor que entra al almacén",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/compras/compras-del-almacen.integracion.test.ts",
+      "qa/simulador/parte5/pasos-compras.ts"
+    ]
   },
   {
     "id": "compras.pagada-de-la-caja",
     "area": "Compras y gastos",
     "flujo": "Compra pagada de la caja",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/compras/gastos-de-la-caja.integracion.test.ts",
+      "packages/app/src/compras/compras-del-almacen.integracion.test.ts"
+    ]
   },
   {
     "id": "compras.por-transferencia",
     "area": "Compras y gastos",
     "flujo": "Compra pagada por transferencia",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/compras/compras-del-almacen.integracion.test.ts",
+      "packages/app/src/compras/fecha-del-negocio.integracion.test.ts",
+      "qa/simulador/parte5/pasos-compras.ts"
+    ]
   },
   {
     "id": "compras.gastos-por-categoria",
     "area": "Compras y gastos",
     "flujo": "Gastos por categoría",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/compras/gastos-de-la-caja.integracion.test.ts",
+      "apps/web/src/venta/categorias-de-gasto.contrato.test.ts"
+    ]
   },
   {
     "id": "compras.el-corte-cuadra",
     "area": "Compras y gastos",
     "flujo": "El corte cuadra con compras y gastos",
-    "pruebas": []
+    "pruebas": ["packages/app/src/compras/gastos-de-la-caja.integracion.test.ts"]
   },
 
   {
@@ -425,55 +542,93 @@
     "id": "inventario.ocultar-y-no-disponible",
     "area": "Inventario y recetas",
     "flujo": "Ocultar del portal y marcar no disponible",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/portal/portal-oculto-del-pos.integracion.test.ts",
+      "packages/app/src/catalogo/agotado.integracion.test.ts",
+      "pruebas/e2e/qa-final/parte7-agotado-y-papel.spec.ts",
+      "qa/simulador/parte5/pasos-disponibilidad.ts"
+    ]
   },
   {
     "id": "inventario.unidades-proveedores-almacen",
     "area": "Inventario y recetas",
     "flujo": "Unidades, proveedores y el almacén principal",
-    "pruebas": []
+    "pruebas": [
+      "qa/simulador/parte5/pasos-compras.ts",
+      "packages/app/src/inventario/unidad-del-insumo.integracion.test.ts",
+      "apps/web/src/inventario/almacen-de-la-sucursal.test.ts"
+    ]
   },
   {
     "id": "inventario.insumos",
     "area": "Inventario y recetas",
     "flujo": "Insumos con su unidad y su existencia mínima",
-    "pruebas": []
+    "pruebas": [
+      "qa/simulador/dia0/inventario.ts",
+      "packages/app/src/inventario/unidad-del-insumo.integracion.test.ts",
+      "packages/app/src/inventario/insumos-bajos.integracion.test.ts"
+    ]
   },
   {
     "id": "inventario.recetas",
     "area": "Inventario y recetas",
     "flujo": "Recetas: crear, asignar a platillos y opciones, costo y margen",
-    "pruebas": []
+    "pruebas": [
+      "qa/simulador/dia0/productos.ts",
+      "qa/simulador/parte5/pasos-reportes.ts",
+      "apps/web/src/inventario/costo-del-platillo.test.ts",
+      "packages/app/src/inventario/costo-exacto.integracion.test.ts"
+    ]
   },
   {
     "id": "inventario.descuento-al-vender",
     "area": "Inventario y recetas",
     "flujo": "Vender descuenta los insumos exactos, en su momento",
-    "pruebas": []
+    "pruebas": [
+      "qa/simulador/parte5/correr.ts",
+      "packages/app/src/qa-final/dinero-ternas.integracion.test.ts",
+      "pruebas/e2e/dia-completo-restaurante.spec.ts"
+    ]
   },
   {
     "id": "inventario.cancelar-y-devolver",
     "area": "Inventario y recetas",
     "flujo": "Cancelar lo no preparado regresa el insumo; lo preparado no; la devolución",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/restaurante/merma-por-cancelacion.integracion.test.ts",
+      "packages/app/src/caja/corte/devolucion-de-receta.integracion.test.ts",
+      "qa/simulador/parte5/pasos-extra.ts"
+    ]
   },
   {
     "id": "inventario.alertas-de-minimo",
     "area": "Inventario y recetas",
     "flujo": "Aviso de insumo bajo de su mínimo",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/inventario/insumos-bajos.integracion.test.ts",
+      "apps/web/src/inventario/por-debajo-del-minimo.test.ts",
+      "apps/web/src/inventario/aviso-de-insumos-bajos.test.ts"
+    ]
   },
   {
     "id": "inventario.conteo-y-merma",
     "area": "Inventario y recetas",
     "flujo": "Conteo físico y merma, también con existencia negativa",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/inventario/merma-desde-ajustar.integracion.test.ts",
+      "packages/app/src/inventario/merma-en-negativo.integracion.test.ts",
+      "qa/simulador/parte5/pasos-extra.ts"
+    ]
   },
   {
     "id": "inventario.valor-y-reportes",
     "area": "Inventario y recetas",
     "flujo": "Valor de inventario, movimientos y reportes contra el árbitro",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/inventario/costo-exacto.integracion.test.ts",
+      "apps/web/src/restaurante/valor-de-inventario.test.ts",
+      "qa/simulador/parte5/pasos-reportes.ts"
+    ]
   },
 
   {
@@ -486,7 +641,10 @@
     "id": "personas.desactivar-con-mesas",
     "area": "Personas",
     "flujo": "Desactivar a alguien con mesas abiertas",
-    "pruebas": []
+    "pruebas": [
+      "pruebas/e2e/usuarios-y-mesas.spec.ts",
+      "packages/app/src/qa-final/cambios-a-media-operacion.integracion.test.ts"
+    ]
   },
   {
     "id": "personas.permisos",
@@ -495,25 +653,53 @@
     "pruebas": ["pruebas/e2e/matriz-de-permisos.spec.ts", "pruebas/e2e/aislamiento.spec.ts"]
   },
 
-  { "id": "reportes.tablero", "area": "Reportes", "flujo": "Tablero del dueño", "pruebas": [] },
+  {
+    "id": "reportes.tablero",
+    "area": "Reportes",
+    "flujo": "Tablero del dueño",
+    "pruebas": [
+      "packages/app/src/tablero/serie.integracion.test.ts",
+      "packages/app/src/tablero/armado.test.ts",
+      "pruebas/e2e/dia-completo-restaurante.spec.ts"
+    ]
+  },
   {
     "id": "reportes.registros",
     "area": "Reportes",
     "flujo": "Registros (ventas, cortes, compras, movimientos, gastos)",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/registros/resumen-del-periodo.integracion.test.ts",
+      "pruebas/e2e/qa-final/parte7-corte.spec.ts",
+      "pruebas/e2e/qa-final/parte7-exportar.spec.ts"
+    ]
   },
-  { "id": "reportes.ventas", "area": "Reportes", "flujo": "Ventas", "pruebas": [] },
+  {
+    "id": "reportes.ventas",
+    "area": "Reportes",
+    "flujo": "Ventas",
+    "pruebas": [
+      "packages/app/src/registros/lo-mas-vendido.integracion.test.ts",
+      "apps/web/src/restaurante/ventas-del-registro.test.ts",
+      "pruebas/e2e/qa-final/parte7-exportar.spec.ts"
+    ]
+  },
   {
     "id": "reportes.propinas-por-mesero",
     "area": "Reportes",
     "flujo": "Propinas por mesero",
-    "pruebas": []
+    "pruebas": [
+      "packages/app/src/propinas/propinas-del-rango.integracion.test.ts",
+      "pruebas/e2e/qa-final/parte7-corte.spec.ts"
+    ]
   },
   {
     "id": "reportes.exportaciones-y-pdf",
     "area": "Reportes",
     "flujo": "Exportaciones y PDF",
-    "pruebas": []
+    "pruebas": [
+      "pruebas/e2e/qa-final/parte7-exportar.spec.ts",
+      "pruebas/e2e/qa-final/ajustes.operacion.spec.ts"
+    ]
   },
 
   {
@@ -538,7 +724,16 @@
     "flujo": "Copias y «REIMPRESIÓN»",
     "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"]
   },
-  { "id": "impresion.corte", "area": "Impresión", "flujo": "El corte en papel", "pruebas": [] },
+  {
+    "id": "impresion.corte",
+    "area": "Impresión",
+    "flujo": "El corte en papel",
+    "pruebas": [
+      "pruebas/impresion/ajustes-del-papel.spec.ts",
+      "pruebas/impresion/copias-por-la-app.spec.ts",
+      "pruebas/e2e/qa-final/parte7-arqueo.spec.ts"
+    ]
+  },
   {
     "id": "impresion.campos-ocultos",
     "area": "Impresión",
@@ -558,12 +753,24 @@
     "flujo": "Impresora y cajón",
     "pruebas": ["pruebas/e2e/impresion-por-la-app.spec.ts"]
   },
-  { "id": "aparato.voz", "area": "Este aparato", "flujo": "Voz de este aparato", "pruebas": [] },
+  {
+    "id": "aparato.voz",
+    "area": "Este aparato",
+    "flujo": "Voz de este aparato",
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.aparato.spec.ts",
+      "apps/web/src/voz/preferencia-de-voz.test.ts"
+    ]
+  },
   {
     "id": "aparato.anuncia-comandas",
     "area": "Este aparato",
     "flujo": "Esta pantalla anuncia las comandas",
-    "pruebas": []
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes.aparato.spec.ts",
+      "apps/web/src/voz/anuncio-del-aparato.test.ts",
+      "pruebas/e2e/qa-final/pregunta-del-anuncio.spec.ts"
+    ]
   },
   {
     "id": "aparato.barra",

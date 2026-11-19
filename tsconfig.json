@@ -22,7 +22,9 @@
     "scripts/modo-compatible/plugin.test.ts",
     "scripts/modo-compatible/tiene.d.mts",
     "scripts/modo-compatible/tiene.test.ts",
-    "scripts/modo-compatible/turbo.test.ts"
+    "scripts/modo-compatible/turbo.test.ts",
+    "scripts/qa-final/matriz/flujos.d.mts",
+    "scripts/qa-final/matriz/flujos.test.ts"
   ],
   "exclude": ["node_modules", "dist", "build", ".next", ".turbo", "coverage", "historico"],
   "compilerOptions": {

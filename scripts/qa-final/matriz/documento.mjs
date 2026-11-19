@@ -5,6 +5,8 @@ import { writeFileSync } from 'node:fs';
 
 import * as prettier from 'prettier';
 
+import { estadoDelFlujo, NO_APLICA, resumenDeFlujos } from './flujos.mjs';
+
 const SIGLAS = {
   dueno: 'Du',
   administrador: 'Ad',
@@ -151,10 +153,11 @@ function seccionDeFlujos(mapa) {
     flujo.area,
     flujo.flujo,
     flujo.pruebas.length === 0
-      ? '**falta**'
+      ? flujo.estado === NO_APLICA
+        ? '—'
+        : '**falta**'
       : flujo.pruebas.map((ruta) => `\`${ruta}\``).join(', '),
-    flujo.estado ??
-      (flujo.pruebas.length === 0 ? 'sin prueba' : 'con prueba, por recorrer con el arnés'),
+    estadoDelFlujo(flujo),
   ]);
   return [
     '## 3 · Flujos del restaurante',
@@ -209,14 +212,14 @@ function resumen(mapa, faltantes) {
   const { delNegocio, delAparato } = mapa.ajustes;
   const todos = [...delNegocio, ...delAparato];
   const sinLector = delNegocio.filter((ajuste) => ajuste.lectores.length === 0);
-  const sinPrueba = mapa.flujos.filter((flujo) => flujo.pruebas.length === 0);
+  const flujos = resumenDeFlujos(mapa.flujos);
   const ventanas = mapa.pantallas.reduce((suma, pantalla) => suma + pantalla.ventanas.length, 0);
   return [
     '## Resumen',
     '',
     `- **Pantallas:** ${String(mapa.pantallas.length)} rutas (${String(mapa.pantallas.filter((p) => p.conSesion).length)} con sesión) y ${String(ventanas)} ventanas.`,
     `- **Ajustes:** ${String(delNegocio.length)} del negocio y ${String(delAparato.length)} de este aparato; ${String(todos.filter((ajuste) => ajuste.efecto?.estado === 'comprobado').length)} con su efecto comprobado; ${String(sinLector.length)} que nadie lee (${sinLector.map((ajuste) => `\`${ajuste.clave}\``).join(', ') || 'ninguno'}).`,
-    `- **Flujos:** ${String(mapa.flujos.length)}; ${String(sinPrueba.length)} todavía sin prueba.`,
+    `- **Flujos:** ${String(mapa.flujos.length)}; ${String(flujos.sinPrueba)} todavía sin prueba; ${String(flujos.noAplica)} «no aplica» declarado con su razón.`,
     `- **Comandos:** ${String(mapa.comandos.length)} del restaurante; ${String(mapa.comandos.filter((comando) => comando.llamadas.length === 0).length)} sin pantalla. **Lecturas del puente:** ${String(mapa.entidades.length)} entidades.`,
     `- **Huecos del mapa** (\`--verificar\`): ${String(faltantes.length)}.`,
   ].join('\n');
