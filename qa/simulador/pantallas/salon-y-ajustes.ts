@@ -213,12 +213,19 @@ export async function asignarLaCategoria(
  * la vista, se prueban las demás pestañas hasta que aparece (la 14 vive en la terraza).
  */
 async function ponerLaZonaDeLaMesa(pagina: Page, mesa: Locator): Promise<void> {
-  if ((await mesa.count()) > 0) return;
+  // Se ESPERA a que la mesa aparezca tras cada cambio de pestaña: contar de inmediato leía 0 antes de que
+  // React pintara la zona y el bot se rendía (S1r del día 2215, D22-036: la 14 vive en la terraza).
+  const aLaVista = (): Promise<boolean> =>
+    mesa.waitFor({ state: 'visible', timeout: 2_500 }).then(
+      () => true,
+      () => false,
+    );
+  if (await aLaVista()) return;
   const zonas = pagina.getByRole('button', { name: /^\D+\(\d+\)$/ });
   const cuantas = await zonas.count();
   for (let i = 0; i < cuantas; i += 1) {
     await zonas.nth(i).click();
-    if ((await mesa.count()) > 0) return;
+    if (await aLaVista()) return;
   }
 }
 

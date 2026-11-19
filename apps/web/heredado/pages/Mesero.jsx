@@ -1360,6 +1360,13 @@ function Mesero() {
       }),
   );
 
+  // DP-22 · Hallazgo 35: con la cuenta ya pedida, el camino a la pantalla Precuenta (que reimprime y
+  // marca la hoja) para que el mesero no dependa del menú. `null` mientras la cuenta no se pide.
+  const hrefDeLaPrecuenta =
+    ventaActiva?.id && mesaActiva?.estado === 'cuenta_solicitada'
+      ? `/restaurante/precuenta?cuenta=${encodeURIComponent(ventaActiva.id)}`
+      : null;
+
   return (
     <div className="space-y-4">
       {/* Header — flex-wrap para que en móvil no se desborde la fila de botones
@@ -1988,6 +1995,15 @@ function Mesero() {
                       Solicitar cuenta
                     </Button>
                   )}
+                {/* DP-22 · Hallazgo 35: la cuenta ya está pedida y la hoja se cerró; otra hoja, a un toque. */}
+                {hrefDeLaPrecuenta !== null && (
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to={hrefDeLaPrecuenta}>
+                      <Printer className="w-4 h-4 mr-1" />
+                      Imprimir otra hoja de la precuenta
+                    </Link>
+                  </Button>
+                )}
                 {/* DP-15 · Cambiar de mesa, unir o dividir vivían sólo tecleando la dirección.
                     DP-15.1 · Y el mesero, que es quien dice «nos pasamos a la terraza», lo tiene en SUS mesas. */}
                 {puedeCambiarDeMesaAqui && (
@@ -2038,6 +2054,7 @@ function Mesero() {
             onUpdateExclusiones={actualizarExclusionesItem}
             puedeCambiarDeMesa={puedeCambiarDeMesaAqui}
             alCambiarDeMesa={() => setCambiandoDeMesa(true)}
+            hrefDeLaPrecuenta={hrefDeLaPrecuenta}
           />
         </DialogContent>
       </Dialog>

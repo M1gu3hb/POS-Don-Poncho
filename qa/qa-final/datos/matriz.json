@@ -1,5 +1,5 @@
 {
-  "commit": "ca7e6f1",
+  "commit": "dfeb099",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -251,6 +251,7 @@
         "apps/web/src/venta/pin-en-retiros.ts",
         "apps/web/src/venta/propina-en-la-caja.ts",
         "apps/web/src/venta/se-menciona-el-iva.ts",
+        "apps/web/src/venta/tarjetas-del-cajon.ts",
         "apps/web/src/venta/tope-de-quien-autoriza.ts",
         "apps/web/src/venta/totales-del-papel.ts",
         "apps/web/src/venta/use-descuentos-permitidos.ts",
@@ -349,7 +350,7 @@
           "titulo": null
         }
       ],
-      "lineas": 19608,
+      "lineas": 19648,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -1174,7 +1175,7 @@
           "titulo": null
         }
       ],
-      "lineas": 17397,
+      "lineas": 17473,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -1803,11 +1804,12 @@
         "apps/web/src/venta/importe-tecleado.ts",
         "apps/web/src/venta/lo-preparado.ts",
         "apps/web/src/venta/pin-en-retiros.ts",
+        "apps/web/src/venta/tarjetas-del-cajon.ts",
         "apps/web/src/venta/tope-de-quien-autoriza.ts",
         "apps/web/src/venta/use-umbral-de-retiro.ts"
       ],
       "ventanas": [],
-      "lineas": 3098,
+      "lineas": 3138,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -2441,13 +2443,13 @@
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:357"
         ],
         "lectores": ["apps/web/heredado/components/common/BrandedBackground.jsx:22"],
-        "pruebasQueLaNombran": [],
+        "pruebasQueLaNombran": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts"],
         "efecto": {
           "efecto": "Cómo se acomoda la imagen de fondo del sistema (cubrir o contener).",
           "valores": ["cover", "contain"],
-          "pruebas": [],
-          "estado": "por ver en navegador",
-          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+          "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#background_image_url"],
+          "estado": "comprobado",
+          "nota": "«Mostrar imagen completa» pinta contain y «Cubrir» pinta cover. Corrida en verde. Sin mutante."
         }
       },
       {
@@ -2472,13 +2474,16 @@
           "apps/web/heredado/components/common/BrandedBackground.jsx:20",
           "packages/app/src/archivos/referencias.ts:9"
         ],
-        "pruebasQueLaNombran": ["packages/app/src/archivos/referencias.test.ts"],
+        "pruebasQueLaNombran": [
+          "packages/app/src/archivos/referencias.test.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts"
+        ],
         "efecto": {
           "efecto": "La imagen de fondo de las pantallas internas.",
           "valores": ["vacío", "una imagen"],
-          "pruebas": [],
-          "estado": "por ver en navegador",
-          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+          "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#background_image_url"],
+          "estado": "comprobado",
+          "nota": "Sin fondo, imagen subida y sin imagen: la marca de agua de las pantallas internas aparece y desaparece; con marca de agua y imagen, gana la imagen. Corrida en verde. Sin mutante."
         }
       },
       {
@@ -2512,14 +2517,15 @@
           "packages/app/src/archivos/referencias.test.ts",
           "packages/app/src/portal/portal.proyeccion.test.ts",
           "packages/app/src/puente/lo-publico.test.ts",
-          "packages/app/src/puente/puente.test.ts"
+          "packages/app/src/puente/puente.test.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts"
         ],
         "efecto": {
           "efecto": "La marca de agua del fondo de las pantallas internas y del portal (el acceso, sin sesión, no la lee).",
           "valores": ["vacío", "una imagen"],
-          "pruebas": [],
-          "estado": "por ver en navegador",
-          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+          "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#background_image_url"],
+          "estado": "comprobado",
+          "nota": "Sin imagen de fondo manda la marca de agua subida; sin ninguna vuelve el degradado solo. Corrida en verde. Falta ver la marca de agua en el portal. Sin mutante."
         }
       },
       {
@@ -2544,13 +2550,13 @@
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:345"
         ],
         "lectores": ["apps/web/heredado/components/common/BrandedBackground.jsx:21"],
-        "pruebasQueLaNombran": [],
+        "pruebasQueLaNombran": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts"],
         "efecto": {
           "efecto": "Qué tan visible es el fondo (0 a 1).",
           "valores": ["0.05", "0.5"],
-          "pruebas": [],
-          "estado": "por ver en navegador",
-          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+          "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#background_image_url"],
+          "estado": "comprobado",
+          "nota": "El dedo sobre la barra (8 % y 92 %): la opacidad guardada es la que pinta el fondo (baja contra alta). Corrida en verde. Sin mutante."
         }
       },
       {
@@ -2816,7 +2822,7 @@
         "lectores": [
           "apps/web/heredado/components/dashboard/ColoredStatCard.jsx:26",
           "apps/web/heredado/components/mesero/MesaActivaView.jsx:63",
-          "apps/web/heredado/components/mesero/MeseroCartFAB.jsx:221",
+          "apps/web/heredado/components/mesero/MeseroCartFAB.jsx:271",
           "apps/web/heredado/components/pos/CartPanel.jsx:12",
           "apps/web/heredado/components/propinas/PropinasDashboardSection.jsx:34",
           "apps/web/heredado/components/recetas/RecetaAccordionRow.jsx:81",
@@ -2829,8 +2835,8 @@
           "apps/web/heredado/pages/Caja.jsx:2242",
           "apps/web/heredado/pages/Caja.jsx:2260",
           "apps/web/heredado/pages/Dashboard.jsx:617",
-          "apps/web/heredado/pages/Mesero.jsx:1850",
-          "apps/web/heredado/pages/Mesero.jsx:1956",
+          "apps/web/heredado/pages/Mesero.jsx:1857",
+          "apps/web/heredado/pages/Mesero.jsx:1963",
           "apps/web/heredado/pages/Productos.jsx:275",
           "apps/web/heredado/pages/Registros.jsx:699",
           "apps/web/heredado/pages/Ventas.jsx:63"
@@ -2989,6 +2995,7 @@
           "packages/app/src/portal/portal.proyeccion.test.ts",
           "packages/app/src/puente/recorte-por-persona.test.ts",
           "packages/app/src/reportes/auditoria-sanea-al-leer.integracion.test.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
@@ -3337,7 +3344,8 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/experiencia.integracion.test.ts",
-          "packages/app/src/configuracion/experiencia.test.ts"
+          "packages/app/src/configuracion/experiencia.test.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts"
         ],
         "efecto": {
           "efecto": "El portal del comensal suena (o no) al tocar.",
@@ -3766,8 +3774,8 @@
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:287"
         ],
         "lectores": [
-          "apps/web/heredado/components/common/Sidebar.jsx:181",
-          "apps/web/heredado/components/common/Sidebar.jsx:183",
+          "apps/web/heredado/components/common/Sidebar.jsx:182",
+          "apps/web/heredado/components/common/Sidebar.jsx:184",
           "apps/web/heredado/components/portalqr/MesasQRTab.jsx:38",
           "apps/web/heredado/components/registros/PeriodoPDF.jsx:52",
           "apps/web/heredado/components/tickets/CorteTicket.jsx:183",
@@ -3793,15 +3801,16 @@
           "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
           "efecto": "El logo del negocio en la barra y la pantalla de espera (el acceso, sin sesión, lleva el de la casa).",
           "valores": ["por omisión", "otra imagen"],
-          "pruebas": [],
-          "estado": "por ver en navegador",
-          "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+          "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#logo_url"],
+          "estado": "comprobado",
+          "nota": "Sube un logo con el dedo; la barra lateral y el portal del comensal pasan de sin logo a rojo, a azul y otra vez a sin logo; el acceso no lo lee (DP-D164). Corrida en verde, Windows 1366x768@125 % y teléfono 360x800. Sin mutante."
         }
       },
       {
@@ -3987,8 +3996,8 @@
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:61"
         ],
         "lectores": [
-          "apps/web/heredado/components/common/Sidebar.jsx:184",
-          "apps/web/heredado/components/common/Sidebar.jsx:194",
+          "apps/web/heredado/components/common/Sidebar.jsx:185",
+          "apps/web/heredado/components/common/Sidebar.jsx:195",
           "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:208",
           "apps/web/heredado/components/cortes/CorteViewerDialog.jsx:278",
           "apps/web/heredado/components/productos/ProductoDesglose.jsx:61",
@@ -4020,6 +4029,7 @@
           "packages/app/src/puente/lo-publico.test.ts",
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/reiniciar.spec.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
@@ -4220,8 +4230,8 @@
           "apps/web/heredado/components/common/RestrictedRoute.jsx:14",
           "apps/web/heredado/components/common/RestrictedRoute.jsx:19",
           "apps/web/heredado/components/common/RestrictedRoute.jsx:39",
-          "apps/web/heredado/components/common/Sidebar.jsx:129",
-          "apps/web/heredado/components/common/Sidebar.jsx:157",
+          "apps/web/heredado/components/common/Sidebar.jsx:130",
+          "apps/web/heredado/components/common/Sidebar.jsx:158",
           "apps/web/heredado/components/common/SolicitudesQRWatcher.jsx:49",
           "apps/web/heredado/components/common/SolicitudesQRWatcher.jsx:55",
           "apps/web/heredado/components/cortes/CorteAutoDownloader.jsx:35",
@@ -4356,7 +4366,7 @@
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:281"
         ],
         "lectores": [
-          "apps/web/heredado/components/common/Sidebar.jsx:197",
+          "apps/web/heredado/components/common/Sidebar.jsx:198",
           "apps/web/heredado/components/tickets/CorteTicket.jsx:205",
           "apps/web/heredado/components/tickets/CorteTicket.jsx:765",
           "packages/app/src/caja/corte/documento.ts:370"
@@ -4431,6 +4441,8 @@
           "pruebas/e2e/ayudantes/mesas-heredadas.ts",
           "pruebas/e2e/mesas-tres-y-veinticinco.spec.ts",
           "pruebas/e2e/portal-sin-asignacion.spec.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts",
           "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
           "pruebas/e2e/restaurante-portal-qr.spec.ts"
         ],
@@ -4558,18 +4570,16 @@
           "packages/app/src/propinas/una-sola-verdad.integracion.test.ts",
           "packages/app/src/qa-final/pares.integracion.test.ts",
           "pruebas/e2e/ayudantes/mesas-heredadas.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts",
           "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
           "pruebas/e2e/restaurante-portal-qr.spec.ts"
         ],
         "efecto": {
           "efecto": "Quién pide la cuenta con propina: mesero, comensal o ambos.",
           "valores": ["mesero", "cliente", "ambos"],
-          "pruebas": [
-            "packages/app/src/portal/portal-desde-fuera.integracion.test.ts",
-            "pruebas/e2e/restaurante-portal-qr.spec.ts",
-            "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
-          ],
-          "estado": "por ver en navegador"
+          "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts#portal_qr_cuenta_modo"],
+          "estado": "comprobado",
+          "nota": "Con el dedo en el teléfono: «Mesero dispara» sólo crea el aviso; «Cliente solicita» y «Ambos» abren la cuenta con propina. Corrida en verde. Sin mutante."
         }
       },
       {
@@ -4894,6 +4904,7 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/portal/ajustes-del-portal.integracion.test.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts",
           "pruebas/e2e/qa-final/ajustes.portal.spec.ts"
         ],
         "efecto": {
@@ -4984,6 +4995,8 @@
           "packages/app/src/restaurante/union-puente-del-qr.integracion.test.ts",
           "pruebas/e2e/ayudantes/mesas-heredadas.ts",
           "pruebas/e2e/portal-sin-asignacion.spec.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts",
           "pruebas/e2e/qa-final/ajustes.portal.spec.ts"
         ],
         "efecto": {
@@ -5626,6 +5639,9 @@
           "pruebas/e2e/qa/qa1-01-servicio.spec.ts",
           "pruebas/e2e/qa/qa1-02-portal.spec.ts",
           "pruebas/e2e/qa/qa1-04-cancelar-y-reabrir.spec.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts",
+          "pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
           "pruebas/e2e/qa-final/ajustes.portal.spec.ts",
           "pruebas/e2e/qa-final/arnes/aparatos.ts",
@@ -6227,8 +6243,11 @@
         "visiblePara": "mesas",
         "efecto": {
           "efecto": "Mesas, zonas y su lugar en el mapa; el reparto a meseros.",
-          "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts", "pruebas/e2e/tactil-mapa.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "pruebas/e2e/qa-final/ajustes-finales/tarjetas-personas.spec.ts#mapa-de-mesas"
+          ],
+          "estado": "comprobado",
+          "nota": "Arrastrar una mesa con el dedo guarda su posición en el servidor y se pinta ahí al recargar. Hallazgo: el lienzo no escala a 1366x768@125 % y corta las mesas 3 y 6. Corrida en verde."
         }
       },
       {
@@ -6265,8 +6284,9 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "Los proveedores que se ofrecen al registrar una compra.",
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts#proveedores"],
+          "estado": "comprobado",
+          "nota": "Crear, ofrecerse al registrar una compra, editar y desactivar (la fila sigue en la base). Corrida en verde."
         }
       },
       {
@@ -6277,8 +6297,11 @@
         "visiblePara": "todos",
         "efecto": {
           "efecto": "Las personas, su puesto, su PIN y si están activas.",
-          "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": [
+            "pruebas/e2e/qa-final/ajustes-finales/tarjetas-personas.spec.ts#usuarios-pos"
+          ],
+          "estado": "comprobado",
+          "nota": "Alta con PIN, entra con su PIN en otro aparato (PIN malo no), desactivar y reactivar. Corrida en verde."
         }
       },
       {
@@ -6289,8 +6312,11 @@
         "visiblePara": "mando",
         "efecto": {
           "efecto": "Descarga los datos del negocio (por sección y todo).",
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts#exportar e importar"
+          ],
+          "estado": "comprobado",
+          "nota": "El CSV que baja trae una fila por proveedor de la base y los datos importados; «Exportar TODO» baja los archivos que dice. Corrida en verde."
         }
       },
       {
@@ -6301,8 +6327,11 @@
         "visiblePara": "mando",
         "efecto": {
           "efecto": "Carga datos desde un archivo con las plantillas.",
-          "pruebas": [],
-          "estado": "por comprobar"
+          "pruebas": [
+            "pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts#exportar e importar"
+          ],
+          "estado": "comprobado",
+          "nota": "Vista previa sin guardar, la fila repetida no entra, confirmar entra sólo lo bueno, reimportar actualiza sin duplicar. Corrida en verde."
         }
       },
       {
@@ -7406,7 +7435,7 @@
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
         "apps/web/heredado/pages/Caja.jsx:1145",
-        "apps/web/src/venta/CorteDeTurno.tsx:50"
+        "apps/web/src/venta/CorteDeTurno.tsx:55"
       ],
       "pantallas": ["/caja", "/restaurante/caja"]
     },
@@ -7521,7 +7550,7 @@
       "ruta": "/api/caja/movimiento",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
-      "llamadas": ["apps/web/src/venta/RetiroDeCaja.tsx:31"],
+      "llamadas": ["apps/web/src/venta/RetiroDeCaja.tsx:32"],
       "pantallas": ["/caja", "/restaurante/caja"]
     },
     {

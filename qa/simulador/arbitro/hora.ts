@@ -334,10 +334,13 @@ async function arbitrarElEfectivo(
 // línea de 2 piezas se parte en 1 + 1 y la pieza nueva entra a la MISMA comanda con la hora de la división
 // (D22-058 y D22-059 del día 2212: la división cayó después del corte, la fila vieja ya traía 1 y la nueva
 // quedaba fuera, y el árbitro veía una pieza menos). Las piezas siguen siendo las que se mandaron.
+// Las FILAS (lo que se cuenta de los platillos por porción o por peso: una línea es un platillo) sí miran la hora
+// de la fila: al dividir una línea de 3 porciones, las 2 filas nuevas nacen minutos después que la comanda y no son
+// platillos nuevos (D22-081 del día 2214: B058 con 3 Shots se cobró en 3 partes y la base dijo 8 contra 6 del libro).
 export const COMANDAS = `
 select split_part(ci.producto_nombre, ' · ', 1) as nombre,
        coalesce(sum(ci.cantidad) filter (where ci.estado <> 'cancelado'), 0)::text as piezas,
-       count(*) filter (where ci.estado <> 'cancelado')::int as filas
+       count(*) filter (where ci.estado <> 'cancelado' and ci.created_at <= c.created_at + interval '5 seconds')::int as filas
   from comanda_items ci
   join comandas c on c.id = ci.comanda_id and c.organizacion_id = ci.organizacion_id
  where ci.organizacion_id = ${ORGANIZACION} and c.created_at >= $1::timestamptz and c.created_at <= $2::timestamptz

@@ -3715,6 +3715,7 @@ entrara, sin mirar el puesto, y lo mandaba a Compras.
   `registraCompras &&`). Mutantes muertos: un botón sin guarda, la guarda comentada, Compras sin la comprobación
   del puesto; inocua (un comentario) que pasa.
 - **Sin migración.**
+
 ## DP-D182 · DP-22 · El día de bots, semilla 2211: «Cambiar de mesa» no estaba en el teléfono · 18-11-2026
 
 El primer día completo (8:00 a 19:00, semilla 2211, la máquina sola) dejó 289 incidentes y 0 diferencias del
@@ -3784,3 +3785,85 @@ explicar, 0 incidentes críticos o altos y 174 cobros por $69,641.50. Lo que se 
   después de entregar): cosmético, de la app. (4) La barra del teléfono no aparece con la cuenta ya pedida,
   y entonces el mesero del teléfono sigue sin «Cambiar de mesa». (5) Registrar una merma, un retiro o una
   compra tarda 3 a 8 s medidos con todos los toques del formulario: no se pudo separar lo de la app.
+
+## DP-D186 · DP-22 · Los hallazgos visuales 34, 35 y 38 del mesero en el teléfono: la barra se esconde al escribir y se queda con la cuenta pedida · 18-11-2026
+
+Tres hallazgos de la hoja del pedido del teléfono (`MeseroCartFAB.jsx`, 360×800), cerrados con el dedo.
+
+- **34 · La barra «Solicitar cuenta» tapaba la primera tarjeta del resultado con el teclado abierto.** La
+  barra es `fixed` abajo; con el teclado en pantalla la ventana se achica y la barra queda encima de los
+  resultados. Lo mínimo: mientras un campo de texto tiene el foco (`focusin`/`focusout` del documento), la barra
+  no se pinta; al soltar el foco vuelve. Ni la tableta ni el escritorio la tienen (`md:hidden`), así que no
+  cambia nada ahí. Si la hoja se cierra con el foco dentro de un campo que desaparece (el navegador no
+  siempre avisa), se vuelve a mirar quién tiene el foco para que la barra no se quede escondida.
+- **38 · Con la cuenta ya pedida el mesero del teléfono se quedaba sin «Cambiar de mesa».** Se leyó el servidor
+  primero: `restaurante.cambiar_mesa` acepta la cuenta en `cuenta_solicitada` (`CUENTAS_VIVAS` de
+  `cambio-de-mesa.ts`) y no toca dinero ni inventario. Por eso SÍ se ofrece, con la MISMA regla de siempre
+  (`puedeMoverLaCuenta`, una sola definición en `Mesero.jsx`: dirección en cualquier mesa, el mesero en las suyas,
+  nadie en una mesa unida). La barra ya no desaparece con la cuenta pedida: dice «Cuenta pedida · Ver pedido» y
+  su hoja trae «Cambiar de mesa».
+- **35 · Tras cerrar «Pre-cuenta lista» no había otra hoja a la mano.** Con la cuenta pedida, la hoja del
+  teléfono y el panel de la mesa (tableta) traen «Imprimir otra hoja de la precuenta», un enlace a
+  `/restaurante/precuenta?cuenta=…`, que reimprime y marca la copia («REIMPRESIÓN · 2ª HOJA»). Y los «—» de
+  esa pantalla NO se arreglaron con un cálculo en el navegador: el total de una venta es de rol caja
+  (`rolesLectura: CAJA`); lo sabe el servidor al pedir la cuenta (que la pestaña que la pidió guarda, y la
+  pantalla usa) y al imprimir. Quien llega sin esa respuesta (otra pestaña, otra tableta) ve «—», y la línea
+  de la barra ahora dice por qué y qué hacer: «lo calcula el servidor al imprimir (el total es de la caja):
+  toca Imprimir y la hoja se completa con él». Es un límite de diseño, declarado, no un defecto.
+
+Pruebas: `apps/web/src/restaurante/visual-pendientes-del-mesero.contrato.test.ts` (fallaban 6 de 7 antes del
+código) y, con el dedo, `pruebas/e2e/qa-final/visual-pendientes.spec.ts` («34 · …» y «35 y 38 · …»).
+Se declaró en `scripts/aspecto-permitido.json` lo que cambia en `MeseroCartFAB.jsx` y `Mesero.jsx`.
+
+## DP-D187 · DP-22 · Hallazgo 26: «Entregar el turno» y «Retirar» a la misma altura con subfilas · 18-11-2026
+
+Las dos tarjetas de Caja → Movimientos (escritorio, dos columnas desde `lg`) tenían sus campos a distinta altura
+porque sus textos de ayuda miden distinto. Sin tocar ningún texto: cada tarjeta es una cuadrícula con SUBFILAS
+(`lg:row-span-4 lg:grid-rows-subgrid`, `src/venta/tarjetas-del-cajon.ts`) de la cuadrícula de afuera, con cuatro
+filas: encabezado, primer campo, segundo campo y lo demás (avisos y botón). Las dos usan el mismo hueco entre filas
+(`--espacio-4`: el corte usaba `-3`) porque con huecos distintos las subfilas no cuadran. Debajo de `lg` siguen
+siendo una pila. Se quitó la excepción `[conocido]` del barrido de servicio (`CONOCIDOS` quedó vacío): desde hoy
+cualquier falta de alineación ahí tumba la prueba. Pruebas: el contrato de arriba y el barrido en los cuatro
+aparatos.
+
+## DP-D188 · DP-22 · Hallazgo 5 (resto): el menú lateral avisa cuando hay más por desplazar · 18-11-2026
+
+En una ventana baja (Windows 1366×768 al 125 % = 1093×614) el menú no cabe: la lista se desplaza, pero
+«Compras» se veía cortado bajo «Modo oscuro» sin ninguna pista. `NavegacionConAviso` (`src/tacto/`) envuelve la
+lista del menú principal: mientras queda algo por desplazar (`scrollHeight - scrollTop - clientHeight > 2 px`)
+pinta al borde de abajo un degradado y una flecha (`data-mas-por-desplazar`, `aria-hidden`,
+`pointer-events-none`: no recibe toques ni tapa un enlace); al llegar al final, o si todo cabe, se quita. Se mide al
+desplazar, al cambiar el alto de la lista y en cada pintada. Prueba con el dedo: «5 · …» en
+`visual-pendientes.spec.ts` (sólo en `win-1366x768-125`). El 11 (propina en el cobro) no se tocó.
+
+## DP-D190 · DP-22 · Los ajustes y tarjetas de Configuración que faltaban, comprobados con el dedo · 18-11-2026
+
+- **Decisión:** lo que se da por comprobado en `efectos.json` lo demuestra una prueba del arnés táctil
+  (`pruebas/e2e/qa-final/ajustes-finales/`) que cambia el ajuste en Configuración (Windows 1366×768 al 125 %) y
+  mira el efecto en el aparato donde se ve (barra y fondo en Windows; portal en el teléfono 360×800; la entrada
+  del nuevo mesero en la tableta), con los DOS estados en la misma prueba. Subir un logo o un fondo exige el
+  almacén de archivos: se usa el local del simulador. «Reiniciar sistema» sólo corre contra la base desechable.
+- **Lo que NO se da por comprobado:** que el papel salga, que el cajón de verdad salte, la impresora del local y
+  la contraseña real del proveedor; el selector de archivos del sistema operativo (se entrega el archivo al
+  campo cuando el toque no lo abre). Van a la lista de pruebas físicas.
+- **Hallazgo declarado, no cambiado en la víspera:** el mapa de Configuración → Salón no escala: a 1366×768 al
+  125 % el lienzo mide ~470 px de CSS y las mesas con posición mayor (3 y 6 de «Interior») quedan cortadas.
+- **Sin migración.**
+
+## DP-D194 · DP-22 · La matriz de flujos gana el estado «no aplica»: una función que no existe no es un hueco de pruebas, pero tampoco se esconde · 18-11-2026
+
+- **Decisión:** en `qa/qa-final/datos/flujos.json` un flujo puede declararse `"estado": "no aplica"` con una
+  `"razon"` escrita y obligatoria, y sin pruebas enlazadas (o aplica o no). El generador (`scripts/qa-final/matriz/flujos.mjs`)
+  no lo cuenta como «sin prueba», lo imprime en la matriz con su razón y lo cuenta aparte en el resumen. Un estado
+  desconocido, un «no aplica» sin razón o con pruebas enlazadas son huecos y `--verificar` falla. Lo cubren siete
+  pruebas (`flujos.test.ts`) y dos mutantes del agente T mueren (sin exigir la razón; contando «no aplica» como sin prueba).
+- **Dos flujos lo usan hoy:** «Descuento por renglón» (el descuento del restaurante es a la cuenta entera; el de
+  mostrador por línea es otro flujo, con su prueba; NUEVO.md lo lista como «lo grande para después») y «Para llevar
+  desde la mesa» (el para llevar sólo se arma desde la Caja; el mesero no tiene esa entrada).
+- **Con qué quedó la matriz:** 104 flujos, 0 sin prueba, 2 «no aplica». Hay enlaces menos fuertes que declaró el
+  agente M (Salir con la barra plegada: contrato de texto más un bot; Quitar antes de enviar: sólo el portal en modo
+  mesero; Sesión vencida: no a media operación; Cambiar de persona: un paso dentro de otra prueba; los guiones por
+  pantallas dependen de que su corrida haya pasado). Se aceptaron; no son lo mismo que una prueba propia.
+- **Por confirmar con el dueño:** que «Para llevar desde la mesa» de verdad no exista; el flujo no aparece en
+  PLAN.md ni en NUEVO.md y no se halló su entrada en la app. Si existiera, pasa a ser un hueco a probar.
+- **Sin migración. No cambia dinero ni inventario.**

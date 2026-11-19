@@ -56,6 +56,13 @@ describe('el corte de las comandas es el de la comanda, no el de cada fila (D22-
     expect(COMANDAS).toContain(
       'c.created_at >= $1::timestamptz and c.created_at <= $2::timestamptz',
     );
-    expect(COMANDAS).not.toContain('ci.created_at');
+    // El corte de la VENTANA y las piezas siguen siendo por comanda; sólo las filas descartan las que nacieron después.
+    expect(COMANDAS.match(/ci\.created_at/g)).toHaveLength(1);
+  });
+  it('al dividir una línea por porciones las filas nuevas no cuentan como platillos nuevos (D22-081)', () => {
+    expect(COMANDAS).toContain("ci.created_at <= c.created_at + interval '5 seconds'");
+    expect(COMANDAS).toMatch(
+      /filter \(where ci\.estado <> 'cancelado' and ci\.created_at <= [^)]*\)::int as filas/,
+    );
   });
 });

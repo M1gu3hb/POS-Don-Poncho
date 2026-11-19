@@ -6,6 +6,7 @@ import { usePOSAuth } from '@/lib/POSAuthContext';
 import { useConfig } from '@/lib/ConfigContext';
 import { etiquetaDeNavegacion, hasPermission } from '@/lib/permissions';
 import { useVocabulario } from '~/cliente/vocabulario';
+import { NavegacionConAviso } from '~/tacto/NavegacionConAviso';
 import { navegacionParaRolYPlantilla } from '@/lib/packageConfig';
 import { ROLE_LABELS } from '@/lib/constants';
 import {
@@ -221,7 +222,8 @@ export default function Sidebar({ collapsed, onToggle }) {
       {/* Nav */}
       {/* Con nombre: las pantallas de modelo tienen su propia navegación —las categorías del
           cobro— y un lector de pantalla tiene que poder distinguir la principal. */}
-      <nav aria-label="Menú principal" className="flex-1 py-4 overflow-y-auto space-y-0.5 px-2">
+      {/* DP-22 · Hallazgo 5: en una pantalla baja la lista se desplaza; el degradado de abajo dice que hay más. */}
+      <NavegacionConAviso etiqueta="Menú principal" className="py-4 space-y-0.5 px-2">
         {navItems.map((item) => {
           const Icon = ICON_MAP[item.icon] || Tag;
           const active = location.pathname === item.path;
@@ -287,7 +289,7 @@ export default function Sidebar({ collapsed, onToggle }) {
             </Link>
           );
         })}
-      </nav>
+      </NavegacionConAviso>
 
       {/* Theme toggle — visible en todas las páginas internas */}
       <div className="px-2 pb-1">

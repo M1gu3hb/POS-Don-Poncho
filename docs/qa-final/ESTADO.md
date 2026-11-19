@@ -3,23 +3,27 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 18-11, 09:45.
+Última puesta al día: 18-11, noche.
 
-## AHORA MISMO (18-11, 09:45) — retomar desde aquí
+## AHORA MISMO (18-11, noche) — retomar desde aquí
 
-1. **Lotes 1 a 5 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`, `e4c45f5`, `6b76050`, `e4e0a70`;
-   migraciones hasta la 195; Vercel sin errores en la hora de cada uno). El lote 5 se unió el 17-11
-   a las 23:45 y su humo salió con 0 fallas.
-2. **Parte 11 hecha** (17-11, 23:50 a 23:58): producción configurada y en ceros (0 cuentas, 0 cajas,
-   siguiente folio DP-01001, 35 aparatos «Aparato N»). **H1 sin activar a propósito:** el bloqueo
-   del arranque lo activa `pnpm dia-cero -- --en-serio` después de la prueba física de Miguel.
-3. **Lote 6 en PR #42** (rama `dp-22-sexto-lote`, sin migraciones, SIN unir): «Cambiar de mesa» en
-   la hoja del pedido del teléfono (hallazgo 37, DP-D182), los arreglos del simulador que dejó el
-   día de bots (DP-D183) y la bitácora del lote 5, la Parte 11 y el día de bots.
-4. **El cuarto día de bots está corriendo** (semilla 2214); su informe quedará en
-   `D:\mpos-tmp\dp22\informes\b-dia-4.md`. Hasta ahora no hay un día limpio estricto (el 2213 no
-   ejecutó R1).
-5. **Falta** el informe 013.
+1. **Lotes 1 a 6 EN PRODUCCIÓN Y CERRADOS** (`ff03687`, `829b13d`, `e4c45f5`, `6b76050`, `e4e0a70`,
+   `ca7e6f1`; migraciones hasta la 195; Vercel sin errores en la hora de cada uno; humo del lote 6:
+   0 fallas, lectura idéntica).
+2. **Parte 11 hecha:** producción configurada y en ceros (0 cuentas, 0 cajas, siguiente folio
+   DP-01001). **H1 sin activar a propósito:** lo activa `pnpm dia-cero -- --en-serio` después de la
+   prueba física de Miguel.
+3. **Lote 7 en PR (SIN unir)**, rama `dp-22-septimo-lote`, sin migraciones: lo visual (34, 38, 35 en
+   parte, 26, resto del 5), Configuración comprobada, la matriz con 0 flujos sin prueba, el simulador,
+   el informe 013 y la bitácora. Hallazgos nuevos 39 (medio: mapa de mesas cortado en Windows
+   1366×768 al 125 %) a 43, sin arreglar.
+4. **El informe 013 está escrito: veredicto «NO todavía»** (condiciones sin cumplir: el día de bots
+   limpio, lo visual y cada ajuste comprobado). Calificación propuesta 89/100.
+5. **El sexto día de bots corre esta noche** sobre el código final; su informe quedará en
+   `D:\mpos-tmp\dp22\informes\b-dia-6.md`. Si sale limpio, el director actualiza el veredicto del 013 a SÍ
+   en una nota fechada al principio (un día limpio no cierra, por sí solo, lo visual ni los ajustes).
+6. **Le toca al director:** unir el lote 7 (tras su CI) → esperar la fila Production «Ready» → humo →
+   lectura de producción → la hora de Vercel; y actualizar el veredicto con el sexto día.
 
 ## Dónde voy
 

@@ -22,30 +22,30 @@
   "background_fit": {
     "efecto": "Cómo se acomoda la imagen de fondo del sistema (cubrir o contener).",
     "valores": ["cover", "contain"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#background_image_url"],
+    "estado": "comprobado",
+    "nota": "«Mostrar imagen completa» pinta contain y «Cubrir» pinta cover. Corrida en verde. Sin mutante."
   },
   "background_image_url": {
     "efecto": "La imagen de fondo de las pantallas internas.",
     "valores": ["vacío", "una imagen"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#background_image_url"],
+    "estado": "comprobado",
+    "nota": "Sin fondo, imagen subida y sin imagen: la marca de agua de las pantallas internas aparece y desaparece; con marca de agua y imagen, gana la imagen. Corrida en verde. Sin mutante."
   },
   "background_logo_url": {
     "efecto": "La marca de agua del fondo de las pantallas internas y del portal (el acceso, sin sesión, no la lee).",
     "valores": ["vacío", "una imagen"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#background_image_url"],
+    "estado": "comprobado",
+    "nota": "Sin imagen de fondo manda la marca de agua subida; sin ninguna vuelve el degradado solo. Corrida en verde. Falta ver la marca de agua en el portal. Sin mutante."
   },
   "background_opacity": {
     "efecto": "Qué tan visible es el fondo (0 a 1).",
     "valores": ["0.05", "0.5"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#background_image_url"],
+    "estado": "comprobado",
+    "nota": "El dedo sobre la barra (8 % y 92 %): la opacidad guardada es la que pinta el fondo (baja contra alta). Corrida en verde. Sin mutante."
   },
   "bascula_etiqueta": {
     "efecto": "Ninguno en un restaurante: es de una báscula de etiquetas de mostrador. Sin pantalla.",
@@ -272,9 +272,9 @@
   "logo_url": {
     "efecto": "El logo del negocio en la barra y la pantalla de espera (el acceso, sin sesión, lleva el de la casa).",
     "valores": ["por omisión", "otra imagen"],
-    "pruebas": [],
-    "estado": "por ver en navegador",
-    "nota": "Efecto puramente visual o de un aparato: sin prueba de servidor; se ve en el navegador."
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts#logo_url"],
+    "estado": "comprobado",
+    "nota": "Sube un logo con el dedo; la barra lateral y el portal del comensal pasan de sin logo a rojo, a azul y otra vez a sin logo; el acceso no lo lee (DP-D164). Corrida en verde, Windows 1366x768@125 % y teléfono 360x800. Sin mutante."
   },
   "mensaje_ticket": {
     "efecto": "El mensaje al final del ticket y de la precuenta.",
@@ -424,12 +424,9 @@
   "portal_qr_cuenta_modo": {
     "efecto": "Quién pide la cuenta con propina: mesero, comensal o ambos.",
     "valores": ["mesero", "cliente", "ambos"],
-    "pruebas": [
-      "packages/app/src/portal/portal-desde-fuera.integracion.test.ts",
-      "pruebas/e2e/restaurante-portal-qr.spec.ts",
-      "packages/app/src/qa-final/pares.integracion.test.ts#cada par de ajustes, con su flujo corto y lo que el servidor hace con ellos"
-    ],
-    "estado": "por ver en navegador"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts#portal_qr_cuenta_modo"],
+    "estado": "comprobado",
+    "nota": "Con el dedo en el teléfono: «Mesero dispara» sólo crea el aviso; «Cliente solicita» y «Ambos» abren la cuenta con propina. Corrida en verde. Sin mutante."
   },
   "portal_qr_envia_a_cocina": {
     "efecto": "El pedido del comensal va directo a cocina o lo confirma el mesero.",
@@ -672,8 +669,9 @@
   },
   "tarjeta:mapa-de-mesas": {
     "efecto": "Mesas, zonas y su lugar en el mapa; el reparto a meseros.",
-    "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts", "pruebas/e2e/tactil-mapa.spec.ts"],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/tarjetas-personas.spec.ts#mapa-de-mesas"],
+    "estado": "comprobado",
+    "nota": "Arrastrar una mesa con el dedo guarda su posición en el servidor y se pinta ahí al recargar. Hallazgo: el lienzo no escala a 1366x768@125 % y corta las mesas 3 y 6. Corrida en verde."
   },
   "tarjeta:voz-de-las-comandas": {
     "efecto": "Sólo deja oír cómo suena una comanda; no guarda nada.",
@@ -689,23 +687,27 @@
   },
   "tarjeta:proveedores": {
     "efecto": "Los proveedores que se ofrecen al registrar una compra.",
-    "pruebas": [],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts#proveedores"],
+    "estado": "comprobado",
+    "nota": "Crear, ofrecerse al registrar una compra, editar y desactivar (la fila sigue en la base). Corrida en verde."
   },
   "tarjeta:usuarios-pos": {
     "efecto": "Las personas, su puesto, su PIN y si están activas.",
-    "pruebas": ["pruebas/e2e/usuarios-y-mesas.spec.ts"],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/tarjetas-personas.spec.ts#usuarios-pos"],
+    "estado": "comprobado",
+    "nota": "Alta con PIN, entra con su PIN en otro aparato (PIN malo no), desactivar y reactivar. Corrida en verde."
   },
   "tarjeta:exportar": {
     "efecto": "Descarga los datos del negocio (por sección y todo).",
-    "pruebas": [],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts#exportar e importar"],
+    "estado": "comprobado",
+    "nota": "El CSV que baja trae una fila por proveedor de la base y los datos importados; «Exportar TODO» baja los archivos que dice. Corrida en verde."
   },
   "tarjeta:importar": {
     "efecto": "Carga datos desde un archivo con las plantillas.",
-    "pruebas": [],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts#exportar e importar"],
+    "estado": "comprobado",
+    "nota": "Vista previa sin guardar, la fila repetida no entra, confirmar entra sólo lo bueno, reimportar actualiza sin duplicar. Corrida en verde."
   },
   "tarjeta:nombre-del-aparato": {
     "efecto": "El nombre de este aparato (terminal) en la Caja de otros aparatos y en la auditoría.",
