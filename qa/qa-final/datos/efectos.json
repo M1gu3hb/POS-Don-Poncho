@@ -205,9 +205,11 @@
   "experiencia.sonidos_en_el_portal": {
     "efecto": "El portal del comensal suena (o no) al tocar.",
     "valores": ["true", "false"],
-    "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
-    "estado": "por ver en navegador",
-    "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+    "pruebas": [
+      "pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts#experiencia.sonidos_en_el_portal"
+    ],
+    "estado": "comprobado",
+    "nota": "Lote 8: apagado el teléfono del comensal (360×800, sin sesión) no suena; encendido suena al tocar (`data-ultimo-sonido`); apagado otra vez calla. Necesita el servidor con ORGANIZACION=<slug> (un despliegue de un negocio); con varios negocios en la base el portal pinta la experiencia de fábrica. No prueba que el altavoz de verdad suene (eso va a la lista física)."
   },
   "experiencia.tecla": {
     "efecto": "El sonido del teclado del PIN y de los toques (nib, keycap, thock, clasp).",
@@ -757,8 +759,9 @@
   },
   "tarjeta:reiniciar-sistema": {
     "efecto": "Borra las pruebas o todo (sólo plataforma, con el nombre del negocio como confirmación).",
-    "pruebas": ["pruebas/e2e/qa/qa1-07-purgas.spec.ts"],
-    "estado": "por comprobar"
+    "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/reiniciar.spec.ts#reiniciar sistema"],
+    "estado": "comprobado",
+    "nota": "Lote 8, sólo sobre la base desechable, contando filas: «Borrar solo ventas y pruebas» quita las cuentas y deja catálogo, mesas, gente y configuración; «Borrar todos los datos» quita catálogo, inventario, recetas, proveedores, mesas y lo transaccional y deja organización, sucursal, gente, zonas, estaciones y configuración; con el nombre mal escrito no borra; el otro negocio no se toca; la app queda usable. El texto de la pantalla prometía resetear la configuración: se corrigió (DP-D198)."
   },
   "mh_cocina_notified_nuevos": {
     "efecto": "Qué comandas ya anunció esta pantalla (para no repetirlas). No es un ajuste.",

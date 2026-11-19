@@ -195,21 +195,46 @@ test.describe('usuarios POS y mapa de mesas', () => {
       const caja = await lienzo.boundingBox();
       expect(caja).not.toBeNull();
       if (caja === null) return;
-      // La mesa 3 está en (x, y) del plano: el centro del dedo cae dentro de su recuadro.
-      const origen = { x: caja.x + antes.x + 30, y: caja.y + antes.y + 30 };
+      // DP-22 · Lote 8: el lienzo se escala al ancho disponible (Windows 1366×768 al 125 % lo dejaba en
+      // ~470 px y cortaba las mesas del fondo). Se declara en `data-escala`; sin el atributo es 1.
+      const escala = Number((await lienzo.getAttribute('data-escala')) ?? '1');
+      expect(escala).toBeGreaterThan(0.3);
+      // Ninguna mesa queda cortada por el borde del lienzo, y el lienzo cabe a lo ancho de la pantalla.
+      const cortadas = await lienzo.evaluate((el) => {
+        const marco = el.getBoundingClientRect();
+        return Array.from(el.children)
+          .map((hijo) => ({ r: hijo.getBoundingClientRect(), t: (hijo.textContent ?? '').trim() }))
+          .filter(
+            ({ r }) =>
+              r.right > marco.right + 1 ||
+              r.bottom > marco.bottom + 1 ||
+              r.left < marco.left - 1 ||
+              r.top < marco.top - 1,
+          )
+          .map(({ t }) => t);
+      });
+      expect(cortadas, 'mesas cortadas por el borde del mapa').toEqual([]);
+      const anchoDePantalla = page.viewportSize()?.width ?? 0;
+      expect(caja.x + caja.width, 'el mapa cabe a lo ancho de la pantalla').toBeLessThanOrEqual(
+        anchoDePantalla + 1,
+      );
+      // La mesa 1 está en (x, y) lógicos del plano: el dedo cae dentro de su recuadro (a la escala del mapa).
+      const origen = {
+        x: caja.x + (antes.x + 30) * escala,
+        y: caja.y + (antes.y + 30) * escala,
+      };
       const destino = { x: origen.x + 120, y: origen.y + 80 };
       const guardado = page.waitForResponse(
         (r) => r.request().method() === 'POST' && r.url().includes('/api/datos/escribir'),
       );
       await arrastrar(page, origen, destino);
       expect((await guardado).ok()).toBe(true);
-      // El servidor tiene la posición nueva (≈ +140, +70), no la de antes.
-      await expect.poll(() => posicion(NUMERO).x).toBeGreaterThan(antes.x + 90);
+      // El servidor tiene la coordenada LÓGICA nueva (el movimiento en pantalla dividido entre la
+      // escala), no la de antes ni los píxeles de pantalla.
+      await expect.poll(() => posicion(NUMERO).x).toBeGreaterThan(antes.x + 90 / escala);
       const despues = posicion(NUMERO);
-      expect(despues.x - antes.x).toBeGreaterThan(90);
-      expect(despues.x - antes.x).toBeLessThan(150);
-      expect(despues.y - antes.y).toBeGreaterThan(50);
-      expect(despues.y - antes.y).toBeLessThan(110);
+      expect(Math.abs(despues.x - antes.x - 120 / escala)).toBeLessThan(30 / escala);
+      expect(Math.abs(despues.y - antes.y - 80 / escala)).toBeLessThan(30 / escala);
       // Y la pantalla la recuerda al recargar: la mesa está donde se dejó.
       await page.reload();
       const lienzo2 = cardDe(page, 'Mapa de mesas')
@@ -217,15 +242,22 @@ test.describe('usuarios POS y mapa de mesas', () => {
         .first();
       await lienzo2.scrollIntoViewIfNeeded();
       const caja2 = await lienzo2.boundingBox();
-      const dentro = await lienzo2.evaluate((el, p) => {
-        const hijos = Array.from(el.children) as HTMLElement[];
-        return hijos.some(
-          (h) =>
-            Math.abs(Number(h.style.left) - p.x) < 2 && Math.abs(Number(h.style.top) - p.y) < 2,
-        );
-      }, despues);
+      // `style.left` dice «123px»: se lee con parseFloat (con Number daba NaN y la prueba nunca veía la mesa).
+      await expect
+        .poll(
+          () =>
+            lienzo2.evaluate((el, p) => {
+              const hijos = Array.from(el.children) as HTMLElement[];
+              return hijos.some(
+                (h) =>
+                  Math.abs(Number.parseFloat(h.style.left) - p.x) < 2 &&
+                  Math.abs(Number.parseFloat(h.style.top) - p.y) < 2,
+              );
+            }, despues),
+          { message: 'la mesa se pinta en la posición guardada', timeout: 20_000 },
+        )
+        .toBe(true);
       expect(caja2).not.toBeNull();
-      expect(dentro, 'la mesa se pinta en la posición guardada').toBe(true);
       await capturar(page, 'mapa-de-mesas', aparato.id, '2-despues');
 
       // Devolverla (preparación: la demo queda como estaba).

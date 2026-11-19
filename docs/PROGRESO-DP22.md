@@ -351,6 +351,25 @@ el trabajo de cuatro agentes y el informe 013. Lleva:
   `test:unit` 680 archivos y 7,307 pruebas (3 omitidas); `verify:residuos`, `estructura`, `venta`,
   `estilos` y `adopcion` en 0; `qa:matriz` y `--verificar` en 0; prettier en 0.
 
+### Lote 8 · PR por abrir (`dp-22-octavo-lote` → `main`) · sin migraciones
+
+Rama `dp-22-octavo-lote`, sobre `dp-22-septimo-lote` (lote 7), hecho la noche del 18-11. Cinco cosas chicas, cada una con su
+prueba que fallaba antes y pasa después:
+
+- **El mapa de mesas de Configuración a 1366×768 al 125 % (hallazgo 39, DP-D195):** el lienzo se reduce al ancho
+  disponible (`data-escala`) y guarda coordenadas lógicas; ninguna mesa cortada en Windows, iMin ni tableta.
+- **La hoja del carrito del teléfono (40, DP-D196):** se cierra sola al quedar vacío el carrito.
+- **El aviso «Solicitud enviada» del portal (41, DP-D197):** ya no se pinta sobre la valoración.
+- **`experiencia.sonidos_en_el_portal`:** corrida y demostrada en sus dos estados (necesita el servidor con
+  `ORGANIZACION=<slug>`, como en un despliegue de un negocio).
+- **«Reiniciar sistema» → «Borrar todos los datos»:** demostrado contando filas (qué borra y qué conserva, el otro
+  negocio intacto, la app usable). Hallazgo 44 (bajo): la pantalla prometía resetear la configuración y el comando
+  no lo hace; se corrigió el texto (DP-D198). La falla de la prueba del lote 7 era el límite de tasa (tres por hora y
+  un nombre mal escrito cuenta), no la app.
+- **Efectos:** 90 comprobados, 0 por ver en navegador, 2 por comprobar (impresora y cajón, laboratorio: aparato real).
+- **Mutantes:** 5 de contrato mueren y 1 inocuo pasa (`lote8-mapa-carrito-aviso.contrato.test.ts`); el código anterior
+  es el mutante de las pruebas e2e (fallan sobre la compilación sin los arreglos).
+
 ## Parte 11 · Producción configurada y en ceros (17-11)
 
 De las 23:50 a las 23:58, con `bash /d/mpos-tmp/dp22/parte11.sh`:

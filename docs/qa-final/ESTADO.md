@@ -3,7 +3,7 @@
 > **Si la sesión se compactó, lee esto primero.** Luego `PLAN.md`, `HALLAZGOS.md` y
 > `docs/PROGRESO-DP22.md`. Sin secretos ni PIN aquí: viven en `..\_PRIVADO\`.
 
-Última puesta al día: 18-11, noche.
+Última puesta al día: 18-11, noche (lote 8).
 
 ## AHORA MISMO (18-11, noche) — retomar desde aquí
 
@@ -15,15 +15,18 @@
    prueba física de Miguel.
 3. **Lote 7 en PR (SIN unir)**, rama `dp-22-septimo-lote`, sin migraciones: lo visual (34, 38, 35 en
    parte, 26, resto del 5), Configuración comprobada, la matriz con 0 flujos sin prueba, el simulador,
-   el informe 013 y la bitácora. Hallazgos nuevos 39 (medio: mapa de mesas cortado en Windows
-   1366×768 al 125 %) a 43, sin arreglar.
-4. **El informe 013 está escrito: veredicto «NO todavía»** (condiciones sin cumplir: el día de bots
-   limpio, lo visual y cada ajuste comprobado). Calificación propuesta 89/100.
-5. **El sexto día de bots corre esta noche** sobre el código final; su informe quedará en
-   `D:\mpos-tmp\dp22\informes\b-dia-6.md`. Si sale limpio, el director actualiza el veredicto del 013 a SÍ
-   en una nota fechada al principio (un día limpio no cierra, por sí solo, lo visual ni los ajustes).
-6. **Le toca al director:** unir el lote 7 (tras su CI) → esperar la fila Production «Ready» → humo →
-   lectura de producción → la hora de Vercel; y actualizar el veredicto con el sexto día.
+   el informe 013 y la bitácora.
+4. **Lote 8 en PR (SIN unir)**, rama `dp-22-octavo-lote`, sin migraciones, necesita el lote 7 en `main`:
+   el mapa de mesas a 125 % (39), la hoja del carrito (40), el aviso del portal (41), los sonidos del
+   portal y «Borrar todos los datos» demostrados, y el texto de «Reiniciar» corregido (44). Efectos: 90
+   comprobados, 2 por comprobar (impresora y cajón, laboratorio: aparato real).
+5. **El informe 013 está escrito: veredicto «NO todavía»** (condiciones sin cumplir: el día de bots
+   limpio, lo visual y cada ajuste comprobado). Calificación propuesta 89/100; la fija el director.
+6. **El sexto día de bots corre esta noche** sobre el código final (`origin/dp-22-octavo-lote`); su
+   informe quedará en `D:\mpos-tmp\dp22\informes\b-dia-6.md`. Si sale limpio, el director actualiza el
+   veredicto del 013 a SÍ en una nota fechada al principio.
+7. **Le toca al director:** unir el lote 7 y luego el 8 (tras su CI) → esperar la fila Production
+   «Ready» → humo → lectura de producción → la hora de Vercel; y actualizar el veredicto con el sexto día.
 
 ## Dónde voy
 
