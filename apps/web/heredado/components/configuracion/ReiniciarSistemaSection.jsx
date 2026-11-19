@@ -203,9 +203,10 @@ export default function ReiniciarSistemaSection() {
               </div>
               <p className="text-xs text-muted-foreground">
                 Elimina ventas, cortes, compras, gastos, inventario, productos, recetas, mesas,
-                solicitudes QR, tickets, movimientos y registros. Conserva la configuración del
-                negocio (estilo, impuestos y ajustes), a toda tu gente con sus usuarios, y las zonas
-                y estaciones de cocina.
+                solicitudes QR, tickets, movimientos y registros. Las zonas vuelven a las de fábrica
+                (Interior, Exterior, Terraza, Barra y Otro): las que hayas creado se pierden.
+                Conserva la configuración del negocio (estilo, impuestos y ajustes), a toda tu gente
+                con sus usuarios, y las estaciones de cocina.
               </p>
               <Button
                 variant="destructive"
@@ -270,7 +271,8 @@ export default function ReiniciarSistemaSection() {
                     ventas, cortes, compras, gastos, inventario, productos, recetas, mesas,
                     solicitudes QR, tickets, movimientos y registros
                   </strong>
-                  . La configuración del negocio, la gente y sus usuarios se conservan.{' '}
+                  . Las zonas vuelven a las de fábrica y las que hayas creado se pierden. La configuración
+                  del negocio, la gente con sus usuarios y las estaciones de cocina se conservan.{' '}
                   <strong>No se puede deshacer.</strong>
                 </p>
               ) : (

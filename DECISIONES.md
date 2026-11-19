@@ -3923,3 +3923,18 @@ desplazar, al cambiar el alto de la lista y en cada pintada. Prueba con el dedo:
   escrito cuenta**. Quien se equivoca dos veces seguidas queda 50 minutos sin poder reiniciar. Es a propósito
   (E10-4); la prueba vacía `limite_tasa` de su base desechable antes de cada intento que debe prosperar.
 - **Sin migración. No toca dinero ni inventario.**
+
+## DP-D199 · DP-22 · Lote 8 · «Borrar todos los datos» describe lo que el comando hace con las zonas y las estaciones · 18-11-2026
+
+- **Qué se leyó (revisión independiente de sólo lectura del lote 8):** el texto de la pantalla decía que se conservan
+  «las zonas y estaciones de cocina». `reiniciarTodo` (`packages/app/src/mantenimiento/comandos.ts`) borra las zonas
+  con el catálogo (`zonas` está en `TABLAS_DEL_CATALOGO`, `purgas.ts`) y las vuelve a sembrar a las 5 de fábrica
+  (Interior, Exterior, Terraza, Barra y Otro; sólo si el giro es restaurante). Las estaciones de cocina NO están en
+  esa lista: todas se conservan, y sólo se siembra «Cocina general» si no hubiera una general.
+- **Decisión:** el texto de la tarjeta y del diálogo dice ahora lo que pasa: las zonas vuelven a las de fábrica (las que
+  el negocio creó se pierden) y se conservan la configuración, la gente con sus usuarios y las estaciones de cocina.
+  Lo ata `lote8-mapa-carrito-aviso.contrato.test.ts › DP-D198`, recortado al texto de la tarjeta y del diálogo, y que
+  no diga que las zonas se conservan.
+- **El comando no cambia.** Conservar la configuración es lo seguro. Si el dueño quiere que «para un cliente nuevo»
+  también la borre, queda para después.
+- **Sin migración. No toca dinero ni inventario.**

@@ -38,6 +38,20 @@ describe('DP-D195 · el mapa de mesas se escala y guarda coordenadas lógicas', 
     expect(mapa).toContain('rect.height / escala - st.h');
   });
 
+  it('el efecto que observa el marco lo deja de observar al desmontarse (limpieza con disconnect)', () => {
+    // Se recorta el efecto: un «disconnect» suelto en otro lado del archivo no lo salva.
+    const inicio = mapa.indexOf('const marco = marcoRef.current;');
+    const fin = mapa.indexOf('}, []);', inicio);
+    expect(inicio).toBeGreaterThan(-1);
+    expect(fin).toBeGreaterThan(inicio);
+    const efecto = mapa.slice(inicio, fin);
+    expect(efecto).toContain('observador.observe(marco);');
+    expect(efecto).toContain('return () => observador.disconnect();');
+    expect(efecto.indexOf('observador.observe(marco);')).toBeLessThan(
+      efecto.indexOf('return () => observador.disconnect();'),
+    );
+  });
+
   it('declara su escala para quien la mide', () => {
     expect(mapa).toContain('data-escala={escala}');
   });
@@ -72,13 +86,48 @@ describe('DP-D197 · el aviso del portal no tapa la hoja de la valoración', () 
 
 describe('DP-D198 · «Borrar todos los datos» dice lo que hace', () => {
   const pantalla = leer('heredado', 'components', 'configuracion', 'ReiniciarSistemaSection.jsx');
+  // Lo que el comando hace (`packages/app/src/mantenimiento/comandos.ts`, `reiniciarTodo`): borra el catálogo
+  // (zonas incluidas) y lo transaccional, vuelve a sembrar las 5 zonas de fábrica, y NO toca las estaciones de cocina,
+  // la configuración ni a la gente.
+  const recorta = (desde: string, hasta: string): string => {
+    const inicio = pantalla.indexOf(desde);
+    expect(inicio, `no está «${desde}»`).toBeGreaterThan(-1);
+    const fin = pantalla.indexOf(hasta, inicio);
+    expect(fin, `no se cierra «${desde}»`).toBeGreaterThan(inicio);
+    return pantalla.slice(inicio, fin);
+  };
+  // La tarjeta de «Borrar todos los datos del sistema» y el aviso de su diálogo (rama 'all', la primera).
+  const tarjeta = recorta('Elimina ventas, cortes', '</p>');
+  const dialogo = recorta('Esta acción eliminará', '<strong>No se puede deshacer.</strong>');
 
-  it('conserva la configuración y a la gente, y no promete resetearla', () => {
-    expect(pantalla).toContain('Conserva la configuración del negocio');
-    expect(pantalla).toContain(
-      'La configuración del negocio, la gente y sus usuarios se conservan',
-    );
-    expect(pantalla).not.toContain('Resetea la configuración');
-    expect(pantalla).not.toContain('reseteará la configuración');
+  it.each([
+    ['la tarjeta', () => tarjeta],
+    ['el diálogo', () => dialogo],
+  ])('%s: las zonas vuelven a las de fábrica y las propias se pierden', (_nombre, texto) => {
+    expect(texto()).toMatch(/zonas vuelven a las de fábrica/);
+    expect(texto()).toMatch(/(las que hayas creado se pierden)/);
   });
+
+  it.each([
+    ['la tarjeta', () => tarjeta],
+    ['el diálogo', () => dialogo],
+  ])('%s: conserva la configuración, la gente y las estaciones de cocina', (_nombre, texto) => {
+    expect(texto()).toContain('configuración del negocio');
+    expect(texto()).toContain('gente');
+    expect(texto()).toContain('estaciones de cocina');
+  });
+
+  it.each([
+    ['la tarjeta', () => tarjeta],
+    ['el diálogo', () => dialogo],
+  ])(
+    '%s: NO dice que las zonas se conservan, ni promete resetear la configuración',
+    (_nombre, texto) => {
+      // «conserva … zonas» dentro de una misma frase, o «las zonas se conservan».
+      expect(texto()).not.toMatch(/conserva[^.]*zonas/i);
+      expect(texto()).not.toMatch(/zonas[^.]*se conservan/i);
+      expect(texto()).not.toContain('Resetea la configuración');
+      expect(texto()).not.toContain('reseteará la configuración');
+    },
+  );
 });

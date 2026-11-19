@@ -2894,10 +2894,10 @@
     },
     {
       "archivo": "apps/web/heredado/components/configuracion/ReiniciarSistemaSection.jsx",
-      "porque": "DP-22 · Lote 8 (DP-D198): «Borrar todos los datos del sistema» prometía «Resetea la configuración a valores base. Conserva tu usuario administrador», y el comando hace otra cosa (comprobado contando filas): conserva la configuración del negocio, a las 11 personas con su empleo, las zonas y las estaciones de cocina, y borra el catálogo, el inventario, las mesas y lo transaccional. El texto de la tarjeta y del diálogo dice ahora lo que pasa. No cambia ningún botón ni ningún dato.",
+      "porque": "DP-22 · Lote 8 (DP-D198): «Borrar todos los datos del sistema» prometía «Resetea la configuración a valores base. Conserva tu usuario administrador», y el comando hace otra cosa (comprobado contando filas): conserva la configuración del negocio, a las 11 personas con su empleo y las estaciones de cocina, borra el catálogo, el inventario, las mesas y lo transaccional, y las zonas vuelven a las 5 de fábrica (las propias se pierden). El texto de la tarjeta y del diálogo dice ahora lo que pasa. No cambia ningún botón ni ningún dato.",
       "testigos": [
         "- texto:Elimina ventas, cortes, compras, gastos, inventario, productos, recetas, mesas, solicitudes QR, tickets, movimientos y registros. Resetea la configuración a valores base. Conserva tu usuario administrador.",
-        "+ texto:Elimina ventas, cortes, compras, gastos, inventario, productos, recetas, mesas, solicitudes QR, tickets, movimientos y registros. Conserva la configuración del negocio (estilo, impuestos y ajustes), a toda tu gente con sus usuarios, y las zonas y estaciones de cocina."
+        "+ texto:Elimina ventas, cortes, compras, gastos, inventario, productos, recetas, mesas, solicitudes QR, tickets, movimientos y registros. Las zonas vuelven a las de fábrica (Interior, Exterior, Terraza, Barra y Otro): las que hayas creado se pierden. Conserva la configuración del negocio (estilo, impuestos y ajustes), a toda tu gente con sus usuarios, y las estaciones de cocina."
       ]
     }
   ]

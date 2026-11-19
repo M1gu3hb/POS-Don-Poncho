@@ -373,6 +373,7 @@ prueba que fallaba antes y pasa después:
   un nombre mal escrito cuenta), no la app.
 - **Efectos:** 90 comprobados, 0 por ver en navegador, 2 por comprobar (impresora y cajón, laboratorio: aparato real).
 - **Galería (corrida 44443693460, success):** 9 de los 81 retratos de Linux difieren de los guardados por ruido de pintado (de 11 a 120 píxeles por imagen, diferencia máxima de 17 niveles en un canal, en pantallas que este lote no toca); el de Configuración muestra «El negocio», no el mapa. No se copió ninguno.
+- **Revisión independiente y su reserva (DP-D199):** el texto de «Borrar todos los datos» ya dice la verdad de zonas (vuelven a las 5 de fábrica) y estaciones (se conservan); contrato recortado al texto, y el del mapa ahora falla si se quita `observador.disconnect()`; se anota el hallazgo 45 (bajo, abierto: mesas chicas en el editor del mapa).
 - **Mutantes:** 5 de contrato mueren y 1 inocuo pasa (`lote8-mapa-carrito-aviso.contrato.test.ts`); el código anterior
   es el mutante de las pruebas e2e (fallan sobre la compilación sin los arreglos).
 

@@ -26,13 +26,19 @@
   que fallaba antes y pasa después en los aparatos que tocan, sin faltas nuevas en el barrido de servicio de
   Windows y del teléfono), y **dos ajustes de Configuración**: `sonidos_en_el_portal` demostrado en sus dos
   estados y «Borrar todos los datos» demostrado contando filas (borra catálogo, inventario, recetas,
-  proveedores, mesas y lo transaccional; conserva organización, sucursal, gente, zonas, estaciones y
-  configuración; el otro negocio no se toca; la app queda usable). Hallazgo nuevo, bajo, **44**: la
+  proveedores, mesas y lo transaccional; vuelve a sembrar las 5 zonas de fábrica; conserva organización,
+  sucursal, gente, estaciones y configuración; el otro negocio no se toca; la app queda usable). Hallazgo nuevo, bajo, **44**: la
   pantalla prometía resetear la configuración y el comando no lo hace; se corrigió el texto y queda para
   Miguel decidir si debe resetearla. `efectos.json`: **90 comprobados, 0 por ver en navegador, 2 por
   comprobar** (impresora y cajón, laboratorio: aparato real). **Lo que NO cierra:** nada se vio en un
   aparato real, no hay un resumen final de axe, el día de bots limpio sigue pendiente, y «Importar» con fila
   repetida (42) y dos usuarios con el mismo nombre (43) siguen abiertos.
+- **Lote 8 (18-11, noche) · revisión independiente:** una revisión independiente de sólo lectura aprobó el lote con una
+  reserva (el texto de «Borrar todos los datos» prometía de más sobre zonas y estaciones); su informe vive fuera del
+  repositorio.
+- **Lote 8 (18-11, noche) · arreglo de la reserva (DP-D199):** el texto dice ahora que las zonas vuelven a las de
+  fábrica (las propias se pierden) y que se conservan las estaciones de cocina; el comando no cambia, y un contrato
+  recortado al texto lo ata. Se anota el hallazgo 45 (bajo, sin arreglo: mesas chicas en el editor del mapa).
 - **18-11 (redacción de este documento): NO todavía.** Un sexto día de bots corre esta noche sobre el
   código final (informe previsto: `b-dia-6.md`, en la carpeta de informes de la orquesta). Si sale limpio, el
   director cambia el veredicto a SÍ **en una nota fechada aquí, encima de ésta**. Mientras no exista
@@ -129,7 +135,7 @@ Fuente: `docs/qa-final/MATRIZ.md` (regenerada en el lote 7 con `pnpm qa:matriz`:
 
 ### 2.2 · Hallazgos por severidad (43)
 
-> **Lote 8 (18-11, noche):** el 39, el 40 y el 41 quedaron arreglados (por desplegar) y se halló el 44 (bajo, arreglado: el texto de «Reiniciar sistema»). Con eso: 44 encontrados, 33 arreglados, 7 descartados y 4 abiertos (11, 16, 42 y 43); medio, 20 encontrados y 18 arreglados; bajo, 16 encontrados y 11 arreglados. La tabla de abajo es la de la redacción.
+> **Lote 8 (18-11, noche):** el 39, el 40 y el 41 quedaron arreglados (por desplegar) y se halló el 44 (bajo, arreglado: el texto de «Reiniciar sistema») y se anotó el 45 (bajo, abierto: mesas chicas en el editor del mapa). Con eso: 45 encontrados, 33 arreglados, 7 descartados y 5 abiertos (11, 16, 42, 43 y 45); medio, 20 encontrados y 18 arreglados; bajo, 17 encontrados y 11 arreglados. La tabla de abajo es la de la redacción.
 
 | Severidad | Encontrados | Arreglados | Descartados | Abiertos |
 | --------- | ----------: | ---------: | ----------: | -------: |
