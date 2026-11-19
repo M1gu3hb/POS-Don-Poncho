@@ -403,8 +403,8 @@ prueba que fallaba antes y pasa después:
 - **Humo sin sesión y sin cobrar** (`humo-produccion.sh 8`, 21:54): **13 bien, 0 mal.**
 - **Lectura de producción después** (21:55): idéntica a la de después de la Parte 11 (111 líneas, sin
   diferencias).
-- **Vercel, la hora siguiente:** **pendiente al redactar** (se revisa hacia las 22:56, ventana de 2 h; el
-  resultado se anota aquí cuando exista). El lote 8 no se da por cerrado hasta entonces.
+- **Vercel, la hora siguiente:** 0 errores de ejecución a las 22:56 del 18-11 (ventana de 2 h, que cubre
+  también el lote 7). **Lote 8 cerrado.**
 
 ## Parte 11 · Producción configurada y en ceros (17-11)
 
@@ -477,9 +477,37 @@ del árbitro. Informes en `D:\mpos-tmp\dp22\informes\`: `b-dia.md` (los tres pri
   cuadraron en el cierre (0 diferencias del árbitro en el cierre de los cinco), 0 5xx y 0 consola, y todo
   el caos se ejecutó entre el 2214 y el 2215, **pero ningún día reunió todo a la vez**: el 2214 tuvo la
   diferencia por hora del árbitro y la cuenta sin cobrar del guion; el 2215 no ejecutó S1r. **Un sexto día
-  sobre el código final corre la noche del 18-11** (informe previsto: `b-dia-6.md`; semilla 2216, el último
-  día: si no sale limpio se arregla y se prueba el caso directo, sin más días de operación; resultado
-  pendiente al redactar).
+  sobre el código final corrió la noche del 18-11** (semilla 2216, el último día de operación, por orden del
+  dueño); su resultado está en la sección «Cierre» de abajo: el primer día que lo reúne todo.
 - **Sin arreglar y anotado:** el modo espera durante el cobro; la lentitud de formularios sin causa
   demostrada; la sesión de la Caja de 12 h fijas (por diseño). El hallazgo 38 (la barra del teléfono con
   la cuenta pedida) lo cierra el lote 7.
+
+## Cierre (18-11, noche, a 19-11): el sexto día, axe, pruebas directas y veredicto
+
+- **La orden del dueño (18-11, 22:00):** sólo un día de operación más (el 2216, que ya corría) y, lo que
+  faltara, con pruebas directas y no con más días. La entrega es el 19-11 entre las 18:00 y las 19:00.
+- **Día 2216** (`9469e5c`, 20:30 a 23:17, 166 min, máquina sola): 166 cobros (57 de mesa, 109 para llevar),
+  $75,264.90; árbitro con 0 diferencias en las 11 horas y en el cierre (1,550 comparaciones); 0 errores 5xx; 0
+  de consola sin explicar; los 30 eventos del caos (R1 y S1r incluidos); 0 críticos y 0 altos; 33 medios y 63
+  bajos clasificados como guion, carga o medición. Es el **primer día que reúne todo a la vez.** De
+  `9469e5c` a lo desplegado (`1c450ec`) sólo cambian el texto de «Borrar todos los datos», su contrato y
+  documentos.
+- **Cuatro pruebas directas** (4 de 4 demostradas, 0 defectos de la app; entran al repo en
+  `pruebas/e2e/qa-final/directas/`): (1) «Registrar compra» del almacén era un falso positivo del guion y el
+  hallazgo 28 sigue arreglado; (2) el portal no pierde el pedido (5 de 5 rondas, cuenta de $295.00); los
+  `ERR_ABORTED` son lecturas de sondeo que se cancelan; el vacío de los 12 incidentes es, por trazas, varios
+  meseros-bot atendiendo lo mismo, **no reproducido** con dos meseros a la vez; (3) un cobro a medio teclear
+  sobrevive al modo espera y al PIN (3 de 3; $384.00, tecleado 300.00, se termina con 500.00, cambio $116.00,
+  una fila en pagos); (4) ninguna petición de los formularios pasa de 2 s en local (máximo 427 ms, el primer
+  cierre de caja). **La CI no corre `qa-final/`:** son corridas en local.
+- **Axe y desbordes:** limpio en 14 de 14 aparatos, 29 pantallas de operación cada uno, 0 violaciones
+  serious o critical, 0 desbordes, 0 recortes, 0 encimados; dos corridas repetidas por infraestructura; con
+  las exenciones vigentes del arnés (faltas aceptadas); sin el barrido de Configuración y sobre la
+  compilación del lote 8 sin el texto nuevo de «Reiniciar».
+- **Veredicto del informe 013: «SÍ, con tres reservas declaradas»** (lo fijó el director): (a) impresora y
+  cajón, y laboratorio del proveedor sólo se comprueban con el aparato real; (b) el día de bots no se
+  repitió con otra semilla, y «dos meseros atendiendo a la vez la misma solicitud del portal» no se
+  reprodujo; (c) nada visto en aparatos reales. **Calificación: 93 de 100.**
+- **Esta rama** (`dp-22-veredicto`) va en un PR sólo de documentos y de las cuatro pruebas directas; sin
+  migraciones.
