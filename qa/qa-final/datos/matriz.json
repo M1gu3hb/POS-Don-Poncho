@@ -1,5 +1,5 @@
 {
-  "commit": "dfeb099",
+  "commit": "58f8c60",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -795,7 +795,7 @@
           "titulo": "Zonas del salón"
         }
       ],
-      "lineas": 23982,
+      "lineas": 24016,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1175,7 +1175,7 @@
           "titulo": null
         }
       ],
-      "lineas": 17473,
+      "lineas": 17487,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -1561,7 +1561,7 @@
           "titulo": "El pedido de la mesa"
         }
       ],
-      "lineas": 6167,
+      "lineas": 6168,
       "conSesion": false,
       "puestos": [],
       "cobertura": null
@@ -2130,7 +2130,7 @@
           "titulo": "El pedido de la mesa"
         }
       ],
-      "lineas": 6177,
+      "lineas": 6178,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero", "mesero", "cocina", "almacen"],
       "cobertura": null
@@ -2357,6 +2357,7 @@
           "apps/web/src/impresion/impresion.test.ts",
           "apps/web/src/restaurante/precuenta-del-mesero.contrato.test.ts",
           "packages/app/src/puente/configuracion-limites.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -2822,7 +2823,7 @@
         "lectores": [
           "apps/web/heredado/components/dashboard/ColoredStatCard.jsx:26",
           "apps/web/heredado/components/mesero/MesaActivaView.jsx:63",
-          "apps/web/heredado/components/mesero/MeseroCartFAB.jsx:271",
+          "apps/web/heredado/components/mesero/MeseroCartFAB.jsx:285",
           "apps/web/heredado/components/pos/CartPanel.jsx:12",
           "apps/web/heredado/components/propinas/PropinasDashboardSection.jsx:34",
           "apps/web/heredado/components/recetas/RecetaAccordionRow.jsx:81",
@@ -3163,6 +3164,7 @@
           "packages/domain/src/venta/campos-del-papel.test.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
           "pruebas/e2e/qr-de-mesas.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts"
@@ -3350,9 +3352,11 @@
         "efecto": {
           "efecto": "El portal del comensal suena (o no) al tocar.",
           "valores": ["true", "false"],
-          "pruebas": ["pruebas/e2e/sonidos.spec.ts"],
-          "estado": "por ver en navegador",
-          "nota": "Efecto de pantalla o de papel; las pruebas citadas cubren lo que hay de lógica."
+          "pruebas": [
+            "pruebas/e2e/qa-final/ajustes-finales/portal.spec.ts#experiencia.sonidos_en_el_portal"
+          ],
+          "estado": "comprobado",
+          "nota": "Lote 8: apagado el teléfono del comensal (360×800, sin sesión) no suena; encendido suena al tocar (`data-ultimo-sonido`); apagado otra vez calla. Necesita el servidor con ORGANIZACION=<slug> (un despliegue de un negocio); con varios negocios en la base el portal pinta la experiencia de fábrica. No prueba que el altavoz de verdad suene (eso va a la lista física)."
         }
       },
       {
@@ -3547,6 +3551,7 @@
           "pruebas/e2e/folios-con-prefijo.spec.ts",
           "pruebas/e2e/qa-final/parte7-corte.spec.ts",
           "pruebas/e2e/restaurante-concurrencia.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "qa/simulador/bots/dueno-ventas.test.ts"
         ],
         "efecto": {
@@ -3741,6 +3746,7 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/archivos/referencias.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -3802,6 +3808,7 @@
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
           "pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -3829,6 +3836,7 @@
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
           "packages/app/src/puente/lo-publico.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -3964,6 +3972,7 @@
           "apps/web/src/impresion/pantallas/ejemplos.jsx:44"
         ],
         "pruebasQueLaNombran": [
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -4031,6 +4040,7 @@
           "pruebas/e2e/estilos-del-negocio.spec.ts",
           "pruebas/e2e/qa-final/ajustes-finales/reiniciar.spec.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -5656,6 +5666,7 @@
           "pruebas/e2e/unir-mesas-en-el-mapa.spec.ts",
           "pruebas/e2e/usuarios-y-mesas.spec.ts",
           "pruebas/e2e/vista-de-solicitudes.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts",
@@ -5687,7 +5698,10 @@
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:135"
         ],
         "lectores": ["apps/web/heredado/components/tickets/PreCuentaTicket.jsx:283"],
-        "pruebasQueLaNombran": ["pruebas/impresion/ajustes-del-papel.spec.ts"],
+        "pruebasQueLaNombran": [
+          "pruebas/impresion/.arnes/arnes.js",
+          "pruebas/impresion/ajustes-del-papel.spec.ts"
+        ],
         "efecto": {
           "efecto": "El pie del ticket térmico.",
           "valores": ["vacío", "un texto"],
@@ -6447,8 +6461,9 @@
         "visiblePara": "plataforma",
         "efecto": {
           "efecto": "Borra las pruebas o todo (sólo plataforma, con el nombre del negocio como confirmación).",
-          "pruebas": ["pruebas/e2e/qa/qa1-07-purgas.spec.ts"],
-          "estado": "por comprobar"
+          "pruebas": ["pruebas/e2e/qa-final/ajustes-finales/reiniciar.spec.ts#reiniciar sistema"],
+          "estado": "comprobado",
+          "nota": "Lote 8, sólo sobre la base desechable, contando filas: «Borrar solo ventas y pruebas» quita las cuentas y deja catálogo, mesas, gente y configuración; «Borrar todos los datos» quita catálogo, inventario, recetas, proveedores, mesas y lo transaccional y deja organización, sucursal, gente, zonas, estaciones y configuración; con el nombre mal escrito no borra; el otro negocio no se toca; la app queda usable. El texto de la pantalla prometía resetear la configuración: se corrigió (DP-D198)."
         }
       }
     ],

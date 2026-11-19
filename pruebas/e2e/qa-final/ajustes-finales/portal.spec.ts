@@ -17,6 +17,10 @@ import { sqlLocal } from '../parte7/comun.ts';
  *
  *   portal_qr_cuenta_modo · experiencia.sonidos_en_el_portal
  *
+ * `sonidos_en_el_portal` necesita el servidor con `ORGANIZACION=<slug del negocio>` (como en un despliegue de
+ * UN negocio): el comensal no tiene sesión y, con varios negocios en la base, el layout no sabe de cuál leer
+ * la experiencia y pinta la de fábrica (el portal callado).
+ *
  * La dueña cambia en Configuración (Windows 1366×768 al 125 %) y lo ve el comensal en su teléfono
  * (360×800, sin sesión, desde el QR de una mesa con cuenta abierta).
  */
@@ -92,7 +96,8 @@ test.describe('el portal: cuenta y sonidos', () => {
           );
         const antes = avisos();
         await telefono.goto(`/qr/${token}`, { waitUntil: 'domcontentloaded' });
-        await toque(telefono, telefono.getByRole('button', { name: 'Atención' }));
+        // «Atención» se convierte en su menú: el segundo toque es en «Pedir cuenta» (abre su hoja; se recarga luego).
+        await toque(telefono, telefono.getByRole('button', { name: 'Pedir cuenta' }));
         await toque(telefono, telefono.getByText('Pedir cuenta', { exact: true }).first());
         await telefono.waitForTimeout(1500);
         const cuerpo = await telefono.locator('body').innerText();
@@ -168,7 +173,8 @@ test.describe('el portal: cuenta y sonidos', () => {
         await expect
           .poll(async () => {
             const exp = (await guardado(page, 'experiencia')) as { sonidos_en_el_portal?: boolean };
-            return exp?.sonidos_en_el_portal;
+            // Sin tocar nunca el ajuste, la clave no existe: vale lo de fábrica (apagado).
+            return exp?.sonidos_en_el_portal ?? false;
           })
           .toBe(encendido);
       }
@@ -183,7 +189,8 @@ test.describe('el portal: cuenta y sonidos', () => {
         });
         await toque(telefono, atencion);
         await telefono.waitForTimeout(400);
-        await toque(telefono, telefono.getByRole('button', { name: 'Atención' }));
+        // «Atención» se convierte en su menú: el segundo toque es en «Pedir cuenta» (abre su hoja; se recarga luego).
+        await toque(telefono, telefono.getByRole('button', { name: 'Pedir cuenta' }));
         await telefono.waitForTimeout(400);
         return telefono.evaluate(() => document.documentElement.getAttribute('data-ultimo-sonido'));
       }

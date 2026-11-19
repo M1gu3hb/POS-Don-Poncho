@@ -19,6 +19,26 @@
 
 ## Actualizaciones fechadas del veredicto
 
+- **Lote 8 (18-11, noche): el veredicto NO cambia (sigue «NO todavía») ni la calificación.** Los fija el director tras el
+  sexto día de bots. Lo que cerró el lote 8 (rama `dp-22-octavo-lote`, sin migraciones, **por desplegar**):
+  **lo visual abierto** (39, 40 y 41: el mapa de mesas a 1366×768 al 125 % ya cabe entero, la hoja del
+  carrito se cierra sola al quedar vacía, el aviso ya no tapa el texto de gracias; cada uno con su prueba
+  que fallaba antes y pasa después en los aparatos que tocan, sin faltas nuevas en el barrido de servicio de
+  Windows y del teléfono), y **dos ajustes de Configuración**: `sonidos_en_el_portal` demostrado en sus dos
+  estados y «Borrar todos los datos» demostrado contando filas (borra catálogo, inventario, recetas,
+  proveedores, mesas y lo transaccional; vuelve a sembrar las 5 zonas de fábrica; conserva organización,
+  sucursal, gente, estaciones y configuración; el otro negocio no se toca; la app queda usable). Hallazgo nuevo, bajo, **44**: la
+  pantalla prometía resetear la configuración y el comando no lo hace; se corrigió el texto y queda para
+  Miguel decidir si debe resetearla. `efectos.json`: **90 comprobados, 0 por ver en navegador, 2 por
+  comprobar** (impresora y cajón, laboratorio: aparato real). **Lo que NO cierra:** nada se vio en un
+  aparato real, no hay un resumen final de axe, el día de bots limpio sigue pendiente, y «Importar» con fila
+  repetida (42) y dos usuarios con el mismo nombre (43) siguen abiertos.
+- **Lote 8 (18-11, noche) · revisión independiente:** una revisión independiente de sólo lectura aprobó el lote con una
+  reserva (el texto de «Borrar todos los datos» prometía de más sobre zonas y estaciones); su informe vive fuera del
+  repositorio.
+- **Lote 8 (18-11, noche) · arreglo de la reserva (DP-D199):** el texto dice ahora que las zonas vuelven a las de
+  fábrica (las propias se pierden) y que se conservan las estaciones de cocina; el comando no cambia, y un contrato
+  recortado al texto lo ata. Se anota el hallazgo 45 (bajo, sin arreglo: mesas chicas en el editor del mapa).
 - **18-11 (redacción de este documento): NO todavía.** Un sexto día de bots corre esta noche sobre el
   código final (informe previsto: `b-dia-6.md`, en la carpeta de informes de la orquesta). Si sale limpio, el
   director cambia el veredicto a SÍ **en una nota fechada aquí, encima de ésta**. Mientras no exista
@@ -71,10 +91,10 @@ exige las siete; un sexto día de bots limpio resolvería la 5, no la 3 ni la 6.
 | --- | --------------------------------------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | 0 hallazgos críticos o altos abiertos                                                               | **Se cumple**                    | `HALLAZGOS.md`: críticos 0; altos 6 encontrados, 4 arreglados (1, 8, 14, 31) y 2 descartados al reproducirlos (13, 20); abiertos 0. Reserva: el hallazgo 1 (la fecha después de las 18:00) quedó arreglado «falta su e2e táctil con el arnés» y su detalle dice «E y V pendientes»; el hallazgo 8 dice «E pendiente» (verlo en la Caja). El arreglo está probado contra Postgres y con mutantes. Abierto hoy: 1 medio (39) y 5 bajos (11, 40, 41, 42, 43), más el 16 («falta»).                                                |
 | 2   | La matriz completa en verde (o con su «no aplica» justificado)                                      | **Se cumple, con reservas**      | `MATRIZ.md`: 0 huecos del mapa (`--verificar`); 104 flujos, **0 sin prueba** (eran 52), 2 «no aplica» con su razón (descuento por renglón y para llevar desde la mesa; el generador ganó ese estado, DP-D194). Reservas: enlaces menos fuertes que declaró M (§10, punto 1); «Para llevar desde la mesa» está declarado «no aplica» sin que el dueño lo haya confirmado; el resto se llama «con prueba, por recorrer con el arnés»: tener prueba no es haberla corrido hoy.                                                |
-| 3   | Cada ajuste con su efecto comprobado y las combinaciones en verde                                   | **No se cumple del todo**        | `efectos.json` (113 puntos): **88 comprobados**, **1 por ver en navegador** (`sonidos_en_el_portal`: prueba escrita y no corrida), **3 por comprobar** (`impresora-y-cajon` y `laboratorio`: lo que exige aparato real va a la lista física; `reiniciar-sistema`: «Borrar todos los datos» no quedó demostrado), 12 sin propósito en un restaurante o fuera de la operación y 9 que son memoria del aparato. Combinaciones: 27 filas de pares de ajustes y 112 ternas del dinero contra el oráculo, en la integración que pasó la CI (10 de 10). |
+| 3   | Cada ajuste con su efecto comprobado y las combinaciones en verde                                   | **No se cumple del todo**        | `efectos.json` (113 puntos): **90 comprobados** (lote 8: `sonidos_en_el_portal` demostrado en sus dos estados y `reiniciar-sistema` demostrado contando filas), **0 por ver en navegador**, **2 por comprobar** (`impresora-y-cajon` y `laboratorio`: lo que exige aparato real va a la lista física), 12 sin propósito en un restaurante o fuera de la operación y 9 que son memoria del aparato. Combinaciones: 27 filas de pares de ajustes y 112 ternas del dinero contra el oráculo, en la integración que pasó la CI (10 de 10). |
 | 4   | El dinero al centavo y el inventario al gramo en todas las pruebas y en el día de bots              | **Se cumple**                    | Cinco días: 0 diferencias del árbitro en el cierre de los cinco (1,533 · 2211; 1,562 · 2213; 1,640 · 2214; 1,523 · 2215 comparaciones; el 2212, 0 en el cierre). Las diferencias por hora fueron del árbitro o del guion y ya están explicadas y arregladas (§2.5). Pruebas: ternas del dinero, Parte 5 (62 de 62 contra el libro).                                                                                                                                       |
 | 5   | El día de bots limpio                                                                               | **No se cumple**                 | `b-dia.md` y `b-dia-4.md`. El 2214 ejecutó los 30 eventos del caos (R1 incluido) pero el árbitro dio 1 diferencia «crítica» por hora (error del árbitro, arreglado) y una cuenta quedó sin cobrar (error del guion, arreglado). El 2215 cuadró en las 11 horas y el cierre, con 0 críticos y 0 altos, pero ejecutó 29 de 30 eventos (S1r falló: guion, arreglado sin verificar). **Ningún día reunió todo a la vez.** Falta uno con el código final.                                                                                      |
-| 6   | En lo visual: 0 desbordes, recortes ni encimados abiertos, y axe sin violaciones graves ni críticas | **No se cumple**                 | Cerrados hoy en el lote 7 (por desplegar): 34, 38, 26 y el resto del 5; el 35, cerrado en parte (la hoja trae «Imprimir otra hoja de la precuenta»; el «—» del total se queda porque el total es de rol caja). **Abiertos:** el 39 (medio: en Windows 1366×768 al 125 % el mapa de mesas de Configuración no escala y corta las mesas 3 y 6 de «Interior»), el 40 (el velo de la hoja del carrito tapa los platillos al quitar el último renglón) y el 41 (el aviso «Solicitud enviada» tapa el texto de gracias en 360×800). Axe: **no hay un resumen final** en las fuentes. |
+| 6   | En lo visual: 0 desbordes, recortes ni encimados abiertos, y axe sin violaciones graves ni críticas | **No se cumple**                 | Cerrados hoy en el lote 7 (por desplegar): 34, 38, 26 y el resto del 5; el 35, cerrado en parte (la hoja trae «Imprimir otra hoja de la precuenta»; el «—» del total se queda porque el total es de rol caja). **Cerrados en el lote 8 (por desplegar):** el 39 (el mapa de mesas de Configuración se escala y cabe entero a 1366×768 al 125 %, en el iMin y en la tableta), el 40 (la hoja del carrito se cierra sola al quedar vacía) y el 41 (el aviso «Solicitud enviada» ya no tapa el texto de gracias), cada uno con su prueba e2e; el barrido de servicio de Windows y del teléfono, 8 de 8 sin faltas. **Abiertos en lo visual:** ninguno conocido. Axe: **no hay un resumen final** en las fuentes. |
 | 7   | Producción desplegada, configurada, en ceros, con `pnpm dia-cero` listo y 0 errores en Vercel      | **Se cumple**                    | Lotes 1 a 6: «READY», humo 0 fallas, 0 errores de Vercel en la hora siguiente de cada uno (el lote 6: humo 10:53, 0 fallas; Vercel revisado a las 11:55, 0 errores; lectura de producción idéntica a la de la Parte 11). Parte 11 hecha. `pnpm dia-cero` (ensayo): «nada que borrar». El lote 7 está en PR y no es parte de esta condición hasta que se despliegue.                                                                       |
 
 ### Lo que falta para un SÍ, dicho exactamente
@@ -82,10 +102,10 @@ exige las siete; un sexto día de bots limpio resolvería la 5, no la 3 ni la 6.
 1. **Un día de bots limpio** (condición 5): una corrida completa con el caos entero (R1 y S1r) y con los
    arreglos finales del guion y del árbitro. Es el sexto día, que corre esta noche sobre el código final;
    su informe será `b-dia-6.md`.
-2. **Lo visual abierto** (condición 6): arreglar el mapa de mesas de Configuración (39) y los bajos 40 y
-   41, y tener un resumen final de axe de las pantallas de operación.
-3. **Ajustes** (condición 3): correr la prueba de sonidos del portal; demostrar «Borrar todos los datos»
-   en la base desechable; y pasar a la prueba física lo que exige aparato real (impresora, cajón,
+2. **Lo visual** (condición 6): el mapa de mesas de Configuración (39) y los bajos 40 y 41 quedaron
+   arreglados en el lote 8 (por desplegar); falta un resumen final de axe de las pantallas de operación.
+3. **Ajustes** (condición 3): la prueba de sonidos del portal y «Borrar todos los datos» quedaron
+   demostrados en el lote 8; falta pasar a la prueba física lo que exige aparato real (impresora, cajón,
    contraseña del proveedor).
 4. **Confirmar con el dueño** que «Para llevar desde la mesa» no existe (condición 2).
 5. **Desplegar el lote 7** (humo, lectura y la hora de Vercel), para que lo visual cerrado hoy llegue
@@ -114,6 +134,8 @@ Fuente: `docs/qa-final/MATRIZ.md` (regenerada en el lote 7 con `pnpm qa:matriz`:
 | Huecos del mapa               | 0                                                                                                     |
 
 ### 2.2 · Hallazgos por severidad (43)
+
+> **Lote 8 (18-11, noche):** el 39, el 40 y el 41 quedaron arreglados (por desplegar) y se halló el 44 (bajo, arreglado: el texto de «Reiniciar sistema») y se anotó el 45 (bajo, abierto: mesas chicas en el editor del mapa). Con eso: 45 encontrados, 33 arreglados, 7 descartados y 5 abiertos (11, 16, 42, 43 y 45); medio, 20 encontrados y 18 arreglados; bajo, 17 encontrados y 11 arreglados. La tabla de abajo es la de la redacción.
 
 | Severidad | Encontrados | Arreglados | Descartados | Abiertos |
 | --------- | ----------: | ---------: | ----------: | -------: |
@@ -349,6 +371,8 @@ Todo esto va a la lista física (§8). Nada de lo de abajo se ha visto en un apa
 
 ### 5.1 · Hallazgos abiertos
 
+> **Lote 8 (18-11, noche):** el 39, el 40 y el 41 de esta tabla ya están arreglados (por desplegar); quedan abiertos el 11, el 16, el 42 y el 43.
+
 | #   | Sev.  | Qué                                                                                                                                                  | Por qué no se cambió                                                                                                                                  |
 | --- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 11  | bajo  | El servidor acepta una propina al cobrar aunque nadie pueda elegirla en Configuración                                                                | Endurecer el cobro arriesga romper un cobro legítimo (la propina puede venir fijada por el comensal o el mesero). A la lista de después.             |
@@ -373,6 +397,8 @@ no guarda la duración por petición); y la sesión de la Caja de 12 h fijas (po
 ya no está en esta lista: lo cierra el lote 7.
 
 ### 5.3 · Los ajustes de Configuración sin comprobar en el navegador
+
+> **Lote 8 (18-11, noche):** `sonidos_en_el_portal` y «Reiniciar sistema para cliente» quedaron demostrados (90 comprobados, 0 por ver en navegador, 2 por comprobar: impresora y cajón, laboratorio). Lo de abajo es lo de la redacción.
 
 Fuente: `qa/qa-final/datos/efectos.json` (113 puntos: 78 ajustes del negocio, 17 tarjetas y 18 de este
 aparato) y `MATRIZ.md`. Hoy: **88 comprobados, 1 por ver en navegador, 3 por comprobar**, 12 sin

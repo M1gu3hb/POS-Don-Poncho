@@ -3867,3 +3867,74 @@ desplazar, al cambiar el alto de la lista y en cada pintada. Prueba con el dedo:
 - **Por confirmar con el dueño:** que «Para llevar desde la mesa» de verdad no exista; el flujo no aparece en
   PLAN.md ni en NUEVO.md y no se halló su entrada en la app. Si existiera, pasa a ser un hueco a probar.
 - **Sin migración. No cambia dinero ni inventario.**
+
+## DP-D195 · DP-22 · Lote 8 · El mapa de mesas de Configuración se escala al ancho que hay y cabe entero · 18-11-2026
+
+- **Decisión:** `MesaMapEditor` mide el ancho disponible de su marco (`ResizeObserver`) y, si el lienzo lógico
+  (810 px de ancho, o más si alguna mesa quedó más a la derecha, por 600 de alto) no cabe, lo **reduce** con
+  `transform: scale(...)` desde la esquina de arriba a la izquierda y le da al marco el alto escalado. Nunca lo
+  agranda (1 = tamaño real). El lienzo declara su escala en `data-escala`. Las coordenadas que se guardan
+  **siguen siendo las lógicas**: al arrastrar, el movimiento en pantalla se divide entre la escala (y los topes del
+  borde también), así que la posición que llega al servidor es la misma que con el lienzo a tamaño real.
+- **Por qué:** en Windows 1366×768 al 125 % el lienzo medía ~470 px de CSS con `overflow-hidden` y cortaba las
+  mesas 3 y 6 de «Interior» (hallazgo medio de `c-ajustes.md`). Un desplazamiento horizontal no servía: el
+  lienzo captura el dedo (`touch-action: none`) y no se puede arrastrar la página desde él.
+- **Costo:** en el ancho de 1366×768 al 125 % las mesas se ven a ~0.73 de su tamaño. En la iMin (1920) y en la
+  tableta (800×1280) el ancho alcanza o el lienzo ya se reducía: sin cambio a peor (la prueba corre en los tres).
+- **Prueba:** `ajustes-finales/tarjetas-personas.spec.ts › mapa-de-mesas…` en `win-1366x768-125`, `imin-1920x1080-c99`
+  y `tableta-800x1280`: ninguna mesa cortada, el mapa cabe a lo ancho, y el arrastre con el dedo guarda
+  (movimiento ÷ escala) en la base. Antes del código fallaba («mesas cortadas por el borde del mapa»: 3 y 6).
+- **Sin migración. No toca dinero ni inventario.**
+
+## DP-D196 · DP-22 · Lote 8 · La hoja del carrito del mesero (teléfono) se cierra sola al quedar vacía · 18-11-2026
+
+- **Decisión:** `MeseroCartFAB` cierra la hoja cuando las piezas del carrito **pasan** de más de cero a cero (se
+  recuerda la cuenta anterior en una referencia). Una hoja abierta a propósito con el carrito vacío (para
+  «Solicitar cuenta», «Cambiar de mesa» o «Imprimir otra hoja») no se toca: sólo cierra la transición.
+- **Por qué:** al quitar el último renglón la hoja se quedaba abierta con el velo encima de los platillos hasta que
+  se tocaba el velo (hallazgo bajo de `t-flujos.md`).
+- **Prueba:** `flujos-sin-prueba.spec.ts › Pedido · Cantidades…` (teléfono 360×800 y tableta): tras bajar a cero no queda el
+  velo (`div.fixed.inset-0[z-65]`). Antes del código fallaba («la hoja y su velo siguen abiertos»).
+- **Sin migración. No toca dinero ni inventario.**
+
+## DP-D197 · DP-22 · Lote 8 · El aviso «Solicitud enviada» del portal no tapa el texto de gracias · 18-11-2026
+
+- **Decisión:** el aviso verde de «Solicitud enviada» (3.5 s, pegado al borde de abajo) no se pinta mientras la hoja
+  de la valoración está abierta: los dos iban al borde de abajo y el aviso tapaba «¡Gracias! Tu valoración fue
+  registrada». El comensal ya vio «¡Cuenta solicitada!» en la hoja de la cuenta; el aviso no aporta nada encima de la
+  hoja de valorar.
+- **Prueba:** `flujos-sin-prueba.spec.ts › Portal QR · Calificar la visita…` (teléfono): el recuadro del aviso (si se ve) no se
+  cruza con el del texto de gracias. Antes del código fallaba.
+- **Sin migración. No toca dinero ni inventario.**
+
+## DP-D198 · DP-22 · Lote 8 · «Borrar todos los datos del sistema» dice lo que hace: conserva la configuración y a la gente · 18-11-2026
+
+- **Qué se comprobó (contando filas, base desechable, Windows 1366×768 al 125 %):** con el nombre del negocio bien
+  escrito el comando borra el catálogo (27 productos, 6 categorías, 57 recetas, 33 insumos, 33 existencias, 1
+  proveedor), las 12 mesas y todo lo transaccional, y deja la organización, su sucursal, las 11 personas con su
+  empleo, las 5 zonas de fábrica y las 3 estaciones de cocina; el otro negocio de la base no se toca; el
+  rastro queda en `comandos_ejecutados` y la app queda usable (el salón vacío ofrece «Crear primera mesa»).
+- **Hallazgo (bajo): la pantalla prometía de más y de menos.** Decía «Resetea la configuración a valores base.
+  Conserva tu usuario administrador», y el comando NO toca `configuracion` (sigue idéntica) ni a nadie de la gente.
+  No se cambió el comando: resetear la configuración borraría también quién es la persona de plataforma y los
+  ajustes del negocio, y esa regla no es de la víspera. Se cambió el texto de la tarjeta y del diálogo.
+  **Queda para Miguel:** si «para un cliente nuevo» debe también volver a valores de fábrica la configuración.
+- **Observación:** el límite de tasa es de tres operaciones de mantenimiento por hora y por origen **y un nombre mal
+  escrito cuenta**. Quien se equivoca dos veces seguidas queda 50 minutos sin poder reiniciar. Es a propósito
+  (E10-4); la prueba vacía `limite_tasa` de su base desechable antes de cada intento que debe prosperar.
+- **Sin migración. No toca dinero ni inventario.**
+
+## DP-D199 · DP-22 · Lote 8 · «Borrar todos los datos» describe lo que el comando hace con las zonas y las estaciones · 18-11-2026
+
+- **Qué se leyó (revisión independiente de sólo lectura del lote 8):** el texto de la pantalla decía que se conservan
+  «las zonas y estaciones de cocina». `reiniciarTodo` (`packages/app/src/mantenimiento/comandos.ts`) borra las zonas
+  con el catálogo (`zonas` está en `TABLAS_DEL_CATALOGO`, `purgas.ts`) y las vuelve a sembrar a las 5 de fábrica
+  (Interior, Exterior, Terraza, Barra y Otro; sólo si el giro es restaurante). Las estaciones de cocina NO están en
+  esa lista: todas se conservan, y sólo se siembra «Cocina general» si no hubiera una general.
+- **Decisión:** el texto de la tarjeta y del diálogo dice ahora lo que pasa: las zonas vuelven a las de fábrica (las que
+  el negocio creó se pierden) y se conservan la configuración, la gente con sus usuarios y las estaciones de cocina.
+  Lo ata `lote8-mapa-carrito-aviso.contrato.test.ts › DP-D198`, recortado al texto de la tarjeta y del diálogo, y que
+  no diga que las zonas se conservan.
+- **El comando no cambia.** Conservar la configuración es lo seguro. Si el dueño quiere que «para un cliente nuevo»
+  también la borre, queda para después.
+- **Sin migración. No toca dinero ni inventario.**

@@ -110,6 +110,14 @@ test.describe('flujos que no tenían prueba', () => {
         'Con cero, el renglón sigue en el carrito.',
       ).toHaveCount(0);
 
+      // DP-22 · Lote 8: en el teléfono, al quitar el último renglón la hoja se cierra sola (sin velo
+      // que tape los platillos). En la tableta el carrito no es una hoja y no hay velo.
+      await expect(
+        lupita.locator('div.fixed.inset-0[class*="z-[65]"]'),
+        'Al quedar vacío el carrito, la hoja y su velo siguen abiertos.',
+      ).toHaveCount(0);
+      await capturar(lupita, 'flujos-sin-prueba', aparato.id, 'carrito-vacio-sin-velo');
+
       await cerrarElCarrito(lupita);
 
       // Una cantidad grande: 12 se ve bien y suma bien.
@@ -204,6 +212,25 @@ test.describe('flujos que no tenían prueba', () => {
         'La pantalla no dice que la valoración quedó.',
       ).toBeVisible();
       await capturar(telefono, 'flujos-sin-prueba', aparato.id, 'carita-guardada');
+      // DP-22 · Lote 8: el aviso «Solicitud enviada» no tapa el texto de gracias.
+      const gracias = valoracion.getByText('¡Gracias! Tu valoración fue registrada.');
+      const textoGracias = await gracias.boundingBox();
+      expect(textoGracias).not.toBeNull();
+      const aviso = telefono.getByText('Solicitud enviada').filter({ visible: true });
+      for (const caja of await aviso.evaluateAll((els) =>
+        els.map((el) => {
+          const r = el.getBoundingClientRect();
+          return { x: r.x, y: r.y, width: r.width, height: r.height };
+        }),
+      )) {
+        const t = textoGracias ?? { x: 0, y: 0, width: 0, height: 0 };
+        const seCruzan =
+          caja.x < t.x + t.width &&
+          caja.x + caja.width > t.x &&
+          caja.y < t.y + t.height &&
+          caja.y + caja.height > t.y;
+        expect(seCruzan, 'el aviso «Solicitud enviada» tapa el texto de gracias').toBe(false);
+      }
 
       // Lo que el servidor guardó: UNA calificación, en la cuenta de la mesa, con la carita del servidor.
       expect(

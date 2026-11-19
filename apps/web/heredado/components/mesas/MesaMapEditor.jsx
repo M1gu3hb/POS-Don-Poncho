@@ -9,6 +9,8 @@ import { responsableColor, responsableTexto } from '@/lib/asignacionMesas';
 import { EsperaDelPlano } from '~/cliente/EstadosDeCarga';
 
 const MAP_HEIGHT = 600;
+// DP-22 · Lote 8: ancho lógico mínimo del lienzo: la rejilla de fábrica (60 + 7 × 90) más la mesa más grande (120).
+const ANCHO_LOGICO = 810;
 
 /**
  * Editable canvas/map for tables — REAL drag&drop with pointer events.
@@ -27,6 +29,10 @@ export default function MesaMapEditor({
 }) {
   const { config } = useConfig();
   const containerRef = useRef(null);
+  // DP-22 · Lote 8: el marco que mide el ancho disponible; el lienzo (en coordenadas LÓGICAS, las que se
+  // guardan) se escala para caber entero en él.
+  const marcoRef = useRef(null);
+  const [anchoDisponible, setAnchoDisponible] = useState(null);
   const [draggingId, setDraggingId] = useState(null);
   // overrides hold the visual position while dragging (per id)
   const [overrides, setOverrides] = useState({});
@@ -38,6 +44,26 @@ export default function MesaMapEditor({
     return TAMANOS_MESA[tamano]?.[forma] || { w: 80, h: 80 };
   };
 
+  useEffect(() => {
+    const marco = marcoRef.current;
+    if (!marco) return undefined;
+    const medir = () => setAnchoDisponible(marco.clientWidth);
+    medir();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observador = new ResizeObserver(medir);
+    observador.observe(marco);
+    return () => observador.disconnect();
+  }, []);
+
+  // Ancho lógico: el de la rejilla de fábrica o, si alguna mesa quedó más a la derecha, el que ella pide.
+  const anchoLogico = Math.max(
+    ANCHO_LOGICO,
+    ...mesas.map((m) => (m.posicion_x ?? 100) + dimsFor(m).w + 20),
+  );
+  // Nunca se agranda (1 = tamaño real): sólo se reduce cuando el ancho disponible no alcanza.
+  const escala = anchoDisponible ? Math.min(1, anchoDisponible / anchoLogico) : 1;
+  const anchoDelLienzo = anchoDisponible && escala === 1 ? anchoDisponible : anchoLogico;
+
   const handlePointerDown = (e, mesa) => {
     if (e.button !== undefined && e.button !== 0) return; // only left click
     if (!containerRef.current) return;
@@ -47,8 +73,8 @@ export default function MesaMapEditor({
     const startY = mesa.posicion_y ?? 100;
     dragState.current = {
       id: mesa.id,
-      offsetX: e.clientX - rect.left - startX,
-      offsetY: e.clientY - rect.top - startY,
+      offsetX: (e.clientX - rect.left) / escala - startX,
+      offsetY: (e.clientY - rect.top) / escala - startY,
       w: dim.w,
       h: dim.h,
       rect,
@@ -65,10 +91,11 @@ export default function MesaMapEditor({
     if (!st) return;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    let x = e.clientX - rect.left - st.offsetX;
-    let y = e.clientY - rect.top - st.offsetY;
-    x = Math.max(0, Math.min(x, rect.width - st.w));
-    y = Math.max(0, Math.min(y, rect.height - st.h));
+    // La pantalla se mueve a la escala del lienzo; lo que se guarda son coordenadas lógicas.
+    let x = (e.clientX - rect.left) / escala - st.offsetX;
+    let y = (e.clientY - rect.top) / escala - st.offsetY;
+    x = Math.max(0, Math.min(x, rect.width / escala - st.w));
+    y = Math.max(0, Math.min(y, rect.height / escala - st.h));
     st.moved = true;
     setOverrides((prev) => ({ ...prev, [st.id]: { x: Math.round(x), y: Math.round(y) } }));
   };
@@ -133,12 +160,17 @@ export default function MesaMapEditor({
   }, []);
 
   return (
+    <div ref={marcoRef} style={{ width: '100%', height: MAP_HEIGHT * escala }}>
     <div
       ref={containerRef}
+      data-escala={escala}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       className="relative rounded-2xl overflow-hidden border-2 select-none"
       style={{
+        width: anchoDisponible ? anchoDelLienzo : '100%',
+        transform: escala < 1 ? `scale(${escala})` : undefined,
+        transformOrigin: 'top left',
         height: MAP_HEIGHT,
         background: 'linear-gradient(135deg, #F4EAD5 0%, #E8DCC0 100%)',
         backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 0)',
@@ -209,6 +241,7 @@ export default function MesaMapEditor({
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

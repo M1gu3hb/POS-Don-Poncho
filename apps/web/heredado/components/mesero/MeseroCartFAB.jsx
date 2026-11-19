@@ -1,5 +1,5 @@
 'use client';
-import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { ArrowLeftRight, Printer, ShoppingCart, Send, X, Receipt } from 'lucide-react';
 import { Link } from '@/enrutado';
 import { Button } from '@/components/ui/button';
@@ -72,6 +72,20 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
         activo.matches('input:not([type="checkbox"]):not([type="radio"]), textarea'),
     );
   }, [open]);
+
+  // DP-22 · Lote 8: al quitar el último renglón del carrito la hoja se cierra sola. Antes se quedaba
+  // abierta, con el velo encima de los platillos, hasta que se tocaba el velo. Sólo se cierra al PASAR
+  // de «con renglones» a «vacío»: una hoja abierta a propósito con el carrito vacío (para pedir la
+  // cuenta o cambiar de mesa) no se toca.
+  const piezasEnElCarrito = (Array.isArray(carrito) ? carrito : []).reduce(
+    (suma, renglon) => suma + (renglon?.cantidad || 0),
+    0,
+  );
+  const piezasDeAntes = useRef(piezasEnElCarrito);
+  useEffect(() => {
+    if (piezasDeAntes.current > 0 && piezasEnElCarrito === 0) setOpen(false);
+    piezasDeAntes.current = piezasEnElCarrito;
+  }, [piezasEnElCarrito]);
 
   useImperativeHandle(
     ref,

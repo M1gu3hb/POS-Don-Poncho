@@ -758,9 +758,10 @@ function PortalCliente() {
         )}
       </AnimatePresence>
 
-      {/* Toast/banner de confirmación */}
+      {/* Toast/banner de confirmación. DP-22 · Lote 8: no mientras la hoja de la valoración está abierta
+          (los dos van pegados al borde de abajo y el aviso tapaba el texto de gracias). */}
       <AnimatePresence>
-        {enviado && (
+        {enviado && !showValoracion && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
