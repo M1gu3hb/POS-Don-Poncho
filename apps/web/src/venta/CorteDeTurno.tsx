@@ -8,6 +8,11 @@ import { Handshake } from 'lucide-react';
 import { useState } from 'react';
 
 import { ErrorApi, invocarComando } from '~/cliente/api';
+import {
+  ALTO_DEL_CAMPO,
+  ALTO_DEL_CAMPO_DE_DINERO,
+  AYUDA_DE_TRES_RENGLONES,
+} from './tarjetas-del-cajon.ts';
 import { folioVisible } from '@morphiqpos/domain/venta';
 
 /**
@@ -73,7 +78,7 @@ export function CorteDeTurno() {
         evento.preventDefault();
         void entregar();
       }}
-      className="flex flex-col gap-(--espacio-3)"
+      className="flex flex-col gap-(--espacio-4)"
     >
       <div className="flex items-start gap-(--espacio-3)">
         <Handshake
@@ -84,19 +89,25 @@ export function CorteDeTurno() {
           <h2 id="corte-de-turno-titulo" className="font-semibold">
             Entregar el turno
           </h2>
-          <p className="text-sm text-texto-sutil">
+          <p className={`text-sm text-texto-sutil ${AYUDA_DE_TRES_RENGLONES}`}>
             Cuenta y entrega lo de tu turno. La caja sigue abierta para quien entra.
           </p>
         </div>
       </div>
       <div className="flex flex-col gap-(--espacio-2)">
         <Label htmlFor="turno-contado">Lo que contaste</Label>
-        <CampoDeDinero id="turno-contado" centavos={contado} alCambiar={setContado} />
+        <CampoDeDinero
+          id="turno-contado"
+          className={ALTO_DEL_CAMPO_DE_DINERO}
+          centavos={contado}
+          alCambiar={setContado}
+        />
       </div>
       <div className="flex flex-col gap-(--espacio-2)">
         <Label htmlFor="turno-notas">Notas (opcional)</Label>
         <Input
           id="turno-notas"
+          className={ALTO_DEL_CAMPO}
           maxLength={500}
           placeholder="se lo entregué a Don Chuy"
           value={notas}
@@ -105,29 +116,31 @@ export function CorteDeTurno() {
           }}
         />
       </div>
-      {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
-      {hecho === null ? null : (
-        <Aviso
-          tono={diferencia === 0 ? 'exito' : 'atencion'}
-          titulo={`Turno ${folioVisible(hecho.serie, hecho.folio, null, 'numero')} entregado: ${
-            diferencia === 0 ? 'cuadra exacto' : diferencia > 0 ? 'sobrante' : 'faltante'
-          }`}
-        >
-          <p className="inline-flex flex-wrap items-baseline gap-(--espacio-1)">
-            Esperado <Dinero centavos={Number(hecho.efectivoEsperadoCentavos)} tamano="sm" /> ·
-            contado <Dinero centavos={Number(hecho.efectivoContadoCentavos)} tamano="sm" />
-            {diferencia === 0 ? null : (
-              <>
-                · {diferencia > 0 ? 'sobran' : 'faltan'}{' '}
-                <Dinero centavos={Math.abs(diferencia)} tamano="sm" />
-              </>
-            )}
-          </p>
-        </Aviso>
-      )}
-      <Button type="submit" variant="outline" disabled={guardando} cargando={guardando}>
-        Entregar el turno
-      </Button>
+      <div className="flex flex-col gap-(--espacio-4)">
+        {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
+        {hecho === null ? null : (
+          <Aviso
+            tono={diferencia === 0 ? 'exito' : 'atencion'}
+            titulo={`Turno ${folioVisible(hecho.serie, hecho.folio, null, 'numero')} entregado: ${
+              diferencia === 0 ? 'cuadra exacto' : diferencia > 0 ? 'sobrante' : 'faltante'
+            }`}
+          >
+            <p className="inline-flex flex-wrap items-baseline gap-(--espacio-1)">
+              Esperado <Dinero centavos={Number(hecho.efectivoEsperadoCentavos)} tamano="sm" /> ·
+              contado <Dinero centavos={Number(hecho.efectivoContadoCentavos)} tamano="sm" />
+              {diferencia === 0 ? null : (
+                <>
+                  · {diferencia > 0 ? 'sobran' : 'faltan'}{' '}
+                  <Dinero centavos={Math.abs(diferencia)} tamano="sm" />
+                </>
+              )}
+            </p>
+          </Aviso>
+        )}
+        <Button type="submit" variant="outline" disabled={guardando} cargando={guardando}>
+          Entregar el turno
+        </Button>
+      </div>
     </Superficie>
   );
 }

@@ -112,6 +112,24 @@ export const SIN_ESTADO = [
       'Pieza del mapa del mesero, no pantalla: dibuja lo que le pasan (las mesas, y encima «no hay mesas» y «cargando», que pinta la página que la usa). El fallo de la lectura lo dice la página.',
   },
   {
+    pantalla: 'tacto/NavegacionConAviso',
+    estado: 'vacio',
+    razon:
+      'Pieza del menú lateral, no pantalla: envuelve la lista de enlaces que le pasan y sólo agrega el aviso de «hay más por desplazar»; el vacío, la carga y el fallo no son suyos.',
+  },
+  {
+    pantalla: 'tacto/NavegacionConAviso',
+    estado: 'cargando',
+    razon:
+      'Pieza del menú lateral, no pantalla: envuelve la lista de enlaces que le pasan y sólo agrega el aviso de «hay más por desplazar»; el vacío, la carga y el fallo no son suyos.',
+  },
+  {
+    pantalla: 'tacto/NavegacionConAviso',
+    estado: 'error',
+    razon:
+      'Pieza del menú lateral, no pantalla: envuelve la lista de enlaces que le pasan y sólo agrega el aviso de «hay más por desplazar»; el vacío, la carga y el fallo no son suyos.',
+  },
+  {
     pantalla: 'portal/menu-digital/MenuDigital',
     estado: 'error',
     razon:

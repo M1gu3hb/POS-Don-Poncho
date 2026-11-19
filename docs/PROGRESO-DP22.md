@@ -305,6 +305,57 @@ lo auditó con mutantes propios. Lleva:
 - **Vercel:** 0 errores al desplegar; la hora siguiente se revisó a las 00:50 del 18-11 (ventana
   de 2 h, que cubre también las escrituras de la Parte 11): 0 errores. **Lote 5 cerrado.**
 
+### Lote 6 · PR #42 (`dp-22-sexto-lote` → `main`) · sin migraciones
+
+Rama `dp-22-sexto-lote`, sobre `main` ya con el lote 5. Lo llevó el agente de entrega (informe
+`r-lote6.md`). Lleva:
+
+- **«Cambiar de mesa» en la hoja del pedido del teléfono del mesero** (hallazgo 37, DP-D182): la
+  página calcula la regla una vez (`puedeCambiarDeMesaAqui`, con `puedeMoverLaCuenta`: dirección
+  siempre, el mesero sólo en sus mesas, nunca una mesa unida) y la comparten el panel de la tableta y
+  la hoja del teléfono. No toca dinero ni inventario. Prueba de contrato 3 de 3; auditado con 3
+  mutantes propios, uno sobrevivía (el botón sin llamar a `alCambiarDeMesa`: la prueba sólo buscaba el
+  nombre) y se reforzó.
+- **Los arreglos del simulador** que dejó el día de bots (DP-D183) y la bitácora del lote 5, la Parte
+  11 y el día de bots.
+- **La CI:** 10 de 10 en el commit `3a102d4`. Galería: 12 de 81 retratos difieren sólo por ruido de
+  dibujo (2 a 125 píxeles, diferencia máxima 17/255); abiertos Configuración (papel) e Inventario
+  (noche), idénticos a la vista; no se copiaron.
+- **Despliegue (18-11):** unido a `main` como `ca7e6f1` a las 10:48; producción «READY»
+  (`dpl_C3cYV8xD…`) a las 10:52. Regreso previsto: el del lote 5 (`dpl_CdXRHVCo…`).
+- **Humo sin sesión y sin cobrar** (`humo-produccion.sh 6`, 10:53): **0 fallas.**
+- **Lectura de producción después:** idéntica a la de después de la Parte 11 (`produccion-final.txt`).
+- **Vercel:** 0 errores al desplegar y 0 en la hora siguiente (revisado a las 11:55, ventana de 2 h).
+  **Lote 6 cerrado.**
+
+### Lote 7 · PR #43 (`dp-22-septimo-lote` → `main`) · sin migraciones
+
+Rama `dp-22-septimo-lote`, sobre `main` con el lote 6 (`ca7e6f1`). Lo armó el agente de entrega con
+el trabajo de cuatro agentes y el informe 013. Lleva:
+
+- **Lo visual (agente V, DP-D186 a DP-D188):** los hallazgos 34 (la barra flotante se esconde mientras
+  se escribe), 38 (con la cuenta pedida la barra se queda con «Cuenta pedida» y «Cambiar de mesa»), 35
+  en parte («Imprimir otra hoja de la precuenta»; el «—» del total se queda: es de rol caja), 26
+  («Entregar el turno» y «Retirar» a la misma altura) y el resto del 5 (el menú lateral avisa que hay más).
+- **Configuración comprobada (agente C, DP-D190):** el arnés táctil de Configuración; 88 de 113 puntos
+  comprobados, 1 por ver y 3 por comprobar. Su prueba de «Borrar todos los datos» está en rojo (no
+  demostrado).
+- **Los flujos (agentes M y T, DP-D194):** la matriz con 0 flujos sin prueba y 2 «no aplica»; pruebas de
+  cantidades del carrito, cortesía y calificación de la visita; el estado «no aplica» del generador.
+- **El simulador (B4):** el guion y el árbitro tras el cuarto día de bots (D22-081, 055 y 036).
+- **El informe 013** (auditoría final, veredicto «NO todavía») y esta bitácora.
+- **Hallazgos nuevos** (39 a 43), anotados y sin arreglar.
+- **Auditoría de la entrega:** 2 mutantes propios sobre lo visual del mesero sobrevivían a la prueba de
+  contrato; se reforzó y mueren.
+- **Galería (corrida 44432190548, success):** los 81 retratos de Linux difieren, y **sólo en la barra
+  lateral** (nada cambia fuera de sus 250 px de la izquierda): el degradado y la flecha al pie del menú
+  porque en 1280×720 «Portal QR» queda cortado. Abiertos Portal QR (bloque) y mesero (don-poncho),
+  nuevo contra guardado: el último elemento se desvanece bajo una flecha y se lee «hay más»; nada
+  cortado ni encimado. Se copiaron los 81.
+- **Comprobado en local (códigos reales):** `comprobar-lote5.sh` todo `=0` y `eslint-errores=0`;
+  `test:unit` 680 archivos y 7,307 pruebas (3 omitidas); `verify:residuos`, `estructura`, `venta`,
+  `estilos` y `adopcion` en 0; `qa:matriz` y `--verificar` en 0; prettier en 0.
+
 ## Parte 11 · Producción configurada y en ceros (17-11)
 
 De las 23:50 a las 23:58, con `bash /d/mpos-tmp/dp22/parte11.sh`:
@@ -328,42 +379,55 @@ De las 23:50 a las 23:58, con `bash /d/mpos-tmp/dp22/parte11.sh`:
 
 ## El día de bots (Parte 10)
 
-Tres días de 8:00 a 19:00 (×4, árbitro cada hora) sobre el commit `b1d630d` (más los arreglos que se le fueron sumando), con la máquina sola
-(informe: `D:\mpos-tmp\dp22\informes\b-dia.md`). Entre medias hubo dos arranques cortados a propósito
-(2212 a las 10:30 y a las 9:30) para arreglar y recompilar; no cuentan.
+Cinco días de 8:00 a 19:00 (×4, árbitro cada hora), semillas 2211 a 2215, con la máquina sola. Los tres
+primeros sobre el commit `b1d630d` (más los arreglos que se le fueron sumando); el 2214 y el 2215 sobre
+el código del lote 6 (`957f143` en la rama local de pruebas) y, el 2215, con tres arreglos del guion y
+del árbitro. Informes en `D:\mpos-tmp\dp22\informes\`: `b-dia.md` (los tres primeros) y `b-dia-4.md`
+(el 2214 y el 2215). Entre medias hubo dos arranques cortados a propósito (2212 a las 10:30 y a las
+9:30) para arreglar y recompilar; no cuentan.
 
-| Semilla | Duración | Cobros                    | Importe    | Lo que dijo el árbitro                                                                         | Incidentes                              |
-| ------- | -------: | ------------------------- | ---------- | ---------------------------------------------------------------------------------------------- | --------------------------------------- |
-| 2211    |  188 min | 171 (50 mesa, 121 llevar) | $64,878.10 | 0 diferencias en 11 horas y cierre (1,533 comparaciones), 0 5xx, 0 consola                     | 289 (2 «críticos» de dinero, del guion) |
-| 2212    |  169 min | 154 (62 mesa)             | $84,528.20 | 0 en el cierre; 2 «críticos» a las 14:00 (guion del árbitro)                                   | 139                                     |
-| 2213    |  168 min | 174 (68 mesa, 106 llevar) | $69,641.50 | 0 diferencias en las 11 horas y el cierre (1,562 comparaciones), 0 5xx, 0 consola sin explicar | 76: 0 críticos, 0 altos, 0 «dinero»     |
+| Semilla | Duración | Cobros                    | Importe    | Lo que dijo el árbitro                                                                                                                                         | Incidentes                              |
+| ------- | -------: | ------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| 2211    |  188 min | 171 (50 mesa, 121 llevar) | $64,878.10 | 0 diferencias en 11 horas y cierre (1,533 comparaciones), 0 5xx, 0 consola                                                                                     | 289 (2 «críticos» de dinero, del guion) |
+| 2212    |  169 min | 154 (62 mesa)             | $84,528.20 | 0 en el cierre; 2 «críticos» a las 14:00 (guion del árbitro)                                                                                                   | 139                                     |
+| 2213    |  168 min | 174 (68 mesa, 106 llevar) | $69,641.50 | 0 diferencias en las 11 horas y el cierre (1,562 comparaciones), 0 5xx, 0 consola sin explicar                                                                 | 76: 0 críticos, 0 altos, 0 «dinero»     |
+| 2214    |  188 min | 177 (65 mesa, 112 llevar) | $63,425.44 | 0 diferencias de 9:00 a 17:00; 1 «crítica» a las 18:00, 19:00 y en la última revisión (Shot de tequila: libro 6/7, base 8/9, error del árbitro); cierre: 0 de 1,640. 0 5xx, 0 consola | 1 crítico, 0 altos, 24 medios           |
+| 2215    |  168 min | 163 (57 mesa, 106 llevar) | $67,947.72 | 0 diferencias en las 11 horas y el cierre (1,523 comparaciones); 0 5xx; 0 consola sin explicar                                                                 | 0 críticos, 0 altos, 17 medios          |
 
 - **2211** (código sin arreglos): 33 mesas, 17 portal, 6 unidas, 7 cambios de mesa, 1 dividida, 8
   cancelaciones; 9,277 toques, 0 clics. **2212** (tras DP-D182): 36 mesas, 8 unidas, 21 cambios, 3
   divididas, 13 cancelaciones; 10,644 toques. **2213** (con todos los arreglos de guion): 44 mesas,
   13 pedidas por portal (32 pedidos), 10 unidas, 27 cambios de mesa, 8 divididas, 17 cancelaciones,
-  3 cortes; 11,036 toques, 0 clics. En la 2213 el árbitro comparó dinero al centavo, inventario al
-  gramo, propinas por mesero y comandas (ninguna perdida o atorada).
-- **Lo juzgado.** De la app, uno: «Cambiar de mesa» no se ofrecía al mesero en el teléfono (la hoja
-  del pedido sólo traía «Solicitar cuenta»; en la tableta, siempre): arreglado (hallazgo 37,
+  3 cortes; 11,036 toques, 0 clics. **2214:** 40 mesas, 18 por portal, 8 unidas, 29 cambios de mesa, 5
+  divididas, 11 canceladas; 11,917 toques, 0 clics de ratón. **2215:** 18 por portal (37 pedidos), 6
+  unidas, 23 cambios de mesa, 3 divididas, 13 canceladas; 11,025 toques, 0 clics de ratón.
+- **Lo juzgado.** De la app, uno: «Cambiar de mesa» no se ofrecía al mesero en el teléfono (hallazgo 37,
   DP-D182, lote 6). Del guion: «Marcar entregado» (13 de 13 casos fueron una entrega ajena de
   segundos antes), zonas y selectores del teléfono, la pregunta «¿Separar mesas o dejarlas
-  unidas?» sin contestar (encadenó ~200 fallos) y tres «críticos» de dinero (la propina que la Caja
-  eligió quedaba fijada tras red caída o recarga y el libro no la sabía). Del árbitro (sin relajar
-  el oráculo): al dividir una cuenta la pieza nueva entra a la misma comanda con otra hora y el
-  corte por fila contaba una menos; ahora corta por la hora de la comanda (DP-D183). De medición:
-  la Caja «abre la cuenta pendiente» medía 2.9 s, de los cuales ~1.5 s eran toques del bot.
+  unidas?» sin contestar (encadenó ~200 fallos), tres «críticos» de dinero (la propina que la Caja
+  eligió quedaba fijada tras red caída o recarga y el libro no la sabía) y, en el 2214, el diálogo
+  «Mesa 8 · cuenta 2 de 2» que la Caja no halló (la guarda del rótulo): la cuenta 2 ($2,007) quedó sin
+  cobrar y arrastró alertas de cierre (D22-055, 089, 090 y 092); en el 2215, S1r (la 14 vive en la
+  Terraza y el guion contaba la mesa antes de que React la pintara; D22-036, **sin verificar en un
+  día**). Del árbitro (sin relajar el oráculo): al dividir una cuenta la pieza nueva entra a la misma
+  comanda con otra hora y el corte por fila contaba una menos (DP-D183); y en el 2214 (D22-081, crítico)
+  una línea de 3 «Shots» cobrada en 3 partes que la división parte en 3 filas, dos nacidas a las 17:52
+  contra la comanda de las 17:40: contaba filas, 8 contra 6, con el dinero cuadrado; ahora cuenta por
+  porción (`hora.ts`, con prueba y mutante). De medición: la Caja «abre la cuenta pendiente» medía
+  2.9 s, ~1.5 s de toques del bot.
 - **Caos.** En la 2213 se ejecutaron todos menos R1 (traslado de la Caja 2): el plan lo ponía al
-  minuto 420 desde que abre la Caja 2 y caía a las 19:40; sólo corrió en la 2211. Se arregló el
-  perfil (`perfil-dp22.ts`, con prueba) y **no** se verificó en un día completo.
-- **Veredicto, tal cual lo da el informe:** ¿hay un día limpio? **No, estrictamente.** La 2213 es
-  limpia en dinero, inventario, propinas, comandas, 5xx y consola, y sin incidentes críticos ni
-  altos, pero no ejecutó todo el caos (R1) y deja unos 15 incidentes medios, de guion o de
-  medición (agotado que gana a la ronda planeada ×5, modo espera tapando un cobro ×2, portal ×4,
-  medidas de merma, retiro y cierre de caja, «Registrar compra» ajeno). Ningún día corrió con los
-  últimos arreglos de guion. **Un cuarto día (semilla 2214) está corriendo;** su informe será
-  `D:\mpos-tmp\dp22\informes\b-dia-4.md`.
-- **Sin arreglar y anotado:** el modo espera durante el cobro; la lentitud de formularios (merma,
-  retiro, compra y cierre de caja de 10.9 s en la 2213, sin causa demostrada); la barra del
-  teléfono no aparece con la cuenta ya pedida (hallazgo 38); la sesión de la Caja de 12 h fijas
-  (por diseño).
+  minuto 420 y caía a las 19:40; se arregló el perfil. **En el 2214 corrieron los 30 eventos, R1
+  incluido** (a las 15:00); **en el 2215, 29 de 30** (falló S1r).
+- **Dos juicios del 2214.** *Modo espera con un cobro abierto:* ningún día perdió un cobro ni lo
+  tecleado; es una capa encima de un puesto que sigue montado (DP-D39): diseño, no defecto (no se
+  probó a propósito con un cobro a medio teclear). *Lentitud* (merma, retiro, compra y cierre de caja,
+  de 3 a 11 s): no se pudo sacar del registro del servidor, que no guarda la duración por petición;
+  el indicio es que se mide el bot.
+- **Veredicto, tal cual lo da el informe:** ¿hay un día limpio? **No, estrictamente.** Los cinco días
+  cuadraron en el cierre (0 diferencias del árbitro en el cierre de los cinco), 0 5xx y 0 consola, y todo
+  el caos se ejecutó entre el 2214 y el 2215, **pero ningún día reunió todo a la vez**: el 2214 tuvo la
+  diferencia por hora del árbitro y la cuenta sin cobrar del guion; el 2215 no ejecutó S1r. **Un sexto día
+  sobre el código final corre la noche del 18-11** (informe previsto: `b-dia-6.md`).
+- **Sin arreglar y anotado:** el modo espera durante el cobro; la lentitud de formularios sin causa
+  demostrada; la sesión de la Caja de 12 h fijas (por diseño). El hallazgo 38 (la barra del teléfono con
+  la cuenta pedida) lo cierra el lote 7.

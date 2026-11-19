@@ -399,7 +399,7 @@ export function Precuenta({ ordenId, cuentaInicial, filasIniciales, ancho }: Pre
             {/* Un botón apagado sin motivo es peor que uno que falla. */}
             <p className="text-xs text-texto-sutil">
               {totales.total === null
-                ? `El total de ${voc.enFraseCon('este', 'orden')} lo calcula el servidor al imprimir: la hoja se completa con él.`
+                ? `El total de ${voc.enFraseCon('este', 'orden')} lo calcula el servidor al imprimir (el total es de la caja): toca Imprimir y la hoja se completa con él.`
                 : `Se ve a tamaño real: papel de ${anchoMm} mm.`}
             </p>
             {copia === null || falloImpresion ? null : (

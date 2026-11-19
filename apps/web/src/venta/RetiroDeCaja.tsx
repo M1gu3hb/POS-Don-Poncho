@@ -12,6 +12,7 @@ import { ErrorApi, invocarComando } from '~/cliente/api';
 import { CampoDePesos } from './CampoDePesos.tsx';
 import { retiroParaEnviar } from './importe-tecleado.ts';
 import { PinDeSupervisor } from './PinDeSupervisor.tsx';
+import { AYUDA_DE_TRES_RENGLONES } from './tarjetas-del-cajon.ts';
 import { pesosDelUmbral, retiroPideElPin } from './pin-en-retiros.ts';
 import { useUmbralDeRetiro } from './use-umbral-de-retiro.ts';
 
@@ -123,7 +124,7 @@ export function RetiroDeCaja({
           <h2 id="retiro-titulo" className="font-semibold">
             Retirar
           </h2>
-          <p className="text-sm text-texto-sutil">
+          <p className={`text-sm text-texto-sutil ${AYUDA_DE_TRES_RENGLONES}`}>
             Lo que sale del cajón lleva escrito a dónde va.
           </p>
         </div>
@@ -153,43 +154,45 @@ export function RetiroDeCaja({
         />
       </div>
 
-      {pidiendoPin && pideElPin ? (
-        <div className="flex flex-col gap-(--espacio-2)">
-          <Aviso tono="info" titulo="Un retiro de ese monto lo autoriza un gerente.">
-            Pasa de {pesosDelUmbral(umbral ?? 0)}: que un gerente, administrador o dueño teclee su
-            PIN. Sirve una sola vez y para este monto.
+      <div className="flex flex-col gap-(--espacio-4)">
+        {pidiendoPin && pideElPin ? (
+          <div className="flex flex-col gap-(--espacio-2)">
+            <Aviso tono="info" titulo="Un retiro de ese monto lo autoriza un gerente.">
+              Pasa de {pesosDelUmbral(umbral ?? 0)}: que un gerente, administrador o dueño teclee su
+              PIN. Sirve una sola vez y para este monto.
+            </Aviso>
+            <PinDeSupervisor
+              key={montoAbsoluto}
+              para="retiro"
+              montoCentavos={montoAbsoluto}
+              idDelCampo="retiro-pin"
+              alAutorizar={(autorizada) => {
+                void enviar(autorizada.token);
+              }}
+            />
+          </div>
+        ) : null}
+
+        {aviso === null ? null : aviso.tono === 'peligro' ? (
+          <Aviso tono="peligro" titulo={aviso.texto} />
+        ) : (
+          <Aviso tono="atencion" titulo={aviso.texto}>
+            No se mandó nada.
           </Aviso>
-          <PinDeSupervisor
-            key={montoAbsoluto}
-            para="retiro"
-            montoCentavos={montoAbsoluto}
-            idDelCampo="retiro-pin"
-            alAutorizar={(autorizada) => {
-              void enviar(autorizada.token);
-            }}
-          />
+        )}
+
+        <div className="mt-auto">
+          <Button
+            type="submit"
+            size="lg"
+            variant="outline"
+            className="w-full"
+            disabled={guardando || (pidiendoPin && pideElPin)}
+            cargando={guardando}
+          >
+            {pidiendoPin && pideElPin ? 'Esperando el PIN…' : 'Registrar el retiro'}
+          </Button>
         </div>
-      ) : null}
-
-      {aviso === null ? null : aviso.tono === 'peligro' ? (
-        <Aviso tono="peligro" titulo={aviso.texto} />
-      ) : (
-        <Aviso tono="atencion" titulo={aviso.texto}>
-          No se mandó nada.
-        </Aviso>
-      )}
-
-      <div className="mt-auto">
-        <Button
-          type="submit"
-          size="lg"
-          variant="outline"
-          className="w-full"
-          disabled={guardando || (pidiendoPin && pideElPin)}
-          cargando={guardando}
-        >
-          {pidiendoPin && pideElPin ? 'Esperando el PIN…' : 'Registrar el retiro'}
-        </Button>
       </div>
     </Superficie>
   );

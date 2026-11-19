@@ -1,6 +1,7 @@
 'use client';
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
-import { ArrowLeftRight, ShoppingCart, Send, X, Receipt } from 'lucide-react';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { ArrowLeftRight, Printer, ShoppingCart, Send, X, Receipt } from 'lucide-react';
+import { Link } from '@/enrutado';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,10 +35,43 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
     // y el panel de la tableta (donde estaba el botón) no se pinta. La regla la decide la página.
     puedeCambiarDeMesa = false,
     alCambiarDeMesa,
+    // DP-22 · Con la cuenta ya pedida, el camino a la pantalla Precuenta para imprimir otra hoja
+    // (`null` si la cuenta aún no se pide). Lo arma la página.
+    hrefDeLaPrecuenta = null,
   },
   ref,
 ) {
   const [open, setOpen] = useState(false);
+  // DP-22 · Hallazgo 34: con el teclado en pantalla abierto (un campo con el foco), la barra flotante
+  // tapaba la parte baja de la primera tarjeta del resultado. Mientras se escribe se esconde.
+  const [escribiendo, setEscribiendo] = useState(false);
+
+  useEffect(() => {
+    const esCampoDeTexto = (el) =>
+      el instanceof HTMLElement &&
+      el.matches(
+        'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea, [contenteditable="true"]',
+      );
+    const alEntrar = (evento) => setEscribiendo(esCampoDeTexto(evento.target));
+    const alSalir = () => setEscribiendo(false);
+    document.addEventListener('focusin', alEntrar);
+    document.addEventListener('focusout', alSalir);
+    return () => {
+      document.removeEventListener('focusin', alEntrar);
+      document.removeEventListener('focusout', alSalir);
+    };
+  }, []);
+
+  // Si la hoja se cierra con el foco dentro de un campo que desaparece, el navegador no siempre avisa
+  // (`focusout`): se vuelve a mirar quién tiene el foco, para que la barra no se quede escondida.
+  useEffect(() => {
+    if (open) return;
+    const activo = document.activeElement;
+    setEscribiendo(
+      activo instanceof HTMLElement &&
+        activo.matches('input:not([type="checkbox"]):not([type="radio"]), textarea'),
+    );
+  }, [open]);
 
   useImperativeHandle(
     ref,
@@ -57,7 +91,13 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
   const cantidad = safeCarrito.reduce((s, i) => s + (i?.cantidad || 0), 0);
   const puedePedirCuenta =
     !!ventaActiva && safeCarrito.length === 0 && estadoMesa !== 'cuenta_solicitada';
-  const visible = cantidad > 0 || puedePedirCuenta;
+  // DP-22 · Hallazgo 38: con la cuenta ya pedida la barra se queda si hay algo que ofrecer: cambiar de
+  // mesa (el servidor lo permite) o imprimir otra hoja de la precuenta.
+  const cuentaPedida = estadoMesa === 'cuenta_solicitada';
+  const visible =
+    cantidad > 0 ||
+    puedePedirCuenta ||
+    (cuentaPedida && (puedeCambiarDeMesa || hrefDeLaPrecuenta !== null));
 
   if (!visible) return null;
 
@@ -69,7 +109,8 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
 
   return (
     <>
-      {/* Barra inferior horizontal — móvil */}
+      {/* Barra inferior horizontal — móvil (escondida mientras se escribe: ver `escribiendo`) */}
+      {!escribiendo && (
       <motion.div
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -102,10 +143,18 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
           </div>
           <div className="flex-1 min-w-0 text-left">
             <p className="text-[11px] font-medium opacity-90 leading-tight">
-              {isCart ? `${cantidad} ${cantidad === 1 ? 'producto' : 'productos'}` : 'Mesa abierta'}
+              {isCart
+                ? `${cantidad} ${cantidad === 1 ? 'producto' : 'productos'}`
+                : cuentaPedida
+                  ? 'Cuenta pedida'
+                  : 'Mesa abierta'}
             </p>
             <p className="font-heading font-black text-base leading-tight truncate">
-              {isCart ? `${fmt(safeTotalCarrito)} · Ver pedido` : 'Solicitar cuenta'}
+              {isCart
+                ? `${fmt(safeTotalCarrito)} · Ver pedido`
+                : cuentaPedida
+                  ? 'Ver pedido'
+                  : 'Solicitar cuenta'}
             </p>
           </div>
           <span className="shrink-0 px-3 py-1.5 rounded-xl bg-white/20 text-xs font-bold">
@@ -113,6 +162,7 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
           </span>
         </button>
       </motion.div>
+      )}
 
       {/* Bottom sheet */}
       <AnimatePresence>
@@ -265,6 +315,15 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
                   >
                     <Receipt className="w-4 h-4 mr-1.5" />
                     Solicitar cuenta
+                  </Button>
+                )}
+                {/* DP-22 · Hallazgo 35: con la cuenta pedida, otra hoja de la precuenta a un toque. */}
+                {hrefDeLaPrecuenta !== null && (
+                  <Button asChild variant="outline" className="w-full h-12">
+                    <Link to={hrefDeLaPrecuenta}>
+                      <Printer className="w-4 h-4 mr-1.5" />
+                      Imprimir otra hoja de la precuenta
+                    </Link>
                   </Button>
                 )}
                 {puedeCambiarDeMesa && (

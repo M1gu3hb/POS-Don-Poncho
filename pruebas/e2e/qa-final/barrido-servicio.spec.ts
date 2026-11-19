@@ -42,16 +42,11 @@ const FONDO_PESOS = '1500.00';
 
 /**
  * LO CONOCIDO que esta tanda NO arregla, con su razón. No tumba la prueba, pero sale en la salida
- * como `[conocido]`; lo que no esté aquí sí la tumba.
+ * como `[conocido]`; lo que no esté aquí sí la tumba. (DP-22 · el hallazgo 26 —los campos de «Entregar
+ * el turno» y «Retirar» a distinta altura— se arregló con una cuadrícula con subfilas: ya no hay nada
+ * conocido y cualquier falta tumba la prueba.)
  */
-const CONOCIDOS: readonly Conocido[] = [
-  {
-    patron:
-      /caja · pestana-movimientos · \[campos-desalineados\] input#(turno-contado|turno-notas)/,
-    razon:
-      'Severidad baja. «Entregar el turno» y «Retirar» son dos tarjetas lado a lado con descripciones de distinto largo (3 y 2 renglones) y campos de distinta altura (CampoDeDinero y CampoDePesos): sus campos no quedan a la misma altura. Alinearlos pide una cuadrícula con subfilas (`subgrid`) o igualar descripciones: `src/venta/CorteDeTurno.tsx` y `RetiroDeCaja.tsx`. Se reporta, no se arregla en esta tanda.',
-  },
-];
+const CONOCIDOS: readonly Conocido[] = [];
 
 // En orden (un worker), pero una prueba que cae no salta a las demás: cada pantalla cuenta.
 

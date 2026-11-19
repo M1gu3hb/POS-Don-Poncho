@@ -103,9 +103,14 @@ export async function confirmarLaDivision(
   await cerrado(dialogo);
 }
 
-/** El nombre con el que Pendientes llama a la parte `n` de `de` de la mesa. */
+/**
+ * El nombre con el que Pendientes llama a la parte `n` de `de` de la mesa. SIN guarda de cifras al final:
+ * el texto accesible del diálogo pega el título con el primer renglón («…cuenta 2 de 21800 cristalino»), y
+ * con `(?!\d)` la Caja no encontraba el cobro de una parte cuyo primer platillo empieza con un dígito
+ * (D22-055 del día 2214: la mesa 8 quedó con su cuenta 2 de 2 sin cobrar). Una mesa no se parte en 10.
+ */
 export const rotuloDeLaParte = (mesa: number, n: number, de: number): RegExp =>
-  new RegExp(`Mesa ${String(mesa)} · cuenta ${String(n)} de ${String(de)}(?!\\d)`);
+  new RegExp(`Mesa ${String(mesa)} · cuenta ${String(n)} de ${String(de)}`);
 
 /** El diálogo de cobro de una parte (se busca por su nombre, que el título repite). */
 export function cobroDeLaParte(pagina: Page, mesa: number, n: number, de: number): Locator {

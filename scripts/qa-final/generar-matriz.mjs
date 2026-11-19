@@ -25,6 +25,7 @@ import { RAIZ } from './matriz/fuentes.mjs';
 import { pantallas } from './matriz/pantallas.mjs';
 import { PUESTOS, rutasPorPuesto } from './matriz/puestos.mjs';
 import { escribirDocumento } from './matriz/documento.mjs';
+import { huecosDeFlujos } from './matriz/flujos.mjs';
 
 const DATOS = 'qa/qa-final/datos';
 const SALIDA_MD = 'docs/qa-final/MATRIZ.md';
@@ -102,11 +103,7 @@ function huecos(mapa) {
     if (tarjeta.efecto === null)
       salida.push(`tarjeta sin renglón en efectos.json: tarjeta:${tarjeta.id}`);
   }
-  for (const flujo of mapa.flujos) {
-    for (const falta of flujo.pruebasQueFaltan) {
-      salida.push(`flujos.json cita una prueba que no existe (${flujo.id}): ${falta}`);
-    }
-  }
+  salida.push(...huecosDeFlujos(mapa.flujos));
   return salida;
 }
 

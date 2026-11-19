@@ -2864,6 +2864,33 @@
         "+ clase:mr-1.5",
         "+ icono:ArrowLeftRight"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/common/Sidebar.jsx",
+      "porque": "DP-22 · DP-D188 (hallazgo 5): la lista del menú principal pasa a NavegacionConAviso (src/tacto), que trae las mismas clases y el mismo nombre accesible «Menú principal» pero los pinta ella; se ve igual, con un degradado y una flecha abajo sólo cuando queda algo por desplazar (pantalla baja).",
+      "testigos": [
+        "- clase:flex-1",
+        "- clase:overflow-y-auto",
+        "- label:Menú principal",
+        "- aria-label:Menú principal"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/MeseroCartFAB.jsx",
+      "porque": "DP-22 · DP-D186 (hallazgos 35 y 38): con la cuenta pedida la barra del teléfono dice «Cuenta pedida» y su hoja trae «Imprimir otra hoja de la precuenta» (enlace de 48 px con icono de impresora) y «Cambiar de mesa»; la barra se esconde mientras un campo tiene el foco (34).",
+      "testigos": [
+        "+ clase:w-full",
+        "+ clase:w-4",
+        "+ clase:h-4",
+        "+ clase:h-12",
+        "+ clase:mr-1.5",
+        "+ icono:Printer"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-22 · DP-D186 (hallazgo 35): con la cuenta pedida, el panel de la mesa (tableta) trae «Imprimir otra hoja de la precuenta», un botón de ancho completo con icono de impresora, hacia la pantalla Precuenta.",
+      "testigos": ["+ clase:w-full", "+ clase:w-4", "+ clase:h-4", "+ clase:mr-1"]
     }
   ]
 }
