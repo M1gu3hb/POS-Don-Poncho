@@ -239,7 +239,7 @@ cuentan. **Son cinco días corridos, 2211 a 2215.**
 | 4    | #40  | `6b76050`  | 17-11, 20:37   | 195       | 10 de 10 (5ª corrida, `1023576`)  | 27 de 27, 0 fallas         | 0 errores (revisado 21:43)         |
 | 5    | #41  | `e4e0a70`  | 17-11, 23:45   | ninguna   | 10 de 10 (`0f107d1`)              | 0 fallas                   | 0 errores (revisado 00:50, 18-11)  |
 | 6    | #42  | `ca7e6f1`  | 18-11, 10:48   | ninguna   | 10 de 10 (`3a102d4`)              | 10:53, 0 fallas            | 0 errores (revisado 11:55)         |
-| 7    | #43  | por unir   | por desplegar  | ninguna   | en curso                          | por hacer                  | por hacer                          |
+| 7    | #43  | por unir   | por desplegar  | ninguna   | 10 de 10 (`54f1bc8`)             | por hacer                  | por hacer                          |
 
 - Migraciones en producción: hasta la **195** (127 aplicadas). Las dos de esta auditoría (194 y 195)
   son aditivas y se ensayaron antes (aplicar y revertir) con el código anterior aún desplegado.
