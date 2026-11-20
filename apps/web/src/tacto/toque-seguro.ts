@@ -55,6 +55,64 @@ export interface DecisionDelToque {
 
 export interface OpcionesDelToque {
   readonly reposoMs?: number;
+  /**
+   * No bloquea mientras la acción anterior sigue resolviéndose. Para el botón cuyo agregado espera un
+   * comando por red en CADA toque (la caja de mostrador): ahí un segundo toque legítimo no debe
+   * perderse. Quedan el reposo y las reglas del gesto. Sin esto (lo normal) lo que se espera son las
+   * opciones del platillo y no entra otro toque hasta que se muestren.
+   */
+  readonly sinCandado?: boolean;
+}
+
+/** Pasado esto, un gesto medido ya no es el de un clic que llega (clic programático o gesto huérfano). */
+export const VIGENCIA_DEL_GESTO_MS = 1_000;
+
+/**
+ * ¿Sigue vigente el gesto medido? Uno terminado cuenta desde que terminó; uno sin terminar (llegó
+ * `pointerdown` y nunca `pointerup` ni `pointercancel`: se perdió el foco, salió un menú) cuenta
+ * desde que empezó, para que un clic posterior sin puntero no se mida contra un inicio viejo.
+ */
+export function gestoVigente(
+  m: { readonly terminado: boolean; readonly inicio: number; readonly fin: number },
+  ahora: number,
+): boolean {
+  return ahora - (m.terminado ? m.fin : m.inicio) < VIGENCIA_DEL_GESTO_MS;
+}
+
+/** Algo con desplazamiento y un padre: lo que `sumaDeDesplazamientos` recorre (un `Element`, o un doble). */
+export interface ConDesplazamiento {
+  readonly scrollTop: number;
+  readonly scrollLeft: number;
+  readonly parentElement: ConDesplazamiento | null;
+}
+
+/**
+ * Suma el desplazamiento de la cadena de contenedores que CONTIENE al botón (y el de la página, si se
+ * da). Un contenedor ajeno al botón no suma: su desplazamiento no mueve el botón bajo el dedo.
+ */
+export function sumaDeDesplazamientosDe(
+  desde: ConDesplazamiento | null,
+  pagina: Pick<ConDesplazamiento, 'scrollTop' | 'scrollLeft'> | null,
+): number {
+  let suma = 0;
+  for (let el = desde; el !== null; el = el.parentElement) {
+    suma += Math.abs(el.scrollTop) + Math.abs(el.scrollLeft);
+  }
+  return pagina === null ? suma : suma + Math.abs(pagina.scrollTop) + Math.abs(pagina.scrollLeft);
+}
+
+/**
+ * Libera el candado cuando la acción termina, bien o mal, SIN tragarse el rechazo: la promesa que
+ * devuelve se rechaza igual (sale como `unhandledrejection`, como antes de DP-23).
+ */
+export function liberarAlTerminar(
+  resultado: Promise<unknown>,
+  liberar: () => void,
+): Promise<unknown> {
+  return resultado.then(liberar, (error: unknown) => {
+    liberar();
+    throw error;
+  });
 }
 
 export function decidirToque(
@@ -63,7 +121,7 @@ export function decidirToque(
   opciones: OpcionesDelToque = {},
 ): DecisionDelToque {
   const no = (motivo: MotivoDelToque): DecisionDelToque => ({ agrega: false, motivo });
-  if (estado.enCurso) return no('en-curso');
+  if (estado.enCurso && opciones.sinCandado !== true) return no('en-curso');
   if (gesto !== null) {
     if (gesto.cancelado) return no('cancelado');
     if (gesto.desplazamientoPx > 0) return no('se-desplazo');

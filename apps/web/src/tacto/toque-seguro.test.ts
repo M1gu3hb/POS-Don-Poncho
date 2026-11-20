@@ -4,7 +4,12 @@ import {
   MS_PARA_MANTENER,
   REPOSO_MS,
   TOLERANCIA_PX,
+  VIGENCIA_DEL_GESTO_MS,
   decidirToque,
+  gestoVigente,
+  liberarAlTerminar,
+  sumaDeDesplazamientosDe,
+  type ConDesplazamiento,
   type EstadoDelBoton,
   type GestoMedido,
 } from './toque-seguro';
@@ -101,5 +106,93 @@ describe('decidirToque · teclado y programático', () => {
       'repetido',
     );
     expect(decidirToque(null, { ...LIBRE, enCurso: true }).motivo).toBe('en-curso');
+  });
+});
+
+describe('sin candado (la caja de mostrador: cada toque manda su comando por red)', () => {
+  const EN_CURSO: EstadoDelBoton = { ahora: 10_500, ultimoAgregado: 10_000, enCurso: true };
+
+  it('con candado, un segundo toque a 500 ms mientras la acción de 800 ms resuelve se pierde', () => {
+    expect(decidirToque(TOQUE, EN_CURSO)).toEqual({ agrega: false, motivo: 'en-curso' });
+  });
+
+  it('sin candado, el mismo segundo toque agrega (suman 2)', () => {
+    expect(decidirToque(TOQUE, EN_CURSO, { sinCandado: true })).toEqual({
+      agrega: true,
+      motivo: 'toque',
+    });
+  });
+
+  it('sin candado siguen valiendo el reposo y las reglas del gesto', () => {
+    const pegado: EstadoDelBoton = { ahora: 10_100, ultimoAgregado: 10_000, enCurso: true };
+    expect(decidirToque(TOQUE, pegado, { sinCandado: true }).motivo).toBe('repetido');
+    expect(
+      decidirToque(con({ duracionMs: MS_PARA_MANTENER }), EN_CURSO, { sinCandado: true }),
+    ).toEqual({
+      agrega: false,
+      motivo: 'mantenido',
+    });
+  });
+});
+
+describe('liberarAlTerminar · el rechazo no se silencia', () => {
+  it('libera al resolver', async () => {
+    let libre = 0;
+    await liberarAlTerminar(Promise.resolve(1), () => (libre += 1));
+    expect(libre).toBe(1);
+  });
+
+  it('libera al rechazar Y el rechazo sigue saliendo', async () => {
+    let libre = 0;
+    const derivada = liberarAlTerminar(Promise.reject(new Error('falló el agregado')), () => {
+      libre += 1;
+    });
+    await expect(derivada).rejects.toThrow('falló el agregado');
+    expect(libre).toBe(1);
+  });
+});
+
+describe('gestoVigente · un gesto sin terminar también caduca', () => {
+  it('uno terminado cuenta desde que terminó', () => {
+    const m = { terminado: true, inicio: 0, fin: 5_000 };
+    expect(gestoVigente(m, 5_000 + VIGENCIA_DEL_GESTO_MS - 1)).toBe(true);
+    expect(gestoVigente(m, 5_000 + VIGENCIA_DEL_GESTO_MS)).toBe(false);
+  });
+
+  it('uno sin terminar (nunca llegó pointerup) cuenta desde que empezó', () => {
+    const m = { terminado: false, inicio: 2_000, fin: 0 };
+    expect(gestoVigente(m, 2_000 + VIGENCIA_DEL_GESTO_MS - 1)).toBe(true);
+    expect(gestoVigente(m, 2_000 + VIGENCIA_DEL_GESTO_MS)).toBe(false);
+    expect(gestoVigente(m, 60_000)).toBe(false);
+  });
+});
+
+describe('sumaDeDesplazamientosDe · sólo los contenedores del botón', () => {
+  const nodo = (scrollTop: number, parentElement: ConDesplazamiento | null): ConDesplazamiento => ({
+    scrollTop,
+    scrollLeft: 0,
+    parentElement,
+  });
+
+  it('un desplazamiento en un ancestro del botón cambia la suma', () => {
+    const lista = nodo(0, null);
+    const boton = nodo(0, lista);
+    const antes = sumaDeDesplazamientosDe(boton, null);
+    (lista as { scrollTop: number }).scrollTop = 120;
+    expect(sumaDeDesplazamientosDe(boton, null)).not.toBe(antes);
+  });
+
+  it('un desplazamiento en un contenedor AJENO (otra rama) no la cambia', () => {
+    const lista = nodo(0, null);
+    const boton = nodo(0, lista);
+    const barraDeSecciones = nodo(0, null);
+    const antes = sumaDeDesplazamientosDe(boton, null);
+    (barraDeSecciones as { scrollTop: number }).scrollTop = 80;
+    expect(sumaDeDesplazamientosDe(boton, null)).toBe(antes);
+  });
+
+  it('la página cuenta si se da', () => {
+    const boton = nodo(0, null);
+    expect(sumaDeDesplazamientosDe(boton, { scrollTop: 40, scrollLeft: 0 })).toBe(40);
   });
 });

@@ -23,15 +23,21 @@ export interface BotonQueAgregaProps extends Omit<
   /** Lo que hace un toque de verdad. Si devuelve una promesa, no entra otro toque hasta que termine. */
   readonly alAgregar: AccionDeAgregar;
   readonly reposoMs?: number;
+  /** El agregado manda un comando por red en cada toque: no se bloquea mientras resuelve (ver `OpcionesDelToque`). */
+  readonly sinCandado?: boolean;
 }
 
 export function BotonQueAgrega({
   alAgregar,
   reposoMs,
+  sinCandado,
   type = 'button',
   ...resto
 }: BotonQueAgregaProps) {
-  const toque = useToqueSeguro(alAgregar, reposoMs === undefined ? {} : { reposoMs });
+  const toque = useToqueSeguro(alAgregar, {
+    ...(reposoMs === undefined ? {} : { reposoMs }),
+    ...(sinCandado === true ? { sinCandado } : {}),
+  });
   return <button type={type} data-boton-que-agrega="" {...resto} {...toque} />;
 }
 

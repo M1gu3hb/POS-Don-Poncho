@@ -145,7 +145,9 @@ describe('cada superficie que agrega usa el botón seguro', () => {
 
   it('la tarjeta de Caja (`ProductCard`) lleva los manejadores del gancho y ningún onClick', () => {
     const codigo = sinComentarios(leer('heredado/components/pos/ProductCard.jsx'));
-    expect(codigo).toMatch(/const toqueSeguro = useToqueSeguro\(\(\) => onAdd\(product\)\);/);
+    expect(codigo).toMatch(
+      /const toqueSeguro = useToqueSeguro\(\(\) => onAdd\(product\), \{ sinCandado: true \}\);/,
+    );
     const [tarjeta] = aperturas(codigo, 'Card');
     expect(tarjeta).toMatch(/\{\.\.\.toqueSeguro\}/);
     expect(tarjeta).not.toMatch(/\bonClick=/);
@@ -191,11 +193,25 @@ describe('el botón seguro y su gancho', () => {
 
   it('mientras la acción devuelve una promesa pendiente, no entra otro toque', () => {
     expect(gancho).toMatch(/enCurso\.current = true;/);
-    expect(gancho).toMatch(/resultado\.then\(liberar, liberar\)/);
+    expect(gancho).toMatch(/liberarAlTerminar\(resultado,/);
+  });
+
+  it('la liberación no se traga el rechazo, y sólo la caja de mostrador va sin candado', () => {
+    const decision = sinComentarios(leer('src/tacto/toque-seguro.ts'));
+    expect(decision).toMatch(/liberar\(\);\s*throw error;/);
+    expect(decision).not.toMatch(/then\(liberar, liberar\)/);
+    expect(gancho).toMatch(/resultado instanceof Promise && !sinCandado/);
+    const tarjeta = sinComentarios(leer('heredado/components/pos/ProductCard.jsx'));
+    expect(tarjeta).toMatch(/useToqueSeguro\(\(\) => onAdd\(product\), \{ sinCandado: true \}\)/);
+    for (const { archivo } of SUPERFICIES) {
+      expect(leer(archivo), archivo).not.toMatch(/sinCandado/);
+    }
   });
 
   it('mide lo que la decisión pide: alejamiento, desplazamiento, duración y cancelación', () => {
-    expect(gancho).toMatch(/document\.addEventListener\('scroll', alDesplazar, true\)/);
+    // Sólo cuenta el desplazamiento de los contenedores del botón, no un `scroll` ajeno.
+    expect(gancho).not.toMatch(/addEventListener\('scroll'/);
+    expect(gancho).toMatch(/gestoVigente\(m, ahora\)/);
     expect(gancho).toMatch(/document\.addEventListener\('pointercancel', alTerminar, true\)/);
     expect(gancho).toMatch(
       /sumaDeDesplazamientos\(e\.currentTarget\) !== m\.desplazamientoInicial/,

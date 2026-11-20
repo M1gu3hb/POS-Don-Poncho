@@ -9,7 +9,14 @@ import {
   type PointerEvent,
 } from 'react';
 
-import { decidirToque, type GestoMedido, type OpcionesDelToque } from './toque-seguro';
+import {
+  decidirToque,
+  gestoVigente,
+  liberarAlTerminar,
+  sumaDeDesplazamientosDe,
+  type GestoMedido,
+  type OpcionesDelToque,
+} from './toque-seguro';
 
 /**
  * EL TOQUE SEGURO (DP-23) · lo que se mide con el DOM; la decisión es de `toque-seguro.ts`.
@@ -23,9 +30,6 @@ import { decidirToque, type GestoMedido, type OpcionesDelToque } from './toque-s
  * Enter sostenido no se repite (`event.repeat`), y mientras la acción devuelve una promesa pendiente
  * no entra otro toque de este mismo botón.
  */
-
-/** Pasado esto, un gesto medido ya no es el de un clic que llega (clic programático). */
-const VIGENCIA_DEL_GESTO_MS = 1_000;
 
 export type AccionDeAgregar = () => unknown;
 
@@ -42,7 +46,6 @@ interface Medicion {
   readonly desplazamientoInicial: number;
   readonly pointerId: number;
   alejamientoPx: number;
-  desplazoElEvento: boolean;
   cancelado: boolean;
   terminado: boolean;
   fin: number;
@@ -50,12 +53,7 @@ interface Medicion {
 
 /** Suma el desplazamiento de la cadena de contenedores (y de la página) que contiene al botón. */
 export function sumaDeDesplazamientos(desde: Element | null): number {
-  let suma = 0;
-  for (let el: Element | null = desde; el !== null; el = el.parentElement) {
-    suma += Math.abs(el.scrollTop) + Math.abs(el.scrollLeft);
-  }
-  const pagina = document.scrollingElement;
-  return pagina === null ? suma : suma + Math.abs(pagina.scrollTop) + Math.abs(pagina.scrollLeft);
+  return sumaDeDesplazamientosDe(desde, document.scrollingElement);
 }
 
 export function useToqueSeguro(
@@ -69,6 +67,7 @@ export function useToqueSeguro(
   // Siempre la acción y las opciones de la última pintada: un manejador viejo no agrega lo de antes.
   const accion = useRef(alAgregar);
   const reposoMs = opciones.reposoMs;
+  const sinCandado = opciones.sinCandado === true;
   // La acción de la última pintada (no la de antes), anotada al confirmarse la pintada.
   useEffect(() => {
     accion.current = alAgregar;
@@ -86,7 +85,6 @@ export function useToqueSeguro(
       desplazamientoInicial: sumaDeDesplazamientos(boton),
       pointerId: e.pointerId,
       alejamientoPx: 0,
-      desplazoElEvento: false,
       cancelado: false,
       terminado: false,
       fin: 0,
@@ -96,9 +94,6 @@ export function useToqueSeguro(
     const alMover = (ev: globalThis.PointerEvent): void => {
       if (ev.pointerId !== m.pointerId) return;
       m.alejamientoPx = Math.max(m.alejamientoPx, Math.hypot(ev.clientX - m.x, ev.clientY - m.y));
-    };
-    const alDesplazar = (): void => {
-      m.desplazoElEvento = true;
     };
     const alTerminar = (ev: globalThis.PointerEvent): void => {
       if (ev.pointerId !== m.pointerId) return;
@@ -112,13 +107,11 @@ export function useToqueSeguro(
       document.removeEventListener('pointermove', alMover, true);
       document.removeEventListener('pointerup', alTerminar, true);
       document.removeEventListener('pointercancel', alTerminar, true);
-      document.removeEventListener('scroll', alDesplazar, true);
       quitarOyentes.current = null;
     };
     document.addEventListener('pointermove', alMover, true);
     document.addEventListener('pointerup', alTerminar, true);
     document.addEventListener('pointercancel', alTerminar, true);
-    document.addEventListener('scroll', alDesplazar, true);
     quitarOyentes.current = quitar;
   }, []);
 
@@ -135,10 +128,9 @@ export function useToqueSeguro(
       medicion.current = null;
       const ahora = performance.now();
       let gesto: GestoMedido | null = null;
-      // Un gesto que terminó hace más de un segundo no es el de este clic (un `click()` programático).
-      if (m !== null && (!m.terminado || ahora - m.fin < VIGENCIA_DEL_GESTO_MS)) {
-        const seDesplazo =
-          m.desplazoElEvento || sumaDeDesplazamientos(e.currentTarget) !== m.desplazamientoInicial;
+      // Un gesto viejo (terminado o huérfano) no es el de este clic: un `click()` programático, el teclado.
+      if (m !== null && gestoVigente(m, ahora)) {
+        const seDesplazo = sumaDeDesplazamientos(e.currentTarget) !== m.desplazamientoInicial;
         gesto = {
           alejamientoPx: m.alejamientoPx,
           desplazamientoPx: seDesplazo ? 1 : 0,
@@ -149,20 +141,20 @@ export function useToqueSeguro(
       const decision = decidirToque(
         gesto,
         { ahora, ultimoAgregado: ultimoAgregado.current, enCurso: enCurso.current },
-        reposoMs === undefined ? {} : { reposoMs },
+        { ...(reposoMs === undefined ? {} : { reposoMs }), sinCandado },
       );
       if (!decision.agrega) return;
       ultimoAgregado.current = ahora;
       const resultado = accion.current();
-      if (resultado instanceof Promise) {
+      if (resultado instanceof Promise && !sinCandado) {
         enCurso.current = true;
-        const liberar = (): void => {
+        // Libera y vuelve a lanzar el rechazo: no se lo traga.
+        void liberarAlTerminar(resultado, () => {
           enCurso.current = false;
-        };
-        resultado.then(liberar, liberar);
+        });
       }
     },
-    [reposoMs],
+    [reposoMs, sinCandado],
   );
 
   return { onPointerDown, onKeyDown, onClick };

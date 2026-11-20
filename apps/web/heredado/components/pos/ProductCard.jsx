@@ -7,7 +7,8 @@ import { useToqueSeguro } from '~/tacto/use-toque-seguro';
 
 export default function ProductCard({ product, onAdd, showCost = false }) {
   // DP-23 · Agrega sólo con un toque de verdad: no al deslizar ni al mantener presionado.
-  const toqueSeguro = useToqueSeguro(() => onAdd(product));
+  // Sin candado: cada toque manda su comando por red y un segundo toque legítimo no debe perderse.
+  const toqueSeguro = useToqueSeguro(() => onAdd(product), { sinCandado: true });
   // 6B / 1.K — Identificar productos variables para badge y precio "desde".
   const tipo = product?.tipo_venta;
   const esMedida = tipo === 'variable_medida';

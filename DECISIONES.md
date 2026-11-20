@@ -4040,3 +4040,19 @@ desplazar, al cambiar el alto de la lista y en cada pintada. Prueba con el dedo:
   (`--quitar`) en la misma sesión.
 - La contraseña del proveedor sigue valiendo, pero siempre encima de la sesión de alguien del personal y sólo para «Hardware y
   pruebas de impresión».
+
+## DP-D209 · DP-23 · Lo que pidió la revisión independiente del toque seguro · 19-11-2026
+
+- **Candado sólo donde lo que se espera son las opciones.** «Mientras `agregarAlCarrito` resuelve ese platillo, no entra otro» vale
+  para el mesero y los demás que abren las opciones del platillo. En la caja de mostrador (`ProductCard` → `addToCart` de `POS.jsx`)
+  cada toque manda un comando por red: con el servidor lento (800 ms) un segundo toque legítimo a 500 ms se perdía y la cajera cobraba
+  1 en vez de 2. Opción `sinCandado` del gancho y de `BotonQueAgrega`, usada sólo ahí; quedan el reposo de 350 ms y las reglas del
+  gesto. `CatalogoDelPedido` (para llevar) y el portal del comensal siguen con candado: lo que esperan son las opciones (lectura en
+  caché) y el agregado es local.
+- **El rechazo no se silencia.** La liberación del candado vuelve a lanzar el error (`liberarAlTerminar`): un agregado que falla sale
+  como `unhandledrejection`, como antes.
+- **Un gesto sin terminar caduca** (1 s desde que empezó): si nunca llegó `pointerup` ni `pointercancel`, un clic posterior sin
+  puntero (teclado, lector de pantalla) no se mide contra un inicio viejo.
+- **Sólo cuenta el desplazamiento de los contenedores del botón.** Se quitó el oyente global de `scroll`: un desplazamiento ajeno
+  (la barra de secciones del menú digital, un `scrollIntoView` del teclado en pantalla) ya no anula el toque limpio del comensal.
+  Uno en un ancestro del botón o en la página sí.
