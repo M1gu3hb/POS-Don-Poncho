@@ -1,5 +1,6 @@
 'use client';
 import { etiquetaDePeso } from '~/restaurante/peso';
+import { BotonQueAgrega, REPOSO_DE_MAS_Y_MENOS_MS } from '~/tacto/BotonQueAgrega';
 import React, { useState, useEffect, useMemo, useId, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus, Minus, Scale, Beaker } from 'lucide-react';
@@ -495,25 +496,25 @@ export default function ProductoQRDialog({
             <div className="flex items-center justify-between border rounded-xl p-2">
               <span className="text-sm font-semibold pl-2">Cantidad</span>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => cambiarCantidad(-1)}
+                <BotonQueAgrega
+                  alAgregar={() => cambiarCantidad(-1)}
+                  reposoMs={REPOSO_DE_MAS_Y_MENOS_MS}
                   disabled={cantidad <= 1}
                   aria-label="Uno menos"
                   className="w-11 h-11 rounded-full border-2 flex items-center justify-center disabled:opacity-40"
                 >
                   <Minus className="w-4 h-4" />
-                </button>
+                </BotonQueAgrega>
                 <span className="font-black text-lg w-8 text-center tabular-nums">{cantidad}</span>
-                <button
-                  type="button"
-                  onClick={() => cambiarCantidad(1)}
+                <BotonQueAgrega
+                  alAgregar={() => cambiarCantidad(1)}
+                  reposoMs={REPOSO_DE_MAS_Y_MENOS_MS}
                   disabled={cantidad >= 99}
                   aria-label="Uno más"
                   className="w-11 h-11 rounded-full border-2 flex items-center justify-center disabled:opacity-40"
                 >
                   <Plus className="w-4 h-4" />
-                </button>
+                </BotonQueAgrega>
               </div>
             </div>
           )}
@@ -527,9 +528,8 @@ export default function ProductoQRDialog({
           >
             Cancelar
           </button>
-          <button
-            type="button"
-            onClick={submit}
+          <BotonQueAgrega
+            alAgregar={submit}
             disabled={!puedeConfirmarVariable}
             className="flex-[1.5] h-12 rounded-xl bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
           >
@@ -537,7 +537,7 @@ export default function ProductoQRDialog({
             {mostrarPrecios && totalLinea > 0 && (
               <span className="opacity-90">· {formatCurrency(totalLinea)}</span>
             )}
-          </button>
+          </BotonQueAgrega>
         </div>
       </motion.div>
     </motion.div>

@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { BotonQueAgrega, REPOSO_DE_MAS_Y_MENOS_MS } from '~/tacto/BotonQueAgrega';
 import {
   UtensilsCrossed,
   Plus,
@@ -171,13 +172,15 @@ export default function MesaActivaView({
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 pb-32 md:pb-3 grid grid-cols-2 gap-2 content-start">
+          <div
+            data-rejilla-de-platillos=""
+            className="flex-1 overflow-y-auto p-3 pb-32 md:pb-3 grid grid-cols-2 gap-2 content-start"
+          >
             {safeProductos.map((p) => (
-              <button
+              <BotonQueAgrega
                 key={p?.id}
-                type="button"
-                onClick={() => agregarAlCarrito?.(p)}
-                className="p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:scale-95 transition-all"
+                alAgregar={() => agregarAlCarrito?.(p)}
+                className="p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:bg-muted/60 transition-all"
                 style={{
                   boxShadow: '0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 4px rgba(0,0,0,0.06)',
                 }}
@@ -194,7 +197,7 @@ export default function MesaActivaView({
                     {p?.area_preparacion || 'cocina'}
                   </span>
                 </div>
-              </button>
+              </BotonQueAgrega>
             ))}
             {safeProductos.length === 0 && (
               <p className="col-span-2 text-center text-sm text-muted-foreground py-8">
@@ -258,25 +261,25 @@ export default function MesaActivaView({
                       </p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => cambiarCantidad?.(item?.id, -1)}
+                      <BotonQueAgrega
+                        alAgregar={() => cambiarCantidad?.(item?.id, -1)}
+                        reposoMs={REPOSO_DE_MAS_Y_MENOS_MS}
                         className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
                         aria-label={`Quitar uno de ${item?.nombre || 'este platillo'}`}
                       >
                         <Minus className="w-3 h-3" />
-                      </button>
+                      </BotonQueAgrega>
                       <span className="w-6 text-center text-xs font-bold">
                         {item?.cantidad || 0}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => cambiarCantidad?.(item?.id, 1)}
+                      <BotonQueAgrega
+                        alAgregar={() => cambiarCantidad?.(item?.id, 1)}
+                        reposoMs={REPOSO_DE_MAS_Y_MENOS_MS}
                         className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
                         aria-label={`Agregar uno de ${item?.nombre || 'este platillo'}`}
                       >
                         <Plus className="w-3 h-3" />
-                      </button>
+                      </BotonQueAgrega>
                     </div>
                   </div>
                 ))}

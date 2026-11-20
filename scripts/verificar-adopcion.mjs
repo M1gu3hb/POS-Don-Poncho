@@ -130,6 +130,24 @@ export const SIN_ESTADO = [
       'Pieza del menú lateral, no pantalla: envuelve la lista de enlaces que le pasan y sólo agrega el aviso de «hay más por desplazar»; el vacío, la carga y el fallo no son suyos.',
   },
   {
+    pantalla: 'tacto/BotonQueAgrega',
+    estado: 'vacio',
+    razon:
+      'Pieza del toque seguro (DP-23), no pantalla: es un botón que agrega al pedido y sólo decide si un toque cuenta; el vacío, la carga y el fallo son de la lista que lo pinta.',
+  },
+  {
+    pantalla: 'tacto/BotonQueAgrega',
+    estado: 'cargando',
+    razon:
+      'Pieza del toque seguro (DP-23), no pantalla: es un botón que agrega al pedido y sólo decide si un toque cuenta; el vacío, la carga y el fallo son de la lista que lo pinta.',
+  },
+  {
+    pantalla: 'tacto/BotonQueAgrega',
+    estado: 'error',
+    razon:
+      'Pieza del toque seguro (DP-23), no pantalla: es un botón que agrega al pedido y sólo decide si un toque cuenta; el vacío, la carga y el fallo son de la lista que lo pinta.',
+  },
+  {
     pantalla: 'portal/menu-digital/MenuDigital',
     estado: 'error',
     razon:

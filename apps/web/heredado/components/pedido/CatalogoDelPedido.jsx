@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import PrecioProductoMesero, { VariableBadge } from '@/components/mesero/PrecioProductoMesero';
 import { tieneGrupos } from './useArmadoDelPedido';
 import { coincideConLaBusqueda } from '~/restaurante/buscar-producto';
+import { BotonQueAgrega, useRejillaQueVuelveArriba } from '~/tacto/BotonQueAgrega';
 
 /**
  * DP-16 · EL MENÚ PARA TOMAR UN PEDIDO: búsqueda, categorías y platillos, como en la mesa del
@@ -21,6 +22,8 @@ export default function CatalogoDelPedido({
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState('todas');
   const lista = Array.isArray(productos) ? productos : [];
+  // DP-23 · La rejilla vuelve arriba al cambiar de categoría o de búsqueda.
+  const rejillaRef = useRejillaQueVuelveArriba(`${categoria}|${busqueda}`);
 
   const filtrados = useMemo(() => {
     let l = lista;
@@ -64,7 +67,11 @@ export default function CatalogoDelPedido({
           ))}
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-3 pb-32 md:pb-3 grid grid-cols-2 lg:grid-cols-3 auto-rows-min gap-2 content-start">
+      <div
+        ref={rejillaRef}
+        data-rejilla-de-platillos=""
+        className="flex-1 overflow-y-auto p-3 pb-32 md:pb-3 grid grid-cols-2 lg:grid-cols-3 auto-rows-min gap-2 content-start"
+      >
         {cargando ? (
           <div className="col-span-full flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground">
             <div className="w-6 h-6 border-2 border-border border-t-primary rounded-full animate-spin" />
@@ -75,12 +82,11 @@ export default function CatalogoDelPedido({
             {filtrados.map((p) => {
               const agotado = p?.agotado_hoy === true;
               return (
-                <button
-                  type="button"
+                <BotonQueAgrega
                   key={p.id}
-                  onClick={() => onTocar(p)}
+                  alAgregar={() => onTocar(p)}
                   aria-disabled={agotado}
-                  className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:scale-95 transition-all relative flex flex-col items-start ${agotado ? 'opacity-50' : ''}`}
+                  className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:bg-muted/60 transition-all relative flex flex-col items-start ${agotado ? 'opacity-50' : ''}`}
                 >
                   <p className="font-semibold text-sm leading-tight">{p?.nombre}</p>
                   <PrecioProductoMesero producto={p} colorize={colorize} />
@@ -101,7 +107,7 @@ export default function CatalogoDelPedido({
                       </span>
                     )}
                   </div>
-                </button>
+                </BotonQueAgrega>
               );
             })}
             {filtrados.length === 0 && lista.length > 0 && (

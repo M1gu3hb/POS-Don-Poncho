@@ -41,6 +41,7 @@
 
 /* DP-21 · Bloque 9 · M4: la pulsación larga no selecciona nada en el POS (sólo en los campos de texto). */
 @import '../src/tacto/sin-seleccion.css';
+@import '../src/tacto/toque-seguro.css';
 
 /* DP-21 · Bloque 9 · M5 y M16: los diálogos y paneles largos se desplazan con el dedo, y con el teclado
    en pantalla usan el alto que se ve. */

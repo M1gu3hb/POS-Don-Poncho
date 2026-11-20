@@ -706,7 +706,7 @@ export default function POS() {
         </div>
 
         {/* Product grid */}
-        <div className="flex-1 overflow-y-auto">
+        <div data-rejilla-de-platillos="" className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
             {filtered.map((p) => (
               <ProductCard key={p.id} product={p} onAdd={addToCart} showCost={showCost} />

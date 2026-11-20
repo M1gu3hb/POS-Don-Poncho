@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ChevronDown, X, Plus, Minus, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
+import { BotonQueAgrega, REPOSO_DE_MAS_Y_MENOS_MS } from '~/tacto/BotonQueAgrega';
 
 /**
  * Ficha del producto en el carrito del mesero — expandible.
@@ -140,33 +141,36 @@ export default function ProductoFichaExpandible({
             <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
               {cantidadVariableTxt || '—'}
             </span>
-            <button
-              onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
+            <BotonQueAgrega
+              alAgregar={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
+              reposoMs={REPOSO_DE_MAS_Y_MENOS_MS}
               className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
               title="Quitar línea"
               aria-label={`Quitar ${item?.nombre || 'la línea'} del carrito`}
             >
               <X className="w-3 h-3" />
-            </button>
+            </BotonQueAgrega>
           </div>
         ) : (
           <div className="flex items-center gap-1 shrink-0">
             {/* DP-18 · A13: sin nombre accesible el lector de pantalla sólo oía «botón». */}
-            <button
-              onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
+            <BotonQueAgrega
+              alAgregar={() => onCambiarCantidad && onCambiarCantidad(item.id, -1)}
+              reposoMs={REPOSO_DE_MAS_Y_MENOS_MS}
               className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
               aria-label={`Quitar uno de ${item?.nombre || 'este platillo'}`}
             >
               <Minus className="w-3 h-3" />
-            </button>
+            </BotonQueAgrega>
             <span className="w-6 text-center text-xs font-bold">{item?.cantidad || 0}</span>
-            <button
-              onClick={() => onCambiarCantidad && onCambiarCantidad(item.id, 1)}
+            <BotonQueAgrega
+              alAgregar={() => onCambiarCantidad && onCambiarCantidad(item.id, 1)}
+              reposoMs={REPOSO_DE_MAS_Y_MENOS_MS}
               className="w-6 h-6 any-pointer-coarse:size-11 rounded-full bg-superficie border flex items-center justify-center"
               aria-label={`Agregar uno de ${item?.nombre || 'este platillo'}`}
             >
               <Plus className="w-3 h-3" />
-            </button>
+            </BotonQueAgrega>
           </div>
         )}
       </div>

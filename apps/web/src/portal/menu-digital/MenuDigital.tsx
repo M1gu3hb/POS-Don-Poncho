@@ -3,6 +3,8 @@
 import { EsqueletoDeLista, Vacio } from '@morphiqpos/ui/sistema';
 import { Plus, UtensilsCrossed } from 'lucide-react';
 
+import { BotonQueAgrega } from '~/tacto/BotonQueAgrega';
+
 import { BarraDeSecciones } from './BarraDeSecciones';
 import {
   fondoDeLaTarjeta,
@@ -174,14 +176,13 @@ function TarjetaDelPlatillo({
     );
   }
   return (
-    <button
-      type="button"
-      onClick={alTocar}
+    <BotonQueAgrega
+      alAgregar={alTocar}
       aria-label={`${etiqueta}. Ver y agregar`}
       data-fondo={conFoto ? undefined : fondoDeLaTarjeta(producto, lugar)}
-      className={`${clase} transition-transform duration-(--duracion-rapida) ease-out active:scale-[0.97] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-anillo motion-reduce:transition-none`}
+      className={`${clase} transition-opacity duration-(--duracion-rapida) ease-out active:opacity-85 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-anillo motion-reduce:transition-none`}
     >
       {contenido}
-    </button>
+    </BotonQueAgrega>
   );
 }

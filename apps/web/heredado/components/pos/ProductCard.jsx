@@ -3,8 +3,11 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/financialUtils';
 import { Coffee, Scale, Beaker } from 'lucide-react';
+import { useToqueSeguro } from '~/tacto/use-toque-seguro';
 
 export default function ProductCard({ product, onAdd, showCost = false }) {
+  // DP-23 · Agrega sólo con un toque de verdad: no al deslizar ni al mantener presionado.
+  const toqueSeguro = useToqueSeguro(() => onAdd(product));
   // 6B / 1.K — Identificar productos variables para badge y precio "desde".
   const tipo = product?.tipo_venta;
   const esMedida = tipo === 'variable_medida';
@@ -25,8 +28,8 @@ export default function ProductCard({ product, onAdd, showCost = false }) {
 
   return (
     <Card
-      onClick={() => onAdd(product)}
-      className="cursor-pointer hover:shadow-md active:scale-[0.98] transition-all duration-150 overflow-hidden group"
+      {...toqueSeguro}
+      className="cursor-pointer hover:shadow-md active:bg-muted/60 transition-all duration-150 overflow-hidden group"
     >
       <div className="aspect-square bg-muted/50 flex items-center justify-center relative overflow-hidden">
         {product.imagen_url ? (

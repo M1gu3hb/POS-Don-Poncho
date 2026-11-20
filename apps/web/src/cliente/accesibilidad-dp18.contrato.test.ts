@@ -34,11 +34,17 @@ const impresora = ts.createPrinter({ removeComments: true });
 const texto = (nodo: ts.Node, fuente: ts.SourceFile): string =>
   impresora.printNode(ts.EmitHint.Unspecified, nodo, fuente).replace(/\s+/g, '');
 
-/** Los `<button …>…</button>` del archivo que contienen un icono con ese nombre. */
+/**
+ * Los `<button …>…</button>` del archivo (o su versión segura, `<BotonQueAgrega>`, DP-23) que contienen un
+ * icono con ese nombre.
+ */
 function botonesConIcono(fuente: ts.SourceFile, icono: string): ts.JsxElement[] {
   const halladas: ts.JsxElement[] = [];
   const visitar = (n: ts.Node): void => {
-    if (ts.isJsxElement(n) && n.openingElement.tagName.getText() === 'button') {
+    if (
+      ts.isJsxElement(n) &&
+      ['button', 'BotonQueAgrega'].includes(n.openingElement.tagName.getText())
+    ) {
       let tiene = false;
       const buscarIcono = (h: ts.Node): void => {
         if (ts.isJsxSelfClosingElement(h) && h.tagName.getText() === icono) tiene = true;
