@@ -1635,3 +1635,49 @@ DP-16. Decisión: DP-D109. Cada mejora con su prueba primero y sus mutantes (22 
   0.8 a 3.9 s), el portal en 5 (de 0.64 a 1.32 s), 8 a la vez todos 200 en 2.7 s, red lenta (10.5 y
   11.9 s la primera vez, 1.5 y 1.8 s con caché) y el manifiesto con sus íconos.
 - 18:03 Vercel: ningún error en producción de las 17:00 a las 18:03 (la hora después del despliegue).
+
+## DP-23 · El toque seguro del mesero, Apariencia responsive y los ceros del día de la entrega (19-11-2026)
+
+Miguel, en el restaurante el día de la entrega. Sin migraciones; no cambia dinero ni inventario.
+
+### Parte A · Ceros sin activar el bloqueo H1 (17:35, producción)
+
+- Pidió dejar producción en ceros SIN activar el bloqueo del arranque (H1), porque después haría dos o tres pruebas con el personal
+  que también hay que poder borrar.
+- Ensayos (no escriben): `pnpm dia-cero` contó las cuentas de prueba del día y una caja abierta; `configurar-produccion.mjs --ensayo`
+  sólo difería en «Dos cajas a la vez» (el negocio trabaja hoy con UNA, lo fijó Miguel en Configuración); `renombrar-aparatos.mjs
+  --ensayo` no tenía nada que renombrar (los 35 aparatos ya son «Aparato N»).
+- Se corrió SÓLO `scripts/dejar-en-ceros.mjs --desde 2026-11-16 --ventas 5` (conexión de sesión 5432, firmado por el dueño de
+  plataforma): 5 cuentas de prueba, 7 comandas y la caja de prueba abierta. No se corrieron `configurar-produccion.mjs`,
+  `renombrar-aparatos.mjs` ni `operacion-real.mjs`.
+- Leído después: 0 cuentas, 0 cajas, 0 comandas, 0 carritos, 10 de 10 mesas libres, siguiente folio «DP-01001», cortes en 101, H1 sin
+  activar. Decisiones DP-D206 a DP-D208.
+
+### Parte B · Los usuarios definitivos (17:17 y 17:36, producción)
+
+- De diez empleos activos quedaron siete: «Dueño», «Gerente», «Caja», «Mesero», «Cocina (Cocina)», «Cocina (Bebidas)» y «Almacén».
+  De baja (inactivos, no borrados): «Caja 2», «Mesero 2» y, al final, «Miguel · Morphiq».
+- Todo por `identidad.guardar_empleado` (el comando de la pantalla «Usuarios»), con su auditoría. El guion reenvía teléfono, color,
+  estación y «ve todas las estaciones» tal como estaban, porque el comando escribe la ficha entera.
+- Cambiar el nombre o el PIN no cierra sesiones; las pantallas de cocina siguieron dentro.
+
+### Parte C · El toque seguro del mesero (DP-D200 a DP-D204)
+
+- Falla del dueño: al deslizar o mantener sobre la rejilla de platillos se agregaban platillos. Se reprodujo (10 de 11 pruebas rojas
+  antes): mantener 800 ms agregaba 1 unidad en 16 de 16 casos; arrastrar 40 px sobre la misma ficha agregaba 1; 6 toques con rebote
+  agregaban 6; Enter sostenido agregaba 8; la rejilla no volvía arriba al cambiar de categoría.
+- Arreglo: `apps/web/src/tacto/` (`toque-seguro`, `use-toque-seguro`, `BotonQueAgrega`, CSS) aplicado al mesero, la caja y para llevar,
+  la caja de mostrador, el diálogo del producto y el portal del comensal. Límite de 500 ms y 10 px también para el ratón; reposo de
+  350 ms en fichas y 200 ms en +/-. No tocados los botones que no agregan.
+- Pruebas: spec de toque `pruebas/e2e/qa-final/toque-seguro-del-mesero.spec.ts` (11 pruebas, dedo y ratón por CDP, cuatro tamaños),
+  unitaria (14) y contrato (22); mutación: 12 destructivas fallan, 5 inocuas pasan.
+- NO comprobado: ningún aparato real todavía (ni el panel de Windows ni la iMin del restaurante). Si el «se agregan varios» de allá
+  viene de un panel que rebota, el reposo lo reduce a 1 o 2 por ráfaga, no a 0. El e2e verde corrió con un build anterior a un
+  cambio de una línea por lint; se repite en el cierre.
+
+### Parte D · Configuración → Apariencia (DP-D205)
+
+- Las tarjetas de «Estilo visual» salían de 87 px y deformes en 1024×768 y 800×600, con el importe saliéndose y la página desbordando.
+  Las dos rejillas usan ahora `repeat(auto-fill, minmax(…, 1fr))` (sigue el ancho del panel, no el de la ventana). A escritorio
+  (≥ 1366) sigue en cuatro columnas; cero desbordes en 12 capturas.
+- NO comprobado: Chromium 99 real ni un aparato del restaurante (sólo Chromium 156 con viewports emulados).

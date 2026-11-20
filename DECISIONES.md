@@ -4015,3 +4015,28 @@ desplazar, al cambiar el alto de la lista y en cada pintada. Prueba con el dedo:
   ancho del panel, sin container queries (que no existen antes de Chromium 105) ni respaldo. A ancho de escritorio
   (panel de unos 730 px o más) siguen siendo cuatro columnas, de los mismos tamaños de antes.
 - **Sin migración. No toca dinero ni inventario.**
+
+## DP-D206 · DP-23 · El día cero, por pasos cuando la configuración del dueño difiere de la de arranque · 19-11-2026
+
+- `pnpm dia-cero -- --en-serio` llama a `configurar-produccion.mjs --primer-folio`, que deja TODA la configuración de arranque
+  (dos cajas a la vez, etc.), y su verificación final exige ese cupo. Con el negocio ya configurado por su dueño, los ceros se
+  hacen por pasos (`dejar-en-ceros.mjs` y, en el cero final, `operacion-real.mjs`), sin `configurar-produccion.mjs`: lo que hay
+  en producción manda.
+- Pendiente (no se hizo hoy): que `dia-cero` acepte la configuración vigente en vez de la de arranque.
+
+## DP-D207 · DP-23 · La pimienta de los PIN en los guiones · 19-11-2026
+
+- `cargarEntorno()` toma `PIN_PEPPER` del `.env` local, que no es la de producción. Un guion que ponga un PIN en producción con
+  esa pimienta deja a esa persona sin poder entrar. En DP-23 se comprobó ANTES de escribir (los hashes existentes no verificaban
+  con la pimienta local y sí con la de producción) y el guion corrió con la de producción en el entorno.
+- Regla: ningún guion escribe un PIN en producción sin comprobar antes la pimienta contra una credencial existente y sin verificar
+  después cada PIN contra lo guardado. Pendiente: que los guiones que ponen PIN se nieguen si no pueden comprobarla.
+
+## DP-D208 · DP-23 · El usuario de plataforma se va con la entrega · 19-11-2026
+
+- Al dar de baja a «Miguel · Morphiq» se quita su marca de plataforma (DP-13.3b) y nadie ve ni ejecuta los botones de
+  mantenimiento que borran en masa. Los guiones de mantenimiento (dejar en ceros, activar la operación, renombrar aparatos)
+  exigen esa marca: para el cero final se marca a «Dueño» con `scripts/marcar-plataforma.mjs`, se corre y se le quita
+  (`--quitar`) en la misma sesión.
+- La contraseña del proveedor sigue valiendo, pero siempre encima de la sesión de alguien del personal y sólo para «Hardware y
+  pruebas de impresión».
