@@ -214,6 +214,9 @@ export async function abrirLaMesa(
   return { mesaId, ordenId };
 }
 
+/** Más que el reposo del toque seguro (350 ms) entre dos toques al mismo platillo. */
+const PAUSA_ENTRE_TOQUES_MS = 450;
+
 /**
  * Toca cada platillo las veces que se piden, en el diálogo de la mesa. Los platillos son
  * botones cuyo nombre empieza por el del platillo y sigue con su precio: «Arrachera al carbón
@@ -228,6 +231,9 @@ export async function armarElPedido(
   for (const { nombre, veces, opcion } of platillos) {
     const tesela = mesa.getByRole('button', { name: new RegExp(`^${escapar(nombre)} \\$`) });
     for (let i = 0; i < veces; i += 1) {
+      // DP-23 · El toque seguro ignora un segundo agregado del mismo platillo en menos de 350 ms
+      // (un rebote del panel): quien pide dos toca dos veces con su pausa, no a la velocidad del script.
+      if (i > 0) await page.waitForTimeout(PAUSA_ENTRE_TOQUES_MS);
       await tesela.click();
       if (opcion === undefined) continue;
       const personalizar = page.getByRole('dialog', { name: 'Personalizar producto' });
