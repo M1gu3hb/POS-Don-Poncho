@@ -52,6 +52,7 @@ import { MESA_STATUS_CONFIG, ZONAS_MESA, insigniaDeEstadoDeMesa } from '@/lib/co
 import MesaShape from '@/components/mesas/MesaShape';
 import MesaGridMobile from '@/components/mesero/MesaGridMobile';
 import MeseroCartFAB from '@/components/mesero/MeseroCartFAB';
+import { BotonQueAgrega, useRejillaQueVuelveArriba } from '~/tacto/BotonQueAgrega';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
 import { coincideConLaBusqueda } from '~/restaurante/buscar-producto';
 import PropinaDialog from '@/components/propinas/PropinaDialog';
@@ -209,6 +210,8 @@ function Mesero() {
   const [carrito, setCarrito] = useState([]);
   const [busquedaProducto, setBusquedaProducto] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('todas');
+  // DP-23 · La rejilla de platillos vuelve arriba al cambiar de categoría o de búsqueda.
+  const rejillaRef = useRejillaQueVuelveArriba(`${categoriaFiltro}|${busquedaProducto}`);
   const [loading, setLoading] = useState(false);
   const [notaMesa, setNotaMesa] = useState('');
   // DP-15 · El pedido a medias se guarda en este aparato mientras se arma (`borrador-del-pedido`).
@@ -1842,7 +1845,11 @@ function Mesero() {
                   ))}
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-3 pb-32 md:pb-3 grid grid-cols-2 gap-2 content-start">
+              <div
+                ref={rejillaRef}
+                data-rejilla-de-platillos=""
+                className="flex-1 overflow-y-auto p-3 pb-32 md:pb-3 grid grid-cols-2 gap-2 content-start"
+              >
                 {/* HOTFIX 6A.3: loading explícito antes de mostrar "Sin productos".
                     Antes en móvil con red lenta salía "Sin productos" falso. */}
                 {cargandoProductos ? (
@@ -1857,11 +1864,11 @@ function Mesero() {
                       const colorize = config?.colorear_importes_monetarios !== false;
                       const agotado = p?.agotado_hoy === true;
                       return (
-                        <button
+                        <BotonQueAgrega
                           key={p.id}
-                          onClick={() => agregarAlCarrito(p)}
+                          alAgregar={() => agregarAlCarrito(p)}
                           aria-disabled={agotado}
-                          className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:scale-95 transition-all relative ${agotado ? 'opacity-50' : ''}`}
+                          className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:bg-muted/60 transition-all relative ${agotado ? 'opacity-50' : ''}`}
                           style={{
                             boxShadow:
                               '0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 4px rgba(0,0,0,0.06)',
@@ -1886,7 +1893,7 @@ function Mesero() {
                               </span>
                             )}
                           </div>
-                        </button>
+                        </BotonQueAgrega>
                       );
                     })}
                     {productosFiltrados.length === 0 && productosArr.length > 0 && (

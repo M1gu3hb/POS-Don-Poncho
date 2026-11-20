@@ -151,9 +151,10 @@ export function SelectorDeApariencia() {
         </p>
       </header>
 
-      {/* Dos por renglón en teléfono, cuatro desde tableta: los ocho caben en dos
+      {/* Las columnas salen del ancho del PANEL, no de la ventana: en el panel angosto de un POS
+          casi cuadrado caben dos, en uno ancho cuatro (nunca más: el 22 % fija el tope). Los ocho caben en dos
           filas y se comparan de un vistazo, que es lo que pide la conversación. */}
-      <ul className="grid grid-cols-2 gap-(--espacio-3) sm:grid-cols-4">
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(max(10.5rem,22%),1fr))] gap-(--espacio-3)">
         {CLAVES_ESTILO.map((clave) => {
           const definicion = ESTILOS[clave];
           const elegido = apariencia.estilo === clave;
@@ -200,7 +201,7 @@ export function SelectorDeApariencia() {
         nivel={0}
         relleno={3}
         radio="md"
-        className="grid grid-cols-2 gap-(--espacio-3) bg-fondo-sutil sm:grid-cols-4"
+        className="grid grid-cols-[repeat(auto-fill,minmax(max(8rem,22%),1fr))] gap-(--espacio-3) bg-fondo-sutil"
       >
         {PERILLAS_EN_ORDEN.map((perilla) => (
           <label

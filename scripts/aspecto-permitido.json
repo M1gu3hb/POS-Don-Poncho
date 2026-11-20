@@ -2899,6 +2899,21 @@
         "- texto:Elimina ventas, cortes, compras, gastos, inventario, productos, recetas, mesas, solicitudes QR, tickets, movimientos y registros. Resetea la configuración a valores base. Conserva tu usuario administrador.",
         "+ texto:Elimina ventas, cortes, compras, gastos, inventario, productos, recetas, mesas, solicitudes QR, tickets, movimientos y registros. Las zonas vuelven a las de fábrica (Interior, Exterior, Terraza, Barra y Otro): las que hayas creado se pierden. Conserva la configuración del negocio (estilo, impuestos y ajustes), a toda tu gente con sus usuarios, y las estaciones de cocina."
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-23 · DP-D200 (el toque seguro): la ficha que agrega al pedido ya no se encoge bajo el dedo (active:scale-95): al deslizar la lista, la tarjeta que se achicaba se movía bajo la yema y el toque se soltaba sobre otra. Ahora sólo cambia de fondo mientras se presiona. Nada más de su aspecto cambia.",
+      "testigos": ["- clase:active:scale-95", "+ clase:active:bg-muted/60"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/MesaActivaView.jsx",
+      "porque": "DP-23 · DP-D200 (el toque seguro): la ficha que agrega al pedido ya no se encoge bajo el dedo (active:scale-95): al deslizar la lista, la tarjeta que se achicaba se movía bajo la yema y el toque se soltaba sobre otra. Ahora sólo cambia de fondo mientras se presiona. Nada más de su aspecto cambia.",
+      "testigos": ["- clase:active:scale-95", "+ clase:active:bg-muted/60"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/pos/ProductCard.jsx",
+      "porque": "DP-23 · DP-D200 (el toque seguro): la ficha que agrega al pedido ya no se encoge bajo el dedo (active:scale-[0.98]): al deslizar la lista, la tarjeta que se achicaba se movía bajo la yema y el toque se soltaba sobre otra. Ahora sólo cambia de fondo mientras se presiona. Nada más de su aspecto cambia.",
+      "testigos": ["- clase:active:scale-[0.98]", "+ clase:active:bg-muted/60"]
     }
   ]
 }

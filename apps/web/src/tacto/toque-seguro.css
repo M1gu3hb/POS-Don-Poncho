@@ -1,0 +1,17 @@
+/* DP-23 · EL TOQUE SEGURO — la rejilla de platillos desplaza con el dedo y nada más.
+
+   `touch-action: pan-y`: el dedo sólo puede desplazar la rejilla hacia arriba y abajo (nada de
+   pellizco ni doble toque sobre una ficha), y el navegador decide enseguida si el gesto es un
+   desplazamiento: no queda un «toque» a medias para soltarse sobre una ficha. `overscroll-behavior:
+   contain`: al llegar al final el gesto no se pasa a la página de atrás. Las fichas no se pintan con
+   el resaltado del toque del sistema; su cambio de fondo al presionar lo pone su clase. */
+@layer base {
+  [data-rejilla-de-platillos] {
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+  }
+
+  [data-boton-que-agrega] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

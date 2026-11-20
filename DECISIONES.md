@@ -3938,3 +3938,121 @@ desplazar, al cambiar el alto de la lista y en cada pintada. Prueba con el dedo:
 - **El comando no cambia.** Conservar la configuración es lo seguro. Si el dueño quiere que «para un cliente nuevo»
   también la borre, queda para después.
 - **Sin migración. No toca dinero ni inventario.**
+
+## DP-D200 · DP-23 · El toque seguro: un botón que agrega al pedido sólo agrega cuando alguien quiso tocarlo · 19-11-2026
+
+- **La falla (el dueño, en el restaurante, 19-11):** en la rejilla de platillos del mesero «al deslizar se agregan
+  platillos» y «al mantener se agregan varios».
+- **Qué se reprodujo (`pruebas/e2e/qa-final/toque-seguro-del-mesero.spec.ts`, dedo por CDP y ratón que llega de un dedo,
+  1024×768, 800×600, 1280×800 y 800×1280, tras cambiar de categoría):** mantener 800 ms sobre una ficha AGREGABA una unidad en
+  el 100 % de los casos (16 de 16, dedo y ratón); un arrastre de 40 px que empieza y termina sobre la misma ficha agregaba
+  una unidad con el ratón en los cuatro tamaños y con el dedo en 1280×800; 6 toques seguidos de un panel que rebota
+  agregaban 6; Enter sostenido agregaba 8; y la rejilla NO volvía arriba al cambiar de categoría (se quedaba a 1278 px).
+  Los arrastres largos (120 y 200 px) que cambian de ficha no agregan: el clic cae en el contenedor.
+- **Decisión:** un solo «toque seguro» (`apps/web/src/tacto/toque-seguro.ts`, decisión PURA; `use-toque-seguro.ts`, el gancho que
+  mide con Pointer Events; `BotonQueAgrega.tsx`, el `<button>`). Cuenta como toque si, entre bajar y soltar, el puntero se
+  movió a lo más `TOLERANCIA_PX` (10, la de las pulsaciones del mesero), ningún contenedor se desplazó, duró menos de
+  `MS_PARA_MANTENER` (500 ms) y el navegador no canceló el gesto. Un botón no vuelve a agregar antes de 350 ms y no
+  entra otro toque mientras su acción (una promesa) se resuelve. Sigue siendo el `click` nativo de un `<button>`: nombre
+  accesible, foco, Enter y Espacio intactos; Enter sostenido no se repite (`event.repeat`).
+- **Dónde:** la rejilla del mesero (`Mesero.jsx`), el + / – / quitar del pedido (`ProductoFichaExpandible`, que usa también
+  `MeseroCartFAB`), las fichas de Caja / para llevar (`CatalogoDelPedido`), la tarjeta de la Caja de mostrador
+  (`ProductCard`), `MesaActivaView` (sin uso hoy; mismas fichas), el menú digital del comensal (`MenuDigital`,
+  `MenuALaCarta`: sus fichas abren el detalle y un arrastre no debe abrirlo) y el diálogo del comensal (`ProductoQRDialog`:
+  su + / – y «Agregar»). Lo ata `toque-seguro.contrato.test.ts` (recorre TODO el heredado y `src`: ninguna etiqueta cruda
+  llama a una acción que agrega desde su `onClick`).
+- **Sin migración. No toca dinero ni inventario.** La pantalla en reposo no cambia (ver DP-D203).
+
+## DP-D201 · DP-23 · Ratón y teclado en el toque seguro · 19-11-2026
+
+- **El dedo que llega como ratón** (Windows táctil con pantallas viejas, WebView de Android) no se distingue de un ratón: por
+  eso el movimiento (10 px) y la duración (500 ms) valen para TODO puntero, ratón incluido. Un clic normal de ratón dura
+  decenas de milisegundos y no se mueve: no se nota. Costo aceptado: un clic de ratón sostenido medio segundo o arrastrado más
+  de 10 px sobre una ficha NO agrega (se vuelve a tocar). Preferimos eso a un platillo de más en la cuenta de una mesa.
+- **Teclado y lector de pantalla** (Enter, Espacio, `click()` sin gesto) no tienen gesto que medir: sólo cuentan el reposo y la
+  acción en curso. Un gesto medido hace más de 1 s no se le atribuye a un clic programático.
+- **Chromium 99 (iMin):** sólo Pointer Events, `performance.now` y `scroll` en captura; nada que no exista ahí.
+
+## DP-D202 · DP-23 · Los tiempos del toque seguro · 19-11-2026
+
+- **350 ms** entre dos agregados del mismo platillo (una ficha): rebote de un panel táctil o doble evento. Es una ventana
+  fija desde el último agregado, no deslizante: tocar dos veces a propósito con 350 ms o más entre toques suma las dos.
+- **200 ms** en el + y el – del pedido y en «Uno más / menos» del comensal (`REPOSO_DE_MAS_Y_MENOS_MS`): una persona no toca
+  dos veces a propósito en menos de eso, y no estorba a quien suma varias unidades seguidas.
+- **«Mantener» no se reprodujo como rebote del panel:** lo que el dueño ve («se agregan varios») se explica por el clic
+  que Chromium dispara al soltar tras una pulsación larga (una unidad por intento) más, quizá, un panel que repite; el
+  reposo cubre lo segundo. **No se pudo comprobar en el aparato del restaurante**: queda como pregunta si en su tableta
+  siguen agregándose varios con el arreglo (el simulador de panel con rebotes sí queda en 1 o 2).
+
+## DP-D203 · DP-23 · La rejilla de platillos desplaza y nada más · 19-11-2026
+
+- `touch-action: pan-y` y `overscroll-behavior: contain` en la rejilla (`toque-seguro.css`, por el atributo
+  `data-rejilla-de-platillos`: el aspecto del heredado no lleva una clase más); al cambiar de categoría o de búsqueda la
+  rejilla vuelve arriba (`useRejillaQueVuelveArriba`); la ficha ya no se encoge con `active:scale-95` (se movía bajo la
+  yema) y sólo cambia de fondo al presionar (`active:bg-muted/60`).
+- Cambia UNA clase por ficha, declarada en `scripts/aspecto-permitido.json` (Mesero, MesaActivaView, ProductCard). La galería
+  de CI retrata las pantallas en reposo y esa clase sólo se ve al presionar: no debe alterarla (la CI lo confirma).
+- El menú digital del comensal cambia `active:scale-[0.97]` por `active:opacity-85` por la misma razón.
+
+## DP-D204 · DP-23 · Lo que el toque seguro no toca · 19-11-2026
+
+- Botones que NO agregan: Enviar a cocina, Solicitar cuenta, cambiar de mesa, categorías, la barra del carrito (`setOpen`), los
+  de «Quitar» del carrito del comensal (`RenglonDelCarrito`: quita, no suma) y «Enviar pedido» del comensal. Un doble toque
+  en «Enviar a cocina» ya lo protege la bandera `loading` del pedido.
+- La spec del toque no se añadió a la CI: el QA final (`qa-final/`) está fuera de `playwright.config.ts` (`testIgnore`) y
+  necesita el servidor de la demo y los motores del laboratorio; se corre en local con `pw.sh <aparato> toque-seguro-del-mesero`.
+- No se probó con un panel táctil de Windows real ni con el WebView de la iMin en el aparato; sí con el Chromium de Electron 156
+  y, ver informe, con Chromium 99 del laboratorio.
+
+## DP-D205 · DP-23 · Configuración → Apariencia: las tarjetas siguen el ancho del panel, no el de la ventana · 19-11-2026
+- **Qué se vio (el dueño, en el restaurante):** en los POS de pantalla casi cuadrada (1024×768, 800×600) las tarjetas de
+  «Estilo visual» salían apretadas y deformes: 87 px de ancho cada una, el importe de la vista previa («$439.00») se
+  salía de su tarjeta, los nombres se partían letra a letra y la página desbordaba en horizontal (1030 px en una
+  ventana de 1024). La causa: `grid-cols-2 sm:grid-cols-4` cambia de columnas con la VENTANA, pero el panel de
+  Configuración pierde la barra lateral y el índice de secciones y queda mucho más angosto que ella.
+- **Decisión:** las dos rejillas de `SelectorDeApariencia.tsx` (los ocho estilos y las cuatro perillas) usan
+  `repeat(auto-fill, minmax(…, 1fr))`: 10,5 rem mínimo por tarjeta de estilo y 8 rem por perilla, y `max(…, 22 %)` para que nunca pasen de cuatro columnas (a 1366 con la barra plegada salían cinco y quedaba una fila de 5 + 3). Las columnas salen del
+  ancho del panel, sin container queries (que no existen antes de Chromium 105) ni respaldo. A ancho de escritorio
+  (panel de unos 730 px o más) siguen siendo cuatro columnas, de los mismos tamaños de antes.
+- **Sin migración. No toca dinero ni inventario.**
+
+## DP-D206 · DP-23 · El día cero, por pasos cuando la configuración del dueño difiere de la de arranque · 19-11-2026
+
+- `pnpm dia-cero -- --en-serio` llama a `configurar-produccion.mjs --primer-folio`, que deja TODA la configuración de arranque
+  (dos cajas a la vez, etc.), y su verificación final exige ese cupo. Con el negocio ya configurado por su dueño, los ceros se
+  hacen por pasos (`dejar-en-ceros.mjs` y, en el cero final, `operacion-real.mjs`), sin `configurar-produccion.mjs`: lo que hay
+  en producción manda.
+- Pendiente (no se hizo hoy): que `dia-cero` acepte la configuración vigente en vez de la de arranque.
+
+## DP-D207 · DP-23 · La pimienta de los PIN en los guiones · 19-11-2026
+
+- `cargarEntorno()` toma `PIN_PEPPER` del `.env` local, que no es la de producción. Un guion que ponga un PIN en producción con
+  esa pimienta deja a esa persona sin poder entrar. En DP-23 se comprobó ANTES de escribir (los hashes existentes no verificaban
+  con la pimienta local y sí con la de producción) y el guion corrió con la de producción en el entorno.
+- Regla: ningún guion escribe un PIN en producción sin comprobar antes la pimienta contra una credencial existente y sin verificar
+  después cada PIN contra lo guardado. Pendiente: que los guiones que ponen PIN se nieguen si no pueden comprobarla.
+
+## DP-D208 · DP-23 · El usuario de plataforma se va con la entrega · 19-11-2026
+
+- Al dar de baja a «Miguel · Morphiq» se quita su marca de plataforma (DP-13.3b) y nadie ve ni ejecuta los botones de
+  mantenimiento que borran en masa. Los guiones de mantenimiento (dejar en ceros, activar la operación, renombrar aparatos)
+  exigen esa marca: para el cero final se marca a «Dueño» con `scripts/marcar-plataforma.mjs`, se corre y se le quita
+  (`--quitar`) en la misma sesión.
+- La contraseña del proveedor sigue valiendo, pero siempre encima de la sesión de alguien del personal y sólo para «Hardware y
+  pruebas de impresión».
+
+## DP-D209 · DP-23 · Lo que pidió la revisión independiente del toque seguro · 19-11-2026
+
+- **Candado sólo donde lo que se espera son las opciones.** «Mientras `agregarAlCarrito` resuelve ese platillo, no entra otro» vale
+  para el mesero y los demás que abren las opciones del platillo. En la caja de mostrador (`ProductCard` → `addToCart` de `POS.jsx`)
+  cada toque manda un comando por red: con el servidor lento (800 ms) un segundo toque legítimo a 500 ms se perdía y la cajera cobraba
+  1 en vez de 2. Opción `sinCandado` del gancho y de `BotonQueAgrega`, usada sólo ahí; quedan el reposo de 350 ms y las reglas del
+  gesto. `CatalogoDelPedido` (para llevar) y el portal del comensal siguen con candado: lo que esperan son las opciones (lectura en
+  caché) y el agregado es local.
+- **El rechazo no se silencia.** La liberación del candado vuelve a lanzar el error (`liberarAlTerminar`): un agregado que falla sale
+  como `unhandledrejection`, como antes.
+- **Un gesto sin terminar caduca** (1 s desde que empezó): si nunca llegó `pointerup` ni `pointercancel`, un clic posterior sin
+  puntero (teclado, lector de pantalla) no se mide contra un inicio viejo.
+- **Sólo cuenta el desplazamiento de los contenedores del botón.** Se quitó el oyente global de `scroll`: un desplazamiento ajeno
+  (la barra de secciones del menú digital, un `scrollIntoView` del teclado en pantalla) ya no anula el toque limpio del comensal.
+  Uno en un ancestro del botón o en la página sí.

@@ -3,6 +3,8 @@
 import { EsqueletoDeLista, Vacio } from '@morphiqpos/ui/sistema';
 import { Plus, UtensilsCrossed } from 'lucide-react';
 
+import { BotonQueAgrega } from '~/tacto/BotonQueAgrega';
+
 import { BarraDeSecciones } from './BarraDeSecciones';
 import {
   precioDeLaTarjeta,
@@ -137,13 +139,12 @@ function Renglon({
   const clase = `flex w-full items-center gap-(--espacio-3) py-(--espacio-4) ${agotado ? 'opacity-60' : ''}`;
   if (!activo) return <div className={clase}>{cuerpo}</div>;
   return (
-    <button
-      type="button"
-      onClick={alTocar}
+    <BotonQueAgrega
+      alAgregar={alTocar}
       aria-label={`${[producto.nombre, precio].filter(Boolean).join(', ')}. Ver y agregar`}
       className={`${clase} rounded-(--radio-md) transition-colors duration-(--duracion-rapida) hover:bg-fondo-sutil focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-anillo`}
     >
       {cuerpo}
-    </button>
+    </BotonQueAgrega>
   );
 }

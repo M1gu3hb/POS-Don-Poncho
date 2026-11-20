@@ -149,7 +149,11 @@ async function accionDeLaMesa(
 
 async function comandar(page: Page, numero: number, platillos: readonly string[]): Promise<void> {
   const mesa = dialogoDeLaMesa(page, numero);
+  let anterior = '';
   for (const platillo of platillos) {
+    // DP-23 · El toque seguro ignora un segundo agregado del mismo platillo en menos de 350 ms.
+    if (platillo === anterior) await page.waitForTimeout(450);
+    anterior = platillo;
     await mesa
       .getByRole('button', { name: new RegExp(`^${platillo.replace(/[()]/g, '\\$&')} \\$`) })
       .click();
