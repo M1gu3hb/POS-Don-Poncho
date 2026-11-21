@@ -93,7 +93,7 @@ test.describe('agregar mesas al grupo (DP-24 · P5)', () => {
 
       const dialogo = duena.getByRole('dialog', { name: 'Agregar mesas al grupo' });
       await expect(dialogo).toBeVisible();
-      const laUna = dialogo.getByRole('button', { name: /^Mesa\s*1/ });
+      const laUna = dialogo.getByRole('button', { name: /^Mesa\s*1(?!\d)/ });
       await exigirBlancoDelDedo(laUna, info);
       await tocar(laUna, info);
       await expect(laUna).toHaveAttribute('aria-pressed', 'true');
