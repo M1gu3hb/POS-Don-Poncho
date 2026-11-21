@@ -92,12 +92,6 @@ export const UNIDADES_DEL_PUENTE = {
   LiquidacionPropina: {
     total_liquidado: 'pesos',
   },
-  PagoDeVenta: {
-    monto: 'pesos',
-    propina: 'pesos',
-    recibido: 'pesos',
-    cambio: 'pesos',
-  },
   MaterialContinuo: {
     costoCentavos: 'centavos',
     precioCentavos: 'centavos',
@@ -133,6 +127,12 @@ export const UNIDADES_DEL_PUENTE = {
   },
   PagoCredito: {
     monto_centavos: 'centavos',
+  },
+  PagoDeVenta: {
+    cambio: 'pesos',
+    monto: 'pesos',
+    propina: 'pesos',
+    recibido: 'pesos',
   },
   PedidoAnticipado: {
     total_centavos: 'centavos',
