@@ -15,7 +15,9 @@ export const TITULO_DE_PAGOS = 'Pagos, uno por uno';
 const SIN_DATO = '—';
 
 export function pagosUnoPorUno(hoja: HojaDelServidor): readonly Seccion[] {
-  const filas = hoja.ventas.flatMap((venta) =>
+  // Una hoja sin ventas (un servidor viejo, o la de las pruebas) no tiene pagos que listar.
+  const ventas: HojaDelServidor['ventas'] = Array.isArray(hoja.ventas) ? hoja.ventas : [];
+  const filas = ventas.flatMap((venta) =>
     renglonesDePagos(
       (venta.pagos ?? []).map((p) => ({
         id: p.id,
