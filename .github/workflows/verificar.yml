@@ -623,6 +623,11 @@ jobs:
           - modelo: restaurante
             suite: dia-completo-restaurante
             aparatos: --project=escritorio --project=tablet --project=telefono
+          # DP-24 · LA CAJA, en su propio trabajo (corre en paralelo con el día): la tarjeta de
+          # cobro con el dedo en las tres pantallas de la caja, y después lo demás del cobro.
+          - modelo: caja
+            suite: tarjeta-de-cobro
+            aparatos: --project=escritorio
 
     services:
       postgres:
@@ -763,6 +768,24 @@ jobs:
           pnpm test:e2e pruebas/e2e/configuracion-que-no-se-regresa.spec.ts --project=escritorio --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/cajas-del-negocio.spec.ts --project=escritorio --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/personalizar-menu.spec.ts --project=escritorio --workers=1 --retries=0
+
+      # LA CAJA MANDA (DP-24): lo que la cajera hace con la cuenta sin salir de la tarjeta de cobro
+      # —agregar, para llevar, quitar con el PIN de un gerente— y las propinas en el corte, con lo
+      # entregado saliendo del cajón; la propina, una sola verdad entre la Caja y el portal; y lo
+      # que ya se cobraba desde ahí: lo quitado, el descuento en el ticket, el IVA, dividir la
+      # cuenta, los folios y lo que se vende por peso. Cada una resetea la demo al empezar.
+      - name: La Caja manda
+        if: matrix.modelo == 'caja'
+        run: |
+          pnpm test:e2e pruebas/e2e/la-caja-manda.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/propina-una-sola-verdad.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/quitado-en-la-caja.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/ticket-con-descuento.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/sin-iva.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/dividir-en-la-caja.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/sala-dp14c-cierre.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/folios-con-prefijo.spec.ts --project=escritorio --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/barbacoa-por-kilo.spec.ts --project=escritorio --workers=1 --retries=0
 
       - name: Las trazas del día
         if: always()

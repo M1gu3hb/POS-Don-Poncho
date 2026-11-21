@@ -93,13 +93,12 @@ export default function ParaLlevarDialog({
   });
   const { carrito, total, dialogos } = pedido;
   // DP-18 · A7 · Un borrador que quedó de antes no se mezcla en silencio con el pedido nuevo.
-  const sinTerminar =
-    !esAgregar &&
-    pedidoSinTerminar({
-      recuperado: pedido.recuperado,
-      deEstaSesion,
-      decidido,
-    });
+  const sinTerminar = pedidoSinTerminar({
+    // DP-24 · Al agregar a una cuenta no hay borrador del aparato que retomar.
+    recuperado: !esAgregar && pedido.recuperado,
+    deEstaSesion,
+    decidido,
+  });
   const piezas = carrito.reduce((s, i) => s + (Number(i.cantidad) || 0), 0);
 
   /** Lo agotado se aparta y se avisa; la cajera revisa y vuelve a tocar «Cobrar». */

@@ -487,7 +487,7 @@
       "ruta": "/api/propinas/liquidar",
       "comando": "propinas.liquidar",
       "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["restaurante"]
     },
     {
@@ -530,6 +530,13 @@
       "comando": "restaurante.abrir_mesa",
       "escribe": true,
       "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/agregar-en-caja",
+      "comando": "restaurante.agregar_en_caja",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["restaurante"]
     },
     {

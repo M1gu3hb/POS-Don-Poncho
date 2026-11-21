@@ -3,6 +3,7 @@
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Input } from '@morphiqpos/ui/primitivas/input';
 import { Label } from '@morphiqpos/ui/primitivas/label';
+import { Dinero, dineroEnTexto, Superficie } from '@morphiqpos/ui/sistema';
 import { cn } from '@morphiqpos/ui/utilidades';
 import { Banknote, Check, CreditCard, Layers, Plus, Smartphone, X } from 'lucide-react';
 import { useId, type ComponentType, type ReactElement, type ReactNode } from 'react';
@@ -22,12 +23,11 @@ import {
   type CampoDelCobro,
   type CobroEnPantalla,
 } from './cobro-en-pantalla.ts';
-import {
-  enPesos,
-  type CuentaDelCobro,
-  type ModoDePago,
-  type PagoAEnviar,
-  type PropinaDelCobro,
+import type {
+  CuentaDelCobro,
+  ModoDePago,
+  PagoAEnviar,
+  PropinaDelCobro,
 } from './cuenta-del-cobro.ts';
 import { aCentavos } from './importe-tecleado.ts';
 import { esLaPropinaPuesta } from './propina-del-cobro.ts';
@@ -46,7 +46,7 @@ import { TecladoDeImportes } from './TecladoDeImportes';
 export type PropinasEnLaCaja = 'elige' | 'solo-lectura' | 'apagadas';
 
 const CHIP =
-  'flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-(--espacio-2) text-sm font-semibold touch-manipulation transition-colors disabled:pointer-events-none disabled:opacity-50';
+  'flex min-h-(--altura-tactil) items-center justify-center gap-1.5 rounded-md border px-(--espacio-2) text-sm font-semibold touch-manipulation transition-colors disabled:pointer-events-none disabled:opacity-50';
 const APAGADO = 'border-borde bg-superficie text-texto hover:bg-acento-suave';
 const ENCENDIDO = 'border-primario bg-primario text-primario-texto';
 
@@ -62,7 +62,12 @@ const FORMAS: readonly {
 ];
 
 /** Los billetes de siempre: lo que se toca ES lo recibido (no se suman). */
-const BILLETES: readonly number[] = [10_000, 20_000, 50_000, 100_000];
+const BILLETES: readonly { readonly centavos: number; readonly rotulo: string }[] = [
+  { centavos: 10_000, rotulo: '$100' },
+  { centavos: 20_000, rotulo: '$200' },
+  { centavos: 50_000, rotulo: '$500' },
+  { centavos: 100_000, rotulo: '$1,000' },
+];
 
 const NOMBRE_DEL_CAMPO: Readonly<Record<string, string>> = {
   recibido: 'Recibido',
@@ -145,7 +150,7 @@ function Campo({
               if (!activo) alCambiar({ ...estado, campoActivo: campo });
             }}
             className={cn(
-              'h-11 pl-(--espacio-5) text-right font-numeros text-lg tabular-nums md:text-lg',
+              'h-(--altura-tactil) pl-(--espacio-5) text-right font-numeros text-lg tabular-nums md:text-lg',
               activo && 'border-primario ring-2 ring-anillo/50',
             )}
           />
@@ -249,7 +254,12 @@ function OtroMonto({
     campoActivo: estado.modo === 'efectivo' ? 'recibido' : null,
   });
   return (
-    <div className="rounded-md border border-primario/40 bg-acento-suave/40 p-(--espacio-2)">
+    <Superficie
+      nivel={0}
+      radio="md"
+      relleno={0}
+      className="border-primario/40 bg-acento-suave/40 p-(--espacio-2)"
+    >
       <Campo
         campo="otro-monto"
         rotulo="Otro monto de propina"
@@ -259,7 +269,7 @@ function OtroMonto({
       >
         <Button
           type="button"
-          className="h-11"
+          className="h-(--altura-tactil)"
           disabled={guardando || centavos === null}
           onClick={() => {
             alCambiar(cerrar());
@@ -276,7 +286,7 @@ function OtroMonto({
       {centavos === null && (
         <p className="mt-1 text-xs text-peligro">Ese importe no se entiende.</p>
       )}
-    </div>
+    </Superficie>
   );
 }
 
@@ -309,7 +319,7 @@ function Tarjetas({
             <Button
               type="button"
               variant="outline"
-              className="h-11 px-(--espacio-2)"
+              className="h-(--altura-tactil) px-(--espacio-2)"
               disabled={deshabilitado}
               aria-label={`Poner el resto en la tarjeta ${numero}`}
               onClick={() => {
@@ -325,7 +335,7 @@ function Tarjetas({
               type="button"
               variant="ghost"
               size="icon"
-              className="size-11 shrink-0"
+              className="size-(--altura-tactil) shrink-0"
               disabled={deshabilitado}
               aria-label={`Quitar la tarjeta ${numero}`}
               onClick={() => {
@@ -341,7 +351,7 @@ function Tarjetas({
         <Button
           type="button"
           variant="outline"
-          className="h-11 justify-start"
+          className="h-(--altura-tactil) justify-start"
           disabled={deshabilitado}
           onClick={() => {
             alCambiar(agregarTarjeta(estado));
@@ -396,7 +406,7 @@ function CamposDelModo({
         </Chip>
         {BILLETES.map((billete) => (
           <Chip
-            key={billete}
+            key={billete.centavos}
             encendido={false}
             disabled={deshabilitado}
             onClick={() => {
@@ -404,12 +414,12 @@ function CamposDelModo({
                 escribir(
                   { ...estado, campoActivo: 'recibido' },
                   'recibido',
-                  textoDeCentavos(billete),
+                  textoDeCentavos(billete.centavos),
                 ),
               );
             }}
           >
-            {enPesos(billete).replace('.00', '')}
+            {billete.rotulo}
           </Chip>
         ))}
       </div>
@@ -419,21 +429,27 @@ function CamposDelModo({
   if (estado.modo === 'efectivo') return recibido;
   if (estado.modo === 'transferencia') {
     return (
-      <p className="rounded-md border border-borde bg-fondo-sutil p-(--espacio-3) text-sm">
-        Todo por transferencia: <strong>{enPesos(cuenta.aCobrarCentavos)}</strong>
-      </p>
+      <Superficie como="p" nivel={0} radio="md" relleno={3} className="bg-fondo-sutil text-sm">
+        Todo por transferencia:{' '}
+        <strong>
+          <Dinero centavos={cuenta.aCobrarCentavos} />
+        </strong>
+      </Superficie>
     );
   }
   if (estado.modo === 'tarjeta' && !estado.dividida) {
     return (
       <>
-        <p className="rounded-md border border-borde bg-fondo-sutil p-(--espacio-3) text-sm">
-          Una tarjeta con todo: <strong>{enPesos(cuenta.aCobrarCentavos)}</strong>
-        </p>
+        <Superficie como="p" nivel={0} radio="md" relleno={3} className="bg-fondo-sutil text-sm">
+          Una tarjeta con todo:{' '}
+          <strong>
+            <Dinero centavos={cuenta.aCobrarCentavos} />
+          </strong>
+        </Superficie>
         <Button
           type="button"
           variant="outline"
-          className="h-11"
+          className="h-(--altura-tactil)"
           disabled={deshabilitado}
           onClick={() => {
             alCambiar(dividirEnTarjetas(estado));
@@ -456,7 +472,7 @@ function CamposDelModo({
         <Button
           type="button"
           variant="ghost"
-          className="h-11 justify-start"
+          className="h-(--altura-tactil) justify-start"
           disabled={deshabilitado}
           onClick={() => {
             alCambiar(unaSolaTarjeta(estado));
@@ -483,7 +499,7 @@ function CamposDelModo({
         deshabilitado={deshabilitado}
       />
       <p className="text-sm font-semibold" data-resto-en-efectivo>
-        El resto, en efectivo: {enPesos(cuenta.efectivoCentavos)}
+        El resto, en efectivo: <Dinero centavos={cuenta.efectivoCentavos} tamano="sm" />
       </p>
       {cuenta.efectivoCentavos > 0 && recibido}
     </>
@@ -524,7 +540,7 @@ function Resultado({
       {cuenta.tropiezo === null && hayRecibido && (
         <p className="flex items-baseline justify-between text-lg font-bold text-exito" data-cambio>
           <span>Cambio</span>
-          <span className="font-numeros tabular-nums">{enPesos(cuenta.cambioCentavos)}</span>
+          <Dinero centavos={cuenta.cambioCentavos} tamano="lg" className="font-bold" />
         </p>
       )}
       {cuenta.tropiezo === null && cuenta.cambioOfrecidoCentavos > 0 && propinas === 'elige' && (
@@ -532,6 +548,8 @@ function Resultado({
           type="button"
           aria-pressed={estado.cambioComoPropina}
           disabled={deshabilitado}
+          // El nombre del botón, con el importe como se lee: «Dejar los $379.60 de cambio como propina».
+          aria-label={`Dejar los ${dineroEnTexto(cuenta.cambioOfrecidoCentavos)} de cambio como propina`}
           onClick={() => {
             alCambiar({ ...estado, cambioComoPropina: !estado.cambioComoPropina });
           }}
@@ -542,7 +560,10 @@ function Resultado({
           )}
         >
           {estado.cambioComoPropina && <Check aria-hidden="true" className="size-4 shrink-0" />}
-          {`Dejar los ${enPesos(cuenta.cambioOfrecidoCentavos)} de cambio como propina`}
+          <span>
+            Dejar los <Dinero centavos={cuenta.cambioOfrecidoCentavos} tamano="sm" /> de cambio como
+            propina
+          </span>
         </button>
       )}
       {cuenta.tropiezo === null && cuenta.propinaCentavos > 0 && conImporte.length > 1 && (

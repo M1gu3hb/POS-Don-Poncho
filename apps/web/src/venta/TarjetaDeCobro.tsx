@@ -2,6 +2,7 @@
 
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Dialog, DialogContent, DialogTitle } from '@morphiqpos/ui/primitivas/dialog';
+import { Aviso, Dinero, dineroEnTexto, Superficie } from '@morphiqpos/ui/sistema';
 import { cn } from '@morphiqpos/ui/utilidades';
 import { Trash2, X } from 'lucide-react';
 import { useState, type KeyboardEvent, type ReactElement, type ReactNode } from 'react';
@@ -13,7 +14,7 @@ import {
   type CobroEnPantalla,
   type TeclaDeImporte,
 } from './cobro-en-pantalla.ts';
-import { enPesos, type CuentaDelCobro, type PropinaDelCobro } from './cuenta-del-cobro.ts';
+import type { CuentaDelCobro, PropinaDelCobro } from './cuenta-del-cobro.ts';
 import { PagoDeLaTarjeta, type PropinasEnLaCaja } from './PagoDeLaTarjeta';
 import { seMencionaElIva } from '~/venta/se-menciona-el-iva';
 
@@ -96,11 +97,12 @@ function teclaDe(evento: KeyboardEvent): TeclaDeImporte | null {
 
 function Renglon({
   etiqueta,
-  valor,
+  children,
   tono,
 }: {
   readonly etiqueta: ReactNode;
-  readonly valor: string;
+  /** El importe, con su signo si lo lleva. */
+  readonly children: ReactNode;
   readonly tono?: 'sutil' | 'propina';
 }): ReactElement {
   return (
@@ -112,8 +114,58 @@ function Renglon({
       )}
     >
       <span>{etiqueta}</span>
-      <span className="font-numeros tabular-nums">{valor}</span>
+      <span className="whitespace-nowrap">{children}</span>
     </div>
+  );
+}
+
+/**
+ * Un platillo de la cuenta, como en el ticket: el nombre con su cantidad, sus opciones y su nota
+ * debajo, el importe y —si quien cobra puede quitarlo— su bote de basura de 44 px.
+ *
+ * Es un renglón de TICKET y no la fila de una tabla: no hay columnas que comparar ni cabecera que
+ * leer, y en 800×600 la lista tiene que caber junto al pago. Por eso es una lista (`ul`/`li`) y no
+ * la `Tabla` del sistema.
+ */
+function PlatilloDeLaCuenta({
+  renglon,
+  apagado,
+  alQuitar,
+}: {
+  readonly renglon: RenglonDeLaTarjeta;
+  readonly apagado: boolean;
+  readonly alQuitar: ((renglon: RenglonDeLaTarjeta) => void) | undefined;
+}): ReactElement {
+  return (
+    <li className="flex min-h-(--altura-tactil) items-center gap-(--espacio-2) px-(--espacio-2) py-1">
+      <div className="min-w-0 flex-1 text-sm">
+        <p className="leading-tight">
+          <span className="font-medium">{renglon.nombre}</span>{' '}
+          <span className="whitespace-nowrap text-texto-sutil">{renglon.cantidad}</span>
+        </p>
+        {(renglon.detalles ?? []).map((detalle) => (
+          <p key={detalle} className="text-xs leading-tight text-texto-sutil">
+            {detalle}
+          </p>
+        ))}
+      </div>
+      <Dinero centavos={renglon.importeCentavos} tamano="sm" className="font-semibold" />
+      {alQuitar !== undefined && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-(--altura-tactil) shrink-0 text-texto-sutil"
+          disabled={apagado}
+          aria-label={`Quitar ${renglon.nombre}`}
+          onClick={() => {
+            alQuitar(renglon);
+          }}
+        >
+          <Trash2 aria-hidden="true" />
+        </Button>
+      )}
+    </li>
   );
 }
 
@@ -131,80 +183,61 @@ function LaCuenta({
   return (
     <section aria-label="La cuenta" className="flex min-h-0 flex-col gap-(--espacio-2)">
       {/* En pantallas sin barra lateral flota el botón «Menú» arriba a la izquierda: el título le deja sitio. */}
-      <DialogTitle className="pr-(--espacio-8) font-heading text-lg max-lg:pl-24 md:pr-0">
+      <DialogTitle className="pr-(--espacio-8) font-heading text-lg max-lg:ml-(--espacio-8) max-lg:pl-(--espacio-16) md:pr-0">
         {p.titulo}
       </DialogTitle>
       {p.aviso}
-      <ul
+      <Superficie
+        como="ul"
+        nivel={0}
+        radio="md"
+        relleno={0}
         aria-label="Platillos de la cuenta"
-        className="min-h-24 flex-1 divide-y divide-dashed divide-borde overflow-y-auto overscroll-contain rounded-md border border-borde bg-superficie"
+        className="min-h-24 flex-1 divide-y divide-dashed divide-borde overflow-y-auto overscroll-contain"
       >
         {p.renglones.map((renglon) => (
-          <li
+          <PlatilloDeLaCuenta
             key={renglon.id}
-            className="flex min-h-11 items-center gap-(--espacio-2) px-(--espacio-2) py-1"
-          >
-            <div className="min-w-0 flex-1 text-sm">
-              <p className="leading-tight">
-                <span className="font-medium">{renglon.nombre}</span>{' '}
-                <span className="whitespace-nowrap text-texto-sutil">{renglon.cantidad}</span>
-              </p>
-              {(renglon.detalles ?? []).map((detalle) => (
-                <p key={detalle} className="text-xs leading-tight text-texto-sutil">
-                  {detalle}
-                </p>
-              ))}
-            </div>
-            <span className="font-numeros text-sm font-semibold tabular-nums">
-              {enPesos(renglon.importeCentavos)}
-            </span>
-            {p.alQuitar !== undefined && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-11 shrink-0 text-texto-sutil"
-                disabled={p.procesando}
-                aria-label={`Quitar ${renglon.nombre}`}
-                onClick={() => p.alQuitar?.(renglon)}
-              >
-                <Trash2 aria-hidden="true" />
-              </Button>
-            )}
-          </li>
+            renglon={renglon}
+            apagado={p.procesando}
+            alQuitar={p.alQuitar}
+          />
         ))}
-      </ul>
+      </Superficie>
       <div className="flex flex-col gap-0.5">
-        <Renglon etiqueta="Subtotal" valor={enPesos(p.subtotalCentavos)} tono="sutil" />
+        <Renglon etiqueta="Subtotal" tono="sutil">
+          <Dinero centavos={p.subtotalCentavos} tamano="sm" />
+        </Renglon>
         {p.descuentoCentavos > 0 && (
           <div>
-            <Renglon etiqueta="Descuento" valor={`−${enPesos(p.descuentoCentavos)}`} />
+            <Renglon etiqueta="Descuento">
+              −<Dinero centavos={p.descuentoCentavos} tamano="sm" />
+            </Renglon>
             {p.bajoElDescuento}
           </div>
         )}
         {seMencionaElIva(p.ivaCentavos) && (
-          <Renglon
-            etiqueta={p.ivaSeSuma ? 'IVA' : 'IVA incluido'}
-            valor={enPesos(p.ivaCentavos)}
-            tono="sutil"
-          />
+          <Renglon etiqueta={p.ivaSeSuma ? 'IVA' : 'IVA incluido'} tono="sutil">
+            <Dinero centavos={p.ivaCentavos} tamano="sm" />
+          </Renglon>
         )}
         {p.propinas !== 'apagadas' && (
           <Renglon
             etiqueta={`Propina${porcentaje}`}
-            valor={`+ ${enPesos(cuenta.propinaCentavos)}`}
             tono={cuenta.propinaCentavos > 0 ? 'propina' : 'sutil'}
-          />
+          >
+            + <Dinero centavos={cuenta.propinaCentavos} tamano="sm" />
+          </Renglon>
         )}
         <div className="mt-1 flex items-baseline justify-between gap-(--espacio-2) border-t border-borde pt-1 font-black">
           <span className="text-base">TOTAL A COBRAR</span>
-          <span className="font-numeros text-2xl tabular-nums text-primario" data-total-a-cobrar>
-            {enPesos(cuenta.aCobrarCentavos)}
+          <span className="text-primario" data-total-a-cobrar>
+            <Dinero centavos={cuenta.aCobrarCentavos} tamano="lg" className="text-2xl font-black" />
           </span>
         </div>
       </div>
       {p.acciones !== undefined && (
-        <div className="grid grid-cols-3 gap-(--espacio-1) [&>button]:h-auto [&>button]:min-h-11 [&>button]:px-(--espacio-2) [&>button]:py-1 [&>button]:text-xs [&>button]:leading-tight [&>button]:whitespace-normal">
+        <div className="grid grid-cols-3 gap-(--espacio-1) [&>button]:h-auto [&>button]:min-h-(--altura-tactil) [&>button]:px-(--espacio-2) [&>button]:py-1 [&>button]:text-xs [&>button]:leading-tight [&>button]:whitespace-normal">
           {p.acciones}
         </div>
       )}
@@ -242,10 +275,9 @@ function Contenido(p: TarjetaDeCobroProps): ReactElement {
         {p.panel ?? (
           <>
             {enCero ? (
-              <p className="rounded-md border border-peligro/30 bg-peligro/10 p-(--espacio-3) text-sm text-peligro">
-                Este ticket está en $0.00. No se puede cobrar. Puedes eliminarlo para limpiar la
-                caja.
-              </p>
+              <Aviso tono="peligro" titulo="Este ticket está en $0.00. No se puede cobrar.">
+                Puedes eliminarlo para limpiar la caja.
+              </Aviso>
             ) : (
               <PagoDeLaTarjeta
                 estado={estado}
@@ -260,15 +292,15 @@ function Contenido(p: TarjetaDeCobroProps): ReactElement {
               />
             )}
             {!enCero && cuenta.tropiezo !== null && (
-              <p role="alert" data-tropiezo className="text-sm font-semibold text-peligro">
-                {cuenta.tropiezo}
-              </p>
+              <div data-tropiezo>
+                <Aviso tono="peligro" titulo={cuenta.tropiezo} className="p-(--espacio-2)" />
+              </div>
             )}
             <div className="mt-auto flex gap-(--espacio-2)">
               <Button
                 type="button"
                 variant="outline"
-                className="h-14 px-(--espacio-4)"
+                className="h-[calc(var(--altura-tactil)+var(--espacio-3))] px-(--espacio-4)"
                 disabled={p.procesando}
                 onClick={p.alCerrar}
               >
@@ -278,7 +310,7 @@ function Contenido(p: TarjetaDeCobroProps): ReactElement {
                 <Button
                   type="button"
                   variant="destructive"
-                  className="h-14 flex-1 text-base"
+                  className="h-[calc(var(--altura-tactil)+var(--espacio-3))] flex-1 text-base"
                   onClick={p.alBorrarEnCero}
                 >
                   <Trash2 aria-hidden="true" /> Borrar ticket en cero
@@ -286,19 +318,28 @@ function Contenido(p: TarjetaDeCobroProps): ReactElement {
               ) : (
                 <Button
                   type="button"
-                  className="h-14 flex-1 text-xl font-black"
+                  className="h-[calc(var(--altura-tactil)+var(--espacio-3))] flex-1 text-xl font-black"
                   disabled={noSePuede}
+                  cargando={p.procesando}
+                  // El nombre del botón es el importe como se lee: «Cobrar $620.40».
+                  aria-label={
+                    p.procesando ? undefined : `Cobrar ${dineroEnTexto(cuenta.aCobrarCentavos)}`
+                  }
                   onClick={() => {
                     p.alCobrar(cuenta);
                   }}
                 >
                   {p.procesando ? (
-                    <span className="flex items-center gap-(--espacio-2) text-base">
-                      <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-primario-texto/40 border-t-primario-texto motion-reduce:animate-none" />
-                      {p.mensajeDeProceso ?? 'Procesando…'}
-                    </span>
+                    <span className="text-base">{p.mensajeDeProceso ?? 'Procesando…'}</span>
                   ) : (
-                    `Cobrar ${enPesos(cuenta.aCobrarCentavos)}`
+                    <>
+                      Cobrar{' '}
+                      <Dinero
+                        centavos={cuenta.aCobrarCentavos}
+                        tamano="lg"
+                        className="font-black"
+                      />
+                    </>
                   )}
                 </Button>
               )}
@@ -327,7 +368,7 @@ export function TarjetaDeCobro(p: TarjetaDeCobroProps): ReactElement {
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute top-1 right-1 size-11 md:hidden"
+          className="absolute top-1 right-1 size-(--altura-tactil) md:hidden"
           aria-label="Cerrar sin cobrar"
           disabled={p.procesando}
           onClick={p.alCerrar}

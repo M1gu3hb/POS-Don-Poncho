@@ -165,7 +165,7 @@ test.describe('la tarjeta de cobro, con el dedo', () => {
 
       // RECIBIDO MENOR AL TOTAL: no se cobra como exacto ni con «Cambio $0.00».
       await tarjeta.getByRole('button', { name: '$500', exact: true }).tap();
-      await expect(tarjeta.getByRole('alert')).toHaveText('Faltan $120.40 en efectivo.');
+      await expect(tarjeta.getByRole('alert')).toContainText('Faltan $120.40 en efectivo.');
       await expect(tarjeta.getByRole('button', { name: /^Cobrar \$/ })).toBeDisabled();
       await expect(cambio(tarjeta)).toHaveCount(0);
 
@@ -238,7 +238,7 @@ test.describe('la tarjeta de cobro, con el dedo', () => {
 
       // Si no cuadra, no deja cobrar y dice cuánto falta.
       await teclear(tarjeta, 'Tarjeta 2', ['Borrar todo', '1', '0', '0']);
-      await expect(tarjeta.getByRole('alert')).toHaveText(
+      await expect(tarjeta.getByRole('alert')).toContainText(
         'Faltan $264.00 por repartir entre las tarjetas.',
       );
       await expect(tarjeta.getByRole('button', { name: /^Cobrar \$/ })).toBeDisabled();

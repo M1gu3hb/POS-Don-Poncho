@@ -24,7 +24,7 @@ const TECLAS: readonly (readonly TeclaDeImporte[])[] = [
 ];
 
 const TECLA =
-  'flex min-h-11 items-center justify-center rounded-md border border-borde bg-superficie font-numeros text-xl font-semibold tabular-nums text-texto select-none active:bg-acento-suave disabled:opacity-50 touch-manipulation';
+  'flex min-h-(--altura-tactil) items-center justify-center rounded-md border border-borde bg-superficie font-numeros text-xl font-semibold tabular-nums text-texto select-none active:bg-acento-suave disabled:opacity-50 touch-manipulation';
 
 export function TecladoDeImportes({
   alTeclear,
@@ -67,7 +67,11 @@ export function TecladoDeImportes({
       </div>
       {/* Las dos de borrar, altas: son las que se buscan con prisa. */}
       <div className="flex flex-1 flex-col gap-(--espacio-1) [&>button]:flex-1">
-        {tecla('borrar', <Delete aria-hidden="true" className="size-6" />, 'Borrar una cifra')}
+        {tecla(
+          'borrar',
+          <Delete aria-hidden="true" className="size-(--espacio-6)" />,
+          'Borrar una cifra',
+        )}
         {tecla('limpiar', 'C', 'Borrar todo')}
       </div>
     </div>

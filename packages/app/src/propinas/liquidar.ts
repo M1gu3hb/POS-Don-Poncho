@@ -74,6 +74,15 @@ const SALIDA_DE_PROPINA = 'propina_entregada';
  */
 const ROLES = ['dueno', 'administrador', 'gerente', 'cajero'] as const;
 
+/**
+ * Quien liquida POR SU CUENTA, sin el PIN de nadie: la dirección. A ellos —y sólo a ellos— el puente
+ * les enseña si una propina ya se liquidó (`puente/autorizacion.test.ts`, §7.5): la cajera entrega
+ * lo que el corte le lista, autorizada, pero no consulta ese estado.
+ */
+export const LIQUIDAN_POR_SU_CUENTA: readonly (typeof ROLES)[number][] = ROLES.filter((rol) =>
+  ROLES_QUE_AUTORIZAN.includes(rol),
+);
+
 const SOLO_CON_PIN =
   'Entregar propinas de la caja lo autoriza un gerente, administrador o dueño con su PIN.';
 

@@ -40,6 +40,6 @@ describe('DP-15 · la tarjeta de cobro', () => {
     // Los botones de la cuenta van en rejilla y su texto se parte en vez de empujar la columna.
     expect(tarjeta).toContain('<div className="grid grid-cols-3 gap-(--espacio-1)');
     expect(tarjeta).toContain('[&>button]:whitespace-normal');
-    expect(tarjeta).toContain('[&>button]:min-h-11');
+    expect(tarjeta).toContain('[&>button]:min-h-(--altura-tactil)');
   });
 });

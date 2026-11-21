@@ -64,7 +64,7 @@ describe('el cobro de la Caja', () => {
     const deVenta = (archivo: string): string =>
       readFileSync(join(HEREDADO, '..', 'src', 'venta', archivo), 'utf8');
     expect(deVenta('TarjetaDeCobro.tsx')).toMatch(
-      /TOTAL A COBRAR<\/span>[\s\S]{0,200}\{enPesos\(cuenta\.aCobrarCentavos\)\}/,
+      /TOTAL A COBRAR<\/span>[\s\S]{0,200}<Dinero\s+centavos=\{cuenta\.aCobrarCentavos\}/,
     );
     expect(deVenta('cuenta-del-cobro.ts')).toMatch(/const aCobrar = total \+ propinaCentavos;/);
   });
