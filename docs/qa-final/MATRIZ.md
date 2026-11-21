@@ -1,13 +1,13 @@
 # MATRIZ · DP-22 · El mapa total
 
-> Generado por `node scripts/qa-final/generar-matriz.mjs` sobre `27f7d27`. **No se edita a mano**: lo que cambia se cambia en el código o en `qa/qa-final/datos/` (`efectos.json`, `flujos.json`) y se vuelve a generar. Las listas completas (todas las citas `archivo:línea`) están en `qa/qa-final/datos/matriz.json`.
+> Generado por `node scripts/qa-final/generar-matriz.mjs` sobre `9f7e458`. **No se edita a mano**: lo que cambia se cambia en el código o en `qa/qa-final/datos/` (`efectos.json`, `flujos.json`) y se vuelve a generar. Las listas completas (todas las citas `archivo:línea`) están en `qa/qa-final/datos/matriz.json`.
 
 ## Resumen
 
-- **Pantallas:** 34 rutas (28 con sesión) y 108 ventanas.
+- **Pantallas:** 34 rutas (28 con sesión) y 109 ventanas.
 - **Ajustes:** 78 del negocio y 18 de este aparato; 75 con su efecto comprobado; 7 que nadie lee (`bascula_etiqueta`, `formato_export_default`, `modo_presentacion_activo`, `permitir_venta_sin_stock`, `presentacion_ultimo_acceso`, `usa_barra`, `usa_cocina`).
 - **Flujos:** 104; 0 todavía sin prueba; 2 «no aplica» declarado con su razón.
-- **Comandos:** 134 del restaurante; 35 sin pantalla. **Lecturas del puente:** 26 entidades.
+- **Comandos:** 135 del restaurante; 35 sin pantalla. **Lecturas del puente:** 26 entidades.
 - **Huecos del mapa** (`--verificar`): 1.
 
 ## 1 · Pantallas
@@ -42,7 +42,7 @@ Puestos: Du = dueno, Ad = administrador, Ge = gerente, Cj = cajero, Me = mesero,
 | `/restaurante/cocina`                 | `src/restaurante/Cocina.tsx`                  | Du Ad Ge       | 0        | 4        | —         |
 | `/restaurante/inventario`             | `src/restaurante/Inventario.tsx`              | Du Ad Ge       | 0        | 8        | —         |
 | `/restaurante/mapa-de-mesas`          | `src/restaurante/MapaDeMesas.tsx`             | Du Ad Ge       | 0        | 4        | —         |
-| `/restaurante/mesa-activa`            | `src/restaurante/MesaActiva.tsx`              | Du Ad Ge Me    | 9        | 30       | —         |
+| `/restaurante/mesa-activa`            | `src/restaurante/MesaActiva.tsx`              | Du Ad Ge Me    | 10       | 33       | —         |
 | `/restaurante/portal-del-comensal`    | `heredado/pages/PortalCliente.jsx`            | todos          | 3        | 41       | —         |
 | `/restaurante/precuenta`              | `src/restaurante/Precuenta.tsx`               | Du Ad Ge Me    | 0        | 13       | —         |
 | `/restaurante/productos`              | `src/restaurante/Productos.tsx`               | Du Ad Ge       | 0        | 5        | —         |
@@ -161,7 +161,7 @@ Puestos: Du = dueno, Ad = administrador, Ge = gerente, Cj = cajero, Me = mesero,
 - `/restaurante/cobro` (2)
   - diálogo · `AjustesDeLaCuenta` · «Descuento»
   - diálogo · `DividirCuentaDialog`
-- `/restaurante/mesa-activa` (9)
+- `/restaurante/mesa-activa` (10)
   - diálogo · `AccionesDeLaMesa`
   - diálogo · `AnularLineaDialog`
   - diálogo · `DividirCuentaDialog`
@@ -169,6 +169,7 @@ Puestos: Du = dueno, Ad = administrador, Ge = gerente, Cj = cajero, Me = mesero,
   - panel · `MesaActiva`
   - diálogo · `PasarLaMesaDialog`
   - diálogo · `PedirLaCuentaDialog`
+  - diálogo · `AgregarMesasDialog` · «Agregar mesas al grupo»
   - confirmación · `SepararMesasDialog` · «¿Separar las mesas?»
   - confirmación · `liberar-con-pregunta`
 - `/restaurante/portal-del-comensal` (3)
@@ -481,11 +482,12 @@ Del armazón (las comparten todas): `useRouteCleanup`, `DialogoDelSonido`, `obse
 | `registros.resumen`                          | `/api/registros/resumen`                    | no      | Du Ad Ge          | `/registros`                                                                                                  | `apps/web/heredado/pages/Registros.jsx:221`                                            |
 | `reportes.auditoria_reciente`                | `/api/reportes/auditoria-reciente`          | no      | Du Ad             | `/registros`                                                                                                  | `apps/web/src/registros/AuditoriaReciente.tsx:65`                                      |
 | `restaurante.abrir_mesa`                     | `/api/restaurante/abrir-mesa`               | sí      | Du Ad Ge Cj Me    | `/mesero`, `/restaurante/mesa-activa`                                                                         | `apps/web/heredado/pages/Mesero.jsx:654` (+2)                                          |
+| `restaurante.agregar_a_la_union`             | `/api/restaurante/agregar-a-la-union`       | sí      | Du Ad Ge Cj Me    | `/restaurante/mesa-activa`                                                                                    | `apps/web/src/restaurante/unir-mesas/AgregarMesasDialog.tsx:85`                        |
 | `restaurante.anular_linea`                   | `/api/restaurante/anular-linea`             | sí      | Du Ad Ge Cj       | `/mesero`, `/restaurante/mesa-activa`                                                                         | `apps/web/src/restaurante/AnularLineaDialog.tsx:133`                                   |
 | `restaurante.armar_para_llevar`              | `/api/restaurante/armar-para-llevar`        | sí      | Du Ad Ge Cj       | `/caja`                                                                                                       | `apps/web/heredado/components/caja/ParaLlevarDialog.jsx:143`                           |
 | `restaurante.asignar_mesero`                 | `/api/restaurante/asignar-mesero`           | sí      | Du Ad Ge Cj Me    | `/mesero`                                                                                                     | `apps/web/heredado/components/mesero/SolicitudesQRCardList.jsx:77`                     |
 | `restaurante.atender_solicitud`              | `/api/restaurante/atender-solicitud`        | sí      | Du Ad Ge Me       | `/mesero`, `/portal-qr`                                                                                       | `apps/web/heredado/components/mesero/SolicitudesQRCardList.jsx:67` (+2)                |
-| `restaurante.cambiar_mesa`                   | `/api/restaurante/cambiar-mesa`             | sí      | Du Ad Ge Cj Me    | `/mesero`, `/restaurante/mesa-activa`                                                                         | `apps/web/src/restaurante/AccionesDeLaMesa.tsx:263` (+1)                               |
+| `restaurante.cambiar_mesa`                   | `/api/restaurante/cambiar-mesa`             | sí      | Du Ad Ge Cj Me    | `/mesero`, `/restaurante/mesa-activa`                                                                         | `apps/web/src/restaurante/AccionesDeLaMesa.tsx:291` (+1)                               |
 | `restaurante.cancelar_orden`                 | `/api/restaurante/cancelar-orden`           | sí      | Du Ad Ge Cj       | `/caja`, `/mesero`, `/restaurante/caja`, `/restaurante/cobro`                                                 | `apps/web/heredado/pages/Caja.jsx:675` (+2)                                            |
 | `restaurante.carrito_cambiar`                | `/api/restaurante/carrito-cambiar`          | sí      | Du Ad Ge Me       | `/mesero`                                                                                                     | `apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:62`              |
 | `restaurante.carrito_enviar`                 | `/api/restaurante/carrito-enviar`           | sí      | Du Ad Ge Me       | `/mesero`                                                                                                     | `apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:89`              |

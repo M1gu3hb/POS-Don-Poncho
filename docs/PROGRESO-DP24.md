@@ -11,8 +11,8 @@ Bitácora de la etapa. Empieza el **20-11-2026 a las 16:45** (hora del centro), 
 | 2 | Quién quita y cancela (y la confirmación de la Parte 7) | agente Sonnet | `.work/dp18-integrar` · `dp-24-p2-quien-cancela` |
 | 3 | El menú: orden, categorías, colores y opciones | agente Sonnet | `.work/dp20-lab` · `dp-24-p3-menu` |
 | 4 | Cocina por producto, avisos al mesero y la mesa | agente Sonnet | `.work/dp20` · `dp-24-p4-cocina` |
-| 5 | Unir mesas poco a poco | agente Sonnet (cuando se libere un árbol) | por abrir |
-| 6 | Impresión: copias y el permiso del iMin (POS y repo de las apps) | agente Sonnet (cuando se libere un árbol) | por abrir |
+| 5 | Unir mesas poco a poco | agente Sonnet | `.work/dp24-p5` · `dp-24-p5-unir-mesas` |
+| 6 | Impresión: copias y el permiso del iMin (POS y repo de las apps) | agente Sonnet | `.work/dp18-integrar` · `dp-24-p6-copias-y-permiso` |
 | 7 | Lo que sólo se confirma | con la Parte 2 | — |
 | 8 | Cero final | sólo cuando Miguel escriba «CERO FINAL» | — |
 
@@ -104,21 +104,95 @@ siguieron donde iban y la sesión principal volvió a la Caja.
   portal completos; unitarias con 20 mutantes; navegador con dedo (`orden-y-color-del-menu.spec.ts`).
 - **Lo revisó la sesión principal:** la migración, los seis comandos y sus permisos, el guion de datos y los cambios en
   la rejilla (que es también la de la Caja). Decisión: DP-D211.
+- **En producción (20-11, 23:20):** `main` en `515d451`, despliegue `dpl_AYMfwXC3wQxAdREQqxMtGKjJMzpK` en READY. La migración
+  196 se aplicó antes de unir (ensayo y aplicación correctos). Humo: 13 bien, 0 mal; las cuatro rutas nuevas de catálogo
+  contestan 403; sin errores de ejecución; las 4 cuentas y las cajas, intactas.
+- **El guion del menú NO se corrió:** el ensayo contra producción terminó en ««don-poncho» sin alta, sin sucursal o sin
+  «Miguel · Morphiq» como dueño activo». Nada se escribió. Hay que dar el nombre exacto de la persona dueña activa y repetirlo.
+  La copia del catálogo de antes quedó en `catalogo-antes-del-menu.json`.
+
+## Parte 6 · Impresión: copias y el permiso de la impresora (PR #49; apps: PR #3 en borrador)
+
+- **Por qué un POS imprimía 1 copia y otro 2:** las copias vivían en una variable que sólo llenaba una consulta de la
+  barra de impresión (un minuto de caducidad, sin releer al enfocar). El aparato que no recargaba imprimía con lo que
+  leyó al abrir. El servidor estaba bien.
+- **El arreglo:** `copiasAlImprimir()` lee del servidor en cada impresión (plazo de 4 s; sin respuesta, la última buena
+  de ese aparato, y lo dice). El diálogo de imprimir del navegador, que ignoraba las copias, ahora las reproduce.
+- **El permiso:** el fallo `SIN_PERMISO` trae el botón «Dar permiso a la impresora» (sin contraseña), que pide el
+  permiso al puente, dice «Permiso concedido ✓» y reintenta la misma impresión.
+- **La app de Android** (repo de las apps, rama `dp-24-permiso-usb`): el filtro `USB_DEVICE_ATTACHED` para que el
+  permiso se quede. **No se publicó APK: falta probarlo en el iMin** (el procedimiento quedó en `INSTALAR.md`).
+- **Pruebas:** `copias-al-imprimir` (dos aparatos contra un servidor que cambia el valor), `pnpm test:impresion` 38 de
+  38 (con el caso de cambiar las copias entre tres impresiones sin recargar), integración del ticket (6), 12 mutantes.
+- **La primera CI salió en rojo:** el arnés de `pruebas/impresion` seguía usando la variable que se quitó, y dos avisos
+  de lint. Corregido en el mismo PR. **No comprobado:** un rollo real ni el iMin. Decisión: DP-D212.
+
+## Parte 5 · Unir mesas poco a poco (PR #51)
+
+- **`restaurante.agregar_a_la_union`:** a un grupo vivo se le agregan mesas las veces que haga falta; todo va a la
+  principal de la primera unión; si la que entra es principal de otro grupo, entra todo ese grupo. Unir y agregar
+  comparten el mismo núcleo (`sumarMiembros`). En el mesero, «Agregar mesas» desde la mesa del grupo. Sin migraciones.
+- **Pruebas:** integración `union-por-partes` (13: tres ampliaciones con comandas en los cuatro estados, separar, cobrar
+  una vez y los rechazos), la regresión de unir (51), la zona de restaurante (1,087) y 25 mutantes. La prueba con dedo
+  (`agregar-mesas-al-tacto`) no corrió en local: se agregó a la CI. Decisión: DP-D213.
+
+## Parte 4 · Cocina por platillo, el aviso de «listo» y la mesa (PR #50)
+
+- **La cocina por platillo:** columnas Nuevo / En preparación / Listo por platillo, bloques por mesa y botón de bloque
+  (`restaurante.mover_platillos`). El estado de la comanda y el de la mesa se derivan de sus platillos.
+- **El mesero:** una tarjeta por estación con «Listos x de n» y «Entregados x de n»; «Marcar entregado» entrega lo
+  listo (por platillo) y la tarjeta lo vuelve a ofrecer.
+- **El aviso grande de «listo»:** sólo al mesero de esa mesa, decidido en el servidor (`restaurante.avisos_de_listo`);
+  con sonido y vibración, apilable, se quita tocando o deslizando.
+- **La nubecita** por estación junto a la mesa en el mapa del mesero. Sin migraciones.
+- **Pruebas:** integración con dos estaciones (17) y las zonas tocadas (535), 12 mutantes, navegador con dedo
+  (`cocina-por-platillo`, `mini-jornada-de-cocina` con 10 mesas y 2 estaciones).
+- **La primera CI salió en rojo, por un defecto de verdad:** en escritorio y tableta el aviso grande quedaba ENCIMA de
+  «Marcar entregado» y el mesero no podía tocarlo (el teléfono sí pasaba). Regresó al agente. Decisión: DP-D214.
+
+## Parte 1 · La Caja (sesión principal, en persona)
+
+- **La tarjeta de cobro nueva** (`~/venta/TarjetaDeCobro`, `PagoDeLaTarjeta`, `TecladoDeImportes`): una sola vista con
+  los platillos, el subtotal, la propina, las formas de pago, lo recibido, el cambio y el total. La cuenta la hace
+  `cuenta-del-cobro.ts` (pura, en centavos) y lo que se teclea vive en `cobro-en-pantalla.ts`. La función pequeña que
+  se agregó: el teclado de importes dentro de la tarjeta (DP-D215).
+- **Propina en la tarjeta** (DP-D216): porcentajes de la Configuración, «Otro monto» y «Sin propina»; la del portal QR
+  llega puesta y se puede cambiar; se acabó la pregunta aparte y el aviso que interrumpía.
+- **Efectivo:** atajos, «dejar el cambio como propina», y **un «Recibido» menor al total ya no se cobra** (la falla
+  del informe 013).
+- **Varias tarjetas:** dividir, agregar, combinar con efectivo y transferencia; si no cuadra no cobra; el ticket, una
+  línea «Tarjeta».
+- **Modificar la cuenta** (DP-D217): «Agregar» y «Para llevar» (`restaurante.agregar_en_caja`, comando nuevo) y quitar
+  con motivo y PIN. **«Pasar platillos a otra cuenta» no existe en el sistema: queda como propuesta, no se construyó.**
+- **Propinas en el corte** (DP-D218): «Propinas del día» por persona con «Liquidar», por el mismo `propinas.liquidar`;
+  lo entregado sale del cajón (movimiento `propina_entregada`) y el conteo cuadra (la otra falla del 013). En la lista
+  sólo quien vende, cobra o atiende.
+- **Pruebas:** unitarias de las reglas puras; integración contra Postgres (`tarjeta-de-cobro`, `agregar-en-caja`,
+  `liquidar-en-el-corte`: 17); navegador con dedo a 1024×768, 800×600 y 1280×800 (`tarjeta-de-cobro.spec.ts`) y
+  `la-caja-manda.spec.ts` (agregar, para llevar, quitar con PIN y liquidar en el corte). Las pruebas que usaban el
+  cobro viejo se pusieron al día (`dia-completo-restaurante`, `propina-una-sola-verdad`, `qa/flujos-qa`).
 
 ## Decisiones (en `DECISIONES.md`, desde DP-D210)
 
 - **DP-D210** · Quién quita y cancela.
 - **DP-D211** · El menú: un solo orden, colores de una paleta y la hoja de comanda como orden inicial.
+- **DP-D212** · Las copias se leen al imprimir, y el permiso de la impresora se da desde el error.
+- **DP-D213** · Unir mesas poco a poco: a un grupo vivo se le agregan mesas.
+- **DP-D214** · La cocina por platillo, el aviso de «listo» al mesero de la mesa y la nubecita.
+- **DP-D215** · La tarjeta de cobro: una sola vista, y se teclea lo que de verdad pasa.
+- **DP-D216** · La propina se elige en la tarjeta de cobro.
+- **DP-D217** · La Caja modifica la cuenta que está cobrando.
+- **DP-D218** · Liquidar propinas en el corte: el mismo comando, y lo entregado sale del cajón.
 
 ## Estado por parte
 
 | Parte | Estado |
 |---|---|
-| 1 · La Caja | en curso (sesión principal) |
+| 1 · La Caja | PR #52, en la CI; se sube al final |
 | 2 · Quién quita y cancela | en producción (20-11, 22:25) |
-| 3 · El menú | PR #48, en la CI |
-| 4 · Cocina por producto | agente trabajando |
-| 5 · Unir mesas poco a poco | agente trabajando |
-| 6 · Impresión | por revisar (agente terminó) |
+| 3 · El menú | en producción (20-11, 23:20); falta correr el guion del menú (persona dueña no hallada) |
+| 4 · Cocina por producto | PR #50; corrigiendo el aviso que tapa «Marcar entregado» |
+| 5 · Unir mesas poco a poco | PR #51, trae main y en la CI |
+| 6 · Impresión | PR #49, trae main y en la CI (la app de Android espera la prueba en el iMin) |
 | 7 · Lo que sólo se confirma | hecho con la Parte 2 |
 | 8 · Cero final | espera el «CERO FINAL» de Miguel |

@@ -1,5 +1,5 @@
 {
-  "commit": "27f7d27",
+  "commit": "9f7e458",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -2027,10 +2027,13 @@
         "apps/web/src/restaurante/precuenta-de-la-mesa.ts",
         "apps/web/src/restaurante/propina-de-la-mesa.ts",
         "apps/web/src/restaurante/rol-de-la-sesion.ts",
+        "apps/web/src/restaurante/unir-mesas/AgregarMesasDialog.tsx",
         "apps/web/src/restaurante/unir-mesas/SepararMesasDialog.tsx",
+        "apps/web/src/restaurante/unir-mesas/agregar-mesas.ts",
         "apps/web/src/restaurante/unir-mesas/index.ts",
         "apps/web/src/restaurante/unir-mesas/liberar-con-pregunta.tsx",
         "apps/web/src/restaurante/unir-mesas/liberar-mesa.ts",
+        "apps/web/src/restaurante/unir-mesas/plano-de-union.ts",
         "apps/web/src/restaurante/unir-mesas/use-union-de-la-mesa.ts",
         "apps/web/src/venta/PinDeSupervisor.tsx",
         "apps/web/src/venta/tope-de-quien-autoriza.ts"
@@ -2079,6 +2082,12 @@
           "titulo": null
         },
         {
+          "tipo": "diálogo",
+          "componente": "AgregarMesasDialog",
+          "archivo": "apps/web/src/restaurante/unir-mesas/AgregarMesasDialog.tsx",
+          "titulo": "Agregar mesas al grupo"
+        },
+        {
           "tipo": "confirmación",
           "componente": "SepararMesasDialog",
           "archivo": "apps/web/src/restaurante/unir-mesas/SepararMesasDialog.tsx",
@@ -2091,7 +2100,7 @@
           "titulo": null
         }
       ],
-      "lineas": 4625,
+      "lineas": 5034,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -8119,6 +8128,14 @@
       "pantallas": ["/mesero", "/restaurante/mesa-activa"]
     },
     {
+      "comando": "restaurante.agregar_a_la_union",
+      "ruta": "/api/restaurante/agregar-a-la-union",
+      "escribe": true,
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/restaurante/unir-mesas/AgregarMesasDialog.tsx:85"],
+      "pantallas": ["/restaurante/mesa-activa"]
+    },
+    {
       "comando": "restaurante.anular_linea",
       "ruta": "/api/restaurante/anular-linea",
       "escribe": true,
@@ -8160,7 +8177,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
-        "apps/web/src/restaurante/AccionesDeLaMesa.tsx:263",
+        "apps/web/src/restaurante/AccionesDeLaMesa.tsx:291",
         "apps/web/src/restaurante/CambiarDeMesaAqui.tsx:120"
       ],
       "pantallas": ["/mesero", "/restaurante/mesa-activa"]
