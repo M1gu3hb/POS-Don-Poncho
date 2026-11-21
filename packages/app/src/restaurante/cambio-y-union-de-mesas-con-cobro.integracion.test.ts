@@ -2,7 +2,7 @@ import { obtenerDb } from '@morphiqpos/data';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { comando } from '../produccion.ts';
-import { clave, exigirOk } from '../pruebas/negocio-real.ts';
+import { clave, conPuestoDeGerencia, exigirOk } from '../pruebas/negocio-real.ts';
 import { cancelarOrden } from './cancelacion.ts';
 import { cambiarMesaComando } from './cambio-de-mesa.ts';
 import { liberarMesa } from './mesas.ts';
@@ -537,7 +537,7 @@ describe('D-7 · cancelar la cuenta de un grupo de mesas unidas', () => {
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId: a.ordenId, motivo: 'se levantaron antes de que saliera la comida' },
-        ambito: ambitoDeCaja(salon),
+        ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden (el grupo)',

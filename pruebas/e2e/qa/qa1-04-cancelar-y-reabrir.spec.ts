@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
-  cancelarConElPinDelGerente,
+  cancelarComoCajaConElPin,
   cancelarLaCuenta,
   quitarUnPlatillo,
 } from '../ayudantes/cancelar-desde-la-mesa.ts';
@@ -30,9 +30,10 @@ import { agregarAlPortal, escanearConLista, pedirAyuda } from './portal-qa.ts';
 
 /**
  * QA-1 · 04 · CANCELACIONES, ANULACIONES, CUENTA PEDIDA, SOLICITUDES Y VOZ.
+ *   DP-24 · Quitar y cancelar ya no son del mesero: los hace la dueña desde la mesa, y la caja con el PIN.
  *   Mesa 13 · antes de preparar: quita el pastel y cancela la cuenta (nada se pierde, nada sale del almacén).
  *   Mesa 14 · con todo ya LISTO: quita el mole y cancela la cuenta (pérdida y merma «Por cancelación»).
- *   Mesa 15 · servida y con la cuenta PEDIDA: cancelar pide el PIN de la gerente.
+ *   Mesa 15 · servida y con la cuenta PEDIDA: la caja cancela sólo con el PIN de la gerente.
  *   Mesa 17 · cuenta pedida, el comensal arma un pastel; el mesero reabre desde «Pedido del portal» y cobra (tarjeta).
  *   Mesa 6 (Mesero 2, teléfono) · una ayuda del portal con voz y sonido, y «Atender».
  */
@@ -54,7 +55,7 @@ const M17_PASTEL: readonly Renglon[] = [{ platillo: 'pastel', veces: 1 }];
 const asientoDeCancelacion = (mesa: number, tipo: string, monto: number, perdida: number) => {
   anotar({
     aparato: 'tableta',
-    quien: 'Mesero 1',
+    quien: 'Dueño',
     accion: `Mesa ${String(mesa)}: ${tipo}`,
     esperado: `monto ${String(monto)}, pérdida ${String(perdida)}`,
     datos: { tipo: 'cancelacion', mesa, que: tipo, monto, perdida },
@@ -97,9 +98,9 @@ test.describe('QA-1 · 04 · cancelar, anular, reabrir y solicitudes', () => {
       await test.step('mesa 13: antes de preparar, quita el pastel y cancela la cuenta (sin pérdida)', async () => {
         await abrirLaMesa(mesero1, duena, 13, 2);
         await comandar(mesero1, 13, comoPedido(M13));
-        await quitarUnPlatillo(mesero1, info, 13, 'Pastel de la casa', false);
+        await quitarUnPlatillo(duena, info, 13, 'Pastel de la casa', false);
         asientoDeCancelacion(13, 'anula el pastel antes de prepararse', importe([M13[2]!]), 0);
-        await cancelarLaCuenta(mesero1, info, 13, 'Capturé la mesa equivocada', false);
+        await cancelarLaCuenta(duena, info, 13, 'Capturé la mesa equivocada', false);
         asientoDeCancelacion(
           13,
           'cancela la cuenta antes de prepararse',
@@ -115,7 +116,7 @@ test.describe('QA-1 · 04 · cancelar, anular, reabrir y solicitudes', () => {
         expect(await sacarTodo(cocinas, M14)).toBe(3);
         await laMesa(mesero1, 14).click();
         await yaAbierto(dialogoDeLaMesa(mesero1, 14));
-        await quitarUnPlatillo(mesero1, info, 14, 'Mole con pollo', true);
+        await quitarUnPlatillo(duena, info, 14, 'Mole con pollo', true);
         asientoDeCancelacion(
           14,
           'anula el mole que ya salió',
@@ -124,7 +125,7 @@ test.describe('QA-1 · 04 · cancelar, anular, reabrir y solicitudes', () => {
         );
         asientoDeMerma(14, 'Mole poblano', 50);
         asientoDeMerma(14, 'Pollo', 300);
-        await cancelarLaCuenta(mesero1, info, 14, 'Se fueron sin pagar', true);
+        await cancelarLaCuenta(duena, info, 14, 'Se fueron sin pagar', true);
         const resto = importe([M14[1]!, M14[2]!]);
         asientoDeCancelacion(
           14,
@@ -136,20 +137,20 @@ test.describe('QA-1 · 04 · cancelar, anular, reabrir y solicitudes', () => {
         asientoDeMerma(14, 'Aguacate', 250);
       });
 
-      await test.step('mesa 15: servida y con la cuenta pedida, cancelar pide el PIN de la gerente', async () => {
+      await test.step('mesa 15: servida y con la cuenta pedida, la caja cancela sólo con el PIN de la gerente', async () => {
         await abrirLaMesa(mesero1, duena, 15, 2);
         await comandar(mesero1, 15, comoPedido(M15));
         await alMapa(mesero1);
         expect(await sacarTodo(cocinas, M15)).toBe(1);
         await entregarListos(mesero1, 15);
         await pedirLaCuentaQa(mesero1, 15, null);
-        if (!(await dialogoDeLaMesa(mesero1, 15).isVisible())) await laMesa(mesero1, 15).click();
-        await yaAbierto(dialogoDeLaMesa(mesero1, 15));
         esperandoRechazo = true; // el 422 «sin PIN» es la respuesta que se espera
-        await cancelarConElPinDelGerente(mesero1, info, 15, 'Se arrepintieron', {
-          nombre: 'Gerente',
-          pin: pinDe('Gerente'),
-        });
+        await cancelarComoCajaConElPin(
+          caja,
+          (await mesaEnElServidor(duena, 15)).ordenId ?? '',
+          'Se arrepintieron',
+          { nombre: 'Gerente', pin: pinDe('Gerente') },
+        );
         esperandoRechazo = false;
         asientoDeCancelacion(
           15,

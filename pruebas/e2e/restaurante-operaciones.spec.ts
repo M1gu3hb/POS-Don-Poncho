@@ -1395,9 +1395,9 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         totalCentavos: importeDe(pedido),
       });
 
-      // DP-12.4 · Anular ya es también de la mesera (con motivo y a su nombre: lo prueba
-      // `cancelacion-del-mesero.spec.ts`). Quien NO puede es el COCINERO (el empleo de cocina; la
-      // pantalla `cocina` de este día es la de la dueña), y el servidor se lo niega.
+      // DP-24 · Anular lo enviado es de la caja (con PIN) y de la gerencia (DP-D210); que la mesera
+      // ya no puede lo prueba `cancelacion-del-mesero.spec.ts`. Aquí, que tampoco el COCINERO (el
+      // empleo de cocina; la pantalla `cocina` de este día es la de la dueña): el servidor se lo niega.
       await test.step('el cocinero NO puede anular: el servidor se lo niega y la cuenta no cambia', async () => {
         const cocinero = await dia.equipo.pagina(info, 'cocina');
         const sopa = (await todasLasLineas(duena, ordenId)).find(
@@ -2942,6 +2942,7 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
       const descuento = Math.round(importeDe(pedido) * 0.2);
       const a = await sentarYComandar(dia.duena, dia.duena, 3, 2, pedido);
       const b = await sentarYComandar(dia.duena, dia.duena, 6, 2, pedido);
+      const sinCancelar: string[] = [];
       try {
         const tope = await comando<{
           readonly quienesAutorizan: readonly {
@@ -2985,13 +2986,21 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
           'El servidor descontó otra cuenta con una autorización que ya se usó en la primera.',
         ).toBe(false);
       } finally {
+        // DP-24 · La cajera ya no cancela sin el PIN de un gerente (DP-D210): la limpieza la hace
+        // la dueña, y se comprueba, porque una cuenta que se queda abierta en la 3 o en la 6 no
+        // deja cerrar la caja en la prueba 7.
         for (const cuenta of [a, b]) {
-          await comando(rosa, '/api/restaurante/cancelar-orden', {
+          const cancelada = await comando(dia.duena, '/api/restaurante/cancelar-orden', {
             ordenId: cuenta.ordenId,
             motivo: 'prueba de la autorización reutilizada',
           });
+          if (!cancelada.ok) sinCancelar.push(cancelada.mensaje ?? cuenta.ordenId);
         }
       }
+      expect(
+        sinCancelar,
+        'Quedó sin cancelar una cuenta de prueba: su mesa seguiría ocupada al cierre.',
+      ).toEqual([]);
     } finally {
       await dia.equipo.cerrar();
     }

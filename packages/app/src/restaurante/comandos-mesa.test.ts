@@ -136,7 +136,7 @@ describe('bloqueante 1 · cancelar_orden es la salida que faltaba', () => {
   it('anula la cuenta con motivo, apaga la cocina y libera la mesa', async () => {
     const base = salonConCuentaViva();
     const ahora = new Date('2026-09-09T21:30:00.000Z');
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'), ahora);
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'), ahora);
 
     const salida = await cancelarOrden.ejecutar(ctx, {
       ordenId: CUENTA,
@@ -165,7 +165,7 @@ describe('bloqueante 1 · cancelar_orden es la salida que faltaba', () => {
   it('tras cancelar, la mesa se puede volver a abrir', async () => {
     // La prueba del veredicto entera: mesa fuera de servicio → mesa operando.
     const base = salonConCuentaViva();
-    const primera = contextoFalso(base.tx, ambitoDe('cajero'));
+    const primera = contextoFalso(base.tx, ambitoDe('gerente'));
     await cancelarOrden.ejecutar(primera.ctx, { ordenId: CUENTA, motivo: 'Mesa abandonada' });
 
     const segunda = contextoFalso(base.tx, ambitoDe('mesero'));
@@ -209,10 +209,10 @@ describe('bloqueante 1 · cancelar_orden es la salida que faltaba', () => {
     expect(base.campo('ordenes', 'estado')).toBe('pagada');
   });
 
-  it('DP-12.4 · el mesero SÍ cancela una cuenta; cocina y almacén no; el motivo es obligatorio', async () => {
+  it('DP-24 · el mesero NO cancela una cuenta; la caja y la gerencia sí; cocina y almacén no; el motivo es obligatorio', async () => {
     // La autorización sale de `ctx.ambito.rol` (sesión del servidor), no del
     // cuerpo: aquí se afirma sobre la DECLARACIÓN, que es lo que lee `comando()`.
-    expect(cancelarOrden.roles).toContain('mesero');
+    expect(cancelarOrden.roles).not.toContain('mesero');
     expect(cancelarOrden.roles).toContain('cajero');
     expect(cancelarOrden.roles).not.toContain('cocina');
     expect(cancelarOrden.roles).not.toContain('almacen');
@@ -221,7 +221,6 @@ describe('bloqueante 1 · cancelar_orden es la salida que faltaba', () => {
       'cajero',
       'dueno',
       'gerente',
-      'mesero',
     ]);
     expect(cancelarOrden.entrada.safeParse({ ordenId: CUENTA }).success).toBe(false);
     expect(cancelarOrden.entrada.safeParse({ ordenId: CUENTA, motivo: '  ' }).success).toBe(false);
@@ -229,7 +228,7 @@ describe('bloqueante 1 · cancelar_orden es la salida que faltaba', () => {
 
   it('cancelar_orden tampoco acepta una venta de mostrador', async () => {
     const base = baseDe({ ordenes: [ordenDeMostrador()] });
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     const codigo = await fallaCon(
       cancelarOrden.ejecutar(ctx, { ordenId: CARRITO_MOSTRADOR, motivo: 'No es mía' }),

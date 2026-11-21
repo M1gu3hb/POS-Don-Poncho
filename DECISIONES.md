@@ -4056,3 +4056,22 @@ desplazar, al cambiar el alto de la lista y en cada pintada. Prueba con el dedo:
 - **Sólo cuenta el desplazamiento de los contenedores del botón.** Se quitó el oyente global de `scroll`: un desplazamiento ajeno
   (la barra de secciones del menú digital, un `scrollIntoView` del teclado en pantalla) ya no anula el toque limpio del comensal.
   Uno en un ancestro del botón o en la página sí.
+
+## DP-D210 · DP-24 · Quién quita y cancela: el mesero ya no; la caja con PIN; la gerencia sin PIN · 20-11-2026
+
+Lo pidió Don Poncho tras la entrega. Sustituye a DP-12.4 (el mesero podía anular y cancelar) y a la parte del mesero de DP-D51.
+
+- **El mesero** sólo quita lo que todavía NO manda a cocina (su carrito, que vive en su pantalla). Ya no anula un platillo
+  enviado ni cancela una cuenta: `restaurante.anular_linea` y `restaurante.cancelar_orden` lo dejaron fuera de sus roles y
+  `exigirPermisoParaCancelar` lo rechaza además por regla (un rol agregado por error a un comando no se cuela). En pantalla no
+  ve los botones. Se quedan con él: mover de mesa, unir mesas, pasar la mesa a otro mesero y liberar una mesa VACÍA
+  (`restaurante.liberar_mesa` no cancela consumo).
+- **El cajero** quita o cancela SIEMPRE con el PIN de un gerente, administrador o dueño (autorización atada a ESA cuenta y a
+  cancelar, de dos minutos). Ya no depende de que la cuenta se haya pedido o impreso, y el ajuste
+  `pin_al_cancelar_cuenta_pedida` deja de leerse (una configuración vieja que lo traiga apagado no apaga nada).
+- **Gerente, administrador y dueño**, sin PIN. El motivo sigue siendo obligatorio y todo queda en la auditoría con quién lo
+  hizo y quién autorizó.
+- **La otra puerta:** `restaurante.transicionar_pedido` a «cancelado» (ninguna pantalla lo manda) queda sólo para la gerencia.
+- **Lo que sólo se confirmó (Parte 7):** con la asignación de mesas apagada, quien abre o atiende la mesa se queda con ella
+  (`portal/sin-asignacion.integracion.test.ts` y una prueba nueva de «el mesero que abre la mesa se queda con la cuenta»). El
+  Tablero no se tocó: cambia de día a la medianoche de America/Mexico_City y el corte no lo reinicia.

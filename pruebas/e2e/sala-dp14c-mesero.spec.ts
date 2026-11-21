@@ -114,7 +114,7 @@ test.describe('la sala del mesero (DP-14.6)', () => {
     }
   });
 
-  test('una mesa abierta sin renglones se cancela desde su diálogo; «Nueva mesa» trae zona', async ({
+  test('una mesa abierta sin renglones la cancela la dueña desde su diálogo (DP-24: ya no el mesero); «Nueva mesa» trae zona', async ({
     browser,
   }, info) => {
     test.setTimeout(5 * 60_000);
@@ -131,7 +131,7 @@ test.describe('la sala del mesero (DP-14.6)', () => {
       const sinFallos = vigilarFallos(lupita);
       await lupita.goto('/mesero');
       await abrirLaMesa(lupita, duena, MESA, 2);
-      await cancelarLaCuenta(lupita, info, MESA, 'Se abrió por error', false);
+      await cancelarLaCuenta(duena, info, MESA, 'Se abrió por error', false);
       await alMapa(lupita);
       await exigirEstadoDeLaMesa(duena, MESA, 'libre', 'La mesa vacía cancelada no quedó libre.');
       sinFallos();

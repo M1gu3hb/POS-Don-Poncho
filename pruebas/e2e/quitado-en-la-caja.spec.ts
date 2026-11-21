@@ -164,13 +164,7 @@ test.describe('lo quitado no se cobra, y la caja descuenta y cancela', () => {
     await resetear();
     const rosa = await equipo.pagina(info, 'cajero');
     const lupita = await equipo.pagina(info, 'mesero');
-    // El 422 de cancelar una cuenta pedida sin PIN es el que la pantalla ESPERA: se perdona sólo
-    // mientras se espera.
-    let esperandoElRechazoDelPin = false;
-    const fallos = [
-      vigilarFallos(rosa, { sondeando: () => esperandoElRechazoDelPin }),
-      vigilarFallos(lupita),
-    ];
+    const fallos = [vigilarFallos(rosa), vigilarFallos(lupita)];
     await rosa.goto('/');
     await rosa.waitForURL(/\/caja$/);
     await lupita.goto('/');
@@ -227,23 +221,15 @@ test.describe('lo quitado no se cobra, y la caja descuenta y cancela', () => {
       }
     });
 
-    await test.step('Rosa cancela la cuenta desde su cobro: ya pedida, con el PIN de la gerente (DP-D51)', async () => {
+    await test.step('Rosa cancela la cuenta desde su cobro: siempre con el PIN de la gerente (DP-24)', async () => {
       const ordenId = await servir(4);
       const cobro = await abrirElCobro(rosa, 4);
       await cobro.getByRole('button', { name: 'Cancelar la cuenta', exact: true }).click();
       const dialogo = rosa.getByRole('dialog', { name: 'Cancelar la cuenta' });
       await dialogo.locator('#cancelar-cuenta-motivo').fill('Se fueron sin consumir');
       const confirmar = dialogo.getByRole('button', { name: 'Cancelar la cuenta sin cobrar' });
-      const rechazo = rosa.waitForResponse(
-        (r) => new URL(r.url()).pathname === '/api/restaurante/cancelar-orden',
-      );
-      esperandoElRechazoDelPin = true;
-      try {
-        await confirmar.click();
-        expect((await rechazo).status(), 'Sin PIN, la cuenta pedida se canceló.').toBe(422);
-      } finally {
-        esperandoElRechazoDelPin = false;
-      }
+      // DP-24 · La caja pide el PIN de entrada, no después de un rechazo: sin él no se puede enviar.
+      await expect(confirmar, 'La caja pudo cancelar sin el PIN de un gerente.').toBeDisabled();
       await dialogo
         .getByRole('group', { name: 'Quién autoriza' })
         .getByRole('button', { name: gerente.nombre })
