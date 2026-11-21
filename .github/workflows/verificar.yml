@@ -777,15 +777,19 @@ jobs:
       - name: La Caja manda
         if: matrix.modelo == 'caja'
         run: |
-          pnpm test:e2e pruebas/e2e/la-caja-manda.spec.ts --project=escritorio --workers=1 --retries=0
-          pnpm test:e2e pruebas/e2e/propina-una-sola-verdad.spec.ts --project=escritorio --workers=1 --retries=0
-          pnpm test:e2e pruebas/e2e/quitado-en-la-caja.spec.ts --project=escritorio --workers=1 --retries=0
-          pnpm test:e2e pruebas/e2e/ticket-con-descuento.spec.ts --project=escritorio --workers=1 --retries=0
-          pnpm test:e2e pruebas/e2e/sin-iva.spec.ts --project=escritorio --workers=1 --retries=0
-          pnpm test:e2e pruebas/e2e/dividir-en-la-caja.spec.ts --project=escritorio --workers=1 --retries=0
-          pnpm test:e2e pruebas/e2e/sala-dp14c-cierre.spec.ts --project=escritorio --workers=1 --retries=0
-          pnpm test:e2e pruebas/e2e/folios-con-prefijo.spec.ts --project=escritorio --workers=1 --retries=0
-          pnpm test:e2e pruebas/e2e/barbacoa-por-kilo.spec.ts --project=escritorio --workers=1 --retries=0
+          # Cada suite corre aunque otra falle: así una vuelta de CI muestra TODO lo roto, y el
+          # trabajo falla igual al final.
+          fallo=0
+          pnpm test:e2e pruebas/e2e/la-caja-manda.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/propina-una-sola-verdad.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/quitado-en-la-caja.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/ticket-con-descuento.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/sin-iva.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/dividir-en-la-caja.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/sala-dp14c-cierre.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/folios-con-prefijo.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/barbacoa-por-kilo.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          exit $fallo
 
       - name: Las trazas del día
         if: always()
