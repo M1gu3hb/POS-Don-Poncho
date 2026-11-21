@@ -392,6 +392,18 @@ export const SIN_ESTADO = [
       'DP-25 · Pieza, no pantalla: si la lectura de los pagos falla, el diálogo que la contiene dice «No se pudieron leer los pagos de esta venta» en su lugar.',
   },
   {
+    pantalla: 'configuracion/VerElPin',
+    estado: 'vacio',
+    razon:
+      'DP-25 · Parte 7 · El ojito del dueño y su diálogo: un PIN, «No disponible» o el campo de su PIN; no tiene lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'configuracion/VerElPin',
+    estado: 'cargando',
+    razon:
+      'DP-25 · Parte 7 · No lee nada al abrir: la lectura de quién tiene copia la hace la sección de Personas, y al pedir el PIN el botón de su campo (`PinDeSupervisor`) lleva su propia espera.',
+  },
+  {
     pantalla: 'venta/PagoDeLaCaja',
     estado: 'vacio',
     razon:

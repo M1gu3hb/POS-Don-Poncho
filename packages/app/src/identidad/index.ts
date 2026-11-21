@@ -19,6 +19,15 @@ export {
 } from './entrar.ts';
 
 export { entradaEstablecerPin, establecerPin } from './comandos.ts';
+// DP-25 · Parte 7 · El dueño ve el PIN de su gente (copia cifrada, con su propio PIN, auditado).
+export {
+  entradaPinesVisibles,
+  entradaVerElPin,
+  pinesVisibles,
+  verElPin,
+  type PinVisto,
+  type PinesVisibles,
+} from './ver-el-pin.ts';
 
 export { leerEstacionDeLaSesion, type EstacionDeLaSesion } from './estacion-de-la-sesion.ts';
 

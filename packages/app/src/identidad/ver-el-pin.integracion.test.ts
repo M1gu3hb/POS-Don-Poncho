@@ -6,7 +6,13 @@ import { sql } from 'kysely';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { comando } from '../produccion.ts';
-import { ambitoDe, clave, exigirOk, sembrarNegocio, type NegocioReal } from '../pruebas/negocio-real.ts';
+import {
+  ambitoDe,
+  clave,
+  exigirOk,
+  sembrarNegocio,
+  type NegocioReal,
+} from '../pruebas/negocio-real.ts';
 import { establecerPin } from './comandos.ts';
 import { firmarAutorizacion } from './supervisor.ts';
 import { pinesVisibles, verElPin } from './ver-el-pin.ts';
@@ -44,23 +50,29 @@ async function sembrarPersona(nombre: string, rol: Rol) {
       .insertInto('personas')
       .values({ id: ids.persona, organizacion_id: negocio.organizacionId, nombre })
       .execute();
-    await tx.insertInto('identidades').values({ id: ids.identidadId, persona_id: ids.persona }).execute();
+    await tx
+      .insertInto('identidades')
+      .values({ id: ids.identidadId, persona_id: ids.persona })
+      .execute();
     await tx
       .insertInto('empleos')
-      .values({ id: ids.empleoId, persona_id: ids.persona, organizacion_id: negocio.organizacionId, rol })
+      .values({
+        id: ids.empleoId,
+        persona_id: ids.persona,
+        organizacion_id: negocio.organizacionId,
+        rol,
+      })
       .execute();
   });
   return { empleoId: ids.empleoId, identidadId: ids.identidadId };
 }
 
 const copiaDe = async (identidadId: string) =>
-  (
-    await obtenerDb()
-      .selectFrom('credenciales_pin')
-      .select(['pin_cifrado', 'pin_hash'])
-      .where('identidad_id', '=', identidadId)
-      .executeTakeFirstOrThrow()
-  );
+  await obtenerDb()
+    .selectFrom('credenciales_pin')
+    .select(['pin_cifrado', 'pin_hash'])
+    .where('identidad_id', '=', identidadId)
+    .executeTakeFirstOrThrow();
 
 const ponerPin = (empleado: string, pin: string) =>
   comando(establecerPin, { entrada: { empleado, pin }, ambito, idempotencyKey: clave() });
@@ -83,8 +95,15 @@ const suFirma = (supervisor = negocio.empleoId, rol: Rol = 'dueno') =>
 const ver = (empleado: string, autorizacion: string, como = ambito) =>
   comando(verElPin, { entrada: { empleado, autorizacion }, ambito: como, idempotencyKey: clave() });
 
-const codigo = (r: { ok: boolean; error?: { codigo: string; datos?: Readonly<Record<string, unknown>> } }) =>
-  r.ok ? 'ok' : (typeof r.error?.datos?.['regla'] === 'string' ? (r.error.datos['regla'] as string) : r.error?.codigo);
+const codigo = (r: {
+  ok: boolean;
+  error?: { codigo: string; datos?: Readonly<Record<string, unknown>> };
+}) =>
+  r.ok
+    ? 'ok'
+    : typeof r.error?.datos?.['regla'] === 'string'
+      ? (r.error.datos['regla'] as string)
+      : r.error?.codigo;
 
 beforeAll(async () => {
   negocio = await sembrarNegocio({
@@ -100,6 +119,7 @@ beforeAll(async () => {
     ['Ana', 'administrador'],
     ['Rosa', 'cajero'],
     ['Memo', 'mesero'],
+    ['Socio', 'dueno'],
   ] as const) {
     gente[nombre] = await sembrarPersona(nombre, rol);
   }
@@ -108,7 +128,10 @@ beforeAll(async () => {
 describe('el dueño ve el PIN de su gente', () => {
   it('al poner el PIN se guarda una copia cifrada, y el PIN nunca queda a la vista', async () => {
     ENTORNO.PIN_CIFRADO_CLAVE = LLAVE;
-    exigirOk(await ponerPin(gente['Lupita']?.empleoId ?? '', PIN_DEL_MESERO), 'identidad.establecer_pin');
+    exigirOk(
+      await ponerPin(gente['Lupita']?.empleoId ?? '', PIN_DEL_MESERO),
+      'identidad.establecer_pin',
+    );
     const fila = await copiaDe(gente['Lupita']?.identidadId ?? '');
     expect(fila.pin_cifrado).toMatch(/^v1\./);
     expect(fila.pin_cifrado).not.toContain(PIN_DEL_MESERO);
@@ -117,7 +140,10 @@ describe('el dueño ve el PIN de su gente', () => {
 
   it('el dueño lo ve con SU firma; la vista queda en la auditoría, sin el PIN', async () => {
     ENTORNO.PIN_CIFRADO_CLAVE = LLAVE;
-    const visto = exigirOk(await ver(gente['Lupita']?.empleoId ?? '', suFirma()), 'identidad.ver_pin');
+    const visto = exigirOk(
+      await ver(gente['Lupita']?.empleoId ?? '', suFirma()),
+      'identidad.ver_pin',
+    );
     expect(visto).toEqual({ disponible: true, pin: PIN_DEL_MESERO });
     const rastro = await obtenerDb()
       .selectFrom('auditoria')
@@ -149,19 +175,28 @@ describe('el dueño ve el PIN de su gente', () => {
     ENTORNO.PIN_CIFRADO_CLAVE = LLAVE;
     const deGema = suFirma(gente['Gema']?.empleoId, 'gerente');
     expect(codigo(await ver(gente['Lupita']?.empleoId ?? '', deGema))).toBe('PUESTO_NO_OTORGABLE');
+    // Ni la de otro dueño: el que pregunta es quien teclea.
+    const delSocio = suFirma(gente['Socio']?.empleoId, 'dueno');
+    expect(codigo(await ver(gente['Lupita']?.empleoId ?? '', delSocio))).toBe(
+      'PUESTO_NO_OTORGABLE',
+    );
   });
 
   it('nadie más lo ve: el servidor lo rechaza para cualquier otro puesto', async () => {
     ENTORNO.PIN_CIFRADO_CLAVE = LLAVE;
     for (const nombre of ['Gema', 'Ana', 'Rosa', 'Memo']) {
       const persona = gente[nombre];
-      const rol = (await obtenerDb()
-        .selectFrom('empleos')
-        .select('rol')
-        .where('id', '=', persona?.empleoId ?? '')
-        .executeTakeFirstOrThrow()).rol as Rol;
+      const rol = (
+        await obtenerDb()
+          .selectFrom('empleos')
+          .select('rol')
+          .where('id', '=', persona?.empleoId ?? '')
+          .executeTakeFirstOrThrow()
+      ).rol as Rol;
       const como = { ...ambito, empleoId: persona?.empleoId ?? '', rol };
-      expect(codigo(await ver(gente['Lupita']?.empleoId ?? '', suFirma(), como))).toBe('SIN_PERMISO');
+      expect(codigo(await ver(gente['Lupita']?.empleoId ?? '', suFirma(), como))).toBe(
+        'SIN_PERMISO',
+      );
       const lista = await comando(pinesVisibles, { entrada: {}, ambito: como });
       expect(codigo(lista)).toBe('SIN_PERMISO');
     }
@@ -171,11 +206,16 @@ describe('el dueño ve el PIN de su gente', () => {
     ENTORNO.PIN_CIFRADO_CLAVE = undefined;
     exigirOk(await ponerPin(gente['Memo']?.empleoId ?? '', '9031'), 'identidad.establecer_pin');
     ENTORNO.PIN_CIFRADO_CLAVE = LLAVE;
-    expect(exigirOk(await ver(gente['Memo']?.empleoId ?? '', suFirma()), 'identidad.ver_pin')).toEqual({
+    expect(
+      exigirOk(await ver(gente['Memo']?.empleoId ?? '', suFirma()), 'identidad.ver_pin'),
+    ).toEqual({
       disponible: false,
       motivo: 'sin_copia',
     });
-    const lista = exigirOk(await comando(pinesVisibles, { entrada: {}, ambito }), 'identidad.pines_visibles');
+    const lista = exigirOk(
+      await comando(pinesVisibles, { entrada: {}, ambito }),
+      'identidad.pines_visibles',
+    );
     expect(lista.activa).toBe(true);
     expect(lista.conCopia).toContain(gente['Lupita']?.empleoId);
     expect(lista.conCopia).not.toContain(gente['Memo']?.empleoId);
@@ -185,11 +225,15 @@ describe('el dueño ve el PIN de su gente', () => {
     ENTORNO.PIN_CIFRADO_CLAVE = undefined;
     exigirOk(await ponerPin(gente['Lupita']?.empleoId ?? '', '7700'), 'identidad.establecer_pin');
     expect((await copiaDe(gente['Lupita']?.identidadId ?? '')).pin_cifrado).toBeNull();
-    expect(exigirOk(await comando(pinesVisibles, { entrada: {}, ambito }), 'identidad.pines_visibles')).toEqual({
+    expect(
+      exigirOk(await comando(pinesVisibles, { entrada: {}, ambito }), 'identidad.pines_visibles'),
+    ).toEqual({
       activa: false,
       conCopia: [],
     });
-    expect(exigirOk(await ver(gente['Lupita']?.empleoId ?? '', suFirma()), 'identidad.ver_pin')).toEqual({
+    expect(
+      exigirOk(await ver(gente['Lupita']?.empleoId ?? '', suFirma()), 'identidad.ver_pin'),
+    ).toEqual({
       disponible: false,
       motivo: 'apagada',
     });

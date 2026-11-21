@@ -131,7 +131,11 @@ export const verElPin = definirComando<Transaccion, typeof entradaVerElPin, PinV
   },
 });
 
-export const pinesVisibles = definirComando<Transaccion, typeof entradaPinesVisibles, PinesVisibles>({
+export const pinesVisibles = definirComando<
+  Transaccion,
+  typeof entradaPinesVisibles,
+  PinesVisibles
+>({
   nombre: 'identidad.pines_visibles',
   entidad: 'empleo',
   escribe: false,

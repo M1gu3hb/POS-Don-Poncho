@@ -421,6 +421,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/identidad/pines-visibles",
+      "comando": "identidad.pines_visibles",
+      "escribe": false,
+      "roles": ["dueno"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/inventario/consumo-interno",
       "comando": "inventario.consumo_interno",
       "escribe": true,
@@ -1053,6 +1060,10 @@
     {
       "ruta": "/api/identidad/supervisor",
       "razon": "no es una ruta de comando (pública, de sesión o de consulta)"
+    },
+    {
+      "ruta": "/api/identidad/ver-pin",
+      "razon": "no sirve UN comando por la tubería estándar: valida o encadena antes del comando"
     },
     {
       "ruta": "/api/inventario/ajustar",

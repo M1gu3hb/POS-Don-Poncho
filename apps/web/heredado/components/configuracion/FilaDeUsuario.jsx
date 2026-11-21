@@ -23,7 +23,7 @@ export function cuerpoDelEmpleado(u, cambios = {}) {
   };
 }
 
-export function FilaDeUsuario({ u, cfg, acciones }) {
+export function FilaDeUsuario({ u, cfg, acciones, verPin = null }) {
   const mostrarEstacionInfo = cfg?.estaciones_preparacion_activas === true && u.rol === 'cocina';
   const mostrarColorDot =
     u.rol === 'mesero' || (u.rol === 'cocina' && cfg?.estaciones_preparacion_activas === true);
@@ -46,9 +46,13 @@ export function FilaDeUsuario({ u, cfg, acciones }) {
         )}
         <div className="min-w-0">
           <p className="font-medium text-sm truncate">{u.nombre}</p>
-          <p className="text-xs text-muted-foreground truncate">
-            {u.etiqueta || etiquetaDelPuesto(u.rol)} · PIN: ••••
-          </p>
+          <div className="flex items-center gap-1">
+            <p className="text-xs text-muted-foreground truncate">
+              {u.etiqueta || etiquetaDelPuesto(u.rol)} · PIN: ••••
+            </p>
+            {/* DP-25 · Parte 7: el ojito del dueño, para ver el PIN con su propio PIN. */}
+            {verPin}
+          </div>
           {mostrarEstacionInfo && (
             <div className="mt-1">
               {u.puede_ver_todas_estaciones ? (
