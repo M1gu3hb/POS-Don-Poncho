@@ -536,7 +536,7 @@
       "ruta": "/api/restaurante/anular-linea",
       "comando": "restaurante.anular_linea",
       "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["restaurante"]
     },
     {
@@ -571,7 +571,7 @@
       "ruta": "/api/restaurante/cancelar-orden",
       "comando": "restaurante.cancelar_orden",
       "escribe": true,
-      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["restaurante"]
     },
     {

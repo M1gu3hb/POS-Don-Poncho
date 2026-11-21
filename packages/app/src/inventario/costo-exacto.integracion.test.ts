@@ -532,7 +532,7 @@ describe('(d) merma y consumo valen cantidad × costo exacto', () => {
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId: cancelada.ordenId, motivo: 'Se fueron sin pagar' },
-        ambito: ambitoDeCaja(salon),
+        ambito: { ...ambitoDeCaja(salon), rol: 'gerente' as const },
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',

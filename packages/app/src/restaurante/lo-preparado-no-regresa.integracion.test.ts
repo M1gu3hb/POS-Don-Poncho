@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { guardarReceta } from '../inventario/recetas.ts';
 import { comando } from '../produccion.ts';
-import { clave, exigirOk } from '../pruebas/negocio-real.ts';
+import { clave, conPuestoDeGerencia, exigirOk } from '../pruebas/negocio-real.ts';
 import { escribir } from '../puente/escribir.ts';
 import { devolverVenta } from '../venta/devolucion-de-venta.ts';
 import { cancelarOrden } from './cancelacion.ts';
@@ -208,7 +208,7 @@ async function cancelar(ordenId: string): Promise<void> {
   exigirOk(
     await comando(cancelarOrden, {
       entrada: { ordenId, motivo: 'El comensal se fue sin pagar' },
-      ambito: ambitoDeCaja(salon),
+      ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
       idempotencyKey: clave(),
     }),
     'restaurante.cancelar_orden',

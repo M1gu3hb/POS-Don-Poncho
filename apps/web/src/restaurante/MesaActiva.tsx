@@ -30,8 +30,8 @@
  *
  * ── Lo que quita dinero no se le ofrece al mesero ───────────────────────
  * «Dividir» es de caja y de dirección: al mesero se le enseñaba y el servidor la negaba. Ahora
- * sólo la ve quien puede (`puedeAjustarLaCuenta`). «Anular» (DP-12.4) es también del mesero
- * (`puedeCancelarPedidos`).
+ * sólo la ve quien puede (`puedeAjustarLaCuenta`). «Anular» es de la caja y la gerencia
+ * (`puedeCancelarPedidos`, DP-24): el mesero ya no.
  *
  * ── En tablet el pedido es una HOJA, no un panel lateral ─────────────────
  * El mesero sostiene la tablet con la izquierda y opera con el pulgar derecho:
@@ -191,7 +191,7 @@ export function MesaActiva(props: MesaActivaProps) {
     delaCocina.falloDeLectura !== null;
   const rol = useRolDeLaSesion();
   const puedeAjustar = puedeAjustarLaCuenta(rol);
-  // DP-12.4: quitar un platillo también es del mesero (con motivo y a su nombre).
+  // DP-24: quitar lo ya enviado es de la caja (con PIN) y de la gerencia; el mesero no ve «Anular».
   const puedeQuitar = puedeCancelarPedidos(rol);
 
   useEffect(() => {

@@ -47,7 +47,7 @@ export const entradaAnularLinea = z.object({
   cantidad: z.string().regex(CANTIDAD, 'La cantidad va con hasta cuatro decimales.').optional(),
   motivo: z.enum(MOTIVOS_ANULACION),
   nota: z.string().trim().min(1).max(200).optional(),
-  /** DP-13.2 · Como al cancelar: con la cuenta pedida o impresa, el PIN de un gerente. */
+  /** DP-24 · El cajero siempre manda aquí la autorización del PIN de un gerente, administrador o dueño. */
   autorizacion: z.string().min(20).max(2000).optional(),
 });
 
@@ -62,16 +62,17 @@ export interface ResultadoAnulacion {
 }
 
 /**
- * Quién anula un platillo.
+ * Quién anula un platillo ya enviado.
  *
- * DP-12.4 · El MESERO entra, igual que en la cancelación de la cuenta: es quien toma el pedido y
- * quien primero se entera de que el cliente cambió de opinión o de que la cocina se equivocó, y
- * mandarlo a buscar al cajero era un platillo más que se enfría. El motivo (cerrado, ver arriba)
+ * DP-24 · Parte 2 · El MESERO ya no (había entrado en DP-12.4): lo que todavía no manda a cocina lo
+ * quita de su carrito, sin comando; lo ya enviado lo quita la caja con el PIN de un gerente, o la
+ * gerencia. El rechazo lo da el servidor: aquí, el rol; y `exigirPermisoParaCancelar`, la regla
+ * (cajero siempre con PIN; gerente, administrador y dueño sin él). El motivo (cerrado, ver arriba)
  * sigue siendo obligatorio y la anulación queda con su nombre (`empleado_anula_id`); si el plato
  * ya había salido de cocina el corte lo saca aparte como PÉRDIDA. Cocina y almacén siguen fuera.
  * Sale de `ctx.ambito.rol`, de la sesión del servidor, nunca del cuerpo.
  */
-const ROLES_DE_ANULACION = ['mesero', 'cajero', 'gerente', 'administrador', 'dueno'] as const;
+const ROLES_DE_ANULACION = ['cajero', 'gerente', 'administrador', 'dueno'] as const;
 
 /** Estados en los que una cuenta todavía se puede tocar. */
 const EDITABLES = [
@@ -135,9 +136,9 @@ export const anularLineaComando = definirComando<
       }),
     );
 
-    // DP-13.2 · El mesero, sólo en sus mesas; con la cuenta pedida o impresa, con PIN.
+    // DP-24 · El cajero, siempre con el PIN de un gerente; la gerencia, sin él; el mesero, no.
     const autorizadoPor = await ctx.paso('permiso', () =>
-      exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion),
+      Promise.resolve(exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion)),
     );
 
     const linea = await ctx.paso('cargar_linea', () =>

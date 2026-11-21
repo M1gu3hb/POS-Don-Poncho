@@ -1,3 +1,4 @@
+import { cancelarComoCajaConElPin } from '../ayudantes/cancelar-desde-la-mesa.ts';
 import { dialogoDeLaMesa, laMesa, yaAbierto, CARTA, pesos } from '../ayudantes/mesas-heredadas.ts';
 import { Equipo, personaDe } from '../ayudantes/roles.ts';
 import { cabecerasDeEscrituraDePrueba, exigirDemostracion } from '../ayudantes/sesion.ts';
@@ -20,9 +21,10 @@ import {
  * PARTE 7 · puntos 3 (cancelar con motivo y con quién autorizó) y 4 (descuento con la clave de
  * gerencia), con el dedo.
  *
- * 3 · El mesero quita un platillo ya enviado (el motivo es obligatorio), no puede cancelar la cuenta
- *     de una mesa que no es suya, y con la cuenta ya pedida cancelarla pide la clave de gerencia; el
- *     motivo y quién autorizó quedan en la auditoría y lo cancelado sale en el corte.
+ * 3 · DP-24 · La mesera no ve «Quitar un platillo» ni «Cancelar la cuenta» y el servidor le niega el
+ *     comando a mano; la dueña quita un platillo ya enviado (el motivo es obligatorio), y la caja
+ *     cancela la cuenta ya pedida sólo con la clave de gerencia; el motivo y quién autorizó quedan
+ *     en la auditoría y lo cancelado sale en el corte.
  * 4 · La cajera aplica un descuento desde la Caja: pide la clave de gerencia, con una clave mala no
  *     aplica y lo dice, el descuento queda con quién lo autorizó y el total y el papel suman.
  */
@@ -61,84 +63,51 @@ test.describe('parte 7 · cancelar y descontar', () => {
         { nombre: 'Cerveza clara 355 ml' },
       ]);
 
-      // ── Un platillo ya enviado: el motivo es obligatorio ─────────────────────────────────────
+      // ── DP-24 · La mesera NO ve los botones y el servidor le niega el comando a mano ───────────
       await lupita.goto('/mesero', { waitUntil: 'domcontentloaded' });
       await toque(lupita, laMesa(lupita, 5));
-      const mesa = dialogoDeLaMesa(lupita, 5);
+      const mesaDeLupita = dialogoDeLaMesa(lupita, 5);
+      await yaAbierto(mesaDeLupita);
+      await expect(mesaDeLupita.getByRole('button', { name: 'Quitar un platillo' })).toHaveCount(0);
+      await expect(
+        mesaDeLupita.getByRole('button', { name: 'Cancelar la cuenta', exact: true }),
+      ).toHaveCount(0);
+      const sinPermiso = await lupita.request.post('/api/restaurante/cancelar-orden', {
+        headers: cabecerasDeEscrituraDePrueba(),
+        data: { ordenId: propia.ordenId, motivo: 'a ver si deja' },
+      });
+      expect(sinPermiso.status(), 'La mesera canceló una cuenta.').toBe(403);
+      await capturar(lupita, 'cancelar', aparato.id, 'la-mesera-no-ve-los-botones');
+
+      // ── Un platillo ya enviado: lo quita la dueña, y el motivo es obligatorio ───────────────
+      await duena.goto('/mesero', { waitUntil: 'domcontentloaded' });
+      await toque(duena, laMesa(duena, 5));
+      const mesa = dialogoDeLaMesa(duena, 5);
       await yaAbierto(mesa);
-      await toque(lupita, mesa.getByRole('button', { name: 'Quitar un platillo' }));
-      const lista = lupita.getByRole('dialog', { name: 'Quitar un platillo' });
+      await toque(duena, mesa.getByRole('button', { name: 'Quitar un platillo' }));
+      const lista = duena.getByRole('dialog', { name: 'Quitar un platillo' });
       await yaAbierto(lista);
-      await toque(lupita, lista.getByRole('button', { name: 'Quitar Sopa de tortilla' }));
-      const anular = lupita.getByRole('dialog', { name: 'Quitar Sopa de tortilla' });
+      await toque(duena, lista.getByRole('button', { name: 'Quitar Sopa de tortilla' }));
+      const anular = duena.getByRole('dialog', { name: 'Quitar Sopa de tortilla' });
       await yaAbierto(anular);
       const confirmarQuitar = anular.getByRole('button', { name: 'Quitar de la cuenta' });
       await expect(confirmarQuitar, 'Se puede quitar sin motivo.').toBeDisabled();
-      await capturar(lupita, 'cancelar', aparato.id, 'quitar-sin-motivo');
-      await toque(lupita, anular.getByRole('radio', { name: 'Me equivoqué al tomar la orden' }));
+      await capturar(duena, 'cancelar', aparato.id, 'quitar-sin-motivo');
+      await toque(duena, anular.getByRole('radio', { name: 'Me equivoqué al tomar la orden' }));
       const [quitada] = await Promise.all([
-        lupita.waitForResponse(
+        duena.waitForResponse(
           (r) =>
             new URL(r.url()).pathname === '/api/restaurante/anular-linea' &&
             r.request().method() === 'POST',
         ),
-        toque(lupita, confirmarQuitar),
+        toque(duena, confirmarQuitar),
       ]);
       expect(quitada.status(), await quitada.text()).toBe(200);
-      await expect(lupita.getByText('Platillo quitado de la cuenta').first()).toBeVisible();
+      await expect(duena.getByText('Platillo quitado de la cuenta').first()).toBeVisible();
 
-      // ── Una mesa que no es suya: el servidor la niega ───────────────────────────────────────
-      const ajena = await mesaConPedido(duena, duena, 6, [{ nombre: 'Cerveza clara 355 ml' }]);
-      const negada = await lupita.request.post('/api/restaurante/cancelar-orden', {
-        headers: cabecerasDeEscrituraDePrueba(),
-        data: { ordenId: ajena.ordenId, motivo: 'a ver si deja' },
-      });
-      expect(negada.status(), 'La mesera canceló la cuenta de una mesa que no es suya.').not.toBe(
-        200,
-      );
-
-      // ── La cuenta entera, ya pedida: pide la clave de gerencia ─────────────────────────────
+      // ── La cuenta entera, ya pedida: la caja la cancela sólo con la clave de gerencia ──────
       await mandar(lupita, '/api/restaurante/solicitar-cuenta', { ordenId: propia.ordenId });
-      await lupita.goto('/mesero', { waitUntil: 'domcontentloaded' });
-      await toque(lupita, laMesa(lupita, 5));
-      await yaAbierto(dialogoDeLaMesa(lupita, 5));
-      await toque(
-        lupita,
-        dialogoDeLaMesa(lupita, 5).getByRole('button', { name: 'Cancelar la cuenta', exact: true }),
-      );
-      const cancelar = lupita.getByRole('dialog', { name: 'Cancelar la cuenta' });
-      await yaAbierto(cancelar);
-      const confirmar = cancelar.getByRole('button', { name: 'Cancelar la cuenta sin cobrar' });
-      await expect(confirmar, 'Se puede cancelar la cuenta sin motivo.').toBeDisabled();
-      await cancelar.locator('#cancelar-cuenta-motivo').fill(MOTIVO_DE_LA_CUENTA);
-      const [rechazo] = await Promise.all([
-        lupita.waitForResponse(
-          (r) => new URL(r.url()).pathname === '/api/restaurante/cancelar-orden',
-        ),
-        toque(lupita, confirmar),
-      ]);
-      expect(rechazo.status(), 'Sin la clave de gerencia, la cuenta pedida se canceló.').toBe(422);
-      await expect(cancelar.getByText(/lo autoriza un gerente o el dueño/)).toBeVisible();
-      await capturar(lupita, 'cancelar', aparato.id, 'pide-la-clave');
-      await toque(
-        lupita,
-        cancelar.getByRole('group', { name: 'Quién autoriza' }).getByRole('button', {
-          name: gerente.nombre,
-        }),
-      );
-      await cancelar.locator('#cancelar-cuenta-pin').fill(gerente.pin);
-      await toque(lupita, cancelar.getByRole('button', { name: 'Autorizar' }));
-      await expect(cancelar.getByText(`Autorizó ${gerente.nombre}.`)).toBeVisible();
-      const [hecha] = await Promise.all([
-        lupita.waitForResponse(
-          (r) =>
-            new URL(r.url()).pathname === '/api/restaurante/cancelar-orden' &&
-            r.request().method() === 'POST',
-        ),
-        toque(lupita, confirmar),
-      ]);
-      expect(hecha.status(), await hecha.text()).toBe(200);
-      await expect(lupita.getByText('Cuenta cancelada').first()).toBeVisible();
+      await cancelarComoCajaConElPin(rosa, propia.ordenId, MOTIVO_DE_LA_CUENTA, gerente);
 
       // ── La auditoría dice quién autorizó y por qué; el corte lo dice también ────────────────
       const auditoria = sqlLocal(
