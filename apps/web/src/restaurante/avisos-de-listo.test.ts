@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   AVISOS_A_LA_VISTA,
+  avisosSegunLaVentana,
   avisosPendientes,
   fraseDelAviso,
   fraseHablada,
@@ -131,5 +132,30 @@ describe('apilar', () => {
     expect(visibles).toHaveLength(AVISOS_A_LA_VISTA);
     expect(ocultos).toHaveLength(2);
     expect([...visibles, ...ocultos]).toEqual(muchos);
+  });
+});
+
+describe('con una ventana abierta', () => {
+  const m5 = aviso('c5', [plato('1', 'Jugo')], { mesaNumero: 5 });
+  const m7 = aviso('c7', [plato('2', 'Taco')], { mesaNumero: 7 });
+
+  it('sin ventana se pintan todos completos', () => {
+    expect(avisosSegunLaVentana([m5, m7], { abierta: false, mesaNumero: null })).toEqual({
+      completos: [m5, m7],
+      enPastilla: [],
+    });
+  });
+
+  it('con la mesa 5 abierta, su aviso no se pinta y el de la 7 baja a la pastilla sin tarjeta encima', () => {
+    expect(avisosSegunLaVentana([m5, m7], { abierta: true, mesaNumero: 5 })).toEqual({
+      completos: [],
+      enPastilla: [m7],
+    });
+  });
+
+  it('con otra ventana (sin mesa) abierta, ninguna tarjeta completa', () => {
+    const r = avisosSegunLaVentana([m5, m7], { abierta: true, mesaNumero: null });
+    expect(r.completos).toEqual([]);
+    expect(r.enPastilla).toHaveLength(2);
   });
 });

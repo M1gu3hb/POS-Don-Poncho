@@ -126,3 +126,20 @@ export function repartirAvisos(avisos: readonly AvisoDeListo[]): {
 } {
   return { visibles: avisos.slice(0, AVISOS_A_LA_VISTA), ocultos: avisos.slice(AVISOS_A_LA_VISTA) };
 }
+
+/**
+ * DP-24 · QUÉ AVISOS SE PINTAN CON UNA VENTANA ABIERTA.
+ *
+ * Con la mesa X abierta, el mesero ya ve su tarjeta «Listos» y los botones de la mesa: el aviso de
+ * esa mesa no se pinta (sigue pendiente, vuelve al cerrar la ventana o se va al entregar). Y con
+ * CUALQUIER ventana abierta, los avisos de las demás mesas bajan a una pastilla que no recibe
+ * toques: un aviso nunca puede quedar encima de «Marcar entregado» ni de ningún botón de la mesa.
+ */
+export function avisosSegunLaVentana(
+  avisos: readonly AvisoDeListo[],
+  ventana: { readonly abierta: boolean; readonly mesaNumero: number | null },
+): { readonly completos: readonly AvisoDeListo[]; readonly enPastilla: readonly AvisoDeListo[] } {
+  if (!ventana.abierta) return { completos: avisos, enPastilla: [] };
+  const deOtrasMesas = avisos.filter((a) => a.mesaNumero !== ventana.mesaNumero);
+  return { completos: [], enPastilla: deOtrasMesas };
+}

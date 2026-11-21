@@ -247,6 +247,8 @@ test.describe('la cocina por platillo (DP-24)', () => {
         await expect(tarjeta.getByRole('button', { name: 'Marcar entregado' })).toBeVisible({
           timeout: 20_000,
         });
+        // Con la mesa abierta, el aviso de ESA mesa no se pinta encima: «Marcar entregado» se toca.
+        await expect(lupita.locator('[data-aviso]')).toHaveCount(0);
         await expect(dialogo.locator(`[data-estacion="${PARRILLA}"]`)).toHaveCount(1);
         await tarjeta.getByRole('button', { name: 'Marcar entregado' }).tap();
         await expect

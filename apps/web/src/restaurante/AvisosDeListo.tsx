@@ -3,10 +3,11 @@
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Superficie } from '@morphiqpos/ui/sistema';
 import { BellRing } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   fraseDelAviso,
+  avisosSegunLaVentana,
   nombreDeLaEstacion,
   repartirAvisos,
   type AvisoDeListo,
@@ -17,8 +18,9 @@ import {
  *
  * «Mesa 5 · Listo en Cantina: 2 Coca cola, 1 Jugo · Recoger en Cantina». Se apilan —tres a la
  * vista y el resto contado, nunca escondido—, no se van solos, y el mesero los quita deslizando o
- * tocando (y con el botón «Entendido» de 44 px, para quien no puede arrastrar). Van ARRIBA y el
- * contenedor no recibe toques, sólo sus tarjetas: no tapan el botón de enviar el pedido. El
+ * tocando (y con el botón «Entendido» de 44 px, para quien no puede arrastrar). Van ARRIBA y EN el
+ * flujo de la pantalla (`sticky`, no `fixed`): empujan el contenido en vez de taparlo, así que
+ * nunca caen sobre un botón del mapa ni de la mesa. El
  * contenedor es un `status` para que el lector de pantalla los lea; sin animación si el aparato
  * pidió movimiento reducido.
  */
@@ -32,8 +34,41 @@ export interface AvisosDeListoProps {
   readonly alQuitarTodos: () => void;
 }
 
-export function AvisosDeListo({ avisos, alQuitar, alQuitarTodos }: AvisosDeListoProps) {
+/** La ventana (diálogo) que el mesero tiene abierta y, si es de una mesa, su número. */
+function useVentanaAbierta(): { abierta: boolean; mesaNumero: number | null } {
+  const [ventana, setVentana] = useState<{ abierta: boolean; mesaNumero: number | null }>({
+    abierta: false,
+    mesaNumero: null,
+  });
+  useEffect(() => {
+    const leer = (): void => {
+      const dialogo = document.querySelector('[role="dialog"]');
+      const titulo = dialogo?.querySelector('h2')?.textContent ?? '';
+      const mesa = /^Mesa (\d+)/.exec(titulo.trim())?.[1];
+      const siguiente = {
+        abierta: dialogo !== null,
+        mesaNumero: mesa === undefined ? null : Number(mesa),
+      };
+      setVentana((previa) =>
+        previa.abierta === siguiente.abierta && previa.mesaNumero === siguiente.mesaNumero
+          ? previa
+          : siguiente,
+      );
+    };
+    leer();
+    const observador = new MutationObserver(leer);
+    observador.observe(document.body, { childList: true, subtree: true, characterData: true });
+    return () => {
+      observador.disconnect();
+    };
+  }, []);
+  return ventana;
+}
+
+export function AvisosDeListo({ avisos: todos, alQuitar, alQuitarTodos }: AvisosDeListoProps) {
   const [verTodos, setVerTodos] = useState(false);
+  const ventana = useVentanaAbierta();
+  const { completos: avisos, enPastilla } = avisosSegunLaVentana(todos, ventana);
   const { visibles, ocultos } = repartirAvisos(avisos);
   const aLaVista = verTodos ? avisos : visibles;
   return (
@@ -42,8 +77,21 @@ export function AvisosDeListo({ avisos, alQuitar, alQuitarTodos }: AvisosDeListo
       aria-live="polite"
       aria-label="Platillos listos para recoger"
       data-avisos-de-listo={String(avisos.length)}
-      className="pointer-events-none fixed inset-x-0 top-0 z-[60] flex flex-col items-center gap-2 p-2"
+      className="sticky top-0 z-30 flex flex-col items-center gap-2 empty:hidden pb-2"
     >
+      {enPastilla.length > 0 && (
+        // Con una ventana abierta los avisos de otras mesas son sólo una pastilla SIN toques.
+        <Superficie
+          como="p"
+          nivel={3}
+          radio="completo"
+          relleno={0}
+          data-avisos-compactos={String(enPastilla.length)}
+          className="pointer-events-none bg-exito px-(--espacio-3) py-1 text-sm font-bold text-exito-texto"
+        >
+          {enPastilla.length} {enPastilla.length === 1 ? 'aviso de listo' : 'avisos de listo'}
+        </Superficie>
+      )}
       {aLaVista.map((aviso) => (
         <TarjetaDelAviso key={aviso.comandaId} aviso={aviso} alQuitar={alQuitar} />
       ))}

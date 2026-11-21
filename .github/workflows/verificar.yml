@@ -614,7 +614,7 @@ jobs:
   jornada:
     name: Jornada completa · ${{ matrix.modelo }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     strategy:
       fail-fast: false
@@ -758,6 +758,9 @@ jobs:
           pnpm test:e2e pruebas/e2e/modo-espera.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/modo-espera-pin.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/sonidos.spec.ts --project=escritorio --project=tablet --project=telefono --workers=1 --retries=0
+          # DP-24 · La cocina por platillo, el aviso de «listo» y la mini jornada con bots.
+          pnpm test:e2e pruebas/e2e/cocina-por-platillo.spec.ts --project=tablet --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/mini-jornada-de-cocina.spec.ts --project=tablet --workers=1 --retries=0
           # DP-18 · Lo que encontró Miguel: el modo del menú que «se regresaba», las cajas de los
           # otros aparatos (la tableta y la PC) y «Personalizar menú».
           pnpm test:e2e pruebas/e2e/configuracion-que-no-se-regresa.spec.ts --project=escritorio --workers=1 --retries=0
