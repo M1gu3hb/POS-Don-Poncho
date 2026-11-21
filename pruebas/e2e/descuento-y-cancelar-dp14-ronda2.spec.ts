@@ -196,7 +196,7 @@ test.describe('el descuento y cancelar con su propio PIN (DP-14 ronda 2)', () =>
   });
 
   for (const quien of ['gerente', 'dueno'] as const) {
-    test(`6 · ${quien === 'gerente' ? 'la gerente' : 'el dueño'} cancela con la cocina sin respuesta tecleando SU PIN`, async ({
+    test(`6 · ${quien === 'gerente' ? 'la gerente' : 'el dueño'} cancela con la cocina sin respuesta, sin PIN (DP-24: la gerencia no lo teclea)`, async ({
       browser,
     }, info) => {
       test.setTimeout(6 * 60_000);
@@ -204,7 +204,6 @@ test.describe('el descuento y cancelar con su propio PIN (DP-14 ronda 2)', () =>
       const mesa = MESAS_DE_CANCELAR[quien];
       try {
         const duena = await equipo.pagina(info, 'dueno');
-        const supervisor = personaDe(SLUG, quien);
         const pagina = quien === 'dueno' ? duena : await equipo.pagina(info, quien);
         const sinFallos = [
           vigilarFallos(duena),
@@ -231,15 +230,8 @@ test.describe('el descuento y cancelar con su propio PIN (DP-14 ronda 2)', () =>
         await dialogo.locator('#cancelar-cuenta-motivo').fill('Capturé la mesa equivocada');
         const confirmar = dialogo.getByRole('button', { name: 'Cancelar la cuenta sin cobrar' });
         await expect(dialogo.getByText('No pude comprobar la cocina')).toBeVisible();
-        await expect(confirmar, 'Sin cocina se canceló sin PIN.').toBeDisabled();
-
-        // Quien tiene la sesión va primero y teclea el suyo: no necesita a otro.
-        const quienes = dialogo.getByRole('group', { name: 'Quién autoriza' });
-        await expect(quienes.getByRole('button').first()).toHaveText(supervisor.nombre);
-        await tocar(quienes.getByRole('button', { name: supervisor.nombre }), info);
-        await dialogo.locator('#cancelar-cuenta-pin').fill(supervisor.pin);
-        await tocar(dialogo.getByRole('button', { name: 'Autorizar' }), info);
-        await expect(dialogo.getByText(`Autorizó ${supervisor.nombre}.`)).toBeVisible();
+        // DP-24 · La gerencia, el administrador y el dueño no teclean PIN para cancelar.
+        await expect(dialogo.getByRole('group', { name: 'Quién autoriza' })).toHaveCount(0);
         await expect(confirmar).toBeEnabled();
         const respuesta = pagina.waitForResponse(
           (r) =>

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { salidasSinVenta } from '../caja/corte/consultas.ts';
 import { comando } from '../produccion.ts';
-import { clave, exigirOk } from '../pruebas/negocio-real.ts';
+import { clave, conPuestoDeGerencia, exigirOk } from '../pruebas/negocio-real.ts';
 import { anularLineaComando } from './anulacion-linea.ts';
 import { cancelarOrden } from './cancelacion.ts';
 import { entregarPedidos, transicionarPedido } from './preparacion.ts';
@@ -112,7 +112,7 @@ describe('cancelar la cuenta', () => {
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId, motivo: 'Se fueron sin pagar' },
-        ambito: ambitoDeCaja(salon),
+        ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',
@@ -158,7 +158,7 @@ describe('cancelar la cuenta', () => {
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId, motivo: 'Capturé mal la mesa' },
-        ambito: ambitoDeCaja(salon),
+        ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',
@@ -184,7 +184,7 @@ describe('anular el platillo', () => {
       exigirOk(
         await comando(anularLineaComando, {
           entrada: { ordenId: cuenta, lineaId: await lineaDe(cuenta, 'Cerveza clara'), motivo },
-          ambito: ambitoDeCaja(salon),
+          ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
           idempotencyKey: clave(),
         }),
         'restaurante.anular_linea',
@@ -204,7 +204,7 @@ describe('anular el platillo', () => {
     exigirOk(
       await comando(anularLineaComando, {
         entrada: { ordenId, lineaId: arrachera, motivo: 'error_mesero', cantidad: '1' },
-        ambito: ambitoDeCaja(salon),
+        ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
         idempotencyKey: clave(),
       }),
       'restaurante.anular_linea',
@@ -213,7 +213,7 @@ describe('anular el platillo', () => {
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId, motivo: 'Se fueron' },
-        ambito: ambitoDeCaja(salon),
+        ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',
@@ -229,7 +229,7 @@ describe('anular el platillo', () => {
     exigirOk(
       await comando(anularLineaComando, {
         entrada: { ordenId, lineaId: guacamole, motivo: 'error_mesero' },
-        ambito: ambitoDeCaja(salon),
+        ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
         idempotencyKey: clave(),
       }),
       'restaurante.anular_linea',
@@ -237,7 +237,7 @@ describe('anular el platillo', () => {
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId, motivo: 'Quedó vacía' },
-        ambito: ambitoDeCaja(salon),
+        ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',
@@ -254,7 +254,7 @@ describe('DP-14.6 · lo que canceló el cliente no se le carga al empleado', () 
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId, motivo: 'Se fueron sin pagar' },
-        ambito: ambitoDeCaja(salon),
+        ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',
