@@ -126,6 +126,8 @@ siguieron donde iban y la sesión principal volvió a la Caja.
   38 (con el caso de cambiar las copias entre tres impresiones sin recargar), integración del ticket (6), 12 mutantes.
 - **La primera CI salió en rojo:** el arnés de `pruebas/impresion` seguía usando la variable que se quitó, y dos avisos
   de lint. Corregido en el mismo PR. **No comprobado:** un rollo real ni el iMin. Decisión: DP-D212.
+- **En producción (20-11, 23:52):** `main` en `2637e80`, despliegue `dpl_CHga7hXFAmhydcJbiNQdYdcENy8B` en READY. Humo: 13 bien,
+  0 mal; sin errores de ejecución; las 4 cuentas y las cajas, intactas. La app de Android no se tocó ni se publicó.
 
 ## Parte 5 · Unir mesas poco a poco (PR #51)
 
@@ -193,6 +195,6 @@ siguieron donde iban y la sesión principal volvió a la Caja.
 | 3 · El menú | en producción (20-11, 23:20); falta correr el guion del menú (persona dueña no hallada) |
 | 4 · Cocina por producto | PR #50; corrigiendo el aviso que tapa «Marcar entregado» |
 | 5 · Unir mesas poco a poco | PR #51, trae main y en la CI |
-| 6 · Impresión | PR #49, trae main y en la CI (la app de Android espera la prueba en el iMin) |
+| 6 · Impresión | en producción (20-11, 23:55) (la app de Android espera la prueba en el iMin) |
 | 7 · Lo que sólo se confirma | hecho con la Parte 2 |
 | 8 · Cero final | espera el «CERO FINAL» de Miguel |

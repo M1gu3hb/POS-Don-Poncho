@@ -24,11 +24,17 @@ export interface EstadoDelTrabajo {
   readonly fallo: Fallo | null;
   /** El id del trabajo que falló, para reintentarlo sin duplicar. */
   readonly idPendiente: string | null;
+  /** Algo que la persona debe saber aunque el papel haya salido («no se pudieron leer las copias»). */
+  readonly aviso?: string;
 }
 
 export type FinDelTrabajo =
   /** `navegador`: este aparato no imprime ese documento directo; se abrió el diálogo de siempre. */
-  | { readonly ok: true; readonly estado: 'impreso' | 'enviado' | 'navegador' }
+  | {
+      readonly ok: true;
+      readonly estado: 'impreso' | 'enviado' | 'navegador';
+      readonly aviso?: string;
+    }
   | { readonly ok: false; readonly fallo: Fallo };
 
 export interface ControlesDelTrabajo {
@@ -51,6 +57,11 @@ export interface SalidasDelTrabajo {
   readonly alNavegador?: () => void;
   /** Lo que ya está hecho aunque el papel falle: «La venta ya quedó cobrada». */
   readonly yaQuedo?: string;
+  /**
+   * DP-24 · Pide el permiso de USB de la impresora del aparato, sin contraseña. Si hay, un fallo
+   * `SIN_PERMISO` trae el botón «Dar permiso a la impresora».
+   */
+  readonly darPermiso?: () => Promise<{ readonly concedido: boolean; readonly mensaje?: string }>;
 }
 
 export interface TrabajoALaVista {
@@ -195,7 +206,10 @@ export function crearMesaDeTrabajos(plazoMs: number = PLAZO_PARA_ENVIAR_MS): Mes
       }
       if (!fin.ok) poner(clave, { fase: 'error', avance: null, fallo: fin.fallo, idPendiente: id });
       else if (fin.estado === 'navegador') poner(clave, LIBRE);
-      else poner(clave, { fase: fin.estado, avance: 1, fallo: null, idPendiente: null });
+      else {
+        const aviso = fin.aviso === undefined ? {} : { aviso: fin.aviso };
+        poner(clave, { fase: fin.estado, avance: 1, fallo: null, idPendiente: null, ...aviso });
+      }
       return fin;
     },
     soltar(clave) {
@@ -222,7 +236,7 @@ const FALLOS: Readonly<Record<string, Omit<Fallo, 'codigo'>>> = {
   },
   SIN_PERMISO: {
     titulo: 'Falta el permiso de la impresora',
-    queHacer: 'Ve a Impresión y da el permiso en este aparato.',
+    queHacer: 'Toca «Dar permiso a la impresora» y acepta lo que pida el aparato.',
   },
   SIN_PERFIL: {
     titulo: 'Este aparato no tiene impresora configurada',

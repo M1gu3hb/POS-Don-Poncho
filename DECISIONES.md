@@ -4098,6 +4098,23 @@ Lo pidió Don Poncho tras la entrega.
 - **No se crea ningún producto ni se inventa ningún precio.** Quedan pendientes de Miguel: los seis productos de la hoja que no
   existen y el precio del alcohol adicional de Paloma, Charro negro y Piña colada sin alcohol.
 
+## DP-D212 · DP-24 · Las copias se leen al imprimir, y el permiso de la impresora se da desde el error · 20-11-2026
+
+Lo pidió Don Poncho tras la entrega: guardó 2 copias en un POS, otro siguió imprimiendo 1 y un tercero sí imprimió 2.
+
+- **La causa:** las copias vivían en una variable del módulo que sólo llenaba una consulta de la barra de impresión (un minuto
+  de caducidad, sin releer al enfocar). Un aparato que no recargaba imprimía con lo que leyó al abrir. El servidor estaba bien.
+- **Las copias se leen del servidor en CADA impresión** (`copiasAlImprimir`, una sola función para todos los caminos, con un
+  plazo de 4 s). Si el servidor no contesta, sale con la última lectura buena de ESE aparato (en memoria y en su almacenamiento)
+  y se dice; si nunca hubo una, sale 1 copia y se dice: el ticket ya cobrado tiene que poder salir.
+- **El diálogo de imprimir del navegador también reproduce las copias** (antes las ignoraba). La reimpresión sigue siendo un
+  solo papel (DP-20).
+- **`SIN_PERMISO`:** el aviso del fallo trae el botón «Dar permiso a la impresora», sin contraseña del proveedor: llama a
+  `pedirPermiso(destino)` del puente, dice «Permiso concedido ✓» y reintenta la MISMA impresión (mismo id, con sus copias).
+- **La app de Android** declara el filtro `USB_DEVICE_ATTACHED` (clases 7 y 255) para que Android ofrezca «usar de forma
+  predeterminada» y el permiso se quede. Va en su repositorio y **no se sube versión ni se publica APK hasta probarlo en el
+  iMin**: si su impresora no es USB o Android no la «conecta» al arrancar, queda el botón (un toque por arranque).
+
 ## DP-D213 · DP-24 · Unir mesas poco a poco: a un grupo vivo se le agregan mesas · 20-11-2026
 
 Lo pidió Don Poncho tras la entrega: juntan las mesas conforme llega la gente, y unir rechazaba toda mesa que ya estuviera en un

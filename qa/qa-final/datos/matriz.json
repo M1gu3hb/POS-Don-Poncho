@@ -1,5 +1,5 @@
 {
-  "commit": "9f7e458",
+  "commit": "1ad0999",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -72,6 +72,9 @@
         "apps/web/src/corte/opciones-vendidas.ts",
         "apps/web/src/corte/retiros-con-pin.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -110,7 +113,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 10894,
+      "lineas": 11137,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -194,6 +197,9 @@
         "apps/web/src/impresion/CajonEnLaCaja.tsx",
         "apps/web/src/impresion/aislar.ts",
         "apps/web/src/impresion/cajon.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -358,7 +364,7 @@
           "titulo": null
         }
       ],
-      "lineas": 20264,
+      "lineas": 20507,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -646,6 +652,7 @@
         "apps/web/src/configuracion/topes-de-los-puestos.ts",
         "apps/web/src/impresion/CajonEnLaCaja.tsx",
         "apps/web/src/impresion/cajon.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/pantallas/AjustesDeLaApp.tsx",
         "apps/web/src/impresion/pantallas/BotonDePrueba.tsx",
@@ -806,7 +813,7 @@
           "titulo": "Zonas del salón"
         }
       ],
-      "lineas": 24621,
+      "lineas": 24672,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -991,6 +998,9 @@
         "apps/web/src/cocina/espera.ts",
         "apps/web/src/cocina/use-ahora.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1191,7 +1201,7 @@
           "titulo": null
         }
       ],
-      "lineas": 17982,
+      "lineas": 18225,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -1366,6 +1376,9 @@
         "apps/web/src/cliente/escaner-del-documento.ts",
         "apps/web/src/cliente/use-escaner-del-documento.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1421,7 +1434,7 @@
           "titulo": "Venta cobrada"
         }
       ],
-      "lineas": 6723,
+      "lineas": 6966,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -1467,6 +1480,9 @@
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1516,7 +1532,7 @@
           "titulo": "Agotados del día"
         }
       ],
-      "lineas": 7211,
+      "lineas": 7454,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -1732,6 +1748,9 @@
         "apps/web/src/corte/retiros-con-pin.ts",
         "apps/web/src/exportacion/columnas-con-folio.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1786,7 +1805,7 @@
           "titulo": null
         }
       ],
-      "lineas": 12469,
+      "lineas": 12712,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -2318,6 +2337,9 @@
         "apps/web/src/cliente/EstadosDeCarga.tsx",
         "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -2349,7 +2371,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 4019,
+      "lineas": 4262,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -2954,7 +2976,8 @@
         "conValorPorOmision": false,
         "escritores": [],
         "lectores": [
-          "apps/web/src/impresion/BarraDeImpresion.tsx:135",
+          "apps/web/src/impresion/copias-al-imprimir.ts:62",
+          "apps/web/src/impresion/copias-al-imprimir.ts:81",
           "apps/web/src/impresion/copias.ts:18",
           "apps/web/src/impresion/copias.ts:31",
           "apps/web/src/impresion/copias.ts:33",
@@ -2965,6 +2988,7 @@
           "packages/app/src/caja/index.ts:120"
         ],
         "pruebasQueLaNombran": [
+          "apps/web/src/impresion/copias-y-permiso.contrato.test.ts",
           "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/venta/impresion-del-ticket.integracion.test.ts",
           "pruebas/impresion/copias-por-la-app.spec.ts"
@@ -8579,7 +8603,7 @@
       "ruta": "/api/venta/registrar-impresion",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
-      "llamadas": ["apps/web/src/impresion/imprimir-documento.ts:56"],
+      "llamadas": ["apps/web/src/impresion/imprimir-documento.ts:58"],
       "pantallas": ["/", "/caja", "/mesero", "/pos", "/productos", "/registros", "/ventas"]
     },
     {
