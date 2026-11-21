@@ -2,6 +2,7 @@ import { invocarComando } from '~/cliente/api';
 
 import type { HojaDelServidor, Seccion } from '../corte/hoja.ts';
 import { opcionesVendidas } from '../corte/opciones-vendidas.ts';
+import { pagosUnoPorUno } from '../corte/pagos-uno-por-uno.ts';
 import { retirosConPin } from '../corte/retiros-con-pin.ts';
 
 /**
@@ -22,7 +23,8 @@ export interface ExtrasDelCorte {
 export const AVISO_SIN_EXTRAS = 'No se pudieron leer las opciones vendidas ni los retiros con PIN';
 
 export function seccionesDeLaHoja(hoja: HojaDelServidor): readonly Seccion[] {
-  return [...opcionesVendidas(hoja), ...retirosConPin(hoja)];
+  // DP-25 · Cada pago por separado: el visor de Registros dice lo mismo que el documento al cerrar.
+  return [...pagosUnoPorUno(hoja), ...opcionesVendidas(hoja), ...retirosConPin(hoja)];
 }
 
 function registrarElFallo(error: unknown): void {

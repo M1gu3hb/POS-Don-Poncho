@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { api, nuevaClave } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -51,7 +51,13 @@ import { liquidaSinPin, quienesRecibenPropina } from '~/venta/quien-recibe-propi
  * cajón (el efectivo esperado del corte baja lo mismo). Ahí la cajera la entrega con el PIN de un
  * gerente, administrador o dueño; la gerencia, sin PIN. Y en la lista de personas sólo aparece quien
  * vende, cobra o atiende cuentas: nunca cocina, bebidas ni almacén.
+ *
+ * DP-25 · En el Tablero, si hay cajas abiertas, se pregunta DE CUÁL sale el dinero (sale de su cajón y
+ * su corte lo descuenta) o si se paga fuera de la caja; sin cajas abiertas, queda pagada fuera de la
+ * caja y así se dice. Y un doble toque manda UNA vez: el segundo, mientras va el primero, no sale.
  */
+/** DP-25 · «Fuera de la caja»: el dinero no sale de ningún cajón. */
+const FUERA_DE_LA_CAJA = 'fuera';
 const RANGOS = [
   { id: 'today', label: 'Hoy' },
   { id: 'week', label: 'Esta semana' },
@@ -91,6 +97,10 @@ export default function LiquidarPropinasDialog({
   // siga abierto: es lo que impide que un doble clic en «Liquidar» registre dos
   // liquidaciones del mismo dinero (F1-02 §8, trampa T5).
   const [claveLiquidacion, setClaveLiquidacion] = useState(null);
+  // DP-25 · De qué caja sale el dinero en el Tablero: el id de una sesión abierta o FUERA_DE_LA_CAJA.
+  const [cajaElegida, setCajaElegida] = useState(null);
+  // DP-25 · El candado del doble toque: un segundo toque, mientras va el primero, no manda nada.
+  const enviando = useRef(false);
 
   useEffect(() => {
     if (open) {
@@ -100,8 +110,24 @@ export default function LiquidarPropinasDialog({
       setDesde(format(new Date(), 'yyyy-MM-dd'));
       setHasta(format(new Date(), 'yyyy-MM-dd'));
       setClaveLiquidacion(nuevaClave());
+      setCajaElegida(null);
     }
   }, [open, rangoInicial, meseroInicialId]);
+
+  // DP-25 · Las cajas abiertas de la sucursal, sólo en el Tablero y para quien liquida sin PIN (la
+  // gerencia): de una de ellas puede salir el dinero.
+  const preguntaLaCaja = !deLaCaja && liquidaSinPin(puesto);
+  const { data: cajas, isError: cajasFallaron } = useQuery({
+    queryKey: ['cajas_abiertas_para_liquidar'],
+    queryFn: () => api.comandos.ejecutar('/api/caja/abiertas', { todas: true }),
+    enabled: open && preguntaLaCaja,
+    staleTime: 5000,
+  });
+  const cajasAbiertas = Array.isArray(cajas?.abiertas) ? cajas.abiertas : [];
+  const cajaDeLaLista = cajasAbiertas.find((c) => c?.sesionId === cajaElegida) ?? null;
+  // Con cajas abiertas hay que decir de dónde sale; sin ninguna, se paga fuera de la caja.
+  const faltaElegirCaja =
+    preguntaLaCaja && cajasAbiertas.length > 0 && cajaElegida === null;
 
   const range = useMemo(() => {
     const now = new Date();
@@ -180,10 +206,16 @@ export default function LiquidarPropinasDialog({
   );
 
   const liquidar = async (autorizacion) => {
+    if (enviando.current) return;
     if (numeroVentas === 0) {
       toast.error('No hay propinas pendientes en ese periodo');
       return;
     }
+    if (faltaElegirCaja) {
+      toast.error('Elige de qué caja sale el dinero, o si se paga fuera de la caja.');
+      return;
+    }
+    enviando.current = true;
     setLoading(true);
     try {
       // ── Lo que desaparece aquí ──────────────────────────────────────────
@@ -219,6 +251,11 @@ export default function LiquidarPropinasDialog({
       // DP-24 · Desde el corte: se entrega en efectivo de esta caja (el servidor deja la salida en el
       // cajón); y si quien liquida es la cajera, con la autorización del PIN de un gerente.
       if (deLaCaja) cuerpo.entregarDeLaCaja = true;
+      // DP-25 · Desde el Tablero: de la caja elegida (sale de su cajón), o fuera de la caja.
+      if (preguntaLaCaja && cajaDeLaLista !== null) {
+        cuerpo.entregarDeLaCaja = true;
+        cuerpo.sesionCajaId = cajaDeLaLista.sesionId;
+      }
       if (typeof autorizacion === 'string') cuerpo.autorizacion = autorizacion;
       // Exactamente las ventas que el diálogo LISTÓ, que son las que el
       // administrador vio al aprobar el total — pero sólo cuando la lista está
@@ -251,6 +288,7 @@ export default function LiquidarPropinasDialog({
       queryClient.invalidateQueries({ queryKey: ['propinas_pendientes'] });
       // Lo entregado de la caja cambia lo que el corte espera en el cajón.
       queryClient.invalidateQueries({ queryKey: ['cortes_caja_estado'] });
+      queryClient.invalidateQueries({ queryKey: ['cajas_abiertas_para_liquidar'] });
       onLiquidada?.(liquidacion);
       // Folio e importe son los del servidor: `LIQ-000042` del consecutivo
       // atómico, y el total sumado dentro de la transacción.
@@ -265,9 +303,14 @@ export default function LiquidarPropinasDialog({
       // Otro intento es otra petición (y, con PIN, otra autorización): clave nueva.
       setClaveLiquidacion(nuevaClave());
     } finally {
+      enviando.current = false;
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (cajasFallaron) toast.error('No se pudieron leer las cajas abiertas.');
+  }, [cajasFallaron]);
 
   return (
     <Dialog
@@ -392,6 +435,42 @@ export default function LiquidarPropinasDialog({
             </div>
           )}
 
+          {/* DP-25 · En el Tablero: de qué caja sale el dinero, o fuera de la caja. */}
+          {preguntaLaCaja && cajasAbiertas.length > 0 && (
+            <fieldset data-de-que-caja className="space-y-2">
+              <legend className="text-xs font-semibold">¿De dónde sale el dinero?</legend>
+              {[
+                ...cajasAbiertas.map((c) => ({ id: c.sesionId, rotulo: `Del cajón de ${c.nombre}` })),
+                { id: FUERA_DE_LA_CAJA, rotulo: 'Fuera de la caja (no sale de ningún cajón)' },
+              ].map((opcion) => (
+                <button
+                  key={opcion.id}
+                  type="button"
+                  aria-pressed={cajaElegida === opcion.id}
+                  onClick={() => setCajaElegida(opcion.id)}
+                  className={`w-full text-left text-sm px-3 py-2 rounded-lg border-2 font-medium any-pointer-coarse:min-h-(--altura-tactil) ${
+                    cajaElegida === opcion.id
+                      ? 'bg-exito/10 border-exito/30 text-exito'
+                      : 'bg-superficie border-border text-foreground'
+                  }`}
+                >
+                  {opcion.rotulo}
+                </button>
+              ))}
+              {cajaDeLaLista !== null && (
+                <p className="text-xs text-info">
+                  {formatCurrency(total)} salen del cajón de {cajaDeLaLista.nombre} y su corte los
+                  descuenta, para que el conteo cuadre.
+                </p>
+              )}
+            </fieldset>
+          )}
+          {preguntaLaCaja && cajas !== undefined && cajasAbiertas.length === 0 && (
+            <div className="p-3 rounded-xl bg-muted/40 border text-xs text-muted-foreground">
+              No hay ninguna caja abierta: esta liquidación queda pagada fuera de la caja.
+            </div>
+          )}
+
           {/* Notas */}
           <div>
             <Label className="text-xs font-semibold">Notas (opcional)</Label>
@@ -429,7 +508,7 @@ export default function LiquidarPropinasDialog({
           </Button>
           <Button
             onClick={() => liquidar()}
-            disabled={loading || numeroVentas === 0}
+            disabled={loading || numeroVentas === 0 || faltaElegirCaja}
             className={pidePin ? 'hidden' : 'gap-2'}
             style={{
               background: 'linear-gradient(135deg, hsl(152,60%,40%) 0%, hsl(152,60%,32%) 100%)',
