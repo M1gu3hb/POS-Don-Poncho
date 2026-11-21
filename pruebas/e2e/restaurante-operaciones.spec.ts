@@ -1854,23 +1854,19 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
 
       await test.step('cocina sigue sirviendo cada tarjeta en su mesa, y la sala entrega desde la principal', async () => {
         await enLaColumna(cocina, 'Nuevos');
-        await expect(tarjetasDeLaMesa(cocina, 'Mesa 1')).toHaveCount(comandasDeLaPrincipal, {
+        // DP-25 · P6: cocina dice la mesa PRINCIPAL: las comandas de la unida salen a su nombre.
+        const todasLasDelGrupo = comandasDeLaPrincipal + comandasDelMiembro;
+        await expect(tarjetasDeLaMesa(cocina, 'Mesa 1')).toHaveCount(todasLasDelGrupo, {
           timeout: 30_000,
         });
-        await expect(tarjetasDeLaMesa(cocina, 'Mesa 2')).toHaveCount(comandasDelMiembro, {
-          timeout: 30_000,
-        });
-        await cocinaDejaListaLaMesa(cocina, 1, comandasDeLaPrincipal);
-        await cocinaDejaListaLaMesa(cocina, 2, comandasDelMiembro);
+        await expect(tarjetasDeLaMesa(cocina, 'Mesa 2')).toHaveCount(0);
+        await cocinaDejaListaLaMesa(cocina, 1, todasLasDelGrupo);
         // «Marcar entregado» en la principal entrega también lo de la mesa unida (D-3): al unir,
         // sus comandas pasaron a la cuenta del grupo.
         await entregarEnLaMesa(duena, 1, CARTA.sopa.nombre);
-        expect(estadosDe(await comandasDeLaMesa(duena, principal.mesaId))).toEqual(
-          Array<string>(comandasDeLaPrincipal).fill('entregado'),
-        );
         await expect
-          .poll(async () => estadosDe(await comandasDeLaMesa(duena, miembro.mesaId)))
-          .toEqual(Array<string>(comandasDelMiembro).fill('entregado'));
+          .poll(async () => estadosDe(await comandasDeLaMesa(duena, principal.mesaId)))
+          .toEqual(Array<string>(todasLasDelGrupo).fill('entregado'));
       });
 
       await test.step('la sala pide la cuenta del grupo: una sola, con todo', async () => {
@@ -2804,6 +2800,8 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
     readonly principal: Awaited<ReturnType<typeof sentarYComandar>>;
     readonly unida: Awaited<ReturnType<typeof sentarYComandar>>;
     readonly unionId: string;
+    /** Cuántas comandas traía la mesa unida ANTES de unir (después salen a nombre de la principal). */
+    readonly comandasDeLaUnida: number;
   }> {
     const principal = await sentarYComandar(dia.duena, dia.duena, numeroPrincipal, 2, [
       { nombre: CARTA.cerveza.nombre, veces: 2 },
@@ -2811,8 +2809,9 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
     const unida = await sentarYComandar(dia.duena, dia.duena, numeroUnida, 2, [
       { nombre: CARTA.arrachera.nombre, veces: 1 },
     ]);
+    const comandasDeLaUnida = (await comandasDe(dia.duena, unida.ordenId)).length;
     const unionId = await unirPorLaPantalla(dia.duena, principal, numeroPrincipal, numeroUnida);
-    return { principal, unida, unionId };
+    return { principal, unida, unionId, comandasDeLaUnida };
   }
 
   /** Lo deshace todo sin cobrar nada: separa el grupo y cancela la cuenta que quedó en la principal. */
@@ -2907,18 +2906,20 @@ test.describe('las operaciones de mesa del restaurante, por las vistas adicional
         .filter((c) => !previas.has(c.id))
         .map((c) => c.estado);
     try {
-      const deLaPrincipal = (await estadosNuevos(grupo.principal.mesaId)).length;
-      const deLaUnida = (await estadosNuevos(grupo.unida.mesaId)).length;
-      expect(deLaUnida, 'La mesa unida no mandó nada a cocina.').toBeGreaterThan(0);
-      await cocinaDejaListaLaMesa(dia.cocina, 7, deLaPrincipal);
-      await cocinaDejaListaLaMesa(dia.cocina, 8, deLaUnida);
+      // DP-25 · P6: las comandas de la unida salen a nombre de la principal (cocina dice la 7).
+      const delGrupo = (await estadosNuevos(grupo.principal.mesaId)).length;
+      expect(grupo.comandasDeLaUnida, 'La mesa unida no mandó nada a cocina.').toBeGreaterThan(0);
+      expect(delGrupo, 'La cocina no ve lo de la unida a nombre de la principal.').toBeGreaterThan(
+        grupo.comandasDeLaUnida,
+      );
+      await cocinaDejaListaLaMesa(dia.cocina, 7, delGrupo);
       await entregarEnLaMesa(dia.duena, 7, CARTA.arrachera.nombre);
       await expect
-        .poll(() => estadosNuevos(grupo.unida.mesaId), {
+        .poll(() => estadosNuevos(grupo.principal.mesaId), {
           message:
             'Lo de la mesa unida sigue «listo» tras entregar desde el grupo: se enfriaría en la ventana.',
         })
-        .toEqual(Array<string>(deLaUnida).fill('entregado'));
+        .toEqual(Array<string>(delGrupo).fill('entregado'));
     } finally {
       await deshacerElGrupo(dia, grupo);
       await dia.equipo.cerrar();
