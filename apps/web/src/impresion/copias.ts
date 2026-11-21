@@ -48,14 +48,3 @@ export function esDocumentoTermico(valor: unknown): valor is DocumentoTermico {
 export function copiasDe(copias: CopiasDeImpresion, documento: DocumentoTermico): number {
   return documento === 'cierre' ? copias.corte : copias[documento];
 }
-
-/** Lo que el negocio configuró, al alcance de `printDocument` (que no es un componente). */
-let delNegocio: CopiasDeImpresion = COPIAS_POR_OMISION;
-
-export function recordarCopias(copias: CopiasDeImpresion): void {
-  delNegocio = copias;
-}
-
-export function copiasDelNegocio(): CopiasDeImpresion {
-  return delNegocio;
-}

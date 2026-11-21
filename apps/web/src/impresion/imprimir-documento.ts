@@ -12,8 +12,10 @@
  */
 import { invocarComando } from '~/cliente/api';
 
-import { copiasDe, copiasDelNegocio, esDocumentoTermico, type DocumentoTermico } from './copias.ts';
+import { copiasAlImprimir } from './copias-al-imprimir.ts';
+import { copiasDe, esDocumentoTermico, type DocumentoTermico } from './copias.ts';
 import { imprimirEnLaApp } from './imprimir-en-la-app.ts';
+import { pedirElPermisoDe } from './permiso-de-la-impresora.ts';
 import { puenteDeLaApp, type MorphiqApp } from './puente/contrato.ts';
 import { marcarReimpresion, ponerPie } from './termico/decorar.ts';
 import type { Pieza } from './termico/dibujar-elemento.ts';
@@ -110,8 +112,10 @@ async function tarea(
     tipo === 'ticket' && ordenId !== null
       ? await registrarSalidaDelTicket(ordenId, controles.id)
       : null;
-  // Una reimpresión es UN papel: las copias son de la primera salida.
-  const total = marca === null ? copiasDe(copiasDelNegocio(), tipo) : 1;
+  // Una reimpresión es UN papel: las copias son de la primera salida. Se leen AHORA, del servidor
+  // (DP-24 · 6.1): un aparato que no recargó no imprime con lo que leyó al abrir.
+  const lectura = marca === null ? await copiasAlImprimir() : null;
+  const total = lectura === null ? 1 : copiasDe(lectura.copias, tipo);
   const copias: Pieza[] = Array.from({ length: total }, (_, i) => ({
     nodo: lienzo,
     preparar(copia: HTMLElement) {
@@ -140,7 +144,7 @@ async function tarea(
     controles,
   );
   if (fin.ok && ordenId !== null) salioElPapel(ordenId);
-  return fin;
+  return fin.ok && lectura?.aviso != null ? { ...fin, aviso: lectura.aviso } : fin;
 }
 
 const YA_QUEDO: Readonly<Record<DocumentoTermico, string>> = {
@@ -173,7 +177,12 @@ export function imprimirDirecto(documento: DocumentoEnPantalla): boolean {
       clave,
       () => nuevoIdDeTrabajo(tipo),
       (controles) => tarea(app, perfil, documento, lienzo, controles),
-      { titulo: documento.titulo, alNavegador: documento.alNavegador, yaQuedo: YA_QUEDO[tipo] },
+      {
+        titulo: documento.titulo,
+        alNavegador: documento.alNavegador,
+        yaQuedo: YA_QUEDO[tipo],
+        darPermiso: pedirElPermisoDe(app, perfil.destino),
+      },
     );
   })();
   return true;
