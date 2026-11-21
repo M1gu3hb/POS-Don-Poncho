@@ -575,6 +575,13 @@
       "paquetes": ["restaurante"]
     },
     {
+      "ruta": "/api/restaurante/agregar-a-la-union",
+      "comando": "restaurante.agregar_a_la_union",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
       "ruta": "/api/restaurante/agregar-en-caja",
       "comando": "restaurante.agregar_en_caja",
       "escribe": true,

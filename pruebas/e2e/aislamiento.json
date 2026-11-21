@@ -739,6 +739,19 @@
       "ids": [{ "camino": "mesaId", "tabla": "mesas" }]
     },
     {
+      "ruta": "/api/restaurante/agregar-a-la-union",
+      "comando": "restaurante.agregar_a_la_union",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "unionId": "⟨uniones_mesa⟩", "mesaIds": ["⟨mesas⟩"], "posiciones": [] },
+      "ids": [
+        { "camino": "unionId", "tabla": "uniones_mesa" },
+        { "camino": "mesaIds[0]", "tabla": "mesas" }
+      ]
+    },
+    {
       "ruta": "/api/restaurante/agregar-en-caja",
       "comando": "restaurante.agregar_en_caja",
       "escribe": true,

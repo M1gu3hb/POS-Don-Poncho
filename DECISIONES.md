@@ -4115,6 +4115,23 @@ Lo pidió Don Poncho tras la entrega: guardó 2 copias en un POS, otro siguió i
   predeterminada» y el permiso se quede. Va en su repositorio y **no se sube versión ni se publica APK hasta probarlo en el
   iMin**: si su impresora no es USB o Android no la «conecta» al arrancar, queda el botón (un toque por arranque).
 
+## DP-D213 · DP-24 · Unir mesas poco a poco: a un grupo vivo se le agregan mesas · 20-11-2026
+
+Lo pidió Don Poncho tras la entrega: juntan las mesas conforme llega la gente, y unir rechazaba toda mesa que ya estuviera en un
+grupo («Sepáralo antes de unir otro»).
+
+- **`restaurante.agregar_a_la_union`**, con los permisos de unir, reusa el núcleo de unir (`sumarMiembros`): no hay un segundo
+  camino. **Todo va a la principal de la PRIMERA unión**: la cuenta del grupo no cambia y lo que traen las mesas que entran (su
+  cuenta, sus comandas en cualquier estado, sus avisos y sus alergias) se MUEVE a ella.
+- **Si la mesa que se agrega es la principal de otro grupo, entra todo ese grupo**: sus mesas pasan a esta unión y la suya se
+  cierra sin separar a nadie. Una mesa absorbida en otro grupo no entra sola: se agrega su principal.
+- **Qué entra:** las cuentas vivas, incluida la «cuenta pedida» (como al unir). No entran las cobradas, divididas ni canceladas,
+  ni una mesa en limpieza o de otra sucursal; y a un grupo que ya se cobró no se le agrega nada. Misma zona y mismo perímetro
+  que al unir.
+- **Separar** deshace el grupo entero, no la última ampliación, y cada mesa vuelve a donde estaba antes de SU unión. El grupo se
+  cobra una vez.
+- En el mesero, desde la mesa principal del grupo: «Agregar mesas».
+
 ## DP-D214 · DP-24 · La cocina por platillo, el aviso de «listo» al mesero de la mesa y la nubecita · 20-11-2026
 
 Lo pidió Don Poncho tras la entrega. La base ya guardaba el estado de cada platillo; faltaba llevarlo a las pantallas.

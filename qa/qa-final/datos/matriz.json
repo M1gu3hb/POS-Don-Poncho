@@ -1,5 +1,5 @@
 {
-  "commit": "324da862",
+  "commit": "bd8c8da3",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -2088,10 +2088,13 @@
         "apps/web/src/restaurante/precuenta-de-la-mesa.ts",
         "apps/web/src/restaurante/propina-de-la-mesa.ts",
         "apps/web/src/restaurante/rol-de-la-sesion.ts",
+        "apps/web/src/restaurante/unir-mesas/AgregarMesasDialog.tsx",
         "apps/web/src/restaurante/unir-mesas/SepararMesasDialog.tsx",
+        "apps/web/src/restaurante/unir-mesas/agregar-mesas.ts",
         "apps/web/src/restaurante/unir-mesas/index.ts",
         "apps/web/src/restaurante/unir-mesas/liberar-con-pregunta.tsx",
         "apps/web/src/restaurante/unir-mesas/liberar-mesa.ts",
+        "apps/web/src/restaurante/unir-mesas/plano-de-union.ts",
         "apps/web/src/restaurante/unir-mesas/use-union-de-la-mesa.ts",
         "apps/web/src/venta/PinDeSupervisor.tsx",
         "apps/web/src/venta/tope-de-quien-autoriza.ts"
@@ -2140,6 +2143,12 @@
           "titulo": null
         },
         {
+          "tipo": "diálogo",
+          "componente": "AgregarMesasDialog",
+          "archivo": "apps/web/src/restaurante/unir-mesas/AgregarMesasDialog.tsx",
+          "titulo": "Agregar mesas al grupo"
+        },
+        {
           "tipo": "confirmación",
           "componente": "SepararMesasDialog",
           "archivo": "apps/web/src/restaurante/unir-mesas/SepararMesasDialog.tsx",
@@ -2152,7 +2161,7 @@
           "titulo": null
         }
       ],
-      "lineas": 4763,
+      "lineas": 5173,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -2461,7 +2470,6 @@
           "apps/web/src/impresion/impresion.test.ts",
           "apps/web/src/restaurante/precuenta-del-mesero.contrato.test.ts",
           "packages/app/src/puente/configuracion-limites.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -3030,7 +3038,6 @@
           "apps/web/src/impresion/copias-y-permiso.contrato.test.ts",
           "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/venta/impresion-del-ticket.integracion.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/copias-por-la-app.spec.ts"
         ],
         "efecto": {
@@ -3105,7 +3112,6 @@
           "packages/app/src/reportes/auditoria-sanea-al-leer.integracion.test.ts",
           "pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -3272,7 +3278,6 @@
           "packages/domain/src/venta/campos-del-papel.test.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
           "pruebas/e2e/qr-de-mesas.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts"
@@ -3682,7 +3687,6 @@
           "pruebas/e2e/folios-con-prefijo.spec.ts",
           "pruebas/e2e/qa-final/parte7-corte.spec.ts",
           "pruebas/e2e/restaurante-concurrencia.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "qa/simulador/bots/dueno-ventas.test.ts"
         ],
         "efecto": {
@@ -3840,7 +3844,6 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/caja/corte/negocio.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -3878,7 +3881,6 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/archivos/referencias.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -3940,7 +3942,6 @@
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
           "pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -3968,7 +3969,6 @@
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
           "packages/app/src/puente/lo-publico.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -4104,7 +4104,6 @@
           "apps/web/src/impresion/pantallas/ejemplos.jsx:44"
         ],
         "pruebasQueLaNombran": [
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -4172,7 +4171,6 @@
           "pruebas/e2e/estilos-del-negocio.spec.ts",
           "pruebas/e2e/qa-final/ajustes-finales/reiniciar.spec.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -4215,7 +4213,6 @@
           "packages/app/src/mantenimiento/plataforma.integracion.test.ts",
           "packages/app/src/puente/claves-del-servidor.integracion.test.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -4330,7 +4327,6 @@
           "apps/web/src/impresion/papel-a-tu-gusto.contrato.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.integracion.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -4453,7 +4449,6 @@
         "pruebasQueLaNombran": [
           "packages/app/src/caja/corte/negocio.test.ts",
           "packages/app/src/puente/claves-del-servidor.integracion.test.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -4520,7 +4515,6 @@
           "apps/web/src/marca/contenido.test.ts",
           "packages/app/src/caja/corte/negocio.test.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -5808,7 +5802,6 @@
           "pruebas/e2e/unir-mesas-en-el-mapa.spec.ts",
           "pruebas/e2e/usuarios-y-mesas.spec.ts",
           "pruebas/e2e/vista-de-solicitudes.spec.ts",
-          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts",
@@ -5840,10 +5833,7 @@
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:135"
         ],
         "lectores": ["apps/web/heredado/components/tickets/PreCuentaTicket.jsx:283"],
-        "pruebasQueLaNombran": [
-          "pruebas/impresion/.arnes/arnes.js",
-          "pruebas/impresion/ajustes-del-papel.spec.ts"
-        ],
+        "pruebasQueLaNombran": ["pruebas/impresion/ajustes-del-papel.spec.ts"],
         "efecto": {
           "efecto": "El pie del ticket térmico.",
           "valores": ["vacío", "un texto"],
@@ -8235,6 +8225,14 @@
       "pantallas": ["/mesero", "/restaurante/mesa-activa"]
     },
     {
+      "comando": "restaurante.agregar_a_la_union",
+      "ruta": "/api/restaurante/agregar-a-la-union",
+      "escribe": true,
+      "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "llamadas": ["apps/web/src/restaurante/unir-mesas/AgregarMesasDialog.tsx:85"],
+      "pantallas": ["/restaurante/mesa-activa"]
+    },
+    {
       "comando": "restaurante.agregar_en_caja",
       "ruta": "/api/restaurante/agregar-en-caja",
       "escribe": true,
@@ -8292,7 +8290,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
-        "apps/web/src/restaurante/AccionesDeLaMesa.tsx:263",
+        "apps/web/src/restaurante/AccionesDeLaMesa.tsx:292",
         "apps/web/src/restaurante/CambiarDeMesaAqui.tsx:120"
       ],
       "pantallas": ["/mesero", "/restaurante/mesa-activa"]

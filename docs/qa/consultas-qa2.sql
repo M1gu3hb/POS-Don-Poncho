@@ -587,7 +587,7 @@ select 'separacion', u.id::text from uniones_mesa u
  where u.organizacion_id = :'org' and u.cerrada_en is not null and u.cerrada_en > '2026-11-02'::timestamptz
    -- una unión se cierra con «Separar mesas» o al liberar la principal con `grupo: 'separar'` (DP-9.6)
    and not exists (select 1 from auditoria a where a.organizacion_id = u.organizacion_id
-                      and a.accion in ('restaurante.separar_mesas', 'restaurante.liberar_mesa')
+                      and a.accion in ('restaurante.separar_mesas', 'restaurante.liberar_mesa', 'restaurante.agregar_a_la_union')
                       and a.created_at between u.cerrada_en - interval '5 seconds' and u.cerrada_en + interval '5 seconds');
 
 \echo '== A03 CUADRE · auditoría de la jornada por acción y resultado (los rechazos quedan como «denegado/conflicto/error»)'
