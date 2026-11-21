@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo, useEffect, useRef, useId } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { api, nuevaClave } from '@/api/cliente';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePOSAuth } from '@/lib/POSAuthContext';
@@ -12,26 +12,24 @@ import {
   Landmark,
   Search,
   DollarSign,
-  CreditCard,
-  Banknote,
   Smartphone,
   Receipt,
   TrendingUp,
   CheckCircle2,
-  Layers,
   Scissors,
   Printer,
   FileText,
   ShoppingBag,
+  Plus,
+  Wallet,
   ShoppingCart,
-  Trash2,
   DoorOpen,
   Lock,
   AlertTriangle,
 } from 'lucide-react';
 import { Link } from '@/enrutado';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
-import PropinaDialog from '@/components/propinas/PropinaDialog';
+import LiquidarPropinasDialog from '@/components/propinas/LiquidarPropinasDialog';
 import CorteViewerDialog from '@/components/cortes/CorteViewerDialog';
 import CorteAutoDownloader from '@/components/cortes/CorteAutoDownloader';
 import { printDocument } from '@/lib/print';
@@ -46,7 +44,6 @@ import {
   getPorcentajesSugeridos,
   propinaAlReleer,
   propinaDerivada,
-  requiereConfirmarPropinaAntesDeCobrar,
   sumarPropinas,
   tipsEnabled,
 } from '@/utils/tipsUtils';
@@ -67,8 +64,6 @@ import { TIPO_VENTA } from '@/utils/tipoVentaUtils';
 import { aCentavos, aPesos } from '@/components/caja/dinero';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import NumericInput from '@/components/common/NumericInput';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -102,42 +97,21 @@ import { rotuloDeLaCuenta } from '~/restaurante/cuenta-de-la-caja';
 import { DescuentoAutorizado } from '~/restaurante/DescuentoAutorizado';
 import { cantidadParaMostrar } from '~/restaurante/peso';
 import { totalesDelPapel } from '~/venta/totales-del-papel';
-import { seMencionaElIva } from '~/venta/se-menciona-el-iva';
-import { AvisoDePropina } from '~/venta/AvisoDePropina';
 import {
+  alUsarEsa,
   entradaDeFijarPropina,
+  estaDecidida,
   laCajaEligeLaPropina,
   propinaDelConflicto,
+  textoDelAviso,
 } from '~/venta/propina-en-la-caja';
+import { TarjetaDeCobro } from '~/venta/TarjetaDeCobro';
+import { QuitarDeLaCuenta } from '~/venta/QuitarDeLaCuenta';
+import { propinaBase } from '~/venta/cuenta-del-cobro';
+import { propinaDeLaCuenta, propinaParaLaCuenta } from '~/venta/propina-del-cobro';
+import { notaSinLasOpciones, renglonesDeLasOpciones } from '~/venta/opciones-del-renglon';
 import { usePropinaAlDia } from '~/venta/use-propina-al-dia';
 import { coincideConElFolio, folioVisible } from '@morphiqpos/domain/venta';
-
-const METODOS = [
-  {
-    key: 'efectivo',
-    label: 'Efectivo',
-    Icon: Banknote,
-    color: 'border-exito bg-exito/5 text-exito',
-  },
-  {
-    key: 'tarjeta',
-    label: 'Tarjeta',
-    Icon: CreditCard,
-    color: 'border-info bg-info/10 text-info',
-  },
-  {
-    key: 'transferencia',
-    label: 'Transferencia',
-    Icon: Smartphone,
-    color: 'border-acento bg-acento/10 text-acento',
-  },
-  {
-    key: 'mixto',
-    label: 'Mixto',
-    Icon: Layers,
-    color: 'border-advertencia bg-advertencia/10 text-advertencia',
-  },
-];
 
 /**
  * Los valores que `venta.cobrar` acepta como metadato de la propina.
@@ -158,8 +132,6 @@ const TIPOS_DE_PROPINA = [
 const ORIGENES_DE_PROPINA = ['mesero', 'caja', 'tradicional', 'portal_qr', 'pendiente_portal_qr'];
 
 export default function Caja() {
-  // A17: los seis campos del pago mixto (venta y propina) llevan su etiqueta asociada por `id`.
-  const idMixto = useId();
   const { posUser } = usePOSAuth();
   const { config, paquete_modo } = useConfig();
   const queryClient = useQueryClient();
@@ -173,14 +145,6 @@ export default function Caja() {
   const [codigoBusqueda, setCodigoBusqueda] = useState('');
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
   const [detallesSeleccionados, setDetallesSeleccionados] = useState([]);
-  const [metodoPago, setMetodoPago] = useState('efectivo');
-  const [montoEfectivo, setMontoEfectivo] = useState('');
-  const [montoTarjeta, setMontoTarjeta] = useState('');
-  const [montoTransferencia, setMontoTransferencia] = useState('');
-  // Propinas EXACTAS por método (solo en pago mixto con propina > 0).
-  const [propinaEfectivo, setPropinaEfectivo] = useState('');
-  const [propinaTarjeta, setPropinaTarjeta] = useState('');
-  const [propinaTransferencia, setPropinaTransferencia] = useState('');
   const [procesando, setProcesando] = useState(false);
   const [procesandoMsg, setProcesandoMsg] = useState('');
   const [showCierreExito, setShowCierreExito] = useState(false);
@@ -198,8 +162,21 @@ export default function Caja() {
   // 6A: bloqueo de cierre si hay mesas abiertas
   const [mesasPendientes, setMesasPendientes] = useState(null); // array | null
   const [verificandoMesas, setVerificandoMesas] = useState(false);
-  // === Propina pendiente al abrir una cuenta sin propina capturada ===
-  const [showPropinaCaja, setShowPropinaCaja] = useState(false);
+  // DP-24 · La propina se elige en la tarjeta de cobro: mientras viaja al servidor, y lo que haya
+  // que decirle a quien cobra (la eligió otra pantalla).
+  const [guardandoPropina, setGuardandoPropina] = useState(false);
+  const [avisoDeLaPropina, setAvisoDeLaPropina] = useState(null);
+  // DP-24 · «Agregar a la cuenta» y «Para llevar» desde la tarjeta: `null`, o qué se agrega.
+  const [agregandoALaCuenta, setAgregandoALaCuenta] = useState(null);
+  // DP-24 · El renglón que se está quitando desde la tarjeta (con motivo, y PIN si es la cajera).
+  const [quitandoDeLaCuenta, setQuitandoDeLaCuenta] = useState(null);
+  // DP-24 · «Liquidar propinas» que se ofrece al terminar el corte (el mismo diálogo del Tablero).
+  const [liquidandoTrasElCorte, setLiquidandoTrasElCorte] = useState(false);
+  const { data: usuariosDeLaCaja = [] } = useQuery({
+    queryKey: claves.usuarios.activos(),
+    queryFn: () => api.entidades.UsuarioPOS.filter({ activo: true }),
+    initialData: [],
+  });
 
   // Caja abierta global (fuente única de verdad)
   // Mientras carga, `hayCaja` es falso: el aviso amarillo de «No hay caja abierta» y «Abrir
@@ -225,19 +202,28 @@ export default function Caja() {
   // que el siguiente cobro no herede la clave del anterior.
   const [claveCobro, setClaveCobro] = useState(null);
   const ventaEnCobroId = ventaSeleccionada?.id || null;
-  // DP-21: `true` mientras la Caja cambia a propósito la propina que eligió otra pantalla.
-  const cambiarPropinaRef = useRef(false);
   // DP-21 (Bloque 4): con el cobro abierto, la cuenta se relee cada pocos segundos. Si los
   // comensales (o el mesero) eligen la propina mientras tanto, sale un aviso que interrumpe.
   const propinaAlDia = usePropinaAlDia({
     cuenta: ventaSeleccionada,
-    pausada: procesando || showPropinaCaja,
+    pausada: procesando || guardandoPropina,
     leer: (ordenId) => api.entidades.Venta.get(ordenId),
     alCambiar: (parche) => setVentaSeleccionada((prev) => (prev ? { ...prev, ...parche } : prev)),
   });
   useEffect(() => {
     setClaveCobro(ventaEnCobroId === null ? null : nuevaClave());
+    setAvisoDeLaPropina(null);
   }, [ventaEnCobroId]);
+  // DP-24 · Si los comensales (o el mesero) eligen la propina con el cobro abierto, llega ya puesta
+  // a la tarjeta y se dice ahí mismo, sin un diálogo encima.
+  const propinaDeOtraPantalla = propinaAlDia.aviso;
+  useEffect(() => {
+    if (!propinaDeOtraPantalla) return;
+    setAvisoDeLaPropina(
+      `${textoDelAviso(propinaDeOtraPantalla)}. Ya está puesta en la cuenta; aquí la puedes cambiar.`,
+    );
+    propinaAlDia.usarEsa();
+  }, [propinaDeOtraPantalla]);
 
   // DP-16 · EL PEDIDO PARA LLEVAR. «Cobrar» en su pantalla arma el borrador en el servidor y abre
   // ESTE diálogo de cobro. Si se cobra, el pedido guardado en el aparato se borra; si se cancela,
@@ -528,25 +514,6 @@ export default function Caja() {
     // sería una propina que no corresponde a lo que se va a cobrar.
     setVentaSeleccionada({ ...ventaFinal, propina_monto: propinaDerivada(ventaFinal) });
     setDetallesSeleccionados(detallesArr);
-    setMontoEfectivo('');
-    setMontoTarjeta('');
-    setMontoTransferencia('');
-    setPropinaEfectivo('');
-    setPropinaTarjeta('');
-    setPropinaTransferencia('');
-    // Solo abrir modal de propina si propinas están activas Y la venta lo requiere.
-    // Tipos que requieren elección explícita en caja:
-    //   - 'pendiente': mesero la dejó pendiente.
-    //   - 'pendiente_cliente': cliente nunca entró al QR a elegir.
-    //   - 'decidir_en_caja': cliente eligió explícitamente decidirla en caja.
-    // DP-21: y sólo si en este negocio la Caja elige la propina (Configuración → Propinas).
-    if (tipsEnabled(config) && laCajaEligeLaPropina(config)) {
-      const tipo = venta?.propina_tipo;
-      if (tipo === 'pendiente' || tipo === 'pendiente_cliente' || tipo === 'decidir_en_caja') {
-        setShowPropinaCaja(true);
-      }
-      // Si no tiene tipo (ventas antiguas) NO forzamos modal; quedan en 0 propina.
-    }
   };
 
   // DP-14.1 (punto 2) · Después de descontar, la cuenta se relee del servidor: el total, las
@@ -561,9 +528,6 @@ export default function Caja() {
       // QA2-A3 · La propina que el cajero ya eligió se conserva (el porcentaje, sobre el total nuevo).
       setVentaSeleccionada((previa) => ({ ...venta, ...propinaAlReleer(previa, venta) }));
       setDetallesSeleccionados(Array.isArray(detalles) ? detalles : []);
-      setMontoEfectivo('');
-      setMontoTarjeta('');
-      setMontoTransferencia('');
       queryClient.invalidateQueries({ queryKey: ['ventas_pendientes_caja'] });
       // Al reemplazar el descuento, «Autorizó X · motivo» es el del nuevo, no el de antes.
       queryClient.invalidateQueries({ queryKey: ['descuento_autorizado', ordenId] });
@@ -579,65 +543,115 @@ export default function Caja() {
     () => totalesDelPapel(ventaSeleccionada, detallesSeleccionados),
     [ventaSeleccionada, detallesSeleccionados],
   );
-  const totalACobrarVenta = useMemo(() => {
-    const t = papelDelCobro.total;
-    const p = Number(ventaSeleccionada?.propina_monto) || 0;
-    return t + p;
-  }, [ventaSeleccionada, papelDelCobro]);
+  // DP-24 · Los renglones de la cuenta, en palabras, para la tarjeta de cobro: lo que se vende por
+  // peso dice su peso («Barbacoa · 500 g»), y cada platillo enseña sus opciones y su nota.
+  const renglonesDelCobro = useMemo(
+    () =>
+      (Array.isArray(detallesSeleccionados) ? detallesSeleccionados : []).map((d, i) => {
+        const tipoSnap = d?.tipo_venta_snapshot;
+        const cantidad =
+          tipoSnap === TIPO_VENTA.VARIABLE_MEDIDA
+            ? cantidadParaMostrar(d)
+            : tipoSnap === TIPO_VENTA.PORCION_CONTENEDOR
+              ? `${Number(d?.cantidad_porciones_snapshot) || 0} ${d?.nombre_porcion_snapshot || ''}`.trim()
+              : `×${d?.cantidad}`;
+        const nota = notaSinLasOpciones(d?.notas_producto, d?.opciones_snapshot);
+        return {
+          id: d?.id || String(i),
+          nombre: d?.producto_nombre || 'Producto',
+          cantidad,
+          importeCentavos: aCentavos(d?.subtotal),
+          detalles: [...renglonesDeLasOpciones(d?.opciones_snapshot), ...(nota ? [nota] : [])],
+        };
+      }),
+    [detallesSeleccionados],
+  );
 
-  const calcularCambio = () => {
-    const recibido = parseFloat(montoEfectivo) || 0;
-    return Math.max(0, recibido - totalACobrarVenta);
+  // Lo que la tarjeta dice arriba de la cuenta: la propina que eligió otra pantalla, o el aviso del
+  // portal QR (el comensal todavía no elige, o pidió decidirla en caja).
+  const avisoDelCobro = (() => {
+    if (!ventaSeleccionada) return null;
+    const origen = ventaSeleccionada.propina_origen;
+    const tipo = ventaSeleccionada.propina_tipo;
+    let mensaje = avisoDeLaPropina;
+    let tono = 'bg-info/10 border-info/30 text-info';
+    if (!mensaje && (origen === 'portal_qr' || origen === 'pendiente_portal_qr')) {
+      if (origen === 'pendiente_portal_qr' || tipo === 'pendiente_cliente') {
+        mensaje = 'QR: el comensal todavía no elige su propina. Puedes esperar o elegirla aquí.';
+        tono = 'bg-advertencia/10 border-advertencia/30 text-advertencia';
+      } else if (tipo === 'decidir_en_caja') {
+        mensaje = 'QR: el comensal pidió decidir la propina en caja. Elígela aquí.';
+      } else if (tipo === 'sin_propina') {
+        mensaje = 'QR: el comensal eligió no dejar propina.';
+      } else if ((Number(ventaSeleccionada.propina_monto) || 0) > 0) {
+        mensaje = `QR: propina elegida por el comensal: ${formatCurrency(Number(ventaSeleccionada.propina_monto) || 0)}. Aquí la puedes cambiar.`;
+      } else {
+        mensaje = 'Cuenta pedida desde el QR.';
+      }
+    }
+    if (!mensaje) return null;
+    return (
+      <div role="status" className={`rounded-lg border p-2 text-xs flex items-start gap-2 ${tono}`}>
+        <Smartphone className="w-4 h-4 shrink-0 mt-0.5" />
+        <p className="flex-1 font-semibold">{mensaje}</p>
+      </div>
+    );
+  })();
+
+  // La propina que otra pantalla decidió (los comensales, el mesero) pasa a ser la del cobro, y se
+  // dice en la tarjeta. «Una sola verdad»: la vigente manda; la Caja puede cambiarla ahí mismo.
+  const ponerLaVigente = (vigente) => {
+    setVentaSeleccionada((prev) => (prev ? { ...prev, ...alUsarEsa(vigente) } : prev));
+    setAvisoDeLaPropina(
+      `${textoDelAviso(vigente)}. Ya está puesta en la cuenta; aquí la puedes cambiar.`,
+    );
   };
 
-  // Guarda la propina elegida en caja sobre la venta actual.
+  // DP-24 · La propina se elige en la tarjeta de cobro, con un toque, y se puede cambiar hasta antes
+  // de cobrar.
   //
-  // Ya NO viaja al servidor por su cuenta. La propina va DENTRO del cobro, en
-  // cada pago y con su método (`venta.cobrar`, regla 3 de `F1-01` §3): mandarla
-  // antes en un `Venta.update` suelto abría la ventana en la que la propina
-  // quedaba escrita y el cobro fallaba, y `ordenes` ni siquiera tiene columna de
-  // importe de propina — precisamente para que `total` no se pueda inflar con
-  // una (F1-04 §6.1). Aquí sólo se recuerda lo que el cajero eligió.
+  // El IMPORTE no viaja al servidor por su cuenta: va DENTRO del cobro, en cada pago y con su
+  // método (`venta.cobrar`, regla 3 de `F1-01` §3), y `ordenes` ni siquiera tiene columna de
+  // importe de propina — precisamente para que `total` no se pueda inflar con una (F1-04 §6.1).
   //
-  // DP-21 (Bloque 4): lo que SÍ viaja en el momento es CÓMO se decidió (tipo y puntos base, nunca
-  // un importe), por `cuenta.fijar_propina` y con la versión de la cuenta que esta pantalla leyó.
-  // Así la propina queda en el servidor cuando se elige y no hasta cobrar: el portal se entera y
-  // deja de ofrecerla, y si los comensales eligieron antes, el servidor contesta la suya.
-  const aplicarPropinaCaja = async (propinaData) => {
-    if (!ventaSeleccionada?.id) {
-      setShowPropinaCaja(false);
-      return;
-    }
+  // DP-21 (Bloque 4): lo que SÍ viaja en el momento es CÓMO se decidió (tipo y puntos base), por
+  // `cuenta.fijar_propina` y con la versión de la cuenta que esta pantalla leyó. Así la propina
+  // queda en el servidor cuando se elige: el portal se entera y deja de ofrecerla, y si la cuenta
+  // cambió mientras tanto (los comensales acaban de elegir), el servidor contesta la vigente y no
+  // escribe nada. Tocar otra propina en la tarjeta ES cambiarla a propósito: la vigente está a la vista.
+  const aplicarPropinaCaja = async (propina) => {
+    if (!ventaSeleccionada?.id || guardandoPropina) return;
     const payload = {
-      propina_monto: Number(propinaData?.propina_monto) || 0,
-      propina_porcentaje: Number(propinaData?.propina_porcentaje) || 0,
-      propina_tipo: propinaData?.propina_tipo || 'sin_propina',
+      ...propinaParaLaCuenta(propina, aCentavos(ventaSeleccionada.total)),
       propina_origen: 'caja',
     };
     if (typeof ventaSeleccionada.version === 'number' && laCajaEligeLaPropina(config)) {
+      setGuardandoPropina(true);
       try {
         const fijada = await api.comandos.ejecutar(
           '/api/venta/fijar-propina',
-          entradaDeFijarPropina(
-            ventaSeleccionada.id,
-            ventaSeleccionada.version,
-            payload,
-            cambiarPropinaRef.current,
-          ),
+          entradaDeFijarPropina(ventaSeleccionada.id, ventaSeleccionada.version, payload, true),
         );
         if (typeof fijada?.version === 'number') payload.version = fijada.version;
       } catch (err) {
-        setShowPropinaCaja(false);
         // Otra pantalla la decidió antes (o la cuenta cambió): se enseña la vigente.
         const vigente = propinaDelConflicto(err?.datos, ventaSeleccionada.total);
-        if (vigente) propinaAlDia.avisar(vigente);
-        else toast.error(err?.message || 'No se pudo guardar la propina. Intenta de nuevo.');
+        if (vigente) {
+          ponerLaVigente(vigente);
+        } else {
+          toast.error(err?.message || 'No se pudo guardar la propina. Intenta de nuevo.');
+          // La cuenta cambió por otra cosa (un platillo, un descuento): se relee con su versión.
+          if (err?.datos?.regla === 'PROPINA_VIGENTE') {
+            await releerLaCuentaDelCobro(ventaSeleccionada.id);
+          }
+        }
         return;
+      } finally {
+        setGuardandoPropina(false);
       }
     }
-    cambiarPropinaRef.current = false;
+    setAvisoDeLaPropina(null);
     setVentaSeleccionada((prev) => (prev ? { ...prev, ...payload } : prev));
-    setShowPropinaCaja(false);
   };
 
   // Eliminar/cancelar tickets en CERO ($0.00) — para limpiar caja sin afectar ventas reales.
@@ -690,7 +704,11 @@ export default function Caja() {
     }
   };
 
-  const handleCobrar = async () => {
+  // DP-24 · La cuenta del cobro la hace la tarjeta (`~/venta/cuenta-del-cobro`), en centavos: aquí
+  // llega con sus renglones de pago ya armados —la venta por un lado, la propina por otro, cada
+  // tarjeta en su renglón— o con el motivo por el que NO se puede cobrar. Un «Recibido» menor al
+  // total ya no se cobra como efectivo exacto: llega con su tropiezo y sin pagos.
+  const handleCobrar = async (loTecleado) => {
     if (!ventaSeleccionada?.id) {
       toast.error('No hay venta seleccionada');
       return;
@@ -700,156 +718,48 @@ export default function Caja() {
       toast.error('No hay caja abierta. Abre caja para cobrar.');
       return;
     }
-    const total = ventaSeleccionada.total || 0;
-    if (!total || total <= 0) {
-      toast.error('La venta no tiene total válido');
-      return;
-    }
-    if (!metodoPago) {
-      toast.error('Selecciona un método de pago');
-      return;
-    }
-    // Si la venta quedó marcada "decidir en caja" y aún no se eligió propina, forzar el modal.
-    // Solo si propinas están activas; si están desactivadas, ignoramos el pendiente.
-    // Se aplica a: 'pendiente' (mesero), 'pendiente_cliente' (QR sin elección),
-    // 'decidir_en_caja' (cliente delegó explícitamente en caja) y 'monto_manual'.
-    //
-    // `monto_manual` se añadió porque el importe que se reconstruye de los
-    // puntos base puede diferir en un centavo del que el comensal escribió: el
-    // cajero lo ve prellenado y lo confirma, que es exactamente lo que este
-    // diálogo existe para hacer. Antes ese caso ni forzaba el diálogo ni se
-    // derivaba, así que la propina del portal se perdía entera.
-    if (requiereConfirmarPropinaAntesDeCobrar(ventaSeleccionada, config)) {
-      setShowPropinaCaja(true);
-      toast.error('Define la propina antes de cobrar (o "Sin propina").');
+    if (!loTecleado || loTecleado.tropiezo !== null || loTecleado.pagos.length === 0) {
+      toast.error(loTecleado?.tropiezo || 'Revisa los pagos antes de cobrar.');
       return;
     }
     setProcesando(true);
     setProcesandoMsg('Procesando cobro…');
 
-    // El cliente paga venta + propina. La venta real (`total`) NO se infla.
-    const propinaMonto = Number(ventaSeleccionada.propina_monto) || 0;
-    const totalACobrar = total + propinaMonto;
-
-    let mEfec = parseFloat(montoEfectivo) || 0;
-    let mTar = parseFloat(montoTarjeta) || 0;
-    let mTrans = parseFloat(montoTransferencia) || 0;
-
-    if (metodoPago === 'efectivo') {
-      mEfec = totalACobrar;
-      mTar = 0;
-      mTrans = 0;
-    }
-    if (metodoPago === 'tarjeta') {
-      mTar = totalACobrar;
-      mEfec = 0;
-      mTrans = 0;
-    }
-    if (metodoPago === 'transferencia') {
-      mTrans = totalACobrar;
-      mEfec = 0;
-      mTar = 0;
-    }
-
-    // === Propinas EXACTAS por método (no proporcional) ===
-    // Regla:
-    //  - 1 solo método: 100% de la propina a ese método.
-    //  - Mixto: el cajero debe haber ingresado el desglose; validamos que sume.
-    let propEf = 0,
-      propTa = 0,
-      propTr = 0;
-    if (propinaMonto > 0) {
-      if (metodoPago === 'efectivo') {
-        propEf = propinaMonto;
-      } else if (metodoPago === 'tarjeta') {
-        propTa = propinaMonto;
-      } else if (metodoPago === 'transferencia') {
-        propTr = propinaMonto;
-      } else if (metodoPago === 'mixto') {
-        propEf = parseFloat(propinaEfectivo) || 0;
-        propTa = parseFloat(propinaTarjeta) || 0;
-        propTr = parseFloat(propinaTransferencia) || 0;
-        const sumaProp = propEf + propTa + propTr;
-        if (Math.abs(sumaProp - propinaMonto) > 0.01) {
-          toast.error(
-            `La suma de propinas por método (${formatCurrency(sumaProp)}) debe coincidir con la propina total (${formatCurrency(propinaMonto)}).`,
-          );
-          setProcesando(false);
-          setProcesandoMsg('');
-          return;
-        }
-      }
-    }
+    // Lo que físicamente entra por cada método (con su propina y sin el cambio): para el ticket.
+    const mEfec = aPesos(loTecleado.efectivoCentavos);
+    const mTar = aPesos(loTecleado.tarjetaCentavos);
+    const mTrans = aPesos(loTecleado.transferenciaCentavos);
+    const metodosUsados = [...new Set(loTecleado.pagos.map((pago) => pago.metodo))];
+    const metodoPago = metodosUsados.length === 1 ? metodosUsados[0] : 'mixto';
 
     // === El cuerpo del cobro ================================================
-    // Un renglón de pago por método, cada uno con SU propina, exacta (regla 3
-    // de `F1-01` §3): si el comensal dejó 50 en efectivo y 30 en tarjeta, son
-    // 50 y 30, nunca un reparto proporcional. `montoCentavos` es la VENTA; la
-    // propina viaja en su propio campo y NO cuenta para cubrir el total, que es
-    // la regla 1 — `Venta.total` es la venta SIN propina.
-    const pagos = [];
-    const agregarPago = (metodo, ventaPesos, propinaPesos, recibidoPesos) => {
-      const montoCentavos = aCentavos(ventaPesos);
-      const propinaCentavos = aCentavos(propinaPesos);
-      // Un renglón sin venta PERO con propina es un pago (cierre del restaurante, 2.4): la
-      // cuenta entera con tarjeta y la propina en billete. Antes se descartaba con todo y
-      // propina —el cobro salía sin ella y nadie lo notaba—; sólo se omite el vacío.
-      if (montoCentavos <= 0 && propinaCentavos <= 0) return;
-      const pago = { metodo, montoCentavos: Math.max(montoCentavos, 0) };
-      if (propinaCentavos > 0) pago.propinaCentavos = propinaCentavos;
-      // El «Recibido» sólo se manda si de verdad cubre venta + propina: es de
-      // donde el servidor saca el cambio, y si no alcanza rechaza el cobro. El
-      // campo vacío significa importe exacto, igual que hasta hoy.
-      if (metodo === 'efectivo' && recibidoPesos !== undefined) {
-        const recibidoCentavos = aCentavos(recibidoPesos);
-        if (recibidoCentavos >= montoCentavos + propinaCentavos) {
-          pago.recibidoCentavos = recibidoCentavos;
-        }
-      }
-      pagos.push(pago);
-    };
-
-    if (metodoPago === 'mixto') {
-      agregarPago('efectivo', parseFloat(montoEfectivo) || 0, propEf);
-      agregarPago('tarjeta', parseFloat(montoTarjeta) || 0, propTa);
-      agregarPago('transferencia', parseFloat(montoTransferencia) || 0, propTr);
-    } else {
-      agregarPago(
-        metodoPago,
-        total,
-        propinaMonto,
-        metodoPago === 'efectivo' ? parseFloat(montoEfectivo) || 0 : undefined,
-      );
-    }
-
-    // Sólo puede pasar en mixto, con los tres campos vacíos. Se dice aquí en vez
-    // de mandar un cobro sin pagos y que vuelva un ENTRADA_INVALIDA de esquema.
-    if (pagos.length === 0) {
-      toast.error('Escribe cuánto se pagó con cada método.');
-      setProcesando(false);
-      setProcesandoMsg('');
-      return;
-    }
-
+    // Un renglón por pago, cada uno con SU propina (regla 3 de `F1-01` §3). `montoCentavos` es la
+    // VENTA; la propina viaja en su propio campo y NO cuenta para cubrir el total, que es la
+    // regla 1 — `Venta.total` es la venta SIN propina.
     const cuerpoCobro = {
       ordenId: ventaSeleccionada.id,
-      pagos,
-      // Lo que ESTA pantalla creía que costaba. No cobra: el servidor recalcula
-      // y, si no coincide, rechaza con el total correcto en vez de cobrar otro
-      // número en silencio. El cajero ya le dijo una cifra al cliente.
-      totalEsperadoCentavos: aCentavos(total),
+      pagos: loTecleado.pagos,
+      // Lo que ESTA pantalla creía que costaba. No cobra: el servidor recalcula y, si no
+      // coincide, rechaza con el total correcto en vez de cobrar otro número en silencio.
+      totalEsperadoCentavos: loTecleado.totalCentavos,
     };
-    // Metadatos de cómo se decidió la propina. No son importes —en `ordenes` no
-    // cabe ninguno de propina, y por eso `total` no se puede inflar con una— y
-    // se filtran contra la lista válida para que un valor viejo no tumbe el
-    // cobro entero con ENTRADA_INVALIDA.
-    const puntosBase = Math.round((Number(ventaSeleccionada.propina_porcentaje) || 0) * 100);
-    if (puntosBase > 0 && puntosBase <= 10000) cuerpoCobro.propinaPuntosBase = puntosBase;
-    if (TIPOS_DE_PROPINA.includes(ventaSeleccionada.propina_tipo)) {
-      cuerpoCobro.propinaTipo = ventaSeleccionada.propina_tipo;
-    }
-    if (ORIGENES_DE_PROPINA.includes(ventaSeleccionada.propina_origen)) {
-      cuerpoCobro.propinaOrigen = ventaSeleccionada.propina_origen;
+    // Cómo se decidió la propina (nunca un importe: en `ordenes` no cabe ninguno). Si llegó puesta
+    // de otra pantalla —los comensales, el mesero— y así se cobra, se respeta tal cual; si la Caja
+    // la eligió, la cambió o dejó el cambio de propina, queda como decisión de la Caja.
+    const propinaQueTraia = propinaBase(loTecleado.totalCentavos, propinaDeLaCuenta(ventaSeleccionada));
+    if (estaDecidida(ventaSeleccionada) && loTecleado.propinaCentavos === propinaQueTraia) {
+      const puntosBase = Math.round((Number(ventaSeleccionada.propina_porcentaje) || 0) * 100);
+      if (puntosBase > 0 && puntosBase <= 10000) cuerpoCobro.propinaPuntosBase = puntosBase;
+      if (TIPOS_DE_PROPINA.includes(ventaSeleccionada.propina_tipo)) {
+        cuerpoCobro.propinaTipo = ventaSeleccionada.propina_tipo;
+      }
+      if (ORIGENES_DE_PROPINA.includes(ventaSeleccionada.propina_origen)) {
+        cuerpoCobro.propinaOrigen = ventaSeleccionada.propina_origen;
+      }
+    } else {
+      cuerpoCobro.propinaTipo = loTecleado.propinaAEnviar.tipo;
+      cuerpoCobro.propinaPuntosBase = loTecleado.propinaAEnviar.puntosBase;
+      cuerpoCobro.propinaOrigen = 'caja';
     }
     // DP-21: la versión de la cuenta que está en pantalla. Si cambió después (los comensales
     // eligieron su propina), el servidor rechaza el cobro con la vigente en vez de cobrar otra.
@@ -983,6 +893,9 @@ export default function Caja() {
           monto_tarjeta: mTar,
           monto_transferencia: mTrans,
           cambio,
+          // DP-24 · La propina que de verdad se cobró (con el cambio, si se dejó de propina).
+          propina_monto: aPesos(loTecleado.propinaCentavos),
+          propina_tipo: cuerpoCobro.propinaTipo,
         };
         const detallesSnap = Array.isArray(detallesSeleccionados) ? [...detallesSeleccionados] : [];
         setTicketFinalData({ venta: ventaPagada, detalles: detallesSnap });
@@ -997,13 +910,6 @@ export default function Caja() {
       // Limpieza de estados del cobro (independiente del ticket)
       setVentaSeleccionada(null);
       setDetallesSeleccionados([]);
-      setMetodoPago('efectivo');
-      setMontoEfectivo('');
-      setMontoTarjeta('');
-      setMontoTransferencia('');
-      setPropinaEfectivo('');
-      setPropinaTarjeta('');
-      setPropinaTransferencia('');
       toast.success(`¡Venta cobrada! Cambio: ${formatCurrency(cambio)}`);
       sonar('cobro');
       // DP-20 · El cajón del aparato se abre solo al cobrar en efectivo (y queda en la auditoría).
@@ -1030,7 +936,7 @@ export default function Caja() {
         // DP-21: la cuenta cambió mientras se cobraba y el servidor mandó la propina vigente:
         // se enseña con su aviso («Usar ésa» o «Cambiarla»), nunca se cobra otra en silencio.
         const propinaVigente = propinaDelConflicto(err?.datos, ventaSeleccionada?.total);
-        if (propinaVigente) propinaAlDia.avisar(propinaVigente);
+        if (propinaVigente) ponerLaVigente(propinaVigente);
         // DP-14 (ronda 2, medio 3): otra caja ya la cobró (o se canceló o se dividió): aquí ya no se
         // cobra. El cobro se cierra y la lista se relee, en vez de dejar al cajero frente a una
         // cuenta que ya no está pendiente.
@@ -1714,343 +1620,76 @@ export default function Caja() {
         </TabsContent>
       </Tabs>
 
-      {/* DP-18 · A9: el cobro y «¿Cómo se pagó la propina?» eran dos diálogos modales abiertos a la
-          vez; Radix oculta (`aria-hidden`) lo de atrás y al lector de pantalla y al teclado se les
-          escondía uno. Van uno tras otro: primero la propina y, al elegirla o cerrarla, el cobro.
-          La cuenta (`ventaSeleccionada`) y lo tecleado viven aquí, así que nada se pierde al ocultarlo. */}
-      {/* COBRO DIALOG */}
-      <Dialog
-        open={!!ventaSeleccionada && !showPropinaCaja}
-        onOpenChange={() => setVentaSeleccionada(null)}
-      >
-        {/* DP-15 · El pie del cobro (Cancelar, Descuento, Cancelar la cuenta, Dividir, Cobrar) no se
-            envolvía: a 768 px o más estiraba la columna del diálogo 300 px fuera de la tarjeta y los
-            importes quedaban sobre el velo, ilegibles. Ahora se envuelve, y el diálogo es un poco
-            más ancho y se desplaza si no cabe de alto. */}
-        <DialogContent className="sm:max-w-lg max-h-[92vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-heading">
-              Cobrar —{' '}
-              {ventaSeleccionada?.canal === 'llevar'
-                ? `Para llevar${ventaSeleccionada?.nombre_pedido ? ` · ${ventaSeleccionada.nombre_pedido}` : ''}`
-                : ventaSeleccionada?.mesa_numero || ventaSeleccionada?.cliente_nombre
-                  ? rotuloDeCaja(ventaSeleccionada)
-                  : folioVisible(ventaSeleccionada?.serie, ventaSeleccionada?.folio, config, 'numero')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* Aviso si la cuenta involucra el Portal QR del comensal */}
-            {(ventaSeleccionada?.propina_origen === 'portal_qr' ||
-              ventaSeleccionada?.propina_origen === 'pendiente_portal_qr') &&
-              (() => {
-                const origen = ventaSeleccionada?.propina_origen;
-                const tipo = ventaSeleccionada?.propina_tipo;
-                const monto = Number(ventaSeleccionada?.propina_monto) || 0;
-                let titulo = 'Cuenta solicitada desde QR';
-                let mensaje = '';
-                let palette = 'bg-info/10 border-info/30 text-info';
-                if (origen === 'pendiente_portal_qr' || tipo === 'pendiente_cliente') {
-                  titulo = 'QR: esperando propina del comensal';
-                  mensaje =
-                    'El cliente aún no eligió propina en el QR. Puedes esperar o cobrar definiendo tú la propina.';
-                  palette = 'bg-advertencia/10 border-advertencia/30 text-advertencia';
-                } else if (tipo === 'decidir_en_caja') {
-                  titulo = 'El cliente decidió en caja';
-                  mensaje =
-                    'Define la propina aquí (porcentaje, monto o sin propina) antes de cobrar.';
-                  palette = 'bg-info/10 border-info/30 text-info';
-                } else if (tipo === 'sin_propina') {
-                  mensaje = 'El cliente eligió no dejar propina.';
-                } else if (monto > 0) {
-                  mensaje = `Propina sugerida por el cliente: ${formatCurrency(monto)}. Puedes ajustarla o quitarla si lo pide.`;
-                }
-                return (
-                  <div
-                    className={`rounded-xl p-2.5 border text-xs flex items-start gap-2 ${palette}`}
-                  >
-                    <Smartphone className="w-4 h-4 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-bold">{titulo}</p>
-                      {mensaje && <p>{mensaje}</p>}
-                    </div>
-                  </div>
-                );
-              })()}
-            <div className="space-y-1 max-h-40 overflow-y-auto">
-              {detallesSeleccionados.map((d, i) => {
-                // 6B / 1.G: líneas variables → "Barbacoa · 500 g"; precio_fijo → "Hamburguesa ×2"
-                const tipoSnap = d?.tipo_venta_snapshot;
-                const esVariable =
-                  tipoSnap === TIPO_VENTA.VARIABLE_MEDIDA ||
-                  tipoSnap === TIPO_VENTA.PORCION_CONTENEDOR;
-                return (
-                  <div key={i} className="flex justify-between text-sm py-1 border-b border-dashed">
-                    <span>
-                      {d?.producto_nombre}
-                      {esVariable ? (
-                        <span className="ml-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[11px] font-bold">
-                          {tipoSnap === TIPO_VENTA.VARIABLE_MEDIDA
-                            ? cantidadParaMostrar(d)
-                            : `${Number(d?.cantidad_porciones_snapshot) || 0} ${d?.nombre_porcion_snapshot || ''}`}
-                        </span>
-                      ) : (
-                        <span> ×{d?.cantidad}</span>
-                      )}
-                    </span>
-                    <span className="font-medium">{formatCurrency(d?.subtotal)}</span>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Subtotal + Propina + Total a cobrar */}
-            <div className="border-t pt-2 space-y-1">
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Subtotal</span>
-                <span>{formatCurrency(papelDelCobro.renglones)}</span>
-              </div>
-              {papelDelCobro.descuento > 0 && (
-                <div className="text-sm">
-                  <div className="flex justify-between">
-                    <span>Descuento</span>
-                    <span>−{formatCurrency(papelDelCobro.descuento)}</span>
-                  </div>
-                  <DescuentoAutorizado ordenId={ventaSeleccionada.id} />
-                </div>
-              )}
-              {seMencionaElIva(papelDelCobro.iva) && (
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>{papelDelCobro.ivaSeSuma ? 'IVA' : 'IVA incluido'}</span>
-                  <span>{formatCurrency(papelDelCobro.iva)}</span>
-                </div>
-              )}
-              {(Number(ventaSeleccionada?.propina_monto) || 0) > 0 && (
-                <div className="flex justify-between text-sm text-peligro">
-                  <span>
-                    Propina{' '}
-                    {ventaSeleccionada?.propina_porcentaje > 0
-                      ? `(${ventaSeleccionada.propina_porcentaje}%)`
-                      : ''}
-                  </span>
-                  <span>+ {formatCurrency(Number(ventaSeleccionada?.propina_monto) || 0)}</span>
-                </div>
-              )}
-              {(ventaSeleccionada?.propina_tipo === 'pendiente' ||
-                ventaSeleccionada?.propina_tipo === 'pendiente_cliente' ||
-                ventaSeleccionada?.propina_tipo === 'decidir_en_caja') && (
-                <button
-                  type="button"
-                  onClick={() => setShowPropinaCaja(true)}
-                  className="w-full text-left text-xs text-advertencia bg-advertencia/10 border border-advertencia/30 rounded-md px-2 py-1.5"
-                >
-                  {ventaSeleccionada?.propina_tipo === 'decidir_en_caja'
-                    ? 'Cliente eligió decidir en caja — toca para definir propina'
-                    : ventaSeleccionada?.propina_tipo === 'pendiente_cliente'
-                      ? 'Cliente no eligió propina en QR — toca para definirla'
-                      : 'Propina pendiente — toca para definirla'}
-                </button>
-              )}
-              <div className="flex justify-between font-black text-lg border-t pt-2">
-                <span>TOTAL A COBRAR</span>
-                <span
-                  className={
-                    config?.colorear_importes_monetarios !== false
-                      ? 'text-primary'
-                      : 'text-foreground'
-                  }
-                >
-                  {formatCurrency(totalACobrarVenta)}
-                </span>
-              </div>
-            </div>
-            {(!ventaSeleccionada?.total || ventaSeleccionada.total <= 0) && (
-              <div className="p-3 rounded-xl bg-peligro/10 border border-peligro/30 text-xs text-peligro">
-                Este ticket está en $0.00. No se puede cobrar. Puedes eliminarlo para limpiar la
-                caja.
-              </div>
-            )}
-            <div>
-              <Label className="text-xs text-muted-foreground">Método de pago</Label>
-              <div className="grid grid-cols-2 gap-2 mt-1.5">
-                {METODOS.map((m) => (
-                  <button
-                    key={m.key}
-                    onClick={() => setMetodoPago(m.key)}
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${metodoPago === m.key ? m.color + ' shadow-md' : 'border-border bg-superficie text-muted-foreground hover:bg-muted'}`}
-                  >
-                    <m.Icon className="w-4 h-4 shrink-0" />
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {metodoPago === 'efectivo' && (
-              <div>
-                <Label className="text-xs">Recibido</Label>
-                <NumericInput
-                  value={montoEfectivo}
-                  onChange={(e) => setMontoEfectivo(e.target.value)}
-                  placeholder="0.00"
-                  className="text-xl font-bold h-12 mt-1"
-                />
-                {montoEfectivo && (
-                  <p
-                    className={`text-sm font-bold mt-1 ${calcularCambio() >= 0 ? 'text-exito' : 'text-peligro'}`}
-                  >
-                    Cambio: {formatCurrency(calcularCambio())}
-                  </p>
-                )}
-              </div>
-            )}
-            {metodoPago === 'mixto' && (
+      {/* DP-24 · LA TARJETA DE COBRO: la cuenta y el pago en una sola vista, sin diálogos encimados.
+          La propina se elige ahí mismo (ya no hay «¿Desean agregar propina?» encima del cobro) y la
+          cuenta del dinero la hace `~/venta/cuenta-del-cobro`, en centavos. La cuenta
+          (`ventaSeleccionada`) sigue viviendo aquí. */}
+      <TarjetaDeCobro
+        abierta={!!ventaSeleccionada}
+        titulo={`Cobrar — ${
+          ventaSeleccionada?.canal === 'llevar'
+            ? `Para llevar${ventaSeleccionada?.nombre_pedido ? ` · ${ventaSeleccionada.nombre_pedido}` : ''}`
+            : ventaSeleccionada?.mesa_numero || ventaSeleccionada?.cliente_nombre
+              ? rotuloDeCaja(ventaSeleccionada)
+              : folioVisible(ventaSeleccionada?.serie, ventaSeleccionada?.folio, config, 'numero')
+        }`}
+        clave={`${ventaSeleccionada?.id ?? ''}|${String(aCentavos(ventaSeleccionada?.total))}`}
+        renglones={renglonesDelCobro}
+        subtotalCentavos={aCentavos(papelDelCobro.renglones)}
+        descuentoCentavos={aCentavos(papelDelCobro.descuento)}
+        ivaCentavos={aCentavos(papelDelCobro.iva)}
+        ivaSeSuma={papelDelCobro.ivaSeSuma}
+        totalCentavos={aCentavos(ventaSeleccionada?.total)}
+        propina={tipsEnabled(config) ? propinaDeLaCuenta(ventaSeleccionada) : { tipo: 'sin_propina' }}
+        porcentajes={getPorcentajesSugeridos(config)}
+        propinas={
+          !tipsEnabled(config) ? 'apagadas' : laCajaEligeLaPropina(config) ? 'elige' : 'solo-lectura'
+        }
+        guardandoPropina={guardandoPropina}
+        procesando={procesando}
+        mensajeDeProceso={procesandoMsg}
+        aviso={avisoDelCobro}
+        bajoElDescuento={
+          ventaSeleccionada?.id ? <DescuentoAutorizado ordenId={ventaSeleccionada.id} /> : null
+        }
+        alElegirPropina={aplicarPropinaCaja}
+        alCobrar={handleCobrar}
+        alCerrar={() => setVentaSeleccionada(null)}
+        alBorrarEnCero={() => handleEliminarTicketCero(ventaSeleccionada)}
+        // DP-24 · Quitar un platillo, aquí donde se cobra: de la cuenta de una mesa (el pedido para
+        // llevar se corrige en el suyo, y a una parte de una cuenta dividida no se le quita).
+        alQuitar={
+          ventaSeleccionada?.mesa_id && !ventaSeleccionada?.orden_padre_id
+            ? (renglon) => setQuitandoDeLaCuenta(renglon)
+            : undefined
+        }
+        acciones={
+          <>
+            {/* DP-24 · La Caja le agrega a la cuenta de una mesa, con el mismo buscador y rejilla del
+                mesero: «Agregar» (para comer aquí) y «Para llevar» (va marcado a cocina). A una parte
+                de una cuenta dividida no se le agrega, y el pedido para llevar se corrige en el suyo. */}
+            {ventaSeleccionada?.mesa_id && !ventaSeleccionada?.orden_padre_id && (
               <>
-                <fieldset
-                  aria-label="Pago de la venta, por método"
-                  className="grid grid-cols-3 gap-2 min-w-0"
+                <Button
+                  variant="outline"
+                  disabled={procesando}
+                  aria-label="Agregar a la cuenta"
+                  onClick={() => setAgregandoALaCuenta({ paraLlevar: false })}
                 >
-                  <div>
-                    <Label htmlFor={`${idMixto}-venta-efectivo`} className="text-xs">
-                      Efectivo
-                    </Label>
-                    <NumericInput
-                      id={`${idMixto}-venta-efectivo`}
-                      value={montoEfectivo}
-                      onChange={(e) => setMontoEfectivo(e.target.value)}
-                      placeholder="0"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={`${idMixto}-venta-tarjeta`} className="text-xs">
-                      Tarjeta
-                    </Label>
-                    <NumericInput
-                      id={`${idMixto}-venta-tarjeta`}
-                      value={montoTarjeta}
-                      onChange={(e) => setMontoTarjeta(e.target.value)}
-                      placeholder="0"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={`${idMixto}-venta-transferencia`} className="text-xs">
-                      Transfer.
-                    </Label>
-                    <NumericInput
-                      id={`${idMixto}-venta-transferencia`}
-                      value={montoTransferencia}
-                      onChange={(e) => setMontoTransferencia(e.target.value)}
-                      placeholder="0"
-                      className="mt-1"
-                    />
-                  </div>
-                </fieldset>
-                {/* Los tres importes son la VENTA por método, sin la propina: la propina se
-                    desglosa abajo. Decirlo aquí evita el «El pago excede el total» de quien
-                    teclea la tarjeta con la propina dentro. */}
-                {(() => {
-                  const venta = Number(ventaSeleccionada?.total) || 0;
-                  const desglosada =
-                    (parseFloat(montoEfectivo) || 0) +
-                    (parseFloat(montoTarjeta) || 0) +
-                    (parseFloat(montoTransferencia) || 0);
-                  const diferencia = Math.round((venta - desglosada) * 100) / 100;
-                  if (diferencia === 0) {
-                    return (
-                      <p className="text-[11px] font-semibold text-exito">
-                        {`✓ La venta (${formatCurrency(venta)}) queda cubierta.`}
-                      </p>
-                    );
-                  }
-                  return (
-                    <p className="text-[11px] font-semibold text-muted-foreground">
-                      {diferencia > 0
-                        ? `Venta sin propina: ${formatCurrency(venta)}. Faltan ${formatCurrency(diferencia)} por desglosar.`
-                        : `Venta sin propina: ${formatCurrency(venta)}. Sobran ${formatCurrency(-diferencia)}: la propina va abajo.`}
-                    </p>
-                  );
-                })()}
-
-                {/* ¿Cómo se pagó la propina? — exacta, no proporcional */}
-                {(Number(ventaSeleccionada?.propina_monto) || 0) > 0 && (
-                  <fieldset className="p-3 rounded-xl bg-peligro/10 border-2 border-peligro/30 min-w-0">
-                    {/* A17: el grupo se llama «¿Cómo se pagó la propina?», para distinguirlo del de la venta. */}
-                    <legend className="text-xs font-bold text-peligro mb-2">
-                      ¿Cómo se pagó la propina?{' '}
-                      <span className="font-mono">
-                        {formatCurrency(Number(ventaSeleccionada?.propina_monto) || 0)}
-                      </span>
-                    </legend>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <Label htmlFor={`${idMixto}-propina-efectivo`} className="text-[10px]">
-                          Efectivo
-                        </Label>
-                        <NumericInput
-                          id={`${idMixto}-propina-efectivo`}
-                          value={propinaEfectivo}
-                          onChange={(e) => setPropinaEfectivo(e.target.value)}
-                          placeholder="0"
-                          className="mt-1 h-9"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor={`${idMixto}-propina-tarjeta`} className="text-[10px]">
-                          Tarjeta
-                        </Label>
-                        <NumericInput
-                          id={`${idMixto}-propina-tarjeta`}
-                          value={propinaTarjeta}
-                          onChange={(e) => setPropinaTarjeta(e.target.value)}
-                          placeholder="0"
-                          className="mt-1 h-9"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor={`${idMixto}-propina-transferencia`} className="text-[10px]">
-                          Transfer.
-                        </Label>
-                        <NumericInput
-                          id={`${idMixto}-propina-transferencia`}
-                          value={propinaTransferencia}
-                          onChange={(e) => setPropinaTransferencia(e.target.value)}
-                          placeholder="0"
-                          className="mt-1 h-9"
-                        />
-                      </div>
-                    </div>
-                    {(() => {
-                      const sP =
-                        (parseFloat(propinaEfectivo) || 0) +
-                        (parseFloat(propinaTarjeta) || 0) +
-                        (parseFloat(propinaTransferencia) || 0);
-                      const pT = Number(ventaSeleccionada?.propina_monto) || 0;
-                      const cuadra = Math.abs(sP - pT) < 0.01;
-                      return (
-                        <p
-                          className={`mt-2 text-[11px] font-semibold ${cuadra ? 'text-exito' : 'text-peligro'}`}
-                        >
-                          {cuadra
-                            ? `✓ Cuadra: ${formatCurrency(sP)} de propina distribuida.`
-                            : `La suma (${formatCurrency(sP)}) debe ser igual a la propina total (${formatCurrency(pT)}).`}
-                        </p>
-                      );
-                    })()}
-                  </fieldset>
-                )}
+                  <Plus className="w-4 h-4" /> Agregar
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={procesando}
+                  onClick={() => setAgregandoALaCuenta({ paraLlevar: true })}
+                >
+                  <ShoppingBag className="w-4 h-4" /> Para llevar
+                </Button>
               </>
             )}
-          </div>
-          <DialogFooter className="flex-wrap gap-2 sm:space-x-0">
-            <Button
-              variant="outline"
-              className="h-auto"
-              onClick={() => setVentaSeleccionada(null)}
-            >
-              Cancelar
-            </Button>
             {/* DP-14.1 (punto 2): el descuento —con la clave de quien lo autoriza— y la
-                cancelación de la cuenta, aquí donde se cobra. Vivían sólo en `/restaurante/cobro`,
-                que ninguna pantalla enlaza. Con los descuentos apagados, el botón no aparece. */}
+                cancelación de la cuenta, aquí donde se cobra. Con los descuentos apagados, el
+                botón no aparece. */}
             {(ventaSeleccionada?.mesa_id ||
               ventaSeleccionada?.orden_padre_id ||
               ventaSeleccionada?.canal === 'llevar') &&
@@ -2066,7 +1705,7 @@ export default function Caja() {
                   }}
                 />
               )}
-            {/* DP-16 · El pedido para llevar aún no cobrado no se «cancela»: «Cancelar» regresa a él. */}
+            {/* DP-16 · El pedido para llevar aún no cobrado no se «cancela»: «Cerrar» regresa a él. */}
             {ventaSeleccionada?.id && ventaSeleccionada.total > 0 && ventaSeleccionada?.canal !== 'llevar' && (
               <CancelarLaCuenta
                 ordenId={ventaSeleccionada.id}
@@ -2080,8 +1719,7 @@ export default function Caja() {
                 }}
               />
             )}
-            {/* QA1-5 (DP-13.5): la cuenta de una mesa se divide aquí, donde se cobra. Antes el
-                botón vivía sólo en `/restaurante/cobro`, que ninguna pantalla enlaza. */}
+            {/* QA1-5 (DP-13.5): la cuenta de una mesa se divide aquí, donde se cobra. */}
             {ventaSeleccionada?.mesa_id && ventaSeleccionada.total > 0 && (
               <DividirLaCuenta
                 ordenId={ventaSeleccionada.id}
@@ -2093,36 +1731,9 @@ export default function Caja() {
                 }}
               />
             )}
-            {!ventaSeleccionada?.total || ventaSeleccionada.total <= 0 ? (
-              <Button
-                variant="destructive"
-                onClick={() => handleEliminarTicketCero(ventaSeleccionada)}
-              >
-                <Trash2 className="w-4 h-4 mr-1" />
-                Borrar ticket en cero
-              </Button>
-            ) : (
-              <Button
-                onClick={handleCobrar}
-                disabled={procesando}
-                className="min-w-[140px] h-auto"
-                style={{
-                  background: 'linear-gradient(135deg, hsl(4,72%,46%) 0%, hsl(4,72%,36%) 100%)',
-                }}
-              >
-                {procesando ? (
-                  <span className="flex items-center gap-2">
-                    <span className="w-4 h-4 border-2 border-borde/40 border-t-borde-fuerte rounded-full animate-spin shrink-0" />
-                    {procesandoMsg || 'Procesando…'}
-                  </span>
-                ) : (
-                  `Cobrar ${formatCurrency(totalACobrarVenta)}`
-                )}
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      />
 
       {/* TICKET FINAL DIALOG — envuelto en SafeBoundary para que un fallo de
           render NO produzca pantalla blanca: solo muestra fallback compacto. */}
@@ -2177,6 +1788,50 @@ export default function Caja() {
         </DialogContent>
       </Dialog>
 
+      {/* DP-24 · Quitar un platillo de la cuenta que se está cobrando. */}
+      {quitandoDeLaCuenta && ventaSeleccionada?.id && (
+        <QuitarDeLaCuenta
+          key={quitandoDeLaCuenta.id}
+          ordenId={ventaSeleccionada.id}
+          lineaId={quitandoDeLaCuenta.id}
+          nombre={quitandoDeLaCuenta.nombre}
+          alCerrar={() => setQuitandoDeLaCuenta(null)}
+          alQuitar={async () => {
+            setQuitandoDeLaCuenta(null);
+            // La cuenta cambió en el servidor: se relee sin el platillo, con su total y su versión.
+            await releerLaCuentaDelCobro(ventaSeleccionada.id);
+            queryClient.invalidateQueries({ queryKey: ['mesas'] });
+          }}
+        />
+      )}
+
+      {/* DP-24 · Agregar a la cuenta que se está cobrando (mismo buscador y rejilla). */}
+      {agregandoALaCuenta && ventaSeleccionada?.id && (
+        <ParaLlevarDialog
+          key={`agregar-${ventaSeleccionada.id}-${agregandoALaCuenta.paraLlevar ? 'llevar' : 'aqui'}`}
+          open
+          usuarioId={posUser?.id}
+          agregarA={{
+            ordenId: ventaSeleccionada.id,
+            rotulo: rotuloDeCaja(ventaSeleccionada),
+            paraLlevar: agregandoALaCuenta.paraLlevar,
+          }}
+          onCerrar={() => setAgregandoALaCuenta(null)}
+          onAgregado={async () => {
+            const eraParaLlevar = agregandoALaCuenta.paraLlevar;
+            setAgregandoALaCuenta(null);
+            // La cuenta cambió en el servidor: se relee con sus renglones, su total y su versión.
+            await releerLaCuentaDelCobro(ventaSeleccionada.id);
+            queryClient.invalidateQueries({ queryKey: ['mesas'] });
+            toast.success(
+              eraParaLlevar
+                ? 'Agregado para llevar: ya salió a cocina.'
+                : 'Agregado a la cuenta: ya salió a cocina.',
+            );
+          }}
+        />
+      )}
+
       {/* DP-16 · La toma del pedido para llevar (se monta al abrirla: lee su borrador del aparato). */}
       {showParaLlevar && (
         <ParaLlevarDialog
@@ -2192,27 +1847,6 @@ export default function Caja() {
         />
       )}
 
-      {/* DP-21: «Los comensales eligieron 10 % de propina ($52.00)» · Usar ésa / Cambiarla. */}
-      <AvisoDePropina
-        aviso={propinaAlDia.aviso}
-        alUsarEsa={propinaAlDia.usarEsa}
-        alCambiarla={() => {
-          propinaAlDia.cambiarla();
-          cambiarPropinaRef.current = true;
-          setShowPropinaCaja(true);
-        }}
-      />
-
-      {/* === MODAL DE PROPINA EN CAJA === */}
-      <PropinaDialog
-        open={showPropinaCaja}
-        onOpenChange={setShowPropinaCaja}
-        subtotal={Number(ventaSeleccionada?.total) || 0}
-        loading={procesando}
-        origen="caja"
-        porcentajesSugeridos={getPorcentajesSugeridos(config)}
-        onConfirm={aplicarPropinaCaja}
-      />
 
       {/* === 3 MODALES NUEVOS === */}
       <AbrirCajaDialog
@@ -2282,6 +1916,20 @@ export default function Caja() {
               >
                 <Printer className="w-4 h-4" /> Imprimir / descargar
               </Button>
+              {/* DP-24 · Ya con el corte hecho, las propinas que queden se liquidan aquí mismo. La
+                  caja ya cerró: esta entrega no cambia el corte (es la del Tablero). */}
+              {PUEDEN_ADMINISTRAR_LA_CAJA.includes(miPuesto) && tipsEnabled(config) && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowCierreExito(false);
+                    setLiquidandoTrasElCorte(true);
+                  }}
+                  className="gap-2"
+                >
+                  <Wallet className="w-4 h-4" /> Liquidar propinas
+                </Button>
+              )}
               <Button variant="ghost" onClick={() => setShowCierreExito(false)}>
                 Cerrar
               </Button>
@@ -2289,6 +1937,14 @@ export default function Caja() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* DP-24 · Liquidar propinas tras el corte: el diálogo de siempre (no hay un segundo camino). */}
+      <LiquidarPropinasDialog
+        open={liquidandoTrasElCorte}
+        onClose={() => setLiquidandoTrasElCorte(false)}
+        meseros={usuariosDeLaCaja}
+        rangoInicial="today"
+      />
 
       {/* 6A: bloqueo cuando hay mesas abiertas */}
       <MesasPendientesCierreDialog

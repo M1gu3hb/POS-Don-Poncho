@@ -64,9 +64,10 @@ describe('ningún papel ni pantalla pinta el IVA por su cuenta', () => {
   it('encuentra los renglones de IVA que hoy existen (si no, el contrato estaría ciego)', () => {
     expect(conRotulo.map((p) => p.ruta).sort()).toEqual([
       'heredado/components/tickets/PreCuentaTicket.jsx',
-      'heredado/pages/Caja.jsx',
       'src/restaurante/Cobro.tsx',
       'src/restaurante/Precuenta.tsx',
+      // DP-24 · El cobro de la Caja es la tarjeta de cobro: ahí vive su renglón de IVA.
+      'src/venta/TarjetaDeCobro.tsx',
     ]);
   });
 

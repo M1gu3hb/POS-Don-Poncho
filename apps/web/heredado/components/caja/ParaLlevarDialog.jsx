@@ -44,6 +44,12 @@ export const claveDelParaLlevar = (usuarioId) =>
  * por peso, agotados y el borrador que sobrevive a una recarga— pero sin mesa. «Cobrar» escribe el
  * pedido en el servidor (`restaurante.armar_para_llevar`, sin mandar nada a cocina) y la Caja abre
  * su diálogo de cobro de siempre; la comanda sale con el cobro, en la misma transacción.
+ *
+ * DP-24 · AGREGAR A UNA CUENTA DESDE LA CAJA. Con `agregarA` (la cuenta que se está cobrando) es el
+ * mismo buscador y la misma rejilla, con otro destino: lo elegido se agrega a ESA cuenta
+ * (`restaurante.agregar_en_caja`) y sale a cocina en ese momento, como cualquier pedido; con
+ * `paraLlevar`, marcado «PARA LLEVAR». Sin nombre ni teléfono (la cuenta ya tiene mesa) y sin
+ * borrador en el aparato (lo que no se agrega, no queda esperando a otra cuenta).
  */
 export default function ParaLlevarDialog({
   open,
@@ -51,7 +57,10 @@ export default function ParaLlevarDialog({
   deEstaSesion = false,
   onCerrar,
   onCobrar,
+  agregarA = null,
+  onAgregado,
 }) {
+  const esAgregar = agregarA !== null;
   const queryClient = useQueryClient();
   const [armando, setArmando] = useState(false);
   const [verPedido, setVerPedido] = useState(false);
@@ -78,17 +87,19 @@ export default function ParaLlevarDialog({
   );
 
   const pedido = useArmadoDelPedido({
-    claveDelAparato: claveDelParaLlevar(usuarioId),
-    ordenDelBorrador: ORDEN_DEL_BORRADOR_PARA_LLEVAR,
+    claveDelAparato: esAgregar ? null : claveDelParaLlevar(usuarioId),
+    ordenDelBorrador: esAgregar ? 'agregar-en-caja' : ORDEN_DEL_BORRADOR_PARA_LLEVAR,
     opcionesListas: listas,
   });
   const { carrito, total, dialogos } = pedido;
   // DP-18 · A7 · Un borrador que quedó de antes no se mezcla en silencio con el pedido nuevo.
-  const sinTerminar = pedidoSinTerminar({
-    recuperado: pedido.recuperado,
-    deEstaSesion,
-    decidido,
-  });
+  const sinTerminar =
+    !esAgregar &&
+    pedidoSinTerminar({
+      recuperado: pedido.recuperado,
+      deEstaSesion,
+      decidido,
+    });
   const piezas = carrito.reduce((s, i) => s + (Number(i.cantidad) || 0), 0);
 
   /** Lo agotado se aparta y se avisa; la cajera revisa y vuelve a tocar «Cobrar». */
@@ -129,6 +140,25 @@ export default function ParaLlevarDialog({
         return;
       }
       lineas.push(linea);
+    }
+    // DP-24 · A la cuenta que se está cobrando: se agrega y sale a cocina ya.
+    if (esAgregar) {
+      setArmando(true);
+      try {
+        const agregado = await api.comandos.ejecutar(
+          '/api/restaurante/agregar-en-caja',
+          { ordenId: agregarA.ordenId, lineas, paraLlevar: agregarA.paraLlevar === true },
+          nuevaClave(),
+        );
+        pedido.vaciar();
+        await onAgregado?.(agregado);
+      } catch (err) {
+        if (esRechazoPorAgotado(err) && (await apartarLoAgotado())) return;
+        toast.error(err?.message || 'No se pudo agregar a la cuenta. Intenta de nuevo.');
+      } finally {
+        setArmando(false);
+      }
+      return;
     }
     // DP-D157 · El teléfono es opcional; si lo hay, se valida con la regla del servidor antes de enviar.
     const telefono = normalizarTelefonoDelPedido(pedido.telefono);
@@ -177,7 +207,13 @@ export default function ParaLlevarDialog({
       disabled={armando || carrito.length === 0}
       className="w-full min-h-14 text-lg font-bold"
     >
-      {armando ? 'Preparando el cobro…' : `Cobrar ${formatCurrency(total)}`}
+      {esAgregar
+        ? armando
+          ? 'Agregando…'
+          : `${agregarA.paraLlevar ? 'Agregar para llevar' : 'Agregar a la cuenta'} ${formatCurrency(total)}`
+        : armando
+          ? 'Preparando el cobro…'
+          : `Cobrar ${formatCurrency(total)}`}
     </Button>
   );
 
@@ -194,23 +230,33 @@ export default function ParaLlevarDialog({
             </div>
             <div className="min-w-0 flex-1">
               <DialogTitle className="font-heading text-lg sm:text-xl font-black leading-tight">
-                Pedido para llevar
+                {esAgregar
+                  ? `${agregarA.paraLlevar ? 'Para llevar' : 'Agregar a la cuenta'} · ${agregarA.rotulo}`
+                  : 'Pedido para llevar'}
               </DialogTitle>
               <DialogDescription id="para-llevar-descripcion" className="text-xs">
-                El número se asigna al cobrar. Nada sale a cocina hasta cobrarlo.
+                {esAgregar
+                  ? agregarA.paraLlevar
+                    ? 'Sale a cocina al agregarlo, marcado PARA LLEVAR, y se cobra con esta cuenta.'
+                    : 'Sale a cocina al agregarlo y se cobra con esta cuenta.'
+                  : 'El número se asigna al cobrar. Nada sale a cocina hasta cobrarlo.'}
               </DialogDescription>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={onCerrar}
-              aria-label="Cerrar sin cobrar (el pedido se guarda)"
+              aria-label={esAgregar ? 'Cerrar sin agregar' : 'Cerrar sin cobrar (el pedido se guarda)'}
               className="shrink-0 min-h-11 min-w-11"
             >
               <X className="w-5 h-5" />
             </Button>
           </header>
-          <div className="px-4 py-2 border-b shrink-0 flex flex-wrap items-center gap-2">
+          <div
+            className={
+              esAgregar ? 'hidden' : 'px-4 py-2 border-b shrink-0 flex flex-wrap items-center gap-2'
+            }
+          >
             <Label htmlFor="para-llevar-nombre" className="shrink-0 text-sm">
               Nombre
             </Label>
@@ -312,7 +358,9 @@ export default function ParaLlevarDialog({
 
       <Dialog open={verPedido && open} onOpenChange={setVerPedido}>
         <DialogContent className="max-w-lg max-h-[90dvh] flex flex-col">
-          <DialogTitle>Pedido para llevar ({piezas})</DialogTitle>
+          <DialogTitle>
+            {esAgregar ? `Por agregar (${piezas})` : `Pedido para llevar (${piezas})`}
+          </DialogTitle>
           <DialogDescription className="sr-only">Lo que lleva el pedido</DialogDescription>
           <div className="flex-1 overflow-y-auto">{lista}</div>
           <div className="pt-2">{botonCobrar}</div>

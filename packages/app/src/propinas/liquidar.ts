@@ -1,9 +1,11 @@
 import 'server-only';
 
-import { ErrorDominio, PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
-import type { Transaccion } from '@morphiqpos/data';
+import { ErrorDominio, PAQUETES_RESTAURANTE, validarEntorno } from '@morphiqpos/contracts';
+import { repoCaja, type Transaccion } from '@morphiqpos/data';
 
 import { definirComando } from '../definicion.ts';
+import { ROLES_QUE_AUTORIZAN, leerAutorizacion } from '../identidad/supervisor.ts';
+import { gastarLaAutorizacion } from '../venta/autorizacion-de-un-uso.ts';
 import {
   desglosarPagos,
   servirDesglose,
@@ -58,9 +60,22 @@ export interface ResultadoLiquidacion {
   readonly meseros: readonly PropinaDeMesero[];
   /** F-242 · Nulo cuando la liquidación reparte directo al mesero. */
   readonly reparto: RepartoEscrito | null;
+  /** DP-24 · Lo que salió del cajón de esta caja al entregarla; «0» si no se entregó de la caja. */
+  readonly entregadoDeLaCajaCentavos: string;
 }
 
-const ROLES = ['dueno', 'administrador', 'gerente'] as const;
+/** El movimiento del cajón que deja una liquidación entregada desde la caja (135). */
+const SALIDA_DE_PROPINA = 'propina_entregada';
+
+/**
+ * DP-24 · Liquidar es de gerencia (dueño, administrador y gerente), como siempre. La CAJERA entra
+ * sólo por un camino: desde el corte (`entregarDeLaCaja`) y con el PIN de un gerente, porque es
+ * quien cierra la caja y quien tiene los billetes en la mano; sin las dos cosas, se le rechaza.
+ */
+const ROLES = ['dueno', 'administrador', 'gerente', 'cajero'] as const;
+
+const SOLO_CON_PIN =
+  'Entregar propinas de la caja lo autoriza un gerente, administrador o dueño con su PIN.';
 
 export const liquidarPropinas = definirComando<
   Transaccion,
@@ -84,11 +99,38 @@ export const liquidarPropinas = definirComando<
   },
   entrada: entradaLiquidarPropinas,
   async ejecutar(ctx, entrada) {
-    const { organizacionId, sucursalId, empleoId } = ctx.ambito;
+    const { organizacionId, sucursalId, empleoId, terminalId, rol } = ctx.ambito;
+    const pidePin = !ROLES_QUE_AUTORIZAN.includes(rol);
+    if (pidePin && entrada.entregarDeLaCaja !== true) {
+      throw new ErrorDominio(
+        'PUESTO_NO_OTORGABLE',
+        'Liquidar propinas es de gerencia. Desde el corte, la caja las entrega con el PIN de un gerente.',
+      );
+    }
+    if (pidePin && entrada.autorizacion === undefined) {
+      throw new ErrorDominio('PUESTO_NO_OTORGABLE', SOLO_CON_PIN, { pidePin: true });
+    }
     if (sucursalId === null) {
       throw new ErrorDominio(
         'LIQUIDACION_INVALIDA',
         'Para liquidar propinas hace falta estar en una sucursal.',
+      );
+    }
+
+    // 0 · DP-24 · Si se entrega DE LA CAJA, tiene que haber una caja abierta en este aparato: es
+    //     de su cajón de donde salen los billetes. Se comprueba antes de escribir nada.
+    const cajaQueEntrega =
+      entrada.entregarDeLaCaja === true
+        ? await ctx.paso('cargar_caja', () =>
+            terminalId === null
+              ? Promise.resolve(null)
+              : repoCaja.sesionAbiertaDeTerminal(ctx.tx, organizacionId, terminalId),
+          )
+        : null;
+    if (entrada.entregarDeLaCaja === true && cajaQueEntrega === null) {
+      throw new ErrorDominio(
+        'CAJA_CERRADA',
+        'Para entregar las propinas en efectivo hace falta la caja abierta en este aparato.',
       );
     }
 
@@ -195,6 +237,62 @@ export const liquidarPropinas = definirComando<
       propinasPorMeseroDeOrdenes(ctx.tx, organizacionId, ids),
     );
 
+    // 5.5 · DP-24 · LO ENTREGADO SALE DEL CAJÓN. La propina cobrada con tarjeta también se entrega
+    //       en billetes: lo que sale es el total de la liquidación, no sólo la parte en efectivo.
+    //       Va como movimiento propio (`propina_entregada`, negativo) y NO como gasto ni retiro:
+    //       no es dinero del negocio, sólo lo custodiaba. El arqueo espera la SUMA de los
+    //       movimientos, así que el esperado del corte baja solo y el conteo cuadra.
+    const entregado = cajaQueEntrega === null ? 0n : desglose.propinasCentavos;
+
+    // 5.4 · DP-24 · El PIN de quien autoriza a la cajera, atado a ESTE importe y de un solo uso. Va
+    //       aquí, ya con el total sumado por el servidor: si entró otra propina desde que se pidió
+    //       el PIN, la autorización es de otro monto y no pasa (se revierte todo).
+    let autorizadoPor: string | null = null;
+    let autorizacionGastada: string | null = null;
+    if (pidePin) {
+      const leida = leerAutorizacion(
+        entrada.autorizacion ?? '',
+        { organizacionId, solicitaEmpleoId: empleoId, para: 'retiro', montoCentavos: entregado },
+        validarEntorno(process.env).SESSION_SECRET,
+        ctx.ahora,
+      );
+      if (leida === null) {
+        throw new ErrorDominio(
+          'PUESTO_NO_OTORGABLE',
+          'La autorización venció o es de otro monto: que quien autoriza teclee su PIN otra vez.',
+          { pidePin: true },
+        );
+      }
+      await ctx.paso('gastar_autorizacion', () =>
+        gastarLaAutorizacion(ctx.tx, organizacionId, leida),
+      );
+      autorizadoPor = leida.supervisor;
+      autorizacionGastada = leida.n;
+    }
+    if (cajaQueEntrega !== null && entregado > 0n) {
+      const sesionCajaId = cajaQueEntrega.id;
+      await ctx.paso('salida_de_la_caja', () =>
+        repoCaja.registrarMovimiento(ctx.tx, {
+          organizacionId,
+          sesionCajaId,
+          tipo: SALIDA_DE_PROPINA,
+          montoCentavos: -entregado,
+          referenciaTipo: 'liquidacion',
+          referenciaId: liquidacion.id,
+          empleadoId: empleoId,
+          motivo: `Propinas entregadas · ${folioVisible(folio.serie, folio.folio)}`,
+        }),
+      );
+      await ctx.paso('sellar_la_caja', () =>
+        ctx.tx
+          .updateTable('liquidaciones_propina')
+          .set({ sesion_caja_id: sesionCajaId })
+          .where('organizacion_id', '=', organizacionId)
+          .where('id', '=', liquidacion.id)
+          .executeTakeFirstOrThrow(),
+      );
+    }
+
     // 6 · F-242 · El reparto por puntos, si esta liquidación lo lleva. Va
     //     DESPUÉS de fijar el total: reparte lo que de verdad entró, no lo que
     //     una lectura anterior creía que iba a entrar.
@@ -222,6 +320,9 @@ export const liquidarPropinas = definirComando<
         numeroVentas: ids.length,
         rangoTipo: entrada.rangoTipo,
         meseroId,
+        ...(entregado > 0n ? { entregadoDeLaCajaCentavos: entregado.toString() } : {}),
+        // Quién autorizó a la cajera, y la autorización que gastó (no se reusa).
+        ...(autorizadoPor === null ? {} : { autorizadoPor, autorizacion: autorizacionGastada }),
       },
     });
 
@@ -233,6 +334,7 @@ export const liquidarPropinas = definirComando<
       desglose: servirDesglose(desglose),
       meseros,
       reparto,
+      entregadoDeLaCajaCentavos: entregado.toString(),
     };
   },
 });

@@ -29,6 +29,7 @@ import { api } from '@/api/cliente';
 import { textoDelCierre } from '~/restaurante/otras-cajas-al-cerrar';
 import { aCentavos, aPesos } from '@/components/caja/dinero';
 import { ConteoPorDenominacion } from '~/caja/ConteoPorDenominacion';
+import PropinasDelCorte from '@/components/caja/PropinasDelCorte';
 import { denominacionesParaEnviar, sumaDelConteo } from '~/caja/conteo-por-denominacion';
 import {
   SIN_RECETA,
@@ -64,6 +65,8 @@ export default function CierreDiarioDialog({
   const conteoUsado = contandoPorPiezas && totalDelConteo > 0;
   const [notas, setNotas] = useState('');
   const [arqueoServidor, setArqueoServidor] = useState(null);
+  // DP-24 · Cada propina que se liquida aquí sale del cajón: el esperado se vuelve a pedir.
+  const [propinasLiquidadas, setPropinasLiquidadas] = useState(0);
   // DP-15 · Cuántas cajas siguen abiertas: si hay otra, este cierre cierra sólo la de este aparato.
   const [cajasAbiertas, setCajasAbiertas] = useState(1);
   const textoDeCierre = textoDelCierre(cajasAbiertas);
@@ -153,7 +156,7 @@ export default function CierreDiarioDialog({
       vigente = false;
       window.clearTimeout(temporizador);
     };
-  }, [efNum, efValido, open]);
+  }, [efNum, efValido, open, propinasLiquidadas]);
 
   const efectivoEsperado = aPesos(arqueoServidor?.efectivoEsperadoCentavos);
   const diferencia = aPesos(arqueoServidor?.diferenciaCentavos);
@@ -271,9 +274,14 @@ export default function CierreDiarioDialog({
               <KPI label="Propina transfer." value={formatCurrency(trPropinas)} />
             </div>
             <p className="text-[10px] text-muted-foreground mt-2">
-              Las propinas se cobran junto con la venta pero NO se liquidan en el cierre. Quedan
-              registradas para entregarse a los meseros aparte.
+              Las propinas se cobran junto con la venta y no son ingreso del negocio. Puedes
+              entregarlas aquí, antes de contar, o después en el Tablero.
             </p>
+            {/* DP-24 · Por persona, con su «Liquidar» (el mismo diálogo del Tablero). */}
+            <PropinasDelCorte
+              desde={cajaAbierta?.fecha_apertura || cajaAbierta?.created_date}
+              alLiquidar={() => setPropinasLiquidadas((n) => n + 1)}
+            />
           </Section>
 
           {/* === MÉTODOS DE PAGO — Ventas / Propinas / Total === */}

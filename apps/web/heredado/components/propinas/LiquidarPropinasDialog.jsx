@@ -35,6 +35,9 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/utils/financialUtils';
 import { aPesos } from '@/components/caja/dinero';
 import { folioVisible } from '@morphiqpos/domain/venta';
+import { usePuesto } from '@/components/configuracion/usePuesto';
+import { PinDeSupervisor } from '~/venta/PinDeSupervisor';
+import { liquidaSinPin, quienesRecibenPropina } from '~/venta/quien-recibe-propina';
 
 /**
  * Dialog de liquidación de propinas.
@@ -42,6 +45,12 @@ import { folioVisible } from '@morphiqpos/domain/venta';
  * - Lista las ventas con propina pendiente del rango.
  * - Al confirmar: crea LiquidacionPropina + marca cada venta con propina_liquidada=true.
  * - NUNCA borra ventas ni propinas.
+ *
+ * DP-24 · Es el MISMO diálogo en el Tablero y en el corte de la Caja. Desde el corte llega con
+ * `deLaCaja`: la liquidación se entrega en efectivo de esa caja y el servidor deja la salida en su
+ * cajón (el efectivo esperado del corte baja lo mismo). Ahí la cajera la entrega con el PIN de un
+ * gerente, administrador o dueño; la gerencia, sin PIN. Y en la lista de personas sólo aparece quien
+ * vende, cobra o atiende cuentas: nunca cocina, bebidas ni almacén.
  */
 const RANGOS = [
   { id: 'today', label: 'Hoy' },
@@ -50,6 +59,8 @@ const RANGOS = [
   { id: 'month', label: 'Este mes' },
   { id: 'custom', label: 'Personalizado' },
 ];
+/** DP-24 · Sólo desde el corte: lo cobrado desde que abrió ESTA caja (lo mismo que lista el corte). */
+const RANGO_DE_LA_CAJA = { id: 'caja', label: 'Este turno de caja' };
 
 export default function LiquidarPropinasDialog({
   open,
@@ -59,8 +70,17 @@ export default function LiquidarPropinasDialog({
   meseros = [],
   rangoInicial = 'today',
   meseroInicialId = '',
+  deLaCaja = false,
+  desdeLaApertura = null,
+  onLiquidada,
 }) {
   const queryClient = useQueryClient();
+  const puesto = usePuesto();
+  // Sólo quien atiende cuentas; la persona ya elegida se conserva aunque su puesto no esté en la lista.
+  const personas = quienesRecibenPropina(meseros);
+  // Desde el corte, quien no es de gerencia entrega con el PIN de un gerente (lo exige el servidor).
+  const pidePin = deLaCaja && !liquidaSinPin(puesto);
+  const rangos = desdeLaApertura ? [RANGO_DE_LA_CAJA, ...RANGOS] : RANGOS;
   const [rango, setRango] = useState(rangoInicial);
   const [desde, setDesde] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [hasta, setHasta] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -85,6 +105,10 @@ export default function LiquidarPropinasDialog({
 
   const range = useMemo(() => {
     const now = new Date();
+    if (rango === 'caja' && desdeLaApertura) {
+      const apertura = new Date(desdeLaApertura);
+      if (Number.isFinite(apertura.getTime())) return { from: apertura, to: endOfDay(now) };
+    }
     if (rango === 'today') return { from: startOfDay(now), to: endOfDay(now) };
     if (rango === 'week')
       return {
@@ -98,7 +122,7 @@ export default function LiquidarPropinasDialog({
     } catch {
       return { from: startOfDay(now), to: endOfDay(now) };
     }
-  }, [rango, desde, hasta]);
+  }, [rango, desde, hasta, desdeLaApertura]);
 
   // Ventas pendientes de liquidar en el rango (y opcionalmente del mesero).
   //
@@ -142,6 +166,7 @@ export default function LiquidarPropinasDialog({
   // topada por `limite` y contarla enseñaría «200 ventas» de un mes con mil.
   const numeroVentas = Number(pendientes?.numeroVentas) || 0;
   const total = aPesos(pendientes?.totalCentavos);
+  const totalCentavos = Number(pendientes?.totalCentavos) || 0;
   // Se remapea a los nombres que este diálogo ya dibujaba, para no tocar el JSX.
   const desglose = useMemo(
     () =>
@@ -154,7 +179,7 @@ export default function LiquidarPropinasDialog({
     [pendientes],
   );
 
-  const liquidar = async () => {
+  const liquidar = async (autorizacion) => {
     if (numeroVentas === 0) {
       toast.error('No hay propinas pendientes en ese periodo');
       return;
@@ -191,6 +216,10 @@ export default function LiquidarPropinasDialog({
         meseroId: meseroId && meseroId !== '__all__' ? meseroId : null,
       };
       if (notas) cuerpo.notas = notas;
+      // DP-24 · Desde el corte: se entrega en efectivo de esta caja (el servidor deja la salida en el
+      // cajón); y si quien liquida es la cajera, con la autorización del PIN de un gerente.
+      if (deLaCaja) cuerpo.entregarDeLaCaja = true;
+      if (typeof autorizacion === 'string') cuerpo.autorizacion = autorizacion;
       // Exactamente las ventas que el diálogo LISTÓ, que son las que el
       // administrador vio al aprobar el total — pero sólo cuando la lista está
       // completa. Si el periodo tiene más ventas de las que cupieron en la
@@ -219,6 +248,10 @@ export default function LiquidarPropinasDialog({
       queryClient.invalidateQueries({ queryKey: ['registros_propinas'] });
       queryClient.invalidateQueries({ queryKey: ['liquidaciones_propinas'] });
       queryClient.invalidateQueries({ queryKey: ['propinas_dashboard_ventas'] });
+      queryClient.invalidateQueries({ queryKey: ['propinas_pendientes'] });
+      // Lo entregado de la caja cambia lo que el corte espera en el cajón.
+      queryClient.invalidateQueries({ queryKey: ['cortes_caja_estado'] });
+      onLiquidada?.(liquidacion);
       // Folio e importe son los del servidor: `LIQ-000042` del consecutivo
       // atómico, y el total sumado dentro de la transacción.
       toast.success(
@@ -229,6 +262,8 @@ export default function LiquidarPropinasDialog({
       // «El periodo está al revés», «El periodo no puede pasar de 366 días»:
       // el dominio ya lo dice, y con el motivo.
       toast.error(err?.message || 'No se pudo registrar la liquidación');
+      // Otro intento es otra petición (y, con PIN, otra autorización): clave nueva.
+      setClaveLiquidacion(nuevaClave());
     } finally {
       setLoading(false);
     }
@@ -254,7 +289,7 @@ export default function LiquidarPropinasDialog({
           <div>
             <Label className="text-xs font-semibold">Periodo</Label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
-              {RANGOS.map((r) => (
+              {rangos.map((r) => (
                 <button
                   key={r.id}
                   type="button"
@@ -296,7 +331,7 @@ export default function LiquidarPropinasDialog({
 
           {/* Mesero */}
           <div>
-            <Label className="text-xs font-semibold">Mesero</Label>
+            <Label className="text-xs font-semibold">Persona</Label>
             <Select
               value={meseroId || '__all__'}
               onValueChange={(v) => setMeseroId(v === '__all__' ? '' : v)}
@@ -305,8 +340,8 @@ export default function LiquidarPropinasDialog({
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">Todos los meseros</SelectItem>
-                {meseros.map((m) => (
+                <SelectItem value="__all__">Todos</SelectItem>
+                {personas.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
                     {m.nombre}
                   </SelectItem>
@@ -350,6 +385,13 @@ export default function LiquidarPropinasDialog({
             </div>
           )}
 
+          {deLaCaja && (
+            <div className="p-3 rounded-xl bg-info/10 border border-info/30 text-xs text-info">
+              Se entrega en efectivo de esta caja: {formatCurrency(total)} salen del cajón y el corte
+              los descuenta, para que el conteo cuadre.
+            </div>
+          )}
+
           {/* Notas */}
           <div>
             <Label className="text-xs font-semibold">Notas (opcional)</Label>
@@ -362,14 +404,33 @@ export default function LiquidarPropinasDialog({
           </div>
         </div>
 
+        {/* DP-24 · La cajera entrega con el PIN de un gerente: sirve una vez y para este importe. */}
+        {pidePin && numeroVentas > 0 && (
+          <div className="rounded-xl border border-advertencia/40 bg-advertencia/10 p-3 space-y-2">
+            <p className="text-xs font-semibold">
+              Entregar {formatCurrency(total)} de la caja lo autoriza un gerente, administrador o
+              dueño con su PIN.
+            </p>
+            <PinDeSupervisor
+              key={totalCentavos}
+              para="retiro"
+              montoCentavos={totalCentavos}
+              idDelCampo="liquidar-propinas-pin"
+              alAutorizar={(autorizada) => {
+                void liquidar(autorizada.token);
+              }}
+            />
+          </div>
+        )}
+
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancelar
           </Button>
           <Button
-            onClick={liquidar}
+            onClick={() => liquidar()}
             disabled={loading || numeroVentas === 0}
-            className="gap-2"
+            className={pidePin ? 'hidden' : 'gap-2'}
             style={{
               background: 'linear-gradient(135deg, hsl(152,60%,40%) 0%, hsl(152,60%,32%) 100%)',
             }}

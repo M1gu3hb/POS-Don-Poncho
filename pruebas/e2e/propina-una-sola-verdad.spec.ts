@@ -33,12 +33,14 @@ import {
  * decisión por tomar, la de la Caja y la del teléfono del comensal. La primera que se confirma gana:
  *
  *   A · LA CAJA ELIGE PRIMERO. El comensal tiene abierta su pantalla de propina («Pedir cuenta»);
- *       la Caja elige 10 %. El teléfono se entera solo, cierra esa pantalla y dice «Tu propina ya
- *       quedó registrada en caja». Y la propina que se cobra es la de la Caja.
+ *       la Caja toca 10 % en su tarjeta de cobro. El teléfono se entera solo, cierra esa pantalla y
+ *       dice «Tu propina ya quedó registrada en caja». Y la propina que se cobra es la de la Caja.
  *   B · EL COMENSAL ELIGE PRIMERO. La Caja tiene el cobro abierto, sin propina elegida; el comensal
- *       confirma 10 %. La Caja recibe un aviso que INTERRUMPE («Los comensales eligieron 10 % de
- *       propina (…)») con «Usar ésa» y «Cambiarla». «Usar ésa» deja la del comensal y el cobro
- *       cobra esa propina.
+ *       confirma 10 %. La propina llega YA PUESTA a la tarjeta de cobro, que lo dice ahí mismo («Los
+ *       comensales eligieron 10 % de propina (…). Ya está puesta en la cuenta; aquí la puedes
+ *       cambiar.»), sin un diálogo encima (DP-24), y el cobro cobra esa propina.
+ *   C · LA DEL PORTAL, CAMBIADA EN LA CAJA (DP-24). El comensal pide su cuenta con 10 %; la Caja
+ *       abre el cobro, la ve puesta y toca 15 %: la cuenta pasa a ser de la Caja y se cobra el 15 %.
  *
  * Lo que se afirma se lee al SERVIDOR (la cuenta y la respuesta del cobro), no al aviso. Corre en
  * serie (`--workers=1`): resetea la demo.
@@ -48,6 +50,7 @@ const SLUG = 'prueba-restaurante';
 const ZONA = 'Interior';
 const MESA_A = 6;
 const MESA_B = 5;
+const MESA_C = 4;
 const FONDO_CENTAVOS = 150_000;
 const PEDIDO: readonly PlatilloPedido[] = [
   { nombre: CARTA.arrachera.nombre, veces: 1 },
@@ -56,6 +59,9 @@ const PEDIDO: readonly PlatilloPedido[] = [
 const VENTA = importeDe(PEDIDO);
 /** El 10 % del total de la cuenta, en centavos: lo que la propina de cualquiera de las dos vale. */
 const PROPINA = Math.round(VENTA * 0.1);
+const PROPINA_DE_15 = Math.round(VENTA * 0.15);
+/** «$422.40», como lo pinta la tarjeta de cobro (importes de menos de mil pesos). */
+const enPantalla = (centavos: number): string => `$${(centavos / 100).toFixed(2)}`;
 
 /**
  * La mesera pide la cuenta como lo hace su pantalla SIN la casilla del mesero: no pregunta la
@@ -69,10 +75,7 @@ async function pedirLaCuenta(mesera: Page, ordenId: string): Promise<void> {
   expect(respuesta.status(), `solicitar-cuenta: ${await respuesta.text()}`).toBe(200);
 }
 
-/**
- * Rosa toca la cuenta en «Pendientes». Con la propina pendiente la Caja pregunta ANTES de dejar
- * usar el cobro: su diálogo queda debajo, oculto para el lector de pantalla, hasta contestar.
- */
+/** Rosa toca la cuenta en «Pendientes»: se abre su tarjeta de cobro, con la propina dentro. */
 async function tocarLaCuenta(rosa: Page, mesa: number): Promise<void> {
   await rosa.getByRole('tab', { name: /^Pendientes/ }).click();
   await rosa.getByRole('button', { name: new RegExp(`^Mesa ${String(mesa)} Cuenta`) }).click();
@@ -83,9 +86,25 @@ function cobroDe(rosa: Page, mesa: number): Locator {
   return rosa.getByRole('dialog').filter({ hasText: `Cobrar — Mesa ${String(mesa)}` });
 }
 
-/** El diálogo de «¿Desean agregar propina?» (el mismo del mesero y de la Caja). */
-function preguntaDePropina(page: Page): Locator {
-  return page.getByRole('dialog').filter({ hasText: '¿Desean agregar propina?' });
+/** Los botones de la propina en la tarjeta de cobro (DP-24: ya no hay una pregunta aparte). */
+function propinaDe(cobro: Locator): Locator {
+  return cobro.getByRole('group', { name: /^Propina/ });
+}
+
+/** Rosa toca un porcentaje en la tarjeta y el servidor lo guarda. */
+async function elegirEnLaCaja(
+  rosa: Page,
+  cobro: Locator,
+  porcentaje: '10%' | '15%',
+): Promise<void> {
+  const fijada = rosa.waitForResponse(
+    (r) => new URL(r.url()).pathname === '/api/venta/fijar-propina',
+  );
+  await propinaDe(cobro).getByRole('button', { name: porcentaje, exact: true }).click();
+  expect((await fijada).status(), 'El servidor no guardó la propina de la Caja.').toBe(200);
+  await expect(
+    propinaDe(cobro).getByRole('button', { name: porcentaje, exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
 }
 
 /** La mesera abre la mesa para dos, comanda, y pide la cuenta SIN propina (por el servidor). */
@@ -114,6 +133,14 @@ async function abrirLaPantallaDePropina(telefono: Page, mesa: number): Promise<L
   return hoja;
 }
 
+/** La cuenta de la mesa, pedida por el COMENSAL con 10 % desde su teléfono. */
+async function pedidaPorElComensal(telefono: Page, mesa: number): Promise<void> {
+  const hoja = await abrirLaPantallaDePropina(telefono, mesa);
+  await hoja.getByRole('button', { name: /^10%/ }).click();
+  await hoja.getByRole('button', { name: 'Confirmar' }).click();
+  await expect(telefono.getByText('¡Cuenta solicitada!')).toBeVisible();
+}
+
 /** La Caja cobra en efectivo la cuenta que tiene abierta y devuelve la propina que cobró. */
 async function cobrarEnEfectivo(rosa: Page, cobro: Locator): Promise<string> {
   await cobro.getByRole('button', { name: 'Efectivo', exact: true }).click();
@@ -134,7 +161,7 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
     await exigirDemostracion(playwright, info, SLUG);
   });
 
-  test('la Caja elige primero y el portal se cierra solo; el comensal elige primero y la Caja lo avisa', async ({
+  test('la Caja elige primero y el portal se cierra solo; el comensal elige primero y llega puesta; y la Caja la cambia', async ({
     browser,
   }, info) => {
     test.setTimeout(12 * 60_000);
@@ -161,8 +188,10 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
       });
       const tokenA = (await mesaEnElServidor(duena, MESA_A)).qrToken ?? '';
       const tokenB = (await mesaEnElServidor(duena, MESA_B)).qrToken ?? '';
+      const tokenC = (await mesaEnElServidor(duena, MESA_C)).qrToken ?? '';
       expect(tokenA, 'La mesa A no tiene su código QR.').not.toBe('');
       expect(tokenB, 'La mesa B no tiene su código QR.').not.toBe('');
+      expect(tokenC, 'La mesa C no tiene su código QR.').not.toBe('');
 
       // Se entra DESPUÉS de dejar listo el portal: las pantallas leen la configuración al cargar.
       const rosa = await equipo.pagina(info, 'cajero');
@@ -187,14 +216,15 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
         await pedirLaCuenta(lupita, ordenA);
         await tocarLaCuenta(rosa, MESA_A);
         const cobro = cobroDe(rosa, MESA_A);
-        const pregunta = preguntaDePropina(rosa);
-        await yaAbierto(pregunta);
-        await pregunta.getByText('10%', { exact: true }).click();
-        const fijada = rosa.waitForResponse(
-          (r) => new URL(r.url()).pathname === '/api/venta/fijar-propina',
+        await yaAbierto(cobro);
+        // Nadie la ha elegido: la tarjeta lo dice y cobraría sólo la venta. Sin pregunta encima.
+        await expect(propinaDe(cobro)).toContainText('sin elegir');
+        await expect(cobro.locator('[data-total-a-cobrar]')).toHaveText(enPantalla(VENTA));
+        await expect(rosa.getByText('¿Desean agregar propina?')).toHaveCount(0);
+        await elegirEnLaCaja(rosa, cobro, '10%');
+        await expect(cobro.locator('[data-total-a-cobrar]')).toHaveText(
+          enPantalla(VENTA + PROPINA),
         );
-        await pregunta.getByRole('button', { name: 'Aplicar' }).click();
-        expect((await fijada).status(), 'El servidor no guardó la propina de la Caja.').toBe(200);
 
         // El servidor la tiene decidida, y es de la Caja.
         expect(await cuentaEnElServidor(duena, ordenA)).toMatchObject({
@@ -218,7 +248,7 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
       });
 
       // ── B · EL COMENSAL ELIGE PRIMERO ────────────────────────────────────────
-      await test.step('B: la Caja tiene el cobro abierto; el comensal confirma 10 %: aviso que interrumpe, «Usar ésa»', async () => {
+      await test.step('B: la Caja tiene el cobro abierto; el comensal confirma 10 %: llega ya puesta a la tarjeta, con su aviso', async () => {
         const ordenB = await mesaConLaCuentaPedida(lupita, duena, MESA_B, true);
         const comensal = await abrirElQrDeLaMesa(browser, info, SLUG, tokenB);
         telefonos.push(comensal);
@@ -226,14 +256,11 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
         fallos.push(vigilarFallos(telefono));
         const hoja = await abrirLaPantallaDePropina(telefono, MESA_B);
 
-        // La Caja abre el cobro y deja sin elegir la propina: cierra la pregunta sin decidir.
+        // La Caja abre el cobro y deja sin elegir la propina.
         await tocarLaCuenta(rosa, MESA_B);
         const cobro = cobroDe(rosa, MESA_B);
-        const pregunta = preguntaDePropina(rosa);
-        await yaAbierto(pregunta);
-        await rosa.keyboard.press('Escape');
-        await expect(pregunta).toBeHidden();
         await yaAbierto(cobro);
+        await expect(propinaDe(cobro)).toContainText('sin elegir');
 
         // El comensal confirma primero: 10 %.
         await hoja.getByRole('button', { name: /^10%/ }).click();
@@ -245,8 +272,9 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
           propinaPorcentaje: 10,
         });
 
-        // La Caja, con el cobro abierto, recibe el aviso que interrumpe (no un toast).
-        const aviso = rosa.getByRole('alertdialog');
+        // La Caja, con el cobro abierto, se entera sola: la propina llega YA PUESTA a la tarjeta
+        // y se dice ahí mismo, sin un diálogo encima (DP-24).
+        const aviso = cobro.getByRole('status').filter({ hasText: 'Los comensales eligieron' });
         await expect(
           aviso,
           'La Caja no avisó que los comensales eligieron la propina.',
@@ -254,10 +282,14 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
         await expect(aviso).toContainText(
           /Los comensales eligieron 10 % de propina \(\$\d+\.\d{2}\)/,
         );
-        await expect(aviso.getByRole('button', { name: 'Usar ésa' })).toBeVisible();
-        await expect(aviso.getByRole('button', { name: 'Cambiarla' })).toBeVisible();
-        await aviso.getByRole('button', { name: 'Usar ésa' }).click();
-        await expect(aviso).toBeHidden();
+        await expect(aviso).toContainText('aquí la puedes cambiar');
+        await expect(rosa.getByRole('alertdialog')).toHaveCount(0);
+        await expect(
+          propinaDe(cobro).getByRole('button', { name: '10%', exact: true }),
+        ).toHaveAttribute('aria-pressed', 'true');
+        await expect(cobro.locator('[data-total-a-cobrar]')).toHaveText(
+          enPantalla(VENTA + PROPINA),
+        );
 
         // El cobro cobra la propina del comensal, y el servidor la sigue teniendo suya.
         expect(await cobrarEnEfectivo(rosa, cobro)).toBe(String(PROPINA));
@@ -266,6 +298,47 @@ test.describe('la propina, una sola verdad (DP-21 · Bloque 4)', () => {
           propinaTipo: 'porcentaje',
           propinaOrigen: 'portal_qr',
           propinaPorcentaje: 10,
+        });
+      });
+
+      // ── C · LA DEL PORTAL, CAMBIADA EN LA CAJA ───────────────────────────────
+      await test.step('C: el comensal pidió su cuenta con 10 %; la Caja la ve puesta y la cambia a 15 %', async () => {
+        const ordenC = await mesaConLaCuentaPedida(lupita, duena, MESA_C, false);
+        const comensal = await abrirElQrDeLaMesa(browser, info, SLUG, tokenC);
+        telefonos.push(comensal);
+        fallos.push(vigilarFallos(comensal.page));
+        await pedidaPorElComensal(comensal.page, MESA_C);
+        expect(await cuentaEnElServidor(duena, ordenC)).toMatchObject({
+          propinaTipo: 'porcentaje',
+          propinaOrigen: 'portal_qr',
+          propinaPorcentaje: 10,
+        });
+
+        // La Caja abre el cobro: la del comensal ya está puesta, y lo dice.
+        await tocarLaCuenta(rosa, MESA_C);
+        const cobro = cobroDe(rosa, MESA_C);
+        await yaAbierto(cobro);
+        await expect(
+          propinaDe(cobro).getByRole('button', { name: '10%', exact: true }),
+        ).toHaveAttribute('aria-pressed', 'true');
+        await expect(cobro.locator('[data-total-a-cobrar]')).toHaveText(
+          enPantalla(VENTA + PROPINA),
+        );
+
+        // La cambia con un toque: ahora la decidió la Caja, y eso es lo que se cobra.
+        await elegirEnLaCaja(rosa, cobro, '15%');
+        expect(await cuentaEnElServidor(duena, ordenC)).toMatchObject({
+          propinaTipo: 'porcentaje',
+          propinaOrigen: 'caja',
+          propinaPorcentaje: 15,
+        });
+        await expect(cobro.locator('[data-total-a-cobrar]')).toHaveText(
+          enPantalla(VENTA + PROPINA_DE_15),
+        );
+        expect(await cobrarEnEfectivo(rosa, cobro)).toBe(String(PROPINA_DE_15));
+        expect(await cuentaEnElServidor(duena, ordenC)).toMatchObject({
+          estado: 'pagada',
+          propinaOrigen: 'caja',
         });
       });
 
