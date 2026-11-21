@@ -5,6 +5,7 @@ import { MESA_STATUS_DARK } from '@/lib/darkPalettes';
 import { useIsDark } from '@/lib/ThemeContext';
 import { Users } from 'lucide-react';
 import { TiempoDeLaMesa } from '~/restaurante/TiempoDeLaMesa';
+import { NubesDeLaMesa } from '~/restaurante/NubesDeLaMesa';
 
 export default function MesaShape({
   mesa,
@@ -20,6 +21,8 @@ export default function MesaShape({
   // DP-12.3: la principal de una unión se pinta FUNDIDA con sus absorbidas: la caja del grupo
   // (`cajaDeLaUnion`: cápsula, rectángulo o cuadrado) en vez de la suya.
   caja = null,
+  // DP-24 · Las nubecitas por estación de lo que ya salió: «Cantina ✓», «Cocina 2/4».
+  nubes = [],
 }) {
   const isDark = useIsDark();
   const lightCfg = MESA_STATUS_CONFIG[mesa.estado] || MESA_STATUS_CONFIG.libre;
@@ -92,6 +95,7 @@ export default function MesaShape({
       }}
     >
       {globos}
+      <NubesDeLaMesa nubes={nubes} forma="plano" />
       <div
         {...(esBoton ? { role: 'button', tabIndex: 0, onClick, onKeyDown: alTeclear } : {})}
         className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

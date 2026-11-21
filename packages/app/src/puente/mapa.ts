@@ -3356,6 +3356,9 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       cantidad: { columna: 'cantidad', conversion: 'decimal', escribible: false },
       notas: { columna: 'notas', conversion: 'texto', escribible: false },
       estado: { columna: 'estado', conversion: 'texto', escribible: false },
+      // DP-24 · Cuándo arrancó y cuándo salió CADA platillo: la cocina por producto los pinta.
+      fecha_inicio: { columna: 'iniciado_en', conversion: 'fecha', escribible: false },
+      fecha_listo: { columna: 'listo_en', conversion: 'fecha', escribible: false },
       tipo_venta: { columna: 'tipo_venta', conversion: 'texto', escribible: false },
       unidad_variable: { columna: 'unidad_variable', conversion: 'texto', escribible: false },
       cantidad_variable: { columna: 'cantidad_variable', conversion: 'decimal', escribible: false },

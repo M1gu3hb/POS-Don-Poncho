@@ -1,282 +1,155 @@
 'use client';
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/api/cliente';
 import { Button } from '@/components/ui/button';
 import { CheckCheck, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { entregarPedidosListosDeMesa } from '@/utils/entregaPedidos';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
+import {
+  contadorDeEntregados,
+  contadorDeListos,
+  hayQueEntregar,
+  resumenPorEstacion,
+} from '~/restaurante/avance-por-estacion';
 
 /**
- * F3.2: Card "Listo para recoger" dentro del dialog de Mesa activa.
+ * DP-24 · 4.2 · «Listo para recoger» dentro de la mesa activa, una tarjeta POR ESTACIÓN.
  *
- * Muestra qué estaciones tienen pedidos en estado 'listo' para esta venta,
- * con sus productos. Botón "Marcar entregado" llama a la utilidad
- * `entregarPedidosListosDeMesa` que solo toca pedidos en estado 'listo'.
+ * Cada tarjeta lleva contadores que se van sumando («Listos 1 de 4», «Entregados 1 de 4»), lo que
+ * ya está en la ventana y su propio botón «Marcar entregado», que entrega SÓLO lo que ya está
+ * listo de esa estación. Si luego sale otro platillo, la MISMA tarjeta vuelve a ofrecer entregar:
+ * no hay una tarjeta por cada platillo. La cuenta sale del mismo cálculo que las nubecitas del
+ * mapa (`~/restaurante/avance-por-estacion`).
  *
- * NO toca:
- *  - inventario
- *  - caja / cobro
- *  - tickets / PDFs
- *  - finanzas
- *
- * Solo mueve comandas a 'entregado'. El estado al que queda la mesa lo decide y
- * lo escribe el servidor en la misma transacción; esta pantalla ya no lo elige.
- *
- * Si no hay pedidos listos, NO se renderiza (devuelve null).
+ * NO toca inventario, caja, cobro, tickets ni finanzas. El estado al que queda la mesa lo decide
+ * y lo escribe el servidor en la misma transacción que entrega los platillos.
  */
-export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }) {
+
+/** Los platillos de la estación que esperan en la ventana, con su cantidad en palabras. */
+function platillosListos(comandas, comandaIds) {
+  const ids = new Set(comandaIds);
+  const salida = [];
+  comandas
+    .filter((c) => ids.has(c.id))
+    .forEach((c) => {
+      (Array.isArray(c.items) ? c.items : [])
+        .filter((it) => it?.estado === 'listo')
+        .forEach((it) => {
+          salida.push({
+            id: it.id,
+            nombre: it.producto_nombre || '—',
+            texto: formatearCantidadVariable(it),
+            cantidad: Number(it.cantidad) || 0,
+          });
+        });
+    });
+  return salida;
+}
+
+export default function ListosParaRecogerCard({ ventaId, onAfterEntregar }) {
   const queryClient = useQueryClient();
   const [entregando, setEntregando] = useState(false);
-  // DP-16: el motivo del último fallo, escrito en la tarjeta hasta el siguiente intento.
+  // El motivo del último fallo, escrito en la tarjeta hasta el siguiente intento.
   const [falloDeEntrega, setFalloDeEntrega] = useState(null);
 
-  // Query local de pedidos listos de ESTA venta. Refetch corto para vista en vivo.
-  // HOTFIX 6A.3: refetchInterval bajado a 1500ms para reflejar listos al
-  // instante. Cocina invalida esta key además — pero el polling rápido
-  // protege contra red lenta / orden de eventos.
+  // Las comandas de ESTA cuenta, con sus platillos. Refetch corto: la cocina marca desde otra
+  // pantalla y el mesero tiene que verlo en seguida. Sin `catch { return [] }`: el fallo sube.
   const { data: pedidos = [], isFetched } = useQuery({
     queryKey: ['pedidos_listos_mesero', ventaId || 'none'],
     queryFn: async () => {
       if (!ventaId) return [];
-      // Sin `catch { return [] }`: ese relleno convertía «no pude leer» en «no
-      // hay nada listo» y react-query daba la consulta por buena, así que ni
-      // reintentaba ni marcaba error. Ahora el fallo se propaga y la consulta
-      // reintenta sola.
       const arr = await api.entidades.PedidoPreparacion.filter({ venta_id: ventaId });
       return Array.isArray(arr) ? arr : [];
     },
     enabled: !!ventaId,
     refetchInterval: 1500,
     staleTime: 1500,
-    // Mantener data previa durante el refetch (evita flicker básico).
     placeholderData: (prev) => prev,
   });
 
-  // Solo los que están en 'listo'.
-  const listos = useMemo(
-    () => (Array.isArray(pedidos) ? pedidos : []).filter((p) => p?.estado === 'listo'),
-    [pedidos],
+  const comandas = useMemo(() => (Array.isArray(pedidos) ? pedidos : []), [pedidos]);
+  // Una estación se enseña mientras algo haya salido de ella y no todo se haya entregado.
+  const estaciones = useMemo(
+    () =>
+      resumenPorEstacion(comandas).filter((e) => e.salidos > 0 && e.entregados < e.total),
+    [comandas],
   );
 
-  // HOTFIX 6A.3 — LATCH REAL anti-parpadeo en móvil.
-  // El problema: en móvil con red lenta o cuando hay un refetch en curso,
-  // momentáneamente `listos.length === 0` y el card se oculta, luego vuelve.
-  // Resultado visible: parpadeo + botón "Marcar entregado" inestable.
-  //
-  // Solución: mantenemos un snapshot del último estado conocido con pedidos
-  // listos. Solo se LIMPIA cuando:
-  //  - cambia ventaId (entramos a otra mesa),
-  //  - el usuario marca entregado (limpieza manual desde handlers),
-  //  - confirmamos que los pedidos del snapshot YA están entregados/cancelados
-  //    en BD (refetch fresco devolvió esos ids con estado !== 'listo').
-  const [lastKnownListos, setLastKnownListos] = useState([]);
-  const ventaPrevRef = useRef(ventaId);
+  if (!ventaId || !isFetched || estaciones.length === 0) return null;
 
-  // Reset al cambiar venta.
-  useEffect(() => {
-    if (ventaPrevRef.current !== ventaId) {
-      ventaPrevRef.current = ventaId;
-      setLastKnownListos([]);
-    }
-  }, [ventaId]);
-
-  // Mantener snapshot cuando hay listos reales.
-  useEffect(() => {
-    if (!isFetched) return;
-    if (listos.length > 0) {
-      setLastKnownListos(listos);
-      return;
-    }
-    // Caso especial: pedidos sí cargaron pero ninguno está en 'listo'.
-    // Si el snapshot anterior YA fue confirmado como entregado/cancelado en BD,
-    // lo limpiamos. Si no se puede confirmar, conservamos para evitar parpadeo.
-    if (lastKnownListos.length > 0 && Array.isArray(pedidos)) {
-      const map = new Map();
-      pedidos.forEach((p) => {
-        if (p?.id) map.set(p.id, p);
-      });
-      const todosEntregados = lastKnownListos.every((p) => {
-        const fresh = map.get(p?.id);
-        return fresh && ['entregado', 'cancelado'].includes(fresh.estado);
-      });
-      if (todosEntregados) {
-        setLastKnownListos([]);
-      }
-      // Si NO todos están confirmados como entregados, mantenemos el snapshot
-      // (puede ser un refetch parcial en curso). El próximo tick lo limpiará.
-    }
-  }, [listos, isFetched, pedidos, lastKnownListos]);
-
-  // Lista efectiva: listos reales si hay, o snapshot si momentáneamente vacío.
-  const listosEfectivos = listos.length > 0 ? listos : lastKnownListos;
-
-  // Agrupar listos por estación para mostrar bonito (usar lista efectiva
-  // con latch para no parpadear durante refetch).
-  const grupos = useMemo(() => {
-    const map = new Map();
-    listosEfectivos.forEach((p) => {
-      const key = p?.estacion_preparacion_id || p?.estacion_preparacion_nombre || '__general__';
-      if (!map.has(key)) {
-        map.set(key, {
-          nombre: p?.estacion_preparacion_nombre || 'Cocina',
-          color: p?.estacion_preparacion_color || '#4A5568',
-          items: [],
-          pedidoIds: [],
-        });
-      }
-      const g = map.get(key);
-      g.pedidoIds.push(p.id);
-      const items = Array.isArray(p?.items) ? p.items : [];
-      items.forEach((it) => {
-        if (!it) return;
-        g.items.push({
-          producto_nombre: it.producto_nombre || '—',
-          cantidad: Number(it.cantidad) || 0,
-          texto: formatearCantidadVariable(it),
-        });
-      });
-    });
-    return Array.from(map.values());
-  }, [listosEfectivos]);
-
-  if (!ventaId) return null;
-  // Esperar al primer fetch para no flashear el card.
-  if (!isFetched) return null;
-  // Si NO hay listos actuales NI en latch, ocultar.
-  if (listosEfectivos.length === 0) return null;
-
-  const nombresEst = grupos.map((g) => g.nombre).filter(Boolean);
+  const hayVarias = estaciones.filter(hayQueEntregar).length > 1;
+  const nombres = estaciones.map((g) => g.nombre);
   const titulo =
-    nombresEst.length === 0
-      ? 'Listo para recoger'
-      : nombresEst.length === 1
-        ? `Listo para recoger: ${nombresEst[0]}`
-        : `Listo para recoger: ${nombresEst.slice(0, -1).join(', ')} y ${nombresEst[nombresEst.length - 1]}`;
+    nombres.length === 1
+      ? `Listo para recoger: ${nombres[0]}`
+      : `Listo para recoger: ${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`;
 
-  const labelBoton = grupos.length > 1 ? 'Entregar listos' : 'Marcar entregado';
-
-  // HOTFIX 6A.2: invalidación + refetch coordinado.
-  // Forzamos refetch INMEDIATO de cocina y mesero para que el pedido
-  // desaparezca de ambos lados sin esperar el siguiente tick de polling.
   const refrescarTodo = () => {
     queryClient.invalidateQueries({ queryKey: ['pedidos_listos_mesero'] });
     queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
-    queryClient.invalidateQueries({ queryKey: ['pedidos_listos_watcher'] });
+    queryClient.invalidateQueries({ queryKey: ['avisos_de_listo'] });
+    queryClient.invalidateQueries({ queryKey: ['pedidos_del_mapa'] });
     queryClient.invalidateQueries({ queryKey: ['mesas'] });
-    queryClient.refetchQueries({ queryKey: ['pedidos_cocina'], type: 'active' }).catch(() => {});
-    queryClient
-      .refetchQueries({ queryKey: ['pedidos_listos_mesero'], type: 'active' })
-      .catch(() => {});
-    queryClient.refetchQueries({ queryKey: ['mesas'], type: 'active' }).catch(() => {});
+    queryClient.refetchQueries({ queryKey: ['pedidos_listos_mesero'], type: 'active' }).catch(() => {});
   };
 
-  // Optimistic update: marca localmente los pedidos como 'entregado'
-  // para que el card desaparezca al instante.
-  const optimisticEntregar = (pedidoIdsAEntregar) => {
+  // Lo listo de esas comandas se pinta ya como entregado, sin esperar a la lectura.
+  const optimisticEntregar = (comandaIds) => {
     const key = ['pedidos_listos_mesero', ventaId || 'none'];
-    queryClient.setQueryData(key, (prev) => {
-      const arr = Array.isArray(prev) ? prev : [];
-      if (pedidoIdsAEntregar && pedidoIdsAEntregar.length > 0) {
-        const wanted = new Set(pedidoIdsAEntregar);
-        return arr.map((p) => (p && wanted.has(p.id) ? { ...p, estado: 'entregado' } : p));
-      }
-      // Entregar todos los listos
-      return arr.map((p) => (p?.estado === 'listo' ? { ...p, estado: 'entregado' } : p));
-    });
+    const ids = comandaIds ? new Set(comandaIds) : null;
+    queryClient.setQueryData(key, (prev) =>
+      (Array.isArray(prev) ? prev : []).map((c) =>
+        c && (ids === null || ids.has(c.id))
+          ? {
+              ...c,
+              items: (Array.isArray(c.items) ? c.items : []).map((it) =>
+                it?.estado === 'listo' ? { ...it, estado: 'entregado' } : it,
+              ),
+            }
+          : c,
+      ),
+    );
   };
 
-  const handleEntregar = async () => {
+  // `grupo` es una estación, o `null` para entregar lo listo de todas.
+  const entregar = async (grupo) => {
     if (entregando) return;
     setEntregando(true);
     setFalloDeEntrega(null);
-    const listosAntes = listosEfectivos;
-    // Optimistic: quitar inmediatamente el card.
-    optimisticEntregar(null);
-    // HOTFIX 6A.3: limpiar el latch manualmente al entregar.
-    setLastKnownListos([]);
+    const comandaIds = grupo ? [...grupo.comandaIds] : null;
+    optimisticEntregar(comandaIds);
     try {
-      const res = await entregarPedidosListosDeMesa({
-        mesaId: mesa?.id,
-        ventaId,
+      const r = await api.comandos.ejecutar('/api/restaurante/entregar-pedidos', {
+        ordenId: ventaId,
+        ...(comandaIds ? { comandaIds } : {}),
       });
-      if (res.ok) {
-        toast.success(res.mensaje || 'Entregado');
+      const entregados = Number(r?.platillos) || 0;
+      if (entregados === 0) {
+        toast.message('No había nada listo para entregar.');
       } else {
-        const motivo = res.mensaje || 'No se pudo entregar';
-        toast.error(motivo);
-        setFalloDeEntrega(motivo);
-        setLastKnownListos(listosAntes);
+        const nombresEntregados = Array.isArray(r?.estaciones) ? r.estaciones.filter(Boolean) : [];
+        toast.success(
+          nombresEntregados.length > 0 ? `Entregado: ${nombresEntregados.join(' y ')}.` : 'Entregado.',
+        );
       }
       refrescarTodo();
       if (typeof onAfterEntregar === 'function') {
         try {
-          onAfterEntregar(res);
+          onAfterEntregar({
+            ...r,
+            mesaCambiada: r?.estadoMesa != null,
+            estadoMesa: r?.estadoMesa ?? null,
+          });
         } catch (e) {
           console.warn('[ListosCard] cb', e);
         }
       }
     } catch (e) {
-      console.error('[ListosParaRecogerCard] handleEntregar:', e);
-      // El comando ya traduce: «ese pedido está en "en preparación" y no puede
-      // pasar a "entregado"» dice qué ocurrió; el genérico no.
-      const motivo = e?.message || 'No se pudo entregar el pedido. Intenta de nuevo.';
-      toast.error(motivo);
-      setFalloDeEntrega(motivo);
-      setLastKnownListos(listosAntes);
-      // Restaurar query si falló.
-      refrescarTodo();
-    } finally {
-      setEntregando(false);
-    }
-  };
-
-  // Entregar SOLO una estación específica.
-  const handleEntregarGrupo = async (grupo) => {
-    if (entregando || !grupo?.pedidoIds?.length) return;
-    setEntregando(true);
-    setFalloDeEntrega(null);
-    const listosAntes = listosEfectivos;
-    optimisticEntregar(grupo.pedidoIds);
-    // HOTFIX 6A.3: limpiar latch para los pedidos de esa estación.
-    setLastKnownListos((prev) => {
-      const arr = Array.isArray(prev) ? prev : [];
-      const set = new Set(grupo.pedidoIds);
-      return arr.filter((p) => !set.has(p?.id));
-    });
-    try {
-      const res = await entregarPedidosListosDeMesa({
-        mesaId: mesa?.id,
-        ventaId,
-        pedidoIds: grupo.pedidoIds,
-        // `transicionar_pedido` mueve una comanda y no devuelve el nombre de su
-        // estación; el card ya lo tiene y lo pasa para que el toast diga
-        // «Entregado: Barra.» igual que antes.
-        estaciones: [grupo.nombre],
-      });
-      if (res.ok) {
-        toast.success(res.mensaje || `Entregado: ${grupo.nombre}`);
-      } else {
-        const motivo = res.mensaje || 'No se pudo entregar';
-        toast.error(motivo);
-        setFalloDeEntrega(motivo);
-        setLastKnownListos(listosAntes);
-      }
-      refrescarTodo();
-      if (typeof onAfterEntregar === 'function') {
-        try {
-          onAfterEntregar(res);
-        } catch (e) {
-          console.warn('[ListosCard] cb', e);
-        }
-      }
-    } catch (e) {
-      console.error('[ListosParaRecogerCard] handleEntregarGrupo:', e);
+      // El comando ya traduce el fallo: dice qué ocurrió.
       const motivo = e?.message || 'No se pudo entregar. Intenta de nuevo.';
       toast.error(motivo);
       setFalloDeEntrega(motivo);
-      setLastKnownListos(listosAntes);
       refrescarTodo();
     } finally {
       setEntregando(false);
@@ -303,81 +176,90 @@ export default function ListosParaRecogerCard({ mesa, ventaId, onAfterEntregar }
           <CheckCheck className="w-5 h-5 text-exito-texto" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-heading font-black text-sm text-exito leading-tight">
-            {titulo}
-          </p>
-          <p className="text-[11px] text-exito/80 leading-tight">
-            Recoge y entrega al cliente
-          </p>
+          <p className="font-heading font-black text-sm text-exito leading-tight">{titulo}</p>
+          <p className="text-[11px] text-exito/80 leading-tight">Recoge y entrega al cliente</p>
         </div>
       </div>
 
-      {/* Subtarjetas por estación con productos. Solo se ven si hay > 1
-          estación o si tiene items. Compacto para no estorbar la vista. */}
+      {/* Una tarjeta por estación, con sus contadores y su propio «Marcar entregado». */}
       <div className="px-3 pb-3 space-y-1.5">
-        {grupos.map((g, idx) => (
-          <div
-            key={`${g.nombre}-${idx}`}
-            className="rounded-lg border bg-superficie/80 px-2.5 py-1.5 flex items-start gap-2"
-            style={{ borderLeft: `3px solid ${g.color}` }}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold leading-tight" style={{ color: g.color }}>
-                {g.nombre}
-              </p>
-              {g.items.length > 0 && (
-                <p className="text-[10px] text-muted-foreground leading-snug">
-                  {g.items.map((it) => `${it.texto ? `${it.texto} ×` : `${it.cantidad}×`} ${it.producto_nombre}`).join(' · ')}
+        {estaciones.map((g) => (
+            <div
+              key={g.clave}
+              data-estacion={g.nombre}
+              className="rounded-lg border bg-superficie/80 px-2.5 py-1.5 flex items-start gap-2"
+              style={{ borderLeft: `3px solid ${g.color || '#4A5568'}` }}
+            >
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-[11px] font-bold leading-tight"
+                  style={{ color: g.color || '#4A5568' }}
+                >
+                  {g.nombre}
                 </p>
+                <p className="text-[11px] font-semibold leading-tight text-texto">
+                  <span>{contadorDeListos(g)}</span>
+                  <span aria-hidden="true"> · </span>
+                  <span>{contadorDeEntregados(g)}</span>
+                </p>
+                {hayQueEntregar(g) && (
+                  <p className="text-[10px] text-muted-foreground leading-snug">
+                    {platillosListos(comandas, g.comandaIds)
+                      .map((it) => `${it.texto ? `${it.texto} ×` : `${it.cantidad}×`} ${it.nombre}`)
+                      .join(' · ')}
+                  </p>
+                )}
+              </div>
+              {hayQueEntregar(g) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => entregar(g)}
+                  disabled={entregando}
+                  className="h-11 px-3 text-xs gap-1 shrink-0 border-exito/30 text-exito hover:bg-exito/10"
+                  title={`Marcar entregado: ${g.nombre}`}
+                >
+                  Marcar entregado
+                </Button>
               )}
             </div>
-            {/* Botón mini para entregar SOLO esta estación, útil cuando
-                hay varias listas a la vez y el mesero recoge una primero. */}
-            {grupos.length > 1 && (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => handleEntregarGrupo(g)}
-                disabled={entregando}
-                className="h-11 px-3 text-xs gap-1 shrink-0 border-exito/30 text-exito hover:bg-exito/10"
-                title={`Entregar solo ${g.nombre}`}
-              >
-                Entregar
-              </Button>
-            )}
-          </div>
         ))}
       </div>
 
-      {/* DP-16: el botón principal, a todo lo ancho y de 48 px como mínimo (dedo, no puntero). */}
-      <div className="px-3 pb-3 space-y-2">
-        <Button
-          size="lg"
-          onClick={handleEntregar}
-          disabled={entregando}
-          className="w-full min-h-12 gap-2 text-base font-bold text-exito-texto"
-          style={{
-            background: 'linear-gradient(135deg, #16A34A 0%, #15803D 100%)',
-            boxShadow: '0 1px 0 rgba(255,255,255,0.2) inset, 0 2px 6px rgba(22,163,74,0.3)',
-          }}
-        >
-          {entregando ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <CheckCheck className="w-5 h-5" />
-          )}
-          {labelBoton}
-        </Button>
-        {falloDeEntrega && (
+      {/* El botón principal, a todo lo ancho y de 48 px como mínimo (dedo, no puntero): sólo cuando
+          hay listos en más de una estación; con una sola, su propia tarjeta ya tiene el botón. */}
+      {hayVarias && (
+        <div className="px-3 pb-3 space-y-2">
+          <Button
+            size="lg"
+            onClick={() => entregar(null)}
+            disabled={entregando}
+            className="w-full min-h-12 gap-2 text-base font-bold text-exito-texto"
+            style={{
+              background: 'linear-gradient(135deg, #16A34A 0%, #15803D 100%)',
+              boxShadow: '0 1px 0 rgba(255,255,255,0.2) inset, 0 2px 6px rgba(22,163,74,0.3)',
+            }}
+          >
+            {entregando ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <CheckCheck className="w-5 h-5" />
+            )}
+            Entregar listos
+          </Button>
+        </div>
+      )}
+      {falloDeEntrega && (
+        <div className="px-3 pb-3">
           <p
             role="alert"
             className="rounded-lg border border-peligro/40 bg-peligro/5 px-3 py-2 text-sm font-semibold text-peligro"
           >
             {falloDeEntrega} No se marcó nada como entregado: lo de la ventana sigue ahí.
           </p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

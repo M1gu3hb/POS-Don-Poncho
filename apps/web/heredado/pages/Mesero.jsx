@@ -51,6 +51,7 @@ import {
 import { MESA_STATUS_CONFIG, ZONAS_MESA, insigniaDeEstadoDeMesa } from '@/lib/constants';
 import MesaShape from '@/components/mesas/MesaShape';
 import MesaGridMobile from '@/components/mesero/MesaGridMobile';
+import { nubesPorCuenta } from '~/restaurante/avance-por-estacion';
 import MeseroCartFAB from '@/components/mesero/MeseroCartFAB';
 import { BotonQueAgrega, useRejillaQueVuelveArriba } from '~/tacto/BotonQueAgrega';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
@@ -379,6 +380,25 @@ function Mesero() {
     staleTime: 3000,
   });
   const mesasRawSafe = Array.isArray(mesasRaw) ? mesasRaw : [];
+  // DP-24 · 4.4: las nubecitas por estación del mapa («Cantina ✓», «Cocina 2/4»). Salen del mismo
+  // cálculo que los contadores de la tarjeta de la mesa y de las comandas vivas, por cuenta.
+  const { data: comandasDelMapa } = useQuery({
+    queryKey: ['pedidos_del_mapa'],
+    queryFn: () =>
+      api.entidades.PedidoPreparacion.filter(
+        { estado: ['nuevo', 'en_preparacion', 'listo'] },
+        '-created_date',
+        300,
+      ),
+    refetchInterval: 5000,
+    placeholderData: (prev) => prev,
+    staleTime: 3000,
+  });
+  const nubes = useMemo(
+    () => nubesPorCuenta(Array.isArray(comandasDelMapa) ? comandasDelMapa : []),
+    [comandasDelMapa],
+  );
+  const nubesDe = (mesa) => nubes[mesa?.venta_activa_id] ?? [];
   // DP-15.1 · Los pedidos a medias de cuentas que ya se cobraron o cerraron (en caja, otro aparato)
   // se barren de este aparato: no se ofrecen ni estorban. Sin mesas leídas no se barre nada.
   useEffect(() => {
@@ -1072,7 +1092,6 @@ function Mesero() {
       // en Cocina y en el watcher de "listos" del propio Mesero, sin polling.
       queryClient.invalidateQueries({ queryKey: ['mesas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
-      queryClient.invalidateQueries({ queryKey: ['pedidos_listos_watcher'] });
       queryClient.refetchQueries({ queryKey: ['pedidos_cocina'], type: 'active' }).catch(() => {});
       toast.success('¡Pedido enviado a cocina!');
       sonar('enviarACocina');
@@ -1601,6 +1620,7 @@ function Mesero() {
             getResponsable={getResponsable}
             loading={cargandoMesas}
             globosDe={(mesa) => globosDe(mesa, 'en-linea')}
+            nubesDe={nubesDe}
           />
         </div>
       ) : (
@@ -1663,6 +1683,7 @@ function Mesero() {
                 responsableNombre={resp?.nombre || ''}
                 // Pegada al borde de arriba, el lienzo recortaría la pila: va debajo.
                 globos={globosDe(mesa, (mesa.posicion_y ?? 100) < 80 ? 'abajo' : 'arriba')}
+                nubes={nubesDe(mesa)}
               />
             );
           })}

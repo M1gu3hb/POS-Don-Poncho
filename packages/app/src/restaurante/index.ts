@@ -37,6 +37,13 @@ export type { ComandaEmitida, ResultadoEnviarPedido } from './pedido.ts';
 export { entradaEnviarPedido, entradaSolicitarCuenta } from './esquemas.ts';
 
 export { entregarPedidos, transicionarPedido } from './preparacion.ts';
+export { moverPlatillos, type ResultadoMoverPlatillos } from './mover-platillos.ts';
+export {
+  avisosDeListo,
+  type AvisoDeListo,
+  type PlatilloDelAviso,
+  type ResultadoAvisosDeListo,
+} from './avisos-de-listo.ts';
 export {
   armarParaLlevar,
   descartarParaLlevar,

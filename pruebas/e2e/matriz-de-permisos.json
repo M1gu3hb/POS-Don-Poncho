@@ -610,6 +610,13 @@
       "paquetes": ["restaurante"]
     },
     {
+      "ruta": "/api/restaurante/avisos-de-listo",
+      "comando": "restaurante.avisos_de_listo",
+      "escribe": false,
+      "roles": ["mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
       "ruta": "/api/restaurante/cambiar-mesa",
       "comando": "restaurante.cambiar_mesa",
       "escribe": true,
@@ -761,6 +768,13 @@
       "comando": "restaurante.marchar_tiempo",
       "escribe": true,
       "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
+      "ruta": "/api/restaurante/mover-platillos",
+      "comando": "restaurante.mover_platillos",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "cocina", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"]
     },
     {

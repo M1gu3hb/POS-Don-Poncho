@@ -1,6 +1,6 @@
 import { etiquetaDePeso } from '../restaurante/peso.ts';
-import { sePrepara } from '../restaurante/platillos-de-cocina.ts';
 
+import { columnaDelPlatillo } from './platillos-del-tablero';
 import type { ComandaDeCocina, ItemDeCocina } from './tipos';
 
 /**
@@ -23,7 +23,6 @@ export interface RenglonDelResumen {
   readonly kilos: number | null;
 }
 
-const PENDIENTES: ReadonlySet<string> = new Set(['nuevo', 'en_preparacion']);
 const NOMBRE_SIN_DATO = 'Platillo';
 
 function aNumero(valor: unknown): number {
@@ -44,9 +43,10 @@ export function resumenDeProduccion(
 ): readonly RenglonDelResumen[] {
   const acumulado = new Map<string, RenglonDelResumen>();
   for (const comanda of comandas) {
-    if (!PENDIENTES.has(comanda.estado)) continue;
     for (const item of comanda.items ?? []) {
-      if (!sePrepara(item)) continue;
+      // DP-24 · Se cuenta por PLATILLO: uno ya listo de una comanda a medias no se vuelve a preparar.
+      const columna = columnaDelPlatillo(item, comanda);
+      if (columna !== 'nuevo' && columna !== 'en_preparacion') continue;
       const nombre = (item.producto_nombre ?? '').trim() || NOMBRE_SIN_DATO;
       const peso = pesoDe(item);
       const clave = `${item.producto_id ?? nombre}|${peso?.presentacion ?? ''}`;

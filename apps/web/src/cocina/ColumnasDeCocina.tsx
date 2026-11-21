@@ -3,7 +3,11 @@ import { Check, Clock, Flame } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { TarjetaDeCocina, type TarjetaDeCocinaProps } from './TarjetaDeCocina';
-import type { CuentaEnCocina } from './grupos';
+import {
+  contarPlatillos,
+  type BloqueDeMesa,
+  type BloquesPorColumna,
+} from './platillos-del-tablero';
 import type { EstadoDeColumna } from './tipos';
 import { useAlturaDisponible } from './use-altura-disponible';
 
@@ -52,13 +56,11 @@ const COLUMNAS: readonly {
 ];
 
 export interface ColumnasDeCocinaProps extends Omit<TarjetaDeCocinaProps, 'cuenta' | 'estado'> {
-  readonly cuentas: Readonly<Record<EstadoDeColumna, readonly CuentaEnCocina[]>>;
+  readonly cuentas: BloquesPorColumna;
   readonly cargando: boolean;
 }
 
-function contar(cuentas: readonly CuentaEnCocina[]): number {
-  return cuentas.reduce((suma, c) => suma + c.comandas.length, 0);
-}
+const contar = (bloques: readonly BloqueDeMesa[]): number => contarPlatillos(bloques);
 
 export function ColumnasDeCocina({ cuentas, cargando, ...tarjeta }: ColumnasDeCocinaProps) {
   const [visible, setVisible] = useState<EstadoDeColumna>('nuevo');

@@ -185,6 +185,7 @@ siguieron donde iban y la sesión principal volvió a la Caja.
   `liquidar-en-el-corte`: 17); navegador con dedo a 1024×768, 800×600 y 1280×800 (`tarjeta-de-cobro.spec.ts`) y
   `la-caja-manda.spec.ts` (agregar, para llevar, quitar con PIN y liquidar en el corte). Las pruebas que usaban el
   cobro viejo se pusieron al día (`dia-completo-restaurante`, `propina-una-sola-verdad`, `qa/flujos-qa`).
+- **En producción (21-11, 01:42):** `main` en `16a5c41`, despliegue `dpl_5MJy91oNf1VMazzT138vZtWnYL28` en READY. Humo: 13 bien, 0 mal; `agregar-en-caja` contesta 403; sin errores de ejecución; las 4 cuentas y las cajas (Aparato 33 abierta), intactas. Nadie cobró para probar.
 
 ## Decisiones (en `DECISIONES.md`, desde DP-D210)
 
@@ -202,10 +203,10 @@ siguieron donde iban y la sesión principal volvió a la Caja.
 
 | Parte | Estado |
 |---|---|
-| 1 · La Caja | PR #52, trae main y en la CI |
+| 1 · La Caja | en producción (21-11, 01:42) |
 | 2 · Quién quita y cancela | en producción (20-11, 22:25) |
-| 3 · El menú | en producción (20-11, 23:20); falta correr el guion del menú (persona dueña no hallada) |
-| 4 · Cocina por producto | PR #50; corrigiendo el aviso que tapa «Marcar entregado» |
+| 3 · El menú | en producción (20-11, 23:20); el menú quedó como la hoja (21-11, 01:35) |
+| 4 · Cocina por producto | PR #50, trae main y en la CI (el aviso de «listo» ya no tapa «Marcar entregado») |
 | 5 · Unir mesas poco a poco | PR #51 SIN UNIR: la prueba con dedo falla (botón de 40.8 px; pide 44) |
 | 6 · Impresión | en producción (20-11, 23:55) (la app de Android espera la prueba en el iMin) |
 | 7 · Lo que sólo se confirma | hecho con la Parte 2 |

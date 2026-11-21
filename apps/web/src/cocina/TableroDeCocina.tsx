@@ -4,11 +4,14 @@ import { Aviso } from '@morphiqpos/ui/sistema';
 import { useMemo } from 'react';
 
 import { ColumnasDeCocina } from './ColumnasDeCocina';
+import type { TarjetaDeCocinaProps } from './TarjetaDeCocina';
+import type { InfoDeLaCuenta } from './encabezado-del-bloque';
 import { ResumenDeProduccion } from './ResumenDeProduccion';
 import { CLAVE_AMBAR, CLAVE_ROJA, umbralesDeCocina } from './espera';
-import { agruparPorCuenta, ordenarMasViejasArriba, type CuentaEnCocina } from './grupos';
+import { bloquesPorColumna } from './platillos-del-tablero';
 import { resumenDeProduccion } from './resumen-de-produccion';
-import type { ComandaDeCocina, EstadoDeColumna, ItemDeCocina } from './tipos';
+import type { ComandaDeCocina, ItemDeCocina } from './tipos';
+
 import { useAhora } from './use-ahora';
 import { useModoCompacto } from './use-modo-compacto';
 
@@ -21,8 +24,6 @@ import { useModoCompacto } from './use-modo-compacto';
  * por cuenta y el tiempo con color son de aquí.
  */
 
-const ESTADOS: readonly EstadoDeColumna[] = ['nuevo', 'en_preparacion', 'listo'];
-
 export interface TableroDeCocinaProps {
   /** Las comandas vivas que esta pantalla puede ver (ya filtradas por estación). */
   readonly comandas: readonly ComandaDeCocina[];
@@ -31,9 +32,11 @@ export interface TableroDeCocinaProps {
   readonly cargando: boolean;
   /** Si la última lectura falló: se queda el último tablero conocido, con este aviso encima. */
   readonly error?: string | null;
-  readonly onIniciar: (comanda: ComandaDeCocina) => void;
-  readonly onListo: (comanda: ComandaDeCocina) => void;
-  readonly onPedirQuitar: (comanda: ComandaDeCocina) => void;
+  /** Mesero y mesa principal de cada cuenta, por `venta_id`. */
+  readonly infoDeLasCuentas?: Readonly<Record<string, InfoDeLaCuenta>>;
+  readonly onPlatillo: TarjetaDeCocinaProps['onPlatillo'];
+  readonly onBloque: TarjetaDeCocinaProps['onBloque'];
+  readonly onPedirQuitar: TarjetaDeCocinaProps['onPedirQuitar'];
   readonly onVerFicha: (item: ItemDeCocina) => void;
 }
 
@@ -54,14 +57,7 @@ export function TableroDeCocina({
     [ambar, roja],
   );
 
-  const cuentas = useMemo(() => {
-    const porEstado = {} as Record<EstadoDeColumna, readonly CuentaEnCocina[]>;
-    for (const estado of ESTADOS) {
-      const deLaColumna = comandas.filter((c) => c.estado === estado);
-      porEstado[estado] = ordenarMasViejasArriba(agruparPorCuenta(deLaColumna), estado);
-    }
-    return porEstado;
-  }, [comandas]);
+  const cuentas = useMemo(() => bloquesPorColumna(comandas), [comandas]);
   const resumen = useMemo(() => resumenDeProduccion(comandas), [comandas]);
 
   return (

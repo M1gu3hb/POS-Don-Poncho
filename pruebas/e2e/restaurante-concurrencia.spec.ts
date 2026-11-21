@@ -174,10 +174,13 @@ async function empezarElDia(browser: Browser, info: TestInfo): Promise<Dia> {
  * dejarían de coincidir.
  */
 async function comandasNuevasEnElServidor(lector: Page): Promise<number> {
-  const filas = await consultarPuente<{ estado?: string }>(lector, 'PedidoPreparacion', {
-    limite: 500,
-  });
-  return filas.filter((f) => f.estado === 'nuevo').length;
+  // DP-24 · La cocina tiene un botón «Preparar» por PLATILLO nuevo, no por comanda.
+  const filas = await consultarPuente<{ items?: readonly { estado?: string }[] }>(
+    lector,
+    'PedidoPreparacion',
+    { limite: 500 },
+  );
+  return filas.flatMap((f) => f.items ?? []).filter((i) => i.estado === 'pendiente').length;
 }
 
 async function exigirLaCocinaSinDuplicados(dia: Dia): Promise<void> {
@@ -869,7 +872,7 @@ test.describe('el restaurante cuando todo se repite, se duplica o se pierde', ()
         // Y la pantalla de cocina enseña ocho tarjetas nuevas, ni más ni menos.
         await exigirLaCocinaSinDuplicados(dia);
         await expect(dia.tono.getByRole('button', { name: 'Preparar', exact: true })).toHaveCount(
-          comandasEsperadas,
+          await comandasNuevasEnElServidor(dia.duena),
         );
       });
 
