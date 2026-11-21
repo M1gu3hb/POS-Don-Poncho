@@ -141,6 +141,7 @@ Convenciones: «Identidad» = `heredado/components/configuracion/IdentidadNegoci
 | 92 | portal-qr | Portal QR | Mostrar precuenta al cliente | `ConfiguracionQRTab.jsx:277` | 8 Portal de comensales | Cuenta y propina |
 | 93 | portal-qr | Portal QR | Propina elegida por el comensal | `ConfiguracionQRTab.jsx:286` | 8 Portal de comensales | Cuenta y propina |
 | 94 | portal-qr | Portal QR | «Guardar» general de la pestaña | `ConfiguracionQRTab.jsx:321` | — (desaparece; las tres tarjetas guardan lo suyo) | cada tarjeta |
+| 94b | portal-qr · Personalizar menú | Orden del menú | Orden de las secciones y de los platillos; mostrar u ocultar un platillo (DP-24) | `src/restaurante/personalizar-menu/OrdenDelMenu.tsx` | 8 Portal de comensales | El orden del menú |
 | 95 | portal-qr · Menú | Botones del menú QR | Editor de botones (`portal_qr_botones`) | `src/restaurante/menu-qr/EditorDeBotones.tsx` | **Se queda en la pantalla Portal QR** (lo operativo/diseño; enlace desde sección 8) | — |
 | 96 | portal-qr · Menú | Aspecto del portal | Tema (`portal_qr_tema`) | `AspectoDelPortal.tsx` | Se queda en Portal QR (con enlace) | — |
 | 97 | portal-qr · Mesas | Diseño de los QR de mesas | `qr_de_mesas` | `qr-de-mesas/*` | Se queda en Portal QR (con enlace) | — |

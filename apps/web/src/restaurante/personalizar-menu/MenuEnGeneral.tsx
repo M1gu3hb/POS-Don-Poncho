@@ -12,23 +12,16 @@ import {
 import { Textarea } from '@morphiqpos/ui/primitivas/textarea';
 import { Aviso } from '@morphiqpos/ui/sistema';
 import { ESTILOS } from '@morphiqpos/ui/tokens';
-import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useId } from 'react';
 
-import type { SeccionDelEditor } from './use-personalizar-menu';
-
 const DEL_NEGOCIO = '__del_negocio__';
-const BOTON = 'min-h-(--altura-control) min-w-(--altura-control)';
+const BOTON = 'min-h-(--altura-tactil) min-w-(--altura-tactil)';
 
 /**
- * DP-18 · 1.3 · DEL MENÚ: el encabezado (el mensaje de bienvenida), los colores (el estilo del portal)
- * y el orden de las secciones. Cada bloque se guarda por separado con lo que cambió.
+ * DP-18 · 1.3 · DEL MENÚ: el encabezado (el mensaje de bienvenida) y los colores (el estilo del portal).
+ * El orden de las secciones y de los platillos pasó a `OrdenDelMenu` (DP-24), que guarda con un comando.
  */
 export function MenuEnGeneral({
-  secciones,
-  alMover,
-  alGuardarOrden,
-  hayOrdenNuevo,
   mensaje,
   alCambiarMensaje,
   estilo,
@@ -38,17 +31,13 @@ export function MenuEnGeneral({
   guardando,
   fallo,
 }: {
-  readonly secciones: readonly SeccionDelEditor[];
-  readonly alMover: (id: string, hacia: 'arriba' | 'abajo') => void;
-  readonly alGuardarOrden: () => void;
-  readonly hayOrdenNuevo: boolean;
   readonly mensaje: string;
   readonly alCambiarMensaje: (texto: string) => void;
   readonly estilo: string | null;
   readonly alCambiarEstilo: (estilo: string | null) => void;
   readonly alGuardarEncabezado: () => void;
   readonly hayEncabezadoNuevo: boolean;
-  readonly guardando: 'orden' | 'encabezado' | null;
+  readonly guardando: 'encabezado' | null;
   readonly fallo: string | null;
 }) {
   const idMensaje = useId();
@@ -103,57 +92,6 @@ export function MenuEnGeneral({
         </Button>
       </section>
 
-      <section aria-labelledby={`${idMensaje}-orden`} className="flex flex-col gap-(--espacio-3)">
-        <h3 id={`${idMensaje}-orden`} className="text-lg font-semibold">
-          Orden de las secciones
-        </h3>
-        <ol className="flex flex-col gap-(--espacio-1)" aria-label="Secciones del menú, en orden">
-          {secciones.map((s, i) => (
-            <li
-              key={s.id}
-              className="flex items-center gap-(--espacio-2) rounded-lg border border-borde px-(--espacio-2)"
-            >
-              <span className="w-6 text-right text-sm tabular-nums text-texto-sutil">{i + 1}</span>
-              <span className="flex-1 font-medium">{(s.nombre ?? '').trim() || 'Sin nombre'}</span>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className={BOTON}
-                aria-label={`Subir ${s.nombre ?? 'la sección'}`}
-                disabled={i === 0}
-                onClick={() => {
-                  alMover(s.id, 'arriba');
-                }}
-              >
-                <ArrowUp aria-hidden className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className={BOTON}
-                aria-label={`Bajar ${s.nombre ?? 'la sección'}`}
-                disabled={i === secciones.length - 1}
-                onClick={() => {
-                  alMover(s.id, 'abajo');
-                }}
-              >
-                <ArrowDown aria-hidden className="size-4" />
-              </Button>
-            </li>
-          ))}
-        </ol>
-        <Button
-          type="button"
-          className={`${BOTON} self-start`}
-          disabled={!hayOrdenNuevo}
-          cargando={guardando === 'orden'}
-          onClick={alGuardarOrden}
-        >
-          Guardar orden
-        </Button>
-      </section>
       {fallo === null ? null : <Aviso tono="peligro" titulo={fallo} />}
     </div>
   );

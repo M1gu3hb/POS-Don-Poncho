@@ -55,6 +55,9 @@ import MeseroCartFAB from '@/components/mesero/MeseroCartFAB';
 import { BotonQueAgrega, useRejillaQueVuelveArriba } from '~/tacto/BotonQueAgrega';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
 import { coincideConLaBusqueda } from '~/restaurante/buscar-producto';
+import { ordenarMenu } from '@morphiqpos/domain/catalogo';
+import { coloresPorCategoria, franjaDeLaCategoria } from '~/restaurante/rejilla/colores';
+import { PestanasDeCategoria } from '~/restaurante/rejilla/PestanasDeCategoria';
 import PropinaDialog from '@/components/propinas/PropinaDialog';
 import { elMeseroEligeLaPropina } from '~/venta/propina-en-la-caja';
 import ErrorBoundary from '@/components/common/ErrorBoundary';
@@ -445,13 +448,15 @@ function Mesero() {
   // obligatorio. Cuando ese ruteo vivía en el navegador, una lectura fallida
   // mandaba el pedido entero a la cocina genérica en vez de a la barra.
 
+  // DP-24 · EL orden del menú (categoría, lugar en ella, nombre): el mismo del portal y de la Caja.
+  const coloresDeCategoria = useMemo(() => coloresPorCategoria(categorias), [categorias]);
   const productosFiltrados = useMemo(() => {
-    let list = productosArr;
+    let list = ordenarMenu(productosArr, categorias);
     if (categoriaFiltro !== 'todas') list = list.filter((p) => p?.categoria_id === categoriaFiltro);
     // DP-D178 · Con acentos o sin ellos, encuentra igual («limon» encuentra «Limón»).
     if (busquedaProducto) list = list.filter((p) => coincideConLaBusqueda(p?.nombre, busquedaProducto));
     return list;
-  }, [productosArr, categoriaFiltro, busquedaProducto]);
+  }, [productosArr, categorias, categoriaFiltro, busquedaProducto]);
 
   const totalCarrito = useMemo(
     () => carrito.reduce((s, i) => s + i.precio_venta * i.cantidad, 0),
@@ -1827,23 +1832,12 @@ function Mesero() {
                     className="pl-9 h-9"
                   />
                 </div>
-                <div className="flex gap-1.5 overflow-x-auto pb-1">
-                  <button
-                    onClick={() => setCategoriaFiltro('todas')}
-                    className={`shrink-0 px-3 py-1 any-pointer-coarse:min-h-(--altura-tactil) rounded-full text-xs font-medium ${categoriaFiltro === 'todas' ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'}`}
-                  >
-                    Todas
-                  </button>
-                  {categorias.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => setCategoriaFiltro(c.id)}
-                      className={`shrink-0 px-3 py-1 any-pointer-coarse:min-h-(--altura-tactil) rounded-full text-xs font-medium ${categoriaFiltro === c.id ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'}`}
-                    >
-                      {c.nombre}
-                    </button>
-                  ))}
-                </div>
+                <PestanasDeCategoria
+                  categorias={categorias}
+                  elegida={categoriaFiltro}
+                  alElegir={setCategoriaFiltro}
+                  tamanoDeTexto="text-xs"
+                />
               </div>
               <div
                 ref={rejillaRef}
@@ -1863,12 +1857,14 @@ function Mesero() {
                       const tieneOpc = productoTieneModificadores(p);
                       const colorize = config?.colorear_importes_monetarios !== false;
                       const agotado = p?.agotado_hoy === true;
+                      const franja = franjaDeLaCategoria(coloresDeCategoria, p?.categoria_id);
                       return (
                         <BotonQueAgrega
                           key={p.id}
                           alAgregar={() => agregarAlCarrito(p)}
                           aria-disabled={agotado}
-                          className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:bg-muted/60 transition-all relative ${agotado ? 'opacity-50' : ''}`}
+                          data-categoria-color={franja['data-categoria-color']}
+                          className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:bg-muted/60 transition-all relative ${franja.className} ${agotado ? 'opacity-50' : ''}`}
                           style={{
                             boxShadow:
                               '0 1px 0 rgba(255,255,255,0.9) inset, 0 2px 4px rgba(0,0,0,0.06)',

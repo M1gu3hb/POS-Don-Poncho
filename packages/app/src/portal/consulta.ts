@@ -2,6 +2,7 @@ import 'server-only';
 
 import { ErrorDominio } from '@morphiqpos/contracts';
 import { obtenerDb } from '@morphiqpos/data';
+import { ordenarCategorias, ordenarMenu } from '@morphiqpos/domain/catalogo';
 
 import { leerConfiguracion } from '../puente/configuracion.ts';
 import { buscadorDeProduccion, resolverAmbitoPortal, type AmbitoPortal } from './ambito.ts';
@@ -247,6 +248,8 @@ async function productosVisibles(
       'p.imagen_url as imagen_url',
       'p.categoria_id as categoria_id',
       'c.nombre as categoria_nombre',
+      'c.orden as categoria_orden',
+      'p.orden_en_categoria as orden_en_categoria',
       'p.precio_venta_centavos as precio_venta_centavos',
       'p.tipo_venta as tipo_venta',
       'p.unidad_venta as unidad_venta',
@@ -267,6 +270,11 @@ async function productosVisibles(
     .where('p.visible_en_menu_digital', '=', true)
     // DP-D174: lo que se oculta del POS («Visible en POS» apagado en Recetas) tampoco sale en el portal.
     .where('p.visible_en_pos', '=', true)
+    // DP-24 · UN SOLO ORDEN del menú (el mismo de la rejilla del mesero y de la Caja): la categoría,
+    // el lugar en ella y el nombre. La base recorta con ese orden y `ordenarMenu` lo fija igual que
+    // las pantallas (mismo alfabeto).
+    .orderBy('c.orden')
+    .orderBy('p.orden_en_categoria', (ob) => ob.asc().nullsLast())
     .orderBy('p.nombre')
     .limit(TOPE_CATALOGO)
     .execute();
@@ -277,7 +285,17 @@ async function productosVisibles(
     filas.map((fila) => fila.id),
     conPrecios,
   );
-  return filas.map((fila) => productoDeMenu(fila, conPrecios, opciones.get(fila.id) ?? []));
+  const enElOrdenDelMenu = ordenarMenu(
+    filas,
+    filas.flatMap((fila) =>
+      fila.categoria_id === null
+        ? []
+        : [{ id: fila.categoria_id, nombre: fila.categoria_nombre, orden: fila.categoria_orden }],
+    ),
+  );
+  return enElOrdenDelMenu.map((fila) =>
+    productoDeMenu(fila, conPrecios, opciones.get(fila.id) ?? []),
+  );
 }
 
 async function categoriasVisibles(organizacionId: string): Promise<readonly CategoriaDeMenu[]> {
@@ -292,7 +310,8 @@ async function categoriasVisibles(organizacionId: string): Promise<readonly Cate
     .limit(TOPE_CATALOGO)
     .execute();
 
-  return filas.map(categoriaDeMenu);
+  // DP-24 · Las categorías en el MISMO orden que usan las pantallas (`ordenarCategorias`).
+  return ordenarCategorias(filas).map(categoriaDeMenu);
 }
 
 async function seccionesVisibles(organizacionId: string): Promise<readonly SeccionDeMenu[]> {

@@ -1,5 +1,6 @@
 'use client';
 
+import { ordenarCategorias, ordenarMenu } from '@morphiqpos/domain/catalogo';
 import { Aviso, EsqueletoDeLista, Superficie, Vacio } from '@morphiqpos/ui/sistema';
 import { UtensilsCrossed } from 'lucide-react';
 import { useState } from 'react';
@@ -10,15 +11,8 @@ import { useConfig } from '@/lib/ConfigContext';
 import { temaDelPortal } from '../menu-qr/tema-del-portal';
 import { EditorDelPlatillo } from './EditorDelPlatillo';
 import { MenuEnGeneral } from './MenuEnGeneral';
-import {
-  conLaEdicion,
-  enSuOrden,
-  moverSeccion,
-  ordenQueCambio,
-  parcheDelPlatillo,
-  type EdicionDelPlatillo,
-} from './personalizar-menu';
-import { usePersonalizarMenu, type SeccionDelEditor } from './use-personalizar-menu';
+import { conLaEdicion, parcheDelPlatillo, type EdicionDelPlatillo } from './personalizar-menu';
+import { usePersonalizarMenu } from './use-personalizar-menu';
 import { VistaDelTelefono } from './VistaDelTelefono';
 
 interface ConfiguracionLeida {
@@ -43,10 +37,9 @@ export function PersonalizarMenu() {
   const datos = usePersonalizarMenu();
   const [elegidoId, setElegidoId] = useState<string | null>(null);
   const [ediciones, setEdiciones] = useState<Readonly<Record<string, EdicionDelPlatillo>>>({});
-  const [orden, setOrden] = useState<readonly SeccionDelEditor[] | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [estilo, setEstilo] = useState<string | null | undefined>(undefined);
-  const [guardando, setGuardando] = useState<'platillo' | 'orden' | 'encabezado' | null>(null);
+  const [guardando, setGuardando] = useState<'platillo' | 'encabezado' | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
 
   if (datos.platillos.isPending || datos.secciones.isPending || datos.tema.isPending) {
@@ -67,19 +60,21 @@ export function PersonalizarMenu() {
       />
     );
   }
-  const leidas = datos.secciones.data;
-  const guardadas = enSuOrden(leidas);
-  const secciones = orden ?? guardadas;
+  // DP-24 · Las secciones y los platillos de la vista previa, en EL orden del menú.
+  const secciones = ordenarCategorias(datos.secciones.data);
   const tema = datos.tema.data ?? temaDelPortal(null);
   const mensajeGuardado = config.portal_qr_mensaje_bienvenida ?? '';
   const mensajeVisto = mensaje ?? mensajeGuardado;
   const estiloVisto = estilo === undefined ? tema.estilo : estilo;
   const elegido = platillos.find((p) => p.id === elegidoId) ?? null;
-  const vistos = platillos.map((p) => conLaEdicion(p, ediciones[p.id]));
+  const vistos = ordenarMenu(
+    platillos.map((p) => conLaEdicion(p, ediciones[p.id])),
+    secciones,
+  );
   const parche = elegido === null ? {} : parcheDelPlatillo(elegido, ediciones[elegido.id] ?? {});
 
   async function conAviso(
-    que: 'platillo' | 'orden' | 'encabezado',
+    que: 'platillo' | 'encabezado',
     hacer: () => Promise<void>,
     listo: string,
   ) {
@@ -137,21 +132,6 @@ export function PersonalizarMenu() {
         </Superficie>
         <Superficie relleno={4}>
           <MenuEnGeneral
-            secciones={secciones}
-            alMover={(id, hacia) => {
-              setOrden(moverSeccion(secciones, id, hacia));
-            }}
-            hayOrdenNuevo={secciones.map((s) => s.id).join() !== guardadas.map((s) => s.id).join()}
-            alGuardarOrden={() => {
-              void conAviso(
-                'orden',
-                async () => {
-                  await datos.guardarOrden(ordenQueCambio(leidas, secciones));
-                  setOrden(null);
-                },
-                'Orden de las secciones guardado',
-              );
-            }}
             mensaje={mensajeVisto}
             alCambiarMensaje={setMensaje}
             estilo={estiloVisto}
@@ -172,10 +152,14 @@ export function PersonalizarMenu() {
                 'Encabezado y colores guardados',
               );
             }}
-            guardando={guardando === 'orden' || guardando === 'encabezado' ? guardando : null}
+            guardando={guardando === 'encabezado' ? guardando : null}
             fallo={guardando === null && elegido === null ? fallo : null}
           />
         </Superficie>
+        <Aviso
+          tono="info"
+          titulo="El orden de las secciones y de los platillos, y cuáles se ven en el menú, se cambian en Configuración → Portal de comensales → El orden del menú. La vista previa ya los enseña."
+        />
       </div>
       <div className="lg:sticky lg:top-(--espacio-4) lg:self-start">
         <VistaDelTelefono
