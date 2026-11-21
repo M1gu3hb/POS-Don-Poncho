@@ -573,27 +573,36 @@ export default function Caja() {
     if (!ventaSeleccionada) return null;
     const origen = ventaSeleccionada.propina_origen;
     const tipo = ventaSeleccionada.propina_tipo;
-    let mensaje = avisoDeLaPropina;
-    let tono = 'bg-info/10 border-info/30 text-info';
-    if (!mensaje && (origen === 'portal_qr' || origen === 'pendiente_portal_qr')) {
+    const monto = Number(ventaSeleccionada.propina_monto) || 0;
+    // Los títulos y los mensajes del portal QR son los de siempre; lo nuevo es que la propina se
+    // elige o se cambia en la misma tarjeta.
+    let titulo = avisoDeLaPropina;
+    let mensaje = '';
+    let palette = 'bg-info/10 border-info/30 text-info';
+    if (!titulo && (origen === 'portal_qr' || origen === 'pendiente_portal_qr')) {
+      titulo = 'Cuenta solicitada desde QR';
       if (origen === 'pendiente_portal_qr' || tipo === 'pendiente_cliente') {
-        mensaje = 'QR: el comensal todavía no elige su propina. Puedes esperar o elegirla aquí.';
-        tono = 'bg-advertencia/10 border-advertencia/30 text-advertencia';
+        titulo = 'QR: esperando propina del comensal';
+        mensaje =
+          'El cliente aún no eligió propina en el QR. Puedes esperar o cobrar definiendo tú la propina.';
+        palette = 'bg-advertencia/10 border-advertencia/30 text-advertencia';
       } else if (tipo === 'decidir_en_caja') {
-        mensaje = 'QR: el comensal pidió decidir la propina en caja. Elígela aquí.';
+        titulo = 'El cliente decidió en caja';
+        mensaje = 'Define la propina aquí (porcentaje, monto o sin propina) antes de cobrar.';
       } else if (tipo === 'sin_propina') {
-        mensaje = 'QR: el comensal eligió no dejar propina.';
-      } else if ((Number(ventaSeleccionada.propina_monto) || 0) > 0) {
-        mensaje = `QR: propina elegida por el comensal: ${formatCurrency(Number(ventaSeleccionada.propina_monto) || 0)}. Aquí la puedes cambiar.`;
-      } else {
-        mensaje = 'Cuenta pedida desde el QR.';
+        mensaje = 'El cliente eligió no dejar propina.';
+      } else if (monto > 0) {
+        mensaje = `Propina sugerida por el cliente: ${formatCurrency(monto)}. Puedes ajustarla o quitarla si lo pide.`;
       }
     }
-    if (!mensaje) return null;
+    if (!titulo) return null;
     return (
-      <div role="status" className={`rounded-lg border p-2 text-xs flex items-start gap-2 ${tono}`}>
+      <div role="status" className={`rounded-xl p-2.5 border text-xs flex items-start gap-2 ${palette}`}>
         <Smartphone className="w-4 h-4 shrink-0 mt-0.5" />
-        <p className="flex-1 font-semibold">{mensaje}</p>
+        <div className="flex-1">
+          <p className="font-bold">{titulo}</p>
+          {mensaje && <p>{mensaje}</p>}
+        </div>
       </div>
     );
   })();
