@@ -54,7 +54,7 @@ describe('la Caja cuando el total cambió con el cobro abierto (hallazgo 12)', (
     expect(alFallarElCobro()).toMatch(/err\?\.datos\?\.regla === 'PROPINA_VIGENTE'/);
   });
 
-  it('releer la cuenta trae total y renglones del servidor y limpia los pagos tecleados', () => {
+  it('releer la cuenta trae total y renglones del servidor, y lo tecleado para el total de antes se limpia', () => {
     const releer = entre(
       caja(),
       'const releerLaCuentaDelCobro = async (ordenId) => {',
@@ -64,18 +64,23 @@ describe('la Caja cuando el total cambió con el cobro abierto (hallazgo 12)', (
     expect(releer).toMatch(/api\.entidades\.DetalleVenta\.filter\(\{ venta_id: ordenId \}\)/);
     expect(releer).toMatch(/setVentaSeleccionada\(/);
     expect(releer).toMatch(/setDetallesSeleccionados\(/);
-    for (const limpiar of [
-      "setMontoEfectivo('')",
-      "setMontoTarjeta('')",
-      "setMontoTransferencia('')",
-    ]) {
-      expect(releer).toContain(limpiar);
-    }
+    // DP-24 · Lo tecleado vive en la tarjeta de cobro, que se monta de nuevo cuando cambia la cuenta
+    // O SU TOTAL (su `clave`): los pagos tecleados para el total de antes no sobreviven a la relectura.
+    expect(caja()).toContain(
+      "clave={`${ventaSeleccionada?.id ?? ''}|${String(aCentavos(ventaSeleccionada?.total))}`}",
+    );
+    const tarjeta = readFileSync(
+      join(HEREDADO, '..', 'src', 'venta', 'TarjetaDeCobro.tsx'),
+      'utf8',
+    );
+    expect(tarjeta).toContain('<Contenido key={p.clave} {...p} />');
   });
 
   it('el total que viaja al cobro sale de la cuenta que está en pantalla (la releída)', () => {
     // Si `total` saliera de otra parte, releer la cuenta no cambiaría lo que se manda.
-    const cobro = entre(caja(), 'const total = ventaSeleccionada.total || 0;', '} finally {');
-    expect(cobro).toMatch(/totalEsperadoCentavos: aCentavos\(total\),/);
+    // DP-24 · El total que la tarjeta recibe es el de la cuenta en pantalla, y ése es el que viaja.
+    expect(caja()).toMatch(/totalCentavos=\{aCentavos\(ventaSeleccionada\?\.total\)\}/);
+    const cobro = entre(caja(), 'const handleCobrar = async (loTecleado) => {', '} finally {');
+    expect(cobro).toMatch(/totalEsperadoCentavos: loTecleado\.totalCentavos,/);
   });
 });

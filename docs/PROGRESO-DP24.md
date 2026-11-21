@@ -107,9 +107,17 @@ siguieron donde iban y la sesión principal volvió a la Caja.
 - **En producción (20-11, 23:20):** `main` en `515d451`, despliegue `dpl_AYMfwXC3wQxAdREQqxMtGKjJMzpK` en READY. La migración
   196 se aplicó antes de unir (ensayo y aplicación correctos). Humo: 13 bien, 0 mal; las cuatro rutas nuevas de catálogo
   contestan 403; sin errores de ejecución; las 4 cuentas y las cajas, intactas.
-- **El guion del menú NO se corrió:** el ensayo contra producción terminó en ««don-poncho» sin alta, sin sucursal o sin
-  «Miguel · Morphiq» como dueño activo». Nada se escribió. Hay que dar el nombre exacto de la persona dueña activa y repetirlo.
-  La copia del catálogo de antes quedó en `catalogo-antes-del-menu.json`.
+- **El guion del menú, primer intento (20-11, 23:22):** no corrió: el encargo al agente traía mal el nombre de la persona
+  («Miguel · Morphiq»); la dueña activa de producción con la que firman los guiones es «Dueño», la de DP-22 y DP-23.
+- **El menú quedó como la hoja (21-11, 01:35), lo corrió la sesión principal:** ensayo limpio (48 comandos: 19 de categorías,
+  4 «(extra)» apagados, 2 grupos, 8 asignaciones, 1 orden de categorías y 14 de platillos), corrida real con 49 ✓ y ningún ✗,
+  y el ensayo de después con todas las etapas en «ya está». Por la conexión de sesión (5432).
+  **Comparación del catálogo antes y después** (`catalogo-antes-del-menu.json` / `catalogo-despues-del-menu.json`): 107
+  productos antes y después, ninguno nuevo ni borrado, **0 precios y 0 nombres cambiados**; los 4 «(extra)» de Cerveza quedaron
+  apagados; 16 categorías activas (Brandy se unió a «Ron y Brandy»); 7 opciones nuevas: Michelado $15, Cubano $20, Con clamato
+  $30, Con clamato cubano $35 (los precios del encargo, iguales a los de los «(extra)») y las 3 de «Preparación» en $0.
+  **No se crearon** (faltan en el catálogo): Campechanas, Panqués, Café americano, Café capuchino, Cuervo especial, Bacardí
+  añejo. **Sin cargar por falta de precio:** el tequila adicional de Paloma, Charro negro y Piña colada sin alcohol.
 
 ## Parte 6 · Impresión: copias y el permiso de la impresora (PR #49; apps: PR #3 en borrador)
 
@@ -126,6 +134,8 @@ siguieron donde iban y la sesión principal volvió a la Caja.
   38 (con el caso de cambiar las copias entre tres impresiones sin recargar), integración del ticket (6), 12 mutantes.
 - **La primera CI salió en rojo:** el arnés de `pruebas/impresion` seguía usando la variable que se quitó, y dos avisos
   de lint. Corregido en el mismo PR. **No comprobado:** un rollo real ni el iMin. Decisión: DP-D212.
+- **En producción (20-11, 23:52):** `main` en `2637e80`, despliegue `dpl_CHga7hXFAmhydcJbiNQdYdcENy8B` en READY. Humo: 13 bien,
+  0 mal; sin errores de ejecución; las 4 cuentas y las cajas, intactas. La app de Android no se tocó ni se publicó.
 
 ## Parte 5 · Unir mesas poco a poco (PR #51)
 
@@ -135,6 +145,10 @@ siguieron donde iban y la sesión principal volvió a la Caja.
 - **Pruebas:** integración `union-por-partes` (13: tres ampliaciones con comandas en los cuatro estados, separar, cobrar
   una vez y los rechazos), la regresión de unir (51), la zona de restaurante (1,087) y 25 mutantes. La prueba con dedo
   (`agregar-mesas-al-tacto`) no corrió en local: se agregó a la CI. Decisión: DP-D213.
+- **SIN UNIR (21-11, 00:21):** la CI de `1777db1` (y la de `4fa2c04`, antes de traer la Parte 6) falla en «Jornada completa»
+  sólo en `agregar-mesas-al-tacto.spec.ts` (tablet y teléfono): el botón «Agregar mesas» de la mesa mide 40.8 px de alto y la
+  prueba exige 44 (`size="sm"` en `AccionesDeLaMesa.tsx`, igual que sus hermanos). Es un defecto de la parte, no de la unión:
+  el PR #51 queda abierto, sin unir. El resto de la CI está en verde. Arreglo probable: darle al botón 44 px al tacto.
 
 ## Parte 4 · Cocina por platillo, el aviso de «listo» y la mesa (PR #50)
 
@@ -188,11 +202,11 @@ siguieron donde iban y la sesión principal volvió a la Caja.
 
 | Parte | Estado |
 |---|---|
-| 1 · La Caja | PR #52, en la CI; se sube al final |
+| 1 · La Caja | PR #52, trae main y en la CI |
 | 2 · Quién quita y cancela | en producción (20-11, 22:25) |
 | 3 · El menú | en producción (20-11, 23:20); falta correr el guion del menú (persona dueña no hallada) |
 | 4 · Cocina por producto | PR #50; corrigiendo el aviso que tapa «Marcar entregado» |
-| 5 · Unir mesas poco a poco | PR #51, en la CI |
-| 6 · Impresión | PR #49, trae main y en la CI (la app de Android espera la prueba en el iMin) |
+| 5 · Unir mesas poco a poco | PR #51 SIN UNIR: la prueba con dedo falla (botón de 40.8 px; pide 44) |
+| 6 · Impresión | en producción (20-11, 23:55) (la app de Android espera la prueba en el iMin) |
 | 7 · Lo que sólo se confirma | hecho con la Parte 2 |
 | 8 · Cero final | espera el «CERO FINAL» de Miguel |

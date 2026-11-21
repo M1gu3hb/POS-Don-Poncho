@@ -278,19 +278,16 @@ async function cobrar(
     await dialogo.getByPlaceholder('0.00').fill(pesos(pago.recibidoCentavos));
   }
   if (pago.metodo === 'Mixto') {
-    // «Efectivo», «Tarjeta» y «Transfer.» de la venta, y debajo —si hay propina— los mismos
-    // tres de la propina: en ese orden y sin etiqueta ligada a su campo.
-    const partes = dialogo.getByPlaceholder('0', { exact: true });
-    if (pago.efectivoCentavos > 0) await partes.nth(0).fill(pesos(pago.efectivoCentavos));
-    if (pago.tarjetaCentavos > 0) await partes.nth(1).fill(pesos(pago.tarjetaCentavos));
-    if (pago.propinaEfectivoCentavos !== undefined) {
-      await partes.nth(3).fill(pesos(pago.propinaEfectivoCentavos));
-    }
-    if (pago.propinaTarjetaCentavos !== undefined) {
-      await partes.nth(4).fill(pesos(pago.propinaTarjetaCentavos));
-    }
-    // La línea que dice si la venta (sin propina) quedó cubierta, antes de cobrar.
-    await expect(dialogo.getByText(/^✓ La venta \(\$[\d,.]+\) queda cubierta\.$/)).toBeVisible();
+    // DP-24 · La tarjeta de cobro: se teclea lo que se le cobra a la tarjeta (con su propina
+    // dentro, si la lleva) y el resto es efectivo; la propina sale primero del efectivo.
+    const conTarjeta = pago.tarjetaCentavos + (pago.propinaTarjetaCentavos ?? 0);
+    const enEfectivo = pago.efectivoCentavos + (pago.propinaEfectivoCentavos ?? 0);
+    await dialogo.getByLabel('Tarjeta 1', { exact: true }).fill(pesos(conTarjeta));
+    // La línea que dice cuánto queda en efectivo, antes de cobrar.
+    await expect(dialogo.locator('[data-resto-en-efectivo]')).toContainText(
+      `$${pesos(enEfectivo)}`,
+    );
+    await expect(dialogo.locator('[data-tropiezo]')).toHaveCount(0);
   }
   const respuesta = page.waitForResponse(
     (r) => new URL(r.url()).pathname === '/api/venta/cobrar' && r.request().method() === 'POST',

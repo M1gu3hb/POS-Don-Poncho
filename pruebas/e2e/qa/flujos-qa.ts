@@ -36,25 +36,28 @@ export type Pago =
 export type Propina = 5 | 10 | 15 | 20 | 'Sin propina' | { readonly montoCentavos: number } | null;
 
 /**
- * En la caja de Don Poncho la propina se pregunta AL COBRAR («¿Desean agregar propina?», con 5, 10, 15
- * y 20 %), no cuando la mesera pide la cuenta. Si la cuenta ya trae propina no pregunta.
+ * DP-24 · En la caja de Don Poncho la propina se elige DENTRO de la tarjeta de cobro (5, 10, 15 y
+ * 20 %, «Otro monto» y «Sin propina»); ya no hay pregunta aparte. Si el guion no dice cuál, se deja
+ * la que la cuenta ya trae.
  */
 async function decidirLaPropina(page: Page, cobro: Locator, propina: Propina): Promise<void> {
-  const pregunta = page.getByText('¿Desean agregar propina?');
-  await expect(pregunta.or(cobro)).toBeVisible({ timeout: 30_000 });
-  if (!(await pregunta.isVisible())) return;
-  expect(propina, 'La caja preguntó por la propina y el guion no dijo cuál.').not.toBeNull();
+  await expect(cobro).toBeVisible({ timeout: 30_000 });
+  if (propina === null) return;
+  const botones = cobro.getByRole('group', { name: /^Propina/ });
+  const guardada = page.waitForResponse(
+    (r) =>
+      new URL(r.url()).pathname === '/api/venta/fijar-propina' && r.request().method() === 'POST',
+  );
   if (propina === 'Sin propina') {
-    await page.locator('button', { hasText: 'Sin propina' }).click();
+    await botones.getByRole('button', { name: 'Sin propina', exact: true }).click();
+  } else if (typeof propina === 'number') {
+    await botones.getByRole('button', { name: `${String(propina)}%`, exact: true }).click();
   } else {
-    if (typeof propina === 'number') {
-      await page.getByText(`${String(propina)}%`, { exact: true }).click();
-    } else if (propina !== null) {
-      await page.getByPlaceholder('0.00').last().fill(pesos(propina.montoCentavos));
-    }
-    await page.locator('button', { hasText: 'Aplicar' }).click();
+    await botones.getByRole('button', { name: 'Otro monto', exact: true }).click();
+    await cobro.getByLabel('Otro monto de propina').fill(pesos(propina.montoCentavos));
+    await cobro.getByRole('button', { name: 'Poner', exact: true }).click();
   }
-  await expect(pregunta).toBeHidden();
+  expect((await guardada).status(), 'La caja no guardó la propina elegida.').toBe(200);
 }
 
 /** Abre la cuenta de la mesa en «Pendientes», paga con ese método y devuelve lo que contestó el servidor. */
@@ -75,16 +78,13 @@ export async function cobrarEnCaja(
     await dialogo.getByPlaceholder('0.00').fill(pesos(pago.recibidoCentavos));
   }
   if (pago.metodo === 'Mixto') {
-    const partes = dialogo.getByPlaceholder('0', { exact: true });
-    if (pago.efectivoCentavos > 0) await partes.nth(0).fill(pesos(pago.efectivoCentavos));
-    if (pago.tarjetaCentavos > 0) await partes.nth(1).fill(pesos(pago.tarjetaCentavos));
-    if (pago.propinaEfectivoCentavos !== undefined) {
-      await partes.nth(3).fill(pesos(pago.propinaEfectivoCentavos));
-    }
-    if (pago.propinaTarjetaCentavos !== undefined) {
-      await partes.nth(4).fill(pesos(pago.propinaTarjetaCentavos));
-    }
-    await expect(dialogo.getByText(/^✓ La venta \(\$[\d,.]+\) queda cubierta\.$/)).toBeVisible();
+    // DP-24 · Se teclea lo que se le cobra a la tarjeta (con su propina dentro, si la lleva); el
+    // resto es efectivo y la propina sale primero de ahí.
+    const conTarjeta = pago.tarjetaCentavos + (pago.propinaTarjetaCentavos ?? 0);
+    const enEfectivo = pago.efectivoCentavos + (pago.propinaEfectivoCentavos ?? 0);
+    await dialogo.getByLabel('Tarjeta 1', { exact: true }).fill(pesos(conTarjeta));
+    await expect(dialogo.locator('[data-resto-en-efectivo]')).toContainText(dinero(enEfectivo));
+    await expect(dialogo.locator('[data-tropiezo]')).toHaveCount(0);
   }
   const respuesta = page.waitForResponse(
     (r) => new URL(r.url()).pathname === '/api/venta/cobrar' && r.request().method() === 'POST',

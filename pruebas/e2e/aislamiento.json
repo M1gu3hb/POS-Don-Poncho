@@ -677,7 +677,7 @@
       "ruta": "/api/propinas/liquidar",
       "comando": "propinas.liquidar",
       "escribe": true,
-      "roles": ["administrador", "dueno", "gerente"],
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
       "paquetes": ["restaurante"],
       "idRequerido": false,
       "cuerpo": {
@@ -737,6 +737,24 @@
       "idRequerido": true,
       "cuerpo": { "mesaId": "⟨mesas⟩", "personas": 1 },
       "ids": [{ "camino": "mesaId", "tabla": "mesas" }]
+    },
+    {
+      "ruta": "/api/restaurante/agregar-en-caja",
+      "comando": "restaurante.agregar_en_caja",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": {
+        "ordenId": "⟨ordenes⟩",
+        "lineas": [
+          { "productoId": "⟨productos⟩", "cantidad": "prueba de aislamiento", "opciones": [] }
+        ]
+      },
+      "ids": [
+        { "camino": "ordenId", "tabla": "ordenes" },
+        { "camino": "lineas[0].productoId", "tabla": "productos" }
+      ]
     },
     {
       "ruta": "/api/restaurante/anular-linea",

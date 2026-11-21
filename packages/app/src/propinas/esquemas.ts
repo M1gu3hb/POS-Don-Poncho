@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { entradaCobrarOrden, entradaPago } from '../venta/esquemas.ts';
+import { MAXIMO_DE_PAGOS, entradaCobrarOrden, entradaPago } from '../venta/esquemas.ts';
 import { RANGOS_DE_LIQUIDACION } from './rango.ts';
 
 /**
@@ -126,7 +126,7 @@ export const entradaPagoConPropina = entradaPago
  */
 export const entradaCobrarOrdenConPropina = entradaCobrarOrden
   .extend({
-    pagos: z.array(entradaPagoConPropina).min(1).max(5),
+    pagos: z.array(entradaPagoConPropina).min(1).max(MAXIMO_DE_PAGOS),
     propinaPuntosBase: puntosBase.optional(),
     propinaTipo: z.enum(TIPOS_DE_PROPINA).optional(),
     propinaOrigen: z.enum(ORIGENES_DE_PROPINA).optional(),
@@ -178,6 +178,19 @@ export const entradaLiquidarPropinas = z.object({
   meseroId: identificador.nullish(),
   ordenIds: z.array(identificador).min(1).max(500).optional(),
   notas: z.string().trim().max(500).optional(),
+  /**
+   * DP-24 · La liquidación se entrega EN EFECTIVO, del cajón de la caja abierta en este aparato
+   * (es la que se hace desde el corte). Lo liquidado queda como salida de esa caja, para que el
+   * conteo del cierre cuadre. Sin esto —la liquidación del Tablero— no se mueve ningún cajón.
+   * No es un importe: cuánto sale lo suma el servidor, es el total de la liquidación.
+   */
+  entregarDeLaCaja: z.boolean().optional(),
+  /**
+   * DP-24 · La autorización firmada del PIN de un gerente, administrador o dueño, cuando quien
+   * liquida desde el corte es la cajera. Atada al importe que se entrega y de un solo uso (la
+   * misma pieza del retiro con PIN, `para: 'retiro'`: es dinero que sale del cajón).
+   */
+  autorizacion: z.string().min(20).max(2_000).optional(),
   /**
    * F-242 · Con esquema, el pool se reparte por puntos entre quienes trabajaron
    * el turno. Sin él, la liquidación reparte como hoy: directa al mesero.

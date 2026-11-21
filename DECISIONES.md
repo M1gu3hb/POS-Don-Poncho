@@ -4114,3 +4114,60 @@ Lo pidió Don Poncho tras la entrega: guardó 2 copias en un POS, otro siguió i
 - **La app de Android** declara el filtro `USB_DEVICE_ATTACHED` (clases 7 y 255) para que Android ofrezca «usar de forma
   predeterminada» y el permiso se quede. Va en su repositorio y **no se sube versión ni se publica APK hasta probarlo en el
   iMin**: si su impresora no es USB o Android no la «conecta» al arrancar, queda el botón (un toque por arranque).
+
+## DP-D215 · DP-24 · La tarjeta de cobro: una sola vista, y se teclea lo que de verdad pasa · 20-11-2026
+
+Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sustituye al diálogo de cobro de la Caja heredada.
+
+- **Una sola vista** (`TarjetaDeCobro`): los platillos, el subtotal, la propina, las formas de pago, lo recibido, el cambio y el
+  total, sin diálogos encimados y sin desplazarse en 1024×768 ni en 800×600. La cuenta la hace un módulo puro y en centavos
+  (`cuenta-del-cobro.ts`); el total lo sigue recalculando el servidor.
+- **La función pequeña que se agregó:** un teclado de importes dentro de la tarjeta. Los campos no abren el teclado del sistema
+  (`inputMode="none"`), que taparía media tarjeta en una pantalla táctil; con teclado físico se teclea igual.
+- **Efectivo.** «Recibido» vacío es importe exacto. Un «Recibido» tecleado MENOR a lo que toca en efectivo no se cobra: el botón
+  se apaga y dice «Faltan $X en efectivo» (la falla del informe 013: se cobraba como exacto, con «Cambio $0.00»). Los atajos
+  (Exacto, $100, $200, $500, $1,000) PONEN lo recibido, no lo suman.
+- **Varias tarjetas.** «Dividir en tarjetas» abre Tarjeta 1, Tarjeta 2 y «Agregar tarjeta» (hasta 10; el cobro acepta 12 pagos).
+  Lo que se teclea en cada una es lo que se le cobra, con la propina dentro; tiene que sumar total + propina o no deja cobrar y dice
+  cuánto falta o sobra. En «Mixto» el resto es efectivo. El ticket dice UNA línea «Tarjeta» con la suma; el corte y Registros
+  guardan cada pago por separado.
+- **De dónde sale la propina** cuando hay más de un método: primero del efectivo («la cuenta con tarjeta y la propina en
+  billete»), luego de la última tarjeta hacia atrás y al final de la transferencia; quien cobra puede decir «con tarjeta» o «por
+  transferencia». Nunca un reparto proporcional.
+
+## DP-D216 · DP-24 · La propina se elige en la tarjeta de cobro; se acabó la pregunta aparte · 20-11-2026
+
+- Botones con los porcentajes de la Configuración, «Otro monto» y «Sin propina»; se cambia hasta antes de cobrar. Tocar otra
+  propina ES cambiarla a propósito (`cuenta.fijar_propina` con `cambiar`), respetando «una sola verdad» (DP-21 · Bloque 4): viaja
+  con la versión de la cuenta y, si cambió, el servidor contesta la vigente y el cobro se rechaza.
+- La que eligió otra pantalla (los comensales por el QR, el mesero) llega YA PUESTA a la tarjeta, que lo dice ahí mismo («…Ya
+  está puesta en la cuenta; aquí la puedes cambiar»). Ya no hay aviso que interrumpa con «Usar ésa / Cambiarla».
+- Cobrar sin haber elegido es «sin propina», decidida por la Caja.
+- **El cambio como propina:** cuando sobra cambio aparece «Dejar los $X de cambio como propina». Si se deja, pasa a la propina
+  (como monto) y el cambio queda en $0; si no, se entrega. Tocar otro importe u otra propina lo deshace.
+
+## DP-D217 · DP-24 · La Caja modifica la cuenta que está cobrando · 20-11-2026
+
+- **Agregar y Para llevar** (`restaurante.agregar_en_caja`: cajero, gerente, administrador y dueño): el mismo buscador y la misma
+  rejilla del pedido para llevar. Lo agregado sale a cocina en ese momento. Una cuenta «pedida» se queda pedida (no vuelve a la
+  mesa) y sube su versión, así que un cobro armado con el total de antes se rechaza. «Para llevar» va marcado en la nota del
+  renglón y de la comanda («PARA LLEVAR · …»), sin migración. No se le agrega a una parte de una cuenta dividida ni a un pedido
+  para llevar (ése se corrige en el suyo).
+- **Quitar** un platillo desde la tarjeta usa el diálogo de siempre y la regla de DP-D210: motivo obligatorio; el cajero, con el
+  PIN de un gerente, administrador o dueño; la gerencia, sin PIN.
+- **Dividir, Descuento y Cancelar** se quedan como estaban, en sus diálogos.
+- **«Pasar platillos a otra cuenta» NO existe** en el sistema (informe 013 §12: de 3 a 4 días). Queda como propuesta; hoy no se
+  construyó.
+
+## DP-D218 · DP-24 · Liquidar propinas en el corte: el mismo comando, y lo entregado sale del cajón · 20-11-2026
+
+- El corte tiene «Propinas del día» por persona (cuentas atendidas, propina y «Liquidar»), con lo pendiente desde que abrió ESA
+  caja. Es opcional. No es un segundo camino: abre el diálogo del Tablero y llama a `propinas.liquidar` con `entregarDeLaCaja`.
+- **Lo entregado queda como salida de la caja** (movimiento `propina_entregada`, negativo, por el total liquidado: es lo que se le
+  da en billetes a la persona, haya entrado la propina en efectivo o con tarjeta). El efectivo esperado baja lo mismo y el conteo
+  cuadra (la otra falla del informe 013). Sin caja abierta en ese aparato no se puede entregar «de la caja».
+- **Quién liquida:** la gerencia, sin PIN. La cajera sólo desde el corte y con el PIN de un gerente, administrador o dueño por ESE
+  importe (sirve una vez). Desde el Tablero sigue siendo sólo la gerencia y no mueve ningún cajón.
+- Al terminar el corte (con su PDF) se ofrece «Liquidar propinas» a la gerencia: es la del Tablero (la caja ya cerró).
+- **Quién aparece**, aquí y en el Tablero: sólo quien vende, cobra o atiende cuentas (mesero, cajero, gerente, administrador o
+  dueño). Nunca cocina, bebidas ni almacén. La atribución de cada propina (quien atendió la cuenta) no cambió.

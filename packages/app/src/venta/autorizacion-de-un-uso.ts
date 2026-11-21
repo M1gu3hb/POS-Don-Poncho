@@ -35,6 +35,8 @@ export const COMANDOS_QUE_GASTAN_AUTORIZACION = [
   'caja.movimiento',
   // DP-21 · Abrir el cajón a mano (`para: 'cajon'`): cada apertura lleva su PIN.
   'caja.abrir_cajon',
+  // DP-24 · La cajera que entrega propinas desde el corte gasta la suya (`para: 'retiro'`).
+  'propinas.liquidar',
 ] as const;
 
 /** La ventana se mide desde que se firmó, con holgura por el reloj de cada lado. */

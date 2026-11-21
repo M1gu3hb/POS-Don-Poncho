@@ -44,12 +44,16 @@ const ATAJOS: ReadonlySet<number> = new Set([0.25, 0.5, 1]);
 /** Agrega UN peso desde el diálogo de cantidad: con su atajo si lo tiene, si no tecleándolo. */
 async function agregarPeso(page: Page, kilos: number, dicho: string): Promise<void> {
   const mesa = dialogoDeLaMesa(page, MESA);
-  await mesa
-    .getByRole('button', { name: new RegExp(`^${BARBACOA.nombre}`) })
-    .first()
-    .click();
   const cantidad = page.getByRole('dialog', { name: BARBACOA.nombre });
-  await expect(cantidad).toBeVisible();
+  // El menú se vuelve a pintar al llegar cada pedido: un toque que cae en ese instante se pierde.
+  // Se repite hasta que el diálogo de la cantidad aparece (lo que se prueba empieza después).
+  await expect(async () => {
+    await mesa
+      .getByRole('button', { name: new RegExp(`^${BARBACOA.nombre}`) })
+      .first()
+      .click({ timeout: 5_000 });
+    await expect(cantidad).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 25_000 });
   if (ATAJOS.has(kilos)) {
     await cantidad.getByRole('button', { name: dicho, exact: true }).click();
   } else {
@@ -82,8 +86,12 @@ test.describe('la barbacoa por kilo, de la mesa a la caja', () => {
     const rosa = await equipo.pagina(info, 'cajero');
     const lupita = await equipo.pagina(info, 'mesero');
     const tono = await equipo.pagina(info, 'cocina');
-    // El 400/422 que la pantalla espera al dividir no se cuenta como fallo mientras se espera.
-    const fallos = [duena, rosa, lupita, tono].map((p) => vigilarFallos(p));
+    // Al cobrar la primera parte la Caja intenta soltar la mesa y el servidor dice 422
+    // (`MESA_NO_LIBERABLE`: falta la otra parte); la pantalla lo espera y no avisa (DP-17). Ese
+    // 422 no se cuenta como fallo mientras Rosa cobra las partes.
+    let cobrandoLasPartes = false;
+    const fallos = [duena, lupita, tono].map((p) => vigilarFallos(p));
+    fallos.push(vigilarFallos(rosa, { sondeando: () => cobrandoLasPartes }));
     await rosa.goto('/');
     await rosa.waitForURL(/\/caja$/);
     await lupita.goto('/');
@@ -145,16 +153,15 @@ test.describe('la barbacoa por kilo, de la mesa a la caja', () => {
       const dialogo = rosa.getByRole('dialog', { name: 'Dividir la cuenta' });
       // Cada renglón es una sola pieza: con su peso a la vista y con un solo «+» que la lleva entera.
       for (const { dicho } of PESOS) await expect(dialogo.getByText(dicho).first()).toBeVisible();
-      const anadir = dialogo.getByRole('button', {
-        name: `Añadir ${BARBACOA.nombre} a la cuenta 1`,
-        exact: true,
-      });
-      const anadir2 = dialogo.getByRole('button', {
-        name: `Añadir ${BARBACOA.nombre} a la cuenta 2`,
-        exact: true,
-      });
-      for (const n of [0, 1, 2]) await anadir.nth(n).click();
-      for (const n of [3, 4]) await anadir2.nth(n).click();
+      // Los cinco renglones se llaman igual, así que sus botones llevan «(ronda N)», por orden de
+      // aparición (DP-18 · A14): ¼ es la ronda 1, ½ la 2, ¾ la 3, 1 kg la 4 y 1.5 kg la 5.
+      const anadir = (ronda: number, cuenta: number) =>
+        dialogo.getByRole('button', {
+          name: `Añadir ${BARBACOA.nombre} (ronda ${String(ronda)}) a la cuenta ${String(cuenta)}`,
+          exact: true,
+        });
+      for (const ronda of [1, 2, 3]) await anadir(ronda, 1).click();
+      for (const ronda of [4, 5]) await anadir(ronda, 2).click();
       await expect(dialogo.getByText('Todo repartido')).toBeVisible();
       const [respuesta] = await Promise.all([
         rosa.waitForResponse(
@@ -184,6 +191,7 @@ test.describe('la barbacoa por kilo, de la mesa a la caja', () => {
     });
 
     await test.step('Rosa cobra cada parte en efectivo exacto y el ticket suma el total', async () => {
+      cobrandoLasPartes = true;
       for (const [i, esperado] of [119_250, 198_750].entries()) {
         await rosa.getByRole('tab', { name: /^Pendientes/ }).click();
         await rosa
@@ -212,6 +220,7 @@ test.describe('la barbacoa por kilo, de la mesa a la caja', () => {
       }
       const pagadas = await Promise.all(partes.map((id) => cuentaEnElServidor(duena, id)));
       expect(pagadas.map((c) => c.estado)).toEqual(['pagada', 'pagada']);
+      cobrandoLasPartes = false;
     });
 
     for (const sinFallos of fallos) sinFallos();
