@@ -12,7 +12,6 @@ import { createRoot } from 'react-dom/client';
 
 import CorteTicket from '@/components/tickets/CorteTicket';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
-import { copiasLeidas, recordarCopias } from '~/impresion/copias';
 import { imprimirDirecto } from '~/impresion/imprimir-documento';
 import { marcarReimpresion, ponerPie } from '~/impresion/termico/decorar';
 import { dibujarPieza } from '~/impresion/termico/dibujar-elemento';
@@ -258,12 +257,11 @@ function ticketMontado() {
 
 /**
  * DP-22 · La precuenta que sale por LA APP, por el camino de producción: lo que hace
- * `BarraDeImpresion` con la configuración del negocio (`copiasLeidas` → `recordarCopias`) y lo que
- * hace `printDocument` (`imprimirDirecto`) con el documento que está en pantalla. La app es la
+ * `tarea` al imprimir (leer las copias del servidor: `copiasAlImprimir`, que la prueba intercepta en
+ * `/api/datos/consultar`) y lo que hace `printDocument` (`imprimirDirecto`) con el documento en pantalla. La app es la
  * falsa de `pruebas/e2e/ayudantes/app-falsa.ts`; sus trabajos se leen en `window.__appFalsa`.
  */
 async function imprimirPorLaApp(caso) {
-  recordarCopias(copiasLeidas(caso.configuracion ?? {}));
   await montar({ ...caso, precuenta: true });
   window.__alNavegador = 0;
   const objetivo = document.querySelector('#en-pantalla .ticket-printable');

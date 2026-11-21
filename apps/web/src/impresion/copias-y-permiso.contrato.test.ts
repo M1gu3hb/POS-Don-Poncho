@@ -59,7 +59,7 @@ describe('copias en el diálogo del navegador', () => {
     const hijos: unknown[] = [];
     const hoja: Record<string, unknown> = {
       hijos,
-      style: { setProperty: () => undefined } as Record<string, unknown>,
+      style: { setProperty: () => undefined },
       append: (nodo: unknown) => hijos.push(nodo),
       cloneNode: () => hojaFalsa(),
       after: () => undefined,
@@ -131,7 +131,9 @@ describe('«Dar permiso a la impresora»', () => {
   });
 
   it('si el puente rechaza, no lanza: lo dice', async () => {
-    const rechazo = { codigo: 'ORIGEN', message: 'Esta página no puede usar la app.' };
+    const rechazo = Object.assign(new Error('Esta página no puede usar la app.'), {
+      codigo: 'ORIGEN',
+    });
     expect(await darPermiso(() => Promise.reject(rechazo))).toEqual({
       concedido: false,
       texto: 'Esta página no puede usar la app.',
