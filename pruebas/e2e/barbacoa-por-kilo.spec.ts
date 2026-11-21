@@ -145,16 +145,15 @@ test.describe('la barbacoa por kilo, de la mesa a la caja', () => {
       const dialogo = rosa.getByRole('dialog', { name: 'Dividir la cuenta' });
       // Cada renglón es una sola pieza: con su peso a la vista y con un solo «+» que la lleva entera.
       for (const { dicho } of PESOS) await expect(dialogo.getByText(dicho).first()).toBeVisible();
-      const anadir = dialogo.getByRole('button', {
-        name: `Añadir ${BARBACOA.nombre} a la cuenta 1`,
-        exact: true,
-      });
-      const anadir2 = dialogo.getByRole('button', {
-        name: `Añadir ${BARBACOA.nombre} a la cuenta 2`,
-        exact: true,
-      });
-      for (const n of [0, 1, 2]) await anadir.nth(n).click();
-      for (const n of [3, 4]) await anadir2.nth(n).click();
+      // Los cinco renglones se llaman igual, así que sus botones llevan «(ronda N)», por orden de
+      // aparición (DP-18 · A14): ¼ es la ronda 1, ½ la 2, ¾ la 3, 1 kg la 4 y 1.5 kg la 5.
+      const anadir = (ronda: number, cuenta: number) =>
+        dialogo.getByRole('button', {
+          name: `Añadir ${BARBACOA.nombre} (ronda ${String(ronda)}) a la cuenta ${String(cuenta)}`,
+          exact: true,
+        });
+      for (const ronda of [1, 2, 3]) await anadir(ronda, 1).click();
+      for (const ronda of [4, 5]) await anadir(ronda, 2).click();
       await expect(dialogo.getByText('Todo repartido')).toBeVisible();
       const [respuesta] = await Promise.all([
         rosa.waitForResponse(
