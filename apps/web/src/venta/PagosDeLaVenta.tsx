@@ -61,7 +61,7 @@ export function PagosDeLaVenta({ pagos, titulo = 'Pagos, uno por uno' }: PagosDe
   if (renglones.length === 0) return null;
   return (
     <section aria-label={titulo} data-pagos-de-la-venta className="space-y-(--espacio-1)">
-      <h3 className="text-xs font-semibold uppercase text-muted-foreground">{titulo}</h3>
+      <h3 className="text-xs font-semibold uppercase text-texto-sutil">{titulo}</h3>
       <Tabla columnas={COLUMNAS} filas={renglones} claveDe={(r) => r.id} />
     </section>
   );
