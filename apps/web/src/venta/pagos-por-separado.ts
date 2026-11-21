@@ -8,7 +8,9 @@
  * recalcula, se lee. Los totales por método siguen donde estaban.
  *
  * Reglas:
- *   · El orden es el del cobro (`created_date`), y a igual hora, el id.
+ *   · El orden es el del cobro (`created_date`). Cada pago guarda la hora exacta de su registro y el
+ *     servidor los entrega ordenados por ella; aquí la hora llega a la milésima, así que a la misma
+ *     milésima se respeta el orden en que llegaron (el orden de `sort` es estable).
  *   · Varios pagos del mismo método se numeran («Tarjeta 1», «Tarjeta 2»); uno solo, sin número.
  *   · Lo recibido y el cambio son del efectivo: una tarjeta o una transferencia no los lleva.
  *   · Un pago devuelto (`reembolsado`) se dice.
@@ -55,8 +57,7 @@ function nombreDelMetodo(metodo: string): string {
 function enOrdenDeCobro(pagos: readonly PagoLeido[]): PagoLeido[] {
   return [...pagos].sort((a, b) => {
     const porHora = Date.parse(a.created_date) - Date.parse(b.created_date);
-    if (Number.isFinite(porHora) && porHora !== 0) return porHora;
-    return a.id.localeCompare(b.id);
+    return Number.isFinite(porHora) ? porHora : 0;
   });
 }
 

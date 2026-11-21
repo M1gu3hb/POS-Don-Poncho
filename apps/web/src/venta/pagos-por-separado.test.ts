@@ -43,6 +43,20 @@ describe('cada pago por separado', () => {
     expect(renglones[0]).toMatchObject({ recibido: null, cambio: 0 });
   });
 
+  it('a la misma milésima se respeta el orden en que llegan: el servidor ya los trae por su hora exacta', () => {
+    const misma = '2026-11-21T20:00:01.000Z';
+    const renglones = renglonesDePagos([
+      pago({ id: 'z', monto: 200, created_date: misma }),
+      pago({ id: 'a', monto: 150, created_date: misma }),
+      pago({ id: 'm', metodo: 'efectivo', monto: 100, recibido: 100, created_date: misma }),
+    ]);
+    expect(renglones.map((r) => `${r.rotulo} ${String(r.monto)}`)).toEqual([
+      'Tarjeta 1 200',
+      'Tarjeta 2 150',
+      'Efectivo 100',
+    ]);
+  });
+
   it('lo recibido y el cambio no salen en una tarjeta aunque la fila los traiga', () => {
     const [tarjeta] = renglonesDePagos([pago({ monto: 620.4, recibido: 700, cambio: 79.6 })]);
     expect(tarjeta).toMatchObject({ recibido: null, cambio: 0 });
