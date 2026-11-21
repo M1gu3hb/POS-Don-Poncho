@@ -86,8 +86,12 @@ test.describe('la barbacoa por kilo, de la mesa a la caja', () => {
     const rosa = await equipo.pagina(info, 'cajero');
     const lupita = await equipo.pagina(info, 'mesero');
     const tono = await equipo.pagina(info, 'cocina');
-    // El 400/422 que la pantalla espera al dividir no se cuenta como fallo mientras se espera.
-    const fallos = [duena, rosa, lupita, tono].map((p) => vigilarFallos(p));
+    // Al cobrar la primera parte la Caja intenta soltar la mesa y el servidor dice 422
+    // (`MESA_NO_LIBERABLE`: falta la otra parte); la pantalla lo espera y no avisa (DP-17). Ese
+    // 422 no se cuenta como fallo mientras Rosa cobra las partes.
+    let cobrandoLasPartes = false;
+    const fallos = [duena, lupita, tono].map((p) => vigilarFallos(p));
+    fallos.push(vigilarFallos(rosa, { sondeando: () => cobrandoLasPartes }));
     await rosa.goto('/');
     await rosa.waitForURL(/\/caja$/);
     await lupita.goto('/');
@@ -187,6 +191,7 @@ test.describe('la barbacoa por kilo, de la mesa a la caja', () => {
     });
 
     await test.step('Rosa cobra cada parte en efectivo exacto y el ticket suma el total', async () => {
+      cobrandoLasPartes = true;
       for (const [i, esperado] of [119_250, 198_750].entries()) {
         await rosa.getByRole('tab', { name: /^Pendientes/ }).click();
         await rosa
@@ -215,6 +220,7 @@ test.describe('la barbacoa por kilo, de la mesa a la caja', () => {
       }
       const pagadas = await Promise.all(partes.map((id) => cuentaEnElServidor(duena, id)));
       expect(pagadas.map((c) => c.estado)).toEqual(['pagada', 'pagada']);
+      cobrandoLasPartes = false;
     });
 
     for (const sinFallos of fallos) sinFallos();
