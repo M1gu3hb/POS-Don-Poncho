@@ -634,11 +634,14 @@ export function PagoDeLaTarjeta({
               key={modo}
               encendido={estado.modo === modo}
               disabled={procesando}
+              // En 800 de ancho «Transferencia» no cabe con su icono y se cortaba: hasta `lg` va sin
+              // icono y con la letra chica; de ahí en adelante, como siempre.
+              className="px-(--espacio-1) text-xs lg:px-(--espacio-2) lg:text-sm"
               onClick={() => {
                 alCambiar(elegirModo(estado, modo));
               }}
             >
-              <Icono className="size-4 shrink-0" />
+              <Icono className="hidden size-4 shrink-0 lg:block" />
               {rotulo}
             </Chip>
           ))}
