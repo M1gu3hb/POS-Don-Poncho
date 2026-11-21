@@ -1,4 +1,5 @@
 import { Superficie } from '@morphiqpos/ui/sistema';
+import type { ReactNode } from 'react';
 
 import { cantidadParaMostrar } from '../restaurante/peso.ts';
 
@@ -20,6 +21,8 @@ export interface RenglonDePlatilloProps {
   readonly compacto: boolean;
   /** Si hay ficha de cocina del platillo, tocar el renglón la abre. */
   readonly onVerFicha?: ((item: ItemDeCocina) => void) | undefined;
+  /** DP-24 · El botón de ESTE platillo («Preparar», «Listo»); la cocina los mueve uno por uno. */
+  readonly accion?: ReactNode;
 }
 
 function cantidadDelRenglon(item: ItemDeCocina): string {
@@ -34,7 +37,7 @@ function cantidadDelRenglon(item: ItemDeCocina): string {
   return cantidadParaMostrar({ ...item, cantidad: item.cantidad ?? 1 });
 }
 
-export function RenglonDePlatillo({ item, compacto, onVerFicha }: RenglonDePlatilloProps) {
+export function RenglonDePlatillo({ item, compacto, onVerFicha, accion }: RenglonDePlatilloProps) {
   const { opciones, nota } = separarOpcionesYNota(item.notas, opcionesDelServidor(item.opciones));
   const nombre = item.producto_nombre ?? 'Producto sin nombre';
   const puedeAbrirFicha = onVerFicha !== undefined && Boolean(item.producto_id);
@@ -104,6 +107,7 @@ export function RenglonDePlatillo({ item, compacto, onVerFicha }: RenglonDePlati
           )}
         </div>
       )}
+      {accion}
     </li>
   );
 }

@@ -115,12 +115,14 @@ export default function AppLayout({ marco = 'interno' }) {
             espacioAlFinal
           }
         >
+          {/* DP-24: los avisos de «listo» van EN el flujo, arriba del contenido: empujan la pantalla en
+              vez de taparla (nunca caen sobre un botón). */}
+          <PedidoListoWatcher />
           <Outlet />
         </div>
       </main>
       <NotificationsWatcher />
       <SolicitudesQRWatcher />
-      <PedidoListoWatcher />
       <MobileAdminRadialMenu />
       {/* DP-11.2: el modo espera, una capa encima; la pantalla de abajo sigue montada. */}
       <ModoEspera ruta={pathname} />

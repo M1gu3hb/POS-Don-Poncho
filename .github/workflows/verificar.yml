@@ -614,7 +614,7 @@ jobs:
   jornada:
     name: Jornada completa · ${{ matrix.modelo }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
 
     strategy:
       fail-fast: false
@@ -773,6 +773,10 @@ jobs:
           pnpm test:e2e pruebas/e2e/personalizar-menu.spec.ts --project=escritorio --workers=1 --retries=0
           # DP-24 · Unir mesas poco a poco: «Agregar mesas» con el dedo, en la tableta y el teléfono del mesero.
           pnpm test:e2e pruebas/e2e/agregar-mesas-al-tacto.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
+          # DP-24 · La cocina por platillo, el aviso de «listo» y la mini jornada con bots. Van al final: dejan mesas y personas de prueba que
+          # otras suites (cajas-del-negocio) no esperan.
+          pnpm test:e2e pruebas/e2e/cocina-por-platillo.spec.ts --project=tablet --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/mini-jornada-de-cocina.spec.ts --project=tablet --workers=1 --retries=0
 
       # LA CAJA MANDA (DP-24): lo que la cajera hace con la cuenta sin salir de la tarjeta de cobro
       # —agregar, para llevar, quitar con el PIN de un gerente— y las propinas en el corte, con lo

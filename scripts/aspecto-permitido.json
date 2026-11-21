@@ -2916,6 +2916,46 @@
       "testigos": ["- clase:active:scale-[0.98]", "+ clase:active:bg-muted/60"]
     },
     {
+      "archivo": "apps/web/heredado/components/common/PedidoListoWatcher.jsx",
+      "porque": "DP-24 (4.3): el aviso de «listo» ya no es un toast pasajero para el mesero y el administrador: es una tarjeta GRANDE y apilada («Mesa 5 · Listo en Cantina: 2 Coca cola, 1 Jugo · Recoger en Cantina») que sólo recibe el mesero de la mesa (el servidor decide cuál es suyo) y que se quita tocando o deslizando. El administrador ya no recibe este aviso.",
+      "testigos": [
+        "- aviso:Pedido listo",
+        "- aviso:Mesa ${p.mesa_numero || '—'} · Sin mesero atendiendo · Recoger en ${destinoLegible}",
+        "- aviso:Mesa ${p.mesa_numero || '—'} · Recoger en ${destinoLegible}"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/ListosParaRecogerCard.jsx",
+      "porque": "DP-24 (4.2): una tarjeta por estación con contadores («Listos 1 de 4», «Entregados 1 de 4») y su propio «Marcar entregado», que entrega sólo lo que ya está listo; si luego sale otro platillo, la MISMA tarjeta lo vuelve a ofrecer.",
+      "testigos": [
+        "- texto:Entregar",
+        "- aviso:Entregado",
+        "- aviso:Entregado: ${grupo.nombre}",
+        "+ clase:px-3",
+        "+ clase:leading-tight",
+        "+ clase:text-[11px]",
+        "+ clase:pb-3",
+        "+ clase:font-semibold",
+        "+ clase:text-texto",
+        "+ texto:Marcar entregado",
+        "+ aviso:No había nada listo para entregar.",
+        "+ aviso:Entregado: ${nombresEntregados.join(' y ')}.",
+        "+ aviso:Entregado."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Cocina.jsx",
+      "porque": "DP-24 (4.1): la cocina mueve PLATILLO por platillo (y el bloque de una mesa de un jalón); los avisos de cada toque hablan del platillo y no de la comanda.",
+      "testigos": [
+        "- aviso:No se pudo iniciar el pedido:",
+        "- aviso:No se pudo marcar listo:",
+        "+ aviso:¡Platillo listo!",
+        "+ aviso:Platillo en preparación",
+        "+ aviso:No se pudo mover el platillo:",
+        "+ aviso:No se pudo mover el pedido:"
+      ]
+    },
+    {
       "archivo": "apps/web/heredado/components/caja/CierreDiarioDialog.jsx",
       "porque": "DP-24 · DP-D218 (liquidar propinas en el corte; lo pidió Don Poncho): la nota de «Propinas del día» ya no dice que NO se liquidan en el cierre, porque ahora se pueden entregar ahí mismo (la lista por persona con su «Liquidar» es una pieza nueva). Nada más de su aspecto cambia.",
       "testigos": [

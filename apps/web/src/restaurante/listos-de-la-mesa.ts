@@ -52,11 +52,16 @@ function unidadesDe(item: ItemDeComandaLeido): number {
 }
 
 /** Suma por nombre, en el orden en que aparecen: «2 × Arrachera» en dos comandas son 2. */
-function sumarPorNombre(comandas: readonly ComandaLeida[]): readonly PlatilloListo[] {
+function sumarPorNombre(
+  comandas: readonly ComandaLeida[],
+  cuenta: (estadoDelPlatillo: string) => boolean,
+): readonly PlatilloListo[] {
   const porNombre = new Map<string, number>();
   const unidadDelPeso = new Map<string, string>();
   for (const comanda of comandas) {
     for (const item of platillosPorPreparar(comanda.items)) {
+      // DP-24 · Se cuenta por PLATILLO: el de una comanda a medias también espera en la ventana.
+      if (!cuenta(item.estado ?? comanda.estado)) continue;
       const nombre = (item.producto_nombre ?? '').trim();
       const unidades = unidadesDe(item);
       if (nombre === '' || unidades === 0) continue;
@@ -77,7 +82,7 @@ function sumarPorNombre(comandas: readonly ComandaLeida[]): readonly PlatilloLis
  * todavía prepara no está en la ventana, y una que ya se entregó no hay nada que recoger.
  */
 export function platillosListos(comandas: readonly ComandaLeida[]): readonly PlatilloListo[] {
-  return sumarPorNombre(comandas.filter((comanda) => comanda.estado === 'listo'));
+  return sumarPorNombre(comandas, (estado) => estado === 'listo');
 }
 
 /**
@@ -87,9 +92,9 @@ export function platillosListos(comandas: readonly ComandaLeida[]): readonly Pla
  */
 export function nombresQueYaSalieron(comandas: readonly ComandaLeida[]): ReadonlySet<string> {
   return new Set(
-    sumarPorNombre(
-      comandas.filter((comanda) => comanda.estado === 'listo' || comanda.estado === 'entregado'),
-    ).map((platillo) => platillo.nombre),
+    sumarPorNombre(comandas, (estado) => estado === 'listo' || estado === 'entregado').map(
+      (platillo) => platillo.nombre,
+    ),
   );
 }
 

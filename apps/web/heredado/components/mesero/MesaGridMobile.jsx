@@ -6,6 +6,7 @@ import { useIsDark } from '@/lib/ThemeContext';
 import { MESA_STATUS_DARK } from '@/lib/darkPalettes';
 import { nombreDistintivoDeLaMesa } from '~/restaurante/nombre-de-la-mesa';
 import { TiempoDeLaMesa } from '~/restaurante/TiempoDeLaMesa';
+import { NubesDeLaMesa } from '~/restaurante/NubesDeLaMesa';
 
 /**
  * Grid de mesas para móvil. Reemplaza el canvas posicional.
@@ -27,6 +28,8 @@ export default function MesaGridMobile({
   getResponsable,
   loading = false,
   globosDe = null,
+  // DP-24: `nubesDe(mesa)` da las nubecitas por estación de la mesa.
+  nubesDe = null,
 }) {
   const isDark = useIsDark();
   const safeMesas = Array.isArray(mesas) ? mesas : [];
@@ -182,6 +185,7 @@ export default function MesaGridMobile({
             })()}
             {/* DP-D177: cuánto lleva abierta la cuenta («35 min»). */}
             <TiempoDeLaMesa mesa={mesa} forma="tarjeta" color={cfg.text} />
+            {nubesDe ? <NubesDeLaMesa nubes={nubesDe(mesa)} forma="tarjeta" /> : null}
             {respNombre && (
               // Badge del mesero — premium con highlight superior + textshadow
               // para que se lea claro sobre cualquier color.

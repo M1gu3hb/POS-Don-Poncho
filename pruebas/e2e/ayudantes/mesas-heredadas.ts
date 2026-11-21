@@ -674,14 +674,22 @@ export async function cocinaDejaLista(
 
   const rango = (c: ComandaDelServidor): number => (c.estado === 'nuevo' ? 0 : 1);
 
-  for (let vuelta = 0; vuelta < comandasEsperadas * 8; vuelta += 1) {
+  // DP-24 · La cocina mueve cada PLATILLO: con varios en el bloque de la mesa se toca «Preparar todo»
+  // / «Todo listo»; con uno solo, su propio «Preparar» / «Listo».
+  for (let vuelta = 0; vuelta < comandasEsperadas * 16; vuelta += 1) {
     const pendientes = await faltan();
     if (pendientes.length === 0) break;
     const progresoAntes = pendientes.reduce((suma, c) => suma + rango(c), 0);
     const hayNuevas = pendientes.some((c) => c.estado === 'nuevo');
-    const boton = cocina
-      .getByRole('button', { name: hayNuevas ? 'Preparar' : 'Listo', exact: true })
-      .first();
+    const delBloque = cocina.getByRole('button', {
+      name: hayNuevas ? 'Preparar todo' : 'Todo listo',
+      exact: true,
+    });
+    const delPlatillo = cocina.getByRole('button', {
+      name: hayNuevas ? 'Preparar' : 'Listo',
+      exact: true,
+    });
+    const boton = ((await delBloque.count()) > 0 ? delBloque : delPlatillo).first();
     await expect(
       boton,
       `La cocina no enseña el botón «${hayNuevas ? 'Preparar' : 'Listo'}» y al servidor le faltan ${String(pendientes.length)} comanda(s).`,

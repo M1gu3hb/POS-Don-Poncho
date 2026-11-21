@@ -114,6 +114,8 @@ export const entradaTransicionarPedido = z.object({
 
 export const entradaEntregarPedidos = z.object({
   ordenId: z.uuid(),
+  /** DP-24 · Si viene, sólo se entrega lo listo de esas comandas (la tarjeta de UNA estación). */
+  comandaIds: z.array(z.uuid()).min(1).max(30).optional(),
 });
 
 export const entradaCancelarOrden = z.object({

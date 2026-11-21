@@ -4131,6 +4131,25 @@ grupo («Sepáralo antes de unir otro»).
 - **Separar** deshace el grupo entero, no la última ampliación, y cada mesa vuelve a donde estaba antes de SU unión. El grupo se
   cobra una vez.
 - En el mesero, desde la mesa principal del grupo: «Agregar mesas».
+
+## DP-D214 · DP-24 · La cocina por platillo, el aviso de «listo» al mesero de la mesa y la nubecita · 20-11-2026
+
+Lo pidió Don Poncho tras la entrega. La base ya guardaba el estado de cada platillo; faltaba llevarlo a las pantallas.
+
+- **La cocina mueve cada platillo por separado** (Nuevo / En preparación / Listo), con un bloque por mesa en cada columna y su
+  botón para el bloque completo (`restaurante.mover_platillos`: sólo mueve lo que SIGUE en esa columna; un toque tardío sobre un
+  platillo que otro cocinero ya adelantó no falla ni lo regresa). Los permisos son los de siempre de la cocina.
+- **El estado de la comanda y el de la mesa se derivan de sus platillos** en el servidor (la comanda va en el de su platillo
+  menos avanzado). Un platillo suelto que no cambia a su comanda ya no mueve la mesa.
+- **«Marcar entregado» entrega platillos, no comandas enteras** (`restaurante.entregar_pedidos`): lo que ya está listo de esa
+  estación; la misma tarjeta lo vuelve a ofrecer cuando sale otro. Se conserva la etiqueta «Marcar entregado». Si la cuenta ya
+  está cobrada, lo que sale listo se da por entregado.
+- **El aviso grande de «listo» es sólo para el mesero de ESA mesa** (el asignado o, sin asignación, quien la atiende), y lo
+  decide el servidor (`restaurante.avisos_de_listo`, sólo rol mesero): ni el administrador, ni la caja, ni la vista general. No
+  guarda nada: es lo «listo y sin entregar» de sus mesas; quitarlo es «ya lo vi» y lo recuerda el aparato. Nunca tapa los
+  botones de la mesa.
+- **La nubecita** junto a la mesa dice cada estación («Cocina 2/4», «Bebidas ✓»); el color del estado de la mesa no cambia.
+
 ## DP-D215 · DP-24 · La tarjeta de cobro: una sola vista, y se teclea lo que de verdad pasa · 20-11-2026
 
 Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sustituye al diálogo de cobro de la Caja heredada.

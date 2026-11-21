@@ -955,8 +955,11 @@
       "roles": ["administrador", "cajero", "cocina", "dueno", "gerente", "mesero"],
       "paquetes": ["restaurante"],
       "idRequerido": true,
-      "cuerpo": { "ordenId": "⟨ordenes⟩" },
-      "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
+      "cuerpo": { "ordenId": "⟨ordenes⟩", "comandaIds": ["⟨comandas⟩"] },
+      "ids": [
+        { "camino": "ordenId", "tabla": "ordenes" },
+        { "camino": "comandaIds[0]", "tabla": "comandas" }
+      ]
     },
     {
       "ruta": "/api/restaurante/enviar-pedido",
@@ -1048,6 +1051,16 @@
       "idRequerido": true,
       "cuerpo": { "ordenId": "⟨ordenes⟩", "tiempoServicio": 1 },
       "ids": [{ "camino": "ordenId", "tabla": "ordenes" }]
+    },
+    {
+      "ruta": "/api/restaurante/mover-platillos",
+      "comando": "restaurante.mover_platillos",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "cocina", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"],
+      "idRequerido": true,
+      "cuerpo": { "platilloIds": ["⟨?⟩"], "desde": "nuevo", "estado": "en_preparacion" },
+      "ids": [{ "camino": "platilloIds[0]", "tabla": null }]
     },
     {
       "ruta": "/api/restaurante/relevar",
