@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { reintentosPorConcurrencia } from '../comando.ts';
 import { comando } from '../produccion.ts';
-import { clave } from '../pruebas/negocio-real.ts';
+import { clave, conPuestoDeGerencia } from '../pruebas/negocio-real.ts';
 import { anularLineaComando } from './anulacion-linea.ts';
 import { cancelarOrden } from './cancelacion.ts';
 import { entregarPedidos, transicionarPedido } from './preparacion.ts';
@@ -95,7 +95,7 @@ const pasar = (comandaId: string, estado: 'en_preparacion' | 'listo', comandaIte
 const quitar = (ordenId: string, lineaId: string) =>
   comando(anularLineaComando, {
     entrada: { ordenId, lineaId, motivo: 'cliente_cambio' },
-    ambito: ambito(),
+    ambito: conPuestoDeGerencia(ambito()),
     idempotencyKey: clave(),
   });
 
@@ -109,7 +109,7 @@ const entregar = (ordenId: string) =>
 const cancelar = (ordenId: string) =>
   comando(cancelarOrden, {
     entrada: { ordenId, motivo: 'El cliente se fue sin pedir nada más' },
-    ambito: ambito(),
+    ambito: conPuestoDeGerencia(ambito()),
     idempotencyKey: clave(),
   });
 

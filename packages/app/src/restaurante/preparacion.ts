@@ -4,6 +4,8 @@ import { PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
+import { Rechazo } from '../fallos.ts';
+import { ROLES_QUE_AUTORIZAN } from '../identidad/supervisor.ts';
 import { tomarCandadosDeCocina } from './candados-de-cocina.ts';
 import { comandaPorId, ordenDeMesa, type ComandaViva } from './datos.ts';
 import { entregarLoListoYaCobrado } from './comandas-al-cobrar.ts';
@@ -60,6 +62,17 @@ export const transicionarPedido = definirComando<
   entrada: entradaTransicionarPedido,
   async ejecutar(ctx, entrada) {
     const { organizacionId, empleoId } = ctx.ambito;
+
+    // DP-24 · Cancelar lo que ya salió a cocina no se cuela por aquí: ninguna pantalla lo manda, y
+    // quien lo mande a mano pasa por la misma regla que quitar un platillo (`cancelar-con-permiso.ts`):
+    // la caja con el PIN de un gerente va por `anular_linea`; aquí, sólo la gerencia.
+    if (entrada.estado === 'cancelado' && !ROLES_QUE_AUTORIZAN.includes(ctx.ambito.rol)) {
+      throw new Rechazo('SIN_PERMISO', 'denegado', {
+        codigo: 'SIN_PERMISO',
+        mensaje:
+          'Cancelar lo que ya se mandó a cocina lo hace la gerencia, o la caja con el PIN de un gerente, quitando el platillo.',
+      });
+    }
 
     // H2 · Los candados primero y siempre en el mismo orden (`candados-de-cocina.ts`): cuenta →
     // comanda → platos → líneas. La primera lectura sólo dice de qué cuenta es la comanda; la que

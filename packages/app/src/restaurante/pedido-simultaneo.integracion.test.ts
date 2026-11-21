@@ -8,6 +8,7 @@ import { enCarrera } from '../pruebas/carrera.ts';
 import {
   ambitoDe,
   clave,
+  conPuestoDeGerencia,
   exigirOk,
   sembrarNegocio,
   sembrarSucursal,
@@ -146,7 +147,7 @@ function pedir(ordenId: string, productoId: string, cantidad: string) {
 function anular(ordenId: string, lineaId: string) {
   return comando(anularLineaComando, {
     entrada: { ordenId, lineaId, motivo: 'error_mesero' },
-    ambito: ambitoDeLaGerente(),
+    ambito: conPuestoDeGerencia(ambitoDeLaGerente()),
     idempotencyKey: clave(),
   });
 }

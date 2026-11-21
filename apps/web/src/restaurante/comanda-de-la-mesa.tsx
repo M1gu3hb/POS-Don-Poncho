@@ -110,8 +110,9 @@ export async function leerLoEnviado(
 
 /**
  * Lo ya enviado: se lee, y se ANULA con motivo. Nunca se edita. La columna de anular sólo se
- * pinta para quien puede: `restaurante.anular_linea` es de caja, de dirección y (DP-12.4) del
- * mesero; a cocina y almacén no se les ofrece un botón que el servidor les niega
+ * pinta para quien puede: `restaurante.anular_linea` es de caja (con el PIN de un gerente) y de
+ * dirección (DP-24); al mesero, a cocina y a almacén no se les ofrece un botón que el servidor
+ * les niega
  * (`ajustes-de-la-cuenta-por-rol.ts`).
  */
 export function columnasDeLoEnviado(

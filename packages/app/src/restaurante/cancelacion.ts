@@ -49,18 +49,19 @@ import { ESTADOS_COMANDA_ACTIVOS } from './transiciones.ts';
 /**
  * Quién cancela una cuenta con consumo.
  *
- * DP-12.4 · El MESERO entra. Antes era sólo de caja y de dirección, y la mesa del cliente que se
- * va sin pagar o el pedido capturado en la mesa equivocada se quedaba clavada hasta que el
- * mesero fuera a buscar al cajero. El incentivo que preocupaba —que el mesero haga desaparecer
- * SU cuenta— se contesta con control, no con negarle la salida: el motivo es obligatorio, queda
- * con su nombre (`cancelada_por`), y si la cocina ya había preparado algo el corte lo saca aparte
- * como PÉRDIDA con quién canceló, cuándo, por qué y cuánto (`caja/corte/cancelaciones.ts`).
+ * DP-24 · Parte 2 · El MESERO ya no (había entrado en DP-12.4): el incentivo de que haga desaparecer
+ * SU cuenta se contesta con la regla de arriba, no con un motivo escrito. Cancela la caja, siempre
+ * con el PIN de un gerente, administrador o dueño, o la gerencia sin él (`cancelar-con-permiso.ts`).
+ * Mover, unir o pasar la mesa a otro mesero siguen siendo suyos: son otros comandos. El motivo es
+ * obligatorio, queda con su nombre (`cancelada_por`), y si la cocina ya había preparado algo el
+ * corte lo saca aparte como PÉRDIDA con quién canceló, cuándo, por qué y cuánto
+ * (`caja/corte/cancelaciones.ts`).
  *
  * Cocina, almacén y cualquier otro rol siguen fuera. Sale de `ctx.ambito.rol`, de la sesión del
  * servidor, nunca del cuerpo (D-03: las cinco funciones de la fuente autorizaban con un string
  * del body); y la cuenta tiene que ser de la sucursal de quien cancela (`sucursal` abajo).
  */
-const ROLES_DE_CANCELACION = ['mesero', 'cajero', 'gerente', 'administrador', 'dueno'] as const;
+const ROLES_DE_CANCELACION = ['cajero', 'gerente', 'administrador', 'dueno'] as const;
 
 export interface ResultadoCancelacion {
   readonly ordenId: string;
@@ -133,12 +134,14 @@ export const cancelarOrden = definirComando<
     );
 
     // DP-13.2 · Ni pagada, ni con pagos, ni dividida, ni reembolsada, ni absorbida
-    // (`cancelar-con-permiso.ts`); y el mesero sólo en sus mesas, con PIN si ya se pidió.
+    // (`cancelar-con-permiso.ts`); y DP-24: el cajero siempre con PIN, la gerencia sin él.
     exigirQueSeCancele(orden.estado);
-    // DP-14.6-7 · Sin poder comprobar la cocina, todo cuenta como ya hecho: con el PIN de un gerente.
+    // DP-14.6-7 · Sin poder comprobar la cocina, todo cuenta como ya hecho (pérdida firmada).
     const todoComoHecho = entrada.sinComprobarLaCocina === true;
     const autorizadoPor = await ctx.paso('permiso', () =>
-      exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion, todoComoHecho),
+      Promise.resolve(
+        exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion, todoComoHecho),
+      ),
     );
 
     // DP-13.3 · Lo que la cocina ya había hecho sale del almacén como merma «Por cancelación».

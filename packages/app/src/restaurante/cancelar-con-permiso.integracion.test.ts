@@ -6,15 +6,16 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { firmarAutorizacion, type CargaDeAutorizacion } from '../identidad/supervisor.ts';
 import { comando } from '../produccion.ts';
 import { clave, exigirOk, sembrarCompanero } from '../pruebas/negocio-real.ts';
+import { anularLineaComando } from './anulacion-linea.ts';
 import { cancelarOrden } from './cancelacion.ts';
 import { solicitarCuenta } from './cuenta.ts';
 import { abrirMesa } from './mesas.ts';
 import { enviarPedido } from './pedido.ts';
-import { separarMesasComando, unirMesasComando } from './union-de-mesas.ts';
+import { unirMesasComando } from './union-de-mesas.ts';
 
 import {
-  anular,
   arrachera,
+  cajera,
   cancelar,
   como,
   cuenta,
@@ -25,15 +26,17 @@ import {
 } from './pruebas/cancelacion-real.ts';
 
 /**
- * DP-13.2 · CANCELAR DESDE EL MESERO, con sus reglas del SERVIDOR, contra Postgres.
+ * DP-13.2 · CANCELAR CON LAS REGLAS DEL SERVIDOR, contra Postgres; puesto al día en DP-24 · Parte 2.
  *
  *   · Una cuenta pagada, dividida, reembolsada o absorbida no se cancela.
  *   · El motivo es obligatorio en el servidor, no sólo en la pantalla.
- *   · El mesero cancela (o anula) sólo en las mesas que atiende o que tiene asignadas; gerente,
- *     administrador y dueño, en cualquiera de su sucursal.
- *   · Con la cuenta ya pedida o la precuenta impresa, cancelar o anular pide el PIN de un gerente
- *     o del dueño, en una autorización atada a ESA cuenta y a cancelar (DP-D51; Miguel la puede
- *     apagar con `pin_al_cancelar_cuenta_pedida`). La autorización de un descuento no sirve.
+ *   · Cancelar o quitar un platillo ya enviado: el MESERO no; la CAJA, siempre con el PIN de un
+ *     gerente, administrador o dueño (una autorización atada a ESA cuenta y a cancelar, DP-D51);
+ *     la gerencia, sin PIN. Estén o no pedidas o impresas las cuentas, y diga lo que diga la
+ *     configuración vieja `pin_al_cancelar_cuenta_pedida`.
+ *
+ * El detalle del rechazo al mesero, a mano y sin cambios en la base, está en
+ * `quien-quita-y-cancela.integracion.test.ts`.
  */
 
 const SECRETO = 'secreto_de_integracion_para_firmar_autorizaciones_2026';
@@ -42,12 +45,10 @@ vi.mock('@morphiqpos/contracts', async (original) => ({
   validarEntorno: () => ({ SESSION_SECRET: SECRETO }),
 }));
 
-let pablo = '';
 let gema = '';
 
 beforeAll(async () => {
   await sembrarElSalonQueCancela();
-  pablo = await sembrarCompanero(negocio, { nombre: 'Pablo', rol: 'mesero' });
   gema = await sembrarCompanero(negocio, { nombre: 'Gema', rol: 'gerente' });
 });
 
@@ -61,14 +62,16 @@ const codigo = (r: {
   return typeof regla === 'string' ? regla : (r.error?.codigo ?? '?');
 };
 
-/** Lo que firma `/api/identidad/supervisor` cuando Gema teclea su PIN para la mesera. */
+const deLaCajera = (): Ambito => como(cajera, 'cajero', true);
+
+/** Lo que firma `/api/identidad/supervisor` cuando Gema teclea su PIN para la cajera. */
 function autorizacion(cambios: Partial<CargaDeAutorizacion> = {}): string {
   return firmarAutorizacion(
     {
       org: negocio.organizacionId,
       supervisor: gema,
       rol: 'gerente',
-      solicita: negocio.empleoId,
+      solicita: cajera,
       exp: Math.floor(Date.now() / 1000) + 120,
       n: `prueba-${clave().slice(0, 8)}`,
       para: 'cancelacion',
@@ -78,10 +81,15 @@ function autorizacion(cambios: Partial<CargaDeAutorizacion> = {}): string {
   );
 }
 
-const cancelarCon = (ordenId: string, firmada: string) =>
+/** La cajera cancela con lo que le den: sin PIN (`firmada` ausente) o con la autorización dada. */
+const cancelarLaCajera = (ordenId: string, firmada?: string) =>
   comando(cancelarOrden, {
-    entrada: { ordenId, motivo: 'Se fueron sin pagar', autorizacion: firmada },
-    ambito: mesero(),
+    entrada: {
+      ordenId,
+      motivo: 'Se fueron sin pagar',
+      ...(firmada === undefined ? {} : { autorizacion: firmada }),
+    },
+    ambito: deLaCajera(),
     idempotencyKey: clave(),
   });
 
@@ -104,90 +112,102 @@ describe('lo que no se cancela', () => {
 
   it('sin motivo (o sólo espacios), el servidor no la cancela', async () => {
     const { ordenId } = await cuenta(4, ['1']);
-    expect(codigo(await cancelar(ordenId, mesero(), '   '))).toBe('ENTRADA_INVALIDA');
+    expect(codigo(await cancelar(ordenId, como(gema, 'gerente'), '   '))).toBe('ENTRADA_INVALIDA');
   });
 });
 
-describe('quién cancela qué mesa', () => {
-  it('otro mesero que no la atiende ni la tiene asignada, no', async () => {
-    const { ordenId } = await cuenta(5, ['1']);
-    expect(codigo(await cancelar(ordenId, como(pablo, 'mesero')))).toBe('SIN_PERMISO');
-    expect(
-      codigo(await anular(ordenId, (await lineas(ordenId))[0] ?? '', como(pablo, 'mesero'))),
-    ).toBe('SIN_PERMISO');
-  });
-
-  it('el mesero que la tiene ASIGNADA, sí', async () => {
-    const { ordenId } = await cuenta(6, ['1']);
-    const { mesa_id } = await obtenerDb()
-      .selectFrom('ordenes')
-      .select('mesa_id')
-      .where('id', '=', ordenId)
-      .executeTakeFirstOrThrow();
-    await conTransaccion((tx) =>
-      tx
-        .updateTable('mesas')
-        .set({ empleado_asignado_id: pablo })
-        .where('id', '=', mesa_id ?? '')
-        .execute(),
-    );
-    expect(codigo(await cancelar(ordenId, como(pablo, 'mesero')))).toBe('ok');
-  });
-
-  it('la gerente, en cualquiera de su sucursal', async () => {
+describe('quién cancela', () => {
+  it('la gerente, en cualquiera de su sucursal y sin PIN', async () => {
     const { ordenId } = await cuenta(7, ['1']);
     expect(codigo(await cancelar(ordenId, como(gema, 'gerente')))).toBe('ok');
   });
-});
 
-describe('con la cuenta pedida o impresa, el PIN de un gerente atado a ESA cuenta', () => {
-  it('pedida: sin PIN no; con la de OTRA cuenta no; con la de un descuento no; con la suya sí', async () => {
-    const { ordenId } = await cuenta(8, ['1']);
-    const otra = await cuenta(9, ['1']);
-    await comando(solicitarCuenta, {
-      entrada: { ordenId },
+  it('el mesero, no: ni siendo su mesa (el detalle, en quien-quita-y-cancela)', async () => {
+    const { ordenId } = await cuenta(5, ['1']);
+    const [primera] = await lineas(ordenId);
+    const a = await comando(cancelarOrden, {
+      entrada: { ordenId, motivo: 'Se fueron sin pagar' },
       ambito: mesero(),
       idempotencyKey: clave(),
     });
-    expect(codigo(await cancelar(ordenId, mesero()))).toBe('PUESTO_NO_OTORGABLE');
-    expect(codigo(await cancelarCon(ordenId, autorizacion({ cuenta: otra.ordenId })))).toBe(
+    expect(codigo(a)).toBe('SIN_PERMISO');
+    expect(codigo(await anularComoMesero(ordenId, primera ?? ''))).toBe('SIN_PERMISO');
+  });
+});
+
+describe('la cajera, siempre con el PIN de un gerente atado a ESA cuenta', () => {
+  it('cuenta sin pedir: sin PIN no; con la de OTRA cuenta no; con la de un descuento no; con la suya sí', async () => {
+    const { ordenId } = await cuenta(8, ['1']);
+    const otra = await cuenta(9, ['1']);
+    expect(codigo(await cancelarLaCajera(ordenId))).toBe('PUESTO_NO_OTORGABLE');
+    expect(codigo(await cancelarLaCajera(ordenId, autorizacion({ cuenta: otra.ordenId })))).toBe(
       'PUESTO_NO_OTORGABLE',
     );
     expect(
-      codigo(await cancelarCon(ordenId, autorizacion({ cuenta: ordenId, para: 'descuento' }))),
+      codigo(await cancelarLaCajera(ordenId, autorizacion({ cuenta: ordenId, para: 'descuento' }))),
     ).toBe('PUESTO_NO_OTORGABLE');
-    expect(codigo(await cancelarCon(ordenId, autorizacion({ cuenta: ordenId })))).toBe('ok');
-    exigirCancelada(await cancelar(otra.ordenId, mesero()));
+    expect(codigo(await cancelarLaCajera(ordenId, autorizacion({ cuenta: ordenId })))).toBe('ok');
+  });
+
+  it('pedida: lo mismo (el PIN ya no depende de que se haya pedido)', async () => {
+    const { ordenId } = await cuenta(10, ['1']);
+    exigirOk(
+      await comando(solicitarCuenta, {
+        entrada: { ordenId },
+        ambito: mesero(),
+        idempotencyKey: clave(),
+      }),
+      'restaurante.solicitar_cuenta',
+    );
+    expect(codigo(await cancelarLaCajera(ordenId))).toBe('PUESTO_NO_OTORGABLE');
+    expect(codigo(await cancelarLaCajera(ordenId, autorizacion({ cuenta: ordenId })))).toBe('ok');
   });
 
   it('QA2-007 · pedida y REABIERTA (vuelve a confirmada, conserva su código): sigue pidiendo el PIN', async () => {
     const { ordenId } = await cuenta(13, ['1']);
-    await comando(solicitarCuenta, {
-      entrada: { ordenId },
-      ambito: mesero(),
+    exigirOk(
+      await comando(solicitarCuenta, {
+        entrada: { ordenId },
+        ambito: mesero(),
+        idempotencyKey: clave(),
+      }),
+      'restaurante.solicitar_cuenta',
+    );
+    await marcar(ordenId, { estado: 'confirmada' });
+    expect(codigo(await cancelarLaCajera(ordenId))).toBe('PUESTO_NO_OTORGABLE');
+  });
+
+  it('impresa (la precuenta salió): quitar un platillo pide el PIN, y con el PIN se quita', async () => {
+    const { ordenId, lineaIds } = await cuenta(11, ['1', '1']);
+    await marcar(ordenId, { precuentas_impresas: 1, precuenta_impresa_en: new Date() });
+    const primera = lineaIds[0] ?? '';
+    const sinPin = await comando(anularLineaComando, {
+      entrada: { ordenId, lineaId: primera, motivo: 'error_mesero' },
+      ambito: deLaCajera(),
       idempotencyKey: clave(),
     });
-    // Lo que deja `reabrir-la-cuenta.ts` (DP-D58): la cuenta otra vez `confirmada`, con su
-    // `codigo_caja` (el comensal tiene ese papel en la mano).
-    await marcar(ordenId, { estado: 'confirmada' });
-    expect(codigo(await cancelar(ordenId, mesero()))).toBe('PUESTO_NO_OTORGABLE');
+    expect(codigo(sinPin)).toBe('PUESTO_NO_OTORGABLE');
+    const conPin = await comando(anularLineaComando, {
+      entrada: {
+        ordenId,
+        lineaId: primera,
+        motivo: 'error_mesero',
+        autorizacion: autorizacion({ cuenta: ordenId }),
+      },
+      ambito: deLaCajera(),
+      idempotencyKey: clave(),
+    });
+    expect(codigo(conPin)).toBe('ok');
   });
 
-  it('impresa (la precuenta salió): anular un platillo también pide el PIN', async () => {
-    const { ordenId } = await cuenta(10, ['1', '1']);
-    await marcar(ordenId, { precuentas_impresas: 1, precuenta_impresa_en: new Date() });
-    const [primera] = await lineas(ordenId);
-    expect(codigo(await anular(ordenId, primera ?? '', mesero()))).toBe('PUESTO_NO_OTORGABLE');
-  });
-
-  it('la gerente no necesita PIN de nadie: ella es quien autoriza', async () => {
-    const { ordenId } = await cuenta(11, ['1']);
+  it('la gerente no necesita PIN de nadie: ella es quien autoriza, esté como esté la cuenta', async () => {
+    const { ordenId } = await cuenta(12, ['1']);
     await marcar(ordenId, { precuentas_impresas: 2, precuenta_impresa_en: new Date() });
     expect(codigo(await cancelar(ordenId, como(gema, 'gerente')))).toBe('ok');
   });
 
-  it('con la regla apagada por Miguel, la mesera cancela la cuenta pedida sin PIN', async () => {
-    const { ordenId } = await cuenta(12, ['1']);
+  it('la configuración vieja «pin_al_cancelar_cuenta_pedida = false» ya no apaga el PIN de la caja', async () => {
+    const { ordenId } = await cuenta(6, ['1']);
     await marcar(ordenId, { precuentas_impresas: 1, precuenta_impresa_en: new Date() });
     await sql`
       insert into configuracion (organizacion_id, valores)
@@ -196,7 +216,7 @@ describe('con la cuenta pedida o impresa, el PIN de un gerente atado a ESA cuent
       do update set valores = configuracion.valores || excluded.valores
     `.execute(obtenerDb());
     try {
-      expect(codigo(await cancelar(ordenId, mesero()))).toBe('ok');
+      expect(codigo(await cancelarLaCajera(ordenId))).toBe('PUESTO_NO_OTORGABLE');
     } finally {
       await sql`
         update configuracion set valores = valores - 'pin_al_cancelar_cuenta_pedida'
@@ -206,7 +226,7 @@ describe('con la cuenta pedida o impresa, el PIN de un gerente atado a ESA cuent
   });
 });
 
-describe('con mesas unidas, la cuenta que queda carga con lo de las absorbidas', () => {
+describe('con mesas unidas, la cuenta que queda se cancela igual: la caja con PIN', () => {
   let mesasDeMas: readonly string[] = [];
 
   beforeAll(async () => {
@@ -214,7 +234,7 @@ describe('con mesas unidas, la cuenta que queda carga con lo de las absorbidas',
       await obtenerDb()
         .insertInto('mesas')
         .values(
-          [21, 22, 23, 24, 25, 26].map((numero) => ({
+          [21, 22].map((numero) => ({
             organizacion_id: negocio.organizacionId,
             sucursal_id: sucursal.sucursalId,
             numero,
@@ -227,12 +247,11 @@ describe('con mesas unidas, la cuenta que queda carga con lo de las absorbidas',
 
   const mesaDeMas = (numero: number): string => mesasDeMas[numero - 21] ?? '';
 
-  /** Una cuenta con una arrachera en la mesa `numero`, abierta por quien diga `ambito`. */
-  async function abrirCon(numero: number, ambito: Ambito): Promise<string> {
+  async function abrirCon(numero: number): Promise<string> {
     const { ordenId } = exigirOk(
       await comando(abrirMesa, {
         entrada: { mesaId: mesaDeMas(numero), personas: 2 },
-        ambito,
+        ambito: mesero(),
         idempotencyKey: clave(),
       }),
       'restaurante.abrir_mesa',
@@ -240,7 +259,7 @@ describe('con mesas unidas, la cuenta que queda carga con lo de las absorbidas',
     exigirOk(
       await comando(enviarPedido, {
         entrada: { ordenId, lineas: [{ productoId: arrachera, cantidad: '1' }] },
-        ambito,
+        ambito: mesero(),
         idempotencyKey: clave(),
       }),
       'restaurante.enviar_pedido',
@@ -248,63 +267,21 @@ describe('con mesas unidas, la cuenta que queda carga con lo de las absorbidas',
     return ordenId;
   }
 
-  const unir = async (principal: number, otra: number) =>
+  it('unir sigue siendo del mesero; cancelar la principal, de la caja con PIN', async () => {
+    const principal = await abrirCon(21);
+    await abrirCon(22);
     exigirOk(
       await comando(unirMesasComando, {
-        entrada: { mesaPrincipalId: mesaDeMas(principal), mesaIds: [mesaDeMas(otra)] },
+        entrada: { mesaPrincipalId: mesaDeMas(21), mesaIds: [mesaDeMas(22)] },
         ambito: mesero(),
         idempotencyKey: clave(),
       }),
       'restaurante.unir_mesas',
     );
-
-  it('la absorbida ya PEDIDA: cancelar o anular en la principal sigue pidiendo el PIN', async () => {
-    const principal = await abrirCon(21, mesero());
-    const pedida = await abrirCon(22, mesero());
-    exigirOk(
-      await comando(solicitarCuenta, {
-        entrada: { ordenId: pedida },
-        ambito: mesero(),
-        idempotencyKey: clave(),
-      }),
-      'restaurante.solicitar_cuenta',
+    expect(codigo(await cancelarLaCajera(principal))).toBe('PUESTO_NO_OTORGABLE');
+    expect(codigo(await cancelarLaCajera(principal, autorizacion({ cuenta: principal })))).toBe(
+      'ok',
     );
-    await unir(21, 22);
-
-    expect(codigo(await cancelar(principal, mesero()))).toBe('PUESTO_NO_OTORGABLE');
-    const [primera] = await lineas(principal);
-    expect(codigo(await anular(principal, primera ?? '', mesero()))).toBe('PUESTO_NO_OTORGABLE');
-    expect(codigo(await cancelarCon(principal, autorizacion({ cuenta: principal })))).toBe('ok');
-  });
-
-  it('la absorbida con la precuenta IMPRESA, aunque ya se separaron: anular pide el PIN', async () => {
-    const principal = await abrirCon(23, mesero());
-    const impresa = await abrirCon(24, mesero());
-    await marcar(impresa, { precuentas_impresas: 1, precuenta_impresa_en: new Date() });
-    const { unionId } = await unir(23, 24);
-    exigirOk(
-      await comando(separarMesasComando, {
-        entrada: { unionId },
-        ambito: mesero(),
-        idempotencyKey: clave(),
-      }),
-      'restaurante.separar_mesas',
-    );
-
-    // Separar no devuelve el consumo: lo de la 24 sigue en la cuenta de la 23.
-    const deLaImpresa = (await lineas(principal))[1] ?? '';
-    expect(codigo(await anular(principal, deLaImpresa, mesero()))).toBe('PUESTO_NO_OTORGABLE');
-  });
-
-  it('el mesero que une a la suya la mesa de OTRO no se vuelve su dueño: no la cancela', async () => {
-    await abrirCon(25, como(pablo, 'mesero'));
-    const suya = await abrirCon(26, mesero());
-    await unir(26, 25);
-
-    expect(codigo(await cancelar(suya, mesero()))).toBe('SIN_PERMISO');
-    const [laDePablo] = await lineas(suya);
-    expect(codigo(await anular(suya, laDePablo ?? '', mesero()))).toBe('SIN_PERMISO');
-    expect(codigo(await cancelar(suya, como(gema, 'gerente')))).toBe('ok');
   });
 });
 
@@ -319,6 +296,10 @@ async function lineas(ordenId: string): Promise<string[]> {
   ).map((l) => l.id);
 }
 
-function exigirCancelada(r: { ok: boolean }): void {
-  expect(r.ok).toBe(true);
-}
+/** `anular` sube el puesto a gerente (miran otra cosa); aquí se prueba el permiso, con el ámbito de verdad. */
+const anularComoMesero = (ordenId: string, lineaId: string) =>
+  comando(anularLineaComando, {
+    entrada: { ordenId, lineaId, motivo: 'error_mesero' },
+    ambito: mesero(),
+    idempotencyKey: clave(),
+  });
