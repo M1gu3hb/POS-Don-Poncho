@@ -14,6 +14,7 @@ import {
   ambitoDe,
   clave,
   cobrarEnEfectivo,
+  conPuestoDeGerencia,
   exigirOk,
   sembrarCompanero,
   sembrarNegocio,
@@ -199,8 +200,14 @@ export async function dejarListoUnPlatillo(lineaId: string): Promise<void> {
   );
 }
 
+/** DP-24 · `cancelar` y `anular` ponen a la persona en el puesto de gerente (`conPuestoDeGerencia`): miran otra cosa que el permiso. */
+
 export const cancelar = (ordenId: string, ambito: Ambito, motivo = 'Se fueron sin pagar') =>
-  comando(cancelarOrden, { entrada: { ordenId, motivo }, ambito, idempotencyKey: clave() });
+  comando(cancelarOrden, {
+    entrada: { ordenId, motivo },
+    ambito: conPuestoDeGerencia(ambito),
+    idempotencyKey: clave(),
+  });
 
 export const anular = (ordenId: string, lineaId: string, ambito: Ambito, cantidad?: string) =>
   comando(anularLineaComando, {
@@ -210,7 +217,7 @@ export const anular = (ordenId: string, lineaId: string, ambito: Ambito, cantida
       motivo: 'error_mesero',
       ...(cantidad === undefined ? {} : { cantidad }),
     },
-    ambito,
+    ambito: conPuestoDeGerencia(ambito),
     idempotencyKey: clave(),
   });
 

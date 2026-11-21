@@ -2,7 +2,7 @@ import { obtenerDb } from '@morphiqpos/data';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { comando } from '../produccion.ts';
-import { clave, exigirOk } from '../pruebas/negocio-real.ts';
+import { clave, conPuestoDeGerencia, exigirOk } from '../pruebas/negocio-real.ts';
 import { anularLineaComando } from './anulacion-linea.ts';
 import { transicionarPedido } from './preparacion.ts';
 import {
@@ -232,7 +232,7 @@ describe('M2 · al cobrar, las comandas ya no se quedan en la pantalla de la est
               lineaId: (await lineasDe(ordenId)).get(platillo)?.[0] ?? '',
               motivo: 'error_mesero',
             },
-            ambito: ambitoDeCaja(salon),
+            ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
             idempotencyKey: clave(),
           }),
           'restaurante.anular_linea',
@@ -261,7 +261,7 @@ async function quitarDe(ordenId: string, platillo: string): Promise<void> {
         lineaId: (await lineasDe(ordenId)).get(platillo)?.[0] ?? '',
         motivo: 'error_mesero',
       },
-      ambito: ambitoDeCaja(salon),
+      ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
       idempotencyKey: clave(),
     }),
     'restaurante.anular_linea',

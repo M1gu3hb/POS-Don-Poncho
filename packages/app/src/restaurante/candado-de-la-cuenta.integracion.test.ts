@@ -8,6 +8,7 @@ import { autorizacionDeDescuento } from '../pruebas/autorizacion-de-prueba.ts';
 import {
   ambitoDe,
   clave,
+  conPuestoDeGerencia,
   exigirOk,
   sembrarNegocio,
   sembrarSucursal,
@@ -212,7 +213,7 @@ describe('cada comando que recalcula la cuenta la toma al cargarla', () => {
     const { sentencia, resultado } = await loQueEsperaAlComando(ordenId, () =>
       comando(anularLineaComando, {
         entrada: { ordenId, lineaId, motivo: 'error_mesero' },
-        ambito: ambitoDeLaGerente(),
+        ambito: conPuestoDeGerencia(ambitoDeLaGerente()),
         idempotencyKey: clave(),
       }),
     );

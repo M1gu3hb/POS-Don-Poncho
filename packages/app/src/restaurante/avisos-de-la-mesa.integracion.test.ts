@@ -5,6 +5,7 @@ import { comando } from '../produccion.ts';
 import {
   ambitoDe,
   clave,
+  conPuestoDeGerencia,
   exigirOk,
   sembrarNegocio,
   sembrarSucursal,
@@ -186,7 +187,7 @@ describe('los avisos del comensal se van con su grupo', () => {
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId, motivo: 'se fueron sin consumir' },
-        ambito: ambitoDeLaGerente(),
+        ambito: conPuestoDeGerencia(ambitoDeLaGerente()),
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',

@@ -7,6 +7,7 @@ import { clave, sembrarCompanero } from '../pruebas/negocio-real.ts';
 import { anularLineaComando } from './anulacion-linea.ts';
 
 import {
+  cajera,
   cuenta,
   deLaCajera,
   delCorte,
@@ -23,6 +24,8 @@ import {
  * Quitar un platillo con el motivo «Cortesía de la casa» queda en la auditoría con su motivo y quién
  * autorizó, y sale en Registros (la lectura de la sucursal) y en la hoja del corte de la caja, con
  * las palabras del motivo y el nombre de quien lo dejó pasar.
+ *
+ * DP-24 · Lo quita la caja SIEMPRE con la clave de un gerente (o la gerencia sin ella); el mesero no.
  */
 
 const SECRETO = 'secreto_de_integracion_para_firmar_autorizaciones_2026';
@@ -44,7 +47,7 @@ const autorizacion = (cuentaId: string): string =>
       org: negocio.organizacionId,
       supervisor: gema,
       rol: 'gerente',
-      solicita: negocio.empleoId,
+      solicita: cajera,
       exp: Math.floor(Date.now() / 1000) + 120,
       n: `cortesia-${clave().slice(0, 8)}`,
       para: 'cancelacion',
@@ -72,9 +75,45 @@ const auditoriaDe = (ordenId: string) =>
     .execute();
 
 describe('la cortesía de la casa al quitar un platillo', () => {
-  it('con la precuenta impresa pide a gerencia: queda en la auditoría y sale en Registros con «Gema»', async () => {
+  it('la caja la quita con la clave de gerencia: queda en la auditoría y sale en Registros con «Gema»', async () => {
     const { ordenId, lineaIds, mesa } = await cuenta(1, ['1', '1']);
     await imprimida(ordenId);
+    const hecha = await comando(anularLineaComando, {
+      entrada: {
+        ordenId,
+        lineaId: lineaIds[0] ?? '',
+        motivo: 'cortesia',
+        autorizacion: autorizacion(ordenId),
+      },
+      ambito: deLaCajera(),
+      idempotencyKey: clave(),
+    });
+    expect(hecha.ok).toBe(true);
+
+    const [asiento, ...otros] = await auditoriaDe(ordenId);
+    expect(otros).toEqual([]);
+    expect(asiento?.payload).toMatchObject({ motivo: 'cortesia', autorizadoPor: gema });
+
+    expect(await delCorte(mesa)).toMatchObject([
+      { tipo: 'linea', motivo: 'Cortesía de la casa', autorizo: 'Gema', usuario: 'Beatriz' },
+    ]);
+  });
+
+  it('la caja SIN clave de gerencia no la quita, esté como esté la cuenta', async () => {
+    const { ordenId, lineaIds, mesa } = await cuenta(2, ['1', '1']);
+    await imprimida(ordenId);
+    const hecha = await comando(anularLineaComando, {
+      entrada: { ordenId, lineaId: lineaIds[0] ?? '', motivo: 'cortesia' },
+      ambito: deLaCajera(),
+      idempotencyKey: clave(),
+    });
+    expect(hecha.ok).toBe(false);
+    expect(await delCorte(mesa)).toEqual([]);
+    expect(await auditoriaDe(ordenId)).toEqual([]);
+  });
+
+  it('el mesero no la quita, ni con la clave de gerencia en la mano', async () => {
+    const { ordenId, lineaIds, mesa } = await cuenta(4, ['1', '1']);
     const hecha = await comando(anularLineaComando, {
       entrada: {
         ordenId,
@@ -85,34 +124,19 @@ describe('la cortesía de la casa al quitar un platillo', () => {
       ambito: mesero(),
       idempotencyKey: clave(),
     });
-    expect(hecha.ok).toBe(true);
-
-    const [asiento, ...otros] = await auditoriaDe(ordenId);
-    expect(otros).toEqual([]);
-    expect(asiento?.payload).toMatchObject({ motivo: 'cortesia', autorizadoPor: gema });
-
-    expect(await delCorte(mesa)).toMatchObject([
-      { tipo: 'linea', motivo: 'Cortesía de la casa', autorizo: 'Gema', usuario: 'Rosa' },
-    ]);
-  });
-
-  it('con la precuenta impresa y SIN clave de gerencia no se quita', async () => {
-    const { ordenId, lineaIds, mesa } = await cuenta(2, ['1', '1']);
-    await imprimida(ordenId);
-    const hecha = await comando(anularLineaComando, {
-      entrada: { ordenId, lineaId: lineaIds[0] ?? '', motivo: 'cortesia' },
-      ambito: mesero(),
-      idempotencyKey: clave(),
-    });
-    expect(hecha.ok).toBe(false);
+    expect(hecha.ok ? null : hecha.error.codigo).toBe('SIN_PERMISO');
     expect(await delCorte(mesa)).toEqual([]);
-    expect(await auditoriaDe(ordenId)).toEqual([]);
   });
 
-  it('la cajera la quita sin pedir clave y sale en la hoja del corte de SU caja con su nombre', async () => {
+  it('con la clave de gerencia, sale en la hoja del corte de SU caja con el nombre de la cajera', async () => {
     const { ordenId, lineaIds, mesa } = await cuenta(3, ['1', '1']);
     const hecha = await comando(anularLineaComando, {
-      entrada: { ordenId, lineaId: lineaIds[0] ?? '', motivo: 'cortesia' },
+      entrada: {
+        ordenId,
+        lineaId: lineaIds[0] ?? '',
+        motivo: 'cortesia',
+        autorizacion: autorizacion(ordenId),
+      },
       ambito: deLaCajera(),
       idempotencyKey: clave(),
     });

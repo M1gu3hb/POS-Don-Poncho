@@ -2,7 +2,7 @@ import { obtenerDb } from '@morphiqpos/data';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { comando } from '../produccion.ts';
-import { clave, exigirOk } from '../pruebas/negocio-real.ts';
+import { clave, conPuestoDeGerencia, exigirOk } from '../pruebas/negocio-real.ts';
 import { anularLineaComando } from './anulacion-linea.ts';
 import { transicionarPedido } from './preparacion.ts';
 import {
@@ -114,7 +114,7 @@ const quitar = async (cuenta: Cuenta, plato: Plato, cantidad?: string): Promise<
         motivo: 'cliente_cambio',
         ...(cantidad === undefined ? {} : { cantidad }),
       },
-      ambito: ambito(),
+      ambito: conPuestoDeGerencia(ambito()),
       idempotencyKey: clave(),
     }),
     'restaurante.anular_linea',

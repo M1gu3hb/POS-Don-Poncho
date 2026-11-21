@@ -127,8 +127,6 @@ const LECTORES: Readonly<Record<string, 'documento-filtrado' | 'proyeccion' | 'i
   'packages/app/src/configuracion/documento-con-candado.ts': 'interno',
   'packages/app/src/mantenimiento/plataforma.ts': 'interno',
   'packages/app/src/portal/negocio.ts': 'interno', // sale por `portal/consulta.ts`, con proyecciones
-  // DP-13.2: lee la bandera `pin_al_cancelar_cuenta_pedida`; no devuelve el documento.
-  'packages/app/src/restaurante/cancelar-con-permiso.ts': 'interno',
   'packages/app/src/telefono-de-cocina/ambito.ts': 'interno',
   // DP-14.2: lee la bandera `descuentos_permitidos`; no devuelve el documento (escribe por el
   // guardado parcial del puente, con su candado).

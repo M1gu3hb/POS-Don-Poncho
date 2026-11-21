@@ -62,7 +62,7 @@ describe('la merma «Por cancelación» en el corte de dos cajas', () => {
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId, motivo: 'Se fueron sin pagar' },
-        ambito: primera,
+        ambito: { ...primera, rol: 'gerente' as const },
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',
