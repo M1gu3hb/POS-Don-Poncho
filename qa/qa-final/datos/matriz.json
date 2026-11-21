@@ -1,5 +1,5 @@
 {
-  "commit": "27f7d27",
+  "commit": "b983931",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -72,6 +72,9 @@
         "apps/web/src/corte/opciones-vendidas.ts",
         "apps/web/src/corte/retiros-con-pin.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -110,7 +113,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 10894,
+      "lineas": 11137,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -194,6 +197,9 @@
         "apps/web/src/impresion/CajonEnLaCaja.tsx",
         "apps/web/src/impresion/aislar.ts",
         "apps/web/src/impresion/cajon.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -358,7 +364,7 @@
           "titulo": null
         }
       ],
-      "lineas": 20264,
+      "lineas": 20507,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -646,6 +652,7 @@
         "apps/web/src/configuracion/topes-de-los-puestos.ts",
         "apps/web/src/impresion/CajonEnLaCaja.tsx",
         "apps/web/src/impresion/cajon.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/pantallas/AjustesDeLaApp.tsx",
         "apps/web/src/impresion/pantallas/BotonDePrueba.tsx",
@@ -806,7 +813,7 @@
           "titulo": "Zonas del salón"
         }
       ],
-      "lineas": 24621,
+      "lineas": 24672,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -991,6 +998,9 @@
         "apps/web/src/cocina/espera.ts",
         "apps/web/src/cocina/use-ahora.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1191,7 +1201,7 @@
           "titulo": null
         }
       ],
-      "lineas": 17982,
+      "lineas": 18225,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -1366,6 +1376,9 @@
         "apps/web/src/cliente/escaner-del-documento.ts",
         "apps/web/src/cliente/use-escaner-del-documento.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1421,7 +1434,7 @@
           "titulo": "Venta cobrada"
         }
       ],
-      "lineas": 6723,
+      "lineas": 6966,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -1467,6 +1480,9 @@
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1516,7 +1532,7 @@
           "titulo": "Agotados del día"
         }
       ],
-      "lineas": 7211,
+      "lineas": 7454,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -1732,6 +1748,9 @@
         "apps/web/src/corte/retiros-con-pin.ts",
         "apps/web/src/exportacion/columnas-con-folio.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1786,7 +1805,7 @@
           "titulo": null
         }
       ],
-      "lineas": 12469,
+      "lineas": 12712,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -2309,6 +2328,9 @@
         "apps/web/src/cliente/EstadosDeCarga.tsx",
         "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -2340,7 +2362,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 4019,
+      "lineas": 4262,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -2391,6 +2413,7 @@
           "apps/web/src/impresion/impresion.test.ts",
           "apps/web/src/restaurante/precuenta-del-mesero.contrato.test.ts",
           "packages/app/src/puente/configuracion-limites.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -2945,7 +2968,8 @@
         "conValorPorOmision": false,
         "escritores": [],
         "lectores": [
-          "apps/web/src/impresion/BarraDeImpresion.tsx:135",
+          "apps/web/src/impresion/copias-al-imprimir.ts:62",
+          "apps/web/src/impresion/copias-al-imprimir.ts:81",
           "apps/web/src/impresion/copias.ts:18",
           "apps/web/src/impresion/copias.ts:31",
           "apps/web/src/impresion/copias.ts:33",
@@ -2956,8 +2980,10 @@
           "packages/app/src/caja/index.ts:120"
         ],
         "pruebasQueLaNombran": [
+          "apps/web/src/impresion/copias-y-permiso.contrato.test.ts",
           "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/venta/impresion-del-ticket.integracion.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/copias-por-la-app.spec.ts"
         ],
         "efecto": {
@@ -3032,6 +3058,7 @@
           "packages/app/src/reportes/auditoria-sanea-al-leer.integracion.test.ts",
           "pruebas/e2e/qa-final/ajustes-finales/tarjetas-datos.spec.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -3198,6 +3225,7 @@
           "packages/domain/src/venta/campos-del-papel.test.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
           "pruebas/e2e/qr-de-mesas.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts"
@@ -3585,6 +3613,7 @@
           "pruebas/e2e/folios-con-prefijo.spec.ts",
           "pruebas/e2e/qa-final/parte7-corte.spec.ts",
           "pruebas/e2e/restaurante-concurrencia.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "qa/simulador/bots/dueno-ventas.test.ts"
         ],
         "efecto": {
@@ -3742,6 +3771,7 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/caja/corte/negocio.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -3779,6 +3809,7 @@
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/archivos/referencias.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -3840,6 +3871,7 @@
           "packages/app/src/puente/puente.test.ts",
           "pruebas/e2e/estilos-del-negocio.spec.ts",
           "pruebas/e2e/qa-final/ajustes-finales/imagenes.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -3867,6 +3899,7 @@
         "pruebasQueLaNombran": [
           "packages/app/src/configuracion/impuesto.integracion.test.ts",
           "packages/app/src/puente/lo-publico.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -4002,6 +4035,7 @@
           "apps/web/src/impresion/pantallas/ejemplos.jsx:44"
         ],
         "pruebasQueLaNombran": [
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -4069,6 +4103,7 @@
           "pruebas/e2e/estilos-del-negocio.spec.ts",
           "pruebas/e2e/qa-final/ajustes-finales/reiniciar.spec.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx"
         ],
@@ -4111,6 +4146,7 @@
           "packages/app/src/mantenimiento/plataforma.integracion.test.ts",
           "packages/app/src/puente/claves-del-servidor.integracion.test.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -4225,6 +4261,7 @@
           "apps/web/src/impresion/papel-a-tu-gusto.contrato.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.integracion.test.ts",
           "packages/app/src/caja/papel-a-tu-gusto.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/arnes.jsx"
         ],
         "efecto": {
@@ -4347,6 +4384,7 @@
         "pruebasQueLaNombran": [
           "packages/app/src/caja/corte/negocio.test.ts",
           "packages/app/src/puente/claves-del-servidor.integracion.test.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -4413,6 +4451,7 @@
           "apps/web/src/marca/contenido.test.ts",
           "packages/app/src/caja/corte/negocio.test.ts",
           "pruebas/e2e/qa-final/ajustes.identidad.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts"
         ],
         "efecto": {
@@ -5695,6 +5734,7 @@
           "pruebas/e2e/unir-mesas-en-el-mapa.spec.ts",
           "pruebas/e2e/usuarios-y-mesas.spec.ts",
           "pruebas/e2e/vista-de-solicitudes.spec.ts",
+          "pruebas/impresion/.arnes/arnes.js",
           "pruebas/impresion/ajustes-del-papel.spec.ts",
           "pruebas/impresion/arnes.jsx",
           "pruebas/impresion/ticket-identico.spec.ts",
@@ -5726,7 +5766,10 @@
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:135"
         ],
         "lectores": ["apps/web/heredado/components/tickets/PreCuentaTicket.jsx:283"],
-        "pruebasQueLaNombran": ["pruebas/impresion/ajustes-del-papel.spec.ts"],
+        "pruebasQueLaNombran": [
+          "pruebas/impresion/.arnes/arnes.js",
+          "pruebas/impresion/ajustes-del-papel.spec.ts"
+        ],
         "efecto": {
           "efecto": "El pie del ticket térmico.",
           "valores": ["vacío", "un texto"],
@@ -8562,7 +8605,7 @@
       "ruta": "/api/venta/registrar-impresion",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
-      "llamadas": ["apps/web/src/impresion/imprimir-documento.ts:56"],
+      "llamadas": ["apps/web/src/impresion/imprimir-documento.ts:58"],
       "pantallas": ["/", "/caja", "/mesero", "/pos", "/productos", "/registros", "/ventas"]
     },
     {
