@@ -102,7 +102,7 @@ const codigo = (r: {
   r.ok
     ? 'ok'
     : typeof r.error?.datos?.['regla'] === 'string'
-      ? (r.error.datos['regla'] as string)
+      ? r.error.datos['regla']
       : r.error?.codigo;
 
 beforeAll(async () => {

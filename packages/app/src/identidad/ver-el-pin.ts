@@ -86,7 +86,7 @@ export const verElPin = definirComando<Transaccion, typeof entradaVerElPin, PinV
       validarEntorno(process.env).SESSION_SECRET,
       ctx.ahora,
     );
-    if (firma === null || firma.supervisor !== empleoId || firma.rol !== 'dueno') {
+    if (firma?.supervisor !== empleoId || firma.rol !== 'dueno') {
       throw new ErrorDominio(
         'PUESTO_NO_OTORGABLE',
         'Para ver un PIN, el dueño teclea el suyo otra vez.',

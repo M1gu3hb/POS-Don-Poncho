@@ -55,16 +55,22 @@ export function VerElPin({ empleado, conCopia, yo, alAsignar }: VerElPinProps) {
   const [sinCopia, setSinCopia] = useState(!conCopia);
   const [error, setError] = useState<string | null>(null);
 
-  // El PIN se oculta solo: cuenta atrás de un segundo en un segundo y, en cero, se cierra.
+  // El PIN se oculta solo: cuenta atrás de un segundo en un segundo y, al llegar a cero, se cierra.
+  // Todo cambio de estado va dentro del reloj, nunca directo en el efecto.
   useEffect(() => {
     if (pin === null) return undefined;
-    if (restan <= 0) {
-      setPin(null);
-      setAbierto(false);
-      return undefined;
-    }
-    const reloj = setTimeout(() => setRestan((r) => r - 1), 1000);
-    return () => clearTimeout(reloj);
+    const reloj = setTimeout(() => {
+      if (restan <= 1) {
+        setPin(null);
+        setRestan(0);
+        setAbierto(false);
+      } else {
+        setRestan(restan - 1);
+      }
+    }, 1000);
+    return () => {
+      clearTimeout(reloj);
+    };
   }, [pin, restan]);
 
   const cerrar = () => {
@@ -108,7 +114,13 @@ export function VerElPin({ empleado, conCopia, yo, alAsignar }: VerElPinProps) {
       >
         <Eye aria-hidden className="size-4" />
       </Button>
-      <Dialog open={abierto} onOpenChange={(v) => (v ? setAbierto(true) : cerrar())}>
+      <Dialog
+        open={abierto}
+        onOpenChange={(v) => {
+          if (v) setAbierto(true);
+          else cerrar();
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>El PIN de {empleado.nombre}</DialogTitle>
