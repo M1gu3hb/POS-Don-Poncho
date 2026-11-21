@@ -1881,6 +1881,42 @@ export const SIN_ESTADO = [
     razon:
       'No pinta nada propio (DP-24): lee si el platillo ya salió de cocina y monta el diálogo de quitar (`AnularLineaDialog`), que es quien pinta su Aviso si no se pudo quitar. Si la cocina no se puede leer, el platillo cuenta como ya preparado.',
   },
+  {
+    pantalla: 'restaurante/rejilla/PestanasDeCategoria',
+    estado: 'vacio',
+    razon:
+      'Pieza de la rejilla de platillos (DP-24), no pantalla: las pestañas de categoría con su color; recibe las categorías ya leídas por quien la monta (mesero, Caja, POS) y sin categorías sólo queda «Todas». La lista vacía, la carga y el fallo de la lectura los dice la rejilla.',
+  },
+  {
+    pantalla: 'restaurante/rejilla/PestanasDeCategoria',
+    estado: 'cargando',
+    razon:
+      'Pieza de la rejilla de platillos (DP-24), no pantalla: las pestañas de categoría con su color; recibe las categorías ya leídas por quien la monta (mesero, Caja, POS) y sin categorías sólo queda «Todas». La lista vacía, la carga y el fallo de la lectura los dice la rejilla.',
+  },
+  {
+    pantalla: 'restaurante/rejilla/PestanasDeCategoria',
+    estado: 'error',
+    razon:
+      'Pieza de la rejilla de platillos (DP-24), no pantalla: las pestañas de categoría con su color; recibe las categorías ya leídas por quien la monta (mesero, Caja, POS) y sin categorías sólo queda «Todas». La lista vacía, la carga y el fallo de la lectura los dice la rejilla.',
+  },
+  {
+    pantalla: 'restaurante/rejilla/SelectorDeColorDeCategoria',
+    estado: 'vacio',
+    razon:
+      'Pieza del diálogo de categorías (DP-24), no pantalla: la paleta fija de 16 colores; no lee nada y no tiene lista que pueda llegar vacía, cargar o fallar.',
+  },
+  {
+    pantalla: 'restaurante/rejilla/SelectorDeColorDeCategoria',
+    estado: 'cargando',
+    razon:
+      'Pieza del diálogo de categorías (DP-24), no pantalla: la paleta fija de 16 colores; no lee nada y no tiene lista que pueda llegar vacía, cargar o fallar.',
+  },
+  {
+    pantalla: 'restaurante/rejilla/SelectorDeColorDeCategoria',
+    estado: 'error',
+    razon:
+      'Pieza del diálogo de categorías (DP-24), no pantalla: la paleta fija de 16 colores; no lee nada y no tiene lista que pueda llegar vacía, cargar o fallar.',
+  },
 ];
 
 const argumentos = process.argv.slice(2);

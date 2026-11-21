@@ -3124,6 +3124,68 @@
         "+ icono:Plus",
         "+ icono:Wallet"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx",
+      "porque": "DP-24 (3.4): al crear o editar una categoría se elige su color de la paleta fija (un selector de 16 colores con su nombre y su palomita) y cada categoría de la lista lleva su punto de color. El resto de la pantalla no cambia.",
+      "testigos": [
+        "+ clase:rounded-full",
+        "+ clase:selector-de-color",
+        "+ clase:inline-block",
+        "+ clase:size-3",
+        "+ clase:shrink-0"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-24 (3.1 y 3.4): las pestañas de categoría de la rejilla de platillos pasan a la pieza compartida `PestanasDeCategoria` (mismo tamaño y mismas clases, ahora con el color de cada categoría, su punto y aro/negrita en la elegida) y cada tarjeta de platillo lleva la franja del color de su categoría. Los platillos salen en el orden del menú. La pestaña «Todas» se ve igual.",
+      "testigos": [
+        "- clase:shrink-0",
+        "- clase:text-xs",
+        "- clase:text-xs",
+        "- clase:rounded-full",
+        "- clase:overflow-x-auto",
+        "- clase:pb-1",
+        "- clase:py-1",
+        "- clase:py-1",
+        "- clase:border",
+        "- clase:border",
+        "- clase:font-medium",
+        "- clase:font-medium",
+        "- clase:px-3",
+        "- clase:px-3",
+        "- clase:===",
+        "- clase:===",
+        "- clase:?",
+        "- clase:'bg-primary",
+        "- clase:'bg-primary",
+        "- clase::",
+        "- clase:'bg-superficie",
+        "- clase:'bg-superficie",
+        "- clase:text-muted-foreground'}",
+        "- clase:text-muted-foreground'}",
+        "- clase:${categoriaFiltro",
+        "- clase:${categoriaFiltro",
+        "- clase:'todas'",
+        "- clase:text-primario-texto'",
+        "- clase:text-primario-texto'",
+        "- clase:c.id",
+        "- texto:Todas",
+        "+ clase:${franja.className}"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/POS.jsx",
+      "porque": "DP-24 (3.1 y 3.4): las pestañas de categoría del POS pasan a la pieza compartida `PestanasDeCategoria` (con el color de cada categoría) y los platillos salen en el orden del menú.",
+      "testigos": [
+        "- clase:flex",
+        "- clase:gap-2",
+        "- clase:shrink-0",
+        "- clase:shrink-0",
+        "- clase:overflow-x-auto",
+        "- clase:pb-1",
+        "- texto:Todos"
+      ]
     }
   ]
 }

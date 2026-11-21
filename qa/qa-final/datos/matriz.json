@@ -1,5 +1,5 @@
 {
-  "commit": "2d759e4",
+  "commit": "d1ca405",
   "puestos": [
     { "puesto": "dueno", "nombre": "Dueño" },
     { "puesto": "administrador", "nombre": "Administrador" },
@@ -72,6 +72,9 @@
         "apps/web/src/corte/opciones-vendidas.ts",
         "apps/web/src/corte/retiros-con-pin.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -113,7 +116,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 11275,
+      "lineas": 11529,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -199,6 +202,9 @@
         "apps/web/src/impresion/CajonEnLaCaja.tsx",
         "apps/web/src/impresion/aislar.ts",
         "apps/web/src/impresion/cajon.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -236,6 +242,8 @@
         "apps/web/src/restaurante/permiso-al-cancelar.ts",
         "apps/web/src/restaurante/platillos-de-cocina.ts",
         "apps/web/src/restaurante/portal-mesero/pulsacion-larga.ts",
+        "apps/web/src/restaurante/rejilla/PestanasDeCategoria.tsx",
+        "apps/web/src/restaurante/rejilla/colores.ts",
         "apps/web/src/restaurante/rol-de-la-sesion.ts",
         "apps/web/src/restaurante/rotulo-de-la-comanda.ts",
         "apps/web/src/restaurante/toma-de-pedido/precio-de-las-opciones.ts",
@@ -380,7 +388,7 @@
           "titulo": null
         }
       ],
-      "lineas": 22766,
+      "lineas": 23130,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -668,6 +676,7 @@
         "apps/web/src/configuracion/topes-de-los-puestos.ts",
         "apps/web/src/impresion/CajonEnLaCaja.tsx",
         "apps/web/src/impresion/cajon.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/pantallas/AjustesDeLaApp.tsx",
         "apps/web/src/impresion/pantallas/BotonDePrueba.tsx",
@@ -718,6 +727,9 @@
         "apps/web/src/impresion/termico/rasterizar.ts",
         "apps/web/src/restaurante/TiempoDeLaMesa.tsx",
         "apps/web/src/restaurante/nombre-de-la-mesa.ts",
+        "apps/web/src/restaurante/personalizar-menu/OrdenDelMenu.tsx",
+        "apps/web/src/restaurante/personalizar-menu/use-orden-del-menu.ts",
+        "apps/web/src/restaurante/rejilla/SelectorDeColorDeCategoria.tsx",
         "apps/web/src/restaurante/rotulo-de-la-comanda.ts",
         "apps/web/src/restaurante/tiempo-de-la-mesa.ts",
         "apps/web/src/restaurante/toma-de-pedido/precio-de-las-opciones.ts",
@@ -825,7 +837,7 @@
           "titulo": "Zonas del salón"
         }
       ],
-      "lineas": 24019,
+      "lineas": 24672,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1010,6 +1022,9 @@
         "apps/web/src/cocina/espera.ts",
         "apps/web/src/cocina/use-ahora.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1059,6 +1074,8 @@
         "apps/web/src/restaurante/portal-mesero/qr-escaneado.ts",
         "apps/web/src/restaurante/portal-mesero/use-pulsacion-larga.ts",
         "apps/web/src/restaurante/puede-mover-la-cuenta.ts",
+        "apps/web/src/restaurante/rejilla/PestanasDeCategoria.tsx",
+        "apps/web/src/restaurante/rejilla/colores.ts",
         "apps/web/src/restaurante/rol-de-la-sesion.ts",
         "apps/web/src/restaurante/rotulo-de-la-comanda.ts",
         "apps/web/src/restaurante/tiempo-de-la-mesa.ts",
@@ -1208,7 +1225,7 @@
           "titulo": null
         }
       ],
-      "lineas": 17874,
+      "lineas": 18225,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "mesero"],
       "cobertura": null
@@ -1341,7 +1358,7 @@
           "titulo": null
         }
       ],
-      "lineas": 6742,
+      "lineas": 6646,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -1383,6 +1400,9 @@
         "apps/web/src/cliente/escaner-del-documento.ts",
         "apps/web/src/cliente/use-escaner-del-documento.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1394,6 +1414,7 @@
         "apps/web/src/restaurante/nombre-de-la-mesa.ts",
         "apps/web/src/restaurante/opciones-de-los-platillos.ts",
         "apps/web/src/restaurante/portal-mesero/pulsacion-larga.ts",
+        "apps/web/src/restaurante/rejilla/PestanasDeCategoria.tsx",
         "apps/web/src/restaurante/rotulo-de-la-comanda.ts",
         "apps/web/src/restaurante/toma-de-pedido/precio-de-las-opciones.ts",
         "apps/web/src/restaurante/toma-de-pedido/renglon-para-el-comando.ts",
@@ -1437,7 +1458,7 @@
           "titulo": "Venta cobrada"
         }
       ],
-      "lineas": 6657,
+      "lineas": 6966,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -1483,6 +1504,9 @@
         "apps/web/src/guias/GuiaDeRecetasEInventario.tsx",
         "apps/web/src/guias/guia-de-recetas-e-inventario.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1532,7 +1556,7 @@
           "titulo": "Agotados del día"
         }
       ],
-      "lineas": 7211,
+      "lineas": 7454,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "almacen"],
       "cobertura": null
@@ -1748,6 +1772,9 @@
         "apps/web/src/corte/retiros-con-pin.ts",
         "apps/web/src/exportacion/columnas-con-folio.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -1805,7 +1832,7 @@
           "titulo": null
         }
       ],
-      "lineas": 12861,
+      "lineas": 13104,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente"],
       "cobertura": null
@@ -2328,6 +2355,9 @@
         "apps/web/src/cliente/EstadosDeCarga.tsx",
         "apps/web/src/cliente/dia-del-negocio.ts",
         "apps/web/src/impresion/aislar.ts",
+        "apps/web/src/impresion/copias-al-imprimir.ts",
+        "apps/web/src/impresion/copias-en-el-navegador.ts",
+        "apps/web/src/impresion/copias.ts",
         "apps/web/src/impresion/imprimir-documento.ts",
         "apps/web/src/impresion/imprimir-en-la-app.ts",
         "apps/web/src/impresion/papel.ts",
@@ -2359,7 +2389,7 @@
           "titulo": ""
         }
       ],
-      "lineas": 4019,
+      "lineas": 4262,
       "conSesion": true,
       "puestos": ["dueno", "administrador", "gerente", "cajero"],
       "cobertura": null
@@ -2401,7 +2431,7 @@
         "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:123"],
         "lectores": [
           "apps/web/heredado/components/tickets/PreCuentaTicket.jsx:52",
-          "apps/web/heredado/pages/Mesero.jsx:1312",
+          "apps/web/heredado/pages/Mesero.jsx:1317",
           "apps/web/src/impresion/use-ancho-del-papel.ts:17",
           "apps/web/src/impresion/use-ancho-del-papel.ts:20",
           "apps/web/src/impresion/use-ancho-del-papel.ts:24"
@@ -2883,13 +2913,13 @@
           "apps/web/heredado/components/registros/ResumenPeriodo.jsx:59",
           "apps/web/heredado/lib/moneyColors.js:15",
           "apps/web/heredado/lib/moneyColors.js:23",
-          "apps/web/heredado/pages/Caja.jsx:1507",
-          "apps/web/heredado/pages/Caja.jsx:1604",
-          "apps/web/heredado/pages/Caja.jsx:1876",
-          "apps/web/heredado/pages/Caja.jsx:1894",
+          "apps/web/heredado/pages/Caja.jsx:1516",
+          "apps/web/heredado/pages/Caja.jsx:1613",
+          "apps/web/heredado/pages/Caja.jsx:1885",
+          "apps/web/heredado/pages/Caja.jsx:1903",
           "apps/web/heredado/pages/Dashboard.jsx:617",
-          "apps/web/heredado/pages/Mesero.jsx:1864",
-          "apps/web/heredado/pages/Mesero.jsx:1970",
+          "apps/web/heredado/pages/Mesero.jsx:1858",
+          "apps/web/heredado/pages/Mesero.jsx:1966",
           "apps/web/heredado/pages/Productos.jsx:275",
           "apps/web/heredado/pages/Registros.jsx:699",
           "apps/web/heredado/pages/Ventas.jsx:63"
@@ -2963,7 +2993,8 @@
         "conValorPorOmision": false,
         "escritores": [],
         "lectores": [
-          "apps/web/src/impresion/BarraDeImpresion.tsx:135",
+          "apps/web/src/impresion/copias-al-imprimir.ts:62",
+          "apps/web/src/impresion/copias-al-imprimir.ts:81",
           "apps/web/src/impresion/copias.ts:18",
           "apps/web/src/impresion/copias.ts:31",
           "apps/web/src/impresion/copias.ts:33",
@@ -2974,6 +3005,7 @@
           "packages/app/src/caja/index.ts:120"
         ],
         "pruebasQueLaNombran": [
+          "apps/web/src/impresion/copias-y-permiso.contrato.test.ts",
           "packages/app/src/qa-final/pares.integracion.test.ts",
           "packages/app/src/venta/impresion-del-ticket.integracion.test.ts",
           "pruebas/impresion/copias-por-la-app.spec.ts"
@@ -3033,9 +3065,9 @@
           "packages/app/src/clientes/ficha.ts:81",
           "packages/app/src/clientes/ficha.ts:159",
           "packages/app/src/clientes/ficha.ts:218",
-          "packages/app/src/puente/mapa.ts:1635",
-          "packages/app/src/puente/mapa.ts:1636",
-          "packages/app/src/puente/mapa.ts:3585",
+          "packages/app/src/puente/mapa.ts:1641",
+          "packages/app/src/puente/mapa.ts:1642",
+          "packages/app/src/puente/mapa.ts:3591",
           "packages/app/src/saneado.ts:94"
         ],
         "pruebasQueLaNombran": [
@@ -3076,7 +3108,7 @@
         "conValorPorOmision": true,
         "escritores": ["apps/web/src/configuracion/ajustes-de-tarjetas.ts:161"],
         "lectores": [
-          "apps/web/heredado/pages/Caja.jsx:1193",
+          "apps/web/heredado/pages/Caja.jsx:1202",
           "packages/app/src/caja/corte/documento.ts:377"
         ],
         "pruebasQueLaNombran": [
@@ -3196,8 +3228,8 @@
           "packages/app/src/clientes/ficha.ts:162",
           "packages/app/src/clientes/ficha.ts:220",
           "packages/app/src/puente/consultar.ts:103",
-          "packages/app/src/puente/mapa.ts:2033",
-          "packages/app/src/puente/mapa.ts:3586",
+          "packages/app/src/puente/mapa.ts:2039",
+          "packages/app/src/puente/mapa.ts:3592",
           "packages/domain/src/venta/campos-del-papel.ts:39"
         ],
         "pruebasQueLaNombran": [
@@ -3243,7 +3275,7 @@
         "soloPorComando": false,
         "conValorPorOmision": false,
         "escritores": [
-          "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx:67",
+          "apps/web/heredado/components/configuracion/CategoriasProductoSection.jsx:73",
           "apps/web/heredado/components/configuracion/EstacionesDeCocina.jsx:39",
           "apps/web/heredado/components/configuracion/EstacionesDeCocina.jsx:47",
           "apps/web/heredado/components/configuracion/EstacionesDeCocina.jsx:48",
@@ -3477,8 +3509,8 @@
           "apps/web/src/sonidos/mapa.ts:116",
           "apps/web/src/telefono-de-cocina/telefono-de-cocina.ts:23",
           "apps/web/src/telefono-de-cocina/telefono-de-cocina.ts:28",
-          "apps/web/src/venta/PagoDeLaTarjeta.tsx:668",
-          "apps/web/src/venta/PagoDeLaTarjeta.tsx:669",
+          "apps/web/src/venta/PagoDeLaTarjeta.tsx:671",
+          "apps/web/src/venta/PagoDeLaTarjeta.tsx:672",
           "apps/web/src/venta/TarjetaDeCobro.tsx:259",
           "apps/web/src/venta/TarjetaDeCobro.tsx:260",
           "apps/web/src/venta/TarjetaDeCobro.tsx:262",
@@ -3486,7 +3518,7 @@
           "apps/web/src/venta/TecladoDeImportes.tsx:39",
           "apps/web/src/venta/TecladoDeImportes.tsx:66",
           "apps/web/src/venta/TecladoDeImportes.tsx:70",
-          "apps/web/src/venta/TecladoDeImportes.tsx:71",
+          "apps/web/src/venta/TecladoDeImportes.tsx:75",
           "apps/web/src/venta/cobro-en-pantalla.ts:142",
           "apps/web/src/venta/cobro-en-pantalla.ts:143",
           "apps/web/src/venta/cobro-en-pantalla.ts:144",
@@ -3532,7 +3564,7 @@
         "soloPorComando": true,
         "conValorPorOmision": false,
         "escritores": [
-          "apps/web/heredado/pages/Configuracion.jsx:180",
+          "apps/web/heredado/pages/Configuracion.jsx:181",
           "apps/web/src/configuracion/FoliosDelNegocio.tsx:48",
           "apps/web/src/configuracion/FoliosDelNegocio.tsx:70",
           "apps/web/src/configuracion/FoliosDelNegocio.tsx:99",
@@ -3862,8 +3894,8 @@
           "apps/web/heredado/pages/PortalCliente.jsx:428",
           "apps/web/src/espera/ModoEspera.tsx:31",
           "apps/web/src/espera/ModoEspera.tsx:104",
-          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:27",
-          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:186",
+          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:21",
+          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:170",
           "packages/app/src/archivos/referencias.ts:9",
           "packages/app/src/caja/corte/documento.ts:369",
           "packages/app/src/portal/lista-blanca.ts:49",
@@ -4066,8 +4098,8 @@
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:71",
           "apps/web/heredado/components/configuracion/IdentidadNegocio.jsx:102",
           "apps/web/heredado/components/configuracion/UnidadesMedidaSection.jsx:70",
-          "apps/web/heredado/pages/Configuracion.jsx:139",
-          "apps/web/heredado/pages/Configuracion.jsx:326",
+          "apps/web/heredado/pages/Configuracion.jsx:140",
+          "apps/web/heredado/pages/Configuracion.jsx:333",
           "apps/web/src/configuracion/ajustes-de-tarjetas.ts:61"
         ],
         "lectores": [
@@ -4087,8 +4119,8 @@
           "apps/web/heredado/pages/PortalCliente.jsx:480",
           "apps/web/src/espera/ModoEspera.tsx:32",
           "apps/web/src/espera/ModoEspera.tsx:105",
-          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:26",
-          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:185",
+          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:20",
+          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:169",
           "packages/app/src/gestion.ts:19",
           "packages/app/src/gestion.ts:24",
           "packages/app/src/gestion.ts:36",
@@ -4287,9 +4319,9 @@
         "soloPorComando": true,
         "conValorPorOmision": true,
         "escritores": [
-          "apps/web/heredado/pages/Configuracion.jsx:88",
           "apps/web/heredado/pages/Configuracion.jsx:89",
-          "apps/web/heredado/pages/Configuracion.jsx:111"
+          "apps/web/heredado/pages/Configuracion.jsx:90",
+          "apps/web/heredado/pages/Configuracion.jsx:112"
         ],
         "lectores": [
           "apps/web/heredado/components/common/AppLayout.jsx:63",
@@ -4485,9 +4517,9 @@
           "apps/web/heredado/components/common/SolicitudesQRWatcher.jsx:56",
           "apps/web/heredado/components/mesero/SolicitudesQRCardList.jsx:45",
           "apps/web/heredado/components/mesero/SolicitudesQRCardList.jsx:57",
-          "apps/web/heredado/pages/Mesero.jsx:274",
-          "apps/web/heredado/pages/Mesero.jsx:346",
-          "apps/web/heredado/pages/Mesero.jsx:1195",
+          "apps/web/heredado/pages/Mesero.jsx:277",
+          "apps/web/heredado/pages/Mesero.jsx:349",
+          "apps/web/heredado/pages/Mesero.jsx:1200",
           "packages/app/src/portal/banderas.ts:119",
           "packages/app/src/portal/lista-blanca.ts:51",
           "packages/app/src/portal/lista-blanca.ts:91",
@@ -4550,8 +4582,8 @@
           "apps/web/src/restaurante/menu-qr/EditorDeBotones.tsx:44",
           "apps/web/src/restaurante/menu-qr/EditorDeBotones.tsx:128",
           "packages/app/src/portal/botones-del-menu.ts:17",
-          "packages/app/src/portal/consulta.ts:31",
-          "packages/app/src/portal/consulta.ts:150"
+          "packages/app/src/portal/consulta.ts:32",
+          "packages/app/src/portal/consulta.ts:151"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/portal/botones.integracion.test.ts",
@@ -4634,7 +4666,7 @@
           "apps/web/heredado/components/portalqr/ConfiguracionQRTab.jsx:361"
         ],
         "lectores": [
-          "apps/web/heredado/pages/Mesero.jsx:1193",
+          "apps/web/heredado/pages/Mesero.jsx:1198",
           "apps/web/heredado/pages/PortalCliente.jsx:141",
           "packages/app/src/portal/banderas.ts:122",
           "packages/app/src/portal/lista-blanca.ts:53",
@@ -4731,9 +4763,9 @@
         "lectores": [
           "apps/web/heredado/pages/PortalCliente.jsx:521",
           "apps/web/heredado/pages/PortalCliente.jsx:526",
-          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:28",
-          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:74",
-          "apps/web/src/restaurante/personalizar-menu/use-personalizar-menu.ts:108",
+          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:22",
+          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:66",
+          "apps/web/src/restaurante/personalizar-menu/use-personalizar-menu.ts:90",
           "packages/app/src/portal/banderas.ts:133",
           "packages/app/src/portal/lista-blanca.ts:62",
           "packages/app/src/portal/lista-blanca.ts:102"
@@ -4774,9 +4806,9 @@
         ],
         "lectores": [
           "apps/web/heredado/pages/PortalCliente.jsx:136",
-          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:29",
-          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:101",
-          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:189",
+          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:23",
+          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:96",
+          "apps/web/src/restaurante/personalizar-menu/PersonalizarMenu.tsx:173",
           "packages/app/src/portal/banderas.ts:121",
           "packages/app/src/portal/lista-blanca.ts:52",
           "packages/app/src/portal/lista-blanca.ts:92"
@@ -5111,7 +5143,7 @@
         ],
         "lectores": [
           "apps/web/heredado/components/portalqr/PedirCuentaQR.jsx:62",
-          "apps/web/heredado/pages/Mesero.jsx:1195",
+          "apps/web/heredado/pages/Mesero.jsx:1200",
           "packages/app/src/portal/banderas.ts:131",
           "packages/app/src/portal/lista-blanca.ts:60",
           "packages/app/src/portal/lista-blanca.ts:100",
@@ -5156,10 +5188,10 @@
           "apps/web/src/restaurante/personalizar-menu/use-personalizar-menu.ts:33",
           "apps/web/src/restaurante/personalizar-menu/use-personalizar-menu.ts:37",
           "apps/web/src/restaurante/personalizar-menu/use-personalizar-menu.ts:43",
-          "apps/web/src/restaurante/personalizar-menu/use-personalizar-menu.ts:116",
+          "apps/web/src/restaurante/personalizar-menu/use-personalizar-menu.ts:98",
           "packages/app/src/portal/tema-del-portal.ts:16",
-          "packages/app/src/portal/consulta.ts:34",
-          "packages/app/src/portal/consulta.ts:167"
+          "packages/app/src/portal/consulta.ts:35",
+          "packages/app/src/portal/consulta.ts:168"
         ],
         "pruebasQueLaNombran": [
           "packages/app/src/portal/botones.integracion.test.ts",
@@ -5444,7 +5476,7 @@
           "packages/app/src/clientes/ficha.ts:98",
           "packages/app/src/clientes/ficha.ts:130",
           "packages/app/src/clientes/ficha.ts:163",
-          "packages/app/src/puente/mapa.ts:1619",
+          "packages/app/src/puente/mapa.ts:1625",
           "packages/domain/src/venta/index.ts:21"
         ],
         "pruebasQueLaNombran": [
@@ -5549,11 +5581,11 @@
           "packages/app/src/configuracion/configuracion.ts:216"
         ],
         "lectores": [
+          "apps/web/heredado/components/caja/ParaLlevarDialog.jsx:163",
           "apps/web/heredado/components/caja/ParaLlevarDialog.jsx:164",
           "apps/web/heredado/components/caja/ParaLlevarDialog.jsx:165",
-          "apps/web/heredado/components/caja/ParaLlevarDialog.jsx:166",
-          "apps/web/heredado/components/caja/ParaLlevarDialog.jsx:176",
-          "apps/web/heredado/components/caja/ParaLlevarDialog.jsx:276",
+          "apps/web/heredado/components/caja/ParaLlevarDialog.jsx:175",
+          "apps/web/heredado/components/caja/ParaLlevarDialog.jsx:275",
           "apps/web/heredado/components/datos/ExportarDatos.jsx:102",
           "apps/web/heredado/components/datos/PlantillasDescargables.jsx:119",
           "apps/web/heredado/components/datos/PlantillasDescargables.jsx:128",
@@ -5612,17 +5644,17 @@
           "packages/app/src/portal/carrito.ts:448",
           "packages/app/src/portal/solicitudes.ts:10",
           "packages/app/src/portal/telefono.ts:32",
-          "packages/app/src/puente/mapa.ts:1629",
-          "packages/app/src/puente/mapa.ts:1630",
-          "packages/app/src/puente/mapa.ts:2054",
-          "packages/app/src/puente/mapa.ts:2564",
-          "packages/app/src/puente/mapa.ts:2595",
-          "packages/app/src/puente/mapa.ts:2756",
-          "packages/app/src/puente/mapa.ts:2970",
-          "packages/app/src/puente/mapa.ts:2972",
-          "packages/app/src/puente/mapa.ts:3064",
-          "packages/app/src/puente/mapa.ts:3066",
-          "packages/app/src/puente/mapa.ts:3583",
+          "packages/app/src/puente/mapa.ts:1635",
+          "packages/app/src/puente/mapa.ts:1636",
+          "packages/app/src/puente/mapa.ts:2060",
+          "packages/app/src/puente/mapa.ts:2570",
+          "packages/app/src/puente/mapa.ts:2601",
+          "packages/app/src/puente/mapa.ts:2762",
+          "packages/app/src/puente/mapa.ts:2976",
+          "packages/app/src/puente/mapa.ts:2978",
+          "packages/app/src/puente/mapa.ts:3070",
+          "packages/app/src/puente/mapa.ts:3072",
+          "packages/app/src/puente/mapa.ts:3589",
           "packages/app/src/puente/usuarios.ts:42",
           "packages/app/src/puente/usuarios.ts:71",
           "packages/app/src/restaurante/espera.ts:40",
@@ -6345,6 +6377,14 @@
         }
       },
       {
+        "id": "portal-orden-del-menu",
+        "seccion": "Portal de comensales",
+        "titulo": "El orden del menú",
+        "con": "catalogo.ordenar_categorias · catalogo.ordenar_productos · catalogo.mostrar_en_menu",
+        "visiblePara": "portal",
+        "efecto": null
+      },
+      {
         "id": "categorias",
         "seccion": "Productos e inventario",
         "titulo": "Categorías de productos",
@@ -6534,7 +6574,7 @@
         }
       }
     ],
-    "tarjetas": 51
+    "tarjetas": 52
   },
   "flujos": [
     {
@@ -7448,7 +7488,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1012",
+        "apps/web/heredado/pages/Caja.jsx:1021",
         "apps/web/heredado/pages/CorteCaja.jsx:124",
         "apps/web/src/restaurante/Caja.tsx:619"
       ],
@@ -7504,7 +7544,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1133",
+        "apps/web/heredado/pages/Caja.jsx:1142",
         "apps/web/heredado/pages/CorteCaja.jsx:151",
         "apps/web/src/restaurante/CierreDiario.tsx:507"
       ],
@@ -7516,7 +7556,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:1051",
+        "apps/web/heredado/pages/Caja.jsx:1060",
         "apps/web/src/venta/CorteDeTurno.tsx:55"
       ],
       "pantallas": ["/caja", "/restaurante/caja"]
@@ -7735,6 +7775,14 @@
       "pantallas": ["/productos"]
     },
     {
+      "comando": "catalogo.guardar_categoria",
+      "ruta": "/api/catalogo/guardar-categoria",
+      "escribe": true,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": [],
+      "pantallas": []
+    },
+    {
       "comando": "catalogo.guardar_grupo_de_opciones",
       "ruta": "/api/catalogo/guardar-grupo-de-opciones",
       "escribe": true,
@@ -7757,6 +7805,46 @@
       "puestos": ["administrador", "cocina", "dueno", "gerente"],
       "llamadas": ["apps/web/src/restaurante/AgotadosDelDia.tsx:55"],
       "pantallas": ["/cocina", "/productos"]
+    },
+    {
+      "comando": "catalogo.mostrar_en_menu",
+      "ruta": "/api/catalogo/mostrar-en-menu",
+      "escribe": true,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/personalizar-menu/use-orden-del-menu.ts:35"],
+      "pantallas": ["/configuracion"]
+    },
+    {
+      "comando": "catalogo.mover_a_categoria",
+      "ruta": "/api/catalogo/mover-a-categoria",
+      "escribe": true,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": [],
+      "pantallas": []
+    },
+    {
+      "comando": "catalogo.ordenar_categorias",
+      "ruta": "/api/catalogo/ordenar-categorias",
+      "escribe": true,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/personalizar-menu/use-orden-del-menu.ts:33"],
+      "pantallas": ["/configuracion"]
+    },
+    {
+      "comando": "catalogo.ordenar_productos",
+      "ruta": "/api/catalogo/ordenar-productos",
+      "escribe": true,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": ["apps/web/src/restaurante/personalizar-menu/use-orden-del-menu.ts:34"],
+      "pantallas": ["/configuracion"]
+    },
+    {
+      "comando": "catalogo.unir_categorias",
+      "ruta": "/api/catalogo/unir-categorias",
+      "escribe": true,
+      "puestos": ["administrador", "dueno", "gerente"],
+      "llamadas": [],
+      "pantallas": []
     },
     {
       "comando": "cliente.alta",
@@ -7875,7 +7963,7 @@
       "ruta": "/api/venta/fijar-propina",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
-      "llamadas": ["apps/web/heredado/pages/Caja.jsx:632"],
+      "llamadas": ["apps/web/heredado/pages/Caja.jsx:641"],
       "pantallas": ["/caja"]
     },
     {
@@ -7923,7 +8011,7 @@
       "llamadas": [
         "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx:85",
         "apps/web/heredado/components/configuracion/UsuariosPOSSection.jsx:110",
-        "apps/web/src/configuracion/secciones.ts:514"
+        "apps/web/src/configuracion/secciones.ts:525"
       ],
       "pantallas": ["/", "/configuracion"]
     },
@@ -8101,7 +8189,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
-        "apps/web/heredado/pages/Mesero.jsx:649",
+        "apps/web/heredado/pages/Mesero.jsx:654",
         "apps/web/src/restaurante/MesaActiva.tsx:302",
         "apps/web/src/restaurante/portal-mesero/api-del-carrito-del-mesero.ts:100"
       ],
@@ -8112,7 +8200,7 @@
       "ruta": "/api/restaurante/agregar-en-caja",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
-      "llamadas": ["apps/web/heredado/components/caja/ParaLlevarDialog.jsx:149"],
+      "llamadas": ["apps/web/heredado/components/caja/ParaLlevarDialog.jsx:148"],
       "pantallas": ["/caja"]
     },
     {
@@ -8128,7 +8216,7 @@
       "ruta": "/api/restaurante/armar-para-llevar",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
-      "llamadas": ["apps/web/heredado/components/caja/ParaLlevarDialog.jsx:173"],
+      "llamadas": ["apps/web/heredado/components/caja/ParaLlevarDialog.jsx:172"],
       "pantallas": ["/caja"]
     },
     {
@@ -8168,7 +8256,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:689",
+        "apps/web/heredado/pages/Caja.jsx:698",
         "apps/web/src/restaurante/AjustesDeLaCuenta.tsx:205",
         "apps/web/src/restaurante/Caja.tsx:609"
       ],
@@ -8266,7 +8354,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
-        "apps/web/heredado/pages/Mesero.jsx:1050",
+        "apps/web/heredado/pages/Mesero.jsx:1055",
         "apps/web/src/restaurante/MesaActiva.tsx:363"
       ],
       "pantallas": ["/mesero", "/restaurante/mesa-activa"]
@@ -8285,7 +8373,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
-        "apps/web/heredado/pages/Mesero.jsx:1310",
+        "apps/web/heredado/pages/Mesero.jsx:1315",
         "apps/web/src/restaurante/Precuenta.tsx:261"
       ],
       "pantallas": ["/mesero", "/restaurante/precuenta"]
@@ -8297,10 +8385,10 @@
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/components/caja/MesasPendientesCierreDialog.jsx:53",
-        "apps/web/heredado/pages/Caja.jsx:685",
-        "apps/web/heredado/pages/Caja.jsx:830",
-        "apps/web/heredado/pages/Mesero.jsx:572",
-        "apps/web/heredado/pages/Mesero.jsx:1337",
+        "apps/web/heredado/pages/Caja.jsx:694",
+        "apps/web/heredado/pages/Caja.jsx:839",
+        "apps/web/heredado/pages/Mesero.jsx:577",
+        "apps/web/heredado/pages/Mesero.jsx:1342",
         "apps/web/src/restaurante/MesaActiva.tsx:334"
       ],
       "pantallas": ["/caja", "/mesero", "/restaurante/mesa-activa"]
@@ -8412,7 +8500,7 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
-        "apps/web/heredado/pages/Mesero.jsx:1243",
+        "apps/web/heredado/pages/Mesero.jsx:1248",
         "apps/web/src/restaurante/PedirLaCuentaDialog.tsx:67"
       ],
       "pantallas": ["/mesero", "/restaurante/mesa-activa"]
@@ -8468,9 +8556,9 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
-        "apps/web/heredado/pages/POS.jsx:326",
-        "apps/web/heredado/pages/POS.jsx:374",
-        "apps/web/heredado/pages/POS.jsx:409"
+        "apps/web/heredado/pages/POS.jsx:329",
+        "apps/web/heredado/pages/POS.jsx:377",
+        "apps/web/heredado/pages/POS.jsx:412"
       ],
       "pantallas": ["/pos"]
     },
@@ -8479,7 +8567,7 @@
       "ruta": "/api/venta/cambiar-cantidad",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
-      "llamadas": ["apps/web/heredado/pages/POS.jsx:320", "apps/web/heredado/pages/POS.jsx:441"],
+      "llamadas": ["apps/web/heredado/pages/POS.jsx:323", "apps/web/heredado/pages/POS.jsx:444"],
       "pantallas": ["/pos"]
     },
     {
@@ -8488,8 +8576,8 @@
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente"],
       "llamadas": [
-        "apps/web/heredado/pages/Caja.jsx:799",
-        "apps/web/heredado/pages/POS.jsx:554",
+        "apps/web/heredado/pages/Caja.jsx:808",
+        "apps/web/heredado/pages/POS.jsx:557",
         "apps/web/src/restaurante/Cobro.tsx:350"
       ],
       "pantallas": ["/caja", "/pos", "/restaurante/cobro"]
@@ -8499,7 +8587,7 @@
       "ruta": "/api/venta/crear-orden",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
-      "llamadas": ["apps/web/heredado/pages/POS.jsx:267"],
+      "llamadas": ["apps/web/heredado/pages/POS.jsx:270"],
       "pantallas": ["/pos"]
     },
     {
@@ -8525,7 +8613,7 @@
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
       "llamadas": [
         "apps/web/heredado/pages/Caja.jsx:495",
-        "apps/web/heredado/pages/POS.jsx:196",
+        "apps/web/heredado/pages/POS.jsx:198",
         "apps/web/src/restaurante/lineas-vivas.ts:76",
         "apps/web/src/venta/DescuentoDeVenta.tsx:100"
       ],
@@ -8551,7 +8639,7 @@
       "ruta": "/api/venta/quitar-linea",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
-      "llamadas": ["apps/web/heredado/pages/POS.jsx:457", "apps/web/heredado/pages/POS.jsx:478"],
+      "llamadas": ["apps/web/heredado/pages/POS.jsx:460", "apps/web/heredado/pages/POS.jsx:481"],
       "pantallas": ["/pos"]
     },
     {
@@ -8559,7 +8647,7 @@
       "ruta": "/api/venta/registrar-impresion",
       "escribe": true,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
-      "llamadas": ["apps/web/src/impresion/imprimir-documento.ts:56"],
+      "llamadas": ["apps/web/src/impresion/imprimir-documento.ts:58"],
       "pantallas": ["/", "/caja", "/mesero", "/pos", "/productos", "/registros", "/ventas"]
     },
     {
@@ -8567,7 +8655,7 @@
       "ruta": "/api/venta/ticket",
       "escribe": false,
       "puestos": ["administrador", "cajero", "dueno", "gerente", "mesero"],
-      "llamadas": ["apps/web/heredado/pages/POS.jsx:581"],
+      "llamadas": ["apps/web/heredado/pages/POS.jsx:584"],
       "pantallas": ["/pos"]
     },
     {
