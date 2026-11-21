@@ -107,9 +107,17 @@ siguieron donde iban y la sesión principal volvió a la Caja.
 - **En producción (20-11, 23:20):** `main` en `515d451`, despliegue `dpl_AYMfwXC3wQxAdREQqxMtGKjJMzpK` en READY. La migración
   196 se aplicó antes de unir (ensayo y aplicación correctos). Humo: 13 bien, 0 mal; las cuatro rutas nuevas de catálogo
   contestan 403; sin errores de ejecución; las 4 cuentas y las cajas, intactas.
-- **El guion del menú NO se corrió:** el ensayo contra producción terminó en ««don-poncho» sin alta, sin sucursal o sin
-  «Miguel · Morphiq» como dueño activo». Nada se escribió. Hay que dar el nombre exacto de la persona dueña activa y repetirlo.
-  La copia del catálogo de antes quedó en `catalogo-antes-del-menu.json`.
+- **El guion del menú, primer intento (20-11, 23:22):** no corrió: el encargo al agente traía mal el nombre de la persona
+  («Miguel · Morphiq»); la dueña activa de producción con la que firman los guiones es «Dueño», la de DP-22 y DP-23.
+- **El menú quedó como la hoja (21-11, 01:35), lo corrió la sesión principal:** ensayo limpio (48 comandos: 19 de categorías,
+  4 «(extra)» apagados, 2 grupos, 8 asignaciones, 1 orden de categorías y 14 de platillos), corrida real con 49 ✓ y ningún ✗,
+  y el ensayo de después con todas las etapas en «ya está». Por la conexión de sesión (5432).
+  **Comparación del catálogo antes y después** (`catalogo-antes-del-menu.json` / `catalogo-despues-del-menu.json`): 107
+  productos antes y después, ninguno nuevo ni borrado, **0 precios y 0 nombres cambiados**; los 4 «(extra)» de Cerveza quedaron
+  apagados; 16 categorías activas (Brandy se unió a «Ron y Brandy»); 7 opciones nuevas: Michelado $15, Cubano $20, Con clamato
+  $30, Con clamato cubano $35 (los precios del encargo, iguales a los de los «(extra)») y las 3 de «Preparación» en $0.
+  **No se crearon** (faltan en el catálogo): Campechanas, Panqués, Café americano, Café capuchino, Cuervo especial, Bacardí
+  añejo. **Sin cargar por falta de precio:** el tequila adicional de Paloma, Charro negro y Piña colada sin alcohol.
 
 ## Parte 6 · Impresión: copias y el permiso de la impresora (PR #49; apps: PR #3 en borrador)
 
