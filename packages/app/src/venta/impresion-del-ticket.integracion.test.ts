@@ -145,3 +145,46 @@ describe('caja.fijar_copias_de_impresion', () => {
     });
   });
 });
+
+/**
+ * DP-24 · 6.1 · LO QUE SE GUARDA SE LEE AL MOMENTO. Dos aparatos del mismo negocio leen la configuración
+ * con la lectura de la pantalla (`leerConfiguracion`): cada lectura trae lo último guardado, sin
+ * caché del lado del servidor, y otro negocio no ve las copias de éste.
+ */
+describe('las copias se leen al momento, en cada lectura', () => {
+  const fijar = (copias: { ticket: number; precuenta: number; corte: number }) =>
+    comando(fijarCopiasDeImpresion, {
+      entrada: copias,
+      ambito: dueno,
+      idempotencyKey: clave(),
+    });
+  const leidas = async (organizacionId: string) =>
+    (await leerConfiguracion(organizacionId)) as { copias_de_impresion?: unknown };
+
+  it(
+    'cada cambio se ve en la siguiente lectura (sube, baja, sube) y no cruza de negocio',
+    { timeout: POR_COMANDOS },
+    async () => {
+      const organizacionId = salon.negocio.organizacionId;
+      exigirOk(await fijar({ ticket: 2, precuenta: 1, corte: 1 }), 'a 2');
+      expect((await leidas(organizacionId)).copias_de_impresion).toEqual({
+        ticket: 2,
+        precuenta: 1,
+        corte: 1,
+      });
+      exigirOk(await fijar({ ticket: 1, precuenta: 1, corte: 1 }), 'a 1');
+      expect((await leidas(organizacionId)).copias_de_impresion).toEqual({
+        ticket: 1,
+        precuenta: 1,
+        corte: 1,
+      });
+      exigirOk(await fijar({ ticket: 3, precuenta: 2, corte: 1 }), 'a 3');
+      expect((await leidas(organizacionId)).copias_de_impresion).toEqual({
+        ticket: 3,
+        precuenta: 2,
+        corte: 1,
+      });
+      expect((await leidas(otro.negocio.organizacionId)).copias_de_impresion).toBeUndefined();
+    },
+  );
+});
