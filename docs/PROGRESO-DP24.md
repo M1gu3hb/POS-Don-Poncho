@@ -145,10 +145,11 @@ siguieron donde iban y la sesión principal volvió a la Caja.
 - **Pruebas:** integración `union-por-partes` (13: tres ampliaciones con comandas en los cuatro estados, separar, cobrar
   una vez y los rechazos), la regresión de unir (51), la zona de restaurante (1,087) y 25 mutantes. La prueba con dedo
   (`agregar-mesas-al-tacto`) no corrió en local: se agregó a la CI. Decisión: DP-D213.
-- **Arreglado antes de unir (la primera CI falló, 21-11, 00:21; el arreglo salió a las 02:12 con «Agregar mesas» a 44 px al tacto):** la CI de `1777db1` (y la de `4fa2c04`, antes de traer la Parte 6) falla en «Jornada completa»
-  sólo en `agregar-mesas-al-tacto.spec.ts` (tablet y teléfono): el botón «Agregar mesas» de la mesa mide 40.8 px de alto y la
-  prueba exige 44 (`size="sm"` en `AccionesDeLaMesa.tsx`, igual que sus hermanos). Es un defecto de la parte, no de la unión:
-  el PR #51 queda abierto, sin unir. El resto de la CI está en verde. Arreglo probable: darle al botón 44 px al tacto.
+- **Arreglado antes de unir:** la primera CI falló (21-11, 00:21) en «Jornada completa», sólo en `agregar-mesas-al-tacto.spec.ts`
+  (tablet y teléfono): el botón «Agregar mesas» de la mesa medía 40.8 px de alto y la prueba exige 44 (`size="sm"` en
+  `AccionesDeLaMesa.tsx`, igual que sus hermanos). Era un defecto de la parte, no de la unión. El arreglo salió a las 02:12
+  (el botón a 44 px al tacto), se trajo `main` y con la CI en verde se unió.
+- **En producción (21-11, 03:17):** `main` en `548e216`, despliegue `dpl_9XuntdoUX62DQkZ1aCcDAocRakDr` en READY. Humo: 13 bien, 0 mal; `agregar-a-la-union` contesta 403; sin errores de ejecución; las 4 cuentas y las cajas, intactas.
 
 ## Parte 4 · Cocina por platillo, el aviso de «listo» y la mesa (PR #50)
 
@@ -208,7 +209,7 @@ siguieron donde iban y la sesión principal volvió a la Caja.
 | 2 · Quién quita y cancela | en producción (20-11, 22:25) |
 | 3 · El menú | en producción (20-11, 23:20); el menú quedó como la hoja (21-11, 01:35) |
 | 4 · Cocina por producto | en producción (21-11, 02:44) |
-| 5 · Unir mesas poco a poco | PR #51, arreglado el botón (44 px); trae main y en la CI |
+| 5 · Unir mesas poco a poco | en producción (21-11, 03:17) |
 | 6 · Impresión | en producción (20-11, 23:55) (la app de Android espera la prueba en el iMin) |
 | 7 · Lo que sólo se confirma | hecho con la Parte 2 |
 | 8 · Cero final | espera el «CERO FINAL» de Miguel |
