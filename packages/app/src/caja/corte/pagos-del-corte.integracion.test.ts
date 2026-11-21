@@ -141,6 +141,9 @@ describe('el corte trae cada pago, por separado', () => {
       );
       expect(ventas).toHaveLength(1);
       const pagos = ventas[0]?.pagos ?? [];
+      // Cada pago guarda la hora exacta en que se registró: los de un mismo cobro no empatan, así
+      // que su orden es el del cobro y no el azar de su id.
+      expect(new Set(pagos.map((p) => p.creadoEn)).size).toBe(3);
       expect(pagos.map((p) => p.metodo)).toEqual(['tarjeta', 'tarjeta', 'efectivo']);
       expect(pagos.map((p) => p.montoCentavos)).toEqual(['20000', '20000', '16400']);
       expect(pagos[2]).toMatchObject({
