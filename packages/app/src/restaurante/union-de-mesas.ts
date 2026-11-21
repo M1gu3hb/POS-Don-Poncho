@@ -12,9 +12,9 @@ import {
   mesaEnSala,
   separarMesas,
   unionAbiertaDeMesa,
-  unirMesas,
   type MesaEnSala,
 } from './sala-escrituras.ts';
+import { CUENTAS_VIVAS, unirMesas } from './union-escrituras.ts';
 import { loQueSeQuedaEnLaPrincipal, type LoQueSeQueda } from './al-separar.ts';
 import { bloquearElGrupo } from './union-del-salon.ts';
 
@@ -43,8 +43,8 @@ import { bloquearElGrupo } from './union-del-salon.ts';
  */
 
 /** Un tope técnico, no de negocio: el de negocio es el perímetro del grupo. */
-const MAXIMO_TECNICO = 40;
-const COORDENADA = z.number().int().min(0).max(10_000);
+export const MAXIMO_TECNICO = 40;
+export const COORDENADA = z.number().int().min(0).max(10_000);
 
 export const entradaUnirMesas = z.object({
   mesaPrincipalId: z.uuid(),
@@ -79,15 +79,7 @@ export interface ResultadoSeparacion extends LoQueSeQueda {
   readonly mesasLiberadas: number;
 }
 
-const ROLES = ['mesero', 'cajero', 'gerente', 'administrador', 'dueno'] as const;
-
-const CUENTAS_VIVAS = [
-  'borrador',
-  'confirmada',
-  'en_preparacion',
-  'lista',
-  'cuenta_solicitada',
-] as const;
+export const ROLES = ['mesero', 'cajero', 'gerente', 'administrador', 'dueno'] as const;
 
 interface Miembro {
   readonly mesa: MesaEnSala;
@@ -317,7 +309,7 @@ export const separarMesasComando = definirComando<
   },
 });
 
-async function exigirCuentaViva(
+export async function exigirCuentaViva(
   tx: Transaccion,
   organizacionId: string,
   ordenId: string,
@@ -338,7 +330,7 @@ async function exigirCuentaViva(
   }
 }
 
-async function guardarTotales(
+export async function guardarTotales(
   tx: Transaccion,
   organizacionId: string,
   ordenId: string,
@@ -368,7 +360,7 @@ async function guardarTotales(
  * posiciones en que quedaron (o donde ya están). Devuelve dónde estaba cada una ANTES, para que
  * separar las regrese.
  */
-async function revisarElGrupo(
+export async function revisarElGrupo(
   tx: Transaccion,
   organizacionId: string,
   ids: readonly string[],
@@ -403,7 +395,7 @@ async function revisarElGrupo(
  * ya se cobró son tres formas distintas de acabar con un grupo imposible; las
  * tres se cierran aquí, antes de escribir nada.
  */
-async function cargarMiembros(
+export async function cargarMiembros(
   tx: Transaccion,
   organizacionId: string,
   principal: MesaEnSala,

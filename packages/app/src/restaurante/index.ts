@@ -151,7 +151,14 @@ export {
   type ResultadoUnion,
 } from './union-de-mesas.ts';
 
-export { separarMesas, unionAbiertaDeMesa, unirMesas } from './sala-escrituras.ts';
+export {
+  agregarALaUnionComando,
+  entradaAgregarALaUnion,
+  type ResultadoAgregado,
+} from './agregar-a-la-union.ts';
+
+export { separarMesas, unionAbiertaDeMesa } from './sala-escrituras.ts';
+export { unirMesas } from './union-escrituras.ts';
 
 export {
   entradaRotacion,

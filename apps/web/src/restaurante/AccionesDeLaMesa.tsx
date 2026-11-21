@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from '@morphiqpos/ui/primitivas/dialog';
 import { Aviso, Esqueleto, Superficie, Vacio } from '@morphiqpos/ui/sistema';
-import { ArrowRightLeft, Combine, ReceiptText, Split, Users } from 'lucide-react';
+import { ArrowRightLeft, Combine, ReceiptText, Split, SquarePlus, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -20,6 +20,7 @@ import { mesasElegibles, type MesaElegible } from './mesas-elegibles';
 import { type MeseroElegible } from './pasar-la-mesa';
 import { PasarLaMesaDialog } from './PasarLaMesaDialog';
 import { PedirLaCuentaDialog } from './PedirLaCuentaDialog';
+import { AgregarMesasDialog } from './unir-mesas/AgregarMesasDialog';
 import { SepararMesasDialog } from './unir-mesas/SepararMesasDialog';
 
 /**
@@ -48,7 +49,8 @@ import { SepararMesasDialog } from './unir-mesas/SepararMesasDialog';
  * Sólo se unen mesas que quedan físicamente juntas, y eso se ve en el plano: «Unir mesas» lleva
  * al mapa del mesero con esta mesa ya elegida (`/mesero?unir=`), donde se arrastran o se juntan
  * con un toque. En la principal de un grupo vivo está «Separar mesas» (D-2): cada mesa vuelve a
- * su lugar y la cuenta se queda en ésta.
+ * su lugar y la cuenta se queda en ésta. DP-24 · P5: y «Agregar mesas», que le suma más mesas al
+ * grupo ya unido sin separarlo (`unir-mesas/AgregarMesasDialog`).
  *
  * ── Las tres son de sala ─────────────────────────────────────────────────
  * Ninguna mueve dinero fuera del negocio —el consumo es el mismo, cambia de sitio o de
@@ -71,7 +73,7 @@ export interface AccionesDeLaMesaProps {
   readonly alCambiarDeMesa: (mesaDestinoId: string) => void;
   /** DP-9.6 · El grupo vivo del que esta mesa es la principal; `null` si no encabeza uno. */
   readonly unionId: string | null;
-  /** Se separó el grupo: la pantalla relee la mesa. */
+  /** Se separó el grupo —o se le agregaron mesas—: la pantalla relee la mesa y su grupo. */
   readonly alSeparar: () => void;
   /**
    * DP-D156 · Pasar esta mesa a otro mesero. Ausente (o `null`) = no se ofrece: lo manda la pantalla
@@ -92,6 +94,7 @@ export function AccionesDeLaMesa(props: AccionesDeLaMesaProps) {
   const [cambiando, setCambiando] = useState(false);
   const [preguntandoLaPropina, setPreguntandoLaPropina] = useState(false);
   const [separando, setSeparando] = useState(false);
+  const [agregando, setAgregando] = useState(false);
   const [pasando, setPasando] = useState(false);
   const pasar = props.pasarLaMesa ?? null;
 
@@ -150,6 +153,18 @@ export function AccionesDeLaMesa(props: AccionesDeLaMesaProps) {
             size="sm"
             variant="outline"
             onClick={() => {
+              setAgregando(true);
+            }}
+          >
+            <SquarePlus aria-hidden="true" />
+            Agregar {voc.plural('unidad_servicio')}
+          </Button>
+        )}
+        {props.unionId === null ? null : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
               setSeparando(true);
             }}
           >
@@ -166,6 +181,19 @@ export function AccionesDeLaMesa(props: AccionesDeLaMesaProps) {
           }}
           alHecho={() => {
             setSeparando(false);
+            props.alSeparar();
+          }}
+        />
+      )}
+      {props.unionId === null || !agregando ? null : (
+        <AgregarMesasDialog
+          unionId={props.unionId}
+          principalId={props.mesaId}
+          alCerrar={() => {
+            setAgregando(false);
+          }}
+          alHecho={() => {
+            setAgregando(false);
             props.alSeparar();
           }}
         />

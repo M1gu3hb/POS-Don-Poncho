@@ -533,6 +533,13 @@
       "paquetes": ["restaurante"]
     },
     {
+      "ruta": "/api/restaurante/agregar-a-la-union",
+      "comando": "restaurante.agregar_a_la_union",
+      "escribe": true,
+      "roles": ["administrador", "cajero", "dueno", "gerente", "mesero"],
+      "paquetes": ["restaurante"]
+    },
+    {
       "ruta": "/api/restaurante/anular-linea",
       "comando": "restaurante.anular_linea",
       "escribe": true,
