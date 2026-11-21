@@ -773,6 +773,8 @@ jobs:
           pnpm test:e2e pruebas/e2e/personalizar-menu.spec.ts --project=escritorio --workers=1 --retries=0
           # DP-24 · Unir mesas poco a poco: «Agregar mesas» con el dedo, en la tableta y el teléfono del mesero.
           pnpm test:e2e pruebas/e2e/agregar-mesas-al-tacto.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
+          # DP-25 · P6 · Unir mesas con una mesa que ya está en un grupo: se agrega, sin error; desde cualquier mesa del grupo.
+          pnpm test:e2e pruebas/e2e/unir-poco-a-poco-sin-error.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-24 · La cocina por platillo, el aviso de «listo» y la mini jornada con bots. Van al final: dejan mesas y personas de prueba que
           # otras suites (cajas-del-negocio) no esperan.
           pnpm test:e2e pruebas/e2e/cocina-por-platillo.spec.ts --project=tablet --workers=1 --retries=0

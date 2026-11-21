@@ -19,6 +19,7 @@ import { consultarPuente, invocarComando } from '~/cliente/api';
 import { centavosDe } from '~/cliente/dinero-del-puente';
 
 import { AvisoDeMesasOcupadas, type MesaOcupada } from './AvisoDeMesasOcupadas';
+import { avisosDeLaUnion, type CuentaQuePaso } from './avisos-de-la-union';
 import { EligeElNumero } from './EligeElNumero';
 import { MesaQueTiembla, type Desplazamiento } from './MesaQueTiembla';
 import { SepararMesasDialog } from './SepararMesasDialog';
@@ -152,8 +153,19 @@ export function UnirMesasEnElMapa({
   };
 
   const tocar = (id: string) => {
-    if (ancla === null || ancla === id || esUnionViva(id) || esUnionViva(ancla)) {
+    if (ancla === null || ancla === id) {
       setAncla(ancla === id ? null : id);
+      return;
+    }
+    if (esUnionViva(id)) {
+      // DP-25 · P6: una mesa libre y luego un grupo: la libre se pega al grupo (se agrega a él).
+      // Un grupo y luego otro: se cambia a cuál se mira.
+      if (esUnionViva(ancla)) {
+        setAncla(id);
+      } else if (!grupo.includes(id)) {
+        const aqui = juntarAlGrupo(ancla, [id], plano);
+        mover(ancla, aqui.x, aqui.y);
+      }
       return;
     }
     if (grupo.includes(id)) return;
@@ -182,8 +194,8 @@ export function UnirMesasEnElMapa({
   );
   const arrastrada = arrastre === null ? undefined : vivo.find((m) => m.id === arrastre.id);
   const llamado = arrastrada === undefined ? null : vecinaQueLlama(arrastrada, vivo);
-  const grupo =
-    ancla === null || esUnionViva(ancla) ? (ancla === null ? [] : [ancla]) : grupoDe(ancla, vivo);
+  // DP-25 · P6: también con un grupo ya unido como ancla, las mesas que se le pegan entran a él.
+  const grupo = ancla === null ? [] : grupoDe(ancla, vivo);
   const delGrupo = vivo.filter((m) => grupo.includes(m.id));
   const fundida =
     grupo.length < 2 ? null : formaDeLaUnion(delGrupo.map((m) => ({ ...m, forma: formaDe(m.id) })));
@@ -194,6 +206,8 @@ export function UnirMesasEnElMapa({
       : limpieza !== null
         ? `La Mesa ${String(limpieza.numero)} está en limpieza: márcala libre primero.`
         : revisarUnion(delGrupo);
+  // El grupo que ya existe manda: su principal es la que queda, y a él entran las demás.
+  const principalDeSiempre = grupo.find((id) => esUnionViva(id)) ?? null;
   const unionDelAncla =
     useUnionDeLaMesa(ancla !== null && esUnionViva(ancla) ? ancla : null, 0)?.unionId ?? null;
 
@@ -215,9 +229,11 @@ export function UnirMesasEnElMapa({
 
   const pedirElNumero = async () => {
     // La mesa desde la que se entró (la suya, ya abierta) no se avisa: eso ya lo sabe quien une.
-    const conCuenta = conGente(grupo, mesas).filter((m) => m.id !== anclaInicial);
+    const conCuenta = conGente(grupo, mesas).filter(
+      (m) => m.id !== anclaInicial && m.id !== principalDeSiempre,
+    );
     if (conCuenta.length === 0) {
-      setPrincipal(ancla);
+      seguirConLaUnion(ancla);
       return;
     }
     const conTotales = await Promise.all(
@@ -241,17 +257,29 @@ export function UnirMesasEnElMapa({
     setOcupadas(conTotales);
   };
 
-  const unir = async () => {
-    if (principal === null) return;
+  // Con un grupo ya unido no hay nada que elegir: queda su principal. Sin él, se pregunta cuál.
+  const seguirConLaUnion = (elegida: string | null) => {
+    if (principalDeSiempre === null) setPrincipal(elegida);
+    else void unir(principalDeSiempre);
+  };
+
+  const unir = async (elegida: string | null = principal) => {
+    if (elegida === null) return;
     setEnviando(true);
     setFallo(null);
     try {
-      await invocarComando('/api/restaurante/unir-mesas', {
-        mesaPrincipalId: principal,
-        mesaIds: grupo.filter((id) => id !== principal),
-        posiciones: delGrupo.map((m) => ({ mesaId: m.id, x: Math.round(m.x), y: Math.round(m.y) })),
+      // Las mesas de un grupo ya unido se dibujan como una caja: su lugar no se manda (no se mueven).
+      const resultado = await invocarComando<{
+        readonly cuentasQuePasaron?: readonly CuentaQuePaso[];
+      }>('/api/restaurante/unir-mesas', {
+        mesaPrincipalId: elegida,
+        mesaIds: grupo.filter((id) => id !== elegida),
+        posiciones: delGrupo
+          .filter((m) => !esUnionViva(m.id))
+          .map((m) => ({ mesaId: m.id, x: Math.round(m.x), y: Math.round(m.y) })),
       });
-      toast.success(`Mesas unidas: queda la ${String(numeroDe(principal))}.`);
+      toast.success(`Mesas unidas: queda la ${String(numeroDe(elegida))}.`);
+      for (const aviso of avisosDeLaUnion(resultado.cuentasQuePasaron)) toast.info(aviso);
       alTerminar(true);
     } catch (error: unknown) {
       setPrincipal(null);
@@ -268,7 +296,8 @@ export function UnirMesasEnElMapa({
         titulo="Arrastra las mesas para juntarlas, o toca una y luego las que se le unen."
       >
         La vecina se acerca cuando la llevas cerca; al soltarla, se funden. Nada se guarda hasta
-        «Unir». Toca una mesa unida para separarla.
+        «Unir». Si una mesa se pega a un grupo ya unido, entra a ese grupo. Toca una mesa unida para
+        separarla.
       </Aviso>
       <Superficie
         ref={contenedor}
@@ -343,7 +372,11 @@ export function UnirMesasEnElMapa({
           onClick={() => void pedirElNumero()}
         >
           <Combine className="size-4" aria-hidden="true" />
-          {grupo.length < 2 ? 'Unir mesas' : `Unir ${String(grupo.length)} mesas`}
+          {grupo.length < 2
+            ? 'Unir mesas'
+            : principalDeSiempre === null
+              ? `Unir ${String(grupo.length)} mesas`
+              : 'Agregar al grupo'}
         </Button>
       </div>
       <AvisoDeMesasOcupadas
@@ -353,7 +386,7 @@ export function UnirMesasEnElMapa({
         }}
         alUnir={() => {
           setOcupadas(null);
-          setPrincipal(ancla);
+          seguirConLaUnion(ancla);
         }}
       />
       <EligeElNumero
@@ -365,7 +398,7 @@ export function UnirMesasEnElMapa({
         alCerrar={() => {
           setPrincipal(null);
         }}
-        alUnir={() => void unir()}
+        alUnir={() => void unir(principal)}
       />
       {unionDelAncla === null || !separando ? null : (
         <SepararMesasDialog

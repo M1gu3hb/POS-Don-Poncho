@@ -567,6 +567,8 @@ export interface OrdenLineas {
   /** F-423 · Quien lo hizo. Sin el, una cita con dos personas no se reparte. */
   profesional_id?: string | null;
   cita_servicio_id?: string | null;
+  /** DP-D226 · La mesa de la que vino el renglón al unir mesas (201). Nulo: es de la propia mesa. */
+  mesa_origen_numero: number | null;
   anulada_en: Date | null;
   /** F-323 · `inmediata` · `retenida` · `marchada`. */
   marcha_estado: Generated<string>;

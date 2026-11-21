@@ -206,23 +206,9 @@ describe('F-302 · lo que rechaza al unir', () => {
     expect(await codigoDe(() => unirMesasComando.ejecutar(ctx, UNIR))).toBe('MESA_YA_ABIERTA');
   });
 
-  it('LA PRINCIPAL ya encabeza otro grupo', async () => {
-    const base = baseDe({
-      uniones_mesa: [
-        {
-          id: UNION,
-          organizacion_id: '11111111-1111-4111-8111-111111111111',
-          sucursal_id: SUCURSAL,
-          mesa_principal_id: MESA_5,
-          orden_id: CUENTA,
-          cerrada_en: null,
-        },
-      ],
-    });
-    const { ctx } = contextoFalso(base.tx, ambitoDe('mesero'), AHORA);
-
-    expect(await codigoDe(() => unirMesasComando.ejecutar(ctx, UNIR))).toBe('MESA_YA_ABIERTA');
-  });
+  // DP-25 · P6 · «La principal ya encabeza otro grupo» YA NO SE RECHAZA: unir con una mesa que está
+  // en un grupo es agregar a ese grupo. La decisión pura está en `unir-con-un-grupo-vivo.test.ts` y
+  // el flujo, contra Postgres, en `unir-con-grupo-existente.integracion.test.ts`.
 
   it('unir la principal consigo misma', async () => {
     const base = baseDe();
