@@ -1,14 +1,20 @@
 import { expect, type Browser, type Locator, type Page, type TestInfo } from '@playwright/test';
 
 import { sesionDeLaCaja } from './conciliacion.ts';
-import { abrirLaCaja, dialogoDeLaMesa } from './mesas-heredadas.ts';
+import { abrirLaCaja, dialogoDeLaMesa, laMesa, yaAbierto } from './mesas-heredadas.ts';
 import { Equipo } from './roles.ts';
 import { cabecerasDeEscrituraDePrueba, vigilarFallos } from './sesion.ts';
 
 /**
- * CANCELAR DESDE LA MESA (DP-12.4), para la prueba de navegador: el día con caja abierta, el
- * toque (tacto real donde lo hay), quitar un platillo y cancelar la cuenta desde el diálogo de
- * la mesa, y lo que el corte del servidor dice de las cancelaciones.
+ * CANCELAR DESDE LA MESA (DP-12.4; DP-24 · Parte 2), para la prueba de navegador: el día con caja
+ * abierta, el toque (tacto real donde lo hay), quitar un platillo y cancelar la cuenta desde el
+ * diálogo de la mesa, y lo que el corte del servidor dice de las cancelaciones.
+ *
+ * DP-24 · Quitar lo ya enviado y cancelar la cuenta ya NO son del mesero: los hace la gerencia
+ * (la dueña, sin PIN) desde la pantalla de mesas, y la caja con el PIN de un gerente. Por eso
+ * `quitarUnPlatillo` y `cancelarLaCuenta` reciben la página de
+ * QUIEN LO HACE (`duena`): si no está en la mesa, entran a `/mesero` y la tocan. Lo que el mesero
+ * ve (nada) y lo que el servidor le contesta a mano, en `elMeseroNoPuede`.
  */
 
 export const SLUG = 'prueba-restaurante';
@@ -51,7 +57,7 @@ export async function empezarElDia(browser: Browser, info: TestInfo): Promise<Di
   const lupita = conTecho(await equipo.pagina(info, 'mesero'));
   const tono = conTecho(await equipo.pagina(info, 'cocina'));
   // El 422 de «sin PIN» es la respuesta que se espera al cancelar una cuenta pedida
-  // (`cancelarConElPinDelGerente`): se perdona sólo mientras se espera.
+  // (`cancelarComoCajaConElPin`): se perdona sólo mientras se espera.
   const vigilantes = [duena, rosa, lupita, tono].map((p) =>
     vigilarFallos(p, { sondeando: () => esperandoElRechazoDelPin }),
   );
@@ -131,6 +137,20 @@ export async function pedirLaCuenta(mesero: Page, ordenId: string): Promise<void
   expect(respuesta.status(), `solicitar-cuenta: ${await respuesta.text()}`).toBe(200);
 }
 
+/**
+ * DP-24 · Deja a `page` con el diálogo de la mesa ocupada abierto. Si `page` no está en la
+ * pantalla de mesas (la gerencia no vive en ella), entra a `/mesero`; si el diálogo no está, toca la mesa.
+ */
+export async function asegurarLaMesa(page: Page, mesa: number): Promise<void> {
+  const dialogo = dialogoDeLaMesa(page, mesa);
+  if (await dialogo.isVisible()) return;
+  if (!new URL(page.url(), 'http://x').pathname.endsWith('/mesero')) {
+    await page.goto('/mesero', { waitUntil: 'domcontentloaded' });
+  }
+  await laMesa(page, mesa).click();
+  await yaAbierto(dialogo);
+}
+
 /** Quita un platillo desde el diálogo de la mesa: lista, platillo, motivo y confirmar. */
 export async function quitarUnPlatillo(
   lupita: Page,
@@ -139,6 +159,7 @@ export async function quitarUnPlatillo(
   platillo: string,
   yaSalio: boolean,
 ): Promise<void> {
+  await asegurarLaMesa(lupita, mesa);
   const enLaMesa = dialogoDeLaMesa(lupita, mesa);
   await tocar(enLaMesa.getByRole('button', { name: 'Quitar un platillo' }), info);
   const lista = lupita.getByRole('dialog', { name: 'Quitar un platillo' });
@@ -165,6 +186,84 @@ export async function quitarUnPlatillo(
   await expect(anular).toBeHidden();
 }
 
+/**
+ * DP-24 · Lo que el MESERO ve y recibe: en el diálogo de su mesa ocupada no hay «Quitar un
+ * platillo» ni «Cancelar la cuenta»; y si manda el comando a mano, el servidor lo rechaza (403) y la
+ * cuenta sigue viva. `ordenId` es la cuenta de esa mesa; `lineaId`, uno de sus renglones.
+ */
+export async function elMeseroNoPuede(
+  mesero: Page,
+  mesa: number,
+  ordenId: string,
+  lineaId: string,
+): Promise<void> {
+  await asegurarLaMesa(mesero, mesa);
+  const enLaMesa = dialogoDeLaMesa(mesero, mesa);
+  await expect(enLaMesa.getByRole('button', { name: 'Quitar un platillo' })).toHaveCount(0);
+  await expect(
+    enLaMesa.getByRole('button', { name: 'Cancelar la cuenta', exact: true }),
+  ).toHaveCount(0);
+  const cancelar = await mesero.request.post('/api/restaurante/cancelar-orden', {
+    headers: cabecerasDeEscrituraDePrueba(),
+    data: { ordenId, motivo: 'a ver si deja' },
+  });
+  expect(cancelar.status(), 'El mesero canceló una cuenta.').toBe(403);
+  const quitar = await mesero.request.post('/api/restaurante/anular-linea', {
+    headers: cabecerasDeEscrituraDePrueba(),
+    data: { ordenId, lineaId, motivo: 'error_mesero' },
+  });
+  expect(quitar.status(), 'El mesero quitó un platillo ya enviado.').toBe(403);
+}
+
+/**
+ * DP-24 · La caja cancela una cuenta SIEMPRE con el PIN de un gerente (aquí por el comando, sin
+ * pantalla: la Caja la rehace otra parte). Sin PIN, 422 y la cuenta sigue viva; con el PIN de ESA
+ * cuenta, 200.
+ */
+export async function cancelarComoCajaConElPin(
+  caja: Page,
+  ordenId: string,
+  motivo: string,
+  gerente: { readonly nombre: string; readonly pin: string },
+): Promise<void> {
+  esperandoElRechazoDelPin = true;
+  try {
+    const sinPin = await caja.request.post('/api/restaurante/cancelar-orden', {
+      headers: cabecerasDeEscrituraDePrueba(),
+      data: { ordenId, motivo },
+    });
+    expect(sinPin.status(), 'La caja canceló sin el PIN de un gerente.').toBe(422);
+  } finally {
+    esperandoElRechazoDelPin = false;
+  }
+  const quienes = await caja.request.post('/api/venta/tope-de-descuento', {
+    headers: cabecerasDeEscrituraDePrueba(),
+    data: {},
+  });
+  const lista = (
+    (await quienes.json()) as {
+      readonly datos: {
+        readonly quienesAutorizan: readonly { empleoId: string; nombre: string }[];
+      };
+    }
+  ).datos.quienesAutorizan;
+  const elegido = lista.find((q) => q.nombre === gerente.nombre);
+  expect(elegido, `${gerente.nombre} no aparece entre quienes autorizan.`).toBeDefined();
+  const firmada = await caja.request.post('/api/identidad/supervisor', {
+    headers: cabecerasDeEscrituraDePrueba(),
+    data: { empleoId: elegido?.empleoId, pin: gerente.pin, ordenId, para: 'cancelacion' },
+  });
+  expect(firmada.status(), `supervisor: ${await firmada.text()}`).toBe(200);
+  const autorizacion = (
+    (await firmada.json()) as { readonly datos: { readonly autorizacion: string } }
+  ).datos.autorizacion;
+  const hecha = await caja.request.post('/api/restaurante/cancelar-orden', {
+    headers: cabecerasDeEscrituraDePrueba(),
+    data: { ordenId, motivo, autorizacion },
+  });
+  expect(hecha.status(), `cancelar-orden con PIN: ${await hecha.text()}`).toBe(200);
+}
+
 /** Cancela la cuenta desde el diálogo de la mesa, con su motivo, y exige (o no) el aviso de pérdida. */
 export async function cancelarLaCuenta(
   lupita: Page,
@@ -173,6 +272,7 @@ export async function cancelarLaCuenta(
   motivo: string,
   avisaDePerdida: boolean,
 ): Promise<void> {
+  await asegurarLaMesa(lupita, mesa);
   const enLaMesa = dialogoDeLaMesa(lupita, mesa);
   await tocar(enLaMesa.getByRole('button', { name: 'Cancelar la cuenta', exact: true }), info);
   const dialogo = lupita.getByRole('dialog', { name: 'Cancelar la cuenta' });
@@ -195,55 +295,5 @@ export async function cancelarLaCuenta(
   expect((await respuesta).status()).toBe(200);
   await expect(lupita.getByText('Cuenta cancelada').first()).toBeVisible();
   // La mesa vuelve al mapa: el diálogo se cierra.
-  await expect(enLaMesa).toHaveCount(0);
-}
-
-/**
- * DP-13.2 · Con la cuenta ya pedida, cancelar pide el PIN de un gerente: la primera vez el
- * servidor lo dice, el diálogo pide a quién y su PIN, y con esa autorización (de ESTA cuenta) la
- * cuenta se cancela.
- */
-export async function cancelarConElPinDelGerente(
-  lupita: Page,
-  info: TestInfo,
-  mesa: number,
-  motivo: string,
-  gerente: { readonly nombre: string; readonly pin: string },
-): Promise<void> {
-  const enLaMesa = dialogoDeLaMesa(lupita, mesa);
-  await tocar(enLaMesa.getByRole('button', { name: 'Cancelar la cuenta', exact: true }), info);
-  const dialogo = lupita.getByRole('dialog', { name: 'Cancelar la cuenta' });
-  await expect(dialogo.getByText('Comprobando lo que ya preparó la cocina…')).toHaveCount(0);
-  await dialogo.locator('#cancelar-cuenta-motivo').fill(motivo);
-  const confirmar = dialogo.getByRole('button', { name: 'Cancelar la cuenta sin cobrar' });
-  const rechazo = lupita.waitForResponse(
-    (r) => new URL(r.url()).pathname === '/api/restaurante/cancelar-orden',
-  );
-  esperandoElRechazoDelPin = true;
-  try {
-    await tocar(confirmar, info);
-    expect((await rechazo).status(), 'Sin PIN, la cuenta pedida se canceló.').toBe(422);
-  } finally {
-    esperandoElRechazoDelPin = false;
-  }
-  await expect(dialogo.getByText(/lo autoriza un gerente o el dueño/)).toBeVisible();
-  await expect(confirmar).toBeDisabled();
-  await tocar(
-    dialogo.getByRole('group', { name: 'Quién autoriza' }).getByRole('button', {
-      name: gerente.nombre,
-    }),
-    info,
-  );
-  await dialogo.locator('#cancelar-cuenta-pin').fill(gerente.pin);
-  await tocar(dialogo.getByRole('button', { name: 'Autorizar' }), info);
-  await expect(dialogo.getByText(`Autorizó ${gerente.nombre}.`)).toBeVisible();
-  const respuesta = lupita.waitForResponse(
-    (r) =>
-      new URL(r.url()).pathname === '/api/restaurante/cancelar-orden' &&
-      r.request().method() === 'POST',
-  );
-  await tocar(confirmar, info);
-  expect((await respuesta).status()).toBe(200);
-  await expect(lupita.getByText('Cuenta cancelada').first()).toBeVisible();
   await expect(enLaMesa).toHaveCount(0);
 }

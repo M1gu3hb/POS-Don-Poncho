@@ -6,6 +6,7 @@ import { escribirDatos } from '../puente/comandos.ts';
 import {
   ambitoDe,
   clave,
+  conPuestoDeGerencia,
   exigirOk,
   sembrarNegocio,
   sembrarSucursal,
@@ -149,7 +150,7 @@ describe('quitar una mesa del mapa', () => {
     exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId, motivo: 'se fueron sin consumir' },
-        ambito: ambito(),
+        ambito: conPuestoDeGerencia(ambito()),
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',

@@ -9,6 +9,7 @@ import { cancelarOrden } from './cancelacion.ts';
 import { liberarMesa } from './mesas.ts';
 import { dividirCuentaComando } from './division.ts';
 import {
+  cajera,
   cancelar,
   cobrar,
   como,
@@ -92,7 +93,7 @@ const laOrden = (id: string) =>
     .executeTakeFirstOrThrow();
 
 /** Lo que firma `/api/identidad/supervisor` cuando Gema teclea su PIN para la mesera. */
-const conPin = (parteId: string, solicita: string, ambito = como(solicita, 'mesero')) =>
+const conPin = (parteId: string, solicita: string, ambito = como(solicita, 'cajero')) =>
   comando(cancelarOrden, {
     entrada: {
       ordenId: parteId,
@@ -191,20 +192,25 @@ describe('cancelar una parte', () => {
 });
 
 describe('quién cancela una parte', () => {
-  it('la mesera que atiende la mesa necesita el PIN de un gerente (la parte ya se pidió)', async () => {
+  it('la cajera necesita el PIN de un gerente para cancelar una parte', async () => {
     const { partes } = await mesaDividida(6);
-    expect(codigo(await cancelar(partes[0] ?? '', mesero()))).toBe('PUESTO_NO_OTORGABLE');
+    const sinPin = await comando(cancelarOrden, {
+      entrada: { ordenId: partes[0] ?? '', motivo: 'El comensal ya no la paga' },
+      ambito: deLaCajera(),
+      idempotencyKey: clave(),
+    });
+    expect(codigo(sinPin)).toBe('PUESTO_NO_OTORGABLE');
     exigirOk(
-      await conPin(partes[0] ?? '', mesero().empleoId, mesero()),
+      await conPin(partes[0] ?? '', cajera, deLaCajera()),
       'cancelar con el PIN de la gerente',
     );
     expect((await laOrden(partes[0] ?? '')).estado).toBe('cancelada');
   });
 
-  it('otro mesero no cancela la parte de una mesa que no es suya, ni con PIN', async () => {
+  it('el mesero no cancela la parte de su mesa, ni con PIN: es de la caja y la gerencia', async () => {
     const { partes } = await mesaDividida(7);
-    expect(codigo(await cancelar(partes[0] ?? '', como(pablo, 'mesero')))).toBe('SIN_PERMISO');
-    expect(codigo(await conPin(partes[0] ?? '', pablo))).toBe('SIN_PERMISO');
+    expect(codigo(await conPin(partes[0] ?? '', mesero().empleoId, mesero()))).toBe('SIN_PERMISO');
+    expect(codigo(await conPin(partes[0] ?? '', pablo, como(pablo, 'mesero')))).toBe('SIN_PERMISO');
     expect((await laOrden(partes[0] ?? '')).estado).toBe('cuenta_solicitada');
   });
 

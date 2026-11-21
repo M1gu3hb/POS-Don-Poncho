@@ -19,7 +19,9 @@ import { invocarComando } from '~/cliente/api';
 import { useVocabulario } from '~/cliente/vocabulario';
 import { PinDeSupervisor, type Autorizada } from '~/venta/PinDeSupervisor';
 
+import { nuncaPideElPin, pideElPinSiempre } from './ajustes-de-la-cuenta-por-rol.ts';
 import { pideElPinDelSupervisor } from './permiso-al-cancelar.ts';
+import { useRolDeLaSesion } from './rol-de-la-sesion.ts';
 import type { Vocabulario } from '@morphiqpos/domain/vocabulario';
 
 /**
@@ -115,9 +117,13 @@ export function AnularLineaDialog({
   const [nota, setNota] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** DP-13.2 · La cuenta ya se pidió (o se imprimió): el servidor pide el PIN de un gerente. */
+  /** El servidor contestó que hace falta el PIN de un gerente. */
   const [pidePin, setPidePin] = useState(false);
   const [autorizada, setAutorizada] = useState<Autorizada | null>(null);
+  // DP-24 · La caja quita lo ya enviado SIEMPRE con el PIN de un gerente (se pide de entrada); la
+  // gerencia, nunca. El servidor es quien decide: esto sólo evita un rechazo seguro.
+  const rol = useRolDeLaSesion();
+  const necesitaPin = !nuncaPideElPin(rol) && (pidePin || pideElPinSiempre(rol));
 
   async function anular(): Promise<void> {
     if (motivo === null) return;
@@ -231,18 +237,18 @@ export function AnularLineaDialog({
         </div>
 
         {/* Qué pasó y, sobre todo, qué NO pasó: el platillo sigue cobrándose. */}
-        {error !== null && !(pidePin && autorizada === null) && (
+        {error !== null && !(necesitaPin && autorizada === null) && (
           <Aviso tono="peligro" titulo={error}>
             {estePlatillo} sigue en {voc.enFrase('orden')}: no se quitó nada.
           </Aviso>
         )}
 
-        {/* DP-13.2 · Con la cuenta ya pedida o impresa, el PIN de un gerente, para ESTA cuenta. */}
-        {!pidePin ? null : autorizada === null ? (
+        {/* DP-24 · La caja: el PIN de un gerente, administrador o dueño, para ESTA cuenta. */}
+        {!necesitaPin ? null : autorizada === null ? (
           <div className="flex flex-col gap-(--espacio-2)">
             <Aviso tono="atencion" titulo={error ?? 'Hace falta el PIN de un gerente o del dueño.'}>
-              {voc.conArticulo('orden')} ya se pidió o se imprimió: lo autoriza un gerente o el
-              dueño.
+              Quitar lo que ya se mandó a {voc.enFrase('preparacion')} lo autoriza un gerente,
+              administrador o dueño con su PIN.
             </Aviso>
             <PinDeSupervisor
               ordenId={ordenId}
@@ -272,7 +278,7 @@ export function AnularLineaDialog({
             variant="destructive"
             size="lg"
             cargando={enviando}
-            disabled={motivo === null || enviando || (pidePin && autorizada === null)}
+            disabled={motivo === null || enviando || (necesitaPin && autorizada === null)}
             onClick={() => {
               void anular();
             }}

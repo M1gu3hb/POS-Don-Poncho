@@ -21,6 +21,7 @@ import { DescuentoDeVenta, type DescuentoElegido } from '~/venta/DescuentoDeVent
 import { PinDeSupervisor, type Autorizada } from '~/venta/PinDeSupervisor';
 import { useDescuentosPermitidos } from '~/venta/use-descuentos-permitidos';
 
+import { nuncaPideElPin, pideElPinSiempre } from './ajustes-de-la-cuenta-por-rol.ts';
 import {
   NO_PUDE_COMPROBAR_LA_COCINA,
   SI_NO_PUDE_COMPROBARLA,
@@ -30,6 +31,7 @@ import {
   pideElPinDelSupervisor,
   type EstadoDeLaCocina,
 } from './permiso-al-cancelar.ts';
+import { useRolDeLaSesion } from './rol-de-la-sesion.ts';
 import {
   DEJARLAS_UNIDAS,
   EXPLICACION_DEL_GRUPO,
@@ -158,8 +160,11 @@ export function CancelarLaCuenta({
   const [motivo, setMotivo] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
-  /** DP-13.2 · La cuenta ya se pidió (o se imprimió): el servidor pide el PIN de un gerente. */
+  /** El servidor contestó que hace falta el PIN de un gerente. */
   const [pidePin, setPidePin] = useState(false);
+  // DP-24 · La caja cancela SIEMPRE con el PIN de un gerente (se pide de entrada); la gerencia,
+  // nunca. El servidor es quien decide: esto sólo evita un rechazo seguro.
+  const rol = useRolDeLaSesion();
   const [autorizada, setAutorizada] = useState<Autorizada | null>(null);
   // DP-14.6-7 · Si «Comprobando la cocina…» no contesta en 8 s, deja de esperar.
   const [vencida, setVencida] = useState(false);
@@ -180,7 +185,7 @@ export function CancelarLaCuenta({
   }, [abierto, cocinaLeida, intento]);
   const cocina = cocinaTrasElTiempo(cocinaLeida, vencida && abierto);
   const sinRespuesta = exigePinPorLaCocina(cocina, vencida && abierto);
-  const necesitaPin = pidePin || sinRespuesta;
+  const necesitaPin = !nuncaPideElPin(rol) && (pidePin || sinRespuesta || pideElPinSiempre(rol));
   const listo =
     motivo.trim().length >= 3 &&
     !enviando &&
@@ -294,7 +299,7 @@ export function CancelarLaCuenta({
               >
                 {sinRespuesta
                   ? 'No se pudo comprobar la cocina: lo autoriza un gerente o el dueño.'
-                  : `${voc.enFrase('orden')} ya se pidió o se imprimió: lo autoriza un gerente o el dueño.`}
+                  : 'Cancelar una cuenta lo autoriza un gerente, administrador o dueño con su PIN.'}
               </Aviso>
               <PinDeSupervisor
                 ordenId={ordenId}

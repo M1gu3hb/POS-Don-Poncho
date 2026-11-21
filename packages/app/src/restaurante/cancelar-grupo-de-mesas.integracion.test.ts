@@ -2,7 +2,7 @@ import { obtenerDb } from '@morphiqpos/data';
 import { describe, expect, it } from 'vitest';
 
 import { comando } from '../produccion.ts';
-import { clave, exigirOk } from '../pruebas/negocio-real.ts';
+import { clave, conPuestoDeGerencia, exigirOk } from '../pruebas/negocio-real.ts';
 import { cancelarOrden } from './cancelacion.ts';
 import {
   abrirLasCajas,
@@ -44,7 +44,7 @@ async function cancelarUnGrupo(nombre: string, grupo: 'separar' | 'mantener' | u
   const resultado = exigirOk(
     await comando(cancelarOrden, {
       entrada: { ordenId: a.ordenId, motivo: MOTIVO, ...(grupo === undefined ? {} : { grupo }) },
-      ambito: ambitoDeCaja(salon),
+      ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
       idempotencyKey: clave(),
     }),
     'restaurante.cancelar_orden (el grupo)',
@@ -100,7 +100,7 @@ describe('DP-18 · cancelar la cuenta de mesas unidas', () => {
     const resultado = exigirOk(
       await comando(cancelarOrden, {
         entrada: { ordenId: a.ordenId, motivo: MOTIVO, grupo: 'separar' },
-        ambito: ambitoDeCaja(salon),
+        ambito: conPuestoDeGerencia(ambitoDeCaja(salon)),
         idempotencyKey: clave(),
       }),
       'restaurante.cancelar_orden',

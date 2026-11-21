@@ -233,7 +233,8 @@ export async function sembrarUnDia(nombre: string): Promise<DiaSembrado> {
         cantidad: '1',
         motivo: MOTIVOS_ANULACION[0],
       },
-      ambito: caja,
+      // DP-24 · Quitar lo ya enviado es de la gerencia (o de la caja con PIN): aquí, sin PIN.
+      ambito: { ...caja, rol: 'gerente' },
       idempotencyKey: clave(),
     }),
     'restaurante.anular_linea',
