@@ -218,8 +218,13 @@ export default function Cocina() {
       .map((p) => p?.item?.id)
       .filter(Boolean)
       .map((id) => ({ id, toque: ponerToque(id, parche) }));
+    // DP-25 · P4: la fila es POR CUENTA. Con una sola fila para toda la cocina, cada toque esperaba
+    // a todos los de las demás mesas (y con la pantalla cargada el último «Listo» llegaba al
+    // servidor segundos después de verse hecho). El servidor ya serializa por cuenta; lo que
+    // importa es que los toques de UNA cuenta salgan en orden, y las demás no se esperen.
+    const cuenta = platillos.find((p) => p?.comanda?.venta_id)?.comanda?.venta_id ?? 'cocina';
     try {
-      await fila.encolar('cocina', enviar);
+      await fila.encolar(cuenta, enviar);
       await queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
     } catch (e) {
       queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
