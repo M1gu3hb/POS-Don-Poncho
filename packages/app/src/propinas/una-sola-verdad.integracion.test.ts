@@ -349,7 +349,12 @@ describe(`la propina del portal y la de la Caja, ${String(VECES)} veces cada cas
 describe('quién puede elegir la propina (M12)', () => {
   const pedirComoMesero = (ordenId: string) =>
     comando(solicitarCuenta, {
-      entrada: { ordenId, propinaTipo: 'porcentaje', propinaPuntosBase: 2000 },
+      entrada: {
+        ordenId,
+        propinaTipo: 'porcentaje',
+        propinaPuntosBase: 2000,
+        aunConPendientes: true,
+      },
       ambito,
       idempotencyKey: clave(),
     });
@@ -366,7 +371,12 @@ describe('quién puede elegir la propina (M12)', () => {
     const { ordenId } = await mesaConCuenta();
     exigirOk(
       await comando(solicitarCuenta, {
-        entrada: { ordenId, propinaTipo: 'pendiente_cliente', propinaPuntosBase: 0 },
+        entrada: {
+          ordenId,
+          propinaTipo: 'pendiente_cliente',
+          propinaPuntosBase: 0,
+          aunConPendientes: true,
+        },
         ambito,
         idempotencyKey: clave(),
       }),

@@ -69,7 +69,10 @@ test.describe('el modo espera', () => {
       await expect(espera(caja)).toBeVisible();
 
       const ordenId = await comandaNueva(duena);
-      await escribir(duena, '/api/restaurante/solicitar-cuenta', { ordenId });
+      await escribir(duena, '/api/restaurante/solicitar-cuenta', {
+        aunConPendientes: true,
+        ordenId,
+      });
       // La caja lee cada 2 s: con el reloj detenido, se le dan unas vueltas.
       await caja.clock.runFor(6_000);
       await expect(espera(caja)).toHaveCount(0);

@@ -248,6 +248,14 @@ export async function pedirLaCuentaQa(
       await pregunta.getByRole('button', { name: 'Aplicar' }).click();
     }
   }
+  // DP-25 · Si a la mesa le faltan platillos por entregar, el aviso se acepta: aquí se prueba otra cosa.
+  const avisoDePendientes = page.getByRole('dialog', {
+    name: 'A esta mesa todavía le faltan platillos',
+  });
+  await expect(avisoDePendientes.or(precuenta)).toBeVisible({ timeout: 30_000 });
+  if (await avisoDePendientes.isVisible()) {
+    await avisoDePendientes.getByRole('button', { name: 'Pedir la cuenta de todos modos' }).click();
+  }
   await yaAbierto(precuenta);
   const codigo = /M\d{2}-\d{4}/.exec(await precuenta.innerText())?.[0] ?? '';
   expect(codigo, 'La precuenta no trae el código para caja.').not.toBe('');

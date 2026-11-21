@@ -150,6 +150,11 @@ export const entradaCancelarOrden = z.object({
 export const entradaSolicitarCuenta = z.object({
   ordenId: z.uuid(),
   /**
+   * DP-25 · La confirmación explícita de quien pide la cuenta viendo el aviso de platillos sin
+   * entregar. Sin ella y con pendientes, el servidor rechaza con `CUENTA_CON_PENDIENTES`.
+   */
+  aunConPendientes: z.boolean().optional(),
+  /**
    * Lo que el mesero eligió en el diálogo de propina, en puntos base enteros:
    * `62.5 %` es `6250`. `0.16` no existe exacto en punto flotante; los puntos
    * base sí (F1-04, transformación T-PORCENTAJE).

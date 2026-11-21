@@ -117,6 +117,7 @@ test.describe('visual pendientes · el mesero', () => {
       ]);
       await mandar(lupita, '/api/restaurante/solicitar-cuenta', {
         ordenId: abierta.ordenId,
+        aunConPendientes: true,
         propinaTipo: 'sin_propina',
       });
       await lupita.goto('/mesero', { waitUntil: 'domcontentloaded' });

@@ -4206,3 +4206,25 @@ Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sust
 - Al terminar el corte (con su PDF) se ofrece «Liquidar propinas» a la gerencia: es la del Tablero (la caja ya cerró).
 - **Quién aparece**, aquí y en el Tablero: sólo quien vende, cobra o atiende cuentas (mesero, cajero, gerente, administrador o
   dueño). Nunca cocina, bebidas ni almacén. La atribución de cada propina (quien atendió la cuenta) no cambió.
+
+## DP-D224 · DP-25 · Pedir la cuenta con platillos sin entregar: se avisa en el servidor y se pide con confirmación · 21-11-2026
+
+- **Contexto.** El mesero podía pedir la cuenta con la mesa todavía esperando platillos, sin enterarse: la cuenta salía con lo
+  que faltaba por llegar y la Caja la cobraba. En la capacitación se pidió que se pueda pedir (a veces la mesa se va), pero
+  sabiéndolo.
+- **Decisión.** `restaurante.solicitar_cuenta` recibe `aunConPendientes` (booleano). Sin él, si la cuenta tiene platillos vivos
+  que no están entregados, rechaza con la regla `CUENTA_CON_PENDIENTES` y NO escribe nada. La lista viaja en `datos.pendientes`
+  (texto JSON, porque los datos de un error sólo llevan escalares) y va por estación, en dos bloques: «sin preparar» (nuevo y en
+  preparación) y «listos sin entregar». Entregado y cancelado no cuentan; con todo entregado se pide normal. La estación es el
+  nombre que la comanda guardó (como esté configurada).
+- **Dónde vive.** En el servidor, para que valga igual en la tableta del mesero, en el mapa del administrador y en cualquier
+  pantalla futura. Las dos pantallas que piden la cuenta (`Mesero.jsx` y `PedirLaCuentaDialog`) abren el mismo aviso
+  (`AvisoDePendientesDeLaCuenta`): «Regresar» no cambia nada y «Pedir la cuenta de todos modos» reintenta con la confirmación
+  (con otra clave de idempotencia, porque el cuerpo cambia).
+- **Lo que NO cambia.** `portal.pedir_cuenta` (el comensal por el QR) no se bloquea: le llega al mesero, que ve el aviso al pedirla.
+  `restaurante.imprimir_precuenta` no cambia el estado de la cuenta, así que no lleva la regla. La Caja no pide cuentas: cobra
+  las ya pedidas. Los roles de `solicitar_cuenta` son los mismos.
+- **Alternativas descartadas.** La confirmación por omisión (anula la regla); bloquear la cuenta mientras haya pendientes (la
+  mesa que se va no podría pagar); avisar sólo en la pantalla (cada pantalla nueva se olvidaría).
+- **Consecuencias.** Toda prueba que pida la cuenta sin haber entregado debe mandar `aunConPendientes: true` (o entregar
+  antes): se adaptaron las de integración y las e2e sin quitarles afirmaciones. No hay migración.
