@@ -27,7 +27,9 @@ describe('el diálogo de cancelar, sin la cocina', () => {
     expect(fuente).toMatch(
       /const sinRespuesta = exigePinPorLaCocina\(cocina, vencida && abierto\);/,
     );
-    expect(fuente).toMatch(/const necesitaPin = pidePin \|\| sinRespuesta;/);
+    expect(fuente).toMatch(
+      /const necesitaPin =\s*!nuncaPideElPin\(rol\) && \(pidePin \|\| sinRespuesta \|\| pideElPinSiempre\(rol\)\);/,
+    );
     expect(fuente).toMatch(/\(!necesitaPin \|\| autorizada !== null\)/);
   });
 });

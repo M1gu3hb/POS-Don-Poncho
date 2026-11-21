@@ -33,14 +33,14 @@ import {
 } from './permiso-al-cancelar.ts';
 
 /**
- * CANCELAR DESDE LA MESA DEL MESERO (DP-12.4): quitar un platillo y cancelar la cuenta.
+ * QUITAR LO YA ENVIADO Y CANCELAR LA CUENTA, desde la mesa (DP-12.4; DP-24 · Parte 2).
  *
- * Hasta ahora una cuenta o un platillo mal pedido se le pedía al cajero; la mesa del cliente que
- * se va sin pagar quedaba clavada hasta que alguien con permiso la soltara. El servidor ya deja al
- * mesero (`restaurante.anular_linea`, `restaurante.cancelar_orden`: por rol y por sucursal); aquí
- * está lo que ve en SU diálogo de la mesa ocupada: dos botones, y los mismos diálogos de la caja,
- * con el motivo obligatorio. Si la cocina ya preparó algo se le dice ANTES, con esas palabras:
- * queda como pérdida en el corte, con su nombre.
+ * DP-24 · El MESERO ya no lo ve: el servidor se lo niega (`restaurante.anular_linea` y
+ * `restaurante.cancelar_orden` son de caja y de gerencia), y lo que todavía no manda a cocina lo
+ * quita de su carrito. Aquí sólo se muestra a quien puede (`puedeCancelarPedidos`): la caja, que
+ * siempre teclea el PIN de un gerente, y la gerencia, que no. Dos botones y los mismos diálogos
+ * de la caja, con el motivo obligatorio. Si la cocina ya preparó algo se le dice ANTES, con esas
+ * palabras: queda como pérdida en el corte, con su nombre.
  *
  * Se monta una vez en `Mesero.jsx` y no tiene más contacto con la página que dos avisos:
  * `alActualizar` (la cuenta releída, sin los renglones anulados) y `alCancelarLaCuenta`.

@@ -202,7 +202,8 @@ describe('cancelar sin poder comprobar la cocina', () => {
       const { ordenId } = await sentarYPedir(salon, 5, PEDIDO);
       const r = await comando(cancelarOrden, {
         entrada: { ordenId, motivo: 'Capturé mal la mesa' },
-        ambito: comoCajera(),
+        // DP-24 · Sin el PIN no cancela la caja: lo hace la gerencia.
+        ambito: comoGema(),
         idempotencyKey: clave(),
       });
       expect(codigo(r)).toBe('ok');

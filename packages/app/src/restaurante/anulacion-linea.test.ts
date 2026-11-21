@@ -74,7 +74,7 @@ async function codigoDe(fn: () => Promise<unknown>): Promise<string> {
 describe('F-324 · anular la línea entera', () => {
   it('la línea queda sellada con motivo y responsable', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     await anularLineaComando.ejecutar(ctx, ENTERA);
 
@@ -86,7 +86,7 @@ describe('F-324 · anular la línea entera', () => {
 
   it('LA CUENTA BAJA DE TOTAL — si no, el cliente paga lo que se le anuló', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     const salida = await anularLineaComando.ejecutar(ctx, ENTERA);
 
@@ -98,7 +98,7 @@ describe('F-324 · anular la línea entera', () => {
 
   it('COCINA DEJA DE PREPARARLO', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     const salida = await anularLineaComando.ejecutar(ctx, ENTERA);
 
@@ -121,7 +121,7 @@ describe('F-324 · anular la línea entera', () => {
 
   it('deja bitácora con el motivo, que la 070 exige para este tipo', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     await anularLineaComando.ejecutar(ctx, { ...ENTERA, nota: 'se cayó al piso' });
 
@@ -134,7 +134,7 @@ describe('F-324 · anular la línea entera', () => {
 
   it('audita qué se anuló y cuánto costó', async () => {
     const base = baseDe();
-    const { ctx, auditorias } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx, auditorias } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     await anularLineaComando.ejecutar(ctx, ENTERA);
 
@@ -147,7 +147,7 @@ describe('F-324 · anular la línea entera', () => {
 describe('F-324 · anular PARTE de una línea', () => {
   it('la línea viva se queda con lo que sigue cobrándose', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     const salida = await anularLineaComando.ejecutar(ctx, { ...ENTERA, cantidad: '1.0000' });
 
@@ -160,7 +160,7 @@ describe('F-324 · anular PARTE de una línea', () => {
 
   it('nace una fila hermana con la porción anulada y su sello', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     const salida = await anularLineaComando.ejecutar(ctx, { ...ENTERA, cantidad: '1.0000' });
 
@@ -177,7 +177,7 @@ describe('F-324 · anular PARTE de una línea', () => {
 
   it('LA CUENTA BAJA SÓLO LO ANULADO, ni un centavo más', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     const salida = await anularLineaComando.ejecutar(ctx, { ...ENTERA, cantidad: '1.0000' });
 
@@ -187,7 +187,7 @@ describe('F-324 · anular PARTE de una línea', () => {
 
   it('cocina hace DOS en vez de tres, no cero', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     const salida = await anularLineaComando.ejecutar(ctx, { ...ENTERA, cantidad: '1.0000' });
 
@@ -203,7 +203,7 @@ describe('F-324 · lo que rechaza', () => {
     const base = baseDe({}, [
       linea({ anulada_en: new Date('2026-09-14T00:00:00.000Z'), motivo_anulacion: 'cortesia' }),
     ]);
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     expect(await codigoDe(() => anularLineaComando.ejecutar(ctx, ENTERA))).toBe(
       'ORDEN_NO_EDITABLE',
@@ -212,7 +212,7 @@ describe('F-324 · lo que rechaza', () => {
 
   it('UNA CUENTA YA COBRADA — eso es una devolución, y tiene su propio camino', async () => {
     const base = baseDe({ estado: 'pagada' });
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     expect(await codigoDe(() => anularLineaComando.ejecutar(ctx, ENTERA))).toBe(
       'ORDEN_NO_EDITABLE',
@@ -221,7 +221,7 @@ describe('F-324 · lo que rechaza', () => {
 
   it('una cuenta de otro negocio se ve como inexistente', async () => {
     const base = baseDe({ organizacion_id: '00000000-0000-4000-8000-000000000000' });
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     expect(await codigoDe(() => anularLineaComando.ejecutar(ctx, ENTERA))).toBe(
       'ORDEN_NO_ENCONTRADA',
@@ -230,7 +230,7 @@ describe('F-324 · lo que rechaza', () => {
 
   it('anular más de lo que la línea tiene', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     expect(
       await codigoDe(() => anularLineaComando.ejecutar(ctx, { ...ENTERA, cantidad: '9.0000' })),
@@ -239,7 +239,7 @@ describe('F-324 · lo que rechaza', () => {
 
   it('NO ESCRIBE NADA cuando la cantidad no cabe', async () => {
     const base = baseDe();
-    const { ctx } = contextoFalso(base.tx, ambitoDe('cajero'));
+    const { ctx } = contextoFalso(base.tx, ambitoDe('gerente'));
 
     await codigoDe(() => anularLineaComando.ejecutar(ctx, { ...ENTERA, cantidad: '9.0000' }));
 
@@ -250,8 +250,8 @@ describe('F-324 · lo que rechaza', () => {
 });
 
 describe('F-324 · quién anula, y qué puede mandar', () => {
-  it('DP-12.4 · el mesero SÍ anula un platillo; cocina y almacén no', () => {
-    expect(anularLineaComando.roles).toContain('mesero');
+  it('DP-24 · el mesero NO quita lo ya enviado; la caja y la gerencia sí; cocina y almacén no', () => {
+    expect(anularLineaComando.roles).not.toContain('mesero');
     expect(anularLineaComando.roles).toContain('cajero');
     expect(anularLineaComando.roles).not.toContain('cocina');
     expect(anularLineaComando.roles).not.toContain('almacen');
@@ -260,7 +260,6 @@ describe('F-324 · quién anula, y qué puede mandar', () => {
       'cajero',
       'dueno',
       'gerente',
-      'mesero',
     ]);
   });
 

@@ -47,6 +47,15 @@ export interface SucursalReal {
   readonly terminales: readonly string[];
 }
 
+/**
+ * DP-24 · Quien cancela o quita lo ya enviado es la gerencia (sin PIN) o la caja (con el PIN de un
+ * gerente); el mesero ya no. Para las pruebas que miran OTRA cosa (el corte, la merma, la cocina…):
+ * pone a la persona del mesero o de la caja en el puesto de gerente y conserva su empleo (cocina y
+ * almacén se quedan como están), así que el corte sigue diciendo quién canceló. Para probar el permiso se manda el comando directo, con el ámbito de verdad.
+ */
+export const conPuestoDeGerencia = (ambito: Ambito): Ambito =>
+  ambito.rol === 'mesero' || ambito.rol === 'cajero' ? { ...ambito, rol: 'gerente' } : ambito;
+
 /** Una clave de idempotencia nueva: cada acción de la prueba es una petición distinta. */
 export function clave(): string {
   return randomUUID();

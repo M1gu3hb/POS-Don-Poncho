@@ -8,8 +8,10 @@ import { cancelarOrden } from './cancelacion.ts';
 import { anularLineaComando } from './anulacion-linea.ts';
 
 import {
+  cajera,
   cancelar,
   cuenta,
+  deLaCajera,
   delCorte,
   mesero,
   negocio,
@@ -19,8 +21,8 @@ import {
 /**
  * DP-D179 · QUIÉN AUTORIZÓ UNA CANCELACIÓN SALE EN EL CORTE Y EN REGISTROS, contra Postgres.
  *
- * Con la cuenta ya pedida (o su precuenta impresa) cancelar o quitar un platillo lleva el PIN de un
- * gerente, y la auditoría guardaba quién (`autorizadoPor`); la lectura que arma el corte y
+ * Cancelar o quitar un platillo lleva el PIN de un gerente cuando lo hace la caja (DP-24: siempre; antes,
+ * con la cuenta pedida o impresa), y la auditoría guardaba quién (`autorizadoPor`); la lectura que arma el corte y
  * Registros no lo traía, así que el papel decía quién canceló y por qué pero no quién lo dejó.
  */
 
@@ -43,7 +45,7 @@ function autorizacion(cuentaId: string, para: CargaDeAutorizacion['para'] = 'can
       org: negocio.organizacionId,
       supervisor: gema,
       rol: 'gerente',
-      solicita: negocio.empleoId,
+      solicita: cajera,
       exp: Math.floor(Date.now() / 1000) + 120,
       n: `prueba-${clave().slice(0, 8)}`,
       para,
@@ -68,7 +70,7 @@ describe('la cancelación dice quién la autorizó', () => {
     await imprimida(ordenId);
     const hecha = await comando(cancelarOrden, {
       entrada: { ordenId, motivo: 'Se fueron sin pagar', autorizacion: autorizacion(ordenId) },
-      ambito: mesero(),
+      ambito: deLaCajera(),
       idempotencyKey: clave(),
     });
     expect(hecha.ok).toBe(true);
@@ -85,14 +87,14 @@ describe('la cancelación dice quién la autorizó', () => {
         motivo: 'error_mesero',
         autorizacion: autorizacion(ordenId),
       },
-      ambito: mesero(),
+      ambito: deLaCajera(),
       idempotencyKey: clave(),
     });
     expect(hecha.ok).toBe(true);
     expect(await delCorte(mesa)).toMatchObject([{ tipo: 'linea', autorizo: 'Gema' }]);
   });
 
-  it('lo que no necesitó autorización (cuenta sin pedir) sale sin autorizó, no con otro nombre', async () => {
+  it('lo que no necesitó autorización (la gerencia cancela sin PIN) sale sin autorizó, no con otro nombre', async () => {
     const { ordenId, mesa } = await cuenta(3, ['1']);
     expect((await cancelar(ordenId, mesero(), 'Capturé mal')).ok).toBe(true);
     const [fila] = await delCorte(mesa);
