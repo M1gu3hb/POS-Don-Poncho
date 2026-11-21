@@ -152,6 +152,7 @@ export function AccionesDeLaMesa(props: AccionesDeLaMesaProps) {
           <Button
             size="sm"
             variant="outline"
+            className="any-pointer-coarse:min-h-(--altura-tactil)"
             onClick={() => {
               setAgregando(true);
             }}
