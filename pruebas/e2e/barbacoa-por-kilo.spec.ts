@@ -44,12 +44,16 @@ const ATAJOS: ReadonlySet<number> = new Set([0.25, 0.5, 1]);
 /** Agrega UN peso desde el diálogo de cantidad: con su atajo si lo tiene, si no tecleándolo. */
 async function agregarPeso(page: Page, kilos: number, dicho: string): Promise<void> {
   const mesa = dialogoDeLaMesa(page, MESA);
-  await mesa
-    .getByRole('button', { name: new RegExp(`^${BARBACOA.nombre}`) })
-    .first()
-    .click();
   const cantidad = page.getByRole('dialog', { name: BARBACOA.nombre });
-  await expect(cantidad).toBeVisible();
+  // El menú se vuelve a pintar al llegar cada pedido: un toque que cae en ese instante se pierde.
+  // Se repite hasta que el diálogo de la cantidad aparece (lo que se prueba empieza después).
+  await expect(async () => {
+    await mesa
+      .getByRole('button', { name: new RegExp(`^${BARBACOA.nombre}`) })
+      .first()
+      .click({ timeout: 5_000 });
+    await expect(cantidad).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 25_000 });
   if (ATAJOS.has(kilos)) {
     await cantidad.getByRole('button', { name: dicho, exact: true }).click();
   } else {
