@@ -186,6 +186,12 @@ export const entradaLiquidarPropinas = z.object({
    */
   entregarDeLaCaja: z.boolean().optional(),
   /**
+   * DP-25 · DE QUÉ CAJA sale el dinero cuando se liquida desde el Tablero (con `entregarDeLaCaja`):
+   * la gerencia elige una de las cajas abiertas de la sucursal. Sin esto, la del corte: la caja
+   * abierta en este aparato. La cajera sólo entrega de la suya.
+   */
+  sesionCajaId: identificador.optional(),
+  /**
    * DP-24 · La autorización firmada del PIN de un gerente, administrador o dueño, cuando quien
    * liquida desde el corte es la cajera. Atada al importe que se entrega y de un solo uso (la
    * misma pieza del retiro con PIN, `para: 'retiro'`: es dinero que sale del cajón).

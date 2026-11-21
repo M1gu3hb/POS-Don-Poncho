@@ -3226,6 +3226,75 @@
         "- clase:pb-1",
         "- texto:Todos"
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/propinas/LiquidarPropinasDialog.jsx",
+      "porque": "DP-25 · DP-D220 (liquidar desde el Tablero; lo pidió Miguel tras la capacitación): con cajas abiertas el diálogo pregunta «¿De dónde sale el dinero?» (el cajón de cada caja abierta, o «Fuera de la caja»), avisa cuánto sale de qué cajón y, sin ninguna caja abierta, dice que queda pagada fuera de la caja. Nada más de su aspecto cambia.",
+      "testigos": [
+        "+ clase:text-xs",
+        "+ clase:text-xs",
+        "+ clase:text-xs",
+        "+ clase:font-semibold",
+        "+ clase:rounded-lg",
+        "+ clase:bg-muted/40",
+        "+ clase:p-3",
+        "+ clase:rounded-xl",
+        "+ clase:border",
+        "+ clase:border-exito/30",
+        "+ clase:text-muted-foreground",
+        "+ clase:px-3",
+        "+ clase:py-2",
+        "+ clase:text-sm",
+        "+ clase:font-medium",
+        "+ clase:border-2",
+        "+ clase:${",
+        "+ clase:===",
+        "+ clase:?",
+        "+ clase:'bg-exito/10",
+        "+ clase:text-exito'",
+        "+ clase::",
+        "+ clase:'bg-superficie",
+        "+ clase:border-border",
+        "+ clase:}",
+        "+ clase:text-info",
+        "+ clase:space-y-2",
+        "+ clase:w-full",
+        "+ clase:text-left",
+        "+ clase:any-pointer-coarse:min-h-(--altura-tactil)",
+        "+ clase:cajaElegida",
+        "+ clase:opcion.id",
+        "+ clase:text-foreground'",
+        "+ texto:¿De dónde sale el dinero?",
+        "+ texto:No hay ninguna caja abierta: esta liquidación queda pagada fuera de la caja.",
+        "+ aviso:Elige de qué caja sale el dinero, o si se paga fuera de la caja.",
+        "+ aviso:No se pudieron leer las cajas abiertas."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/propinas/PropinasRegistros.jsx",
+      "porque": "DP-25 · DP-D220: cada liquidación del historial dice de dónde salió el dinero («Salió del cajón» o «Fuera de la caja»). Nada más cambia.",
+      "testigos": ["+ clase:text-[10px]"]
+    },
+    {
+      "archivo": "apps/web/heredado/components/tickets/TicketViewerDialog.jsx",
+      "porque": "DP-25 · DP-D222 (cada pago por separado; lo pidió Miguel): bajo el ticket, sin imprimirse, la lista de los pagos de la venta («Tarjeta 1», «Tarjeta 2», «Efectivo» con lo recibido y el cambio, y la propina de cada uno), pieza nueva fuera del heredado (~/venta/PagosDeLaVenta). El ticket no cambia.",
+      "testigos": [
+        "+ clase:no-print",
+        "+ clase:text-muted-foreground",
+        "+ clase:px-4",
+        "+ clase:pb-4",
+        "+ clase:text-xs",
+        "+ texto:No se pudieron leer los pagos de esta venta."
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Ventas.jsx",
+      "porque": "DP-25 · DP-D222: el detalle de la venta lista cada pago por separado (la misma pieza nueva ~/venta/PagosDeLaVenta) bajo sus productos. Nada más de su aspecto cambia.",
+      "testigos": [
+        "+ clase:text-muted-foreground",
+        "+ clase:text-xs",
+        "+ texto:No se pudieron leer los pagos de esta venta."
+      ]
     }
   ]
 }

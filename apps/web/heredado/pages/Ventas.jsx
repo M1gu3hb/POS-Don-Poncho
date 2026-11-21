@@ -35,6 +35,7 @@ import TicketViewerDialog from '@/components/tickets/TicketViewerDialog';
 import { useConfig } from '@/lib/ConfigContext';
 import { MargenEnLaLista } from '~/restaurante/MargenDeLaVenta';
 import { cantidadEnLaLista } from '~/restaurante/peso';
+import { PagosDeLaVenta } from '~/venta/PagosDeLaVenta';
 import {
   RECETA_INCOMPLETA,
   SIN_RECETA,
@@ -110,6 +111,13 @@ export default function Ventas() {
     queryFn: () => api.entidades.RenglonQuitado.filter({ venta_id: selectedVenta.id }),
     enabled: !!selectedVenta,
   });
+  // DP-25 · Los pagos de la venta, uno por uno.
+  const { data: pagosLeidos, isError: pagosFallaron } = useQuery({
+    queryKey: ['pagos_de_la_venta', selectedVenta?.id],
+    queryFn: () => api.entidades.PagoDeVenta.filter({ venta_id: selectedVenta.id }),
+    enabled: !!selectedVenta,
+  });
+  const pagosDeLaVenta = Array.isArray(pagosLeidos) ? pagosLeidos : SIN_FILAS;
   const quitados = Array.isArray(quitadosLeidos) ? quitadosLeidos : SIN_FILAS;
   const cargandoDetalles = !!selectedVenta && detallesLeidos === undefined && !detallesFallaron;
 
@@ -459,6 +467,15 @@ export default function Ventas() {
                   ))}
                 </div>
               </div>
+
+              {/* DP-25 · Cada pago, por separado: «Tarjeta 1», «Tarjeta 2», «Efectivo» con recibido y cambio. */}
+              {pagosFallaron ? (
+                <p className="text-xs text-muted-foreground">
+                  No se pudieron leer los pagos de esta venta.
+                </p>
+              ) : (
+                <PagosDeLaVenta pagos={pagosDeLaVenta} />
+              )}
 
               {/* Valoración del comensal (Prompt 6C). Solo lectura. NO se imprime. */}
               {Number(selectedVenta?.satisfaccion_score) > 0 && (

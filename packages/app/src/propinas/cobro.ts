@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { Transaccion } from '@morphiqpos/data';
+import { sql } from 'kysely';
 
 /**
  * Lo que el cobro escribe de propina (F1-04 §38.2, hueco confirmado).
@@ -33,7 +34,14 @@ export interface PagoConPropina {
   readonly idempotencyKey: string | null;
 }
 
-/** Un pago mixto son varias llamadas, una por método, cada una con su propina. */
+/**
+ * Un pago mixto son varias llamadas, una por método, cada una con su propina.
+ *
+ * DP-25 · Cada pago guarda la hora EXACTA en que se registra (`clock_timestamp()`), no la de su
+ * transacción (`now()`, el valor por omisión de la columna): los pagos de un mismo cobro viven en
+ * una sola transacción y con `now()` empataban, así que «Tarjeta 1», «Tarjeta 2» y «Efectivo»
+ * salían en el corte y en Registros en el orden azaroso de su id en vez del orden del cobro.
+ */
 export async function registrarPagoConPropina(
   tx: Transaccion,
   pago: PagoConPropina,
@@ -41,6 +49,7 @@ export async function registrarPagoConPropina(
   await tx
     .insertInto('pagos')
     .values({
+      created_at: sql<Date>`clock_timestamp()`,
       organizacion_id: pago.organizacionId,
       orden_id: pago.ordenId,
       sesion_caja_id: pago.sesionCajaId,

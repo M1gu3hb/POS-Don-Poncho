@@ -229,14 +229,16 @@ describe('liquidar propinas en el corte', () => {
     expect(salidas[0]?.motivo).toContain(liquidada.folio);
     expect(await esperado(sesionCajaId)).toBe(antes - 7_600n);
 
-    // La liquidación recuerda de qué caja salió.
+    // La liquidación recuerda de qué caja salió, en SU columna (DP-25): la del reparto del turno
+    // (087, única por turno) queda libre, para que otra entrega del mismo turno quepa.
     const fila = await obtenerDb()
       .selectFrom('liquidaciones_propina')
-      .select(['sesion_caja_id', 'total_centavos', 'empleado_id'])
+      .select(['sesion_caja_id', 'entregada_en_sesion_caja_id', 'total_centavos', 'empleado_id'])
       .where('id', '=', liquidada.liquidacionId)
       .executeTakeFirstOrThrow();
     expect(fila).toEqual({
-      sesion_caja_id: sesionCajaId,
+      sesion_caja_id: null,
+      entregada_en_sesion_caja_id: sesionCajaId,
       total_centavos: 7_600n,
       empleado_id: lupita,
     });

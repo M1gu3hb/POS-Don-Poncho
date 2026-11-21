@@ -84,6 +84,18 @@ export interface CanalDelDia {
 export const etiquetaDelCanal = (c: CanalDelDia): string =>
   `${c.grupo === 'llevar' ? 'Para llevar' : 'Mesas'} (${String(c.cuentas)})`;
 
+/** DP-25 · Un pago de una venta del corte, como lo manda el servidor (`detalleDeVentas`). */
+export interface PagoDeLaHoja {
+  readonly id: string;
+  readonly metodo: string;
+  readonly montoCentavos: string;
+  readonly propinaCentavos: string;
+  readonly recibidoCentavos: string | null;
+  readonly cambioCentavos: string;
+  readonly estado: string;
+  readonly creadoEn: string;
+}
+
 export interface HojaDelServidor {
   readonly verCostos: boolean;
   readonly negocio: NegocioDeLaHoja;
@@ -167,6 +179,8 @@ export interface HojaDelServidor {
     totalCentavos: string;
     pago: string | null;
     atendio: string | null;
+    /** DP-25 · Cada pago, por separado y en el orden del cobro (un servidor viejo no los manda). */
+    pagos?: readonly PagoDeLaHoja[] | null;
   }[];
   readonly productos: readonly ProductoDeLaHoja[];
   readonly porPersona: readonly {

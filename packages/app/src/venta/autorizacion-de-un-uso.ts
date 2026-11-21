@@ -37,6 +37,9 @@ export const COMANDOS_QUE_GASTAN_AUTORIZACION = [
   'caja.abrir_cajon',
   // DP-24 · La cajera que entrega propinas desde el corte gasta la suya (`para: 'retiro'`).
   'propinas.liquidar',
+  // DP-25 · Quitar un platillo y cancelar la cuenta (`para: 'cancelacion'`): un PIN, una acción.
+  'restaurante.anular_linea',
+  'restaurante.cancelar_orden',
 ] as const;
 
 /** La ventana se mide desde que se firmó, con holgura por el reloj de cada lado. */
@@ -46,6 +49,14 @@ export async function gastarLaAutorizacion(
   tx: Transaccion,
   organizacionId: string,
   carga: CargaDeAutorizacion,
+  /** DP-25 · Lo que se le dice a quien la reusa, si no es un descuento; `datos` pide otro PIN. */
+  rechazo: {
+    readonly mensaje: string;
+    readonly datos?: Readonly<Record<string, string | number | boolean | null>>;
+  } = {
+    mensaje:
+      'Esa autorización ya se usó: cada descuento lleva su PIN. Que quien autoriza lo teclee otra vez.',
+  },
 ): Promise<void> {
   await sql`select pg_advisory_xact_lock(hashtextextended(${`autorizacion:${organizacionId}:${carga.n}`}, 0))`.execute(
     tx,
@@ -60,9 +71,6 @@ export async function gastarLaAutorizacion(
     .where(sql<string>`payload ->> 'autorizacion'`, '=', carga.n)
     .executeTakeFirst();
   if (usada !== undefined) {
-    throw new ErrorDominio(
-      'AUTORIZACION_USADA',
-      'Esa autorización ya se usó: cada descuento lleva su PIN. Que quien autoriza lo teclee otra vez.',
-    );
+    throw new ErrorDominio('AUTORIZACION_USADA', rechazo.mensaje, rechazo.datos);
   }
 }
