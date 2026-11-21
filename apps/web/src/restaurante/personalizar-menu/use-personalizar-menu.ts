@@ -10,7 +10,7 @@ import type { EdicionDelPlatillo } from './personalizar-menu';
 
 /**
  * DP-18 · 1.3 · Lo que lee y escribe «Personalizar menú»: los platillos (foto, descripción corta y
- * fondo), las secciones (su orden) y el encabezado (el mensaje de bienvenida y el estilo del portal).
+ * fondo), las secciones (su orden se guarda en `use-orden-del-menu`, DP-24) y el encabezado (el mensaje de bienvenida y el estilo del portal).
  * Cada cosa se guarda con SU parche por el puente (`/api/datos/escribir`) y refresca las consultas
  * que la leen (la prueba de contrato de las llaves lo exige).
  */
@@ -78,24 +78,6 @@ export function usePersonalizarMenu() {
     ]);
   }
 
-  async function guardarOrden(
-    cambios: readonly { readonly id: string; readonly orden: number }[],
-  ): Promise<void> {
-    for (const c of cambios) {
-      await invocarComando(ESCRIBIR, {
-        entidad: 'CategoriaProducto',
-        operacion: 'update',
-        id: c.id,
-        datos: { orden: c.orden },
-      });
-    }
-    await Promise.all([
-      cliente.invalidateQueries({ queryKey: CLAVE_SECCIONES }),
-      cliente.invalidateQueries({ queryKey: ['categorias_producto'] }),
-      cliente.invalidateQueries({ queryKey: ['menu_qr_categorias'] }),
-    ]);
-  }
-
   async function guardarEncabezado(cambios: {
     readonly mensaje?: string;
     readonly estilo?: string | null;
@@ -119,5 +101,5 @@ export function usePersonalizarMenu() {
     }
   }
 
-  return { platillos, secciones, tema, guardarPlatillo, guardarOrden, guardarEncabezado };
+  return { platillos, secciones, tema, guardarPlatillo, guardarEncabezado };
 }

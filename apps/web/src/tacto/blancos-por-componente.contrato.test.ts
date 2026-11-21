@@ -106,9 +106,10 @@ const FILAS: readonly Fila[] = [
     clase: TACTIL_ALTO,
   },
   {
-    archivo: 'heredado/pages/Mesero.jsx',
-    componente: 'fichas de categoría del diálogo de la mesa',
-    identifica: ['shrink-0', 'px-3', 'py-1', 'rounded-full'],
+    // DP-24 · Las fichas de categoría del mesero, de «Para llevar» y del POS son UNA pieza compartida.
+    archivo: 'src/restaurante/rejilla/PestanasDeCategoria.tsx',
+    componente: 'fichas de categoría de la rejilla (mesero, Para llevar y POS)',
+    identifica: ['shrink-0', 'py-1', 'rounded-full'],
     clase: TACTIL_ALTO,
   },
   {
@@ -164,12 +165,6 @@ const FILAS: readonly Fila[] = [
     componente: 'cantidad de la ficha (− y +)',
     identifica: ['w-6', 'h-6', 'rounded-full'],
     clase: TACTIL_LADO,
-  },
-  {
-    archivo: 'heredado/components/pedido/CatalogoDelPedido.jsx',
-    componente: 'fichas de categoría de Para llevar',
-    identifica: ['shrink-0', 'min-h-9', 'rounded-full'],
-    clase: TACTIL_ALTO,
   },
 ];
 

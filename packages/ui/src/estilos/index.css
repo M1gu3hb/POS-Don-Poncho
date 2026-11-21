@@ -15,6 +15,9 @@
 @import './noche.css';
 @import './don-poncho.css';
 
+/* Los colores de las categorías del menú (DP-24). */
+@import './categorias.css';
+
 /* Y la capa fina: lo que los tokens no pueden decir. Va al final para que gane. */
 @import './capas.css';
 

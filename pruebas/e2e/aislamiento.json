@@ -226,6 +226,16 @@
       "ids": [{ "camino": "categoriaId", "tabla": "categorias" }]
     },
     {
+      "ruta": "/api/catalogo/guardar-categoria",
+      "comando": "catalogo.guardar_categoria",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "categoriaId": "⟨categorias⟩" },
+      "ids": [{ "camino": "categoriaId", "tabla": "categorias" }]
+    },
+    {
       "ruta": "/api/catalogo/guardar-grupo-de-opciones",
       "comando": "catalogo.guardar_grupo_de_opciones",
       "escribe": true,
@@ -279,6 +289,65 @@
       "idRequerido": true,
       "cuerpo": { "productoId": "⟨productos⟩", "grupos": [] },
       "ids": [{ "camino": "productoId", "tabla": "productos" }]
+    },
+    {
+      "ruta": "/api/catalogo/mostrar-en-menu",
+      "comando": "catalogo.mostrar_en_menu",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "productoId": "⟨productos⟩", "visible": false },
+      "ids": [{ "camino": "productoId", "tabla": "productos" }]
+    },
+    {
+      "ruta": "/api/catalogo/mover-a-categoria",
+      "comando": "catalogo.mover_a_categoria",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "productoIds": ["⟨productos⟩"], "categoriaId": "⟨categorias⟩" },
+      "ids": [
+        { "camino": "productoIds[0]", "tabla": "productos" },
+        { "camino": "categoriaId", "tabla": "categorias" }
+      ]
+    },
+    {
+      "ruta": "/api/catalogo/ordenar-categorias",
+      "comando": "catalogo.ordenar_categorias",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "categoriaIds": ["⟨categorias⟩"], "antes": [] },
+      "ids": [{ "camino": "categoriaIds[0]", "tabla": "categorias" }]
+    },
+    {
+      "ruta": "/api/catalogo/ordenar-productos",
+      "comando": "catalogo.ordenar_productos",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "categoriaId": "⟨categorias⟩", "productoIds": ["⟨productos⟩"], "antes": [] },
+      "ids": [
+        { "camino": "categoriaId", "tabla": "categorias" },
+        { "camino": "productoIds[0]", "tabla": "productos" }
+      ]
+    },
+    {
+      "ruta": "/api/catalogo/unir-categorias",
+      "comando": "catalogo.unir_categorias",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
+      "idRequerido": true,
+      "cuerpo": { "categoriaQueSobraId": "⟨categorias⟩", "categoriaQueRecibeId": "⟨categorias⟩" },
+      "ids": [
+        { "camino": "categoriaQueSobraId", "tabla": "categorias" },
+        { "camino": "categoriaQueRecibeId", "tabla": "categorias" }
+      ]
     },
     {
       "ruta": "/api/compras/importar-nota",

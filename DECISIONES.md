@@ -4075,3 +4075,25 @@ Lo pidió Don Poncho tras la entrega. Sustituye a DP-12.4 (el mesero podía anul
 - **Lo que sólo se confirmó (Parte 7):** con la asignación de mesas apagada, quien abre o atiende la mesa se queda con ella
   (`portal/sin-asignacion.integracion.test.ts` y una prueba nueva de «el mesero que abre la mesa se queda con la cuenta»). El
   Tablero no se tocó: cambia de día a la medianoche de America/Mexico_City y el corte no lo reinicia.
+
+## DP-D211 · DP-24 · El menú: un solo orden, colores de una paleta y la hoja de comanda como orden inicial · 20-11-2026
+
+Lo pidió Don Poncho tras la entrega.
+
+- **Un solo orden** para el portal QR, la rejilla del mesero, la de la Caja y el buscador: la categoría (su `orden`), el lugar
+  del platillo en ella (`productos.orden_en_categoria`, migración 196) y el nombre. Un platillo que nadie ordenó va al final de
+  su categoría, por nombre: mientras nadie ordene, el menú se ve igual que antes. Al cambiar de categoría, el platillo pierde su
+  lugar (lo anula un disparador, también si el cambio no viene de un comando).
+- **Dónde se ordena:** sólo en Configuración → Portal de comensales → «El orden del menú» (↑ ↓ y «En el menú / Oculto»).
+  «Personalizar menú» ya no ordena secciones: remite ahí. Ordenan y cambian categorías el gerente, el administrador y el dueño;
+  el mesero y la cajera, no. Si dos personas ordenan a la vez, la segunda recibe un conflicto y se vuelve a leer.
+- **El color de la categoría** es la CLAVE de una paleta fija de 16 (`cat-1` … `cat-16`), nunca un color suelto: sus valores en
+  claro y en oscuro son tokens de la interfaz y su contraste se mide en la CI. La pestaña lleva el color, un punto y el nombre;
+  la tarjeta, una franja.
+- **Unir y mover:** la categoría que sobra al unir se APAGA, no se borra. Unir categorías y mover platillos se niegan si al
+  platillo le cambiaría la estación de preparación.
+- **El orden inicial de Don Poncho es su hoja de comanda de papel**, puesto por un guion que usa los comandos de la aplicación
+  (`scripts/ordenar-menu-produccion.mjs`): lo que no viene en la hoja va al final de su categoría; los «(extra)» de Cerveza se
+  apagan sólo si ninguna cuenta abierta los trae y su lugar lo toma el grupo de opciones «Prepárala».
+- **No se crea ningún producto ni se inventa ningún precio.** Quedan pendientes de Miguel: los seis productos de la hoja que no
+  existen y el precio del alcohol adicional de Paloma, Charro negro y Piña colada sin alcohol.

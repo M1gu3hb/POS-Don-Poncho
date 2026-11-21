@@ -218,6 +218,13 @@
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
     },
     {
+      "ruta": "/api/catalogo/guardar-categoria",
+      "comando": "catalogo.guardar_categoria",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
       "ruta": "/api/catalogo/guardar-grupo-de-opciones",
       "comando": "catalogo.guardar_grupo_de_opciones",
       "escribe": true,
@@ -241,6 +248,41 @@
     {
       "ruta": "/api/catalogo/modificadores",
       "comando": "catalogo.guardar_modificadores",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/catalogo/mostrar-en-menu",
+      "comando": "catalogo.mostrar_en_menu",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/catalogo/mover-a-categoria",
+      "comando": "catalogo.mover_a_categoria",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/catalogo/ordenar-categorias",
+      "comando": "catalogo.ordenar_categorias",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/catalogo/ordenar-productos",
+      "comando": "catalogo.ordenar_productos",
+      "escribe": true,
+      "roles": ["administrador", "dueno", "gerente"],
+      "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
+    },
+    {
+      "ruta": "/api/catalogo/unir-categorias",
+      "comando": "catalogo.unir_categorias",
       "escribe": true,
       "roles": ["administrador", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"]
