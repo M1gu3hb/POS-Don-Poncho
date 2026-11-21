@@ -44,3 +44,17 @@ export {
 } from './area-por-omision.ts';
 export { estaAgotado } from './agotado.ts';
 export * from './opciones-sin-precio.ts';
+export {
+  mismoOrden,
+  moverEnLaLista,
+  ordenarCategorias,
+  ordenarMenu,
+  type CategoriaOrdenable,
+  type ProductoOrdenable,
+} from './orden-del-menu.ts';
+export {
+  COLORES_DE_CATEGORIA,
+  claveDeColorDeCategoria,
+  primerColorLibre,
+  type ColorDeCategoria,
+} from './colores-de-categoria.ts';

@@ -54,3 +54,21 @@ export {
   QUIEN_MARCA_AGOTADO,
   type ResultadoMarcarAgotado,
 } from './agotado.ts';
+
+export {
+  entradaMostrarEnMenu,
+  entradaOrdenarCategorias,
+  entradaOrdenarProductos,
+  mostrarProductoEnElMenu,
+  ordenarCategoriasDelMenu,
+  ordenarProductosDeLaCategoria,
+  type ResultadoOrden,
+} from './orden-del-menu.ts';
+export {
+  entradaGuardarCategoria,
+  entradaMoverACategoria,
+  entradaUnirCategorias,
+  guardarCategoriaDelMenu,
+  moverProductosACategoria,
+  unirCategoriasDelMenu,
+} from './categorias-del-menu.ts';

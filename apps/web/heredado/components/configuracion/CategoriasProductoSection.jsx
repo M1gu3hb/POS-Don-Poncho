@@ -34,6 +34,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { normalizeCategoryName, categoryKey, ensureCategoriaExists } from '@/utils/categoriaUtils';
 import { COCINA_GENERAL_COLOR } from '@/utils/estacionUtils';
+import { claveDeColorDeCategoria, primerColorLibre } from '@morphiqpos/domain/catalogo';
+import { SelectorDeColorDeCategoria } from '~/restaurante/rejilla/SelectorDeColorDeCategoria';
 
 const SIN_ESTACION = '__sin_estacion__';
 
@@ -47,6 +49,9 @@ const SIN_ESTACION = '__sin_estacion__';
  *    (solo visible si `estaciones_preparacion_activas` está activo en config).
  *  - Soft-delete intacto: marca activo:false y respeta productos asociados.
  *
+ * DP-24 · Al crear o editar una categoría se elige su COLOR de la paleta fija (la pestaña y la franja
+ *  de sus platillos en el mesero y en la Caja lo muestran).
+ *
  * Nunca toca: ProductoTerminado, RecetaEscandallo, Inventario, ventas, caja,
  * cortes, tickets, PDFs.
  */
@@ -56,7 +61,8 @@ export default function CategoriasProductoSection() {
   const [saving, setSaving] = useState(false);
   const [confirmDel, setConfirmDel] = useState(null); // { categoria, productosCount }
   const [editing, setEditing] = useState(null); // categoría en edición
-  const [editForm, setEditForm] = useState({ nombre: '', estacion_id: '' });
+  const [editForm, setEditForm] = useState({ nombre: '', estacion_id: '', color: null });
+  const [nuevoColor, setNuevoColor] = useState(null);
 
   const { data: configs = [] } = useQuery({
     queryKey: ['config'],
@@ -118,6 +124,9 @@ export default function CategoriasProductoSection() {
     [estaciones],
   );
 
+  // DP-24 · Si no se elige, la categoría nueva toma el primer color de la paleta que nadie usa.
+  const colorLibre = primerColorLibre((Array.isArray(categorias) ? categorias : []).map((c) => c?.color));
+
   const invalidarTodo = () => {
     queryClient.invalidateQueries({ queryKey: ['categorias_producto'] });
     queryClient.invalidateQueries({ queryKey: ['menu_qr_categorias'] });
@@ -135,9 +144,13 @@ export default function CategoriasProductoSection() {
     }
     setSaving(true);
     try {
-      const cat = await ensureCategoriaExists(api, n, { reactivate: true });
+      const cat = await ensureCategoriaExists(api, n, {
+        reactivate: true,
+        color: nuevoColor || colorLibre,
+      });
       toast.success(`Categoría "${cat.nombre}" lista`);
       setNuevoNombre('');
+      setNuevoColor(null);
       invalidarTodo();
     } catch (e) {
       toast.error('No se pudo crear: ' + (e?.message || ''));
@@ -150,6 +163,7 @@ export default function CategoriasProductoSection() {
     setEditForm({
       nombre: categoria?.nombre || '',
       estacion_id: categoria?.estacion_preparacion_id || '',
+      color: claveDeColorDeCategoria(categoria?.color),
     });
   };
 
@@ -173,6 +187,10 @@ export default function CategoriasProductoSection() {
         return;
       }
       const payload = { nombre };
+      // DP-24 · Sólo viaja el color si se eligió uno distinto del que tenía.
+      if (editForm.color && editForm.color !== claveDeColorDeCategoria(editing?.color)) {
+        payload.color = editForm.color;
+      }
       if (estacionesActivas) {
         // Sólo viaja lo que se GUARDA: la clave de la estación. Su nombre y su color son derivados
         // —el puente los saca del `join` con `estaciones_preparacion` al leer— y el servidor
@@ -286,6 +304,11 @@ export default function CategoriasProductoSection() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      aria-hidden
+                      className="selector-de-color inline-block size-3 shrink-0 rounded-full"
+                      data-categoria-color={claveDeColorDeCategoria(c.color) || undefined}
+                    />
                     <p className="text-sm font-medium truncate">{c.nombre}</p>
                     {renderEstacionBadge(c)}
                   </div>
@@ -340,6 +363,11 @@ export default function CategoriasProductoSection() {
               <Plus className="w-4 h-4 mr-1" /> Agregar
             </Button>
           </div>
+          <SelectorDeColorDeCategoria
+            valor={nuevoColor || colorLibre}
+            alElegir={setNuevoColor}
+            deshabilitado={saving}
+          />
           {estacionesActivas && (
             <p className="text-[10px] text-muted-foreground">
               Tras crear la categoría podrás asignarle una estación con el botón ✏️.
@@ -368,6 +396,11 @@ export default function CategoriasProductoSection() {
                 disabled={saving}
               />
             </div>
+            <SelectorDeColorDeCategoria
+              valor={editForm.color}
+              alElegir={(color) => setEditForm({ ...editForm, color })}
+              deshabilitado={saving}
+            />
             {estacionesActivas && (
               <div>
                 <Label className="text-xs">Estación de preparación</Label>

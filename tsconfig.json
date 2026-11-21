@@ -14,6 +14,7 @@
     "scripts/lib/lectura-segura.test.ts",
     "scripts/lib/menu.test.ts",
     "scripts/lib/plano-de-mesas.test.ts",
+    "scripts/lib/plan-del-menu.test.ts",
     "scripts/lib/unidades.test.ts",
     "scripts/lib/vocabulario-de-color.test.ts",
     "scripts/modo-compatible/api-nuevas.test.ts",
