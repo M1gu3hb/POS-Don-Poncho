@@ -56,7 +56,7 @@ describe('A7 · las pantallas', () => {
   });
 
   it('y sólo DESPUÉS de que el servidor confirmó el cobro (si se cae, el borrador sigue)', () => {
-    const cobrar = caja.indexOf('const handleCobrar = async () => {');
+    const cobrar = caja.indexOf('const handleCobrar = async (loTecleado) => {');
     const llamada = caja.indexOf("'/api/venta/cobrar'", cobrar);
     const borrado = caja.indexOf('borrarBorrador(almacenDelBorrador(), claveDelBorrador)', cobrar);
     expect(cobrar).toBeGreaterThan(-1);

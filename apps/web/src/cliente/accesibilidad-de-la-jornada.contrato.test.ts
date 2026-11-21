@@ -204,35 +204,64 @@ describe('A16 · el diálogo del portal en modo mesero cabe a 360 px', () => {
   });
 });
 
-describe('A17 · el pago mixto: cada campo con su etiqueta', () => {
-  const caja = leer('heredado/pages/Caja.jsx');
-  const rotulos = new Set(['Efectivo', 'Tarjeta', 'Transfer.']);
-  const etiquetas = elementos(caja, 'Label').filter((l) => rotulos.has(letrero(l)));
+/**
+ * DP-24 · El pago vive en la tarjeta de cobro (`src/venta/PagoDeLaTarjeta.tsx`). Antes eran seis
+ * campos sueltos en `Caja.jsx` («Efectivo», «Tarjeta», «Transfer.» de la venta y de la propina);
+ * ahora cada importe —«Recibido», «Tarjeta N», «Transferencia», «Otro monto de propina»— se pinta con
+ * UNA sola pieza, `Campo`, que liga su etiqueta con su campo. El contrato vigila esa pieza y que
+ * ningún campo de importe se pinte por fuera de ella.
+ */
+describe('A17 · el pago: cada importe con su etiqueta', () => {
+  const pago = leer('src/venta/PagoDeLaTarjeta.tsx');
+  const etiquetas = elementos(pago, 'Label');
+  const campos = buscar(
+    pago,
+    (n): n is ts.JsxSelfClosingElement =>
+      ts.isJsxSelfClosingElement(n) && n.tagName.getText() === 'Input',
+  );
 
-  it('hay seis etiquetas (tres de la venta, tres de la propina), todas con `htmlFor`', () => {
-    expect(etiquetas).toHaveLength(6);
-    for (const l of etiquetas) expect(atributos(l.openingElement, caja)['htmlFor']).toBeTruthy();
+  it('hay UNA pieza de campo: una etiqueta con `htmlFor` y un campo con ese mismo `id`', () => {
+    expect(etiquetas).toHaveLength(1);
+    expect(campos).toHaveLength(1);
+    const paraId = atributos(etiquetas[0]!.openingElement, pago)['htmlFor'];
+    expect(paraId).toBeTruthy();
+    expect(atributos(campos[0]!, pago)['id']).toBe(paraId);
   });
 
-  it('ningún `htmlFor` se repite y cada uno es el `id` de un campo', () => {
-    const paraId = etiquetas.map((l) => atributos(l.openingElement, caja)['htmlFor']);
-    expect(new Set(paraId).size).toBe(6);
-    const idsDeCampos = buscar(
-      caja,
-      (n): n is ts.JsxSelfClosingElement =>
-        ts.isJsxSelfClosingElement(n) && n.tagName.getText() === 'NumericInput',
-    ).map((c) => atributos(c, caja)['id']);
-    for (const id of paraId) expect(idsDeCampos).toContain(id);
+  it('el `id` es único por campo (`useId`), no un texto fijo que se repetiría entre tarjetas', () => {
+    expect(texto(pago, pago)).toContain('constid=useId();');
+    expect(atributos(campos[0]!, pago)['id']).toBe('id');
   });
 
-  it('los dos grupos se distinguen: cada uno es un fieldset con su legend', () => {
+  it('todos los importes pasan por esa pieza: recibido, tarjetas, transferencia y otro monto', () => {
+    const usos = buscar(
+      pago,
+      (n): n is ts.JsxOpeningElement | ts.JsxSelfClosingElement =>
+        (ts.isJsxOpeningElement(n) || ts.isJsxSelfClosingElement(n)) &&
+        n.tagName.getText() === 'Campo',
+    ).map((c) => texto(c, pago));
+    for (const campo of [
+      'campo="recibido"',
+      'campo="transferencia"',
+      'campo="otro-monto"',
+      'campo={campo}',
+    ]) {
+      expect(
+        usos.some((uso) => uso.includes(campo)),
+        campo,
+      ).toBe(true);
+    }
+    expect(usos.every((uso) => uso.includes('rotulo='))).toBe(true);
+  });
+
+  it('la propina y la forma de pago son grupos con nombre: un fieldset con su legend', () => {
     const grupos = buscar(
-      caja,
+      pago,
       (n): n is ts.JsxElement =>
         ts.isJsxElement(n) && n.openingElement.tagName.getText() === 'fieldset',
     );
-    const leyendas = grupos.map((g) => texto(g, caja));
-    expect(leyendas.some((t) => t.includes('aria-label="Pagodelaventa,pormétodo"'))).toBe(true);
-    expect(leyendas.some((t) => t.includes('¿Cómosepagólapropina?'))).toBe(true);
+    const leyendas = grupos.map((g) => texto(g, pago));
+    expect(leyendas.some((t) => t.includes('>Propina'))).toBe(true);
+    expect(leyendas.some((t) => t.includes('>Formadepago<'))).toBe(true);
   });
 });

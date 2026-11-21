@@ -277,22 +277,6 @@ export const SIN_ESTADO = [
       'Lee la configuración del negocio que el armazón ya cargó (`useConfig`); mientras no llega pinta lo de omisión. No hace su propio viaje al servidor.',
   },
   {
-    pantalla: 'venta/AvisoDePropina',
-    estado: 'vacio',
-    razon: 'Un aviso con dos botones (DP-21): no tiene lista que pueda llegar vacía.',
-  },
-  {
-    pantalla: 'venta/AvisoDePropina',
-    estado: 'cargando',
-    razon: 'Pinta lo que la Caja ya leyó; no hace viajes al servidor.',
-  },
-  {
-    pantalla: 'venta/AvisoDePropina',
-    estado: 'error',
-    razon:
-      'No hace viajes al servidor: el error de guardar la propina o de cobrar lo dice la Caja, que es quien llama.',
-  },
-  {
     pantalla: 'configuracion/IvaDelNegocio',
     estado: 'vacio',
     razon:
@@ -1828,6 +1812,74 @@ export const SIN_ESTADO = [
     estado: 'error',
     razon:
       'Pieza del cierre de la caja (DP-D178), no pantalla: once filas de piezas que teclea quien cuenta; no lee nada. Sus estados (cargando y error del cierre) los pinta el diálogo que la monta.',
+  },
+  // ── DP-24 · La tarjeta de cobro de la Caja y sus piezas: reciben la cuenta ya leída y lo que
+  //    no cuadra lo dice la tarjeta con su Aviso.
+  {
+    pantalla: 'venta/TarjetaDeCobro',
+    estado: 'vacio',
+    razon:
+      'La cuenta que se cobra siempre trae platillos; sin renglones vale $0.00 y la tarjeta lo dice con su Aviso («Este ticket está en $0.00»): no hay lista que pueda llegar vacía sin decirlo.',
+  },
+  {
+    pantalla: 'venta/TarjetaDeCobro',
+    estado: 'cargando',
+    razon:
+      'No lee nada: recibe la cuenta ya leída por la Caja que la monta. Lo único que espera es el cobro, y mientras corre el botón de cobrar pasa a `cargando` con su mensaje.',
+  },
+  {
+    pantalla: 'venta/PagoDeLaTarjeta',
+    estado: 'vacio',
+    razon:
+      'Pieza de la tarjeta de cobro (DP-24), no pantalla: los controles del pago —la propina, la forma de pago y los importes—. No pinta ninguna lista que pueda llegar vacía.',
+  },
+  {
+    pantalla: 'venta/PagoDeLaTarjeta',
+    estado: 'cargando',
+    razon:
+      'Pieza de la tarjeta de cobro (DP-24), no pantalla: los controles del pago —la propina, la forma de pago y los importes—. No lee nada: mientras la propina viaja o el cobro corre sus controles se apagan, y la espera la dice el botón de cobrar de la tarjeta.',
+  },
+  {
+    pantalla: 'venta/PagoDeLaTarjeta',
+    estado: 'error',
+    razon:
+      'Pieza de la tarjeta de cobro (DP-24), no pantalla: los controles del pago —la propina, la forma de pago y los importes—. Lo que no cuadra (falta efectivo, las tarjetas no suman) lo calcula `cuenta-del-cobro` y lo pinta la tarjeta que la monta con su Aviso, junto al botón apagado.',
+  },
+  {
+    pantalla: 'venta/TecladoDeImportes',
+    estado: 'vacio',
+    razon:
+      'Pieza de la tarjeta de cobro (DP-24), no pantalla: doce teclas fijas que escriben en el campo activo. No lista nada que pueda llegar vacío.',
+  },
+  {
+    pantalla: 'venta/TecladoDeImportes',
+    estado: 'cargando',
+    razon:
+      'Pieza de la tarjeta de cobro (DP-24), no pantalla: doce teclas fijas que escriben en el campo activo. No lee nada y no espera nada.',
+  },
+  {
+    pantalla: 'venta/TecladoDeImportes',
+    estado: 'error',
+    razon:
+      'Pieza de la tarjeta de cobro (DP-24), no pantalla: doce teclas fijas que escriben en el campo activo. No decide si el importe está bien: lo decide la tarjeta que lo monta, que pinta su Aviso.',
+  },
+  {
+    pantalla: 'venta/QuitarDeLaCuenta',
+    estado: 'vacio',
+    razon:
+      'No pinta nada propio (DP-24): lee si el platillo ya salió de cocina y monta el diálogo de quitar (`AnularLineaDialog`), que no lista nada: recibe un solo platillo.',
+  },
+  {
+    pantalla: 'venta/QuitarDeLaCuenta',
+    estado: 'cargando',
+    razon:
+      'No pinta nada propio (DP-24): lee si el platillo ya salió de cocina y monta el diálogo de quitar (`AnularLineaDialog`), y esa lectura dura un instante: mientras tanto la tarjeta de cobro sigue a la vista y no hay nada que esqueletar.',
+  },
+  {
+    pantalla: 'venta/QuitarDeLaCuenta',
+    estado: 'error',
+    razon:
+      'No pinta nada propio (DP-24): lee si el platillo ya salió de cocina y monta el diálogo de quitar (`AnularLineaDialog`), que es quien pinta su Aviso si no se pudo quitar. Si la cocina no se puede leer, el platillo cuenta como ya preparado.',
   },
   {
     pantalla: 'restaurante/rejilla/PestanasDeCategoria',

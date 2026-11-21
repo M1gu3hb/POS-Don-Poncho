@@ -120,20 +120,38 @@ describe('A14 · Dividir la cuenta: nombres de botón únicos entre rondas', () 
   });
 });
 
-describe('A9 · el cobro y la propina no se abren a la vez', () => {
-  it('el diálogo de cobro se oculta mientras el de propina está abierto', () => {
+/**
+ * DP-24 · El cobro y «¿Desean agregar propina?» eran dos diálogos modales que se turnaban (DP-18).
+ * Ahora la propina se elige DENTRO de la tarjeta de cobro: no hay segundo diálogo que esconder.
+ */
+describe('A9 · el cobro y la propina no son dos diálogos', () => {
+  it('la Caja ya no monta el diálogo de propina: el cobro es una sola tarjeta', () => {
     const caja = leer('heredado/pages/Caja.jsx');
-    const abiertos: string[] = [];
+    const etiquetas: string[] = [];
     const visitar = (n: ts.Node): void => {
-      if (ts.isJsxOpeningElement(n) && n.tagName.getText() === 'Dialog') {
-        for (const a of n.attributes.properties) {
-          if (ts.isJsxAttribute(a) && a.name.getText() === 'open' && a.initializer)
-            abiertos.push(texto(a.initializer, caja));
-        }
+      if (ts.isJsxOpeningElement(n) || ts.isJsxSelfClosingElement(n)) {
+        etiquetas.push(n.tagName.getText());
       }
       ts.forEachChild(n, visitar);
     };
     visitar(caja);
-    expect(abiertos).toContain('{!!ventaSeleccionada&&!showPropinaCaja}');
+    expect(etiquetas).not.toContain('PropinaDialog');
+    expect(etiquetas).not.toContain('AvisoDePropina');
+    expect(etiquetas.filter((e) => e === 'TarjetaDeCobro')).toHaveLength(1);
+  });
+
+  it('la tarjeta es UN diálogo, y la propina de adentro no abre otro', () => {
+    const cuenta = (ruta: string): number => {
+      const fuente = leer(ruta);
+      let n = 0;
+      const visitar = (nodo: ts.Node): void => {
+        if (ts.isJsxOpeningElement(nodo) && nodo.tagName.getText() === 'Dialog') n += 1;
+        ts.forEachChild(nodo, visitar);
+      };
+      visitar(fuente);
+      return n;
+    };
+    expect(cuenta('src/venta/TarjetaDeCobro.tsx')).toBe(1);
+    expect(cuenta('src/venta/PagoDeLaTarjeta.tsx')).toBe(0);
   });
 });

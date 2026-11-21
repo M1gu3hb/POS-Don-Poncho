@@ -45,8 +45,9 @@ describe('el cobro de la Caja', () => {
     expect(texto).toMatch(
       /const papelDelCobro = useMemo\(\s*\(\) => totalesDelPapel\(ventaSeleccionada, detallesSeleccionados\)/,
     );
-    expect(texto).toMatch(/formatCurrency\(papelDelCobro\.renglones\)/);
-    expect(texto).toMatch(/Descuento[\s\S]{0,120}formatCurrency\(papelDelCobro\.descuento\)/);
+    // DP-24 · La tarjeta de cobro los pinta; la Caja se los pasa del mismo cálculo, en centavos.
+    expect(texto).toMatch(/subtotalCentavos=\{aCentavos\(papelDelCobro\.renglones\)\}/);
+    expect(texto).toMatch(/descuentoCentavos=\{aCentavos\(papelDelCobro\.descuento\)\}/);
     expect(texto).toMatch(/<DescuentoAutorizado ordenId=\{ventaSeleccionada\.id\} \/>/);
   });
 
@@ -57,7 +58,15 @@ describe('el cobro de la Caja', () => {
   });
 
   it('TOTAL A COBRAR = el total del servidor + la propina', () => {
-    expect(caja()).toMatch(/const t = papelDelCobro\.total;/);
+    // DP-24 · La suma la hace `cuenta-del-cobro.ts` (con sus pruebas): la Caja le da el total del
+    // servidor y la tarjeta pinta lo que esa cuenta dice que se cobra.
+    expect(caja()).toMatch(/totalCentavos=\{aCentavos\(ventaSeleccionada\?\.total\)\}/);
+    const deVenta = (archivo: string): string =>
+      readFileSync(join(HEREDADO, '..', 'src', 'venta', archivo), 'utf8');
+    expect(deVenta('TarjetaDeCobro.tsx')).toMatch(
+      /TOTAL A COBRAR<\/span>[\s\S]{0,200}<Dinero\s+centavos=\{cuenta\.aCobrarCentavos\}/,
+    );
+    expect(deVenta('cuenta-del-cobro.ts')).toMatch(/const aCobrar = total \+ propinaCentavos;/);
   });
 
   it('la cantidad de una línea por peso con el formateador único', () => {
