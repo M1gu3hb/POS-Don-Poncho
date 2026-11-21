@@ -30,11 +30,8 @@ import { mantenerDespierta } from '~/espera/despertador';
 import { sonar } from '~/sonidos/gestor';
 import { alcanceDeLaCocina, comandasDelAlcance } from '~/restaurante/alcance-de-la-cocina';
 import { conLaCuentaCobrada, sinPlatillosQuitados } from '~/restaurante/platos-de-la-estacion';
-import {
-  conLosToques,
-  crearFilaPorClave,
-  useToquesEnCamino,
-} from '~/restaurante/toques-en-camino';
+import { crearFilaPorClave, useToquesEnCamino } from '~/restaurante/toques-en-camino';
+import { conLosToquesDePlatillos } from '~/cocina/platillos-del-tablero';
 
 const ESTADOS = ['nuevo', 'en_preparacion', 'listo'];
 // DP-16 · 2.2: cuántas comandas vivas y cuántas ventas se piden. Una cocina con diez mesas a la
@@ -93,7 +90,11 @@ export default function Cocina() {
   // leído, no dentro: una lectura que salió antes de otro toque lo traía viejo y regresaba la
   // comanda a «Nuevos» (`~/restaurante/toques-en-camino`).
   const { toques, poner: ponerToque, soltar: soltarToque } = useToquesEnCamino();
-  const pedidosVistos = useMemo(() => conLosToques(pedidos, toques), [pedidos, toques]);
+  // DP-24: los toques son por PLATILLO (id del renglón de la comanda), no por comanda.
+  const pedidosVistos = useMemo(
+    () => conLosToquesDePlatillos(Array.isArray(pedidos) ? pedidos : [], toques),
+    [pedidos, toques],
+  );
   // Y los de una misma comanda salen en fila: «Listo» espera a que conteste su «Preparar».
   const [fila] = React.useState(crearFilaPorClave);
 
@@ -127,6 +128,15 @@ export default function Cocina() {
     });
     return m;
   }, [ventas]);
+
+  // DP-24: el título de cada bloque dice la mesa de la CUENTA (la principal si hay unión) y su mesero.
+  const infoDeLasCuentas = useMemo(() => {
+    const info = {};
+    Object.values(ventasMap).forEach((v) => {
+      info[v.id] = { mesero: v.usuario_mesero_nombre || null, mesaNumero: v.mesa_numero ?? null };
+    });
+    return info;
+  }, [ventasMap]);
 
   // Conocer si la estación del usuario es "Cocina general" (es_general:true).
   // Si lo es, también debe ver pedidos legacy sin estacion_preparacion_id
@@ -186,92 +196,103 @@ export default function Cocina() {
   }, [porPreparar]);
 
   /**
-   * Mover una comanda de estado — el único camino de los tres botones (E6-6).
+   * DP-24 · LA COCINA POR PLATILLO. Cada platillo se mueve solo (`transicionar_pedido` con
+   * `comandaItemId`) y el bloque de una mesa se mueve de un jalón (`mover_platillos`, que sólo
+   * toca los que siguen en la columna). La comanda y la mesa se derivan de sus platillos en el
+   * SERVIDOR, dentro de la misma transacción: aquí no se decide ni una.
    *
-   * `transicionar_pedido` mueve la comanda, arrastra sus items, recalcula el
-   * estado de las líneas de venta y SINCRONIZA LA MESA dentro de la misma
-   * transacción. Por eso aquí ya no queda ni un `Mesa.update`: los dos que
-   * había (`:232` y `:273` de F1-06 §4.4) iban con `.catch(() => {})` encima,
-   * así que cocina empezaba a cocinar —o dejaba el plato listo— y el mesero no
-   * se enteraba nunca. Además `Mesa.estado` es un campo que el puente ya no
-   * deja escribir: quien decide el estado del salón son las comandas.
-   *
-   * La versión es monotónica y vive en el rango del estado, no en una columna:
-   * un toque que llega tarde pidiendo `en_preparacion` sobre una comanda que ya
-   * está `listo` se RECHAZA con `TRANSICION_INVALIDA` en vez de devolver el
-   * plato al fuego. Cuando eso pasa se enseña el mensaje del dominio tal cual y
-   * se recarga de la base — no se reintenta, porque el rechazo es la respuesta
-   * correcta.
+   * Lo pintado en camino (DP-7) es por platillo: se ve ya en su columna nueva sin esperar al
+   * servidor, y se suelta cuando contestó y ya se releyó. Los toques salen en fila: el «Listo»
+   * de un platillo espera a que conteste su «Preparar».
    */
-  const transicionar = (comandaId, estado) =>
-    api.comandos.ejecutar('/api/restaurante/transicionar-pedido', { comandaId, estado });
+  const refrescarLoQueDependeDeCocina = () => {
+    queryClient.invalidateQueries({ queryKey: ['mesas'] });
+    // El mesero se entera de lo que salió: su tarjeta de la mesa, el aviso y las nubecitas del mapa.
+    queryClient.invalidateQueries({ queryKey: ['pedidos_listos_mesero'] });
+    queryClient.invalidateQueries({ queryKey: ['avisos_de_listo'] });
+    queryClient.invalidateQueries({ queryKey: ['pedidos_del_mapa'] });
+  };
 
-  /**
-   * Lo que comparten los tres botones: pinta el toque, lo manda y, si contesta, relee ANTES de
-   * soltarlo. `invalidateQueries` cancela la lectura que venía en camino (salió antes de este
-   * toque) y espera una que sale después: al soltar el toque, lo leído ya lo trae. Si falla, se
-   * suelta y la comanda vuelve a pintarse como la tiene el servidor; el fallo sigue hacia el
-   * botón, que lo avisa. El toque se manda cuando contestó el anterior de ESA comanda.
-   */
-  const moverComanda = async (pedido, estado, parche) => {
-    const toque = ponerToque(pedido.id, { estado, ...parche });
+  const enviarToques = async (platillos, parche, enviar) => {
+    const puestos = platillos
+      .map((p) => p?.item?.id)
+      .filter(Boolean)
+      .map((id) => ({ id, toque: ponerToque(id, parche) }));
     try {
-      await fila.encolar(pedido.id, () => transicionar(pedido.id, estado));
+      await fila.encolar('cocina', enviar);
       await queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
     } catch (e) {
       queryClient.invalidateQueries({ queryKey: ['pedidos_cocina'] });
       throw e;
     } finally {
-      soltarToque(pedido.id, toque);
+      puestos.forEach(({ id, toque }) => soltarToque(id, toque));
     }
   };
 
-  const iniciarPedido = async (pedido) => {
-    if (!pedido?.id) return;
+  const sellosDelToque = (hacia) =>
+    hacia === 'listo'
+      ? { fecha_listo: new Date().toISOString() }
+      : { fecha_inicio: new Date().toISOString() };
+
+  const moverPlatillo = async (platillo, hacia) => {
+    const comandaItemId = platillo?.item?.id;
+    if (!comandaItemId) return;
     try {
-      await moverComanda(pedido, 'en_preparacion', { fecha_inicio: new Date().toISOString() });
-      queryClient.invalidateQueries({ queryKey: ['mesas'] });
-      toast.success('Pedido en preparación');
+      await enviarToques([platillo], { estado: hacia, ...sellosDelToque(hacia) }, () =>
+        api.comandos.ejecutar('/api/restaurante/transicionar-pedido', {
+          comandaId: platillo.comanda.id,
+          comandaItemId,
+          estado: hacia,
+        }),
+      );
+      refrescarLoQueDependeDeCocina();
+      if (hacia === 'listo') {
+        toast.success('¡Platillo listo!');
+        sonar('comandaLista');
+      } else {
+        toast.success('Platillo en preparación');
+      }
     } catch (e) {
-      toast.error('No se pudo iniciar el pedido: ' + (e?.message || ''));
+      toast.error('No se pudo mover el platillo: ' + (e?.message || ''));
     }
   };
 
-  const marcarListo = async (pedido) => {
-    if (!pedido?.id) return;
+  const moverBloque = async (bloque, hacia) => {
+    const ids = bloque.platillos.map((p) => p?.item?.id).filter(Boolean);
+    if (ids.length === 0) return;
     try {
-      // F3: la mesa sólo avanza si TODAS sus comandas están listas. Esa cuenta
-      // la hace ahora `sincronizarMesa` DENTRO de la transacción del comando,
-      // sobre las comandas de la orden. Aquí se hacía leyendo
-      // `PedidoPreparacion.filter({venta_id})` con `.catch(() => [])`: cuando la
-      // lectura fallaba, la lista vacía se leía como «no queda nadie
-      // cocinando», la mesa se marcaba lista con la otra estación todavía en el
-      // fuego y el mesero recogía media charola (F1-06 §4.4, `:265`).
-      await moverComanda(pedido, 'listo', { fecha_listo: new Date().toISOString() });
-      queryClient.invalidateQueries({ queryKey: ['mesas'] });
-      // F3.2: refrescar la card "Listo para recoger" del Mesero y el watcher
-      // global de voz si están abiertos en otra pestaña/sesión.
-      queryClient.invalidateQueries({ queryKey: ['pedidos_listos_mesero'] });
-      queryClient.invalidateQueries({ queryKey: ['pedidos_listos_watcher'] });
-      toast.success('¡Pedido listo!');
-      sonar('comandaLista');
+      await enviarToques(bloque.platillos, { estado: hacia, ...sellosDelToque(hacia) }, () =>
+        api.comandos.ejecutar('/api/restaurante/mover-platillos', {
+          platilloIds: ids,
+          desde: bloque.estado,
+          estado: hacia,
+        }),
+      );
+      refrescarLoQueDependeDeCocina();
+      if (hacia === 'listo') {
+        toast.success('¡Pedido listo!');
+        sonar('comandaLista');
+      } else {
+        toast.success('Pedido en preparación');
+      }
     } catch (e) {
-      toast.error('No se pudo marcar listo: ' + (e?.message || ''));
+      toast.error('No se pudo mover el pedido: ' + (e?.message || ''));
     }
   };
 
   // Quitar un pedido de "Listos" como emergencia (mesero se olvidó de dar
   // "Entregado"). NO borra venta, NO toca inventario, NO afecta caja.
-  const quitarPedidoListo = async (pedido) => {
-    if (!pedido?.id) return;
-    const ahora = new Date().toISOString();
+  const quitarBloqueListo = async (bloque) => {
+    const ordenId = bloque?.comandas?.[0]?.venta_id;
+    if (!ordenId) return;
     try {
-      // Las fechas las pone el servidor con la hora de la transacción; las del
-      // toque son sólo para que la tarjeta desaparezca sin esperar a la lectura.
-      await moverComanda(pedido, 'entregado', {
-        fecha_entregado: ahora,
-        ...(pedido.fecha_listo ? {} : { fecha_listo: ahora }),
-      });
+      await enviarToques(bloque.platillos, { estado: 'entregado' }, () =>
+        api.comandos.ejecutar('/api/restaurante/entregar-pedidos', {
+          ordenId,
+          comandaIds: bloque.comandas.map((c) => c.id),
+        }),
+      );
+      refrescarLoQueDependeDeCocina();
       toast.success('Pedido quitado de la lista');
     } catch (e) {
       toast.error('No se pudo quitar el pedido: ' + (e?.message || ''));
@@ -385,8 +406,9 @@ export default function Cocina() {
         config={config}
         cargando={cargandoPedidos || !verificada}
         error={pedidosConError ? 'No se pudo leer los pedidos de la cocina.' : null}
-        onIniciar={iniciarPedido}
-        onListo={marcarListo}
+        infoDeLasCuentas={infoDeLasCuentas}
+        onPlatillo={moverPlatillo}
+        onBloque={moverBloque}
         onPedirQuitar={setPorQuitar}
         onVerFicha={setFichaItem}
       />
@@ -410,7 +432,7 @@ export default function Cocina() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                quitarPedidoListo(porQuitar);
+                quitarBloqueListo(porQuitar);
                 setPorQuitar(null);
               }}
             >

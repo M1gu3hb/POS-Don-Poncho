@@ -1,192 +1,66 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/api/cliente';
+import React, { useCallback } from 'react';
 import { usePOSAuth } from '@/lib/POSAuthContext';
 import { useConfig } from '@/lib/ConfigContext';
 import { ROLES } from '@/lib/constants';
 import { canAccessModule } from '@/lib/packageConfig';
 import { sonarAntesDeHablar } from '~/sonidos/gestor';
-import { speak, fraseListoCocina, getAlertConfig } from '@/lib/voiceAlert';
-import { toast } from 'sonner';
-import { claves } from '~/cliente/claves-de-consulta';
-import {
-  asignacionActiva,
-  debeEscucharAudio,
-  resolverMeseroResponsable,
-} from '@/lib/asignacionMesas';
-
-// asignacionActiva se mantiene: se usa para diferenciar mensajes admin.
+import { speak, getAlertConfig } from '@/lib/voiceAlert';
+import { debeEscucharAudio } from '@/lib/asignacionMesas';
+import { AvisosDeListo } from '~/restaurante/AvisosDeListo';
+import { useAvisosDeListo } from '~/restaurante/use-avisos-de-listo';
+import { fraseHablada } from '~/restaurante/avisos-de-listo';
 
 /**
- * Watcher global: avisa al mesero correspondiente cuando un pedido pasa a "listo".
+ * DP-24 · 4.3 · Watcher global: el aviso de «listo» GRANDE para el mesero de esa mesa.
  *
- * Reglas finales:
- * - Cocina NUNCA escucha audio/voz de "listo" (este watcher solo corre para mesero/admin).
- * - Modo asignación activa:
- *     - Solo el mesero asignado a la mesa escucha audio/voz.
- *     - La voz puede decir su nombre si "Decir mi nombre" está activado.
- * - Modo sin asignación:
- *     - Si la mesa tiene atendido_por_id: SOLO ese mesero escucha audio/voz.
- *     - Si NO hay atendido_por: NO se reproduce voz masiva. Solo toast genérico
- *       y el admin (si no está silenciado) ve advertencia "Mesa sin mesero".
- * - El ADMIN ve toast siempre; el audio depende de silenciar_notificaciones_admin.
- * - Orden: PRIMERO visual (toast), luego voz/sonido con pequeño delay.
+ * Reglas:
+ * - El aviso es SÓLO del mesero de la mesa (el asignado; sin asignación, el que la atiende). El
+ *   SERVIDOR decide cuáles son suyos (`restaurante.avisos_de_listo`): este watcher ya no lee las
+ *   comandas listas de todos ni compara mesas en el navegador, y el administrador, el gerente y
+ *   la caja no reciben nada. Cocina nunca escucha el «listo».
+ * - Cómo se ve: una tarjeta grande por mesa y estación («Mesa 5 · Listo en Cantina: 2 Coca cola,
+ *   1 Jugo · Recoger en Cantina»), apiladas, que no se van solas; se quitan deslizando o tocando.
+ * - Cómo suena: PRIMERO lo visual; luego el sonido (Check) y, cuando termina, la voz si el mesero
+ *   la tiene activada. Y vibra si el aparato puede (la app de Android sí; donde no, sólo suena).
  */
-const NOTIFIED_KEY = 'mh_notified_pedidos_listos';
 
-const loadSet = () => {
+/** Vibra si el aparato lo sabe hacer. Protegida: no existe en iOS ni en el motor viejo. */
+function vibrar() {
   try {
-    const raw = sessionStorage.getItem(NOTIFIED_KEY);
-    if (!raw) return new Set();
-    const arr = JSON.parse(raw);
-    return new Set(Array.isArray(arr) ? arr : []);
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate([300, 120, 300]);
+    }
   } catch {
-    return new Set();
+    // Un aparato que no vibra no es un error.
   }
-};
-const saveSet = (set) => {
-  try {
-    sessionStorage.setItem(NOTIFIED_KEY, JSON.stringify([...set].slice(-200)));
-  } catch {}
-};
+}
 
 export default function PedidoListoWatcher() {
   const { posUser } = usePOSAuth();
   const { paquete_modo, config } = useConfig();
-  const role = posUser?.rol;
-  // Un pedido «listo» sólo existe donde hay cocina que lo marque, así que
-  // decide el módulo y no el nombre de la plantilla.
+  // Un pedido «listo» sólo existe donde hay cocina que lo marque, así que decide el módulo y no el
+  // nombre de la plantilla. Y sólo para el mesero: el administrador no recibe este aviso.
   const haySala = canAccessModule('cocina', paquete_modo);
-  // IMPORTANTE: este watcher solo corre para mesero/admin. Cocina queda fuera.
-  const watch = haySala && (role === ROLES.WAITER || role === ROLES.ADMIN);
-  const firstLoadRef = useRef(true);
-  const notifiedRef = useRef(loadSet());
+  const watch = haySala && posUser?.rol === ROLES.WAITER;
+  const audioOk = debeEscucharAudio(posUser, config);
 
-  // SIN `initialData: []`: con él, el primer pasaje del efecto veía una lista vacía, la daba por
-  // «la primera carga» y la siguiente lectura —con los pedidos que YA estaban listos al entrar—
-  // salía como NOVEDAD: toast y voz por cada uno, en cada pestaña nueva. El primer dato de
-  // verdad es el que se toma de referencia.
-  const { data: pedidosListos } = useQuery({
-    queryKey: ['pedidos_listos_watcher'],
-    queryFn: () => api.entidades.PedidoPreparacion.filter({ estado: 'listo' }),
-    refetchInterval: 6000,
-    enabled: watch,
-  });
-
-  // Las mesas sólo hacen falta para saber QUIÉN atiende un pedido que acaba de quedar listo. Antes
-  // se descargaban TODAS (500 filas, las inactivas incluidas) cada 15 s en cada pantalla, hubiera
-  // algo que avisar o no. Ahora se piden cuando hay un aviso por dar, con la clave del salón en
-  // servicio: en el mapa del mesero —que ya la sondea cada 5 s— no cuesta ni una petición más.
-  const hayAvisosPorDar =
-    watch &&
-    Array.isArray(pedidosListos) &&
-    !firstLoadRef.current &&
-    pedidosListos.some((p) => !notifiedRef.current.has(p.id));
-  const {
-    data: mesas,
-    isError: mesasFallaron,
-    isFetching: mesasActualizando,
-  } = useQuery({
-    queryKey: claves.mesas.activas(),
-    queryFn: () => api.entidades.Mesa.filter({ activo: true }),
-    enabled: hayAvisosPorDar,
-    staleTime: 4000,
-  });
-
-  useEffect(() => {
-    if (!watch) return;
-    // Sin la primera lectura no hay nada que comparar.
-    if (!Array.isArray(pedidosListos)) return;
-    const todos = pedidosListos;
-
-    if (firstLoadRef.current) {
-      todos.forEach((p) => notifiedRef.current.add(p.id));
-      saveSet(notifiedRef.current);
-      firstLoadRef.current = false;
-      return;
-    }
-
-    const nuevos = todos.filter((p) => !notifiedRef.current.has(p.id));
-    if (nuevos.length === 0) return;
-    // A quién le toca se sabe por la mesa, y la mesa tiene que estar AL DÍA: se espera a que
-    // termine su lectura (si el caché del mapa ya está fresco no hay nada que esperar). Si la
-    // lectura falló, se avisa igual —sin responsable, como cuando la lista llegaba vacía— antes
-    // que no avisar.
-    if (mesasActualizando) return;
-    if (!Array.isArray(mesas) && !mesasFallaron) return;
-
-    const mesasMap = {};
-    (Array.isArray(mesas) ? mesas : []).forEach((m) => {
-      if (m?.id) mesasMap[m.id] = m;
-    });
-
-    const asign = asignacionActiva(config);
-    const audioOk = debeEscucharAudio(posUser, config);
-    const alertCfg = getAlertConfig();
-    const conSonido = audioOk && (alertCfg.modo === 'sonido' || alertCfg.modo === 'sonido_voz');
-    const conVoz = audioOk && (alertCfg.modo === 'voz' || alertCfg.modo === 'sonido_voz');
-
-    let debeSonarUna = false;
-    let debeHablar = []; // frases a hablar tras delay visual
-
-    nuevos.forEach((p) => {
-      notifiedRef.current.add(p.id);
-      const mesa = p.mesa_id ? mesasMap[p.mesa_id] : null;
-      const responsable = resolverMeseroResponsable(mesa, config);
-
-      // ¿A este usuario le toca audio/voz?
-      let leToca = false;
-      if (role === ROLES.WAITER) {
-        if (asign) {
-          // Solo si la mesa tiene mesero asignado === yo.
-          leToca = !!responsable?.id && responsable.id === posUser.id;
-        } else {
-          // Sin asignación: solo si la mesa tiene atendido_por === yo.
-          // Si la mesa NO tiene atendido_por, NO suena masivo.
-          leToca = !!responsable?.id && responsable.id === posUser.id;
-        }
-      } else if (role === ROLES.ADMIN) {
-        // Admin: toast siempre. Audio/voz solo si no está silenciado.
-        leToca = true;
-      }
-
-      // F3.2: nombre de estación para mostrar/decir. Si el pedido tiene
-      // estacion_preparacion_nombre, se usa; si no, fallback a "cocina".
-      const estacionNombre = (p?.estacion_preparacion_nombre || '').trim();
-      const destinoLegible = estacionNombre || 'cocina';
-
-      // Toast (PRIMERO visual). Mesero solo si le toca; admin siempre.
-      if (leToca || role === ROLES.ADMIN) {
-        // Si admin y la mesa no tiene responsable en modo apagado, advertir.
-        const sinResp = role === ROLES.ADMIN && !asign && mesa && !responsable?.id;
-        toast.success('Pedido listo', {
-          description: sinResp
-            ? `Mesa ${p.mesa_numero || '—'} · Sin mesero atendiendo · Recoger en ${destinoLegible}`
-            : `Mesa ${p.mesa_numero || '—'} · Recoger en ${destinoLegible}`,
-          duration: 8000,
-        });
-      }
-
-      // Voz solo para quien le toca y tenga audio.
-      if (leToca && conVoz) {
-        const puedeNombre =
-          !!responsable?.id && responsable.id === posUser?.id && alertCfg.decir_nombre;
-        const nombre = puedeNombre ? posUser?.nombre || '' : '';
-        debeHablar.push(fraseListoCocina(p.mesa_numero, nombre, estacionNombre));
-      }
-      if (leToca && conSonido) debeSonarUna = true;
-    });
-
-    saveSet(notifiedRef.current);
-
-    // Visual → luego voz/sonido con ~280ms de delay. DP-12.6: el sonido (Check) es del gestor
-    // y la voz empieza cuando termina; nunca se le encima.
-    if (debeSonarUna || debeHablar.length > 0) {
+  const alLlegarNuevos = useCallback(
+    (nuevos) => {
+      if (!Array.isArray(nuevos) || nuevos.length === 0) return;
+      vibrar();
+      const alertCfg = getAlertConfig();
+      const conSonido = audioOk && (alertCfg.modo === 'sonido' || alertCfg.modo === 'sonido_voz');
+      const conVoz = audioOk && (alertCfg.modo === 'voz' || alertCfg.modo === 'sonido_voz');
+      if (!conSonido && !conVoz) return;
+      const nombre = alertCfg.decir_nombre ? posUser?.nombre || '' : '';
+      const frases = conVoz ? nuevos.map((aviso) => fraseHablada(aviso, nombre)) : [];
+      // Visual → luego voz/sonido con ~280ms de delay. DP-12.6: el sonido (Check) es del gestor
+      // y la voz empieza cuando termina; nunca se le encima.
       setTimeout(() => {
-        const sonido = debeSonarUna ? sonarAntesDeHablar('comandaLista') : Promise.resolve();
+        const sonido = conSonido ? sonarAntesDeHablar('comandaLista') : Promise.resolve();
         sonido.then(() => {
-          debeHablar.forEach((frase, i) => {
+          frases.forEach((frase, i) => {
             // Pequeño stagger entre frases si hay varias.
             setTimeout(() => {
               try {
@@ -196,8 +70,16 @@ export default function PedidoListoWatcher() {
           });
         });
       }, 280);
-    }
-  }, [pedidosListos, mesas, mesasFallaron, mesasActualizando, watch, posUser, config]);
+    },
+    [audioOk, posUser],
+  );
 
-  return null;
+  const { pendientes, quitar, quitarTodos } = useAvisosDeListo(
+    watch,
+    watch ? (posUser?.id ?? null) : null,
+    alLlegarNuevos,
+  );
+
+  if (!watch) return null;
+  return <AvisosDeListo avisos={pendientes} alQuitar={quitar} alQuitarTodos={quitarTodos} />;
 }

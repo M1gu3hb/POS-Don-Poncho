@@ -177,19 +177,20 @@ async function prepararLaMesa(page: Page, numero: number, comandas: number): Pro
   const tarjetas = page
     .locator('li')
     .filter({ hasText: new RegExp(`^Mesa ${String(numero)}(?!\\d)`) });
+  // DP-24 · Cada PLATILLO tiene su botón: se toca hasta que la columna se vacía.
   for (const [accion, columna] of [
     ['Preparar', 'Nuevos'],
     ['Listo', 'En preparación'],
   ] as const) {
+    const botones = page.getByRole('button', { name: accion, exact: true });
     await expect(
-      page.getByRole('button', { name: accion }),
-      `La cocina no tiene las ${String(comandas)} comandas de la mesa ${String(numero)} en «${columna}».`,
-    ).toHaveCount(comandas, { timeout: 30_000 });
-    for (let i = 0; i < comandas; i += 1) {
-      await page.getByRole('button', { name: accion }).first().click();
-      await expect(page.getByRole('button', { name: accion })).toHaveCount(comandas - i - 1, {
-        timeout: 30_000,
-      });
+      botones.first(),
+      `La cocina no tiene lo de la mesa ${String(numero)} (${String(comandas)} comandas) en «${columna}».`,
+    ).toBeVisible({ timeout: 30_000 });
+    for (let i = 0; i < 40 && (await botones.count()) > 0; i += 1) {
+      const antes = await botones.count();
+      await botones.first().click();
+      await expect(botones).toHaveCount(antes - 1, { timeout: 30_000 });
     }
   }
   await expect(tarjetas.getByText('Esperando que el mesero recoja').first()).toBeVisible();

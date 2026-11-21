@@ -204,6 +204,19 @@ export const SIN_ESTADO = [
       'No lee nada: quien la pinta ya leyó los almacenes; su única espera es la del botón («Creando…») y su fallo se queda escrito en el aviso.',
   },
   ...ESTADOS_DE_LA_COCINA_GRANDE(),
+  // DP-24 · Las dos piezas del aviso de «listo» y de la nubecita del mapa.
+  ...['vacio', 'cargando', 'error'].map((estado) => ({
+    pantalla: 'restaurante/AvisosDeListo',
+    estado,
+    razon:
+      'Pieza del aviso de «listo» (DP-24), no pantalla: pinta los avisos que le pasa el vigilante (`use-avisos-de-listo`). Sin avisos no pinta tarjetas; la lectura y su fallo son del vigilante, que se calla y reintenta.',
+  })),
+  ...['vacio', 'cargando', 'error'].map((estado) => ({
+    pantalla: 'restaurante/NubesDeLaMesa',
+    estado,
+    razon:
+      'Pieza de la mesa del mapa (DP-24), no pantalla: dice «Cantina ✓», «Cocina 2/4» con lo que ya leyó el mapa del mesero; sin nada que decir no pinta nada. La carga y el fallo los dice el mapa.',
+  })),
   {
     pantalla: 'catalogo/opciones/EditorDeGrupo',
     estado: 'vacio',

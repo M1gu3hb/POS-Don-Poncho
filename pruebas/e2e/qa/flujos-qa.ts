@@ -169,7 +169,8 @@ export async function cobrarEnCaja(
  * una en preparación, hasta que no quede botón. Devuelve cuántas comandas pasó a «listo».
  */
 export async function sacarLoDeLaEstacion(pantalla: Page): Promise<number> {
-  let listas = 0;
+  // DP-24 · Se mueve cada PLATILLO; se cuentan las COMANDAS que el servidor dejó en «listo».
+  const listas = new Set<string>();
   const preparar = pantalla.getByRole('button', { name: 'Preparar', exact: true });
   const listo = pantalla.getByRole('button', { name: 'Listo', exact: true });
   await expect(preparar.or(listo).first()).toBeVisible({ timeout: 30_000 });
@@ -189,9 +190,12 @@ export async function sacarLoDeLaEstacion(pantalla: Page): Promise<number> {
     await (hayPreparar ? preparar : listo).first().click();
     const dicha = await respuesta;
     expect(dicha.status(), `La cocina no pudo mover la comanda: ${await dicha.text()}`).toBe(200);
-    if (!hayPreparar) listas += 1;
+    const cuerpo = (await dicha.json()) as { datos?: { comandaId?: string; estado?: string } };
+    if (cuerpo.datos?.estado === 'listo' && cuerpo.datos.comandaId !== undefined) {
+      listas.add(cuerpo.datos.comandaId);
+    }
   }
-  return listas;
+  return listas.size;
 }
 
 /** El número de comandas por estación que dice el encabezado «N pedido(s) activos». */

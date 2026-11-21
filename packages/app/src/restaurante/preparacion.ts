@@ -5,13 +5,19 @@ import type { Transaccion } from '@morphiqpos/data';
 
 import { definirComando, type ContextoComando } from '../definicion.ts';
 import { tomarCandadosDeCocina } from './candados-de-cocina.ts';
-import { comandaPorId, ordenDeMesa, type ComandaViva } from './datos.ts';
+import { comandaPorId, type ComandaViva } from './datos.ts';
+import { ROLES_DE_COCINA } from './roles-de-cocina.ts';
 import { entregarLoListoYaCobrado } from './comandas-al-cobrar.ts';
-import { entradaEntregarPedidos, entradaTransicionarPedido } from './esquemas.ts';
+import { entradaTransicionarPedido } from './esquemas.ts';
 import { ajustarComandaAlMinimo, itemDeComanda, moverItem, type ItemDeComanda } from './items.ts';
-import { marcarEntregadas, moverComanda, sincronizarMesa } from './preparacion-escrituras.ts';
+import { moverComanda, sincronizarMesa } from './preparacion-escrituras.ts';
 import { propagarAItems, recalcularEstadoDeLineas } from './propagacion.ts';
-import { estadoComandaDeItem, evaluarTransicion, type EstadoComanda } from './transiciones.ts';
+import {
+  esTransicionValida,
+  estadoComandaDeItem,
+  evaluarTransicion,
+  type EstadoComanda,
+} from './transiciones.ts';
 
 /**
  * El ciclo de preparación: `transicionar_pedido` y `entregar_pedidos` (E6-6).
@@ -28,15 +34,6 @@ import { estadoComandaDeItem, evaluarTransicion, type EstadoComanda } from './tr
  * cada `update` es lo que hace que dos pantallas de cocina abiertas a la vez no
  * se pisen: la segunda actualiza cero filas y revierte.
  */
-
-const ROLES_DE_COCINA = [
-  'cocina',
-  'mesero',
-  'cajero',
-  'gerente',
-  'administrador',
-  'dueno',
-] as const;
 
 export interface ResultadoTransicion {
   readonly comandaId: string;
@@ -89,7 +86,13 @@ export const transicionarPedido = definirComando<
     // Lanza TRANSICION_INVALIDA si el destino no sigue a la tabla o retrocede.
     // Sobre el item se evalúa la MISMA tabla, traduciendo `pendiente` a `nuevo`.
     const partida = item === null ? comanda.estado : estadoComandaDeItem(item.estado);
-    const movimiento = evaluarTransicion(partida, entrada.estado);
+    // DP-24 · Un toque tardío sobre un PLATILLO que otro cocinero ya adelantó (pedía «en preparación»
+    // y ya está listo) no es un fallo ni lo regresa: no hace nada. La comanda sigue como estaba.
+    const yaAdelantado =
+      item !== null && partida !== entrada.estado && esTransicionValida(entrada.estado, partida);
+    const movimiento = yaAdelantado
+      ? ({ tipo: 'sin_cambio' } as const)
+      : evaluarTransicion(partida, entrada.estado);
 
     if (movimiento.tipo === 'sin_cambio') {
       ctx.auditar({
@@ -121,6 +124,9 @@ export const transicionarPedido = definirComando<
       estadoComanda,
       empleoId,
       ahora: ctx.ahora,
+      // DP-24 · Un platillo suelto que no cambia a la comanda no es noticia para la mesa.
+      cambioLaComanda: item === null || estadoComanda !== comanda.estado,
+      salioUnPlato: item !== null && entrada.estado === 'listo',
     });
 
     ctx.auditar({
@@ -186,16 +192,26 @@ async function moverToda(
 export async function cerrarElMovimiento(
   tx: Transaccion,
   paso: Paso,
-  datos: DatosDeLaComanda & { readonly estadoComanda: EstadoComanda },
+  datos: DatosDeLaComanda & {
+    readonly estadoComanda: EstadoComanda;
+    /**
+     * DP-24 · Falso cuando sólo se movió un platillo y la comanda siguió donde estaba: la mesa
+     * no se toca (otra estación puede ir más adelante y regresarla sería mentirle al mapa).
+     */
+    readonly cambioLaComanda?: boolean;
+    /** DP-24 · Un platillo quedó listo aunque la comanda aún no: igual se mira si ya se cobró. */
+    readonly salioUnPlato?: boolean;
+  },
 ): Promise<string | null> {
   const { organizacionId, comanda } = datos;
   // DP-15 (QA, J-H3): lo que se termina de una cuenta ya cobrada no espera a ningún mesero.
-  if (datos.estadoComanda === 'listo') {
+  if (datos.estadoComanda === 'listo' || datos.salioUnPlato === true) {
     await paso('entregar_lo_ya_cobrado', () =>
       entregarLoListoYaCobrado(tx, organizacionId, comanda.id, datos.ahora),
     );
   }
   await paso('recalcular_lineas', () => recalcularEstadoDeLineas(tx, organizacionId, [comanda.id]));
+  if (datos.cambioLaComanda === false) return null;
   return paso('avanzar_mesa', () =>
     sincronizarMesa(tx, {
       organizacionId,
@@ -259,101 +275,5 @@ async function moverUnPlato(
   );
 }
 
-export interface ResultadoEntrega {
-  readonly ordenId: string;
-  readonly entregadas: readonly string[];
-  readonly estaciones: readonly string[];
-  readonly estadoMesa: string | null;
-}
-
-/**
- * Entrega de una vez todo lo que la cocina dejó listo para esa cuenta.
- *
- * Sólo mueve las comandas en `listo`, igual que `entregaPedidos.js:110`: lo que
- * sigue en el fuego no se puede entregar. Que no haya nada listo no es un
- * fallo: es un mesero que llegó antes que el plato, y devolver una lista vacía
- * lo dice sin inventar un error.
- */
-export const entregarPedidos = definirComando<
-  Transaccion,
-  typeof entradaEntregarPedidos,
-  ResultadoEntrega
->({
-  nombre: 'restaurante.entregar_pedidos',
-  entidad: 'comanda',
-  escribe: true,
-  roles: [...ROLES_DE_COCINA],
-  paquetes: PAQUETES_RESTAURANTE,
-  sucursal: { ordenId: 'ordenes' },
-  modulo: 'cocina',
-  entrada: entradaEntregarPedidos,
-  async ejecutar(ctx, entrada) {
-    const { organizacionId, empleoId } = ctx.ambito;
-
-    const orden = await ctx.paso('cargar_orden', () =>
-      ordenDeMesa(ctx.tx, organizacionId, entrada.ordenId),
-    );
-    // H2 · La cuenta ya está tomada; faltan sus comandas, platos y líneas, en el orden de siempre.
-    await ctx.paso('candados', () =>
-      tomarCandadosDeCocina(ctx.tx, {
-        organizacionId,
-        ordenIds: [orden.id],
-        comandas: { de: 'las-cuentas' },
-      }),
-    );
-
-    const listas = await ctx.paso('buscar_listas', () =>
-      ctx.tx
-        .selectFrom('comandas')
-        .select(['id', 'estacion_nombre as estacionNombre'])
-        .where('organizacion_id', '=', organizacionId)
-        .where('orden_id', '=', entrada.ordenId)
-        .where('estado', '=', 'listo')
-        .execute(),
-    );
-
-    const ids = listas.map((c) => c.id);
-
-    // La sincronía de la mesa va DENTRO de la guarda, no fuera. Un comando que
-    // no hizo nada no debe escribir estado: con la lista vacía,
-    // `mesaTrasComanda(estado,'entregado',false)` devolvía 'ocupada' y se
-    // escribía en `mesas` una entrega que no entregó nada — la mesa que sólo
-    // pidió refrescos pasaba de «pedido enviado» a «ocupada» porque alguien
-    // pulsó «entregar» sin que hubiera un solo plato listo.
-    let estadoMesa: string | null = null;
-
-    if (ids.length > 0) {
-      await ctx.paso('marcar_entregadas', () =>
-        marcarEntregadas(ctx.tx, organizacionId, ids, ctx.ahora),
-      );
-      await ctx.paso('propagar_items', () =>
-        propagarAItems(ctx.tx, organizacionId, ids, 'entregado', ctx.ahora),
-      );
-      await ctx.paso('recalcular_lineas', () =>
-        recalcularEstadoDeLineas(ctx.tx, organizacionId, ids),
-      );
-      estadoMesa = await ctx.paso('avanzar_mesa', () =>
-        sincronizarMesa(ctx.tx, {
-          organizacionId,
-          ordenId: entrada.ordenId,
-          mesaId: orden.mesaId,
-          comandasMovidas: ids,
-          estadoComanda: 'entregado',
-          empleoId,
-          ahora: ctx.ahora,
-        }),
-      );
-    }
-
-    const estaciones = [
-      ...new Set(listas.map((c) => c.estacionNombre).filter((n): n is string => n !== null)),
-    ];
-
-    ctx.auditar({
-      entidadId: entrada.ordenId,
-      payload: { entregadas: ids.length, estaciones, estadoMesa },
-    });
-
-    return { ordenId: entrada.ordenId, entregadas: ids, estaciones, estadoMesa };
-  },
-});
+/** El comando de la mesa vive aparte (DP-24): entrega platillos, no comandas. */
+export { entregarPedidos, type ResultadoEntrega } from './entrega-de-platillos.ts';

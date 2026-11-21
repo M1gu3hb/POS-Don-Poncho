@@ -18,6 +18,9 @@ export interface ItemDeCocina {
   readonly cantidad?: number | string | null;
   readonly notas?: string | null;
   readonly estado?: string | null;
+  /** DP-24 · Cuándo arrancó y cuándo salió ESTE platillo. */
+  readonly fecha_inicio?: string | null;
+  readonly fecha_listo?: string | null;
   readonly tipo_venta?: string | null;
   readonly unidad_variable?: string | null;
   readonly cantidad_variable?: number | string | null;
