@@ -10,7 +10,6 @@ import {
   MESA_5,
   ordenDeMesa,
   PREDETERMINADOS,
-  SUCURSAL,
 } from './pruebas/sala.ts';
 import { separarMesasComando, unirMesasComando } from './union-de-mesas.ts';
 
