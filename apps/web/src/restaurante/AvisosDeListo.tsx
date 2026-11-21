@@ -19,7 +19,7 @@ import {
  * «Mesa 5 · Listo en Cantina: 2 Coca cola, 1 Jugo · Recoger en Cantina». Se apilan —tres a la
  * vista y el resto contado, nunca escondido—, no se van solos, y el mesero los quita deslizando o
  * tocando (y con el botón «Entendido» de 44 px, para quien no puede arrastrar). Van ARRIBA y EN el
- * flujo de la pantalla (`sticky`, no `fixed`): empujan el contenido en vez de taparlo, así que
+ * flujo de la pantalla (sin `sticky` ni `fixed`): empujan el contenido en vez de taparlo, así que
  * nunca caen sobre un botón del mapa ni de la mesa. El
  * contenedor es un `status` para que el lector de pantalla los lea; sin animación si el aparato
  * pidió movimiento reducido.
@@ -77,7 +77,7 @@ export function AvisosDeListo({ avisos: todos, alQuitar, alQuitarTodos }: Avisos
       aria-live="polite"
       aria-label="Platillos listos para recoger"
       data-avisos-de-listo={String(avisos.length)}
-      className="sticky top-0 z-30 flex flex-col items-center gap-2 empty:hidden pb-2"
+      className="relative flex flex-col items-center gap-2 empty:hidden pb-2"
     >
       {enPastilla.length > 0 && (
         // Con una ventana abierta los avisos de otras mesas son sólo una pastilla SIN toques.
