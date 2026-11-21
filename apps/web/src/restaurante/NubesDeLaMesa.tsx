@@ -13,7 +13,7 @@ export interface NubesDeLaMesaProps {
 export function NubesDeLaMesa({ nubes, forma }: NubesDeLaMesaProps) {
   if (nubes.length === 0) return null;
   const chip =
-    'pointer-events-none whitespace-nowrap rounded-full border border-exito bg-superficie px-1.5 py-px text-xs leading-tight font-bold text-texto shadow-1';
+    'pointer-events-none whitespace-nowrap rounded-full bg-superficie px-1.5 py-px text-xs leading-none font-bold ring-1 ring-exito text-texto shadow-1';
   if (forma === 'tarjeta') {
     return (
       <span data-nubes-de-la-mesa className="mt-1 flex flex-wrap justify-center gap-1">
