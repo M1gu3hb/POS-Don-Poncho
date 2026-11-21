@@ -14807,6 +14807,17 @@
       "generada": null
     },
     {
+      "clave": "public.productos.orden_en_categoria",
+      "esquema": "public",
+      "tabla": "productos",
+      "columna": "orden_en_categoria",
+      "tipo": "integer",
+      "noNula": false,
+      "defaultSql": null,
+      "identidad": null,
+      "generada": null
+    },
+    {
       "clave": "public.productos.organizacion_id",
       "esquema": "public",
       "tabla": "productos",
@@ -20369,7 +20380,7 @@
       "tabla": "categorias",
       "nombre": "categorias_color_check",
       "tipo": "check",
-      "definicion": "CHECK (color ~ '^#[0-9a-fA-F]{6}$'::text)",
+      "definicion": "CHECK (color IS NULL OR color ~ '^#[0-9a-fA-F]{6}$'::text OR color ~ '^cat-([1-9]|1[0-6])$'::text)",
       "validada": true,
       "diferible": false,
       "diferidaInicialmente": false
@@ -31133,6 +31144,17 @@
       "diferidaInicialmente": false
     },
     {
+      "clave": "public.productos.productos_orden_en_categoria_valido",
+      "esquema": "public",
+      "tabla": "productos",
+      "nombre": "productos_orden_en_categoria_valido",
+      "tipo": "check",
+      "definicion": "CHECK (orden_en_categoria IS NULL OR orden_en_categoria >= 0)",
+      "validada": true,
+      "diferible": false,
+      "diferidaInicialmente": false
+    },
+    {
       "clave": "public.productos.productos_organizacion_id_fkey",
       "esquema": "public",
       "tabla": "productos",
@@ -38251,6 +38273,16 @@
       "primario": false,
       "valido": true,
       "definicion": "CREATE INDEX productos_por_linea ON public.productos USING btree (organizacion_id, linea_id) WHERE (linea_id IS NOT NULL)"
+    },
+    {
+      "clave": "public.productos.productos_por_orden_en_categoria",
+      "esquema": "public",
+      "tabla": "productos",
+      "nombre": "productos_por_orden_en_categoria",
+      "unico": false,
+      "primario": false,
+      "valido": true,
+      "definicion": "CREATE INDEX productos_por_orden_en_categoria ON public.productos USING btree (organizacion_id, categoria_id, orden_en_categoria)"
     },
     {
       "clave": "public.productos.productos_por_organizacion",

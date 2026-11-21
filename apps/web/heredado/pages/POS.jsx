@@ -37,6 +37,8 @@ import { conSusOpciones, pideOpciones } from '~/restaurante/opciones-de-los-plat
 import { opcionesParaElComando, tieneGruposParaOfrecer } from '~/venta/opciones-en-pos';
 import { useEscanerDelDocumento } from '~/cliente/use-escaner-del-documento';
 import { folioVisible } from '@morphiqpos/domain/venta';
+import { ordenarMenu } from '@morphiqpos/domain/catalogo';
+import { PestanasDeCategoria } from '~/restaurante/rejilla/PestanasDeCategoria';
 
 /** Centavos del servidor (llegan como cadena) a los pesos que la interfaz pinta. */
 const centavosAPesos = (valor) => (Number(valor) || 0) / 100;
@@ -248,12 +250,13 @@ export default function POS() {
   const refrescarCarrito = () => queryClient.invalidateQueries({ queryKey: ['venta_borrador'] });
 
   const filtered = useMemo(() => {
-    return productos.filter((p) => {
+    // DP-24 · EL orden del menú (el mismo del mesero, del portal y de «Para llevar»).
+    return ordenarMenu(productos, categorias).filter((p) => {
       const matchSearch = !search || p.nombre.toLowerCase().includes(search.toLowerCase());
       const matchCat = activeCategory === 'all' || p.categoria_id === activeCategory;
       return matchSearch && matchCat;
     });
-  }, [productos, search, activeCategory]);
+  }, [productos, categorias, search, activeCategory]);
 
   // El total lo derivó el servidor de las líneas persistidas, con la regla de
   // impuesto del negocio. Sumarlo otra vez aquí sería el segundo sitio donde se
@@ -682,27 +685,13 @@ export default function POS() {
               </Button>
             )}
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <Button
-              variant={activeCategory === 'all' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setActiveCategory('all')}
-              className="shrink-0"
-            >
-              Todos
-            </Button>
-            {categorias.map((c) => (
-              <Button
-                key={c.id}
-                variant={activeCategory === c.id ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setActiveCategory(c.id)}
-                className="shrink-0"
-              >
-                {c.nombre}
-              </Button>
-            ))}
-          </div>
+          <PestanasDeCategoria
+            categorias={categorias}
+            elegida={activeCategory}
+            alElegir={setActiveCategory}
+            etiquetaDeTodas="Todos"
+            claveDeTodas="all"
+          />
         </div>
 
         {/* Product grid */}
