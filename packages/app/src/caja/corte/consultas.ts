@@ -340,6 +340,22 @@ export interface VentaDelDetalle {
   readonly totalCentavos: string;
   readonly pago: string | null;
   readonly atendio: string | null;
+  /**
+   * DP-25 · Cada pago de la venta, por separado y en el orden en que se cobró: el documento lista
+   * «Tarjeta 1», «Tarjeta 2» y «Efectivo» (con lo recibido y el cambio) en vez de «Mixto».
+   */
+  readonly pagos: readonly PagoDelDetalle[] | null;
+}
+
+export interface PagoDelDetalle {
+  readonly id: string;
+  readonly metodo: string;
+  readonly montoCentavos: string;
+  readonly propinaCentavos: string;
+  readonly recibidoCentavos: string | null;
+  readonly cambioCentavos: string;
+  readonly estado: string;
+  readonly creadoEn: string;
 }
 
 export interface LineaDelDetalle {
@@ -394,6 +410,17 @@ export async function detalleDeVentas(
               from pagos p
              where p.orden_id = o.id and p.organizacion_id = o.organizacion_id
                and p.estado = 'confirmado')                   as "pago",
+           (select json_agg(json_build_object(
+                     'id', p.id,
+                     'metodo', p.metodo,
+                     'montoCentavos', p.monto_centavos::text,
+                     'propinaCentavos', p.propina_centavos::text,
+                     'recibidoCentavos', p.recibido_centavos::text,
+                     'cambioCentavos', p.cambio_centavos::text,
+                     'estado', p.estado,
+                     'creadoEn', p.created_at) order by p.created_at, p.id)
+              from pagos p
+             where p.orden_id = o.id and p.organizacion_id = o.organizacion_id) as "pagos",
            ev.nombre                                          as "atendio"
       from ordenes o
       left join mesas m on m.id = o.mesa_id and m.organizacion_id = o.organizacion_id

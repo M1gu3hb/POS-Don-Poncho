@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
 import { avalarElCajon } from './aval-del-cajon.ts';
+import { cajaConSuAparato, leerNombresDeCajas } from './lugares.ts';
 
 /**
  * F-235 · Varias cajas a la vez · F-984 · El cajón de dinero.
@@ -66,6 +67,11 @@ export interface CajaAbierta {
   readonly fondoInicialCentavos: string;
   /** `true` cuando es la de la terminal desde la que se pregunta. */
   readonly esLaMia: boolean;
+  /**
+   * DP-25 · «Caja principal · iMin mostrador»: cómo se lee en pantalla, para elegir en el Tablero
+   * de qué caja sale una propina entregada. Un identificador no le dice nada a quien liquida.
+   */
+  readonly nombre: string;
 }
 
 export interface ResultadoCajas {
@@ -125,14 +131,27 @@ export const cajasAbiertas = definirComando<
 
     let consulta = ctx.tx
       .selectFrom('sesiones_caja')
-      .select(['id', 'terminal_id', 'empleado_abre_id', 'abierta_en', 'fondo_inicial_centavos'])
-      .where('organizacion_id', '=', organizacionId)
-      .where('estado', '=', 'abierta');
+      .leftJoin('terminales', 'terminales.id', 'sesiones_caja.terminal_id')
+      .select([
+        'sesiones_caja.id as id',
+        'sesiones_caja.terminal_id as terminal_id',
+        'sesiones_caja.empleado_abre_id as empleado_abre_id',
+        'sesiones_caja.abierta_en as abierta_en',
+        'sesiones_caja.fondo_inicial_centavos as fondo_inicial_centavos',
+        'sesiones_caja.lugar as lugar',
+        'terminales.nombre as aparato',
+      ])
+      .where('sesiones_caja.organizacion_id', '=', organizacionId)
+      .where('sesiones_caja.estado', '=', 'abierta');
 
-    if (sucursalId !== null) consulta = consulta.where('sucursal_id', '=', sucursalId);
-    if (!entrada.todas) consulta = consulta.where('terminal_id', '=', terminalId);
+    if (sucursalId !== null)
+      consulta = consulta.where('sesiones_caja.sucursal_id', '=', sucursalId);
+    if (!entrada.todas) consulta = consulta.where('sesiones_caja.terminal_id', '=', terminalId);
 
     const filas = await ctx.paso('leer_cajas', () => consulta.execute());
+    const nombres = await ctx.paso('nombres_de_cajas', () =>
+      leerNombresDeCajas(ctx.tx, organizacionId),
+    );
 
     const limite = ctx.ahora.getTime() - HORAS_DE_UN_TURNO * 3_600_000;
     const abiertas = filas.map((f) => ({
@@ -142,6 +161,7 @@ export const cajasAbiertas = definirComando<
       abiertaEn: f.abierta_en.toISOString(),
       fondoInicialCentavos: f.fondo_inicial_centavos.toString(),
       esLaMia: f.terminal_id === terminalId,
+      nombre: cajaConSuAparato(f.lugar, nombres, f.aparato),
     }));
 
     return {
