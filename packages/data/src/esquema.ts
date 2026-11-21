@@ -832,6 +832,8 @@ export interface Productos {
   presentacion_venta_id: string | null;
   /** F-021 · La línea de ferretería, con su esquema de atributos (110). */
   linea_id: string | null;
+  /** DP-24 · El lugar del producto en su categoría (196). Nulo = nadie lo ordenó: al final, por nombre. */
+  orden_en_categoria: number | null;
   // ── 092 · F-106 · La caducidad sin lote. Opcionales: migración sin aplicar.
   /** `true` sólo en lo que de verdad caduca: la lista de la mañana se lee. */
   controla_caducidad?: boolean;

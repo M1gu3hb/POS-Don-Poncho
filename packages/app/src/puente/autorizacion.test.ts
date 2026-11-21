@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { ErrorDominio, ROLES } from '@morphiqpos/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { liquidarPropinas } from '../propinas/liquidar.ts';
+import { LIQUIDAN_POR_SU_CUENTA, liquidarPropinas } from '../propinas/liquidar.ts';
 import { consultar } from './consultar.ts';
 import { entidadMapeada, MAPA } from './mapa.ts';
 import { rolMH } from './roles.ts';
@@ -222,14 +222,26 @@ function heredadosQueContienen(texto: string): string[] {
  * Por eso el campo se ata AL COMANDO y no a una lista escrita a mano aquí:
  * «quién liquida» y «quién puede ver si ya se liquidó» son la misma pregunta, y
  * con una sola respuesta no se pueden separar por descuido.
+ *
+ * ── DP-24 · La cajera entrega propinas en el corte, y esto NO se ensancha ──
+ * Don Poncho pidió liquidar desde el corte de la Caja, que cierra la cajera. Por eso
+ * `propinas.liquidar` acepta ahora al cajero, pero por un solo camino: desde el corte
+ * (`entregarDeLaCaja`) y con el PIN de la dirección para ESE importe (lo prueba
+ * `liquidar-en-el-corte.integracion`). No liquida por su cuenta, el diálogo le lista lo
+ * pendiente con `propinas.pendientes` (que ya era suyo: el cierre siempre le enseñó las
+ * propinas del día) y NO lee estos campos. Así que el campo sigue atado al comando, a
+ * quien liquida POR SU CUENTA (`LIQUIDAN_POR_SU_CUENTA`), y se exige además que fuera de
+ * la dirección al comando no entre nadie más que la caja.
  */
 describe('§7.5 · el estado de liquidación de la propina', () => {
   /** El puntero, su fecha y el booleano derivado: los tres dicen lo mismo. */
   const CAMPOS = ['propina_liquidada', 'propina_liquidacion_id', 'propina_liquidada_fecha'];
 
-  it('los tres campos declaran exactamente los roles que liquidan', () => {
-    const quienLiquida = [...liquidarPropinas.roles].sort();
+  it('los tres campos declaran exactamente los roles que liquidan por su cuenta', () => {
+    const quienLiquida: readonly string[] = [...LIQUIDAN_POR_SU_CUENTA].sort();
     expect(quienLiquida.length).toBeGreaterThan(0);
+    // Fuera de la dirección, al comando sólo entra la caja (y sólo desde el corte, con PIN).
+    expect(liquidarPropinas.roles.filter((rol) => !quienLiquida.includes(rol))).toEqual(['cajero']);
 
     for (const campo of CAMPOS) {
       // `rolesDelCampo` devuelve `[]` cuando no hay política declarada, así que
@@ -253,7 +265,7 @@ describe('§7.5 · el estado de liquidación de la propina', () => {
     // Y que `ROLES.ADMIN` siga siendo exactamente esos tres: la traducción es
     // el eslabón que convierte «administrador» de su menú en tres roles de esta
     // base, y sin ella la cita de `permissions.js` no probaría nada.
-    for (const rol of liquidarPropinas.roles) expect(rolMH(rol), rol).toBe('administrador');
+    for (const rol of LIQUIDAN_POR_SU_CUENTA) expect(rolMH(rol), rol).toBe('administrador');
     expect(rolMH('cajero')).toBe('caja');
   });
 

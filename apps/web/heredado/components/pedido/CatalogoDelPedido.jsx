@@ -4,12 +4,18 @@ import { ChefHat, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import PrecioProductoMesero, { VariableBadge } from '@/components/mesero/PrecioProductoMesero';
 import { tieneGrupos } from './useArmadoDelPedido';
+import { ordenarMenu } from '@morphiqpos/domain/catalogo';
 import { coincideConLaBusqueda } from '~/restaurante/buscar-producto';
+import { coloresPorCategoria, franjaDeLaCategoria } from '~/restaurante/rejilla/colores';
+import { PestanasDeCategoria } from '~/restaurante/rejilla/PestanasDeCategoria';
 import { BotonQueAgrega, useRejillaQueVuelveArriba } from '~/tacto/BotonQueAgrega';
 
 /**
  * DP-16 · EL MENÚ PARA TOMAR UN PEDIDO: búsqueda, categorías y platillos, como en la mesa del
  * mesero (`Mesero.jsx`). Lo agotado del día se ve apagado y no entra (lo dice `agregar`).
+ *
+ * DP-24 · Platillos y búsqueda en EL orden del menú (`ordenarMenu`, el mismo del mesero y del portal);
+ * las pestañas con su color de categoría y cada tarjeta con su franja (`rejilla/PestanasDeCategoria`).
  */
 export default function CatalogoDelPedido({
   productos,
@@ -21,7 +27,12 @@ export default function CatalogoDelPedido({
 }) {
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState('todas');
-  const lista = Array.isArray(productos) ? productos : [];
+  const listaCategorias = useMemo(() => (Array.isArray(categorias) ? categorias : []), [categorias]);
+  const colores = useMemo(() => coloresPorCategoria(listaCategorias), [listaCategorias]);
+  const lista = useMemo(
+    () => ordenarMenu(Array.isArray(productos) ? productos : [], listaCategorias),
+    [productos, listaCategorias],
+  );
   // DP-23 · La rejilla vuelve arriba al cambiar de categoría o de búsqueda.
   const rejillaRef = useRejillaQueVuelveArriba(`${categoria}|${busqueda}`);
 
@@ -32,11 +43,6 @@ export default function CatalogoDelPedido({
     if (busqueda.trim()) l = l.filter((p) => coincideConLaBusqueda(p?.nombre, busqueda));
     return l;
   }, [lista, categoria, busqueda]);
-
-  const chip = (activo) =>
-    `shrink-0 min-h-9 any-pointer-coarse:min-h-(--altura-tactil) px-3 py-1 rounded-full text-sm font-medium ${
-      activo ? 'bg-primary text-primario-texto' : 'bg-superficie border text-muted-foreground'
-    }`;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-0">
@@ -51,21 +57,7 @@ export default function CatalogoDelPedido({
             className="pl-9 h-10"
           />
         </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Categorías">
-          <button type="button" onClick={() => setCategoria('todas')} className={chip(categoria === 'todas')}>
-            Todas
-          </button>
-          {(Array.isArray(categorias) ? categorias : []).map((c) => (
-            <button
-              type="button"
-              key={c.id}
-              onClick={() => setCategoria(c.id)}
-              className={chip(categoria === c.id)}
-            >
-              {c.nombre}
-            </button>
-          ))}
-        </div>
+        <PestanasDeCategoria categorias={listaCategorias} elegida={categoria} alElegir={setCategoria} />
       </div>
       <div
         ref={rejillaRef}
@@ -81,12 +73,14 @@ export default function CatalogoDelPedido({
           <>
             {filtrados.map((p) => {
               const agotado = p?.agotado_hoy === true;
+              const franja = franjaDeLaCategoria(colores, p?.categoria_id);
               return (
                 <BotonQueAgrega
                   key={p.id}
                   alAgregar={() => onTocar(p)}
                   aria-disabled={agotado}
-                  className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:bg-muted/60 transition-all relative flex flex-col items-start ${agotado ? 'opacity-50' : ''}`}
+                  className={`p-3 rounded-xl border bg-superficie text-left hover:bg-muted/30 active:bg-muted/60 transition-all relative flex flex-col items-start ${franja.className} ${agotado ? 'opacity-50' : ''}`}
+                  data-categoria-color={franja['data-categoria-color']}
                 >
                   <p className="font-semibold text-sm leading-tight">{p?.nombre}</p>
                   <PrecioProductoMesero producto={p} colorize={colorize} />

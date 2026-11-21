@@ -28,12 +28,11 @@ import {
 } from './ayudantes/sesion.ts';
 
 /**
- * DP-14.6 (medios 1 y 9) · UNA PARTE SE CANCELA, Y EL CIERRE DEL DÍA SUELTA LA MESA EN LIMPIEZA.
+ * DP-14.6 (medios 1 y 9) · UNA PARTE SE CANCELA, LA CAJA COBRA LA OTRA Y LA MESA QUEDA LIBRE.
  *
  * La mesa 4 pide y se divide en dos partes; la dueña cancela una (las partes nacen sin mesa y
- * `cancelar_orden` las rechazaba) y la caja cobra la otra: la mesa queda en limpieza. Al cerrar el
- * día, el diálogo de las mesas pendientes trae «Marcar libre» para esa mesa —no hay dinero
- * pendiente— y la mesa dividida no se queda con una venta activa.
+ * `cancelar_orden` las rechazaba) y la caja cobra la otra y la suelta (la mesa queda libre, sin venta
+ * activa). Al cerrar el día ya no hay mesa pendiente: el cierre abre su formulario.
  */
 
 const SLUG = 'prueba-restaurante';
@@ -137,7 +136,7 @@ test.describe('cancelar una parte y cerrar el día (DP-14.6)', () => {
       ).toHaveCount(0, { timeout: 30_000 });
     });
 
-    await test.step('Rosa cobra la parte que queda y la mesa pasa a limpieza', async () => {
+    await test.step('Rosa cobra la parte que queda y la caja suelta la mesa', async () => {
       const total = (await cuentaEnElServidor(duena, partes[0] ?? '')).totalCentavos;
       await rosa
         .getByRole('button', { name: new RegExp(`^Mesa ${String(MESA)} · cuenta 1 de 2 `) })
@@ -152,32 +151,27 @@ test.describe('cancelar una parte y cerrar el día (DP-14.6)', () => {
       await dialogo.getByRole('button', { name: /^Cobrar \$/ }).click();
       expect((await leerElCobro(await cobrado)).ok).toBe(true);
       await cerrarElTicket(rosa);
+      // Desde DP-17 la Caja suelta la mesa en cuanto cobra la última parte (`liberar-mesa`): del
+      // cobro a libre, sin dejarla en «limpieza» para el cierre. Que el servidor deje en limpieza
+      // lo cobrado sin que nadie la suelte lo cubre su prueba de integración
+      // (`cancelar-parte-dividida.integracion.test.ts`).
       await exigirEstadoDeLaMesa(
         duena,
         MESA,
-        'limpieza',
-        'La última parte viva no dejó la mesa en limpieza.',
+        'libre',
+        'La última parte viva no dejó la mesa libre.',
       );
-    });
-
-    await test.step('el cierre del día lista la mesa y «Marcar libre» la suelta', async () => {
-      const cierreDiario = rosa.getByRole('button', { name: /^(Cierre diario|Cierre)$/ });
-      await cierreDiario.click();
-      const pendientes = rosa.getByRole('dialog').filter({ hasText: 'No puedes cerrar caja' });
-      await expect(pendientes).toBeVisible();
-      await expect(pendientes.getByText(`Mesa ${String(MESA)}`)).toBeVisible();
-      // La mesa cobrada conserva el id de su cuenta, pero no dice «venta activa»: no hay qué cobrar.
-      await expect(pendientes.getByText('Con venta activa')).toHaveCount(0);
-      await pendientes.locator('[data-marcar-libre]').click();
-      await expect(
-        pendientes.getByText('Listo: ya puedes intentar el cierre otra vez.'),
-      ).toBeVisible();
-      await exigirEstadoDeLaMesa(duena, MESA, 'libre', 'Marcar libre no soltó la mesa.');
       const mesa = await mesaEnElServidor(duena, MESA);
       expect(mesa.ordenId, 'La mesa dividida se quedó con una venta activa.').toBeNull();
-      // Sin mesas pendientes, el cierre del día abre su formulario.
-      await pendientes.getByRole('button', { name: 'Entendido' }).click();
+    });
+
+    await test.step('el cierre del día ya no encuentra la mesa pendiente y abre su formulario', async () => {
+      const cierreDiario = rosa.getByRole('button', { name: /^(Cierre diario|Cierre)$/ });
       await cierreDiario.click();
+      await expect(
+        rosa.getByRole('dialog').filter({ hasText: 'No puedes cerrar caja' }),
+        'El cierre del día siguió listando una mesa que la caja ya soltó.',
+      ).toHaveCount(0);
       await expect(
         rosa.getByRole('dialog').filter({ hasText: 'Cierre de caja diario' }),
       ).toBeVisible();

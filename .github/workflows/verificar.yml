@@ -623,6 +623,11 @@ jobs:
           - modelo: restaurante
             suite: dia-completo-restaurante
             aparatos: --project=escritorio --project=tablet --project=telefono
+          # DP-24 · LA CAJA, en su propio trabajo (corre en paralelo con el día): la tarjeta de
+          # cobro con el dedo en las tres pantallas de la caja, y después lo demás del cobro.
+          - modelo: caja
+            suite: tarjeta-de-cobro
+            aparatos: --project=escritorio
 
     services:
       postgres:
@@ -653,6 +658,9 @@ jobs:
       SESSION_SECRET: e2e_de_ci_firma_de_sesion_efimera_2026_x
       PIN_PEPPER: e2e_de_ci_pimienta_de_pin_efimera_2026_xx
       NODE_ENV: production
+      # DP-24: las capturas de la tarjeta de cobro (800×600, 1024×768, 1280×800) caen aquí y se suben
+      # con las trazas: una prueba que pasa no deja nada en `.resultados`, y hay que MIRARLAS.
+      MORPHIQPOS_CAPTURAS: ${{ github.workspace }}/capturas-caja
       TZ: America/Mexico_City
 
     steps:
@@ -768,6 +776,28 @@ jobs:
           pnpm test:e2e pruebas/e2e/cocina-por-platillo.spec.ts --project=tablet --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/mini-jornada-de-cocina.spec.ts --project=tablet --workers=1 --retries=0
 
+      # LA CAJA MANDA (DP-24): lo que la cajera hace con la cuenta sin salir de la tarjeta de cobro
+      # —agregar, para llevar, quitar con el PIN de un gerente— y las propinas en el corte, con lo
+      # entregado saliendo del cajón; la propina, una sola verdad entre la Caja y el portal; y lo
+      # que ya se cobraba desde ahí: lo quitado, el descuento en el ticket, el IVA, dividir la
+      # cuenta, los folios y lo que se vende por peso. Cada una resetea la demo al empezar.
+      - name: La Caja manda
+        if: matrix.modelo == 'caja'
+        run: |
+          # Cada suite corre aunque otra falle: así una vuelta de CI muestra TODO lo roto, y el
+          # trabajo falla igual al final.
+          fallo=0
+          pnpm test:e2e pruebas/e2e/la-caja-manda.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/propina-una-sola-verdad.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/quitado-en-la-caja.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/ticket-con-descuento.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/sin-iva.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/dividir-en-la-caja.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/sala-dp14c-cierre.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/folios-con-prefijo.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          pnpm test:e2e pruebas/e2e/barbacoa-por-kilo.spec.ts --project=escritorio --workers=1 --retries=0 || fallo=1
+          exit $fallo
+
       - name: Las trazas del día
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -776,6 +806,7 @@ jobs:
           path: |
             pruebas/e2e/.resultados
             playwright-report
+            capturas-caja
           retention-days: 7
           if-no-files-found: ignore
 

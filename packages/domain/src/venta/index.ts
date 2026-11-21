@@ -152,3 +152,4 @@ export {
   type PapelATuGustoParcial,
   type PapelDeVenta,
 } from './campos-del-papel.ts';
+export { MARCA_PARA_LLEVAR, esParaLlevar, notaParaLlevar } from './para-llevar-en-la-cuenta.ts';

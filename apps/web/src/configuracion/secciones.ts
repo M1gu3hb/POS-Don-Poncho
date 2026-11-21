@@ -445,6 +445,17 @@ export const TARJETAS: readonly Tarjeta[] = [
     con: GENERICO,
   },
   {
+    // DP-24 · 3.2 · El menú 100 % personalizable: el orden de las secciones y de los platillos, y qué
+    // platillos se ven en el menú digital. Guarda con comandos de catálogo (con auditoría).
+    id: 'portal-orden-del-menu',
+    seccion: 'portal',
+    titulo: 'El orden del menú',
+    componente: 'OrdenDelMenu',
+    visiblePara: 'portal',
+    guarda: [],
+    con: 'catalogo.ordenar_categorias · catalogo.ordenar_productos · catalogo.mostrar_en_menu',
+  },
+  {
     id: 'portal-pedidos',
     seccion: 'portal',
     titulo: 'Pedidos desde el portal',

@@ -28,6 +28,7 @@
  * venta se registra antes de salir, y desde la segunda salida dice «REIMPRESIÓN».
  */
 import { aislarParaImprimir, documentoAImprimir } from '~/impresion/aislar';
+import { ponerCopiasParaElNavegador } from '~/impresion/copias-en-el-navegador';
 import {
   LIENZO_TERMICO,
   datosDelDocumento,
@@ -73,6 +74,12 @@ async function imprimirConElNavegador({ modo, title, ancho, objetivo }) {
   const lienzo = modo === 'thermal' && objetivo ? objetivo.querySelector(LIENZO_TERMICO) : null;
   const salida = lienzo ? await marcaDelTicket(objetivo) : { marca: null, ordenId: null };
   if (lienzo && salida.marca !== null) marcarReimpresion(lienzo, salida.marca, rollo);
+  // DP-24 · Las copias del negocio, leídas AHORA, también por el diálogo del navegador (la original;
+  // una reimpresión es un solo papel).
+  const quitarCopias =
+    lienzo && salida.marca === null
+      ? await ponerCopiasParaElNavegador(lienzo, datosDelDocumento(objetivo).tipo, rollo)
+      : () => {};
 
   html.setAttribute('data-print-mode', modo);
   document.title = title;
@@ -90,6 +97,7 @@ async function imprimirConElNavegador({ modo, title, ancho, objetivo }) {
     document.title = prevTitle;
     hoja.remove();
     deshacerAislado();
+    quitarCopias();
     if (lienzo) quitarMarcas(lienzo);
     window.removeEventListener('afterprint', cleanup);
   };

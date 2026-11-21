@@ -106,9 +106,10 @@ const FILAS: readonly Fila[] = [
     clase: TACTIL_ALTO,
   },
   {
-    archivo: 'heredado/pages/Mesero.jsx',
-    componente: 'fichas de categoría del diálogo de la mesa',
-    identifica: ['shrink-0', 'px-3', 'py-1', 'rounded-full'],
+    // DP-24 · Las fichas de categoría del mesero, de «Para llevar» y del POS son UNA pieza compartida.
+    archivo: 'src/restaurante/rejilla/PestanasDeCategoria.tsx',
+    componente: 'fichas de categoría de la rejilla (mesero, Para llevar y POS)',
+    identifica: ['shrink-0', 'py-1', 'rounded-full'],
     clase: TACTIL_ALTO,
   },
   {
@@ -164,12 +165,6 @@ const FILAS: readonly Fila[] = [
     componente: 'cantidad de la ficha (− y +)',
     identifica: ['w-6', 'h-6', 'rounded-full'],
     clase: TACTIL_LADO,
-  },
-  {
-    archivo: 'heredado/components/pedido/CatalogoDelPedido.jsx',
-    componente: 'fichas de categoría de Para llevar',
-    identifica: ['shrink-0', 'min-h-9', 'rounded-full'],
-    clase: TACTIL_ALTO,
   },
 ];
 
@@ -229,9 +224,14 @@ describe('los 44 px por componente (DP-22 · barrido de servicio)', () => {
     const resumen = leer('heredado/components/caja/ResumenDelDia.jsx');
     expect(resumen).toContain('aria-label="Métodos de pago (se desplaza de lado)"');
     expect(resumen).toContain('tabIndex={0}');
-    const cajaCobro = leer('heredado/pages/Caja.jsx');
-    expect(cajaCobro).toContain('className="h-auto"');
-    expect(cajaCobro).toContain('className="min-w-[140px] h-auto"');
+    // DP-24 · «Cerrar» y «Cobrar $…» viven en la tarjeta de cobro, con su alto táctil propio.
+    const cajaCobro = leer('src/venta/TarjetaDeCobro.tsx');
+    expect(cajaCobro).toContain(
+      'className="h-[calc(var(--altura-tactil)+var(--espacio-3))] px-(--espacio-4)"',
+    );
+    expect(cajaCobro).toContain(
+      'className="h-[calc(var(--altura-tactil)+var(--espacio-3))] flex-1 text-xl font-black"',
+    );
   });
 
   it('el contraste: la cuenta de la zona sobre el primario y los avisos en texto oscuro', () => {

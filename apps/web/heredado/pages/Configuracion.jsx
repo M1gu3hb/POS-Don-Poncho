@@ -19,6 +19,7 @@ import ConfiguracionDeVoz from '@/components/configuracion/ConfiguracionDeVoz';
 import UsuariosPOSSection from '@/components/configuracion/UsuariosPOSSection';
 import ReiniciarSistemaSection from '@/components/configuracion/ReiniciarSistemaSection';
 import CategoriasProductoSection from '@/components/configuracion/CategoriasProductoSection';
+import { OrdenDelMenu } from '~/restaurante/personalizar-menu/OrdenDelMenu';
 import UnidadesMedidaSection from '@/components/configuracion/UnidadesMedidaSection';
 import ProveedoresSection from '@/components/configuracion/ProveedoresSection';
 import EstacionesDeCocina from '@/components/configuracion/EstacionesDeCocina';
@@ -197,6 +198,12 @@ export default function Configuracion() {
     'alertas-de-espera': () => <AlertasDeEsperaDeCocina cfg={cfg} />,
     'voz-de-las-comandas': () => <PruebaDeLaVozDeComandas />,
     'portal-activacion': () => <ConfiguracionQRTab config={cfg} grupo="activacion" />,
+    // DP-24 · El orden del menú y qué platillos se ven en él (comandos de catálogo, con auditoría).
+    'portal-orden-del-menu': () => (
+      <div className="mt-4">
+        <OrdenDelMenu />
+      </div>
+    ),
     'portal-pedidos': () => (
       <ConfiguracionQRTab config={cfg} grupo="pedidos" conMesas={tieneMesas} />
     ),

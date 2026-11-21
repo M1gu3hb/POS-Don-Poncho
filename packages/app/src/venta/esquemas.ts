@@ -93,9 +93,19 @@ export const entradaPago = z.object({
   referencia: z.string().max(60).optional(),
 });
 
+/**
+ * Cuántos renglones de pago admite un cobro (DP-24).
+ *
+ * Eran cinco, de cuando un pago mixto era efectivo, tarjeta y transferencia. La tarjeta de cobro nueva
+ * deja repartir la cuenta entre VARIAS tarjetas (una mesa grande, cada quien la suya) y combinarlas
+ * con efectivo y transferencia: cada tarjeta es su renglón, para que el corte y Registros las enseñen
+ * por separado. Doce cubre diez tarjetas más efectivo y transferencia, y sigue siendo una cota.
+ */
+export const MAXIMO_DE_PAGOS = 12;
+
 export const entradaCobrarOrden = z.object({
   ordenId: z.uuid(),
-  pagos: z.array(entradaPago).min(1).max(5),
+  pagos: z.array(entradaPago).min(1).max(MAXIMO_DE_PAGOS),
   /**
    * Lo que la pantalla creía que era el total, en centavos.
    *

@@ -52,6 +52,11 @@ export {
 } from './para-llevar.ts';
 export { entregarParaLlevar } from './para-llevar-entregar.ts';
 export {
+  agregarEnCaja,
+  entradaAgregarEnCaja,
+  type ResultadoAgregarEnCaja,
+} from './agregar-en-caja.ts';
+export {
   paraLlevarDelDia,
   type EstadoParaLlevar,
   type PedidoParaLlevar,

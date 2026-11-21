@@ -163,6 +163,12 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       nombre: { columna: 'nombre', conversion: 'texto', publico: true },
       descripcion: { columna: 'descripcion', conversion: 'texto', publico: true },
       categoria_id: { columna: 'categoria_id', conversion: 'texto', publico: true },
+      // DP-24 · El lugar en su categoría: sólo se escribe por `catalogo.ordenar_productos`.
+      orden_en_categoria: {
+        columna: 'orden_en_categoria',
+        conversion: 'entero',
+        escribible: false,
+      },
       imagen_url: {
         columna: 'imagen_url',
         conversion: 'texto',
