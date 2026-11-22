@@ -21,7 +21,7 @@ export default function MesaShape({
   // DP-12.3: la principal de una unión se pinta FUNDIDA con sus absorbidas: la caja del grupo
   // (`cajaDeLaUnion`: cápsula, rectángulo o cuadrado) en vez de la suya.
   caja = null,
-  // DP-24 · Las nubecitas por estación de lo que ya salió: «Cantina ✓», «Cocina 2/4».
+  // DP-24 · Las nubecitas por estación de lo que ya salió: «Cantina ✓», «Cocina 2 de 4».
   nubes = [],
 }) {
   const isDark = useIsDark();
