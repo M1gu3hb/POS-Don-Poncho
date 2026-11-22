@@ -215,7 +215,26 @@ export const SIN_ESTADO = [
     pantalla: 'restaurante/NubesDeLaMesa',
     estado,
     razon:
-      'Pieza de la mesa del mapa (DP-24), no pantalla: dice «Cantina ✓», «Cocina 2/4» con lo que ya leyó el mapa del mesero; sin nada que decir no pinta nada. La carga y el fallo los dice el mapa.',
+      'Pieza de la mesa del mapa (DP-24), no pantalla: dice «Cantina ✓», «Cocina 2 de 4» con lo que ya leyó el mapa del mesero; sin nada que decir no pinta nada. La carga y el fallo los dice el mapa.',
+  })),
+  // DP-25 · Parte 3 · Lo que ve el mesero dentro de la mesa: tres piezas que reciben lo ya leído.
+  ...['vacio', 'cargando', 'error'].map((estado) => ({
+    pantalla: 'restaurante/LeyendaDeLaMesa',
+    estado,
+    razon:
+      'Pieza de la mesa del mesero (DP-25), no pantalla: explica los estados y los colores con textos fijos y no lee nada, así que no tiene lista que pueda llegar vacía, ni espera, ni lectura que pueda fallar.',
+  })),
+  ...['vacio', 'cargando', 'error'].map((estado) => ({
+    pantalla: 'restaurante/LoEnviadoDeLaMesa',
+    estado,
+    razon:
+      'Pieza de la mesa del mesero (DP-25), no pantalla: pinta los renglones y las comandas que le pasa Mesero; la cuenta sin nada enviado no la pinta y la carga y el fallo de la lectura los dice la mesa.',
+  })),
+  ...['vacio', 'cargando'].map((estado) => ({
+    pantalla: 'restaurante/VigilaLaCuenta',
+    estado,
+    razon:
+      'Vigilante de la mesa del mesero (DP-25), no pantalla: no pinta nada mientras la cuenta está viva y sólo dice, con un Aviso, que otro la cerró; su lectura cada pocos segundos es silenciosa.',
   })),
   {
     pantalla: 'catalogo/opciones/EditorDeGrupo',
@@ -1029,6 +1048,12 @@ export const SIN_ESTADO = [
     razon:
       'No lee ni escribe: dibuja lo que se está editando; los fallos de lectura y de guardado los dice «Personalizar menú» con su Aviso.',
   },
+  ...['vacio', 'cargando', 'error'].map((estado) => ({
+    pantalla: 'restaurante/personalizar-menu/DondeSeVe',
+    estado,
+    razon:
+      'Pieza de «El orden del menú» (DP-25 · DP-D227), no pantalla: dice dónde se ve un platillo y ofrece ocultarlo; no lee nada y recibe lo que la pantalla ya leyó. La lista vacía, la carga y el fallo de la lectura o del guardado los dice «El orden del menú» con su Vacio, su esqueleto y su Aviso.',
+  })),
   {
     pantalla: 'telefono-de-cocina/ConectarTelefono',
     estado: 'vacio',

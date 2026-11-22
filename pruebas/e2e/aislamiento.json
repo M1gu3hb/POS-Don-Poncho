@@ -298,7 +298,7 @@
       "roles": ["administrador", "dueno", "gerente"],
       "paquetes": ["cafeteria", "estetica", "ferreteria", "restaurante", "tienda"],
       "idRequerido": true,
-      "cuerpo": { "productoId": "⟨productos⟩", "visible": false },
+      "cuerpo": { "productoId": "⟨productos⟩" },
       "ids": [{ "camino": "productoId", "tabla": "productos" }]
     },
     {

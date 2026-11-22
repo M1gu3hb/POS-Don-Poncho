@@ -7,6 +7,8 @@ import { CheckCheck, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatearCantidadVariable } from '@/utils/tipoVentaUtils';
 import {
+  etiquetaDeLaNube,
+  nubeCompleta,
   contadorDeEntregados,
   contadorDeListos,
   hayQueEntregar,
@@ -191,13 +193,19 @@ export default function ListosParaRecogerCard({ ventaId, onAfterEntregar }) {
               style={{ borderLeft: `3px solid ${g.color || '#4A5568'}` }}
             >
               <div className="flex-1 min-w-0">
+                {/* DP-25 · 3.4: el avance de la estación, grande y legible a un metro: «Bebidas 2 de 3»;
+                    cuando terminó («Cocina ✓») va verde sólido. El nombre es el configurado. */}
                 <p
-                  className="text-[11px] font-bold leading-tight"
-                  style={{ color: g.color || '#4A5568' }}
+                  data-avance-de-la-estacion={nubeCompleta(etiquetaDeLaNube(g) ?? '') ? 'completo' : 'parcial'}
+                  className={`inline-block rounded-full px-3 py-1 text-base leading-tight font-black ${
+                    nubeCompleta(etiquetaDeLaNube(g) ?? '')
+                      ? 'bg-exito text-exito-texto'
+                      : 'bg-superficie text-texto ring-2 ring-exito'
+                  }`}
                 >
-                  {g.nombre}
+                  {etiquetaDeLaNube(g) ?? g.nombre}
                 </p>
-                <p className="text-[11px] font-semibold leading-tight text-texto">
+                <p className="mt-1 text-xs font-semibold leading-tight text-texto">
                   <span>{contadorDeListos(g)}</span>
                   <span aria-hidden="true"> · </span>
                   <span>{contadorDeEntregados(g)}</span>

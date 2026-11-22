@@ -4,6 +4,7 @@ import {
   contadorDeEntregados,
   contadorDeListos,
   etiquetaDeLaNube,
+  nubeCompleta,
   hayQueEntregar,
   nubesDeLaMesa,
   resumenPorEstacion,
@@ -66,12 +67,12 @@ describe('resumenPorEstacion', () => {
 });
 
 describe('la nubecita del mapa', () => {
-  it('«Cantina ✓» cuando toda la estación salió, «Cocina 2/4» cuando falta', () => {
+  it('«Cantina ✓» cuando toda la estación salió, «Cocina 2 de 4» cuando falta', () => {
     const nubes = nubesDeLaMesa([
       cocina('c1', ['listo', 'listo', 'pendiente', 'en_preparacion']),
       cantina('c2', ['listo']),
     ]);
-    expect(nubes).toEqual(['Cocina 2/4', 'Cantina ✓']);
+    expect(nubes).toEqual(['Cocina 2 de 4', 'Cantina ✓']);
   });
 
   it('si terminó primero la cantina se ve ANTES de que termine la cocina', () => {
@@ -85,9 +86,9 @@ describe('la nubecita del mapa', () => {
     expect(nubesDeLaMesa([cocina('c1', ['entregado', 'entregado'])])).toEqual([]);
   });
 
-  it('lo ya entregado cuenta como salido: «Cocina 3/4» con uno entregado y dos listos', () => {
+  it('lo ya entregado cuenta como salido: «Cocina 3 de 4» con uno entregado y dos listos', () => {
     const [c] = resumenPorEstacion([cocina('c1', ['entregado', 'listo', 'listo', 'pendiente'])]);
-    expect(etiquetaDeLaNube(c!)).toBe('Cocina 3/4');
+    expect(etiquetaDeLaNube(c!)).toBe('Cocina 3 de 4');
   });
 
   it('usa el nombre REAL de la estación, no uno fijo', () => {
@@ -96,5 +97,26 @@ describe('la nubecita del mapa', () => {
         { ...cantina('c1', ['listo']), estacion_preparacion_nombre: 'Barra de mezcal' },
       ]),
     ).toEqual(['Barra de mezcal ✓']);
+  });
+});
+
+describe('DP-25 · 3.4 · la nubecita dice el conteo y se distingue la que terminó', () => {
+  it('«Bebidas 2 de 3» mientras falta y «Cocina ✓» cuando terminó, con el nombre como esté configurado', () => {
+    const bebidas: ComandaParaElAvance = {
+      id: 'b1',
+      estado: 'en_preparacion',
+      estacion_preparacion_id: 'e-bebidas',
+      estacion_preparacion_nombre: 'Bebidas',
+      items: [{ estado: 'listo' }, { estado: 'listo' }, { estado: 'en_preparacion' }],
+    };
+    expect(nubesDeLaMesa([bebidas, cocina('c1', ['listo'])])).toEqual([
+      'Bebidas 2 de 3',
+      'Cocina ✓',
+    ]);
+  });
+
+  it('nubeCompleta sólo es verdadera para la que terminó', () => {
+    expect(nubeCompleta('Cocina ✓')).toBe(true);
+    expect(nubeCompleta('Bebidas 2 de 3')).toBe(false);
   });
 });

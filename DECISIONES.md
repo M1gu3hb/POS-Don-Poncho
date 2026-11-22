@@ -4317,6 +4317,36 @@ verificación de la mañana (`mini-jornada-de-cocina`, 3 fallos de 15 con la lap
 - **Consecuencias.** Toda prueba que pida la cuenta sin haber entregado debe mandar `aunConPendientes: true` (o entregar
   antes): se adaptaron las de integración y las e2e sin quitarles afirmaciones. No hay migración.
 
+## DP-D225 · DP-25 · Lo que el mesero ve dentro de la mesa: la pantalla se explica sola · 21-11-2026
+
+- **Contexto.** Tras la capacitación, Miguel tuvo que explicar la pantalla de la mesa de viva voz: nadie sabía en qué iba cada
+  platillo, el «Michelado» (que sí sube el precio) no se veía en el pedido, no había forma de saber qué significaba cada color y la
+  cuenta que otra persona cancelaba o cobraba seguía abierta en el aparato del mesero hasta que mandaba un platillo y el servidor
+  contestaba «Esa cuenta ya se cerró».
+- **Decisión.**
+  - **Estado de cada platillo** (Nuevo, En preparación, Listo, Entregado) en la lista de lo enviado, con glifo y palabra (el color
+    nunca va solo). Sale del item de la comanda que la cocina mueve por platillo, emparejado con la línea de la cuenta por
+    `detalle_venta_id`; si una línea tiene varios items manda el MENOS avanzado. Se relee con la misma consulta de la tarjeta «Listo
+    para recoger» (una sola, cada 1.5 s). Un platillo sin comanda leída todavía es «Nuevo».
+  - **Opciones y nota** de cada platillo con el mismo texto que cocina, Caja y ticket (`~/venta/opciones-del-renglon`): en lo
+    enviado, y en el carrito la ficha ya no esconde la opción elegida («Extras: Michelado»), sólo las exclusiones y la nota.
+  - **Leyenda con «?» en la misma pantalla.** Una fila con los cuatro estados y un «?» de 44 px con dedo que abre, EN EL MISMO
+    lugar (no una ventana sobre la ventana de la mesa), el significado de cada estado y de cada color de la mesa, y las
+    instrucciones: cuándo marcar entregado y qué hacer con los pendientes al pedir la cuenta («Regresar» / «Pedir la cuenta de
+    todos modos»).
+  - **Avance por estación más visible.** La nubecita del mapa y la tarjeta de la mesa dicen el conteo con el nombre configurado
+    («Bebidas 2 de 3», antes «2/3») y, cuando la estación terminó, «Cocina ✓» en verde sólido y más grande (par `exito` /
+    `exito-texto`, contraste medido en la prueba). Letra de 16 px o más en negritas.
+  - **La cuenta que otro cerró.** Con la mesa abierta, el aparato lee el ESTADO DE LA CUENTA cada 4 s (no el de la mesa, que cambia
+    al abrirla o pasarla y daba falsas alarmas). Si pasa a cancelada, cobrada (o reembolsada) o dividida, sale el aviso («La cuenta de
+    la mesa 5 se canceló / ya se cobró / se dividió en la Caja»), la pantalla regresa al mapa y el aviso se queda ahí hasta «Entendido».
+    Una cuenta parcialmente pagada sigue abierta en la Caja y no avisa.
+- **Alternativas descartadas.** Dibujar el estado sólo con color (no cumple AA ni sirve a quien no distingue tonos); abrir la
+  leyenda en otra ventana (otro portal sobre el de la mesa: los conflictos de `removeChild` ya conocidos); detectar el cierre por el
+  `venta_activa_id` de la mesa (falsas alarmas mientras la lectura del mapa va atrasada).
+- **Consecuencias.** No toca dinero, PIN ni permisos. No hay migración. El aviso de «listo» que sale en pantalla (platillos de la
+  estación) no trae todavía las opciones de cada platillo: pide un cambio en `restaurante.avisos_de_listo` y queda como siguiente paso.
+
 ## DP-D226 · DP-25 · Unir mesas poco a poco, sin forma de equivocarse: unir con una mesa que ya está en un grupo es agregar · 21-11-2026
 
 **Contexto.** Durante la capacitación los meseros unieron mesas cuatro veces con «Unir mesas» y nadie usó «Agregar mesas» (DP-D213). Los
@@ -4359,6 +4389,36 @@ aún no se mandan a cocina no tienen comanda); elegir la principal «la que teng
 **Consecuencias.** Una unión elegida con otra principal que la del grupo deja la del grupo: el mesero lo ve en el aviso («queda la N»).
 La cuenta de una mesa absorbida desde antes de la migración no trae origen (nada que mostrar). Caja (`TarjetaDeCobro`) no muestra el
 origen todavía: es de la Parte 1. Toca `restaurante.imprimir_precuenta` y `Precuenta.tsx` (Parte 2) con el cambio mínimo.
+
+## DP-D227 · DP-25 · Ocultar un platillo eligiendo dónde: portal QR, POS o todo; y el jugo «Mixto» · 21-11-2026
+
+**Contexto.** «Oculto» en «El orden del menú» sólo quitaba el platillo del portal QR (`visible_en_menu_digital`), y el
+interruptor «Visible en POS» (`visible_en_pos`) quitaba el platillo del POS **y también del portal** (DP-D174). La dueña quería
+poder esconder un platillo sólo de un lugar (p. ej. algo que sólo se vende en el POS, o algo que sólo se ve en el portal).
+
+**Decisión.**
+- Cada platillo se oculta POR LUGAR y cada lugar es independiente: el portal QR (`visible_en_menu_digital`) y el POS, o sea el
+  mesero y la Caja (`visible_en_pos`). En cada fila de «El orden del menú» dice dónde SÍ se ve («Se ve en: POS y portal QR», «Se
+  ve en: POS», «Se ve en: portal QR», «Oculto en todo») y «Dónde se ve» abre «Ocultar del portal QR», «Ocultar del POS (mesero y
+  Caja)» y «Ocultar de todo» (o el «Mostrar…» del lugar donde esté oculto).
+- **Revierte DP-D174:** el portal obedece SÓLO a `visible_en_menu_digital`. Lo oculto del POS sigue en el portal y se puede pedir
+  desde él; lo oculto del portal no sale ni se deja pedir aunque siga en el POS.
+- El mismo comando de catálogo, `catalogo.mostrar_en_menu` (dueño, administrador y gerente), recibe `visible` (portal) y/o
+  `visibleEnPos` (al menos uno; el que no viene no cambia). Una sola escritura, y una sola auditoría con el antes y el después de
+  cada lugar; sin cambios no hay auditoría ni clave de idempotencia. Sin migración.
+- Todas las rejillas del POS piden sólo lo activo y visible en el POS: mesero (`Mesero.jsx`), la Caja (`POS.jsx`, «Para llevar» y
+  «Agregar a la cuenta», que usan el mismo diálogo) y la mesa activa del mapa (`MesaActiva.tsx`, que no filtraba y se corrigió). Lo
+  oculto del POS que YA está en una cuenta abierta se sigue cobrando: el servidor no lo vuelve a mirar al cobrar.
+- **Jugo «Mixto»** (8.2): el guion `scripts/agregar-jugo-mixto-produccion.mjs` agrega «Mixto» (+$0) al grupo «Sabor del jugo» del
+  producto «Jugo» con `catalogo.guardar_grupo_de_opciones` (manda las opciones de hoy con su `id` y su precio, porque el comando
+  guarda el grupo entero), con `--ensayo` y idempotente.
+
+**Alternativas.** Dejar el portal atado al POS (no permite «sólo POS»); una columna nueva «dónde se ve» (migración sin necesidad:
+ya hay una columna por lugar); un comando por lugar (dos escrituras y dos auditorías para «ocultar de todo»).
+
+**Consecuencias.** «Se acabó el pescado» ya no se resuelve apagando «Visible en POS» si también debe salir del portal: para eso
+está «Ocultar de todo» o «Agotado del día». La lista de «apartar un pedido anticipado» sigue leyendo `visible_en_pos` como «hoy
+no hay»: un platillo oculto del POS pero visible en el portal aparece ahí en gris; es otra pantalla y no se tocó (queda por decidir).
 
 ## DP-D229 · DP-25 · El dueño ve el PIN de su gente: una copia cifrada, su propio PIN y la auditoría · 21-11-2026
 
