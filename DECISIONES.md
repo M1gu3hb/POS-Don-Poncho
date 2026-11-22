@@ -4256,6 +4256,45 @@ Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sust
   por uno», debajo de los totales por método, que se quedan). Los datos son los de `pagos` (la entidad de lectura `PagoDeVenta` y la
   hoja del corte del servidor); nada se recalcula. El ticket del cliente sigue con una sola línea «Tarjeta».
 
+## DP-D223 · DP-25 · Parte 4 · La mesa que cambia es la de la CUENTA, y los toques de la cocina salen en fila por cuenta · 21-11-2026
+
+Lo vio Don Poncho en la capacitación con dos estaciones («terminó la cocina y la mesa siguió naranja», «la palomita no sale»), y la
+verificación de la mañana (`mini-jornada-de-cocina`, 3 fallos de 15 con la laptop cargada).
+
+- **Causa 1 (servidor).** Al unir mesas, las comandas de la cuenta absorbida pasan a la cuenta de la principal pero conservan su
+  `comandas.mesa_id`. La cocina movía «la mesa de la comanda» (`sincronizarMesa`): lo que se terminaba de la mesa absorbida cambiaba
+  una mesa que el mapa no enseña, y la principal se quedaba en «pedido enviado» o «en preparación» aunque todo estuviera listo.
+  Ahora `sincronizarMesa` mueve la mesa de la CUENTA (`ordenes.mesa_id`, que en una unión es la principal); `entregar_pedidos` y
+  «cancelar lo que faltaba» ya lo hacían así.
+  La Parte 6 (DP-D226) ya reapunta `comandas.mesa_id` a la principal al unir, así que las uniones NUEVAS no tienen el defecto en su
+  origen; esto queda como segundo cerrojo para las uniones que ya estaban vivas antes de ese cambio (la prueba cubre las dos).
+- **Causa 2 (pantalla de cocina).** Los toques salían en UNA sola fila para toda la cocina («`cocina`»): cada «Listo» esperaba a los de
+  todas las demás mesas. Con la pantalla cargada el último toque llegaba al servidor 1.6 a 3 s después de verse hecho (medido con la
+  CPU estrangulada 4×), y quien lo leía en ese momento veía el platillo todavía «en preparación». La fila es ahora POR CUENTA: los
+  toques de una cuenta siguen en orden (un «Listo» nunca adelanta a su «Preparar») y las demás cuentas no se esperan. El servidor ya
+  serializa por cuenta, así que no se pierde nada.
+- **Causa 3 (servidor, la que SÍ perdía toques).** El `lock_timeout` de 3 s se pone al reclamar la clave del comando y vale para TODA
+  la transacción. Cocina y Cantina tocando la misma cuenta con la laptop cargada: la segunda esperaba el candado de la cuenta más de
+  3 s, Postgres contestaba 55P03, el servidor lo sacaba como 500 «Algo falló» y el toque —ya pintado en la pantalla— no se guardaba.
+  Medido en la mini jornada con CPU 4×: un 500 `restaurante.transicionar_pedido sqlstate=55P03`, y ese platillo se quedó «en
+  preparación» en el servidor tras 30 s de espera. Ahora `comando.ts` repite también la espera de candado agotada (55P03), igual que
+  el interbloqueo (40P01): la transacción se revirtió entera y repetirla es seguro. La espera de la CLAVE sigue siendo «comando en
+  curso».
+- **Causa 4 (pantalla de cocina, el «Preparar» que se perdía).** Cada toque sacaba su aviso verde («Platillo en preparación») y en
+  el teléfono y la tableta se apilaban hasta cuatro sobre las tarjetas. El toque siguiente caía sobre el aviso y no sobre el botón:
+  el navegador veía el clic, pero ningún pedido salía al servidor (medido con la CPU 4× y el trace: abajo+1, arriba+1, clic+1, sin
+  POST, y el propio Playwright registra que un aviso de `sonner` interceptó el toque). Ahora los avisos informativos de la cocina
+  dejan pasar el toque (`pointer-events: none`, sólo ésos: `AVISO_SIN_TOQUE` en `Cocina.jsx`); el `Toaster` global y cualquier
+  aviso con botón (Deshacer, Reintentar, Ver) siguen recibiendo toques, y el contrato lo ata. El «toque seguro» de `tacto/` no
+  interviene: la cocina no lo usa.
+- **Lo que NO es un fallo** (comportamiento de DP-D214): con dos estaciones la mesa sigue «en preparación» mientras la otra estación
+  no termine. Cada estación dice su avance en la nubecita del mapa; hacerlo más visible es la Parte 3.4.
+- **Pruebas.** Integración `cocina-de-la-mesa-unida.integracion.test.ts` (en rojo antes del arreglo) y la mini jornada con la CPU
+  estrangulada (`COCINA_CPU=4`), que ahora espera a que el servidor llegue a lo que la pantalla ya pintó (DP-7: se pinta antes de
+  contestar).
+- **Alternativas descartadas.** Derivar la mesa al leer (cambia el contrato del mapa y de los avisos); quitar la pintura anticipada de
+  los toques (la cocina vería lento cada toque).
+
 ## DP-D224 · DP-25 · Pedir la cuenta con platillos sin entregar: se avisa en el servidor y se pide con confirmación · 21-11-2026
 
 - **Contexto.** El mesero podía pedir la cuenta con la mesa todavía esperando platillos, sin enterarse: la cuenta salía con lo

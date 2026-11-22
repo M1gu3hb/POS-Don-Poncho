@@ -20,7 +20,9 @@ export interface Estacion {
 }
 
 export async function estaciones(lector: Page): Promise<readonly Estacion[]> {
-  return consultarPuente<Estacion>(lector, 'EstacionPreparacion', { limite: 50 });
+  // Las desactivadas siguen en la lista: con 50 de tope, una base que ya vio muchas corridas de
+  // estas pruebas dejaba la estación recién creada fuera de la lectura.
+  return consultarPuente<Estacion>(lector, 'EstacionPreparacion', { limite: 500 });
 }
 
 export async function laEstacion(lector: Page, nombre: string): Promise<Estacion> {
