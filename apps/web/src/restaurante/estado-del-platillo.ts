@@ -20,13 +20,15 @@ export interface EstadoDelPlatilloEnPalabras {
   readonly explicacion: string;
 }
 
+const PLATILLO_NUEVO: EstadoDelPlatilloEnPalabras = {
+  estado: 'nuevo',
+  etiqueta: 'Nuevo',
+  glifo: '○',
+  explicacion: 'Ya se mandó; la estación todavía no lo empieza.',
+};
+
 export const ESTADOS_DEL_PLATILLO: readonly EstadoDelPlatilloEnPalabras[] = [
-  {
-    estado: 'nuevo',
-    etiqueta: 'Nuevo',
-    glifo: '○',
-    explicacion: 'Ya se mandó; la estación todavía no lo empieza.',
-  },
+  PLATILLO_NUEVO,
   {
     estado: 'en_preparacion',
     etiqueta: 'En preparación',
@@ -116,7 +118,7 @@ export function estadoDeLaLinea(
 }
 
 export function datosDelEstado(estado: EstadoDelPlatillo): EstadoDelPlatilloEnPalabras {
-  return ESTADOS_DEL_PLATILLO.find((e) => e.estado === estado) ?? ESTADOS_DEL_PLATILLO[0]!;
+  return ESTADOS_DEL_PLATILLO.find((e) => e.estado === estado) ?? PLATILLO_NUEVO;
 }
 
 export interface LineaConOpciones {
@@ -138,7 +140,7 @@ export function renglonesDelPlatillo(linea: LineaConOpciones): {
   const opciones =
     linea.opciones_snapshot !== undefined && linea.opciones_snapshot !== null
       ? renglonesDeLasOpciones(linea.opciones_snapshot)
-      : String(linea.opciones_texto ?? '')
+      : (typeof linea.opciones_texto === 'string' ? linea.opciones_texto : '')
           .split(SEPARADOR)
           .map((t) => t.trim())
           .filter(Boolean);
