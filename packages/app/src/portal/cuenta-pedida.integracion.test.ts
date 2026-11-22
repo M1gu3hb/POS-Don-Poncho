@@ -70,7 +70,7 @@ async function mesaConLaCuentaPedida(envian: 'mesero' | 'comensales' = 'comensal
   exigirOk(
     await comando(solicitarCuenta, {
       ambito: caso.ambito,
-      entrada: { ordenId: ventaId },
+      entrada: { ordenId: ventaId, aunConPendientes: true },
       idempotencyKey: clave(),
     }),
     'restaurante.solicitar_cuenta',

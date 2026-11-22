@@ -153,7 +153,7 @@ describe('el mesero no quita lo enviado ni cancela, aunque mande el comando a ma
     const { ordenId, lineaIds } = await cuenta(4, ['1']);
     exigirOk(
       await comando(solicitarCuenta, {
-        entrada: { ordenId },
+        entrada: { ordenId, aunConPendientes: true },
         ambito: mesero(),
         idempotencyKey: clave(),
       }),

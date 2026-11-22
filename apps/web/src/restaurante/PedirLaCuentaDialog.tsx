@@ -14,6 +14,8 @@ import { useState } from 'react';
 import { ErrorApi, invocarComando } from '~/cliente/api';
 import { useVocabulario } from '~/cliente/vocabulario';
 
+import { AvisoDePendientesDeLaCuenta } from './AvisoDePendientesDeLaCuenta.tsx';
+import { pendientesDelRechazo, type PendientesDeLaCuenta } from './pendientes-de-la-cuenta.ts';
 import {
   almacenDeLaPestana,
   guardarPrecuenta,
@@ -58,24 +60,50 @@ export function PedirLaCuentaDialog({
   const router = useRouter();
   const [pidiendo, setPidiendo] = useState<string | null>(null);
   const [fallo, setFallo] = useState<string | null>(null);
+  // DP-25: la mesa tiene platillos sin entregar; se avisa y se espera la confirmación.
+  const [aviso, setAviso] = useState<{
+    readonly opcion: OpcionDePropina;
+    readonly pendientes: PendientesDeLaCuenta;
+  } | null>(null);
 
-  async function pedir(opcion: OpcionDePropina): Promise<void> {
+  async function pedir(opcion: OpcionDePropina, aunConPendientes = false): Promise<void> {
     setPidiendo(opcion.clave);
     setFallo(null);
     try {
-      const precuenta = await invocarComando<unknown>(
-        '/api/restaurante/solicitar-cuenta',
-        entradaDePedirLaCuenta(ordenId, opcion),
-      );
+      const precuenta = await invocarComando<unknown>('/api/restaurante/solicitar-cuenta', {
+        ...entradaDePedirLaCuenta(ordenId, opcion),
+        ...(aunConPendientes ? { aunConPendientes: true } : {}),
+      });
       const guardada = precuentaDeLaRespuesta(precuenta, opcion);
       if (guardada !== null) guardarPrecuenta(guardada, almacenDeLaPestana());
       router.push(`/restaurante/precuenta?cuenta=${encodeURIComponent(ordenId)}`);
     } catch (error: unknown) {
+      const pendientes = error instanceof ErrorApi ? pendientesDelRechazo(error.error.datos) : null;
+      if (pendientes !== null) {
+        setAviso({ opcion, pendientes });
+        setPidiendo(null);
+        return;
+      }
+      // Otro rechazo (la cuenta se cerró, no hay caja…): el aviso se quita para que se lea.
+      setAviso(null);
       setFallo(
         error instanceof ErrorApi ? error.message : `No se pudo pedir ${voc.enFrase('orden')}.`,
       );
       setPidiendo(null);
     }
+  }
+
+  if (aviso !== null) {
+    return (
+      <AvisoDePendientesDeLaCuenta
+        pendientes={aviso.pendientes}
+        pidiendo={pidiendo !== null}
+        alRegresar={alCerrar}
+        alPedirDeTodosModos={() => {
+          void pedir(aviso.opcion, true);
+        }}
+      />
+    );
   }
 
   return (

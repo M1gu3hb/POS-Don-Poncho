@@ -114,6 +114,7 @@ test.describe('A9 · una parte cobrada con la propina por decidir (tableta)', ()
       });
       await mandar(duena, '/api/restaurante/solicitar-cuenta', {
         ordenId,
+        aunConPendientes: true,
         propinaTipo: 'decidir_en_caja',
       });
       const lineas = await consultarPuente<{ id?: string; producto_nombre?: string }>(

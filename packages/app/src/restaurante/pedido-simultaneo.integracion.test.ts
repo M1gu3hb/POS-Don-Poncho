@@ -217,7 +217,7 @@ describe('dos comandos simultáneos sobre la misma cuenta', () => {
       () => pedir(ordenId, sopa, '1'),
       () =>
         comando(solicitarCuenta, {
-          entrada: { ordenId, propinaTipo: 'sin_propina' },
+          entrada: { ordenId, propinaTipo: 'sin_propina', aunConPendientes: true },
           ambito: ambito(),
           idempotencyKey: clave(),
         }),

@@ -60,7 +60,11 @@ async function mesaPedida() {
   );
   exigirOk(await caso.agregar(TELEFONO_B, caso.agua), 'agregar otro');
   exigirOk(
-    await comando(solicitarCuenta, { ambito: rosa, entrada: { ordenId }, idempotencyKey: clave() }),
+    await comando(solicitarCuenta, {
+      ambito: rosa,
+      entrada: { ordenId, aunConPendientes: true },
+      idempotencyKey: clave(),
+    }),
     'pedir la cuenta',
   );
   return { caso, rosa, ordenId };

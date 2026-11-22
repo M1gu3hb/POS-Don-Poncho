@@ -38,7 +38,7 @@ let esperandoUnRechazo = false;
 async function pedirLaCuentaPorElServidor(pagina: Page, ordenId: string): Promise<void> {
   const respuesta = await pagina.request.post('/api/restaurante/solicitar-cuenta', {
     headers: cabecerasDeEscrituraDePrueba(),
-    data: { ordenId },
+    data: { aunConPendientes: true, ordenId },
   });
   expect(respuesta.status(), `solicitar-cuenta: ${await respuesta.text()}`).toBe(200);
 }

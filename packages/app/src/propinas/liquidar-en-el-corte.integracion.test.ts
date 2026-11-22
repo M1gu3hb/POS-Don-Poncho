@@ -126,7 +126,7 @@ async function mesaCobrada(
   );
   exigirOk(
     await comando(solicitarCuenta, {
-      entrada: { ordenId },
+      entrada: { ordenId, aunConPendientes: true },
       ambito: como(mesero, 'mesero'),
       idempotencyKey: clave(),
     }),

@@ -63,6 +63,12 @@ export const CODIGOS_ERROR = {
   ORDEN_NO_EDITABLE: 'ORDEN_NO_EDITABLE',
   ORDEN_VACIA: 'ORDEN_VACIA',
   /**
+   * DP-25 · Pedir la cuenta con platillos que no se han entregado. NO es un fallo: es el aviso que
+   * el servidor da ANTES de pedirla, con la lista por estación en `datos.pendientes`. Se pide de
+   * todos modos reenviando la confirmación explícita (`aunConPendientes`).
+   */
+  CUENTA_CON_PENDIENTES: 'CUENTA_CON_PENDIENTES',
+  /**
    * F-321 · La división de una cuenta no reparte exactamente lo que había.
    *
    * Código propio y no `ORDEN_NO_EDITABLE` porque la cuenta SÍ es editable: lo

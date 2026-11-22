@@ -245,7 +245,10 @@ test.describe('el portal del comensal (DP-13.3)', () => {
 
       await test.step('piden la cuenta con un platillo más armado en el teléfono', async () => {
         await agregar(a, CARTA.cerveza.nombre);
-        await escribir(duena, '/api/restaurante/solicitar-cuenta', { ordenId });
+        await escribir(duena, '/api/restaurante/solicitar-cuenta', {
+          aunConPendientes: true,
+          ordenId,
+        });
         // El pedido armado no desaparece: se sigue viendo, con el mensaje y sin botón de enviar.
         await a.getByRole('button', { name: /^Pedido de la mesa \(1\)/ }).click();
         const hoja = a.getByRole('dialog', { name: 'El pedido de la mesa' });
