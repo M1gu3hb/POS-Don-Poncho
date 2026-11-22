@@ -115,6 +115,11 @@ export const CODIGOS_ERROR = {
    * abierta» y no como un 500 sin explicación.
    */
   MESA_YA_ABIERTA: 'MESA_YA_ABIERTA',
+  /**
+   * DP-25 · Parte 9 · Crear o editar una mesa con el número de otra mesa activa.
+   * Lo impone `mesas_numero_unico` (183); el puente traduce ese 23505 en vez de dejarlo en 500.
+   */
+  MESA_NUMERO_REPETIDO: 'MESA_NUMERO_REPETIDO',
   /** Se intentó liberar una mesa cuya venta todavía no se ha cobrado. */
   MESA_NO_LIBERABLE: 'MESA_NO_LIBERABLE',
   /** DP-9.6 · Las mesas de la unión no quedaron pegadas, son de otra zona, o son medio salón. */

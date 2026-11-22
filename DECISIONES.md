@@ -4320,3 +4320,28 @@ aún no se mandan a cocina no tienen comanda); elegir la principal «la que teng
 **Consecuencias.** Una unión elegida con otra principal que la del grupo deja la del grupo: el mesero lo ve en el aviso («queda la N»).
 La cuenta de una mesa absorbida desde antes de la migración no trae origen (nada que mostrar). Caja (`TarjetaDeCobro`) no muestra el
 origen todavía: es de la Parte 1. Toca `restaurante.imprimir_precuenta` y `Precuenta.tsx` (Parte 2) con el cambio mínimo.
+
+## DP-D230 · DP-25 · Un número de mesa repetido se dice con palabras, y el acople deja de mentir sobre lo que no tiene ruta · 21-11-2026
+
+**Contexto.** Hoy, en producción, el dueño editaba el mapa en Configuración y dos veces le salió «Algo falló»: crear o renombrar una mesa
+con el número de otra mesa activa choca con el índice `mesas_numero_unico` (migración 183). El 23505 subía sin traducir por
+`puente.escribir` y llegaba como un 500. Además `verify:acople` (DP-24) encontró tres fallas de código: cuatro comandos que escriben y
+a los que no llega ninguna ruta, y dos palabras escritas a mano que el diccionario del giro ya dice.
+
+**Decisión.**
+- **El puente traduce el choque.** Una entidad del mapa puede declarar `repetidoDe` (índice, columna, código y mensaje). `crear` y
+  `actualizar` atrapan el 23505 **de ese índice, por nombre** y contestan `MESA_NUMERO_REPETIDO` (422, regla de negocio) con «Ya hay una
+  mesa activa con el número 7.». Un 23505 de otro índice sube tal cual. Se traduce el error en vez de preguntar antes: la pregunta tiene
+  hueco entre mirar y escribir, el índice no. La pantalla ya mostraba el mensaje del servidor, así que no cambia.
+- **Los cuatro comandos son de guion, y se dice.** `activarOperacion`, `quitarBloqueoDeOperacion`, `reiniciarFolios` y
+  `renombrarAparatos` sólo los llaman `scripts/operacion-real.mjs`, `scripts/dejar-en-ceros.mjs` y `scripts/renombrar-aparatos.mjs`
+  (nada en `apps/web` los importa). Se declaran en `COMANDOS_SOLO_POR_GUION` de `scripts/verificar-acople.mjs` con su razón; la puerta
+  falla si una fila sobra (si el comando ya no escribe o si una ruta lo importa). No se inventaron rutas que nadie llama.
+- **Las dos palabras salen del vocabulario:** «Platillos listos para recoger» (`AvisosDeListo`) y «Mesa» (`CambiarDeMesaAqui`).
+
+**Alternativas descartadas.** Comprobar el número antes de escribir (carrera entre dos pestañas del dueño); poner una ruta a cada
+comando de mantenimiento (abre a cualquier sesión de dueño lo que sólo debe correr quien despliega); dejar el 500 y mejorar el texto de
+la pantalla (el servidor seguiría registrando un fallo que no lo es).
+
+**Consecuencias.** `verify:acople` pasa de 8 pendientes a 6 en una corrida sin producción; las seis son las que piden la base viva, un
+servidor o la CI. Sin migración.

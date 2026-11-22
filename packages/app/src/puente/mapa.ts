@@ -3121,6 +3121,16 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       mensaje:
         'Esa mesa está en servicio o unida a otras: cóbrala, o sepáralas, antes de quitarla del mapa.',
     },
+    // DP-25 · Parte 9: el número de una mesa activa no se repite (índice `mesas_numero_unico`, 183).
+    repetidoDe: {
+      indice: 'mesas_numero_unico',
+      columna: 'numero',
+      codigo: 'MESA_NUMERO_REPETIDO',
+      mensaje: (numero) =>
+        typeof numero === 'number'
+          ? `Ya hay una mesa activa con el número ${String(numero)}.`
+          : 'Ya hay una mesa activa con ese número.',
+    },
     ordenPorOmision: 'numero',
     campos: {
       ...AUTO,

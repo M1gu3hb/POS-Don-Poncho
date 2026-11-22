@@ -358,6 +358,20 @@ export interface MapaEntidad {
     readonly mensaje: string;
   };
   /**
+   * UN VALOR QUE EL ÍNDICE ÚNICO NO DEJA REPETIR, DICHO CON PALABRAS (DP-25 · Parte 9).
+   *
+   * Si `crear` o `actualizar` choca con `indice` (un 23505 con ESE nombre), el puente contesta
+   * `codigo` con `mensaje(valor)` en vez de dejar subir el error de la base —que llegaba como un
+   * 500 «Algo falló»—. `campo` es la columna cuyo valor se dice; si la petición no la trae,
+   * `valor` llega `undefined`. Un 23505 de OTRO índice sigue subiendo tal cual.
+   */
+  readonly repetidoDe?: {
+    readonly indice: string;
+    readonly columna: string;
+    readonly codigo: CodigoError;
+    readonly mensaje: (valor: unknown) => string;
+  };
+  /**
    * LA FRONTERA POR SUCURSAL de lo que se LEE (cierre de la 2.4, D-36). Obligatoria, como
    * `rolesLectura`: una entidad nueva no puede quedar sin decidir si es de una sucursal.
    * Quien no consolida (`ROLES_CONSOLIDADOS`) sólo lee lo de la sucursal de su sesión.
