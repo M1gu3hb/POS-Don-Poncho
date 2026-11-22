@@ -9,7 +9,7 @@ import { definirComando } from '../definicion.ts';
 import { cotizar } from '../venta/cotizar.ts';
 import { ajustarComandasTrasAnular } from './ajustar-comandas-tras-anular.ts';
 import { tomarCandadosDeCocina } from './candados-de-cocina.ts';
-import { exigirPermisoParaCancelar } from './cancelar-con-permiso.ts';
+import { exigirPermisoParaCancelar, gastarElPermisoParaCancelar } from './cancelar-con-permiso.ts';
 import { cancelarComandasSinPlatillos, moverLaMesaTrasCancelar } from './comandas-al-cobrar.ts';
 import { mermaDelPlatilloAnulado } from './merma-por-cancelacion.ts';
 
@@ -137,9 +137,14 @@ export const anularLineaComando = definirComando<
     );
 
     // DP-24 · El cajero, siempre con el PIN de un gerente; la gerencia, sin él; el mesero, no.
-    const autorizadoPor = await ctx.paso('permiso', () =>
+    // DP-25 · Y esa firma es de UN uso: quita este platillo y se gasta.
+    const permiso = await ctx.paso('permiso', () =>
       Promise.resolve(exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion)),
     );
+    await ctx.paso('gastar_autorizacion', () =>
+      gastarElPermisoParaCancelar(ctx.tx, organizacionId, permiso),
+    );
+    const autorizadoPor = permiso?.supervisor ?? null;
 
     const linea = await ctx.paso('cargar_linea', () =>
       ctx.tx
@@ -268,6 +273,8 @@ export const anularLineaComando = definirComando<
         itemsCancelados: escrita.itemsCancelados,
         itemsReducidos: escrita.itemsReducidos,
         autorizadoPor,
+        // DP-25 · La firma gastada: `gastarLaAutorizacion` la busca aquí y no la deja reusar.
+        ...(permiso === null ? {} : { autorizacion: permiso.n }),
       },
     });
 

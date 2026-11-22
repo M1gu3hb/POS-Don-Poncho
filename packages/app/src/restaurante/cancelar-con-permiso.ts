@@ -1,9 +1,15 @@
 import 'server-only';
 
 import { ErrorDominio, validarEntorno, type Rol } from '@morphiqpos/contracts';
+import type { Transaccion } from '@morphiqpos/data';
 
 import { Rechazo } from '../fallos.ts';
-import { ROLES_QUE_AUTORIZAN, leerAutorizacion } from '../identidad/supervisor.ts';
+import {
+  ROLES_QUE_AUTORIZAN,
+  leerAutorizacion,
+  type CargaDeAutorizacion,
+} from '../identidad/supervisor.ts';
+import { gastarLaAutorizacion } from '../venta/autorizacion-de-un-uso.ts';
 
 /**
  * QUIÉN QUITA LO YA ENVIADO Y QUIÉN CANCELA UNA CUENTA (DP-24 · Parte 2; antes DP-13.2).
@@ -65,7 +71,7 @@ export function exigirPermisoParaCancelar(
    * el PIN; esto sólo cambia lo que se le dice.
    */
   sinComprobarLaCocina = false,
-): string | null {
+): CargaDeAutorizacion | null {
   const { organizacionId, empleoId, rol } = ctx.ambito;
   if (ROLES_QUE_AUTORIZAN.includes(rol)) return null;
   if (rol !== 'cajero') {
@@ -95,5 +101,24 @@ export function exigirPermisoParaCancelar(
       { pidePin: true },
     );
   }
-  return carga.supervisor;
+  return carga;
+}
+
+/**
+ * DP-25 · La firma de quitar o cancelar es de UN uso: la misma no quita un segundo platillo ni
+ * cancela después la cuenta (antes, mandando el comando a mano, servía mientras viviera). Se gasta
+ * DENTRO de la transacción (`venta/autorizacion-de-un-uso.ts`): si la acción se revierte, la firma
+ * sigue servible; y dos usos a la vez se forman en fila y el segundo se rechaza.
+ */
+export async function gastarElPermisoParaCancelar(
+  tx: Transaccion,
+  organizacionId: string,
+  carga: CargaDeAutorizacion | null,
+): Promise<void> {
+  if (carga === null) return;
+  await gastarLaAutorizacion(tx, organizacionId, carga, {
+    mensaje:
+      'Esa autorización ya se usó: cada platillo que se quita, y cada cuenta que se cancela, lleva su PIN. Que el gerente lo teclee otra vez.',
+    datos: { pidePin: true },
+  });
 }

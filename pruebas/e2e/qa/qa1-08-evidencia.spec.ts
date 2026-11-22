@@ -87,7 +87,10 @@ test('capturas y comprobaciones para los hallazgos', async ({ browser }, info) =
       await (await botonDeLaMesa(mesero, 15, 'Enviar a Cocina')).click();
       await expect(mesero.getByText('¡Pedido enviado a cocina!').first()).toBeVisible();
       // La cuenta ya pedida: es cuando se divide.
-      await escribir(duena, '/api/restaurante/solicitar-cuenta', { ordenId });
+      await escribir(duena, '/api/restaurante/solicitar-cuenta', {
+        aunConPendientes: true,
+        ordenId,
+      });
       await mesero.waitForTimeout(3_000); // la mesa se relee cada pocos segundos
       // El enlace «Dividir, unir, separar o cambiar de mesa» vive en MesaActivaView.jsx: ¿lo monta la pantalla?
       const enlaces = await dialogoDeLaMesa(mesero, 15)
@@ -171,7 +174,10 @@ test('capturas y comprobaciones para los hallazgos', async ({ browser }, info) =
           { productoId: productos.find((p) => p.nombre === 'Guacamole')?.id, cantidad: '1' },
         ],
       });
-      await escribir(duena, '/api/restaurante/solicitar-cuenta', { ordenId });
+      await escribir(duena, '/api/restaurante/solicitar-cuenta', {
+        aunConPendientes: true,
+        ordenId,
+      });
       await duena.goto(`/restaurante/precuenta?cuenta=${ordenId}`);
       await expect(duena.getByText('PRE-CUENTA')).toBeVisible({ timeout: 30_000 });
       const texto = (await duena.locator('body').innerText()).replace(/\s+/g, ' ');

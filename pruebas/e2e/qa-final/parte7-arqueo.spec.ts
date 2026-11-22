@@ -58,6 +58,7 @@ test.describe('parte 7 · el arqueo por billetes y monedas', () => {
       const a = await mesaConPedido(lupita, duena, 1, [{ nombre: CARTA.arrachera.nombre }]);
       await mandar(lupita, '/api/restaurante/solicitar-cuenta', {
         ordenId: a.ordenId,
+        aunConPendientes: true,
         propinaTipo: 'sin_propina',
       });
       await cobrarLaMesa(rosa, 1, 'Efectivo');

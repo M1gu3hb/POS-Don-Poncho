@@ -303,7 +303,7 @@ test.describe('restaurante · su vocabulario, sus pantallas y su dashboard', () 
     // 5.3 · LA CUENTA, POR FAVOR. Sin propina: es voluntaria y se elige después.
     const cuenta = await page.request.post('/api/restaurante/solicitar-cuenta', {
       headers: cabecerasDeEscrituraDePrueba(),
-      data: { ordenId },
+      data: { aunConPendientes: true, ordenId },
     });
     expect(
       cuenta.status(),

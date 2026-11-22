@@ -211,4 +211,21 @@ describe('el portal con dos teléfonos en la misma mesa', () => {
     }
     expect(final.total_centavos).toBe(final.sumaDeLineas);
   });
+
+  it('DP-25 · el comensal pide su cuenta aunque su platillo siga sin prepararse: el portal no se bloquea', async () => {
+    const { token, ordenId } = await mesaConQR(33);
+    exigirOk(await pedir(token, taco), 'el pedido');
+    const sinPreparar = await obtenerDb()
+      .selectFrom('comanda_items as i')
+      .innerJoin('comandas as c', 'c.id', 'i.comanda_id')
+      .select('i.estado')
+      .where('c.orden_id', '=', ordenId)
+      .execute();
+    expect(sinPreparar.length, 'el pedido no llegó a cocina').toBeGreaterThan(0);
+    expect(sinPreparar.every((p) => p.estado === 'pendiente')).toBe(true);
+
+    exigirOk(await pedirLaCuenta(token), 'portal.pedir_cuenta');
+
+    expect((await estadoDe(ordenId)).estado).toBe('cuenta_solicitada');
+  });
 });

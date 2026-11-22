@@ -393,6 +393,24 @@ export const SIN_ESTADO = [
       'Dos columnas de interruptores fijos (DP-21 · Bloque 12): no tiene lista que pueda llegar vacía.',
   },
   {
+    pantalla: 'venta/PagosDeLaVenta',
+    estado: 'vacio',
+    razon:
+      'DP-25 · Pieza del detalle de la venta (Ventas y «Ver ticket»): recibe los pagos ya leídos y, sin pagos, no pinta nada; el detalle de la venta sigue completo.',
+  },
+  {
+    pantalla: 'venta/PagosDeLaVenta',
+    estado: 'cargando',
+    razon:
+      'DP-25 · Pieza, no pantalla: la lectura la hace el diálogo que la contiene; mientras no llega no pinta nada y el ticket o el detalle se leen igual.',
+  },
+  {
+    pantalla: 'venta/PagosDeLaVenta',
+    estado: 'error',
+    razon:
+      'DP-25 · Pieza, no pantalla: si la lectura de los pagos falla, el diálogo que la contiene dice «No se pudieron leer los pagos de esta venta» en su lugar.',
+  },
+  {
     pantalla: 'venta/PagoDeLaCaja',
     estado: 'vacio',
     razon:
@@ -1343,6 +1361,18 @@ export const SIN_ESTADO = [
     estado: 'cargando',
     razon:
       'No lee nada antes de pintarse: el total llega por props. Lo único asíncrono es pedir la cuenta, y mientras corre las teselas quedan deshabilitadas.',
+  },
+  {
+    pantalla: 'restaurante/AvisoDePendientesDeLaCuenta',
+    estado: 'vacio',
+    razon:
+      'Sólo se abre cuando el servidor devolvió al menos un platillo sin entregar (una lista vacía no la abre); cada bloque se omite si no tiene nada.',
+  },
+  {
+    pantalla: 'restaurante/AvisoDePendientesDeLaCuenta',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la lista llega por props con el rechazo del servidor. Lo único asíncrono es pedir la cuenta de todos modos, y mientras corre los dos botones quedan deshabilitados.',
   },
   {
     pantalla: 'restaurante/QuePasoConLoQuitado',

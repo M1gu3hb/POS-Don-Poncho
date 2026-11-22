@@ -187,7 +187,10 @@ test.describe('QA-1 · 05 · cámara, pulsación larga y modo espera', () => {
         });
         await cocinaClock.clock.runFor(6_000);
         await expect(espera(cocinaClock), 'La comanda nueva no despertó la cocina.').toHaveCount(0);
-        await escribir(duena, '/api/restaurante/solicitar-cuenta', { ordenId });
+        await escribir(duena, '/api/restaurante/solicitar-cuenta', {
+          aunConPendientes: true,
+          ordenId,
+        });
         await caja.clock.runFor(6_000);
         await expect(espera(caja), 'La cuenta pedida no despertó la caja.').toHaveCount(0);
         anotar({

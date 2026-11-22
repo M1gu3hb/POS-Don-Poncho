@@ -9,6 +9,7 @@ import { printDocument } from '@/lib/print';
 import { sonar } from '~/sonidos/gestor';
 import PreCuentaTicket from './PreCuentaTicket';
 import { folioVisible } from '@morphiqpos/domain/venta';
+import { PagosDeLaVenta } from '~/venta/PagosDeLaVenta';
 
 /**
  * Dialog que muestra el ticket real de una venta y permite reimprimirlo.
@@ -20,6 +21,9 @@ export default function TicketViewerDialog({ venta, open, onClose }) {
   const [mesa, setMesa] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // DP-25 · Cada pago de la venta, por separado (no se imprime: es para quien revisa la venta).
+  const [pagos, setPagos] = useState([]);
+  const [pagosFallaron, setPagosFallaron] = useState(false);
 
   useEffect(() => {
     if (!open || !venta?.id) return;
@@ -60,6 +64,24 @@ export default function TicketViewerDialog({ venta, open, onClose }) {
     };
   }, [open, venta]);
 
+  useEffect(() => {
+    if (!open || !venta?.id) return;
+    let vigente = true;
+    setPagosFallaron(false);
+    api.entidades.PagoDeVenta.filter({ venta_id: venta.id })
+      .then((filas) => {
+        if (vigente) setPagos(Array.isArray(filas) ? filas : []);
+      })
+      .catch(() => {
+        if (!vigente) return;
+        setPagos([]);
+        setPagosFallaron(true);
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [open, venta]);
+
   const handlePrint = () => {
     sonar('ticket');
     printDocument({ mode: 'thermal', title: `Ticket-${folioVisible(venta?.serie, venta?.folio, config, 'numero')}` });
@@ -95,6 +117,14 @@ export default function TicketViewerDialog({ venta, open, onClose }) {
               config={config}
               esFinal={venta?.estado === 'pagada'}
             />
+          )}
+        </div>
+        {/* DP-25 · Cada pago, por separado: «Tarjeta 1», «Tarjeta 2», «Efectivo» con recibido y cambio. */}
+        <div className="no-print px-4 pb-4">
+          {pagosFallaron ? (
+            <p className="text-xs text-muted-foreground">No se pudieron leer los pagos de esta venta.</p>
+          ) : (
+            <PagosDeLaVenta pagos={pagos} />
           )}
         </div>
       </DialogContent>
