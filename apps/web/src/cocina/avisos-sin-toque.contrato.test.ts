@@ -28,6 +28,14 @@ function cuerpoDe(nombre: string): string {
   return resto.slice(0, fin === -1 ? undefined : fin);
 }
 
+function leerSiExiste(ruta: string): string | null {
+  try {
+    return readFileSync(ruta, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
 describe('los avisos de éxito de la cocina', () => {
   it('el aviso que no recibe toques deja pasar el toque (pointer-events: none)', () => {
     expect(fuente).toMatch(
@@ -40,12 +48,8 @@ describe('los avisos de éxito de la cocina', () => {
       join(__dirname, '..', 'proveedores', 'Proveedores.tsx'),
       join(__dirname, '..', '..', 'heredado', 'components', 'ui', 'toaster.jsx'),
     ]) {
-      let texto = '';
-      try {
-        texto = readFileSync(ruta, 'utf8');
-      } catch {
-        continue; // ese archivo no existe en este árbol: no hay nada que afirmar sobre él
-      }
+      const texto = leerSiExiste(ruta);
+      if (texto === null) continue; // ese archivo no existe en este árbol: nada que afirmar
       expect(texto, ruta).not.toMatch(/pointer-?events/i);
     }
   });
