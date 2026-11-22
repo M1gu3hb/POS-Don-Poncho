@@ -2,8 +2,9 @@ import 'server-only';
 
 import { ErrorDominio, PAQUETES_RESTAURANTE, validarEntorno } from '@morphiqpos/contracts';
 import { repoCaja, type Transaccion } from '@morphiqpos/data';
+import type { z } from 'zod';
 
-import { definirComando } from '../definicion.ts';
+import { definirComando, type ContextoComando } from '../definicion.ts';
 import { ROLES_QUE_AUTORIZAN, leerAutorizacion } from '../identidad/supervisor.ts';
 import { gastarLaAutorizacion } from '../venta/autorizacion-de-un-uso.ts';
 import {
@@ -103,6 +104,8 @@ export const liquidarPropinas = definirComando<
   sucursal: {
     meseroId: 'empleos',
     'ordenIds[]': 'ordenes',
+    // DP-25 · La caja de la que sale el dinero, elegida en el Tablero: de ESTA sucursal.
+    sesionCajaId: 'sesiones_caja',
     esquemaId: 'esquemas_propina',
     'beneficiarios[].empleoId': 'empleos',
   },
@@ -126,22 +129,9 @@ export const liquidarPropinas = definirComando<
       );
     }
 
-    // 0 · DP-24 · Si se entrega DE LA CAJA, tiene que haber una caja abierta en este aparato: es
-    //     de su cajón de donde salen los billetes. Se comprueba antes de escribir nada.
-    const cajaQueEntrega =
-      entrada.entregarDeLaCaja === true
-        ? await ctx.paso('cargar_caja', () =>
-            terminalId === null
-              ? Promise.resolve(null)
-              : repoCaja.sesionAbiertaDeTerminal(ctx.tx, organizacionId, terminalId),
-          )
-        : null;
-    if (entrada.entregarDeLaCaja === true && cajaQueEntrega === null) {
-      throw new ErrorDominio(
-        'CAJA_CERRADA',
-        'Para entregar las propinas en efectivo hace falta la caja abierta en este aparato.',
-      );
-    }
+    // 0 · DP-24/DP-25 · Si se entrega DE LA CAJA, de cuál: la de este aparato (el corte) o la que
+    //     la gerencia eligió (el Tablero). Se comprueba antes de escribir nada.
+    const cajaQueEntrega = await cajaDeLaEntrega(ctx, entrada, pidePin, terminalId);
 
     const rango = resolverRango(entrada.desde, entrada.hasta);
     const meseroId = entrada.meseroId ?? null;
@@ -292,10 +282,12 @@ export const liquidarPropinas = definirComando<
           motivo: `Propinas entregadas · ${folioVisible(folio.serie, folio.folio)}`,
         }),
       );
+      // DP-25 · En SU columna. `sesion_caja_id` es la del reparto del turno (087), única por turno:
+      //     escribirla aquí hacía chocar la segunda entrega del turno («Algo falló»).
       await ctx.paso('sellar_la_caja', () =>
         ctx.tx
           .updateTable('liquidaciones_propina')
-          .set({ sesion_caja_id: sesionCajaId })
+          .set({ entregada_en_sesion_caja_id: sesionCajaId })
           .where('organizacion_id', '=', organizacionId)
           .where('id', '=', liquidacion.id)
           .executeTakeFirstOrThrow(),
@@ -329,7 +321,12 @@ export const liquidarPropinas = definirComando<
         numeroVentas: ids.length,
         rangoTipo: entrada.rangoTipo,
         meseroId,
-        ...(entregado > 0n ? { entregadoDeLaCajaCentavos: entregado.toString() } : {}),
+        ...(entregado > 0n && cajaQueEntrega !== null
+          ? {
+              entregadoDeLaCajaCentavos: entregado.toString(),
+              entregadaEnSesionCajaId: cajaQueEntrega.id,
+            }
+          : {}),
         // Quién autorizó a la cajera, y la autorización que gastó (no se reusa).
         ...(autorizadoPor === null ? {} : { autorizadoPor, autorizacion: autorizacionGastada }),
       },
@@ -347,6 +344,61 @@ export const liquidarPropinas = definirComando<
     };
   },
 });
+
+type ContextoDeLiquidar = ContextoComando<Transaccion>;
+type EntradaDeLiquidar = z.infer<typeof entradaLiquidarPropinas>;
+
+/**
+ * DP-25 · De qué caja sale el dinero. Desde el corte, la abierta en este aparato; desde el Tablero,
+ * la que la gerencia eligió de entre las abiertas de la sucursal (la frontera ya cambió por uno que
+ * no existe el id de otra sucursal). La cajera sólo entrega de su propio cajón. La caja se toma
+ * bloqueada (`sesionAbiertaPorId`): si otro la cierra primero, esta entrega la ve cerrada y no se hace.
+ */
+async function cajaDeLaEntrega(
+  ctx: ContextoDeLiquidar,
+  entrada: EntradaDeLiquidar,
+  pidePin: boolean,
+  terminalId: string | null,
+): Promise<repoCaja.SesionAbierta | null> {
+  const { organizacionId } = ctx.ambito;
+  if (entrada.entregarDeLaCaja !== true) {
+    if (entrada.sesionCajaId !== undefined) {
+      throw new ErrorDominio(
+        'LIQUIDACION_INVALIDA',
+        'Para sacar el dinero de una caja, la liquidación se entrega de la caja.',
+      );
+    }
+    return null;
+  }
+  const deEsteAparato =
+    terminalId === null
+      ? null
+      : await ctx.paso('cargar_caja', () =>
+          repoCaja.sesionAbiertaDeTerminal(ctx.tx, organizacionId, terminalId),
+        );
+  if (pidePin && entrada.sesionCajaId !== undefined && entrada.sesionCajaId !== deEsteAparato?.id) {
+    throw new ErrorDominio(
+      'PUESTO_NO_OTORGABLE',
+      'La caja entrega propinas sólo de su propio cajón. De otra caja, que lo haga la gerencia.',
+    );
+  }
+  const sesionCajaId = entrada.sesionCajaId ?? deEsteAparato?.id;
+  const caja =
+    sesionCajaId === undefined
+      ? null
+      : await ctx.paso('bloquear_caja', () =>
+          repoCaja.sesionAbiertaPorId(ctx.tx, organizacionId, sesionCajaId),
+        );
+  if (caja === null) {
+    throw new ErrorDominio(
+      'CAJA_CERRADA',
+      entrada.sesionCajaId === undefined
+        ? 'Para entregar las propinas en efectivo hace falta la caja abierta en este aparato.'
+        : 'Esa caja ya se cerró: elige otra abierta o págala fuera de la caja.',
+    );
+  }
+  return caja;
+}
 
 /** `LIQ` + consecutivo a seis cifras, igual que el folio de venta (§6.2). */
 export function folioVisible(serie: string, folio: bigint): string {

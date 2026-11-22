@@ -239,6 +239,8 @@ const NOMBRES = [
   'SolicitudQR',
   'MenuQRSeccion',
   'LiquidacionPropina',
+  // DP-25 · Cada pago de una venta, por separado (corte, Registros y el detalle de la venta).
+  'PagoDeVenta',
   'IntegrationSyncLog',
 ] as const;
 

@@ -423,6 +423,8 @@ export interface LiquidacionesPropina {
   reparto_base: string | null;
   /** F-248 · El turno cuyo bote se repartió. Nulo en las de rango de fechas. */
   sesion_caja_id: string | null;
+  /** DP-25 · La caja de cuyo cajón salió el dinero (varias por turno). Nula = fuera de la caja. */
+  entregada_en_sesion_caja_id: string | null;
   /** F-242 · La fórmula usada, congelada. */
   formula_snapshot: string | null;
   idempotency_key: string | null;
