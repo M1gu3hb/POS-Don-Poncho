@@ -4,6 +4,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { consultarPuente, invocarComando } from '~/cliente/api';
 
+import type { CambioDeVisibilidad } from './donde-se-ve';
+
 /**
  * DP-24 · 3.2 · Lo que lee y escribe «El orden del menú» (Configuración → Portal de comensales):
  * las categorías, sus platillos y cuáles se ven en el menú digital. Todo se GUARDA con comandos de
@@ -27,6 +29,8 @@ export interface PlatilloDelOrden {
   readonly categoria_id?: string | null;
   readonly orden_en_categoria?: number | null;
   readonly visible_en_menu_digital?: boolean | null;
+  /** DP-D227 · El mesero y la Caja (aparte del portal QR). */
+  readonly visible_en_pos?: boolean | null;
 }
 
 export const RUTAS_DEL_ORDEN = {
@@ -91,8 +95,9 @@ export function useOrdenDelMenu() {
     await refrescar();
   }
 
-  async function mostrar(productoId: string, visible: boolean) {
-    await invocarComando(RUTAS_DEL_ORDEN.mostrar, { productoId, visible });
+  /** DP-D227 · `visible` es el portal QR y `visibleEnPos` el POS: sólo se manda lo que cambia. */
+  async function mostrar(productoId: string, cambio: CambioDeVisibilidad) {
+    await invocarComando(RUTAS_DEL_ORDEN.mostrar, { productoId, ...cambio });
     await refrescar();
   }
 

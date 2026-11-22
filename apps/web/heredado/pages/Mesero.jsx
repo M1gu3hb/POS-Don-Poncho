@@ -136,6 +136,11 @@ import { puedeMoverLaCuenta } from '~/restaurante/puede-mover-la-cuenta';
 // DP-21 · Bloque 10 · «Cambiar de mesa» abre aquí mismo las mesas libres: no saca del mapa.
 import { CambiarDeMesaAqui } from '~/restaurante/CambiarDeMesaAqui';
 import { avisoDelCambio, puedeUnirODividir } from '~/restaurante/cambiar-de-mesa-aqui';
+// DP-25 · Parte 3 · Lo que el mesero ve dentro de la mesa: el estado de cada platillo con sus
+// opciones, la leyenda con su «?» y el aviso de la cuenta que otro cerró.
+import { LoEnviadoDeLaMesa } from '~/restaurante/LoEnviadoDeLaMesa';
+import { LeyendaDeLaMesa } from '~/restaurante/LeyendaDeLaMesa';
+import { AvisoDeCuentaCerradaEnElMapa, VigilaLaCuenta } from '~/restaurante/VigilaLaCuenta';
 // DP-12.2: el portal en modo mesero (escanear el QR, mantener presionada una mesa, el carrito).
 import BarcodeScanner from '@/components/barcode/BarcodeScanner';
 import { esPedidoListo } from '~/restaurante/globos-de-solicitud';
@@ -386,7 +391,7 @@ function Mesero() {
     staleTime: 3000,
   });
   const mesasRawSafe = Array.isArray(mesasRaw) ? mesasRaw : [];
-  // DP-24 · 4.4: las nubecitas por estación del mapa («Cantina ✓», «Cocina 2/4»). Salen del mismo
+  // DP-24 · 4.4: las nubecitas por estación del mapa («Cantina ✓», «Cocina 2 de 4»). Salen del mismo
   // cálculo que los contadores de la tarjeta de la mesa y de las comandas vivas, por cuenta.
   const { data: comandasDelMapa } = useQuery({
     queryKey: ['pedidos_del_mapa'],
@@ -405,6 +410,32 @@ function Mesero() {
     [comandasDelMapa],
   );
   const nubesDe = (mesa) => nubes[mesa?.venta_activa_id] ?? [];
+  // DP-25 · Parte 3 · 3.1: las comandas de la cuenta abierta (misma lectura que la tarjeta de
+  // «Listo para recoger»: una sola consulta) dicen en qué va cada platillo enviado.
+  const ventaIdDeLaMesa = ventaActiva?.id || mesaActiva?.venta_activa_id || null;
+  const { data: comandasDeLaMesa } = useQuery({
+    queryKey: ['pedidos_listos_mesero', ventaIdDeLaMesa || 'none'],
+    queryFn: async () => {
+      if (!ventaIdDeLaMesa) return [];
+      const arr = await api.entidades.PedidoPreparacion.filter({ venta_id: ventaIdDeLaMesa });
+      return Array.isArray(arr) ? arr : [];
+    },
+    enabled: !!ventaIdDeLaMesa,
+    refetchInterval: 1500,
+    staleTime: 1500,
+    placeholderData: (prev) => prev,
+  });
+  const comandasDeLaCuenta = Array.isArray(comandasDeLaMesa) ? comandasDeLaMesa : [];
+  // DP-25 · 3.3: los colores de la mesa de la leyenda, los mismos del mapa.
+  const coloresDeMesa = useMemo(
+    () =>
+      Object.entries(MESA_STATUS_CONFIG)
+        .filter(([k]) => !['pagada', 'cancelada'].includes(k))
+        .map(([k, v]) => ({ clave: k, etiqueta: v.label, relleno: v.fill, borde: v.stroke })),
+    [],
+  );
+  // DP-25 · 3.5: lo que le pasó a la cuenta que otro cerró; se queda en el mapa hasta que se quita.
+  const [avisoDeCuenta, setAvisoDeCuenta] = useState(null);
   // DP-15.1 · Los pedidos a medias de cuentas que ya se cobraron o cerraron (en caja, otro aparato)
   // se barren de este aparato: no se ofrecen ni estorban. Sin mesas leídas no se barre nada.
   useEffect(() => {
@@ -1469,6 +1500,9 @@ function Mesero() {
         />
       ) : (
         <>
+      {avisoDeCuenta && (
+        <AvisoDeCuentaCerradaEnElMapa aviso={avisoDeCuenta} alQuitar={() => setAvisoDeCuenta(null)} />
+      )}
       {/* Zone tabs */}
       {zonasConCount.length > 1 && (
         <div className="flex gap-1.5 overflow-x-auto pb-1">
@@ -1819,6 +1853,20 @@ function Mesero() {
             )}
           </DialogHeader>
 
+          {/* DP-25 · 3.5: si otra persona cancela o cobra esta cuenta, el mesero se entera y vuelve al mapa. */}
+          <VigilaLaCuenta
+            ventaId={mesaActiva?.venta_activa_id || null}
+            numeroMesa={mesaActiva?.numero ?? ''}
+            alCerrarse={(aviso) => {
+              if (isClosingRef.current) return;
+              setAvisoDeCuenta(aviso);
+              toast.message(aviso.mensaje);
+              cerrarDialog();
+              queryClient.invalidateQueries({ queryKey: ['mesas'] });
+            }}
+          />
+          {/* DP-25 · 3.3: qué significa cada estado y cada color, con su «?». */}
+          <LeyendaDeLaMesa coloresDeMesa={coloresDeMesa} />
           {/* F3.2: Card "Listo para recoger" — se auto-muestra solo cuando
               hay pedidos en estado 'listo' para la venta activa. Maneja
               estaciones (Postres, Alimentos, Barra...) y la entrega solo
@@ -1949,15 +1997,11 @@ function Mesero() {
               {(detallesVenta || []).length > 0 && (
                 <div className="px-4 py-3 border-b bg-muted/20">
                   <p className="text-xs font-semibold text-muted-foreground mb-2">PEDIDO ACTUAL</p>
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {(detallesVenta || []).map((d, i) => (
-                      <div key={d?.id || `det-d-${i}`} className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          {d?.producto_nombre || '—'} ×{d?.cantidad || 0}
-                        </span>
-                        <span className="font-medium">{formatCurrency(d?.subtotal || 0)}</span>
-                      </div>
-                    ))}
+                  <div className="max-h-56 overflow-y-auto">
+                    <LoEnviadoDeLaMesa
+                      renglones={detallesVenta || []}
+                      comandas={comandasDeLaCuenta}
+                    />
                   </div>
                   <p className="text-xs font-bold border-t pt-1 mt-1 text-right">
                     Total: {formatCurrency(totalActual || 0)}
@@ -2081,6 +2125,7 @@ function Mesero() {
             totalCarrito={totalCarrito}
             totalActual={totalActual}
             detallesVenta={detallesVenta}
+            comandasDeLaCuenta={comandasDeLaCuenta}
             notaMesa={notaMesa}
             setNotaMesa={setNotaMesa}
             cambiarCantidad={cambiarCantidad}

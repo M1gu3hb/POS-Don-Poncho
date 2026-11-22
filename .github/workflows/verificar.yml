@@ -771,6 +771,9 @@ jobs:
           pnpm test:e2e pruebas/e2e/configuracion-que-no-se-regresa.spec.ts --project=escritorio --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/cajas-del-negocio.spec.ts --project=escritorio --workers=1 --retries=0
           pnpm test:e2e pruebas/e2e/personalizar-menu.spec.ts --project=escritorio --workers=1 --retries=0
+          # DP-25 · Parte 8: dónde se ve un platillo (portal QR, POS o todo) y el jugo «Mixto» que agrega el guion.
+          pnpm test:e2e pruebas/e2e/donde-se-ve-el-platillo.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
+          pnpm test:e2e pruebas/e2e/jugo-mixto.spec.ts --project=telefono --workers=1 --retries=0
           # DP-24 · Unir mesas poco a poco: «Agregar mesas» con el dedo, en la tableta y el teléfono del mesero.
           pnpm test:e2e pruebas/e2e/agregar-mesas-al-tacto.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-25 · P6 · Unir mesas con una mesa que ya está en un grupo: se agrega, sin error; desde cualquier mesa del grupo.
@@ -779,6 +782,8 @@ jobs:
           pnpm test:e2e pruebas/e2e/cuenta-con-pendientes.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-25 · P5 · La bolita de «agregado al pedido»: tres toques son tres bolitas, deslizar no lanza ninguna, y sin movimiento sólo rebota el número.
           pnpm test:e2e pruebas/e2e/bolita-de-agregado.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
+          # DP-25 · Parte 3 · Lo que ve el mesero dentro de la mesa: el estado de cada platillo, «Michelado», la leyenda, el avance por estación y la cuenta que otro cerró.
+          pnpm test:e2e pruebas/e2e/lo-que-ve-el-mesero.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-24 · La cocina por platillo, el aviso de «listo» y la mini jornada con bots. Van al final: dejan mesas y personas de prueba que
           # otras suites (cajas-del-negocio) no esperan.
           pnpm test:e2e pruebas/e2e/cocina-por-platillo.spec.ts --project=tablet --workers=1 --retries=0

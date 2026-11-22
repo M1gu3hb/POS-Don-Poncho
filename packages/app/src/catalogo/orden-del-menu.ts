@@ -40,10 +40,20 @@ export const entradaOrdenarProductos = z.object({
   antes: z.array(z.uuid()).max(500).optional(),
 });
 
-export const entradaMostrarEnMenu = z.object({
-  productoId: z.uuid(),
-  visible: z.boolean(),
-});
+/**
+ * DP-25 · Parte 8 · DP-D227 · Dónde se ve un platillo: `visible` es el portal QR
+ * (`visible_en_menu_digital`) y `visibleEnPos` el mesero y la Caja (`visible_en_pos`). Cada uno
+ * es independiente; se manda al menos uno, y «ocultar de todo» manda los dos.
+ */
+export const entradaMostrarEnMenu = z
+  .object({
+    productoId: z.uuid(),
+    visible: z.boolean().optional(),
+    visibleEnPos: z.boolean().optional(),
+  })
+  .refine((e) => e.visible !== undefined || e.visibleEnPos !== undefined, {
+    message: 'Di dónde se ve el platillo: en el portal, en el POS o en los dos.',
+  });
 
 const CONFLICTO =
   'Alguien más cambió el orden del menú mientras lo ordenabas. Se volvió a leer: revísalo y vuelve a ordenar.';
@@ -191,10 +201,17 @@ export const ordenarProductosDeLaCategoria = definirComando<
   },
 });
 
+export interface ResultadoMostrar {
+  readonly productoId: string;
+  readonly visible: boolean;
+  readonly visibleEnPos: boolean;
+  readonly cambio: boolean;
+}
+
 export const mostrarProductoEnElMenu = definirComando<
   Transaccion,
   typeof entradaMostrarEnMenu,
-  { readonly productoId: string; readonly visible: boolean; readonly cambio: boolean }
+  ResultadoMostrar
 >({
   nombre: 'catalogo.mostrar_en_menu',
   entidad: 'producto',
@@ -207,7 +224,7 @@ export const mostrarProductoEnElMenu = definirComando<
     const producto = await ctx.paso('bloquear_producto', () =>
       ctx.tx
         .selectFrom('productos')
-        .select(['id', 'nombre', 'visible_en_menu_digital'])
+        .select(['id', 'nombre', 'visible_en_menu_digital', 'visible_en_pos'])
         .where('organizacion_id', '=', organizacionId)
         .where('id', '=', entrada.productoId)
         .where('activo', '=', true)
@@ -220,13 +237,17 @@ export const mostrarProductoEnElMenu = definirComando<
         'Ese producto no existe o está dado de baja.',
       );
     }
-    if (producto.visible_en_menu_digital === entrada.visible) {
-      throw new SinNovedad({ productoId: producto.id, visible: entrada.visible, cambio: false });
+    // Lo que la entrada no menciona se queda como está: cada lugar es independiente.
+    const portal = entrada.visible ?? producto.visible_en_menu_digital;
+    const pos = entrada.visibleEnPos ?? producto.visible_en_pos;
+    const resultado = { productoId: producto.id, visible: portal, visibleEnPos: pos };
+    if (portal === producto.visible_en_menu_digital && pos === producto.visible_en_pos) {
+      throw new SinNovedad({ ...resultado, cambio: false });
     }
     await ctx.paso('escribir_visible', () =>
       ctx.tx
         .updateTable('productos')
-        .set({ visible_en_menu_digital: entrada.visible, updated_at: ctx.ahora })
+        .set({ visible_en_menu_digital: portal, visible_en_pos: pos, updated_at: ctx.ahora })
         .where('organizacion_id', '=', organizacionId)
         .where('id', '=', producto.id)
         .execute(),
@@ -235,10 +256,10 @@ export const mostrarProductoEnElMenu = definirComando<
       entidadId: producto.id,
       payload: {
         nombre: producto.nombre,
-        antes: producto.visible_en_menu_digital,
-        visible: entrada.visible,
+        portal: { antes: producto.visible_en_menu_digital, despues: portal },
+        pos: { antes: producto.visible_en_pos, despues: pos },
       },
     });
-    return { productoId: producto.id, visible: entrada.visible, cambio: true };
+    return { ...resultado, cambio: true };
   },
 });

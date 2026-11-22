@@ -3295,6 +3295,73 @@
         "+ clase:text-xs",
         "+ texto:No se pudieron leer los pagos de esta venta."
       ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/ListosParaRecogerCard.jsx",
+      "porque": "DP-25 · DP-D225 (3.4, lo pidió Miguel): el avance de cada estación en la tarjeta de la mesa se lee a un metro —«Bebidas 2 de 3», o «Cocina ✓» en verde sólido cuando terminó— en letra de 16 px en negritas con el par exito/exito-texto; los contadores de siempre quedan debajo. Nada más de su aspecto cambia.",
+      "testigos": [
+        "- clase:text-[11px]",
+        "- clase:font-bold",
+        "+ clase:px-3",
+        "+ clase:font-black",
+        "+ clase:text-xs",
+        "+ clase:mt-1",
+        "+ clase:text-texto",
+        "+ clase:text-base",
+        "+ clase:inline-block",
+        "+ clase:rounded-full",
+        "+ clase:py-1",
+        "+ clase:${",
+        "+ clase:nubeCompleta(etiquetaDeLaNube(g)",
+        "+ clase:??",
+        "+ clase:'')",
+        "+ clase:?",
+        "+ clase:'bg-exito",
+        "+ clase:text-exito-texto'",
+        "+ clase::",
+        "+ clase:'bg-superficie",
+        "+ clase:ring-2",
+        "+ clase:ring-exito'",
+        "+ clase:}"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/MeseroCartFAB.jsx",
+      "porque": "DP-25 · DP-D225 (3.1 y 3.2): la lista de «Ya enviado a cocina» de la hoja del teléfono pasa a la pieza nueva ~/restaurante/LoEnviadoDeLaMesa (estado de cada platillo, sus opciones y su nota). Nada más de su aspecto cambia.",
+      "testigos": [
+        "- clase:flex",
+        "- clase:font-medium",
+        "- clase:text-xs",
+        "- clase:justify-between",
+        "- clase:text-muted-foreground",
+        "- clase:py-0.5"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/components/mesero/ProductoFichaExpandible.jsx",
+      "porque": "DP-25 · DP-D225 (3.2): lo elegido de las opciones («Extras: Michelado») se ve en el carrito, en 12 px, en color de texto y a varias líneas si hace falta (antes sólo las exclusiones y la nota, en 10 px, cortado). Nada más cambia.",
+      "testigos": [
+        "- clase:truncate",
+        "- clase:text-[10px]",
+        "- clase:text-advertencia",
+        "+ clase:text-xs",
+        "+ clase:text-texto",
+        "+ clase:break-words"
+      ]
+    },
+    {
+      "archivo": "apps/web/heredado/pages/Mesero.jsx",
+      "porque": "DP-25 · DP-D225: el panel «Pedido actual» usa la pieza nueva ~/restaurante/LoEnviadoDeLaMesa (estado de cada platillo, opciones y nota; más alto: 14 rem), la mesa lleva la leyenda con su «?» y el aviso de la cuenta que otro cerró queda sobre el mapa (piezas nuevas fuera del heredado). Nada más de su aspecto cambia.",
+      "testigos": [
+        "- clase:flex",
+        "- clase:text-xs",
+        "- clase:text-muted-foreground",
+        "- clase:space-y-1",
+        "- clase:max-h-32",
+        "- clase:justify-between",
+        "- clase:font-medium",
+        "+ clase:max-h-56"
+      ]
     }
   ]
 }

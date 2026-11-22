@@ -40,6 +40,8 @@ export const COMANDOS_QUE_GASTAN_AUTORIZACION = [
   // DP-25 · Quitar un platillo y cancelar la cuenta (`para: 'cancelacion'`): un PIN, una acción.
   'restaurante.anular_linea',
   'restaurante.cancelar_orden',
+  // DP-25 · Parte 7 · Ver el PIN de alguien (`para: 'ver_pin'`): el PIN del dueño, una vista.
+  'identidad.ver_pin',
 ] as const;
 
 /** La ventana se mide desde que se firmó, con holgura por el reloj de cada lado. */

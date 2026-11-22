@@ -29,7 +29,7 @@ import {
  *     platillos en dos columnas a la vez, cada uno bajo su bloque «Mesa N»;
  *   · el aviso grande («Mesa N · Listo en …: … · Recoger en …») llega SÓLO a la mesera de esa
  *     mesa —no a la dueña—, se apila, se quita tocando y no se pierde al recargar;
- *   · la nubecita del mapa dice «Parrilla 1/2» y «Barra ✓» (la Barra se ve antes de que termine
+ *   · la nubecita del mapa dice «Parrilla 1 de 2» y «Barra ✓» (la Barra se ve antes de que termine
  *     la Parrilla);
  *   · la tarjeta de cada estación en la mesa cuenta «Listos 1 de 2» / «Entregados 1 de 2», y si
  *     luego sale otro platillo la MISMA tarjeta vuelve a ofrecer entregar.
@@ -186,7 +186,7 @@ test.describe('la cocina por platillo (DP-24)', () => {
         await expect(aviso).toContainText(`Mesa ${String(MESA)} · Listo en ${PARRILLA}`);
         await expect(aviso).toContainText(`Recoger en ${PARRILLA}`);
         await expect(aviso).toContainText(fuerte);
-        await expect(lupita.locator(`[data-nube="${PARRILLA} 1/2"]`)).toBeVisible({
+        await expect(lupita.locator(`[data-nube="${PARRILLA} 1 de 2"]`)).toBeVisible({
           timeout: 20_000,
         });
         // La dueña NO recibe el aviso.

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductoFichaExpandible from './ProductoFichaExpandible';
+import { LoEnviadoDeLaMesa } from '~/restaurante/LoEnviadoDeLaMesa';
 
 /**
  * Barra inferior horizontal de carrito + bottom sheet para Mesero en móvil.
@@ -19,6 +20,7 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
     totalCarrito,
     totalActual,
     detallesVenta,
+    comandasDeLaCuenta = [],
     notaMesa,
     setNotaMesa,
     cambiarCantidad,
@@ -222,17 +224,10 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
                     <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5">
                       Ya enviado a cocina
                     </p>
-                    {safeDetalles.map((d, i) => (
-                      <div
-                        key={d?.id || `det-${i}`}
-                        className="flex justify-between text-xs py-0.5"
-                      >
-                        <span className="text-muted-foreground">
-                          {d?.producto_nombre || '—'} ×{d?.cantidad || 0}
-                        </span>
-                        <span className="font-medium">{fmt(d?.subtotal || 0)}</span>
-                      </div>
-                    ))}
+                    <LoEnviadoDeLaMesa
+                      renglones={safeDetalles}
+                      comandas={Array.isArray(comandasDeLaCuenta) ? comandasDeLaCuenta : []}
+                    />
                     <div className="flex justify-between text-xs font-bold border-t pt-1 mt-1">
                       <span>Subtotal enviado</span>
                       <span>{fmt(safeTotalActual)}</span>

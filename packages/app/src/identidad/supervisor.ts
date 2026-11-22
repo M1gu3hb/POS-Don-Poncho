@@ -43,7 +43,8 @@ export const VIGENCIA_AUTORIZACION_SEGUNDOS = 120;
  * DP-13.2 · Para qué se autoriza (D-5). Una autorización de descuento no sirve para cancelar ni al
  * revés; sin `para` es la de descuento, como las firmadas antes.
  */
-export type ParaQueSeAutoriza = 'descuento' | 'cancelacion' | 'retiro' | 'cajon';
+/** DP-25 · `ver_pin`: el dueño teclea SU PIN para ver el de otra persona (`ver-el-pin.ts`). */
+export type ParaQueSeAutoriza = 'descuento' | 'cancelacion' | 'retiro' | 'cajon' | 'ver_pin';
 
 export interface PeticionDeSupervisor {
   readonly organizacionId: string;
@@ -125,7 +126,8 @@ function esCarga(valor: unknown): valor is CargaDeAutorizacion {
       v['para'] === 'descuento' ||
       v['para'] === 'cancelacion' ||
       v['para'] === 'retiro' ||
-      v['para'] === 'cajon') &&
+      v['para'] === 'cajon' ||
+      v['para'] === 'ver_pin') &&
     (v['monto'] === undefined || typeof v['monto'] === 'string')
   );
 }
@@ -208,8 +210,12 @@ export async function autorizarConPin(
   // demás (sin decir para qué), nadie se autoriza a sí mismo.
   // DP-21 · Bloque 7: lo mismo para abrir el cajón a mano —la apertura sin venta es la que puede
   // esconder un faltante—: quien ya es de mando también teclea su PIN.
+  // DP-25 · Y para VER UN PIN: el dueño teclea el suyo (nadie más puede verlo).
   const seTecleaElSuyo =
-    peticion.para === 'descuento' || peticion.para === 'cancelacion' || peticion.para === 'cajon';
+    peticion.para === 'descuento' ||
+    peticion.para === 'cancelacion' ||
+    peticion.para === 'cajon' ||
+    peticion.para === 'ver_pin';
   if (peticion.empleoId === peticion.solicitaEmpleoId && !seTecleaElSuyo) {
     return { ok: false, motivo: 'uno_mismo' };
   }

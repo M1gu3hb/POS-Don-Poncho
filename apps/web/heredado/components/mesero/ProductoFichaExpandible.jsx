@@ -96,7 +96,10 @@ export default function ProductoFichaExpandible({
       onUpdateNotas(item.id, buildNotaFinal(exclusiones, val));
   };
 
-  const hayModif = exclusiones.length > 0 || (nota || '').trim().length > 0;
+  // DP-25 · 3.2: lo elegido de las opciones («Extras: Michelado») también se ve en el carrito, no
+  // sólo las exclusiones y la nota: el precio sube y el mesero tiene que ver por qué.
+  const hayModif =
+    modificadoresPrefix !== '' || exclusiones.length > 0 || (nota || '').trim().length > 0;
 
   // 6B / 1.D — Si el item es variable, mostramos cantidad real ("500 g" / "4 shots")
   // en vez de los controles ±. Las líneas variables NO se incrementan: para más
@@ -128,7 +131,7 @@ export default function ProductoFichaExpandible({
             />
           </button>
           {hayModif && (
-            <p className="text-[10px] text-advertencia italic truncate">
+            <p data-opciones-del-carrito className="text-xs text-texto italic break-words">
               ↳ {buildNotaFinal(exclusiones, nota)}
             </p>
           )}

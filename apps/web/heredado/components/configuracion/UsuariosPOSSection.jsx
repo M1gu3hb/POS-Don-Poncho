@@ -21,6 +21,7 @@ import { claves } from '~/cliente/claves-de-consulta';
 import UsuarioPOSDialog from './UsuarioPOSDialog';
 import { FilaDeUsuario, cuerpoDelEmpleado } from './FilaDeUsuario';
 import { usePuesto } from './usePuesto';
+import { VerElPin } from '~/configuracion/VerElPin';
 import { esDeMando, puedeEditarA } from './puestos';
 
 /**
@@ -56,14 +57,34 @@ export default function UsuariosPOSSection({ cfg }) {
     enabled: verDesactivados,
   });
 
+  // DP-25 · Parte 7 · Sólo el dueño ve el PIN de su gente, y sólo con la función encendida (hay llave).
+  const esDueno = miPuesto === 'dueno';
+  const { data: pines } = useQuery({
+    queryKey: ['pines_visibles'],
+    queryFn: () => api.comandos.ejecutar('/api/identidad/pines-visibles', {}),
+    enabled: esDueno,
+    staleTime: 30_000,
+  });
+
   const lista = Array.isArray(usuarios) ? usuarios : [];
   const puedeGestionar = esDeMando(miPuesto);
   const esUnoMismo = (u) => u?.id === posUser?.id;
+  const verPin = (u) =>
+    esDueno && pines?.activa === true ? (
+      <VerElPin
+        empleado={{ id: u.id, nombre: u.nombre }}
+        conCopia={Array.isArray(pines.conCopia) && pines.conCopia.includes(u.id)}
+        yo={{ empleoId: posUser?.id, nombre: posUser?.nombre || 'Tú' }}
+        alAsignar={() => setDialogo({ abierto: true, usuario: u })}
+      />
+    ) : null;
 
   const refrescar = () => {
     // La raíz alcanza a todas las variantes (activos, meseros, desactivados): `claves-de-consulta.ts`.
     queryClient.invalidateQueries({ queryKey: ['usuarios_pos'] });
     queryClient.invalidateQueries({ queryKey: ['mesas'] });
+    // Un PIN recién asignado ya tiene copia: el ojito deja de decir «No disponible».
+    queryClient.invalidateQueries({ queryKey: ['pines_visibles'] });
   };
 
   const guardarUsuario = async (payload, prevUser) => {
@@ -164,7 +185,7 @@ export default function UsuariosPOSSection({ cfg }) {
         </CardHeader>
         <CardContent className="space-y-2">
           {lista.map((u) => (
-            <FilaDeUsuario key={u.id} u={u} cfg={cfg} acciones={acciones(u)} />
+            <FilaDeUsuario key={u.id} u={u} cfg={cfg} acciones={acciones(u)} verPin={verPin(u)} />
           ))}
           {lista.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">Sin usuarios registrados</p>

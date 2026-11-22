@@ -266,10 +266,9 @@ async function productosVisibles(
     .where('p.organizacion_id', '=', organizacionId)
     .where('p.activo', '=', true)
     // El interruptor por producto. Un producto del POS que Miguel no quiso en
-    // el menú digital no aparece aquí ni aunque esté activo.
+    // el menú digital no aparece aquí ni aunque esté activo. DP-D227: es el ÚNICO interruptor del
+    // portal; lo oculto del POS (`visible_en_pos`) sigue aquí.
     .where('p.visible_en_menu_digital', '=', true)
-    // DP-D174: lo que se oculta del POS («Visible en POS» apagado en Recetas) tampoco sale en el portal.
-    .where('p.visible_en_pos', '=', true)
     // DP-24 · UN SOLO ORDEN del menú (el mismo de la rejilla del mesero y de la Caja): la categoría,
     // el lugar en ella y el nombre. La base recorta con ese orden y `ordenarMenu` lo fija igual que
     // las pantallas (mismo alfabeto).
