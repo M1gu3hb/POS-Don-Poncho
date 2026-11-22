@@ -5,6 +5,8 @@ import { Superficie } from '@morphiqpos/ui/sistema';
 import { BellRing } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { useVocabulario } from '~/cliente/vocabulario';
+
 import {
   fraseDelAviso,
   avisosSegunLaVentana,
@@ -67,6 +69,7 @@ function useVentanaAbierta(): { abierta: boolean; mesaNumero: number | null } {
 
 export function AvisosDeListo({ avisos: todos, alQuitar, alQuitarTodos }: AvisosDeListoProps) {
   const [verTodos, setVerTodos] = useState(false);
+  const voc = useVocabulario();
   const ventana = useVentanaAbierta();
   const { completos: avisos, enPastilla } = avisosSegunLaVentana(todos, ventana);
   const { visibles, ocultos } = repartirAvisos(avisos);
@@ -75,7 +78,7 @@ export function AvisosDeListo({ avisos: todos, alQuitar, alQuitarTodos }: Avisos
     <div
       role="status"
       aria-live="polite"
-      aria-label="Platillos listos para recoger"
+      aria-label={`${voc.titulo('linea_orden', true)} listos para recoger`}
       data-avisos-de-listo={String(avisos.length)}
       className="relative flex flex-col items-center gap-2 empty:hidden pb-2"
     >

@@ -4420,25 +4420,6 @@ ya hay una columna por lugar); un comando por lugar (dos escrituras y dos audito
 está «Ocultar de todo» o «Agotado del día». La lista de «apartar un pedido anticipado» sigue leyendo `visible_en_pos` como «hoy
 no hay»: un platillo oculto del POS pero visible en el portal aparece ahí en gris; es otra pantalla y no se tocó (queda por decidir).
 
-## DP-D229 · DP-25 · El dueño ve el PIN de su gente: una copia cifrada, su propio PIN y la auditoría · 21-11-2026
-
-- **Contexto.** Al personal se le olvida el PIN y cambiarlo a cada rato es un problema. El PIN se guarda sólo como hash Argon2id
-  (`credenciales_pin.pin_hash`): de un hash no se vuelve al PIN.
-- **Decisión.** Al poner o cambiar un PIN (`identidad.establecer_pin` y el alta de persona) se guarda además una COPIA cifrada con
-  AES-256-GCM en `credenciales_pin.pin_cifrado` (migración 204, aditiva, con un `check` de su forma para que nunca entre un PIN a la
-  vista). La llave es `PIN_CIFRADO_CLAVE` (32 bytes), sólo en el entorno del servidor (Vercel) con su copia fuera del repositorio;
-  nunca en la base, el repo ni un registro. Cada copia lleva su vector aleatorio y se ata a su identidad: copiada a la fila de otra
-  persona, o alterada, no se descifra.
-- **Ver un PIN** (`identidad.ver_pin`, Configuración → Personas, el ojito): sólo el dueño, y el servidor lo rechaza para cualquier
-  otro puesto. Pide SU propio PIN (la firma de `/api/identidad/supervisor` con `para: 'ver_pin'`, tecleada por él mismo, de un solo
-  uso y con el bloqueo por intentos de siempre). Se ve 10 segundos y se oculta solo. Cada vista queda en la auditoría (quién vio el
-  de quién y cuándo), nunca el PIN.
-- **Los PIN de antes** no tienen copia: dicen «No disponible: asígnalo de nuevo una vez», con el botón para asignarlo ahí mismo.
-- **Sin la llave** la función se apaga sola: no hay ojito, no se guarda copia (y cambiar un PIN borra la copia vieja, para que nadie
-  vea un PIN que ya no es el de hoy), y poner y usar el PIN sigue igual.
-- **Alternativas descartadas.** Guardar el PIN a la vista o con un cifrado reversible sin llave aparte: cualquiera con la base lo
-  leería. Que el dueño lo cambie cada vez: es justo lo que se quería evitar.
-
 ## DP-D228 · DP-25 · Parte 5 · La bolita de «agregado al pedido»: decoración que sale después del agregado · 21-11-2026
 
 **Contexto.** En la capacitación pidieron que se note cuando un toque agregó un platillo, y que tres toques seguidos se vean como tres.
@@ -4472,3 +4453,53 @@ corre en el motor viejo); bolita también en + y – (el pedido ya está a la vi
 hasta que el servidor responde. En el mostrador la bolita sale cuando el comando de agregar terminó (es un viaje por red), no al toque.
 Toca `Mesero.jsx`, `POS.jsx`, `PortalCliente.jsx`, `MeseroCartFAB.jsx`, `MesaActivaView.jsx`, `ParaLlevarDialog.jsx`, `CartPanel.jsx` con
 atributos y un `return SE_AGREGO;`, sin cambiar lo que hacen (el mostrador y el portal son de la Parte 1 / el comensal: cambio mínimo).
+
+## DP-D229 · DP-25 · El dueño ve el PIN de su gente: una copia cifrada, su propio PIN y la auditoría · 21-11-2026
+
+- **Contexto.** Al personal se le olvida el PIN y cambiarlo a cada rato es un problema. El PIN se guarda sólo como hash Argon2id
+  (`credenciales_pin.pin_hash`): de un hash no se vuelve al PIN.
+- **Decisión.** Al poner o cambiar un PIN (`identidad.establecer_pin` y el alta de persona) se guarda además una COPIA cifrada con
+  AES-256-GCM en `credenciales_pin.pin_cifrado` (migración 204, aditiva, con un `check` de su forma para que nunca entre un PIN a la
+  vista). La llave es `PIN_CIFRADO_CLAVE` (32 bytes), sólo en el entorno del servidor (Vercel) con su copia fuera del repositorio;
+  nunca en la base, el repo ni un registro. Cada copia lleva su vector aleatorio y se ata a su identidad: copiada a la fila de otra
+  persona, o alterada, no se descifra.
+- **Ver un PIN** (`identidad.ver_pin`, Configuración → Personas, el ojito): sólo el dueño, y el servidor lo rechaza para cualquier
+  otro puesto. Pide SU propio PIN (la firma de `/api/identidad/supervisor` con `para: 'ver_pin'`, tecleada por él mismo, de un solo
+  uso y con el bloqueo por intentos de siempre). Se ve 10 segundos y se oculta solo. Cada vista queda en la auditoría (quién vio el
+  de quién y cuándo), nunca el PIN.
+- **Los PIN de antes** no tienen copia: dicen «No disponible: asígnalo de nuevo una vez», con el botón para asignarlo ahí mismo.
+- **Sin la llave** la función se apaga sola: no hay ojito, no se guarda copia (y cambiar un PIN borra la copia vieja, para que nadie
+  vea un PIN que ya no es el de hoy), y poner y usar el PIN sigue igual.
+- **Alternativas descartadas.** Guardar el PIN a la vista o con un cifrado reversible sin llave aparte: cualquiera con la base lo
+  leería. Que el dueño lo cambie cada vez: es justo lo que se quería evitar.
+
+## DP-D230 · DP-25 · Un número de mesa repetido se dice con palabras, y el acople deja de mentir sobre lo que no tiene ruta · 21-11-2026
+
+**Contexto.** Hoy, en producción, el dueño editaba el mapa en Configuración y dos veces le salió «Algo falló»: crear o renombrar una mesa
+con el número de otra mesa activa choca con el índice `mesas_numero_unico` (migración 183). El 23505 subía sin traducir por
+`puente.escribir` y llegaba como un 500. Además `verify:acople` (DP-24) encontró tres fallas de código: cuatro comandos que escriben y
+a los que no llega ninguna ruta, y dos palabras escritas a mano que el diccionario del giro ya dice.
+
+**Decisión.**
+- **El puente traduce el choque.** Una entidad del mapa puede declarar `repetidoDe` (índice, columna, código y mensaje). `crear` y
+  `actualizar` atrapan el 23505 **de ese índice, por nombre** y contestan `MESA_NUMERO_REPETIDO` (422, regla de negocio) con «Ya hay una
+  mesa activa con el número 7.». Un 23505 de otro índice sube tal cual. Se traduce el error en vez de preguntar antes: la pregunta tiene
+  hueco entre mirar y escribir, el índice no. La pantalla ya mostraba el mensaje del servidor, así que no cambia.
+- **Los cuatro comandos son de guion, y se dice.** `activarOperacion`, `quitarBloqueoDeOperacion`, `reiniciarFolios` y
+  `renombrarAparatos` sólo los llaman `scripts/operacion-real.mjs`, `scripts/dejar-en-ceros.mjs` y `scripts/renombrar-aparatos.mjs`
+  (nada en `apps/web` los importa). Se declaran en `COMANDOS_SOLO_POR_GUION` de `scripts/verificar-acople.mjs` con su razón; la puerta
+  falla si una fila sobra (si el comando ya no escribe o si una ruta lo importa). No se inventaron rutas que nadie llama.
+- **Las dos palabras salen del vocabulario:** «Platillos listos para recoger» (`AvisosDeListo`) y «Mesa» (`CambiarDeMesaAqui`).
+
+**Alternativas descartadas.** Comprobar el número antes de escribir (carrera entre dos pestañas del dueño); poner una ruta a cada
+comando de mantenimiento (abre a cualquier sesión de dueño lo que sólo debe correr quien despliega); dejar el 500 y mejorar el texto de
+la pantalla (el servidor seguiría registrando un fallo que no lo es).
+
+**Consecuencias.** `verify:acople` pasa de 8 pendientes a 6 en una corrida sin producción; las seis son las que piden la base viva, un
+servidor o la CI. Sin migración.
+
+**Adenda (mismo día) · el editor del mapa y el simulador.** El editor de Configuración → Mesas **ya guardaba al soltar** (una sola
+escritura por arrastrada: mover sólo cambia el estado de la pantalla); en el código no hay un guardado por movimiento, y no se encontró
+de dónde salieron las miles de escrituras de posición de producción. Se dejó una prueba e2e que lo fija (`mapa-de-mesas-editor.spec.ts`:
+nada se guarda con la mesa en el aire, una sola escritura al soltar, y el número repetido se ve en pantalla). El simulador de bots
+(jornada corta de DP-24 y sus cuadres) **no entró**: sus guiones no pasan `eslint` y arreglarlos no cabía; quedan fuera del repositorio.

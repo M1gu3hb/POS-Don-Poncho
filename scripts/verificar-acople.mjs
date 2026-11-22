@@ -304,6 +304,16 @@ const COMANDOS_SOLO_POR_GUION = {
     'DP-12.1 · `scripts/marcar-plataforma.mjs`: la marca de plataforma (DP-D44) sólo la pone quien despliega.',
   quitarPlataforma:
     'DP-12.1 · `scripts/marcar-plataforma.mjs --quitar`: la quita, por el mismo camino que la pone.',
+  // DP-25 · Parte 9 · Los cuatro de mantenimiento de la puesta en marcha: ninguna pantalla los llama,
+  // sólo su guion (verificado: nada en `apps/web` los importa).
+  activarOperacion:
+    'DP-21 · `scripts/operacion-real.mjs`: activa el bloqueo de «ya se opera» con la hora del servidor, una vez, después de dejar en ceros.',
+  quitarBloqueoDeOperacion:
+    'DP-21 · `scripts/operacion-real.mjs --quitar`: lo quita el dueño con el nombre del negocio, sólo cuando Miguel lo pide.',
+  reiniciarFolios:
+    'DP-18 · `scripts/dejar-en-ceros.mjs`: los folios vuelven a su «Primer folio» al dejar producción en ceros; una ruta lo abriría a cualquier sesión de dueño.',
+  renombrarAparatos:
+    'DP-21 · `scripts/renombrar-aparatos.mjs`: «Caja N» pasa a «Aparato N» una sola vez, en la puesta en marcha.',
 };
 
 /** Los huérfanos que cuentan, y las filas de la declaración que sobran. */

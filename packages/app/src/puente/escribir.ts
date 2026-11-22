@@ -13,6 +13,7 @@ import { transaccionLibre } from './db-dinamica.ts';
 
 import { entidadMapeada } from './mapa.ts';
 import { valorHaciaEl, valorHaciaLaBase, type MapaEntidad } from './tipos.ts';
+import { violaIndice } from '../portal/errores-sql.ts';
 import { esUrlHttp } from '../validacion/url-http.ts';
 
 /**
@@ -175,6 +176,27 @@ function traducirFila(fila: Fila, mapa: MapaEntidad, rol: string): Fila {
   return salida;
 }
 
+/**
+ * DP-25 · Parte 9 · El choque con un índice único que el mapa declara (`repetidoDe`) se dice con
+ * palabras. Sólo ESE índice, por nombre: cualquier otro error de la base sube tal cual, y como la
+ * transacción ya quedó abortada, se relanza de inmediato sin tocar nada más.
+ */
+async function conRepetidoDicho<T>(
+  mapa: MapaEntidad,
+  valores: Fila,
+  ejecutar: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await ejecutar();
+  } catch (error) {
+    const repetido = mapa.repetidoDe;
+    if (repetido !== undefined && violaIndice(error, repetido.indice)) {
+      throw new ErrorDominio(repetido.codigo, repetido.mensaje(valores[repetido.columna]));
+    }
+    throw error;
+  }
+}
+
 async function crear(
   tx: Transaccion,
   ambito: AmbitoEscritura,
@@ -201,11 +223,13 @@ async function crear(
   }
 
   // La tabla sale del MAPA, nunca del cliente. Ver `db-dinamica.ts`.
-  const fila = (await transaccionLibre(tx)
-    .insertInto(mapa.tabla)
-    .values(valores as never)
-    .returning(columnasDeSalida(mapa, ambito.rol))
-    .executeTakeFirstOrThrow()) as Fila;
+  const fila = (await conRepetidoDicho(mapa, valores, () =>
+    transaccionLibre(tx)
+      .insertInto(mapa.tabla)
+      .values(valores as never)
+      .returning(columnasDeSalida(mapa, ambito.rol))
+      .executeTakeFirstOrThrow(),
+  )) as Fila;
 
   return traducirFila(fila, mapa, ambito.rol);
 }
@@ -259,7 +283,9 @@ async function actualizar(
     }
   }
 
-  const fila = await consulta.returning(columnasDeSalida(mapa, ambito.rol)).executeTakeFirst();
+  const fila = await conRepetidoDicho(mapa, valores, () =>
+    consulta.returning(columnasDeSalida(mapa, ambito.rol)).executeTakeFirst(),
+  );
 
   // Cero filas es un FALLO, no un éxito silencioso. Es la trampa de
   // `supabase-vercel-produccion` §7: un UPDATE que no encuentra su fila no da
