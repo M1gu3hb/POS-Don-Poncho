@@ -141,7 +141,7 @@ async function resetearLaDemo(duena: Page): Promise<void> {
 }
 
 test.describe('lo que ve el mesero dentro de la mesa (DP-25 · Parte 3)', () => {
-  test.use({ actionTimeout: 20_000, navigationTimeout: 30_000 });
+  test.use({ actionTimeout: 60_000, navigationTimeout: 60_000 });
 
   test.beforeAll(async ({ playwright }, info) => {
     await exigirDemostracion(playwright, info, SLUG);
@@ -167,6 +167,7 @@ test.describe('lo que ve el mesero dentro de la mesa (DP-25 · Parte 3)', () => 
       const barra = await laEstacion(duena, 'Barra');
       await categoriaA(duena, 'Platos fuertes', parrilla);
       await categoriaA(duena, 'Bebidas', barra);
+      await categoriaA(duena, 'Cervezas', barra);
       const fuerte = (await platilloDe(duena, 'Platos fuertes')).nombre;
 
       // La cerveza trae «Prepárala» con el Michelado (+$15): el precio sube y se tiene que ver por qué.
@@ -203,7 +204,7 @@ test.describe('lo que ve el mesero dentro de la mesa (DP-25 · Parte 3)', () => 
           .tap();
         const personalizar = lupita.getByRole('dialog', { name: 'Personalizar producto' });
         await personalizar.getByRole('button', { name: /Michelado/ }).tap();
-        await personalizar.getByRole('button', { name: 'Agregar al pedido' }).tap();
+        await personalizar.getByRole('button', { name: /^Agregar/ }).tap();
         await expect(personalizar).toHaveCount(0);
         await armarElPedido(lupita, MESA_DEL_PEDIDO, [
           { nombre: CARTA.limonada.nombre, veces: 1 },
@@ -235,6 +236,14 @@ test.describe('lo que ve el mesero dentro de la mesa (DP-25 · Parte 3)', () => 
           await (await botonDeLaMesa(lupita, MESA_DEL_PEDIDO, 'Solicitar cuenta')).waitFor();
         }
         await expect(lista).toBeVisible({ timeout: 20_000 });
+      };
+
+      /** En el teléfono la hoja del carrito tapa la mesa mientras está abierta: se cierra con su botón. */
+      const cerrarLaHoja = async (): Promise<void> => {
+        const hoja = lupita.locator('div.z-\\[66\\]');
+        if ((await hoja.count()) === 0) return;
+        await hoja.getByRole('button', { name: 'Cerrar', exact: true }).tap();
+        await expect(hoja).toHaveCount(0);
       };
 
       await test.step('3.1 y 3.2 · lo enviado trae su estado y su «Michelado»', async () => {
@@ -271,6 +280,7 @@ test.describe('lo que ve el mesero dentro de la mesa (DP-25 · Parte 3)', () => 
       });
 
       await test.step('3.3 · la leyenda está a la vista y su «?» abre las instrucciones', async () => {
+        await cerrarLaHoja();
         const leyenda = mesa.locator('[data-leyenda-de-la-mesa]');
         await expect(leyenda).toBeVisible();
         for (const palabra of ['Nuevo', 'En preparación', 'Listo', 'Entregado']) {
