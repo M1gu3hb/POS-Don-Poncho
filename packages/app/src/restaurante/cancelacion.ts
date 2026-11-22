@@ -5,7 +5,11 @@ import type { Transaccion } from '@morphiqpos/data';
 
 import { definirComando } from '../definicion.ts';
 import { cuentaYSusAbsorbidas, tomarCandadosDeCocina } from './candados-de-cocina.ts';
-import { exigirPermisoParaCancelar, exigirQueSeCancele } from './cancelar-con-permiso.ts';
+import {
+  exigirPermisoParaCancelar,
+  exigirQueSeCancele,
+  gastarElPermisoParaCancelar,
+} from './cancelar-con-permiso.ts';
 import { mermaDeLaCuentaCancelada } from './merma-por-cancelacion.ts';
 import { mesaOperable, ordenParaCancelar } from './datos.ts';
 import { cancelarLoDeLaParte, cerrarLaParteCancelada } from './parte-cancelada.ts';
@@ -138,11 +142,16 @@ export const cancelarOrden = definirComando<
     exigirQueSeCancele(orden.estado);
     // DP-14.6-7 · Sin poder comprobar la cocina, todo cuenta como ya hecho (pérdida firmada).
     const todoComoHecho = entrada.sinComprobarLaCocina === true;
-    const autorizadoPor = await ctx.paso('permiso', () =>
+    const permiso = await ctx.paso('permiso', () =>
       Promise.resolve(
         exigirPermisoParaCancelar(ctx, orden.id, entrada.autorizacion, todoComoHecho),
       ),
     );
+    // DP-25 · La firma de la caja es de UN uso: cancela esta cuenta y se gasta.
+    await ctx.paso('gastar_autorizacion', () =>
+      gastarElPermisoParaCancelar(ctx.tx, organizacionId, permiso),
+    );
+    const autorizadoPor = permiso?.supervisor ?? null;
 
     // DP-13.3 · Lo que la cocina ya había hecho sale del almacén como merma «Por cancelación».
     // ANTES de cancelar las comandas: después ya no se distingue lo hecho de lo que no.
@@ -260,6 +269,8 @@ export const cancelarOrden = definirComando<
         comandasCanceladas: comandas.length,
         mesaId: mesaDeLaCuenta,
         autorizadoPor,
+        // DP-25 · La firma gastada: `gastarLaAutorizacion` la busca aquí y no la deja reusar.
+        ...(permiso === null ? {} : { autorizacion: permiso.n }),
         ...(union === null ? {} : { unionId: union.unionId, unionSeparada: union.separada }),
         ...(orden.madreId === null ? {} : { parteDeLaCuenta: orden.madreId }),
         // El corte lo lee de aquí (`caja/corte/cancelaciones.ts`): todo lo vivo es pérdida.

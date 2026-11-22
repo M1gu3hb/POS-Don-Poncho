@@ -265,6 +265,10 @@ export default function PropinasRegistros() {
                   <Badge variant="secondary" className="text-[10px]">
                     {l.numero_ventas || 0} ventas
                   </Badge>
+                  {/* DP-25 · De dónde salió el dinero: del cajón de una caja, o fuera de la caja. */}
+                  <Badge variant="outline" className="text-[10px]" data-entrega-de-la-liquidacion>
+                    {l.entregada_en_caja_id ? 'Salió del cajón' : 'Fuera de la caja'}
+                  </Badge>
                   <p className="font-heading font-black text-exito min-w-[80px] text-right">
                     {formatCurrency(l.total_liquidado)}
                   </p>

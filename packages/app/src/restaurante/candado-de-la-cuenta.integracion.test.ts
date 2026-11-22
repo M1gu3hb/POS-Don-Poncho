@@ -199,7 +199,7 @@ describe('cada comando que recalcula la cuenta la toma al cargarla', () => {
     const { ordenId } = await cuentaConDosArracheras(1);
     const { sentencia, resultado } = await loQueEsperaAlComando(ordenId, () =>
       comando(solicitarCuenta, {
-        entrada: { ordenId, propinaTipo: 'sin_propina' },
+        entrada: { ordenId, propinaTipo: 'sin_propina', aunConPendientes: true },
         ambito: ambito(),
         idempotencyKey: clave(),
       }),

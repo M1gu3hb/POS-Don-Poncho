@@ -54,6 +54,7 @@ test.describe('D3 · modo espera con el cobro a medio teclear', () => {
       ]);
       await mandar(duena, '/api/restaurante/solicitar-cuenta', {
         ordenId,
+        aunConPendientes: true,
         propinaTipo: 'sin_propina',
       });
 

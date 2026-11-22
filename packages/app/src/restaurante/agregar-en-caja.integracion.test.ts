@@ -122,7 +122,7 @@ async function mesaConCuentaPedida(): Promise<{ ordenId: string; mesaId: string 
   );
   exigirOk(
     await comando(solicitarCuenta, {
-      entrada: { ordenId },
+      entrada: { ordenId, aunConPendientes: true },
       ambito: comoMesero(),
       idempotencyKey: clave(),
     }),

@@ -106,7 +106,10 @@ test.describe('parte 7 · cancelar y descontar', () => {
       await expect(duena.getByText('Platillo quitado de la cuenta').first()).toBeVisible();
 
       // ── La cuenta entera, ya pedida: la caja la cancela sólo con la clave de gerencia ──────
-      await mandar(lupita, '/api/restaurante/solicitar-cuenta', { ordenId: propia.ordenId });
+      await mandar(lupita, '/api/restaurante/solicitar-cuenta', {
+        aunConPendientes: true,
+        ordenId: propia.ordenId,
+      });
       await cancelarComoCajaConElPin(rosa, propia.ordenId, MOTIVO_DE_LA_CUENTA, gerente);
 
       // ── La auditoría dice quién autorizó y por qué; el corte lo dice también ────────────────
@@ -156,7 +159,10 @@ test.describe('parte 7 · cancelar y descontar', () => {
       const { ordenId } = await mesaConPedido(lupita, duena, 5, [
         { nombre: CARTA.arrachera.nombre, cantidad: '2' },
       ]);
-      await mandar(lupita, '/api/restaurante/solicitar-cuenta', { ordenId });
+      await mandar(lupita, '/api/restaurante/solicitar-cuenta', {
+        aunConPendientes: true,
+        ordenId,
+      });
 
       await rosa.goto('/caja', { waitUntil: 'domcontentloaded' });
       await toque(rosa, rosa.getByRole('tab', { name: /^Pendientes/ }));

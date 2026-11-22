@@ -3694,6 +3694,31 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
    * que el booleano `propina_liquidada` se desincroniza del puntero de verdad.
    * Por eso `propina_liquidada` se DERIVA y esto es un comando.
    */
+  /**
+   * DP-25 · CADA PAGO DE UNA VENTA, por separado: el corte, Registros y el detalle de la venta
+   * listan «Tarjeta 1», «Tarjeta 2» y «Efectivo» (con lo recibido y el cambio) y la propina de cada
+   * uno, en vez de «Mixto» con un total por método. Sólo lectura: un pago lo escribe `venta.cobrar`.
+   * Es dinero de la caja: lo lee quien lee la caja.
+   */
+  PagoDeVenta: {
+    tabla: 'pagos',
+    sucursal: { porPadre: { columna: 'orden_id', tabla: 'ordenes' } },
+    rolesLectura: [...CAJA],
+    escritura: 'comando',
+    ordenPorOmision: 'created_date',
+    campos: {
+      ...soloAutomaticos(['id', 'created_date']),
+      venta_id: { columna: 'orden_id', conversion: 'texto', escribible: false },
+      sesion_caja_id: { columna: 'sesion_caja_id', conversion: 'texto', escribible: false },
+      metodo: { columna: 'metodo', conversion: 'texto', escribible: false },
+      monto: { columna: 'monto_centavos', conversion: 'dinero', escribible: false },
+      propina: { columna: 'propina_centavos', conversion: 'dinero', escribible: false },
+      recibido: { columna: 'recibido_centavos', conversion: 'dinero', escribible: false },
+      cambio: { columna: 'cambio_centavos', conversion: 'dinero', escribible: false },
+      estado: { columna: 'estado', conversion: 'texto', escribible: false },
+    },
+  },
+
   LiquidacionPropina: {
     tabla: 'liquidaciones_propina',
     sucursal: DE_SU_SUCURSAL,
@@ -3719,6 +3744,12 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
         escribible: false,
       },
       notas: { columna: 'notas', conversion: 'texto', escribible: false },
+      // DP-25 · La caja de cuyo cajón salió el dinero; nulo = pagada fuera de la caja.
+      entregada_en_caja_id: {
+        columna: 'entregada_en_sesion_caja_id',
+        conversion: 'texto',
+        escribible: false,
+      },
     },
     derivados: {
       mesero_nombre: {

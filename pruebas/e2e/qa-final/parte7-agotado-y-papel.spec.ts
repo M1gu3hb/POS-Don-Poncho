@@ -219,6 +219,16 @@ test.describe('parte 7 · agotado y papel', () => {
       await yaAbierto(pregunta);
       await toque(lupita, pregunta.getByRole('button', { name: 'Sin propina' }));
       const precuenta = lupita.getByRole('dialog').filter({ hasText: 'Pre-cuenta lista' });
+      // DP-25 · Si a la mesa le faltan platillos por entregar, el aviso se acepta: aquí se prueba otra cosa.
+      const avisoDePendientes = lupita.getByRole('dialog', {
+        name: 'A esta mesa todavía le faltan platillos',
+      });
+      await expect(avisoDePendientes.or(precuenta)).toBeVisible({ timeout: 30_000 });
+      if (await avisoDePendientes.isVisible()) {
+        await avisoDePendientes
+          .getByRole('button', { name: 'Pedir la cuenta de todos modos' })
+          .click();
+      }
       await yaAbierto(precuenta);
       await capturar(lupita, 'reimprimir', aparato.id, 'precuenta-lista');
       await toque(lupita, precuenta.getByRole('button', { name: 'Imprimir' }));

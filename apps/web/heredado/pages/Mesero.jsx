@@ -117,6 +117,9 @@ import {
   useOpcionesDeLosPlatillos,
 } from '~/restaurante/use-opciones-de-los-platillos';
 import { CancelarDelMesero } from '~/restaurante/CancelarDelMesero';
+// DP-25 · Pedir la cuenta con platillos sin entregar: el servidor avisa y aquí se confirma.
+import { AvisoDePendientesDeLaCuenta } from '~/restaurante/AvisoDePendientesDeLaCuenta';
+import { pendientesDelRechazo } from '~/restaurante/pendientes-de-la-cuenta';
 import { UnirMesasEnElMapa } from '~/restaurante/unir-mesas/UnirMesasEnElMapa';
 import {
   cajaDeLaUnion,
@@ -240,6 +243,8 @@ function Mesero() {
 
   // Propina (RP — antes de pedir cuenta)
   const [showPropinaMesero, setShowPropinaMesero] = useState(false);
+  // DP-25 · { propinaData, pendientes } cuando la mesa tiene platillos sin entregar.
+  const [avisoDePendientes, setAvisoDePendientes] = useState(null);
   // DP-21 · Bloque 10: el panel de «Cambiar de mesa», abierto sobre el de la mesa.
   const [cambiandoDeMesa, setCambiandoDeMesa] = useState(false);
 
@@ -1247,7 +1252,7 @@ function Mesero() {
   };
 
   // Finaliza el flujo de solicitar cuenta tras elegir propina (o "decidir en caja").
-  const finalizarPedirCuenta = async (propinaData) => {
+  const finalizarPedirCuenta = async (propinaData, aunConPendientes = false) => {
     const mesaRef = mesaActiva;
     const ventaRef = ventaActiva;
 
@@ -1262,13 +1267,15 @@ function Mesero() {
       // La propina viaja en PUNTOS BASE enteros: 10 % es 1000. `0.1` no existe
       // exacto en punto flotante y los puntos base sí. Y el importe NO se manda:
       // el comando lo calcula sobre el total que acaba de cotizar.
-      if (claveCuentaRef.current === null) claveCuentaRef.current = nuevaClave();
+      // Con la confirmación el cuerpo cambia: es otro intento, con su propia clave.
+      if (claveCuentaRef.current === null || aunConPendientes) claveCuentaRef.current = nuevaClave();
       const r = await api.comandos.ejecutar(
         '/api/restaurante/solicitar-cuenta',
         {
           ordenId: ventaRef.id,
           propinaPuntosBase: Math.round((Number(propinaData?.propina_porcentaje) || 0) * 100),
           propinaTipo: propinaData?.propina_tipo || 'sin_propina',
+          ...(aunConPendientes ? { aunConPendientes: true } : {}),
         },
         claveCuentaRef.current,
       );
@@ -1316,6 +1323,14 @@ function Mesero() {
         toast.success(`Cuenta solicitada. Código: ${codigo}`);
       }
     } catch (err) {
+      // DP-25: a la mesa le faltan platillos por entregar. No es un fallo: se avisa en grande y
+      // quien pide la cuenta decide si la pide de todos modos o regresa.
+      const pendientes = pendientesDelRechazo(err?.datos);
+      if (pendientes) {
+        claveCuentaRef.current = null;
+        setAvisoDePendientes({ propinaData, pendientes });
+        return;
+      }
       console.error('[Mesero] finalizarPedirCuenta error:', err);
       // «Esa mesa todavía no ha consumido nada», «esa cuenta ya se cerró en
       // caja»: el dominio ya lo dice en español y mejor que un genérico.
@@ -2140,6 +2155,19 @@ function Mesero() {
         porcentajesSugeridos={getPorcentajesSugeridos(config)}
         onConfirm={finalizarPedirCuenta}
       />
+
+      {avisoDePendientes && (
+        <AvisoDePendientesDeLaCuenta
+          pendientes={avisoDePendientes.pendientes}
+          pidiendo={loading}
+          alRegresar={() => setAvisoDePendientes(null)}
+          alPedirDeTodosModos={() => {
+            const { propinaData } = avisoDePendientes;
+            setAvisoDePendientes(null);
+            finalizarPedirCuenta(propinaData, true);
+          }}
+        />
+      )}
 
       {/* === PRE-CUENTA TICKET DIALOG === */}
       <Dialog open={showPreCuenta} onOpenChange={setShowPreCuenta}>
