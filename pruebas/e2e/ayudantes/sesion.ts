@@ -1224,6 +1224,23 @@ export function vigilarFallos(page: Page, opciones: OpcionesDeVigilancia = {}): 
       rechazosDeSonda.push(`${String(estado)} ${ruta}`);
       return;
     }
+    // DP-25 · El aviso «a esta mesa le faltan platillos» es un 422 que la pantalla espera y enseña:
+    // no es un botón roto. Se mira el cuerpo: cualquier OTRO 422 de esta ruta sigue contando.
+    if (estado === 422 && ruta === '/api/restaurante/solicitar-cuenta') {
+      cuerpos.push(
+        respuesta
+          .json()
+          .then((cuerpo: unknown) => {
+            const sobre = cuerpo as { error?: { datos?: { regla?: unknown } } } | null;
+            if (sobre?.error?.datos?.regla === 'CUENTA_CON_PENDIENTES') return;
+            reventadas.push(`422 ${ruta}${loQuePedia(respuesta)}${enLaPantalla(page)}`);
+          })
+          .catch(() => {
+            reventadas.push(`422 ${ruta}${loQuePedia(respuesta)}${enLaPantalla(page)}`);
+          }),
+      );
+      return;
+    }
     if (estado >= 500 || (esApi && estado >= 400)) {
       reventadas.push(`${String(estado)} ${ruta}${loQuePedia(respuesta)}${enLaPantalla(page)}`);
       return;

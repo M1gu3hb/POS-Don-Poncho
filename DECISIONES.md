@@ -4207,6 +4207,77 @@ Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sust
 - **Quién aparece**, aquí y en el Tablero: sólo quien vende, cobra o atiende cuentas (mesero, cajero, gerente, administrador o
   dueño). Nunca cocina, bebidas ni almacén. La atribución de cada propina (quien atendió la cuenta) no cambió.
 
+## DP-D219 · DP-25 · Varias entregas de propina en el mismo turno: la entrega tiene su propia columna · 21-11-2026
+
+- **Contexto.** DP-D218 guardó la caja de la que salía cada entrega en `liquidaciones_propina.sesion_caja_id`. Esa columna es la
+  del REPARTO del turno (087, F-248) y su índice `liquidaciones_un_reparto_por_turno` la hace única por turno: la primera entrega
+  del turno pasaba y la segunda salía «Algo falló de nuestro lado» (la verificación de DP-24 lo reprodujo; nada quedaba a medias).
+- **Decisión.** La entrega se guarda en su columna nueva, `entregada_en_sesion_caja_id` (migración 197, aditiva, con su llave
+  foránea y un índice). Caben todas las entregas que haga falta en un turno, una por una. `sesion_caja_id` y su índice único no
+  se tocan: un turno se sigue repartiendo UNA vez.
+- **Lo que no se paga dos veces** no cambió y ahora tiene prueba de integración: el reclamo de las órdenes es un solo `UPDATE` con
+  `propina_liquidacion_id is null` en el `WHERE` (dos a la vez: sólo una gana), la llave de idempotencia devuelve la misma
+  respuesta al mismo toque, y el diálogo ya no manda un segundo toque mientras va el primero.
+- **Alternativas descartadas.** Volver el índice de la 087 parcial (`where reparto_base is not null`): no es aditivo y aflojaba la
+  protección del reparto. Dejar de recordar la caja de la entrega: Registros ya no podría decir de dónde salió el dinero.
+- **Consecuencias.** Producción tenía una sola liquidación (del 19-11, sin caja), así que la migración no rellena nada.
+
+## DP-D220 · DP-25 · Liquidar desde el Tablero pregunta de qué caja sale el dinero · 21-11-2026
+
+- **Contexto.** La liquidación del Tablero (y de Registros) no movía ningún cajón: si el dinero salía de una caja abierta, su
+  corte salía con sobrante.
+- **Decisión.** Si hay cajas abiertas en la sucursal, el diálogo pregunta «¿De dónde sale el dinero?»: el cajón de cada caja
+  abierta (por su nombre, «Caja 1 · Aparato 33») o «Fuera de la caja». Nada viene elegido: sin elegir no se liquida. Con una caja,
+  el servidor registra la salida `propina_entregada` en ESA caja (el mismo camino del corte, `sesionCajaId`) y su esperado baja.
+  Sin cajas abiertas, el diálogo dice que queda pagada fuera de la caja. Registros dice de cada liquidación «Salió del cajón» o
+  «Fuera de la caja».
+- **Permisos.** Elegir otra caja es de la gerencia; la cajera entrega sólo de su propio cajón (desde su corte y con PIN). Una caja
+  cerrada no se elige, y la caja se toma bloqueada (`FOR NO KEY UPDATE`): si otro la cierra a la vez, la entrega la ve cerrada y no
+  se hace.
+- **Alternativa descartada.** Sacarlo siempre de la caja del aparato: el Tablero suele abrirse en un teléfono o en la oficina, sin
+  caja.
+
+## DP-D221 · DP-25 · El PIN de quitar y de cancelar es de un solo uso · 21-11-2026
+
+- **Contexto.** La firma del PIN de un gerente para quitar o cancelar quedaba atada a la cuenta y a «cancelación», pero no se
+  gastaba como la de los descuentos y la del cajón (lo señaló la verificación de DP-24; venía de antes).
+- **Decisión.** Las dos pasan por `venta/autorizacion-de-un-uso.ts`, como los descuentos y el cajón: cada firma vale para UNA
+  acción, de UNA cuenta, por pocos minutos. Se gasta dentro de la transacción (si la acción se revierte, la firma sigue servible) y
+  dos usos a la vez se forman en fila: el segundo recibe «Esa autorización ya se usó…» con `pidePin`, y el diálogo vuelve a pedir el
+  PIN. La gerencia y el dueño siguen sin PIN.
+
+## DP-D222 · DP-25 · Cada pago por separado en el detalle de la venta, Registros y el corte · 21-11-2026
+
+- **Contexto.** Lo que DP-D215 no cumplió del encargo (1.4): una venta cobrada con varias tarjetas y efectivo se leía «Mixto» con
+  un total por método.
+- **Decisión.** Cada pago se lista por separado, en el orden del cobro: «Tarjeta 1», «Tarjeta 2», «Efectivo» (con lo recibido y el
+  cambio) y la propina de cada uno; un solo método no lleva número; un pago devuelto lo dice. Sale en el detalle de la venta (Ventas
+  y «Ver ticket» de Registros, sin imprimirse en el ticket), en el visor del corte de Registros y en el PDF del corte («Pagos, uno
+  por uno», debajo de los totales por método, que se quedan). Los datos son los de `pagos` (la entidad de lectura `PagoDeVenta` y la
+  hoja del corte del servidor); nada se recalcula. El ticket del cliente sigue con una sola línea «Tarjeta».
+
+## DP-D224 · DP-25 · Pedir la cuenta con platillos sin entregar: se avisa en el servidor y se pide con confirmación · 21-11-2026
+
+- **Contexto.** El mesero podía pedir la cuenta con la mesa todavía esperando platillos, sin enterarse: la cuenta salía con lo
+  que faltaba por llegar y la Caja la cobraba. En la capacitación se pidió que se pueda pedir (a veces la mesa se va), pero
+  sabiéndolo.
+- **Decisión.** `restaurante.solicitar_cuenta` recibe `aunConPendientes` (booleano). Sin él, si la cuenta tiene platillos vivos
+  que no están entregados, rechaza con la regla `CUENTA_CON_PENDIENTES` y NO escribe nada. La lista viaja en `datos.pendientes`
+  (texto JSON, porque los datos de un error sólo llevan escalares) y va por estación, en dos bloques: «sin preparar» (nuevo y en
+  preparación) y «listos sin entregar». Entregado y cancelado no cuentan; con todo entregado se pide normal. La estación es el
+  nombre que la comanda guardó (como esté configurada).
+- **Dónde vive.** En el servidor, para que valga igual en la tableta del mesero, en el mapa del administrador y en cualquier
+  pantalla futura. Las dos pantallas que piden la cuenta (`Mesero.jsx` y `PedirLaCuentaDialog`) abren el mismo aviso
+  (`AvisoDePendientesDeLaCuenta`): «Regresar» no cambia nada y «Pedir la cuenta de todos modos» reintenta con la confirmación
+  (con otra clave de idempotencia, porque el cuerpo cambia).
+- **Lo que NO cambia.** `portal.pedir_cuenta` (el comensal por el QR) no se bloquea: le llega al mesero, que ve el aviso al pedirla.
+  `restaurante.imprimir_precuenta` no cambia el estado de la cuenta, así que no lleva la regla. La Caja no pide cuentas: cobra
+  las ya pedidas. Los roles de `solicitar_cuenta` son los mismos.
+- **Alternativas descartadas.** La confirmación por omisión (anula la regla); bloquear la cuenta mientras haya pendientes (la
+  mesa que se va no podría pagar); avisar sólo en la pantalla (cada pantalla nueva se olvidaría).
+- **Consecuencias.** Toda prueba que pida la cuenta sin haber entregado debe mandar `aunConPendientes: true` (o entregar
+  antes): se adaptaron las de integración y las e2e sin quitarles afirmaciones. No hay migración.
+
 ## DP-D226 · DP-25 · Unir mesas poco a poco, sin forma de equivocarse: unir con una mesa que ya está en un grupo es agregar · 21-11-2026
 
 **Contexto.** Durante la capacitación los meseros unieron mesas cuatro veces con «Unir mesas» y nadie usó «Agregar mesas» (DP-D213). Los

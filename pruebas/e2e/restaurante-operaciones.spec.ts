@@ -888,6 +888,15 @@ async function pedirLaCuentaDeLaMesa(sala: Page, propina: RegExp): Promise<void>
     .getByRole('button', { name: /^Pedir/ })
     .click();
   await sala.getByRole('group', { name: 'Propina' }).getByRole('button', { name: propina }).click();
+  // DP-25 · Si a la mesa le faltan platillos por entregar, el aviso se acepta: aquí se prueba otra cosa.
+  const avisoDePendientes = sala.getByRole('dialog', {
+    name: 'A esta mesa todavía le faltan platillos',
+  });
+  const hojaDeLaCuenta = sala.getByRole('article', { name: /^Precuenta de la mesa/ });
+  await expect(avisoDePendientes.or(hojaDeLaCuenta)).toBeVisible();
+  if (await avisoDePendientes.isVisible()) {
+    await avisoDePendientes.getByRole('button', { name: 'Pedir la cuenta de todos modos' }).click();
+  }
   await sala.waitForURL(/\/restaurante\/precuenta\?cuenta=/);
   await expect(sala.getByRole('article', { name: /^Precuenta de la mesa/ })).toBeVisible();
 }

@@ -139,6 +139,11 @@ const NO_PINTA: readonly { archivo: string; contiene: string; razon: string }[] 
     razon: 'folio de la fila de la hoja: ya vestido por el servidor',
   },
   {
+    archivo: 'src/corte/pagos-uno-por-uno.ts',
+    contiene: 'venta.folio',
+    razon: 'DP-25 · folio de la venta de la hoja del corte: ya vestido por el servidor',
+  },
+  {
     archivo: 'src/corte/cancelaciones.ts',
     contiene: 'c.folio',
     razon: 'folio de la fila de la hoja: ya vestido por el servidor',

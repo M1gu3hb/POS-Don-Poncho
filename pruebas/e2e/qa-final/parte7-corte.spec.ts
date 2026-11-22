@@ -87,6 +87,7 @@ test.describe('parte 7 · propinas y cortes', () => {
       const a = await mesaConPedido(lupita, duena, 1, [{ nombre: CARTA.arrachera.nombre }]);
       await mandar(lupita, '/api/restaurante/solicitar-cuenta', {
         ordenId: a.ordenId,
+        aunConPendientes: true,
         propinaTipo: 'porcentaje',
         propinaPuntosBase: 1000,
       });
@@ -95,6 +96,7 @@ test.describe('parte 7 · propinas y cortes', () => {
       ]);
       await mandar(lupita, '/api/restaurante/solicitar-cuenta', {
         ordenId: b.ordenId,
+        aunConPendientes: true,
         propinaTipo: 'porcentaje',
         propinaPuntosBase: 1500,
       });
@@ -204,6 +206,7 @@ test.describe('parte 7 · propinas y cortes', () => {
       const a = await mesaConPedido(lupita, duena, 1, [{ nombre: CARTA.arrachera.nombre }]);
       await mandar(lupita, '/api/restaurante/solicitar-cuenta', {
         ordenId: a.ordenId,
+        aunConPendientes: true,
         propinaTipo: 'sin_propina',
       });
       const cobroA = await cobrarLaMesa(rosa, 1, 'Efectivo');
@@ -245,6 +248,7 @@ test.describe('parte 7 · propinas y cortes', () => {
       const b = await mesaConPedido(lupita, duena, 2, [{ nombre: CARTA.guacamole.nombre }]);
       await mandar(lupita, '/api/restaurante/solicitar-cuenta', {
         ordenId: b.ordenId,
+        aunConPendientes: true,
         propinaTipo: 'sin_propina',
       });
       const cobroB = await cobrarLaMesa(rosa, 2, 'Tarjeta');
