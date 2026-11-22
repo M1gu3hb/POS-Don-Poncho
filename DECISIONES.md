@@ -4206,3 +4206,33 @@ Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sust
 - Al terminar el corte (con su PDF) se ofrece «Liquidar propinas» a la gerencia: es la del Tablero (la caja ya cerró).
 - **Quién aparece**, aquí y en el Tablero: sólo quien vende, cobra o atiende cuentas (mesero, cajero, gerente, administrador o
   dueño). Nunca cocina, bebidas ni almacén. La atribución de cada propina (quien atendió la cuenta) no cambió.
+
+## DP-D225 · DP-25 · Lo que el mesero ve dentro de la mesa: la pantalla se explica sola · 21-11-2026
+
+- **Contexto.** Tras la capacitación, Miguel tuvo que explicar la pantalla de la mesa de viva voz: nadie sabía en qué iba cada
+  platillo, el «Michelado» (que sí sube el precio) no se veía en el pedido, no había forma de saber qué significaba cada color y la
+  cuenta que otra persona cancelaba o cobraba seguía abierta en el aparato del mesero hasta que mandaba un platillo y el servidor
+  contestaba «Esa cuenta ya se cerró».
+- **Decisión.**
+  - **Estado de cada platillo** (Nuevo, En preparación, Listo, Entregado) en la lista de lo enviado, con glifo y palabra (el color
+    nunca va solo). Sale del item de la comanda que la cocina mueve por platillo, emparejado con la línea de la cuenta por
+    `detalle_venta_id`; si una línea tiene varios items manda el MENOS avanzado. Se relee con la misma consulta de la tarjeta «Listo
+    para recoger» (una sola, cada 1.5 s). Un platillo sin comanda leída todavía es «Nuevo».
+  - **Opciones y nota** de cada platillo con el mismo texto que cocina, Caja y ticket (`~/venta/opciones-del-renglon`): en lo
+    enviado, y en el carrito la ficha ya no esconde la opción elegida («Extras: Michelado»), sólo las exclusiones y la nota.
+  - **Leyenda con «?» en la misma pantalla.** Una fila con los cuatro estados y un «?» de 44 px con dedo que abre, EN EL MISMO
+    lugar (no una ventana sobre la ventana de la mesa), el significado de cada estado y de cada color de la mesa, y las
+    instrucciones: cuándo marcar entregado y qué hacer con los pendientes al pedir la cuenta («Regresar» / «Pedir la cuenta de
+    todos modos»).
+  - **Avance por estación más visible.** La nubecita del mapa y la tarjeta de la mesa dicen el conteo con el nombre configurado
+    («Bebidas 2 de 3», antes «2/3») y, cuando la estación terminó, «Cocina ✓» en verde sólido y más grande (par `exito` /
+    `exito-texto`, contraste medido en la prueba). Letra de 16 px o más en negritas.
+  - **La cuenta que otro cerró.** Con la mesa abierta, el aparato lee el ESTADO DE LA CUENTA cada 4 s (no el de la mesa, que cambia
+    al abrirla o pasarla y daba falsas alarmas). Si pasa a cancelada, cobrada (o reembolsada) o dividida, sale el aviso («La cuenta de
+    la mesa 5 se canceló / ya se cobró / se dividió en la Caja»), la pantalla regresa al mapa y el aviso se queda ahí hasta «Entendido».
+    Una cuenta parcialmente pagada sigue abierta en la Caja y no avisa.
+- **Alternativas descartadas.** Dibujar el estado sólo con color (no cumple AA ni sirve a quien no distingue tonos); abrir la
+  leyenda en otra ventana (otro portal sobre el de la mesa: los conflictos de `removeChild` ya conocidos); detectar el cierre por el
+  `venta_activa_id` de la mesa (falsas alarmas mientras la lectura del mapa va atrasada).
+- **Consecuencias.** No toca dinero, PIN ni permisos. No hay migración. El aviso de «listo» que sale en pantalla (platillos de la
+  estación) no trae todavía las opciones de cada platillo: pide un cambio en `restaurante.avisos_de_listo` y queda como siguiente paso.
