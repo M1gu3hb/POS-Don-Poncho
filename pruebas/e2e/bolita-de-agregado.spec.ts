@@ -50,15 +50,13 @@ async function vigilar(page: Page, sinWaapi = false): Promise<void> {
         }
       }
     }).observe(document.body, { childList: true });
-    const original = Function.prototype.call.bind(Element.prototype.animate) as (
-      el: Element,
-      ...args: Parameters<Element['animate']>
-    ) => Animation;
+    const original: (this: Element, ...args: Parameters<Element['animate']>) => Animation =
+      Reflect.get(Element.prototype, 'animate');
     Element.prototype.animate = function (this: Element, ...args: Parameters<Element['animate']>) {
       if (!this.hasAttribute('data-bolita') && this.closest('[data-destino-bolita]') !== null) {
         window.__rebotes += 1;
       }
-      return original(this, ...args);
+      return original.call(this, ...args);
     };
     if (sin) (Element.prototype as { animate?: unknown }).animate = undefined;
   }, sinWaapi);
