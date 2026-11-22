@@ -179,6 +179,7 @@ export async function ponerLasMesas(
       // → cuenta_solicitada
       const cuenta = await mandar(duena, '/api/restaurante/solicitar-cuenta', {
         ordenId,
+        aunConPendientes: true,
         propinaTipo: 'sin_propina',
       });
       if (paso === PASO.cuenta_solicitada) continue;

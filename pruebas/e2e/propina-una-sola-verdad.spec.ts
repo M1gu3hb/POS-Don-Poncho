@@ -70,7 +70,7 @@ const enPantalla = (centavos: number): string => `$${(centavos / 100).toFixed(2)
 async function pedirLaCuenta(mesera: Page, ordenId: string): Promise<void> {
   const respuesta = await mesera.request.post('/api/restaurante/solicitar-cuenta', {
     headers: cabecerasDeEscrituraDePrueba(),
-    data: { ordenId, propinaTipo: 'pendiente', propinaPuntosBase: 0 },
+    data: { aunConPendientes: true, ordenId, propinaTipo: 'pendiente', propinaPuntosBase: 0 },
   });
   expect(respuesta.status(), `solicitar-cuenta: ${await respuesta.text()}`).toBe(200);
 }

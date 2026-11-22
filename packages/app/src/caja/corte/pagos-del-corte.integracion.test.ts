@@ -103,7 +103,7 @@ describe('el corte trae cada pago, por separado', () => {
       );
       exigirOk(
         await comando(solicitarCuenta, {
-          entrada: { ordenId },
+          entrada: { ordenId, aunConPendientes: true },
           ambito: delMesero,
           idempotencyKey: clave(),
         }),

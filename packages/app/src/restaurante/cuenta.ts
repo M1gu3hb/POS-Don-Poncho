@@ -9,6 +9,11 @@ import type { TotalesOrden } from '@morphiqpos/domain/venta';
 import { definirComando } from '../definicion.ts';
 import { laEscribeElMesero, quienPuedeElegirEn } from '../propinas/una-sola-verdad.ts';
 import { cotizar, type LineaCotizada } from '../venta/cotizar.ts';
+import {
+  hayPendientes,
+  pendientesDeLaCuenta,
+  rechazoPorPendientes,
+} from './cuenta-con-pendientes.ts';
 import { mesaOperable, ordenDeMesa } from './datos.ts';
 import { entradaSolicitarCuenta } from './esquemas.ts';
 import { sellarTransicionDeMesa } from './sala-escrituras.ts';
@@ -87,6 +92,15 @@ export const solicitarCuenta = definirComando<
         'ORDEN_VACIA',
         'Esa mesa todavía no ha consumido nada; no hay cuenta que pedir.',
       );
+    }
+
+    // DP-25 · Con platillos sin entregar se avisa antes de pedirla. La confirmación es explícita:
+    // sin ella no se pide, y el aviso lleva la lista por estación.
+    if (entrada.aunConPendientes !== true) {
+      const pendientes = await ctx.paso('platillos_pendientes', () =>
+        pendientesDeLaCuenta(ctx.tx, organizacionId, entrada.ordenId),
+      );
+      if (hayPendientes(pendientes)) throw rechazoPorPendientes(pendientes);
     }
 
     // Con nombre de paso: de esta lectura salen el número que se imprime en el

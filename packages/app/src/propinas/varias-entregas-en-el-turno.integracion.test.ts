@@ -129,7 +129,11 @@ async function mesaCobrada(
     'restaurante.enviar_pedido',
   );
   exigirOk(
-    await comando(solicitarCuenta, { ...pide, entrada: { ordenId }, idempotencyKey: clave() }),
+    await comando(solicitarCuenta, {
+      ...pide,
+      entrada: { ordenId, aunConPendientes: true },
+      idempotencyKey: clave(),
+    }),
     'restaurante.solicitar_cuenta',
   );
   exigirOk(

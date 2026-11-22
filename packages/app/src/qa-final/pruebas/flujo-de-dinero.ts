@@ -165,8 +165,9 @@ export async function abrirYPedir(
             ordenId: abierta.ordenId,
             propinaTipo: 'porcentaje',
             propinaPuntosBase: PUNTOS_BASE_DE_PROPINA,
+            aunConPendientes: true,
           }
-        : { ordenId: abierta.ordenId },
+        : { ordenId: abierta.ordenId, aunConPendientes: true },
       ambito: pideElMesero ? mundo.quienes(terminal).mesero : cajera,
       idempotencyKey: clave(),
     }),

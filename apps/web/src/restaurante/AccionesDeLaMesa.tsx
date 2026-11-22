@@ -109,6 +109,7 @@ export function AccionesDeLaMesa(props: AccionesDeLaMesaProps) {
           size="sm"
           variant="outline"
           disabled={!props.hayEnviado}
+          className="any-pointer-coarse:min-h-(--altura-tactil)"
           onClick={() => {
             setPreguntandoLaPropina(true);
           }}

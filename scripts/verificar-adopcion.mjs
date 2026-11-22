@@ -1356,6 +1356,18 @@ export const SIN_ESTADO = [
       'No lee nada antes de pintarse: el total llega por props. Lo único asíncrono es pedir la cuenta, y mientras corre las teselas quedan deshabilitadas.',
   },
   {
+    pantalla: 'restaurante/AvisoDePendientesDeLaCuenta',
+    estado: 'vacio',
+    razon:
+      'Sólo se abre cuando el servidor devolvió al menos un platillo sin entregar (una lista vacía no la abre); cada bloque se omite si no tiene nada.',
+  },
+  {
+    pantalla: 'restaurante/AvisoDePendientesDeLaCuenta',
+    estado: 'cargando',
+    razon:
+      'No lee nada: la lista llega por props con el rechazo del servidor. Lo único asíncrono es pedir la cuenta de todos modos, y mientras corre los dos botones quedan deshabilitados.',
+  },
+  {
     pantalla: 'restaurante/QuePasoConLoQuitado',
     estado: 'vacio',
     razon:
