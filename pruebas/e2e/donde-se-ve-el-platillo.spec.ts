@@ -93,11 +93,11 @@ test.describe('dónde se ve un platillo', () => {
         return { pagina, dialogo: dialogoDeLaMesa(pagina, MESA) };
       };
       const enElMesero = async (dialogo: Locator, hay: boolean) => {
-        await dialogo.getByLabel('Buscar producto').fill('Limonada');
+        await dialogo.getByPlaceholder('Buscar producto...').fill('Limonada');
         await expect(dialogo.getByRole('button', { name: BOTON_DE_LA_LIMONADA })).toHaveCount(
           hay ? 1 : 0,
         );
-        await dialogo.getByLabel('Buscar producto').fill('');
+        await dialogo.getByPlaceholder('Buscar producto...').fill('');
       };
       const enLaCaja = async (hay: boolean) => {
         const rosa = await equipo.pagina(info, 'cajero');
@@ -107,7 +107,7 @@ test.describe('dónde se ve un platillo', () => {
         await pulsar(rosa.getByRole('button', { name: /^Para llevar/ }));
         const dialogo = rosa.getByRole('dialog', { name: 'Pedido para llevar' });
         await yaAbierto(dialogo);
-        await dialogo.getByLabel('Buscar producto').fill('Limonada');
+        await dialogo.getByPlaceholder('Buscar producto...').fill('Limonada');
         await expect(dialogo.getByRole('button', { name: BOTON_DE_LA_LIMONADA })).toHaveCount(
           hay ? 1 : 0,
         );
