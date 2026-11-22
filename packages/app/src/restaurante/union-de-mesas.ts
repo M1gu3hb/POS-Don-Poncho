@@ -2,21 +2,27 @@ import 'server-only';
 
 import { ErrorDominio, PAQUETES_RESTAURANTE } from '@morphiqpos/contracts';
 import type { Transaccion } from '@morphiqpos/data';
-import { medidasDeMesa, revisarUnion, type MesaEnPlano } from '@morphiqpos/domain/sala';
 import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
-import { cotizar } from '../venta/cotizar.ts';
+import { aDondeVaLaUnion, type MesaDeLaUnion } from './unir-con-un-grupo-vivo.ts';
+import { agregarALaUnion } from './agregar-a-la-union.ts';
+import { cambiarDeMesa, mesaEnSala, separarMesas, unionAbiertaDeMesa } from './sala-escrituras.ts';
 import {
-  cambiarDeMesa,
-  mesaEnSala,
-  separarMesas,
-  unionAbiertaDeMesa,
-  type MesaEnSala,
-} from './sala-escrituras.ts';
-import { CUENTAS_VIVAS, unirMesas } from './union-escrituras.ts';
+  COORDENADA,
+  MAXIMO_TECNICO,
+  ROLES,
+  cargarMiembros,
+  exigirCuentaViva,
+  guardarTotales,
+  revisarElGrupo,
+  type ResultadoUnion,
+} from './union-comun.ts';
+import { cuentasQuePasaron, marcarDeDondeVienen, unirMesas } from './union-escrituras.ts';
 import { loQueSeQuedaEnLaPrincipal, type LoQueSeQueda } from './al-separar.ts';
 import { bloquearElGrupo } from './union-del-salon.ts';
+
+export type { ResultadoUnion } from './union-comun.ts';
 
 /**
  * `restaurante.unir_mesas` y `restaurante.separar_mesas` — F-302, y DP-9.6 (fase B).
@@ -42,10 +48,6 @@ import { bloquearElGrupo } from './union-del-salon.ts';
  * No vuelve a repartir el consumo. Repartir por consumo es F-321 y es caja.
  */
 
-/** Un tope técnico, no de negocio: el de negocio es el perímetro del grupo. */
-export const MAXIMO_TECNICO = 40;
-export const COORDENADA = z.number().int().min(0).max(10_000);
-
 export const entradaUnirMesas = z.object({
   mesaPrincipalId: z.uuid(),
   mesaIds: z.array(z.uuid()).min(1).max(MAXIMO_TECNICO),
@@ -63,27 +65,10 @@ export const entradaSepararMesas = z.object({
   unionId: z.uuid(),
 });
 
-export interface ResultadoUnion {
-  readonly unionId: string;
-  /** `null`: la unión nació sin cuenta; la toma la primera que se abra en la principal. */
-  readonly ordenPrincipalId: string | null;
-  readonly mesasUnidas: number;
-  readonly cuentasAbsorbidas: number;
-  readonly lineasMovidas: number;
-  readonly totalCentavos: string;
-}
-
 export interface ResultadoSeparacion extends LoQueSeQueda {
   readonly unionId: string;
   readonly ordenPrincipalId: string | null;
   readonly mesasLiberadas: number;
-}
-
-export const ROLES = ['mesero', 'cajero', 'gerente', 'administrador', 'dueno'] as const;
-
-interface Miembro {
-  readonly mesa: MesaEnSala;
-  readonly ordenId: string | null;
 }
 
 export const unirMesasComando = definirComando<
@@ -115,6 +100,26 @@ export const unirMesasComando = definirComando<
     if (new Set(entrada.mesaIds).size !== entrada.mesaIds.length) {
       throw new ErrorDominio('MESA_YA_ABIERTA', 'Esa mesa viene repetida en el grupo.');
     }
+    // DP-25 · P6: si alguna de las mesas YA está en un grupo, esto es agregar al grupo.
+    const destino = await ctx.paso('mirar_si_ya_hay_grupo', async () =>
+      aDondeVaLaUnion(
+        entrada.mesaPrincipalId,
+        entrada.mesaIds,
+        await mesasDeLaUnion(ctx.tx, organizacionId, [entrada.mesaPrincipalId, ...entrada.mesaIds]),
+      ),
+    );
+    if (destino.tipo === 'nada') throw new ErrorDominio('MESA_YA_ABIERTA', destino.mensaje);
+    if (destino.tipo === 'agregar') {
+      const posiciones = await ctx.paso('posiciones_de_lo_que_entra', () =>
+        posicionesDeLoQueEntra(ctx.tx, organizacionId, destino.principalId, entrada.posiciones),
+      );
+      return agregarALaUnion(ctx, {
+        unionId: destino.unionId,
+        mesaIds: [...destino.mesaIds],
+        ...(posiciones === undefined ? {} : { posiciones }),
+      });
+    }
+
     // Sólo se acomodan las mesas que se están uniendo: una posición ajena movería otra mesa
     // —de otra zona, o de otra sucursal— sin guardar dónde estaba.
     const delGrupo = new Set([entrada.mesaPrincipalId, ...entrada.mesaIds]);
@@ -153,6 +158,7 @@ export const unirMesasComando = definirComando<
     let miembros = await ctx.paso('cargar_miembros', () =>
       cargarMiembros(ctx.tx, organizacionId, principal, entrada.mesaIds),
     );
+    const avisos = cuentasQuePasaron(miembros, principal);
     // DP-12.3: una mesa en limpieza no se une; se dice con su nombre y qué hacer.
     const enLimpieza = [principal, ...miembros.map((m) => m.mesa)].find(
       (m) => m.estado === 'limpieza',
@@ -186,6 +192,9 @@ export const unirMesasComando = definirComando<
           empleadoId: empleoId,
           ahora: ctx.ahora,
         }),
+      );
+      await ctx.paso('marcar_de_donde_vienen', () =>
+        marcarDeDondeVienen(ctx.tx, organizacionId, ordenMudada, conCuenta.mesa.numero),
       );
       principal = await mesaEnSala(ctx.tx, organizacionId, principal.id);
       const vacia = await mesaEnSala(ctx.tx, organizacionId, conCuenta.mesa.id);
@@ -244,9 +253,65 @@ export const unirMesasComando = definirComando<
       cuentasAbsorbidas: escrito.cuentasAbsorbidas,
       lineasMovidas: escrito.lineasMovidas,
       totalCentavos: totalCentavos.toString(),
+      cuentasQuePasaron: avisos,
     };
   },
 });
+
+/** Lo que `aDondeVaLaUnion` necesita saber de las mesas elegidas y de las principales de sus grupos. */
+async function mesasDeLaUnion(
+  tx: Transaccion,
+  organizacionId: string,
+  ids: readonly string[],
+): Promise<readonly MesaDeLaUnion[]> {
+  const filas = await tx
+    .selectFrom('mesas')
+    .select(['id', 'unida_a_mesa_id'])
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', 'in', [...ids])
+    .execute();
+  const principales = [...new Set(filas.map((f) => f.unida_a_mesa_id ?? f.id))];
+  const uniones = await tx
+    .selectFrom('uniones_mesa')
+    .select(['id', 'mesa_principal_id'])
+    .where('organizacion_id', '=', organizacionId)
+    .where('mesa_principal_id', 'in', principales)
+    .where('cerrada_en', 'is', null)
+    .execute();
+  const encabeza = new Map(uniones.map((u) => [u.mesa_principal_id, u.id]));
+  const elegidas = filas.map((f) => ({
+    id: f.id,
+    unidaAMesaId: f.unida_a_mesa_id,
+    encabezaUnionId: encabeza.get(f.id) ?? null,
+  }));
+  const sueltas = principales
+    .filter((p) => !elegidas.some((m) => m.id === p))
+    .map((p) => ({ id: p, unidaAMesaId: null, encabezaUnionId: encabeza.get(p) ?? null }));
+  return [...elegidas, ...sueltas];
+}
+
+/**
+ * Al agregar al grupo que ya existe sólo se mueven las mesas que entran: las posiciones que el
+ * plano mande de la principal del grupo y de sus mesas se descartan (la pantalla las dibuja como
+ * una caja y no son las de cada mesa; moverlas rompería el lugar al que separar las regresa).
+ */
+async function posicionesDeLoQueEntra(
+  tx: Transaccion,
+  organizacionId: string,
+  principalDelGrupoId: string,
+  posiciones: z.infer<typeof entradaUnirMesas>['posiciones'],
+): Promise<z.infer<typeof entradaUnirMesas>['posiciones']> {
+  if (posiciones === undefined) return undefined;
+  const miembros = await tx
+    .selectFrom('mesas')
+    .select('id')
+    .where('organizacion_id', '=', organizacionId)
+    .where('unida_a_mesa_id', '=', principalDelGrupoId)
+    .execute();
+  const delGrupo = new Set([principalDelGrupoId, ...miembros.map((m) => m.id)]);
+  const entran = posiciones.filter((p) => !delGrupo.has(p.mesaId));
+  return entran.length === 0 ? undefined : entran;
+}
 
 export const separarMesasComando = definirComando<
   Transaccion,
@@ -308,143 +373,3 @@ export const separarMesasComando = definirComando<
     };
   },
 });
-
-export async function exigirCuentaViva(
-  tx: Transaccion,
-  organizacionId: string,
-  ordenId: string,
-  numero: number,
-): Promise<void> {
-  const orden = await tx
-    .selectFrom('ordenes')
-    .select('estado')
-    .where('organizacion_id', '=', organizacionId)
-    .where('id', '=', ordenId)
-    .executeTakeFirst();
-  if (orden === undefined || !(CUENTAS_VIVAS as readonly string[]).includes(orden.estado)) {
-    throw new ErrorDominio(
-      'ORDEN_NO_EDITABLE',
-      `La mesa ${String(numero)} ya cobró su cuenta: márcala limpia antes de unirla.`,
-      { estado: orden?.estado ?? 'inexistente' },
-    );
-  }
-}
-
-export async function guardarTotales(
-  tx: Transaccion,
-  organizacionId: string,
-  ordenId: string,
-  ahora: Date,
-): Promise<bigint> {
-  const { totales } = await cotizar(tx, organizacionId, ordenId);
-  await tx
-    .updateTable('ordenes')
-    .set({
-      subtotal_centavos: totales.subtotalCentavos,
-      descuento_centavos: totales.descuentoCentavos,
-      impuestos_centavos: totales.impuestosCentavos,
-      total_centavos: totales.totalCentavos,
-      costo_total_centavos: totales.costoTotalCentavos,
-      utilidad_centavos: totales.utilidadCentavos,
-      margen_bp: totales.margenBp,
-      updated_at: ahora,
-    })
-    .where('organizacion_id', '=', organizacionId)
-    .where('id', '=', ordenId)
-    .execute();
-  return totales.totalCentavos;
-}
-
-/**
- * DP-9.6 · Las mesas del grupo en el plano: misma zona, pegadas y dentro del perímetro, con las
- * posiciones en que quedaron (o donde ya están). Devuelve dónde estaba cada una ANTES, para que
- * separar las regrese.
- */
-export async function revisarElGrupo(
-  tx: Transaccion,
-  organizacionId: string,
-  ids: readonly string[],
-  posiciones:
-    readonly { readonly mesaId: string; readonly x: number; readonly y: number }[] | undefined,
-): Promise<ReadonlyMap<string, { readonly x: number; readonly y: number }>> {
-  const filas = await tx
-    .selectFrom('mesas')
-    .select(['id', 'posicion_x', 'posicion_y', 'forma', 'tamano', 'zona_id'])
-    .where('organizacion_id', '=', organizacionId)
-    .where('id', 'in', [...ids])
-    .execute();
-  if (new Set(filas.map((f) => f.zona_id)).size > 1) {
-    throw new ErrorDominio('UNION_DE_MESAS_INVALIDA', 'Sólo se unen mesas de la misma zona.');
-  }
-  const nuevas = new Map((posiciones ?? []).map((p) => [p.mesaId, p]));
-  const enPlano: MesaEnPlano[] = filas.map((f) => ({
-    id: f.id,
-    x: nuevas.get(f.id)?.x ?? f.posicion_x,
-    y: nuevas.get(f.id)?.y ?? f.posicion_y,
-    ...medidasDeMesa(f.forma, f.tamano),
-  }));
-  const problema = revisarUnion(enPlano);
-  if (problema !== null) throw new ErrorDominio('UNION_DE_MESAS_INVALIDA', problema);
-  return new Map(filas.map((f) => [f.id, { x: f.posicion_x, y: f.posicion_y }]));
-}
-
-/**
- * Carga cada mesa que se va a unir y comprueba lo que la base no puede.
- *
- * Una mesa de otra sucursal, una que ya está en otro grupo o una cuyo consumo
- * ya se cobró son tres formas distintas de acabar con un grupo imposible; las
- * tres se cierran aquí, antes de escribir nada.
- */
-export async function cargarMiembros(
-  tx: Transaccion,
-  organizacionId: string,
-  principal: MesaEnSala,
-  mesaIds: readonly string[],
-): Promise<readonly Miembro[]> {
-  const salida: Miembro[] = [];
-
-  for (const mesaId of mesaIds) {
-    const mesa = await mesaEnSala(tx, organizacionId, mesaId);
-
-    if (mesa.sucursalId !== principal.sucursalId) {
-      throw new ErrorDominio(
-        'MESA_NO_ENCONTRADA',
-        `La mesa ${String(mesa.numero)} es de otra sucursal: no se puede juntar con ésta.`,
-      );
-    }
-
-    const grupo = await unionAbiertaDeMesa(tx, organizacionId, mesaId);
-    if (grupo !== null) {
-      throw new ErrorDominio(
-        'MESA_YA_ABIERTA',
-        `La mesa ${String(mesa.numero)} ya pertenece a otro grupo.`,
-      );
-    }
-
-    if (mesa.ordenActivaId === null) {
-      // Una mesa libre se une sin traer consumo: es el caso de «pásate a esta
-      // otra que está vacía», y es legítimo.
-      salida.push({ mesa, ordenId: null });
-      continue;
-    }
-
-    const orden = await tx
-      .selectFrom('ordenes')
-      .select(['id', 'estado'])
-      .where('organizacion_id', '=', organizacionId)
-      .where('id', '=', mesa.ordenActivaId)
-      .executeTakeFirst();
-
-    if (orden === undefined || !(CUENTAS_VIVAS as readonly string[]).includes(orden.estado)) {
-      throw new ErrorDominio(
-        'ORDEN_NO_EDITABLE',
-        `La cuenta de la mesa ${String(mesa.numero)} ya se cobró o se cerró: no se puede absorber.`,
-        { estado: orden?.estado ?? 'inexistente' },
-      );
-    }
-
-    salida.push({ mesa, ordenId: orden.id });
-  }
-
-  return salida;
-}

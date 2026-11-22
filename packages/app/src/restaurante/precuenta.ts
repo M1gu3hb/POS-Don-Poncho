@@ -61,7 +61,8 @@ export interface PrecuentaImpresa {
   /** El código que el comensal lleva a la caja; el folio si aún no se sella. */
   readonly codigo: string;
   readonly mesaNumero: number | null;
-  readonly lineas: readonly LineaCotizada[];
+  /** DP-D226 · `mesaOrigen`: la mesa de la que vino el renglón al unir mesas; `null` si es de la propia. */
+  readonly lineas: readonly (LineaCotizada & { readonly mesaOrigen: number | null })[];
   readonly subtotalCentavos: string;
   readonly descuentoCentavos: string;
   readonly impuestosCentavos: string;
@@ -128,6 +129,17 @@ export const imprimirPrecuenta = definirComando<
       );
     }
 
+    // DP-D226 · De qué mesa vino cada renglón (migración 201): «(Mesa 7)» en la hoja del grupo.
+    const origenes = await ctx.paso('mesa_de_origen_de_los_renglones', () =>
+      ctx.tx
+        .selectFrom('orden_lineas')
+        .select(['id', 'mesa_origen_numero'])
+        .where('organizacion_id', '=', organizacionId)
+        .where('orden_id', '=', entrada.ordenId)
+        .execute(),
+    );
+    const origenDe = new Map(origenes.map((o) => [o.id, o.mesa_origen_numero]));
+
     // El contador sube EN LA BASE y devuelve el valor nuevo: dos meseros que
     // aprietan imprimir a la vez obtienen 1 y 2, no 1 y 1. Leer, sumar y escribir
     // desde el servidor daría dos hojas que las dos dicen ser la primera.
@@ -157,7 +169,7 @@ export const imprimirPrecuenta = definirComando<
       // no la puede encontrar el cajero entre veinte pendientes.
       codigo: orden.codigoCaja ?? (orden.folio === null ? '' : String(orden.folio)),
       mesaNumero: orden.mesaNumero,
-      lineas: cotizacion.lineas,
+      lineas: cotizacion.lineas.map((l) => ({ ...l, mesaOrigen: origenDe.get(l.id) ?? null })),
       subtotalCentavos: totales.subtotalCentavos.toString(),
       descuentoCentavos: totales.descuentoCentavos.toString(),
       impuestosCentavos: totales.impuestosCentavos.toString(),
