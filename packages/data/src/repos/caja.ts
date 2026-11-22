@@ -62,6 +62,37 @@ export async function sesionAbiertaDeTerminal(
 }
 
 /**
+ * DP-25 · Una caja por su sesión, sólo si sigue ABIERTA, bloqueada para que el cierre no la cierre
+ * a medias: de su cajón sale una propina entregada. El cierre la toma `FOR UPDATE`; ésta, `FOR NO
+ * KEY UPDATE`, que choca con el cierre (una salida que entraba mientras otro cerraba esa caja quedaba
+ * fuera del esperado firmado) pero no con los cobros, que sólo la referencian.
+ */
+export async function sesionAbiertaPorId(
+  db: Kysely<Esquema> | Transaccion,
+  organizacionId: string,
+  sesionCajaId: string,
+): Promise<SesionAbierta | null> {
+  const fila = await db
+    .selectFrom('sesiones_caja')
+    .select([
+      'id',
+      'sucursal_id as sucursalId',
+      'terminal_id as terminalId',
+      'serie',
+      'fondo_inicial_centavos as fondoInicialCentavos',
+      'abierta_en as abiertaEn',
+      'lugar',
+    ])
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', sesionCajaId)
+    .where('estado', '=', 'abierta')
+    .forNoKeyUpdate()
+    .executeTakeFirst();
+
+  return fila ?? null;
+}
+
+/**
  * La sesión abierta de la SUCURSAL, con el nombre de su terminal.
  *
  * ── Para qué, si ya hay una por terminal ──────────────────────────────────

@@ -31,6 +31,7 @@ import { cancelaciones } from './cancelaciones.ts';
 import { ventasPorCanal } from './por-canal.ts';
 import { retirosConPin } from './retiros-con-pin.ts';
 import { opcionesVendidas } from './opciones-vendidas.ts';
+import { pagosUnoPorUno } from './pagos-uno-por-uno.ts';
 import { devolucionesDelDia } from './devoluciones.ts';
 import { seccionesDeDescuentos } from './descuentos.ts';
 import type { DescuentosLeidos } from '~/corte-heredado/descuentos-del-corte';
@@ -129,6 +130,8 @@ export function corteDeRestaurante(
     ...seccionesExtraDelDia(hoja.ventasDelDia ?? null),
     resumenFinanciero(hoja, tituloDelResumen(hoja), [], comisionEstimada(hoja)),
     ...metodosConPropina(hoja),
+    // DP-25 · Y debajo de los totales por método, cada pago por separado.
+    ...pagosUnoPorUno(hoja),
     ...seccionesDePropina,
     // DP-16 · Mesas y pedidos para llevar, por separado.
     ...ventasPorCanal(hoja),

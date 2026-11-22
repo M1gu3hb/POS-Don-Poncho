@@ -232,6 +232,14 @@ async function pedirLaCuenta(
     await pregunta.getByRole('button', { name: 'Aplicar' }).click();
   }
   const precuenta = page.getByRole('dialog').filter({ hasText: 'PRE-CUENTA' });
+  // DP-25 · Si a la mesa le faltan platillos por entregar, el aviso se acepta: aquí se prueba otra cosa.
+  const avisoDePendientes = page.getByRole('dialog', {
+    name: 'A esta mesa todavía le faltan platillos',
+  });
+  await expect(avisoDePendientes.or(precuenta)).toBeVisible({ timeout: 30_000 });
+  if (await avisoDePendientes.isVisible()) {
+    await avisoDePendientes.getByRole('button', { name: 'Pedir la cuenta de todos modos' }).click();
+  }
   await yaAbierto(precuenta);
   // El TOTAL de la hoja, no cualquier cifra: sin propina el subtotal dice lo mismo.
   await expect(precuenta).toContainText(

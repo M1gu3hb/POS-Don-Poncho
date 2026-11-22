@@ -43,6 +43,7 @@
     { "entidad": "OcupacionMesa", "tabla": "ocupacion_mesas" },
     { "entidad": "OperacionComision", "tabla": "operaciones_comision" },
     { "entidad": "PagoCredito", "tabla": "pagos_credito" },
+    { "entidad": "PagoDeVenta", "tabla": "pagos" },
     { "entidad": "PedidoAnticipado", "tabla": "pedidos_anticipados" },
     { "entidad": "PedidoPreparacion", "tabla": "comandas" },
     { "entidad": "PedidoPreparacionItem", "tabla": "comanda_items" },
@@ -686,12 +687,14 @@
         "hasta": "prueba de aislamiento",
         "meseroId": "⟨empleos⟩",
         "ordenIds": ["⟨ordenes⟩"],
+        "sesionCajaId": "⟨sesiones_caja⟩",
         "esquemaId": "⟨esquemas_propina⟩",
         "beneficiarios": [{ "empleoId": "⟨empleos⟩", "puesto": "mesero" }]
       },
       "ids": [
         { "camino": "meseroId", "tabla": "empleos" },
         { "camino": "ordenIds[0]", "tabla": "ordenes" },
+        { "camino": "sesionCajaId", "tabla": "sesiones_caja" },
         { "camino": "esquemaId", "tabla": "esquemas_propina" },
         { "camino": "beneficiarios[0].empleoId", "tabla": "empleos" }
       ]

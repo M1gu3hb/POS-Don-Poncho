@@ -135,6 +135,47 @@ describe('las reglas del corte', () => {
     expect(titulos(doc.secciones)).not.toContain('Métodos de pago · ventas, propinas y total');
   });
 
+  it('DP-25 · el documento lista cada pago por separado, debajo de los totales por método', () => {
+    const venta = {
+      folio: 'DP-1005',
+      cobradaEn: '2026-11-21T20:00:00.000Z',
+      mesa: 'Mesa 3',
+      nombrePedido: null,
+      cliente: null,
+      canal: 'mesa',
+      productos: '1 pza × Barbacoa',
+      totalCentavos: '56400',
+      pago: 'efectivo + tarjeta',
+      atendio: 'Lupita',
+      pagos: [
+        {
+          id: 'a',
+          metodo: 'tarjeta',
+          montoCentavos: '20000',
+          propinaCentavos: '0',
+          recibidoCentavos: null,
+          cambioCentavos: '0',
+          estado: 'confirmado',
+          creadoEn: '2026-11-21T20:00:01.000Z',
+        },
+        {
+          id: 'b',
+          metodo: 'efectivo',
+          montoCentavos: '36400',
+          propinaCentavos: '5640',
+          recibidoCentavos: '50000',
+          cambioCentavos: '7960',
+          estado: 'confirmado',
+          creadoEn: '2026-11-21T20:00:02.000Z',
+        },
+      ],
+    };
+    const doc = documentoDelCorte(hoja(RESTAURANTE, { ventas: [venta] }));
+    expect(titulos(doc.secciones)).toContain('Pagos, uno por uno');
+    const sinPagos = documentoDelCorte(hoja(RESTAURANTE, { ventas: [{ ...venta, pagos: null }] }));
+    expect(titulos(sinPagos.secciones)).not.toContain('Pagos, uno por uno');
+  });
+
   it('el dinero dejado en caja es contado − retirado, y en negritas', () => {
     const doc = documentoDelCorte(hoja(RESTAURANTE));
     const dejado = celda(doc.secciones, 'Apertura y fondo', 'Dinero dejado en caja');

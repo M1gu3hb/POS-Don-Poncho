@@ -153,7 +153,7 @@ describe('la cajera, siempre con el PIN de un gerente atado a ESA cuenta', () =>
     const { ordenId } = await cuenta(10, ['1']);
     exigirOk(
       await comando(solicitarCuenta, {
-        entrada: { ordenId },
+        entrada: { ordenId, aunConPendientes: true },
         ambito: mesero(),
         idempotencyKey: clave(),
       }),
@@ -167,7 +167,7 @@ describe('la cajera, siempre con el PIN de un gerente atado a ESA cuenta', () =>
     const { ordenId } = await cuenta(13, ['1']);
     exigirOk(
       await comando(solicitarCuenta, {
-        entrada: { ordenId },
+        entrada: { ordenId, aunConPendientes: true },
         ambito: mesero(),
         idempotencyKey: clave(),
       }),

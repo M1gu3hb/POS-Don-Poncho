@@ -47,9 +47,26 @@ export function vigilarPagina(page: Page): void {
     v.consola.push({ texto: `Excepción sin atrapar: ${error.message}`, donde: '' });
   });
   page.on('response', (r) => {
-    if (r.status() >= 400) {
-      v.respuestas.push({ metodo: r.request().method(), estado: r.status(), url: r.url() });
+    if (r.status() < 400) return;
+    const respuesta: Respuesta = { metodo: r.request().method(), estado: r.status(), url: r.url() };
+    // DP-25 · «A esta mesa le faltan platillos» es un 422 que la pantalla espera y enseña, no un
+    // botón roto. Se mira el cuerpo: cualquier OTRO 422 de esta ruta sigue contando.
+    if (
+      respuesta.estado === 422 &&
+      new URL(respuesta.url).pathname === '/api/restaurante/solicitar-cuenta'
+    ) {
+      void r
+        .json()
+        .then((cuerpo: unknown) => {
+          const sobre = cuerpo as { error?: { datos?: { regla?: unknown } } } | null;
+          if (sobre?.error?.datos?.regla !== 'CUENTA_CON_PENDIENTES') v.respuestas.push(respuesta);
+        })
+        .catch(() => {
+          v.respuestas.push(respuesta);
+        });
+      return;
     }
+    v.respuestas.push(respuesta);
   });
 }
 

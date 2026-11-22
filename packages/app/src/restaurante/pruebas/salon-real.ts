@@ -296,8 +296,8 @@ export async function pedirLaCuenta(
     await comando(solicitarCuenta, {
       entrada:
         propinaPuntosBase === undefined
-          ? { ordenId, propinaTipo: 'sin_propina' }
-          : { ordenId, propinaTipo: 'porcentaje', propinaPuntosBase },
+          ? { ordenId, propinaTipo: 'sin_propina', aunConPendientes: true }
+          : { ordenId, propinaTipo: 'porcentaje', propinaPuntosBase, aunConPendientes: true },
       ambito: ambitoDeCaja(salon),
       idempotencyKey: clave(),
     }),

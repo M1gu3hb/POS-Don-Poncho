@@ -132,7 +132,7 @@ export async function cancelacionesDelDia(lector: Page) {
 export async function pedirLaCuenta(mesero: Page, ordenId: string): Promise<void> {
   const respuesta = await mesero.request.post('/api/restaurante/solicitar-cuenta', {
     headers: cabecerasDeEscrituraDePrueba(),
-    data: { ordenId },
+    data: { aunConPendientes: true, ordenId },
   });
   expect(respuesta.status(), `solicitar-cuenta: ${await respuesta.text()}`).toBe(200);
 }
