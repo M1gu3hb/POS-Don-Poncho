@@ -12,6 +12,7 @@ import { Aviso, Esqueleto, Superficie, Vacio } from '@morphiqpos/ui/sistema';
 import { useEffect, useState, type ReactElement } from 'react';
 
 import { ErrorApi, consultarPuente, invocarComando } from '~/cliente/api';
+import { useVocabulario } from '~/cliente/vocabulario';
 
 import { destinosDelCambio, preguntaDelCambio } from './cambiar-de-mesa-aqui';
 import type { MesaElegible } from './mesas-elegibles';
@@ -75,6 +76,7 @@ function BotonesDeMesas({
   readonly ocupado: boolean;
   readonly alTocar: (mesa: MesaElegible) => void;
 }): ReactElement {
+  const voc = useVocabulario();
   return (
     <ul className="grid grid-cols-3 gap-(--espacio-2) sm:grid-cols-4">
       {mesas.map((mesa) => (
@@ -85,13 +87,13 @@ function BotonesDeMesas({
             interactiva
             relleno={3}
             disabled={ocupado}
-            aria-label={`Mesa ${String(mesa.numero)}${mesa.zona === null || mesa.zona === '' ? '' : `, ${mesa.zona}`}`}
+            aria-label={`${voc.titulo('unidad_servicio')} ${String(mesa.numero)}${mesa.zona === null || mesa.zona === '' ? '' : `, ${mesa.zona}`}`}
             onClick={() => {
               alTocar(mesa);
             }}
             className="flex min-h-20 w-full flex-col items-center justify-center gap-(--espacio-1)"
           >
-            <span className="text-xs text-texto-sutil">Mesa</span>
+            <span className="text-xs text-texto-sutil">{voc.titulo('unidad_servicio')}</span>
             <span className="font-numeros text-2xl font-bold tabular-nums">
               {String(mesa.numero)}
             </span>

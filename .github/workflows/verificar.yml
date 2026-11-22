@@ -782,6 +782,8 @@ jobs:
           pnpm test:e2e pruebas/e2e/cuenta-con-pendientes.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-25 · Parte 3 · Lo que ve el mesero dentro de la mesa: el estado de cada platillo, «Michelado», la leyenda, el avance por estación y la cuenta que otro cerró.
           pnpm test:e2e pruebas/e2e/lo-que-ve-el-mesero.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
+          # DP-25 · P9 · El editor del mapa de mesas: una arrastrada es UNA escritura (al soltar) y un número repetido se dice con palabras.
+          pnpm test:e2e pruebas/e2e/mapa-de-mesas-editor.spec.ts --project=escritorio --workers=1 --retries=0
           # DP-24 · La cocina por platillo, el aviso de «listo» y la mini jornada con bots. Van al final: dejan mesas y personas de prueba que
           # otras suites (cajas-del-negocio) no esperan.
           pnpm test:e2e pruebas/e2e/cocina-por-platillo.spec.ts --project=tablet --workers=1 --retries=0
