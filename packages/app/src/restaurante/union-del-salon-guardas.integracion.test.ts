@@ -72,16 +72,18 @@ describe('DP-9.6 · lo que una unión no deja hacer', () => {
     const a = await sentarYPedir(salon, 0, [{ platillo: 'cerveza', cantidad: '1' }]);
     const b = await sentarYPedir(salon, 1, [{ platillo: 'arrachera', cantidad: '1' }]);
     exigirOk(await unir(salon, 0, [1], JUNTAS), 'unir');
+    // DP-25 · P6: cocina las ve a nombre de la mesa PRINCIPAL, y cuelgan de su cuenta.
     const comandas = await obtenerDb()
       .selectFrom('comandas')
-      .select('orden_id')
-      .where('mesa_id', '=', b.mesaId)
+      .select(['orden_id', 'mesa_id'])
+      .where('mesa_id', 'in', [a.mesaId, b.mesaId])
       .execute();
-    expect(comandas.length, 'La absorbida no mandó nada a cocina.').toBeGreaterThan(0);
+    expect(comandas.length, 'La absorbida no mandó nada a cocina.').toBeGreaterThan(1);
     expect(
       [...new Set(comandas.map((c) => c.orden_id))],
       '«Marcar entregado» en la principal no alcanzaría lo de la absorbida.',
     ).toEqual([a.ordenId]);
+    expect([...new Set(comandas.map((c) => c.mesa_id))]).toEqual([a.mesaId]);
   });
 
   it('sólo se acomodan las mesas del grupo: una posición ajena se rechaza', async () => {

@@ -1080,6 +1080,13 @@ const MAPA_DECLARADO: Readonly<Record<string, MapaEntidad>> = {
       // de la nota.
       opciones_snapshot: { columna: 'opciones', conversion: 'json', escribible: false },
       orden_visual: { columna: 'orden_visual', conversion: 'entero', escribible: false },
+      // DP-D226 · La mesa de la que vino el renglón al unir mesas (migración 201): «(Mesa 7)» en la
+      // cuenta del grupo. Nulo: es de la propia mesa.
+      mesa_origen_numero: {
+        columna: 'mesa_origen_numero',
+        conversion: 'entero',
+        escribible: false,
+      },
 
       // ── El contrato de trazabilidad del restaurante (migración 045) ──────
       estado_preparacion: {
