@@ -4229,6 +4229,13 @@ verificación de la mañana (`mini-jornada-de-cocina`, 3 fallos de 15 con la lap
   preparación» en el servidor tras 30 s de espera. Ahora `comando.ts` repite también la espera de candado agotada (55P03), igual que
   el interbloqueo (40P01): la transacción se revirtió entera y repetirla es seguro. La espera de la CLAVE sigue siendo «comando en
   curso».
+- **Causa 4 (pantalla de cocina, el «Preparar» que se perdía).** Cada toque sacaba su aviso verde («Platillo en preparación») y en
+  el teléfono y la tableta se apilaban hasta cuatro sobre las tarjetas. El toque siguiente caía sobre el aviso y no sobre el botón:
+  el navegador veía el clic, pero ningún pedido salía al servidor (medido con la CPU 4× y el trace: abajo+1, arriba+1, clic+1, sin
+  POST, y el propio Playwright registra que un aviso de `sonner` interceptó el toque). Ahora los avisos informativos de la cocina
+  dejan pasar el toque (`pointer-events: none`, sólo ésos: `AVISO_SIN_TOQUE` en `Cocina.jsx`); el `Toaster` global y cualquier
+  aviso con botón (Deshacer, Reintentar, Ver) siguen recibiendo toques, y el contrato lo ata. El «toque seguro» de `tacto/` no
+  interviene: la cocina no lo usa.
 - **Lo que NO es un fallo** (comportamiento de DP-D214): con dos estaciones la mesa sigue «en preparación» mientras la otra estación
   no termine. Cada estación dice su avance en la nubecita del mapa; hacerlo más visible es la Parte 3.4.
 - **Pruebas.** Integración `cocina-de-la-mesa-unida.integracion.test.ts` (en rojo antes del arreglo) y la mini jornada con la CPU
