@@ -9,18 +9,17 @@ import {
 } from '@morphiqpos/domain/catalogo';
 import { Button } from '@morphiqpos/ui/primitivas/button';
 import { Aviso, EsqueletoDeLista, Vacio } from '@morphiqpos/ui/sistema';
-import {
-  ArrowDown,
-  ArrowUp,
-  ChevronDown,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  UtensilsCrossed,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, UtensilsCrossed } from 'lucide-react';
 import { useState, type ReactElement } from 'react';
 import { toast } from 'sonner';
 
+import { DondeSeVe } from './DondeSeVe';
+import {
+  avisoDeVisibilidad,
+  cambioDe,
+  visibilidadDe,
+  type AccionDeVisibilidad,
+} from './donde-se-ve';
 import {
   useOrdenDelMenu,
   type CategoriaDelOrden,
@@ -109,34 +108,18 @@ function FilaDePlatillo({
   readonly total: number;
   readonly ocupado: boolean;
   readonly alMover: (hacia: Hacia) => void;
-  readonly alMostrar: (visible: boolean) => void;
+  readonly alMostrar: (accion: AccionDeVisibilidad) => void;
 }) {
   const nombre = nombreDe(platillo.nombre, 'el platillo');
-  const visible = platillo.visible_en_menu_digital !== false;
   return (
-    <li className="flex items-center gap-(--espacio-2) rounded-lg border border-borde px-(--espacio-2)">
+    <li className="flex flex-wrap items-center gap-(--espacio-2) rounded-lg border border-borde px-(--espacio-2)">
       <span className="w-6 text-right text-sm tabular-nums text-texto-sutil">{lugar + 1}</span>
-      <span className={`min-w-0 flex-1 truncate ${visible ? 'font-medium' : 'text-texto-sutil'}`}>
-        {nombre}
-      </span>
-      <Button
-        type="button"
-        variant={visible ? 'outline' : 'secondary'}
-        className={`${BOTON} shrink-0 gap-(--espacio-1)`}
-        aria-pressed={visible}
-        aria-label={`${nombre}: ${visible ? 'se ve en el menú' : 'oculto del menú'}`}
-        disabled={ocupado}
-        onClick={() => {
-          alMostrar(!visible);
-        }}
-      >
-        {visible ? (
-          <Eye aria-hidden className="size-4" />
-        ) : (
-          <EyeOff aria-hidden className="size-4" />
-        )}
-        <span className="text-sm">{visible ? 'En el menú' : 'Oculto'}</span>
-      </Button>
+      <DondeSeVe
+        nombre={nombre}
+        visibilidad={visibilidadDe(platillo)}
+        ocupado={ocupado}
+        alElegir={alMostrar}
+      />
       <BotonesDeOrden
         nombre={nombre}
         primero={lugar === 0}
@@ -162,7 +145,7 @@ interface AccionesDeLaFila {
   readonly alAbrir: () => void;
   readonly alMoverCategoria: (hacia: Hacia) => void;
   readonly alMoverPlatillo: (id: string, hacia: Hacia) => void;
-  readonly alMostrar: (id: string, visible: boolean) => void;
+  readonly alMostrar: (id: string, accion: AccionDeVisibilidad) => void;
   readonly alGuardarPlatillos: () => void;
 }
 
@@ -194,8 +177,8 @@ function PlatillosDeLaCategoria({
               alMover={(hacia) => {
                 a.alMoverPlatillo(id, hacia);
               }}
-              alMostrar={(visible) => {
-                a.alMostrar(id, visible);
+              alMostrar={(accion) => {
+                a.alMostrar(id, accion);
               }}
             />
           );
@@ -336,12 +319,19 @@ export function OrdenDelMenu() {
       alMoverPlatillo: (pid, hacia) => {
         setBorradorProductos({ ...borradorProductos, [id]: moverEnLaLista(ids, pid, hacia) });
       },
-      alMostrar: (pid, visible) => {
-        const que = nombreDe(platilloPorId.get(pid)?.nombre, 'El platillo');
+      alMostrar: (pid, accion) => {
+        const platillo = platilloPorId.get(pid);
+        const que = nombreDe(platillo?.nombre, 'El platillo');
+        const cambio = cambioDe(accion);
+        const hoy = visibilidadDe(platillo ?? {});
+        const queda = {
+          portal: cambio.visible ?? hoy.portal,
+          pos: cambio.visibleEnPos ?? hoy.pos,
+        };
         void guardar(
           `ver-${pid}`,
-          () => datos.mostrar(pid, visible),
-          visible ? `«${que}» se ve en el menú` : `«${que}» quedó oculto`,
+          () => datos.mostrar(pid, cambio),
+          avisoDeVisibilidad(que, queda),
         );
       },
       alGuardarPlatillos: () => {
@@ -367,7 +357,8 @@ export function OrdenDelMenu() {
       </h3>
       <p className="text-sm text-texto-sutil">
         Así se ordenan las secciones y los platillos en el portal, en la mesa del mesero y en la
-        Caja. Toca las flechas para subir o bajar; «Oculto» quita un platillo del menú digital.
+        Caja. Toca las flechas para subir o bajar; con «Dónde se ve» eliges si un platillo se oculta
+        del portal QR, del POS (mesero y Caja) o de todo.
       </p>
       <ol className="flex flex-col gap-(--espacio-2)" aria-label="Secciones del menú, en orden">
         {filas}

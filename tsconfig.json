@@ -11,6 +11,7 @@
     "scripts/lib/adopcion.test.ts",
     "scripts/lib/buscar-secreto.test.ts",
     "scripts/lib/clases-de-color.test.ts",
+    "scripts/lib/jugo-mixto.test.ts",
     "scripts/lib/lectura-segura.test.ts",
     "scripts/lib/menu.test.ts",
     "scripts/lib/plano-de-mesas.test.ts",

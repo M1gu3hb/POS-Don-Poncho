@@ -95,12 +95,31 @@ interface DatosDeSincronia {
   readonly ahora: Date;
 }
 
+/** La mesa de la cuenta (en una unión, la principal); la de la comanda sólo si la cuenta no dice. */
+async function mesaDeLaCuenta(
+  tx: Transaccion,
+  organizacionId: string,
+  ordenId: string,
+  respaldo: string | null,
+): Promise<string | null> {
+  const orden = await tx
+    .selectFrom('ordenes')
+    .select('mesa_id')
+    .where('organizacion_id', '=', organizacionId)
+    .where('id', '=', ordenId)
+    .executeTakeFirst();
+  return orden?.mesa_id ?? respaldo;
+}
+
 /** Mueve la mesa si la tabla de F1-04 §8.2 dice que le toca. */
 export async function sincronizarMesa(
   tx: Transaccion,
   datos: DatosDeSincronia,
 ): Promise<string | null> {
-  const mesaId = datos.mesaId;
+  // DP-25 · P4: la mesa que cambia es la de la CUENTA, no la de la comanda. Al unir mesas las
+  // comandas de la absorbida pasan a la cuenta de la principal pero conservan su `mesa_id`; con
+  // él la cocina movía una mesa que el mapa no enseña y la principal nunca avanzaba.
+  const mesaId = await mesaDeLaCuenta(tx, datos.organizacionId, datos.ordenId, datos.mesaId);
   if (mesaId === null) return null;
 
   const mesa = await mesaOperable(tx, datos.organizacionId, mesaId);

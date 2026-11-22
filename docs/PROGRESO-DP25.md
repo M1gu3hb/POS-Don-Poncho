@@ -34,3 +34,16 @@
   PDF. Pruebas: `venta/pagos-por-separado.test.ts`, `corte/pagos-uno-por-uno.test.ts` y
   `caja/corte/pagos-del-corte.integracion.test.ts`.
 - Mutantes: 7 destructivos (cada uno muere con su prueba) y 2 inocuos (pasan).
+
+## Parte 7 · El dueño ve el PIN de su gente (DP-D229)
+
+- Al poner o cambiar un PIN se guarda, junto al hash, una copia cifrada con AES-256-GCM (migración 204,
+  `credenciales_pin.pin_cifrado`, con un `check` de su forma). La llave (`PIN_CIFRADO_CLAVE`) vive sólo en el entorno del servidor;
+  sin ella la función se apaga sola y cambiar un PIN borra la copia vieja.
+- Configuración → Personas: el dueño ve el PIN con el ojito, tecleando el suyo (firma `para: 'ver_pin'`, de un solo uso); se ve 10
+  segundos. Cada vista queda en la auditoría (quién vio el de quién y cuándo, nunca el PIN). El servidor lo rechaza para cualquier
+  otro puesto. Los PIN de antes dicen «No disponible: asígnalo de nuevo una vez», con el botón para asignarlo.
+- Pruebas: `identidad/pin-cifrado.test.ts` (6) y `identidad/ver-el-pin.integracion.test.ts` (7). Mutantes: el gerente lo ve · la
+  firma de otro dueño · la de un gerente · la firma no se gasta · el PIN en la auditoría (con otra llave: la llave «pin» ya la quita
+  el saneador) · el PIN a la vista en vez de su copia · sin llave la copia vieja se queda · la copia sin atar a su identidad: todos
+  mueren. Inocuo: otro nombre del paso de lectura.

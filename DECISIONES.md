@@ -4256,6 +4256,45 @@ Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sust
   por uno», debajo de los totales por método, que se quedan). Los datos son los de `pagos` (la entidad de lectura `PagoDeVenta` y la
   hoja del corte del servidor); nada se recalcula. El ticket del cliente sigue con una sola línea «Tarjeta».
 
+## DP-D223 · DP-25 · Parte 4 · La mesa que cambia es la de la CUENTA, y los toques de la cocina salen en fila por cuenta · 21-11-2026
+
+Lo vio Don Poncho en la capacitación con dos estaciones («terminó la cocina y la mesa siguió naranja», «la palomita no sale»), y la
+verificación de la mañana (`mini-jornada-de-cocina`, 3 fallos de 15 con la laptop cargada).
+
+- **Causa 1 (servidor).** Al unir mesas, las comandas de la cuenta absorbida pasan a la cuenta de la principal pero conservan su
+  `comandas.mesa_id`. La cocina movía «la mesa de la comanda» (`sincronizarMesa`): lo que se terminaba de la mesa absorbida cambiaba
+  una mesa que el mapa no enseña, y la principal se quedaba en «pedido enviado» o «en preparación» aunque todo estuviera listo.
+  Ahora `sincronizarMesa` mueve la mesa de la CUENTA (`ordenes.mesa_id`, que en una unión es la principal); `entregar_pedidos` y
+  «cancelar lo que faltaba» ya lo hacían así.
+  La Parte 6 (DP-D226) ya reapunta `comandas.mesa_id` a la principal al unir, así que las uniones NUEVAS no tienen el defecto en su
+  origen; esto queda como segundo cerrojo para las uniones que ya estaban vivas antes de ese cambio (la prueba cubre las dos).
+- **Causa 2 (pantalla de cocina).** Los toques salían en UNA sola fila para toda la cocina («`cocina`»): cada «Listo» esperaba a los de
+  todas las demás mesas. Con la pantalla cargada el último toque llegaba al servidor 1.6 a 3 s después de verse hecho (medido con la
+  CPU estrangulada 4×), y quien lo leía en ese momento veía el platillo todavía «en preparación». La fila es ahora POR CUENTA: los
+  toques de una cuenta siguen en orden (un «Listo» nunca adelanta a su «Preparar») y las demás cuentas no se esperan. El servidor ya
+  serializa por cuenta, así que no se pierde nada.
+- **Causa 3 (servidor, la que SÍ perdía toques).** El `lock_timeout` de 3 s se pone al reclamar la clave del comando y vale para TODA
+  la transacción. Cocina y Cantina tocando la misma cuenta con la laptop cargada: la segunda esperaba el candado de la cuenta más de
+  3 s, Postgres contestaba 55P03, el servidor lo sacaba como 500 «Algo falló» y el toque —ya pintado en la pantalla— no se guardaba.
+  Medido en la mini jornada con CPU 4×: un 500 `restaurante.transicionar_pedido sqlstate=55P03`, y ese platillo se quedó «en
+  preparación» en el servidor tras 30 s de espera. Ahora `comando.ts` repite también la espera de candado agotada (55P03), igual que
+  el interbloqueo (40P01): la transacción se revirtió entera y repetirla es seguro. La espera de la CLAVE sigue siendo «comando en
+  curso».
+- **Causa 4 (pantalla de cocina, el «Preparar» que se perdía).** Cada toque sacaba su aviso verde («Platillo en preparación») y en
+  el teléfono y la tableta se apilaban hasta cuatro sobre las tarjetas. El toque siguiente caía sobre el aviso y no sobre el botón:
+  el navegador veía el clic, pero ningún pedido salía al servidor (medido con la CPU 4× y el trace: abajo+1, arriba+1, clic+1, sin
+  POST, y el propio Playwright registra que un aviso de `sonner` interceptó el toque). Ahora los avisos informativos de la cocina
+  dejan pasar el toque (`pointer-events: none`, sólo ésos: `AVISO_SIN_TOQUE` en `Cocina.jsx`); el `Toaster` global y cualquier
+  aviso con botón (Deshacer, Reintentar, Ver) siguen recibiendo toques, y el contrato lo ata. El «toque seguro» de `tacto/` no
+  interviene: la cocina no lo usa.
+- **Lo que NO es un fallo** (comportamiento de DP-D214): con dos estaciones la mesa sigue «en preparación» mientras la otra estación
+  no termine. Cada estación dice su avance en la nubecita del mapa; hacerlo más visible es la Parte 3.4.
+- **Pruebas.** Integración `cocina-de-la-mesa-unida.integracion.test.ts` (en rojo antes del arreglo) y la mini jornada con la CPU
+  estrangulada (`COCINA_CPU=4`), que ahora espera a que el servidor llegue a lo que la pantalla ya pintó (DP-7: se pinta antes de
+  contestar).
+- **Alternativas descartadas.** Derivar la mesa al leer (cambia el contrato del mapa y de los avisos); quitar la pintura anticipada de
+  los toques (la cocina vería lento cada toque).
+
 ## DP-D224 · DP-25 · Pedir la cuenta con platillos sin entregar: se avisa en el servidor y se pide con confirmación · 21-11-2026
 
 - **Contexto.** El mesero podía pedir la cuenta con la mesa todavía esperando platillos, sin enterarse: la cuenta salía con lo
@@ -4277,6 +4316,36 @@ Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sust
   mesa que se va no podría pagar); avisar sólo en la pantalla (cada pantalla nueva se olvidaría).
 - **Consecuencias.** Toda prueba que pida la cuenta sin haber entregado debe mandar `aunConPendientes: true` (o entregar
   antes): se adaptaron las de integración y las e2e sin quitarles afirmaciones. No hay migración.
+
+## DP-D225 · DP-25 · Lo que el mesero ve dentro de la mesa: la pantalla se explica sola · 21-11-2026
+
+- **Contexto.** Tras la capacitación, Miguel tuvo que explicar la pantalla de la mesa de viva voz: nadie sabía en qué iba cada
+  platillo, el «Michelado» (que sí sube el precio) no se veía en el pedido, no había forma de saber qué significaba cada color y la
+  cuenta que otra persona cancelaba o cobraba seguía abierta en el aparato del mesero hasta que mandaba un platillo y el servidor
+  contestaba «Esa cuenta ya se cerró».
+- **Decisión.**
+  - **Estado de cada platillo** (Nuevo, En preparación, Listo, Entregado) en la lista de lo enviado, con glifo y palabra (el color
+    nunca va solo). Sale del item de la comanda que la cocina mueve por platillo, emparejado con la línea de la cuenta por
+    `detalle_venta_id`; si una línea tiene varios items manda el MENOS avanzado. Se relee con la misma consulta de la tarjeta «Listo
+    para recoger» (una sola, cada 1.5 s). Un platillo sin comanda leída todavía es «Nuevo».
+  - **Opciones y nota** de cada platillo con el mismo texto que cocina, Caja y ticket (`~/venta/opciones-del-renglon`): en lo
+    enviado, y en el carrito la ficha ya no esconde la opción elegida («Extras: Michelado»), sólo las exclusiones y la nota.
+  - **Leyenda con «?» en la misma pantalla.** Una fila con los cuatro estados y un «?» de 44 px con dedo que abre, EN EL MISMO
+    lugar (no una ventana sobre la ventana de la mesa), el significado de cada estado y de cada color de la mesa, y las
+    instrucciones: cuándo marcar entregado y qué hacer con los pendientes al pedir la cuenta («Regresar» / «Pedir la cuenta de
+    todos modos»).
+  - **Avance por estación más visible.** La nubecita del mapa y la tarjeta de la mesa dicen el conteo con el nombre configurado
+    («Bebidas 2 de 3», antes «2/3») y, cuando la estación terminó, «Cocina ✓» en verde sólido y más grande (par `exito` /
+    `exito-texto`, contraste medido en la prueba). Letra de 16 px o más en negritas.
+  - **La cuenta que otro cerró.** Con la mesa abierta, el aparato lee el ESTADO DE LA CUENTA cada 4 s (no el de la mesa, que cambia
+    al abrirla o pasarla y daba falsas alarmas). Si pasa a cancelada, cobrada (o reembolsada) o dividida, sale el aviso («La cuenta de
+    la mesa 5 se canceló / ya se cobró / se dividió en la Caja»), la pantalla regresa al mapa y el aviso se queda ahí hasta «Entendido».
+    Una cuenta parcialmente pagada sigue abierta en la Caja y no avisa.
+- **Alternativas descartadas.** Dibujar el estado sólo con color (no cumple AA ni sirve a quien no distingue tonos); abrir la
+  leyenda en otra ventana (otro portal sobre el de la mesa: los conflictos de `removeChild` ya conocidos); detectar el cierre por el
+  `venta_activa_id` de la mesa (falsas alarmas mientras la lectura del mapa va atrasada).
+- **Consecuencias.** No toca dinero, PIN ni permisos. No hay migración. El aviso de «listo» que sale en pantalla (platillos de la
+  estación) no trae todavía las opciones de cada platillo: pide un cambio en `restaurante.avisos_de_listo` y queda como siguiente paso.
 
 ## DP-D226 · DP-25 · Unir mesas poco a poco, sin forma de equivocarse: unir con una mesa que ya está en un grupo es agregar · 21-11-2026
 
@@ -4320,6 +4389,55 @@ aún no se mandan a cocina no tienen comanda); elegir la principal «la que teng
 **Consecuencias.** Una unión elegida con otra principal que la del grupo deja la del grupo: el mesero lo ve en el aviso («queda la N»).
 La cuenta de una mesa absorbida desde antes de la migración no trae origen (nada que mostrar). Caja (`TarjetaDeCobro`) no muestra el
 origen todavía: es de la Parte 1. Toca `restaurante.imprimir_precuenta` y `Precuenta.tsx` (Parte 2) con el cambio mínimo.
+
+## DP-D227 · DP-25 · Ocultar un platillo eligiendo dónde: portal QR, POS o todo; y el jugo «Mixto» · 21-11-2026
+
+**Contexto.** «Oculto» en «El orden del menú» sólo quitaba el platillo del portal QR (`visible_en_menu_digital`), y el
+interruptor «Visible en POS» (`visible_en_pos`) quitaba el platillo del POS **y también del portal** (DP-D174). La dueña quería
+poder esconder un platillo sólo de un lugar (p. ej. algo que sólo se vende en el POS, o algo que sólo se ve en el portal).
+
+**Decisión.**
+- Cada platillo se oculta POR LUGAR y cada lugar es independiente: el portal QR (`visible_en_menu_digital`) y el POS, o sea el
+  mesero y la Caja (`visible_en_pos`). En cada fila de «El orden del menú» dice dónde SÍ se ve («Se ve en: POS y portal QR», «Se
+  ve en: POS», «Se ve en: portal QR», «Oculto en todo») y «Dónde se ve» abre «Ocultar del portal QR», «Ocultar del POS (mesero y
+  Caja)» y «Ocultar de todo» (o el «Mostrar…» del lugar donde esté oculto).
+- **Revierte DP-D174:** el portal obedece SÓLO a `visible_en_menu_digital`. Lo oculto del POS sigue en el portal y se puede pedir
+  desde él; lo oculto del portal no sale ni se deja pedir aunque siga en el POS.
+- El mismo comando de catálogo, `catalogo.mostrar_en_menu` (dueño, administrador y gerente), recibe `visible` (portal) y/o
+  `visibleEnPos` (al menos uno; el que no viene no cambia). Una sola escritura, y una sola auditoría con el antes y el después de
+  cada lugar; sin cambios no hay auditoría ni clave de idempotencia. Sin migración.
+- Todas las rejillas del POS piden sólo lo activo y visible en el POS: mesero (`Mesero.jsx`), la Caja (`POS.jsx`, «Para llevar» y
+  «Agregar a la cuenta», que usan el mismo diálogo) y la mesa activa del mapa (`MesaActiva.tsx`, que no filtraba y se corrigió). Lo
+  oculto del POS que YA está en una cuenta abierta se sigue cobrando: el servidor no lo vuelve a mirar al cobrar.
+- **Jugo «Mixto»** (8.2): el guion `scripts/agregar-jugo-mixto-produccion.mjs` agrega «Mixto» (+$0) al grupo «Sabor del jugo» del
+  producto «Jugo» con `catalogo.guardar_grupo_de_opciones` (manda las opciones de hoy con su `id` y su precio, porque el comando
+  guarda el grupo entero), con `--ensayo` y idempotente.
+
+**Alternativas.** Dejar el portal atado al POS (no permite «sólo POS»); una columna nueva «dónde se ve» (migración sin necesidad:
+ya hay una columna por lugar); un comando por lugar (dos escrituras y dos auditorías para «ocultar de todo»).
+
+**Consecuencias.** «Se acabó el pescado» ya no se resuelve apagando «Visible en POS» si también debe salir del portal: para eso
+está «Ocultar de todo» o «Agotado del día». La lista de «apartar un pedido anticipado» sigue leyendo `visible_en_pos` como «hoy
+no hay»: un platillo oculto del POS pero visible en el portal aparece ahí en gris; es otra pantalla y no se tocó (queda por decidir).
+
+## DP-D229 · DP-25 · El dueño ve el PIN de su gente: una copia cifrada, su propio PIN y la auditoría · 21-11-2026
+
+- **Contexto.** Al personal se le olvida el PIN y cambiarlo a cada rato es un problema. El PIN se guarda sólo como hash Argon2id
+  (`credenciales_pin.pin_hash`): de un hash no se vuelve al PIN.
+- **Decisión.** Al poner o cambiar un PIN (`identidad.establecer_pin` y el alta de persona) se guarda además una COPIA cifrada con
+  AES-256-GCM en `credenciales_pin.pin_cifrado` (migración 204, aditiva, con un `check` de su forma para que nunca entre un PIN a la
+  vista). La llave es `PIN_CIFRADO_CLAVE` (32 bytes), sólo en el entorno del servidor (Vercel) con su copia fuera del repositorio;
+  nunca en la base, el repo ni un registro. Cada copia lleva su vector aleatorio y se ata a su identidad: copiada a la fila de otra
+  persona, o alterada, no se descifra.
+- **Ver un PIN** (`identidad.ver_pin`, Configuración → Personas, el ojito): sólo el dueño, y el servidor lo rechaza para cualquier
+  otro puesto. Pide SU propio PIN (la firma de `/api/identidad/supervisor` con `para: 'ver_pin'`, tecleada por él mismo, de un solo
+  uso y con el bloqueo por intentos de siempre). Se ve 10 segundos y se oculta solo. Cada vista queda en la auditoría (quién vio el
+  de quién y cuándo), nunca el PIN.
+- **Los PIN de antes** no tienen copia: dicen «No disponible: asígnalo de nuevo una vez», con el botón para asignarlo ahí mismo.
+- **Sin la llave** la función se apaga sola: no hay ojito, no se guarda copia (y cambiar un PIN borra la copia vieja, para que nadie
+  vea un PIN que ya no es el de hoy), y poner y usar el PIN sigue igual.
+- **Alternativas descartadas.** Guardar el PIN a la vista o con un cifrado reversible sin llave aparte: cualquiera con la base lo
+  leería. Que el dueño lo cambie cada vez: es justo lo que se quería evitar.
 
 ## DP-D230 · DP-25 · Un número de mesa repetido se dice con palabras, y el acople deja de mentir sobre lo que no tiene ruta · 21-11-2026
 

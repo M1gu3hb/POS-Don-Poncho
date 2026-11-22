@@ -5,7 +5,7 @@ import { sePrepara } from './platillos-de-cocina.ts';
  *
  * Un solo cálculo para dos pantallas: los contadores de la tarjeta de cada estación dentro de la
  * mesa del mesero («Listos 1 de 4», «Entregados 1 de 4») y la «nubecita» del mapa («Cantina ✓»,
- * «Cocina 2/4»). Cuenta PLATILLOS (renglones de comanda), no unidades, y sólo los vivos: uno
+ * «Cocina 2 de 4»). Cuenta PLATILLOS (renglones de comanda), no unidades, y sólo los vivos: uno
  * anulado en la mesa no es un platillo que esperar.
  *
  * `salidos` es lo que ya salió de la estación —listo o ya entregado—: es lo que dice la nubecita.
@@ -97,14 +97,19 @@ export function hayQueEntregar(avance: AvanceDeEstacion): boolean {
 }
 
 /**
- * La nubecita del mapa para una estación: «Cantina ✓» si todo salió, «Cocina 2/4» si falta, o
+ * La nubecita del mapa para una estación: «Cantina ✓» si todo salió, «Cocina 2 de 4» si falta, o
  * `null` cuando no hay nada que decir (nada ha salido todavía, o ya se entregó todo).
  */
 export function etiquetaDeLaNube(avance: AvanceDeEstacion): string | null {
   if (avance.salidos === 0 || avance.entregados === avance.total) return null;
   return avance.salidos === avance.total
     ? `${avance.nombre} ✓`
-    : `${avance.nombre} ${String(avance.salidos)}/${String(avance.total)}`;
+    : `${avance.nombre} ${String(avance.salidos)} de ${String(avance.total)}`;
+}
+
+/** ¿La nubecita es de una estación que ya terminó («Cocina ✓»)? Ésa va verde y más grande. */
+export function nubeCompleta(etiqueta: string): boolean {
+  return etiqueta.endsWith(' ✓');
 }
 
 /** Las nubecitas de una mesa, en el orden de sus estaciones. */
@@ -114,7 +119,7 @@ export function nubesDeLaMesa(comandas: readonly ComandaParaElAvance[]): readonl
     .filter((e): e is string => e !== null);
 }
 
-/** Las nubecitas de cada cuenta viva: `{ [venta_id]: ['Cocina 2/4', 'Cantina ✓'] }`. */
+/** Las nubecitas de cada cuenta viva: `{ [venta_id]: ['Cocina 2 de 4', 'Cantina ✓'] }`. */
 export function nubesPorCuenta(
   comandas: readonly (ComandaParaElAvance & { readonly venta_id?: string | null })[],
 ): Readonly<Record<string, readonly string[]>> {
