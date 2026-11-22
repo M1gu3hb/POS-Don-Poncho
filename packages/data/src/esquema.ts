@@ -280,6 +280,8 @@ export interface CredencialesPin {
   rotada_en: Generated<Date>;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
+  /** DP-25 · Copia cifrada del PIN (AES-256-GCM); nula = sin copia. Sólo el dueño la ve. */
+  pin_cifrado: string | null;
 }
 
 export interface CuotasArchivos {

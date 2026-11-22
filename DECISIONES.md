@@ -4419,3 +4419,22 @@ ya hay una columna por lugar); un comando por lugar (dos escrituras y dos audito
 **Consecuencias.** «Se acabó el pescado» ya no se resuelve apagando «Visible en POS» si también debe salir del portal: para eso
 está «Ocultar de todo» o «Agotado del día». La lista de «apartar un pedido anticipado» sigue leyendo `visible_en_pos` como «hoy
 no hay»: un platillo oculto del POS pero visible en el portal aparece ahí en gris; es otra pantalla y no se tocó (queda por decidir).
+
+## DP-D229 · DP-25 · El dueño ve el PIN de su gente: una copia cifrada, su propio PIN y la auditoría · 21-11-2026
+
+- **Contexto.** Al personal se le olvida el PIN y cambiarlo a cada rato es un problema. El PIN se guarda sólo como hash Argon2id
+  (`credenciales_pin.pin_hash`): de un hash no se vuelve al PIN.
+- **Decisión.** Al poner o cambiar un PIN (`identidad.establecer_pin` y el alta de persona) se guarda además una COPIA cifrada con
+  AES-256-GCM en `credenciales_pin.pin_cifrado` (migración 204, aditiva, con un `check` de su forma para que nunca entre un PIN a la
+  vista). La llave es `PIN_CIFRADO_CLAVE` (32 bytes), sólo en el entorno del servidor (Vercel) con su copia fuera del repositorio;
+  nunca en la base, el repo ni un registro. Cada copia lleva su vector aleatorio y se ata a su identidad: copiada a la fila de otra
+  persona, o alterada, no se descifra.
+- **Ver un PIN** (`identidad.ver_pin`, Configuración → Personas, el ojito): sólo el dueño, y el servidor lo rechaza para cualquier
+  otro puesto. Pide SU propio PIN (la firma de `/api/identidad/supervisor` con `para: 'ver_pin'`, tecleada por él mismo, de un solo
+  uso y con el bloqueo por intentos de siempre). Se ve 10 segundos y se oculta solo. Cada vista queda en la auditoría (quién vio el
+  de quién y cuándo), nunca el PIN.
+- **Los PIN de antes** no tienen copia: dicen «No disponible: asígnalo de nuevo una vez», con el botón para asignarlo ahí mismo.
+- **Sin la llave** la función se apaga sola: no hay ojito, no se guarda copia (y cambiar un PIN borra la copia vieja, para que nadie
+  vea un PIN que ya no es el de hoy), y poner y usar el PIN sigue igual.
+- **Alternativas descartadas.** Guardar el PIN a la vista o con un cifrado reversible sin llave aparte: cualquiera con la base lo
+  leería. Que el dueño lo cambie cada vez: es justo lo que se quería evitar.

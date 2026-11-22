@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { definirComando } from '../definicion.ts';
 import { quitarMarcaDeEmpleo } from '../mantenimiento/plataforma-cambios.ts';
 import { FORMA_PIN, hashearPin } from './pin.ts';
+import { copiaDelPin } from './pin-cifrado.ts';
 
 /**
  * `identidad.guardar_empleado` — dar de alta y editar a la plantilla.
@@ -338,6 +339,8 @@ export const guardarEmpleado = definirComando<
     let pinEstablecido = false;
     if (entrada.pin !== undefined) {
       const hash = await hashearPin(entrada.pin, pimienta());
+      // DP-25 · La copia cifrada para que el dueño pueda verlo; sin llave, nula (y borra la vieja).
+      const copia = copiaDelPin(entrada.pin, identidad.id);
       await ctx.paso('guardar_pin', async () => {
         const previa = await ctx.tx
           .selectFrom('credenciales_pin')
@@ -347,7 +350,12 @@ export const guardarEmpleado = definirComando<
         if (previa === undefined) {
           await ctx.tx
             .insertInto('credenciales_pin')
-            .values({ identidad_id: identidad.id, pin_hash: hash, algoritmo: 'argon2id' })
+            .values({
+              identidad_id: identidad.id,
+              pin_hash: hash,
+              algoritmo: 'argon2id',
+              pin_cifrado: copia,
+            })
             .execute();
         } else {
           // Poner un PIN nuevo levanta el bloqueo, igual que en
@@ -358,6 +366,7 @@ export const guardarEmpleado = definirComando<
             .set({
               pin_hash: hash,
               algoritmo: 'argon2id',
+              pin_cifrado: copia,
               intentos_fallidos: 0,
               bloqueada_hasta: null,
               updated_at: ctx.ahora,

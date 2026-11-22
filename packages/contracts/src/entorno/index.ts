@@ -78,6 +78,14 @@ export const esquemaEntorno = z.object({
       'TODOS los PIN y obliga a reenrolar a todo el mundo, asi que se fija una vez.',
   ),
 
+  /**
+   * DP-25 · La llave de la COPIA CIFRADA del PIN (AES-256-GCM, 32 bytes en base64), para que el dueño
+   * pueda ver el PIN de su gente. OPCIONAL a proposito: sin ella la funcion se apaga sola (no se
+   * guarda copia y nadie la ve) y poner y usar el PIN sigue igual. Vive solo en el entorno del
+   * servidor: nunca en la base, el repositorio ni un registro.
+   */
+  PIN_CIFRADO_CLAVE: z.string().trim().optional(),
+
   // --- Aplicacion ---
   APP_URL: urlHttp('APP_URL'),
 

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { definirComando } from '../definicion.ts';
 import { PUEDE_OTORGAR } from './empleados.ts';
 import { FORMA_PIN, hashearPin } from './pin.ts';
+import { copiaDelPin } from './pin-cifrado.ts';
 
 /**
  * Administrar accesos desde la aplicación (F1.1-C-05 y C-06).
@@ -98,6 +99,8 @@ export const establecerPin = definirComando<
     }
 
     const hash = await hashearPin(entrada.pin, pimienta());
+    // DP-25 · La copia cifrada para que el dueño pueda verlo; sin llave, nula (y borra la vieja).
+    const copia = copiaDelPin(entrada.pin, objetivo.identidadId);
 
     const previa = await ctx.tx
       .selectFrom('credenciales_pin')
@@ -113,6 +116,7 @@ export const establecerPin = definirComando<
             identidad_id: objetivo.identidadId,
             pin_hash: hash,
             algoritmo: 'argon2id',
+            pin_cifrado: copia,
           })
           .execute(),
       );
@@ -123,6 +127,7 @@ export const establecerPin = definirComando<
           .set({
             pin_hash: hash,
             algoritmo: 'argon2id',
+            pin_cifrado: copia,
             // Poner un PIN nuevo levanta el bloqueo: si no, quien se pasó de
             // intentos seguiría fuera con la credencial recién cambiada.
             intentos_fallidos: 0,
