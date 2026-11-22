@@ -39,6 +39,10 @@ const ESTADOS = ['nuevo', 'en_preparacion', 'listo'];
 const LIMITE_COMANDAS = 300;
 // El puente acepta hasta 200 valores en un filtro de lista.
 const LIMITE_VENTAS = 200;
+// DP-25 · P4: los avisos de «listo» / «en preparación» de la cocina NO reciben toques. Cada toque
+// sacaba el suyo y en el teléfono y la tableta se apilaban sobre las tarjetas: el toque siguiente
+// caía sobre el aviso y no sobre el botón (el «Preparar» que se perdía). El toque lo atraviesa.
+const AVISO_SIN_TOQUE = { style: { pointerEvents: 'none' } };
 
 export default function Cocina() {
   const queryClient = useQueryClient();
@@ -252,10 +256,10 @@ export default function Cocina() {
       );
       refrescarLoQueDependeDeCocina();
       if (hacia === 'listo') {
-        toast.success('¡Platillo listo!');
+        toast.success('¡Platillo listo!', AVISO_SIN_TOQUE);
         sonar('comandaLista');
       } else {
-        toast.success('Platillo en preparación');
+        toast.success('Platillo en preparación', AVISO_SIN_TOQUE);
       }
     } catch (e) {
       toast.error('No se pudo mover el platillo: ' + (e?.message || ''));
@@ -275,10 +279,10 @@ export default function Cocina() {
       );
       refrescarLoQueDependeDeCocina();
       if (hacia === 'listo') {
-        toast.success('¡Pedido listo!');
+        toast.success('¡Pedido listo!', AVISO_SIN_TOQUE);
         sonar('comandaLista');
       } else {
-        toast.success('Pedido en preparación');
+        toast.success('Pedido en preparación', AVISO_SIN_TOQUE);
       }
     } catch (e) {
       toast.error('No se pudo mover el pedido: ' + (e?.message || ''));
@@ -298,7 +302,7 @@ export default function Cocina() {
         }),
       );
       refrescarLoQueDependeDeCocina();
-      toast.success('Pedido quitado de la lista');
+      toast.success('Pedido quitado de la lista', AVISO_SIN_TOQUE);
     } catch (e) {
       toast.error('No se pudo quitar el pedido: ' + (e?.message || ''));
     }
