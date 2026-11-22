@@ -77,8 +77,14 @@ const CLAVE_MINIMA = 8;
  * Antes salían como ERROR_INTERNO (500): en la jornada simulada de DP-18 (A12) la estación tocó
  * «Preparar» mientras el mesero quitaba un platillo de la misma orden y recibió un 500. Cualquier
  * otro error no se repite: no mejora repitiéndose y repetirlo sólo taparía el defecto.
+ *
+ * DP-25 · P4: también la espera de un candado que pasó de los 3 s (55P03). El `lock_timeout` se pone
+ * al reclamar la clave y vale para TODA la transacción: con la laptop cargada, la estación que toca
+ * una cuenta mientras la otra estación la tiene tomada esperaba más de 3 s, salía como 500 «Algo
+ * falló» y el toque (ya pintado en pantalla) se perdía. Tampoco dejó nada; repetirla es seguro. Sólo
+ * la espera de la CLAVE sigue siendo «comando en curso» (`reclamarClave` la atrapa antes).
  */
-const CONFLICTOS_DE_CONCURRENCIA: ReadonlySet<string> = new Set(['40P01', '40001']);
+const CONFLICTOS_DE_CONCURRENCIA: ReadonlySet<string> = new Set(['40P01', '40001', '55P03']);
 const INTENTOS_ANTE_CONCURRENCIA = 3;
 
 function esConflictoDeConcurrencia(error: unknown): boolean {

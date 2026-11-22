@@ -92,8 +92,40 @@ async function tocar(
   boton: 'Preparar' | 'Listo',
 ): Promise<void> {
   const fila = bloqueEn(cocina, de, mesa).locator('ul > li').filter({ hasText: nombre }).first();
+  const antes = await gestosVistos(cocina);
   await fila.getByRole('button', { name: boton, exact: true }).tap();
-  await expect(fila).toHaveCount(0, { timeout: 20_000 });
+  try {
+    await expect(fila).toHaveCount(0, { timeout: 5_000 });
+  } catch {
+    // La pantalla pinta el toque en el acto: si la fila sigue ahí, el toque se perdió y ES la falla
+    // (no se repite: repetirlo escondería justo lo que reportó la cocina). Se deja dicho QUÉ vio el
+    // navegador (¿bajó el dedo? ¿llegó el clic?) para saber en qué capa se perdió.
+    const despues = await gestosVistos(cocina);
+    throw new Error(
+      `TOQUE PERDIDO mesa ${String(mesa)} · ${nombre} · ${boton}: el navegador vio abajo+${String(despues.abajo - antes.abajo)} arriba+${String(despues.arriba - antes.arriba)} clics+${String(despues.clics - antes.clics)} y la fila no salió de la columna en 5 s.`,
+    );
+  }
+}
+
+interface Gestos {
+  readonly abajo: number;
+  readonly arriba: number;
+  readonly clics: number;
+}
+
+/** Cuántos gestos de puntero y clics ha visto la página (se instala solo la primera vez). */
+async function gestosVistos(pagina: Page): Promise<Gestos> {
+  return pagina.evaluate(() => {
+    const w = window as unknown as { __gestos?: { abajo: number; arriba: number; clics: number } };
+    if (w.__gestos === undefined) {
+      const cuenta = { abajo: 0, arriba: 0, clics: 0 };
+      w.__gestos = cuenta;
+      document.addEventListener('pointerdown', () => (cuenta.abajo += 1), true);
+      document.addEventListener('pointerup', () => (cuenta.arriba += 1), true);
+      document.addEventListener('click', () => (cuenta.clics += 1), true);
+    }
+    return { ...w.__gestos };
+  });
 }
 
 test.describe('mini jornada de cocina (DP-24)', () => {
@@ -136,6 +168,15 @@ test.describe('mini jornada de cocina (DP-24)', () => {
       const deParrilla = await cocineroDe(browser, info, duena, SLUG, parrilla);
       const deBarra = await cocineroDe(browser, info, duena, SLUG, barra);
       aCerrar.push(deParrilla.pagina.context(), deBarra.pagina.context());
+      // Con COCINA_CPU=4 las dos cocinas corren con la CPU estrangulada (lo que pasa en una
+      // tableta vieja con la cocina a tope): ahí es donde un toque tardaba en llegar al servidor.
+      const tasa = Number(process.env['COCINA_CPU'] ?? '1');
+      if (tasa > 1) {
+        for (const cocina of [deParrilla.pagina, deBarra.pagina]) {
+          const cdp = await cocina.context().newCDPSession(cocina);
+          await cdp.send('Emulation.setCPUThrottlingRate', { rate: tasa });
+        }
+      }
 
       // Dos meseros: Lupita (de la demo) y otro creado para esta corrida.
       const lupita = await equipo.pagina(info, 'mesero');
@@ -236,24 +277,31 @@ test.describe('mini jornada de cocina (DP-24)', () => {
       });
 
       await test.step('el servidor: tres platillos por mesa, ninguno perdido ni duplicado, todo listo', async () => {
+        // La pantalla pinta cada toque antes de que el servidor conteste (DP-7): al verse hecho el
+        // último «Listo», su pedido todavía puede ir en camino. Lo que se exige es que el servidor
+        // LLEGUE a tenerlo todo (nada perdido ni duplicado), no que ya lo tenga en ese instante.
         for (const [numero, ordenId] of ordenes) {
-          const comandas = await consultarPuente<Comanda>(duena, 'PedidoPreparacion', {
-            filtro: { venta_id: ordenId },
-            limite: 20,
-          });
-          const platillos = comandas.flatMap((c) => c.items ?? []);
-          expect(
-            platillos,
-            `Mesa ${String(numero)}: platillos perdidos o duplicados.`,
-          ).toHaveLength(3);
-          expect(new Set(platillos.map((p) => p.id)).size).toBe(3);
-          expect(platillos.map((p) => p.estado)).toEqual(['listo', 'listo', 'listo']);
-          expect(comandas.map((c) => c.estado)).toEqual(['listo', 'listo']);
-          const [mesa] = await consultarPuente<{ estado: string }>(duena, 'Mesa', {
-            filtro: { numero },
-            limite: 1,
-          });
-          expect(mesa?.estado, `Mesa ${String(numero)} no quedó lista.`).toBe('en_espera_entrega');
+          await expect(async () => {
+            const comandas = await consultarPuente<Comanda>(duena, 'PedidoPreparacion', {
+              filtro: { venta_id: ordenId },
+              limite: 20,
+            });
+            const platillos = comandas.flatMap((c) => c.items ?? []);
+            expect(
+              platillos,
+              `Mesa ${String(numero)}: platillos perdidos o duplicados.`,
+            ).toHaveLength(3);
+            expect(new Set(platillos.map((p) => p.id)).size).toBe(3);
+            expect(platillos.map((p) => p.estado)).toEqual(['listo', 'listo', 'listo']);
+            expect(comandas.map((c) => c.estado)).toEqual(['listo', 'listo']);
+            const [mesa] = await consultarPuente<{ estado: string }>(duena, 'Mesa', {
+              filtro: { numero },
+              limite: 1,
+            });
+            expect(mesa?.estado, `Mesa ${String(numero)} no quedó lista.`).toBe(
+              'en_espera_entrega',
+            );
+          }).toPass({ timeout: 30_000, intervals: [500] });
         }
       });
 
