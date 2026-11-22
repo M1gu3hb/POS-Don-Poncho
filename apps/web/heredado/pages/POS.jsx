@@ -7,6 +7,7 @@ import { useConfig } from '@/lib/ConfigContext';
 import { hasPermission } from '@/lib/permissions';
 import { formatCurrency } from '@/utils/financialUtils';
 import ProductCard from '@/components/pos/ProductCard';
+import { SE_AGREGO } from '~/tacto/bolita';
 import CartPanel from '@/components/pos/CartPanel';
 import PaymentModal from '@/components/pos/PaymentModal';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
@@ -334,7 +335,7 @@ export default function POS() {
       }
       await refrescarCarrito();
       sonar('agregar');
-      return true;
+      return SE_AGREGO;
     } catch (e) {
       toast.error(e?.message || 'No se pudo agregar el producto.');
       return false;
@@ -708,6 +709,7 @@ export default function POS() {
           <Button
             onClick={() => setShowCartMobile(true)}
             className="w-full h-12 text-base gap-2"
+            data-destino-bolita=""
             disabled={cart.length === 0}
           >
             <ShoppingCart className="w-5 h-5" />

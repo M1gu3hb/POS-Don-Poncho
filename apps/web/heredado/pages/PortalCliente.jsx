@@ -9,6 +9,7 @@ import AtencionFAB from '@/components/portalqr/AtencionFAB';
 import PedirCuentaQR from '@/components/portalqr/PedirCuentaQR';
 import AbrirMesaQRDialog from '@/components/portalqr/AbrirMesaQRDialog';
 import ProductoQRDialog from '@/components/portalqr/ProductoQRDialog';
+import { SE_AGREGO } from '~/tacto/bolita';
 import ValoracionEmoji from '@/components/portalqr/ValoracionEmoji';
 import { crearSolicitudQR, itemParaComando, leerPortalPublico } from '@/utils/qrPedidoFlow';
 import { getTiposSolicitudHabilitados, TIPO_SOLICITUD_VERBO } from '@/utils/qrUtils';
@@ -261,6 +262,7 @@ function PortalCliente() {
       );
       setProductoSeleccionado(null);
       toast.success(`${producto.nombre || 'Producto'} agregado al pedido de la mesa`);
+      return SE_AGREGO;
     } catch (err) {
       toast.error(err?.message || 'No pudimos agregarlo. Intenta de nuevo.');
     }

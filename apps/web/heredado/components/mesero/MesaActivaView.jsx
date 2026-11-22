@@ -240,7 +240,7 @@ export default function MesaActivaView({
           )}
 
           <div className="flex-1 overflow-y-auto px-4 py-3">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">
+            <p className="text-xs font-semibold text-muted-foreground mb-2" data-destino-bolita="">
               {safeDetalles.length > 0 ? 'AGREGAR AL PEDIDO' : 'NUEVO PEDIDO'}
             </p>
             {safeCarrito.length === 0 ? (

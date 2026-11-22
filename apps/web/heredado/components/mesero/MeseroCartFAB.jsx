@@ -146,11 +146,12 @@ const MeseroCartFAB = forwardRef(function MeseroCartFAB(
             boxShadow: '0 12px 28px rgba(0,0,0,0.38), 0 1px 0 rgba(255,255,255,0.25) inset',
           }}
         >
-          <div className="relative shrink-0">
+          <div className="relative shrink-0" data-destino-bolita="">
             {isCart ? <ShoppingCart className="w-5 h-5" /> : <Receipt className="w-5 h-5" />}
             {isCart && (
               <span
                 className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-superficie text-[10px] font-black flex items-center justify-center"
+                data-bolita-numero=""
                 style={{ color: 'hsl(var(--primario))' }}
               >
                 {cantidad}

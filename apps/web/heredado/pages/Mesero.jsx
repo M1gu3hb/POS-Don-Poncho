@@ -54,6 +54,7 @@ import MesaGridMobile from '@/components/mesero/MesaGridMobile';
 import { nubesPorCuenta } from '~/restaurante/avance-por-estacion';
 import MeseroCartFAB from '@/components/mesero/MeseroCartFAB';
 import { BotonQueAgrega, useRejillaQueVuelveArriba } from '~/tacto/BotonQueAgrega';
+import { SE_AGREGO } from '~/tacto/bolita';
 import PreCuentaTicket from '@/components/tickets/PreCuentaTicket';
 import { coincideConLaBusqueda } from '~/restaurante/buscar-producto';
 import { ordenarMenu } from '@morphiqpos/domain/catalogo';
@@ -893,6 +894,7 @@ function Mesero() {
         },
       ];
     });
+    return SE_AGREGO;
   };
 
   // 6B / 1.D — Confirma el modal de cantidad/porción y agrega línea nueva al carrito.
@@ -2008,7 +2010,7 @@ function Mesero() {
               )}
 
               <div className="flex-1 overflow-y-auto px-4 py-3">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                <p className="text-xs font-semibold text-muted-foreground mb-2" data-destino-bolita="">
                   {(detallesVenta || []).length > 0 ? 'AGREGAR AL PEDIDO' : 'NUEVO PEDIDO'}
                 </p>
                 {(carrito || []).length === 0 ? (

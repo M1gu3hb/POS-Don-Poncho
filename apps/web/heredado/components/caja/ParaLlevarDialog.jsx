@@ -318,7 +318,7 @@ export default function ParaLlevarDialog({
             />
             <aside className="hidden md:flex w-80 lg:w-96 flex-col border-l shrink-0 min-h-0">
               <div className="flex-1 overflow-y-auto px-4 py-3">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                <p className="text-xs font-semibold text-muted-foreground mb-2" data-destino-bolita="">
                   PEDIDO ({piezas})
                 </p>
                 {carrito.length === 0 ? (
@@ -345,6 +345,7 @@ export default function ParaLlevarDialog({
             <Button
               variant="outline"
               className="min-h-14 shrink-0"
+              data-destino-bolita=""
               onClick={() => setVerPedido(true)}
               disabled={carrito.length === 0}
             >

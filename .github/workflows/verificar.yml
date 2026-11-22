@@ -780,6 +780,8 @@ jobs:
           pnpm test:e2e pruebas/e2e/unir-poco-a-poco-sin-error.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-25 · Pedir la cuenta con platillos sin entregar: el aviso con el dedo, desde el mapa del administrador y la tableta del mesero.
           pnpm test:e2e pruebas/e2e/cuenta-con-pendientes.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
+          # DP-25 · P5 · La bolita de «agregado al pedido»: tres toques son tres bolitas, deslizar no lanza ninguna, y sin movimiento sólo rebota el número.
+          pnpm test:e2e pruebas/e2e/bolita-de-agregado.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-25 · Parte 3 · Lo que ve el mesero dentro de la mesa: el estado de cada platillo, «Michelado», la leyenda, el avance por estación y la cuenta que otro cerró.
           pnpm test:e2e pruebas/e2e/lo-que-ve-el-mesero.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-25 · P9 · El editor del mapa de mesas: una arrastrada es UNA escritura (al soltar) y un número repetido se dice con palabras.

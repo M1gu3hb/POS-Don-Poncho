@@ -9,6 +9,7 @@ import {
   type PointerEvent,
 } from 'react';
 
+import { bolitaSiSeAgrego, puntoDeLaFicha } from './bolita-dom';
 import {
   decidirToque,
   gestoVigente,
@@ -145,8 +146,14 @@ export function useToqueSeguro(
       );
       if (!decision.agrega) return;
       ultimoAgregado.current = ahora;
+      // DP-25 · Parte 5 · La bolita sale DESPUÉS de que el toque se aceptó y la acción confirmó que
+      // agregó (`SE_AGREGO`); el punto se anota antes por si la acción desmonta el botón. No retrasa
+      // ni condiciona el agregado.
+      const origen = puntoDeLaFicha(e.currentTarget);
       const resultado = accion.current();
-      if (resultado instanceof Promise && !sinCandado) {
+      const conCandado = resultado instanceof Promise && !sinCandado;
+      bolitaSiSeAgrego(resultado, origen, { yaSeAtiendeElRechazo: conCandado });
+      if (resultado instanceof Promise && conCandado) {
         enCurso.current = true;
         // Libera y vuelve a lanzar el rechazo: no se lo traga.
         void liberarAlTerminar(resultado, () => {

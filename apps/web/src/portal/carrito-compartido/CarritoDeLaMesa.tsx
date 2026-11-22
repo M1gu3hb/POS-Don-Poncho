@@ -173,11 +173,12 @@ export function CarritoDeLaMesa({
     <>
       <Button
         className="fixed inset-x-(--espacio-4) bottom-(--espacio-4) z-30 mx-auto max-w-md gap-(--espacio-3)"
+        data-destino-bolita=""
         onClick={() => {
           setAbierto(true);
         }}
       >
-        <ShoppingCart className="size-5" aria-hidden />
+        <ShoppingCart className="size-5" aria-hidden data-bolita-numero="" />
         <span className="flex-1 text-left">Pedido de la mesa ({String(estado.lineas.length)})</span>
         {precios ? <Dinero centavos={subtotal} /> : null}
       </Button>
