@@ -4467,5 +4467,5 @@ servidor o la CI. Sin migración.
 **Adenda (mismo día) · el editor del mapa y el simulador.** El editor de Configuración → Mesas **ya guardaba al soltar** (una sola
 escritura por arrastrada: mover sólo cambia el estado de la pantalla); en el código no hay un guardado por movimiento, y no se encontró
 de dónde salieron las miles de escrituras de posición de producción. Se dejó una prueba e2e que lo fija (`mapa-de-mesas-editor.spec.ts`:
-nada se guarda con la mesa en el aire, una sola escritura al soltar, y el número repetido se ve en pantalla). El simulador recibe la
-jornada corta de DP-24 y sus cuadres (el mesero de esa jornada no quita platillos; sólo lee la base), con una prueba de contrato.
+nada se guarda con la mesa en el aire, una sola escritura al soltar, y el número repetido se ve en pantalla). El simulador de bots
+(jornada corta de DP-24 y sus cuadres) **no entró**: sus guiones no pasan `eslint` y arreglarlos no cabía; quedan fuera del repositorio.

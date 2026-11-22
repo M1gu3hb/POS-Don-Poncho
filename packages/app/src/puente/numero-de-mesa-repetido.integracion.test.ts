@@ -53,7 +53,7 @@ beforeAll(async () => {
 
 function escribir(entrada: Record<string, unknown>) {
   return comando(escribirDatos, {
-    entrada: { entidad: 'Mesa', ...entrada } as never,
+    entrada: { entidad: 'Mesa', ...entrada },
     ambito: ambito(),
     idempotencyKey: clave(),
   });
