@@ -4307,3 +4307,46 @@ Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sust
   `venta_activa_id` de la mesa (falsas alarmas mientras la lectura del mapa va atrasada).
 - **Consecuencias.** No toca dinero, PIN ni permisos. No hay migración. El aviso de «listo» que sale en pantalla (platillos de la
   estación) no trae todavía las opciones de cada platillo: pide un cambio en `restaurante.avisos_de_listo` y queda como siguiente paso.
+
+## DP-D226 · DP-25 · Unir mesas poco a poco, sin forma de equivocarse: unir con una mesa que ya está en un grupo es agregar · 21-11-2026
+
+**Contexto.** Durante la capacitación los meseros unieron mesas cuatro veces con «Unir mesas» y nadie usó «Agregar mesas» (DP-D213). Los
+rechazos no quedan en la auditoría, así que no se ve qué intentaron y falló. Con «Unir mesas» una mesa que ya estaba en un grupo daba
+«ya pertenece a un grupo»; desde la principal de un grupo, «Unir mesas» abría el mapa sin poder sumar nada; y una mesa absorbida no
+decía a cuál estaba unida. Además, al absorber una cuenta el renglón perdía de qué mesa venía, y cocina seguía diciendo la mesa que se
+levantó.
+
+**Decisión.**
+
+- **El servidor decide, no la pantalla** (`unir-con-un-grupo-vivo.ts`, `restaurante.unir_mesas`): si alguna de las mesas elegidas (la
+  principal o las que se unen) ya está en un grupo, la unión **es** agregar a ese grupo (`restaurante.agregar_a_la_union`, el mismo
+  cuerpo, no un segundo camino). Vale para todas las pantallas.
+- **Quién queda de principal:** la del grupo que ya existe. Si lo elegido toca **dos grupos**, gana el de la principal elegida (esté en
+  él como principal o absorbida); si la elegida está libre, el de la primera mesa que se nombró que ya esté en uno. El otro grupo entra
+  **entero**, por su principal, sin separar a nadie (como ya hacía «Agregar mesas»). Si todas las elegidas ya son del mismo grupo no hay
+  nada que agregar y se dice («Esas mesas ya están unidas en el mismo grupo.»). Lo que no entra se sigue rechazando como siempre (otra
+  sucursal, limpieza, cuenta cobrada, perímetro y zona). Las posiciones que el mapa mande de la principal del grupo y de sus mesas se
+  descartan: sólo se mueven las que entran.
+- **La carrera que revisó la auditoría de la mañana era real.** `agregar_a_la_union` leía el grupo, sus miembros y los grupos ajenos
+  ANTES del candado y no los volvía a leer: dos meseros que agregaban a la vez revisaban el perímetro cada uno sin la mesa del otro, y
+  juntos se pasaban del límite (720 de largo contra 640). Ahora se lee, se bloquea y **se vuelve a leer con el candado puesto**; lo que
+  aparezca y no estuviera cubierto se bloquea también, y si aun así cambia, se rechaza («Ese grupo cambió mientras se agregaba»).
+- **Cada renglón dice de qué mesa vino** (migración 201, aditiva: `orden_lineas.mesa_origen_numero`, nula = es de la propia mesa). Se
+  guarda al absorber una cuenta (si ya traía origen, lo conserva) y se muestra «(Mesa 7)» junto al platillo en la cuenta de la mesa y en
+  la precuenta. Es una instantánea del número, como `producto_nombre`; no toca importes. En la hoja que imprime el servidor
+  (`restaurante.imprimir_precuenta`) cada renglón trae `mesaOrigen`.
+- **Cocina dice la mesa principal:** las comandas que pasan a la cuenta del grupo se reapuntan a la mesa principal (`comandas.mesa_id`),
+  igual que ya hace «Cambiar de mesa». Los avisos de «listo» (DP-D214) salen de la cuenta, así que van al mesero de la principal.
+- **Aviso al unir o agregar:** el comando devuelve `cuentasQuePasaron` y la pantalla dice, por cada mesa que traía consumo, «La cuenta
+  de la mesa 7 pasó a la mesa 3.».
+- **Pantallas.** En el mapa, con un grupo como ancla las mesas que se pegan (o se tocan) entran a él y el botón dice «Agregar al grupo»
+  (no se elige número: queda su principal). Una mesa absorbida dice a cuál está unida, lleva a ella y ofrece «Agregar mesas» (≥ 44 px):
+  se ve desde cualquier mesa del grupo.
+
+**Alternativas descartadas.** Rechazar con un mensaje mejor (sigue siendo un error para el mesero); resolverlo sólo en el mapa (otras
+pantallas y la API seguirían rechazando); guardar el origen del renglón en una tabla aparte o deducirlo de la comanda (las líneas que
+aún no se mandan a cocina no tienen comanda); elegir la principal «la que tenga más mesas» (el mesero ya la conoce: la de siempre).
+
+**Consecuencias.** Una unión elegida con otra principal que la del grupo deja la del grupo: el mesero lo ve en el aviso («queda la N»).
+La cuenta de una mesa absorbida desde antes de la migración no trae origen (nada que mostrar). Caja (`TarjetaDeCobro`) no muestra el
+origen todavía: es de la Parte 1. Toca `restaurante.imprimir_precuenta` y `Precuenta.tsx` (Parte 2) con el cambio mínimo.

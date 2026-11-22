@@ -125,6 +125,41 @@ export async function sumarMiembros(
   return { lineasMovidas, cuentasAbsorbidas, personas };
 }
 
+/**
+ * DP-D226 · Cada renglón de la cuenta que se absorbe guarda el número de la mesa de la que viene
+ * (migración 201), para decir «(Mesa 7)» en la cuenta y la precuenta. Un renglón que ya traía un
+ * origen —el grupo que se absorbe entero— lo conserva: sigue siendo de la 7.
+ */
+export async function marcarDeDondeVienen(
+  tx: Transaccion,
+  organizacionId: string,
+  ordenId: string,
+  mesaNumero: number,
+): Promise<void> {
+  await tx
+    .updateTable('orden_lineas')
+    .set({ mesa_origen_numero: mesaNumero })
+    .where('organizacion_id', '=', organizacionId)
+    .where('orden_id', '=', ordenId)
+    .where('mesa_origen_numero', 'is', null)
+    .execute();
+}
+
+export interface CuentaQuePaso {
+  readonly desdeMesa: number;
+  readonly aMesa: number;
+}
+
+/** Los avisos de una unión: «La cuenta de la mesa 7 pasó a la mesa 3», una por cada mesa con consumo. */
+export function cuentasQuePasaron(
+  miembros: readonly MiembroPorUnir[],
+  principal: { readonly numero: number },
+): readonly CuentaQuePaso[] {
+  return miembros
+    .filter((m) => m.ordenId !== null)
+    .map((m) => ({ desdeMesa: m.mesa.numero, aMesa: principal.numero }));
+}
+
 /** Mueve comandas y líneas de la cuenta absorbida a la de la principal y la sella. */
 async function absorberLaCuenta(
   tx: Transaccion,
@@ -138,11 +173,14 @@ async function absorberLaCuenta(
       `La cuenta de la mesa ${String(mesa.numero)} necesita una cuenta en la principal que la absorba.`,
     );
   }
+  // DP-D226 · Cada renglón recuerda de qué mesa vino, ANTES de cambiar de cuenta.
+  await marcarDeDondeVienen(tx, datos.organizacionId, ordenId, mesa.numero);
   // Lo que cocina tiene en marcha para esta mesa pasa a la cuenta del grupo (D-3): así
-  // «Marcar entregado» en la principal alcanza lo que se pidió en la unida.
+  // «Marcar entregado» en la principal alcanza lo que se pidió en la unida. DP-D226 · y cocina
+  // dice la mesa PRINCIPAL, la que se cobra (como al cambiar de mesa), no la que se levantó.
   await tx
     .updateTable('comandas')
-    .set({ orden_id: datos.ordenPrincipalId, updated_at: datos.ahora })
+    .set({ orden_id: datos.ordenPrincipalId, mesa_id: datos.principal.id, updated_at: datos.ahora })
     .where('organizacion_id', '=', datos.organizacionId)
     .where('orden_id', '=', ordenId)
     .execute();
