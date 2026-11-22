@@ -1036,6 +1036,12 @@ export const SIN_ESTADO = [
     razon:
       'No lee ni escribe: dibuja lo que se está editando; los fallos de lectura y de guardado los dice «Personalizar menú» con su Aviso.',
   },
+  ...['vacio', 'cargando', 'error'].map((estado) => ({
+    pantalla: 'restaurante/personalizar-menu/DondeSeVe',
+    estado,
+    razon:
+      'Pieza de «El orden del menú» (DP-25 · DP-D227), no pantalla: dice dónde se ve un platillo y ofrece ocultarlo; no lee nada y recibe lo que la pantalla ya leyó. La lista vacía, la carga y el fallo de la lectura o del guardado los dice «El orden del menú» con su Vacio, su esqueleto y su Aviso.',
+  })),
   {
     pantalla: 'telefono-de-cocina/ConectarTelefono',
     estado: 'vacio',

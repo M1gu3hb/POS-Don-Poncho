@@ -79,9 +79,9 @@ export async function cargarProductosDelMenu(
     .where('organizacion_id', '=', organizacionId)
     .where('id', 'in', unicos)
     .where('activo', '=', true)
+    // Un platillo oculto del portal no se pide aunque un teléfono lo tuviera abierto (DP-D227: lo
+    // oculto del POS sí se pide desde el portal).
     .where('visible_en_menu_digital', '=', true)
-    // DP-D174: un platillo oculto del POS no se pide desde el portal aunque un teléfono lo tuviera abierto.
-    .where('visible_en_pos', '=', true)
     .execute();
 
   const mapa = new Map<string, ProductoDelMenu>();

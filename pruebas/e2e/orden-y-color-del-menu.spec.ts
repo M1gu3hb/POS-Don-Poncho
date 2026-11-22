@@ -143,8 +143,9 @@ test.describe('el orden y el color del menú', () => {
           await expect(duena.getByText(`Orden de «${segunda}» guardado`)).toBeVisible();
         }
         const ultimo = platillosAntes.at(-1) ?? '';
-        await pulsar(platillos.getByRole('button', { name: `${ultimo}: se ve en el menú` }));
-        await expect(duena.getByText(`«${ultimo}» quedó oculto`)).toBeVisible();
+        await pulsar(platillos.getByRole('button', { name: `${ultimo}: dónde se ve` }));
+        await pulsar(duena.getByRole('button', { name: 'Ocultar del portal QR' }));
+        await expect(duena.getByText(`«${ultimo}» · Se ve en: POS`, { exact: true })).toBeVisible();
       });
 
       await test.step('al recargar, el orden y lo oculto siguen', async () => {
@@ -155,7 +156,8 @@ test.describe('el orden y el color del menú', () => {
         );
         await pulsar(duena.getByRole('button', { name: `Ver los platillos de ${segunda}` }));
         const platillos = duena.getByRole('list', { name: `Platillos de ${segunda}, en orden` });
-        await expect(platillos.getByRole('button', { name: /: oculto del menú$/ })).toHaveCount(1);
+        // Oculto sólo del portal: sigue en el POS (el mesero lo ve más abajo).
+        await expect(platillos.getByText(/^Se ve en: POS$/)).toHaveCount(1);
         if (delPrimerPlatillo.length >= 2) {
           const hoy = await platillos
             .getByRole('button', { name: /^Bajar / })
