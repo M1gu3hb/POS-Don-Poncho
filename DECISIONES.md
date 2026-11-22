@@ -4266,6 +4266,8 @@ verificación de la mañana (`mini-jornada-de-cocina`, 3 fallos de 15 con la lap
   una mesa que el mapa no enseña, y la principal se quedaba en «pedido enviado» o «en preparación» aunque todo estuviera listo.
   Ahora `sincronizarMesa` mueve la mesa de la CUENTA (`ordenes.mesa_id`, que en una unión es la principal); `entregar_pedidos` y
   «cancelar lo que faltaba» ya lo hacían así.
+  La Parte 6 (DP-D226) ya reapunta `comandas.mesa_id` a la principal al unir, así que las uniones NUEVAS no tienen el defecto en su
+  origen; esto queda como segundo cerrojo para las uniones que ya estaban vivas antes de ese cambio (la prueba cubre las dos).
 - **Causa 2 (pantalla de cocina).** Los toques salían en UNA sola fila para toda la cocina («`cocina`»): cada «Listo» esperaba a los de
   todas las demás mesas. Con la pantalla cargada el último toque llegaba al servidor 1.6 a 3 s después de verse hecho (medido con la
   CPU estrangulada 4×), y quien lo leía en ese momento veía el platillo todavía «en preparación». La fila es ahora POR CUENTA: los

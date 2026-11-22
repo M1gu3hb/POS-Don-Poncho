@@ -60,8 +60,14 @@ beforeAll(async () => {
   await sembrarCompanero(salon.negocio, { nombre: 'Ana', rol: 'mesero' });
 }, 120_000);
 
-/** Dos mesas con cuenta y pedido en estaciones distintas, ya unidas: la primera es la principal. */
-async function dosMesasUnidas() {
+/**
+ * Dos mesas con cuenta y pedido en estaciones distintas, ya unidas: la primera es la principal.
+ *
+ * `comoAntes`: la unión como la dejaba el sistema ANTES de la Parte 6, que ya reapunta `comandas.mesa_id`
+ * a la principal (`union-escrituras.ts`): las comandas de la absorbida conservan su mesa de origen. Hay
+ * uniones vivas así (se hicieron antes de ese cambio), y la cocina tiene que mover la principal también.
+ */
+async function dosMesasUnidas(comoAntes: boolean) {
   const posicion = indice;
   indice += 2;
   const principal = await sentarYPedir(salon, posicion, [{ platillo: 'guacamole', cantidad: '1' }]);
@@ -69,6 +75,13 @@ async function dosMesasUnidas() {
     { platillo: 'cerveza', cantidad: '1' },
     { platillo: 'arrachera', cantidad: '1' },
   ]);
+  const comandasDeLaOtra = (
+    await obtenerDb()
+      .selectFrom('comandas')
+      .select('id')
+      .where('orden_id', '=', otra.ordenId)
+      .execute()
+  ).map((c) => c.id);
   exigirOk(
     await comando(unirMesasComando, {
       entrada: { mesaPrincipalId: principal.mesaId, mesaIds: [otra.mesaId] },
@@ -77,6 +90,13 @@ async function dosMesasUnidas() {
     }),
     'unir',
   );
+  if (comoAntes) {
+    await obtenerDb()
+      .updateTable('comandas')
+      .set({ mesa_id: otra.mesaId })
+      .where('id', 'in', comandasDeLaOtra)
+      .execute();
+  }
   return { principal, otra };
 }
 
@@ -97,9 +117,12 @@ const marcar = (comandaId: string, comandaItemId: string, estado: 'en_preparacio
     idempotencyKey: clave(),
   });
 
-describe('P4 · la cocina de una mesa unida', () => {
+describe.each([
+  ['con las comandas ya reapuntadas a la principal (Parte 6)', false],
+  ['con la unión como era antes del reapuntado (mesa_id de origen)', true],
+])('P4 · la cocina de una mesa unida, %s', (_como, comoAntes) => {
   it('a · todo lo que se pidió en la mesa absorbida sale listo: la PRINCIPAL pasa a «esperando entrega»', async () => {
-    const { principal, otra } = await dosMesasUnidas();
+    const { principal, otra } = await dosMesasUnidas(comoAntes);
     for (const p of await platillosDe(principal.ordenId)) {
       exigirOk(await marcar(p.comandaId, p.id, 'listo'), 'marcar listo');
     }
@@ -109,7 +132,7 @@ describe('P4 · la cocina de una mesa unida', () => {
   });
 
   it('b · la estación de la mesa absorbida arranca: la principal pasa a «en preparación»', async () => {
-    const { principal } = await dosMesasUnidas();
+    const { principal } = await dosMesasUnidas(comoAntes);
     const todos = await platillosDe(principal.ordenId);
     const deLaOtra = todos.filter((p) => !p.nombre.startsWith('Guacamole'));
     for (const p of deLaOtra) {
@@ -120,7 +143,7 @@ describe('P4 · la cocina de una mesa unida', () => {
   });
 
   it('c · el bloque completo (mover_platillos) también mueve la principal', async () => {
-    const { principal } = await dosMesasUnidas();
+    const { principal } = await dosMesasUnidas(comoAntes);
     const ids = (await platillosDe(principal.ordenId)).map((p) => p.id);
     exigirOk(
       await comando(moverPlatillos, {
@@ -134,7 +157,7 @@ describe('P4 · la cocina de una mesa unida', () => {
   });
 
   it('d · entregado todo, la principal queda ocupada y sin nada en cocina', async () => {
-    const { principal } = await dosMesasUnidas();
+    const { principal } = await dosMesasUnidas(comoAntes);
     for (const p of await platillosDe(principal.ordenId)) {
       exigirOk(await marcar(p.comandaId, p.id, 'listo'), 'marcar listo');
     }
