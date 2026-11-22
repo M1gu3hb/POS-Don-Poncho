@@ -17,11 +17,23 @@
  *
  * En producción, por la conexión de sesión (5432), nunca por el pooler de transacción (DP-D92).
  */
+import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
 import { argumento, cargarEntorno } from './lib/guion.mjs';
 import { OPCION, planDelJugoMixto } from './lib/jugo-mixto.mjs';
 import { exigirConexionDirecta } from './lib/lectura-segura.mjs';
+
+// Los comandos de la aplicación sólo cargan con la condición `react-server`: si falta, el guion se
+// vuelve a lanzar con ella, para que la orden sea la corta (`node scripts/agregar-jugo-mixto-produccion.mjs …`).
+if (!process.execArgv.includes('--conditions=react-server')) {
+  const otra = spawnSync(
+    process.execPath,
+    ['--conditions=react-server', ...process.argv.slice(1)],
+    { stdio: 'inherit' },
+  );
+  process.exit(otra.status ?? 1);
+}
 
 cargarEntorno();
 const slug = argumento('negocio') ?? argumento('org');

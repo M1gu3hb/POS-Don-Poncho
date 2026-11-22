@@ -8,7 +8,6 @@ import {
   botonDeLaMesa,
   CARTA,
   comandasDeLaCuenta,
-  cuentaEnElServidor,
   dialogoDeLaMesa,
   laMesa,
   prepararElPortalDelComensal,
@@ -120,12 +119,18 @@ test.describe('el jugo Mixto', () => {
       expect(reseteo.status(), `resetear: ${await reseteo.text()}`).toBe(200);
 
       let jugoId = '';
+      let seccion = '';
       await test.step('el Jugo como en producción: «Sabor del jugo» (única, obligatoria) con Naranja y Zanahoria', async () => {
         const [limonada] = await consultarPuente<{ categoria_id: string }>(
           duena,
           'ProductoTerminado',
           { filtro: { nombre: CARTA.limonada.nombre }, limite: 1 },
         );
+        const [categoria] = await consultarPuente<{ nombre: string }>(duena, 'CategoriaProducto', {
+          filtro: { id: limonada?.categoria_id },
+          limite: 1,
+        });
+        seccion = categoria?.nombre ?? '';
         const creado = await comando(duena, '/api/catalogo/crear-producto', {
           nombre: JUGO,
           categoriaId: limonada?.categoria_id,
@@ -139,6 +144,13 @@ test.describe('el jugo Mixto', () => {
           visibleEnPos: true,
         });
         jugoId = String(creado.datos?.['id']);
+        // Como el Jugo de producción: sale por la barra (sin área no hay comanda que preparar).
+        await comando(duena, '/api/datos/escribir', {
+          entidad: 'ProductoTerminado',
+          operacion: 'update',
+          id: jugoId,
+          datos: { area_preparacion: 'barra' },
+        });
         const grupo = await comando(duena, '/api/catalogo/guardar-grupo-de-opciones', {
           nombre: GRUPO,
           tipo: 'unica',
@@ -201,7 +213,11 @@ test.describe('el jugo Mixto', () => {
         telefonos.push(comensal);
         const telefono = comensal.page;
         fallos.push(vigilarFallos(telefono));
-        await telefono.getByRole('button', { name: `Agregar ${JUGO}`, exact: true }).click();
+        // El portal enseña una categoría a la vez: se abre la del jugo.
+        await telefono.getByText(seccion, { exact: true }).first().click();
+        await telefono
+          .getByRole('button', { name: new RegExp(`^${JUGO},.*Ver y agregar$`) })
+          .click();
         for (const opcion of ['Naranja', 'Zanahoria', 'Mixto']) {
           await expect(telefono.getByText(opcion, { exact: true })).toBeVisible();
         }
@@ -240,7 +256,7 @@ test.describe('el jugo Mixto', () => {
           ).toBeVisible();
         }
         await pulsar(personalizar.getByRole('button', { name: 'Mixto', exact: true }));
-        await pulsar(personalizar.getByRole('button', { name: 'Agregar al pedido' }));
+        await pulsar(personalizar.getByRole('button', { name: /^Agregar/ }));
         await expect(personalizar).toHaveCount(0);
         const enviar = await botonDeLaMesa(mesera, MESA, 'Enviar a Cocina');
         const enviado = mesera.waitForResponse(
@@ -282,23 +298,29 @@ test.describe('el jugo Mixto', () => {
           await expect(dialogo.getByRole('button', { name: opcion, exact: true })).toBeVisible();
         }
         await pulsar(dialogo.getByRole('button', { name: 'Mixto', exact: true }));
-        await pulsar(dialogo.getByRole('button', { name: 'Agregar al pedido' }));
+        await pulsar(dialogo.getByRole('button', { name: /^Agregar/ }));
         const respuesta = await agregada;
         expect(respuesta.status(), 'El servidor rechazó la línea con «Mixto».').toBe(200);
         const ordenDeLaCaja = String(
           (respuesta.request().postDataJSON() as { ordenId?: string }).ordenId,
         );
         const ver = rosa.getByRole('button', { name: /^Ver orden \(/ });
+        const opcionElegida = rosa.getByText(`${GRUPO}: Mixto`).locator('visible=true').first();
+        await expect(ver.or(opcionElegida)).toBeVisible();
         if (await ver.isVisible()) await pulsar(ver);
-        await expect(rosa.getByText(`${GRUPO}: Mixto`).first()).toBeVisible();
+        await expect(opcionElegida).toBeVisible();
 
-        const total = (await cuentaEnElServidor(duena, ordenDeLaCaja)).totalCentavos;
-        await comando(duena, '/api/venta/cobrar', {
+        const estado = await comando(rosa, '/api/venta/estado', { ordenId: ordenDeLaCaja });
+        const total = Number(
+          (estado.datos?.['cotizacion'] as { totalCentavos?: string } | null)?.totalCentavos,
+        );
+        expect(total).toBeGreaterThan(0);
+        await comando(rosa, '/api/venta/cobrar', {
           ordenId: ordenDeLaCaja,
           pagos: [{ metodo: 'efectivo', montoCentavos: total }],
           totalEsperadoCentavos: total,
         });
-        const ticket = await comando(duena, '/api/venta/ticket', { ordenId: ordenDeLaCaja });
+        const ticket = await comando(rosa, '/api/venta/ticket', { ordenId: ordenDeLaCaja });
         expect(JSON.stringify(ticket.datos)).toContain(`${GRUPO}: Mixto`);
       });
 

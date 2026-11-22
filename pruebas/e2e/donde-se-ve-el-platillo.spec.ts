@@ -116,6 +116,8 @@ test.describe('dónde se ve un platillo', () => {
       const enElPortal = async (hay: boolean) => {
         const portal = await duena.context().newPage();
         await portal.goto(`/qr/${token}`);
+        // El portal enseña una categoría a la vez: se abre la de la limonada.
+        await portal.getByText(seccion, { exact: true }).first().click();
         await expect(portal.getByText('Agua mineral 355 ml').first()).toBeVisible();
         await expect(portal.getByText(LIMONADA)).toHaveCount(hay ? 1 : 0);
         await portal.close();
