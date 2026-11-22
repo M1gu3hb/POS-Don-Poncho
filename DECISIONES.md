@@ -4206,3 +4206,33 @@ Lo pidió Don Poncho tras la entrega («la Caja controla TODO al cobrar»). Sust
 - Al terminar el corte (con su PDF) se ofrece «Liquidar propinas» a la gerencia: es la del Tablero (la caja ya cerró).
 - **Quién aparece**, aquí y en el Tablero: sólo quien vende, cobra o atiende cuentas (mesero, cajero, gerente, administrador o
   dueño). Nunca cocina, bebidas ni almacén. La atribución de cada propina (quien atendió la cuenta) no cambió.
+
+## DP-D227 · DP-25 · Ocultar un platillo eligiendo dónde: portal QR, POS o todo; y el jugo «Mixto» · 21-11-2026
+
+**Contexto.** «Oculto» en «El orden del menú» sólo quitaba el platillo del portal QR (`visible_en_menu_digital`), y el
+interruptor «Visible en POS» (`visible_en_pos`) quitaba el platillo del POS **y también del portal** (DP-D174). La dueña quería
+poder esconder un platillo sólo de un lugar (p. ej. algo que sólo se vende en el POS, o algo que sólo se ve en el portal).
+
+**Decisión.**
+- Cada platillo se oculta POR LUGAR y cada lugar es independiente: el portal QR (`visible_en_menu_digital`) y el POS, o sea el
+  mesero y la Caja (`visible_en_pos`). En cada fila de «El orden del menú» dice dónde SÍ se ve («Se ve en: POS y portal QR», «Se
+  ve en: POS», «Se ve en: portal QR», «Oculto en todo») y «Dónde se ve» abre «Ocultar del portal QR», «Ocultar del POS (mesero y
+  Caja)» y «Ocultar de todo» (o el «Mostrar…» del lugar donde esté oculto).
+- **Revierte DP-D174:** el portal obedece SÓLO a `visible_en_menu_digital`. Lo oculto del POS sigue en el portal y se puede pedir
+  desde él; lo oculto del portal no sale ni se deja pedir aunque siga en el POS.
+- El mismo comando de catálogo, `catalogo.mostrar_en_menu` (dueño, administrador y gerente), recibe `visible` (portal) y/o
+  `visibleEnPos` (al menos uno; el que no viene no cambia). Una sola escritura, y una sola auditoría con el antes y el después de
+  cada lugar; sin cambios no hay auditoría ni clave de idempotencia. Sin migración.
+- Todas las rejillas del POS piden sólo lo activo y visible en el POS: mesero (`Mesero.jsx`), la Caja (`POS.jsx`, «Para llevar» y
+  «Agregar a la cuenta», que usan el mismo diálogo) y la mesa activa del mapa (`MesaActiva.tsx`, que no filtraba y se corrigió). Lo
+  oculto del POS que YA está en una cuenta abierta se sigue cobrando: el servidor no lo vuelve a mirar al cobrar.
+- **Jugo «Mixto»** (8.2): el guion `scripts/agregar-jugo-mixto-produccion.mjs` agrega «Mixto» (+$0) al grupo «Sabor del jugo» del
+  producto «Jugo» con `catalogo.guardar_grupo_de_opciones` (manda las opciones de hoy con su `id` y su precio, porque el comando
+  guarda el grupo entero), con `--ensayo` y idempotente.
+
+**Alternativas.** Dejar el portal atado al POS (no permite «sólo POS»); una columna nueva «dónde se ve» (migración sin necesidad:
+ya hay una columna por lugar); un comando por lugar (dos escrituras y dos auditorías para «ocultar de todo»).
+
+**Consecuencias.** «Se acabó el pescado» ya no se resuelve apagando «Visible en POS» si también debe salir del portal: para eso
+está «Ocultar de todo» o «Agotado del día». La lista de «apartar un pedido anticipado» sigue leyendo `visible_en_pos` como «hoy
+no hay»: un platillo oculto del POS pero visible en el portal aparece ahí en gris; es otra pantalla y no se tocó (queda por decidir).

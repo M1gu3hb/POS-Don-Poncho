@@ -207,7 +207,12 @@ export function MesaActiva(props: MesaActivaProps) {
             limite: 1,
             signal: señal,
           }),
-          consultarPuente<ProductoDeComanda>('ProductoTerminado', { limite: 300, signal: señal }),
+          consultarPuente<ProductoDeComanda>('ProductoTerminado', {
+            // DP-D227 · Lo oculto del POS no se ofrece aquí (lo ya enviado a la cuenta sí se cobra).
+            filtro: { activo: true, visible_en_pos: true },
+            limite: 300,
+            signal: señal,
+          }),
         ]);
         const orden = mesas[0]?.venta_activa_id ?? null;
         // Lo enviado se lee ANTES de pintar la comanda: sin ello, «Cuenta actual»
