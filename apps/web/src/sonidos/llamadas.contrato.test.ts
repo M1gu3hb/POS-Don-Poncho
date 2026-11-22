@@ -89,7 +89,7 @@ const LLAMADAS: readonly Llamada[] = [
   {
     archivo: 'heredado/pages/Cocina.jsx',
     que: 'la comanda lista, tras «¡Pedido listo!»',
-    tras: /toast\.success\('¡Pedido listo!'\);\s*/,
+    tras: /toast\.success\('¡Pedido listo!'(?:, AVISO_SIN_TOQUE)?\);\s*/,
     llamada: "sonar('comandaLista')",
   },
   {
