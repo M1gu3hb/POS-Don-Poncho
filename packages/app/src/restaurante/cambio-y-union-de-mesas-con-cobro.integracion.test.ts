@@ -544,17 +544,21 @@ describe('D-7 · cancelar la cuenta de un grupo de mesas unidas', () => {
     );
 
     const db = obtenerDb();
-    // Desde DP-9.6 las comandas de la unida pasan a la cuenta del grupo al unir (D-3): se buscan
-    // por su MESA, que es como las ve la cocina.
+    // Desde DP-9.6 las comandas de la unida pasan a la cuenta del grupo al unir (D-3), y desde
+    // DP-25 · P6 cocina las ve a nombre de la mesa PRINCIPAL: se buscan por ella.
     const comandas = await db
       .selectFrom('comandas')
       .select(['id', 'orden_id', 'mesa_id', 'estado'])
       .where('mesa_id', 'in', [a.mesaId, b.mesaId])
       .execute();
     expect(
-      comandas.filter((c) => c.mesa_id === b.mesaId).length,
-      'la mesa unida mandó su comanda',
-    ).toBeGreaterThan(0);
+      comandas.filter((c) => c.mesa_id === b.mesaId),
+      'cocina sigue diciendo la mesa que se unió',
+    ).toEqual([]);
+    expect(
+      comandas.filter((c) => c.mesa_id === a.mesaId).length,
+      'la comanda de la mesa unida pasó a la principal',
+    ).toBeGreaterThan(1);
     expect(
       comandas.filter((c) => c.estado !== 'cancelado').map((c) => `${c.orden_id}: ${c.estado}`),
       'comandas del grupo que la cocina sigue viendo',

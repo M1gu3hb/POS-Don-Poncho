@@ -35,6 +35,8 @@ export interface LineaEnviada {
   readonly tipo_venta_snapshot?: string | null;
   readonly cantidad_variable_snapshot?: number | null;
   readonly unidad_variable_snapshot?: string | null;
+  /** DP-D226 · La mesa de la que vino el renglón al unir mesas; ausente o nulo: es de esta mesa. */
+  readonly mesa_origen_numero?: number | null;
 }
 export interface MesaAbierta {
   /** Lo que el mapa pasa en la dirección, y lo que el comando pide para ABRIRLA. */
@@ -44,6 +46,8 @@ export interface MesaAbierta {
   readonly personas_actuales: number | null;
   readonly notas_alergias: string | null;
   readonly venta_activa_id: string | null;
+  /** DP-25 · P6 · Si está unida a otra, la principal del grupo (la mesa que tiene la cuenta). */
+  readonly unida_a_mesa_id?: string | null;
   /** DP-D156 · Quien la atiende hoy (`Mesa.atendido_por_id`) y su nombre; ausentes si nadie. */
   readonly atendido_por_id?: string | null;
   readonly atendido_por_nombre?: string | null;
@@ -150,6 +154,12 @@ export function columnasDeLoEnviado(
             {cantidadParaMostrar(l)} ×
           </span>{' '}
           {l.producto_nombre}
+          {l.mesa_origen_numero == null ? null : (
+            <span className="text-texto-sutil" data-origen-del-renglon>
+              {' '}
+              ({voc.titulo('unidad_servicio')} {String(l.mesa_origen_numero)})
+            </span>
+          )}
         </span>
       ),
     },

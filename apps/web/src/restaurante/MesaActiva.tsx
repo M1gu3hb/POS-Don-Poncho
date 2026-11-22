@@ -73,6 +73,7 @@ import {
   Search,
   Send,
   Split,
+  SquarePlus,
   TriangleAlert,
   Users,
   UtensilsCrossed,
@@ -106,6 +107,8 @@ import { ListosParaRecoger, useListosDeLaCuenta } from './ListosParaRecoger';
 import { avisoDelRelevo, puedePasarLaMesa, type MeseroElegible } from './pasar-la-mesa';
 import { useRolDeLaSesion } from './rol-de-la-sesion';
 import { liberarMesaConPregunta, useUnionDeLaMesa } from './unir-mesas';
+import { AgregarMesasDialog } from './unir-mesas/AgregarMesasDialog';
+import { useNumeroDeLaPrincipal } from './unir-mesas/use-numero-de-la-principal';
 import { useVocabulario } from '~/cliente/vocabulario';
 import { sonar } from '~/sonidos/gestor';
 
@@ -137,6 +140,12 @@ export function MesaActiva(props: MesaActivaProps) {
   const [versionDelGrupo, setVersionDelGrupo] = useState(0);
   const grupo = useUnionDeLaMesa(mesa?.id ?? null, versionDelGrupo);
   const unionId = grupo?.unionId ?? null;
+  // DP-25 · P6: si esta mesa está UNIDA a otra, el grupo de esa principal y su número: desde aquí
+  // también se agregan mesas al grupo.
+  const principalDeLaUnida = mesa?.unida_a_mesa_id ?? null;
+  const grupoDeLaPrincipal = useUnionDeLaMesa(principalDeLaUnida, versionDelGrupo);
+  const numeroDeLaPrincipal = useNumeroDeLaPrincipal(principalDeLaUnida);
+  const [agregandoDesdeLaUnida, setAgregandoDesdeLaUnida] = useState(false);
   const [productos, setProductos] = useState<readonly ProductoDeComanda[] | null>(
     productosIniciales ?? (mesaInicial === undefined ? null : []),
   );
@@ -701,16 +710,59 @@ export function MesaActiva(props: MesaActivaProps) {
       >
         <p className="text-xl font-semibold">
           {voc.titulo('unidad_servicio')} {mesa.numero} está unid
-          {voc.terminacion('unidad_servicio')} a otra
+          {voc.terminacion('unidad_servicio')} a{' '}
+          {numeroDeLaPrincipal === null
+            ? 'la principal del grupo'
+            : `la ${String(numeroDeLaPrincipal)}`}
         </p>
         <p className="text-sm text-texto-sutil">
           Su consumo pasó a {voc.enFrase('orden')} de la principal del grupo: ahí se pide, se manda
           a {voc.enFrase('preparacion')} y se cobra. Al cobrar o cancelar el grupo, vuelve a quedar
           para quien sigue.
         </p>
+        {principalDeLaUnida === null ? null : (
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => {
+              alCambiarDeMesa(principalDeLaUnida);
+            }}
+          >
+            Ir a{' '}
+            {numeroDeLaPrincipal === null ? 'la principal' : `la ${String(numeroDeLaPrincipal)}`}
+          </Button>
+        )}
+        {grupoDeLaPrincipal === null ? null : (
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full"
+            onClick={() => {
+              setAgregandoDesdeLaUnida(true);
+            }}
+          >
+            <SquarePlus aria-hidden="true" />
+            Agregar {voc.plural('unidad_servicio')}
+          </Button>
+        )}
         <Button variant="outline" size="lg" className="w-full" onClick={volverAlMapa}>
           Volver al mapa
         </Button>
+        {grupoDeLaPrincipal === null ||
+        principalDeLaUnida === null ||
+        !agregandoDesdeLaUnida ? null : (
+          <AgregarMesasDialog
+            unionId={grupoDeLaPrincipal.unionId}
+            principalId={principalDeLaUnida}
+            alCerrar={() => {
+              setAgregandoDesdeLaUnida(false);
+            }}
+            alHecho={() => {
+              setAgregandoDesdeLaUnida(false);
+              setVersionDelGrupo((v) => v + 1);
+            }}
+          />
+        )}
       </Superficie>
     );
 
