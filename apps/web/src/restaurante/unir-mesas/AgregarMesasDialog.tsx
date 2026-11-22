@@ -20,6 +20,7 @@ import {
   posicionesAlAgregar,
   type MesaParaAgregar,
 } from './agregar-mesas';
+import { avisosDeLaUnion, type CuentaQuePaso } from './avisos-de-la-union';
 import { nombreConUnidas } from './plano-de-union';
 
 /**
@@ -82,7 +83,9 @@ export function AgregarMesasDialog(props: AgregarMesasDialogProps) {
       ...mesas.filter((m) => m.unida_a_mesa_id === props.principalId).map((m) => m.id),
     ];
     try {
-      await invocarComando('/api/restaurante/agregar-a-la-union', {
+      const resultado = await invocarComando<{
+        readonly cuentasQuePasaron?: readonly CuentaQuePaso[];
+      }>('/api/restaurante/agregar-a-la-union', {
         unionId: props.unionId,
         mesaIds: elegidas,
         posiciones: posicionesAlAgregar(mesas, delGrupo, elegidas),
@@ -90,6 +93,7 @@ export function AgregarMesasDialog(props: AgregarMesasDialogProps) {
       toast.success(
         elegidas.length === 1 ? 'Mesa agregada al grupo.' : 'Mesas agregadas al grupo.',
       );
+      for (const aviso of avisosDeLaUnion(resultado.cuentasQuePasaron)) toast.info(aviso);
       props.alHecho();
     } catch (error: unknown) {
       setFallo(error instanceof ErrorApi ? error.message : 'No se pudieron agregar las mesas.');

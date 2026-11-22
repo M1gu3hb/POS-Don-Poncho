@@ -81,6 +81,19 @@ describe('comando() · conflictos de concurrencia de Postgres', () => {
     expect(llamadas.n).toBe(2);
   });
 
+  it('una espera por un candado que pasó de los 3 s (55P03) se repite y el comando confirma', async () => {
+    // DP-25 · P4: Cocina y Cantina tocando la misma cuenta con la laptop cargada: la segunda
+    // esperaba el candado de la cuenta más de 3 s, salía como 500 «Algo falló» y el toque de «Listo»
+    // se perdía (la pantalla ya lo había pintado). No dejó nada: repetirla es seguro.
+    const antes = reintentosPorConcurrencia();
+    const { salida, llamadas, fabrica } = await fallaPrimero(2, () => deLaBase('55P03'));
+
+    expect(salida.ok).toBe(true);
+    expect(llamadas.n).toBe(3);
+    expect(reintentosPorConcurrencia() - antes).toBe(2);
+    expect(fabrica.base.transacciones.filter((t) => t.confirmada)).toHaveLength(1);
+  });
+
   it('si el conflicto sigue, se rinde al tercer intento con ERROR_INTERNO', async () => {
     const { salida, llamadas } = await fallaPrimero(99, () => deLaBase('40P01'));
 

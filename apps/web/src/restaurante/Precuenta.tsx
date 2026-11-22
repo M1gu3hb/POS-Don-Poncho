@@ -91,6 +91,8 @@ export interface LineaPrecuenta {
   readonly tipo_venta_snapshot?: string | null;
   readonly cantidad_variable_snapshot?: number | null;
   readonly unidad_variable_snapshot?: string | null;
+  /** DP-D226 · La mesa de la que vino el renglón al unir mesas; ausente o nulo: es de esta mesa. */
+  readonly mesa_origen_numero?: number | null;
 }
 
 /**
@@ -443,6 +445,12 @@ function Hoja({ cuenta, lineas, estilo, copia, totales }: HojaProps) {
       celda: (linea) => (
         <span className="block min-w-0">
           <span className="font-bold">{cantidadParaMostrar(linea)}×</span> {linea.producto_nombre}
+          {linea.mesa_origen_numero == null ? null : (
+            <span data-origen-del-renglon>
+              {' '}
+              ({voc.titulo('unidad_servicio')} {String(linea.mesa_origen_numero)})
+            </span>
+          )}
           <span className="block text-texto-sutil">
             <Importe
               centavos={centavosDe(

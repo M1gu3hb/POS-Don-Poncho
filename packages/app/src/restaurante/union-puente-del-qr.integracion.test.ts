@@ -275,9 +275,10 @@ describe('D-3 · lo que cocina tiene de la unida pasa a la cuenta del grupo', ()
     const deLaCinco = await obtenerDb()
       .selectFrom('comandas')
       .select('orden_id')
-      .where('mesa_id', '=', salon.mesas.cinco)
+      .where('orden_id', 'in', [ordenDeLaCuatro, ordenDeLaCinco])
       .execute();
-    expect(deLaCinco.length).toBeGreaterThan(0);
+    // DP-25 · P6: las de la 5 ya no se buscan por su mesa (cocina dice la 4); son las dos de la cuenta.
+    expect(deLaCinco.length).toBeGreaterThan(1);
     expect(deLaCinco.every((c) => c.orden_id === ordenDeLaCuatro)).toBe(true);
     expect(ordenDeLaCinco).not.toBe(ordenDeLaCuatro);
   });
