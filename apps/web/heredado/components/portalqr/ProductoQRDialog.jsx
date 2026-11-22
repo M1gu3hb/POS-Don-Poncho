@@ -237,7 +237,7 @@ export default function ProductoQRDialog({
           precio_por_unidad_snapshot: Number(producto?.precio_por_porcion) || 0,
         };
       }
-      onConfirm?.({
+      return onConfirm?.({
         producto,
         cantidad: 1, // cantidad lógica = 1 para variables (la cantidad real va en _variable)
         notas: notas.trim(),
@@ -245,14 +245,13 @@ export default function ProductoQRDialog({
         modificadores: elegidasConPrecio(gruposActivos, selecciones),
         _variable: variableSnap,
       });
-      return;
     }
 
     // Los grupos elegidos, compatibles con el flujo del mesero (`grupo_nombre`, no `grupo`: lo
     // leen la cocina y la nota del pedido), con el precio de cada opción.
     const modificadoresArr = elegidasConPrecio(gruposActivos, selecciones);
 
-    onConfirm?.({
+    return onConfirm?.({
       producto,
       cantidad,
       notas: notas.trim(),

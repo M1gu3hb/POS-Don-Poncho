@@ -13,7 +13,7 @@ export default function CartPanel({ items, onUpdateQty, onRemove, total, onCheck
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-6">
-        <ShoppingCart className="w-12 h-12 text-muted-foreground/30 mb-3" />
+        <ShoppingCart className="w-12 h-12 text-muted-foreground/30 mb-3" data-destino-bolita="" />
         <p className="text-sm text-muted-foreground">Agrega productos</p>
       </div>
     );
@@ -22,7 +22,9 @@ export default function CartPanel({ items, onUpdateQty, onRemove, total, onCheck
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <h3 className="font-heading font-semibold text-sm">Orden</h3>
+        <h3 className="font-heading font-semibold text-sm" data-destino-bolita="">
+          Orden
+        </h3>
         <Button
           variant="ghost"
           size="sm"

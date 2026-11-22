@@ -8,6 +8,7 @@ import { ColaDeUnoEnUno } from '~/restaurante/cola-de-uno-en-uno';
 import { conSusOpciones, pideOpciones } from '~/restaurante/opciones-de-los-platillos';
 import { consultaDeLasOpciones } from '~/restaurante/use-opciones-de-los-platillos';
 import { precioConOpciones } from '~/restaurante/toma-de-pedido/precio-de-las-opciones';
+import { SE_AGREGO } from '~/tacto/bolita';
 import {
   almacenDelBorrador,
   borrarBorrador,
@@ -163,6 +164,7 @@ export function useArmadoDelPedido({ claveDelAparato, ordenDelBorrador, opciones
         { ...producto, _linea: nuevaLinea(), cantidad: 1, notas: '', _notaUsuario: '', _exclusiones: [], _modificadores: [] },
       ];
     });
+    return SE_AGREGO;
   };
 
   const confirmarCantidadVariable = (snapshot) => {

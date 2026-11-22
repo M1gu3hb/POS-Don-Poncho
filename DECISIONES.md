@@ -4359,3 +4359,37 @@ aún no se mandan a cocina no tienen comanda); elegir la principal «la que teng
 **Consecuencias.** Una unión elegida con otra principal que la del grupo deja la del grupo: el mesero lo ve en el aviso («queda la N»).
 La cuenta de una mesa absorbida desde antes de la migración no trae origen (nada que mostrar). Caja (`TarjetaDeCobro`) no muestra el
 origen todavía: es de la Parte 1. Toca `restaurante.imprimir_precuenta` y `Precuenta.tsx` (Parte 2) con el cambio mínimo.
+
+## DP-D228 · DP-25 · Parte 5 · La bolita de «agregado al pedido»: decoración que sale después del agregado · 21-11-2026
+
+**Contexto.** En la capacitación pidieron que se note cuando un toque agregó un platillo, y que tres toques seguidos se vean como tres.
+Un platillo que se agrega sin que nada se mueva deja la duda de si el toque entró; una animación que se interpone, en cambio, vuelve lenta
+una pantalla que se toca cien veces por turno y puede agregar de más (el problema de DP-23).
+
+**Decisión.**
+- **Un toque que agrega lanza una bolita** (14 px, del color primario) que vuela de la ficha al pedido —el botón flotante en el teléfono,
+  el panel en la tableta y en el mostrador, el carrito del comensal en el portal— y, al aterrizar, el número rebota. Tres toques son tres
+  bolitas, salen escalonadas 70 ms una de otra.
+- **Nunca antes ni en lugar del agregado.** Sale del gancho del toque seguro (`use-toque-seguro.ts`) DESPUÉS de que `decidirToque`
+  aceptó el toque y la acción de agregar ya corrió; deslizar, mantener o un panel que rebota no la lanzan porque no llegan hasta ahí. El
+  platillo se agrega al instante; la bolita sólo se cuelga de lo que la acción devolvió.
+- **Quien agrega avisa devolviendo `SE_AGREGO`** (el valor, o una promesa que lo devuelva): el mesero, el pedido para llevar, el mostrador
+  y el portal. Un toque que sólo abre las opciones, un agotado o una falla no lanzan nada. Los botones + y – del pedido no lo devuelven,
+  así que no vuelan.
+- **Ligera.** Capa fija fuera del flujo (`position: fixed`, sin eventos), sólo `transform` y `opacity`, vuelo de 320 ms con salida fuerte
+  (`cubic-bezier(0.23, 1, 0.32, 1)`), rebote de 200 ms, nunca desde `scale(0)`, tope de 6 bolitas en el aire (pasado el tope sólo rebota
+  el número). Se lanza un cuadro después del agregado para que el destino —que puede aparecer con el primer platillo— ya esté pintado.
+- **Sin movimiento** (`prefers-reduced-motion`): no hay bolita, sólo rebota el número. **Motor viejo (Chromium 99–103):** usa la API de
+  animación (WAAPI); si el aparato no la trae, cuadros con `requestAnimationFrame`; si tampoco, sólo el rebote. No usa nada que el modo
+  compatible no cubra.
+- La lógica pura (`bolita.ts`) se prueba sin navegador; lo del DOM está en `bolita-dom.ts`. Cada pedido visible se marca con
+  `data-destino-bolita` (y su número con `data-bolita-numero`): el destino es el primero que de verdad se ve.
+
+**Alternativas descartadas.** Lanzar la bolita en el `onPointerDown` (sale aunque el gesto sea un deslizamiento y confunde: vuela algo
+que no se agregó); animar con CSS por clases sobre la ficha (reacomoda y no llega al destino); una librería de animación (peso y no
+corre en el motor viejo); bolita también en + y – (el pedido ya está a la vista, sólo estorba).
+
+**Consecuencias.** En el portal, el botón «Agregar» del platillo ahora devuelve la promesa del agregado, así que no entra un segundo toque
+hasta que el servidor responde. En el mostrador la bolita sale cuando el comando de agregar terminó (es un viaje por red), no al toque.
+Toca `Mesero.jsx`, `POS.jsx`, `PortalCliente.jsx`, `MeseroCartFAB.jsx`, `MesaActivaView.jsx`, `ParaLlevarDialog.jsx`, `CartPanel.jsx` con
+atributos y un `return SE_AGREGO;`, sin cambiar lo que hacen (el mostrador y el portal son de la Parte 1 / el comensal: cambio mínimo).

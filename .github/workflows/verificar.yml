@@ -777,6 +777,8 @@ jobs:
           pnpm test:e2e pruebas/e2e/unir-poco-a-poco-sin-error.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-25 · Pedir la cuenta con platillos sin entregar: el aviso con el dedo, desde el mapa del administrador y la tableta del mesero.
           pnpm test:e2e pruebas/e2e/cuenta-con-pendientes.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
+          # DP-25 · P5 · La bolita de «agregado al pedido»: tres toques son tres bolitas, deslizar no lanza ninguna, y sin movimiento sólo rebota el número.
+          pnpm test:e2e pruebas/e2e/bolita-de-agregado.spec.ts --project=tablet --project=telefono --workers=1 --retries=0
           # DP-24 · La cocina por platillo, el aviso de «listo» y la mini jornada con bots. Van al final: dejan mesas y personas de prueba que
           # otras suites (cajas-del-negocio) no esperan.
           pnpm test:e2e pruebas/e2e/cocina-por-platillo.spec.ts --project=tablet --workers=1 --retries=0
