@@ -18,6 +18,8 @@ export interface PlatilloDelAviso {
   readonly cantidad: string;
   readonly tipoVenta: string | null;
   readonly unidadVariable: string | null;
+  /** DP-25 · 3.2 · Las opciones elegidas («Michelado»): el aviso dice QUÉ salió, no sólo cuántos. */
+  readonly opciones?: readonly string[];
 }
 
 export interface AvisoDeListo {
@@ -42,7 +44,10 @@ export function nombreDeLaEstacion(aviso: Pick<AvisoDeListo, 'estacionNombre'>):
 export function platillosEnPalabras(platillos: readonly PlatilloDelAviso[]): string {
   const porNombre = new Map<string, { cantidad: number; peso: string | null }>();
   for (const p of platillos) {
-    const previo = porNombre.get(p.nombre);
+    // El mismo platillo con otras opciones es otro renglón: «2 Cerveza (Michelado), 1 Cerveza».
+    const conOpciones =
+      (p.opciones ?? []).length > 0 ? `${p.nombre} (${(p.opciones ?? []).join(', ')})` : p.nombre;
+    const previo = porNombre.get(conOpciones);
     const porPeso = p.tipoVenta === 'variable_medida';
     const cantidad = Number(p.cantidad);
     const etiqueta = porPeso
@@ -52,7 +57,7 @@ export function platillosEnPalabras(platillos: readonly PlatilloDelAviso[]): str
           unidad_variable: p.unidadVariable,
         })
       : null;
-    porNombre.set(p.nombre, {
+    porNombre.set(conOpciones, {
       cantidad: (previo?.cantidad ?? 0) + (Number.isFinite(cantidad) ? cantidad : 0),
       peso: etiqueta ?? previo?.peso ?? null,
     });

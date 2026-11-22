@@ -59,6 +59,16 @@ describe('el texto del aviso', () => {
     ).toBe('3 Coca cola, 1 Jugo');
   });
 
+  it('DP-25 · 3.2 · lleva las opciones de cada platillo: «1 Cerveza (Michelado), 1 Cerveza»', () => {
+    const a = aviso('c1', [
+      plato('1', 'Cerveza', '1', { opciones: ['Michelado'] }),
+      plato('2', 'Cerveza'),
+      plato('3', 'Cerveza', '1', { opciones: ['Michelado'] }),
+    ]);
+    expect(platillosEnPalabras(a.platillos)).toBe('2 Cerveza (Michelado), 1 Cerveza');
+    expect(fraseHablada(a)).toContain('2 Cerveza (Michelado), 1 Cerveza');
+  });
+
   it('usa el nombre REAL de la estación y «Cocina» sólo si no tiene', () => {
     expect(
       fraseDelAviso(aviso('c', [plato('1', 'Taco')], { estacionNombre: 'Barra de mezcal' })),

@@ -5,6 +5,7 @@ import type { Transaccion } from '@morphiqpos/data';
 import { z } from 'zod';
 
 import { definirComando } from '../definicion.ts';
+import { opcionesParaCocina } from '../puente/opciones-de-cocina.ts';
 
 /**
  * DP-24 · LOS AVISOS DE «LISTO»: lo que ya salió de cocina, para el mesero DE ESA MESA y nadie más.
@@ -28,6 +29,8 @@ export interface PlatilloDelAviso {
   readonly cantidad: string;
   readonly tipoVenta: string | null;
   readonly unidadVariable: string | null;
+  /** DP-25 · 3.2 · Los nombres de las opciones elegidas («Michelado»), sin precios ni ids. */
+  readonly opciones: readonly string[];
 }
 
 export interface AvisoDeListo {
@@ -69,6 +72,11 @@ export const avisosDeListo = definirComando<
       .innerJoin('ordenes as o', (j) =>
         j.onRef('o.id', '=', 'c.orden_id').onRef('o.organizacion_id', '=', 'c.organizacion_id'),
       )
+      .leftJoin('orden_lineas as l', (j) =>
+        j
+          .onRef('l.id', '=', 'i.orden_linea_id')
+          .onRef('l.organizacion_id', '=', 'i.organizacion_id'),
+      )
       .innerJoin('mesas as m', (j) =>
         j.onRef('m.id', '=', 'o.mesa_id').onRef('m.organizacion_id', '=', 'o.organizacion_id'),
       )
@@ -78,6 +86,7 @@ export const avisosDeListo = definirComando<
         'i.cantidad as cantidad',
         'i.tipo_venta as tipoVenta',
         'i.unidad_variable as unidadVariable',
+        'l.opciones as opciones',
         'i.listo_en as listoEn',
         'i.orden_visual as ordenVisual',
         'c.id as comandaId',
@@ -115,6 +124,7 @@ export const avisosDeListo = definirComando<
         cantidad: f.cantidad,
         tipoVenta: f.tipoVenta,
         unidadVariable: f.unidadVariable,
+        opciones: (opcionesParaCocina(f.opciones) ?? []).flatMap((g) => g.opciones),
       };
       const previo = porComanda.get(f.comandaId);
       const listoEn = f.listoEn === null ? null : f.listoEn.toISOString();
