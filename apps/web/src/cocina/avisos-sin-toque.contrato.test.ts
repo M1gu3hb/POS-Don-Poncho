@@ -14,10 +14,7 @@ import { describe, expect, it } from 'vitest';
  * lleva `pointer-events: none`.
  */
 
-const fuente = readFileSync(
-  join(__dirname, '..', '..', 'heredado', 'pages', 'Cocina.jsx'),
-  'utf8',
-)
+const fuente = readFileSync(join(__dirname, '..', '..', 'heredado', 'pages', 'Cocina.jsx'), 'utf8')
   // Sin comentarios: lo que se afirma es el código, no una frase que lo nombra.
   .replace(/\/\*[\s\S]*?\*\//g, '')
   .replace(/^\s*\/\/.*$/gm, '');
