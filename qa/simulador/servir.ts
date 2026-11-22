@@ -59,7 +59,7 @@ const entorno: NodeJS.ProcessEnv = {
   ...process.env,
   MORPHIQPOS_SUPABASE_PROJECT_REF: '',
   DATABASE_URL: base,
-  ORGANIZACION: 'don-poncho',
+  ORGANIZACION: process.env['SIM_ORGANIZACION'] ?? 'don-poncho',
   APP_URL: appUrl,
   STORAGE_ENDPOINT: almacen,
   STORAGE_BUCKET: 'pos-don-poncho',
