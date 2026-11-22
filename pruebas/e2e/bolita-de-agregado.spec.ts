@@ -215,7 +215,7 @@ test.describe('la bolita de «agregado al pedido» (DP-25 · P5)', () => {
         await expect(
           page.getByText(`${CARTA.cerveza.nombre} agregado al pedido de la mesa`),
         ).toBeVisible();
-        await expect(page.getByRole('button', { name: /^Pedido de la mesa (1)/ })).toBeVisible();
+        await expect(page.getByRole('button', { name: /^Pedido de la mesa \(1\)/ })).toBeVisible();
         await expect.poll(() => bolitas(page), { timeout: 5_000 }).toBe(1);
         await expect.poll(() => rebotes(page), { timeout: 5_000 }).toBeGreaterThanOrEqual(1);
       } finally {

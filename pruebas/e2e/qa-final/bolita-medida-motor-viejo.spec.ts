@@ -37,11 +37,8 @@ interface Medida {
 function medirLosToques(page: Page, conBolita: boolean): Promise<Medida> {
   return page.evaluate(
     async ({ toques, con }) => {
-      if (!con) {
-        document.querySelectorAll('[data-destino-bolita]').forEach((el) => {
-          el.removeAttribute('data-destino-bolita');
-        });
-      }
+      const sinDestino = con ? [] : [...document.querySelectorAll('[data-destino-bolita]')];
+      for (const el of sinDestino) el.removeAttribute('data-destino-bolita');
       let tareasLargas = 0;
       const observador = new PerformanceObserver((lista) => {
         tareasLargas += lista.getEntries().length;
@@ -81,6 +78,7 @@ function medirLosToques(page: Page, conBolita: boolean): Promise<Medida> {
       await new Promise((r) => setTimeout(r, 1500));
       corriendo = false;
       observador.disconnect();
+      for (const el of sinDestino) el.setAttribute('data-destino-bolita', '');
       const piezas = [...document.querySelectorAll('button[aria-label^="Agregar uno de "]')]
         .filter((el) => (el as HTMLElement).offsetParent !== null)
         .reduce(
@@ -130,19 +128,25 @@ test.describe('DP-25 · P5 · la bolita en el motor viejo (medida)', () => {
               0,
             ),
         );
-        // El primer tramo de cada orden calienta el motor; se miden los dos, en los dos órdenes.
-        const primero = orden === 'con-primero';
-        const a = await medirLosToques(page, primero);
-        const b = await medirLosToques(page, !primero);
-        const con = primero ? a : b;
-        const sin = primero ? b : a;
+        // Cuatro tandas alternadas (dos con y dos sin) para que el calentamiento del motor no se
+        // atribuya a la bolita; la primera tanda de cada orden es la que más se parece a un arranque en frío.
+        const secuencia =
+          orden === 'con-primero' ? [true, false, true, false] : [false, true, false, true];
+        const tandas: { readonly con: boolean; readonly m: Medida }[] = [];
+        for (const con of secuencia) tandas.push({ con, m: await medirLosToques(page, con) });
+        const linea = (t: { readonly con: boolean; readonly m: Medida }): string =>
+          `  ${t.con ? 'CON' : 'SIN'} bolita: agregado ${t.m.agregadoMs.toFixed(1)} ms · tareas largas ${String(t.m.tareasLargas)} · mayor hueco entre cuadros ${t.m.huecoMaximoMs.toFixed(1)} ms · bolitas ${String(t.m.bolitasCreadas)}
+`;
         process.stdout.write(
-          `[bolita-motor-viejo] ${motor.version ?? motor.id} · WAAPI ${String(waapi)} · ${orden}\n` +
-            `  CON bolita: agregado ${con.agregadoMs.toFixed(1)} ms · tareas largas ${String(con.tareasLargas)} · mayor hueco entre cuadros ${con.huecoMaximoMs.toFixed(1)} ms · bolitas ${String(con.bolitasCreadas)}\n` +
-            `  SIN bolita: agregado ${sin.agregadoMs.toFixed(1)} ms · tareas largas ${String(sin.tareasLargas)} · mayor hueco entre cuadros ${sin.huecoMaximoMs.toFixed(1)} ms · bolitas ${String(sin.bolitasCreadas)}\n`,
+          `[bolita-motor-viejo] ${motor.version ?? motor.id} · WAAPI ${String(waapi)} · ${orden}
+${tandas.map(linea).join('')}`,
         );
-        expect(con.bolitasCreadas, 'con destino debían salir bolitas.').toBeGreaterThan(0);
-        expect(sin.bolitasCreadas, 'sin destino no debía salir ninguna.').toBe(0);
+        const con = tandas.filter((t) => t.con).map((t) => t.m);
+        const sin = tandas.filter((t) => !t.con).map((t) => t.m);
+        for (const m of con)
+          expect(m.bolitasCreadas, 'con destino debían salir bolitas.').toBeGreaterThan(0);
+        for (const m of sin)
+          expect(m.bolitasCreadas, 'sin destino no debía salir ninguna.').toBe(0);
         expect(await page.locator('[data-bolita]').count(), 'quedó una bolita en la página.').toBe(
           0,
         );
